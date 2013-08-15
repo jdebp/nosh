@@ -1,0 +1,137 @@
+<refentry id="ulimit">
+
+<refmeta><refentrytitle>ulimit</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>ulimit</refname><refpurpose>change resource limit then chain</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>ulimit</command> <arg>-H</arg> <arg>-S</arg> <arg rep='repeat'><replaceable>limits</replaceable></arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>NOTE</title>
+
+<para>
+Most shells have a built-in <command>ulimit</command> command that does not chain and that has
+additional interactive functionality.  
+See the manual for each individual shell for its built-in command.
+This command is more commonly used with <citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+</refsection><refsection><title>Description</title>
+
+<para>
+<command>ulimit</command> is a chain-loading utility that changes its resource limits
+and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>ulimit</command> will ignore.
+</para>
+
+<para>
+If the <arg>-H</arg> command line option is used, <command>ulimit</command> will set the hard resource
+limits.  If the <arg>-S</arg> option is used as well, <command>ulimit</command> will set both the hard
+and the soft resource limits.  Otherwise, <command>ulimit</command> will set just the soft
+resource limits.
+</para>
+
+<para>
+The following limit options are available:
+</para>
+
+<variablelist>
+
+<varlistentry><term>
+<arg>-a <replaceable>KiB</replaceable></arg></term><listitem><para>sets 
+<code>RLIMIT_AS</code>, <code>RLIMIT_DATA</code>, <code>RLIMIT_MEMLOCK</code>, and <code>RLIMIT_STACK</code>
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-c <replaceable>blocks</replaceable></arg></term><listitem><para>sets <code>RLIMIT_CORE</code>
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-d <replaceable>KiB</replaceable></arg></term><listitem><para>sets <code>RLIMIT_DATA</code>
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-e <replaceable>number</replaceable></arg></term><listitem><para>sets <code>RLIMIT_NICE</code> (only on some operating systems)
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-f <replaceable>blocks</replaceable></arg></term><listitem><para>sets <code>RLIMIT_FSIZE</code>
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-i <replaceable>n</replaceable></arg></term><listitem><para>sets <code>RLIMIT_SIGPENDING</code> (only on some operating systems)
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-l <replaceable>KiB</replaceable></arg></term><listitem><para>sets <code>RLIMIT_MEMLOCK</code>
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-m <replaceable>KiB</replaceable></arg></term><listitem><para>sets <code>RLIMIT_RSS</code>
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-n <replaceable>n</replaceable></arg></term><listitem><para>sets <code>RLIMIT_NOFILE</code>
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-q <replaceable>count</replaceable></arg></term><listitem><para>sets <code>RLIMIT_MSGQUEUE</code> (only on some operating systems)
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-s <replaceable>KiB</replaceable></arg></term><listitem><para>sets <code>RLIMIT_STACK</code>
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-t <replaceable>seconds</replaceable></arg></term><listitem><para>sets <code>RLIMIT_CPU</code>
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-u <replaceable>n</replaceable></arg></term><listitem><para>sets <code>RLIMIT_NPROC</code>
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-v <replaceable>KiB</replaceable></arg></term><listitem><para>sets <code>RLIMIT_AS</code>
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-x <replaceable>n</replaceable></arg></term><listitem><para>sets <code>RLIMIT_LOCKS</code> (only on some operating systems)
+</para></listitem></varlistentry>
+
+</variablelist>
+
+<para>
+See <citerefentry><refentrytitle>setrlimit</refentrytitle><manvolnum>1</manvolnum></citerefentry> for an explanation of the effects of these limits.
+</para>
+
+<para>
+To set an "infinite" limit, use the text <code>unlimited</code> for the limit
+value.
+Similarly, the text <code>=</code> or <code>hard</code> will use the current value of the
+hard limit as the value.  (This is particularly useful when setting
+soft limits, as it provides a simple means of setting the soft limit
+to the hard limit ceiling without knowing its current value.)
+</para>
+
+<para>
+Special treatment is given to the <arg>-a</arg> option because it sets multiple limits
+at once.  
+An attempt to set any one soft limit greater than the matching hard limit will
+be silently converted into an attempt to set the soft limit equal to the hard
+limit.
+</para>
+
+<para>
+Some limits are set in units of kilobinarybytes and blocks.
+For a command with finer granularity, see <citerefentry><refentrytitle>softlimit</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

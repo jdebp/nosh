@@ -1,0 +1,49 @@
+<refentry id="chroot">
+
+<refmeta><refentrytitle>chroot</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>chroot</refname><refpurpose>change root then chain</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>chroot</command> <arg choice='req'><replaceable>directory</replaceable></arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>NOTE</title>
+
+<para>
+Some operating systems come with a <command>chroot</command> command that does not chain,
+but that instead spawns its target as a child process.  
+This command does not fork a child process, and so is suitable for use
+in supervised command chains run under control of a daemon supervisor.
+</para>
+
+</refsection><refsection><title>Description</title>
+
+<para>
+<command>chroot</command> is a chain-loading utility that changes its current root to
+<replaceable>directory</replaceable> and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>chroot</command> will ignore.
+</para>
+
+</refsection><refsection><title>SECURITY</title>
+
+<para>
+On most systems, only the superuser is permitted to execute the underlying
+system call.  
+</para>
+
+</refsection><refsection><title>NOTE</title>
+
+<para>
+The functionality of the GNU <command>chroot</command> command can be achieved by
+combining this command with <citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

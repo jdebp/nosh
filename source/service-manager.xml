@@ -1,0 +1,276 @@
+<refentry id="service-manager">
+
+<refmeta><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>service-manager</refname><refpurpose>service manager</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>service-manager</command>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>service-manager</command> manages a set of services, allowing their service processes
+to be programmatically brought up and down, and providing automatic restart
+upon failure.
+</para>
+
+<para>
+It expects file descriptor 3 to be a (datagram) socket that has been set up to
+listen for incoming datagrams.
+This is its main control socket, through which it receives requests to load,
+unload, and pipe together services from utilities such as
+<citerefentry><refentrytitle>service-dt-scanner</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+It creates individual control FIFOs for each service, through which it receives requests to
+send signals the service and bring it up or down, from utilities such as
+<citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+</refsection><refsection><title>Services</title>
+
+<para>
+Each service comprises several files in the filesystem, contained in two
+directories.
+</para>
+
+<refsection><title>Service directories</title>
+
+<para>
+A <replaceable>service directory</replaceable> is the current directory in which a service process is
+run.  It contains:
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+a <filename>run</filename> file, which is the executable file for the service process itself;  
+</para>
+</listitem>
+
+<listitem>
+<para>
+an <filename>start</filename> file, which is the executable file to be run when a service is
+first brought up (but not when it is automatically restarted);
+</para>
+</listitem>
+
+<listitem>
+<para>
+a <filename>restart</filename> file, which is the executable file to be run when a service has
+ended (to determine whether it should automatically be restarted);
+</para>
+</listitem>
+
+<listitem>
+<para>
+a <filename>stop</filename> file, which is the executable file to be run when a service is
+finally taken down (but not when it is automatically restarted);
+</para>
+</listitem>
+
+</itemizedlist>
+
+<para>
+Although there is nothing to stop them from being binaries, the executable
+files are usually scripts interpreted by
+<citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>execlineb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+or a shell.
+They set up various parts of the process state (using commands such as
+<citerefentry><refentrytitle>softlimit</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+and
+<citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>)
+and then chain to the service program proper.
+</para>
+
+<para>
+A service directory can also contain ancillary files required by the service
+itself, varying from service to service.  
+A
+<citerefentry><refentrytitle>tcp-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+service could have an access-control database, for example.
+</para>
+
+<para>
+Other tools may use further files in a service directory.
+<command>service-dt-scanner</command> recognizes a <filename>down</filename> file, for example.
+These files are ignored by <command>service-manager</command>.
+</para>
+
+<para>
+The service manager does not need write access to the service directory or 
+to any of the executables within it.
+This permits service directories (as long as the services themselves do not
+require write access to their service directories) to reside on read-only
+volumes.
+</para>
+
+</refsection><refsection><title>Supervise directories</title>
+
+<para>
+A <replaceable>supervise directory</replaceable> provides the control/status API for the service
+supervisor.  It contains:
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+an <filename>ok</filename> FIFO that does nothing more than signify that the service manager
+has loaded the service;
+</para>
+</listitem>
+
+<listitem>
+<para>
+a <filename>control</filename> FIFO through which commands to control the individual service
+process are sent;
+</para>
+</listitem>
+
+<listitem>
+<para>
+a <filename>status</filename> file that contains a record of the service process ID, start time,
+and control state; and
+</para>
+</listitem>
+
+<listitem>
+<para>
+a <filename>lock</filename> file (compatible with 
+<citerefentry><refentrytitle>setlock</refentrytitle><manvolnum>1</manvolnum></citerefentry>) 
+that prevents the service manager from re-using an active supervise directory.
+</para>
+</listitem>
+
+</itemizedlist>
+
+<para>
+The service manager requires read-write access to these files, and write
+access to the supervise directory itself, as it creates the files if they
+do not exist to start with.
+However, it does not require write access to the supervise directory
+once the files have been created.
+(The
+<citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+program in daemontools repeatedly re-creates the <filename>status</filename>
+file, in contrast.)
+</para>
+
+<para>
+Control of services and access to service status is thus subject to ordinary
+permissions and ACLs on these files.
+</para>
+
+<para>
+Bernstein's daemontools employs an 18-byte <filename>state</filename> file.
+daemontools has no notion of "starting", "failing", or "stopping" states for
+services, and its state file provides only simple binary "up" or "down" state
+information.
+Guenter's daemontools-encore employs a 20-byte <filename>state</filename> that
+includes extra state information for the aforementioned states.  
+<command>service-manager</command> uses the same file format.
+</para>
+
+<para>
+Other tools may use further files in a supervise directory.
+Again, these files are ignored by <command>service-manager</command>.
+</para>
+
+</refsection><refsection><title>Directory locations</title>
+
+<para>
+The service manager neither knows nor cares where in the filesystem
+these directories are.
+That is the province of the utilities that feed control requests to it.
+It is not necessary for supervise directories to be subdirectories of
+service directories.
+</para>
+
+<para>
+It is not necessary for the relationship between service directories
+and supervise directories to be one-to-one.  
+One service directory can be shared amongst multiple services, as long as they
+each have an individual supervise directory.
+</para>
+
+<para>
+Moreover, it is not necessary for the relationship between services themselves
+to be exactly one "main" service feeding its output into one subordinate "log"
+service.
+The service manager permits arbitrary-length pipelines of services, as well
+as fan-in.  (However, fan-in should be used sparingly as it generally causes
+more administrative headaches than it solves.)
+</para>
+
+</refsection><refsection><title>RESTART</title>
+
+<para>
+Automatic restart is tailorable to individual services.
+If the <filename>restart</filename> program does not exist, or does not exit with a success
+(i.e. zero) status when run, the service <filename>run</filename> program is not restarted.
+</para>
+
+<para>
+For the simplest cases <filename>restart</filename> can just be a (symbolic) link to <filename>/bin/true</filename>
+or <filename>/bin/false</filename>, to provide always-restart and never-restart services, 
+respectively.
+(If using the nosh flavours of
+<citerefentry><refentrytitle>true</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>false</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+do not use links to them.
+They will see themselves invoked under the unknown (to them) name
+<filename>restart</filename> and complain.
+Instead, write a short
+<citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+script.)
+</para>
+
+<para>
+However, <filename>restart</filename> is invoked with two pieces of information, which together
+represent the most recent exit status of the <filename>run</filename> program, that allow
+finer control over the restart decision, if desired.
+The two pieces of information are its two command line arguments.
+</para>
+
+<para>
+The first is a code, one of <code>exit</code>, <code>term</code>, <code>kill</code>, <code>abort</code>, or
+<code>crash</code>.  This categorizes how <filename>run</filename> exited.  Everything apart from
+<code>exit</code> denotes being terminated by an uncaught signal. <code>term</code> denotes
+the "good" termination signals <code>SIGTERM</code>, <code>SIGPIPE</code>, <code>SIGHUP</code>, and
+<code>SIGINT</code>.  <code>kill</code> denotes <code>SIGKILL</code>.  <code>abort</code> denotes <code>SIGABRT</code>,
+<code>SIGALRM</code>, or <code>SIGQUIT</code>.  And <code>crash</code> is everything else.
+</para>
+
+<para>
+The second is either (for <code>exit</code>) the decimal exit status of the process or
+(for everything else) a symbolic designation or decimal code of the specific
+signal, if the first argument is not specific enough to make a decision.
+</para>
+
+</refsection></refsection><refsection><title>USAGE</title>
+
+<para>
+<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>session-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+invoke 
+<command>service-manager</command> directly, having set up the listening socket themselves.
+<command>service-manager</command> can also be invoked
+as a "socket-activated" daemon monitored by
+<citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+(with the systemd-recommended <code>Accept=false</code>).
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

@@ -1,0 +1,6 @@
+#!/command/execlineb -S0
+pty-get-tty
+pty-run -t
+setsid
+open-controlling-tty --exclusive --no-vhangup --
+$@

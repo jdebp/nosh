@@ -1,0 +1,61 @@
+<refentry id="service-is-up">
+
+<refmeta><refentrytitle>service-is-up</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>service-is-up</refname><refname>svup</refname><refpurpose>daemontools compatibility service state checker</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>service-is-up</command>
+<arg choice='req'><replaceable>directory</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>svup</command>
+<arg choice='req'><replaceable>directory</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>service-is-up</command> checks to see whether a service is currently up and running.
+<replaceable>directory</replaceable> is either a supervise directory or a daemontools-style service
+directory with a supervise directory named <filename>supervise</filename> within it.
+</para>
+
+<para>
+A service is considered up and running if its supervise directory contains an
+<filename>ok</filename> FIFO that can be opened for write in non-blocking mode, and contains a
+<filename>status</filename> file that indicates that the service is both up and running.
+</para>
+
+<para>
+<command>service-is-up</command> understands the extended <filename>status</filename> file structure employed by
+<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> and daemontools-encore, and in the presence of extended
+status information will only consider a service to be up and running if it both
+has a non-zero process ID and is marked as in the running state.  If there is
+only daemontools-style status information available, a service is considered up
+and running simply if it has a non-zero process ID.
+</para>
+
+<para>
+The result is signalled by the exit code, which is 0 upon success, 111
+if the directory does not exist or some other error occurred, and 100
+if the <filename>status</filename> file says that the service is not up and running or
+the <filename>ok</filename> FIFO cannot be opened in client mode.
+</para>
+
+<para>
+For more on service and supervise directories, see <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+</refsection><refsection><title>COMPATIBILITY</title>
+
+<para>
+For daemontools-encore compatibility, this command is also
+available as <command>svup</command>.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

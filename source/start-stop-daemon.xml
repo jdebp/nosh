@@ -1,0 +1,55 @@
+<refentry id="start-stop-daemon">
+
+<refmeta><refentrytitle>start-stop-daemon</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>start-stop-daemon</refname><refpurpose>SystemD shim for Debian's start-stop-daemon</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>start-stop-daemon</command> <arg>--start</arg> <arg>--stop</arg> <arg>--quiet</arg> <arg>--retry <replaceable>number</replaceable></arg> <arg>--signal <replaceable>signal</replaceable></arg> <arg>--oknodo</arg> <arg>--pidfile <replaceable>filename</replaceable></arg> <arg>--name <replaceable>name</replaceable></arg> <arg>--startas <replaceable>filename</replaceable></arg> <arg>--exec <replaceable>filename</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>start-stop-daemon</command> is a limited workalike for the Debian utility of the
+same name, that forwards instructions to start and stop daemons to a
+SystemD service template named <filename>debian@.service</filename>.  
+(The Debian utility attempts to control the service process directly, by
+searching the process table.)
+</para>
+
+<para>
+<command>start-stop-daemon</command> emulates only the core functionality of the Debian
+program, that is most commonly used in start/stop scripts in <filename>/etc/init.d</filename>.
+If you need unusual functionality such as per-service user IDs or
+"daemonization", then the correct, and by far the easier, thing to do is to
+write a native SystemD service description file.
+</para>
+
+<para>
+<command>start-stop-daemon</command> translates <arg>--start</arg> into a <code>systemctl start</code> and <arg>--stop</arg> 
+into either a <code>systemctl stop</code> or a <code>systemctl reload</code>.
+<arg>--signal</arg> must have the argument <arg>1</arg> or <arg>HUP</arg>, and its mere presence is 
+what selects between <arg>stop</arg> and <arg>reload</arg>.
+Any other argument is erroneous.
+</para>
+
+<para>
+<arg>--name</arg>, <arg>--startas</arg>, and <arg>--exec</arg> are all taken to be the parameter to
+the service template, and are otherwise undifferentiated.
+<arg>--pidfile</arg> is a security nightmare, is present only for compatibility,
+and is ignored.
+</para>
+
+<para>
+<arg>--oknodo</arg> is also present for compatibility, and is ignored.
+The exit status is always the status of the underlying <code>systemctl</code>.
+<arg>--retry</arg> simply executes <code>systemctl is-active</code> for up to <replaceable>number</replaceable> seconds
+or until it returns non-zero.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

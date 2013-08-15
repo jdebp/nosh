@@ -1,0 +1,5 @@
+[Unit]
+Description=Daemontools compatible service scanner
+
+[Service]
+ExecStart=/bin/service-dt-scanner /service/

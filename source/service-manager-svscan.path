@@ -1,0 +1,6 @@
+[Path]
+DirectoryNotEmpty=/service/
+After=local-fs.target sysinit.target
+
+[Install]
+WantedBy=multi-user.target

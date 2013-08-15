@@ -1,0 +1,210 @@
+<refentry id="cyclog">
+
+<refmeta><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>cyclog</refname><refpurpose>safely log standard input to status files and log directories</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>cyclog</command> 
+<arg>--max-file-size <replaceable>max-file-size</replaceable></arg> 
+<arg>--max-total-size <replaceable>max-total-size</replaceable></arg> 
+<arg>--margin <replaceable>margin</replaceable></arg> 
+<arg choice='req' rep='repeat'><replaceable>directories</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>cyclog</command> is a simple logging utility that logs everything that it receives on
+its standard input to a set of log file directories named as
+its command arguments.
+It automatically timestamps logs, produces time-sortable log file names,
+rotates log files, and caps log directory sizes.
+</para>
+
+<para>
+At startup, <command>cyclog</command> attempts to open all of the <replaceable>directories</replaceable>.
+If they are directories (or symbolic links to the same), it treats them as log directories.
+Otherwise, if they don't exist or are other types of file such as regular files, device
+files, or FIFOs, it aborts startup without reading from standard input.
+</para>
+
+<para>
+It keeps a file descriptor open to each log directory for its lifetime, and
+accesses files relative to that open file descriptor.
+Log directories can thus be renamed as it is running, and it will continue to
+use the original directory, wherever it is renamed to.
+</para>
+
+<refsection><title>LOG DIRECTORY</title>
+
+<para>
+A log directory is compatible with the log directories employed by daemontools'
+and daemontools-encore's <citerefentry><refentrytitle>multilog</refentrytitle><manvolnum>1</manvolnum></citerefentry>, s6's <citerefentry><refentrytitle>s6-log</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and runit's <citerefentry><refentrytitle>svlog</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+It contains:
+</para>
+
+<itemizedlist> 
+
+<listitem>
+<para>
+a <filename>lock</filename> file (compatible with
+<citerefentry><refentrytitle>setlock</refentrytitle><manvolnum>1</manvolnum></citerefentry>)
+that prevents two logging processes from sharing an active log directory;
+</para>
+</listitem>
+
+<listitem>
+<para>
+a set of old log files, named as <code>@</code> followed by a TAI64N timestamp in external
+form (16 hexadecimal digits of seconds and 8 hexadecimal digits of nanoseconds)
+and either <code>.s</code> (safely written to disc) or <code>.u</code> (aborted whilst writing to disc
+and possibly incomplete);
+and
+</para>
+</listitem>
+
+<listitem>
+<para>
+a <filename>current</filename> file where incoming log data are currently being appended.
+</para>
+</listitem>
+
+</itemizedlist>
+
+<para>
+An active <filename>current</filename> file, or an old log file or a <filename>current</filename> file that was not
+written to disc by <command>cyclog</command> properly shutting down, has permissions 0644.
+A <filename>current</filename> file or an old log file where <command>cyclog</command> properly shut down 
+has permissions 0744.
+</para>
+
+<para>
+<command>cyclog</command> shuts down when either it sees EOF on its standard input, or it
+receives one of the "good" termination signals (<code>SIGTERM</code>, <code>SIGPIPE</code>,
+<code>SIGINT</code>, or <code>SIGHUP</code>).
+At shut down, <command>cyclog</command> writes all pending data that it has already read from
+standard input, flushes <filename>current</filename> to disc, and changes <filename>current</filename>'s permissions.
+At start up, it changes <filename>current</filename>'s permissions and carries on.
+</para>
+
+</refsection><refsection><title>RELIABLE PIPED INPUT</title>
+
+<para>
+In the normal case, the standard input of <command>cyclog</command> will be a pipe; and both
+ends of the the pipe will be open in a long-lived supervisor process such as
+<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+<command>cyclog</command>, as aforementioned, ensures that it writes all data read
+from its standard input, even if it is terminated by a (good) signal.
+</para>
+
+<para>
+Thus no log data are lost, even if <command>cyclog</command> is shut down and restarted.
+</para>
+
+</refsection><refsection><title>AUTOMATIC LOG ROTATION</title>
+
+<para>
+<command>cyclog</command> performs automatic log rotation when it writes a linefeed within
+<replaceable>margin</replaceable> bytes of the maximum size (<replaceable>max-file-size</replaceable>) of the <filename>current</filename> file,
+when it is about to exceed that size, or when it receives a <code>SIGALRM</code>.
+It flushes <filename>current</filename> to disc, changes its permissions and renames it to
+a timestamped name, and then creates a new <filename>current</filename> file.
+The TAI64N timestamp of an old log file is the timestamp of when <command>cyclog</command>
+rotated <filename>current</filename> to that file.
+</para>
+
+<para>
+At log rotation, and also at startup, it checks to ensure that the total size
+of all log files in the directory does not exceed the maximum total size
+(<replaceable>max-total-size</replaceable>).
+(It only totals the sizes of <filename>current</filename> and old log files.  
+Other files, not managed or created by <command>cyclog</command>, are ignored.)
+If the total exceeds that maximum, it deletes each old log file with the
+numerically lowest name until either the total is less than the maximum or
+there is only the <filename>current</filename> file left.
+</para>
+
+<para>
+Thus the maximum size of all log files at any time is <replaceable>max-total-size</replaceable> (the
+total size after the last rotation) plus <replaceable>max-file-size</replaceable> (the data written
+since that rotation).
+</para>
+
+<para>
+<command>cyclog</command> totals file sizes rather than space allocated on disc.
+The amount of space allocated to all files may be, depending from the
+filesystem type and the maxima chosen, higher or lower than the space usage
+calculated by <command>cyclog</command>.
+</para>
+
+</refsection><refsection><title>TIMESTAMPS</title>
+
+<para>
+<command>cyclog</command> writes a timestamp
+at the beginning of every line written to <filename>current</filename>, which is the time
+when it processes the beginning of a line.  
+This is slightly after it has read the beginning of that line.
+The timestamp is in TAI64N external form (16 hexadecimal digits of seconds and
+8 hexadecimal digits of nanoseconds), which can be converted to human-readable
+form using <citerefentry><refentrytitle>tai64nlocal</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+<para>
+<command>cyclog</command> uses the <code>CLOCK_REALTIME</code> clock of the 
+<citerefentry><refentrytitle>clock_gettime</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+system call.
+On many systems this has nanosecond resolution.
+</para>
+
+<para>
+<command>cyclog</command> usually doesn't generate real TAI timestamps.
+Rather, it generates UTC-10 timestamps, in 96-bit external TAI64N form.
+But this is alright, since the programs that read the timestamps
+won't expect TAI either.
+Few programs, including the ones in daemontools, go to the bother of
+correctly converting UTC to TAI, but rather pretend that UTC-10 is TAI.
+</para>
+
+</refsection></refsection><refsection><title>COMPATIBILITY</title>
+
+<para>
+A <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> utility was part of daemontools version 0.53.
+This utility is a workalike, with some minor additions to automatic log
+rotation and changes to log directory semantics.
+</para>
+
+<para>
+daemontools later replaced <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> with <citerefentry><refentrytitle>multilog</refentrytitle><manvolnum>1</manvolnum></citerefentry>, which treats its command
+arguments as a script and has the abilities to do pattern matching and run
+external commands.
+<command>cyclog</command> is intended for the commonest, simple, use cases of logging services
+where there is just one plain logging directory with no bells and whistles.
+As such, it does not implement a script syntax, does not have pattern matching,
+and does not invoke other programs at all.
+</para>
+
+<para>
+The version 0.53 <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> used permissions 0644 and 0444 to flag files that
+had not been written to disc.
+<command>cyclog</command> adopts the convention employed by the later <citerefentry><refentrytitle>multilog</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and
+thence <citerefentry><refentrytitle>s6-log</refentrytitle><manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>svlog</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+<para>
+The version 0.53 <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> used the TAI64 timestamp of when a log file was
+started as its timestamp.
+Again <command>cyclog</command> adopts the convention employed by later tools.
+</para>
+
+<para>
+daemontools' and daemontools-encore's <citerefentry><refentrytitle>multilog</refentrytitle><manvolnum>1</manvolnum></citerefentry> uses a timer with only
+microsecond resolution, and for the same events will thus produce different
+timestamps to <command>cyclog</command>.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

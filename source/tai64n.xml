@@ -1,0 +1,61 @@
+<refentry id="tai64n">
+
+<refmeta><refentrytitle>tai64n</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>tai64n</refname><refpurpose>filter to translate external TAI64N timestamps</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>tai64n</command> <arg rep='repeat'><replaceable>files</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>tai64n</command> reads a series of lines.  
+To each line it prefixes an <code>@</code> character, a TAI64N timestamp
+in external form (16 hexadecimal digits of seconds and 8 hexadecimal
+digits of nanoseconds), and a space.
+</para>
+
+<para>
+If no <replaceable>files</replaceable> are supplied, <command>tai64n</command> reads from its standard
+input until EOF.
+Otherwise it processes each named file in turn.
+In both cases it writes to its standard output.
+</para>
+
+<para>
+A trailing newline is silently added to any file (or to standard input) that
+ends with a partial line.
+</para>
+
+<para>
+The timestamp is the time when <command>tai64n</command> processes the beginning of a line,
+which is slightly after it has read the beginning of that line.
+<command>tai6n</command> uses the <code>CLOCK_REALTIME</code> clock of the 
+<citerefentry><refentrytitle>clock_gettime</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+system call.
+On many systems this has nanosecond resolution.
+Daemontools uses a timer with only microsecond resolution, and will produce
+different timestamps for the same events.
+</para>
+
+</refsection><refsection><title>TAI</title>
+
+<para>
+<command>tai64n</command> usually doesn't generate real TAI timestamps.
+Rather, it generates UTC-10 timestamps, in 96-bit external TAI64N form.
+But this is alright, since the programs that read the timestamps
+won't expect TAI either.
+</para>
+
+<para>
+Few programs, including the ones in daemontools, go to the bother of
+correctly converting UTC to TAI, but rather pretend that UTC-10 is TAI.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

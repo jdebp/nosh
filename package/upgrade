@@ -1,0 +1,18 @@
+#!/bin/sh -e
+# See http://skarnet.org./software/compile.html
+if [ \! -d package -o \! -d source ] 
+then
+	echo "You are not in the right directory." 1>&2 
+	exit 100
+fi
+cwd="`/bin/pwd`"
+base_plus_version="`basename "${cwd}"`"
+base="`echo "${base_plus_version}" | sed -e 's/-[[:digit:]][[:alnum:].]*$//'`"
+if [ "${base}" != "${base_plus_version}" ]
+then
+	ln -s -f -- "${base_plus_version}" ../"${base}"{new}
+	mv -f -T -- ../"${base}"{new} ../"${base}"
+else
+	echo 1>&2 "This is not a versioned package."
+fi
+exit 0

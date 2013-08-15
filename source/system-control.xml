@@ -1,0 +1,988 @@
+<refentry id="system-control">
+
+<refmeta><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">administrator commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv>
+<refname>system-control</refname>
+<refpurpose>process system control jobs, sending commands to the system manager and service manager</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req"><replaceable>command</replaceable></arg>
+<arg><replaceable>arguments or options</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>systemctl</command>
+<arg choice="req"><replaceable>command</replaceable></arg>
+<arg><replaceable>arguments or options</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>system-control</command> takes a subcommand as
+<replaceable>command</replaceable> that instructs it on what to do.
+</para>
+
+<para>
+For limited systemd compatibility, it is also available as
+<command>systemctl</command>.  
+Not all subcommands are supported, nor is placing subcommand options before the
+<replaceable>command</replaceable>.
+</para>
+
+<para>
+It operates in one of two modes, controlled by the
+<arg choice="req">--user</arg> command line option:
+</para>
+
+<itemizedlist>
+<listitem>
+<para>
+In "system" mode it operates on system-level state and services.  
+It potentially communicates with a System Manager process, which must be
+process #1 and which it expects to recognize the same signals as
+<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+does.
+It potentially communicates with a Service Manager process, such as
+<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+via a local domain socket at <filename>/run/service-manager/control</filename>
+and via the control/status API of the individual services.
+</para>
+</listitem>
+<listitem>
+<para>
+In "session" mode it operates on session-level state and services.  
+It potentially communicates with a Session Manager process, which 
+again it expects to recognize the same signals as
+<citerefentry><refentrytitle>session-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+does, and which is found either through the value of the
+<replaceable>$MANAGER_PID</replaceable> environment variable or through the 
+<citerefentry><refentrytitle>getsid</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+library function.
+(The latter will generally not find the right process, and it is recommended
+that you ensure that the <replaceable>$MANAGER_PID</replaceable> environment
+variable is correctly set.)
+It potentially communicates with a Service Manager process, such as
+<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+via a local domain socket at
+<filename><replaceable>$XDG_RUNTIME_DIR</replaceable>/service-manager/control.<replaceable>$SID</replaceable></filename>
+and via the control/status API of the individual services.
+</para>
+</listitem>
+</itemizedlist>
+
+</refsection>
+<refsection><title>Concepts</title>
+
+<refsection><title>Services and targets</title>
+
+<para>
+Services and targets are defined by bundle directories.
+Although there is no constraint enforced, and <command>system-control</command>
+simply follows symbolic links, by convention service bundle directories
+generally live under <filename>/etc/sv</filename>,
+<filename>/run/sv</filename>, or <filename>/var/sv</filename>; and target
+bundle directories generally live under
+<filename>/etc/system-service</filename>.
+</para>
+
+<para>
+A service is generally a daemon process that runs.
+A target is generally a collection of services that are started/stopped
+together.
+</para>
+
+</refsection>
+<refsection><title>Jobs and actions</title>
+
+<para>
+The <command>start</command> and <command>stop</command> subcommands construct
+jobs, which comprise a set of actions.
+Each action is a start or a stop command to the control API of a service/target.
+Jobs are composed by starting with an action on a named service, and then
+following information in the service bundles to related services and targets.
+The service bundles also determine the order in which the actions are taken.
+</para>
+
+</refsection>
+
+<refsection><title>Bundle directories</title>
+
+<para>
+A bundle directory contains the command information, dependency information, relationship
+information, and control/status API for a service.
+It contains various subdirectories (which can be symbolic links to directories
+elsewhere):
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+The <filename>service/</filename> and <filename>supervise/</filename>
+subdirectories are (respectively) the service and supervise directories for the
+service, comprising the command information and the control/status API.
+See
+<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+for what service and supervise directories contain.
+(<citerefentry><refentrytitle>service-dt-scanner</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+implements a slight extension here, for compatibility.)
+</para>
+<para>
+When bundles are on a read-only filesystem, such as a CD-ROM,
+<filename>supervise</filename> must be a symbolic link pointing to a directory
+on a read-write filesystem, since supervise directories must be writable.
+One might choose a subdirectory of
+<filename>/run/system-manager/early-supervise/</filename> for example.
+<command>system-control</command> attempts to create the target of such a
+symbolic link before attempting to load the service, to avoid a chicken-and-egg
+situation with "sysinit" services that are set up this way.
+</para>
+</listitem>
+
+<listitem>
+<para>
+The <filename>wants/</filename>, <filename>conflicts/</filename>, 
+<filename>wanted-by/</filename>, <filename>stopped-by/</filename>, and
+<filename>required-by/</filename> 
+subdirectories comprise dependency or dependency installation information.
+Each contains a set of symbolic links to other bundle directories for other services.
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+<filename>wants/</filename> contains links to services that the current service
+"wants".
+Starting the current service implies starting the linked-to service as well.
+</para>
+</listitem>
+
+<listitem>
+<para>
+<filename>conflicts/</filename> contains links to services that "conflict" with the current service.
+Starting the current service implies stopping the linked-to services.
+</para>
+</listitem>
+
+<listitem>
+<para>
+<filename>required-by/</filename> contains links to services that "require" the current service.
+Stopping the current service implies stopping the linked-to services as well.
+</para>
+</listitem>
+
+<listitem>
+<para>
+<filename>wanted-by/</filename> contains links to (standard) targets that should "want"
+the current service when it is enabled.
+Enabling the service places it in the targets' "wants" lists, and disabling the service removes it.
+</para>
+</listitem>
+
+<listitem>
+<para>
+<filename>stopped-by/</filename> contains links to (standard) targets that
+should "conflict" with the current service when it is enabled.
+Enabling the service places it in the targets' "conflicts" lists, and disabling the service removes it.
+</para>
+</listitem>
+
+</itemizedlist>
+
+</listitem>
+
+<listitem>
+<para>
+The <filename>after/</filename> and <filename>before/</filename> subdirectories comprise
+relationship information.
+Relationships govern the ordering between the individual actions in a start/stop job.
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+<filename>after/</filename> contains links to services that should be started
+after/stopped before the current service when executing a start/stop job.
+</para>
+</listitem>
+
+<listitem>
+<para>
+<filename>before/</filename> contains links to services that should be started
+before/stopped after the current service when executing a start/stop job.
+</para>
+</listitem>
+
+</itemizedlist>
+
+</listitem>
+
+</itemizedlist>
+
+<para>
+Relationships are not the same as dependencies.
+A service can "want" another service without having any ordering against it with respect
+to start/stop actions.
+Indeed, this is a common case for system targets.
+The <filename>normal</filename> target, for example, "wants" the
+<filename>server</filename>, <filename>workstation</filename>, and
+<filename>multi-user</filename> targets (and by extension everything that they
+in their turn "want"), but all of the wanted services are started in parallel
+with the <filename>server</filename> target itself.
+</para>
+
+<para>
+Similarly, a service can be ordered with respect to another service without having
+a dependency from it.
+For example, both "log" and "main" services are "wanted" by the
+<filename>server</filename> and <filename>workstation</filename> targets, 
+explicitly.
+The individual "main" services, therefore, only need to be ordered after their
+corresponding "log" services, and do not "want" them.
+("log" services are first-class citizens in this respect.)
+</para>
+
+<para>
+There are no implicit relationships or dependencies in a bundle.
+The relationships and dependencies are exactly what is explicitly
+in the filesystem.
+<command>system-control</command> will fail if the recorded relationships
+and dependencies are self-contradictory or impossible (such as a service
+that conflicts with itself, for example).
+</para>
+
+</refsection>
+
+</refsection>
+
+<refsection><title>Subcommands</title>
+
+<refsection><title>System control subcommands</title>
+
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">reboot</arg>
+<group><arg choice="plain">-q</arg><arg choice="plain">--quick</arg></group>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">halt</arg>
+<group><arg choice="plain">-q</arg><arg choice="plain">--quick</arg></group>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">poweroff</arg>
+<group><arg choice="plain">-q</arg><arg choice="plain">--quick</arg></group>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">emergency</arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">rescue</arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">normal</arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">sysinit</arg>
+</cmdsynopsis>
+
+<para>
+Those subcommands communicate with the system manager to change system state.
+<command>system-control</command> sends a signal to process #1 using the 
+<citerefentry><refentrytitle>kill</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+system call.
+It will fail if it does not have the necessary privileges for sending a signal
+to that process.
+</para>
+
+<table>
+<title>The signals for each subcommand:</title>
+<thead>
+<tr><td rowspan='2'>command</td><td colspan='2'>signal</td></tr>
+<tr><td>on BSD</td><td>on Linux</td></tr>
+</thead>
+<tbody>
+<tr><td><command>reboot</command></td><td><code>SIGINT</code></td><td><code>SIGRTMIN + 5</code></td></tr>
+<tr><td><command>reboot</command> <arg choice='plain'>-q</arg></td><td colspan='2'><code>SIGRTMIN + 15</code></td></tr>
+<tr><td><command>poweroff</command></td><td><code>SIGUSR2</code></td><td><code>SIGRTMIN + 4</code></td></tr>
+<tr><td><command>poweroff</command> <arg choice='plain'>-q</arg></td><td colspan='2'><code>SIGRTMIN + 14</code></td></tr>
+<tr><td><command>halt</command></td><td><code>SIGUSR1</code></td><td><code>SIGRTMIN + 3</code></td></tr>
+<tr><td><command>halt</command> <arg choice='plain'>-q</arg></td><td colspan='2'><code>SIGRTMIN + 13</code></td> </tr>
+<tr><td><command>emergency</command></td><td colspan='2'><code>SIGRTMIN + 2</code></td></tr>
+<tr><td><command>rescue</command></td><td><code>SIGTERM</code></td><td><code>SIGRTMIN + 1</code></td></tr>
+<tr><td><command>normal</command></td><td colspan='2'><code>SIGRTMIN + 0</code></td></tr>
+<tr><td><command>sysinit</command></td><td colspan='2'><code>SIGRTMIN + 10</code></td></tr>
+</tbody>
+</table>
+
+<para>
+Exactly how the system powers off, halts, reboots, and so forth is entirely up
+to whatever is running as process #1, which is expected to be in charge of
+system state.
+These subcommands do nothing except send the signals to command the system manager.
+They do not directly enact any system state change themselves.
+</para>
+
+<para>
+The <arg>--quick</arg> command line argument is used within the various targets
+and is intended to cause the system manager to proceed directly to the finalization
+action.
+</para>
+
+</refsection>
+<refsection><title>job subcommands</title>
+
+<cmdsynopsis>
+<command>system-control</command>
+<group choice='req'>
+<arg choice="plain">start</arg>
+<arg choice="plain">activate</arg>
+</group>
+<arg rep='repeat'><replaceable>names</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>system-control</command>
+<group choice='req'>
+<arg choice="plain">stop</arg>
+<arg choice="plain">deactivate</arg>
+</group>
+<arg rep='repeat'><replaceable>names</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">isolate</arg>
+<arg rep='repeat'><replaceable>names</replaceable></arg>
+</cmdsynopsis>
+
+<para>
+These subcommands process one or more jobs, sending messages to the service
+manager to start or to stop one or more services.
+Jobs may also involve invoking any number of configurable actions.
+Jobs processing tries to ensure that service dependencies are correctly
+maintained and processed.
+To control services directly and individually without regard for dependencies,
+use
+<citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+</para>
+
+<para>
+The <command>isolate</command> subcommand exists for compatibility, and is
+equivalent to <command>start</command>.
+</para>
+
+</refsection>
+<refsection><title>service autoboot configuration subcommands</title>
+
+<cmdsynopsis>
+<command>system-control</command>
+<group choice='req'>
+<arg choice="plain">enable</arg>
+</group>
+<arg rep='repeat'><replaceable>names</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>system-control</command>
+<group choice='req'>
+<arg choice="plain">disable</arg>
+</group>
+<arg rep='repeat'><replaceable>names</replaceable></arg>
+</cmdsynopsis>
+
+<para>
+These subcommands enable or disable one or more services or targets, so that they
+do or do not automatically start when one of the standard targets is started
+and automatically stop when the shutdown standard target is started.
+</para>
+
+<para>
+Each service bundle specifies a (symbolically linked) list of target bundles in
+its <filename>wanted-by/</filename> directory.
+Usually these will be the <filename>workstation</filename>,
+<filename>server</filename>, or <filename>multi-user</filename> standard
+targets.
+For each bundle, enabling the service involves symbolically linking its
+bundle directory into the target bundle's <filename>wants/</filename> list,
+and disabling the service involves removing that link.
+</para>
+
+<para>
+Each service bundle also specifies a (symbolically linked) list of target
+bundles in its <filename>stopped-by/</filename> directory.
+Usually these will be the <filename>shutdown</filename> standard target.
+For each bundle, enabling the service involves symbolically linking its
+bundle directory into the target bundle's <filename>conflicts/</filename> 
+and <filename>after/</filename> lists,
+and disabling the service involves removing those links.
+</para>
+
+</refsection>
+<refsection><title>service status/control subcommands</title>
+
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">status</arg>
+<arg rep='repeat'><replaceable>names</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">show</arg>
+<arg rep='repeat'><replaceable>names</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">try-restart</arg>
+<arg rep='repeat'><replaceable>names</replaceable></arg>
+</cmdsynopsis>
+
+<para>
+<command>system-control</command> takes each of the
+<arg rep='repeat'><replaceable>names</replaceable></arg>,
+searches for the corresponding service bundle directory, constructs a list of
+directory names, and chains to (respectively)
+<citerefentry><refentrytitle>service-status</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>service-show</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+or
+<citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+with the <arg>--terminate</arg> option.
+</para>
+
+</refsection>
+<refsection><title>init subcommand</title>
+
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">init</arg>
+<arg>--user</arg>
+<arg>-s</arg>
+<arg>-b</arg>
+<arg>-a</arg>
+<arg>-f</arg>
+</cmdsynopsis>
+
+<para>
+This subcommand is spawned by
+<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>session-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+as their initial action.
+It activates (as if by the <arg choice="req">activate</arg> subcommand)
+one of three targets.
+Its command line syntax is modelled on those of the BSD
+<citerefentry><refentrytitle>init</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+command and the old Linux
+<citerefentry><refentrytitle>init</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+command (not to be confused with the syntaxes of the later
+<citerefentry><refentrytitle>upstart</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+or
+<citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+note) as its command line arguments originate in boot loaders and kernels that
+expect (variants of) this syntax.
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+With <arg>-b</arg> the <code>emergency</code> target is activated.
+This should bring up no services, mount no volumes, and bring up
+a secure login user interface.
+</para>
+</listitem>
+
+<listitem>
+<para>
+Without <arg>-b</arg> but with <arg>-s</arg> the <code>rescue</code> target is
+activated.
+This should bring up with it enough services to facilitate a "rescue"
+environment, and a secure login user interface.
+</para>
+</listitem>
+
+<listitem>
+<para>
+Without <arg>-b</arg> or <arg>-s</arg> the <code>normal</code> target is activated.
+This should bring up with it all of the services involved in the normal
+operation of the system, and an administrator-defined set of multiple login
+user interfaces that may include both TUI and GUI login prompts.
+</para>
+</listitem>
+
+</itemizedlist>
+
+<para>
+Old boot loaders may also pass other options to process #1, and hence to
+<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry> 
+and the <command>init</command> subcommand.  
+These include an <arg>-a</arg> command line option indicating an "unattended"
+boot (a.k.a. an "autoboot"), and an <arg>-f</arg> command line option,
+indicating a boot that skips certain lengthy disc checks (a.k.a. a "fastboot").
+These options are undocumented, non-standardized, and nowadays obsolete on many
+systems:
+</para>
+
+<itemizedlist>
+<listitem><para>LILO passes <arg>-a</arg>.</para></listitem>
+<listitem><para>FreeBSD's boot loader passes <arg>-f</arg> to mean skipping lengthy
+daemon, not disc, checks; and confusingly calls it "autoboot" even though the
+bootstrap might have used the attended <command>boot</command>
+rather than the unattended <command>autoboot</command> command. (See
+<citerefentry><refentrytitle>loader</refentrytitle><manvolnum>8</manvolnum></citerefentry> and
+<citerefentry><refentrytitle>rc</refentrytitle><manvolnum>8</manvolnum></citerefentry>.)
+</para></listitem>
+<listitem><para>OpenBSD documents <arg>-f</arg> as no longer implemented, in favour of a <filename>/fastboot</filename> flag file.</para></listitem>
+<listitem><para>systemd's
+<citerefentry><refentrytitle>systemd-fsck</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+uses a <arg>fsck.mode</arg> kernel command line option instead, and has
+no equivalent at all for "autoboot".  </para></listitem>
+<listitem><para>upstart has no equivalent at all for either.</para></listitem>
+</itemizedlist>
+
+<para>
+<command>system-control</command> <arg choice='req'>init</arg> makes no
+attempt to be compatible with this mess.
+</para>
+
+</refsection>
+<refsection><title>script coversion subcommand</title>
+
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">convert-systemd-units</arg>
+<arg><replaceable>name</replaceable></arg>
+</cmdsynopsis>
+
+<para>
+This subcommand takes the systemd unit files for the service
+<replaceable>name</replaceable> and generates from them a service bundle named
+<filename><replaceable>name/</replaceable></filename> in the current directory
+that contains scripts, dependencies, and autoboot dependency configuration
+information.
+The bundle is not enabled by the conversion process, but can be started and
+enabled as it stands, with the <command>start</command> and
+<command>preset</command> subcommands, just like any other service bundle.
+</para>
+
+<para>
+The systemd unit files are:
+</para>
+<itemizedlist>
+<listitem>
+<para>
+<filename><replaceable>name</replaceable>.socket</filename> if it exists,
+</para>
+</listitem>
+<listitem>
+<para>
+<filename><replaceable>name</replaceable>@.service</filename> if a socket unit exists and the socket has <code>Accept=true</code>, and
+</para>
+</listitem>
+<listitem>
+<para>
+<filename><replaceable>name</replaceable>.service</filename> if a socket unit does not exist or the socket has <code>Accept=false</code>.
+</para>
+</listitem>
+</itemizedlist>
+
+<para>
+Conversion of every possible systemd unit file to a service bundle requires a
+human being.
+This subcommand converts systemd units that fall within certain bounds, which
+(given that most services are fairly simple) should be the majority of systemd
+units in existence.
+These bounds are:
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+The service must be a simple, forking, or oneshot service.
+DBus and notify services are not converted.
+For preference, avoid forking services; such designs are based upon the
+incorrect premise that services may run directly from an interactive shell
+(which is a huge security issue that is wholly avoided by the model of having a
+service supervisor that spawns services in a controlled environment not
+associated with terminals or interactive shells at all).
+</para>
+</listitem>
+
+<listitem>
+<para>
+Only TCP and local domain stream sockets are converted.
+The <filename>run</filename>/<filename>service</filename> script makes use of
+<citerefentry><refentrytitle>tcp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>local-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>tcp-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and
+<citerefentry><refentrytitle>local-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+to spawn services, either to listen to the accepting socket or to respond on connecting sockets.
+FIFOs and datagram sockets are not supported, in the absence of similar
+"fifo-listen" and "udp-socket-listen" tools.
+</para>
+</listitem>
+
+<listitem>
+
+<para>
+Some of the more esoteric mechanisms, and any undocumented settings, in systemd
+are not converted.
+The converter will print a warning for any setting in the unit files that it
+does not use for conversion.
+These will include:
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+Specialized options for conditionally enabling the service, such as
+<code>conditionpathexists</code> and <code>conditiondirectorynotempty</code>,
+are not converted.
+These are almost always in practice used to make services run on specific
+platforms and not on others, and should be replaced with hooks into the
+<command>preset</command> mechanism.
+</para>
+</listitem>
+
+<listitem>
+<para>
+Other highly specialized options that even systemd recommends against, such as
+<code>fsckpassno</code>, are not converted.
+</para>
+</listitem>
+
+<listitem>
+<para>
+Specialized options for TTY management, such as
+<code>standardinput=tty-force</code>, are not converted.
+Instead of these, employ the
+<citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+and related utilities in the <filename>run</filename> script.
+</para>
+</listitem>
+
+<listitem>
+<para>
+Non-standard substitutes for <code>SIGTERM</code> via <code>killsignal</code> are not converted.
+In practice, this is primarily used to substitute <code>SIGHUP</code> for
+use with "services" that are actually interactive login shells.
+</para>
+</listitem>
+
+<listitem>
+<para>
+Linux-only mechanisms such as <code>capabilityboundingset</code>, I/O
+scheduling, and control groups are not converted.
+This is merely down to a lack of known chaining commands for manipulating
+those mechanisms.
+</para>
+</listitem>
+
+</itemizedlist>
+
+</listitem>
+
+</itemizedlist>
+
+</refsection>
+
+</refsection>
+
+<refsection><title>Standard targets</title>
+
+<para>
+Several standard targets are defined.
+They conventionally live in the
+<filename>/etc/system-manager/bundles/</filename> directory.
+</para>
+
+<para>
+Three standard targets are started by the <command>init</command> subcommand.
+</para>
+
+<variablelist>
+
+<varlistentry>
+<term>
+<filename>normal</filename>
+</term>
+<listitem>
+<para>
+This target is the normal target started by the <command>init</command>
+subcommand.
+It "wants" the <filename>workstation</filename>,
+<filename>server</filename>, and <filename>multi-user</filename> targets.
+Thus starting it starts the union of all services wanted by those
+targets.
+It is not ordered with respect to those targets.
+So in the absence of orderings in between the individual services wanted by
+those targets, defined in their bundles, all wanted workstation, server, and
+multi-user services are brought up in parallel.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term><filename>emergency</filename></term>
+<listitem><para>
+This target is the target started by the <command>init</command>
+subcommand with the <arg>-b</arg> option.
+It brings up "emergency mode" services, such as a secure login
+on the default terminal.
+It "wants" no other targets or services, not even <filename>sysinit</filename>.
+So in "emergency mode" (if nothing else has been started) only the root
+filesystem is available, not necessarily even read-write.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><filename>rescue</filename></term>
+<listitem><para>
+This target is the target started by the <command>init</command>
+subcommand with the <arg>-s</arg> option.
+It "wants" the <filename>sysinit</filename> target.
+Starting it is intended to bring up the system in "rescue mode".
+It "wants" the <filename>sysinit</filename> target, but not the
+<filename>basic</filename> target.
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+<para>
+The <command>poweroff</command>, <command>halt</command>, and
+<command>reboot</command> subcommands invoke several standard targets
+indirectly.
+</para>
+
+<variablelist>
+
+<varlistentry>
+<term><filename>poweroff</filename></term>
+<term><filename>halt</filename></term>
+<term><filename>reboot</filename></term>
+<listitem><para>
+These three targets both "want" the <filename>shutdown</filename> target and
+order themselves to start after it.
+Thus starting them shuts down all services and then, once this has been done,
+starts these targets.
+They are usually started by the System Manager, in response to system control
+commands requesting system reboot, halt, or power off.
+When they (finally) start, they invoke the <command>reboot</command>,
+<command>halt</command>, and <command>poweroff</command> subcommands of
+<command>system-control</command> with the <arg choice="req">-q</arg>
+command-line option.
+This signals the System Manager to enact the actual reboot, halt, or power-off action.
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+<para>
+For example: When
+<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry> 
+is process #1, system halt operates as follows:
+</para>
+
+<orderedlist>
+<listitem>
+<para>
+The superuser runs <command>system-control</command> <arg choice='req'>halt</arg>.
+This sends <code>SIGUSR1</code> (on BSD) or <code>SIGRTMIN + 3</code> (on Linux)
+to the system manager process.
+</para>
+</listitem>
+<listitem>
+<para>
+In response to that signal, the system manager runs
+<command>system-control</command> <arg choice='req'>activate</arg> <arg choice="plain">halt</arg>.
+</para>
+</listitem>
+<listitem>
+<para>
+<command>system-control</command> does everything necessary for activating the
+<filename>halt</filename> target, including stopping all other (conflicting)
+services and targets.
+In the service control ordering starting the <filename>halt</filename> target
+comes after processing every other service, because of the ordering between
+<filename>halt</filename> and <filename>shutdown</filename> and between
+<filename>shutdown</filename> and everything else.
+</para>
+</listitem>
+<listitem>
+<para>
+The start action for the <filename>halt</filename> target runs
+<command>system-control</command> <arg choice='req'>halt</arg> <arg choice="req">-q</arg>.
+This sends <code>SIGRTMIN + 13</code> to the system manager process.
+</para>
+</listitem>
+<listitem>
+<para>
+In response to that signal, the system manager performs the finalization action
+of actually telling the operating system kernel to halt the system, after various
+standard system shutdown actions such as flushing the filesystem cache.
+</para>
+</listitem>
+</orderedlist>
+
+<para>
+User-supplied services and targets that are auto-started at system bootstrap
+should list themselves in the <filename>wants/</filename> and
+<filename>conflicts/</filename> lists of subordinate targets (via the
+<command>enable</command> and <command>disable</command> subcommands).
+These targets are usually not started explicitly.
+</para>
+
+<variablelist>
+
+<varlistentry><term><filename>workstation</filename></term>
+<listitem><para>
+All services that normally form part of bringing the system up as a "workstation"
+should be listed in this target's 
+<filename>wants/</filename> list.
+Such services will include things such as the
+<citerefentry><refentrytitle>cron</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+daemon.
+This target "wants" the <filename>basic</filename> target, so starting it
+(directly or indirectly) will bring the basic system up.
+</para></listitem>
+</varlistentry>
+
+<varlistentry><term><filename>server</filename></term>
+<listitem><para>
+All services that normally form part of bringing the system up as a "server"
+should be listed in this target's 
+<filename>wants/</filename> list.
+Such services will include things such as HTTP/FTP/SMTP daemons, and
+daemons that provide services over the network.
+This target "wants" the <filename>basic</filename> target, so starting it
+(directly or indirectly) will bring the basic system up.
+</para></listitem>
+</varlistentry>
+
+<varlistentry><term><filename>multi-user</filename></term>
+<listitem><para>
+All services that normally form part of bringing up multi-user logins
+should be listed in this target's 
+<filename>wants/</filename> list.
+Such services will include things such as the login services for terminals
+(real and virtual) and X.
+This target "wants" the <filename>basic</filename> target, so starting it
+(directly or indirectly) will bring the basic system up.
+</para></listitem>
+</varlistentry>
+
+<varlistentry><term><filename>shutdown</filename></term>
+<listitem><para>
+Starting this target is intended to shut down all running normal services.
+All normal services should be in this target's <filename>conflicts/</filename> list.
+It is also an ordering milestone, in that all services listed in its
+<filename>conflicts/</filename> list should also be listed in its
+<filename>after/</filename> list.
+<filename>shutdown</filename> is then listed in the <filename>after/</filename>
+list of the <filename>poweroff</filename>, <filename>halt</filename>, and
+<filename>reboot</filename> target to ensure that they are only started after
+the system has entered "shutdown mode".
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+<para>
+Core services and targets are incorporated into a set of further subordinate targets.
+</para>
+
+<variablelist>
+
+<varlistentry><term><filename>basic</filename></term>
+<listitem><para>
+This target implies the "basic" system, excluding all workstation, server,
+and multi-user services.
+It "wants" the <filename>sysinit</filename> target.
+It is not an ordering milestone and has an empty <filename>after/</filename>
+list.
+</para></listitem>
+</varlistentry>
+
+<varlistentry><term><filename>sysinit</filename></term>
+<listitem><para>
+All fundamental system initialization services and steps should be listed in
+this target's <filename>wants/</filename> list.
+Such services will include things such as the <filename>hostname</filename>
+service that runs
+<citerefentry><refentrytitle>set-dynamic-hostname</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+the <filename>machine-id</filename> service that runs
+<citerefentry><refentrytitle>setup-machine-id</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+the <filename>local-fs</filename> target, and the the
+<filename>remote-fs</filename> target.
+It is not an ordering milestone and has an empty <filename>after/</filename>
+list.
+</para></listitem>
+</varlistentry>
+
+<varlistentry><term><filename>local-fs</filename></term>
+<listitem><para>
+All system initialization services and steps for checking and mounting local
+filesystems, including remounting the root filesystem in read-write mode,
+should be listed in this target's <filename>wants/</filename> and
+<filename>after/</filename> lists.
+This target is an ordering milestone, in that all services listed in its
+<filename>wants/</filename> list should also be listed in its
+<filename>after/</filename> list.
+One can thus list <filename>local-fs</filename> in the
+<filename>after/</filename> list of a service or target to ensure that it is
+only brought up after local filesystems have been mounted and checked.
+</para>
+<para>
+Note that services encompassed by this target may not rely upon filesystems
+being checked and mounted, nor upon the root filesystem being mounted
+read-write.
+To handle the latter, in particular, their <filename>supervise/</filename>
+subdirectories should be symbolic links to a suitable subdirectory of
+<filename>/run/system-manager/early-supervise</filename>.
+</para></listitem>
+</varlistentry>
+
+<varlistentry><term><filename>remote-fs</filename></term>
+<listitem><para>
+All system initialization services and steps for checking and mounting remote
+filesystems should be listed in this target's <filename>wants/</filename> and
+<filename>after/</filename> lists.
+This target is an ordering milestone, in that all services listed in its
+<filename>wants/</filename> list should also be listed in its
+<filename>after/</filename> list.
+One can thus list <filename>remote-fs</filename> in the
+<filename>after/</filename> list of a service or target to ensure that it is
+only brought up after remote filesystems have been mounted and checked.
+</para></listitem>
+</varlistentry>
+
+<varlistentry><term><filename>dns</filename></term>
+<listitem><para>
+This target is primarily an ordering milestone.
+All services that are involved in providing local DNS lookup services
+should be listed in its <filename>after/</filename> list.
+One can thus list <filename>dns</filename> in the
+<filename>after/</filename> list of a service or target to ensure that it is
+only brought up after local DNS lookup service is available.
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+</refsection>
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

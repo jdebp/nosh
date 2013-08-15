@@ -1,0 +1,8 @@
+init
+telinit
+reboot
+halt
+poweroff
+rescue
+normal
+system-manager

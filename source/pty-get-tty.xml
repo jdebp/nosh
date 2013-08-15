@@ -1,0 +1,48 @@
+<refentry id="pty-get-tty">
+
+<refmeta><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>pty-get-tty</refname><refpurpose>allocate a pseudo-terminal </refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>pty-get-tty</command> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>pty-get-tty</command> is a chain-loading utility that allocates and opens the master
+side of a new pseudo-terminal, sets up environment variables appropriate to it,
+and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>pty-get-tty</command> will ignore.
+</para>
+
+<para>
+<command>pty-get-tty</command> sets the <code>TTY</code> environment variable to the full device filename 
+of the pseudo-terminal.
+Programs such as
+<citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>login-banner</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>login-process</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+will make use of this environment variable.
+<command>pty-get-tty</command> opens the master side of the pseudo-terminal as file descriptor
+number 4, closing that descriptor if it was already open.
+<citerefentry><refentrytitle>pty-run</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+expects the pseudo-terminal master side on this open file descriptor.
+</para>
+
+<para>
+<command>pty-get-tty</command> otherwise leaves its environment and open file descriptors unchanged.
+Thus <replaceable>next-prog</replaceable> will inherit the <code>TERM</code> environment variable and the
+(as far as the kernel is concerned anyway) original controlling terminal.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

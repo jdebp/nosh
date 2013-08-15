@@ -1,0 +1,83 @@
+#!/bin/mksh -e
+# See http://skarnet.org./software/compile.html
+if [ \! -d package -o \! -d source ] 
+then
+	echo "You are not in the right directory." 1>&2 
+	exit 100
+fi
+
+root="${1-/usr/local/}"
+user="`id -un`"
+group="`id -gn`"
+
+mkdir -p "${root}"bin/ "${root}"sbin/ "${root}"man/man1 "${root}"man/man8 "${root}"lib/systemd/system "${root}"lib/tmpfiles.d
+
+(
+	cat package/commands1
+	awk '{ if ($1 == "exec" || $1 == "session-manager") print $2 ; }' package/aliases1
+) | while read i
+do
+	# Manual page
+	rm -f -- "${root}"man/man1/"$i.1"{new}
+	install -m 0644 -o "${user}" -g "${group}" -p -- manual/"$i.1" "${root}"man/man1/"$i.1"{new}
+	mv -f -- "${root}"man/man1/"$i.1"{new} "${root}"man/man1/"$i.1"
+done
+awk '{ if ($1 != "exec" && $1 != "session-manager") print $0 ; }' package/aliases1 | while read command alias
+do
+	# Manual page
+	ln -f -s -- "${command}.1" "${root}"man/man1/"${alias}.1"{new}
+	mv -f -- "${root}"man/man1/"${alias}.1"{new} "${root}"man/man1/"${alias}.1"
+done
+(
+	cat package/commands8
+) | while read i
+do
+	# Manual page
+	rm -f -- "${root}"man/man8/"$i.8"{new}
+	install -m 0644 -o "${user}" -g "${group}" -p -- manual/"$i.8" "${root}"man/man8/"$i.8"{new}
+	mv -f -- "${root}"man/man8/"$i.8"{new} "${root}"man/man8/"$i.8"
+done
+(
+	awk '{ if ($1 != "session-manager") print $0 ; }' package/aliases8
+) | while read command alias
+do
+	# Manual page
+	ln -f -s -- "${command}.8" "${root}"man/man8/"${alias}.8"{new}
+	mv -f -- "${root}"man/man8/"${alias}.8"{new} "${root}"man/man8/"${alias}.8"
+done
+while read i
+do
+	# Executable
+	rm -f -- "${root}"bin/"$i"{new}
+	install -m 0755 -o "${user}" -g "${group}" -p -- command/"$i" "${root}"bin/"$i"{new}
+	mv -f -- "${root}"bin/"$i"{new} "${root}"bin/"$i"
+done < package/commands1
+while read i
+do
+	# Executable
+	rm -f -- "${root}"sbin/"$i"{new}
+	install -m 0755 -o "${user}" -g "${group}" -p -- command/"$i" "${root}"sbin/"$i"{new}
+	mv -f -- "${root}"sbin/"$i"{new} "${root}"sbin/"$i"
+done < package/commands8
+while read command alias
+do
+	# Hard link alias
+	ln -f -- "${root}"bin/"${command}" "${root}"bin/"${alias}"{new}
+	mv -f -- "${root}"bin/"${alias}"{new} "${root}"bin/"${alias}"
+done < package/aliases1
+while read command alias
+do
+	# Hard link alias
+	ln -f -- "${root}"sbin/"${command}" "${root}"sbin/"${alias}"{new}
+	mv -f -- "${root}"sbin/"${alias}"{new} "${root}"sbin/"${alias}"
+done < package/aliases8
+for i in service-manager.socket service-manager.service service-manager-svscan.path service-manager-svscan.service
+do
+	cp -p -f -- config/"$i" "${root}"lib/systemd/system/"$i"{new}
+	mv -f -- "${root}"lib/systemd/system/"$i"{new} "${root}"lib/systemd/system/"$i"
+done 
+for i in service-manager.conf
+do
+	cp -p -f -- config/"$i" "${root}"lib/tmpfiles.d/"$i"{new}
+	mv -f -- "${root}"lib/tmpfiles.d/"$i"{new} "${root}"lib/tmpfiles.d/"$i"
+done 

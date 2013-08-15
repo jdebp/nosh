@@ -1,0 +1,95 @@
+<refentry id="pty-run">
+
+<refmeta><refentrytitle>pty-run</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>pty-run</refname><refpurpose>run a program under a pseudo-terminal </refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>pty-run</command> <arg>-t</arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>pty-run</command> is a utility that expects file descriptor 4 to be the master side of
+a pseudo-terminal and the <code>TTY</code> environment variable to be the full device
+filename of the slave side.
+</para>
+
+<para>
+It spawns <replaceable>next-prog</replaceable>, closing the master side file descriptor in the child
+process, and then enters a loop where it simultaneously:
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+writes all data received from the master side to its own standard output, until
+the master side signals hangup (i.e. when the line discipline would set modem control
+lines on a real serial device to signal hangup because the last slave file descriptor
+is closed);
+</para>
+</listitem>
+
+<listitem>
+<para>
+writes all data received from its standard input to the master side, until
+its standard input signals EOF with a 0 byte read; and
+</para>
+</listitem>
+
+<listitem>
+<para>
+acts upon state changes in the spawned child process.
+</para>
+</listitem>
+
+</itemizedlist>
+
+<para>
+It has two modes:
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+If the <arg>-t</arg> option was used, it behaves in "pass-through TTY" mode.
+</para>
+
+<para>
+It copies the terminal mode settings from its standard input or output
+to the pseudo-terminal
+and sets both its standard input and output to "raw" mode.
+If the child process stops with a stop signal, it undoes this and
+stops itself.
+When it receives a <code>SIGCONT</code>, it re-does it and sends a <code>SIGCONT</code>
+to its child.
+</para>
+</listitem>
+
+<listitem>
+<para>
+In the default if the <arg>-t</arg> option is used,
+it behaves in "pipe" mode.
+</para>
+
+<para>
+It makes no alteration to terminal mode settings.
+If the child process stops with a stop signal, it simply sends it a
+<code>SIGCONT</code> immediately.
+</para>
+</listitem>
+
+</itemizedlist>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>pty-run</command> will ignore.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

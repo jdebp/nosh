@@ -1,0 +1,44 @@
+#!/bin/sh -e
+if [ \! -d package -o \! -d source ] 
+then
+	echo "You are not in the right directory." 1>&2 
+	exit 100
+fi
+
+cd build
+if [ "`uname`" = "Interix" ]
+then
+	echo wlib.exe > ar
+	echo -n -q > arflags
+else
+	echo ar > ar
+	echo rc > arflags
+fi
+if type >/dev/null clang++
+then
+	echo clang++ > cxx
+	echo > cppflags
+	echo -g -pthread -Os -Wall -Wextra -Wshadow -Wcast-qual -Wsynth -Woverloaded-virtual -Wcast-align -integrated-as > cxxflags
+	echo -g -pthread > ldflags
+elif type >/dev/null g++
+then
+	echo g++ > cxx
+	echo > cppflags
+	echo -g -pthread -Os -Wall -Wextra -Wshadow -Wcast-qual -Wsynth -Woverloaded-virtual -Wcast-align > cxxflags
+	echo -g -pthread > ldflags
+elif type >/dev/null owcc
+then
+	echo owcc > cxx
+	echo > cppflags
+	echo -g -pthread -Os -Wall -Wextra -Wc,-xs -Wc,-xr > cxxflags
+	echo -g -pthread > ldflags
+elif type >/dev/null owcc.exe
+then
+	echo owcc.exe > cxx
+	echo > cppflags
+	echo -g -pthread -Os -Wall -Wextra -Wc,-xs -Wc,-xr > cxxflags
+	echo -g -pthread > ldflags
+else
+	echo "Cannot find clang++, g++, or owcc." 1>&2
+	false
+fi

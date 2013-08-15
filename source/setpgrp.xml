@@ -1,0 +1,35 @@
+<refentry id="setpgrp">
+
+<refmeta><refentrytitle>setpgrp</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>setpgrp</refname><refpurpose>become a process group leader then chain</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>setpgrp</command> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>setpgrp</command> is a chain-loading utility that attempts to become a
+proces group leader and then chain loads to <replaceable>next-prog</replaceable>
+with the
+<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>setpgrp</command> will ignore.
+</para>
+
+<para>
+If the process already is a process group leader, no call to the
+<citerefentry><refentrytitle>setpgid</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+library function is made.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

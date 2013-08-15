@@ -1,0 +1,42 @@
+Source: nosh
+Section: admin
+Priority: optional
+Maintainer: Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@ntlworld.com>
+Build-Depends: redo
+
+Package: nosh-exec
+Architecture: amd64
+Depends: ${shlibs:Depends}
+Suggests: 
+Recommends: 
+Description: Minimal non-shell script processor and various chain-load utilities useful for services
+ nosh is a minimal script processor for use in the #! lines of scripts.
+ .
+ Included here are various commands for altering process state:
+ * appendpath, chdir, chroot, clearenv, envdir, envuidgid, fdmove, fdredir
+ * prependpath, read-conf, setenv, setsid, setuidgid, setuidgid-fromenv,
+ * softlimit, ulimit, umask, unsetenv
+ .
+ Also present are commands useful for daemon implementations:
+ * false, line-banner, local-socket-accept, local-socket-listen,
+ * recordio, setlock, tcp-socket-accept, tcp-socket-listen, true
+ .
+ Further commands are useful for TUI login and TTY/PTY management:
+ * login-banner,login-process, login-prompt, open-controlling-tty,
+ * pty-get-tty, pty-run, vc-get-tty, vc-reset-tty
+
+Package: nosh-service-management
+Architecture: amd64
+Depends: ${shlibs:Depends}, nosh-exec
+Suggests: 
+Recommends: 
+Description: Service and system management utilities
+ This package provides a complete daemon supervisor and system management toolset.
+ .
+ It includes a system-wide system manager, a per-user-login session manager, a service manager, along with various control and status utilities.
+ .
+ Various compatibility commands are provided for those familiar with systemd, daemontools, daemontools-encore, and SystemV utilities:
+ * service, svc, svok, svscan, svshow, svstat, svup, init, telinit, halt, poweroff reboot, systemctl
+ .
+ This package supplies systemd unit files for setting up a daemontools-like daemon management system under systemd.
+ Or one can instead run this pacakage's system manager as process #1.

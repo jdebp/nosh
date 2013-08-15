@@ -1,0 +1,147 @@
+<refentry id="exec">
+
+<refmeta><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>exec</refname><refpurpose>chain</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>exec</command> <arg>--login</arg> <arg>--clear</arg> <arg>--arg0 <replaceable>string</replaceable></arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>NOTE</title>
+
+<para>
+Most shells have a built-in <command>exec</command> command that replaces the shell
+process itself.
+See the manual for each individual shell for its built-in command.
+This command will be an external command to most shells.
+It is a built-in command for <citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+</refsection><refsection><title>Description</title>
+
+<para>
+<command>exec</command> is a chain-loading utility that simply chain loads to <replaceable>next-prog</replaceable>
+with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>exec</command> will ignore.
+</para>
+
+<para>
+If the <arg>--clear</arg> command line option is used, <command>exec</command> will clear its
+environment before chaining.
+Otherwise, it leaves its process state unchanged.
+This option is for compatibility with the built-in <citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry> command of
+shells.
+Avoid its use.
+Instead, use the built-in <citerefentry><refentrytitle>clearenv</refentrytitle><manvolnum>1</manvolnum></citerefentry> command.
+</para>
+
+<para>
+The <arg>--arg0</arg> command line option causes it to replace the first element
+of the argument list that it passes to <replaceable>next-prog</replaceable>, which is otherwise 
+the name of the command in <replaceable>next-prog</replaceable>, with the supplied string.
+If the <arg>--login</arg> command line option is used, then the first element of
+the argument list has a dash (<code>-</code>) prepended, which is the convention
+for signalling shells that they are being invoked directly by <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+This happens after any substitution because of <arg>--arg0</arg>.
+</para>
+
+</refsection><refsection><title>BUILT-IN COMMANDS</title>
+
+<para>
+<command>exec</command> is in fact a multiple personality program, whose function varies
+according to what name it is invoked as.
+The alternative names are:
+<command>appendpath</command>, <command>chdir</command>,
+<command>chroot</command>, <command>clearenv</command>,
+<command>envuidgid</command>, <command>fdmove</command>,
+<command>line-banner</command>, <command>local-socket-accept</command>,
+<command>local-socket-listen</command>, <command>login-banner</command>,
+<command>login-process</command>, <command>login-prompt</command>,
+<command>nosh</command>, <command>open-controlling-tty</command>,
+<command>prependpath</command>, <command>pty-get-tty</command>,
+<command>pty-run</command>, <command>read-conf</command>,
+<command>set-dynamic-hostname</command>,
+<command>setenv</command>, <command>setuidgid-fromenv</command>, <command>setlock</command>,
+<command>setpgrp</command>, <command>setsid</command>,
+<command>setuidgid</command>, 
+<command>softlimit</command>, <command>tcp-socket-accept</command>,
+<command>tcp-socket-listen</command>, <command>ulimit</command>,
+<command>umask</command>, <command>unsetenv</command>,
+<command>vc-get-tty</command>, and <command>vc-reset-tty</command>,
+See their individual manual pages for details.
+</para>
+
+<para>
+These other commands are also available as built-in commands, in <citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and in <citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+If <replaceable>next-prog</replaceable> is such a command, it will be executed directly, without
+needing to ask the operating system to overlay the current process and
+reinitialize the runtime libraries.
+(Built-in commands must be named simply, and may not have directory prefixes.
+If invoked with prefixes, they will be run as ordinary overlaid programs via
+<citerefentry><refentrytitle>execv</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
+</para>
+
+<refsection><title>AESTHETICS</title>
+
+<para>
+<command>login-prompt</command> and <command>tcp-socket-accept</command> are built-in commands.
+Because of this, daemons that run <command>tcp-socket-accept</command> chain loaded from other programs
+such as <command>tcp-socket-listen</command> will appear in a <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>1</manvolnum></citerefentry> listing to be running the chain of
+commands that preceded it.
+Similarly, a virtual terminal login process running <command>login-prompt</command> will appear
+to be running the chain of commands that led up to it, starting from
+<command>vc-get-tty</command>.
+</para>
+
+<para>
+This may be aesthetically unpleasing.
+The way to address it is simply to run <command>login-prompt</command> and <command>tcp-socket-accept</command>
+as ordinary external commands, by referencing them via their full pathnames.
+The operating system will as a consequence overwrite the process' argument list
+visible with <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>1</manvolnum></citerefentry> with the arguments as they are by the time those programs
+are run.
+</para>
+
+</refsection><refsection><title>SECURITY</title>
+
+<para>
+Having built-in commands, rather than forcing each individual command to be
+reloaded as a fresh process image by the operating system, exposes all built-in
+commands in a chain-loading chain to any weaknesses in one.
+</para>
+
+<para>
+However, this is a reasonable trade-off.  
+Most of the built-in commands do very little, and most of their processing when
+executed as external commands is in fact devoted to the dynamic loader and
+initializing the runtime libraries.  
+(For example: <citerefentry><refentrytitle>chdir</refentrytitle><manvolnum>1</manvolnum></citerefentry> makes two system calls in the meat of the command.  On
+one Linux system, however, the dynamic loader and runtime libraries make 143
+system calls just to load and start the program.  Other commands have similarly
+enormous ratios.)
+Having built-in commands eliminates the repeated teardown and re-initialization
+overheads from the dynamic loader and runtime libraries, reducing the overhead
+of small commands that individually do little to the same order of magnitude as
+simple function calls.
+</para>
+
+<para>
+And the commands themselves <replaceable>are</replaceable> short and readily amenable to security
+audit.  They are highly modular, with almost no coupling between commands; and
+usually simple.
+</para>
+
+<para>
+And you can always run the commands as external commands, as aforementioned.
+</para>
+
+</refsection></refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

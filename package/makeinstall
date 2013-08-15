@@ -1,0 +1,94 @@
+#!/bin/sh -e
+# See http://skarnet.org./software/compile.html
+if [ \! -d package -o \! -d source ]
+then
+	echo "You are not in the right directory." 1>&2
+	exit 100
+fi
+
+# Atomically update the release directories ./command, ./library, ./include, and so forth.
+# The build and release directories need not be on the same disc volume.
+# And the files released must not be potentially overwritable and truncatable by the compiler/linker during subsequent builds.
+# But released files can be links to other released files, of course.
+mkdir -p command manual config
+
+# Build all of the ...{new} files.
+cat package/commands1 package/commands8 | while read i
+do
+	rm -f -- command/"$i"{new}
+	cp -p -f -- build/"$i" command/"$i"{new}
+	strip -p -- command/"$i"{new}
+done
+cat package/aliases1 package/aliases8 | while read command alias
+do
+	rm -f -- command/"${alias}"{new}
+	ln -f -- command/"${command}"{new} command/"${alias}"{new}
+done
+(
+	cat package/commands1
+	awk '{ if ($1 == "exec" || $1 == "session-manager") print $2 ; }' package/aliases1
+) | while read i
+do
+	rm -f -- manual/"$i".1{new}
+	cp -p -f -- build/"$i".1 manual/"$i".1{new}
+done
+(
+	cat package/commands8
+) | while read i
+do
+	rm -f -- manual/"$i".8{new}
+	cp -p -f -- build/"$i".8 manual/"$i".8{new}
+done
+(
+	awk '{ if ($1 != "exec" && $1 != "session-manager") print $0 ; }' package/aliases1
+) | while read command alias
+do
+	ln -f -s -- "${command}".1 manual/"${alias}".1{new}
+done
+while read command alias
+do
+	ln -f -s -- "${command}".8 manual/"${alias}".8{new}
+done < package/aliases8
+
+# Rename the ...{new} files.
+(
+	cat package/commands1 package/commands8
+	awk '{ if ($1 == "exec" || $1 == "session-manager") print $2 ; }' package/aliases1
+) | while read i
+do
+	mv -f -- command/"$i"{new} command/"$i"
+done
+(
+	cat package/commands1
+	awk '{ if ($1 == "exec" || $1 == "session-manager") print $2 ; }' package/aliases1
+) | while read i
+do
+	mv -f -- manual/"$i".1{new} manual/"$i".1
+done
+while read i
+do
+	mv -f -- manual/"$i".8{new} manual/"$i".8
+done < package/commands8
+(
+	awk '{ if ($1 != "exec" && $1 != "session-manager") print $0 ; }' package/aliases1
+) | while read command alias
+do
+	mv -f -- manual/"${alias}".1{new} manual/"${alias}".1
+	mv -f -- command/"${alias}"{new} command/"${alias}"
+done
+while read command alias
+do
+	mv -f -- manual/"${alias}".8{new} manual/"${alias}".8
+	mv -f -- command/"${alias}"{new} command/"${alias}"
+done < package/aliases8
+
+#
+for i in service-manager.socket service-manager.service service-manager.conf service-manager-svscan.path service-manager-svscan.service
+do
+	rm -f -- config/"$i"{new}
+	cp -p -f -- build/"$i" config/"$i"{new}
+done
+for i in service-manager.socket service-manager.service service-manager.conf service-manager-svscan.path service-manager-svscan.service
+do
+	mv -f -- config/"$i"{new} config/"$i"
+done 

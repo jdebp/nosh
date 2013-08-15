@@ -1,0 +1,66 @@
+<refentry id="line-banner">
+
+<refmeta><refentrytitle>line-banner</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>line-banner</refname><refpurpose>chain-load utility for printing 1-line banners</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>line-banner</command> <arg choice='req'><replaceable>banner</replaceable></arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>line-banner</command> is a chain-loading utility that prints the 
+1-line banner <replaceable>banner</replaceable> (followed by a newline) to its
+standard output, and then chain loads to <replaceable>next-prog</replaceable> with the
+<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>line-banner</command> will ignore.
+</para>
+
+<para>
+<command>line-banner</command> makes no alteration to process state.
+</para>
+
+</refsection><refsection><title>EXAMPLE</title>
+
+<para>
+The following <citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry> script wraps the <citerefentry><refentrytitle>ftpd</refentrytitle><manvolnum>1</manvolnum></citerefentry> server from the publicfile
+package, which requires that the initial 220 response be written before
+the daemon is invoked.
+</para>
+
+<programlisting>
+#!/bin/nosh
+fdmove -c 2 1
+envuidgid publicfile
+softlimit -o 20 -d 50000
+tcp-socket-listen -b 2 0 80
+tcp-socket-accept -v -c 2 -x cdb.tcp -l 0 --no-delay
+line-banner "220 Features: a p ."
+ftpd /home/publicfile/public
+</programlisting>
+
+<para>
+This is the <citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry> equivalent:
+</para>
+
+<programlisting>
+#!/bin/sh -e
+exec 2&lt;>&amp;1 \
+envuidgid publicfile \
+softlimit -o 20 -d 50000 \
+tcp-socket-listen -b 2 0 80 \
+tcp-socket-accept -v -c 2 -x cdb.tcp -l 0 --no-delay \
+line-banner '220 Features: a p .' \
+ftpd /home/publicfile/public
+</programlisting>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

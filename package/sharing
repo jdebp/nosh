@@ -1,0 +1,6 @@
+debian:syst
+build:syst
+command:syst
+manual:syst
+package:dist
+source:dist

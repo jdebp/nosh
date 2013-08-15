@@ -1,0 +1,45 @@
+<refentry id="setsid">
+
+<refmeta><refentrytitle>setsid</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>setsid</refname><refpurpose>become a session leader then chain</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>setsid</command> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>NOTE</title>
+
+<para>
+Some operating systems come with a <command>setsid</command> command that does not chain,
+but that instead (often) spawns its target as a child process.  
+This command does not ever fork a child process, and so is suitable for use
+in supervised command chains run under control of a daemon supervisor.
+</para>
+
+</refsection><refsection><title>Description</title>
+
+<para>
+<command>setsid</command> is a chain-loading utility that attempts to become a
+session leader and then chain loads to <replaceable>next-prog</replaceable>
+with the
+<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>setsid</command> will ignore.
+</para>
+
+<para>
+<command>setsid</command> does not perform chicanery with 
+<citerefentry><refentrytitle>fork</refentrytitle><manvolnum>2</manvolnum></citerefentry>.
+If the process is not permitted to become a session leader, or if the process
+already is a session leader, the program fails.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

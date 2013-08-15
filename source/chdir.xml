@@ -1,0 +1,35 @@
+<refentry id="chdir">
+
+<refmeta><refentrytitle>chdir</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>chdir</refname><refpurpose>change working directory then chain</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>chdir</command> <arg choice='req'><replaceable>directory</replaceable></arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>NOTE</title>
+
+<para>
+Most shells have a built-in <command>chdir</command> command that does not chain.  
+See the manual for each individual shell for its built-in command.
+This command is more commonly used with <citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+</refsection><refsection><title>Description</title>
+
+<command>chdir</command> is a chain-loading utility that changes its working directory to
+<replaceable>directory</replaceable> and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>chdir</command> will ignore.
+
+<para>
+Unlike the shell built-in of the same name, <command>chdir</command> has no notion of
+"logical" and "physical" paths.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

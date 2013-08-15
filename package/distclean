@@ -1,0 +1,8 @@
+#!/bin/sh -e
+if [ \! -d package -o \! -d source ] 
+then
+	echo "You are not in the right directory." 1>&2 
+	exit 100
+fi
+
+rm -rf build/ debian/ command/ manual/ config/

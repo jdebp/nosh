@@ -1,0 +1,44 @@
+<refentry id="login-prompt">
+
+<refmeta><refentrytitle>login-prompt</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>login-prompt</refname><refpurpose>simple chain-load getty for prompting before login</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>login-prompt</command> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>login-prompt</command> is a chain-loading utility that prompts to standard 
+output, waits for standard input to have data ready, flushes standard
+input,
+and then (if successful) chain load to <replaceable>next-prog</replaceable> with the
+<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>login-prompt</command> will ignore.
+</para>
+
+<para>
+This program is only necessary if <replaceable>next-prog</replaceable> has timeout functionality that
+cannot be switched off, as is the case for Linux <filename>/bin/login</filename>.
+<command>login-prompt</command> effectively delays running that program, and commencing the
+timeout, until the user has responded to a prompt.
+This prevents login processes from continually respawning on unused terminals.
+</para>
+
+<para>
+<command>login-prompt</command> expects the terminal and the line discipline to be in 
+relatively sane states.
+To reset to these states, run <citerefentry><refentrytitle>vc-reset-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> or <citerefentry><refentrytitle>reset</refentrytitle><manvolnum>1</manvolnum></citerefentry> before
+<command>login-prompt</command>.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

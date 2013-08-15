@@ -1,0 +1,40 @@
+<refentry id="service-status">
+
+<refmeta><refentrytitle>service-status</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>service-status</refname><refname>svstat</refname><refpurpose>daemontools compatibility service status display</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>service-status</command> <arg choice='req' rep='repeat'><replaceable>directory</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>svstat</command> <arg choice='req' rep='repeat'><replaceable>directory</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>service-status</command> displays human-readable (but not necessarily machine
+parseable) information about a service that may be currently managed by
+<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> (or runit's <citerefentry><refentrytitle>runsv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, s6's <citerefentry><refentrytitle>s6-supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>, daemontools'
+<citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>, or daemontools-encore's <citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+Each <replaceable>directory</replaceable> is either a supervise directory or a daemontools-style
+service directory with a supervise directory named <filename>supervise</filename> within it.
+</para>
+
+<para>
+For more on service and supervise directories, see <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+</refsection><refsection><title>COMPATIBILITY</title>
+
+<para>
+For daemontools and daemontools-encore compatibility, this command is also
+available as <command>svstat</command>.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

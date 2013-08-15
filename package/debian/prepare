@@ -1,0 +1,22 @@
+#!/bin/sh -e
+if [ \! -d package -o \! -d source ] 
+then
+	echo "You are not in the right directory." 1>&2 
+	exit 100
+fi
+
+# Create and populate the debian directory.
+mkdir -p debian
+(
+	cd package/debian
+	ls -1 .
+) | (
+	cd debian	# The syntax of ln -s makes more sense if we are in the target directory.
+	while read i
+	do
+		dir="`dirname $i`"
+		# Try to create a hard link, and fall back to a symbolic link.
+		# The package and debian directories aren't necessarily on the same disc volume.
+		ln -f ../package/debian/"$i" "${dir}"/"$i" 2>/dev/null || ln -s -f ../package/debian/"$i" "${dir}"/"$i"
+	done
+)

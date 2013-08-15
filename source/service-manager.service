@@ -1,0 +1,6 @@
+[Unit]
+Description=Service manager
+
+[Service]
+ExecStart=/bin/service-manager
+TimeoutSec=10

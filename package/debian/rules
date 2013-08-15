@@ -1,0 +1,90 @@
+#!/usr/bin/make -sf
+
+.PHONY: build build-arch build-indep binary binary-arch binary-indep install install-arch install-indep install-common clean
+
+build: build-arch build-indep 
+
+binary: binary-arch binary-indep 
+	for i in exec service-management ; \
+	do \
+		dpkg -b debian/nosh-"$$i" ../ || exit 1 ; \
+	done
+
+install: install-arch install-indep 
+
+build-arch:
+	package/compile
+
+build-indep:
+	@true
+
+binary-arch: build-arch install-arch
+	for i in exec service-management ; \
+	do \
+		${RM} debian/substvars ; \
+		dpkg-shlibdeps debian/nosh-"$$i"/usr/local/bin/* || exit 1 ; \
+		if [ "$$i" != exec ] ; then dpkg-shlibdeps debian/nosh-"$$i"/usr/local/sbin/* || exit 1 ; fi ; \
+		dpkg-gencontrol -pnosh-"$$i" -Pdebian/nosh-"$$i" || exit 1 ; \
+	done
+
+binary-indep: build-indep install-indep
+	@true
+
+install-common:
+	install -d -m 0755 debian/tmp/DEBIAN
+	package/export debian/tmp/
+	for i in exec service-management ; \
+	do \
+		install -d -m 0755 debian/nosh-"$$i"/DEBIAN || exit 1 ; \
+	done
+
+install-arch: install-common
+	for i in exec service-management ; \
+	do \
+		install -d -m 0755 debian/nosh-"$$i"/usr/local/bin || exit 1 ; \
+		while read j ; \
+		do \
+			ln -f -t debian/nosh-"$$i"/usr/local/bin/ debian/tmp/bin/"$$j" || exit 1 ; \
+		done < debian/nosh-"$$i".commands1 ; \
+		install -d -m 0755 debian/nosh-"$$i"/usr/local/sbin || exit 1 ; \
+		while read j ; \
+		do \
+			ln -f -t debian/nosh-"$$i"/usr/local/sbin/ debian/tmp/sbin/"$$j" || exit 1 ; \
+		done < debian/nosh-"$$i".commands8 ; \
+	done
+
+install-indep: install-common
+	for i in exec service-management ; \
+	do \
+		install -d -m 0755 debian/nosh-"$$i"/usr/local/man/man1 || exit 1 ; \
+		while read j ; \
+		do \
+			ln -f -t debian/nosh-"$$i"/usr/local/man/man1/ debian/tmp/man/man1/"$$j".1 || exit 1 ; \
+		done < debian/nosh-"$$i".commands1 ; \
+		install -d -m 0755 debian/nosh-"$$i"/usr/local/man/man8 || exit 1 ; \
+		while read j ; \
+		do \
+			ln -f -t debian/nosh-"$$i"/usr/local/man/man8/ debian/tmp/man/man8/"$$j".8 || exit 1 ; \
+		done < debian/nosh-"$$i".commands8 ; \
+	done ; \
+	for i in service-management ; \
+	do \
+		install -d -m 0755 debian/nosh-"$$i"/usr/local/lib/systemd/system || exit 1 ; \
+		install -d -m 0755 debian/nosh-"$$i"/usr/local/lib/tmpfiles.d || exit 1 ; \
+		while read j ; \
+		do \
+			ln -f -t debian/nosh-"$$i"/usr/local/lib/systemd/system/ debian/tmp/lib/systemd/system/"$$j" || exit 1 ; \
+		done < debian/nosh-"$$i".systemd ; \
+		while read j ; \
+		do \
+			ln -f -t debian/nosh-"$$i"/usr/local/lib/tmpfiles.d/ debian/tmp/lib/tmpfiles.d/"$$j" || exit 1 ; \
+		done < debian/nosh-"$$i".tmpfilesd ; \
+	done
+
+clean:
+	${RM} debian/files debian/substvars
+	for i in exec service-management ; \
+	do \
+		${RM} -r debian/nosh-"$$i"/ || exit 1 ; \
+	done
+	${RM} -r debian/tmp/

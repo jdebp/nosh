@@ -1,0 +1,30 @@
+<refentry id="recordio">
+
+<refmeta><refentrytitle>recordio</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>recordio</refname><refpurpose>run a program recording its standard input and output</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>recordio</command> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>recordio</command> is a utility that chain loads <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+function.  
+It redirects the standard input and standard output through a pipe,
+whose other end is a child process that it spawns.
+</para>
+
+<para>
+The child process has the original standard input and standard output.
+It records, to standard error, all of the I/O over the standard input
+and standard output; as well as passing it through the pipe.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

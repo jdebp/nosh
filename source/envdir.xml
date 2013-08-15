@@ -1,0 +1,95 @@
+<refentry id="envdir">
+
+<refmeta><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>envdir</refname><refpurpose>set environment variables then chain</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>envdir</command> <arg choice='req'><replaceable>dir</replaceable></arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>envdir</command> is a chain-loading utility that sets and unsets environment variables
+according to the files in <replaceable>dir</replaceable>
+and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>envdir</command> will ignore.
+</para>
+
+<para>
+For each file <filename>file</filename> in <replaceable>dir</replaceable>:
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+If the file is empty, <command>envdir</command> unsets the variable <filename>file</filename> if it is set.
+</para>
+</listitem>
+
+<listitem>
+<para>
+Otherwise <command>envdir</command> sets the variable <filename>file</filename>, overwriting its existing value
+if it has one, to the first line of the contents of <filename>file</filename>, after turning NUL
+characters into LF characters.
+</para>
+</listitem>
+
+</itemizedlist>
+
+<para>
+<command>envdir</command> skips directory entries that aren't regular files (or symbolic links
+to regular files), trying not to even attempt to open them if the operating
+system's directory scanning ability includes the reporting of entry types.
+It also skips entries whose names begin with a dot.
+</para>
+
+<para>
+<command>envdir</command> makes no attempt to sanitize the contents of <filename>file</filename> or the name
+<filename>file</filename>.
+If the name or the contents contain an <code>=</code> character, counter-intuitive things
+will happen to the environment.
+If the contents have whitespace at the end of the first line, that will be
+included in the variable's value in the environment.
+</para>
+
+</refsection><refsection><title>BUGS</title>
+
+<para>
+Although not strictly a bug in this program, it is worth noting that the
+GNU C library and the BSD Library both have memory leaks in their <citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>3</manvolnum></citerefentry> functions,
+used by this program.
+You can work around these bugs by ensuring that <replaceable>next-prog</replaceable> is
+not a built-in command (see <citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+</para>
+
+</refsection><refsection><title>See also</title>
+
+<itemizedlist>
+<listitem><para>
+<citerefentry><refentrytitle>appendpath</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>prependpath</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>unsetenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>read-conf</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+</itemizedlist>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

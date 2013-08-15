@@ -1,0 +1,265 @@
+<refentry id="init">
+
+<refmeta><refentrytitle>init</refentrytitle><manvolnum>8</manvolnum><refmiscinfo class="manual">administrator commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv>
+<refname>init</refname>
+<refname>telinit</refname>
+<refname>reboot</refname>
+<refname>halt</refname>
+<refname>poweroff</refname>
+<refname>emergency</refname>
+<refname>rescue</refname>
+<refname>normal</refname>
+<refname>service</refname>
+<refname>fastboot</refname>
+<refname>fasthalt</refname>
+<refpurpose>BSD/System V compatibility utilities for system and service control</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>init</command>
+<arg choice="opt" rep="repeat"><replaceable>args</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>reboot</command>
+<group choice="opt">
+<arg choice="plain">-f</arg>
+<arg choice="plain">--force</arg>
+</group>
+<arg choice="opt">--halt</arg>
+<arg choice="opt">--reboot</arg>
+<arg choice="opt">--poweroff</arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>halt</command>
+<group choice="opt">
+<arg choice="plain">-f</arg>
+<arg choice="plain">--force</arg>
+</group>
+<arg choice="opt">--halt</arg>
+<arg choice="opt">--reboot</arg>
+<arg choice="opt">--poweroff</arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>poweroff</command>
+<group choice="opt">
+<arg choice="plain">-f</arg>
+<arg choice="plain">--force</arg>
+</group>
+<arg choice="opt">--halt</arg>
+<arg choice="opt">--reboot</arg>
+<arg choice="opt">--poweroff</arg>
+</cmdsynopsis>
+<cmdsynopsis><command>emergency</command></cmdsynopsis>
+<cmdsynopsis><command>rescue</command></cmdsynopsis>
+<cmdsynopsis><command>normal</command></cmdsynopsis>
+<cmdsynopsis>
+<command>service</command>
+<arg choice="req"><replaceable>name</replaceable></arg>
+<arg choice="req"><replaceable>command</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>telinit</command>
+<group choice="plain">
+<arg choice="req">0</arg>
+<arg choice="req">1</arg>
+<arg choice="req">5</arg>
+<arg choice="req">6</arg>
+<arg choice="req">h</arg>
+<arg choice="req">m</arg>
+<arg choice="req">s</arg>
+</group>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>init</command> is a multiple personality program, whose function varies
+according to what name it is invoked as.
+</para>
+
+<refsection><title>Compatibility system control commands</title>
+
+<para>
+Invoked as one of the system control commands
+<command>emergency</command>,
+<command>rescue</command>,
+or
+<command>normal</command>,
+it will chain to
+<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+inserting that as the 0th argument and passing the original arguments as the subcommand.
+</para>
+
+<para>
+Invoked as one of the system control commands <command>reboot</command>,
+<command>halt</command>, or <command>poweroff</command> it will normally chain to
+<citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+with the <arg>-r</arg>, <arg>-h</arg>, or <arg>-p</arg> command-line option
+respectively.
+<citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+is then responsible for issuing the relevant commands to the system manager.
+The <arg>--halt</arg>, <arg>--reboot</arg>, and <arg>--poweroff</arg>
+command-line options force which option is sent to
+<citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+for the benefits of system administrators who enjoy giving computers self-contradictory
+instructions like <command>reboot</command> <arg choice="plain">--halt</arg>.
+</para>
+
+<para>
+The <arg>--force</arg> command-line option specifies that the shutdown process
+should bypass service changes and enact the finalization action immediately.
+When it is used the command will instead chain to the <arg
+choice="req">reboot</arg>, <arg choice="req">halt</arg>, and <arg
+choice="req">poweroff</arg> subcommands of
+<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+passing the <arg>--force</arg> command-line option through.
+This will also bypass whatever actions
+<citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+would have taken, including writing warning messages to users and writing
+login accounting database entries.
+</para>
+
+<para>
+Invoked as one of the system control commands <command>fastboot</command>,
+<command>fasthalt</command>, or <command>fastpoweroff</command>, it will act as
+if invoked as <command>reboot</command>, <command>halt</command>, or
+<command>poweroff</command> with the <arg>--force</arg> command-line option.
+</para>
+
+</refsection><refsection><title>Compatibility service control commands</title>
+
+<para>
+Invoked as 
+<command>service</command>
+<arg choice="plain"><replaceable>name</replaceable></arg>
+<arg choice="plain"><replaceable>command</replaceable></arg>,
+the program chains to
+<command>system-control</command>
+<arg choice="plain"><replaceable>command</replaceable></arg>
+<arg choice="plain"><replaceable>name</replaceable></arg>.
+It makes no attempt to validate <replaceable>command</replaceable> itself.
+For best results, restrict <replaceable>command</replaceable> to one of 
+<arg choice="plain">start</arg>, <arg choice="plain">stop</arg>, or <arg
+choice="plain">status</arg>.
+</para>
+
+<para>
+<command>service</command> chains to
+<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+rather than to
+<citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+or
+<citerefentry><refentrytitle>service-status</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+directly.
+Because of this,
+<arg choice="plain">start</arg> and <arg choice="plain">stop</arg> will execute service control
+jobs, rather than affecting individual services.
+Thus starting or stopping a service will affect any dependent services, and may take additional
+dependent actions.
+The traditional behaviour of the SystemV <command>service</command> command is to only affect
+individual services, without ensuring correct service dependencies and ordering.
+</para>
+
+</refsection><refsection><title>Compatibility bootstrap utility</title>
+
+<para>
+Invoked as <command>init</command> the program simply chain loads to either
+<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+or 
+<citerefentry><refentrytitle>telinit</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+with the
+<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+function, passing along all of its command line arguments (with one possible
+exception) as-is.  
+</para>
+
+<para>
+If it sees that it is process #1, it chains to
+<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+It leaves the command line arguments alone.
+This means that
+<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+sees itself invoked under the name <command>init</command> and behaves accordingly.
+</para>
+
+<para>
+If it sees that it is not process #1, it chains to
+<citerefentry><refentrytitle>telinit</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+It replaces the first command line argument with <command>telinit</command>.
+This is so that
+<citerefentry><refentrytitle>telinit</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+sees itself invoked under that name and behaves accordingly.
+</para>
+
+<para>
+Because on some systems the executable is dynamically linked to libraries in
+<filename>/usr/lib</filename> and <filename>/usr/lib</filename> isn't present
+as boot time, it is a mistake to use this as process #1.
+Configure the system to invoke
+<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+directly, instead.
+</para>
+
+</refsection><refsection><title>Compatibility control utility</title>
+
+<para>
+Invoked as <command>telinit</command> the program chain loads to one of the
+system control commands, selected by its first (non-option) argument:
+</para>
+
+<variablelist>
+
+<varlistentry>
+<term><arg choice="req">0</arg></term>
+<listitem><para><citerefentry><refentrytitle>poweroff</refentrytitle><manvolnum>8</manvolnum></citerefentry></para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><arg choice="req">1</arg> or <arg choice="req">s</arg></term>
+<listitem><para><citerefentry><refentrytitle>rescue</refentrytitle><manvolnum>8</manvolnum></citerefentry></para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><arg choice="req">5</arg> or <arg choice="req">m</arg></term>
+<listitem><para><citerefentry><refentrytitle>normal</refentrytitle><manvolnum>8</manvolnum></citerefentry></para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><arg choice="req">6</arg></term>
+<listitem><para><citerefentry><refentrytitle>reboot</refentrytitle><manvolnum>8</manvolnum></citerefentry></para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><arg choice="req">h</arg></term>
+<listitem><para><citerefentry><refentrytitle>halt</refentrytitle><manvolnum>8</manvolnum></citerefentry></para></listitem>
+</varlistentry>
+
+</variablelist>
+
+<para>
+It is a mistake to run this as process #1, thinking that it is an alias for
+<citerefentry><refentrytitle>init</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+</para>
+
+<para>
+It is pretty much a mistake to use it at all.
+Use the system control commands directly instead.
+</para>
+
+<para>
+There is no <arg choice="req">q</arg> argument.
+This is deliberate.
+Its use case is running <command>telinit</command> <arg choice="plain">q</arg> after updating
+<filename>/etc/ttys</filename> or <filename>/etc/inittab</filename>.
+Any script that is updating those files and then expecting the system manager
+to re-read them is not targetting the correct configuration mechanisms, and
+is in error.
+</para>
+
+</refsection></refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

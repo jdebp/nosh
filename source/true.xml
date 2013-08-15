@@ -1,0 +1,49 @@
+<refentry id="true">
+
+<refmeta><refentrytitle>true</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>true</refname><refpurpose>return success status</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>true</command> <arg choice='opt' rep='repeat'>args</arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>NOTE</title>
+
+<para>
+Most shells have a built-in <command>true</command> command.
+See the manual for each individual shell for its built-in command.
+This command is more commonly used with <citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+</refsection><refsection><title>Description</title>
+
+<para>
+<command>true</command> is a utility that simply exits with a zero exit status in normal use.
+It ignores <arg rep='repeat'>args</arg>
+</para>
+
+<para>
+<command>true</command> will exit with a non-zero exit status if an error occurs during argument parsing.
+</para>
+
+</refsection><refsection><title>Security</title>
+
+<para>
+Some other external implementations of <command>true</command> are shell
+scripts that wrap a shell's built-in <command>true</command> command.
+This is a security problem, as significant care must be taken to ensure that
+the shell correctly deals with people who symbolically link the script to other
+names (such as <filename>-i</filename>), who supply extra script arguments,
+and who set environment variables such as <code>IFS</code>.
+</para>
+
+<para>
+This <command>true</command> is not a shell script.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

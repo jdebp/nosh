@@ -1,0 +1,152 @@
+<refentry id="fdredir">
+
+<refmeta><refentrytitle>fdredir</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>fdredir</refname><refpurpose>redirect a file descriptor then chain</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>fdredir</command> <arg choice='req'><replaceable>fd</replaceable></arg> <arg choice='req'><replaceable>name</replaceable></arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>fdredir</command> is a chain-loading utility that opens the file
+<replaceable>name</replaceable> as the file descriptor
+<replaceable>fd</replaceable> (closing that descriptor if it is already open)
+and then chain loads to <replaceable>next-prog</replaceable> with the
+<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>fdredir</command> will ignore.
+</para>
+
+<para>
+Command line options determine the mode in which <replaceable>name</replaceable> is opened:
+</para>
+
+<variablelist>
+
+<varlistentry>
+<term><arg>--non-blocking</arg></term><listitem>
+
+<para>
+The file is opened in non-blocking mode (and blocking mode is restored once it
+has been opened).
+Non-blocking mode allows one to open serial devices without waiting for a carrier,
+to open FIFOs without waiting for the opposite end to be opened, and so forth.
+Blocking mode is restored because most shell-level utilities do not expect to
+inherit file descriptors in non-blocking mode.
+</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><arg>--permissions</arg></term><listitem>
+
+<para>
+Specify the (numeric) permissions to use when creating a file.
+These are of course subject to the process' file creation mask as set by
+<citerefentry><refentrytitle>umask</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+The default permissions are 0666.
+</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><arg>--read</arg></term><listitem>
+
+<para>
+Open the file in input mode.  
+If the file does not exist, <command>fdredir</command> will fail.
+If the file exists it will be opened for read-only access.
+</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><arg>--write</arg></term><listitem>
+
+<para>
+Open the file in output mode.
+If the file does not exist, it will be created with the specified permissions.
+If the file exists, it will be opened and truncated to zero length.
+In both cases, it will be opened for write-only access.
+</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><arg>--write-noclobber</arg></term><listitem>
+
+<para>
+Open the file in output mode.
+If the file does not exist, it will be created with the specified permissions and opened with write-only access.
+If the file exists, <command>fdredir</command> will fail.
+</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><arg>--append</arg></term><listitem>
+
+<para>
+Open the file in append write mode.
+If the file does not exist, it will be created with the specified permissions.
+If the file exists, it will be opened.
+In both cases, it will be opened for write-only access and the file pointer initially set to the end of the file.
+</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><arg>--append-noclobber</arg></term><listitem>
+
+<para>
+Open the file in append write mode.
+If the file does not exist, it will be created with the specified permissions and opened with write-only access and the file pointer initially set to the end of the file.
+If the file exists, <command>fdredir</command> will fail.
+</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><arg>--update</arg></term><listitem>
+
+<para>
+Open the file in read-write mode.
+If the file does not exist, it will be created with the specified permissions.
+If the file exists, it will be opened.
+In both cases, it will be opened for read-write access.
+</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><arg>--directory</arg></term><listitem>
+
+<para>
+Open the file in directory mode.
+If the file does not exist, or if the file exists and is not a directory, <command>fdredir</command> will fail.
+If the file exists and is a directory, it will be opened in directory read mode.
+This requires appropriate operating system kernel support, and on some systems, this is the same as read mode and the check to see whether the file is a directory is not made.
+</para>
+
+</listitem>
+</varlistentry>
+</variablelist>
+
+<para>
+In all cases, opening the file will not affect the process's controlling TTY, if it has one.
+(For that, see <citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
+Nor will it set synchronous mode or (which would be silly given what <command>fdredir</command> does) mark
+the file descriptor as close-on-exec.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

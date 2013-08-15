@@ -1,0 +1,11 @@
+init	reboot
+init	halt
+init	poweroff
+init	fasthalt
+init	fastboot
+init	emergency
+init	rescue
+init	normal
+init	telinit
+init	service
+system-manager	systemd

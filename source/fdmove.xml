@@ -1,0 +1,28 @@
+<refentry id="fdmove">
+
+<refmeta><refentrytitle>fdmove</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>fdmove</refname><refpurpose>move/copy a file descriptor then chain</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>fdmove</command> <arg>--copy</arg> <arg choice='req'><replaceable>to</replaceable></arg> <arg choice='req'><replaceable>from</replaceable></arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>fdmove</command> is a chain-loading utility that duplicates the (open) file descriptor 
+<replaceable>from</replaceable> to the descriptor <replaceable>to</replaceable>, closes <replaceable>from</replaceable> unless the <arg>--copy</arg> command
+line option is used,
+and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>fdmove</command> will ignore.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

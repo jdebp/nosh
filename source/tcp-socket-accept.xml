@@ -1,0 +1,160 @@
+<refentry id="tcp-socket-accept">
+
+<refmeta><refentrytitle>tcp-socket-accept</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>tcp-socket-accept</refname><refpurpose>accept incoming TCP connections and spawn a program per connection</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>tcp-socket-accept</command> 
+<arg>--verbose</arg> 
+<arg>--no-keepalives</arg> 
+<arg>--no-kill-IP-options</arg> 
+<arg>--no-delay</arg> 
+<arg>--connection-limit <replaceable>number</replaceable></arg> 
+<arg>--localname <replaceable>hostname</replaceable></arg> 
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>tcp-socket-accept</command> expects file descriptor 3 to be a socket that has been
+set up with <citerefentry><refentrytitle>tcp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry> to listen for incoming TCP connections.
+It loops forever, accepting TCP connections and (for each such connection)
+spawning <replaceable>next-prog</replaceable>, closing the listening socket in the child process and
+setting the connected socket as the child process' standard input and standard
+output.
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>tcp-socket-accept</command> will ignore.
+</para>
+
+<para>
+Following the UCSPI conventions,
+<command>tcp-socket-accept</command> sets up several environment variables containing information
+about the TCP connection.
+</para>
+
+<variablelist>
+
+<varlistentry><term> 
+<code>PROTO</code>
+</term><listitem>
+<para>
+This always has the value <code>TCP</code>.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term> 
+<code>TCPLOCALIP</code>
+</term><listitem>
+<para>
+The local (server) IP address of the accepted socket, in human-readable form.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term> 
+<code>TCPLOCALPORT</code>
+</term><listitem>
+<para>
+The local (server) port number of the accepted socket.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term> 
+<code>TCPREMOTEIP</code>
+</term><listitem>
+<para>
+The remote (client) IP address of the accepted socket, in human-readable form.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term> 
+<code>TCPREMOTEPORT</code>
+</term><listitem>
+<para>
+The remote (server) port number of the accepted socket.
+</para>
+</listitem>
+</varlistentry>
+
+</variablelist>
+
+<para>
+If the <arg>--verbose</arg> option is used, <command>tcp-socket-accept</command> logs information about processes
+spawned and the current and maximum number of connections.
+The latter is set with the <arg>--connection-limit</arg> option, which defaults to 40.
+If it is reached, <command>tcp-socket-accept</command> stops accepting new connections
+until one or more child processes exit.
+<command>tcp-socket-accept</command> always limits the number of connections, and has
+no notion of an "unlimited" number of connections.
+</para>
+
+<para>
+If the <arg>--localname</arg> option is used, it disables lookup of the local host name
+from the IP address, and instead substitutes the supplied name.
+</para>
+
+<para>
+The <arg>--no-keepalives</arg>, <arg>--no-kill-IP-options</arg>, and <arg>--no-delay</arg> command 
+line options set options on the accepted sockets.
+The first disables the use of TCP keepalive probes (which are used by
+default to ensure that dead connections are noticed and eliminated);
+the second permits IP options (which are removed by default) so that clients
+can set source routes; and 
+the third disables the "Nagle" delay algorithm used for slow clients.
+</para>
+
+</refsection><refsection><title>USAGE</title>
+
+<para>
+<command>tcp-socket-accept</command> can be used 
+<itemizedlist>
+<listitem>
+as a "socket-activated" daemon monitored by
+<citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+(with the systemd-recommended <code>Accept=false</code>),
+</listitem>
+<listitem>
+as a daemon started by
+<citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+(with <code>wait</code> and as long as it is chained via <code>fdmove 0 3</code>), and
+</listitem>
+<listitem>
+as a simple daemon chained from
+<citerefentry><refentrytitle>tcp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and monitored by
+<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</listitem>
+</itemizedlist>
+Together, <command>tcp-socket-accept</command> and
+<citerefentry><refentrytitle>tcp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+replace
+<citerefentry><refentrytitle>tcpserver</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+from ucspi-tcp.
+</para>
+
+<para>
+To change the process' UID and GID after a successful 
+call to <citerefentry><refentrytitle>accept</refentrytitle><manvolnum>2</manvolnum></citerefentry>,
+simply chain to
+<citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+or
+<citerefentry><refentrytitle>setuidgid-fromenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+This is, however, not usually necessary because unprivileged processes can accept any
+connections.
+It is preferable to chain <command>tcp-socket-accept</command> from 
+<citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+or
+<citerefentry><refentrytitle>setuidgid-fromenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

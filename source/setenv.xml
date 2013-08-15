@@ -1,0 +1,79 @@
+<refentry id="setenv">
+
+<refmeta><refentrytitle>setenv</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>setenv</refname><refpurpose>set an environment variable then chain</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>setenv</command>
+<arg choice='req'><replaceable>var</replaceable></arg>
+<arg choice='req'><replaceable>val</replaceable></arg>
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>NOTE</title>
+
+<para>
+C-shells have a built-in <command>setenv</command> command that does not chain.  
+See the manual for each individual shell for its built-in command.
+</para>
+
+</refsection><refsection><title>Description</title>
+
+<para>
+<command>setenv</command> is a chain-loading utility that sets the environment variable <replaceable>var</replaceable>
+to the value <replaceable>val</replaceable>
+and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>setenv</command> will ignore.
+</para>
+
+<para>
+An empty <replaceable>val</replaceable> is not the same as unsetting the variable.
+For that, see <citerefentry><refentrytitle>unsetenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+<para>
+If either <replaceable>var</replaceable> or <replaceable>val</replaceable> contain an equals
+character, counter-intuitive things will happen to the environment.
+</para>
+
+</refsection><refsection><title>BUGS</title>
+
+<para>
+Although not strictly a bug in this program, it is worth noting that the GNU C
+library and the BSD C library both have memory leaks in their
+<citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+functions, used by this program.
+You can work around these bugs by ensuring that <replaceable>next-prog</replaceable> is
+not a built-in command (see <citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+</para>
+
+<para>
+The BSD C library documentation acknowledges this memory leak as a bug.
+</para>
+
+</refsection><refsection><title>See also</title>
+
+<itemizedlist>
+<listitem><para>
+<citerefentry><refentrytitle>appendpath</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>prependpath</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>read-conf</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+</itemizedlist>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

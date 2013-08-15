@@ -1,0 +1,180 @@
+<refentry id="open-controlling-tty">
+
+<refmeta><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>open-controlling-tty</refname><refpurpose>open a controlling terminal and prepare for login</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<refsection><title>BSD</title>
+<cmdsynopsis>
+<command>open-controlling-tty</command> 
+<arg>--no-revoke</arg> 
+<arg>--exclusive</arg> 
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsection><refsection><title>Linux</title>
+<cmdsynopsis>
+<command>open-controlling-tty</command> 
+<arg>--no-vhangup</arg> 
+<arg>--exclusive</arg> 
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsection>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>open-controlling-tty</command> is a chain-loading utility that opens a terminal as a
+controlling terminal, sets its own standard I/O file descriptors to it, and then
+chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>open-controlling-tty</command> will ignore.
+</para>
+
+<para>
+<command>open-controlling-tty</command> expects to inherit the terminal
+character device filename to open as the value of the <code>TTY</code>
+environment variable, which it expects to have been set up by a program such as
+<citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+or
+<citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>.  
+This can be either a virtual or a real terminal.
+It opens this terminal, hangs up (or otherwise disassociates) any existing
+processes for which it was still a controlling terminal or which had open file
+handles to it; assigns it as its own controlling terminal; sets its own
+standard input, standard output, and standard error file descriptors to it
+(closing whatever they were previously open to); and then (if everything
+succeeds) chain loads <replaceable>next-prog</replaceable>.
+</para>
+
+<para>
+<command>open-controlling-tty</command> does not call
+<citerefentry><refentrytitle>setsid</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+to become a session leader.
+Nor does it make any attempt to adjust its process group or the foreground
+process group of the controlling terminal.
+Dealing with these is the province of a job-control shell, which may not even
+run as this process.
+(Linux
+<citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+with PAM runs the session leader shell as a child process, for example.)
+</para>
+
+<para>
+If the <arg>--exclusive</arg> command line option is used, it will
+attempt to use the <code>TIOCEXCL</code>
+<citerefentry><refentrytitle>ioctl</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+function to put the terminal device into "exclusive" mode.
+</para>
+
+</refsection><refsection><title>SECURITY</title>
+
+<refsection><title>Linux</title>
+
+<para>
+Unless the <arg>--no-vhangup</arg> command line option is used, which
+disables calling the
+<citerefentry><refentrytitle>vhangup</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+system call, <command>open-controlling-tty</command> has to open the terminal
+device file twice, once so that it can disconnect/hangup existing processes,
+which of course disconnects itself at the same time, and once again to gain the
+controlling TTY afterwards.
+There is a race condition here, where the character device file could be
+unlinked or otherwise altered in between the two opens.
+</para>
+
+</refsection><refsection><title>BSD</title>
+
+<para>
+<command>open-controlling-tty</command> opens the terminal device file once,
+because BSD has no
+<citerefentry><refentrytitle>vhangup</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+system call.
+Instead, on BSD
+<command>open-controlling-tty</command> calls
+<citerefentry><refentrytitle>revoke</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+before opening the terminal device file, unless the <arg>--no-revoke</arg>
+command line option is used.
+A similar race condition exists, except that it is between the call to
+<citerefentry><refentrytitle>revoke</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+and the call to then
+<citerefentry><refentrytitle>open</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+the terminal device file.
+Again, the character device file could be unlinked or otherwise altered in between the two.
+</para>
+
+</refsection>
+
+<para>
+To restrict the processes able to take advantage of these races to just those
+programs running as the current user or the superuser, system administrators
+should ensure that the directory containing the character device file is not
+writable by untrusted accounts; and programs that invoke
+<command>open-controlling-tty</command> should ensure that the character device
+file is owned by the effective UID of the process, and has <code>rw-</code>
+permissions for that owner alone, no other user or group having any
+permissions.
+The
+<citerefentry><refentrytitle>grantpt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+library function does the latter.
+<citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+calls this function, and
+<citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+performs the moral equivalent for virtual consoles.
+</para>
+
+</refsection><refsection><title>EXAMPLES</title>
+
+<para>
+The following <citerefentry><refentrytitle>execlineb</refentrytitle><manvolnum>1</manvolnum></citerefentry> script can be substituted for 
+<citerefentry><refentrytitle>fgetty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+or (assuming the BAUD rate argument is always the second argument) 
+<citerefentry><refentrytitle>mingetty</refentrytitle><manvolnum>1</manvolnum></citerefentry>:
+</para>
+
+<programlisting>
+#!/command/execlineb
+elgetpositionals
+vc-get-tty $1
+open-controlling-tty
+vc-reset-tty
+login-prompt
+login-banner /etc/issue
+login-process
+login
+</programlisting>
+
+<para>
+This is the <citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry> equivalent:
+</para>
+
+<programlisting>
+#!/bin/sh -e
+exec \
+vc-get-tty "$1" \
+open-controlling-tty \
+vc-reset-tty \
+login-prompt \
+login-banner /etc/issue \
+login-process \
+login
+</programlisting>
+
+<para>
+This would be the contents of a (System V) <citerefentry><refentrytitle>inittab</refentrytitle><manvolnum>1</manvolnum></citerefentry> if used directly:
+</para>
+
+ 1:2345:respawn:/bin/vc-get-vtty 1 /bin/open-controlling-tty /bin/vc-reset-tty /bin/login-prompt /bin/login-banner /etc/issue /bin/login-process /bin/login
+
+<para>
+The same without a banner (for a secondary console):
+</para>
+
+ 2:23:respawn:/bin/vc-get-vtty 2 /bin/open-controlling-tty /bin/vc-reset-tty /bin/login-prompt /bin/login-process /bin/login
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

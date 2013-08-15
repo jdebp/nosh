@@ -1,0 +1,14 @@
+Format-Specification: http://svn.debian.org/wsvn/dep/web/deps/dep5.mdwn?op=file&rev=135
+Name: nosh
+Maintainer: Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@ntlworld.com>
+
+Copyright: 2012 Jonathan de Boyne Pollard
+License: see source/COPYING
+
+Files: source/*
+Copyright: 2012 Jonathan de Boyne Pollard
+License: see source/COPYING
+
+Files: package/*
+Copyright: 2012 Jonathan de Boyne Pollard
+License: see package/COPYING

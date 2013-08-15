@@ -1,0 +1,740 @@
+<refentry id="system-manager">
+
+<refmeta><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum><refmiscinfo class="manual">administrator commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv>
+<refname>system-manager</refname>
+<refpurpose>manage the system as process #1</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>system-manager</command>
+<arg rep='repeat'><replaceable>args</replaceable></arg> 
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>system-manager</command> is meant to be invoked as process #1, either
+as the first user process of an entire system, or as the first process of a
+"container" running within a Linux PID namespace or a BSD jail.
+It will not operate correctly if it is not process #1.
+To manage per-user, local, sessions use
+<citerefentry><refentrytitle>session-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+It should also not be confused with
+<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+<para>
+Its design is intended to keep process #1 simple, since the operating system
+regards it as a vital system process.
+In particular:
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+<command>system-manager</command> doesn't contain (or link to) library code for
+complex parsing and communications functionality, such as XML parsers and
+libraries for D-Bus, PAM, and udev.
+No parsing or RPC marshalling are done by process #1.
+It is also not involved in any Plug-and-Play device management or Desktop
+bus systems.
+</para>
+</listitem>
+
+<listitem>
+<para>
+Process #1 is the system manager, as distinguished from the service manager
+which is another process.
+Process #1 does not contain nor manage service state tables.
+It does not have open file handles to the service control FIFOs, and
+its operation is not complicated by mixing the system state with
+individual service states.
+</para>
+</listitem>
+
+<listitem>
+<para>
+Process #1 is has no hand in calculating the details of system state changes.
+That's done by a separate program running as another process.
+</para>
+</listitem>
+
+</itemizedlist>
+
+<para>
+The operation of <command>system-manager</command> falls into four parts: 
+process setup, system setup, reaping, and responding to system events.
+</para>
+
+<refsection><title>Process setup</title>
+
+<para>
+<command>system-manager</command> expects to be started in the normal state for
+process #1 (of the system or of a container/jail).
+It does very little to its process state, which is inherited by the service
+manager and the logger:
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+It sets itself as a session leader, as if by
+<citerefentry><refentrytitle>setsid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+</listitem>
+
+<listitem>
+<para>
+(On operating systems that support this)
+It calls
+<citerefentry><refentrytitle>setlogin</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+to set the session's login name to <code>root</code>.
+</para>
+</listitem>
+
+<listitem>
+<para>
+It changes current directory to <filename>/</filename> as if by
+<citerefentry><refentrytitle>chdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+on the grounds that on some systems there is an "initrd" mechanism that might have
+left the current directory somewhere else.
+</para>
+</listitem>
+
+<listitem>
+<para>
+It resets the file/directory creation mask to 0000 as if by
+<citerefentry><refentrytitle>umask</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+on the same grounds.
+</para>
+</listitem>
+
+<listitem>
+<para>
+It sets the hardwired default environment:
+</para>
+<itemizedlist>
+<listitem>
+<para><code>PATH</code>=<filename>/usr/local/bin</filename>:<filename>/usr/local/sbin</filename>:<filename>/usr/bin</filename>:<filename>/usr/sbin</filename>:<filename>/bin</filename>:<filename>/sbin</filename></para>
+</listitem>
+<listitem><para><code>LANG</code>=<code>C</code></para></listitem>
+</itemizedlist>
+</listitem>
+
+<listitem>
+<para>
+It reads the administrator-configurable default environment.
+If the directory <filename>/etc/locale.d</filename> exists, it processes it
+as if by
+<citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Otherwise it processes, as if by
+<citerefentry><refentrytitle>read-conf</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+the first file that is found (and can be opened for reading) in the list:
+</para>
+<orderedlist>
+<listitem><para><filename>/etc/locale.conf</filename></para></listitem>
+<listitem><para><filename>/etc/default/locale</filename></para></listitem>
+<listitem><para><filename>/etc/sysconfig/i18n</filename></para></listitem>
+<listitem><para><filename>/etc/sysconfig/language</filename></para></listitem>
+<listitem><para><filename>/etc/sysconf/i18n</filename></para></listitem>
+</orderedlist>
+<para>
+As the names indicate, this default environment is only expected to comprise
+locale-controlling variables such as <code>LANG</code>.
+</para>
+</listitem>
+
+</itemizedlist>
+
+</refsection><refsection><title>System setup</title>
+
+<para>
+<command>system-manager</command> performs various setup actions so that the
+full kernel "API" is visible to itself and its descendents:
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+It mounts the "API" filesystems in their accustomed places.
+</para>
+</listitem>
+
+<listitem>
+<para>
+It creates the device nodes for various "early" devices that are
+required to exist before any plug-and-play device management services
+start up.
+</para>
+</listitem>
+
+<listitem>
+<para>
+It instructs the kernel to send the signals for various optional system events
+such as <code>secure-attention-key</code> and <code>kbrequest</code>.
+</para>
+</listitem>
+
+<listitem>
+<para>
+It corrects the system clock.
+</para>
+</listitem>
+
+</itemizedlist>
+
+</refsection><refsection><title>Reaping</title>
+
+<para>
+<command>system-manager</command> operates as a "grim reaper", cleaning up
+after any child processes that exit.
+The operating system re-parents any orphaned processes to it.
+<command>system-manager</command> spawns exactly three processes itself:
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+After creating a local domain socket at
+<filename>/run/service-manager/control</filename>,
+it spawns an instance of
+<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+This is the global service manager for the system, controlled through the socket.
+It is not expected to ever terminate.
+If it does, <command>system-manager</command> re-spawns it.
+</para>
+</listitem>
+
+<listitem>
+<para>
+As system events occur, it spawns (ephemeral) instances of
+<citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+These calculate the details of service and target dependencices for system
+state changes, and pass instructions to the global service manager for bringing
+services up and down.
+Only one instance is spawned at a time.
+</para>
+</listitem>
+
+<listitem>
+<para>
+It spawns an instance of
+<citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+with its input connected to the read end of a pipe.
+This process, too, is not expected to ever terminate.
+And again, if it does, <command>system-manager</command> re-spawns it.
+</para>
+</listitem>
+
+</itemizedlist>
+
+<para>
+The write end of the aforementioned pipe is connected to the the standard
+outputs and standard errors of the service manager, the (ephemeral) service
+controllers, and of <command>system-manager</command> itself.
+(Their standard input is connected to <filename>/dev/null</filename>.)
+<command>system-manager</command> retains open file descriptors to this pipe, so
+that no unsaved log data are lost should the logger unexpectedly exit.
+</para>
+
+<para>
+The logger is intended to be just for the system manager, the service manager,
+and the service controllers.
+Actual services should be plumbed to their own logging services.
+The logger is told to write its logfiles to
+<filename>/run/system-manager/log</filename>, which will by default be in
+a tmpfs filesystem, and to cap their maximum total size at 1MiB.
+</para>
+
+</refsection><refsection><title>System event response</title>
+
+<para>
+The only IPC mechanism provided by <command>system-manager</command> is signals.
+(Commands to manipulate services are sent to the spawned service manager,
+not to the system manager.)
+System-wide events are flagged, by the kernel and by other programs,
+by sending various signals to process #1.
+<command>system-manager</command> responds to these signals as follows:
+</para>
+
+<variablelist>
+
+<varlistentry>
+<term>
+<code>SIGRTMIN + 3</code>,
+<code>SIGRTMIN + 4</code>, and
+<code>SIGRTMIN + 5</code>
+(and, for compatibility, respectively
+<code>SIGUSR1</code>,
+<code>SIGUSR2</code>, and
+<code>SIGINT</code> 
+on BSD) 
+</term>
+<listitem><para>
+Spawn (respectively)
+<command>system-control</command> <arg choice="plain">start</arg> <arg choice="plain">halt</arg>,
+<command>system-control</command> <arg choice="plain">start</arg> <arg choice="plain">poweroff</arg>, or
+<command>system-control</command> <arg choice="plain">start</arg> <arg choice="plain">reboot</arg>.
+This will activate the 
+<code>halt</code>,
+<code>poweroff</code>, or
+<code>reboot</code> 
+target.
+</para>
+<para>
+Activating these targets activates the <code>shutdown</code> target.
+Other targets do not imply shutdown.
+<code>shutdown</code> is configured to conflict with login services and all
+normal server and workstation services, and will hence cause them to be
+stopped.
+(This is written into the packaged target definitions, not hardwired into 
+<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>.)
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><code>SIGRTMIN + 2</code></term>
+<listitem><para>
+Spawn <command>system-control</command> <arg choice="plain">start</arg> <arg choice="plain">emergency</arg>.
+This will activate the <code>emergency</code> target.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>SIGRTMIN + 1</code> (and, for compatibility <code>SIGTERM</code> on BSD) 
+</term>
+<listitem><para>
+Spawn <command>system-control</command> <arg choice="plain">start</arg> <arg choice="plain">rescue</arg>.
+This will activate the <code>rescue</code> target.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><code>SIGRTMIN + 0</code></term>
+<listitem><para>
+Spawn <command>system-control</command> <arg choice="plain">start</arg> <arg choice="plain">normal</arg>.
+This will activate the <code>normal</code> target.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><code>SIGPWR</code></term>
+<listitem><para>
+Spawn <command>system-control</command> <arg choice="plain">activate</arg> <arg choice="plain">powerfail</arg>.
+This will activate the <code>powerfail</code> target, which is expected to
+take action to deal with impending power failure.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><code>SIGWINCH</code></term>
+<listitem><para>
+Spawn <command>system-control</command> <arg choice="plain">activate</arg> <arg choice="plain">kbrequest</arg>.
+This will activate the <code>kbrequest</code> target.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><code>SIGINT</code> (on Linux)</term>
+<listitem><para>
+Spawn <command>system-control</command> <arg choice="plain">activate</arg> <arg choice="plain">secure-attention-key</arg>.
+This will activate the <code>secure-attention-key</code> target.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>SIGRTMIN + 13</code>,
+<code>SIGRTMIN + 14</code>, and
+<code>SIGRTMIN + 15</code>
+</term>
+<listitem><para>
+Close the pipe, terminate the service manager, and wait a short while for it.
+If the system manager is the system-wide process #1, tell the kernel to flush
+its disc cache and (respectively) halt, power off, or reboot the system.
+Otherwise, if the system manager is running in a container/jail, just exit.
+</para>
+<para>
+When the <code>reboot</code>, <code>halt</code>, and <code>poweroff</code>
+targets are fully active, they are expected to send the 
+<code>SIGRTMIN + 15</code>, <code>SIGRTMIN + 13</code>, and <code>SIGRTMIN + 14</code> signals
+(respectively) to process #1.
+In the packaged target definitions, they use
+the <arg>-q</arg> option to the 
+<command>reboot</command>,
+<command>halt</command>, and
+<command>poweroff</command>
+subcommands of
+<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+to do this.
+Do not send these signals directly, as this does not shut down services cleanly.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><code>SIGRTMIN + 10</code></term>
+<listitem><para>
+Spawn <command>system-control</command> <arg choice="plain">init</arg>,
+passing it the <arg rep='repeat'><replaceable>args</replaceable></arg> 
+that were supplied on its own command line.
+(For process #1 of the entire system, these options are supplied to
+the initial program by the boot loader via the kernel.
+In a container/jail, they are supplied by the container/jail configuration.)
+This will activate whatever target can be deduced from those arguments.
+</para>
+<para>
+When the <code>sysinit</code> target is fully active, it is expected to send
+the <code>SIGRTMIN + 0</code> signal to process #1.
+In the packaged target definition, it uses use the <command>normal</command>
+subcommand of
+<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+to do this.
+Do not send this signal directly.
+</para>
+</listitem>
+</varlistentry>
+
+</variablelist>
+
+<para>
+What the <code>kbrequest</code> and <code>secure-attention-key</code> targets do is
+configured by the system administrator.
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+For traditional Linux and BSD semantics, <code>secure-attention-key</code> 
+should run the
+<citerefentry><refentrytitle>reboot</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+command (or some wrapper around it) and <code>kbrequest</code> should run the
+<citerefentry><refentrytitle>rescue</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+command.
+</para>
+</listitem>
+
+<listitem>
+<para>
+For semantics more akin to those of Microsoft Windows NT,
+<code>secure-attention-key</code> 
+should run
+<citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+on a (secure) console, or the GUI equivalent on a secure desktop;
+and <code>kbrequest</code> should run
+<citerefentry><refentrytitle>vlock</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+or the GUI equivalent, similarly.
+</para>
+</listitem>
+
+</itemizedlist>
+
+<para>
+<command>system-manager</command> startup is also treated as a system event.
+In response this "event" <command>system-manager</command> spawns 
+<command>system-control</command> 
+<arg choice="plain">start</arg>
+<arg choice="plain">sysinit</arg>.
+</para>
+
+</refsection></refsection><refsection><title>API filesystems and early devices</title>
+
+<para>
+"API" filesystems are filesystems that do not employ persistent backing storage,
+and that provide means for interrogating and configuring kernel mechanisms.
+They are thus effectively extensions to the kernel's system call API.
+</para>
+
+<refsection><title>Linux API filesystems and early devices</title>
+
+<variablelist>
+
+<varlistentry>
+<term><filename>/proc</filename></term>
+<listitem><para>A <code>proc</code> filesystem is mounted here with options
+<code>nodev</code> and <code>nosuid</code>.
+(<code>noexec</code> is not used because that would disallow the trick of
+using <filename>/proc/<replaceable>N</replaceable>/exe</filename> to re-execute
+a process' executable.)
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><filename>/sys</filename></term>
+<listitem><para>The <code>sysfs</code> filesystem is mounted here with options
+<code>nodev</code>, <code>noexec</code>, and <code>nosuid</code>.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><filename>/run</filename></term>
+<listitem><para>A <code>tmpfs</code> filesystem is mounted here with options
+<code>nodev</code>, <code>nosuid</code>, <code>strictatime</code>,
+<code>size=10%</code>, and <code>mode=0755</code>.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><filename>/run/shm</filename></term>
+<listitem><para>A <code>tmpfs</code> filesystem is mounted here with options
+<code>nodev</code>, <code>noexec</code>, <code>nosuid</code>,
+<code>strictatime</code>, <code>size=50%</code>, and <code>mode=01777</code>.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><filename>/dev</filename></term>
+<listitem><para>A <code>devtmpfs</code> filesystem is mounted here with options
+<code>noexec</code>, <code>nosuid</code>, <code>strictatime</code>, <code>size=10M</code>, 
+and <code>mode=0755</code>.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><filename>/dev/pts</filename></term>
+<listitem><para>A <code>devpts</code> filesystem is mounted here with options
+<code>noexec</code>, <code>nosuid</code>, <code>ptmxmode=0666</code>,
+<code>gid=<replaceable>tty</replaceable></code>, <code>newinstance</code>, and
+<code>mode=0620</code>.
+The GID of the group <replaceable>tty</replaceable> is determined from the system account database. 
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><filename>/dev/ptmx</filename></term>
+<listitem><para>
+This is symbolically linked to <filename>/dev/pts/ptmx</filename> to take
+advantage of the fact that the <code>devpts</code> filesystem nowadays provides
+a <filename>ptmx</filename> device node that is guaranteed correct for its own set
+of PTY devices.
+With this, obtaining PTYs will work correctly even in a container.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><filename>/dev/fd</filename></term>
+<listitem><para>
+This is symbolically linked to <filename>/proc/self/fd</filename> for
+compatibility with BSD programs that expect a single <code>/dev/fd</code> tree
+for the current process.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><filename>/dev/core</filename></term>
+<listitem><para>
+This is symbolically linked to <filename>/proc/kcore</filename>.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><filename>/dev/stdin</filename>, <filename>/dev/stdout</filename>, and <filename>/dev/stderr</filename></term>
+<listitem><para>
+These are symbolically linked to 
+<filename>/proc/self/fd/0</filename>,
+<filename>/proc/self/fd/1</filename>, and
+<filename>/proc/self/fd/2</filename>,
+respectively.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><filename>/dev/shm</filename></term>
+<listitem><para>
+This is symbolically linked to <filename>/run/shm</filename> for
+compatibility with C/C++ libraries.
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+</refsection><refsection><title>BSD API filesystems and early devices</title>
+
+<variablelist>
+
+<varlistentry>
+<term><filename>/proc</filename></term>
+<listitem><para>A <code>procfs</code> filesystem is mounted here with options
+<code>nosuid</code>.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><filename>/run</filename></term>
+<listitem><para>A <code>tmpfs</code> filesystem is mounted here with options
+<code>nosuid</code> and <code>size=10%</code>.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><filename>/run/shm</filename></term>
+<listitem><para>A <code>tmpfs</code> filesystem is mounted here with options
+<code>nosuid</code> and <code>size=50%</code>.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><filename>/dev</filename></term>
+<listitem><para>A <code>devfs</code> filesystem is mounted here with options
+<code>nosuid</code>.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><filename>/dev/fd</filename></term>
+<listitem><para>A <code>fdescfs</code> filesystem is mounted here with options
+<code>nosuid</code>.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><filename>/dev/shm</filename></term>
+<listitem><para>
+This is symbolically linked to <filename>/run/shm</filename> for
+compatibility with C/C++ libraries.
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+</refsection>
+
+</refsection><refsection><title>The system clock</title>
+
+<para>
+When the system starts process #1, the operating system kernel's system clock
+will have been initialized from a hardware real-time clock.
+On an all-BSD/Linux system, that hardware real-time clock will be running in
+UTC, and the system clock will thus be initially set to a proper UTC value.
+On a more hetergenous system, the hardware real-time clock may be mistakenly
+running in a local time.
+This usually leads to some program or other, during the bootstrap process,
+having to determine the offset between RTC local time and UTC and correct the
+system clock.
+A consequence of this is that the system clock jumps by hours partway through
+the system bootstrap.
+In particular, system time leaps backwards for machines whose RTC local time is
+ahead of UTC, which is not something that POSIX programs are written to expect.
+</para>
+
+<para>
+Furthermore, the operating system tries to do silly things with FAT volumes.
+Instead of just taking file and directory timestamps to be UTC, the filesystem
+driver takes the timestamps to be local time, so needs to know how to convert
+FAT local time (as on disc) to UTC (as seen at the system call interface with
+<citerefentry><refentrytitle>stat</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+and so forth).
+Because this is done in-kernel, a simplistic and hence broken mechanism is used.
+A single offset between FAT local time and UTC is applied to all timestamps.
+</para>
+
+<para>
+<citerefentry><refentrytitle>fsck</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+also needs to have the correct system time and the local time offset to hand.
+Otherwise, it miscalculates timestamps on FAT volumes, and compares the wrong
+system time against the superblock's "last checked" timestamps on EXT and other
+volumes.
+This means that the FAT local time offset must be provided to the kernel before any
+<citerefentry><refentrytitle>fsck</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+is run by the system bootstrap.
+</para>
+
+<para>
+<command>system-manager</command> performs adjustments to the system clock and
+supplies the kernel with the one offset from FAT/RTC local time to UTC before
+the service manager or logger are started up, to ensure that time running
+backwards happens at a predictable point during the system bootstrap, and that
+it happens before any filesystem checks can run.
+</para>
+
+<refsection><title>The Linux system clock</title>
+
+<para>
+When the hardware clock is mistakenly runing in local time, the system clock is
+initialized to the wrong value, since the kernel is always expecting to read UTC
+from the hardware clock at that point.
+The shifting back to UTC is done using a special once-only variant of the
+<citerefentry><refentrytitle>settimeofday</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+system call.
+The FAT time offset is set by the normal variant of
+<citerefentry><refentrytitle>settimeofday</refentrytitle><manvolnum>2</manvolnum></citerefentry>.
+</para>
+
+<para>
+So as part of system initialization, <command>system-manager</command> calls the
+once-only special variant of
+<citerefentry><refentrytitle>settimeofday</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+to set the system time back to UTC and calls the normal variant of the same
+function to provide the RTC-local-time-to-UTC and FAT-local-time-to-UTC
+offsets.
+</para>
+
+</refsection>
+
+<refsection><title>The BSD system clock</title>
+
+<para>
+BSDs have a <code>machdep.adkerntz</code> variable and a
+<code>machdep.wall_cmos_clock</code> variable (see
+<citerefentry><refentrytitle>sysctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>)
+that can be set by the kernel loader from
+<citerefentry><refentrytitle>loader.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
+These supply the offset between local time, as on FAT volumes and as in the
+hardware clock, and UTC.
+Since they can be set before the kernel first sets the system clock (with
+<citerefentry><refentrytitle>inittodr</refentrytitle><manvolnum>9</manvolnum></citerefentry>)
+and thus the local time offset can be applied from the get-go when first
+transferring from the hardware clock to the system clock, there is no
+requirement to step the system clock later in the bootstrap process.
+However, they are often not set in
+<citerefentry><refentrytitle>loader.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+and the system clock is initialized incorrectly.
+</para>
+
+<para>
+So as part of system initialization, <command>system-manager</command>
+calculates <code>machdep.adkerntz</code> and
+<code>machdep.wall_cmos_clock</code> (the latter from the existence of
+<filename>/etc/wall_cmos_clock</filename> and the former from the timezone
+database), updates them, and changes the system clock with
+<citerefentry><refentrytitle>settimeofday</refentrytitle><manvolnum>2</manvolnum></citerefentry>.
+</para>
+
+</refsection>
+
+</refsection><refsection><title>Warts</title>
+
+<para>
+The signal numbers should be uniform across BSD and Linux.
+They aren't because of the BSD 
+<citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+command, which sends signals directly to process #1, meaning that
+<command>system-manager</command> has to align with whatever signals
+it sends.
+</para>
+
+<para>
+Because <filename>/usr/lib</filename> and its ilk aren't necessarily present at mount
+time, the <command>system-manager</command> program image file is statically linked
+and also incorporates (copies of) the 
+<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+and
+<citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+commands as built-in commands.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

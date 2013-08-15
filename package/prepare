@@ -1,0 +1,35 @@
+#!/bin/sh -e
+# See http://skarnet.org./software/compile.html
+if [ \! -d package -o \! -d source ]
+then
+	echo "You are not in the right directory." 1>&2
+	exit 100
+fi
+
+# Create and populate the build directory.
+if [ \! -d build ]
+then
+	mkdir -p build
+	./package/tools
+fi
+(
+	cd source && find . -type d
+) | (
+	cd build
+	while read i
+	do
+		mkdir -p "$i"
+	done
+)
+(
+	cd source && find . -type f
+) | (
+	cd build	# The syntax of ln -s makes more sense if we are in the target directory.
+	while read i
+	do
+		dir="`dirname $i`"
+		# Try to create a hard link, and fall back to a symbolic link.
+		# The source and build directories aren't necessarily on the same disc volume.
+		ln -f ../source/"$i" "${dir}" 2>/dev/null || ln -s -f ../source/"$i" "${dir}"
+	done
+)

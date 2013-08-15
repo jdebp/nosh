@@ -1,0 +1,32 @@
+<refentry id="setuidgid-fromenv">
+
+<refmeta><refentrytitle>setuidgid-fromenv</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>setuidgid-fromenv</refname><refpurpose>set process UID and GID(s) then chain</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>setuidgid-fromenv</command> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>setuidgid-fromenv</command> is a chain-loading utility that sets the process real+effective
+UID and real+effective GID to the values given in the <code>UID</code> and <code>GID</code>
+environment variables
+and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>setuidgid-fromenv</command> will ignore.
+</para>
+
+<para>
+If it fails setting the group or user IDs, it does not chain and exits with status code 111.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

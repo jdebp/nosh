@@ -1,0 +1,125 @@
+<refentry id="tcp-socket-listen">
+
+<refmeta><refentrytitle>tcp-socket-listen</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>tcp-socket-listen</refname><refpurpose>create a socket listening for incoming TCP connections and chain</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>tcp-socket-listen</command> 
+<arg>--no-reuse-address</arg> 
+<arg>--numeric</arg> 
+<arg>--check-interfaces</arg> 
+<arg>--combine4and6</arg> 
+<arg>--backlog <replaceable>number</replaceable></arg> 
+<arg>--systemd-compatibility</arg> 
+<arg choice='req'><replaceable>host</replaceable></arg> 
+<arg choice='req'><replaceable>port</replaceable></arg> 
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>tcp-socket-listen</command> is a chain-loading utility that opens a TCP socket bound to
+<replaceable>host</replaceable> and <replaceable>port</replaceable>, executes a call to <citerefentry><refentrytitle>listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>, sets the socket to
+file descriptor 3 (closing whatever that descriptor was),
+and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>tcp-socket-listen</command> will ignore.
+</para>
+
+<para>
+If the <arg>--numeric</arg> command line option is used, then no name lookup is done on
+<replaceable>host</replaceable> and <replaceable>port</replaceable>, and they must be (human readable forms of) IP addresses and
+port numbers.
+Otherwise, <replaceable>host</replaceable> is looked up using the system name resolution facility, with
+the first IP address found being used, and <replaceable>port</replaceable> can be an alphanumeric
+service name.
+</para>
+
+<para>
+The <arg>--backlog</arg> option specifies the allowed backlog level (defaulting to 5)
+of outstanding not-yet-accepted connections to the socket.
+The <arg>--no-reuse-address</arg> sets a flag that prevents the kernel from re-using
+an IP address and port combination if there are still TCP connections for
+that address and port in the CLOSE_WAIT state,
+</para>
+
+<para>
+The <arg>--check-interfaces</arg> option prevents the use of any IPv4 addresses if
+there are no IPv4 addresses on any network interface, and the use of any IPv6
+addresses if there are no IPv6 addresses.
+This isn't particularly useful on a dynamically configured system where
+network interface IP addresses can come and go.
+</para>
+
+<para>
+The <arg>--systemd-compatibility</arg> option causes <command>tcp-socket-listen</command> to set the
+<code>LISTEN_FDS</code> environment variable to 1, and the <code>LISTEN_PID</code> environment
+variable to its own process ID.
+This is for compatibility with daemons that expect to be run under 
+<citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+<para>
+For compatibility with daemons that expect to be run under <citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry>, 
+inheriting the listening socket as their standard input, simply use
+<command>fdmove</command> <arg choice="plain">0</arg> <arg choice="plain">3</arg> 
+in <replaceable>next-prog</replaceable>.
+See <citerefentry><refentrytitle>fdmove</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+<para>
+On systems that support such, the <arg>--combine4and6</arg> option allows a
+listener to communicate with both IPv4 and IPv6 clients.
+(<replaceable>host</replaceable> must denote an IPv6 address for this to work.)
+On other systems, and also the default if <arg>--combine4and6</arg> is not used,
+one must run an IPv4 listener for IPv4 clients and an IPv6 listener for
+IPv6 clients.
+See RFCs 3493 and 4038 for more details.
+</para>
+
+</refsection><refsection><title>PROTOCOLS</title>
+
+<para>
+<command>tcp-socket-listen</command> is fully IPv6 capable, albeit that by the nature of IP versions
+it is not possible on some operating system kernels
+to handle both IPv4 and IPv6 with a single socket.
+To listen on an IPv4 address and an IPv6 address on such kernels, 
+one must have two <command>tcp-socket-listen</command> processes.
+</para>
+
+</refsection><refsection><title>USAGE</title>
+
+<para>
+<command>tcp-socket-listen</command> can be used as a simple daemon monitored by
+<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+that chains to
+<citerefentry><refentrytitle>tcp-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Together, the two replace
+<citerefentry><refentrytitle>tcpserver</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+from ucspi-tcp.
+<command>tcp-socket-listen</command> overlaps the functionality of
+<citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+with which only the
+<citerefentry><refentrytitle>tcp-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+half of the pair would be needed (in the systemd-recommended configuration of
+<code>Accept=false</code> sockets).
+</para>
+
+<para>
+To change the process' UID and GID after a successful call to
+<citerefentry><refentrytitle>listen</refentrytitle><manvolnum>2</manvolnum></citerefentry>,
+simply chain through
+<citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

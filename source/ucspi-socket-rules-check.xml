@@ -1,0 +1,191 @@
+<refentry id="ucspi-socket-rules-check">
+
+<refmeta>
+<refentrytitle>ucspi-socket-rules-check</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.0</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>ucspi-socket-rules-check</refname>
+<refpurpose>check local socket connections against access control rules</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>ucspi-socket-rules-check</command>
+<arg>--verbose</arg>
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>ucspi-socket-rules-check</command> expects a process environment
+that has been set up per the UCSPI conventions by
+<citerefentry><refentrytitle>local-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+or
+<citerefentry><refentrytitle>tcp-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+It checks what is contained in the environment against a database of access
+control rules, and (if the access checks pass)
+it then chain loads to 
+<replaceable>next-prog</replaceable> with the 
+<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> 
+function.
+If the access checks fail, it exits without running anything.
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>ucspi-socket-rules-check</command> will ignore.
+</para>
+
+<refsection><title>Searching for access control rules</title>
+
+<para>
+Overall behaviour is guided by the value of the <code>PROTO</code> environment
+variable.
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+If <code>PROTO</code> has the value <code>UNIX</code>:
+</para>
+
+<orderedlist>
+
+<listitem>
+<para>
+If a directory named <filename>uid/<replaceable>$UNIXREMOTEUID</replaceable></filename> exists
+then access is granted according to the directory contents
+(continuing to search if access is neither granted nor denied by the directory).
+</para>
+</listitem>
+
+<listitem>
+<para>
+If a directory named <filename>gid/<replaceable>$UNIXREMOTEGID</replaceable></filename> exists
+then access is granted according to the directory contents
+(continuing to search if access is neither granted nor denied by the directory).
+</para>
+</listitem>
+
+<listitem>
+<para>
+If a directory named <filename>uid/default</filename> exists
+then access is granted according to the directory contents
+(continuing to search if access is neither granted nor denied by the directory).
+</para>
+</listitem>
+
+<listitem>
+<para>
+Otherwise access is denied.
+</para>
+</listitem>
+
+</orderedlist>
+
+</listitem>
+
+<listitem>
+<para>
+If <code>PROTO</code> has the value <code>TCP</code>:
+</para>
+
+<orderedlist>
+
+<listitem>
+
+<para>
+A group of directories, forming progressively larger supernets of the IP address, are checked.
+</para>
+
+<itemizedlist>
+<listitem>
+<para>
+If the value of <code>TCPREMOTEIP</code> is a human-readable IPv4 address,
+then, for each prefix length <code>N</code> from 32 down to 0 an <code>IP</code> string
+is constructed using the netmask
+<code><replaceable>$TCPREMOTEIP</replaceable>/<replaceable>$N</replaceable></code>,
+and if a directory named
+<filename>ip4/<replaceable>$IP</replaceable>_<replaceable>$N</replaceable></filename>
+exists then access is granted according to the directory contents (continuing
+to search if access is neither granted nor denied by the directory).
+</para>
+<para>
+Thus <filename>ip4/0.0.0.0_0</filename> is a catch-all rule.
+</para>
+</listitem>
+<listitem>
+<para>
+If the value of <code>TCPREMOTEIP</code> is a human-readable IPv6 address,
+then, for each prefix length <code>N</code> from 128 down to 0 an <code>IP</code> string
+is constructed using the netmask
+<code><replaceable>$TCPREMOTEIP</replaceable>/<replaceable>$N</replaceable></code>,
+and if a directory named
+<filename>ip6/<replaceable>$IP</replaceable>_<replaceable>$N</replaceable></filename>
+exists then access is granted according to the directory contents (continuing
+to search if access is neither granted nor denied by the directory).
+</para>
+<para>
+Thus <filename>ip6/::_0</filename> is a catch-all rule.
+</para>
+</listitem>
+</itemizedlist>
+
+</listitem>
+
+<listitem>
+<para>
+Otherwise access is denied.
+</para>
+</listitem>
+
+</orderedlist>
+
+</listitem>
+
+<listitem>
+<para>
+Otherwise access is denied.
+</para>
+</listitem>
+
+</itemizedlist>
+
+</refsection>
+
+<refsection><title>Access control rule directories</title>
+
+<para>
+In any given directory:
+</para>
+
+<itemizedlist>
+<listitem>
+<para>
+If a file named <filename>allow</filename> exists then access is granted.
+</para>
+</listitem>
+<listitem>
+<para>
+If a file named <filename>deny</filename> exists then access is denied.
+</para>
+</listitem>
+<listitem>
+<para>
+Otherwise access is neither granted nor denied.
+</para>
+</listitem>
+</itemizedlist>
+
+</refsection>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

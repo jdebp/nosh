@@ -1,0 +1,46 @@
+<refentry id="envuidgid">
+
+<refmeta><refentrytitle>envuidgid</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>envuidgid</refname><refpurpose>add UID and GID environment variables then chain</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>envuidgid</command> <arg choice='req'><replaceable>account</replaceable></arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>envuidgid</command> is a chain-loading utility that sets the <code>UID</code> and <code>GID</code>
+environment variables to the values for <replaceable>account</replaceable> in the system account
+database
+and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+If it cannot set the environment variables, or cannot find an account named
+<replaceable>account</replaceable> in the database, it does not chain and exits with status code 111.
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>envuidgid</command> will ignore.
+</para>
+
+<para>
+The main purpose of <command>envuidgid</command> is to eliminate the need for a process that has run
+<citerefentry><refentrytitle>chroot</refentrytitle><manvolnum>1</manvolnum></citerefentry> 
+to read from the system password database.
+Instead of running
+<citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry> 
+and thus forcing the need for a copy of the system password database inside the
+changed root environment, a chain runs <command>envuidgid</command> and can obtain
+the account information from the environment (or run
+<citerefentry><refentrytitle>setuidgid-fromenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>)
+later.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

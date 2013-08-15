@@ -1,0 +1,108 @@
+<refentry id="vc-reset-tty">
+
+<refmeta><refentrytitle>vc-reset-tty</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>vc-reset-tty</refname><refpurpose>chain-load utility for resetting virtual console terminals</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>vc-reset-tty</command> <arg>--no-reset</arg> <arg>--no-newline</arg> <arg>--no-utf8</arg> <arg>--no-tostop</arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>vc-reset-tty</command> is a chain-loading utility that attempts to initialize
+the terminal snd line discipline tate of the terminal that is on its 
+standard output, and then (if successful) chain loads to <replaceable>next-prog</replaceable> with the
+<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+If its standard output is not a terminal, it aborts without attempting to
+initialize anything.
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>vc-reset-tty</command> will ignore.
+</para>
+
+<para>
+<command>vc-reset-tty</command> makes no alteration to process state.
+</para>
+
+<para>
+It initializes the terminal by resetting the line discipline and then
+outputting the escape sequences appropriate to the terminal type.
+Unless the <arg>--no-newline</arg> option is set a newline is printed afterwards.
+This program is thus much the same as the BSD 
+<citerefentry><refentrytitle>reset</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+command, except that it chain-loads to another command and has slightly different
+defaults.
+</para>
+
+<para>
+The line discipline is reset to approximately the same state as would be
+done by the <command>stty</command> <arg choice="plain">sane</arg> command, with several exceptions:
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+The <code>istrip</code> option is not set.  8-bit cleanliness is the norm nowadays.
+</para>
+</listitem>
+
+<listitem>
+<para>
+The <code>tostop</code> option is set, unless the <arg>--no-tostop</arg> command-line option has been used.  Job control is the norm nowadays.
+</para>
+</listitem>
+
+<listitem>
+<para>
+The <code>iutf8</code> option is set, unless the <arg>--no-utf8</arg> command-line option has been used.  UTF-8 is the norm nowadays.
+</para>
+</listitem>
+
+</itemizedlist>
+
+<para>
+<command>vc-reset-tty</command> writes escape sequences to soft (re-)initialize the
+terminal state, including tabstops, margins, windows. scrolling mode, and
+overstrike mode.
+Unless the <arg>--no-reset</arg> command line option is used, additional escape
+sequences are written to hard reset the terminal from an unknown state,
+including resetting the palette.
+</para>
+
+<para>
+<command>vc-reset-tty</command> ignores the <code>TERM</code> environment
+variable and does not use
+<citerefentry><refentrytitle>terminfo</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
+Rather, it hardwires the terminal escape sequences to use to control the terminal,
+since they are fixed for each virtual console.
+If the standard output is not a virtual console, odd things may happen.
+</para>
+
+</refsection><refsection><title>EXAMPLE</title>
+
+<para>
+The major use case for <command>vc-reset-tty</command> is to reset the terminal
+and line discipline to some known states before printing the login banner (see
+<citerefentry><refentrytitle>login-banner</refentrytitle><manvolnum>1</manvolnum></citerefentry>)
+and running the
+<citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+program.
+</para>
+
+</refsection><refsection><title>SEE ALSO</title>
+
+<itemizedlist>
+<listitem><para>
+<citerefentry><refentrytitle>stty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+</itemizedlist>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

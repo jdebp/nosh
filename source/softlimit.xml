@@ -1,0 +1,106 @@
+<refentry id="softlimit">
+
+<refmeta><refentrytitle>softlimit</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>softlimit</refname><refpurpose>change resource limit then chain</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>softlimit</command>
+<arg choice='opt' rep='repeat'><replaceable>limits</replaceable></arg>
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>softlimit</command> is a chain-loading utility that changes its soft resource limits
+and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>softlimit</command> will ignore.
+</para>
+
+<para>
+The following limit options are available:
+</para>
+
+<variablelist>
+
+<varlistentry><term>
+<arg>-m <replaceable>bytes</replaceable></arg></term><listitem><para>sets 
+<code>RLIMIT_AS</code>, <code>RLIMIT_DATA</code>, <code>RLIMIT_MEMLOCK</code>, and <code>RLIMIT_STACK</code>
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-a <replaceable>bytes</replaceable></arg></term><listitem><para>sets <code>RLIMIT_AS</code>
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-c <replaceable>bytes</replaceable></arg></term><listitem><para>sets <code>RLIMIT_CORE</code>
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-d <replaceable>bytes</replaceable></arg></term><listitem><para>sets <code>RLIMIT_DATA</code>
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-f <replaceable>bytes</replaceable></arg></term><listitem><para>sets <code>RLIMIT_FSIZE</code>
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-l <replaceable>bytes</replaceable></arg></term><listitem><para>sets <code>RLIMIT_MEMLOCK</code>
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-o <replaceable>n</replaceable></arg></term><listitem><para>sets <code>RLIMIT_NOFILE</code>
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-p <replaceable>n</replaceable></arg></term><listitem><para>sets <code>RLIMIT_NPROC</code>
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-r <replaceable>n</replaceable></arg></term><listitem><para>sets <code>RLIMIT_RSS</code>
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-s <replaceable>bytes</replaceable></arg></term><listitem><para>sets <code>RLIMIT_STACK</code>
+</para></listitem></varlistentry>
+
+<varlistentry><term>
+<arg>-t <replaceable>seconds</replaceable></arg></term><listitem><para>sets <code>RLIMIT_CPU</code>
+</para></listitem></varlistentry>
+
+</variablelist>
+
+<para>
+See <citerefentry><refentrytitle>setrlimit</refentrytitle><manvolnum>1</manvolnum></citerefentry> for an explanation of these limits.
+</para>
+
+<para>
+To set an "infinite" limit, use the text <code>unlimited</code> for the limit
+value.
+Similarly, the text <code>=</code> or <code>hard</code> will use the current value of the
+hard limit as the value.  (This provides a simple means of setting the soft
+limit to the hard limit ceiling without knowing its current value.)
+</para>
+
+<para>
+Special treatment is given to the <arg>-m</arg> option because it sets multiple limits
+at once.  
+An attempt to set any one soft limit greater than the matching hard limit will
+be silently converted into an attempt to set the soft limit equal to the hard
+limit.
+</para>
+
+<para>
+For a command with coarser granularity, that can also set hard limits,
+see <citerefentry><refentrytitle>ulimit</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

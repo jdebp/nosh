@@ -1,0 +1,8 @@
+#!/bin/sh -e
+redo-ifchange ./ar ./arflags
+read ar < ./ar
+read arflags < ./arflags
+archive="$1"
+shift
+rm -f -- "$archive"
+"${ar}" ${arflags} "$archive" "$@"

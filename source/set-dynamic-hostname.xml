@@ -1,0 +1,120 @@
+<refentry id="set-dynamic-hostname">
+
+<refmeta><refentrytitle>set-dynamic-hostname</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>set-dynamic-hostname</refname><refpurpose>set the dynamic hostname from the statically configured hostname</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>set-dynamic-hostname</command>
+<arg choice="opt">--force</arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>set-dynamic-hostname</command> sets the dynamic hostname from the 
+statically configured hostname.
+It is designed to be run as part of system or container/jail initialization.
+</para>
+
+<para>
+The dynamic hostname is the hostname that is returned from the
+<citerefentry><refentrytitle>gethostname</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+and the
+<citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+library functions, which may vary during the system's lifetime as the machine is
+(for example) granted DHCP leases.
+The statically configured hostname is stored in the <filename>/etc/hostname</filename> file,
+and is taken to be the first line of that file (excluding the newline).
+If that file is missing or empty, <command>set-dynamic-hostname</command> looks
+(on operating systems that support it) to the kernel environment variable
+<code>dhcp.host-name</code>, which is the host name contained in the DHCP lease
+obtained by a PXE boot loader.
+If that fails, it sets the dynamic hostname to <code>"localhost"</code>.
+</para>
+
+<para>
+Unless the <arg choice="opt">--force</arg> option is used,
+<command>set-dynamic-hostname</command> will not attempt to set the dynamic
+hostname if it has already been set to something.
+Thus setting the dynamic hostname for a container/jail can be done by simply setting
+it as the jail is created.
+Any later execution of <command>set-dynamic-hostname</command> within the jail,
+as part of its startup process, will not override that.
+</para>
+
+<para>
+No restrictions are placed upon hostnames by
+<command>set-dynamic-hostname</command>, nor by most operating systems,
+except length restrictions.
+However, for best results, administrators should obey the rules
+set out in RFC 1123 &#x00A7; 2.1, which limit hostnames to:
+</para>
+
+<itemizedlist>
+<listitem><para>
+the characters 
+<code>A</code>&#x2013;<code>Z</code>, 
+<code>a</code>&#x2013;<code>z</code>, 
+<code>0</code>&#x2013;<code>9</code>, and 
+<code>-</code>
+(preferring lowercase, since RFC 1123 Host Names are not case sensitive)
+</para></listitem>
+<listitem><para>
+a maximum of 63 characters
+(hostnames here being the first label of an RFC 1123 Host Name)
+</para></listitem>
+</itemizedlist>
+
+<para>
+For clarity, observe that a RFC 1123 Host Name comprises two parts:
+</para>
+
+<itemizedlist>
+<listitem><para>
+the dynamic hostname, as set by this command, comprising the first label; and
+</para></listitem>
+<listitem><para>
+the domain name, as returned by the
+<citerefentry><refentrytitle>getdomainname</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+and the
+<citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+library functions, comprising the remaining labels.
+</para></listitem>
+</itemizedlist>
+
+</refsection><refsection><title>Compatibility</title>
+
+<para>
+For compatibility, before defaulting to <code>"localhost"</code>,
+<command>set-dynamic-hostname</command> scans various other configuration files:
+</para>
+
+<itemizedlist>
+<listitem><para><filename>/etc/HOSTNAME</filename></para></listitem>
+<listitem><para><filename>/etc/sysconfig/network</filename>
+(as if by
+<citerefentry><refentrytitle>read-conf</refentrytitle><manvolnum>1</manvolnum></citerefentry>)
+</para></listitem>
+<listitem><para><filename>/etc/conf.d/hostname</filename>
+(as if by
+<citerefentry><refentrytitle>read-conf</refentrytitle><manvolnum>1</manvolnum></citerefentry>)
+</para></listitem>
+<listitem><para><filename>/etc/rc.conf</filename>
+(as if by
+<citerefentry><refentrytitle>read-conf</refentrytitle><manvolnum>1</manvolnum></citerefentry>)
+</para></listitem>
+</itemizedlist>
+
+<para>
+These are backwards compatibility measures only.
+Continued support for these files is not guaranteed.
+Programs that use them should be changed to prefer
+<filename>/etc/hostname</filename>.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

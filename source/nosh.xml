@@ -1,0 +1,119 @@
+<refentry id="nosh">
+
+<refmeta><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+
+<refnamediv><refname>nosh</refname><refpurpose>minimal non-shell script processor</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>nosh</command> <arg choice='req'><replaceable>filename</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>nosh</command> reads <replaceable>filename</replaceable>, constructing a sequence of arguments, and then
+attempts to chain load the program denoted by the first argument, passing it
+all of the arguments.
+</para>
+
+<para>
+<command>nosh</command> is intended for use as a minimal script processor for use in <code>#!</code>
+lines in executable script files.
+</para>
+
+<para>
+It doesn't do argument handling.
+It doesn't do parsing, parameter substitution, or variables.
+It doesn't do redirection.
+It doesn't do syntax.
+It doesn't do C-style escape sequences.
+</para>
+
+<para>
+If you are looking for any of these things, <command>nosh</command> is the wrong tool for the job.
+Look at <citerefentry><refentrytitle>execlineb</refentrytitle><manvolnum>1</manvolnum></citerefentry> or <citerefentry><refentrytitle>dash</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+<para>
+It does do chain loading, with a wide range of useful built-in chain loading
+commands available.  See <citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry> for details.
+</para>
+
+</refsection><refsection><title>FILE LEXING</title>
+
+<para>
+Arguments are normally separated by one or more whitespace characters.
+Pairs of quotation mark characters will prevent whitespace from being treated
+specially, and the quoted sequence of characters, which can include newlines,
+will form part of one argument, concatenated with whatever quoted or unquoted
+sequences precede or follow it.
+</para>
+
+<para>
+Inside a double-quotation mark delimited sequence of characters:
+A slash followed by a newline is discarded entirely.
+A slash followed by any other character is that character.  
+This allows one to provide literal slashes and quotation marks.
+</para>
+
+<para>
+In a non-quotation mark delimited sequence of characters:
+A slash followed by a newline is discarded entirely.
+A slash followed by any other character is that character.  
+This allows one to provide literal slashes, hashes, and quotation marks.
+A hash at the start of a sequence is a line comment, that is discarded along
+with everything that follows it up to and including the end of the line.
+</para>
+
+<para>
+Inside a single-quotation mark delimited sequence of characters
+no characters are discarded or treated specially, except of course
+the single quotation mark that terminates the sequence.
+</para>
+
+<refsection><title>EXAMPLE</title>
+
+<programlisting>
+#!/bin/nosh
+echo
+This"is"all'one'argument.
+This\
+"is\
+all"\
+one\
+'argument,'\
+too.
+These are multiple arguments.
+'\' is a single backslash;
+"\\" is a single backslash as well;
+'#' is a hash; but
+# this is a comment, because
+unquoted "#" that starts an argument introduces comments.
+So because the ''# does not start an argument this is not a comment.
+</programlisting>
+
+</refsection></refsection><refsection><title>SECURITY</title>
+
+<para>
+The <code>#!</code> mechanism in Unix is a security disaster.  
+Optional extra arguments (more than one on some operating systems) can be
+supplied in the trusted script and they cannot be reliably distinguished from
+arguments supplied by the untrusted user of the script. 
+There is also a race condition caused by the window of opportunity
+between when a script is executed and when the script interpreter gets around
+to opening the script file.
+</para>
+
+<para>
+<command>nosh</command> avoids the former problem by simply disallowing any
+optional extra arguments at all, meaning that the script filename is
+always argument 1.  
+It cannot do anything about the second problem, which has to be solved by the
+operating system kernel.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>
