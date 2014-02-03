@@ -27,6 +27,8 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
+static bool verbose(false), pretending(false);
+
 struct index : public std::pair<dev_t, ino_t> {
 	index(const struct stat & s) : pair(s.st_dev, s.st_ino) {}
 };
@@ -40,7 +42,7 @@ typedef std::list<bundle *> bundle_pointer_list;
 
 namespace {
 struct bundle {
-	bundle() : bundle_dir_fd(-1), supervise_dir_fd(-1), ss_scanned(false), job_done(false), order(-1), wants(WANT_NONE) {}
+	bundle() : bundle_dir_fd(-1), supervise_dir_fd(-1), ss_scanned(false), job_state(INITIAL), order(-1), wants(WANT_NONE) {}
 	~bundle() { 
 		if (-1 != bundle_dir_fd) { close(bundle_dir_fd); bundle_dir_fd = -1; } 
 		if (-1 != supervise_dir_fd) { close(supervise_dir_fd); supervise_dir_fd = -1; } 
@@ -53,7 +55,8 @@ struct bundle {
 	};
 	int bundle_dir_fd, supervise_dir_fd;
 	std::string name;
-	bool ss_scanned, job_done;
+	bool ss_scanned;
+	enum { INITIAL, BLOCKED, CHANGING, DONE } job_state;
 	int order;
 	unsigned wants;
 	bundle_pointer_set sort_after;
@@ -119,7 +122,7 @@ add_bundle_searching_path (
 	}
 
 	if (!local_session_mode) {
-		for ( const char * const * q(bundle_prefixes); q < bundle_prefixes + 1; ++q) {
+		for ( const char * const * q(bundle_prefixes); q < bundle_prefixes + sizeof bundle_prefixes/sizeof *bundle_prefixes; ++q) {
 			const std::string suffix(*q);
 			for ( const char * const * p(roots); p < roots + sizeof roots/sizeof *roots; ++p) {
 				const std::string r(*p);
@@ -383,12 +386,15 @@ start_stop_common (
 		}
 		const bool was_already_loaded(is_ok(b.supervise_dir_fd));
 		if (!was_already_loaded) {
-			std::fprintf(stderr, "%s: LOAD: %s\n", prog, b.name.c_str());
-			load(prog, socket_fd, b.name.c_str(), b.supervise_dir_fd, service_dir_fd, true, true);
-			if (!wait_ok(b.supervise_dir_fd, 5000)) {
-				std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, b.name.c_str(), "ok", "Unable to load service bundle.");
-				close(service_dir_fd);
-				continue;
+			if (verbose)
+				std::fprintf(stderr, "%s: LOAD: %s\n", prog, b.name.c_str());
+			if (pretending) {
+				load(prog, socket_fd, b.name.c_str(), b.supervise_dir_fd, service_dir_fd, true, true);
+				if (!wait_ok(b.supervise_dir_fd, 5000)) {
+					std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, b.name.c_str(), "ok", "Unable to load service bundle.");
+					close(service_dir_fd);
+					continue;
+				}
 			}
 		}
 		close(service_dir_fd);
@@ -398,10 +404,13 @@ start_stop_common (
 		if (0 <= log_supervise_dir_fd && 0 <= log_service_dir_fd) {
 			const bool log_was_already_loaded(is_ok(log_supervise_dir_fd));
 			if (!log_was_already_loaded) {
-				std::fprintf(stderr, "%s: LOAD: %s\n", prog, (b.name + "/log").c_str());
-				load(prog, socket_fd, (b.name + "/log").c_str(), log_supervise_dir_fd, log_service_dir_fd, true, true);
+				if (verbose)
+					std::fprintf(stderr, "%s: LOAD: %s\n", prog, (b.name + "/log").c_str());
+				if (!pretending)
+					load(prog, socket_fd, (b.name + "/log").c_str(), log_supervise_dir_fd, log_service_dir_fd, true, true);
 			}
-			plumb(prog, socket_fd, b.supervise_dir_fd, log_supervise_dir_fd);
+			if (!pretending)
+				plumb(prog, socket_fd, b.supervise_dir_fd, log_supervise_dir_fd);
 		}
 		if (0 <= log_supervise_dir_fd)
 			close(log_supervise_dir_fd);
@@ -413,45 +422,70 @@ start_stop_common (
 		bool pending(false);
 		for (bundle_pointer_list::const_iterator i(sorted.begin()); sorted.end() != i; ++i) {
 			bundle & b(**i);
-			if (b.job_done) continue;
+			if (b.DONE != b.job_state) {
+				bool is_done(true);
+				switch (b.wants) {
+					case bundle::WANT_START:
+						is_done = 0 <= b.supervise_dir_fd && is_ok(b.supervise_dir_fd) && is_up(b.supervise_dir_fd);
+						break;
+					case bundle::WANT_STOP:
+						is_done = 0 <= b.supervise_dir_fd && !(is_ok(b.supervise_dir_fd) && is_up(b.supervise_dir_fd));
+						break;
+				}
+				if (is_done) {
+					if (verbose)
+						std::fprintf(stderr, "%s: DONE: %s\n", prog, b.name.c_str());
+					b.job_state = b.DONE;
+				}
+			}
+			if (b.DONE == b.job_state) continue;
+			pending = true;
+			if (b.CHANGING == b.job_state) continue;
 
-			bool blocked(false);
+			b.job_state = b.CHANGING;
 			const bundle_pointer_set & a(b.sort_after);
 			for (bundle_pointer_set::const_iterator j(a.begin()); a.end() != j; ++j) {
 				bundle * p(*j);
-				if (!p->job_done) {
-					std::fprintf(stderr, "%s: BLOCKED: %s\n", prog, b.name.c_str());
-					blocked = pending = true;
+				if (p->DONE != p->job_state) {
+					if (verbose)
+						std::fprintf(stderr, "%s: BLOCKED: %s\n", prog, b.name.c_str());
+					b.job_state = b.BLOCKED;
 					break;
 				}
 			}
-			if (blocked) continue;
+			if (b.CHANGING != b.job_state) continue;
 
 			switch (b.wants) {
 				case bundle::WANT_START:
 				{
 					if (0 > b.supervise_dir_fd) break;
 					const bool was_already_loaded(is_ok(b.supervise_dir_fd));
-					std::fprintf(stderr, "%s: START: %s\n", prog, b.name.c_str());
 					if (was_already_loaded) {
-						start(prog, b.supervise_dir_fd);
-					}
+						if (verbose)
+							std::fprintf(stderr, "%s: START: %s\n", prog, b.name.c_str());
+						if (!pretending)
+							start(prog, b.supervise_dir_fd);
+					} else
+						std::fprintf(stderr, "%s: CANNOT START: %s\n", prog, b.name.c_str());
 					break;
 				}
 				case bundle::WANT_STOP:
 				{
 					if (0 > b.supervise_dir_fd) break;
 					const bool was_already_loaded(is_ok(b.supervise_dir_fd));
-					std::fprintf(stderr, "%s: STOP: %s\n", prog, b.name.c_str());
 					if (was_already_loaded) {
-						stop(prog, b.supervise_dir_fd);
-					}
+						if (verbose)
+							std::fprintf(stderr, "%s: STOP: %s\n", prog, b.name.c_str());
+						if (!pretending)
+							stop(prog, b.supervise_dir_fd);
+					} else
+						std::fprintf(stderr, "%s: CANNOT STOP: %s\n", prog, b.name.c_str());
 					break;
 				}
 			}
-			b.job_done = true;
 		}
 		if (!pending) break;
+		sleep(1);
 	}
 
 	throw EXIT_SUCCESS;
@@ -465,8 +499,12 @@ activate (
 	const char * prog(basename_of(args[0]));
 	try {
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
+		popt::bool_definition verbose_option('v', "verbose", "Display verbose information.", verbose);
+		popt::bool_definition pretending_option('n', "pretend", "Pretend to take action, without telling the service manager to do anything.", pretending);
 		popt::definition * main_table[] = {
-			&user_option
+			&user_option,
+			&verbose_option,
+			&pretending_option
 		};
 		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "service(s)...");
 
@@ -492,8 +530,12 @@ deactivate (
 	const char * prog(basename_of(args[0]));
 	try {
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
+		popt::bool_definition verbose_option('v', "verbose", "Display verbose information.", verbose);
+		popt::bool_definition pretending_option('n', "pretend", "Pretend to take action, without telling the service manager to do anything.", pretending);
 		popt::definition * main_table[] = {
-			&user_option
+			&user_option,
+			&verbose_option,
+			&pretending_option
 		};
 		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "service(s)...");
 
@@ -519,8 +561,12 @@ isolate (
 	const char * prog(basename_of(args[0]));
 	try {
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
+		popt::bool_definition verbose_option('v', "verbose", "Display verbose information.", verbose);
+		popt::bool_definition pretending_option('n', "pretend", "Pretend to take action, without telling the service manager to do anything.", pretending);
 		popt::definition * main_table[] = {
-			&user_option
+			&user_option,
+			&verbose_option,
+			&pretending_option
 		};
 		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "service(s)...");
 

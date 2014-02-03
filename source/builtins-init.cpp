@@ -35,6 +35,7 @@ commands[] = {
 	{	"telinit",		telinit					},
 	{	"init",			init					},
 	{	"service",		service,				},
+	{	"chkconfig",		service,				},
 	{	"invoke-rc.d",		service,				},
 };
 const std::size_t num_commands = sizeof commands/sizeof *commands;

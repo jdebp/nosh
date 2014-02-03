@@ -9,6 +9,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <csignal>
 #include <cerrno>
 #include <stdint.h>
+#include <sys/types.h>
 #include <sys/event.h>
 #include <dirent.h>
 #include <unistd.h>

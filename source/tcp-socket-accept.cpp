@@ -9,13 +9,13 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstring>
 #include <csignal>
 #include <cerrno>
+#include <sys/types.h>
 #if !defined(__LINUX__) && !defined(__linux__)
 #include <sys/event.h>
 #else
 #include <sys/poll.h>
 #endif
 #include <sys/wait.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/tcp.h>

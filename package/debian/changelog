@@ -1,5 +1,14 @@
-nosh (1.0) UNRELEASED; urgency=low
+nosh (1.1) unstable; urgency=low
+
+  * Added ucspi-socket-rules-check for checking access control rules for UCSPI-TCP and UCSPI-UNIX services.
+  * Corrected the way that system-control start and stop were processing dependencies.
+  * Fixed a compilation problem on FreeBSD 10.
+  * Added a compatibility chkconfig command.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Mon, 03 Feb 2014 08:43:22 +0000
+
+nosh (1.0) unstable; urgency=low
 
   * first version
 
- -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Fri, 16 Aug 2013 00:00:00 +0000
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Tue, 28 Jan 2014 00:00:00 +0000

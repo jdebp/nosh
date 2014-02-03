@@ -9,6 +9,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstring>
 #include <csignal>
 #include <cerrno>
+#include <sys/types.h>
 #include <sys/event.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>

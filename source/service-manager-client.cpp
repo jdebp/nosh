@@ -96,6 +96,18 @@ make_input_activated (
 	do_rpc_call(prog, socket_fd, &m, sizeof m, fds, sizeof fds/sizeof *fds);
 }
 
+void
+unload (
+	const char * prog,
+	int socket_fd,
+	int supervise_dir_fd
+) {
+	service_manager_rpc_message m;
+	m.command = m.UNLOAD;
+	int fds[1] = { supervise_dir_fd };
+	do_rpc_call(prog, socket_fd, &m, sizeof m, fds, sizeof fds/sizeof *fds);
+}
+
 static
 int
 start_stop_common (
@@ -165,5 +177,22 @@ wait_ok (
 			sleep(1);
 			timeout = (timeout < 1000) ? 0 : timeout - 1000;
 		}
+	}
+}
+
+bool
+is_up (
+	const int supervise_dir_fd
+) {
+	const int status_fd(open_read_at(supervise_dir_fd, "status"));
+	if (0 > status_fd) return false;
+	char status[20];
+	const int n(read(status_fd, status, sizeof status));
+	close(status_fd);
+	if (18 > n) return false;
+	if (20 <= n) {
+		return encore_status_running == status[18];
+	} else {
+		return status[12] || status[13] || status[14] || status[15];
 	}
 }

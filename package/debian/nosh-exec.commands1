@@ -34,6 +34,7 @@ softlimit
 tcp-socket-accept
 tcp-socket-listen
 true
+ucspi-socket-rules-check
 ulimit
 umask
 unsetenv

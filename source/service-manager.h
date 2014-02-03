@@ -17,7 +17,7 @@ enum {		// statuses from daemontools-encore
 	encore_status_failed,
 };
 struct service_manager_rpc_message {
-	enum { NOOP = 0, PLUMB, LOAD, MAKE_INPUT_ACTIVATED };
+	enum { NOOP = 0, PLUMB, LOAD, MAKE_INPUT_ACTIVATED, UNLOAD };
 	uint8_t command;
 	uint8_t want_pipe;
 	uint8_t run_on_empty;

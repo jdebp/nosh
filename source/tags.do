@@ -2,6 +2,6 @@
 files="*.cpp *.h"
 rm -f -- "$3"
 opts=""
-[ "`uname`" = "Interix" ] || opts="-e"
-ctags --extra=+q -f "$3" ${opts} ${files}
+[ "`uname`" = "Linux" ] && opts="-e --extra=+q"
+ctags -f "$3" ${opts} ${files}
 redo-ifchange ${files}

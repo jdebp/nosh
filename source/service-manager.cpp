@@ -937,6 +937,9 @@ control_message (
 				case service_manager_rpc_message::MAKE_INPUT_ACTIVATED:
 					make_input_activated(fds[0]);
 					break;
+				case service_manager_rpc_message::UNLOAD:
+//					unload(fds[0]);
+//					break;
 				default:
 					std::fprintf(stderr, "%s: WARNING: unknown control message command %u with %lu file descriptors\n", prog, m.command, count_fds);
 					break;

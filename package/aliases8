@@ -8,4 +8,5 @@ init	rescue
 init	normal
 init	telinit
 init	service
+init	chkconfig
 system-manager	systemd

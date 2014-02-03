@@ -41,12 +41,16 @@ stop (
 );
 bool
 is_ok (
-	const int dir_fd
+	const int supervise_dir_fd
 );
 bool
 wait_ok (
 	const int supervise_dir_fd,
 	int timeout
+);
+bool
+is_up (
+	const int supervise_dir_fd
 );
 
 #endif

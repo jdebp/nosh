@@ -1,6 +1,12 @@
 <refentry id="init">
 
-<refmeta><refentrytitle>init</refentrytitle><manvolnum>8</manvolnum><refmiscinfo class="manual">administrator commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+<refmeta>
+<refentrytitle>init</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo class="manual">administrator commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.0</refmiscinfo>
+</refmeta>
 
 <refnamediv>
 <refname>init</refname>
@@ -12,6 +18,7 @@
 <refname>rescue</refname>
 <refname>normal</refname>
 <refname>service</refname>
+<refname>chkconfig</refname>
 <refname>fastboot</refname>
 <refname>fasthalt</refname>
 <refpurpose>BSD/System V compatibility utilities for system and service control</refpurpose>
@@ -130,7 +137,8 @@ if invoked as <command>reboot</command>, <command>halt</command>, or
 <command>poweroff</command> with the <arg>--force</arg> command-line option.
 </para>
 
-</refsection><refsection><title>Compatibility service control commands</title>
+</refsection>
+<refsection><title>Compatibility service control commands</title>
 
 <para>
 Invoked as 
@@ -164,7 +172,26 @@ The traditional behaviour of the SystemV <command>service</command> command is t
 individual services, without ensuring correct service dependencies and ordering.
 </para>
 
-</refsection><refsection><title>Compatibility bootstrap utility</title>
+</refsection>
+<refsection><title>Compatibility service configuration commands</title>
+
+<para>
+Invoked as 
+<command>chkconfig</command>
+<arg choice="plain"><replaceable>name</replaceable></arg>
+<arg choice="plain"><replaceable>command</replaceable></arg>,
+the program chains to
+<command>system-control</command>
+<arg choice="plain"><replaceable>command</replaceable></arg>
+<arg choice="plain"><replaceable>name</replaceable></arg>.
+It makes no attempt to validate <replaceable>command</replaceable> itself.
+For best results, restrict <replaceable>command</replaceable> to one of 
+<arg choice="plain">on</arg>, <arg choice="plain">off</arg>, or <arg
+choice="plain">reset</arg>.
+</para>
+
+</refsection>
+<refsection><title>Compatibility bootstrap utility</title>
 
 <para>
 Invoked as <command>init</command> the program simply chain loads to either
@@ -204,7 +231,8 @@ Configure the system to invoke
 directly, instead.
 </para>
 
-</refsection><refsection><title>Compatibility control utility</title>
+</refsection>
+<refsection><title>Compatibility control utility</title>
 
 <para>
 Invoked as <command>telinit</command> the program chain loads to one of the
@@ -260,6 +288,8 @@ to re-read them is not targetting the correct configuration mechanisms, and
 is in error.
 </para>
 
-</refsection></refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection>
+</refsection>
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
 
 </refentry>

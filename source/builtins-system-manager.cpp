@@ -30,6 +30,7 @@ void init ( const char * & , std::vector<const char *> & ) ;
 void show ( const char * & , std::vector<const char *> & ) ;
 void status ( const char * & , std::vector<const char *> & ) ;
 void try_restart ( const char * & , std::vector<const char *> & ) ;
+void preset ( const char * & , std::vector<const char *> & ) ;
 void convert_systemd_units ( const char * & , std::vector<const char *> & ) ;
 void cyclog ( const char * & , std::vector<const char *> & ) ;
 void system_control ( const char * & , std::vector<const char *> & ) ;
@@ -66,13 +67,16 @@ commands[] = {
 	{	"isolate",		isolate			},
 	{	"enable",		enable			},
 	{	"load",			enable			},
+	{	"on",			enable			},
 	{	"disable",		disable			},
 	{	"unload",		disable			},
+	{	"off",			disable			},
 	{	"init",			init			},
+	{	"preset",		preset			},
+	{	"reset",		preset			},
 	{	"show",			show			},
 	{	"status",		status			},
 	{	"try-restart",		try_restart		},
-	{	"preset",		convert_systemd_units	},
 	{	"convert-systemd-units",convert_systemd_units	},
 
 	// These are spawned by system-manager.

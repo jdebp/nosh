@@ -4,4 +4,6 @@ then
 	echo "You are not in the right directory." 1>&2
 	exit 100
 fi
-zip -ur9 nosh source/* package/*
+cwd="`/bin/pwd`"
+base_plus_version="`basename "${cwd}"`"
+tar --create --bzip2 --file "${base_plus_version}.tar.bz2" source/* package/*
