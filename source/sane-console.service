@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Set the line discipline on the console TTY to the "sane" state sysinit service
+DefaultDependencies=false
+EarlySupervise=true
+
+[Service]
+Type=oneshot
+systemdWorkingDirectory=false
+ExecStart=fdredir --update 0 /dev/console fdmove -c 1 0 fdmove -c 2 1 stty sane
+
+[Install]
+WantedBy=sysinit.target

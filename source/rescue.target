@@ -1,0 +1,21 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Rescue log-in target
+DefaultDependencies=false
+EarlySupervise=true
+Wants=sysinit.target
+Before=shutdown.target
+
+[Service]
+systemdWorkingDirectory=false
+ExecStartPre=/bin/echo Rescue mode log-in:
+TTYPath=console
+StandardInput=tty
+ExecStart=sulogin
+Restart=always
+
+[Install]
+StoppedBy=shutdown.target

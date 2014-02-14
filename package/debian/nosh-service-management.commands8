@@ -5,4 +5,5 @@ halt
 poweroff
 rescue
 normal
+chkconfig
 system-manager

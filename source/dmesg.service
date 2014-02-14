@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Dump kernel boot log sysinit service
+DefaultDependencies=false
+EarlySupervise=true
+
+[Service]
+Type=oneshot
+Umask=0022
+systemdWorkingDirectory=false
+ExecStart=fdredir --write 1 /run/dmesg.boot dmesg
+
+[Install]
+WantedBy=sysinit.target

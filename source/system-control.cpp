@@ -34,7 +34,7 @@ const char * const roots[] = {
 };
 
 const char * const bundle_prefixes[] = {
-	"system-manager/bundles/", "sv/", "service/",
+	"system-manager/targets/", "sv/", "service/",
 };
 
 /* The system-control command ***********************************************
@@ -48,9 +48,18 @@ system_control (
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
+		// These compatibility options make command completion in the Z and Bourne Again shells slightly smoother.
+		bool full(false), no_legend(false), no_pager(false);
+		popt::bool_definition full_option('\0', "full", "Compatibility option.  Ignored.", full);
+		popt::bool_definition no_legend_option('\0', "no-legend", "Compatibility option.  Ignored.", no_legend);
+		popt::bool_definition no_pager_option('\0', "no-pager", "Compatibility option.  Ignored.", no_pager);
+
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
 		popt::definition * top_table[] = {
-			&user_option
+			&user_option,
+			&full_option,
+			&no_legend_option,
+			&no_pager_option
 		};
 		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "halt|reboot|poweroff|emergency|rescue|normal|init|activate|deactivate|isolate|show|status args...");
 

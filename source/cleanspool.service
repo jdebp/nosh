@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Clean-up spool directories sysinit service
+DefaultDependencies=false
+EarlySupervise=true
+Wants=local-fs.target
+After=local-fs.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/var/spool/
+ExecStart=rm -r uucp/.Temp/* lock/*
+
+[Install]
+WantedBy=sysinit.target

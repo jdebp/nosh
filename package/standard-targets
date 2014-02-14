@@ -1,0 +1,15 @@
+basic
+dns
+emergency
+halt
+local-fs
+multi-user
+normal
+poweroff
+reboot
+remote-fs
+rescue
+server
+shutdown
+sysinit
+workstation

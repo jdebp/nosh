@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Poweroff state target
+DefaultDependencies=false
+EarlySupervise=true
+After=shutdown.target
+Wants=shutdown.target
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=system-control poweroff --force
+Restart=always
+
+[Install]

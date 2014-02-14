@@ -1,0 +1,20 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Emergency log-in target
+DefaultDependencies=false
+EarlySupervise=true
+Before=shutdown.target
+
+[Service]
+systemdWorkingDirectory=false
+ExecStartPre=/bin/echo Emergency mode log-in:
+TTYPath=console
+StandardInput=tty
+ExecStart=sulogin
+Restart=always
+
+[Install]
+StoppedBy=shutdown.target

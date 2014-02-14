@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Mount the /usr filesystem
+DefaultDependencies=false
+EarlySupervise=true
+
+[Service]
+Type=oneshot
+systemdWorkingDirectory=false
+ExecStart=mount /usr
+
+[Install]
+WantedBy=local-fs.target

@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Bernstein's content DNS server daemon
+[Install]
+WantedBy=server.target
+[Service]
+systemdWorkingDirectory=false
+EnvironmentUser=tinydns-d 
+EnvironmentDirectory=./env 
+LimitDATA=300000 
+ExecStart=tinydns
+Restart=always

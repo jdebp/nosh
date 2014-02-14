@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=DNS milestone
+DefaultDependencies=false
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=pause
+Restart=always
+
+[Install]

@@ -370,7 +370,7 @@ targets are fully active, they are expected to send the
 <code>SIGRTMIN + 15</code>, <code>SIGRTMIN + 13</code>, and <code>SIGRTMIN + 14</code> signals
 (respectively) to process #1.
 In the packaged target definitions, they use
-the <arg>-q</arg> option to the 
+the <arg>--force</arg> option to the 
 <command>reboot</command>,
 <command>halt</command>, and
 <command>poweroff</command>
@@ -507,7 +507,10 @@ and <code>mode=0755</code>.
 <code>noexec</code>, <code>nosuid</code>, <code>ptmxmode=0666</code>,
 <code>gid=<replaceable>tty</replaceable></code>, <code>newinstance</code>, and
 <code>mode=0620</code>.
-The GID of the group <replaceable>tty</replaceable> is determined from the system account database. 
+<replaceable>tty</replaceable> is currently hardwired to <code>5</code>,
+because the library functions for reading the system account database require
+dynamic link library and network functionality that are inappropriate for
+process #1.
 </para></listitem>
 </varlistentry>
 
@@ -617,7 +620,7 @@ When the system starts process #1, the operating system kernel's system clock
 will have been initialized from a hardware real-time clock.
 On an all-BSD/Linux system, that hardware real-time clock will be running in
 UTC, and the system clock will thus be initially set to a proper UTC value.
-On a more hetergenous system, the hardware real-time clock may be mistakenly
+On a more heterogenous system, the hardware real-time clock may be mistakenly
 running in a local time.
 This usually leads to some program or other, during the bootstrap process,
 having to determine the offset between RTC local time and UTC and correct the

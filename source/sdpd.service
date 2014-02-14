@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Bluetooth Service Discovery Protocol service
+[Install]
+WantedBy=workstation.target
+[Service]
+systemdWorkingDirectory=false
+ExecStartPre=kldload -n ng_btsocket
+ExecStart=sdpd -d
+Restart=always

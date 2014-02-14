@@ -32,6 +32,7 @@ extern void setenv ( const char * &, std::vector<const char *> & );
 extern void unsetenv ( const char * &, std::vector<const char *> & );
 extern void envdir ( const char * &, std::vector<const char *> & );
 extern void clearenv ( const char * &, std::vector<const char *> & );
+extern void udp_socket_listen ( const char * &, std::vector<const char *> & );
 extern void tcp_socket_listen ( const char * &, std::vector<const char *> & );
 extern void tcp_socket_accept ( const char * &, std::vector<const char *> & );
 extern void ulimit ( const char * &, std::vector<const char *> & );
@@ -55,6 +56,7 @@ extern void set_dynamic_hostname ( const char * &, std::vector<const char *> & )
 extern void setup_machine_id ( const char * &, std::vector<const char *> & );
 extern void pipe ( const char * &, std::vector<const char *> & );
 extern void ucspi_socket_rules_check ( const char * &, std::vector<const char *> & );
+extern void pause ( const char * &, std::vector<const char *> & );
 
 extern const
 struct command 
@@ -81,6 +83,7 @@ commands[] = {
 	{	"clearenv",			clearenv			},
 	{	"tcp-socket-accept",		tcp_socket_accept		},
 	{	"tcp-socket-listen",		tcp_socket_listen		},
+	{	"udp-socket-listen",		udp_socket_listen		},
 	{	"ulimit",			ulimit				},
 	{	"softlimit",			softlimit			},
 	{	"envuidgid",			envuidgid			},
@@ -102,5 +105,6 @@ commands[] = {
 	{	"setup-machine-id",		setup_machine_id		},
 	{	"pipe",				pipe				},
 	{	"ucspi-socket-rules-check",	ucspi_socket_rules_check	},
+	{	"pause",			pause				},
 };
 const std::size_t num_commands = sizeof commands/sizeof *commands;

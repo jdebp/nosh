@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=exim4 queue runner daemon
+[Install]
+WantedBy=server.target
+[Service]
+systemdWorkingDirectory=false
+EnvironmentDirectory=env
+LimitMEMORY=70000000
+ExecStart=exim4 -q30m
+ExecStartPre=exim4 -bV
+Restart=always

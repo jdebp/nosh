@@ -40,3 +40,35 @@ Description: Service and system management utilities
  .
  This package supplies systemd unit files for setting up a daemontools-like daemon management system under systemd.
  Or one can instead run this pacakage's system manager as process #1.
+
+Package: nosh-standard-targets
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management
+Suggests: 
+Recommends: 
+Description: Standard targets for the system manager
+ This package provides the pre-packaged bundle directories for the standard targets (normal, workstation, server, multi-user, and so on).
+
+Package: nosh-sysinit-services
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management
+Suggests: 
+Recommends: 
+Description: System initialization services
+ This package provides the pre-packaged bundle directories for system initialization services.
+
+Package: nosh-regular-services
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management
+Suggests: 
+Recommends: 
+Description: Regular non-socket-activated services
+ This package provides the pre-packaged bundle directories for regular non-socket-activated services.
+
+Package: nosh-regular-sockets
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management
+Suggests: 
+Recommends: 
+Description: Regular socket-activated services
+ This package provides the pre-packaged bundle directories for regular socket-activated services.

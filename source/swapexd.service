@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD swapex daemon
+[Install]
+WantedBy=workstation.target
+[Service]
+systemdWorkingDirectory=false
+ExecStart=swapexd -p
+Restart=always

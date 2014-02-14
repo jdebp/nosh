@@ -108,8 +108,13 @@ exit_scan:
 					std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, entry->d_name, "log", std::strerror(errno));
 				if (!was_already_loaded) {
 					struct stat down_file_s;
-					if (0 > fstatat(service_dir_fd, "down", &down_file_s, 0) && ENOENT == errno)
-						start(prog, supervise_dir_fd);
+					if (0 > fstatat(service_dir_fd, "down", &down_file_s, 0) && ENOENT == errno) {
+						if (!wait_ok(supervise_dir_fd, 5000))
+							std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, entry->d_name, "supervise/ok", "Unable to load service bundle.");
+						else
+							start(prog, supervise_dir_fd);
+					} else
+						std::fprintf(stderr, "%s: INFO: %s: %s\n", prog, entry->d_name, "Service is initially down.");
 				}
 				close(supervise_dir_fd);
 			} else

@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=anacron scheduling service
+[Install]
+WantedBy=workstation.target
+[Service]
+systemdWorkingDirectory=false
+ExecStart=anacron -d -s
+Restart=always

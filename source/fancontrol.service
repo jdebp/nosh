@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=fan control service
+[Install]
+WantedBy=workstation.target
+[Service]
+Type=forking
+systemdWorkingDirectory=false
+ExecStart=fancontrol
+Restart=always

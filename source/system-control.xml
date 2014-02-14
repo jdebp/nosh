@@ -87,7 +87,7 @@ simply follows symbolic links, by convention service bundle directories
 generally live under <filename>/etc/sv</filename>,
 <filename>/run/sv</filename>, or <filename>/var/sv</filename>; and target
 bundle directories generally live under
-<filename>/etc/system-service</filename>.
+<filename>/etc/system-manager/targets</filename>.
 </para>
 
 <para>
@@ -269,17 +269,17 @@ that conflicts with itself, for example).
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">reboot</arg>
-<group><arg choice="plain">-q</arg><arg choice="plain">--quick</arg></group>
+<group><arg choice="plain">-f</arg><arg choice="plain">--force</arg></group>
 </cmdsynopsis>
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">halt</arg>
-<group><arg choice="plain">-q</arg><arg choice="plain">--quick</arg></group>
+<group><arg choice="plain">-f</arg><arg choice="plain">--force</arg></group>
 </cmdsynopsis>
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">poweroff</arg>
-<group><arg choice="plain">-q</arg><arg choice="plain">--quick</arg></group>
+<group><arg choice="plain">-f</arg><arg choice="plain">--force</arg></group>
 </cmdsynopsis>
 <cmdsynopsis>
 <command>system-control</command>
@@ -336,7 +336,7 @@ They do not directly enact any system state change themselves.
 </para>
 
 <para>
-The <arg>--quick</arg> command line argument is used within the various targets
+The <arg>--force</arg> command line argument is used within the various targets
 and is intended to cause the system manager to proceed directly to the finalization
 action.
 </para>
@@ -389,6 +389,7 @@ equivalent to <command>start</command>.
 <command>system-control</command>
 <group choice='req'>
 <arg choice="plain">enable</arg>
+<arg choice="plain">on</arg>
 </group>
 <arg rep='repeat'><replaceable>names</replaceable></arg>
 </cmdsynopsis>
@@ -396,6 +397,15 @@ equivalent to <command>start</command>.
 <command>system-control</command>
 <group choice='req'>
 <arg choice="plain">disable</arg>
+<arg choice="plain">off</arg>
+</group>
+<arg rep='repeat'><replaceable>names</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>system-control</command>
+<group choice='req'>
+<arg choice="plain">preset</arg>
+<arg choice="plain">reset</arg>
 </group>
 <arg rep='repeat'><replaceable>names</replaceable></arg>
 </cmdsynopsis>
@@ -425,6 +435,19 @@ For each bundle, enabling the service involves symbolically linking its
 bundle directory into the target bundle's <filename>conflicts/</filename> 
 and <filename>after/</filename> lists,
 and disabling the service involves removing those links.
+</para>
+
+<para>
+The <command>preset</command> command is intended to be used by package
+installer programs.
+It is translated into either <command>enable</command> or
+<command>disable</command> according to administrator-supplied information
+about whether and what services are to be enabled.
+This allows package installers to remain in blissful ignorance of whether a
+service should be enabled or disabled after installing the package for it.
+Instead, the package installer simply executes the <command>preset</command>
+command and the service is set to whatever enabled or disabled status the
+administrator has chosen.
 </para>
 
 </refsection>
@@ -560,37 +583,69 @@ attempt to be compatible with this mess.
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">convert-systemd-units</arg>
-<arg><replaceable>name</replaceable></arg>
+<group choice='req'>
+<arg choice='plain'><replaceable>name</replaceable>.target</arg>
+<arg choice='plain'><replaceable>name</replaceable>.socket</arg>
+<arg choice='plain'><replaceable>name</replaceable>.service</arg>
+<arg choice='plain'><replaceable>name</replaceable>@<replaceable>parameter</replaceable>.service</arg>
+</group>
 </cmdsynopsis>
 
 <para>
-This subcommand takes the systemd unit files for the service
-<replaceable>name</replaceable> and generates from them a service bundle named
-<filename><replaceable>name/</replaceable></filename> in the current directory
-that contains scripts, dependencies, and autoboot dependency configuration
-information.
+This subcommand takes some systemd unit files and generates from them a service
+bundle in the current directory that contains scripts, dependencies, and
+autoboot dependency configuration information.
 The bundle is not enabled by the conversion process, but can be started and
 enabled as it stands, with the <command>start</command> and
 <command>preset</command> subcommands, just like any other service bundle.
 </para>
 
 <para>
-The systemd unit files are:
+The systemd unit files are determined from the argument.
 </para>
 <itemizedlist>
 <listitem>
 <para>
-<filename><replaceable>name</replaceable>.socket</filename> if it exists,
+If <filename><replaceable>name</replaceable>.target</filename> is specified,
+then that target unit file is converted into a target bundle directory named
+<filename><replaceable>name</replaceable>/</filename>.
 </para>
 </listitem>
 <listitem>
 <para>
-<filename><replaceable>name</replaceable>@.service</filename> if a socket unit exists and the socket has <code>Accept=true</code>, and
+If <filename><replaceable>name</replaceable>.socket</filename> is specified,
+and it has <code>Accept=true</code>, then it is combined with a
+<filename><replaceable>name</replaceable>@.service</filename> service unit
+file
+to make a service bundle directory named
+<filename><replaceable>name</replaceable>/</filename>.
 </para>
 </listitem>
 <listitem>
 <para>
-<filename><replaceable>name</replaceable>.service</filename> if a socket unit does not exist or the socket has <code>Accept=false</code>.
+If <filename><replaceable>name</replaceable>.socket</filename> is specified,
+and it has <code>Accept=false</code>, then it is combined with a
+<filename><replaceable>name</replaceable>.service</filename> service unit
+file
+to make a service bundle directory named
+<filename><replaceable>name</replaceable>/</filename>.
+</para>
+</listitem>
+<listitem>
+<para>
+If <filename><replaceable>name</replaceable>.service</filename> is specified,
+then that service unit file is converted into a service bundle directory named
+<filename><replaceable>name</replaceable>/</filename>.
+</para>
+</listitem>
+<listitem>
+<para>
+If
+<filename><replaceable>name</replaceable>@<replaceable>parameter</replaceable>.service</filename>
+is specified, then that service unit file is converted using
+<replaceable>parameter</replaceable> for parameter substitution into a service
+bundle directory named
+<filename><replaceable>name</replaceable>@<replaceable>parameter</replaceable>/</filename>.
 </para>
 </listitem>
 </itemizedlist>
@@ -610,25 +665,23 @@ These bounds are:
 <para>
 The service must be a simple, forking, or oneshot service.
 DBus and notify services are not converted.
-For preference, avoid forking services; such designs are based upon the
-incorrect premise that services may run directly from an interactive shell
-(which is a huge security issue that is wholly avoided by the model of having a
-service supervisor that spawns services in a controlled environment not
-associated with terminals or interactive shells at all).
+For best results, avoid having forking services in the first place, and change
+them into simple services wherever possible.
 </para>
 </listitem>
 
 <listitem>
 <para>
-Only TCP and local domain stream sockets are converted.
+Only TCP, UDP, and local domain stream sockets are converted.
 The <filename>run</filename>/<filename>service</filename> script makes use of
+<citerefentry><refentrytitle>udp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>tcp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>local-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>tcp-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and
 <citerefentry><refentrytitle>local-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 to spawn services, either to listen to the accepting socket or to respond on connecting sockets.
-FIFOs and datagram sockets are not supported, in the absence of similar
-"fifo-listen" and "udp-socket-listen" tools.
+FIFOs and sequential packet sockets are not supported, in the absence of similar
+tools.
 </para>
 </listitem>
 
@@ -705,7 +758,7 @@ those mechanisms.
 <para>
 Several standard targets are defined.
 They conventionally live in the
-<filename>/etc/system-manager/bundles/</filename> directory.
+<filename>/etc/system-manager/targets/</filename> directory.
 </para>
 
 <para>

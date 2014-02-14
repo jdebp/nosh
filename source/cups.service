@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Common Unix Printing Service
+[Install]
+WantedBy=workstation.target
+[Service]
+systemdWorkingDirectory=false
+ExecStart=cupsd -f
+Restart=always

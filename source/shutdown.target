@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Shutdown action group target
+DefaultDependencies=false
+EarlySupervise=true
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=pause
+Restart=always
+
+[Install]

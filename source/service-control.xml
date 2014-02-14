@@ -20,12 +20,21 @@
 <refsection><title>Description</title>
 
 <para>
-<command>service-control</command> sends a series of control commands to services that are being
-managed by <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>, runit's <citerefentry><refentrytitle>runsv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, s6's <citerefentry><refentrytitle>s6-supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>, 
-daemontools' <citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>, or daemontools-encore's <citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-Each of the <replaceable>directories</replaceable> is either a supervise directory (see
-<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>) or a daemontools-style service directory with a supervise
-directory named <filename>supervise</filename> within it.
+<command>service-control</command> sends a series of control commands to
+services that are being managed by
+<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+runit's
+<citerefentry><refentrytitle>runsv</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+s6's
+<citerefentry><refentrytitle>s6-supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+daemontools'
+<citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+or daemontools-encore's
+<citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Each of the <replaceable>directories</replaceable> is either a supervise
+directory (see
+<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>)
+itself or a directory with a supervise directory named <filename>supervise</filename> within it.
 </para>
 
 <para>

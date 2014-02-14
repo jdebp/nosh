@@ -1,9 +1,0 @@
-[Unit]
-Description=Debian start-stop-daemon service %f
-
-[Service]
-Type=forking
-ExecStart=/command/exec %f
-
-[Install]
-WantedBy=multi-user.target

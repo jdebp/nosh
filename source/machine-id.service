@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Set up the machine ID sysinit service
+DefaultDependencies=false
+EarlySupervise=true
+
+[Service]
+Type=oneshot
+systemdWorkingDirectory=false
+ExecStart=setup-machine-id
+
+[Install]
+WantedBy=sysinit.target

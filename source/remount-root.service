@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Remount the / filesystem (from initial read-only mount)
+DefaultDependencies=false
+EarlySupervise=true
+
+[Service]
+Type=oneshot
+systemdWorkingDirectory=false
+ExecStart=mount /
+
+[Install]
+WantedBy=local-fs.target

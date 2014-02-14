@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=exim4 SMTP Submission socket
+[Install]
+WantedBy=server.target
+[Socket]
+Backlog=2
+BindIPv6Only=both
+ListenStream=smtp
+Accept=true
+MaxConnections=16
+UCSPIRules=true
+Nagle=false

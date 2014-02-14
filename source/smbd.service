@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=SAMBA file and print services daemon
+[Install]
+WantedBy=server.target
+[Service]
+systemdWorkingDirectory=false
+ExecStart=smbd -F -s /usr/local/etc/smb.conf
+Restart=always

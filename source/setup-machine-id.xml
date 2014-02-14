@@ -127,7 +127,7 @@ container management utilities.
 </para></listitem>
 <listitem><para>
 If it detects that it is not running in a container/jail, it will attempt to
-read the SMBIOS-generated boot GUID and use that.
+read the SMBIOS-generated system GUID and use that.
 This GUID is taken from either the <code>smbios.system.uuid</code> variable
 (see
 <citerefentry><refentrytitle>sysctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>)
@@ -135,7 +135,7 @@ or the <code>/sys/class/dmi/id/product_uuid</code> file.
 </para><para>
 Thus, if available, the SMBIOS unique identifier for the first bootstrap also
 becomes the machine identifier.
-The SMBIOS boot GUID is not used in containers/jails because it will be the
+The SMBIOS system GUID is not used in containers/jails because it will be the
 same as in the containing system itself, which may have used it as a machine ID.
 </para></listitem>
 <listitem><para>
@@ -158,7 +158,7 @@ Various softwares expect to find the machine ID in various areas of volatile sto
 <itemizedlist>
 <listitem><para>
 <command>setup-machine-id</command> itself uses <filename>/run/machine-id</filename>.
-It always creates it, and it will also use it a the source of a bind mount
+It always creates it, and it will also use it as the source of a bind mount
 should it need to (and be able to) bind mount over the top of
 <filename>/etc/machine-id</filename>.
 </para></listitem>

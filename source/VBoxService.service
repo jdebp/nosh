@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=VirtualBox guest additions
+[Install]
+WantedBy=workstation.target
+[Service]
+systemdWorkingDirectory=false
+ExecStartPre=/etc/rc.d/vboxguest start
+ExecStart=VBoxService -f
+Restart=always

@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Filesystem check the /var volume
+DefaultDependencies=false
+EarlySupervise=true
+Before=mount-var.service
+
+[Service]
+Type=oneshot
+ExecStart=fsck -C -p /var
+systemdWorkingDirectory=false
+
+[Install]
+WantedBy=mount-var.service

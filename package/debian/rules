@@ -5,7 +5,7 @@
 build: build-arch build-indep 
 
 binary: binary-arch binary-indep 
-	for i in exec service-management ; \
+	for i in exec service-management standard-targets sysinit-services regular-services regular-sockets ; \
 	do \
 		dpkg -b debian/nosh-"$$i" ../ || exit 1 ; \
 	done
@@ -28,12 +28,16 @@ binary-arch: build-arch install-arch
 	done
 
 binary-indep: build-indep install-indep
-	@true
+	for i in standard-targets sysinit-services regular-services regular-sockets ; \
+	do \
+		${RM} debian/substvars ; \
+		dpkg-gencontrol -pnosh-"$$i" -Pdebian/nosh-"$$i" || exit 1 ; \
+	done
 
 install-common:
 	install -d -m 0755 debian/tmp/DEBIAN
 	package/export debian/tmp/
-	for i in exec service-management ; \
+	for i in exec service-management standard-targets sysinit-services regular-services regular-sockets ; \
 	do \
 		install -d -m 0755 debian/nosh-"$$i"/DEBIAN || exit 1 ; \
 	done
@@ -80,10 +84,34 @@ install-indep: install-common
 			ln -f -t debian/nosh-"$$i"/usr/local/lib/tmpfiles.d/ debian/tmp/lib/tmpfiles.d/"$$j" || exit 1 ; \
 		done < debian/nosh-"$$i".tmpfilesd ; \
 	done
+	for i in sysinit-services ; \
+	do \
+		install -d -m 0755 debian/nosh-"$$i"/etc/sv || exit 1 ; \
+		while read j ; \
+		do \
+			cp -a -t debian/nosh-"$$i"/etc/sv/ debian/tmp/etc/sv/"$$j" || exit 1 ; \
+		done < package/"$$i" ; \
+	done
+	for i in regular-services regular-sockets ; \
+	do \
+		install -d -m 0755 debian/nosh-"$$i"/var/sv || exit 1 ; \
+		while read j ; \
+		do \
+			cp -a -t debian/nosh-"$$i"/var/sv/ debian/tmp/var/sv/"$$j" || exit 1 ; \
+		done < package/"$$i" ; \
+	done
+	for i in standard-targets ; \
+	do \
+		install -d -m 0755 debian/nosh-"$$i"/etc/system-manager/targets || exit 1 ; \
+		while read j ; \
+		do \
+			cp -a -t debian/nosh-"$$i"/etc/system-manager/targets/ debian/tmp/etc/system-manager/targets/"$$j" || exit 1 ; \
+		done < package/"$$i" ; \
+	done
 
 clean:
 	${RM} debian/files debian/substvars
-	for i in exec service-management ; \
+	for i in exec service-management standard-targets sysinit-services regular-services regular-sockets ; \
 	do \
 		${RM} -r debian/nosh-"$$i"/ || exit 1 ; \
 	done

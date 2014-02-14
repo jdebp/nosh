@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Filesystem check the /usr volume
+DefaultDependencies=false
+EarlySupervise=true
+Before=mount-usr.service
+
+[Service]
+Type=oneshot
+ExecStart=fsck -C -p /usr
+systemdWorkingDirectory=false
+
+[Install]
+WantedBy=mount-usr.service

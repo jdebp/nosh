@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=MySQL database server
+[Install]
+WantedBy=server.target
+[Service]
+systemdWorkingDirectory=false
+User=mysql
+ExecStart=mysqld --defaults-file=/etc/mysql/my.cnf --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib/mysql/plugin --socket=/run/mysqld/mysqld.sock --port=3306
+PrivateTmp=true
+Restart=no

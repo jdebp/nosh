@@ -10,7 +10,7 @@ root="${1-/usr/local/}"
 user="`id -un`"
 group="`id -gn`"
 
-mkdir -p "${root}"bin/ "${root}"sbin/ "${root}"man/man1 "${root}"man/man8 "${root}"lib/systemd/system "${root}"lib/tmpfiles.d
+mkdir -p "${root}"bin/ "${root}"sbin/ "${root}"man/man1 "${root}"man/man8 "${root}"lib/systemd/system "${root}"lib/tmpfiles.d "${root}"var/sv "${root}"etc/sv "${root}"etc/system-manager/targets
 
 (
 	cat package/commands1
@@ -81,3 +81,23 @@ do
 	cp -p -f -- config/"$i" "${root}"lib/tmpfiles.d/"$i"{new}
 	mv -f -- "${root}"lib/tmpfiles.d/"$i"{new} "${root}"lib/tmpfiles.d/"$i"
 done 
+while read i
+do
+	rm -f -r -- "${root}"/etc/system-manager/targets/$i/{service,before,after,wants,conflicts,required-by,wanted-by,stopped-by}/
+	command/system-control convert-systemd-units --bundle-root "${root}"etc/system-manager/targets/ build/$i.target
+done < package/standard-targets
+while read i
+do
+	rm -f -r -- "${root}"/etc/sv/$i/{service,before,after,wants,conflicts,required-by,wanted-by,stopped-by}/
+	command/system-control convert-systemd-units --bundle-root "${root}"etc/sv/ build/$i.service
+done < package/sysinit-services
+while read i
+do
+	rm -f -r -- "${root}"/var/sv/$i/{service,before,after,wants,conflicts,required-by,wanted-by,stopped-by}/
+	command/system-control convert-systemd-units --bundle-root "${root}"var/sv/ build/$i.service
+done < package/regular-services
+while read i
+do
+	rm -f -r -- "${root}"/var/sv/$i/{service,before,after,wants,conflicts,required-by,wanted-by,stopped-by}/
+	command/system-control convert-systemd-units --bundle-root "${root}"var/sv/ build/$i.socket
+done < package/regular-sockets

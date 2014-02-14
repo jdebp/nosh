@@ -68,6 +68,11 @@
 <arg choice="req"><replaceable>command</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
+<command>chkconfig</command>
+<arg choice="req"><replaceable>name</replaceable></arg>
+<arg choice="req"><replaceable>command</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
 <command>telinit</command>
 <group choice="plain">
 <arg choice="req">0</arg>

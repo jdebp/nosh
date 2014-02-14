@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=SSH service
+Conflicts=sshd@.service
+Requires=sshdgenkeys.service
+After=sshdgenkeys.service
+[Install]
+WantedBy=server.target
+[Service]
+systemdWorkingDirectory=false
+ExecStart=sshd -D -e

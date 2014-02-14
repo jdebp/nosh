@@ -388,7 +388,7 @@ start_stop_common (
 		if (!was_already_loaded) {
 			if (verbose)
 				std::fprintf(stderr, "%s: LOAD: %s\n", prog, b.name.c_str());
-			if (pretending) {
+			if (!pretending) {
 				load(prog, socket_fd, b.name.c_str(), b.supervise_dir_fd, service_dir_fd, true, true);
 				if (!wait_ok(b.supervise_dir_fd, 5000)) {
 					std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, b.name.c_str(), "ok", "Unable to load service bundle.");

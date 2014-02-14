@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+## NOTE: Bernstein's publicfile supports HTTP over both IPv4 and IPv6 without patches.
+
+[Unit]
+Description=HTTP service over IP4/IP6 using Bernstein's publicfile
+[Install]
+WantedBy=server.target
+[Service]
+systemdWorkingDirectory=false
+EnvironmentUser=publicfile
+LimitNOFILE=20
+LimitDATA=50000
+ExecStart=httpd /home/publicfile/public
+Restart=always

@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Erlang Port Mapper service
+[Install]
+WantedBy=workstation.target
+[Service]
+User=rabbitmq
+ExecStart=epmd
+Restart=always

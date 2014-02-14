@@ -1,3 +1,16 @@
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Fri, 14 Feb 2014 08:20:22 +0000
+
+nosh (1.2) unstable; urgency=low
+
+  * Made vc-reset-tty also set up default tabstops.
+  * Corrected some documentation.
+  * Removed an errant debugging statement from pty-run.
+  * Enhanced the convert-systemd-units tool.
+  * Added a bunch of pre-packaged system targets, sysinit services, regular services, and regular sockets.
+  * Added udp-socket-listen.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Fri, 14 Feb 2014 08:18:28 +0000
+
 nosh (1.1) unstable; urgency=low
 
   * Added ucspi-socket-rules-check for checking access control rules for UCSPI-TCP and UCSPI-UNIX services.

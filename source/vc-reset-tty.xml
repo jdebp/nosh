@@ -70,6 +70,7 @@ The <code>iutf8</code> option is set, unless the <arg>--no-utf8</arg> command-li
 <command>vc-reset-tty</command> writes escape sequences to soft (re-)initialize the
 terminal state, including tabstops, margins, windows. scrolling mode, and
 overstrike mode.
+Tabstops are reset to every 8th column.
 Unless the <arg>--no-reset</arg> command line option is used, additional escape
 sequences are written to hard reset the terminal from an unknown state,
 including resetting the palette.

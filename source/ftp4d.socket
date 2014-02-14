@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+[Install]
+WantedBy=server.target
+[Socket]
+Backlog=2
+MaxConnections=2
+Nagle=false
+ListenStream=0:21
+UCSPIRules=true
+Accept=true

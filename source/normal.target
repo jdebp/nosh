@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Normal group target
+EarlySupervise=true
+Wants=multi-user.target server.target workstation.target
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=pause
+Restart=always
+
+[Install]

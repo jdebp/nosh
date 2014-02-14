@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Standard login on tty1
+[Install]
+WantedBy=multi-user.target
+[Service]
+systemdWorkingDirectory=false
+SessionLeader=true
+StandardInput=tty
+StandardOutput=inherit
+TTYPath=tty1
+TTYReset=true
+ExecStart=/bin/login-prompt login-banner /etc/issue login-process login
+Restart=always

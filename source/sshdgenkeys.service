@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=SSH service
+[Install]
+WantedBy=server.target
+[Service]
+systemdWorkingDirectory=false
+ExecStart=sshdgenkeys
+RemainAfterExit=yes

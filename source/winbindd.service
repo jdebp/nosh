@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Name service switch daemon for SAMBA
+[Install]
+WantedBy=server.target
+[Service]
+systemdWorkingDirectory=false
+ExecStart=winbindd -F -s /usr/local/etc/smb.conf
+Restart=always

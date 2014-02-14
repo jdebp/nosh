@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+## NOTE: Bernstein's publicfile supports FTP over both IPv4 without patches.
+
+[Unit]
+Description=FTP service over IP4 using Bernstein's publicfile
+[Install]
+WantedBy=server.target
+[Service]
+systemdWorkingDirectory=false
+EnvironmentUser=publicfile
+LimitNOFILE=20
+LimitData=50000
+ExecStart=line-banner --NVT "220 Features: a p ." ftpd /home/publicfile/public
+Restart=always

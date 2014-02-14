@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Rabbit-MQ AMQP broker service
+Requires=epmd.service
+After=epmd.service
+[Install]
+WantedBy=server.target
+[Service]
+User=rabbitmq
+ExecStart=/usr/lib/rabbitmq/bin/rabbitmq-server
+Restart=always

@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+[Install]
+WantedBy=server.target
+[Socket]
+Backlog=2
+BindIPv6Only=both
+ListenStream=80
+Accept=true
+MaxConnections=16
+UCSPIRules=true
+Nagle=false

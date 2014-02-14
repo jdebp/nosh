@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=cron scheduling service
+[Install]
+WantedBy=workstation.target
+[Service]
+systemdWorkingDirectory=false
+EnvironmentFile=/etc/environment 
+ExecStart=cron -f
+# For "Vixie" cron, rather than GNU cron, the command line is:
+#ExecStart=cron -s -x bit
+Restart=always

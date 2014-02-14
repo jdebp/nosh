@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Sysinit group target
+DefaultDependencies=false
+EarlySupervise=true
+Before=shutdown.target
+
+[Service]
+systemdWorkingDirectory=false
+ExecStartPre=system-control sysinit
+ExecStart=pause
+Restart=always
+
+[Install]
+StoppedBy=shutdown.target

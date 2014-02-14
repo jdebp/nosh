@@ -18,48 +18,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include "popt.h"
 #include "utils.h"
 
-/* terminal processing ******************************************************
-// **************************************************************************
-// This program only targets virtual terminals provided by system console drivers.
-// So we just hardwire what we KNOW to be the value appropriate to each system.
-*/
-
-static inline
-int
-tcgetattr_nointr (
-	int fd,
-	struct termios & t
-) {
-	for (;;) {
-		const int rc(tcgetattr(fd, &t));
-		if (rc >= 0 || EINTR != errno) return rc;
-	}
-}
-
-static inline
-int
-tcsetwinsz_nointr (
-	int fd,
-	const struct winsize & w
-) {
-	for (;;) {
-		const int rc(ioctl(fd, TIOCSWINSZ, &w));
-		if (rc >= 0 || EINTR != errno) return rc;
-	}
-}
-
-static inline
-int
-tcgetwinsz_nointr (
-	int fd,
-	struct winsize & w
-) {
-	for (;;) {
-		const int rc(ioctl(fd, TIOCGWINSZ, &w));
-		if (rc >= 0 || EINTR != errno) return rc;
-	}
-}
-
 /* Main function ************************************************************
 // **************************************************************************
 */
@@ -226,8 +184,6 @@ pty_run (
 			child_signalled = false;
 		}
 
-//		std::fprintf(stderr, "%s: INFO: ine %i inl %lu oute %i outl %lu\n", prog, ine, inl, oute, outl);
-
 		// Read from stdin if we have emptied the in buffer and haven't hit EOF.
 		EV_SET(&p[0], STDIN_FILENO, EVFILT_READ, !ine && !inl ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
 		// Read from master if we have emptied the out buffer and haven't hit EOF.
@@ -250,7 +206,15 @@ pty_run (
 			throw EXIT_FAILURE;
 		}
 
+#if defined(DEBUG)
+		if (0 != rc)
+			std::fprintf(stderr, "%s: DEBUG: ine %i inl %lu oute %i outl %lu, rc = %i\n", prog, ine, inl, oute, outl, rc);
+#endif
+
 		for (size_t i(0); i < static_cast<size_t>(rc); ++i) {
+#if defined(DEBUG)
+			std::fprintf(stderr, "%s: DEBUG: i %lu: filter %i ident %lu flags %i data %i\n", prog, i, p[i].filter, p[i].ident, p[i].flags, p[i].data);
+#endif
 			if (EVFILT_READ == p[i].filter && STDIN_FILENO == p[i].ident) {
 				const int l(read(STDIN_FILENO, inb, sizeof inb));
 				if (l > 0) 
@@ -282,7 +246,9 @@ pty_run (
 					inl -= l;
 				}
 			}
-			std::fprintf(stderr, "%s: INFO: filter %i ident %lu flags %i\n", prog, p[i].filter, p[i].ident, p[i].flags);
+#if defined(DEBUG)
+			std::fprintf(stderr, "%s: DEBUG: ine %i inl %lu oute %i outl %lu\n", prog, ine, inl, oute, outl);
+#endif
 		}
 	}
 

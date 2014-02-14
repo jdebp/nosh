@@ -10,6 +10,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cerrno>
 #include <unistd.h>
 #include <termios.h>
+#include <sys/ioctl.h>
 #include "popt.h"
 #include "utils.h"
 
@@ -54,7 +55,6 @@ initialization_string()
 	return
 #if defined(__LINUX__) || defined(__linux__)
 		CSI "3g"	// clear all tab stops
-		ESC "H"		// set tab stop at current column
 #elif defined(__FreeBSD__) || defined(__DragonFly__)
 		// This isn't quite correct, but it isn't worth fixing.
 		// cons25 has fallen into desuetude and the new (2010) emulator is xterm.
@@ -63,20 +63,38 @@ initialization_string()
 		CSI "4l"	// reset insert mode (i.e. set overstrike)
 		ESC ">"		// set numeric keypad mode
 		CSI "3g"	// clear all tab stops
-		ESC "H"		// set tab stop at current column
 #elif defined(__NetBSD__)
 		// This isn't quite correct, but it isn't worth fixing.
 		// We could attempt to auto-detect the use of cons25, but it has fallen into desuetude.
 		CSI "r"		// reset window to whole screen (DECSTBM)
 		CSI "25;1H"	// move to line 25 column 1
 		CSI "3g"	// clear all tab stops
-		ESC "H"		// set tab stop at current column
 #else
 		// OpenBSD can change the emulator at kernel configuration time and at runtime.
 		// MacOS X doesn't have virtual consoles.
 #		error "Don't know what the terminal type for your console driver is."
 #endif
 	;
+}
+
+// The string that sets the default tabstops.
+static inline
+std::string
+default_tabs_string ()
+{
+	static winsize size;
+	std::string r;
+	if (0 <= tcgetwinsz_nointr(STDOUT_FILENO, size)) {
+		r += '\r';
+		for (unsigned i(8U); i < size.ws_col; i += 8U) {	// Each new tabstop is set AFTER 8 more columns.
+			r += 
+				" "" "" "" "" "" "" "" "	// Hard tabs are always every 8 columns.
+				ESC "H"		// set tab stop at current column
+			;
+		}
+		r += '\r';
+	}
+	return r;
 }
 
 /* Main function ************************************************************
@@ -129,6 +147,9 @@ vc_reset_tty (
 	if (!no_reset)
 		std::fputs(reset_string(), stdout);
 	std::fputs(initialization_string(), stdout);
+	std::fflush(stdout);
+	std::fputs(default_tabs_string().c_str(), stdout);
+	std::fflush(stdout);
 	if (!no_newline)
 		std::fputc('\n', stdout);
 	std::fflush(stdout);

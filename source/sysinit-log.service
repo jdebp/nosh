@@ -1,0 +1,21 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Combined logger for most sysinit services
+DefaultDependencies=false
+EarlySupervise=true
+After=local-fs.target
+Before=shutdown.target
+
+[Service]
+systemdWorkingDirectory=false
+PermissionsStartOnly=true
+User=log
+ExecStart=cyclog /var/log/sv/sysinit
+Restart=always
+
+[Install]
+WantedBy=sysinit.target
+StoppedBy=shutdown.target

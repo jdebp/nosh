@@ -1,0 +1,21 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=devd daemon's logger
+DefaultDependencies=false
+EarlySupervise=true
+After=local-fs.target
+Before=shutdown.target
+
+[Service]
+PermissionsStartOnly=true
+User=log
+systemdWorkingDirectory=false
+ExecStart=cyclog /var/log/sv/devd
+Restart=always
+
+[Install]
+WantedBy=sysinit.target
+StoppedBy=shutdown.target

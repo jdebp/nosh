@@ -48,6 +48,21 @@ tcsetattr_nointr (
 	int mode,
 	const struct termios & t
 ) ;
+int
+tcgetattr_nointr (
+	int fd,
+	struct termios & t
+) ;
+int
+tcsetwinsz_nointr (
+	int fd,
+	const struct winsize & w
+) ;
+int
+tcgetwinsz_nointr (
+	int fd,
+	struct winsize & w
+) ;
 extern
 void
 exec_terminal (
