@@ -645,7 +645,7 @@ common_manager (
 
 	const int service_manager_socket_fd(listen_service_manager_socket(is_system, prog));
 
-#if 1
+#if 0
 	if (is_system) {
 		const int shell(fork());
 		if (-1 == shell) {

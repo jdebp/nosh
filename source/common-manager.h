@@ -33,6 +33,6 @@ extern std::string xdg_runtime_dir();
 
 extern bool local_session_mode;
 extern const char * const roots[4];
-extern const char * const bundle_prefixes[4];
+extern const char * const bundle_prefixes[3];
 
 #endif

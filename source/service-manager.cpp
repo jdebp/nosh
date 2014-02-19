@@ -525,7 +525,7 @@ service::spawn (
 	std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, name, *a, std::strerror(error));
 	std::fflush(stderr);
 	sleep(1);
-	_exit(111);
+	_exit(EXIT_TEMPORARY_FAILURE);
 }
 
 void 

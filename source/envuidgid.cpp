@@ -45,12 +45,13 @@ envuidgid (
 	args.erase(args.begin());
 	next_prog = arg0_of(args);
 
+	errno = 0;
 	passwd * p(getpwnam(account));
 	if (!p) {
 exit_error:
 		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, account, std::strerror(error));
-		throw 111;	// Bernstein daemontools compatibility
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, account, error ? std::strerror(error) : "No such user.");
+		throw EXIT_TEMPORARY_FAILURE;	// Bernstein daemontools compatibility
 	}
 	char uid[64], gid[64];
 	snprintf(uid, sizeof uid, "%u", p->pw_uid);

@@ -11,6 +11,9 @@ For copyright and licensing terms, see the file named COPYING.
 #include <csignal>
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#if defined(__LINUX__) || defined(__linux__)
+#include <sys/vt.h>
+#endif
 #include <unistd.h>
 #include <fcntl.h>
 #include "popt.h"
@@ -30,6 +33,9 @@ open_controlling_tty (
 #else
 	bool no_revoke(false);
 #endif
+#if defined(__LINUX__) || defined(__linux__)
+	bool no_disallocate(false);
+#endif
 	bool exclusive(false);
 
 	const char * prog(basename_of(args[0]));
@@ -39,12 +45,18 @@ open_controlling_tty (
 #else
 		popt::bool_definition no_revoke_option('\0', "no-revoke", "Do not execute the revoke call.", no_revoke);
 #endif
+#if defined(__LINUX__) || defined(__linux__)
+		popt::bool_definition no_disallocate_option('\0', "no-disallocate", "Do not disallocate the scrollback buffer.", no_disallocate);
+#endif
 		popt::bool_definition exclusive_option('\0', "exclusive", "Attempt to set exclusive mode.", exclusive);
 		popt::definition * top_table[] = {
 #if defined(_GNU_SOURCE)
 			&no_vhangup_option,
 #else
 			&no_revoke_option,
+#endif
+#if defined(__LINUX__) || defined(__linux__)
+			&no_disallocate_option,
 #endif
 			&exclusive_option
 		};
@@ -71,7 +83,7 @@ open_controlling_tty (
 	if (!no_revoke) {
 		if (0 > revoke(tty)) {
 			const int error(errno);
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, tty, std::strerror(error));
+			std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, "revoke", tty, std::strerror(error));
 			throw EXIT_FAILURE;
 		}
 	}
@@ -96,15 +108,24 @@ close_exit:
 		goto close_exit;
 	}
 
-	if (exclusive) {
-		if (0 > ioctl(fd, TIOCEXCL, 1)) {
+	if (0 > ioctl(fd, exclusive ? TIOCEXCL : TIOCNXCL, 1)) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: WARNING: %s: %s: %s\n", prog, exclusive ? "TIOEXCL" : "TIOCNXCL", tty, std::strerror(error));
+	}
+#if defined(__LINUX__) || defined(__linux__)
+	if (!no_disallocate) {
+#if defined(__LINUX__) || defined(__linux__)
+		if (0 > ioctl(fd, VT_DISALLOCATE, tty)) {
 			const int error(errno);
-			std::fprintf(stderr, "%s: WARNING: %s: %s\n", prog, tty, std::strerror(error));
+			std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, "VT_DISALLOCATE", tty, std::strerror(error));
+			throw EXIT_FAILURE;
 		}
+#endif
 	}
 
 	// This is the BSD way of acquiring the controlling TTY.
-	// The 1 flag causes the forcible removal of this controlling TTY from existing processes, if we have the privileges.
+	// On Linux, the 1 flag causes the forcible removal of this controlling TTY from existing processes, if we have the privileges.
+	// BSD ignores the flag.
 	if (0 > ioctl(fd, TIOCSCTTY, 1)) goto error_exit;
 
 #if defined(_GNU_SOURCE)

@@ -672,13 +672,14 @@ them into simple services wherever possible.
 
 <listitem>
 <para>
-Only TCP, UDP, and local domain stream sockets are converted.
+Only TCP, UDP, local domain datagram, and local domain stream sockets are converted.
 The <filename>run</filename>/<filename>service</filename> script makes use of
 <citerefentry><refentrytitle>udp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>tcp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>local-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>local-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>local-stream-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>tcp-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and
-<citerefentry><refentrytitle>local-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+<citerefentry><refentrytitle>local-stream-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 to spawn services, either to listen to the accepting socket or to respond on connecting sockets.
 FIFOs and sequential packet sockets are not supported, in the absence of similar
 tools.

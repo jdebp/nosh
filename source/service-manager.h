@@ -8,7 +8,7 @@ For copyright and licensing terms, see the file named COPYING.
 
 #include <stdint.h>
 
-enum {		// statuses from daemontools-encore
+enum {		///< statuses from daemontools-encore
 	encore_status_stopped,
 	encore_status_starting,
 	encore_status_started,

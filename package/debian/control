@@ -18,8 +18,11 @@ Description: Minimal non-shell script processor and various chain-load utilities
  * softlimit, ulimit, umask, unsetenv
  .
  Also present are commands useful for daemon implementations:
- * false, line-banner, local-socket-accept, local-socket-listen,
- * recordio, setlock, tcp-socket-accept, tcp-socket-listen, true
+ * false, line-banner, true, recordio, setlock,
+ * local-datagram-socket-listen,
+ * local-stream-socket-accept, local-stream-socket-listen,
+ * udp-socket-listen,
+ * tcp-socket-accept, tcp-socket-listen, 
  .
  Further commands are useful for TUI login and TTY/PTY management:
  * login-banner,login-process, login-prompt, open-controlling-tty,

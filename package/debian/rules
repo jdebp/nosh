@@ -98,6 +98,7 @@ install-indep: install-common
 		while read j ; \
 		do \
 			cp -a -t debian/nosh-"$$i"/var/sv/ debian/tmp/var/sv/"$$j" || exit 1 ; \
+			cp -a -t debian/nosh-"$$i"/var/sv/ debian/tmp/var/sv/cyclog@"$$j" || exit 1 ; \
 		done < package/"$$i" ; \
 	done
 	for i in standard-targets ; \

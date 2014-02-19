@@ -26,7 +26,7 @@
 <para>
 <command>ucspi-socket-rules-check</command> expects a process environment
 that has been set up per the UCSPI conventions by
-<citerefentry><refentrytitle>local-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+<citerefentry><refentrytitle>local-stream-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 or
 <citerefentry><refentrytitle>tcp-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 It checks what is contained in the environment against a database of access

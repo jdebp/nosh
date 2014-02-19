@@ -23,6 +23,7 @@ smbd
 swapexd
 syslogd
 tinydns
-tty1
+ttylogin@tty6
+ttylogin@ttyv5
 volmand
 winbindd

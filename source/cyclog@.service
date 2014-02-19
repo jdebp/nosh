@@ -3,11 +3,12 @@
 ## **************************************************************************
 
 [Unit]
-Description=SSH service
-Requires=sshdgenkeys.service
-After=sshdgenkeys.service
+Description=Standard format %P logging service for %I
+Before=%I.service
 [Install]
-WantedBy=server.target
+WantedBy=workstation.target
 [Service]
-systemdWorkingDirectory=false
-ExecStart=sshd -D -e
+WorkingDirectory=/var/log/sv/
+User=%I-log
+ExecStart=%P %I/
+Restart=always

@@ -6,7 +6,12 @@
 
 <refsynopsisdiv>
 <cmdsynopsis>
-<command>vc-reset-tty</command> <arg>--no-reset</arg> <arg>--no-newline</arg> <arg>--no-utf8</arg> <arg>--no-tostop</arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+<command>vc-reset-tty</command>
+<arg>--no-reset</arg>
+<arg>--no-newline</arg>
+<arg>--no-utf8</arg>
+<arg>--no-tostop</arg>
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -14,7 +19,7 @@
 
 <para>
 <command>vc-reset-tty</command> is a chain-loading utility that attempts to initialize
-the terminal snd line discipline tate of the terminal that is on its 
+the terminal and line discipline state of the terminal that is on its 
 standard output, and then (if successful) chain loads to <replaceable>next-prog</replaceable> with the
 <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
 If its standard output is not a terminal, it aborts without attempting to

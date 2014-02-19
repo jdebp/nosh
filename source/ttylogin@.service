@@ -3,15 +3,19 @@
 ## **************************************************************************
 
 [Unit]
-Description=Standard login on tty1
+Description=Standard login on %I
 [Install]
 WantedBy=multi-user.target
 [Service]
 systemdWorkingDirectory=false
+UTmpIdentifier=%I
 SessionLeader=true
 StandardInput=tty
 StandardOutput=inherit
-TTYPath=tty1
+TTYPath=%I
 TTYReset=true
-ExecStart=/bin/login-prompt login-banner /etc/issue login-process login
+TTYVHangup=on
+TTYVTDisallocate=yes
+ExecStart=login-banner /etc/issue.vc login
 Restart=always
+RestartSec=0

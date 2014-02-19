@@ -1,4 +1,14 @@
- -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Fri, 14 Feb 2014 08:20:22 +0000
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Wed, 19 Feb 2014 15:15:44 +0000
+
+nosh (1.3) unstable; urgency=low
+
+  * Fixed an array bounds problem in "system-control status".
+  * The convert-systemd-units tool now supports templatization.
+  * Regular sockets and services now come with accompanying log services, all built from a template.
+  * Split local-socket-listen into local-stream-socket-listen and local-datagram-socket-listen.
+  * Renamed local-socket-accept to local-stream-socket-accept.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Wed, 19 Feb 2014 15:00:42 +0000
 
 nosh (1.2) unstable; urgency=low
 

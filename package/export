@@ -83,21 +83,29 @@ do
 done 
 while read i
 do
-	rm -f -r -- "${root}"/etc/system-manager/targets/$i/{service,before,after,wants,conflicts,required-by,wanted-by,stopped-by}/
+	rm -f -r -- "${root}"/etc/system-manager/targets/$i/{before,after,wants,conflicts,required-by,wanted-by,stopped-by}/
 	command/system-control convert-systemd-units --bundle-root "${root}"etc/system-manager/targets/ build/$i.target
 done < package/standard-targets
 while read i
 do
-	rm -f -r -- "${root}"/etc/sv/$i/{service,before,after,wants,conflicts,required-by,wanted-by,stopped-by}/
+	rm -f -r -- "${root}"/etc/sv/$i/{before,after,wants,conflicts,required-by,wanted-by,stopped-by}/
 	command/system-control convert-systemd-units --bundle-root "${root}"etc/sv/ build/$i.service
 done < package/sysinit-services
 while read i
 do
-	rm -f -r -- "${root}"/var/sv/$i/{service,before,after,wants,conflicts,required-by,wanted-by,stopped-by}/
+	rm -f -r -- "${root}"/var/sv/$i/{before,after,wants,conflicts,required-by,wanted-by,stopped-by}/
 	command/system-control convert-systemd-units --bundle-root "${root}"var/sv/ build/$i.service
+	rm -f -r -- "${root}"/var/sv/cyclog@$i/{before,after,wants,conflicts,required-by,wanted-by,stopped-by}/
+	command/system-control convert-systemd-units --bundle-root "${root}"var/sv/ build/cyclog@$i.service
+	rm -f -- "${root}"var/sv/$i/log
+	ln -s ../cyclog@$i "${root}"var/sv/$i/log
 done < package/regular-services
 while read i
 do
-	rm -f -r -- "${root}"/var/sv/$i/{service,before,after,wants,conflicts,required-by,wanted-by,stopped-by}/
+	rm -f -r -- "${root}"/var/sv/$i/{before,after,wants,conflicts,required-by,wanted-by,stopped-by}/
 	command/system-control convert-systemd-units --bundle-root "${root}"var/sv/ build/$i.socket
+	rm -f -r -- "${root}"/var/sv/cyclog@$i/{before,after,wants,conflicts,required-by,wanted-by,stopped-by}/
+	command/system-control convert-systemd-units --bundle-root "${root}"var/sv/ build/cyclog@$i.service
+	rm -f -- "${root}"var/sv/$i/log
+	ln -s ../cyclog@$i "${root}"var/sv/$i/log
 done < package/regular-sockets

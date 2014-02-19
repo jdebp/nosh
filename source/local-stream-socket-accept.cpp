@@ -91,7 +91,7 @@ reap (
 }
 
 void
-local_socket_accept ( 
+local_stream_socket_accept ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {

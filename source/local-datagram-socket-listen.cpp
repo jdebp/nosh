@@ -26,26 +26,21 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 void
-local_socket_listen ( 
+local_datagram_socket_listen ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {
 	const char * prog(basename_of(args[0]));
-	unsigned long backlog(5U);
 	signed long uid(-1), gid(-1), mode(0700);
-	bool has_uid(false), has_gid(false), has_mode(false), datagram(false);
+	bool has_uid(false), has_gid(false), has_mode(false);
 	bool systemd_compatibility(false);
 	try {
 		popt::bool_definition systemd_compatibility_option('\0', "systemd-compatibility", "Set the $LISTEN_FDS and $LISTEN_PID environment variables for compatibility with systemd.", systemd_compatibility);
-		popt::bool_definition datagram_option('\0', "datagram", "Open a datagram socket rather than a stream one.", datagram);
-		popt::unsigned_number_definition backlog_option('b', "backlog", "number", "Specify the listening backlog.", backlog, 0);
 		popt::signed_number_definition uid_option('u', "uid", "number", "Specify the UID for the bound socket filename.", uid, 0);
 		popt::signed_number_definition gid_option('g', "gid", "number", "Specify the GID for the bound socket filename.", gid, 0);
 		popt::signed_number_definition mode_option('m', "mode", "number", "Specify the permissions for the bound socket filename.", mode, 0);
 		popt::definition * top_table[] = {
 			&systemd_compatibility_option,
-			&datagram_option,
-			&backlog_option,
 			&uid_option,
 			&gid_option,
 			&mode_option
@@ -93,7 +88,7 @@ local_socket_listen (
 	addr.sun_len = SUN_LEN(&addr);
 #endif
 
-	const int s(socket(AF_LOCAL, datagram ? SOCK_DGRAM : SOCK_STREAM, 0));
+	const int s(socket(AF_LOCAL, SOCK_DGRAM, 0));
 	if (0 > s) {
 exit_error:
 		const int error(errno);
@@ -107,9 +102,6 @@ exit_error:
 	}
 	if (has_mode) {
 		if (0 > chmod(listenpath, mode)) goto exit_error;
-	}
-	if (!datagram) {
-		if (0 > listen(s, backlog)) goto exit_error;
 	}
 
 	if (0 > dup2(s, LISTEN_SOCKET_FILENO)) goto exit_error;

@@ -29,11 +29,11 @@ For copyright and licensing terms, see the file named COPYING.
 
 bool local_session_mode(false);
 
-const char * const roots[] = {
+const char * const roots[4] = {
 	"/run/", "/etc/", "/", "/var/"
 };
 
-const char * const bundle_prefixes[] = {
+const char * const bundle_prefixes[3] = {
 	"system-manager/targets/", "sv/", "service/",
 };
 

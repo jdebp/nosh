@@ -118,7 +118,6 @@ exit_error:
 #endif
 	}
 	if (0 > bind(s, info->ai_addr, info->ai_addrlen)) goto exit_error;
-	if (0 > listen(s, 128)) goto exit_error;
 
 	if (0 > dup2(s, LISTEN_SOCKET_FILENO)) goto exit_error;
 	if (LISTEN_SOCKET_FILENO != s) close(s);

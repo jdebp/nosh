@@ -9,8 +9,9 @@ false
 fdmove
 fdredir
 line-banner
-local-socket-accept
-local-socket-listen
+local-datagram-socket-listen
+local-stream-socket-listen
+local-stream-socket-accept
 login-banner
 login-process
 login-prompt

@@ -45,8 +45,9 @@ extern void fdmove ( const char * &, std::vector<const char *> & );
 extern void fdredir ( const char * &, std::vector<const char *> & );
 extern void read_conf ( const char * &, std::vector<const char *> & );
 extern void setlock ( const char * &, std::vector<const char *> & );
-extern void local_socket_listen ( const char * &, std::vector<const char *> & );
-extern void local_socket_accept ( const char * &, std::vector<const char *> & );
+extern void local_datagram_socket_listen ( const char * &, std::vector<const char *> & );
+extern void local_stream_socket_listen ( const char * &, std::vector<const char *> & );
+extern void local_stream_socket_accept ( const char * &, std::vector<const char *> & );
 extern void appendpath ( const char * &, std::vector<const char *> & );
 extern void prependpath ( const char * &, std::vector<const char *> & );
 extern void recordio ( const char * &, std::vector<const char *> & );
@@ -94,8 +95,9 @@ commands[] = {
 	{	"fdredir",			fdredir				},
 	{	"read-conf",			read_conf			},
 	{	"setlock",			setlock				},
-	{	"local-socket-accept",		local_socket_accept		},
-	{	"local-socket-listen",		local_socket_listen		},
+	{	"local-datagram-socket-listen",	local_datagram_socket_listen	},
+	{	"local-stream-socket-listen",	local_stream_socket_listen	},
+	{	"local-stream-socket-accept",	local_stream_socket_accept	},
 	{	"appendpath",			appendpath			},
 	{	"prependpath",			prependpath			},
 	{	"recordio",			recordio			},

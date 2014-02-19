@@ -1,12 +1,15 @@
-<refentry id="local-socket-listen">
+<refentry id="local-stream-socket-listen">
 
-<refmeta><refentrytitle>local-socket-listen</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+<refmeta><refentrytitle>local-stream-socket-listen</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
 
-<refnamediv><refname>local-socket-listen</refname><refpurpose>create a socket listening for incoming TCP connections and chain</refpurpose></refnamediv>
+<refnamediv>
+<refname>local-stream-socket-listen</refname>
+<refpurpose>create a socket listening for incoming TCP connections and chain</refpurpose>
+</refnamediv>
 
 <refsynopsisdiv>
 <cmdsynopsis>
-<command>local-socket-listen</command>
+<command>local-stream-socket-listen</command>
 <arg>--backlog <replaceable>number</replaceable></arg>
 <arg>--uid <replaceable>number</replaceable></arg>
 <arg>--gid <replaceable>number</replaceable></arg>
@@ -20,8 +23,8 @@
 <refsection><title>Description</title>
 
 <para>
-<command>local-socket-listen</command> is a chain-loading utility that opens a
-local domain socket bound to <replaceable>path</replaceable>, executes a call
+<command>local-stream-socket-listen</command> is a chain-loading utility that opens a
+local domain stream socket bound to <replaceable>path</replaceable>, executes a call
 to
 <citerefentry><refentrytitle>listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 sets the socket to file descriptor 3 (closing whatever that descriptor was),
@@ -30,7 +33,7 @@ and then chain loads to <replaceable>next-prog</replaceable> with the
 function.
 </para>
 
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>local-socket-listen</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>local-stream-socket-listen</command> will ignore.
 
 <para>
 The <arg>--backlog</arg> option specifies the allowed backlog level (defaulting to 5)
@@ -39,7 +42,7 @@ of outstanding not-yet-accepted connections to the socket.
 
 <para>
 After binding the socket to <replaceable>path</replaceable>,
-<command>local-socket-listen</command> changes the owner UID of the socket to
+<command>local-stream-socket-listen</command> changes the owner UID of the socket to
 that specified with the <arg>--uid</arg> command line argument (if supplied),
 changes the GID of the socket to that specified with the <arg>--gid</arg>
 command line argument (if supplied), and changes the permissions of the socket
@@ -51,7 +54,7 @@ Symbolic permissions and account names are not supported.
 </para>
 
 <para>
-The <arg>--systemd-compatibility</arg> option causes <command>local-socket-listen</command> to set the
+The <arg>--systemd-compatibility</arg> option causes <command>local-stream-socket-listen</command> to set the
 <code>LISTEN_FDS</code> environment variable to 1, and the <code>LISTEN_PID</code> environment
 variable to its own process ID.
 This is for compatibility with daemons that expect to be run under 
@@ -74,7 +77,7 @@ Because of an oversight in operating systems that prevents
 <citerefentry><refentrytitle>fchmod</refentrytitle><manvolnum>2</manvolnum></citerefentry>
 and
 <citerefentry><refentrytitle>fchown</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-from working with bound local domain sockets, <command>local-socket-listen</command> calls
+from working with bound local domain sockets, <command>local-stream-socket-listen</command> calls
 <citerefentry><refentrytitle>chmod</refentrytitle><manvolnum>2</manvolnum></citerefentry>
 and
 <citerefentry><refentrytitle>chown</refentrytitle><manvolnum>2</manvolnum></citerefentry>
@@ -82,7 +85,7 @@ on <replaceable>path</replaceable>.
 Because of an oversight in operating systems that prevents
 <citerefentry><refentrytitle>bind</refentrytitle><manvolnum>2</manvolnum></citerefentry>
 from being able to re-use old local domain socket addresses,
-<command>local-socket-listen</command> attempts to delete, with
+<command>local-stream-socket-listen</command> attempts to delete, with
 <citerefentry><refentrytitle>unlink</refentrytitle><manvolnum>2</manvolnum></citerefentry>, 
 any file named <replaceable>path</replaceable> before binding.
 An attacker who could change what file is denoted by 
@@ -109,19 +112,19 @@ untrusted programs cannot supply <replaceable>path</replaceable>.
 </refsection><refsection><title>USAGE</title>
 
 <para>
-<command>local-socket-listen</command> can be used as a simple daemon monitored by
+<command>local-stream-socket-listen</command> can be used as a simple daemon monitored by
 <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 that chains to
-<citerefentry><refentrytitle>local-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+<citerefentry><refentrytitle>local-stream-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 Together, the two replace
 <citerefentry><refentrytitle>unixserver</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 from ucspi-unix.
-<command>local-socket-listen</command> overlaps the functionality of
+<command>local-stream-socket-listen</command> overlaps the functionality of
 <citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 and
 <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 with which only the
-<citerefentry><refentrytitle>local-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+<citerefentry><refentrytitle>local-stream-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 half of the pair would be needed (in the systemd-recommended configuration of
 <code>Accept=false</code> sockets).
 </para>

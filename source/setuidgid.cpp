@@ -59,7 +59,7 @@ setuidgid (
 exit_error:
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, account, error ? std::strerror(error) : "No such user.");
-		throw 111;	// Bernstein daemontools compatibility
+		throw EXIT_TEMPORARY_FAILURE;	// Bernstein daemontools compatibility
 	}
 	if (supplementary) {
 		if (0 > initgroups(account, p->pw_gid)) goto exit_error;

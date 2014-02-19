@@ -11,6 +11,9 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include <termios.h>
 #include <sys/ioctl.h>
+#if defined(__LINUX__) || defined(__linux__)
+#include <sys/kd.h>
+#endif
 #include "popt.h"
 #include "utils.h"
 
@@ -144,6 +147,12 @@ vc_reset_tty (
 
 	tcsetattr_nointr(STDOUT_FILENO, TCSAFLUSH, sane(no_tostop, no_utf_8));
 
+#if defined(__LINUX__) || defined(__linux__)
+	if (0 > ioctl(STDOUT_FILENO, KDSETMODE, KD_TEXT)) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: WARNING: %s: %s: %s\n", prog, "KDSETMODE", "stdout", std::strerror(error));
+	}
+#endif
 	if (!no_reset)
 		std::fputs(reset_string(), stdout);
 	std::fputs(initialization_string(), stdout);

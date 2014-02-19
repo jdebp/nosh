@@ -8,8 +8,9 @@ exec	false
 exec	fdmove
 exec	fdredir
 exec	line-banner
-exec	local-socket-accept
-exec	local-socket-listen
+exec	local-datagram-socket-listen
+exec	local-stream-socket-listen
+exec	local-stream-socket-accept
 exec	login-banner
 exec	login-process
 exec	login-prompt

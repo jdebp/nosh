@@ -2,7 +2,10 @@
 
 <refmeta><refentrytitle>udp-socket-listen</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
 
-<refnamediv><refname>udp-socket-listen</refname><refpurpose>create a socket listening for incoming UDP connections and chain</refpurpose></refnamediv>
+<refnamediv>
+<refname>udp-socket-listen</refname>
+<refpurpose>create a socket listening for incoming UDP connections and chain</refpurpose>
+</refnamediv>
 
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -23,8 +26,7 @@
 <para>
 <command>udp-socket-listen</command> is a chain-loading utility that opens a
 UDP socket bound to <replaceable>host</replaceable> and
-<replaceable>port</replaceable>, executes a call to
-<citerefentry><refentrytitle>listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<replaceable>port</replaceable>, 
 sets the socket to file descriptor 3 (closing whatever that descriptor was),
 and then chain loads to <replaceable>next-prog</replaceable> with the
 <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
@@ -102,8 +104,7 @@ and
 </para>
 
 <para>
-To change the process' UID and GID after a successful call to
-<citerefentry><refentrytitle>listen</refentrytitle><manvolnum>2</manvolnum></citerefentry>,
+To change the process' UID and GID after opening the socket,
 simply chain through
 <citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
