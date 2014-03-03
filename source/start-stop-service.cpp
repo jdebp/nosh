@@ -228,10 +228,11 @@ lookup_without_adding (
 static
 void
 mark_paths_in_order (
+	bundle * parent,
 	bundle * b
 ) {
 	if (0 == b->order) {
-		std::fprintf(stderr, "%s: %s\n", b->name.c_str(), "Ordering loop.");
+		std::fprintf(stderr, "%s: %s: %s\n", parent ? parent->name.c_str() : "", b->name.c_str(), "Ordering loop.");
 		return;
 	}
 	if (0 > b->order) {
@@ -239,7 +240,7 @@ mark_paths_in_order (
 		const bundle_pointer_set & a(b->sort_after);
 		for (bundle_pointer_set::const_iterator j(a.begin()); a.end() != j; ++j) {
 			bundle * p(*j);
-			mark_paths_in_order(p);
+			mark_paths_in_order(b, p);
 			if (p->order > b->order) b->order = p->order;
 		}
 		++b->order;	// Never assigns order zero.
@@ -338,16 +339,56 @@ start_stop_common (
 		const bundle_pointer_set b(lookup_without_adding(bundles, i->second, "before/"));
 		switch (i->second.wants) {
 			case bundle::WANT_START:
-				for (bundle_pointer_set::const_iterator j(a.begin()); a.end() != j; ++j)
-					i->second.sort_after.insert(*j);
-				for (bundle_pointer_set::const_iterator j(b.begin()); b.end() != j; ++j)
-					(*j)->sort_after.insert(&i->second);
+				for (bundle_pointer_set::const_iterator j(a.begin()); a.end() != j; ++j) {
+					switch ((*j)->wants) {
+						case bundle::WANT_START:
+							i->second.sort_after.insert(*j);
+							break;
+						case bundle::WANT_STOP:
+							i->second.sort_after.insert(*j);
+							break;
+						default:
+							break;
+					}
+				}
+				for (bundle_pointer_set::const_iterator j(b.begin()); b.end() != j; ++j) {
+					switch ((*j)->wants) {
+						case bundle::WANT_START:
+							(*j)->sort_after.insert(&i->second);
+							break;
+						case bundle::WANT_STOP:
+							(*j)->sort_after.insert(&i->second);
+							break;
+						default:
+							break;
+					}
+				}
 				break;
 			case bundle::WANT_STOP:
-				for (bundle_pointer_set::const_iterator j(a.begin()); a.end() != j; ++j)
-					(*j)->sort_after.insert(&i->second);
-				for (bundle_pointer_set::const_iterator j(b.begin()); b.end() != j; ++j)
-					i->second.sort_after.insert(*j);
+				for (bundle_pointer_set::const_iterator j(a.begin()); a.end() != j; ++j) {
+					switch ((*j)->wants) {
+						case bundle::WANT_START:
+							i->second.sort_after.insert(*j);
+							break;
+						case bundle::WANT_STOP:
+							(*j)->sort_after.insert(&i->second);
+							break;
+						default:
+							break;
+					}
+				}
+				for (bundle_pointer_set::const_iterator j(b.begin()); b.end() != j; ++j) {
+					switch ((*j)->wants) {
+						case bundle::WANT_START:
+							(*j)->sort_after.insert(&i->second);
+							break;
+						case bundle::WANT_STOP:
+							i->second.sort_after.insert(*j);
+							break;
+						default:
+							break;
+					}
+				}
 				break;
 			default:
 				break;
@@ -356,7 +397,7 @@ start_stop_common (
 	}
 
 	for (bundle_pointer_set::const_iterator i(unsorted.begin()); unsorted.end() != i; ++i)
-		mark_paths_in_order(*i);
+		mark_paths_in_order(0, *i);
 	bundle_pointer_list sorted;
 	for (bundle_pointer_set::const_iterator i(unsorted.begin()); unsorted.end() != i; ++i)
 		insertion_sort(sorted, *i);
@@ -366,6 +407,7 @@ start_stop_common (
 		bundle & b(**i);
 		if (bundle::WANT_NONE == b.wants) continue;
 		make_symlink_target(b.bundle_dir_fd, "supervise", 0755);
+		make_supervise (b.bundle_dir_fd);
 		b.supervise_dir_fd = open_dir_at(b.bundle_dir_fd, "supervise/");
 		if (0 > b.supervise_dir_fd) {
 			const int error(errno);
@@ -389,6 +431,7 @@ start_stop_common (
 			if (verbose)
 				std::fprintf(stderr, "%s: LOAD: %s\n", prog, b.name.c_str());
 			if (!pretending) {
+				make_supervise_fifos (b.supervise_dir_fd);
 				load(prog, socket_fd, b.name.c_str(), b.supervise_dir_fd, service_dir_fd, true, true);
 				if (!wait_ok(b.supervise_dir_fd, 5000)) {
 					std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, b.name.c_str(), "ok", "Unable to load service bundle.");
@@ -406,8 +449,10 @@ start_stop_common (
 			if (!log_was_already_loaded) {
 				if (verbose)
 					std::fprintf(stderr, "%s: LOAD: %s\n", prog, (b.name + "/log").c_str());
-				if (!pretending)
+				if (!pretending) {
+					make_supervise_fifos (log_supervise_dir_fd);
 					load(prog, socket_fd, (b.name + "/log").c_str(), log_supervise_dir_fd, log_service_dir_fd, true, true);
+				}
 			}
 			if (!pretending)
 				plumb(prog, socket_fd, b.supervise_dir_fd, log_supervise_dir_fd);
@@ -448,7 +493,7 @@ start_stop_common (
 				bundle * p(*j);
 				if (p->DONE != p->job_state) {
 					if (verbose)
-						std::fprintf(stderr, "%s: BLOCKED: %s\n", prog, b.name.c_str());
+						std::fprintf(stderr, "%s: %s: BLOCKED by %s\n", prog, b.name.c_str(), p->name.c_str());
 					b.job_state = b.BLOCKED;
 					break;
 				}

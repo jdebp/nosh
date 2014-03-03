@@ -52,5 +52,13 @@ bool
 is_up (
 	const int supervise_dir_fd
 );
+void
+make_supervise (
+	const int bundle_dir_fd
+);
+void
+make_supervise_fifos (
+	const int supervise_dir_fd
+);
 
 #endif

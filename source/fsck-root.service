@@ -3,13 +3,15 @@
 ## **************************************************************************
 
 [Unit]
-Description=Device bus service
+Description=Filesystem check the / volume
+DefaultDependencies=false
+EarlySupervise=true
+Before=remount-root.service
 
 [Service]
+Type=oneshot
+ExecStart=fsck -C -p /
 systemdWorkingDirectory=false
-ExecStartPre=sh -c 'mkdir -p /run/dbus ; mkdir -p /var/db/dbus ; [ ! -r /var/db/dbus/machine-id ] && ln -s /etc/machine-id /var/db/dbus/'
-ExecStart=dbus-daemon --system --nofork
-Restart=always
 
 [Install]
-WantedBy=workstation.target
+WantedBy=remount-root.service

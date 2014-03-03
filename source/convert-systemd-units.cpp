@@ -73,10 +73,15 @@ find (
 		FILE * f = std::fopen(path.c_str(), "r");
 		if (f) return f;
 	} else {
+		int error(ENOENT);	// the most interesting error encountered
 		for ( const char ** p(systemd_prefixes); p < systemd_prefixes + sizeof systemd_prefixes/sizeof *systemd_prefixes; ++p) {
 			path = ((std::string(*p) + "systemd/") + (local_session_mode ? "user/" : "system/")) + name;
 			FILE * f = std::fopen(path.c_str(), "r");
 			if (f) return f;
+			if (ENOENT == errno) 
+				errno = error;	// Restore a more interesting error.
+			else
+				error = errno;	// Save this interesting error.
 		}
 	}
 	return NULL;
@@ -532,33 +537,40 @@ convert_systemd_units (
 	value * socket_defaultdependencies(socket_profile.use("unit", "defaultdependencies"));
 	value * socket_earlysupervise(socket_profile.use("unit", "earlysupervise"));	// This is an extension to systemd.
 	value * socket_wantedby(socket_profile.use("install", "wantedby"));
+	value * socket_requiredby(socket_profile.use("install", "requiredby"));
 	value * socket_stoppedby(socket_profile.use("install", "stoppedby"));	// This is an extension to systemd.
 
-	std::string service_unit_name, prefix_name, instance_name;
+	std::string service_filename, prefix_name, instance_name;
+	FileStar service_file;
 	bool is_socket_accept(false);
-	if (is_socket_activated) {
-		is_socket_accept = is_bool_true(accept, false);
-		prefix_name = bundle_basename;
-		service_unit_name = unit_dirname + prefix_name + (is_socket_accept ? "@" : "") + ".service";
-	} else {
-		std::string::size_type atc(bundle_basename.find('@'));
-		if (bundle_basename.npos != atc) {
-			prefix_name = unit_basename.substr(0, atc);
-			++atc;
-			instance_name = bundle_basename.substr(atc, bundle_basename.npos);
-			service_unit_name = unit_dirname + prefix_name + "@.service";
+	{
+		std::string service_unit_name;
+		if (is_socket_activated) {
+			is_socket_accept = is_bool_true(accept, false);
+			prefix_name = bundle_basename;
+			service_unit_name = unit_dirname + prefix_name + (is_socket_accept ? "@" : "") + ".service";
+			service_file = find(service_unit_name, service_filename);
 		} else {
 			prefix_name = bundle_basename;
 			service_unit_name = unit_name;
+			service_file = find(service_unit_name, service_filename);
+			if (!service_file && ENOENT == errno) {
+				std::string::size_type atc(bundle_basename.find('@'));
+				if (bundle_basename.npos != atc) {
+					prefix_name = unit_basename.substr(0, atc);
+					++atc;
+					instance_name = bundle_basename.substr(atc, bundle_basename.npos);
+					service_unit_name = unit_dirname + prefix_name + "@.service";
+					service_file = find(service_unit_name, service_filename);
+				}
+			}
 		}
-	}
-			
-	std::string service_filename;
-	FileStar service_file(find(service_unit_name, service_filename));
-	if (!service_file) {
-		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, service_unit_name.c_str(), std::strerror(error));
-		throw EXIT_FAILURE;
+				
+		if (!service_file) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, service_unit_name.c_str(), std::strerror(error));
+			throw EXIT_FAILURE;
+		}
 	}
 	if (!is_regular(prog, service_filename, service_file))
 		throw EXIT_FAILURE;
@@ -616,6 +628,7 @@ convert_systemd_units (
 	value * service_requisite(service_profile.use("unit", "requisite"));
 	value * service_description(service_profile.use("unit", "description"));
 	value * service_wantedby(service_profile.use("install", "wantedby"));
+	value * service_requiredby(service_profile.use("install", "requiredby"));
 	value * service_stoppedby(service_profile.use("install", "stoppedby"));	// This is an extension to systemd.
 
 	// Actively prevent certain unsupported combinations.
@@ -675,7 +688,7 @@ convert_systemd_units (
 	const bool chrootall(!is_bool_true(rootdirectorystartonly, false));
 	std::string setsid;
 	if (is_bool_true(sessionleader, false)) setsid += "setsid\n";
-	if (is_bool_true(processgroupleader, false)) setsid += "setpgid\n";
+	if (is_bool_true(processgroupleader, false)) setsid += "setpgrp\n";
 	std::string setuidgid;
 	if (user) {
 		const std::string u(SUBSTITUTE(user->datum));
@@ -746,7 +759,12 @@ convert_systemd_units (
 #else
 			redirect += " --no-revoke";
 #endif
-		if (!is_bool_true(ttyvtdisallocate, false)) redirect += " --no-disallocate";
+		if (is_bool_true(ttyvtdisallocate, false)) 
+#if defined(__LINUX__) || defined(__linux__)
+			redirect += " --disallocate";
+#else
+			;
+#endif
 		redirect += "\n";
 		if (is_bool_true(ttyreset, false)) redirect += "vc-reset-tty\n";
 	}
@@ -929,6 +947,8 @@ convert_systemd_units (
 	CREATE_LINKS(prog, is_target, service_conflicts, bundle_dirname, "/conflicts/");
 	CREATE_LINKS(prog, is_target, socket_wantedby, bundle_dirname, "/wanted-by/");
 	CREATE_LINKS(prog, is_target, service_wantedby, bundle_dirname, "/wanted-by/");
+	CREATE_LINKS(prog, is_target, socket_requiredby, bundle_dirname, "/wanted-by/");
+	CREATE_LINKS(prog, is_target, service_requiredby, bundle_dirname, "/wanted-by/");
 	CREATE_LINKS(prog, is_target, socket_stoppedby, bundle_dirname, "/stopped-by/");
 	CREATE_LINKS(prog, is_target, service_stoppedby, bundle_dirname, "/stopped-by/");
 	const bool defaultdependencies(

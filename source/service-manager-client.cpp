@@ -4,6 +4,7 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 #include <cstring>
+#include <csignal>
 #include <cstdio>
 #include <cerrno>
 #include <sys/socket.h>
@@ -157,6 +158,8 @@ is_ok (
 	return r;
 }
 
+static void sig_ignore ( int ) {}
+
 bool
 wait_ok (
 	const int supervise_dir_fd,
@@ -166,7 +169,12 @@ wait_ok (
 		const int ok_fd(open_writeexisting_or_wait_at(supervise_dir_fd, "ok"));
 		if (0 <= ok_fd) close(ok_fd);
 		return 0 <= ok_fd;
+	} else if (0 == timeout) {
+		const int ok_fd(open_writeexisting_at(supervise_dir_fd, "ok"));
+		if (0 <= ok_fd) close(ok_fd);
+		return 0 <= ok_fd;
 	} else {
+#if 0
 		for (;;) {
 			const int ok_fd(open_writeexisting_at(supervise_dir_fd, "ok"));
 			if (0 <= ok_fd) {
@@ -177,6 +185,18 @@ wait_ok (
 			sleep(1);
 			timeout = (timeout < 1000) ? 0 : timeout - 1000;
 		}
+#else
+		struct sigaction a, o;
+		a.sa_flags=0;
+		sigemptyset(&a.sa_mask);
+		a.sa_handler=sig_ignore;
+		sigaction(SIGALRM,&a,&o);
+		alarm((timeout + 999) / 1000);
+		const int ok_fd(open_writeexisting_or_wait_at(supervise_dir_fd, "ok"));
+		if (0 <= ok_fd) close(ok_fd);
+		sigaction(SIGALRM,&o,NULL);
+		return 0 <= ok_fd;
+#endif
 	}
 }
 
@@ -195,4 +215,19 @@ is_up (
 	} else {
 		return status[12] || status[13] || status[14] || status[15];
 	}
+}
+
+void
+make_supervise (
+	const int bundle_dir_fd
+) {
+	mkdirat(bundle_dir_fd, "supervise", 0700);
+}
+
+void
+make_supervise_fifos (
+	const int supervise_dir_fd
+) {
+	mkfifoat(supervise_dir_fd, "ok", 0666);
+	mkfifoat(supervise_dir_fd, "control", 0600);
 }

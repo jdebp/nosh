@@ -8,6 +8,7 @@ DefaultDependencies=false
 EarlySupervise=true
 
 [Service]
+User=nobody
 systemdWorkingDirectory=false
 ExecStart=pause
 Restart=always

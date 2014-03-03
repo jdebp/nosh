@@ -34,7 +34,7 @@ open_controlling_tty (
 	bool no_revoke(false);
 #endif
 #if defined(__LINUX__) || defined(__linux__)
-	bool no_disallocate(false);
+	bool disallocate(false);
 #endif
 	bool exclusive(false);
 
@@ -46,7 +46,7 @@ open_controlling_tty (
 		popt::bool_definition no_revoke_option('\0', "no-revoke", "Do not execute the revoke call.", no_revoke);
 #endif
 #if defined(__LINUX__) || defined(__linux__)
-		popt::bool_definition no_disallocate_option('\0', "no-disallocate", "Do not disallocate the scrollback buffer.", no_disallocate);
+		popt::bool_definition disallocate_option('\0', "disallocate", "Do not disallocate the scrollback buffer.", disallocate);
 #endif
 		popt::bool_definition exclusive_option('\0', "exclusive", "Attempt to set exclusive mode.", exclusive);
 		popt::definition * top_table[] = {
@@ -56,7 +56,7 @@ open_controlling_tty (
 			&no_revoke_option,
 #endif
 #if defined(__LINUX__) || defined(__linux__)
-			&no_disallocate_option,
+			&disallocate_option,
 #endif
 			&exclusive_option
 		};
@@ -113,15 +113,14 @@ close_exit:
 		std::fprintf(stderr, "%s: WARNING: %s: %s: %s\n", prog, exclusive ? "TIOEXCL" : "TIOCNXCL", tty, std::strerror(error));
 	}
 #if defined(__LINUX__) || defined(__linux__)
-	if (!no_disallocate) {
-#if defined(__LINUX__) || defined(__linux__)
+	if (disallocate) {
 		if (0 > ioctl(fd, VT_DISALLOCATE, tty)) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, "VT_DISALLOCATE", tty, std::strerror(error));
 			throw EXIT_FAILURE;
 		}
-#endif
 	}
+#endif
 
 	// This is the BSD way of acquiring the controlling TTY.
 	// On Linux, the 1 flag causes the forcible removal of this controlling TTY from existing processes, if we have the privileges.

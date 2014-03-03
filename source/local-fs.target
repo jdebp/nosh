@@ -9,6 +9,7 @@ EarlySupervise=true
 Before=shutdown.target
 
 [Service]
+User=nobody
 systemdWorkingDirectory=false
 ExecStart=pause
 Restart=always

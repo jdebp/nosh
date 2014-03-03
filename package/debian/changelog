@@ -1,4 +1,17 @@
- -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Wed, 19 Feb 2014 15:15:44 +0000
+nosh (1.4) unstable; urgency=low
+
+  * More BSD services: background-fsck, mixer@, uhidd@, and powerd
+  * More Linux services: kmod@
+  * More cross-platform services: fsck-root
+  * Fixed a signal masking problem in system-manager's state machine.
+  * Ordered the mount-* services before local-fs.
+  * Fixed a problem in system-control where it was waiting for the "ok" FIFO to come up.
+  * convert-systemd-units now uses explicit template instantiations if they exist.
+  * Fixed an ordering problem in system-control start/stop that was hanging shutdown.
+  * Documented the pause command.
+  * system-manager now invokes system-control start with the --verbose option.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Mon, 03 Mar 2014 23:23:19 +0000
 
 nosh (1.3) unstable; urgency=low
 

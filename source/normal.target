@@ -8,6 +8,7 @@ EarlySupervise=true
 Wants=multi-user.target server.target workstation.target
 
 [Service]
+User=nobody
 systemdWorkingDirectory=false
 ExecStart=pause
 Restart=always

@@ -41,6 +41,12 @@ pause (
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Unexpected argument.");
 		throw EXIT_FAILURE;
 	}
+#if defined(__LINUX__) || defined(__linux__)
+	sigset_t s;
+	sigemptyset(&s);
+	sigsuspend(&s);
+#else
 	sigpause(0);
+#endif
 	throw EXIT_SUCCESS;
 }

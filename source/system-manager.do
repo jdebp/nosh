@@ -1,5 +1,5 @@
 #!/bin/sh -e
-objects="common-manager.o main-exec.o builtins-system-manager.o api_mounts.o api_symlinks.o service-manager-socket.o system-control.o system-control-init.o system-control-status.o system-control-job.o system-control-enable.o"
+objects="common-manager.o main-exec.o builtins-system-manager.o api_mounts.o api_symlinks.o service-manager-socket.o system-control.o system-state-change.o system-control-status.o start-stop-service.o enable-disable-preset.o"
 libraries="builtins.a utils.a"
 [ "`uname`" = "FreeBSD" ] || kqueue=-lkqueue
 redo-ifchange link ${objects} ${libraries}

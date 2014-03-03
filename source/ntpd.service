@@ -4,9 +4,13 @@
 
 [Unit]
 Description=BSD NTP daemon
-[Install]
-WantedBy=workstation.target
+
 [Service]
 systemdWorkingDirectory=false
 ExecStart=ntpd -n -g -f /var/db/ntpd.drift
 Restart=always
+StandardOutput=inherit
+StandardError=inherit
+
+[Install]
+WantedBy=workstation.target

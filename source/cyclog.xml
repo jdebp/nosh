@@ -107,9 +107,11 @@ Thus no log data are lost, even if <command>cyclog</command> is shut down and re
 </refsection><refsection><title>AUTOMATIC LOG ROTATION</title>
 
 <para>
-<command>cyclog</command> performs automatic log rotation when it writes a linefeed within
-<replaceable>margin</replaceable> bytes of the maximum size (<replaceable>max-file-size</replaceable>) of the <filename>current</filename> file,
-when it is about to exceed that size, or when it receives a <code>SIGALRM</code>.
+<command>cyclog</command> performs automatic log rotation when it writes a
+linefeed within <replaceable>margin</replaceable> bytes of the maximum size
+(<replaceable>max-file-size</replaceable>) of the <filename>current</filename>
+file, when it is about to exceed that size, or when it receives a
+<code>SIGALRM</code>.  
 It flushes <filename>current</filename> to disc, changes its permissions and renames it to
 a timestamped name, and then creates a new <filename>current</filename> file.
 The TAI64N timestamp of an old log file is the timestamp of when <command>cyclog</command>
@@ -131,6 +133,8 @@ there is only the <filename>current</filename> file left.
 Thus the maximum size of all log files at any time is <replaceable>max-total-size</replaceable> (the
 total size after the last rotation) plus <replaceable>max-file-size</replaceable> (the data written
 since that rotation).
+The default <replaceable>max-file-size</replaceable> is 16MiB
+and the default <replaceable>max-total-size</replaceable> is 1GiB.
 </para>
 
 <para>

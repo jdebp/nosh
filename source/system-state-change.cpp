@@ -29,7 +29,6 @@ doit (
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kill", std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	throw EXIT_SUCCESS;
 }
 
 /* Signal sending functions *************************************************
@@ -136,8 +135,10 @@ void
 sysinit (
 	const char * prog
 ) {
-	// This signal tells process #1 to spawn "system-control init" with its own arguments.
+	// This signal tells process #1 to spawn "system-control start sysinit".
 	doit(SIGRTMIN + 10, prog);
+	// This signal tells process #1 to spawn "system-control init" with its own arguments.
+	doit(SIGRTMIN + 11, prog);
 }
 
 /* System control commands **************************************************
@@ -172,6 +173,7 @@ reboot (
 	}
 
 	reboot(force, prog);
+	throw EXIT_SUCCESS;
 }
 
 void
@@ -202,6 +204,7 @@ halt (
 	}
 
 	halt(force, prog);
+	throw EXIT_SUCCESS;
 }
 
 void
@@ -232,6 +235,7 @@ poweroff (
 	}
 
 	poweroff(force, prog);
+	throw EXIT_SUCCESS;
 }
 
 void
@@ -259,6 +263,7 @@ emergency (
 	}
 
 	emergency(prog);
+	throw EXIT_SUCCESS;
 }
 
 void
@@ -286,6 +291,7 @@ rescue (
 	}
 
 	rescue(prog);
+	throw EXIT_SUCCESS;
 }
 
 void
@@ -313,6 +319,7 @@ normal (
 	}
 
 	normal(prog);
+	throw EXIT_SUCCESS;
 }
 
 void
@@ -340,6 +347,7 @@ sysinit (
 	}
 
 	sysinit(prog);
+	throw EXIT_SUCCESS;
 }
 
 /* The init subcommand ******************************************************

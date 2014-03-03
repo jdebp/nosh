@@ -12,8 +12,8 @@ Before=shutdown.target
 [Service]
 PermissionsStartOnly=true
 User=log
-systemdWorkingDirectory=false
-ExecStart=cyclog /var/log/sv/devd
+WorkingDirectory=/var/log/sv
+ExecStart=cyclog devd/
 Restart=always
 
 [Install]

@@ -6,6 +6,7 @@
 Description=Mount the /usr filesystem
 DefaultDependencies=false
 EarlySupervise=true
+Before=local-fs.target
 
 [Service]
 Type=oneshot

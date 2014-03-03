@@ -10,8 +10,8 @@ After=shutdown.target
 Wants=shutdown.target
 
 [Service]
+Type=oneshot
 systemdWorkingDirectory=false
 ExecStart=system-control poweroff --force
-Restart=always
 
 [Install]

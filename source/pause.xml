@@ -1,0 +1,33 @@
+<refentry id="pause">
+
+<refmeta>
+<refentrytitle>pause</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.0</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>pause</refname>
+<refpurpose>do nothing until a signal arrives</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>pause</command>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>pause</command> is a utility that simply waits indefinitely until the
+process is sent a signal, using the
+<citerefentry><refentrytitle>sigpause</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+function.  
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

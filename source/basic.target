@@ -10,6 +10,7 @@ Wants=sysinit.target
 Before=shutdown.target
 
 [Service]
+User=nobody
 ExecStart=pause
 Restart=always
 

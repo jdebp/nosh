@@ -10,10 +10,10 @@ After=local-fs.target
 Before=shutdown.target
 
 [Service]
-systemdWorkingDirectory=false
 PermissionsStartOnly=true
 User=log
-ExecStart=cyclog /var/log/sv/sysinit
+WorkingDirectory=/var/log/sv
+ExecStart=cyclog sysinit/
 Restart=always
 
 [Install]

@@ -12,7 +12,7 @@ After=local-fs.target
 [Service]
 Type=oneshot
 WorkingDirectory=/var/spool/
-ExecStart=rm -r uucp/.Temp/* lock/*
+ExecStart=sh -c 'exec rm -r uucp/.Temp/* lock/*'
 
 [Install]
 WantedBy=sysinit.target

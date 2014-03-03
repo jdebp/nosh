@@ -4,10 +4,12 @@
 
 [Unit]
 Description=Bluetooth link keys and PINs service
-[Install]
-WantedBy=workstation.target
+
 [Service]
 systemdWorkingDirectory=false
 ExecStartPre=kldload -n ng_btsocket
 ExecStart=hcsecd -d
 Restart=always
+
+[Install]
+WantedBy=workstation.target

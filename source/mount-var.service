@@ -6,6 +6,7 @@
 Description=Mount the /var filesystem
 DefaultDependencies=false
 EarlySupervise=true
+Before=local-fs.target
 
 [Service]
 Type=oneshot

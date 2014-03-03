@@ -3,13 +3,14 @@
 ## **************************************************************************
 
 [Unit]
-Description=DNS milestone
+Description=Background filesystem check sysinit service
 DefaultDependencies=false
+EarlySupervise=true
 
 [Service]
-User=nobody
-systemdWorkingDirectory=false
-ExecStart=pause
-Restart=always
+Type=oneshot
+ExecStartPre=sh -c "exec sleep ${background_fsck_delay}"
+ExecStart=fsck -B -p
 
 [Install]
+WantedBy=sysinit.target

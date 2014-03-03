@@ -6,6 +6,7 @@
 Description=Remount the / filesystem (from initial read-only mount)
 DefaultDependencies=false
 EarlySupervise=true
+Before=local-fs.target
 
 [Service]
 Type=oneshot

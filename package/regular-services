@@ -14,6 +14,7 @@ mysql
 nmbd
 ntpd
 pbid
+powerd
 qmail-send
 exim4q
 rabbitmq-server

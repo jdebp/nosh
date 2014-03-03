@@ -58,8 +58,9 @@ concat (
 // **************************************************************************
 */
 
-static sig_atomic_t sysinit_signalled (true);
-static sig_atomic_t init_signalled (true);
+static sig_atomic_t start_signalled (true);
+static sig_atomic_t sysinit_signalled (false);
+static sig_atomic_t init_signalled (false);
 static sig_atomic_t normal_signalled (false);
 static sig_atomic_t child_signalled (false);
 static sig_atomic_t rescue_signalled (false);
@@ -85,18 +86,18 @@ record_signal_system (
 ) {
 	switch (signo) {
 		case SIGCHLD:		child_signalled = true; break;
-		case SIGWINCH:		kbrequest_signalled = true; break;
 #if !defined(__LINUX__) && !defined(__linux__)
 		case SIGINT:		reboot_signalled = true; break;
+		case SIGTERM:		rescue_signalled = true; break;
 		case SIGUSR1:		halt_signalled = true; break;
 		case SIGUSR2:		poweroff_signalled = true; break;
-		case SIGTERM:		rescue_signalled = true; break;
 #else
 		case SIGINT:		sak_signalled = true; break;
 #endif
 #if defined(SIGPWR)
 		case SIGPWR:		power_signalled = true; break;
 #endif
+		case SIGWINCH:		kbrequest_signalled = true; break;
 		default:
 			if (SIGRTMIN <= signo) switch (signo - SIGRTMIN) {
 				case 0:		normal_signalled = true; break;
@@ -105,7 +106,8 @@ record_signal_system (
 				case 3:		halt_signalled = true; break;
 				case 4:		poweroff_signalled = true; break;
 				case 5:		reboot_signalled = true; break;
-				case 10:	init_signalled = true; break;
+				case 10:	sysinit_signalled = true; break;
+				case 11:	init_signalled = true; break;
 				case 13:	fasthalt_signalled = true; break;
 				case 14:	fastpoweroff_signalled = true; break;
 				case 15:	fastreboot_signalled = true; break;
@@ -188,7 +190,9 @@ attach_signals_to_state_machine()
 	sigemptyset(&sa.sa_mask);
 	sa.sa_handler=sig_handle;
 	sigaction(SIGCHLD,&sa,NULL);
+	sigaction(SIGRTMIN + 0,&sa,NULL);
 	sigaction(SIGRTMIN + 1,&sa,NULL);
+	sigaction(SIGRTMIN + 2,&sa,NULL);
 	sigaction(SIGRTMIN + 3,&sa,NULL);
 	sigaction(SIGRTMIN + 4,&sa,NULL);
 	sigaction(SIGRTMIN + 5,&sa,NULL);
@@ -197,6 +201,8 @@ attach_signals_to_state_machine()
 #endif
 	sigaction(SIGWINCH,&sa,NULL);
 	sigaction(SIGINT,&sa,NULL);
+	sigaction(SIGRTMIN + 10,&sa,NULL);
+	sigaction(SIGRTMIN + 11,&sa,NULL);
 	sigaction(SIGRTMIN + 13,&sa,NULL);
 	sigaction(SIGRTMIN + 14,&sa,NULL);
 	sigaction(SIGRTMIN + 15,&sa,NULL);
@@ -684,22 +690,37 @@ common_manager (
 		return;
 	}
 
-	std::vector<struct kevent> p(16);
-	EV_SET(&p[ 0], SIGCHLD, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[ 1], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[ 2], SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[ 3], SIGUSR2, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[ 4], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[ 6], SIGWINCH, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[ 7], SIGRTMIN +  0, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[ 8], SIGRTMIN +  1, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[ 9], SIGRTMIN +  2, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[10], SIGRTMIN +  3, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[11], SIGRTMIN +  4, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[12], SIGRTMIN +  5, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[13], SIGRTMIN + 13, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[14], SIGRTMIN + 14, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[15], SIGRTMIN + 15, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	std::vector<struct kevent> p(24);
+	unsigned n(0);
+	EV_SET(&p[n++], SIGCHLD, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	EV_SET(&p[n++], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	EV_SET(&p[n++], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	if (is_system) {
+	EV_SET(&p[n++], SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	EV_SET(&p[n++], SIGUSR2, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+#if defined(SIGPWR)
+	EV_SET(&p[n++], SIGPWR, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+#endif
+	EV_SET(&p[n++], SIGWINCH, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	} else {
+	EV_SET(&p[n++], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	EV_SET(&p[n++], SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	}
+	if (is_system) {
+	EV_SET(&p[n++], SIGRTMIN +  0, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	EV_SET(&p[n++], SIGRTMIN +  1, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	EV_SET(&p[n++], SIGRTMIN +  2, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	}
+	EV_SET(&p[n++], SIGRTMIN +  3, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	EV_SET(&p[n++], SIGRTMIN +  4, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	EV_SET(&p[n++], SIGRTMIN +  5, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	if (is_system) {
+	EV_SET(&p[n++], SIGRTMIN + 10, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	EV_SET(&p[n++], SIGRTMIN + 11, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	}
+	EV_SET(&p[n++], SIGRTMIN + 13, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	EV_SET(&p[n++], SIGRTMIN + 14, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	EV_SET(&p[n++], SIGRTMIN + 15, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 	if (0 > kevent(queue, p.data(), p.size(), 0, 0, 0)) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
@@ -710,17 +731,28 @@ common_manager (
 	sigprocmask(SIG_SETMASK, &masked_signals, &original_signals);
 	sigset_t masked_signals_during_poll(masked_signals);
 	sigdelset(&masked_signals_during_poll, SIGCHLD);
-	sigdelset(&masked_signals_during_poll, SIGRTMIN + 0);
-	sigdelset(&masked_signals_during_poll, SIGRTMIN + 1);
-	sigdelset(&masked_signals_during_poll, SIGRTMIN + 2);
-	sigdelset(&masked_signals_during_poll, SIGRTMIN + 3);
-	sigdelset(&masked_signals_during_poll, SIGRTMIN + 4);
-	sigdelset(&masked_signals_during_poll, SIGRTMIN + 5);
+	sigdelset(&masked_signals_during_poll, SIGINT);
+	if (is_system) {
 #if defined(SIGPWR)
 	sigdelset(&masked_signals_during_poll, SIGPWR);
 #endif
+	} else {
+	sigdelset(&masked_signals_during_poll, SIGHUP);
+	sigdelset(&masked_signals_during_poll, SIGPIPE);
+	}
 	sigdelset(&masked_signals_during_poll, SIGWINCH);
-	sigdelset(&masked_signals_during_poll, SIGINT);
+	if (is_system) {
+	sigdelset(&masked_signals_during_poll, SIGRTMIN + 0);
+	sigdelset(&masked_signals_during_poll, SIGRTMIN + 1);
+	sigdelset(&masked_signals_during_poll, SIGRTMIN + 2);
+	}
+	sigdelset(&masked_signals_during_poll, SIGRTMIN + 3);
+	sigdelset(&masked_signals_during_poll, SIGRTMIN + 4);
+	sigdelset(&masked_signals_during_poll, SIGRTMIN + 5);
+	if (is_system) {
+	sigdelset(&masked_signals_during_poll, SIGRTMIN + 10);
+	sigdelset(&masked_signals_during_poll, SIGRTMIN + 11);
+	}
 	sigdelset(&masked_signals_during_poll, SIGRTMIN + 13);
 	sigdelset(&masked_signals_during_poll, SIGRTMIN + 14);
 	sigdelset(&masked_signals_during_poll, SIGRTMIN + 15);
@@ -757,6 +789,12 @@ common_manager (
 		}
 		if (!has_system_control) {
 			const char * subcommand(0), * option(0);
+			bool verbose(true);
+			if (start_signalled) {
+				subcommand = "sysinit";
+				start_signalled = false;
+				verbose = false;
+			} else
 			if (sysinit_signalled) {
 				subcommand = "start";
 				option = "sysinit";
@@ -819,9 +857,12 @@ common_manager (
 #	endif
 					sigprocmask(SIG_SETMASK, &original_signals, &masked_signals);
 #endif
+					// Replace the original arguments with this.
 					args.clear();
 					args.insert(args.end(), "system-control");
 					args.insert(args.end(), subcommand);
+					if (verbose)
+						args.insert(args.end(), "--verbose");
 					if (!is_system)
 						args.insert(args.end(), "--user");
 					if (option)
@@ -847,6 +888,7 @@ common_manager (
 #	endif
 					sigprocmask(SIG_SETMASK, &original_signals, &masked_signals);
 #endif
+					// Retain the original arguments and insert the following in front of them.
 					if (!is_system)
 						args.insert(args.begin(), "--user");
 					args.insert(args.begin(), "init");

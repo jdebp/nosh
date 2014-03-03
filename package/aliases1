@@ -16,6 +16,7 @@ exec	login-process
 exec	login-prompt
 exec	nosh
 exec	open-controlling-tty
+exec	pause
 exec	pipe
 exec	prependpath
 exec	pty-get-tty

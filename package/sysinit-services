@@ -1,7 +1,9 @@
+background-fsck
 cleanspool
 devd
 devd-log
 dmesg
+fsck-root
 fsck-usr
 fsck-var
 hostname
@@ -13,3 +15,6 @@ newsyslog
 remount-root
 sane-console
 sysinit-log
+kmod@autofs
+kmod@unix
+kmod@ipv6

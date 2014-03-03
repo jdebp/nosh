@@ -23,15 +23,6 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-static
-void
-make_supervise (
-	int supervise_dir_fd
-) {
-	mkfifoat(supervise_dir_fd, "ok", 0666);
-	mkfifoat(supervise_dir_fd, "control", 0600);
-}
-
 static 
 void
 rescan (
@@ -69,7 +60,7 @@ exit_scan:
 		if (0 <= bundle_dir_fd) {
 			int service_dir_fd(open_dir_at(bundle_dir_fd, "service/"));
 			if (0 > service_dir_fd) service_dir_fd = dup(bundle_dir_fd);
-			mkdirat(bundle_dir_fd, "supervise", 0700);
+			make_supervise(bundle_dir_fd);
 			const int supervise_dir_fd(open_dir_at(bundle_dir_fd, "supervise/"));
 			if (0 <= supervise_dir_fd) {
 				const bool was_already_loaded(is_ok(supervise_dir_fd));
@@ -88,7 +79,7 @@ exit_scan:
 #endif
 					int log_service_dir_fd(open_dir_at(log_bundle_dir_fd, "service/"));
 					if (0 > log_service_dir_fd) log_service_dir_fd = dup(log_bundle_dir_fd);
-					mkdirat(log_bundle_dir_fd, "supervise", 0700);
+					make_supervise(log_bundle_dir_fd);
 					const int log_supervise_dir_fd(open_dir_at(log_bundle_dir_fd, "supervise/"));
 					if (0 <= log_supervise_dir_fd) {
 						const bool log_was_already_loaded(is_ok(log_supervise_dir_fd));
