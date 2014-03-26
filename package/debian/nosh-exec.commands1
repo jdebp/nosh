@@ -15,6 +15,7 @@ local-stream-socket-accept
 login-banner
 login-process
 login-prompt
+make-private-fs
 nosh
 open-controlling-tty
 pipe
@@ -24,6 +25,7 @@ pty-run
 read-conf
 recordio
 set-dynamic-hostname
+set-mount-object
 setenv
 setlock
 setpgrp
@@ -36,8 +38,10 @@ tcp-socket-accept
 tcp-socket-listen
 true
 ucspi-socket-rules-check
+udp-socket-listen
 ulimit
 umask
 unsetenv
+unshare
 vc-get-tty
 vc-reset-tty

@@ -10,7 +10,7 @@ fi
 # The build and release directories need not be on the same disc volume.
 # And the files released must not be potentially overwritable and truncatable by the compiler/linker during subsequent builds.
 # But released files can be links to other released files, of course.
-mkdir -p command manual config
+mkdir -p command manual config guide
 
 # Build all of the ...{new} files.
 cat package/commands1 package/commands8 | while read i
@@ -49,6 +49,21 @@ while read command alias
 do
 	ln -f -s -- "${command}".8 manual/"${alias}".8{new}
 done < package/aliases8
+(
+	cat package/guidepages package/commands1 package/commands8
+	awk '{ if ($1 == "exec" || $1 == "session-manager") print $2 ; }' package/aliases1
+) | while read i
+do
+	rm -f -- guide/"$i".html{new}
+	cp -p -f -- build/"$i".html guide/"$i".html{new}
+done
+(
+	cat package/aliases8
+	awk '{ if ($1 != "exec" && $1 != "session-manager") print $0 ; }' package/aliases1
+) | while read command alias
+do
+	ln -f -s -- "${command}".html guide/"${alias}".html{new}
+done
 
 # Rename the ...{new} files.
 (
@@ -81,8 +96,57 @@ do
 	mv -f -- manual/"${alias}".8{new} manual/"${alias}".8
 	mv -f -- command/"${alias}"{new} command/"${alias}"
 done < package/aliases8
+(
+	cat package/guidepages package/commands1 package/commands8
+	awk '{ if ($1 == "exec" || $1 == "session-manager") print $2 ; }' package/aliases1
+) | while read i
+do
+	mv -f -- guide/"$i".html{new} guide/"$i".html
+done
+(
+	cat package/aliases8
+	awk '{ if ($1 != "exec" && $1 != "session-manager") print $0 ; }' package/aliases1
+) | while read command alias
+do
+	mv -f -- guide/"${alias}".html{new} guide/"${alias}".html
+done
 
-#
+# Build all of the {new} directories.
+rm -rf -- config/standard-targets{new} config/sysinit-services{new} config/regular-services{new}
+mkdir -p config/standard-targets{new} config/sysinit-services{new} config/regular-services{new}
+while read i
+do
+	command/system-control convert-systemd-units --bundle-root config/standard-targets{new}/ build/$i.target
+done < package/standard-targets
+while read i
+do
+	command/system-control convert-systemd-units --bundle-root config/sysinit-services{new}/ build/$i.service
+	ln -s ../sysinit-log config/sysinit-services{new}/$i/log
+done < package/sysinit-services
+while read i
+do
+	command/system-control convert-systemd-units --bundle-root config/sysinit-services{new}/ --unescape-instance build/mount@$i.service
+	ln -s ../sysinit-log config/sysinit-services{new}/mount@$i/log
+	command/system-control convert-systemd-units --bundle-root config/sysinit-services{new}/ --unescape-instance build/fsck@$i.service
+	ln -s ../sysinit-log config/sysinit-services{new}/fsck@$i/log
+done < package/sysinit-mounts
+while read i
+do
+	command/system-control convert-systemd-units --bundle-root config/regular-services{new}/ build/$i.service
+	command/system-control convert-systemd-units --bundle-root config/regular-services{new}/ build/cyclog@$i.service
+	ln -s ../cyclog@$i config/regular-services{new}/$i/log
+done < package/regular-services
+while read i
+do
+	command/system-control convert-systemd-units --bundle-root config/regular-services{new}/ build/$i.socket
+	command/system-control convert-systemd-units --bundle-root config/regular-services{new}/ build/cyclog@$i.service
+	ln -s ../cyclog@$i config/regular-services{new}/$i/log
+done < package/regular-sockets
+rm -f -- config/sysinit-services{new}/sysinit-log/log
+rm -f -- config/sysinit-services{new}/devd/log
+ln -s ../devd-log config/sysinit-services{new}/devd/log
+
+# Rename the ...{new} directories.
 for i in service-manager.socket service-manager.service service-manager.conf service-manager-svscan.path service-manager-svscan.service
 do
 	rm -f -- config/"$i"{new}
@@ -92,3 +156,9 @@ for i in service-manager.socket service-manager.service service-manager.conf ser
 do
 	mv -f -- config/"$i"{new} config/"$i"
 done 
+for i in standard-targets sysinit-services regular-services
+do
+	rm -rf -- config/"$i"{old}
+	test -e config/"$i" && mv -f -- config/"$i" config/"$i"{old}
+	mv -f -- config/"$i"{new} config/"$i"
+done

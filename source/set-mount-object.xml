@@ -1,0 +1,76 @@
+<refentry id="set-mount-object">
+
+<refmeta>
+<refentrytitle>set-mount-object</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.0</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>set-mount-object</refname>
+<refpurpose>set the state of a mount object</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>set-mount-object</command>
+<arg>--recursive</arg>
+<arg choice='req'><replaceable>state</replaceable></arg>
+<arg choice='req'><replaceable>directory</replaceable></arg>
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>BSD Note</title>
+
+<para>
+This command currently has no effect on BSD.
+Be careful, therefore, of the effect that this will have on
+<citerefentry><refentrytitle>make-private-fs</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+</refsection>
+<refsection><title>Description</title>
+
+<para>
+<command>set-mount-object</command> is a chain-loading utility that changes the
+state of the mount object at <replaceable>directory</replaceable> to
+<replaceable>state</replaceable> and then
+chain loads to <replaceable>next-prog</replaceable> with the
+<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>set-mount-object</command> will ignore.
+</para>
+
+<para>
+The states are
+</para>
+
+<variablelist>
+
+<varlistentry>
+<term><arg>shared</arg></term>
+<listitem><para>All mount operations made at or below this mount point are shared with other copies of this mount point.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><arg>slave</arg></term>
+<listitem><para>This mount point reflects all mount operations made at or below a(nother) master copy.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><arg>private</arg></term>
+<listitem><para>No mount operations made at or below this mount point are reflected either to or from another copy.</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>
+

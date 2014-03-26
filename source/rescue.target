@@ -11,10 +11,12 @@ Before=shutdown.target
 
 [Service]
 systemdWorkingDirectory=false
-ExecStartPre=/bin/echo Rescue mode log-in:
+PermissionsStartOnly=true
+SessionLeader=true
 TTYPath=console
 StandardInput=tty
-ExecStart=sulogin
+ExecStartPre=echo Rescue mode log-in:
+ExecStart=login
 Restart=always
 
 [Install]

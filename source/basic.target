@@ -10,9 +10,9 @@ Wants=sysinit.target
 Before=shutdown.target
 
 [Service]
+Type=oneshot
 User=nobody
-ExecStart=pause
-Restart=always
+RemainAfterExit=yes
 
 [Install]
 StoppedBy=shutdown.target

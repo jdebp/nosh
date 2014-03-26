@@ -29,13 +29,76 @@ For copyright and licensing terms, see the file named COPYING.
 
 bool local_session_mode(false);
 
-const char * const roots[4] = {
-	"/run/", "/etc/", "/", "/var/"
+/* Utilities ****************************************************************
+// **************************************************************************
+*/
+
+static 
+const char * const 
+target_bundle_prefixes[3] = {
+	"/run/system-manager/targets/", 
+	"/etc/system-manager/targets/", 
+	"/var/system-manager/targets/"
+}, * const
+service_bundle_prefixes[8] = {
+	"/run/sv/", 
+	"/etc/sv/", 
+	"/var/sv/",
+	"/var/local/sv/",
+	"/run/service/", 
+	"/etc/service/", 
+	"/var/service/",
+	"/service/"
 };
 
-const char * const bundle_prefixes[3] = {
-	"system-manager/targets/", "sv/", "service/",
-};
+int
+open_bundle_directory (
+	const char * arg,
+	std::string & path,
+	std::string & name
+) {
+	if (const char * slash = std::strchr(arg, '/')) {
+		path = std::string(arg, slash + 1);
+		name = std::string(slash + 1);
+		return open_dir_at(AT_FDCWD, (path + name + "/").c_str());
+	}
+
+	const std::string a(arg);
+	if (!local_session_mode) {
+		bool scan_for_target(false), scan_for_service(false);
+		if (ends_in(a, ".target", name)) {
+			scan_for_target = true;
+		} else
+		if (ends_in(a, ".service", name)) {
+			scan_for_service = true;
+		} else
+		if (ends_in(a, ".socket", name)) {
+			scan_for_service = true;
+		} else
+		{
+			scan_for_target = scan_for_service = true;
+			name = a;
+		}
+		if (scan_for_target) {
+			for ( const char * const * q(target_bundle_prefixes); q < target_bundle_prefixes + sizeof target_bundle_prefixes/sizeof *target_bundle_prefixes; ++q) {
+				path = *q;
+				const int bundle_dir_fd(open_dir_at(AT_FDCWD, (path + name + "/").c_str()));
+				if (0 <= bundle_dir_fd) return bundle_dir_fd;
+			}
+		}
+		if (scan_for_service) {
+			for ( const char * const * q(service_bundle_prefixes); q < service_bundle_prefixes + sizeof service_bundle_prefixes/sizeof *service_bundle_prefixes; ++q) {
+				path = *q;
+				const int bundle_dir_fd(open_dir_at(AT_FDCWD, (path + name + "/").c_str()));
+				if (0 <= bundle_dir_fd) return bundle_dir_fd;
+			}
+		}
+	}
+
+	path = std::string();
+	name = a;
+	return open_dir_at(AT_FDCWD, (path + name + "/").c_str());
+}
 
 /* The system-control command ***********************************************
 // **************************************************************************
@@ -61,7 +124,7 @@ system_control (
 			&no_legend_option,
 			&no_pager_option
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "halt|reboot|poweroff|emergency|rescue|normal|init|activate|deactivate|isolate|show|status args...");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "halt|reboot|poweroff|emergency|rescue|normal|init|start|stop|try-restart|enable|disable|preset|show|status|convert-systemd-units args...");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);

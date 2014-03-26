@@ -3,15 +3,18 @@
 ## **************************************************************************
 
 [Unit]
-Description=Remount the / filesystem (from initial read-only mount)
+Description=Create the "dynamic" part of the Message Of The Day
 DefaultDependencies=false
 EarlySupervise=true
-Before=local-fs.target
+Wants=local-fs.target
+After=local-fs.target
 
 [Service]
 Type=oneshot
-systemdWorkingDirectory=false
-ExecStart=mount /
+WorkingDirectory=/run/
+Umask=0033
+ExecStart=sh -c 'uname -srm > motd.dynamic'
+RemainAfterExit=yes
 
 [Install]
-WantedBy=local-fs.target
+WantedBy=sysinit.target

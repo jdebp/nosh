@@ -7,10 +7,10 @@ Description=Multi-user group target
 EarlySupervise=true
 
 [Service]
+Type=oneshot
 User=nobody
 systemdWorkingDirectory=false
-ExecStart=pause
-Restart=always
+RemainAfterExit=yes
 
 [Install]
 WantedBy=normal.target

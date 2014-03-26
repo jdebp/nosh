@@ -26,11 +26,12 @@ void isolate ( const char * & , std::vector<const char *> & ) ;
 void isolate ( const char * & , std::vector<const char *> & ) ;
 void enable ( const char * & , std::vector<const char *> & ) ;
 void disable ( const char * & , std::vector<const char *> & ) ;
+void preset ( const char * & , std::vector<const char *> & ) ;
 void init ( const char * & , std::vector<const char *> & ) ;
 void show ( const char * & , std::vector<const char *> & ) ;
 void status ( const char * & , std::vector<const char *> & ) ;
 void try_restart ( const char * & , std::vector<const char *> & ) ;
-void preset ( const char * & , std::vector<const char *> & ) ;
+void is_active ( const char * & , std::vector<const char *> & ) ;
 void convert_systemd_units ( const char * & , std::vector<const char *> & ) ;
 void cyclog ( const char * & , std::vector<const char *> & ) ;
 void system_control ( const char * & , std::vector<const char *> & ) ;
@@ -71,19 +72,21 @@ commands[] = {
 	{	"disable",		disable			},
 	{	"unload",		disable			},
 	{	"off",			disable			},
-	{	"init",			init			},
 	{	"preset",		preset			},
 	{	"reset",		preset			},
 	{	"show",			show			},
 	{	"status",		status			},
 	{	"try-restart",		try_restart		},
+	{	"condrestart",		try_restart		},
+	{	"force-reload",		try_restart		},
+	{	"is-active",		is_active		},
 	{	"convert-systemd-units",convert_systemd_units	},
 
 	// These are spawned by system-manager.
-	{	"cyclog",		cyclog			},
+	{	"service-manager",	service_manager		},
 	{	"system-control",	system_control		},
 	{	"systemctl",		system_control		},
-	{	"service-manager",	service_manager		},
+	{	"cyclog",		cyclog			},
 
 	// These are used by debugging.
 	{	"setsid",		setsid			},

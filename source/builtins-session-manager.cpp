@@ -31,6 +31,7 @@ void init ( const char * & , std::vector<const char *> & ) ;
 void show ( const char * & , std::vector<const char *> & ) ;
 void status ( const char * & , std::vector<const char *> & ) ;
 void try_restart ( const char * & , std::vector<const char *> & ) ;
+void is_active ( const char * & , std::vector<const char *> & ) ;
 void convert_systemd_units ( const char * & , std::vector<const char *> & ) ;
 void cyclog ( const char * & , std::vector<const char *> & ) ;
 void system_control ( const char * & , std::vector<const char *> & ) ;
@@ -72,11 +73,12 @@ commands[] = {
 	{	"off",			disable			},
 	{	"preset",		preset			},
 	{	"reset",		preset			},
-	{	"init",			init			},
 	{	"show",			show			},
 	{	"status",		status			},
 	{	"try-restart",		try_restart		},
-	{	"preset",		convert_systemd_units	},
+	{	"condrestart",		try_restart		},
+	{	"force-reload",		try_restart		},
+	{	"is-active",		is_active		},
 	{	"convert-systemd-units",convert_systemd_units	},
 
 	// These are spawned by session-manager.

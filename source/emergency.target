@@ -10,10 +10,12 @@ Before=shutdown.target
 
 [Service]
 systemdWorkingDirectory=false
-ExecStartPre=/bin/echo Emergency mode log-in:
+PermissionsStartOnly=true
+SessionLeader=true
 TTYPath=console
 StandardInput=tty
-ExecStart=sulogin
+ExecStartPre=echo Emergency mode log-in:
+ExecStart=login
 Restart=always
 
 [Install]

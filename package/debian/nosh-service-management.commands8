@@ -1,9 +1,1 @@
-init
-telinit
-reboot
-halt
-poweroff
-rescue
-normal
-chkconfig
 system-manager

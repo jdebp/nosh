@@ -1,6 +1,12 @@
 <refentry id="system-control">
 
-<refmeta><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">administrator commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+<refmeta>
+<refentrytitle>system-control</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">administrator commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.0</refmiscinfo>
+</refmeta>
 
 <refnamediv>
 <refname>system-control</refname>
@@ -260,6 +266,62 @@ that conflicts with itself, for example).
 
 </refsection>
 
+<refsection><title>Bundle search paths and conventional locations</title>
+
+<para>
+Several subcommands take a list of bundle
+<arg rep='repeat' choice='plain'><replaceable>names</replaceable></arg>.
+Each
+<arg choice='plain'><replaceable>name</replaceable></arg>.
+can be the full absolute pathname of a bundle directory or a relative pathname
+with a directory prefix, in which case it is used as-is, or a bundle directory
+name without any directory prefix, in which case a set of standard locations is
+searched for a bundle directory by that name.
+The search algorithm is as follows:
+</para>
+
+<itemizedlist>
+<listitem><para>
+A <arg choice='plain'><replaceable>name</replaceable></arg> that ends in
+<filename>.target</filename> is searched for (sans the <filename>.target</filename> suffix)
+in the standard locations for target bundles:
+</para>
+<orderedlist>
+<listitem><para><filename>/run/system-manager/targets/</filename></para></listitem>
+<listitem><para><filename>/etc/system-manager/targets/</filename></para></listitem>
+<listitem><para><filename>/var/system-manager/targets/</filename></para></listitem>
+</orderedlist>
+</listitem>
+<listitem><para>
+A <arg choice='plain'><replaceable>name</replaceable></arg> that ends in
+<filename>.service</filename> or <filename>.socket</filename> is searched for (sans those 
+suffixes) in the standard locations for service bundles:
+</para>
+<orderedlist>
+<listitem><para><filename>/run/sv/</filename></para></listitem>
+<listitem><para><filename>/etc/sv/</filename></para></listitem>
+<listitem><para><filename>/var/sv/</filename></para></listitem>
+<listitem><para><filename>/var/local/sv/</filename></para></listitem>
+<listitem><para><filename>/run/service/</filename></para></listitem>
+<listitem><para><filename>/etc/service/</filename></para></listitem>
+<listitem><para><filename>/var/service/</filename></para></listitem>
+<listitem><para><filename>/service/</filename></para></listitem>
+</orderedlist>
+</listitem>
+<listitem><para>
+Any other <arg choice='plain'><replaceable>name</replaceable></arg> is searched
+for (as-is) in the standard locations for service and for target bundles.
+</para></listitem>
+</itemizedlist>
+
+<para>
+If the path search fails, the
+<arg choice='plain'><replaceable>name</replaceable></arg> is simply assumed to
+name a bundle directory in the current directory.
+</para>
+
+</refsection>
+
 </refsection>
 
 <refsection><title>Subcommands</title>
@@ -315,11 +377,11 @@ to that process.
 </thead>
 <tbody>
 <tr><td><command>reboot</command></td><td><code>SIGINT</code></td><td><code>SIGRTMIN + 5</code></td></tr>
-<tr><td><command>reboot</command> <arg choice='plain'>-q</arg></td><td colspan='2'><code>SIGRTMIN + 15</code></td></tr>
+<tr><td><command>reboot</command> <arg choice='plain'>-f</arg></td><td colspan='2'><code>SIGRTMIN + 15</code></td></tr>
 <tr><td><command>poweroff</command></td><td><code>SIGUSR2</code></td><td><code>SIGRTMIN + 4</code></td></tr>
-<tr><td><command>poweroff</command> <arg choice='plain'>-q</arg></td><td colspan='2'><code>SIGRTMIN + 14</code></td></tr>
+<tr><td><command>poweroff</command> <arg choice='plain'>-f</arg></td><td colspan='2'><code>SIGRTMIN + 14</code></td></tr>
 <tr><td><command>halt</command></td><td><code>SIGUSR1</code></td><td><code>SIGRTMIN + 3</code></td></tr>
-<tr><td><command>halt</command> <arg choice='plain'>-q</arg></td><td colspan='2'><code>SIGRTMIN + 13</code></td> </tr>
+<tr><td><command>halt</command> <arg choice='plain'>-f</arg></td><td colspan='2'><code>SIGRTMIN + 13</code></td> </tr>
 <tr><td><command>emergency</command></td><td colspan='2'><code>SIGRTMIN + 2</code></td></tr>
 <tr><td><command>rescue</command></td><td><code>SIGTERM</code></td><td><code>SIGRTMIN + 1</code></td></tr>
 <tr><td><command>normal</command></td><td colspan='2'><code>SIGRTMIN + 0</code></td></tr>
@@ -465,7 +527,16 @@ administrator has chosen.
 </cmdsynopsis>
 <cmdsynopsis>
 <command>system-control</command>
+<group choice="req">
 <arg choice="req">try-restart</arg>
+<arg choice="req">condrestart</arg>
+<arg choice="req">force-reload</arg>
+</group>
+<arg rep='repeat'><replaceable>names</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">is-active</arg>
 <arg rep='repeat'><replaceable>names</replaceable></arg>
 </cmdsynopsis>
 
@@ -476,9 +547,10 @@ searches for the corresponding service bundle directory, constructs a list of
 directory names, and chains to (respectively)
 <citerefentry><refentrytitle>service-status</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>service-show</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-or
 <citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-with the <arg>--terminate</arg> option.
+with the <arg>--terminate</arg> option,
+or
+<citerefentry><refentrytitle>service-is-up</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 </refsection>
@@ -835,7 +907,7 @@ They are usually started by the System Manager, in response to system control
 commands requesting system reboot, halt, or power off.
 When they (finally) start, they invoke the <command>reboot</command>,
 <command>halt</command>, and <command>poweroff</command> subcommands of
-<command>system-control</command> with the <arg choice="req">-q</arg>
+<command>system-control</command> with the <arg choice="req">-f</arg>
 command-line option.
 This signals the System Manager to enact the actual reboot, halt, or power-off action.
 </para></listitem>
@@ -1022,14 +1094,14 @@ only brought up after remote filesystems have been mounted and checked.
 </para></listitem>
 </varlistentry>
 
-<varlistentry><term><filename>dns</filename></term>
+<varlistentry><term><filename>name-services</filename></term>
 <listitem><para>
 This target is primarily an ordering milestone.
-All services that are involved in providing local DNS lookup services
+All services that are involved in providing local name/address lookup services
 should be listed in its <filename>after/</filename> list.
-One can thus list <filename>dns</filename> in the
+One can thus list <filename>name-services</filename> in the
 <filename>after/</filename> list of a service or target to ensure that it is
-only brought up after local DNS lookup service is available.
+only brought up after local name/address lookup service is available.
 </para></listitem>
 </varlistentry>
 

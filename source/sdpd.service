@@ -4,10 +4,12 @@
 
 [Unit]
 Description=Bluetooth Service Discovery Protocol service
-[Install]
-WantedBy=workstation.target
+
 [Service]
 systemdWorkingDirectory=false
 ExecStartPre=kldload -n ng_btsocket
 ExecStart=sdpd -d
 Restart=always
+
+[Install]
+WantedBy=workstation.target

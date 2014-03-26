@@ -58,6 +58,9 @@ extern void setup_machine_id ( const char * &, std::vector<const char *> & );
 extern void pipe ( const char * &, std::vector<const char *> & );
 extern void ucspi_socket_rules_check ( const char * &, std::vector<const char *> & );
 extern void pause ( const char * &, std::vector<const char *> & );
+extern void unshare ( const char * &, std::vector<const char *> & );
+extern void make_private_fs ( const char * &, std::vector<const char *> & );
+extern void set_mount_object ( const char * &, std::vector<const char *> & );
 
 extern const
 struct command 
@@ -108,5 +111,8 @@ commands[] = {
 	{	"pipe",				pipe				},
 	{	"ucspi-socket-rules-check",	ucspi_socket_rules_check	},
 	{	"pause",			pause				},
+	{	"unshare",			unshare				},
+	{	"set-mount-object",		set_mount_object		},
+	{	"make-private-fs",		make_private_fs			},
 };
 const std::size_t num_commands = sizeof commands/sizeof *commands;

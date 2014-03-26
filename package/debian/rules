@@ -5,7 +5,7 @@
 build: build-arch build-indep 
 
 binary: binary-arch binary-indep 
-	for i in exec service-management standard-targets sysinit-services regular-services regular-sockets ; \
+	for i in exec service-management systemv-shims systemd-shims guide standard-targets sysinit-services regular-services regular-sockets ; \
 	do \
 		dpkg -b debian/nosh-"$$i" ../ || exit 1 ; \
 	done
@@ -19,7 +19,7 @@ build-indep:
 	@true
 
 binary-arch: build-arch install-arch
-	for i in exec service-management ; \
+	for i in exec service-management systemv-shims systemd-shims ; \
 	do \
 		${RM} debian/substvars ; \
 		dpkg-shlibdeps debian/nosh-"$$i"/usr/local/bin/* || exit 1 ; \
@@ -28,7 +28,7 @@ binary-arch: build-arch install-arch
 	done
 
 binary-indep: build-indep install-indep
-	for i in standard-targets sysinit-services regular-services regular-sockets ; \
+	for i in guide standard-targets sysinit-services regular-services regular-sockets ; \
 	do \
 		${RM} debian/substvars ; \
 		dpkg-gencontrol -pnosh-"$$i" -Pdebian/nosh-"$$i" || exit 1 ; \
@@ -37,13 +37,13 @@ binary-indep: build-indep install-indep
 install-common:
 	install -d -m 0755 debian/tmp/DEBIAN
 	package/export debian/tmp/
-	for i in exec service-management standard-targets sysinit-services regular-services regular-sockets ; \
+	for i in exec service-management systemv-shims systemd-shims guide standard-targets sysinit-services regular-services regular-sockets ; \
 	do \
 		install -d -m 0755 debian/nosh-"$$i"/DEBIAN || exit 1 ; \
 	done
 
 install-arch: install-common
-	for i in exec service-management ; \
+	for i in exec service-management systemv-shims systemd-shims ; \
 	do \
 		install -d -m 0755 debian/nosh-"$$i"/usr/local/bin || exit 1 ; \
 		while read j ; \
@@ -55,21 +55,37 @@ install-arch: install-common
 		do \
 			ln -f -t debian/nosh-"$$i"/usr/local/sbin/ debian/tmp/sbin/"$$j" || exit 1 ; \
 		done < debian/nosh-"$$i".commands8 ; \
+		while read c a ; \
+		do \
+			ln -f -s "$$c" debian/nosh-"$$i"/usr/local/bin/"$$a" || exit 1 ; \
+		done < debian/nosh-"$$i".aliases1 ; \
+		while read c a ; \
+		do \
+			ln -f -s "$$c" debian/nosh-"$$i"/usr/local/sbin/"$$a" || exit 1 ; \
+		done < debian/nosh-"$$i".aliases8 ; \
 	done
 
 install-indep: install-common
-	for i in exec service-management ; \
+	for i in exec service-management systemv-shims systemd-shims ; \
 	do \
 		install -d -m 0755 debian/nosh-"$$i"/usr/local/man/man1 || exit 1 ; \
 		while read j ; \
 		do \
 			ln -f -t debian/nosh-"$$i"/usr/local/man/man1/ debian/tmp/man/man1/"$$j".1 || exit 1 ; \
 		done < debian/nosh-"$$i".commands1 ; \
+		while read c a ; \
+		do \
+			ln -f -s "$$c".1 debian/nosh-"$$i"/usr/local/man/man1/"$$a".1 || exit 1 ; \
+		done < debian/nosh-"$$i".aliases1 ; \
 		install -d -m 0755 debian/nosh-"$$i"/usr/local/man/man8 || exit 1 ; \
 		while read j ; \
 		do \
 			ln -f -t debian/nosh-"$$i"/usr/local/man/man8/ debian/tmp/man/man8/"$$j".8 || exit 1 ; \
 		done < debian/nosh-"$$i".commands8 ; \
+		while read c a ; \
+		do \
+			ln -f -s "$$c".8 debian/nosh-"$$i"/usr/local/man/man8/"$$a".8 || exit 1 ; \
+		done < debian/nosh-"$$i".aliases8 ; \
 	done ; \
 	for i in service-management ; \
 	do \
@@ -92,6 +108,15 @@ install-indep: install-common
 			cp -a -t debian/nosh-"$$i"/etc/sv/ debian/tmp/etc/sv/"$$j" || exit 1 ; \
 		done < package/"$$i" ; \
 	done
+	for i in sysinit-mounts ; \
+	do \
+		install -d -m 0755 debian/nosh-sysinit-services/etc/sv || exit 1 ; \
+		while read j ; \
+		do \
+			cp -a -t debian/nosh-sysinit-services/etc/sv/ debian/tmp/etc/sv/mount@"$$j" || exit 1 ; \
+			cp -a -t debian/nosh-sysinit-services/etc/sv/ debian/tmp/etc/sv/fsck@"$$j" || exit 1 ; \
+		done < package/"$$i" ; \
+	done
 	for i in regular-services regular-sockets ; \
 	do \
 		install -d -m 0755 debian/nosh-"$$i"/var/sv || exit 1 ; \
@@ -109,10 +134,15 @@ install-indep: install-common
 			cp -a -t debian/nosh-"$$i"/etc/system-manager/targets/ debian/tmp/etc/system-manager/targets/"$$j" || exit 1 ; \
 		done < package/"$$i" ; \
 	done
+	for i in guide ; \
+	do \
+		install -d -m 0755 debian/nosh-"$$i"/usr/local/share/doc/nosh || exit 1 ; \
+		cp -a debian/tmp/share/doc/nosh debian/nosh-"$$i"/usr/local/share/doc/ || exit 1 ; \
+	done
 
 clean:
 	${RM} debian/files debian/substvars
-	for i in exec service-management standard-targets sysinit-services regular-services regular-sockets ; \
+	for i in guide exec service-management systemv-shims systemd-shims standard-targets sysinit-services regular-services regular-sockets ; \
 	do \
 		${RM} -r debian/nosh-"$$i"/ || exit 1 ; \
 	done

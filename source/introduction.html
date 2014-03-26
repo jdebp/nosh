@@ -1,0 +1,82 @@
+<title>Introduction</title>
+<link rel="Up" href="index.html" title="nosh Guide" />
+<link rel="Next" href="familiar-interfaces.html" title="Interfaces that you are used to" />
+<h2>
+Introduction
+</h2>
+
+<p>
+This package provides a full system-management and service-management toolset for BSDs and for Linux.
+</p>
+
+<h3>
+Introduction for BSD users
+</h3>
+
+<p>
+For BSD users, the package provides five distinctive major features:
+</p>
+<ul>
+<li><p>Parallel and ordered service startup.
+If you've ever waited impatiently for <code>/etc/rc.delay</code> to stop <code>sleep</code>ing you'll appreciate this.
+nosh starts (and stops) daemons in parallel, calculating a grouping, and a start/stop order, based upon inter-service ordering dependencies.
+</p></li>
+<li><p>Service startup that only runs the enabled services.
+The NetBSD <code>rc.d</code> mechanism always runs every shell script, relying upon shell scripts to disable themselves when they see a <code>foo_enable=NO</code> shell variable.
+nosh simply doesn't run disabled services at all at boot time.
+</p></li>
+<li><p>An extensible set of named system states.
+As standard the package supplies <code>rescue</code> for single-user mode, <code>normal</code> for multi-user mode, and <code>emergency</code> for a bare bones emergency mode.
+One can create further states of one's own.</p></li>
+<li><p>Daemon tracking.
+PID files are tantamount a loaded gun left lying around for a system administrator to shoot random processes with.
+Parsing the output of <code>ps</code> with shell script is even worse.
+The service manager tracks services properly, without stale information lying around and without race conditions.
+</p></li>
+<li><p>The ability to import many systemd service and socket units.</p></li>
+</ul>
+
+<h3>
+Introduction for Debian users
+</h3>
+
+<p>
+nosh targets two groups of Debian users.
+</p>
+
+<ul>
+<li><p><strong>Debian users who aren't using the Linux kernel</strong> cannot use systemd.</p>
+<p>
+But the nosh toolset can run on the BSD kernel.  It runs on real BSD, after all.
+Those people can use the supplied conversion tool to import many systemd service and socket unit files into the service manager's native service bundle format.
+So as more and more services in the Debian world (and indeed in the Arch, Ubuntu, Mint, and other worlds) start coming supplied with systemd units to start them, one has a mechanism for importing them for use with the nosh package service manager on non-Linux kernels.
+</p>
+<p>Furthermore, some systemd-acquired habits and knowledge carry over.  For examples:</p>
+<ul>
+<li><p>The command to enable a service is still <code>systemctl enable <i>name</i></code>.</p></li>
+<li><p>The command to poweroff the system is still <code>systemctl poweroff</code>.</p></li>
+<li><p>There's a target named "local-fs" and it is mostly what a system administrator used to systemd or the LSB might expect it to be.</p></li>
+<li><p>Familiar mechanisms such as <code>/etc/machine-id</code> and <code>/etc/hostname</code>, and their associated boot-time initialization services, are available.</p></li>
+</ul>
+<p>
+nosh isn't systemd, though.  There are some distinctive features:
+</p>
+<ul>
+<li><p>System management and service management are properly distinct.</p></li>
+<li><p>Parsing at run-time is avoided.
+There are no XML parsers or .INI file parsers running in either the service manager or the system manager processes.
+</p></li>
+</ul>
+</li>
+<li><p><strong>Debian users who like the daemontools way of working</strong> can now overcome the traditional problem with "daemontools as the system manager": that it isn't enough on its own.
+</p><p>
+daemontools, 
+<a href="http://untroubled.org/daemontools-encore/">daemontools-encore</a>, 
+<a href="http://skarnet.org/software/s6/">s6</a>, 
+<a href="http://b0llix.net/perp/">perp</a>, and 
+<a href="http://smarden.org/runit/">runit</a> all share the problems of having no (or almost no) system manager and having little to no daemon startup/shutdown ordering mechanisms.
+The traditional mechanism for addressing this is the "thundering herd solution": keep bringing a service up, once per second, until its dependences are up and it finally stays up.
+This is suboptimal, to say the least; and it ignores the problem of proper shutdown ordering entirely.
+nosh provides the same daemontools mechanisms, but builds a full service and system management mechanism on top of them.
+</p></li>
+</ul>

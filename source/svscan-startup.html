@@ -1,0 +1,66 @@
+<title>Compatible old-style startup</title>
+<link rel="Up" href="index.html" title="nosh Guide" />
+<link rel="Prev" href="startup-and-shutdown.html" title="Startup and shutdown" />
+<link rel="Next" href="mounting.html" title="Mounting filesystems" />
+<h2>
+Compatible old-style startup
+</h2>
+
+<p>
+As an alternative to the full startup and shutdown mechanisms that involve running the system manager, one can use a mechanism that operates more like traditional daemontools.
+The service manager still runs, but instead of being sent control messages by <a href="system-control.html"><code>system-control</code></a> it is sent control messages by <a href="service-dt-scanner.html"><code>service-dt-scanner</code></a>, which implements old-style daemontools service activation involving a <code>/service/</code> directory.
+</p>
+
+<p>
+Of course, one has to do one's own system management, with some program running as process #1 that invokes <a href="service-manager.html"><code>service-manager</code></a> and <code>service-dt-scanner</code>.
+Exactly what one uses is beyond the scope of this guide, obviously.
+</p>
+
+<h3>
+Old-style startup under systemd
+</h3>
+
+<p>
+The package comes supplied with some unit files that enable one to run the service manager and old-style scanner under systemd.
+</p>
+
+<ul>
+<li><p>
+<code>service-manager.socket</code> is a systemd <em>socket unit</em> that defines a local-domain datagram socket named <code>/run/service-manager/control</code>.
+<code>service-manager.service</code> is a systemd <em>service unit</em> that defines the <em>socket-activated</em> service associated with that socket.
+The service runs <code>service-manager</code>, which understands the
+<a href="http://freedesktop.org/software/systemd/man/sd_listen_fds.html">systemd LISTEN_FDS convention</a> 
+and so can be run as a systemd socket-activated service in this manner.
+</p></li>
+<li><p>
+<code>service-manager-svscan.path</code> is a systemd <em>path unit</em> that tells systemd to watch the <code>/service/</code> directory.
+<code>service-manager-svscan.service</code> is a systemd <em>service unit</em> that defines the <em>path-activated</em> service that is associated with that path.
+The service runs <code>service-dt-scanner</code>.
+</p></li>
+</ul>
+
+<p>
+You must enable the path and the socket units if you wish to run the service manager under systemd.
+What happens at system bootstrap, with these enabled, is:
+</p>
+
+<ol>
+<li><p>
+systemd, monitoring the <code>/service/</code> directory as a result of activating the path unit, sees that the directory is non-empty.
+</p></li>
+<li><p>
+systemd activates the <code>service-manager-svscan.service</code> service, running <code>service-dt-scanner /service/</code>.
+</p></li>
+<li><p>
+<code>service-dt-scanner</code> scans <code>/service/</code> and for every service found it sends a LOAD command to the <code>/run/service-manager/control</code> socket.
+</p></li>
+<li><p>
+systemd, monitoring the <code>/run/service-manager/control</code> socket as a result of activating the socket unit, sees that requests have arrived on the socket.
+</p></li>
+<li><p>
+systemd activates the <code>service-manager.service</code> service, running <code>service-manager</code> with an open file descriptor for the control socket.
+</p></li>
+<li><p>
+<code>service-manager</code> loads and manages the services that <code>service-dt-scanner</code> tells it to.
+</p></li>
+</ol>

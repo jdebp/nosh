@@ -14,6 +14,7 @@ exec	local-stream-socket-accept
 exec	login-banner
 exec	login-process
 exec	login-prompt
+exec	make-private-fs
 exec	nosh
 exec	open-controlling-tty
 exec	pause
@@ -24,6 +25,7 @@ exec	pty-run
 exec	read-conf
 exec	recordio
 exec	set-dynamic-hostname
+exec	set-mount-object
 exec	setenv
 exec	setlock
 exec	setpgrp
@@ -36,7 +38,9 @@ exec	tcp-socket-accept
 exec	tcp-socket-listen
 exec	true
 exec	ucspi-socket-rules-check
+exec	udp-socket-listen
 exec	ulimit
+exec	unshare
 exec	umask
 exec	unsetenv
 exec	vc-get-tty
@@ -44,6 +48,7 @@ exec	vc-reset-tty
 session-manager	cyclog
 session-manager	system-control
 session-manager	service-manager
+system-control	convert-systemd-units
 system-control	systemctl
 service-dt-scanner	svscan
 service-is-up	svup

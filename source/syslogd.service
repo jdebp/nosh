@@ -4,9 +4,11 @@
 
 [Unit]
 Description=Old-style system log daemon
-[Install]
-WantedBy=workstation.target
+
 [Service]
 systemdWorkingDirectory=false
 ExecStart=syslogd -c -ss
 Restart=always
+
+[Install]
+WantedBy=workstation.target

@@ -24,40 +24,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include "common-manager.h"
 #include "popt.h"
 
-
-/* Utilities ****************************************************************
-// **************************************************************************
-*/
-
-static inline
-int
-open_bundle_directory (
-	const char * arg,
-	std::string & path
-) {
-	const std::string a(arg);
-	if (std::strchr(arg, '/')) {
-		path = a;
-		return open_dir_at(AT_FDCWD, (path + "/").c_str());
-	}
-
-	if (!local_session_mode) {
-		for ( const char * const * q(bundle_prefixes); q < bundle_prefixes + sizeof bundle_prefixes/sizeof *bundle_prefixes; ++q) {
-			const std::string p(*q);
-			const std::string suffix(p + a);
-			for ( const char * const * proot(roots); proot < roots + sizeof roots/sizeof *roots; ++proot) {
-				const std::string r(*proot);
-				path = r + suffix;
-				const int bundle_dir_fd(open_dir_at(AT_FDCWD, (path + "/").c_str()));
-				if (0 > bundle_dir_fd) continue;
-				return bundle_dir_fd;
-			}
-		}
-	}
-
-	return -1;
-}
-
 /* System control subcommands ***********************************************
 // **************************************************************************
 */
@@ -163,16 +129,18 @@ enable (
 	}
 
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
-		std::string path;
-		const int bundle_dir_fd(open_bundle_directory(*i, path));
+		std::string path, name;
+		const int bundle_dir_fd(open_bundle_directory(*i, path, name));
 		if (0 > bundle_dir_fd) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, *i, std::strerror(error));
 			continue;
 		}
-		enable_disable(prog, true, path, bundle_dir_fd, "wanted-by", "wants");
-		enable_disable(prog, true, path, bundle_dir_fd, "stopped-by", "conflicts");
-		enable_disable(prog, true, path, bundle_dir_fd, "stopped-by", "after");
+		const std::string p(path + name);
+		const bool make(true);
+		enable_disable(prog, make, p, bundle_dir_fd, "wanted-by", "wants");
+		enable_disable(prog, make, p, bundle_dir_fd, "stopped-by", "conflicts");
+		enable_disable(prog, make, p, bundle_dir_fd, "stopped-by", "after");
 		close(bundle_dir_fd);
 	}
 
@@ -204,16 +172,18 @@ disable (
 	}
 
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
-		std::string path;
-		const int bundle_dir_fd(open_bundle_directory(*i, path));
+		std::string path, name;
+		const int bundle_dir_fd(open_bundle_directory(*i, path, name));
 		if (0 > bundle_dir_fd) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, *i, std::strerror(error));
 			continue;
 		}
-		enable_disable(prog, false, path, bundle_dir_fd, "wanted-by", "wants");
-		enable_disable(prog, false, path, bundle_dir_fd, "stopped-by", "conflicts");
-		enable_disable(prog, false, path, bundle_dir_fd, "stopped-by", "after");
+		const std::string p(path + name);
+		const bool make(false);
+		enable_disable(prog, make, p, bundle_dir_fd, "wanted-by", "wants");
+		enable_disable(prog, make, p, bundle_dir_fd, "stopped-by", "conflicts");
+		enable_disable(prog, make, p, bundle_dir_fd, "stopped-by", "after");
 		close(bundle_dir_fd);
 	}
 
@@ -245,17 +215,18 @@ preset (
 	}
 
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
-		std::string path;
-		const int bundle_dir_fd(open_bundle_directory(*i, path));
+		std::string path, name;
+		const int bundle_dir_fd(open_bundle_directory(*i, path, name));
 		if (0 > bundle_dir_fd) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, *i, std::strerror(error));
 			continue;
 		}
+		const std::string p(path + name);
 		const bool make(determine_preset(prog, *i));
-		enable_disable(prog, make, path, bundle_dir_fd, "wanted-by", "wants");
-		enable_disable(prog, make, path, bundle_dir_fd, "stopped-by", "conflicts");
-		enable_disable(prog, make, path, bundle_dir_fd, "stopped-by", "after");
+		enable_disable(prog, make, p, bundle_dir_fd, "wanted-by", "wants");
+		enable_disable(prog, make, p, bundle_dir_fd, "stopped-by", "conflicts");
+		enable_disable(prog, make, p, bundle_dir_fd, "stopped-by", "after");
 		close(bundle_dir_fd);
 	}
 

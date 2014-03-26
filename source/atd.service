@@ -4,9 +4,11 @@
 
 [Unit]
 Description="at" scheduling service
-[Install]
-WantedBy=workstation.target
+
 [Service]
 systemdWorkingDirectory=false
 ExecStart=atd -f
 Restart=always
+
+[Install]
+WantedBy=workstation.target

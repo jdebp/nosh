@@ -4,11 +4,13 @@
 
 [Unit]
 Description=VirtualBox guest additions
-[Install]
-WantedBy=workstation.target
+
 [Service]
 systemdWorkingDirectory=false
 ExecStartPre=sh -c 'kldstat -q -m pci/vboxguest || kldload vboxguest'
 ExecStart=VBoxService -f
 ExecStopPost=sh -c 'kldstat -q -m pci/vboxguest && kldunload vboxguest'
 Restart=always
+
+[Install]
+WantedBy=workstation.target

@@ -4,11 +4,13 @@
 
 [Unit]
 Description=Scanner service
-[Install]
-WantedBy=server.target
+
 [Service]
 Group=scanner
 systemdWorkingDirectory=false
-ExecStart=saned
+ExecStart=%P
 StandardInput=socket
 Restart=always
+
+[Install]
+WantedBy=server.target

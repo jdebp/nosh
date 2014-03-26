@@ -1,0 +1,61 @@
+<title>Troubleshooting</title>
+<link rel="Up" href="index.html" title="nosh Guide" />
+<link rel="Prev" href="logging.html" title="Logging" />
+<h2>
+Troubleshooting
+</h2>
+
+<h3>
+A service is continually switching between the "running" and "failed" states, and shows an uptime of 0 seconds (or 1 second).
+</h3>
+
+<p>
+<a href="http://homepage.ntlworld.com./jonathan.deboynepollard/FGA/daemontools-service-not-staying-up.html">
+This service is failing to start properly; investigate its log and check its run script.</a>
+</p>
+
+<h3>
+A service is stuck in the "starting", "failed", or "stopping" states.
+</h3>
+
+<p>
+The <a href="service-control.html"><code>service-control</code> command</a> causes the service manager to send signals to the service process(es).
+Those processes include the ones that run in the "starting", "failed", and "stopping" states &mdash; namely the <code>start</code>, <code>restart</code>, and <code>stop</code> programs and anything that they in their turn run.
+So just terminate the process(es) with <code>service-control --terminate</code>.
+</p>
+
+<p>
+Bear in mind that some "sysinit" services do things in their <code>start</code> programs that may take a long time.
+The "fsck@" service <code>fsck</code>s a volume in its "starting" state, for example.
+These long-running initialization actions are <em>not</em> necessarily stuck just because they take a long time.
+</p>
+
+<h3>
+The system bootstrap never starts the "normal" target.
+</h3>
+
+<ul>
+<li><p>
+You have your <code>/usr</code> and <code>/var</code> filesystems on separate volumes and you haven't run <code>system-control enable mount@-usr mount@-var</code>.
+These mount services are not enabled as shipped.
+You have to enable them if you have separate <code>/usr</code> and <code>/var</code> volumes.
+</p></li>
+<li><p>
+Service A specifies that it is to be started after service B (or service B has specified that it is to start before service A), one or both services are directly or indirectly wanted by the "normal" target, and service B has failed to start.
+</p></li>
+<li><p>
+You have an enabled service whose <code>supervise</code> directory is on a read-only filesystem.
+Notice that "sysinit" services locate their <code>supervise</code> directories under <code>/run/system-manager/early-supervise/</code> for this reason.
+</p></li>
+</ul>
+
+<h3>
+A "log" service is marked as "initially started" by <code>svstat</code> but the daemontools-compatible bootstrap doesn't start it.
+</h3>
+
+<p>
+This is actually the expected behaviour.
+<a href="service-dt-scanner.html"><code>service-dt-scanner</code></a> uses an experimental service manager mechanism for logging services that causes them to be only started when something is written by the "main" service to the pipe that joins the services.
+Note that <a href="system-control.html"><code>system-control</code></a> doesn't make use of this mechanism.
+You will never see this outwith the daemontools-compatible bootstrap.
+</p>

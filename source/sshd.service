@@ -6,8 +6,10 @@
 Description=SSH service
 #Requires=sshdgenkeys.service
 After=sshdgenkeys.service
-[Install]
-WantedBy=server.target
+
 [Service]
 systemdWorkingDirectory=false
 ExecStart=sshd -D -e
+
+[Install]
+WantedBy=server.target

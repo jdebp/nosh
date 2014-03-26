@@ -7,7 +7,7 @@ Description=Device bus service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStartPre=sh -c 'mkdir -p /run/dbus ; mkdir -p /var/db/dbus ; [ ! -r /var/db/dbus/machine-id ] && ln -s /etc/machine-id /var/db/dbus/'
+ExecStartPre=sh -c 'mkdir -p /run/dbus ; mkdir -p /var/db/dbus ; [ ! -r /var/db/dbus/machine-id ] && ln -s /etc/machine-id /var/db/dbus/ ; rm -f /run/dbus/dbus.pid'
 ExecStart=dbus-daemon --system --nofork
 Restart=always
 

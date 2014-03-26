@@ -4,9 +4,12 @@
 
 [Unit]
 Description=SSH service
-[Install]
-WantedBy=server.target
+
 [Service]
+Type=oneshot
 systemdWorkingDirectory=false
 ExecStart=sshdgenkeys
 RemainAfterExit=yes
+
+[Install]
+WantedBy=server.target

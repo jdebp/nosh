@@ -54,7 +54,7 @@ struct bundle {
 		WANT_STOP = 0x4,
 	};
 	int bundle_dir_fd, supervise_dir_fd;
-	std::string name;
+	std::string path, name;
 	bool ss_scanned;
 	enum { INITIAL, BLOCKED, CHANGING, DONE } job_state;
 	int order;
@@ -70,6 +70,7 @@ bundle *
 add_bundle (
 	bundle_info_map & bundles,
 	const int bundle_dir_fd,
+	const std::string & path,
 	const std::string & name,
 	unsigned wants
 ) {
@@ -88,23 +89,10 @@ add_bundle (
 	}
 	bundle & b(bundles[bundle_dir_s]);
 	b.name = name;
+	b.path = path;
 	b.bundle_dir_fd = bundle_dir_fd;
 	b.wants = wants;
 	return &b;
-}
-
-static inline
-bundle *
-open_and_add_bundle (
-	bundle_info_map & bundles,
-	const std::string & path,
-	const std::string & name,
-	unsigned wants
-) {
-	const std::string paths(path + name + "/");
-	const int bundle_dir_fd(open_dir_at(AT_FDCWD, paths.c_str()));
-	if (0 > bundle_dir_fd) return 0;
-	return add_bundle(bundles, bundle_dir_fd, name, wants);
 }
 
 static inline
@@ -114,27 +102,10 @@ add_bundle_searching_path (
 	const char * arg,
 	unsigned wants
 ) {
-	const std::string a(arg);
-	if (const char * slash = std::strrchr(arg, '/')) {
-		const std::string path(arg, slash + 1);
-		const std::string name(slash + 1);
-		return open_and_add_bundle(bundles, path, name, wants);
-	}
-
-	if (!local_session_mode) {
-		for ( const char * const * q(bundle_prefixes); q < bundle_prefixes + sizeof bundle_prefixes/sizeof *bundle_prefixes; ++q) {
-			const std::string suffix(*q);
-			for ( const char * const * p(roots); p < roots + sizeof roots/sizeof *roots; ++p) {
-				const std::string r(*p);
-				const std::string path(r + suffix);
-				if (bundle * b = open_and_add_bundle(bundles, path, a, wants))
-					return b;
-			}
-		}
-	}
-
-	errno = ENOENT;
-	return 0;
+	std::string path, name;
+	const int bundle_dir_fd(open_bundle_directory (arg, path, name));
+	if (0 > bundle_dir_fd) return 0;
+	return add_bundle(bundles, bundle_dir_fd, path, name, wants);
 }
 
 static inline
@@ -176,7 +147,7 @@ add_related_bundles (
 		if ('.' == entry->d_name[0]) continue;
 		const int dir_fd(open_dir_at(subdir_fd, entry->d_name));
 		if (0 > dir_fd) continue;
-		add_bundle(bundles, dir_fd, entry->d_name, wants);
+		add_bundle(bundles, dir_fd, (b.path + b.name + "/") + subdir_name, entry->d_name, wants);
 	}
 	closedir(subdir_dir);
 }
@@ -428,11 +399,12 @@ start_stop_common (
 		}
 		const bool was_already_loaded(is_ok(b.supervise_dir_fd));
 		if (!was_already_loaded) {
+			const bool run_on_empty(!is_done_after_exit(service_dir_fd));
 			if (verbose)
-				std::fprintf(stderr, "%s: LOAD: %s\n", prog, b.name.c_str());
+				std::fprintf(stderr, "%s: LOAD: %s%s\n", prog, b.name.c_str(), run_on_empty ? " (remain)" : "");
 			if (!pretending) {
 				make_supervise_fifos (b.supervise_dir_fd);
-				load(prog, socket_fd, b.name.c_str(), b.supervise_dir_fd, service_dir_fd, true, true);
+				load(prog, socket_fd, b.name.c_str(), b.supervise_dir_fd, service_dir_fd, true, run_on_empty);
 				if (!wait_ok(b.supervise_dir_fd, 5000)) {
 					std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, b.name.c_str(), "ok", "Unable to load service bundle.");
 					close(service_dir_fd);
@@ -447,11 +419,12 @@ start_stop_common (
 		if (0 <= log_supervise_dir_fd && 0 <= log_service_dir_fd) {
 			const bool log_was_already_loaded(is_ok(log_supervise_dir_fd));
 			if (!log_was_already_loaded) {
+				const bool run_on_empty(!is_done_after_exit(log_service_dir_fd));
 				if (verbose)
-					std::fprintf(stderr, "%s: LOAD: %s\n", prog, (b.name + "/log").c_str());
+					std::fprintf(stderr, "%s: LOAD: %s%s\n", prog, (b.name + "/log").c_str(), run_on_empty ? " (remain)" : "");
 				if (!pretending) {
 					make_supervise_fifos (log_supervise_dir_fd);
-					load(prog, socket_fd, (b.name + "/log").c_str(), log_supervise_dir_fd, log_service_dir_fd, true, true);
+					load(prog, socket_fd, (b.name + "/log").c_str(), log_supervise_dir_fd, log_service_dir_fd, true, run_on_empty);
 				}
 			}
 			if (!pretending)
@@ -479,7 +452,7 @@ start_stop_common (
 				}
 				if (is_done) {
 					if (verbose)
-						std::fprintf(stderr, "%s: DONE: %s\n", prog, b.name.c_str());
+						std::fprintf(stderr, "%s: DONE: %s%s\n", prog, b.path.c_str(), b.name.c_str());
 					b.job_state = b.DONE;
 				}
 			}
@@ -493,7 +466,7 @@ start_stop_common (
 				bundle * p(*j);
 				if (p->DONE != p->job_state) {
 					if (verbose)
-						std::fprintf(stderr, "%s: %s: BLOCKED by %s\n", prog, b.name.c_str(), p->name.c_str());
+						std::fprintf(stderr, "%s: %s%s: BLOCKED by %s%s\n", prog, b.path.c_str(), b.name.c_str(), p->path.c_str(), p->name.c_str());
 					b.job_state = b.BLOCKED;
 					break;
 				}
@@ -507,11 +480,11 @@ start_stop_common (
 					const bool was_already_loaded(is_ok(b.supervise_dir_fd));
 					if (was_already_loaded) {
 						if (verbose)
-							std::fprintf(stderr, "%s: START: %s\n", prog, b.name.c_str());
+							std::fprintf(stderr, "%s: START: %s%s\n", prog, b.path.c_str(), b.name.c_str());
 						if (!pretending)
 							start(prog, b.supervise_dir_fd);
 					} else
-						std::fprintf(stderr, "%s: CANNOT START: %s\n", prog, b.name.c_str());
+						std::fprintf(stderr, "%s: CANNOT START: %s%s\n", prog, b.path.c_str(), b.name.c_str());
 					break;
 				}
 				case bundle::WANT_STOP:
@@ -520,11 +493,11 @@ start_stop_common (
 					const bool was_already_loaded(is_ok(b.supervise_dir_fd));
 					if (was_already_loaded) {
 						if (verbose)
-							std::fprintf(stderr, "%s: STOP: %s\n", prog, b.name.c_str());
+							std::fprintf(stderr, "%s: STOP: %s%s\n", prog, b.path.c_str(), b.name.c_str());
 						if (!pretending)
 							stop(prog, b.supervise_dir_fd);
 					} else
-						std::fprintf(stderr, "%s: CANNOT STOP: %s\n", prog, b.name.c_str());
+						std::fprintf(stderr, "%s: CANNOT STOP: %s%s\n", prog, b.path.c_str(), b.name.c_str());
 					break;
 				}
 			}

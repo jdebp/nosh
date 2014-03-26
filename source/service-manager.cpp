@@ -50,8 +50,8 @@ struct index : public std::pair<dev_t, ino_t> {
 	index(const struct stat & s) : pair(s.st_dev, s.st_ino) {}
 };
 
-struct service {
-	service();
+struct service : public index {
+	service(const struct stat &);
 	~service();
 
 	void add_process(int);
@@ -66,14 +66,16 @@ struct service {
 	void delete_from_input_activation_list();
 	void add_to_control_fifo_list();
 	void delete_from_control_fifo_list();
+	void set_unload() { unload_after_stop = true; }
+	bool unloadable() const { return unload_after_stop && (NONE == activity) && !has_processes(); }
 
 	int in, out, err, pipe_fds[2], lock_fd, ok_fd, control_fd, control_client_fd, status_fd, service_dir_fd;
 	char name[NAME_MAX + 1];
 	bool run_on_empty;
 protected:
 	char pending_command;
-	bool paused;
-	enum {
+	bool paused, unload_after_stop;
+	enum ActivityType {
 		NONE = 0,	///< The service is not running anything.
 		START = 'a',	///< The service is running the "start" program.
 		RUN = 'r',	///< The service is running the "run" program.
@@ -85,9 +87,9 @@ protected:
 	std::set<int> processes;
 
 	void change_state_if_necessary (const sigset_t &);
-	void spawn(const sigset_t &);
+	void enter_state(const sigset_t &);
 	void del_process(int);
-	bool has_processes() { return !processes.empty(); }
+	bool has_processes() const { return !processes.empty(); }
 	void killall(int);
 	void add_input_ready_event(int);
 	void delete_input_ready_event(int);
@@ -193,7 +195,8 @@ is_failure (
 		return WEXITSTATUS(process_status) != EXIT_SUCCESS;
 }
 
-service::service() : 
+service::service(const struct stat & s) : 
+	index(s),
 	in(STDIN_FILENO), 
 	out(STDOUT_FILENO), 
 	err(STDERR_FILENO), 
@@ -205,7 +208,8 @@ service::service() :
 	service_dir_fd(-1),
 	run_on_empty(false),
 	pending_command('\0'), 
-	paused(false),
+	paused(false), 
+	unload_after_stop(false),
 	activity(NONE), 
 	process_status(0),
 	processes()
@@ -217,6 +221,8 @@ service::service() :
 
 service::~service() 
 {
+	delete_from_input_activation_list();
+	delete_from_control_fifo_list();
 	close(pipe_fds[0]);
 	close(pipe_fds[1]);
 	close(status_fd);
@@ -451,7 +457,7 @@ static const char * const stop_args[] = { "stop", 0 };
 
 inline
 void
-service::spawn (
+service::enter_state (
 	const sigset_t & original_signals
 ) {
 	if (has_processes()) return;
@@ -459,7 +465,8 @@ service::spawn (
 	const char * const * a(0);
 	const char * restart_args[] = { "restart", 0, 0, 0 };
 	switch (activity) {
-		default:	sleep(1); return;
+		default:	sleep(1); write_status(); return;
+		case NONE:	write_status(); return;
 		case START:	a = start_args; break;
 		case RUN:	a = run_args; break;
 		case STOP:	a = stop_args; break;
@@ -532,6 +539,7 @@ void
 service::change_state_if_necessary (
 	const sigset_t & original_signals
 ) {
+	const enum ActivityType prior_activity(activity);
 	switch (activity) {
 		case NONE:
 			switch (pending_command) {
@@ -543,7 +551,7 @@ service::change_state_if_necessary (
 			}
 			break;
 		case START:	
-			if (has_processes()) return;
+			if (!has_processes()) 
 			switch (pending_command) {
 				case 'O': 	activity = RUN; break;
 				case 'o':	activity = RUN; break;
@@ -555,10 +563,7 @@ service::change_state_if_necessary (
 		case RUN:	
 			if (has_processes()) {
 				if ('u' == pending_command) pending_command = '\0';
-				stamp_pending_command();
-				write_status();
-				return;
-			}
+			} else
 			switch (pending_command) {
 				case 'O': 	activity = RESTART; break;
 				case 'o':	activity = RESTART; break;
@@ -568,7 +573,7 @@ service::change_state_if_necessary (
 			}
 			break;
 		case RESTART:
-			if (has_processes()) return;
+			if (!has_processes()) 
 			switch (pending_command) {
 				case 'O': 	activity = STOP; break;
 				case 'o':	activity = STOP; break;
@@ -578,7 +583,7 @@ service::change_state_if_necessary (
 			}
 			break;
 		case STOP:
-			if (has_processes()) return;
+			if (!has_processes()) 
 			switch (pending_command) {
 				case 'O': 	pending_command = '\0'; activity = NONE; break;
 				case 'o':	pending_command = '\0'; activity = NONE; break;
@@ -590,8 +595,8 @@ service::change_state_if_necessary (
 	}
 	stamp_activity();
 	stamp_pending_command();
-	if (NONE != activity)
-		spawn(original_signals);
+	if (prior_activity != activity)
+		enter_state(original_signals);
 	else
 		write_status();
 }
@@ -659,7 +664,7 @@ void
 sig_term ( 
 	int signo 
 ) {
-	if (SIGHUP != signo) return;
+	if (SIGTERM != signo) return;
 	stop_signalled = true;
 }
 
@@ -668,12 +673,20 @@ void
 sig_int ( 
 	int signo 
 ) {
-	if (SIGHUP != signo) return;
+	if (SIGINT != signo) return;
+	stop_signalled = true;
+}
+
+static 
+void 
+sig_quit ( 
+	int signo 
+) {
+	if (SIGQUIT != signo) return;
 	stop_signalled = true;
 }
 
 static void sig_tstp ( int ) {}
-//static void sig_quit ( int ) {}
 
 #else
 
@@ -774,7 +787,8 @@ load (
 			close(service_dir_fd2);
 			return;
 		}
-		service & s(services[supervise_dir_s]);
+		std::pair<service_map::iterator, bool> it(services.insert(service_map::value_type(supervise_dir_s,supervise_dir_s)));
+		service & s(it.first->second);
 		s.lock_fd = lock_fd;
 		s.ok_fd = ok_fd;
 		s.control_fd = control_fd;
@@ -809,6 +823,25 @@ make_input_activated (
 
 	std::fprintf(stderr, "%s: DEBUG: make input activated %s\n", prog, s.name);
 	s.add_to_input_activation_list();
+}
+
+static
+void
+set_unload (
+	int supervise_dir_fd
+) {
+	struct stat supervise_dir_s;
+	if (!is_directory(supervise_dir_fd, supervise_dir_s)) return;
+	service_map::iterator supervise_dir_i(services.find(supervise_dir_s));
+	if (supervise_dir_i == services.end()) return;
+
+	service & s(supervise_dir_i->second);
+	std::fprintf(stderr, "%s: DEBUG: set unload after stop %s\n", prog, s.name);
+	s.set_unload();
+	if (s.unloadable()) {
+		std::fprintf(stderr, "%s: DEBUG: unloading %s\n", prog, s.name);
+		services.erase(supervise_dir_i);
+	}
 }
 
 /* Support functions ********************************************************
@@ -849,6 +882,13 @@ reap (
 	service & s(*i->second);
 
 	s.reap(original_signals, status, pid);
+	if (s.unloadable()) {
+		service_map::iterator j(services.find(s));
+		if (j != services.end()) {
+			std::fprintf(stderr, "%s: DEBUG: unloading %s\n", prog, s.name);
+			services.erase(j);
+		}
+	}
 }
 
 static inline
@@ -897,7 +937,6 @@ input_ready_event (
 static inline
 void
 control_message (
-	const sigset_t & original_signals,
 	int socket_fd
 ) {
 	service_manager_rpc_message m;
@@ -938,8 +977,8 @@ control_message (
 					make_input_activated(fds[0]);
 					break;
 				case service_manager_rpc_message::UNLOAD:
-//					unload(fds[0]);
-//					break;
+					set_unload(fds[0]);
+					break;
 				default:
 					std::fprintf(stderr, "%s: WARNING: unknown control message command %u with %lu file descriptors\n", prog, m.command, count_fds);
 					break;
@@ -952,12 +991,20 @@ control_message (
 
 static
 void
-stop_all (
+stop_and_unload_all (
 	const sigset_t & original_signals
 ) {
-	for (service_map::iterator supervise_dir_i(services.begin()); services.end() != supervise_dir_i; ++supervise_dir_i) {
-		service & s(supervise_dir_i->second);
+	for (service_map::iterator supervise_dir_i(services.begin()); services.end() != supervise_dir_i; ) {
+		// Pre-increment because we might be erasing.
+		service_map::iterator i(supervise_dir_i++);
+		service & s(i->second);
 		s.enact_control_message(original_signals, 'd');
+		std::fprintf(stderr, "%s: DEBUG: set unload after stop %s\n", prog, s.name);
+		s.set_unload();
+		if (s.unloadable()) {
+			std::fprintf(stderr, "%s: DEBUG: unloading %s\n", prog, s.name);
+			services.erase(i);
+		}
 	}
 }
 
@@ -967,7 +1014,7 @@ stop_all (
 
 void
 service_manager (
-	const char * & next_prog,
+	const char * & /*next_prog*/,
 	std::vector<const char *> & args
 ) {
 	prog = basename_of(args[0]);
@@ -999,15 +1046,16 @@ service_manager (
 	}
 
 	{
-		std::vector<struct kevent> p(listen_fds + 6);
+		std::vector<struct kevent> p(listen_fds + 7);
 		for (unsigned i(0U); i < listen_fds; ++i)
 			EV_SET(&p[i], LISTEN_SOCKET_FILENO + i, EVFILT_READ, EV_ADD, 0, 0, 0);
 		EV_SET(&p[listen_fds + 0], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 		EV_SET(&p[listen_fds + 1], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 		EV_SET(&p[listen_fds + 2], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-		EV_SET(&p[listen_fds + 3], SIGTSTP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-		EV_SET(&p[listen_fds + 4], SIGCHLD, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-		EV_SET(&p[listen_fds + 5], SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		EV_SET(&p[listen_fds + 3], SIGQUIT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		EV_SET(&p[listen_fds + 4], SIGTSTP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		EV_SET(&p[listen_fds + 5], SIGCHLD, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		EV_SET(&p[listen_fds + 6], SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 		if (0 > kevent(queue, p.data(), listen_fds + 6, 0, 0, 0)) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
@@ -1021,6 +1069,7 @@ service_manager (
 		sigaction(SIGHUP,&sa,NULL);
 		sigaction(SIGTERM,&sa,NULL);
 		sigaction(SIGINT,&sa,NULL);
+		sigaction(SIGQUIT,&sa,NULL);
 		sigaction(SIGTSTP,&sa,NULL);
 		sigaction(SIGPIPE,&sa,NULL);
 	}
@@ -1046,8 +1095,8 @@ service_manager (
 		sigaction(SIGTSTP,&sa,NULL);
 		sa.sa_handler=sig_child;
 		sigaction(SIGCHLD,&sa,NULL);
-//		sa.sa_handler=sig_quit;
-//		sigaction(SIGQUIT,&sa,NULL);
+		sa.sa_handler=sig_quit;
+		sigaction(SIGQUIT,&sa,NULL);
 	}
 
 	sigset_t masked_signals(original_signals);
@@ -1068,8 +1117,13 @@ service_manager (
 	sigdelset(&masked_signals_during_poll, SIGPIPE);
 #endif
 
+	bool in_shutdown(false);
 	for (;;) {
 		try {
+			if (in_shutdown) {
+				if (services.empty()) break;
+				std::fprintf(stderr, "%s: INFO: %s %lu %s\n", prog, "Shutdown requested but there are", services.size(), "services still active.");
+			}
 #if !defined(__LINUX__) && !defined(__linux__)
 			struct kevent e;
 			if (0 > kevent(queue, 0, 0, &e, 1, 0)) {
@@ -1081,7 +1135,7 @@ service_manager (
 			switch (e.filter) {
 				case EVFILT_READ:
 					if (LISTEN_SOCKET_FILENO <= static_cast<int>(e.ident) && LISTEN_SOCKET_FILENO + static_cast<int>(listen_fds) > static_cast<int>(e.ident))
-						control_message(original_signals, e.ident);
+						control_message(e.ident);
 					else
 						input_ready_event(original_signals, e.ident);
 					break;
@@ -1089,8 +1143,12 @@ service_manager (
 					switch (e.ident) {
 						case SIGTERM:
 						case SIGINT:
+						case SIGQUIT:
 						case SIGHUP:
-							stop_all(original_signals);
+							std::fprintf(stderr, "%s: DEBUG: stop signalled\n", prog);
+							stop_and_unload_all(original_signals);
+							std::fprintf(stderr, "%s: DEBUG: setting in_shutdown to true\n", prog);
+							in_shutdown = true;
 							break;
 						case SIGCHLD:
 							reaper(original_signals);
@@ -1124,10 +1182,13 @@ service_manager (
 			if (child_signalled) {
 				reaper(original_signals);
 				child_signalled = false;
+				continue;
 			}
 			if (stop_signalled) {
-				stop_all(original_signals);
+				stop_and_unload_all(original_signals);
 				stop_signalled = false;
+				in_shutdown = true;
+				continue;
 			}
 			if (0 > ppoll(poll_table.data(), poll_table.size(), 0, &masked_signals_during_poll)) {
 				const int error(errno);
@@ -1138,7 +1199,7 @@ service_manager (
 			for (std::vector<pollfd>::iterator i(poll_table.begin()); i != poll_table.end(); ++i) {
 				if (i->revents & POLLIN) {
 					if (LISTEN_SOCKET_FILENO <= i->fd && LISTEN_SOCKET_FILENO + static_cast<int>(listen_fds) > i->fd)
-						control_message(original_signals, i->fd);
+						control_message(i->fd);
 					else
 						input_ready_event(original_signals, i->fd);
 					break;
@@ -1151,4 +1212,6 @@ service_manager (
 			std::fprintf(stderr, "%s: ERROR: exception: %s\n", prog, e.what());
 		}
 	}
+	std::fprintf(stderr, "%s: DEBUG: all engines stop\n", prog);
+	throw EXIT_SUCCESS;
 }

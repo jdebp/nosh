@@ -11,6 +11,7 @@ EarlySupervise=true
 Type=oneshot
 systemdWorkingDirectory=false
 ExecStart=setup-machine-id
+RemainAfterExit=yes
 
 [Install]
 WantedBy=sysinit.target

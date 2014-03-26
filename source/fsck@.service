@@ -3,15 +3,16 @@
 ## **************************************************************************
 
 [Unit]
-Description=Filesystem check the /usr volume
+Description=Filesystem check the %I volume
 DefaultDependencies=false
 EarlySupervise=true
-Before=mount-usr.service
+Before=mount@%i.service
 
 [Service]
 Type=oneshot
-ExecStart=fsck -C -p /usr
+ExecStart=%P -C -p %I
 systemdWorkingDirectory=false
+RemainAfterExit=yes
 
 [Install]
-WantedBy=mount-usr.service
+WantedBy=mount@%i.service

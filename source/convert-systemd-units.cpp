@@ -12,7 +12,9 @@ For copyright and licensing terms, see the file named COPYING.
 #include <iostream>
 #include <fstream>
 #include <sys/stat.h>
-#include <arpa/inet.h>	// Necessary for the IPV6_V6ONLY macro.
+#include <sys/types.h>
+#include <sys/socket.h>	// Necessary for the SO_REUSEPORT macro.
+#include <netinet/in.h>	// Necessary for the IPV6_V6ONLY macro.
 #include <dirent.h>
 #include <unistd.h>
 #include <pwd.h>
@@ -189,21 +191,6 @@ split_list (
 }
 
 static
-bool
-ends_in (
-	const std::string & s,
-	const std::string & p,
-	std::string & r
-) {
-	const std::string::size_type pl(p.length());
-	const std::string::size_type sl(s.length());
-	if (sl < pl) return false;
-	if (s.substr(sl - pl, pl) != p) return false;
-	r = s.substr(0, sl - pl);
-	return true;
-}
-
-static
 std::string
 strip_leading_minus (
 	const std::string & s
@@ -253,13 +240,96 @@ quote (
 	return r;
 }
 
-static
+struct names {
+	names(const char * a) : arg_name(a) { split_name(a, unit_dirname, unit_basename); }
+	void set_prefix(const std::string & v, bool esc) { set(esc, escaped_prefix, prefix, v); }
+	void set_instance(const std::string & v, bool esc) { set(esc, escaped_instance, instance, v); }
+	void set_bundle_basename(const std::string & v) { bundle_basename = v; }
+	void set_bundle_dirname(const std::string & v) { bundle_dirname = v; }
+	const std::string & query_arg_name () const { return arg_name; }
+	const std::string & query_unit_dirname () const { return unit_dirname; }
+	const std::string & query_unit_basename () const { return unit_basename; }
+	const std::string & query_escaped_unit_basename () const { return escaped_unit_basename; }
+	const std::string & query_prefix () const { return prefix; }
+	const std::string & query_escaped_prefix () const { return escaped_prefix; }
+	const std::string & query_instance () const { return instance; }
+	const std::string & query_escaped_instance () const { return escaped_instance; }
+	const std::string & query_bundle_basename () const { return bundle_basename; }
+	const std::string & query_bundle_dirname () const { return bundle_dirname; }
+	std::string substitute ( const std::string & );
+protected:
+	std::string arg_name, unit_dirname, unit_basename, escaped_unit_basename, prefix, escaped_prefix, instance, escaped_instance, bundle_basename, bundle_dirname;
+	static std::string unescape ( const std::string & );
+	static std::string escape ( const std::string & );
+	void set ( bool esc, std::string & escaped, std::string & normal, const std::string & value ) {
+		if (esc)
+			normal = unescape(escaped = value);
+		else
+			escaped = escape(normal = value);
+	}
+};
+
+std::string 
+names::unescape ( 
+	const std::string & s
+) {
+	std::string r;
+	for (std::string::const_iterator e(s.end()), q(s.begin()); e != q; ) {
+		char c(*q++);
+		if ('-' == c) {
+			r += '/';
+		} else
+		if ('\\' != c) {
+			r += c;
+		} else
+		if (e == q) {
+			r += c;
+		} else
+		{
+			c = *q++;
+			if ('X' != c && 'x' != c)
+				r += c;
+			else {
+				unsigned v(0U);
+				for (;;) {
+					if (e == q) break;
+					c = *q;
+					if (!std::isxdigit(c)) break;
+					c = std::isdigit(c) ? (c - '0') : (std::tolower(c) - 'a' + 10);
+					v = (v << 4) | c;
+				}
+				r += char(v);
+			}
+		}
+	}
+	return r;
+}
+
+std::string 
+names::escape ( 
+	const std::string & s
+) {
+	std::string r;
+	for (std::string::const_iterator e(s.end()), q(s.begin()); e != q; ) {
+		char c(*q++);
+		if ('/' == c) {
+			r += '-';
+		} else
+		if ('-' != c) {
+			r += c;
+		} else
+		{
+			char buf[6];
+			snprintf(buf, sizeof buf, "\\x%02x", c);
+			r += std::string(buf);
+		}
+	}
+	return r;
+}
+
 std::string
-substitute (
-	const std::string & s,
-	const std::string & n,
-	const std::string & p,
-	const std::string & i
+names::substitute (
+	const std::string & s
 ) {
 	std::string r;
 	for (std::string::const_iterator e(s.end()), q(s.begin()); e != q; ++q) {
@@ -275,9 +345,12 @@ substitute (
 			continue;
 		}
 		switch (c = *q) {
-			case 'p': case 'P':	r += p; break;
-			case 'i': case 'I':	r += i; break;
-			case 'n': case 'N':	r += n; break;
+			case 'p': r += query_escaped_prefix(); break;
+			case 'P': r += query_prefix(); break;
+			case 'i': r += query_escaped_instance(); break;
+			case 'I': r += query_instance(); break;
+			case 'n': r += query_escaped_unit_basename(); break;
+			case 'N': r += query_unit_basename(); break;
 			case '%': default:	r += '%'; r += c; break;
 		}
 	}
@@ -305,12 +378,39 @@ is_local_socket_name (
 
 static inline
 bool
+bracketed (
+	const std::string & s
+) {
+	return s.length() > 1 && '[' == s[0] && ']' == s[s.length() - 1];
+}
+
+static
+void
+split_ip_socket_name (
+	const std::string & s, 
+	std::string & listenaddress, 
+	std::string & listenport
+) {
+	const std::string::size_type colon(s.rfind(':'));
+	if (std::string::npos == colon) {
+		listenaddress = "::0";
+		listenport = s;
+	} else {
+		listenaddress = s.substr(0, colon);
+		listenport = s.substr(colon + 1, std::string::npos);
+		if (bracketed(listenaddress))
+			listenaddress = listenaddress.substr(1, colon - 2);
+	}
+}
+
+static inline
+bool
 is_section_heading (
 	std::string line,	///< line, already left trimmed by the caller
 	std::string & section	///< overwritten only if we successfully parse the heading
 ) {
 	line = rtrim(line);
-	if (line.length() < 2 || '[' != line[0] || ']' != line[line.length() - 1]) return false;
+	if (!bracketed(line)) return false;
 	section = tolower(line.substr(1, line.length() - 2));
 	return true;
 }
@@ -383,19 +483,19 @@ create_links (
 			if (is_target)
 				target = "../../" + base;
 			else
-				target = roots[1] + (bundle_prefixes[0] + base);
+				target = "/etc/system-manager/targets/" + base;
 			link = service_basename + subdir + base;
 		} else
 		if (ends_in(name, ".service", base)) {
 			if (is_target)
-				target = roots[3] + (bundle_prefixes[1] + base);
+				target = "/var/sv/" + base;
 			else
 				target = "../../" + base;
 			link = service_basename + subdir + base;
 		} else 
 		{
 			if (is_target)
-				target = roots[3] + (bundle_prefixes[1] + base);
+				target = "/var/sv/" + base;
 			else
 				target = "../../" + name;
 			link = service_basename + subdir + name;
@@ -452,13 +552,16 @@ convert_systemd_units (
 ) {
 	const char * prog(basename_of(args[0]));
 	std::string bundle_root;
+	bool unescape_instance(false), unescape_prefix(false);
 	try {
 		const char * bundle_root_str(0);
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
 		popt::string_definition bundle_option('\0', "bundle-root", "Root directory for bundles.", "directory", bundle_root_str);
+		popt::bool_definition unescape_instance_option('\0', "unescape-instance", "Unescape the instance part of a template instantiation.", unescape_instance);
 		popt::definition * main_table[] = {
 			&user_option,
-			&bundle_option
+			&bundle_option,
+			&unescape_instance_option
 		};
 		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "");
 
@@ -477,36 +580,44 @@ convert_systemd_units (
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing argument(s).");
 		throw EXIT_FAILURE;
 	}
-	const std::string unit_name(args.front());
-	std::string unit_basename, unit_dirname;
-	split_name(args.front(), unit_dirname, unit_basename);
+
+	struct names names(args.front());
+
 	args.erase(args.begin());
 	if (!args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Unrecognized argument(s).");
 		throw EXIT_FAILURE;
 	}
 
-	bool is_socket_activated(false), is_target(false);
-	std::string bundle_basename;
-	if (ends_in(unit_basename, ".target", bundle_basename)) {
-		is_target = true;
-	} else
-	if (ends_in(unit_basename, ".socket", bundle_basename)) {
-		is_socket_activated = true;
-	} else
-	if (ends_in(unit_basename, ".service", bundle_basename)) {
-	} else
-	{
-		bundle_basename = unit_basename;
-	}
+	bool is_socket_activated(false), is_target(false), is_socket_accept(false);
 
 	std::string socket_filename;
 	profile socket_profile;
+	std::string service_filename;
+	profile service_profile;
+
+	{
+		std::string bundle_basename;
+		if (ends_in(names.query_unit_basename(), ".target", bundle_basename)) {
+			is_target = true;
+		} else
+		if (ends_in(names.query_unit_basename(), ".socket", bundle_basename)) {
+			is_socket_activated = true;
+		} else
+		if (ends_in(names.query_unit_basename(), ".service", bundle_basename)) {
+		} else
+		{
+			bundle_basename = names.query_unit_basename();
+		}
+		names.set_bundle_basename(bundle_basename);
+		names.set_bundle_dirname(bundle_root + names.query_bundle_basename());
+	}
+
 	if (is_socket_activated) {
-		FileStar socket_file(find(unit_name, socket_filename));
+		FileStar socket_file(find(names.query_arg_name(), socket_filename));
 		if (!socket_file) {
 			const int error(errno);
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, unit_name.c_str(), std::strerror(error));
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, names.query_arg_name().c_str(), std::strerror(error));
 			throw EXIT_FAILURE;
 		}
 		if (!is_regular(prog, socket_filename, socket_file))
@@ -515,11 +626,52 @@ convert_systemd_units (
 		socket_file = NULL;
 	}
 
-	value * accept(socket_profile.use("socket", "accept"));
+	{
+		FileStar service_file;
+		std::string service_unit_name;
+		if (is_socket_activated) {
+			value * accept(socket_profile.use("socket", "accept"));
+			names.set_prefix(names.query_bundle_basename(), unescape_prefix);
+			is_socket_accept = is_bool_true(accept, false);
+			service_unit_name = names.query_unit_dirname() + names.query_prefix() + (is_socket_accept ? "@" : "") + ".service";
+			service_file = find(service_unit_name, service_filename);
+		} else {
+			names.set_prefix(names.query_bundle_basename(), unescape_prefix);
+			service_unit_name = names.query_arg_name();
+			service_file = find(service_unit_name, service_filename);
+			if (!service_file && ENOENT == errno) {
+				std::string::size_type atc(names.query_bundle_basename().find('@'));
+				if (names.query_bundle_basename().npos != atc) {
+					names.set_prefix(names.query_unit_basename().substr(0, atc), unescape_prefix);
+					++atc;
+					names.set_instance(names.query_bundle_basename().substr(atc, names.query_bundle_basename().npos), unescape_instance);
+					service_unit_name = names.query_unit_dirname() + names.query_prefix() + "@.service";
+					service_file = find(service_unit_name, service_filename);
+				}
+			}
+		}
+				
+		if (!service_file) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, service_unit_name.c_str(), std::strerror(error));
+			throw EXIT_FAILURE;
+		}
+
+		if (!is_regular(prog, service_filename, service_file))
+			throw EXIT_FAILURE;
+
+		load(service_profile, service_file);
+
+		service_file = NULL;
+	}
+
 	value * listenstream(socket_profile.use("socket", "listenstream"));
 	value * listendatagram(socket_profile.use("socket", "listendatagram"));
 #if defined(IPV6_V6ONLY)
 	value * bindipv6only(socket_profile.use("socket", "bindipv6only"));
+#endif
+#if defined(SO_REUSEPORT)
+	value * reuseport(socket_profile.use("socket", "reuseport"));
 #endif
 	value * backlog(socket_profile.use("socket", "backlog"));
 	value * maxconnections(socket_profile.use("socket", "maxconnections"));
@@ -527,6 +679,7 @@ convert_systemd_units (
 	value * socketmode(socket_profile.use("socket", "socketmode"));
 	value * nagle(socket_profile.use("socket", "nagle"));
 	value * ucspirules(socket_profile.use("socket", "ucspirules"));
+	value * freebind(socket_profile.use("socket", "freebind"));
 	value * socket_before(socket_profile.use("unit", "before"));
 	value * socket_after(socket_profile.use("unit", "after"));
 	value * socket_conflicts(socket_profile.use("unit", "conflicts"));
@@ -539,46 +692,6 @@ convert_systemd_units (
 	value * socket_wantedby(socket_profile.use("install", "wantedby"));
 	value * socket_requiredby(socket_profile.use("install", "requiredby"));
 	value * socket_stoppedby(socket_profile.use("install", "stoppedby"));	// This is an extension to systemd.
-
-	std::string service_filename, prefix_name, instance_name;
-	FileStar service_file;
-	bool is_socket_accept(false);
-	{
-		std::string service_unit_name;
-		if (is_socket_activated) {
-			is_socket_accept = is_bool_true(accept, false);
-			prefix_name = bundle_basename;
-			service_unit_name = unit_dirname + prefix_name + (is_socket_accept ? "@" : "") + ".service";
-			service_file = find(service_unit_name, service_filename);
-		} else {
-			prefix_name = bundle_basename;
-			service_unit_name = unit_name;
-			service_file = find(service_unit_name, service_filename);
-			if (!service_file && ENOENT == errno) {
-				std::string::size_type atc(bundle_basename.find('@'));
-				if (bundle_basename.npos != atc) {
-					prefix_name = unit_basename.substr(0, atc);
-					++atc;
-					instance_name = bundle_basename.substr(atc, bundle_basename.npos);
-					service_unit_name = unit_dirname + prefix_name + "@.service";
-					service_file = find(service_unit_name, service_filename);
-				}
-			}
-		}
-				
-		if (!service_file) {
-			const int error(errno);
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, service_unit_name.c_str(), std::strerror(error));
-			throw EXIT_FAILURE;
-		}
-	}
-	if (!is_regular(prog, service_filename, service_file))
-		throw EXIT_FAILURE;
-
-	profile service_profile;
-	load(service_profile, service_file);
-
-	service_file = NULL;
 
 	value * type(service_profile.use("service", "type"));
 	value * workingdirectory(service_profile.use("service", "workingdirectory"));
@@ -610,14 +723,21 @@ convert_systemd_units (
 	value * environmentuser(service_profile.use("service", "environmentuser"));	// This is an extension to systemd.
 	value * ttypath(service_profile.use("service", "ttypath"));
 	value * ttyreset(service_profile.use("service", "ttyreset"));
+	value * ttyprompt(service_profile.use("service", "ttyprompt"));
 	value * ttyvhangup(service_profile.use("service", "ttyvhangup"));
-	value * ttyvtdisallocate(service_profile.use("service", "ttyvtdisallocate"));
+//	value * ttyvtdisallocate(service_profile.use("service", "ttyvtdisallocate"));
 	value * remainafterexit(service_profile.use("service", "remainafterexit"));
 	value * processgroupleader(service_profile.use("service", "processgroupleader"));	// This is an extension to systemd.
 	value * sessionleader(service_profile.use("service", "sessionleader"));	// This is an extension to systemd.
 	value * restart(service_profile.use("service", "restart"));
 	value * restartsec(service_profile.use("service", "restartsec"));
 //	value * ignoresigpipe(service_profile.use("service", "ignoresigpipe"));
+#if defined(__LINUX__) || defined(__linux__)
+	value * privatetmp(service_profile.use("service", "privatetmp"));
+	value * privatedevices(service_profile.use("service", "privatedevices"));
+	value * privatenetwork(service_profile.use("service", "privatenetwork"));
+	value * mountflags(service_profile.use("service", "mountflags"));
+#endif
 	value * service_defaultdependencies(service_profile.use("unit", "defaultdependencies"));
 	value * service_earlysupervise(service_profile.use("unit", "earlysupervise"));	// This is an extension to systemd.
 	value * service_after(service_profile.use("unit", "after"));
@@ -637,8 +757,8 @@ convert_systemd_units (
 		std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, service_filename.c_str(), type->datum.c_str(), "Only simple services are supported.");
 		throw EXIT_FAILURE;
 	}
-	if (!execstart) {
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, unit_name.c_str(), "Missing mandatory ExecStart entry.");
+	if (!execstart && !is_target) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, service_filename.c_str(), "Missing mandatory ExecStart entry.");
 		throw EXIT_FAILURE;
 	}
 	if (is_socket_activated) {
@@ -651,10 +771,6 @@ convert_systemd_units (
 				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, socket_filename.c_str(), "ListenDatagram sockets may not have Accept=yes.");
 				throw EXIT_FAILURE;
 			}
-			if (is_local_socket_name(listendatagram->datum)) {
-				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, socket_filename.c_str(), "ListenDatagram sockets may not be local domain.");
-				throw EXIT_FAILURE;
-			}
 		}
 	}
 	// We silently set "process" as the default killmode, not "control-group".
@@ -665,48 +781,71 @@ convert_systemd_units (
 
 	// Make the directories.
 
-	const std::string bundle_dirname(bundle_root + bundle_basename);
-	const std::string service_dirname(bundle_dirname + "/service");
+	const std::string service_dirname(names.query_bundle_dirname() + "/service");
 
-	mkdir(bundle_dirname.c_str(), 0755);
+	mkdir(names.query_bundle_dirname().c_str(), 0755);
 	mkdir(service_dirname.c_str(), 0755);
-	mkdir((bundle_dirname + "/after").c_str(), 0755);
-	mkdir((bundle_dirname + "/before").c_str(), 0755);
-	mkdir((bundle_dirname + "/wants").c_str(), 0755);
-	mkdir((bundle_dirname + "/conflicts").c_str(), 0755);
-	mkdir((bundle_dirname + "/wanted-by").c_str(), 0755);
-	mkdir((bundle_dirname + "/required-by").c_str(), 0755);
-	mkdir((bundle_dirname + "/stopped-by").c_str(), 0755);
+	mkdir((names.query_bundle_dirname() + "/after").c_str(), 0755);
+	mkdir((names.query_bundle_dirname() + "/before").c_str(), 0755);
+	mkdir((names.query_bundle_dirname() + "/wants").c_str(), 0755);
+	mkdir((names.query_bundle_dirname() + "/conflicts").c_str(), 0755);
+	mkdir((names.query_bundle_dirname() + "/wanted-by").c_str(), 0755);
+	mkdir((names.query_bundle_dirname() + "/required-by").c_str(), 0755);
+	mkdir((names.query_bundle_dirname() + "/stopped-by").c_str(), 0755);
 
-#define SUBSTITUTE(x) substitute((x), unit_basename, prefix_name, instance_name)
-#define CREATE_LINKS(p,i,l,b,s) (l ? create_links ((p),(i),SUBSTITUTE((l)->datum),(b),(s)) : static_cast<void>(0))
+#define CREATE_LINKS(p,i,l,b,s) (l ? create_links ((p),(i),names.substitute((l)->datum),(b),(s)) : static_cast<void>(0))
 
 	// Construct various common command strings.
 
 	std::string chroot;
-	if (rootdirectory) chroot += "chroot " + quote(SUBSTITUTE(rootdirectory->datum)) + "\n";
+	if (rootdirectory) chroot += "chroot " + quote(names.substitute(rootdirectory->datum)) + "\n";
+#if defined(__LINUX__) || defined(__linux__)
+	const bool is_private_tmp(is_bool_true(privatetmp, false));
+	const bool is_private_network(is_bool_true(privatenetwork, false));
+	const bool is_private_devices(is_bool_true(privatedevices, false));
+	if (is_private_tmp||is_private_network||is_private_devices) {
+		chroot += "unshare ";
+		if (is_private_tmp||is_private_devices) chroot += "--mount ";
+		if (is_private_network) chroot += "--network ";
+		chroot += "\n";
+		if (is_private_tmp||is_private_devices) {
+			chroot += "set-mount-object --recursive slave /\n";
+			chroot += "make-private-fs ";
+			if (is_private_tmp) chroot += "--temp ";
+			if (is_private_devices) chroot += "--devices ";
+			chroot += "\n";
+		}
+	}
+	if (mountflags) 
+		chroot += "set-mount-object --recursive " + quote(mountflags->datum) + " /\n";
+	else if (is_private_tmp||is_private_devices)
+		chroot += "set-mount-object --recursive shared /\n";
+#endif
 	const bool chrootall(!is_bool_true(rootdirectorystartonly, false));
 	std::string setsid;
 	if (is_bool_true(sessionleader, false)) setsid += "setsid\n";
 	if (is_bool_true(processgroupleader, false)) setsid += "setpgrp\n";
 	std::string setuidgid;
 	if (user) {
-		const std::string u(SUBSTITUTE(user->datum));
+		const std::string u(names.substitute(user->datum));
 		setuidgid += "setuidgid " + quote(u) + "\n";
-		// This replicates a systemd bug.
 		if (passwd * pw = getpwnam(u.c_str())) {
+			// This replicates a systemd bug.
 			if (pw->pw_dir)
 				setuidgid += "setenv HOME " + quote(pw->pw_dir) + "\n";
+			// This replicates a systemd useless feature.
+			if (pw->pw_shell)
+				setuidgid += "setenv SHELL " + quote(pw->pw_shell) + "\n";
 		}
 	} else {
 		if (group)
-			setuidgid += "setgid " + quote(SUBSTITUTE(group->datum)) + "\n";
+			setuidgid += "setgid " + quote(names.substitute(group->datum)) + "\n";
 	}
 	const bool setuidgidall(!is_bool_true(permissionsstartonly, false));
 	// systemd always runs services in / by default; daemontools runs them in the service directory.
 	std::string chdir;
 	if (workingdirectory)
-		chdir += "chdir " + quote(SUBSTITUTE(workingdirectory->datum)) + "\n";
+		chdir += "chdir " + quote(names.substitute(workingdirectory->datum)) + "\n";
 	else if (is_bool_true(systemdworkingdirectory, true))
 		chdir += "chdir /\n";
 	std::string softlimit;
@@ -723,11 +862,11 @@ convert_systemd_units (
 		softlimit += "\n";
 	}
 	std::string env;
-	if (environmentfile) env += "read-conf " + quote(SUBSTITUTE(environmentfile->datum)) + "\n";
-	if (environmentdirectory) env += "envdir " + quote(SUBSTITUTE(environmentdirectory->datum)) + "\n";
-	if (environmentuser) env += "envuidgid " + quote(SUBSTITUTE(environmentuser->datum)) + "\n";
+	if (environmentfile) env += "read-conf " + quote(names.substitute(environmentfile->datum)) + "\n";
+	if (environmentdirectory) env += "envdir " + quote(names.substitute(environmentdirectory->datum)) + "\n";
+	if (environmentuser) env += "envuidgid " + quote(names.substitute(environmentuser->datum)) + "\n";
 	if (environment) {
-		const std::list<std::string> list(split_list(SUBSTITUTE(environment->datum)));
+		const std::list<std::string> list(split_list(names.substitute(environment->datum)));
 		for (std::list<std::string>::const_iterator i(list.begin()); list.end() != i; ++i) {
 			const std::string s(*i);
 			const std::string::size_type eq(s.find('='));
@@ -738,8 +877,8 @@ convert_systemd_units (
 	}
 	std::string um;
 	if (umask) um += "umask " + quote(umask->datum) + "\n";
-	const bool sleeponeshot(!is_bool_true(remainafterexit, false));
-	const bool oneshot(type && "oneshot" == tolower(type->datum));
+	const bool is_oneshot(type && "oneshot" == tolower(type->datum));
+	const bool is_remain(is_bool_true(remainafterexit, false));
 	const bool stdin_socket(standardinput && "socket" == tolower(standardinput->datum));
 	const bool stdin_tty(standardinput && ("tty" == tolower(standardinput->datum) || "tty-force" == tolower(standardinput->datum)));
 	const bool stdout_inherit(standardoutput && "inherit" == tolower(standardoutput->datum));
@@ -748,8 +887,8 @@ convert_systemd_units (
 	if (standardinput && !stdin_socket && !stdin_tty) standardinput->used = false;
 	if (standardoutput && !stdout_inherit) standardoutput->used = false;
 	if (standarderror && !stderr_inherit) standarderror->used = false;
-	std::string tty(ttypath ? SUBSTITUTE(ttypath->datum) : "/dev/console");
-	std::string redirect;
+	std::string tty(ttypath ? names.substitute(ttypath->datum) : "/dev/console");
+	std::string redirect, login_prompt;
 	if (ttypath || stdin_tty) redirect += "vc-get-tty " + quote(tty) + "\n";
 	if (stdin_tty) {
 		redirect += "open-controlling-tty";
@@ -759,33 +898,32 @@ convert_systemd_units (
 #else
 			redirect += " --no-revoke";
 #endif
-		if (is_bool_true(ttyvtdisallocate, false)) 
-#if defined(__LINUX__) || defined(__linux__)
-			redirect += " --disallocate";
-#else
-			;
-#endif
 		redirect += "\n";
-		if (is_bool_true(ttyreset, false)) redirect += "vc-reset-tty\n";
 	}
-	if (stdout_inherit) redirect += "fdmove -c 1 0\n";
-	if (stderr_inherit) redirect += "fdmove -c 2 1\n";
+	if (stdout_inherit && !stdin_tty) redirect += "fdmove -c 1 0\n";
+	if (stderr_inherit && !stdin_tty) redirect += "fdmove -c 2 1\n";
+	if (stdin_tty) {
+		if (is_bool_true(ttyreset, false)) login_prompt += "vc-reset-tty\n";
+		if (is_bool_true(ttyprompt, false)) login_prompt += "login-prompt\n";
+	}
 
 	// Open the service script files.
 
-	std::ofstream start, stop, restart_script, real_run, real_service;
+	std::ofstream start, stop, restart_script, real_run, real_service, remain;
 	open(prog, start, service_dirname + "/start");
 	open(prog, stop, service_dirname + "/stop");
 	open(prog, restart_script, service_dirname + "/restart");
 	open(prog, real_run, service_dirname + "/run");
 	if (is_socket_activated)
 		open(prog, real_service, service_dirname + "/service");
-	std::ostream & run(oneshot ? start : real_run);
+	std::ostream & run(is_oneshot ? start : real_run);
 	std::ostream & service(is_socket_activated ? real_service : run);
+	if (is_remain)
+		open(prog, remain, service_dirname + "/remain");
 
 	// Write the script files.
 
-	if (!oneshot) {
+	if (!is_oneshot) {
 		start << "#!/bin/nosh\n" << multi_line_comment("Start file generated from " + service_filename);
 		start << redirect;
 		start << softlimit;
@@ -794,10 +932,10 @@ convert_systemd_units (
 		start << env;
 		start << um;
 		if (chrootall) start << chroot;
-		if (execstartpre) start << SUBSTITUTE(strip_leading_minus(execstartpre->datum)) << "\n"; else start << "true\n";
+		if (execstartpre) start << names.substitute(strip_leading_minus(execstartpre->datum)) << "\n"; else start << "true\n";
 	} else {
 		real_run << "#!/bin/nosh\n" << multi_line_comment("Run file generated from " + service_filename);
-		if (sleeponeshot)
+		if (!is_remain)
 			real_run << "pause\n";
 		else
 			real_run << "true\n";
@@ -805,7 +943,7 @@ convert_systemd_units (
 
 	if (is_socket_activated) {
 		run << "#!/bin/nosh\n" << multi_line_comment("Run file generated from " + socket_filename);
-		if (socket_description) run << multi_line_comment(SUBSTITUTE(socket_description->datum));
+		if (socket_description) run << multi_line_comment(names.substitute(socket_description->datum));
 		if (listenstream) {
 			if (is_local_socket_name(listenstream->datum)) {
 				run << "local-stream-socket-listen --systemd-compatibility ";
@@ -826,12 +964,18 @@ convert_systemd_units (
 					run << "\n";
 				}
 			} else {
+				std::string listenaddress, listenport;
+				split_ip_socket_name(listenstream->datum, listenaddress, listenport);
 				run << "tcp-socket-listen --systemd-compatibility ";
 				if (backlog) run << "--backlog " << quote(backlog->datum) << " ";
 #if defined(IPV6_V6ONLY)
 				if (bindipv6only && "both" == tolower(bindipv6only->datum)) run << "--combine4and6 ";
 #endif
-				run << "0 " << quote(listenstream->datum) << "\n";
+#if defined(SO_REUSEPORT)
+				if (is_bool_true(reuseport, false)) run << "--reuse-port ";
+#endif
+				if (is_bool_true(freebind, false)) run << "--bind-to-any ";
+				run << quote(listenaddress) << " " << quote(listenport) << "\n";
 				run << setsid;
 				run << redirect;
 				run << chroot;
@@ -850,26 +994,46 @@ convert_systemd_units (
 			}
 		}
 		if (listendatagram) {
-			run << "udp-socket-listen --systemd-compatibility ";
+			if (is_local_socket_name(listenstream->datum)) {
+				run << "local-datagram-socket-listen --systemd-compatibility ";
+				if (backlog) run << "--backlog " << quote(backlog->datum) << " ";
+				if (socketmode) run << "--socketmode " << quote(socketmode->datum) << " ";
+				run << quote(listendatagram->datum) << "\n";
+				run << setsid;
+				run << redirect;
+				run << chroot;
+				run << chdir;
+				run << env;
+				run << softlimit;
+				run << setuidgid;
+				run << um;
+			} else {
+				std::string listenaddress, listenport;
+				split_ip_socket_name(listendatagram->datum, listenaddress, listenport);
+				run << "udp-socket-listen --systemd-compatibility ";
 #if defined(IPV6_V6ONLY)
-			if (bindipv6only && "both" == tolower(bindipv6only->datum)) run << "--combine4and6 ";
+				if (bindipv6only && "both" == tolower(bindipv6only->datum)) run << "--combine4and6 ";
 #endif
-			run << "0 " << quote(listendatagram->datum) << "\n";
-			run << setsid;
-			run << redirect;
-			run << chroot;
-			run << chdir;
-			run << env;
-			run << softlimit;
-			run << setuidgid;
-			run << um;
+#if defined(SO_REUSEPORT)
+				if (is_bool_true(reuseport, false)) run << "--reuse-port ";
+#endif
+				run << quote(listenaddress) << " " << quote(listenport) << "\n";
+				run << setsid;
+				run << redirect;
+				run << chroot;
+				run << chdir;
+				run << env;
+				run << softlimit;
+				run << setuidgid;
+				run << um;
+			}
 		}
 		if (is_bool_true(ucspirules, false)) run << "ucspi-socket-rules-check\n";
 		run << "./service\n";
 		service << "#!/bin/nosh\n" << multi_line_comment("Service file generated from " + service_filename);
 	} else
 		run << "#!/bin/nosh\n" << multi_line_comment("Run file generated from " + service_filename);
-	if (service_description) service << multi_line_comment(SUBSTITUTE(service_description->datum));
+	if (service_description) service << multi_line_comment(names.substitute(service_description->datum));
 	if (is_socket_activated) {
 		if (!is_socket_accept) {
 			if (stdin_socket) service << "fdmove -c 0 3\n";
@@ -883,18 +1047,20 @@ convert_systemd_units (
 		service << setuidgid;
 		service << um;
 		service << env;
+		service << login_prompt;
 	}
-	service << SUBSTITUTE(strip_leading_minus(execstart->datum)) << "\n";
+	service << (execstart ? names.substitute(strip_leading_minus(execstart->datum)) : is_remain ? "true" : "pause") << "\n";
 
-	if (!restartsec && restart && "always" == tolower(restart->datum)) {
-		restart_script << "#!/bin/sh -\n" << multi_line_comment("Restart file generated from " + service_filename) << "true\n";
+	// nosh is not suitable here, since the restart script is passed arguments.
+	restart_script << "#!/bin/sh\n" << multi_line_comment("Restart file generated from " + service_filename);
+	if (restartsec) restart_script << "sleep " << restartsec->datum << "\n";
+	if (restart && "always" == tolower(restart->datum)) {
+		restart_script << "exec true\n";
 	} else
-	if (!restartsec && (!restart || "no" == tolower(restart->datum))) {
-		restart_script << "#!/bin/sh -\n" << multi_line_comment("Restart file generated from " + service_filename) << "false\n";
+	if ((!restart || "no" == tolower(restart->datum))) {
+		restart_script << "exec false\n";
 	} else 
 	{
-		restart_script << "#!/bin/sh\n" << multi_line_comment("Restart file generated from " + service_filename);
-		if (restartsec) restart_script << "sleep " << restartsec->datum << "\n";
 		restart_script << 
 			"case \"$1\" in\n"
 			"\te*)\n"
@@ -927,30 +1093,30 @@ convert_systemd_units (
 		stop << env;
 		stop << um;
 		if (chrootall) stop << chroot;
-		stop << SUBSTITUTE(strip_leading_minus(execstoppost->datum)) << "\n"; 
+		stop << names.substitute(strip_leading_minus(execstoppost->datum)) << "\n"; 
 	} else 
 		stop << "true\n";
 
 	// Set the dependency and installation information.
 
-	CREATE_LINKS(prog, is_target, socket_after, bundle_dirname, "/after/");
-	CREATE_LINKS(prog, is_target, service_after, bundle_dirname, "/after/");
-	CREATE_LINKS(prog, is_target, socket_before, bundle_dirname, "/before/");
-	CREATE_LINKS(prog, is_target, service_before, bundle_dirname, "/before/");
-	CREATE_LINKS(prog, is_target, socket_wants, bundle_dirname, "/wants/");
-	CREATE_LINKS(prog, is_target, service_wants, bundle_dirname, "/wants/");
-	CREATE_LINKS(prog, is_target, socket_requires, bundle_dirname, "/wants/");
-	CREATE_LINKS(prog, is_target, service_requires, bundle_dirname, "/wants/");
-	CREATE_LINKS(prog, is_target, socket_requisite, bundle_dirname, "/wants/");
-	CREATE_LINKS(prog, is_target, service_requisite, bundle_dirname, "/wants/");
-	CREATE_LINKS(prog, is_target, socket_conflicts, bundle_dirname, "/conflicts/");
-	CREATE_LINKS(prog, is_target, service_conflicts, bundle_dirname, "/conflicts/");
-	CREATE_LINKS(prog, is_target, socket_wantedby, bundle_dirname, "/wanted-by/");
-	CREATE_LINKS(prog, is_target, service_wantedby, bundle_dirname, "/wanted-by/");
-	CREATE_LINKS(prog, is_target, socket_requiredby, bundle_dirname, "/wanted-by/");
-	CREATE_LINKS(prog, is_target, service_requiredby, bundle_dirname, "/wanted-by/");
-	CREATE_LINKS(prog, is_target, socket_stoppedby, bundle_dirname, "/stopped-by/");
-	CREATE_LINKS(prog, is_target, service_stoppedby, bundle_dirname, "/stopped-by/");
+	CREATE_LINKS(prog, is_target, socket_after, names.query_bundle_dirname(), "/after/");
+	CREATE_LINKS(prog, is_target, service_after, names.query_bundle_dirname(), "/after/");
+	CREATE_LINKS(prog, is_target, socket_before, names.query_bundle_dirname(), "/before/");
+	CREATE_LINKS(prog, is_target, service_before, names.query_bundle_dirname(), "/before/");
+	CREATE_LINKS(prog, is_target, socket_wants, names.query_bundle_dirname(), "/wants/");
+	CREATE_LINKS(prog, is_target, service_wants, names.query_bundle_dirname(), "/wants/");
+	CREATE_LINKS(prog, is_target, socket_requires, names.query_bundle_dirname(), "/wants/");
+	CREATE_LINKS(prog, is_target, service_requires, names.query_bundle_dirname(), "/wants/");
+	CREATE_LINKS(prog, is_target, socket_requisite, names.query_bundle_dirname(), "/wants/");
+	CREATE_LINKS(prog, is_target, service_requisite, names.query_bundle_dirname(), "/wants/");
+	CREATE_LINKS(prog, is_target, socket_conflicts, names.query_bundle_dirname(), "/conflicts/");
+	CREATE_LINKS(prog, is_target, service_conflicts, names.query_bundle_dirname(), "/conflicts/");
+	CREATE_LINKS(prog, is_target, socket_wantedby, names.query_bundle_dirname(), "/wanted-by/");
+	CREATE_LINKS(prog, is_target, service_wantedby, names.query_bundle_dirname(), "/wanted-by/");
+	CREATE_LINKS(prog, is_target, socket_requiredby, names.query_bundle_dirname(), "/wanted-by/");
+	CREATE_LINKS(prog, is_target, service_requiredby, names.query_bundle_dirname(), "/wanted-by/");
+	CREATE_LINKS(prog, is_target, socket_stoppedby, names.query_bundle_dirname(), "/stopped-by/");
+	CREATE_LINKS(prog, is_target, service_stoppedby, names.query_bundle_dirname(), "/stopped-by/");
 	const bool defaultdependencies(
 			(is_socket_activated && is_bool_true(socket_defaultdependencies, true)) || 
 			is_bool_true(service_defaultdependencies, true)
@@ -961,14 +1127,14 @@ convert_systemd_units (
 	);
 	if (defaultdependencies) {
 		if (is_socket_activated)
-			create_links(prog, is_target, "sockets.target", bundle_dirname, "/wanted-by/");
-		create_links(prog, is_target, "basic.target", bundle_dirname, "/after/");
-		create_links(prog, is_target, "basic.target", bundle_dirname, "/wants/");
-		create_links(prog, is_target, "shutdown.target", bundle_dirname, "/before/");
-		create_links(prog, is_target, "shutdown.target", bundle_dirname, "/stopped-by/");
+			create_links(prog, is_target, "sockets.target", names.query_bundle_dirname(), "/wanted-by/");
+		create_links(prog, is_target, "basic.target", names.query_bundle_dirname(), "/after/");
+		create_links(prog, is_target, "basic.target", names.query_bundle_dirname(), "/wants/");
+		create_links(prog, is_target, "shutdown.target", names.query_bundle_dirname(), "/before/");
+		create_links(prog, is_target, "shutdown.target", names.query_bundle_dirname(), "/stopped-by/");
 	}
 	if (earlysupervise) {
-		create_link(prog, "/run/system-manager/early-supervise/" + bundle_basename, bundle_dirname + "/supervise");
+		create_link(prog, "/run/system-manager/early-supervise/" + names.query_bundle_basename(), names.query_bundle_dirname() + "/supervise");
 	}
 
 	// Issue the final reports.

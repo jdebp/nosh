@@ -1,0 +1,86 @@
+<refentry id="unshare">
+
+<refmeta>
+<refentrytitle>unshare</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.0</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>unshare</refname>
+<refpurpose>un-share various namespaces making them private to the process</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>unshare</command>
+<arg>--mount</arg>
+<arg>--network</arg>
+<arg>--uts</arg>
+<arg>--ipc</arg>
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>BSD Note</title>
+
+<para>
+This command currently has no effect on BSD.
+Be careful, therefore, of the effect that this will have on
+<citerefentry><refentrytitle>make-private-fs</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+</refsection>
+<refsection><title>Description</title>
+
+<para>
+<command>unshare</command> is a chain-loading utility that calls
+<citerefentry><refentrytitle>unshare</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+to "unshare" various "namespaces" from its parent process and then
+chain loads to <replaceable>next-prog</replaceable> with the
+<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>unshare</command> will ignore.
+</para>
+
+<para>
+The namespaces un-shared are controlled by command-line options as follows:
+</para>
+
+<variablelist>
+
+<varlistentry>
+<term><arg>--mount</arg></term>
+<listitem><para>The process switches to a private namespace of mounted filesystems.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><arg>--network</arg></term>
+<listitem><para>The process switches to a private namespace of network interfaces.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><arg>--uts</arg></term>
+<listitem><para>The process switches to a private namespace of UTS names.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><arg>--IPC</arg></term>
+<listitem><para>The process switches to a private namespace of IPC names.</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+<para>
+The command will fail if the process is not running under the aegis of the superuser. 
+Non-superusers are not permitted to unshare these things.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

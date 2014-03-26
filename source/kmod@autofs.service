@@ -8,8 +8,8 @@ Description=kmod loader for autofs4
 [Service]
 Type=oneshot
 systemdWorkingDirectory=false
-ExecStart=[ -d /sys/class/misc/autofs4/ ] || kmod modprobe autofs4
-Restart=always
+ExecStart=sh -c '[ -d /sys/class/misc/autofs4/ ] || kmod modprobe autofs4'
+RemainAfterExit=yes
 
 [Install]
 WantedBy=workstation.target

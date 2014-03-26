@@ -6,8 +6,7 @@
 
 [Unit]
 Description=FTP service over IP4 using Bernstein's publicfile
-[Install]
-WantedBy=server.target
+
 [Service]
 systemdWorkingDirectory=false
 EnvironmentUser=publicfile
@@ -15,3 +14,6 @@ LimitNOFILE=20
 LimitData=50000
 ExecStart=line-banner --NVT "220 Features: a p ." ftpd /home/publicfile/public
 Restart=always
+
+[Install]
+WantedBy=server.target

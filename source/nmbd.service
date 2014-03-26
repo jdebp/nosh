@@ -4,10 +4,12 @@
 
 [Unit]
 Description=SAMBA naming services daemon
-[Install]
-WantedBy=server.target
+
 [Service]
 systemdWorkingDirectory=false
 ExecStartPre=sh -c 'r="/run/samba" ; if [ \! -d "$r" -a \! -e "$r" ] ; then install -m 0755 -d "$r" ; fi ; l="`testparm -s -v --parameter-name "lock directory" /usr/local/etc/smb.conf`" ; if [ -n "$l" -a -d "$l" ] ; then for fin brlock.tdb browse.dat connections.tdb gencache.tdb locking.tdb messages.tdb namelist.debug sessionid.tdb unexpected.tdb ; do rm -f "$l"/"$f" ; done ; fi'
 ExecStart=nmbd -F -s /usr/local/etc/smb.conf
 Restart=always
+
+[Install]
+WantedBy=server.target

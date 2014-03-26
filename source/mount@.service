@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=Mount the /usr filesystem
+Description=Mount the %I filesystem (or remount from a initial read-only mount)
 DefaultDependencies=false
 EarlySupervise=true
 Before=local-fs.target
@@ -11,7 +11,8 @@ Before=local-fs.target
 [Service]
 Type=oneshot
 systemdWorkingDirectory=false
-ExecStart=mount /usr
+ExecStart=%P %I
+RemainAfterExit=yes
 
 [Install]
 WantedBy=local-fs.target

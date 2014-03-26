@@ -11,6 +11,8 @@
 <cmdsynopsis>
 <command>udp-socket-listen</command> 
 <arg>--no-reuse-address</arg> 
+<arg>--reuse-port</arg> 
+<arg>--bind-to-any</arg> 
 <arg>--numeric</arg> 
 <arg>--check-interfaces</arg> 
 <arg>--combine4and6</arg> 
@@ -47,11 +49,17 @@ service name.
 </para>
 
 <para>
+The <arg>--reuse-port</arg> sets a flag that allows the same IP address and
+port combination to be used by multiple UDP listeners, as long as they all use
+the flag.
 The <arg>--check-interfaces</arg> option prevents the use of any IPv4 addresses if
 there are no IPv4 addresses on any network interface, and the use of any IPv6
 addresses if there are no IPv6 addresses.
 This isn't particularly useful on a dynamically configured system where
 network interface IP addresses can come and go.
+Conversely, the <arg>--bind-to-any</arg> option is quite useful on such a system,
+as it allows binding to any IPV4 or IPV6 address, even one that is not on
+any network interface.
 </para>
 
 <para>

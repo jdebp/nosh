@@ -6,9 +6,11 @@
 Description=SSH per-connection service
 #Requires=sshdgenkeys.service
 After=sshdgenkeys.service
-[Install]
-WantedBy=server.target
+
 [Service]
 systemdWorkingDirectory=false
-ExecStart=sshd -i -e
+ExecStart=%P -i -e
 Restart=always
+
+[Install]
+WantedBy=server.target

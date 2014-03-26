@@ -52,15 +52,23 @@ succeeds) chain loads <replaceable>next-prog</replaceable>.
 
 <para>
 <command>open-controlling-tty</command> does not call
-<citerefentry><refentrytitle>setsid</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+<citerefentry><refentrytitle>setsid</refentrytitle><manvolnum>2</manvolnum></citerefentry>
 to become a session leader.
-Nor does it make any attempt to adjust its process group or the foreground
-process group of the controlling terminal.
+On some operating systems it it necessary to already be a session leader in 
+order to set a controlling terminal.
+On those operating systems, it is thus necessary to chain to
+<command>open-controlling-tty</command> from
+<citerefentry><refentrytitle>setsid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+<para>
+<command>open-controlling-tty</command> does not make any attempt to adjust its
+process group or the foreground process group of the controlling terminal.
 Dealing with these is the province of a job-control shell, which may not even
 run as this process.
 (Linux
 <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-with PAM runs the session leader shell as a child process, for example.)
+with PAM runs the job-controlling shell as a child process, for example.)
 </para>
 
 <para>
@@ -125,55 +133,6 @@ calls this function, and
 <citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 performs the moral equivalent for virtual consoles.
 </para>
-
-</refsection><refsection><title>EXAMPLES</title>
-
-<para>
-The following <citerefentry><refentrytitle>execlineb</refentrytitle><manvolnum>1</manvolnum></citerefentry> script can be substituted for 
-<citerefentry><refentrytitle>fgetty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-or (assuming the BAUD rate argument is always the second argument) 
-<citerefentry><refentrytitle>mingetty</refentrytitle><manvolnum>1</manvolnum></citerefentry>:
-</para>
-
-<programlisting>
-#!/command/execlineb
-elgetpositionals
-vc-get-tty $1
-open-controlling-tty
-vc-reset-tty
-login-prompt
-login-banner /etc/issue
-login-process
-login
-</programlisting>
-
-<para>
-This is the <citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry> equivalent:
-</para>
-
-<programlisting>
-#!/bin/sh -e
-exec \
-vc-get-tty "$1" \
-open-controlling-tty \
-vc-reset-tty \
-login-prompt \
-login-banner /etc/issue \
-login-process \
-login
-</programlisting>
-
-<para>
-This would be the contents of a (System V) <citerefentry><refentrytitle>inittab</refentrytitle><manvolnum>1</manvolnum></citerefentry> if used directly:
-</para>
-
- 1:2345:respawn:/bin/vc-get-vtty 1 /bin/open-controlling-tty /bin/vc-reset-tty /bin/login-prompt /bin/login-banner /etc/issue /bin/login-process /bin/login
-
-<para>
-The same without a banner (for a secondary console):
-</para>
-
- 2:23:respawn:/bin/vc-get-vtty 2 /bin/open-controlling-tty /bin/vc-reset-tty /bin/login-prompt /bin/login-process /bin/login
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
 

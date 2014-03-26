@@ -6,9 +6,11 @@
 Description=Rabbit-MQ AMQP broker service
 Requires=epmd.service
 After=epmd.service
-[Install]
-WantedBy=server.target
+
 [Service]
 User=rabbitmq
 ExecStart=/usr/lib/rabbitmq/bin/rabbitmq-server
 Restart=always
+
+[Install]
+WantedBy=server.target

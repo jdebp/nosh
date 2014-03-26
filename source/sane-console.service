@@ -11,6 +11,7 @@ EarlySupervise=true
 Type=oneshot
 systemdWorkingDirectory=false
 ExecStart=fdredir --update 0 /dev/console fdmove -c 1 0 fdmove -c 2 1 stty sane
+RemainAfterExit=yes
 
 [Install]
 WantedBy=sysinit.target

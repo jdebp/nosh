@@ -32,7 +32,6 @@ extern int connect_service_manager_socket(const bool is_system, const char * pro
 extern std::string xdg_runtime_dir();
 
 extern bool local_session_mode;
-extern const char * const roots[4];
-extern const char * const bundle_prefixes[3];
+extern int open_bundle_directory ( const char * arg, std::string & path, std::string & name ) ;
 
 #endif

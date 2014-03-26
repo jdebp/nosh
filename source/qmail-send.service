@@ -4,9 +4,11 @@
 
 [Unit]
 Description=Bernstein's qmail queue processing and delivery daemon
-[Install]
-WantedBy=server.target
+
 [Service]
 systemdWorkingDirectory=false
 ExecStart=prependpath PATH "/var/lib/qmail/bin" qmail-start "./Maildir/"
 Restart=always
+
+[Install]
+WantedBy=server.target

@@ -4,9 +4,11 @@
 
 [Unit]
 Description=anacron scheduling service
-[Install]
-WantedBy=workstation.target
+
 [Service]
 systemdWorkingDirectory=false
 ExecStart=anacron -d -s
 Restart=always
+
+[Install]
+WantedBy=workstation.target

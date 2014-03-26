@@ -1,0 +1,125 @@
+<title>Interfaces that are new</title>
+<link rel="Up" href="index.html" title="nosh Guide" />
+<link rel="Prev" href="familiar-interfaces.html" title="Interfaces that you are used to" />
+<link rel="Next" href="anatomy-of-regular-service.html" title="Anatomy of a typical service" />
+<h2>
+Interfaces that are new
+</h2>
+
+<p>
+nosh incorporates several interfaces and mechanisms that might be new to you:
+</p>
+
+<h3>
+Bundle directories
+</h3>
+
+<p>
+Service and supervise directories are stored as two (of several) subdirectories of an over all service <em>bundle directory</em>.
+Other subdirectories contain symbolic links that define service interrelationships and orderings.
+</p>
+
+<p>
+Bundle directories can live anywhere that one likes in the filesystem.
+The <a href="system-control.html"><code>system-control</code></a> program locates various standard targets in the <code>/etc/system-manager/targets</code> directory.
+But those targets refer to other services (and targets) via symbolic links, which can point anywhere in the filesystem.
+</p>
+
+<p>
+(A slight restriction on this is also the fairly obvious one: 
+Bundles for services and targets that are started in parallel with, or before, mounting the non-root filesystems must live on the root filesystem.
+By convention, these "sysinit" bundles live in <code>/etc/sv</code>.
+Since their supervise directories must be writable at run-time, they are symbolic links to directories that live under <code>/run/system-manager/early-supervise</code>.)
+</p>
+
+<h3>
+Distinct managers
+</h3>
+
+<p>
+The <em>service</em> manager is not the <em>system</em> manager.
+The service manager manages daemons, and their state transitions through the "stopped", "starting", "running", "failed", and "stopping" states.
+The system manager manages the state machine for the system as a whole, with the "normal", "rescue", and "emergency" bootstrap modes, the "halt", "reboot", and "poweroff" targets, and system-level control mechanisms such as hotkeys (Control+Alt+Delete and on Linux Alt-UpArrow) on the system console.
+</p>
+
+<p>
+(Those familiar with Windows NT and ReactOS can see the system manager as akin to SMSS (the Session Manager Subsystem) which runs as process #1 and manages startup and shutdown, and the service manager as akin to SERVICES (the Service Controller) which manages service processes and provides an RPC API.
+They are quite different when compared in detail, though.)
+</p>
+
+<h3>
+Distinct scanners
+</h3>
+
+<p>
+The service <em>manager</em> is not the service <em>scanner</em>.
+In daemontools (and in 
+<a href="http://skarnet.org/software/s6/">s6</a> and 
+<a href="http://untroubled.org/daemontools-encore/">daemontools-encore</a>) the service scanner forks supervisory processes for services, directly.
+In this system the daemontools-compatibility service scanner, <a href="service-dt-scanner.html"><code>service-dt-scanner</code></a>, talks through the RPC API to the service manager, which forks the service processes.
+The service scanner is not the parent of service processes.
+Indeed, it can be treated as a service <em>itself</em> (running under something like systemd), and can be brought up and down.
+Traditional daemontools service scanners are not expected to be terminated, in contrast.
+</p>
+
+<p>
+One can do away with <code>service-dt-scanner</code> and any <code>/service/</code> directory entirely, moreover.
+The service manager API provides mechanism; whereas tools like <code>service-dt-scanner</code> determine in what particular way that mechanism is used, and are replaceable.
+Running <a href="system-manager.html"><code>system-manager</code></a> as process #1, there's no daemontools-compatible scanner involved in normal operation.
+Instead, <a href="system-control.html"><code>system-control</code></a> institutes the full service/target bundle interdependency framework.
+</p>
+
+<h3>
+<code>restart</code> scripts
+</h3>
+
+<p>
+Whenever the last service process for a service that is in the "running" state finishes, the service manager runs the service's <code>restart</code> program.
+(Some services, particularly targets, can be specially marked as "run on empty", which alters this behaviour.)
+This program is given arguments that tell it the status of the last service process: whether it exited, crashed, aborted, was terminated, or was killed; and what the signal or exit code was.
+</p>
+
+<p>
+A very simple <code>restart</code> script executes the <a href="true.html"><code>true</code> command</a>, which causes the service to be unconditionally restarted by the service manager.
+However, one can do a lot more than that.
+More complex <code>restart</code> scripts can &hellip;
+</p>
+
+<ul>
+<li><p>&hellip; decide whether to restart or to stop dependent from how the process terminated;</p></li>
+<li><p>&hellip; generate alert messages to monitoring systems;</p></li>
+<li><p>&hellip; delay restarting services by pausing for some timeout interval;</p></li>
+<li><p>&hellip; perform service-specific cleanup/reset actions.</p></li>
+</ul>
+
+<h3>
+Standard targets
+</h3>
+
+<p>
+This package has more standard targets than systemd:
+</p>
+<ul>
+<li><p>Services that are part of running a workstation, as opposed to a server, machine are enabled by being added to the "wants" list of the standard "workstation" target.</p></li>
+<li><p>Services that are part of running a server, as opposed to a workstation, machine are enabled by being added to the "wants" list of the standard "server" target.</p></li>
+<li><p>Services that are part of providing multi-user login are enabled by being added to the "wants" list of the standard "multi-user" target.</p></li>
+</ul>
+
+<p>
+It has different standard targets to systemd:
+</p>
+<ul>
+<li><p>The default target is named "normal", not "default".  "normal" encompasses "server", "workstation", and "multi-user".</p></li>
+</ul>
+
+<p>
+It also has fewer standard targets than systemd:
+</p>
+<ul>
+<li><p>
+There are no "runlevel" targets.  
+There is no concept of run-levels, full stop.  
+This not only reflects the roots of the package in BSDs, which do not have run levels, but also reflects the fact that run-levels are an outdated (Solaris 10 replaced them with symbolic "milestones" that have names like <code>multi-user</code> in 2005.) hodge-podge (Multi-user bootstrap with an X server can be run-level 2, 4, or 5, depending from which system one uses.) that are best avoided.
+You are strongly encouraged to un-learn the idea of run-levels.
+</p></li>
+</ul>

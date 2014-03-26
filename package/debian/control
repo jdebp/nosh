@@ -4,6 +4,13 @@ Priority: optional
 Maintainer: Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@ntlworld.com>
 Build-Depends: redo
 
+Package: nosh-guide
+Architecture: amd64
+Depends: ${shlibs:Depends}
+Suggests: 
+Recommends: 
+Description: User guide for the various nosh-* packages.
+
 Package: nosh-exec
 Architecture: amd64
 Depends: ${shlibs:Depends}
@@ -38,11 +45,36 @@ Description: Service and system management utilities
  .
  It includes a system-wide system manager, a per-user-login session manager, a service manager, along with various control and status utilities.
  .
- Various compatibility commands are provided for those familiar with systemd, daemontools, daemontools-encore, and SystemV utilities:
- * service, svc, svok, svscan, svshow, svstat, svup, init, telinit, halt, poweroff reboot, systemctl
+ It supplies systemd unit files for setting up a daemontools-like daemon management system under systemd.
+ Or one can instead run this its system manager as process #1.
  .
- This package supplies systemd unit files for setting up a daemontools-like daemon management system under systemd.
- Or one can instead run this pacakage's system manager as process #1.
+ It also provides compatibility commands for those familiar with daemontools and daemontools-encore.
+ * svc, svok, svscan, svshow, svstat, svup
+ The shims simply invoke native service management commands.
+
+Package: nosh-systemv-shims
+Architecture: amd64
+Depends: ${shlibs:Depends}, nosh-service-management
+Suggests: 
+Recommends: 
+Description: System V shim service and system management utilities
+ This package provides shims for old-style System V system management commands.
+ * service, chkconfig
+ * init, telinit, halt, fasthalt, poweroff, fastpoweroff, reboot, fastboot
+ * emergency, normal, rescue
+ .
+ The shims simply invoke native service management commands.
+
+Package: nosh-systemd-shims
+Architecture: amd64
+Depends: ${shlibs:Depends}, nosh-service-management
+Suggests: 
+Recommends: 
+Description: systemd shim service and system management utilities
+ This package provides shims for systemd service and system management commands.
+ * systemctl, systemd
+ .
+ The shims simply invoke native service management commands.
 
 Package: nosh-standard-targets
 Architecture: amd64

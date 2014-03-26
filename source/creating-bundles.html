@@ -1,0 +1,73 @@
+<title>Creating bundles</title>
+<link rel="Up" href="index.html" title="nosh Guide" />
+<link rel="Next" href="converting-systemd-units.html" title="Converting systemd units" />
+<link rel="Prev" href="anatomy-of-login-service.html" title="Anatomy of a login service" />
+<h2>
+Creating bundles
+</h2>
+
+<p>
+If you are unlucky enough to have a package that does not supply service bundle directories for its services, you have some options.
+</p>
+
+<h3>
+You can build a bundle using parts from some public <code>run</code> script collections.
+</h3>
+
+<p>
+<a href="http://smarden.org/runit/runscripts.html">Gerrit Pape made a collection of some run scripts some years ago.</a>
+<a href="http://thedjbway.b0llix.net/services.html">Wayne Marshall has collected a few more.</a>
+Simply take an appropriate <code>run</code> script, add minimal <code>start</code>, <code>stop</code>, and <code>restart</code> programs, put the lot into a <code>service</code> directory, put that into a bundle directory, and enable/start the service.
+</p>
+
+<p>
+Minimal <code>start</code>, <code>stop</code>, and <code>restart</code> scripts are simply:
+</p>
+<blockquote><pre>#!/bin/nosh
+true</pre></blockquote>
+
+<p>
+Note that Gerrit Pape's and Wayne Marshall's collections use shells as the script interpreters.
+Several of the scripts can be simplified <em>yet further</em> with use of <code>nosh</code> and its built-in toolset.
+Somme of them also rely upon tools such as <code>chpst</code> and <code>tcpsvd</code>, which one of course replaces with the equivalent daemontools-alike tool(s) and some combination of <a href="tcp-socket-listen.html"><code>tcp-socket-listen</code></a>, <a href="tcp-socket-accept.html"><code>tcp-socket-accept</code></a>, and <a href="ucspi-socket-rules-check.html"><code>ucspi-socket-rules-check</code></a>.
+</p>
+
+<h3>
+You can import a systemd <em>service unit</em> file.
+</h3>
+
+<p>
+<a href="converting-systemd-units.html">
+If the package comes with a systemd service unit file (and potentially an accompanying socket unit file), you can import it.</a>
+Simply run <code>system-control convert-systemd-units <i>servicename</i></code> and the import utility will attempt to import the service and write a bundle directory.
+(You can control where the bundle directory is written.)
+This can cope with many systemd service units, as long as they aren't Linux-specific, esoteric, or too clever by half.
+</p>
+
+<p>
+The import utility will display warnings about anything that it didn't understand or ignored.
+</p>
+
+<h3>
+You can simply write a bundle.
+</h3>
+
+<p>
+As mentioned above, minimal <code>start</code>, <code>stop</code>, and <code>restart</code> scripts are very simple.
+So, too, are <code>run</code> scripts.
+</p>
+
+<p>
+The service interdependencies and orderings are usually quite simple, too:
+</p>
+<blockquote><pre>mkdir -p wants after before stopped-by wanted-by
+ln -s /etc/system-manager/targets/basic after/
+ln -s /etc/system-manager/targets/basic wants/
+ln -s /etc/system-manager/targets/shutdown before/
+ln -s /etc/system-manager/targets/shutdown stopped-by/
+ln -s /etc/system-manager/targets/workstation wanted-by/</pre></blockquote>
+
+<p>
+Tailor this according to need, of course.
+The service may be wanted by the "server" or "multi-user" targets rather than by the "workstation" target, for example.
+</p>

@@ -1,0 +1,84 @@
+<refentry id="make-private-fs">
+
+<refmeta>
+<refentrytitle>make-private-fs</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.0</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>make-private-fs</refname>
+<refpurpose>populate various private-mount parts of the filesystem</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>make-private-fs</command>
+<arg>--temp</arg>
+<arg>--devices</arg>
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>make-private-fs</command> is a chain-loading utility that mounts
+private volumes in various parts of the filesystem namespace and pre-populates
+them, and then chain loads to <replaceable>next-prog</replaceable> with the
+<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>make-private-fs</command> will ignore.
+</para>
+
+<para>
+The parts of the filesystem that are mounted and populated are controlled by command-line options as follows:
+</para>
+
+<variablelist>
+
+<varlistentry>
+<term><arg>--temp</arg></term>
+<listitem>
+<para>
+Empty directories, held below a superuser-only-accessible parent, are mounted at <filename>/tmp</filename> and <filename>/var/tmp</filename>.
+They have <code>rwx</code> permissions for the owner, group, and world; and they have the sticky bit set.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><arg>--devices</arg></term>
+<listitem>
+<para>
+A <code>tmpfs</code> filesystem is mounted at <filename>/dev</filename>, without any real devices in it.
+It is populated only with "API" devices such as <filename>/dev/shm</filename>.
+On Linux, a <code>devpts</code> filesystem is mounted at <filename>/dev/pts</filename>.
+On BSD systems, a <code>fdescfs</code> filesystem is mounted at <filename>/dev/fd</filename>.
+</para>
+</listitem>
+</varlistentry>
+
+</variablelist>
+
+<para>
+The command will fail if the process is not running under the aegis of the superuser, 
+because most of the internal operations necessary are not permitted to non-superusers. 
+</para>
+
+</refsection><refsection><title>Usage</title>
+
+<para>
+<command>make-private-fs</command> is usually run chain-loaded from
+<citerefentry><refentrytitle>unshare</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Beware: Running it without unsharing first will affect the global mount namespace.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

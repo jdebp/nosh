@@ -8,8 +8,8 @@ Description=kmod loader for ipv6
 [Service]
 Type=oneshot
 systemdWorkingDirectory=false
-ExecStart=[ -d /sys/module/ipv6/ ] || kmod modprobe ipv6
-Restart=always
+ExecStart=sh -c '[ -d /sys/module/ipv6/ ] || kmod modprobe ipv6'
+RemainAfterExit=yes
 
 [Install]
 WantedBy=workstation.target

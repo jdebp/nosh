@@ -10,9 +10,12 @@ Wants=local-fs.target
 After=local-fs.target
 
 [Service]
-Type=oneshot
+# This is not a oneshot service, so that it can be re-run after boot time.
+# And so that the ten seconds of log processing don't delay bootstrap.
 systemdWorkingDirectory=false
 ExecStart=newsyslog
+Restart=never
+RemainAfterExit=yes
 
 [Install]
 WantedBy=sysinit.target

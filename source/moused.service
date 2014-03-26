@@ -4,9 +4,11 @@
 
 [Unit]
 Description=BSD mouse daemon
-[Install]
-WantedBy=workstation.target
+
 [Service]
 systemdWorkingDirectory=false
 ExecStart=moused -f -p /dev/psm0 -t auto
 Restart=always
+
+[Install]
+WantedBy=workstation.target

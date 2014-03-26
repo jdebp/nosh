@@ -78,6 +78,7 @@ static sig_atomic_t unknown_signalled (false);
 #define has_service_manager (-1 != service_manager_pid)
 #define has_cyclog (-1 != cyclog_pid)
 #define has_system_control (-1 != system_control_pid)
+#define stop_signalled (fasthalt_signalled || fastpoweroff_signalled || fastreboot_signalled)
 
 static inline
 void
@@ -207,6 +208,23 @@ attach_signals_to_state_machine()
 	sigaction(SIGRTMIN + 14,&sa,NULL);
 	sigaction(SIGRTMIN + 15,&sa,NULL);
 #endif
+}
+
+static inline
+void
+default_all_signals()
+{
+	// GNU libc doesn't like us setting SIGRTMIN+0 and SIGRTMIN+1, but we don't care enough about error returns to notice.
+	struct sigaction sa;
+	sa.sa_flags=0;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_handler=SIG_DFL;
+#if !defined(__LINUX__) && !defined(__linux__)
+	for (int signo(1); signo < NSIG; ++signo)
+#else
+	for (int signo(1); signo < _NSIG; ++signo)
+#endif
+		sigaction(signo,&sa,NULL);
 }
 
 /* File and directory names *************************************************
@@ -651,7 +669,7 @@ common_manager (
 
 	const int service_manager_socket_fd(listen_service_manager_socket(is_system, prog));
 
-#if 0
+#if 1
 	if (is_system) {
 		const int shell(fork());
 		if (-1 == shell) {
@@ -787,6 +805,7 @@ common_manager (
 			}
 			child_signalled = false;
 		}
+		// Run system-control if a job is pending and system-control isn't already running.
 		if (!has_system_control) {
 			const char * subcommand(0), * option(0);
 			bool verbose(true);
@@ -857,6 +876,8 @@ common_manager (
 #	endif
 					sigprocmask(SIG_SETMASK, &original_signals, &masked_signals);
 #endif
+					default_all_signals();
+					alarm(180);
 					// Replace the original arguments with this.
 					args.clear();
 					args.insert(args.end(), "system-control");
@@ -888,6 +909,8 @@ common_manager (
 #	endif
 					sigprocmask(SIG_SETMASK, &original_signals, &masked_signals);
 #endif
+					default_all_signals();
+					alarm(180);
 					// Retain the original arguments and insert the following in front of them.
 					if (!is_system)
 						args.insert(args.begin(), "--user");
@@ -899,8 +922,16 @@ common_manager (
 					std::fprintf(stderr, "%s: INFO: %s (pid %i) started (%s %s)\n", prog, "system-control", system_control_pid, "init", concat(args).c_str());
 			}
 		}
-		if (fasthalt_signalled || fastpoweroff_signalled || fastreboot_signalled) break;
-		if (!has_cyclog) {
+		// Exit if stop has been signalled and both the service manager and logger have exited.
+		if (stop_signalled && !has_cyclog && !has_service_manager) break;
+		// Kill the service manager if stop has been signalled.
+		if (has_service_manager && stop_signalled) {
+			std::fprintf(stderr, "%s: DEBUG: %s\n", prog, "terminating service manager");
+			kill(service_manager_pid, SIGTERM);
+		}
+		// Restart the logger unless both stop has been signalled and the service manager has exited.
+		// If the service manager has not exited and stop has been signalled, we still need the logger to restart and keep draining the pipe.
+		if (!has_cyclog && (!stop_signalled || has_service_manager)) {
 			cyclog_pid = fork();
 			if (-1 == cyclog_pid) {
 				const int error(errno);
@@ -914,6 +945,7 @@ common_manager (
 #	endif
 				sigprocmask(SIG_SETMASK, &original_signals, &masked_signals);
 #endif
+				default_all_signals();
 				args.clear();
 				args.insert(args.end(), "cyclog");
 				args.insert(args.end(), "--max-file-size");
@@ -923,7 +955,7 @@ common_manager (
 				args.insert(args.end(), log_name);
 				args.insert(args.end(), 0);
 				next_prog = arg0_of(args);
-				dup2(pipe_fds[0], STDIN_FILENO);
+				if (-1 != pipe_fds[0]) dup2(pipe_fds[0], STDIN_FILENO);
 				dup2(dev_console_fd, STDOUT_FILENO);
 				dup2(dev_console_fd, STDERR_FILENO);
 				close(LISTEN_SOCKET_FILENO);
@@ -936,7 +968,19 @@ common_manager (
 			} else
 				std::fprintf(stderr, "%s: INFO: %s (pid %i) started\n", prog, "cyclog", cyclog_pid);
 		}
-		if (!has_service_manager) {
+		// If the service manager has exited and stop has been signalled, close the logging pipe so that the logger finally exits.
+		if (!has_service_manager && stop_signalled && -1 != pipe_fds[0]) {
+			std::fprintf(stderr, "%s: DEBUG: %s\n", prog, "closing logger");
+			dup2(dev_console_fd, STDIN_FILENO);
+			dup2(dev_console_fd, STDOUT_FILENO);
+			dup2(dev_console_fd, STDERR_FILENO);
+			close(LISTEN_SOCKET_FILENO);
+			close(pipe_fds[0]);
+			close(pipe_fds[1]);
+			pipe_fds[0] = pipe_fds[1] = -1;
+		}
+		// Restart the service manager unless stop has been signalled.
+		if (!has_service_manager && !stop_signalled) {
 			service_manager_pid = fork();
 			if (-1 == service_manager_pid) {
 				const int error(errno);
@@ -948,13 +992,14 @@ common_manager (
 #	endif
 				sigprocmask(SIG_SETMASK, &original_signals, &masked_signals);
 #endif
+				default_all_signals();
 				args.clear();
 				args.insert(args.end(), "service-manager");
 				args.insert(args.end(), 0);
 				next_prog = arg0_of(args);
 				dup2(dev_null_fd, STDIN_FILENO);
-				dup2(pipe_fds[1], STDOUT_FILENO);
-				dup2(pipe_fds[1], STDERR_FILENO);
+				if (-1 != pipe_fds[1]) dup2(pipe_fds[1], STDOUT_FILENO);
+				if (-1 != pipe_fds[1]) dup2(pipe_fds[1], STDERR_FILENO);
 				dup2(service_manager_socket_fd, LISTEN_SOCKET_FILENO);
 				close(pipe_fds[0]);
 				close(pipe_fds[1]);

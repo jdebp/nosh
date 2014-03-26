@@ -7,12 +7,12 @@ service-dt-scanner
 service-status
 service-show
 session-manager
+system-control
 svc
+svup
 svok
-svscan
 svstat
 svshow
-svup
-system-control
+svscan
 tai64n
 tai64nlocal

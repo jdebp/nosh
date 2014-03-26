@@ -8,9 +8,9 @@ EarlySupervise=true
 Wants=multi-user.target server.target workstation.target
 
 [Service]
+Type=oneshot
 User=nobody
 systemdWorkingDirectory=false
-ExecStart=pause
-Restart=always
+RemainAfterExit=yes
 
 [Install]

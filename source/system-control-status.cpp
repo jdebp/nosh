@@ -21,39 +21,23 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 static inline
-std::string
-lookup_bundle_directory (
-	const char * arg
-) {
-	const std::string a(arg);
-	if (std::strchr(arg, '/')) return a;
-
-	if (!local_session_mode) {
-		for ( const char * const * q(bundle_prefixes); q < bundle_prefixes + sizeof bundle_prefixes/sizeof *bundle_prefixes; ++q) {
-			const std::string p(*q);
-			const std::string suffix(p + a);
-			for ( const char * const * proot(roots); proot < roots + sizeof roots/sizeof *roots; ++proot) {
-				const std::string r(*proot);
-				const std::string path(r + suffix);
-				const int bundle_dir_fd(open_dir_at(AT_FDCWD, (path + "/").c_str()));
-				if (0 > bundle_dir_fd) continue;
-				close(bundle_dir_fd);
-				return path;
-			}
-		}
-	}
-
-	return a;
-}
-
-static inline
 std::vector<std::string>
 lookup_bundle_directories (
+	const char * prog,
 	const std::vector<const char *> & args
 ) {
 	std::vector<std::string> r;
-	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i)
-		r.insert(r.end(), lookup_bundle_directory(*i));
+	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
+		std::string path, name;
+		const int rc(open_bundle_directory(*i, path, name));
+		if (0 > rc) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, *i, std::strerror(error));
+			throw EXIT_FAILURE;
+		}
+		r.insert(r.end(), path + name);
+		close(rc);
+	}
 	return r;
 }
 
@@ -102,7 +86,7 @@ common_subcommand (
 		throw EXIT_FAILURE;
 	}
 
-	args_storage = lookup_bundle_directories(args);
+	args_storage = lookup_bundle_directories(prog, args);
 	args = convert(args_storage);
 	if (arg)
 		args.insert(args.begin(), arg);
@@ -132,4 +116,12 @@ try_restart (
 	std::vector<const char *> & args
 ) {
 	common_subcommand(next_prog, args, "service-control", "--terminate");
+}
+
+void
+is_active ( 
+	const char * & next_prog,
+	std::vector<const char *> & args
+) {
+	common_subcommand(next_prog, args, "service-is-up", NULL);
 }

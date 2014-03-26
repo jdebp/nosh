@@ -4,18 +4,19 @@
 
 [Unit]
 Description=Standard login on %I
-[Install]
-WantedBy=multi-user.target
+
 [Service]
 systemdWorkingDirectory=false
-UTmpIdentifier=%I
 SessionLeader=true
 StandardInput=tty
 StandardOutput=inherit
 TTYPath=%I
 TTYReset=true
 TTYVHangup=on
-TTYVTDisallocate=yes
+TTYPrompt=on
 ExecStart=login-banner /etc/issue.vc login
 Restart=always
 RestartSec=0
+
+[Install]
+WantedBy=multi-user.target

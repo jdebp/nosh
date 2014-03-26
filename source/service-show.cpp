@@ -19,6 +19,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "fdutils.h"
 #include "unpack.h"
 #include "popt.h"
+#include "service-manager-client.h"
 #include "service-manager.h"
 
 /* Main function ************************************************************
@@ -185,38 +186,46 @@ main (
 	write_document_start();
 	for (std::vector<const char *>::const_iterator i(args.begin()); i != args.end(); ++i) {
 		const char * name(*i);
-		int dir_fd(open_dir_at(AT_FDCWD, name));
-		if (0 > dir_fd) {
+
+		int bundle_dir_fd(open_dir_at(AT_FDCWD, name));
+		if (0 > bundle_dir_fd) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: %s\n", name, std::strerror(error));
 			continue;
 		}
-		struct stat sbuf;
-		const bool initially_up(0 > fstatat(dir_fd, "down", &sbuf, 0) && ENOENT == errno);
-		int ok_fd(open_writeexisting_at(dir_fd, "ok"));
+		int service_dir_fd(open_dir_at(bundle_dir_fd, "service/"));
+		if (0 > service_dir_fd) service_dir_fd = dup(bundle_dir_fd);
+		int supervise_dir_fd(open_dir_at(bundle_dir_fd, "supervise/"));
+		if (0 > supervise_dir_fd) supervise_dir_fd = dup(bundle_dir_fd);
+		close(bundle_dir_fd); bundle_dir_fd = -1;
+		if (0 > supervise_dir_fd) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: %s: %s\n", name, "supervise", std::strerror(error));
+			close(service_dir_fd);
+			continue;
+		}
+		if (0 > service_dir_fd) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: %s: %s\n", name, "service", std::strerror(error));
+			close(supervise_dir_fd);
+			continue;
+		}
+
+		const bool initially_up(is_initially_up(service_dir_fd));
+		close(service_dir_fd); service_dir_fd = -1;
+		int ok_fd(open_writeexisting_at(supervise_dir_fd, "ok"));
 		if (0 > ok_fd) {
-			const int old_dir_fd(dir_fd);
-			dir_fd = open_dir_at(dir_fd, "supervise");
-			close(old_dir_fd);
-			if (0 > dir_fd) {
-				const int error(errno);
-				std::fprintf(stderr, "%s: %s: %s\n", name, "supervise", std::strerror(error));
-				continue;
-			}
-			ok_fd = open_writeexisting_at(dir_fd, "ok");
-			if (0 > ok_fd) {
-				const int error(errno);
-				close(dir_fd);
-				if (ENXIO == error)
-					std::fprintf(stderr, "%s: No supervisor is running\n", name);
-				else
-					std::fprintf(stderr, "%s: %s: %s\n", name, "supervise/ok", std::strerror(error));
-				continue;
-			}
+			const int error(errno);
+			close(supervise_dir_fd);
+			if (ENXIO == error)
+				std::fprintf(stderr, "%s: No supervisor is running\n", name);
+			else
+				std::fprintf(stderr, "%s: %s: %s\n", name, "supervise/ok", std::strerror(error));
+			continue;
 		}
 		close(ok_fd), ok_fd = -1;
-		int status_fd(open_read_at(dir_fd, "status"));
-		close(dir_fd), dir_fd = -1;
+		int status_fd(open_read_at(supervise_dir_fd, "status"));
+		close(supervise_dir_fd), supervise_dir_fd = -1;
 		if (0 > status_fd) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: %s: %s\n", name, "status", std::strerror(error));
@@ -250,7 +259,7 @@ main (
 			const char * const want('u' == status[17] ? "up" : 'O' == status[17] ? "once at most" : 'o' == status[17] ? "once" : 'd' == status[17] ? "down" : "nothing");
 			write_string_value("Want", want);
 			write_boolean_value("Paused", status[16]);
-			write_boolean_value("Enabled", initially_up);
+			write_boolean_value("DaemontoolsEnabled", initially_up);
 		}
 		write_section_end();
 	}

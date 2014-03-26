@@ -1,0 +1,13 @@
+chkconfig
+emergency
+fastboot
+fasthalt
+fastpoweroff
+halt
+init
+normal
+poweroff
+reboot
+rescue
+telinit
+service

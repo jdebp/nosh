@@ -13,6 +13,7 @@ After=local-fs.target
 Type=oneshot
 systemdWorkingDirectory=false
 ExecStart=set-dynamic-hostname
+RemainAfterExit=yes
 
 [Install]
 WantedBy=sysinit.target

@@ -1,3 +1,21 @@
+nosh (1.5) unstable; urgency=low
+
+  * The mount and fsck services are now generated from templates.
+  * Template instance names can now optionally be escaped.
+  * The TCP and UDP socket listeners now support SO_REUSEPORT and IP_FREEBIND/IP_BINDANY.
+  * Added make-private-fs, set-mount-object, and unshare.
+  * Tweaked the service manager's state machine to better handle some state transitions.
+  * More cross-platform services: motd
+  * convert-systemd-units now handles IP addresses in ListenStream=/ListenDatagram=.
+  * The disallocate option to open-controlling-tty has been removed.  It was a Linuxism that never worked, and that relies upon hardwired assumptions about device names even on multi-head systems.
+  * open-controlling-tty now works around a Linux bug with the TIOCSCTTY ioctl where it sometimes returns an error but works anyway.
+  * start/stop/enable/disable/preset/status/show now understand the .service, .socket, and .target extensions to imply different search paths.
+  * The system manager now attempts to properly shut down the service manager and its logger at system shutdown.
+  * The service manager now stops+unloads services and exits when it is sent a termination signal.
+  * There is now a bundled Guide.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Wed, 26 Mar 2014 22:20:17 +0000
+
 nosh (1.4) unstable; urgency=low
 
   * More BSD services: background-fsck, mixer@, uhidd@, and powerd

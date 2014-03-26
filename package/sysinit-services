@@ -3,16 +3,11 @@ cleanspool
 devd
 devd-log
 dmesg
-fsck-root
-fsck-usr
-fsck-var
 hostname
 ldconfig
 machine-id
-mount-usr
-mount-var
+motd
 newsyslog
-remount-root
 sane-console
 sysinit-log
 kmod@autofs

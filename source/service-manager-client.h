@@ -60,5 +60,13 @@ void
 make_supervise_fifos (
 	const int supervise_dir_fd
 );
+bool
+is_initially_up (
+	const int service_dir_fd
+);
+bool
+is_done_after_exit (
+	const int service_dir_fd
+);
 
 #endif

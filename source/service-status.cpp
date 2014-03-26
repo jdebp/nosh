@@ -19,6 +19,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "fdutils.h"
 #include "unpack.h"
 #include "popt.h"
+#include "service-manager-client.h"
 #include "service-manager.h"
 
 /* Main function ************************************************************
@@ -130,8 +131,7 @@ main (
 		int service_dir_fd(open_dir_at(bundle_dir_fd, "service/"));
 		if (0 > service_dir_fd) service_dir_fd = dup(bundle_dir_fd);
 
-		struct stat sbuf;
-		const bool initially_up(0 > fstatat(service_dir_fd, "down", &sbuf, 0) && ENOENT == errno);
+		const bool initially_up(is_initially_up(service_dir_fd));
 
 		close(service_dir_fd); service_dir_fd = -1;
 

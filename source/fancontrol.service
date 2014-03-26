@@ -4,10 +4,12 @@
 
 [Unit]
 Description=fan control service
-[Install]
-WantedBy=workstation.target
+
 [Service]
 Type=forking
 systemdWorkingDirectory=false
 ExecStart=fancontrol
 Restart=always
+
+[Install]
+WantedBy=workstation.target

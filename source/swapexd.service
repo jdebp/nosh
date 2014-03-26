@@ -4,9 +4,11 @@
 
 [Unit]
 Description=BSD swapex daemon
-[Install]
-WantedBy=workstation.target
+
 [Service]
 systemdWorkingDirectory=false
 ExecStart=swapexd -p
 Restart=always
+
+[Install]
+WantedBy=workstation.target

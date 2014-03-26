@@ -4,9 +4,11 @@
 
 [Unit]
 Description=BSD PBI daemon
-[Install]
-WantedBy=workstation.target
+
 [Service]
 systemdWorkingDirectory=false
 ExecStart=pbid
 Restart=always
+
+[Install]
+WantedBy=workstation.target

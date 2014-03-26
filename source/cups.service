@@ -4,9 +4,11 @@
 
 [Unit]
 Description=Common Unix Printing Service
-[Install]
-WantedBy=workstation.target
+
 [Service]
 systemdWorkingDirectory=false
 ExecStart=cupsd -f
 Restart=always
+
+[Install]
+WantedBy=workstation.target

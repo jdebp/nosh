@@ -4,9 +4,11 @@
 
 [Unit]
 Description=Bonjour service
-[Install]
-WantedBy=workstation.target
+
 [Service]
 systemdWorkingDirectory=false
 ExecStart=avahi-daemon
 Restart=always
+
+[Install]
+WantedBy=workstation.target

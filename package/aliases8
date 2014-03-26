@@ -3,6 +3,7 @@ init	halt
 init	poweroff
 init	fasthalt
 init	fastboot
+init	fastpoweroff
 init	emergency
 init	rescue
 init	normal

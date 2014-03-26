@@ -120,5 +120,12 @@ read_env_file (
 	const char * basename,
 	int fd
 ) ;
+extern
+bool
+ends_in (
+	const std::string & s,
+	const std::string & p,
+	std::string & r
+) ;
 
 #endif

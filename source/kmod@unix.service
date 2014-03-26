@@ -8,8 +8,8 @@ Description=kmod loader for unix
 [Service]
 Type=oneshot
 systemdWorkingDirectory=false
-ExecStart=[ -d /proc/net/unix/ ] || kmod modprobe unix
-Restart=always
+ExecStart=sh -c '[ -d /proc/net/unix/ ] || kmod modprobe unix'
+RemainAfterExit=yes
 
 [Install]
 WantedBy=workstation.target

@@ -13,6 +13,7 @@ Type=oneshot
 systemdWorkingDirectory=false
 EnvironmentFile=/etc/rc.conf
 ExecStart=sh -c 'ldconfig -elf /lib /usr/lib /usr/local/lib ${ldconfig_paths} /etc/ld-elf.so.conf ; ldconfig -32 /lib /usr/lib /usr/local/lib ${ldconfig32_paths} /etc/ld-elf32.so.conf ; ldconfig -aout /lib/aout /usr/lib/aout /usr/local/lib/aout ${ldconfig_paths_aout=${ldconfig_paths}} /etc/ld.so.conf'
+RemainAfterExit=yes
 
 [Install]
 WantedBy=sysinit.target

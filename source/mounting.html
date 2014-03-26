@@ -1,0 +1,22 @@
+<title>Mounting filesystems</title>
+<link rel="Up" href="index.html" title="nosh Guide" />
+<link rel="Prev" href="svscan-shutdown.html" title="Compatible old-style startup" />
+<link rel="Next" href="logging.html" title="Logging" />
+<h2>
+Mounting filesystems
+</h2>
+
+<p>
+Volumes are mounted at bootstrap time through services like the "mount@-usr" service.
+When enabled, these services are wanted by the "local-fs" target, so that default volumes are all mounted by activating that target.
+</p>
+
+<p>
+In their turn they depend from services like the "fsck@-usr" service, which run <code>fsck</code> on the relevant volume before the mount service attempts to mount it.
+The "fsck@-usr" service orders itself before the "mount@-usr" service.
+</p>
+
+<p>
+Note that the "fsck@" service declares itself as wanted by the "mount@" service, rather than the "mount@" service declaring itself as always wanting the "fsck@" service.
+This allows the "fsck@" service to be optional, and for boot-time filesystem checking to be structured in another manner should that be desired.
+</p>

@@ -1,0 +1,32 @@
+<title>Anatomy of a login service</title>
+<link rel="Up" href="index.html" title="nosh Guide" />
+<link rel="Next" href="creating-bundles.html" title="Creating bundles" />
+<link rel="Prev" href="anatomy-of-sysinit-service.html" title="Anatomy of a sysinit service" />
+<h2>
+Anatomy of a login service
+</h2>
+
+<p>
+The various tools can, together, replace the <code>fgetty</code>/<code>mingetty</code> utilities directly.
+Here is an 
+<a href="http://skarnet.org/software/execline/"><code>execlineb</code></a>
+script that (assuming that the BAUD rate argument is always the second argument) does that. 
+</p>
+<blockquote><pre>#!/command/execlineb
+elgetpositionals
+vc-get-tty $1
+open-controlling-tty
+vc-reset-tty
+login-prompt
+login-banner /etc/issue
+login-process
+login</pre></blockquote>
+
+<p>
+In a System V <code>inittab</code> database one could have:
+</p>
+<blockquote><pre>1:2345:respawn:/bin/vc-get-vtty 1 open-controlling-tty vc-reset-tty login-prompt login-banner /etc/issue login-process login</pre></blockquote>
+
+<p>
+This can be turned into a <code>run</code> script fairly easily, and in fact this package comes with a regular login service for logging in on <code>/dev/ttyv5</code> (BSD) or <code>/dev/tty6</code> (Linux) with such a <code>run</code> script.
+</p>

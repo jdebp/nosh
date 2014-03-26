@@ -4,8 +4,7 @@
 
 [Unit]
 Description=exim4 SMTP Submission daemon
-[Install]
-WantedBy=server.target
+
 [Service]
 systemdWorkingDirectory=false
 EnvironmentDirectory=env
@@ -16,3 +15,6 @@ User=exim4
 ExecStart=exim4 -bw
 ExecStartPre=exim4 -bV
 Restart=always
+
+[Install]
+WantedBy=server.target

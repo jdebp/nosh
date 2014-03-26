@@ -12,6 +12,7 @@ Type=oneshot
 Umask=0022
 systemdWorkingDirectory=false
 ExecStart=fdredir --write 1 /run/dmesg.boot dmesg
+RemainAfterExit=yes
 
 [Install]
 WantedBy=sysinit.target

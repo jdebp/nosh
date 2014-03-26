@@ -18,6 +18,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sys/syslimits.h>
 #endif
 #include <sys/mount.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #if !defined(__LINUX__) && !defined(__linux__)
 #include <sys/types.h>
@@ -538,6 +539,7 @@ setup_machine_id (
 		free(buf);
 #endif
 	}
+	umask(0033);
 	write_volatile(prog);
 	write_volatile_hostid(prog);
 	write_volatile_hostuuid(prog);

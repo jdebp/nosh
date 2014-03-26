@@ -4,12 +4,14 @@
 
 [Unit]
 Description=Bernstein's qmail SMTP Relay daemon
-[Install]
-WantedBy=server.target
+
 [Service]
 systemdWorkingDirectory=false
 EnvironmentDirectory=env
 LimitMEMORY=70000000
 User=qmaild
-ExecStart=qmail-smtpd
+ExecStart=%P
 Restart=always
+
+[Install]
+WantedBy=server.target

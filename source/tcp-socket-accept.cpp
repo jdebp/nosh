@@ -273,15 +273,21 @@ exit_error:
 				const int on = 1;
 				if (0 > setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof on)) goto exit_error ;
 			}
-#if defined(IP_OPTIONS)
-			if (!no_kill_IP_options) {
-				if (0 > setsockopt(s, IPPROTO_IP, IP_OPTIONS, 0, 0)) goto exit_error ;
-			}
-#endif
 			if (no_delay) {
 				const int on = 1;
 				if (0 > setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &on, sizeof on)) goto exit_error ;
 			}
+#if defined(IP_OPTIONS)
+			if (!no_kill_IP_options) {
+				switch (remoteaddr.ss_family) {
+					case AF_INET:
+						if (0 > setsockopt(s, IPPROTO_IP, IP_OPTIONS, 0, 0)) goto exit_error ;
+						break;
+					default:
+						break;
+				}
+			}
+#endif
 
 			sockaddr_storage localaddr;
 			socklen_t localaddrsz = sizeof localaddr;

@@ -161,20 +161,21 @@ choice="plain">status</arg>.
 </para>
 
 <para>
-<command>service</command> chains to
-<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+The traditional behaviour of <command>service</command> is not to start or stop
+any dependent services, and not to ensure correct service dependencies and
+ordering.
+However, the replacement <command>service</command> commands bundled with
+upstart and systemd do affect dependent services, and will take additional
+actions on other services if necessary.
+This command follows suit and thus chains to
+<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 rather than to
 <citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 or
 <citerefentry><refentrytitle>service-status</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 directly.
-Because of this,
 <arg choice="plain">start</arg> and <arg choice="plain">stop</arg> will execute service control
 jobs, rather than affecting individual services.
-Thus starting or stopping a service will affect any dependent services, and may take additional
-dependent actions.
-The traditional behaviour of the SystemV <command>service</command> command is to only affect
-individual services, without ensuring correct service dependencies and ordering.
 </para>
 
 </refsection>

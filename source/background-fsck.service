@@ -11,6 +11,7 @@ EarlySupervise=true
 Type=oneshot
 ExecStartPre=sh -c "exec sleep ${background_fsck_delay}"
 ExecStart=fsck -B -p
+RemainAfterExit=yes
 
 [Install]
 WantedBy=sysinit.target

@@ -7,9 +7,9 @@ Description=DNS milestone
 DefaultDependencies=false
 
 [Service]
+Type=oneshot
 User=nobody
 systemdWorkingDirectory=false
-ExecStart=pause
-Restart=always
+RemainAfterExit=yes
 
 [Install]

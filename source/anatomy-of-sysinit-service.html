@@ -1,0 +1,39 @@
+<title>Anatomy of a sysinit service</title>
+<link rel="Up" href="index.html" title="nosh Guide" />
+<link rel="Prev" href="anatomy-of-system-target.html" title="Anatomy of a system target" />
+<link rel="Next" href="anatomy-of-login-service.html" title="Anatomy of a login service" />
+<h2>
+Anatomy of a sysinit service
+</h2>
+
+<p>
+Various pre-packaged services are "sysinit" services, started as a result of being wanted by the "sysinit" target (either directly or indirectly via a targets such as "local-fs").
+</p>
+
+<p>
+The machine-id service in the sysinit services collection is an example of a sysinit service.
+Its <code>run</code>, <code>stop</code>, and <code>restart</code> programs are all fairly straightforward and self-explanatory.
+And its <code>remain</code> flag file causes the service to be considered a "run on empty" service by the service manager, as a target is.
+This is because the meat of the service is in its <code>start</code> program, run when the service is brought up from being down, as happens at boot time because the service (when enabled) is wanted by the "sysinit" target.
+</p>
+
+<p>
+The <code>start</code> program runs the <a href="setup-machine-id.html"><code>setup-machine-id</code></a> utility.
+This utility performs boot-time actions that set up the <code>/etc/machine-id</code> and <code>/run/machine-id</code> files.
+</p>
+
+<p>
+There are several things that make "sysinit" services special compared to regular services:
+</p>
+<ul>
+<li><p>
+Most "sysinit" services do their work in their <code>start</code> programs.
+Only a few, such as the devd and devd-log services, have long-lived daemon processes.
+</p></li>
+<li><p>
+Apart from devd, "sysinit" services all use one single sysinit-log logging service.
+</p></li>
+<li><p>
+The supervise directories for many "sysinit" services, which are loaded in parallel with (or even before) mounting <code>/usr</code> and <code>/var</code>, live under <code>/run</code>.
+</p></li>
+</ul>

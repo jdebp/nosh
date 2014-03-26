@@ -1,0 +1,101 @@
+<title>Startup and shutdown</title>
+<link rel="Up" href="index.html" title="nosh Guide" />
+<link rel="Next" href="svscan-shutdown.html" title="Compatible old-style startup" />
+<link rel="Prev" href="converting-systemd-units.html" title="Converting systemd units" />
+<h2>
+Startup and shutdown
+</h2>
+
+<p>
+On a system with the system manager as process #1, startup and shutdown operate (in broad overview) as follows.
+</p>
+
+<h3>
+System startup
+</h3>
+
+<ol>
+<li><p>
+<a href="system-manager.html"><code>system-manager</code></a> performs process setup, a few inescapable items of system setup, starts the service manager and a logger for it, and enters the main system management state machine.
+It will restart the service manager and logger if they exit before system shutdown is initiated.
+The service manager process and its logger process are joined, standard output+error to standard input, via a pipe.
+The system manager keeps an open file descriptor for this pipe, so that its contents aren't lost in the event of a logger restart.
+</p></li>
+<li><p>
+The initialization action of the system management state machine is to spawn a process that runs <code>system-control sysinit</code>.
+</p></li>
+<li><p>
+<a href="system-control.html"><code>system-control</code></a> simply sends <code>SIGRTMIN + 10</code> to process #1, followed by <code>SIGRTMIN + 11</code>.
+</p></li>
+<li><p>
+In response to <code>SIGRTMIN + 10</code> the system management state machine spawns <code>system-control start sysinit</code>.
+</p></li>
+<li><p>
+<code>system-control</code> activates the "sysinit" target.
+This is a special system target that is expected to bring up "sysinit" services, and encompasses targets such as "local-fs".
+After the target is started, the system is expected to have performed fundamental initialization tasks such as:
+</p>
+<ul>
+<li><p>mounting <code>/usr</code> and <code>/var</code> (if necessary),</p></li>
+<li><p>remounting <code>/</code> read-write,</p></li>
+<li><p>ensuring that <code>/etc/machine-id</code> is set,</p></li>
+<li><p>loading kernel modules for things like IPv6 and local-domain sockets,</p></li>
+<li><p>squirrelling away the boot log somewhere,</p></li>
+<li><p>initializing the dynamic library loader, and</p></li>
+<li><p>bringing the system console TTY's line discipline into a "sane" state.</p></li>
+</ul>
+<p>
+Note that fundamental initialization cannot rely upon a writable root filesystem or the presence of the filesystems that contain the bundle directories for "regular" services.
+So all "sysinit" services and targets have to have supervise directories under <code>/run/system-manager/early-supervise/</code>. 
+And this is a separate step from starting the "normal" target later, even though that indirectly encompasses the "sysinit" target and would thus be expected to start all this, because at this point the service/target ordering and dependency mechanism might not even <em>find</em> "regular" services.
+So the "sysinit" target has to be started explicitly first, just to make it possible to find and load all other "regular" services and targets.
+</p>
+</li>
+<li><p>
+In response to <code>SIGRTMIN + 11</code> the system management state machine runs <code>system-control init <i>arguments</i></code> where <i>arguments</i> are the arguments passed to the system manager itself at bootstrap.
+They will usually be flags such as <code>-b</code> or <code>-s</code>, to indicate "emergency" and "rescue" (formerly known as "single-user") modes.
+</p></li>
+<li><p>
+<code>system-control</code> activates the "normal", "rescue", or "emergency" targets, as if by <code>system-control start</code>.
+By now, <code>/usr</code> and <code>/var</code> are mounted, and the service/target ordering and dependency system will find all "regular" services and targets encompassed by these targets.
+</p></li>
+</ol>
+
+<h3>
+System shutdown
+</h3>
+
+<ol>
+<li><p>
+The administrator runs <code>system-control halt</code>, <code>system-control poweroff</code>, <code>system-control reboot</code>, or some other utility.
+</p></li>
+<li><p>
+The utility sends the appropriate signal to process #1.
+(On BSD, these are the same signals as issued by the BSD <code>shutdown</code> command, for compatibility with that command.
+On Linux, these are the systemd signals.)
+</p></li>
+<li><p>
+In response to the signal the system management state machine spawns <code>system-control start <i>target</i></code> where <i>target</i> is "halt", "reboot", or "poweroff".
+</p></li>
+<li><p>
+<code>system-control</code> starts the named target.
+All of these targets encompass the "shutdown" target, and as standard all "regular" services are marked as conflicting with that target (causing them to be stopped if it is started) and to be stopped <em>before</em> it is started.
+</p></li>
+<li><p>
+The "halt", "reboot", and "poweroff" targets are finally started.
+They are ordered to be started after the "shutdown" target has been started.
+Their <code>start</code> programs invoke <code>system-control halt --force</code>, <code>system-control poweroff --force</code>, or <code>system-control reboot --force</code>, as appropriate.
+</p></li>
+<li><p>
+<code>system-control</code> sends a different signal to process #1.
+(These are the systemd signals on both BSD and Linux, as there is no BSD mechanism to be compatible with, here.)
+</p></li>
+<li><p>
+In response to the signal the system management state machine attempts to terminate the service manager and its logger daemon.
+All services should have been shut down already, but the service manager attempts to shut down all services that it manages when it is told to terminate.
+The logger daemon is expected to close when it reaches EOF on the pipe that is attached to its standard input, which happens after the service manager process closes and the system manager (process #1) closes its open file descriptor for the write end of the pipe.
+</p></li>
+<li><p>
+The system management state machine at last enters its final state, halting, rebooting, or powering off the machine directly with the appropriate system calls, after asking the kernel to flush the filesystem cache to disc.
+</p></li>
+</ol>

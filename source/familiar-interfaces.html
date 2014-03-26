@@ -1,0 +1,83 @@
+<title>Interfaces that you are used to</title>
+<link rel="Up" href="index.html" title="nosh Guide" />
+<link rel="Prev" href="introduction.html" title="Introduction" />
+<link rel="Next" href="new-interfaces.html" title="Interfaces that are new" />
+<h2>
+Interfaces that you are used to
+</h2>
+
+<p>
+nosh uses several interfaces that you might already be familiar with:
+</p>
+
+<p>
+The fundamental service management mechanism is taken from daemontools, with some augmentations from 
+<a href="http://untroubled.org/daemontools-encore/">daemontools-encore</a> and some ideas from 
+<a href="http://smarden.org/runit/">runit</a>, 
+<a href="http://b0llix.net/perp/">perp</a>, and 
+<a href="http://skarnet.org/software/s6/">s6</a>.
+</p>
+<ul>
+<li><p>A daemon is run using a <code>run</code> program (usually a script) in a service directory.</p></li>
+<li><p>In addition to the standard daemontools <code>run</code> program, there are <code>start</code>, <code>restart</code>, and <code>stop</code> programs.</p></li>
+<li><p>Several of the tools have daemontools-compatible modes and names.</p>
+<ul>
+<li><p><a href="service-control.html"><code>service-control</code></a> can be used under the name <code>svc</code>, and supports the short options <code>-u</code>, <code>-d</code>, and so forth.</p></li>
+<li><p><a href="service-dt-scanner.html"><code>service-dt-scanner</code></a> can be used under the name <code>svscan</code>.</p></li>
+<li><p><a href="service-status.html"><code>service-status</code></a> can be used under the name <code>svstat</code>.</p></li>
+<li><p><a href="service-is-ok.html"><code>service-is-ok</code></a> can be used under the name <code>svok</code>.</p></li>
+</ul>
+</p></li>
+<li><p>The control/status API is a supervise directory, containing <code>ok</code>, <code>status</code>, <code>control</code>, and <code>lock</code>.
+The <code>status</code> file incorporates the 
+<a href="http://untroubled.org/daemontools-encore/">daemontools-encore</a> extensions that report more detailed service state information.</p></li>
+<li><p><code>svc</code> has been enhanced with the additional signal capabilities from 
+<a href="http://smarden.org/runit/">runit</a>, 
+<a href="http://untroubled.org/daemontools-encore/">daemontools-encore</a>, and 
+<a href="http://skarnet.org/software/s6/">s6</a>.
+<code>svc -w</code> sends a <code>SIGWINCH</code> signal, for example.</p></li>
+</ul>
+
+<p>
+The service and system management mechanism is intentionally similar to systemd.
+</p>
+<ul>
+<li><p>The standard target bundles have familiar names: "multi-user", "local-fs", "remote-fs", "sysinit", and so forth.
+There are some differences in the details ("multi-user" is a sub-target, not a main target, for example) but the gist is the same.</p></li>
+<li><p>
+The <a href="system-control.html"><code>system-control</code></a> utility can be used under the name <code>systemctl</code>, and supports some of the subcommands from systemd's command of the same name: 
+<code>enable</code>, <code>disable</code>, <code>preset</code>, <code>start</code>, <code>stop</code>, <code>status</code>, <code>show</code>, <code>reboot</code>, <code>poweroff</code>, and so forth.</p></li>
+<li><p>The service management mechanism shares systemd's notion of services that are "enabled" so that they are activated automatically at (normal) bootup.</p></li>
+<li><p>An extended set of systemd signals (<code>SIGRTMIN + n</code>) is made available on BSD, in addition to the small set of conventional BSD signals.</p></li>
+</ul>
+
+<p>
+The system management control mechanism and toolset are similar to BSD's and Linux's old System V mechanism and toolset, and have compatibility mechanisms.
+</p>
+<ul>
+<li><p>One sends signals to process #1 to change system states.</p></li>
+<li><p>
+The <a href="service.html"><code>service</code></a>, <a href="chkconfig.html"><code>chkconfig</code></a>, <a href="halt.html"><code>halt</code></a>, <a href="poweroff.html"><code>poweroff</code></a>, <a href="reboot.html"><code>reboot</code></a>, and <a href="telinit.html"><code>telinit</code></a> tools provide a compatibility subset of the BSD and Linux System V tools of the same names.
+</p></li>
+</ul>
+
+<p>
+The scripting utilities parallel daemontools, 
+<a href="http://skarnet.org/software/s6/">s6</a>, and 
+<a href="http://untroubled.org/daemontools-encore/">daemontools-encore</a>.
+</p>
+<ul>
+<li><p>All of the daemontools chain-loading commands are available: <a href="envdir.html"><code>envdir</code></a>, <a href="envuidgid.html"><code>envuidgid</code></a>, <a href="setlock.html"><code>setlock</code></a>, <a href="setuidgid.html"><code>setuidgid</code></a>, and <a href="softlimit.html"><code>softlimit</code></a>.  
+<code>pgrphack</code> is replaced by <a href="setsid.html"><code>setsid</code></a> and <a href="setpgrp.html"><code>setpgrp</code></a>.  
+<code>multilog</code> is replaced by <a href="cyclog.html"><code>cyclog</code></a> (which was in fact the logging command in older versions of daemontools).</p></li>
+<li><p>Socket utilities use the 
+<a href="http://cr.yp.to/proto/ucspi-tcp.txt">UCSPI-TCP</a>, 
+UCSPI-UDP, and 
+UCSPI-LOCAL conventions.</p></li>
+<li><p>Socket utilities can also use 
+<a href="http://freedesktop.org/software/systemd/man/sd_listen_fds.html">systemd's LISTEN_FDS convention</a>.</p></li>
+</ul>
+
+<p>
+And, of course, one can import many systemd service and socket unit files to the native service bundle form very easily.
+</p>

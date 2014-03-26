@@ -191,9 +191,10 @@ wait_ok (
 		sigemptyset(&a.sa_mask);
 		a.sa_handler=sig_ignore;
 		sigaction(SIGALRM,&a,&o);
-		alarm((timeout + 999) / 1000);
+		unsigned int old(alarm((timeout + 999) / 1000));
 		const int ok_fd(open_writeexisting_or_wait_at(supervise_dir_fd, "ok"));
 		if (0 <= ok_fd) close(ok_fd);
+		alarm(old);
 		sigaction(SIGALRM,&o,NULL);
 		return 0 <= ok_fd;
 #endif
@@ -230,4 +231,20 @@ make_supervise_fifos (
 ) {
 	mkfifoat(supervise_dir_fd, "ok", 0666);
 	mkfifoat(supervise_dir_fd, "control", 0600);
+}
+
+bool
+is_initially_up (
+	const int service_dir_fd
+) {
+	struct stat down_file_s;
+	return 0 > fstatat(service_dir_fd, "down", &down_file_s, 0) && ENOENT == errno;
+}
+
+bool
+is_done_after_exit (
+	const int service_dir_fd
+) {
+	struct stat remain_file_s;
+	return 0 > fstatat(service_dir_fd, "remain", &remain_file_s, 0) && ENOENT == errno;
 }

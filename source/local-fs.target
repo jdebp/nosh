@@ -9,10 +9,10 @@ EarlySupervise=true
 Before=shutdown.target
 
 [Service]
+Type=oneshot
 User=nobody
 systemdWorkingDirectory=false
-ExecStart=pause
-Restart=always
+RemainAfterExit=yes
 
 [Install]
 StoppedBy=shutdown.target

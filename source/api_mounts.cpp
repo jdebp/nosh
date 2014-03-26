@@ -7,12 +7,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include <sys/uio.h>
 #include <sys/mount.h>
+#include "nmount.h"
 #include "common-manager.h"
-
-#define MAKE_IOVEC(x) { const_cast<char *>(x), sizeof x }
-#define FROM MAKE_IOVEC("from")
-#define FSTYPE MAKE_IOVEC("fstype")
-#define FSPATH MAKE_IOVEC("fspath")
 
 #if defined(__LINUX__) || defined(__linux__)
 static const struct iovec proc[] = {
