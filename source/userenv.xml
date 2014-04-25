@@ -1,0 +1,87 @@
+<refentry id="userenv">
+
+<refmeta>
+<refentrytitle>userenv</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.0</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>userenv</refname>
+<refpurpose>set the "user" environment variables from the current UID and GID</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>userenv</command> 
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>userenv</command> is a chain-loading utility that sets environment variables
+and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>userenv</command> will ignore.
+</para>
+
+<para>
+The following environment variables are set:
+<variablelist>
+
+<varlistentry>
+<term><code>UID</code></term>
+<listitem><para>Set to the (decimal) numeric value of the process's effective user ID.</para> </listitem>
+</varlistentry><varlistentry>
+<term><code>GID</code></term>
+<listitem><para>Set to the (decimal) numeric value of the process's effective group ID.</para> </listitem>
+</varlistentry><varlistentry>
+<term><code>HOME</code></term>
+<listitem><para>Set to the pathname of the user's home directory, as given in the system account database.</para> </listitem>
+</varlistentry><varlistentry>
+<term><code>SHELL</code></term>
+<listitem><para>Set to the pathname of the user's shell program, as given in the system account database.</para> </listitem>
+</varlistentry><varlistentry>
+<term><code>USER</code> and <code>LOGNAME</code></term>
+<listitem><para>Set to the user's name, as given in the system account database.</para> </listitem>
+</varlistentry>
+
+</variablelist>
+</para>
+
+</refsection><refsection><title>BUGS</title>
+
+<para>
+Although not strictly a bug in this program, it is worth noting that the GNU C
+library and the BSD C library both have memory leaks in theur
+<citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>unsetenv</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+functions, used by this program.
+You can work around these bugs by ensuring that
+<replaceable>next-prog</replaceable> is not a built-in command (see
+<citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+</para>
+
+</refsection><refsection><title>See also</title>
+
+<itemizedlist>
+<listitem><para>
+<citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>envuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>clearenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+</itemizedlist>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

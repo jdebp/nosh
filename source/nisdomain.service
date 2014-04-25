@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=NIS domain name
+
+[Service]
+systemdWorkingDirectory=false
+EnvironmentFile=/etc/rc.conf
+ExecStart=sh -c 'domainname ${nisdomainname}'
+RemainAfterExit=true
+
+[Install]
+WantedBy=workstation.target

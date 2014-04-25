@@ -1,8 +1,18 @@
 <refentry id="service-control">
 
-<refmeta><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+<refmeta>
+<refentrytitle>service-control</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.0</refmiscinfo>
+</refmeta>
 
-<refnamediv><refname>service-control</refname><refname>svc</refname><refpurpose>control services through their supervision directory API</refpurpose> </refnamediv>
+<refnamediv>
+<refname>service-control</refname>
+<refname>svc</refname>
+<refpurpose>control services through their supervision directory API</refpurpose> 
+</refnamediv>
 
 <refsynopsisdiv>
 <cmdsynopsis>

@@ -58,58 +58,62 @@ exit_scan:
 
 		const int bundle_dir_fd(open_dir_at(scan_dir_fd, entry->d_name));
 		if (0 <= bundle_dir_fd) {
-			int service_dir_fd(open_dir_at(bundle_dir_fd, "service/"));
-			if (0 > service_dir_fd) service_dir_fd = dup(bundle_dir_fd);
-			make_supervise(bundle_dir_fd);
-			const int supervise_dir_fd(open_dir_at(bundle_dir_fd, "supervise/"));
-			if (0 <= supervise_dir_fd) {
-				const bool was_already_loaded(is_ok(supervise_dir_fd));
-				if (!was_already_loaded) {
-					make_supervise(supervise_dir_fd);
-					load(prog, socket_fd, entry->d_name, supervise_dir_fd, service_dir_fd, false, false);
-				}
-				const int log_bundle_dir_fd(open_dir_at(bundle_dir_fd, "log/"));
-				if (0 <= log_bundle_dir_fd) {
-					char log_name[NAME_MAX + sizeof "/log"];
-					std::strncpy(log_name, entry->d_name, sizeof log_name);
+			int service_dir_fd(open_service_dir(bundle_dir_fd));
+			if (0 <= service_dir_fd) {
+				make_supervise(bundle_dir_fd);
+				const int supervise_dir_fd(open_supervise_dir(bundle_dir_fd));
+				if (0 <= supervise_dir_fd) {
+					const bool was_already_loaded(is_ok(supervise_dir_fd));
+					if (!was_already_loaded) {
+						make_supervise(supervise_dir_fd);
+						load(prog, socket_fd, entry->d_name, supervise_dir_fd, service_dir_fd, false, false);
+					}
+					const int log_bundle_dir_fd(open_dir_at(bundle_dir_fd, "log/"));
+					if (0 <= log_bundle_dir_fd) {
+						char log_name[NAME_MAX + sizeof "/log"];
+						std::strncpy(log_name, entry->d_name, sizeof log_name);
 #if defined(_DIRENT_HAVE_D_NAMLEN)
-					std::strncat(log_name, "/log", sizeof log_name - entry->d_namelen);
+						std::strncat(log_name, "/log", sizeof log_name - entry->d_namelen);
 #else
-					std::strncat(log_name, "/log", sizeof log_name - std::strlen(entry->d_name));
+						std::strncat(log_name, "/log", sizeof log_name - std::strlen(entry->d_name));
 #endif
-					int log_service_dir_fd(open_dir_at(log_bundle_dir_fd, "service/"));
-					if (0 > log_service_dir_fd) log_service_dir_fd = dup(log_bundle_dir_fd);
-					make_supervise(log_bundle_dir_fd);
-					const int log_supervise_dir_fd(open_dir_at(log_bundle_dir_fd, "supervise/"));
-					if (0 <= log_supervise_dir_fd) {
-						const bool log_was_already_loaded(is_ok(log_supervise_dir_fd));
-						if (!log_was_already_loaded) {
-							make_supervise(log_supervise_dir_fd);
-							load(prog, socket_fd, log_name, log_supervise_dir_fd, log_service_dir_fd, true, false);
-						}
-						plumb(prog, socket_fd, supervise_dir_fd, log_supervise_dir_fd);
-						if (!log_was_already_loaded)
-							make_input_activated(prog, socket_fd, log_supervise_dir_fd);
-						close(log_supervise_dir_fd);
+						int log_service_dir_fd(open_service_dir(log_bundle_dir_fd));
+						if (0 <= log_service_dir_fd) {
+							make_supervise(log_bundle_dir_fd);
+							const int log_supervise_dir_fd(open_supervise_dir(log_bundle_dir_fd));
+							if (0 <= log_supervise_dir_fd) {
+								const bool log_was_already_loaded(is_ok(log_supervise_dir_fd));
+								if (!log_was_already_loaded) {
+									make_supervise(log_supervise_dir_fd);
+									load(prog, socket_fd, log_name, log_supervise_dir_fd, log_service_dir_fd, true, false);
+								}
+								plumb(prog, socket_fd, supervise_dir_fd, log_supervise_dir_fd);
+								if (!log_was_already_loaded)
+									make_input_activated(prog, socket_fd, log_supervise_dir_fd);
+								close(log_supervise_dir_fd);
+							} else
+								std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, entry->d_name, "log/supervise", std::strerror(errno));
+							close(log_service_dir_fd);
+						} else
+							std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, entry->d_name, "log/service", std::strerror(errno));
+						close(log_bundle_dir_fd);
 					} else
-						std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, entry->d_name, "log/supervise", std::strerror(errno));
-					close(log_service_dir_fd);
-					close(log_bundle_dir_fd);
+						std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, entry->d_name, "log", std::strerror(errno));
+					if (!was_already_loaded) {
+						if (is_initially_up(service_dir_fd)) {
+							if (!wait_ok(supervise_dir_fd, 5000))
+								std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, entry->d_name, "supervise/ok", "Unable to load service bundle.");
+							else
+								start(supervise_dir_fd);
+						} else
+							std::fprintf(stderr, "%s: INFO: %s: %s\n", prog, entry->d_name, "Service is initially down.");
+					}
+					close(supervise_dir_fd);
 				} else
-					std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, entry->d_name, "log", std::strerror(errno));
-				if (!was_already_loaded) {
-					if (is_initially_up(service_dir_fd)) {
-						if (!wait_ok(supervise_dir_fd, 5000))
-							std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, entry->d_name, "supervise/ok", "Unable to load service bundle.");
-						else
-							start(prog, supervise_dir_fd);
-					} else
-						std::fprintf(stderr, "%s: INFO: %s: %s\n", prog, entry->d_name, "Service is initially down.");
-				}
-				close(supervise_dir_fd);
+					std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, entry->d_name, "supervise", std::strerror(errno));
+				close(service_dir_fd);
 			} else
-				std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, entry->d_name, "supervise", std::strerror(errno));
-			close(service_dir_fd);
+				std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, entry->d_name, "service", std::strerror(errno));
 			close(bundle_dir_fd);
 		} else
 			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, entry->d_name, std::strerror(errno));

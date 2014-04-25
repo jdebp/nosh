@@ -111,12 +111,11 @@ unload (
 
 static
 int
-start_stop_common (
-	const char * prog,
+send_control_command (
 	int supervise_dir_fd,
 	char command
 ) {
-	int control_fd(open_writeexisting_at(supervise_dir_fd, "control"));
+	const int control_fd(open_writeexisting_at(supervise_dir_fd, "control"));
 	if (0 > control_fd) return -1;
 	while (true) {
 		const int n(write(control_fd, &command, 1));
@@ -134,18 +133,23 @@ start_stop_common (
 
 int
 start (
-	const char * prog,
 	int supervise_dir_fd
 ) {
-	return start_stop_common(prog, supervise_dir_fd, 'u');
+	return send_control_command(supervise_dir_fd, 'u');
 }
 
 int
 stop (
-	const char * prog,
 	int supervise_dir_fd
 ) {
-	return start_stop_common(prog, supervise_dir_fd, 'd');
+	return send_control_command(supervise_dir_fd, 'd');
+}
+
+int
+kill_daemon (
+	int supervise_dir_fd
+) {
+	return send_control_command(supervise_dir_fd, 'k');
 }
 
 bool
@@ -231,6 +235,24 @@ make_supervise_fifos (
 ) {
 	mkfifoat(supervise_dir_fd, "ok", 0666);
 	mkfifoat(supervise_dir_fd, "control", 0600);
+}
+
+int
+open_service_dir (
+	const int bundle_dir_fd
+) {
+	int service_dir_fd(open_dir_at(bundle_dir_fd, "service/"));
+	if ((0 > service_dir_fd) && (ENOENT == errno)) service_dir_fd = dup(bundle_dir_fd);
+	return service_dir_fd;
+}
+
+int
+open_supervise_dir (
+	const int bundle_dir_fd
+) {
+	int supervise_dir_fd(open_dir_at(bundle_dir_fd, "supervise/"));
+	if ((0 > supervise_dir_fd) && (ENOENT == errno)) supervise_dir_fd = dup(bundle_dir_fd);
+	return supervise_dir_fd;
 }
 
 bool

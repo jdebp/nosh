@@ -1,0 +1,19 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=packet filter service
+
+[Service]
+systemdWorkingDirectory=false
+EnvironmentFile=-/etc/rc.conf
+EnvironmentFile=-/etc/rc.conf.local
+ExecStartPre=pfctl -Fall
+ExecStartPre=pfctl -e -q
+ExecStart=foreground sh -c 'exec pfctl -f "$pf_rules" $pf_flags' ; pause
+ExecStopPost=pfctl -d -q
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target server.target

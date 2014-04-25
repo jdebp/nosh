@@ -8,6 +8,4 @@ WantedBy=server.target
 [Socket]
 ListenStream=22
 BindIPv6Only=both
-Backlog=2
 Accept=true
-MaxConnections=2

@@ -1,8 +1,17 @@
 <refentry id="service-manager">
 
-<refmeta><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+<refmeta>
+<refentrytitle>service-manager</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.0</refmiscinfo>
+</refmeta>
 
-<refnamediv><refname>service-manager</refname><refpurpose>service manager</refpurpose></refnamediv>
+<refnamediv>
+<refname>service-manager</refname>
+<refpurpose>service manager</refpurpose>
+</refnamediv>
 
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -31,11 +40,28 @@ send signals the service and bring it up or down, from utilities such as
 <citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
+<para>
+<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+invokes <command>service-manager</command> with the appropriate socket (which it sets up itself) 
+and output directed to a logging daemon.
+So also does
+<citerefentry><refentrytitle>session-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Alternatively, <command>service-manager</command> can be started by
+<citerefentry><refentrytitle>local-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+which will set up the appropriate socket.
+(<command>service-manager</command> can even be started as a "socket-activated"
+daemon by
+<citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+with the systemd-recommended <code>Accept=false</code>.)
+</para>
+
 </refsection><refsection><title>Services</title>
 
 <para>
-Each service comprises several files in the filesystem, contained in two
-directories.
+Each service comprises several files in the filesystem, contained in two directories.
+(<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+builds upon these two with further directories, to construct a service bundle, for the details
+of which see its manual page.)
 </para>
 
 <refsection><title>Service directories</title>
@@ -96,7 +122,9 @@ A service directory can also contain ancillary files required by the service
 itself, varying from service to service.  
 A
 <citerefentry><refentrytitle>tcp-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-service could have an access-control database, for example.
+service could have an access-control database managed by
+<citerefentry><refentrytitle>ucspi-socket-rules-check</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+for example.
 </para>
 
 <para>
@@ -211,7 +239,9 @@ as fan-in.  (However, fan-in should be used sparingly as it generally causes
 more administrative headaches than it solves.)
 </para>
 
-</refsection><refsection><title>RESTART</title>
+</refsection>
+</refsection>
+<refsection><title>RESTART</title>
 
 <para>
 Automatic restart is tailorable to individual services.
@@ -255,20 +285,6 @@ the "good" termination signals <code>SIGTERM</code>, <code>SIGPIPE</code>, <code
 The second is either (for <code>exit</code>) the decimal exit status of the process or
 (for everything else) a symbolic designation or decimal code of the specific
 signal, if the first argument is not specific enough to make a decision.
-</para>
-
-</refsection></refsection><refsection><title>USAGE</title>
-
-<para>
-<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-and
-<citerefentry><refentrytitle>session-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-invoke 
-<command>service-manager</command> directly, having set up the listening socket themselves.
-<command>service-manager</command> can also be invoked
-as a "socket-activated" daemon monitored by
-<citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-(with the systemd-recommended <code>Accept=false</code>).
 </para>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

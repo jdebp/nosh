@@ -1,0 +1,97 @@
+<refentry id="foreground">
+
+<refmeta>
+<refentrytitle>foreground</refentrytitle>
+<refentrytitle>background</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.0</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>foreground</refname>
+<refname>background</refname>
+<refpurpose>execute two commands, sequentially or in parallel</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>foreground</command> 
+<arg choice='opt'>--separator <replaceable>alt-sep</replaceable></arg> 
+<arg choice='req'><replaceable>left-prog</replaceable></arg> 
+<arg choice='req'>;</arg> 
+<arg choice='req'><replaceable>right-prog</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>background</command> 
+<arg choice='opt'>--separator <replaceable>alt-sep</replaceable></arg> 
+<arg choice='req'><replaceable>left-prog</replaceable></arg> 
+<arg choice='req'>&#x0026;</arg> 
+<arg choice='req'><replaceable>right-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>foreground</command> and <command>background</command> are
+chain-loading utilities that run <replaceable>left-prog</replaceable> as a
+child process created by
+<citerefentry><refentrytitle>fork</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+and chain load to <replaceable>right-prog</replaceable> in the current process.
+Both are executed as if with the
+<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+function.
+</para>
+
+<para>
+<replaceable>left-prog</replaceable> and <replaceable>right-prog</replaceable>
+may contain their own command line options, which 
+<command>foreground</command> and <command>background</command> will ignore.
+</para>
+
+<para>
+The <arg choice='opt'>--separator</arg> command line option specifies an
+alternative separator argument, to scan for in place of 
+<arg choice='req'>;</arg> or <arg choice='req'>&#x0026;</arg>.
+</para>
+
+<para>
+<command>foreground</command> waits for the child process to
+finish before contining in the parent, executing the programs sequentially.
+<command>background</command> runs child and parent in parallel,
+without waiting.
+</para>
+
+</refsection>
+<refsection><title>Usage</title>
+
+<para>
+The primary use of <command>foreground</command> and
+<command>background</command> is from a
+<citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+script to enact command lists.
+When invoking <command>foreground</command> or <command>background</command>
+from within a shell script, remember that 
+<arg choice='req'>;</arg> or <arg choice='req'>&#x0026;</arg> must be escaped or
+quoted in order to prevent the shell from recognizing it.
+</para>
+
+<para>
+The commands look for the leftmost instance of the separator
+<arg choice='req'>;</arg>/<arg choice='req'>&#x0026;</arg>,
+and separate left from right there.
+Further instances of the separator
+in <replaceable>right-prog</replaceable> are left alone.
+This allows longer lists, by using another <command>foreground</command> or
+<command>background</command> in <replaceable>right-prog</replaceable>.
+However, these commands are intended only for enacting simple sequential
+or parallel command lists.
+For more complex command lists, these are not the correct tools.
+</para>
+
+</refsection>
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

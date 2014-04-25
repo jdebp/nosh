@@ -4,7 +4,7 @@
 
 [Unit]
 Description=SSH service
-#Requires=sshdgenkeys.service
+Requires=sshdgenkeys.service
 After=sshdgenkeys.service
 
 [Service]

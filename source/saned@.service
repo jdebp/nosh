@@ -6,7 +6,7 @@
 Description=Scanner service
 
 [Service]
-Group=scanner
+User=saned
 systemdWorkingDirectory=false
 ExecStart=%P
 StandardInput=socket

@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=NIS binding daemon
+
+[Service]
+Type=forking
+systemdWorkingDirectory=false
+ExecStart=ypbind
+Restart=always
+
+[Install]
+WantedBy=server.target

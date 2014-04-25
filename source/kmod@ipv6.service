@@ -6,7 +6,6 @@
 Description=kmod loader for ipv6
 
 [Service]
-Type=oneshot
 systemdWorkingDirectory=false
 ExecStart=sh -c '[ -d /sys/module/ipv6/ ] || kmod modprobe ipv6'
 RemainAfterExit=yes

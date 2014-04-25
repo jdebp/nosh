@@ -317,7 +317,7 @@ void logger::end () {
 
 void
 cyclog (
-	const char * & next_prog,
+	const char * & /*next_prog*/,
 	std::vector<const char *> & args
 ) {
 	const char * prog(basename_of(args[0]));

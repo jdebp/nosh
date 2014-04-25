@@ -110,10 +110,14 @@ is_regular (
 }
 
 struct value {
-	value() : used(false), datum() {}
-	value(const std::string & v) : used(false), datum(v) {}
+	value() : used(false), d() {}
+	value(const std::string & v) : used(false), d() { d.push_back(v); }
+	void append(const std::string & v) { d.push_back(v); }
+	std::string last_setting() const { return d.empty() ? std::string() : d.back(); }
+	const std::list<std::string> & all_settings() const { return d; }
 	bool used;
-	std::string datum;
+protected:
+	std::list<std::string> d;
 };
 
 struct profile {
@@ -133,13 +137,13 @@ struct profile {
 		i1->second.used = true;
 		return &i1->second;
 	}
-	void insert_or_replace ( 
+	void append ( 
 		const std::string & k0, ///< must be all lowercase
 		const std::string & k1, ///< must be all lowercase
 		const std::string & v 
 	) 
 	{
-		m0[k0][k1] = v;
+		m0[k0][k1].append(v);
 	}
 
 	FirstLevel m0;
@@ -364,7 +368,7 @@ is_bool_true (
 	bool def
 ) {
 	if (!v) return def;
-	const std::string r(tolower(v->datum));
+	const std::string r(tolower(v->last_setting()));
 	return "yes" == r || "on" == r || "true" == r;
 }
 
@@ -444,7 +448,7 @@ load (
 		const std::string::size_type eq(line.find('='));
 		const std::string var(line.substr(0, eq));
 		const std::string val(eq == std::string::npos ? std::string() : line.substr(eq + 1, std::string::npos));
-		p.insert_or_replace(section, tolower(var), val);
+		p.append(section, tolower(var), val);
 	}
 }
 
@@ -534,8 +538,10 @@ report_unused(
 			const std::string & var(i1->first);
 			const value & v(i1->second);
 			if (!v.used) {
-				const std::string & val(v.datum);
-				std::fprintf(stderr, "%s: WARNING: %s: Unused setting: [%s] %s = %s\n", prog, name.c_str(), section.c_str(), var.c_str(), val.c_str());
+				for (std::list<std::string>::const_iterator i(v.all_settings().begin()); v.all_settings().end() != i; ++i) {
+				       const std::string & val(*i);
+			       	       std::fprintf(stderr, "%s: WARNING: %s: Unused setting: [%s] %s = %s\n", prog, name.c_str(), section.c_str(), var.c_str(), val.c_str());
+				}
 			}
 		}
 	}
@@ -721,6 +727,7 @@ convert_systemd_units (
 	value * environmentfile(service_profile.use("service", "environmentfile"));
 	value * environmentdirectory(service_profile.use("service", "environmentdirectory"));	// This is an extension to systemd.
 	value * environmentuser(service_profile.use("service", "environmentuser"));	// This is an extension to systemd.
+	value * environmentappendpath(service_profile.use("service", "environmentappendpath"));	// This is an extension to systemd.
 	value * ttypath(service_profile.use("service", "ttypath"));
 	value * ttyreset(service_profile.use("service", "ttyreset"));
 	value * ttyprompt(service_profile.use("service", "ttyprompt"));
@@ -753,8 +760,8 @@ convert_systemd_units (
 
 	// Actively prevent certain unsupported combinations.
 
-	if (type && "simple" != tolower(type->datum) && "forking" != tolower(type->datum) && "oneshot" != tolower(type->datum)) {
-		std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, service_filename.c_str(), type->datum.c_str(), "Only simple services are supported.");
+	if (type && "simple" != tolower(type->last_setting()) && "forking" != tolower(type->last_setting()) && "oneshot" != tolower(type->last_setting())) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, service_filename.c_str(), type->last_setting().c_str(), "Only simple services are supported.");
 		throw EXIT_FAILURE;
 	}
 	if (!execstart && !is_target) {
@@ -774,8 +781,8 @@ convert_systemd_units (
 		}
 	}
 	// We silently set "process" as the default killmode, not "control-group".
-	if (killmode && "process" != tolower(killmode->datum)) {
-		std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, service_filename.c_str(), killmode->datum.c_str(), "Unsupported service stop mechanism.");
+	if (killmode && "process" != tolower(killmode->last_setting())) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, service_filename.c_str(), killmode->last_setting().c_str(), "Unsupported service stop mechanism.");
 		throw EXIT_FAILURE;
 	}
 
@@ -793,12 +800,12 @@ convert_systemd_units (
 	mkdir((names.query_bundle_dirname() + "/required-by").c_str(), 0755);
 	mkdir((names.query_bundle_dirname() + "/stopped-by").c_str(), 0755);
 
-#define CREATE_LINKS(p,i,l,b,s) (l ? create_links ((p),(i),names.substitute((l)->datum),(b),(s)) : static_cast<void>(0))
+#define CREATE_LINKS(p,i,l,b,s) (l ? create_links ((p),(i),names.substitute((l)->last_setting()),(b),(s)) : static_cast<void>(0))
 
 	// Construct various common command strings.
 
 	std::string chroot;
-	if (rootdirectory) chroot += "chroot " + quote(names.substitute(rootdirectory->datum)) + "\n";
+	if (rootdirectory) chroot += "chroot " + quote(names.substitute(rootdirectory->last_setting())) + "\n";
 #if defined(__LINUX__) || defined(__linux__)
 	const bool is_private_tmp(is_bool_true(privatetmp, false));
 	const bool is_private_network(is_bool_true(privatenetwork, false));
@@ -817,7 +824,7 @@ convert_systemd_units (
 		}
 	}
 	if (mountflags) 
-		chroot += "set-mount-object --recursive " + quote(mountflags->datum) + " /\n";
+		chroot += "set-mount-object --recursive " + quote(mountflags->last_setting()) + " /\n";
 	else if (is_private_tmp||is_private_devices)
 		chroot += "set-mount-object --recursive shared /\n";
 #endif
@@ -825,10 +832,14 @@ convert_systemd_units (
 	std::string setsid;
 	if (is_bool_true(sessionleader, false)) setsid += "setsid\n";
 	if (is_bool_true(processgroupleader, false)) setsid += "setpgrp\n";
-	std::string setuidgid;
+	std::string envuidgid, setuidgid;
 	if (user) {
-		const std::string u(names.substitute(user->datum));
-		setuidgid += "setuidgid " + quote(u) + "\n";
+		const std::string u(names.substitute(user->last_setting()));
+		if (rootdirectory) {
+			envuidgid += "envuidgid " + quote(u) + "\n";
+			setuidgid += "setuidgid-fromenv\n";
+		} else
+			setuidgid += "setuidgid " + quote(u) + "\n";
 		if (passwd * pw = getpwnam(u.c_str())) {
 			// This replicates a systemd bug.
 			if (pw->pw_dir)
@@ -839,55 +850,81 @@ convert_systemd_units (
 		}
 	} else {
 		if (group)
-			setuidgid += "setgid " + quote(names.substitute(group->datum)) + "\n";
+			setuidgid += "setgid " + quote(names.substitute(group->last_setting())) + "\n";
 	}
 	const bool setuidgidall(!is_bool_true(permissionsstartonly, false));
 	// systemd always runs services in / by default; daemontools runs them in the service directory.
 	std::string chdir;
 	if (workingdirectory)
-		chdir += "chdir " + quote(names.substitute(workingdirectory->datum)) + "\n";
-	else if (is_bool_true(systemdworkingdirectory, true))
+		chdir += "chdir " + quote(names.substitute(workingdirectory->last_setting())) + "\n";
+	else if (rootdirectory || is_bool_true(systemdworkingdirectory, true))
 		chdir += "chdir /\n";
 	std::string softlimit;
 	if (limitnofile||limitcpu||limitcore||limitnproc||limitfsize||limitas||limitdata||limitmemory) {
 		softlimit += "softlimit";
-		if (limitnofile) softlimit += " -o " + quote(limitnofile->datum);
-		if (limitcpu) softlimit += " -t " + quote(limitcpu->datum);
-		if (limitcore) softlimit += " -c " + quote(limitcore->datum);
-		if (limitnproc) softlimit += " -p " + quote(limitnproc->datum);
-		if (limitfsize) softlimit += " -f " + quote(limitfsize->datum);
-		if (limitas) softlimit += " -a " + quote(limitas->datum);
-		if (limitdata) softlimit += " -d " + quote(limitdata->datum);
-		if (limitmemory) softlimit += " -m " + quote(limitmemory->datum);
+		if (limitnofile) softlimit += " -o " + quote(limitnofile->last_setting());
+		if (limitcpu) softlimit += " -t " + quote(limitcpu->last_setting());
+		if (limitcore) softlimit += " -c " + quote(limitcore->last_setting());
+		if (limitnproc) softlimit += " -p " + quote(limitnproc->last_setting());
+		if (limitfsize) softlimit += " -f " + quote(limitfsize->last_setting());
+		if (limitas) softlimit += " -a " + quote(limitas->last_setting());
+		if (limitdata) softlimit += " -d " + quote(limitdata->last_setting());
+		if (limitmemory) softlimit += " -m " + quote(limitmemory->last_setting());
 		softlimit += "\n";
 	}
 	std::string env;
-	if (environmentfile) env += "read-conf " + quote(names.substitute(environmentfile->datum)) + "\n";
-	if (environmentdirectory) env += "envdir " + quote(names.substitute(environmentdirectory->datum)) + "\n";
-	if (environmentuser) env += "envuidgid " + quote(names.substitute(environmentuser->datum)) + "\n";
+	if (environmentfile) {
+		for (std::list<std::string>::const_iterator i(environmentfile->all_settings().begin()); environmentfile->all_settings().end() != i; ++i) {
+			const std::string & val(*i);
+			env += "read-conf " + quote(names.substitute(val)) + "\n";
+		}
+	}
+	if (environmentdirectory) {
+		for (std::list<std::string>::const_iterator i(environmentdirectory->all_settings().begin()); environmentdirectory->all_settings().end() != i; ++i) {
+			const std::string & val(*i);
+			env += "envdir " + quote(names.substitute(val)) + "\n";
+		}
+	}
+	if (environmentuser) env += "envuidgid " + quote(names.substitute(environmentuser->last_setting())) + "\n";
 	if (environment) {
-		const std::list<std::string> list(split_list(names.substitute(environment->datum)));
-		for (std::list<std::string>::const_iterator i(list.begin()); list.end() != i; ++i) {
-			const std::string s(*i);
-			const std::string::size_type eq(s.find('='));
-			const std::string var(s.substr(0, eq));
-			const std::string val(eq == std::string::npos ? std::string() : s.substr(eq + 1, std::string::npos));
-			env += "setenv " + quote(var) + " " + quote(val) + "\n";
+		for (std::list<std::string>::const_iterator i(environment->all_settings().begin()); environment->all_settings().end() != i; ++i) {
+			const std::string & datum(*i);
+			const std::list<std::string> list(split_list(names.substitute(datum)));
+			for (std::list<std::string>::const_iterator j(list.begin()); list.end() != j; ++j) {
+				const std::string & s(*j);
+				const std::string::size_type eq(s.find('='));
+				const std::string var(s.substr(0, eq));
+				const std::string val(eq == std::string::npos ? std::string() : s.substr(eq + 1, std::string::npos));
+				env += "setenv " + quote(var) + " " + quote(val) + "\n";
+			}
+		}
+	}
+	if (environmentappendpath) {
+		for (std::list<std::string>::const_iterator i(environmentappendpath->all_settings().begin()); environmentappendpath->all_settings().end() != i; ++i) {
+			const std::string & datum(*i);
+			const std::list<std::string> list(split_list(names.substitute(datum)));
+			for (std::list<std::string>::const_iterator j(list.begin()); list.end() != j; ++j) {
+				const std::string & s(*j);
+				const std::string::size_type eq(s.find('='));
+				const std::string var(s.substr(0, eq));
+				const std::string val(eq == std::string::npos ? std::string() : s.substr(eq + 1, std::string::npos));
+				env += "appendpath " + quote(var) + " " + quote(val) + "\n";
+			}
 		}
 	}
 	std::string um;
-	if (umask) um += "umask " + quote(umask->datum) + "\n";
-	const bool is_oneshot(type && "oneshot" == tolower(type->datum));
+	if (umask) um += "umask " + quote(umask->last_setting()) + "\n";
+	const bool is_oneshot(type && "oneshot" == tolower(type->last_setting()));
 	const bool is_remain(is_bool_true(remainafterexit, false));
-	const bool stdin_socket(standardinput && "socket" == tolower(standardinput->datum));
-	const bool stdin_tty(standardinput && ("tty" == tolower(standardinput->datum) || "tty-force" == tolower(standardinput->datum)));
-	const bool stdout_inherit(standardoutput && "inherit" == tolower(standardoutput->datum));
-	const bool stderr_inherit(standarderror && "inherit" == tolower(standarderror->datum));
+	const bool stdin_socket(standardinput && "socket" == tolower(standardinput->last_setting()));
+	const bool stdin_tty(standardinput && ("tty" == tolower(standardinput->last_setting()) || "tty-force" == tolower(standardinput->last_setting())));
+	const bool stdout_inherit(standardoutput && "inherit" == tolower(standardoutput->last_setting()));
+	const bool stderr_inherit(standarderror && "inherit" == tolower(standarderror->last_setting()));
 	// We "un-use" anything that isn't "inherit"/"socket".
 	if (standardinput && !stdin_socket && !stdin_tty) standardinput->used = false;
 	if (standardoutput && !stdout_inherit) standardoutput->used = false;
 	if (standarderror && !stderr_inherit) standarderror->used = false;
-	std::string tty(ttypath ? names.substitute(ttypath->datum) : "/dev/console");
+	std::string tty(ttypath ? names.substitute(ttypath->last_setting()) : "/dev/console");
 	std::string redirect, login_prompt;
 	if (ttypath || stdin_tty) redirect += "vc-get-tty " + quote(tty) + "\n";
 	if (stdin_tty) {
@@ -925,14 +962,25 @@ convert_systemd_units (
 
 	if (!is_oneshot) {
 		start << "#!/bin/nosh\n" << multi_line_comment("Start file generated from " + service_filename);
-		start << redirect;
-		start << softlimit;
-		if (setuidgidall) start << setuidgid;
-		start << chdir;
-		start << env;
-		start << um;
-		if (chrootall) start << chroot;
-		if (execstartpre) start << names.substitute(strip_leading_minus(execstartpre->datum)) << "\n"; else start << "true\n";
+		if (execstartpre) {
+			if (setuidgidall) start << envuidgid;
+			start << redirect;
+			start << softlimit;
+			if (chrootall) start << chroot;
+			start << chdir;
+			if (setuidgidall) start << setuidgid;
+			start << env;
+			start << um;
+			for (std::list<std::string>::const_iterator i(execstartpre->all_settings().begin()); execstartpre->all_settings().end() != i; ) {
+				std::list<std::string>::const_iterator j(i++);
+				if (execstartpre->all_settings().begin() != j) start << " ;\n"; 
+				if (execstartpre->all_settings().end() != i) start << "foreground "; 
+				const std::string & val(*j);
+				start << names.substitute(strip_leading_minus(val));
+			}
+			start << "\n";
+		} else 
+			start << "true\n";
 	} else {
 		real_run << "#!/bin/nosh\n" << multi_line_comment("Run file generated from " + service_filename);
 		if (!is_remain)
@@ -943,50 +991,57 @@ convert_systemd_units (
 
 	if (is_socket_activated) {
 		run << "#!/bin/nosh\n" << multi_line_comment("Run file generated from " + socket_filename);
-		if (socket_description) run << multi_line_comment(names.substitute(socket_description->datum));
+		if (socket_description) {
+			for (std::list<std::string>::const_iterator i(socket_description->all_settings().begin()); socket_description->all_settings().end() != i; ++i) {
+				const std::string & val(*i);
+				run << multi_line_comment(names.substitute(val));
+			}
+		}
 		if (listenstream) {
-			if (is_local_socket_name(listenstream->datum)) {
+			if (is_local_socket_name(listenstream->last_setting())) {
 				run << "local-stream-socket-listen --systemd-compatibility ";
-				if (backlog) run << "--backlog " << quote(backlog->datum) << " ";
-				if (socketmode) run << "--socketmode " << quote(socketmode->datum) << " ";
-				run << quote(listenstream->datum) << "\n";
+				if (backlog) run << "--backlog " << quote(backlog->last_setting()) << " ";
+				if (socketmode) run << "--socketmode " << quote(socketmode->last_setting()) << " ";
+				run << quote(listenstream->last_setting()) << "\n";
+				run << envuidgid;
 				run << setsid;
 				run << redirect;
+				run << softlimit;
 				run << chroot;
 				run << chdir;
-				run << env;
-				run << softlimit;
 				run << setuidgid;
+				run << env;
 				run << um;
 				if (is_socket_accept) {
 					run << "local-stream-socket-accept ";
-					if (maxconnections) run << "--connection-limit " << quote(maxconnections->datum) << " ";
+					if (maxconnections) run << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
 					run << "\n";
 				}
 			} else {
 				std::string listenaddress, listenport;
-				split_ip_socket_name(listenstream->datum, listenaddress, listenport);
+				split_ip_socket_name(listenstream->last_setting(), listenaddress, listenport);
 				run << "tcp-socket-listen --systemd-compatibility ";
-				if (backlog) run << "--backlog " << quote(backlog->datum) << " ";
+				if (backlog) run << "--backlog " << quote(backlog->last_setting()) << " ";
 #if defined(IPV6_V6ONLY)
-				if (bindipv6only && "both" == tolower(bindipv6only->datum)) run << "--combine4and6 ";
+				if (bindipv6only && "both" == tolower(bindipv6only->last_setting())) run << "--combine4and6 ";
 #endif
 #if defined(SO_REUSEPORT)
 				if (is_bool_true(reuseport, false)) run << "--reuse-port ";
 #endif
 				if (is_bool_true(freebind, false)) run << "--bind-to-any ";
 				run << quote(listenaddress) << " " << quote(listenport) << "\n";
+				run << envuidgid;
 				run << setsid;
 				run << redirect;
+				run << softlimit;
 				run << chroot;
 				run << chdir;
-				run << softlimit;
 				run << setuidgid;
-				run << um;
 				run << env;
+				run << um;
 				if (is_socket_accept) {
 					run << "tcp-socket-accept ";
-					if (maxconnections) run << "--connection-limit " << quote(maxconnections->datum) << " ";
+					if (maxconnections) run << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
 					if (is_bool_true(keepalive, false)) run << "--keepalives ";
 					if (!is_bool_true(nagle, true)) run << "--no-delay ";
 					run << "\n";
@@ -994,37 +1049,39 @@ convert_systemd_units (
 			}
 		}
 		if (listendatagram) {
-			if (is_local_socket_name(listenstream->datum)) {
+			if (is_local_socket_name(listenstream->last_setting())) {
 				run << "local-datagram-socket-listen --systemd-compatibility ";
-				if (backlog) run << "--backlog " << quote(backlog->datum) << " ";
-				if (socketmode) run << "--socketmode " << quote(socketmode->datum) << " ";
-				run << quote(listendatagram->datum) << "\n";
+				if (backlog) run << "--backlog " << quote(backlog->last_setting()) << " ";
+				if (socketmode) run << "--socketmode " << quote(socketmode->last_setting()) << " ";
+				run << quote(listendatagram->last_setting()) << "\n";
+				run << envuidgid;
 				run << setsid;
 				run << redirect;
+				run << softlimit;
 				run << chroot;
 				run << chdir;
-				run << env;
-				run << softlimit;
 				run << setuidgid;
+				run << env;
 				run << um;
 			} else {
 				std::string listenaddress, listenport;
-				split_ip_socket_name(listendatagram->datum, listenaddress, listenport);
+				split_ip_socket_name(listendatagram->last_setting(), listenaddress, listenport);
 				run << "udp-socket-listen --systemd-compatibility ";
 #if defined(IPV6_V6ONLY)
-				if (bindipv6only && "both" == tolower(bindipv6only->datum)) run << "--combine4and6 ";
+				if (bindipv6only && "both" == tolower(bindipv6only->last_setting())) run << "--combine4and6 ";
 #endif
 #if defined(SO_REUSEPORT)
 				if (is_bool_true(reuseport, false)) run << "--reuse-port ";
 #endif
 				run << quote(listenaddress) << " " << quote(listenport) << "\n";
+				run << envuidgid;
 				run << setsid;
 				run << redirect;
+				run << softlimit;
 				run << chroot;
 				run << chdir;
-				run << env;
-				run << softlimit;
 				run << setuidgid;
+				run << env;
 				run << um;
 			}
 		}
@@ -1033,32 +1090,38 @@ convert_systemd_units (
 		service << "#!/bin/nosh\n" << multi_line_comment("Service file generated from " + service_filename);
 	} else
 		run << "#!/bin/nosh\n" << multi_line_comment("Run file generated from " + service_filename);
-	if (service_description) service << multi_line_comment(names.substitute(service_description->datum));
+	if (service_description) {
+		for (std::list<std::string>::const_iterator i(service_description->all_settings().begin()); service_description->all_settings().end() != i; ++i) {
+			const std::string & val(*i);
+			service << multi_line_comment(names.substitute(val));
+		}
+	}
 	if (is_socket_activated) {
 		if (!is_socket_accept) {
 			if (stdin_socket) service << "fdmove -c 0 3\n";
 		}
 	} else {
+		service << envuidgid;
 		service << setsid;
 		service << redirect;
+		service << softlimit;
 		service << chroot;
 		service << chdir;
-		service << softlimit;
 		service << setuidgid;
-		service << um;
 		service << env;
+		service << um;
 		service << login_prompt;
 	}
-	service << (execstart ? names.substitute(strip_leading_minus(execstart->datum)) : is_remain ? "true" : "pause") << "\n";
+	service << (execstart ? names.substitute(strip_leading_minus(execstart->last_setting())) : is_remain ? "true" : "pause") << "\n";
 
 	// nosh is not suitable here, since the restart script is passed arguments.
 	restart_script << "#!/bin/sh\n" << multi_line_comment("Restart file generated from " + service_filename);
-	if (restartsec) restart_script << "sleep " << restartsec->datum << "\n";
-	if (restart && "always" == tolower(restart->datum)) {
-		restart_script << "exec true\n";
+	if (restartsec) restart_script << "sleep " << restartsec->last_setting() << "\n";
+	if (restart && "always" == tolower(restart->last_setting())) {
+		restart_script << "exec true\t# ignore script arguments\n";
 	} else
-	if ((!restart || "no" == tolower(restart->datum))) {
-		restart_script << "exec false\n";
+	if ((!restart || "no" == tolower(restart->last_setting()))) {
+		restart_script << "exec false\t# ignore script arguments\n";
 	} else 
 	{
 		restart_script << 
@@ -1066,9 +1129,9 @@ convert_systemd_units (
 			"\te*)\n"
 			"\t\tif [ \"$2\" -ne 0 ]\n"
 			"\t\tthen\n"
-			"\t\texec " << (restart && ("on-failure" == tolower(restart->datum)) ? "true" : "false") << "\n"
+			"\t\texec " << (restart && ("on-failure" == tolower(restart->last_setting())) ? "true" : "false") << "\n"
 			"\t\telse\n"
-			"\t\texec " << (restart && ("on-success" == tolower(restart->datum)) ? "true" : "false") << "\n"
+			"\t\texec " << (restart && ("on-success" == tolower(restart->last_setting())) ? "true" : "false") << "\n"
 			"\t\tfi\n"
 			"\t\t;;\n"
 			"\tt*)\n"
@@ -1076,10 +1139,10 @@ convert_systemd_units (
 			"\tk*)\n"
 			"\t\t;;\n"
 			"\ta*)\n"
-			"\t\texec " << (restart && ("on-abort" == tolower(restart->datum)) ? "true" : "false") << "\n"
+			"\t\texec " << (restart && ("on-abort" == tolower(restart->last_setting())) ? "true" : "false") << "\n"
 			"\t\t;;\n"
 			"\tc*|*)\n"
-			"\t\texec " << (restart && ("on-abort" == tolower(restart->datum)) ? "true" : "false") << "\n"
+			"\t\texec " << (restart && ("on-abort" == tolower(restart->last_setting())) ? "true" : "false") << "\n"
 			"\t\t;;\n"
 			"esac\n"
 			"exec false\n";
@@ -1087,13 +1150,21 @@ convert_systemd_units (
 
 	stop << "#!/bin/nosh\n" << multi_line_comment("Stop file generated from " + service_filename);
 	if (execstoppost) {
+		if (setuidgidall) stop << envuidgid;
 		stop << softlimit;
-		if (setuidgidall) stop << setuidgid;
+		if (chrootall) stop << chroot;
 		stop << chdir;
+		if (setuidgidall) stop << setuidgid;
 		stop << env;
 		stop << um;
-		if (chrootall) stop << chroot;
-		stop << names.substitute(strip_leading_minus(execstoppost->datum)) << "\n"; 
+		for (std::list<std::string>::const_iterator i(execstoppost->all_settings().begin()); execstoppost->all_settings().end() != i; ) {
+			std::list<std::string>::const_iterator j(i++);
+			if (execstoppost->all_settings().begin() != j) stop << " ;\n"; 
+			if (execstoppost->all_settings().end() != i) stop << "foreground "; 
+			const std::string & val(*j);
+			stop << names.substitute(strip_leading_minus(val));
+		}
+		stop << "\n";
 	} else 
 		stop << "true\n";
 

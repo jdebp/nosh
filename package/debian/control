@@ -76,6 +76,25 @@ Description: systemd shim service and system management utilities
  .
  The shims simply invoke native service management commands.
 
+Package: nosh-upstart-shims
+Architecture: amd64
+Depends: ${shlibs:Depends}, nosh-service-management
+Suggests: 
+Recommends: 
+Description: upstart shim service and system management utilities
+ This package provides shims for upstart service and system management commands.
+ * initctl, start, stop, enable, disable
+ .
+ The shims simply invoke native service management commands.
+
+Package: nosh-systemd-services
+Architecture: amd64
+Depends: ${shlibs:Depends}, nosh-service-management, systemd
+Suggests: 
+Recommends: 
+Description: systemd services for running the nosh service manager and daemontools service scanner
+ This package provides systemd service units for running the nosh service manager and daemontools service scanner under systemd, instead of running the nosh service manager.
+
 Package: nosh-standard-targets
 Architecture: amd64
 Depends: nosh-exec, nosh-service-management

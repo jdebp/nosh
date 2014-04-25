@@ -147,12 +147,12 @@ rm -f -- config/sysinit-services{new}/devd/log
 ln -s ../devd-log config/sysinit-services{new}/devd/log
 
 # Rename the ...{new} directories.
-for i in service-manager.socket service-manager.service service-manager.conf service-manager-svscan.path service-manager-svscan.service
+for i in service-manager.socket service-manager.service service-manager.conf system-manager.conf service-manager-svscan.path service-manager-svscan.service
 do
 	rm -f -- config/"$i"{new}
 	cp -p -f -- build/"$i" config/"$i"{new}
 done
-for i in service-manager.socket service-manager.service service-manager.conf service-manager-svscan.path service-manager-svscan.service
+for i in service-manager.socket service-manager.service service-manager.conf system-manager.conf service-manager-svscan.path service-manager-svscan.service
 do
 	mv -f -- config/"$i"{new} config/"$i"
 done 

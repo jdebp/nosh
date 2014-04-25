@@ -23,6 +23,12 @@ For copyright and licensing terms, see the file named COPYING.
 #include "common-manager.h"
 #include "popt.h"
 
+enum {
+	DEFAULT = -1,
+	STOP = 0,
+	START = 1
+};
+
 /* Utilities ****************************************************************
 // **************************************************************************
 */
@@ -56,11 +62,25 @@ struct bundle {
 	int bundle_dir_fd, supervise_dir_fd;
 	std::string path, name;
 	bool ss_scanned;
-	enum { INITIAL, BLOCKED, CHANGING, DONE } job_state;
+	// Our state machine guarantees that state transitions only ever increase the state value.
+	// Even though we don't make use of it, our logic requires at least one state between FORCED and DONE, for timed-out jobs to sit in.
+	enum { INITIAL, BLOCKED, ACTIONED, FORCED = ACTIONED + 60, TIMEDOUT = FORCED + 30, DONE } ;
+	int job_state;
 	int order;
 	unsigned wants;
 	bundle_pointer_set sort_after;
 };
+}
+
+static inline
+unsigned
+want_for (
+	int bundle_dir_fd
+) {
+	int service_dir_fd(open_service_dir(bundle_dir_fd));
+	const bool preset(is_initially_up(service_dir_fd));
+	close(service_dir_fd);
+	return preset ? bundle::WANT_START : bundle::WANT_STOP;
 }
 
 typedef std::map<struct index, bundle> bundle_info_map;
@@ -72,7 +92,7 @@ add_bundle (
 	const int bundle_dir_fd,
 	const std::string & path,
 	const std::string & name,
-	unsigned wants
+	int want
 ) {
 	struct stat bundle_dir_s;
 	if (!is_directory(bundle_dir_fd, bundle_dir_s)) {
@@ -81,6 +101,11 @@ add_bundle (
 		errno = error;
 		return 0;
 	}
+	const unsigned wants (
+		0 == want ? bundle::WANT_STOP :
+		1 == want ? bundle::WANT_START :
+		want_for(bundle_dir_fd)
+	);
 	bundle_info_map::iterator bundle_i(bundles.find(bundle_dir_s));
 	if (bundle_i != bundles.end()) {
 		close(bundle_dir_fd);
@@ -100,12 +125,12 @@ bundle *
 add_bundle_searching_path (
 	bundle_info_map & bundles,
 	const char * arg,
-	unsigned wants
+	int want
 ) {
 	std::string path, name;
 	const int bundle_dir_fd(open_bundle_directory (arg, path, name));
 	if (0 > bundle_dir_fd) return 0;
-	return add_bundle(bundles, bundle_dir_fd, path, name, wants);
+	return add_bundle(bundles, bundle_dir_fd, path, name, want);
 }
 
 static inline
@@ -114,10 +139,10 @@ add_primary_target_bundles (
 	const char * prog,
 	bundle_info_map & bundles,
 	const std::vector<const char *> & args,
-	unsigned wants
+	int want
 ) {
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
-		bundle * bp(add_bundle_searching_path(bundles, *i, wants));
+		bundle * bp(add_bundle_searching_path(bundles, *i, want));
 		if (!bp) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, *i, std::strerror(error));
@@ -132,7 +157,7 @@ add_related_bundles (
 	bundle_info_map & bundles,
 	const bundle & b,
 	const char * subdir_name,
-	unsigned wants
+	int want
 ) {
 	const int subdir_fd(open_dir_at(b.bundle_dir_fd, subdir_name));
 	if (0 > subdir_fd) return;
@@ -147,7 +172,7 @@ add_related_bundles (
 		if ('.' == entry->d_name[0]) continue;
 		const int dir_fd(open_dir_at(subdir_fd, entry->d_name));
 		if (0 > dir_fd) continue;
-		add_bundle(bundles, dir_fd, (b.path + b.name + "/") + subdir_name, entry->d_name, wants);
+		add_bundle(bundles, dir_fd, (b.path + b.name + "/") + subdir_name, entry->d_name, want);
 	}
 	closedir(subdir_dir);
 }
@@ -185,7 +210,7 @@ lookup_without_adding (
 #if defined(_DIRENT_HAVE_D_TYPE)
 		if (DT_DIR != entry->d_type && DT_LNK != entry->d_type) continue;
 #endif
-		if ('.' == entry->d_name[0]) continue;
+	if ('.' == entry->d_name[0]) continue;
 		const int dir_fd(open_dir_at(subdir_fd, entry->d_name));
 		if (0 > dir_fd) continue;
 		if (bundle * p = lookup_without_adding(bundles, dir_fd))
@@ -257,14 +282,15 @@ make_symlink_target (
 
 void
 start_stop_common ( 
-	const char * & next_prog,
+	const char * & /*next_prog*/,
 	std::vector<const char *> & args,
 	const char * prog,
-	unsigned want
+	int want
 ) {
 	const int socket_fd(connect_service_manager_socket(!local_session_mode, prog));
 	if (0 > socket_fd) throw EXIT_FAILURE;
 
+	// Create the list of primary target bundles from the command-line arguments, then add in all of the bundles that they relate to.
 	bundle_info_map bundles;
 	add_primary_target_bundles(prog, bundles, args, want);
 	for (;;) {
@@ -276,11 +302,11 @@ start_stop_common (
 					case bundle::WANT_NONE:
 						break;
 					case bundle::WANT_START:
-						add_related_bundles(bundles, i->second, "wants/", bundle::WANT_START);
-						add_related_bundles(bundles, i->second, "conflicts/", bundle::WANT_STOP);
+						add_related_bundles(bundles, i->second, "wants/", START);
+						add_related_bundles(bundles, i->second, "conflicts/", STOP);
 						break;
 					case bundle::WANT_STOP:
-						add_related_bundles(bundles, i->second, "required-by/", bundle::WANT_STOP);
+						add_related_bundles(bundles, i->second, "required-by/", STOP);
 						break;
 				}
 				done_one = true;
@@ -289,6 +315,7 @@ start_stop_common (
 		if (!done_one) break;
 	}
 
+	// Check that we aren't starting and stopping a bundle at the same time.
 	bool conflicts(false);
 	for (bundle_info_map::const_iterator i(bundles.begin()); bundles.end() != i; ++i) {
 		switch (i->second.wants) {
@@ -304,6 +331,8 @@ start_stop_common (
 	}
 	if (conflicts) throw EXIT_FAILURE;
 
+	// Apply the bundle orderings to each bundle, now that we have the full set of bundles upon which we are operating (and it is self-consistent).
+	// This is complicated by the fact that ordering depends from whether a predecessor/successor is being started or stopped and whether this bundle is being started or stopped.
 	bundle_pointer_set unsorted;
 	for (bundle_info_map::iterator i(bundles.begin()); bundles.end() != i; ++i) {
 		const bundle_pointer_set a(lookup_without_adding(bundles, i->second, "after/"));
@@ -367,12 +396,16 @@ start_stop_common (
 		unsorted.insert(&i->second);
 	}
 
+	// Do a topological sort on the bundles.
+	// This isn't strictly necessary, as checks in the enacting loop will ensure that no bundle has action taken if a predecessor action has yet to happen.
+	// But for large targets, with lots of prerequisites, this yields a consistent and fairly sensible ordering of actions in the log output, for humans.
 	for (bundle_pointer_set::const_iterator i(unsorted.begin()); unsorted.end() != i; ++i)
 		mark_paths_in_order(0, *i);
 	bundle_pointer_list sorted;
 	for (bundle_pointer_set::const_iterator i(unsorted.begin()); unsorted.end() != i; ++i)
 		insertion_sort(sorted, *i);
 
+	// Make the various "supervise" directories, if they are in a RAM volume, and open file descriptors for them.
 	umask(0);
 	for (bundle_pointer_list::const_iterator i(sorted.begin()); sorted.end() != i; ++i) {
 		bundle & b(**i);
@@ -386,6 +419,9 @@ start_stop_common (
 		}
 	}
 
+	// Load any services (into the service manager) that are about to be started but that are not already loaded.
+	// Do the same for their log services, even if those log services are not part of the calculated bundle set.
+	// This is because the service manager must have the log service loaded in order to send the main service's output to the right place, even if the log service isn't being acted upon here.
 	for (bundle_pointer_list::const_iterator i(sorted.begin()); sorted.end() != i; ++i) {
 		bundle & b(**i);
 		if (bundle::WANT_START != b.wants) continue;
@@ -436,11 +472,12 @@ start_stop_common (
 			close(log_service_dir_fd);
 	}
 
+	// The main enacting loop; where we keep trying to start/stop any remaining services with pending actions until no more are left.
 	for (;;) {
 		bool pending(false);
 		for (bundle_pointer_list::const_iterator i(sorted.begin()); sorted.end() != i; ++i) {
 			bundle & b(**i);
-			if (b.DONE != b.job_state) {
+			if (b.DONE > b.job_state) {
 				bool is_done(true);
 				switch (b.wants) {
 					case bundle::WANT_START:
@@ -456,51 +493,63 @@ start_stop_common (
 					b.job_state = b.DONE;
 				}
 			}
-			if (b.DONE == b.job_state) continue;
+			if (b.DONE <= b.job_state) continue;
 			pending = true;
-			if (b.CHANGING == b.job_state) continue;
-
-			b.job_state = b.CHANGING;
-			const bundle_pointer_set & a(b.sort_after);
-			for (bundle_pointer_set::const_iterator j(a.begin()); a.end() != j; ++j) {
-				bundle * p(*j);
-				if (p->DONE != p->job_state) {
-					if (verbose)
-						std::fprintf(stderr, "%s: %s%s: BLOCKED by %s%s\n", prog, b.path.c_str(), b.name.c_str(), p->path.c_str(), p->name.c_str());
-					b.job_state = b.BLOCKED;
-					break;
+			if (b.ACTIONED > b.job_state) {
+				b.job_state = b.ACTIONED;
+				const bundle_pointer_set & a(b.sort_after);
+				for (bundle_pointer_set::const_iterator j(a.begin()); a.end() != j; ++j) {
+					bundle * p(*j);
+					if (p->DONE > p->job_state) {
+						if (verbose)
+							std::fprintf(stderr, "%s: %s%s: BLOCKED by %s%s\n", prog, b.path.c_str(), b.name.c_str(), p->path.c_str(), p->name.c_str());
+						b.job_state = b.BLOCKED;
+						break;
+					}
+				}
+				if (b.ACTIONED > b.job_state) continue;
+			} 
+			if (b.FORCED == b.job_state || b.ACTIONED == b.job_state) {
+				switch (b.wants) {
+					case bundle::WANT_START:
+					{
+						if (0 > b.supervise_dir_fd) break;
+						const bool was_already_loaded(is_ok(b.supervise_dir_fd));
+						if (was_already_loaded) {
+							if (b.ACTIONED == b.job_state) {
+								if (verbose)
+									std::fprintf(stderr, "%s: START: %s%s\n", prog, b.path.c_str(), b.name.c_str());
+								if (!pretending)
+									start(b.supervise_dir_fd);
+							}
+						} else
+							std::fprintf(stderr, "%s: CANNOT START: %s%s\n", prog, b.path.c_str(), b.name.c_str());
+						break;
+					}
+					case bundle::WANT_STOP:
+					{
+						if (0 > b.supervise_dir_fd) break;
+						const bool was_already_loaded(is_ok(b.supervise_dir_fd));
+						if (was_already_loaded) {
+							if (b.FORCED == b.job_state) {
+								if (verbose)
+									std::fprintf(stderr, "%s: KILL: %s%s\n", prog, b.path.c_str(), b.name.c_str());
+								if (!pretending)
+									kill_daemon(b.supervise_dir_fd);
+							} else {
+								if (verbose)
+									std::fprintf(stderr, "%s: STOP: %s%s\n", prog, b.path.c_str(), b.name.c_str());
+								if (!pretending)
+									stop(b.supervise_dir_fd);
+							}
+						} else
+							std::fprintf(stderr, "%s: CANNOT STOP: %s%s\n", prog, b.path.c_str(), b.name.c_str());
+						break;
+					}
 				}
 			}
-			if (b.CHANGING != b.job_state) continue;
-
-			switch (b.wants) {
-				case bundle::WANT_START:
-				{
-					if (0 > b.supervise_dir_fd) break;
-					const bool was_already_loaded(is_ok(b.supervise_dir_fd));
-					if (was_already_loaded) {
-						if (verbose)
-							std::fprintf(stderr, "%s: START: %s%s\n", prog, b.path.c_str(), b.name.c_str());
-						if (!pretending)
-							start(prog, b.supervise_dir_fd);
-					} else
-						std::fprintf(stderr, "%s: CANNOT START: %s%s\n", prog, b.path.c_str(), b.name.c_str());
-					break;
-				}
-				case bundle::WANT_STOP:
-				{
-					if (0 > b.supervise_dir_fd) break;
-					const bool was_already_loaded(is_ok(b.supervise_dir_fd));
-					if (was_already_loaded) {
-						if (verbose)
-							std::fprintf(stderr, "%s: STOP: %s%s\n", prog, b.path.c_str(), b.name.c_str());
-						if (!pretending)
-							stop(prog, b.supervise_dir_fd);
-					} else
-						std::fprintf(stderr, "%s: CANNOT STOP: %s%s\n", prog, b.path.c_str(), b.name.c_str());
-					break;
-				}
-			}
+			if (b.DONE > 1 + b.job_state)	// micro-optimization: only needs to calculate 1 + job_state once
+				++b.job_state;
 		}
 		if (!pending) break;
 		sleep(1);
@@ -537,7 +586,7 @@ activate (
 		throw EXIT_FAILURE;
 	}
 
-	start_stop_common(next_prog, args, prog, bundle::WANT_START);
+	start_stop_common(next_prog, args, prog, START);
 }
 
 void
@@ -568,7 +617,7 @@ deactivate (
 		throw EXIT_FAILURE;
 	}
 
-	start_stop_common(next_prog, args, prog, bundle::WANT_STOP);
+	start_stop_common(next_prog, args, prog, STOP);
 }
 
 void
@@ -599,5 +648,36 @@ isolate (
 		throw EXIT_FAILURE;
 	}
 
-	start_stop_common(next_prog, args, prog, bundle::WANT_START);
+	start_stop_common(next_prog, args, prog, START);
+}
+
+void
+reset ( 
+	const char * & next_prog,
+	std::vector<const char *> & args
+) {
+	const char * prog(basename_of(args[0]));
+	try {
+		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
+		popt::bool_definition verbose_option('v', "verbose", "Display verbose information.", verbose);
+		popt::bool_definition pretending_option('n', "pretend", "Pretend to take action, without telling the service manager to do anything.", pretending);
+		popt::definition * main_table[] = {
+			&user_option,
+			&verbose_option,
+			&pretending_option
+		};
+		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "service(s)...");
+
+		std::vector<const char *> new_args;
+		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
+		p.process(true /* strictly options before arguments */);
+		args = new_args;
+		next_prog = arg0_of(args);
+		if (p.stopped()) throw EXIT_SUCCESS;
+	} catch (const popt::error & e) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
+		throw EXIT_FAILURE;
+	}
+
+	start_stop_common(next_prog, args, prog, DEFAULT);
 }

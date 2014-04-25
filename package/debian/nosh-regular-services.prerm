@@ -1,0 +1,44 @@
+#!/bin/sh
+case "$1" in
+	remove|purge)
+		for i in \
+			anacron \
+			atd \
+			avahi-daemon \
+			cron \
+			cups \
+			dbus \
+			dnscache \
+			epmd \
+			exim4q \
+			fancontrol \
+			fscd \
+			hcsecd \
+			moused \
+			mysql \
+			nisdomain \
+			nmbd \
+			ntpd \
+			pbid \
+			powerd \
+			qmail-send \
+			rabbitmq-server \
+			rpcbind \
+			sdpd \
+			smartd \
+			smbd \
+			sshdgenkeys \
+			swapexd \
+			syslogd \
+			tinydns \
+			ttylogin@tty6 \
+			volmand \
+			winbindd \
+			ypbind \
+			;
+		do
+			system-control disable $i cyclog@$i
+			system-control stop $i cyclog@$i
+		done
+		;;
+esac

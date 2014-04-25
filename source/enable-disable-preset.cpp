@@ -97,11 +97,12 @@ enable_disable (
 static inline
 bool
 determine_preset (
-	const char * prog,
-	const char * arg
+	const int bundle_dir_fd
 ) {
-	std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, arg, "Don't know how to determine preset yet.");
-	throw EXIT_FAILURE;
+	int service_dir_fd(open_service_dir(bundle_dir_fd));
+	const bool preset(is_initially_up(service_dir_fd));
+	close(service_dir_fd);
+	return preset;
 }
 
 void
@@ -223,7 +224,7 @@ preset (
 			continue;
 		}
 		const std::string p(path + name);
-		const bool make(determine_preset(prog, *i));
+		const bool make(determine_preset(bundle_dir_fd));
 		enable_disable(prog, make, p, bundle_dir_fd, "wanted-by", "wants");
 		enable_disable(prog, make, p, bundle_dir_fd, "stopped-by", "conflicts");
 		enable_disable(prog, make, p, bundle_dir_fd, "stopped-by", "after");

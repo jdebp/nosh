@@ -1,0 +1,13 @@
+#!/bin/sh
+case "$1" in
+	configure)
+		for i in \
+			server \
+			workstation \
+			multi-user \
+			;
+		do
+			system-control preset $i
+		done
+		;;
+esac

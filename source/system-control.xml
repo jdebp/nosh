@@ -10,6 +10,8 @@
 
 <refnamediv>
 <refname>system-control</refname>
+<refname>systemctl</refname>
+<refname>initctl</refname>
 <refpurpose>process system control jobs, sending commands to the system manager and service manager</refpurpose>
 </refnamediv>
 
@@ -21,6 +23,11 @@
 </cmdsynopsis>
 <cmdsynopsis>
 <command>systemctl</command>
+<arg choice="req"><replaceable>command</replaceable></arg>
+<arg><replaceable>arguments or options</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>initctl</command>
 <arg choice="req"><replaceable>command</replaceable></arg>
 <arg><replaceable>arguments or options</replaceable></arg>
 </cmdsynopsis>
@@ -38,6 +45,8 @@ For limited systemd compatibility, it is also available as
 <command>systemctl</command>.  
 Not all subcommands are supported, nor is placing subcommand options before the
 <replaceable>command</replaceable>.
+For similarly limited upstart compatibility, it is also available as
+<command>initctl</command>.  
 </para>
 
 <para>
@@ -112,6 +121,16 @@ Each action is a start or a stop command to the control API of a service/target.
 Jobs are composed by starting with an action on a named service, and then
 following information in the service bundles to related services and targets.
 The service bundles also determine the order in which the actions are taken.
+</para>
+
+<para>
+A start action simply requests that the service manager bring the
+service/target to the "running" state, if it isn't already there.
+A stop action, however, is more complex.
+Initially it requests that the service manager bring the service/target to the
+"stopped" state (if it isn't already there).
+However, if that does not happen within 60 seconds, it requests that the
+service manager send the <code>SIGKILL</code> signal to the service/target.
 </para>
 
 </refsection>
@@ -241,7 +260,7 @@ The <filename>normal</filename> target, for example, "wants" the
 <filename>server</filename>, <filename>workstation</filename>, and
 <filename>multi-user</filename> targets (and by extension everything that they
 in their turn "want"), but all of the wanted services are started in parallel
-with the <filename>server</filename> target itself.
+with the <filename>normal</filename> target itself.
 </para>
 
 <para>
@@ -272,7 +291,7 @@ that conflicts with itself, for example).
 Several subcommands take a list of bundle
 <arg rep='repeat' choice='plain'><replaceable>names</replaceable></arg>.
 Each
-<arg choice='plain'><replaceable>name</replaceable></arg>.
+<arg choice='plain'><replaceable>name</replaceable></arg>
 can be the full absolute pathname of a bundle directory or a relative pathname
 with a directory prefix, in which case it is used as-is, or a bundle directory
 name without any directory prefix, in which case a set of standard locations is
@@ -300,11 +319,8 @@ suffixes) in the standard locations for service bundles:
 <orderedlist>
 <listitem><para><filename>/run/sv/</filename></para></listitem>
 <listitem><para><filename>/etc/sv/</filename></para></listitem>
-<listitem><para><filename>/var/sv/</filename></para></listitem>
 <listitem><para><filename>/var/local/sv/</filename></para></listitem>
-<listitem><para><filename>/run/service/</filename></para></listitem>
-<listitem><para><filename>/etc/service/</filename></para></listitem>
-<listitem><para><filename>/var/service/</filename></para></listitem>
+<listitem><para><filename>/var/sv/</filename></para></listitem>
 <listitem><para><filename>/service/</filename></para></listitem>
 </orderedlist>
 </listitem>
@@ -427,6 +443,11 @@ action.
 <arg choice="req">isolate</arg>
 <arg rep='repeat'><replaceable>names</replaceable></arg>
 </cmdsynopsis>
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">reset</arg>
+<arg rep='repeat'><replaceable>names</replaceable></arg>
+</cmdsynopsis>
 
 <para>
 These subcommands process one or more jobs, sending messages to the service
@@ -440,6 +461,19 @@ use
 </para>
 
 <para>
+The <command>reset</command> command is intended to be used by package
+installer programs.
+It is translated into either <command>start</command> or
+<command>stop</command> according to administrator-supplied information
+about whether and what services are to be started.
+This allows package installers to remain in blissful ignorance of whether a
+service should be started or stopped after installing the package for it.
+Instead, the package installer simply executes the <command>reset</command>
+command and the service is started or stopped according to whatever the
+administrator has chosen.
+</para>
+
+<para>
 The <command>isolate</command> subcommand exists for compatibility, and is
 equivalent to <command>start</command>.
 </para>
@@ -449,26 +483,17 @@ equivalent to <command>start</command>.
 
 <cmdsynopsis>
 <command>system-control</command>
-<group choice='req'>
-<arg choice="plain">enable</arg>
-<arg choice="plain">on</arg>
-</group>
+<arg choice="req">enable</arg>
 <arg rep='repeat'><replaceable>names</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
 <command>system-control</command>
-<group choice='req'>
-<arg choice="plain">disable</arg>
-<arg choice="plain">off</arg>
-</group>
+<arg choice="req">disable</arg>
 <arg rep='repeat'><replaceable>names</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
 <command>system-control</command>
-<group choice='req'>
-<arg choice="plain">preset</arg>
-<arg choice="plain">reset</arg>
-</group>
+<arg choice="req">preset</arg>
 <arg rep='repeat'><replaceable>names</replaceable></arg>
 </cmdsynopsis>
 
@@ -528,9 +553,9 @@ administrator has chosen.
 <cmdsynopsis>
 <command>system-control</command>
 <group choice="req">
-<arg choice="req">try-restart</arg>
-<arg choice="req">condrestart</arg>
-<arg choice="req">force-reload</arg>
+<arg choice="plain">try-restart</arg>
+<arg choice="plain">condrestart</arg>
+<arg choice="plain">force-reload</arg>
 </group>
 <arg rep='repeat'><replaceable>names</replaceable></arg>
 </cmdsynopsis>
@@ -591,8 +616,8 @@ expect (variants of) this syntax.
 <listitem>
 <para>
 With <arg>-b</arg> the <code>emergency</code> target is activated.
-This should bring up no services, mount no volumes, and bring up
-a secure login user interface.
+This should bring up no (non-sysinit) services, mount no (non-system) volumes,
+and bring up a secure login user interface.
 </para>
 </listitem>
 
@@ -866,9 +891,10 @@ This target is the target started by the <command>init</command>
 subcommand with the <arg>-b</arg> option.
 It brings up "emergency mode" services, such as a secure login
 on the default terminal.
-It "wants" no other targets or services, not even <filename>sysinit</filename>.
-So in "emergency mode" (if nothing else has been started) only the root
-filesystem is available, not necessarily even read-write.
+It "wants" no other targets or services, although <filename>sysinit</filename>
+will have already been started as part of system manager initialization.
+So in "emergency mode" (if nothing else has been started) only the system
+filesystems are available, and not necessarily even read-write.
 </para></listitem>
 </varlistentry>
 
@@ -948,8 +974,8 @@ comes after processing every other service, because of the ordering between
 </listitem>
 <listitem>
 <para>
-The start action for the <filename>halt</filename> target runs
-<command>system-control</command> <arg choice='req'>halt</arg> <arg choice="req">-q</arg>.
+When the <filename>halt</filename> target is finally started it runs
+<command>system-control</command> <arg choice='req'>halt</arg> <arg choice="req">-f</arg>.
 This sends <code>SIGRTMIN + 13</code> to the system manager process.
 </para>
 </listitem>
@@ -1050,7 +1076,7 @@ service that runs
 <citerefentry><refentrytitle>set-dynamic-hostname</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 the <filename>machine-id</filename> service that runs
 <citerefentry><refentrytitle>setup-machine-id</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-the <filename>local-fs</filename> target, and the the
+the <filename>local-fs</filename> target, and the
 <filename>remote-fs</filename> target.
 It is not an ordering milestone and has an empty <filename>after/</filename>
 list.

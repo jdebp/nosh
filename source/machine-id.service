@@ -8,7 +8,6 @@ DefaultDependencies=false
 EarlySupervise=true
 
 [Service]
-Type=oneshot
 systemdWorkingDirectory=false
 ExecStart=setup-machine-id
 RemainAfterExit=yes

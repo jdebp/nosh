@@ -18,6 +18,9 @@ void wrap_system_control_subcommand ( const char * & , std::vector<const char *>
 void telinit ( const char * & , std::vector<const char *> & ) ;
 void init ( const char * & , std::vector<const char *> & ) ;
 void service ( const char * & , std::vector<const char *> & ) ;
+void chkconfig ( const char * & , std::vector<const char *> & ) ;
+void invoke_rcd ( const char * & , std::vector<const char *> & ) ;
+void update_rcd ( const char * & , std::vector<const char *> & ) ;
 
 extern const
 struct command 
@@ -35,7 +38,8 @@ commands[] = {
 	{	"telinit",		telinit					},
 	{	"init",			init					},
 	{	"service",		service,				},
-	{	"chkconfig",		service,				},
-	{	"invoke-rc.d",		service,				},
+	{	"chkconfig",		chkconfig,				},
+	{	"invoke-rc.d",		invoke_rcd,				},
+	{	"update-rc.d",		update_rcd,				},
 };
 const std::size_t num_commands = sizeof commands/sizeof *commands;

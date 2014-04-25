@@ -40,6 +40,7 @@ extern void softlimit ( const char * &, std::vector<const char *> & );
 extern void envuidgid ( const char * &, std::vector<const char *> & );
 extern void setuidgid ( const char * &, std::vector<const char *> & );
 extern void setuidgid_fromenv ( const char * &, std::vector<const char *> & );
+extern void userenv ( const char * &, std::vector<const char *> & );
 extern void line_banner ( const char * &, std::vector<const char *> & );
 extern void fdmove ( const char * &, std::vector<const char *> & );
 extern void fdredir ( const char * &, std::vector<const char *> & );
@@ -56,6 +57,8 @@ extern void false_command ( const char * &, std::vector<const char *> & );
 extern void set_dynamic_hostname ( const char * &, std::vector<const char *> & );
 extern void setup_machine_id ( const char * &, std::vector<const char *> & );
 extern void pipe ( const char * &, std::vector<const char *> & );
+extern void foreground ( const char * &, std::vector<const char *> & );
+extern void background ( const char * &, std::vector<const char *> & );
 extern void ucspi_socket_rules_check ( const char * &, std::vector<const char *> & );
 extern void pause ( const char * &, std::vector<const char *> & );
 extern void unshare ( const char * &, std::vector<const char *> & );
@@ -85,6 +88,7 @@ commands[] = {
 	{	"unsetenv",			unsetenv			},
 	{	"envdir",			envdir				},
 	{	"clearenv",			clearenv			},
+	{	"userenv",			userenv				},
 	{	"tcp-socket-accept",		tcp_socket_accept		},
 	{	"tcp-socket-listen",		tcp_socket_listen		},
 	{	"udp-socket-listen",		udp_socket_listen		},
@@ -109,6 +113,8 @@ commands[] = {
 	{	"set-dynamic-hostname",		set_dynamic_hostname		},
 	{	"setup-machine-id",		setup_machine_id		},
 	{	"pipe",				pipe				},
+	{	"foreground",			foreground			},
+	{	"background",			background			},
 	{	"ucspi-socket-rules-check",	ucspi_socket_rules_check	},
 	{	"pause",			pause				},
 	{	"unshare",			unshare				},

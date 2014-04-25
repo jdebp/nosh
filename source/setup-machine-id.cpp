@@ -300,6 +300,8 @@ write_host_uuid (
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kern.hostuuid", std::strerror(error));
 	}
 	free(buf);
+#else
+	static_cast<void>(prog);	// Silences a compiler warning.
 #endif
 }
 
@@ -342,6 +344,8 @@ write_non_volatile_hostuuid (
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, non_volatile_hostuuid_filename, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
+#else
+	static_cast<void>(prog);	// Silences a compiler warning.
 #endif
 }
 
@@ -365,6 +369,8 @@ write_volatile_hostuuid (
 	const int error(errno);
 	std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, volatile_hostuuid_filename, std::strerror(error));
 	throw EXIT_FAILURE;
+#else
+	static_cast<void>(prog);	// Silences a compiler warning.
 #endif
 }
 
@@ -388,6 +394,8 @@ write_non_volatile_hostid (
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, non_volatile_hostid_filename, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
+#else
+	static_cast<void>(prog);	// Silences a compiler warning.
 #endif
 }
 

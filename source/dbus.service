@@ -4,6 +4,7 @@
 
 [Unit]
 Description=Device bus service
+After=machine-id.service
 
 [Service]
 systemdWorkingDirectory=false

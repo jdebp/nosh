@@ -14,9 +14,11 @@
 
 <para>
 <command>envuidgid</command> is a chain-loading utility that sets the <code>UID</code> and <code>GID</code>
-environment variables to the values for <replaceable>account</replaceable> in the system account
-database
-and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+environment variables to the values for <replaceable>account</replaceable> in
+the system account database and then chain loads to
+<replaceable>next-prog</replaceable> with the
+<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+function.  
 </para>
 
 <para>

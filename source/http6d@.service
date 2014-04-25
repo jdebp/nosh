@@ -11,7 +11,7 @@ Description=HTTP service over IP4/IP6 using Bernstein's publicfile
 systemdWorkingDirectory=false
 EnvironmentUser=publicfile
 LimitNOFILE=20
-LimitDATA=50000
+LimitData=50000
 ExecStart=httpd /home/publicfile/public
 Restart=always
 

@@ -31,12 +31,14 @@ make_input_activated (
 );
 int
 start (
-	const char * prog,
 	int supervise_dir_fd
 );
 int
 stop (
-	const char * prog,
+	int supervise_dir_fd
+);
+int
+kill_daemon (
 	int supervise_dir_fd
 );
 bool
@@ -59,6 +61,14 @@ make_supervise (
 void
 make_supervise_fifos (
 	const int supervise_dir_fd
+);
+int
+open_service_dir (
+	const int bundle_dir_fd
+);
+int
+open_supervise_dir (
+	const int bundle_dir_fd
 );
 bool
 is_initially_up (

@@ -9,5 +9,5 @@ normal
 poweroff
 reboot
 rescue
-telinit
 service
+telinit

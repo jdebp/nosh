@@ -17,10 +17,13 @@
 <refname>emergency</refname>
 <refname>rescue</refname>
 <refname>normal</refname>
-<refname>service</refname>
-<refname>chkconfig</refname>
 <refname>fastboot</refname>
 <refname>fasthalt</refname>
+<refname>fastpoweroff</refname>
+<refname>service</refname>
+<refname>chkconfig</refname>
+<refname>update-rc.d</refname>
+<refname>invoke-rc.d</refname>
 <refpurpose>BSD/System V compatibility utilities for system and service control</refpurpose>
 </refnamediv>
 
@@ -68,7 +71,17 @@
 <arg choice="req"><replaceable>command</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
+<command>invoke-rc.d</command>
+<arg choice="req"><replaceable>name</replaceable></arg>
+<arg choice="req"><replaceable>command</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
 <command>chkconfig</command>
+<arg choice="req"><replaceable>name</replaceable></arg>
+<arg choice="req"><replaceable>command</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>update-rc.d</command>
 <arg choice="req"><replaceable>name</replaceable></arg>
 <arg choice="req"><replaceable>command</replaceable></arg>
 </cmdsynopsis>
@@ -91,6 +104,23 @@
 <para>
 <command>init</command> is a multiple personality program, whose function varies
 according to what name it is invoked as.
+</para>
+
+<para>
+The various commands that it provides are compatibility shims only; they do not
+support the full capabilities of the original commands, only a common-use
+subset for providing an easy migration path for old BSD and System V habits and
+scripts.
+Avoid using them if possible.
+</para>
+
+<para>
+It is preferable, although not ideal, to have systemd and upstart habits and
+use the
+<citerefentry><refentrytitle>systemctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>initctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+compatibility commands instead.
 </para>
 
 <refsection><title>Compatibility system control commands</title>
@@ -143,7 +173,7 @@ if invoked as <command>reboot</command>, <command>halt</command>, or
 </para>
 
 </refsection>
-<refsection><title>Compatibility service control commands</title>
+<refsection><title>Compatibility service control and configuration commands</title>
 
 <para>
 Invoked as 
@@ -154,46 +184,104 @@ the program chains to
 <command>system-control</command>
 <arg choice="plain"><replaceable>command</replaceable></arg>
 <arg choice="plain"><replaceable>name</replaceable></arg>.
-It makes no attempt to validate <replaceable>command</replaceable> itself.
-For best results, restrict <replaceable>command</replaceable> to one of 
+It makes no attempt itself to validate <replaceable>command</replaceable>,
+which can be any of the subcommands supported by
+<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+However, for best results restrict <replaceable>command</replaceable> to one of
 <arg choice="plain">start</arg>, <arg choice="plain">stop</arg>, or <arg
 choice="plain">status</arg>.
 </para>
 
 <para>
-The traditional behaviour of <command>service</command> is not to start or stop
-any dependent services, and not to ensure correct service dependencies and
-ordering.
-However, the replacement <command>service</command> commands bundled with
-upstart and systemd do affect dependent services, and will take additional
-actions on other services if necessary.
-This command follows suit and thus chains to
-<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-rather than to
+Invoked as 
+<command>invoke-rc.d</command>
+<arg choice="plain"><replaceable>name</replaceable></arg>
+<arg choice="plain"><replaceable>command1</replaceable></arg>,
+the program chains to
+<command>system-control</command>
+<arg choice="plain"><replaceable>command2</replaceable></arg>
+<arg choice="plain"><replaceable>name</replaceable></arg>.
+<replaceable>command1</replaceable> may only be one of <arg
+choice="plain">start</arg> or <arg choice="plain">stop</arg>, which are
+translated to <arg choice="plain">reset</arg> and <arg
+choice="plain">stop</arg> (respectively) for
+<replaceable>command2</replaceable>.
+Avoid using this command outwith package installation/uninstallation
+scripts.
+It is tailored for such use.
+In particular, notice that it does not necessarily start a service
+when the <arg choice="plain">start</arg> subcommand is used.
+The behaviour that it is designed to be backwards compatible with only starts a
+service in response to the <arg choice="plain">start</arg> subcommand if the
+administrator has configured the service to auto-start.
+</para>
+
+<para>
+These two commands all operate on native nosh services, of course, not on
+old BSD or System V shell scripts.
+Their actions are defined in terms of service management actions, not
+in terms of shell scripts.
+For example: 
+<command>service</command> 
+<arg choice="plain"><replaceable>name</replaceable></arg>
+<arg choice="plain">start</arg>
+has the meaning of starting a named service, not of invoking a shell
+script with an argument.
+</para>
+
+<para>
+The old BSD and System V service management systems do not enforce correct
+service dependencies and start/stop orderings.
+These commands are based upon 
+<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and hence do.
+For individual control of services without orderings or dependencies, use
 <citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 or
 <citerefentry><refentrytitle>service-status</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-directly.
-<arg choice="plain">start</arg> and <arg choice="plain">stop</arg> will execute service control
-jobs, rather than affecting individual services.
+directly instead.
 </para>
 
-</refsection>
-<refsection><title>Compatibility service configuration commands</title>
+<para>
+Invoked as 
+<command>update-rc.d</command>
+<arg choice="plain"><replaceable>name</replaceable></arg>
+<arg choice="plain"><replaceable>command1</replaceable></arg>,
+the program chains to
+<command>system-control</command>
+<arg choice="plain"><replaceable>command2</replaceable></arg>
+<arg choice="plain"><replaceable>name</replaceable></arg>.
+<replaceable>command1</replaceable> may only be one of 
+<arg choice="plain">enable</arg>, <arg choice="plain">disable</arg>, 
+<arg choice="plain">remove</arg>, or <arg choice="plain">defaults</arg>, 
+which are translated to 
+<arg choice="plain">enable</arg>, <arg choice="plain">disable</arg>, 
+<arg choice="plain">disable</arg>, and <arg choice="plain">preset</arg> 
+(respectively) for <replaceable>command2</replaceable>.
+Avoid using this command outwith package installation/uninstallation
+scripts.
+It is tailored for such use.
+Note that the
+<arg choice="plain">start</arg> and <arg choice="plain">stop</arg>
+subcommands of the original tool have been deprecated.
+This command makes no attempt to support any such mechanism.
+</para>
 
 <para>
 Invoked as 
 <command>chkconfig</command>
 <arg choice="plain"><replaceable>name</replaceable></arg>
-<arg choice="plain"><replaceable>command</replaceable></arg>,
+<arg choice="plain"><replaceable>command1</replaceable></arg>,
 the program chains to
 <command>system-control</command>
-<arg choice="plain"><replaceable>command</replaceable></arg>
+<arg choice="plain"><replaceable>command2</replaceable></arg>
 <arg choice="plain"><replaceable>name</replaceable></arg>.
-It makes no attempt to validate <replaceable>command</replaceable> itself.
-For best results, restrict <replaceable>command</replaceable> to one of 
-<arg choice="plain">on</arg>, <arg choice="plain">off</arg>, or <arg
-choice="plain">reset</arg>.
+<replaceable>command1</replaceable> may only be one of <arg
+choice="plain">on</arg> or <arg choice="plain">off</arg>, which are translated
+to <arg choice="plain">enable</arg> and <arg choice="plain">disable</arg>
+(respectively) for <replaceable>command2</replaceable>.
+No other functionality of the original tool (whose operation varies from
+platform to platform outwith these two subcommands) is supported.
 </para>
 
 </refsection>
@@ -238,7 +326,7 @@ directly, instead.
 </para>
 
 </refsection>
-<refsection><title>Compatibility control utility</title>
+<refsection><title>Compatibility system control utility</title>
 
 <para>
 Invoked as <command>telinit</command> the program chain loads to one of the
@@ -277,11 +365,6 @@ system control commands, selected by its first (non-option) argument:
 <para>
 It is a mistake to run this as process #1, thinking that it is an alias for
 <citerefentry><refentrytitle>init</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
-</para>
-
-<para>
-It is pretty much a mistake to use it at all.
-Use the system control commands directly instead.
 </para>
 
 <para>

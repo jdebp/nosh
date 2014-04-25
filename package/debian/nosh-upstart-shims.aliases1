@@ -1,0 +1,4 @@
+system-control	initctl
+system-control	start
+system-control	stop
+system-control	status

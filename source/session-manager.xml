@@ -1,6 +1,12 @@
 <refentry id="session-manager">
 
-<refmeta><refentrytitle>session-manager</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">administrator commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+<refmeta>
+<refentrytitle>session-manager</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">administrator commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.0</refmiscinfo>
+</refmeta>
 
 <refnamediv>
 <refname>session-manager</refname>
@@ -138,7 +144,7 @@ Only one instance is spawned at a time.
 It spawns an instance of
 <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 with its input connected to the read end of a pipe.
-This process, too, is expected to only terminate when the pipe is closed.
+This process is expected to only terminate when the pipe is closed.
 If it terminates otherwise, <command>session-manager</command> simply re-spawns it.
 </para>
 </listitem>
@@ -182,7 +188,7 @@ library function (on systems that support it), or (failing that) the value of th
 The only IPC mechanism provided by <command>session-manager</command> is signals.
 (Commands to manipulate services are sent to the spawned service manager,
 not to the session manager.)
-Session-local events are flagged by sending various signals to process #1.
+Session-local events are flagged by sending various signals to the session manager process.
 <command>session-manager</command> responds to these signals as follows:
 </para>
 
@@ -199,15 +205,14 @@ Session-local events are flagged by sending various signals to process #1.
 <code>SIGRTMIN + 5</code>
 </term>
 <listitem><para>
-Spawn <command>system-control</command> <arg choice="plain">isolate</arg> <arg choice="plain">halt</arg>.
-This will activate the <code>halt</code> target and deactivate everything else.
+Spawn <command>system-control</command> <arg choice="plain">start</arg> <arg choice="plain">halt</arg>.
+This will activate the <code>halt</code> target.
 </para>
 <para>
-Implicit in activating the <code>halt</code>
-target is activating the <code>shutdown</code> target.
+Implicit in activating the <code>halt</code> target is activating the
+<code>shutdown</code> target, which deactivates everything else.
 (This is written into the packaged target definitions, not hardwired into 
 <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>.)
-Other targets do not imply shutdown.
 </para>
 </listitem>
 </varlistentry>
@@ -228,12 +233,12 @@ target is fully active, it is expected to send the <code>SIGRTMIN +
 13</code> signal
 to the session manager process.
 In the packaged target definitions, they use
-the <arg>-q</arg> option to the 
+the <arg>--force</arg> option to the 
 <command>halt</command>
 subcommand of
 <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>
 to do this.
-Do not send these signals directly, as this does not shut down services cleanly.
+Do not send these signals directly, as this does not shut down services in order.
 </para>
 </listitem>
 </varlistentry>
@@ -248,9 +253,14 @@ It ignores the <code>SIGTTIN</code>, <code>SIGTTOU</code>,
 <para>
 <command>session-manager</command> startup is also treated as a session event.
 In response this "event" <command>session-manager</command> spawns 
-<command>system-control</command> <arg choice="plain">init</arg>,
-passing it the <arg rep='repeat'><replaceable>args</replaceable></arg> 
-that were supplied on its own command line.
+<command>system-control</command> 
+<arg choice="plain">start</arg>
+<arg choice="plain">sysinit</arg>.
+This sends the <code>SIGRTMIN + 10</code> and <code>SIGRTMIN + 11</code> signals
+back to the session manager process, instituting a two-phase initialization sequence.
+The first phase, the <code>sysinit</code> target, is expected to initialize as much of the
+session as necessary so that the second phase, <command>system-control</command>
+<arg choice="plain">init</arg>, can do the rest.
 </para>
 
 </refsection>

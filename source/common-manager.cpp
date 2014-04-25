@@ -586,6 +586,8 @@ request_system_events(
 	if (0 <= dev_console_fd)
 		ioctl(dev_console_fd, KDSIGACCEPT, SIGWINCH);
 	reboot(RB_DISABLE_CAD);
+#else
+	static_cast<void>(dev_console_fd);	// Silences a compiler warning.
 #endif
 }
 
@@ -669,7 +671,7 @@ common_manager (
 
 	const int service_manager_socket_fd(listen_service_manager_socket(is_system, prog));
 
-#if 1
+#if defined(DEBUG)
 	if (is_system) {
 		const int shell(fork());
 		if (-1 == shell) {
@@ -681,8 +683,8 @@ common_manager (
 			prctl(PR_SET_NAME, "sh");
 #	endif
 #endif
+			setsid();
 			args.clear();
-			args.insert(args.end(), "setsid");
 			args.insert(args.end(), "/bin/sh");
 			args.insert(args.end(), 0);
 			next_prog = arg0_of(args);
@@ -732,14 +734,12 @@ common_manager (
 	EV_SET(&p[n++], SIGRTMIN +  3, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 	EV_SET(&p[n++], SIGRTMIN +  4, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 	EV_SET(&p[n++], SIGRTMIN +  5, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	if (is_system) {
 	EV_SET(&p[n++], SIGRTMIN + 10, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 	EV_SET(&p[n++], SIGRTMIN + 11, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	}
 	EV_SET(&p[n++], SIGRTMIN + 13, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 	EV_SET(&p[n++], SIGRTMIN + 14, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 	EV_SET(&p[n++], SIGRTMIN + 15, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	if (0 > kevent(queue, p.data(), p.size(), 0, 0, 0)) {
+	if (0 > kevent(queue, p.data(), n, 0, 0, 0)) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
 	}
@@ -872,7 +872,7 @@ common_manager (
 				} else if (0 == system_control_pid) {
 #if defined(__LINUX__) || defined(__linux__)
 #	if defined(PR_SET_NAME)
-					prctl(PR_SET_NAME, "systemctl");
+					prctl(PR_SET_NAME, "system-control");
 #	endif
 					sigprocmask(SIG_SETMASK, &original_signals, &masked_signals);
 #endif
@@ -905,7 +905,7 @@ common_manager (
 				} else if (0 == system_control_pid) {
 #if defined(__LINUX__) || defined(__linux__)
 #	if defined(PR_SET_NAME)
-					prctl(PR_SET_NAME, "systemctl");
+					prctl(PR_SET_NAME, "system-control");
 #	endif
 					sigprocmask(SIG_SETMASK, &original_signals, &masked_signals);
 #endif
@@ -925,7 +925,7 @@ common_manager (
 		// Exit if stop has been signalled and both the service manager and logger have exited.
 		if (stop_signalled && !has_cyclog && !has_service_manager) break;
 		// Kill the service manager if stop has been signalled.
-		if (has_service_manager && stop_signalled) {
+		if (has_service_manager && stop_signalled && !has_system_control) {
 			std::fprintf(stderr, "%s: DEBUG: %s\n", prog, "terminating service manager");
 			kill(service_manager_pid, SIGTERM);
 		}
@@ -945,6 +945,8 @@ common_manager (
 #	endif
 				sigprocmask(SIG_SETMASK, &original_signals, &masked_signals);
 #endif
+				if (is_system)
+					setsid();
 				default_all_signals();
 				args.clear();
 				args.insert(args.end(), "cyclog");
@@ -992,6 +994,8 @@ common_manager (
 #	endif
 				sigprocmask(SIG_SETMASK, &original_signals, &masked_signals);
 #endif
+				if (is_system)
+					setsid();
 				default_all_signals();
 				args.clear();
 				args.insert(args.end(), "service-manager");

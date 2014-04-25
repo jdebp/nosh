@@ -95,6 +95,14 @@ common_subcommand (
 }
 
 void
+show_json ( 
+	const char * & next_prog,
+	std::vector<const char *> & args
+) {
+	common_subcommand(next_prog, args, "service-show", "--json");
+}
+
+void
 show ( 
 	const char * & next_prog,
 	std::vector<const char *> & args

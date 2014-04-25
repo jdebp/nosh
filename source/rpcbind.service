@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=SunRPC port mapping daemon
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=rpcbind -d
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=server.target

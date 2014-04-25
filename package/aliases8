@@ -9,5 +9,7 @@ init	rescue
 init	normal
 init	telinit
 init	service
+init	invoke-rc.d
 init	chkconfig
+init	update-rc.d
 system-manager	systemd

@@ -9,6 +9,7 @@ Description=MySQL database server
 systemdWorkingDirectory=false
 User=mysql
 ExecStart=mysqld --defaults-file=/etc/mysql/my.cnf --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib/mysql/plugin --socket=/run/mysqld/mysqld.sock --port=3306
+## This works around a security hole in MySQL where it opens sensitive files with predictable names in /tmp/ .
 PrivateTmp=true
 Restart=no
 

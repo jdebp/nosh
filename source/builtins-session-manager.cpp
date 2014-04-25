@@ -23,12 +23,13 @@ void sysinit ( const char * & , std::vector<const char *> & ) ;
 void activate ( const char * & , std::vector<const char *> & ) ;
 void deactivate ( const char * & , std::vector<const char *> & ) ;
 void isolate ( const char * & , std::vector<const char *> & ) ;
-void isolate ( const char * & , std::vector<const char *> & ) ;
+void reset ( const char * & , std::vector<const char *> & ) ;
 void enable ( const char * & , std::vector<const char *> & ) ;
 void disable ( const char * & , std::vector<const char *> & ) ;
 void preset ( const char * & , std::vector<const char *> & ) ;
 void init ( const char * & , std::vector<const char *> & ) ;
 void show ( const char * & , std::vector<const char *> & ) ;
+void show_json ( const char * & , std::vector<const char *> & ) ;
 void status ( const char * & , std::vector<const char *> & ) ;
 void try_restart ( const char * & , std::vector<const char *> & ) ;
 void is_active ( const char * & , std::vector<const char *> & ) ;
@@ -43,6 +44,8 @@ extern const
 struct command 
 commands[] = {
 	{	"session-manager",	system_manager		},
+	{	"systemctl",		system_control		},
+	{	"initctl",		system_control		},
 
 	// These are the system-control subcommands.
 	{	"init",			init			},
@@ -65,15 +68,12 @@ commands[] = {
 	{	"deactivate",		deactivate		},
 	{	"stop",			deactivate		},
 	{	"isolate",		isolate			},
+	{	"reset",		reset			},
 	{	"enable",		enable			},
-	{	"load",			enable			},
-	{	"on",			enable			},
 	{	"disable",		disable			},
-	{	"unload",		disable			},
-	{	"off",			disable			},
 	{	"preset",		preset			},
-	{	"reset",		preset			},
 	{	"show",			show			},
+	{	"show-json",		show_json		},
 	{	"status",		status			},
 	{	"try-restart",		try_restart		},
 	{	"condrestart",		try_restart		},
@@ -84,9 +84,5 @@ commands[] = {
 	// These are spawned by session-manager.
 	{	"service-manager",	service_manager		},
 	{	"system-control",	system_control		},
-	{	"systemctl",		system_control		},
-
-	// These are used by debugging.
-	{	"setsid",		setsid			},
 };
 const std::size_t num_commands = sizeof commands/sizeof *commands;

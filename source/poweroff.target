@@ -10,8 +10,10 @@ After=shutdown.target
 Wants=shutdown.target
 
 [Service]
-Type=oneshot
+# Do not make this a one-shot target, because that creates a problem: a race condition where this target can stop itself from the starting state whilst system-control is still waiting for it to enter the running state,
 systemdWorkingDirectory=false
 ExecStart=system-control poweroff --force
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
 
 [Install]

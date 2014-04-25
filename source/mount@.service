@@ -9,9 +9,9 @@ EarlySupervise=true
 Before=local-fs.target
 
 [Service]
-Type=oneshot
 systemdWorkingDirectory=false
-ExecStart=%P %I
+ExecStartPre=%P %I
+ExecStart=true
 RemainAfterExit=yes
 
 [Install]

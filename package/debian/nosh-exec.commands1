@@ -1,4 +1,5 @@
 appendpath
+background
 chdir
 chroot
 clearenv
@@ -8,6 +9,7 @@ exec
 false
 fdmove
 fdredir
+foreground
 line-banner
 local-datagram-socket-listen
 local-stream-socket-listen
@@ -43,5 +45,6 @@ ulimit
 umask
 unsetenv
 unshare
+userenv
 vc-get-tty
 vc-reset-tty

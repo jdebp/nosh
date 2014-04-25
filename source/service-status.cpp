@@ -128,15 +128,19 @@ main (
 			continue;
 		}
 
-		int service_dir_fd(open_dir_at(bundle_dir_fd, "service/"));
-		if (0 > service_dir_fd) service_dir_fd = dup(bundle_dir_fd);
+		int supervise_dir_fd(open_supervise_dir(bundle_dir_fd));
+		if (0 > supervise_dir_fd) {
+			const int error(errno);
+			close(bundle_dir_fd);
+			std::fprintf(stdout, "%s: %s: %s\n", name, "supervise", std::strerror(error));
+			continue;
+		}
+
+		int service_dir_fd(open_service_dir(bundle_dir_fd));
 
 		const bool initially_up(is_initially_up(service_dir_fd));
 
 		close(service_dir_fd); service_dir_fd = -1;
-
-		int supervise_dir_fd(open_dir_at(bundle_dir_fd, "supervise/"));
-		if (0 > supervise_dir_fd) supervise_dir_fd = dup(bundle_dir_fd);
 
 		close(bundle_dir_fd), bundle_dir_fd = -1;
 

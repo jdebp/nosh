@@ -10,7 +10,6 @@ Wants=local-fs.target
 After=local-fs.target
 
 [Service]
-Type=oneshot
 WorkingDirectory=/run/
 Umask=0033
 ExecStart=sh -c 'uname -srm > motd.dynamic'

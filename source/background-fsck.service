@@ -8,7 +8,8 @@ DefaultDependencies=false
 EarlySupervise=true
 
 [Service]
-Type=oneshot
+EnvironmentFile=-/etc/rc.conf
+EnvironmentFile=-/etc/rc.conf.local
 ExecStartPre=sh -c "exec sleep ${background_fsck_delay}"
 ExecStart=fsck -B -p
 RemainAfterExit=yes

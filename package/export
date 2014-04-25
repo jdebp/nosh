@@ -95,7 +95,7 @@ do
 	cp -p -f -- config/"$i" "${root}"lib/systemd/system/"$i"{new}
 	mv -f -- "${root}"lib/systemd/system/"$i"{new} "${root}"lib/systemd/system/"$i"
 done 
-for i in service-manager.conf
+for i in service-manager.conf system-manager.conf
 do
 	cp -p -f -- config/"$i" "${root}"lib/tmpfiles.d/"$i"{new}
 	mv -f -- "${root}"lib/tmpfiles.d/"$i"{new} "${root}"lib/tmpfiles.d/"$i"

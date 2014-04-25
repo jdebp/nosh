@@ -6,7 +6,6 @@
 Description=%P service for mixer device %I
 
 [Service]
-Type=oneshot
 systemdWorkingDirectory=false
 ExecStartPre=sh -c '%P -f /dev/%I `cat /var/db/%I-state`'
 ExecStopPost=fdredir --write 1 /var/db/%I-state %P -f /dev/%I -s 

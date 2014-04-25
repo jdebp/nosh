@@ -10,7 +10,6 @@ Wants=local-fs.target
 After=local-fs.target
 
 [Service]
-Type=oneshot
 WorkingDirectory=/var/spool/
 ExecStart=sh -c 'rm -r uucp/.Temp/* ; rm -r lock/*'
 RemainAfterExit=yes

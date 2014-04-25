@@ -5,6 +5,7 @@ For copyright and licensing terms, see the file named COPYING.
 
 #define __STDC_FORMAT_MACROS
 #include <vector>
+#include <memory>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -13,8 +14,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <curses.h>
-#include <term.h>
+#include <dirent.h>
 #include "utils.h"
 #include "fdutils.h"
 #include "unpack.h"
@@ -39,6 +39,34 @@ to_json_string (
 		r += c;
 	}
 	return "\"" + r + "\"";
+}
+
+static
+std::string
+to_ini_string (
+	const std::string & s,
+	bool quoting
+) {
+	std::string r, q;
+	for (std::string::const_iterator p(s.begin()); s.end() != p; ++p) {
+		const char c(*p);
+		if ('\\' == c || '\"' == c)
+			r += '\\';
+		else if ('\r' == c) {
+			r += "\\r";
+			continue;
+		} else if ('\n' == c) {
+			r += "\\n";
+			continue;
+		} else if ('\0' == c) {
+			r += "\\0";
+			continue;
+		} else {
+			if (quoting && std::isspace(c)) q = "\"";
+		}
+		r += c;
+	}
+	return q + r + q;
 }
 
 static bool json(false);
@@ -109,7 +137,7 @@ write_string_value(
 		std::fprintf(stdout, "%c%s:%s", inner_comma, to_json_string(name).c_str(), to_json_string(value).c_str());
 		inner_comma = ',';
 	} else
-		std::fprintf(stdout, "%s=%s\n", name, value);
+		std::fprintf(stdout, "%s=%s\n", name, to_ini_string(value, false).c_str());
 }
 
 static
@@ -154,6 +182,90 @@ state_of (
 	}
 }
 
+typedef std::list<std::string> Relations;
+
+static
+Relations
+get_relations (
+	int bundle_dir_fd,
+	const char * relation
+) {
+	Relations r;
+	const int relation_dir_fd(open_dir_at(bundle_dir_fd, relation));
+	if (0 <= relation_dir_fd) {
+		DIR * relation_dir(fdopendir(relation_dir_fd));
+		if (relation_dir) for (;;) {
+			const dirent * entry(readdir(relation_dir));
+			if (!entry) break;
+#if defined(_DIRENT_HAVE_D_TYPE)
+			if (DT_LNK != entry->d_type)
+				continue;
+#endif
+#if defined(_DIRENT_HAVE_D_NAMLEN)
+			if (1 > entry->d_namlen) continue;
+#endif
+			if ('.' == entry->d_name[0]) continue;
+
+			struct stat s;
+			if (0 > fstatat(relation_dir_fd, entry->d_name, &s, AT_SYMLINK_NOFOLLOW)) continue;
+			if (!S_ISLNK(s.st_mode)) continue;
+			std::auto_ptr<char> buf(new(std::nothrow) char [s.st_size]);
+			if (!buf.get()) continue;
+			const int l(readlinkat(relation_dir_fd, entry->d_name, buf.get(), s.st_size));
+			if (0 > l) continue;
+			std::string d(buf.get(), l);
+			if ("../" == d.substr(0, 3))
+				d = d.substr(3, d.npos);
+			r.push_back(d);
+		}
+		closedir(relation_dir);
+	}
+	return r;
+}
+
+static
+void
+write_string_array(
+	const char * name,
+	const Relations & values
+) {
+	if (json) {
+		std::fprintf(stdout, "%c%s:[", inner_comma, to_json_string(name).c_str());
+		inner_comma = ',';
+	} else
+		std::fprintf(stdout, "%s=", name);
+	std::string array_comma("");
+	for (Relations::const_iterator i(values.begin()); values.end() != i; ++i) {
+		const std::string & value(*i);
+		if (json) {
+			std::fprintf(stdout, "%s%s", array_comma.c_str(), to_json_string(value).c_str());
+			array_comma = ",";
+		} else {
+			std::fprintf(stdout, "%s%s", array_comma.c_str(), to_ini_string(value, true).c_str());
+			array_comma = " ";
+		}
+	}
+	if (json)
+		std::fprintf(stdout, "];");
+	else
+		std::fprintf(stdout, "\n");
+}
+
+static
+std::string
+get_log (
+	int bundle_dir_fd
+) {
+	struct stat s;
+	if (0 > fstatat(bundle_dir_fd, "log", &s, AT_SYMLINK_NOFOLLOW)) return std::string();
+	if (!S_ISLNK(s.st_mode)) return std::string();
+	std::auto_ptr<char> buf(new(std::nothrow) char [s.st_size]);
+	if (!buf.get()) return std::string();
+	const int l(readlinkat(bundle_dir_fd, "log", buf.get(), s.st_size));
+	if (0 > l) return std::string();
+	return std::string(buf.get(), l);
+}
+
 int
 main (
 	int argc, 
@@ -193,10 +305,17 @@ main (
 			std::fprintf(stderr, "%s: %s\n", name, std::strerror(error));
 			continue;
 		}
-		int service_dir_fd(open_dir_at(bundle_dir_fd, "service/"));
-		if (0 > service_dir_fd) service_dir_fd = dup(bundle_dir_fd);
-		int supervise_dir_fd(open_dir_at(bundle_dir_fd, "supervise/"));
-		if (0 > supervise_dir_fd) supervise_dir_fd = dup(bundle_dir_fd);
+		const Relations wants(get_relations(bundle_dir_fd, "wants"));
+		const Relations before(get_relations(bundle_dir_fd, "before"));
+		const Relations after(get_relations(bundle_dir_fd, "after"));
+		const Relations conflicts(get_relations(bundle_dir_fd, "conflicts"));
+		const Relations required_by(get_relations(bundle_dir_fd, "required-by"));
+		const Relations wanted_by(get_relations(bundle_dir_fd, "wanted-by"));
+		const Relations stopped_by(get_relations(bundle_dir_fd, "stopped-by"));
+		const std::string log_service(get_log(bundle_dir_fd));
+
+		int service_dir_fd(open_service_dir(bundle_dir_fd));
+		int supervise_dir_fd(open_supervise_dir(bundle_dir_fd));
 		close(bundle_dir_fd); bundle_dir_fd = -1;
 		if (0 > supervise_dir_fd) {
 			const int error(errno);
@@ -212,6 +331,7 @@ main (
 		}
 
 		const bool initially_up(is_initially_up(service_dir_fd));
+		const bool run_on_empty(!is_done_after_exit(service_dir_fd));
 		close(service_dir_fd); service_dir_fd = -1;
 		int ok_fd(open_writeexisting_at(supervise_dir_fd, "ok"));
 		if (0 > ok_fd) {
@@ -259,8 +379,17 @@ main (
 			const char * const want('u' == status[17] ? "up" : 'O' == status[17] ? "once at most" : 'o' == status[17] ? "once" : 'd' == status[17] ? "down" : "nothing");
 			write_string_value("Want", want);
 			write_boolean_value("Paused", status[16]);
-			write_boolean_value("DaemontoolsEnabled", initially_up);
 		}
+		write_boolean_value("DaemontoolsEnabled", initially_up);
+		write_boolean_value("RemainAfterExit", run_on_empty);
+		write_string_array("Wants", wants);
+		write_string_array("Before", before);
+		write_string_array("After", after);
+		write_string_array("Conflicts", conflicts);
+		write_string_array("Required-By", required_by);
+		write_string_array("Wanted-By", wanted_by);
+		write_string_array("Stopped-By", stopped_by);
+		write_string_value("LogService", log_service.c_str());
 		write_section_end();
 	}
 	write_document_end();

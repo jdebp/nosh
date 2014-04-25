@@ -15,7 +15,7 @@ SessionLeader=true
 TTYPath=console
 StandardInput=tty
 ExecStartPre=echo Emergency mode log-in:
-ExecStart=login
+ExecStart=emergency-login
 Restart=always
 
 [Install]

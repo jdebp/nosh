@@ -1,9 +1,9 @@
 basic
-name-services
 emergency
 halt
 local-fs
 multi-user
+name-services
 normal
 poweroff
 reboot
@@ -11,5 +11,6 @@ remote-fs
 rescue
 server
 shutdown
+sockets
 sysinit
 workstation

@@ -1,6 +1,12 @@
 <refentry id="system-manager">
 
-<refmeta><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum><refmiscinfo class="manual">administrator commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+<refmeta>
+<refentrytitle>system-manager</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo class="manual">administrator commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.0</refmiscinfo>
+</refmeta>
 
 <refnamediv>
 <refname>system-manager</refname>
@@ -208,7 +214,7 @@ After creating a local domain socket at
 it spawns an instance of
 <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 This is the global service manager for the system, controlled through the socket.
-It is not expected to ever terminate.
+It is not expected to ever terminate (before shutdown).
 If it does, <command>system-manager</command> re-spawns it.
 </para>
 </listitem>
@@ -229,8 +235,8 @@ Only one instance is spawned at a time.
 It spawns an instance of
 <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 with its input connected to the read end of a pipe.
-This process, too, is not expected to ever terminate.
-And again, if it does, <command>system-manager</command> re-spawns it.
+This process is expected to only terminate when the pipe is closed.
+If it terminates otherwise, <command>session-manager</command> simply re-spawns it.
 </para>
 </listitem>
 
@@ -377,7 +383,7 @@ the <arg>--force</arg> option to the
 subcommands of
 <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>
 to do this.
-Do not send these signals directly, as this does not shut down services cleanly.
+Do not send these signals directly, as this does not shut down services in order.
 </para>
 </listitem>
 </varlistentry>
@@ -392,15 +398,6 @@ that were supplied on its own command line.
 the initial program by the boot loader via the kernel.
 In a container/jail, they are supplied by the container/jail configuration.)
 This will activate whatever target can be deduced from those arguments.
-</para>
-<para>
-When the <code>sysinit</code> target is fully active, it is expected to send
-the <code>SIGRTMIN + 0</code> signal to process #1.
-In the packaged target definition, it uses use the <command>normal</command>
-subcommand of
-<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-to do this.
-Do not send this signal directly.
 </para>
 </listitem>
 </varlistentry>
@@ -446,6 +443,13 @@ In response this "event" <command>system-manager</command> spawns
 <command>system-control</command> 
 <arg choice="plain">start</arg>
 <arg choice="plain">sysinit</arg>.
+This sends the <code>SIGRTMIN + 10</code> and <code>SIGRTMIN + 11</code> signals
+back to process #1, instituting a two-phase initialization sequence similar to the
+<code>FILESYSTEMS</code> milestone mechanism in BSD operating systems.
+The first phase, the <code>sysinit</code> target, is expected to initialize as much of the
+system as necessary so that the second phase, <command>system-control</command>
+<arg choice="plain">init</arg>, can find all service and target bundles, including
+those that are not on the root filesystem.
 </para>
 
 </refsection></refsection><refsection><title>API filesystems and early devices</title>

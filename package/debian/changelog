@@ -1,3 +1,16 @@
+nosh (1.6) unstable; urgency=low
+
+  * Added compatibility initctl, invoke-rc.d, and update-rc.d commands.
+  * The chkconfig command is now restricted to a specific functionality subset.
+  * service-show now displays orderings and dependencies.
+  * More cross-platform services: rpcbind smartd ypbind nisdomain
+  * system-control reset is now for start/stop what system-control preset is for enable/disable.
+  * convert-systemd-units now handles some directives that can be repeated.
+  * Added foreground, background, and userenv commands.
+  * system-control now performs a DOWN-wait-KILL procedure on services that take more than 60 seconds to stop.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Fri, 25 Apr 2014 12:44:37 +0100
+
 nosh (1.5) unstable; urgency=low
 
   * The mount and fsck services are now generated from templates.
