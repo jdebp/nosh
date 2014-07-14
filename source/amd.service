@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=auto-mount daemon
+Requires=rpcbind.service nfsclient.service
+After=rpcbind.service nfsclient.service
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=amd
+Restart=always
+
+[Install]
+WantedBy=workstation.target

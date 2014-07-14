@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD kernel watchdog daemon
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=watchdogd -d
+Restart=always
+
+[Install]
+WantedBy=workstation.target

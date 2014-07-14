@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%P service
+After=local-fs.target
+
+[Service]
+systemdWorkingDirectory=false
+EnvironmentFile=-/etc/default/%P
+ExecStartPre=sh -c 'exec quotaon "${quotaon_flags}"'
+ExecStopPost=sh -c 'exec quotaoff "${quotaoff_flags}"'
+ExecStart=true
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

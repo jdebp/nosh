@@ -70,7 +70,7 @@ Using those, it locates the appropriate record in <filename>utmp</filename> to o
 which matches one or the other or both.
 If it fails to find a match, it unconditionally extends <filename>utmp</filename> with a new
 record.
-If always extends <filename>wtmp</filename> with that same record.
+It always extends <filename>wtmp</filename> with that same record.
 </para>
 
 <para>

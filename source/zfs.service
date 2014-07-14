@@ -1,0 +1,21 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=ZFS outwith a jail
+After=local-fs.target
+Conflicts=zfs-jailed.service
+
+[Service]
+systemdWorkingDirectory=false
+ExecStartPre=zfs mount -v -a
+ExecStartPre=zfs share -a
+ExecStartPre=sh -c 'test -r /etc/zfs/exports || touch /etc/zfs/exports'
+ExecStart=true
+ExecStopPost=zfs unshare -a
+ExecStopPost=zfs unmount -a
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

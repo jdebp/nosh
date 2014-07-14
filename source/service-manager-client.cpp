@@ -146,6 +146,13 @@ stop (
 }
 
 int
+terminate_daemon (
+	int supervise_dir_fd
+) {
+	return send_control_command(supervise_dir_fd, 't');
+}
+
+int
 kill_daemon (
 	int supervise_dir_fd
 ) {

@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=FTP service over IP4 using vsftp
+
+[Service]
+systemdWorkingDirectory=false
+LimitData=300000
+User=vsftpd
+ExecStart=/var/vsftpd/bin/vsftpd
+Restart=always
+
+[Install]
+WantedBy=server.target

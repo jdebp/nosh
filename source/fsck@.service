@@ -9,6 +9,7 @@ EarlySupervise=true
 Before=mount@%i.service
 
 [Service]
+Type=oneshot
 ExecStart=%P -C -p %I
 systemdWorkingDirectory=false
 RemainAfterExit=yes

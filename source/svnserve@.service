@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=svnserve per-connection service
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=%P -i
+Restart=always
+
+[Install]
+WantedBy=server.target

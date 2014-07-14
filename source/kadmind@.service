@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Kerberos database daemon
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=%P
+Restart=always
+
+[Install]
+WantedBy=server.target

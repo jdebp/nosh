@@ -51,6 +51,7 @@ foreground	background
 session-manager	cyclog
 session-manager	system-control
 session-manager	service-manager
+system-control	convert-systemd-presets
 system-control	convert-systemd-units
 system-control	systemctl
 system-control	initctl

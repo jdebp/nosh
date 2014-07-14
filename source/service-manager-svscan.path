@@ -1,6 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Daemontools compatible /service/ directory
+After=local-fs.target sysinit.target
+
 [Path]
 DirectoryNotEmpty=/service/
-After=local-fs.target sysinit.target
 
 [Install]
 WantedBy=multi-user.target

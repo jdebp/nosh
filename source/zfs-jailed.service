@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=ZFS within a jail
+After=local-fs.target
+Conflicts=zfs.service
+
+[Service]
+systemdWorkingDirectory=false
+ExecStartPre=zfs mount -v -a
+ExecStart=true
+ExecStopPost=zfs unmount -a
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

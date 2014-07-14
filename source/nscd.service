@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=nsswitch caching service
+
+[Service]
+systemdWorkingDirectory=false
+EnvironmentFile=/etc/environment
+ExecStart=nscd -n
+Restart=always
+
+[Install]
+WantedBy=workstation.target

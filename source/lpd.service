@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=line printer service
+
+[Service]
+systemdWorkingDirectory=false
+ExecStartPre=chkprintcap
+ExecStart=lpd
+Restart=always
+
+[Install]
+WantedBy=server.target

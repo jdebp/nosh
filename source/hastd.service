@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=High Availability Storage service
+
+[Service]
+systemdWorkingDirectory=false
+# The daemon should properly clean itself up at SIGTERM; if it does not, that is a bug.
+ExecStart=hastd -F
+Restart=always
+
+[Install]
+WantedBy=server.target

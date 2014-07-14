@@ -1,3 +1,7 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
 [Unit]
 Description=Service manager local domain socket activation
 After=local-fs.target sysinit.target systemd-tmpfiles-setup.service

@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+
+[Socket]
+ListenStream=3690
+BindIPv6Only=both
+Accept=true
+
+[Install]
+WantedBy=server.target

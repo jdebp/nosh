@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=PostgreSQL database server
+
+[Service]
+systemdWorkingDirectory=false
+User=postgres
+ExecStart=/usr/lib/postgresql/bin/postmaster -D /var/lib/postgres/data
+Restart=no
+
+[Install]
+WantedBy=server.target

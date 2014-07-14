@@ -4,8 +4,7 @@
 
 [Unit]
 Description=exim4 SMTP Relay socket
-[Install]
-WantedBy=server.target
+
 [Socket]
 Backlog=2
 BindIPv6Only=both
@@ -14,3 +13,6 @@ Accept=true
 MaxConnections=16
 UCSPIRules=true
 Nagle=false
+
+[Install]
+WantedBy=server.target

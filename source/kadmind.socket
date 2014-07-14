@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Kerberos database socket
+
+[Socket]
+Backlog=2
+BindIPv6Only=both
+ListenStream=kerberos-adm
+Accept=true
+MaxConnections=16
+UCSPIRules=true
+Nagle=false
+
+[Install]
+WantedBy=server.target

@@ -150,29 +150,6 @@ struct profile {
 };
 
 static
-std::string
-ltrim (
-	const std::string & s
-) {
-	for (std::string::size_type p(0); s.length() != p; ++p) {
-		if (!std::isspace(s[p])) return s.substr(p, std::string::npos);
-	}
-	return std::string();
-}
-
-static
-std::string
-rtrim (
-	const std::string & s
-) {
-	for (std::string::size_type p(s.length()); p > 0; ) {
-		--p;
-		if (!std::isspace(s[p])) return s.substr(0, p + 1);
-	}
-	return std::string();
-}
-
-static
 std::list<std::string>
 split_list (
 	const std::string & s
@@ -526,7 +503,7 @@ open (
 
 static
 void
-report_unused(
+report_unused (
 	const char * prog,
 	profile & p,
 	const std::string & name
@@ -1124,25 +1101,34 @@ convert_systemd_units (
 		restart_script << "exec false\t# ignore script arguments\n";
 	} else 
 	{
+		const bool 
+			on_true (restart &&  ("on-success" == tolower(restart->last_setting()))),
+			on_false(restart &&  ("on-failure" == tolower(restart->last_setting()))),
+			on_abort(restart && (("on-failure" == tolower(restart->last_setting())) || ("on-abort" == tolower(restart->last_setting())))), 
+			on_crash(on_abort),
+			on_kill (on_abort),
+			on_term (on_abort);
 		restart_script << 
 			"case \"$1\" in\n"
 			"\te*)\n"
 			"\t\tif [ \"$2\" -ne 0 ]\n"
 			"\t\tthen\n"
-			"\t\texec " << (restart && ("on-failure" == tolower(restart->last_setting())) ? "true" : "false") << "\n"
+			"\t\texec " << (on_false ? "true" : "false") << "\n"
 			"\t\telse\n"
-			"\t\texec " << (restart && ("on-success" == tolower(restart->last_setting())) ? "true" : "false") << "\n"
+			"\t\texec " << (on_true  ? "true" : "false") << "\n"
 			"\t\tfi\n"
 			"\t\t;;\n"
 			"\tt*)\n"
+			"\t\texec " << (on_term  ? "true" : "false") << "\n"
 			"\t\t;;\n"
 			"\tk*)\n"
+			"\t\texec " << (on_kill  ? "true" : "false") << "\n"
 			"\t\t;;\n"
 			"\ta*)\n"
-			"\t\texec " << (restart && ("on-abort" == tolower(restart->last_setting())) ? "true" : "false") << "\n"
+			"\t\texec " << (on_abort ? "true" : "false") << "\n"
 			"\t\t;;\n"
 			"\tc*|*)\n"
-			"\t\texec " << (restart && ("on-abort" == tolower(restart->last_setting())) ? "true" : "false") << "\n"
+			"\t\texec " << (on_crash ? "true" : "false") << "\n"
 			"\t\t;;\n"
 			"esac\n"
 			"exec false\n";

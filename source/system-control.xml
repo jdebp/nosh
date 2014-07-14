@@ -464,8 +464,8 @@ use
 The <command>reset</command> command is intended to be used by package
 installer programs.
 It is translated into either <command>start</command> or
-<command>stop</command> according to administrator-supplied information
-about whether and what services are to be started.
+<command>stop</command> according to a system/administrator-supplied
+preset flag.
 This allows package installers to remain in blissful ignorance of whether a
 service should be started or stopped after installing the package for it.
 Instead, the package installer simply executes the <command>reset</command>
@@ -528,8 +528,8 @@ and disabling the service involves removing those links.
 The <command>preset</command> command is intended to be used by package
 installer programs.
 It is translated into either <command>enable</command> or
-<command>disable</command> according to administrator-supplied information
-about whether and what services are to be enabled.
+<command>disable</command> according to a system/administrator-supplied
+preset flag.
 This allows package installers to remain in blissful ignorance of whether a
 service should be enabled or disabled after installing the package for it.
 Instead, the package installer simply executes the <command>preset</command>
@@ -675,7 +675,7 @@ attempt to be compatible with this mess.
 </para>
 
 </refsection>
-<refsection><title>script coversion subcommand</title>
+<refsection><title>script conversion subcommand</title>
 
 <cmdsynopsis>
 <command>system-control</command>
@@ -846,6 +846,26 @@ those mechanisms.
 </listitem>
 
 </itemizedlist>
+
+</refsection>
+<refsection><title>preset conversion subcommand</title>
+
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">convert-systemd-presets</arg>
+<group choice='req' rep='repeat'>
+<arg choice='plain'><replaceable>name</replaceable></arg>
+<arg choice='plain'><replaceable>name</replaceable>.target</arg>
+<arg choice='plain'><replaceable>name</replaceable>.socket</arg>
+<arg choice='plain'><replaceable>name</replaceable>.service</arg>
+</group>
+</cmdsynopsis>
+
+<para>
+This subcommand translates the preset information used by systemd into
+native preset information in the bundle directory for service/target
+<arg choice='plain'><replaceable>name</replaceable></arg>.
+</para>
 
 </refsection>
 

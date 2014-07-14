@@ -38,6 +38,10 @@ stop (
 	int supervise_dir_fd
 );
 int
+terminate_daemon (
+	int supervise_dir_fd
+);
+int
 kill_daemon (
 	int supervise_dir_fd
 );

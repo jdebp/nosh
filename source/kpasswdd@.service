@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Kerberos v5 password daemon
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=kpasswdd
+Restart=always
+
+[Install]
+WantedBy=server.target

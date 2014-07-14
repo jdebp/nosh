@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=security level raiser
+After=adjkerntz.service ifpw.service ipfilter.service pf.service
+
+[Service]
+systemdWorkingDirectory=false
+EnvironmentFile=-/etc/rc.conf
+EnvironmentFile=-/etc/rc.conf.local
+ExecStartPre=sh -c 'for f in /etc/sysctl.conf /etc/sysctl.conf.local ; do [ -r $f ] && sysctl -f $f ; done'
+ExecStart=sh -c '[ ${kern_securelevel} -ge 0 ] && sysctl kern.securelevel=${kern_securelevel}'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

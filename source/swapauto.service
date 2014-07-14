@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%P service
+
+[Service]
+systemdWorkingDirectory=false
+ExecStartPre=swapon -a
+ExecStart=true
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

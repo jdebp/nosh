@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=FTP socket using vsftp
+
+[Socket]
+Backlog=2
+BindIPv6Only=both
+MaxConnections=30
+Nagle=false
+ListenStream=ftp
+UCSPIRules=true
+Accept=true
+
+[Install]
+WantedBy=server.target

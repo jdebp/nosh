@@ -1,3 +1,13 @@
+nosh (1.7) unstable; urgency=low
+
+  * More cross-platform services: rsync nscd securelevel svnserve postgresql vsftpd
+  * More BSD services: swapauto swaplate quota routed route6d kadmind kpasswdd gssd hastd rarpd zfs zfs-jailed lpd bsnmpd watchdogd rtsold auditd amd
+  * Added a convert-systemd-presets command.
+  * Added a nagios-check-service command.
+  * convert-systemd-units now relates termination and kill signals to Restart=on-abort and Restart=on-failure.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Mon, 14 Jul 2014 12:40:15 +0100
+
 nosh (1.6) unstable; urgency=low
 
   * Added compatibility initctl, invoke-rc.d, and update-rc.d commands.

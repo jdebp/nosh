@@ -64,7 +64,7 @@ struct bundle {
 	bool ss_scanned;
 	// Our state machine guarantees that state transitions only ever increase the state value.
 	// Even though we don't make use of it, our logic requires at least one state between FORCED and DONE, for timed-out jobs to sit in.
-	enum { INITIAL, BLOCKED, ACTIONED, FORCED = ACTIONED + 60, TIMEDOUT = FORCED + 30, DONE } ;
+	enum { INITIAL, BLOCKED, ACTIONED, REREQUESTED = ACTIONED + 30, FORCED = REREQUESTED + 60, TIMEDOUT = FORCED + 30, DONE } ;
 	int job_state;
 	int order;
 	unsigned wants;
@@ -509,7 +509,7 @@ start_stop_common (
 				}
 				if (b.ACTIONED > b.job_state) continue;
 			} 
-			if (b.FORCED == b.job_state || b.ACTIONED == b.job_state) {
+			if (b.FORCED == b.job_state || b.REREQUESTED == b.job_state || b.ACTIONED == b.job_state) {
 				switch (b.wants) {
 					case bundle::WANT_START:
 					{
@@ -536,6 +536,11 @@ start_stop_common (
 									std::fprintf(stderr, "%s: KILL: %s%s\n", prog, b.path.c_str(), b.name.c_str());
 								if (!pretending)
 									kill_daemon(b.supervise_dir_fd);
+							} else if (b.REREQUESTED == b.job_state) {
+								if (verbose)
+									std::fprintf(stderr, "%s: TERM: %s%s\n", prog, b.path.c_str(), b.name.c_str());
+								if (!pretending)
+									terminate_daemon(b.supervise_dir_fd);
 							} else {
 								if (verbose)
 									std::fprintf(stderr, "%s: STOP: %s%s\n", prog, b.path.c_str(), b.name.c_str());

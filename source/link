@@ -3,5 +3,4 @@ redo-ifchange ./cxx ./cxxflags
 read cxx < ./cxx
 read cxxflags < ./cxxflags
 ldflags=""
-[ "`uname`" = "FreeBSD" ] && ldflags="-static"
 exec ${cxx} ${cxxflags} -o "$@" ${ldflags}

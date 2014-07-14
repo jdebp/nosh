@@ -127,5 +127,23 @@ ends_in (
 	const std::string & p,
 	std::string & r
 ) ;
+extern
+bool
+begins_with (
+	const std::string & s,
+	const std::string & p,
+	std::string & r
+) ;
+extern
+std::string
+ltrim (
+	const std::string & s
+);
+extern
+std::string
+rtrim (
+	const std::string & s
+);
+
 
 #endif

@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%P service
+After=swapauto.service
+
+[Service]
+systemdWorkingDirectory=false
+ExecStartPre=swapon -aL
+ExecStopPost=swapoff -aL
+ExecStart=true
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target
