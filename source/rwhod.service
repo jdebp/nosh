@@ -3,12 +3,11 @@
 ## **************************************************************************
 
 [Unit]
-Description=Erlang Port Mapper service
+Description=remote who service
 
 [Service]
 systemdWorkingDirectory=false
-User=rabbitmq
-ExecStart=epmd
+ExecStart=rwhod
 Restart=always
 
 [Install]

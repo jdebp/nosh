@@ -101,7 +101,7 @@ set_dynamic_hostname (
 
 	if (!args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Unexpected argument(s).");
-		throw EXIT_USAGE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	if (am_in_jail() && !set_dynamic_hostname_is_allowed())

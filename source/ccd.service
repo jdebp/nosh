@@ -3,13 +3,12 @@
 ## **************************************************************************
 
 [Unit]
-Description=Erlang Port Mapper service
+Description=CCD service
 
 [Service]
 systemdWorkingDirectory=false
-User=rabbitmq
-ExecStart=epmd
-Restart=always
+ExecStart=ccdconfig -C
+RemainAfterExit=yes
 
 [Install]
-WantedBy=workstation.target
+WantedBy=sysinit.target

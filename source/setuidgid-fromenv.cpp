@@ -48,7 +48,7 @@ setuidgid_fromenv (
 		if (0 > setgroups(sizeof groups/sizeof *groups, groups) || 0 > setgid(gid)) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, old, std::strerror(error));
-			throw EXIT_TEMPORARY_FAILURE;	// Bernstein daemontools compatibility
+			throw static_cast<int>(EXIT_TEMPORARY_FAILURE);	// Bernstein daemontools compatibility
 		}
 	} else {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "GID", "Missing environment variable.");
@@ -64,7 +64,7 @@ setuidgid_fromenv (
 		if (0 > setuid(uid)) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, old, std::strerror(error));
-			throw EXIT_TEMPORARY_FAILURE;	// Bernstein daemontools compatibility
+			throw static_cast<int>(EXIT_TEMPORARY_FAILURE);	// Bernstein daemontools compatibility
 		}
 	} else {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "UID", "Missing environment variable.");

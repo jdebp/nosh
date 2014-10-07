@@ -3,13 +3,12 @@
 ## **************************************************************************
 
 [Unit]
-Description=Erlang Port Mapper service
+Description=IPv4 mroute daemon
 
 [Service]
 systemdWorkingDirectory=false
-User=rabbitmq
-ExecStart=epmd
+ExecStart=mrouted
 Restart=always
 
 [Install]
-WantedBy=workstation.target
+WantedBy=server.target

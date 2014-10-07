@@ -3,13 +3,12 @@
 ## **************************************************************************
 
 [Unit]
-Description=Erlang Port Mapper service
+Description=IPX route daemon
 
 [Service]
 systemdWorkingDirectory=false
-User=rabbitmq
-ExecStart=epmd
+ExecStart=ipxrouted
 Restart=always
 
 [Install]
-WantedBy=workstation.target
+WantedBy=server.target

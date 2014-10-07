@@ -246,7 +246,7 @@ write_string_array(
 		}
 	}
 	if (json)
-		std::fprintf(stdout, "];");
+		std::fprintf(stdout, "]");
 	else
 		std::fprintf(stdout, "\n");
 }

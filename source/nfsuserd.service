@@ -3,13 +3,12 @@
 ## **************************************************************************
 
 [Unit]
-Description=Erlang Port Mapper service
+Description=NFS user daemon
 
 [Service]
 systemdWorkingDirectory=false
-User=rabbitmq
-ExecStart=epmd
+ExecStart=nfsuserd
 Restart=always
 
 [Install]
-WantedBy=workstation.target
+WantedBy=server.target

@@ -256,5 +256,5 @@ pty_run (
 		tcsetattr_nointr(STDIN_FILENO, TCSADRAIN, original_attr);
 	if (!WIFEXITED(status))
 		waitpid(child, &status, 0);
-	throw WIFEXITED(status) ? WEXITSTATUS(status) : EXIT_TEMPORARY_FAILURE;
+	throw WIFEXITED(status) ? WEXITSTATUS(status) : static_cast<int>(EXIT_TEMPORARY_FAILURE);
 }

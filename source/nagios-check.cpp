@@ -205,7 +205,7 @@ nagios_check (
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
-		popt::unsigned_number_definition min_seconds_option('s', "min-seconds", "Specify the minimum number of seconds for a service to be running.", "seconds", min_seconds, 0);
+		popt::unsigned_number_definition min_seconds_option('s', "min-seconds", "seconds", "Specify the minimum number of seconds for a service to be running.", min_seconds, 0);
 		popt::definition * main_table[] = {
 			&min_seconds_option
 		};
@@ -216,10 +216,10 @@ nagios_check (
 		p.process(true /* strictly options before arguments */);
 		args = new_args;
 		next_prog = arg0_of(args);
-		if (p.stopped()) throw EXIT_NAGIOS_OK;
+		if (p.stopped()) throw static_cast<int>(EXIT_NAGIOS_OK);
 	} catch (const popt::error & e) {
 		std::fprintf(stdout, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_NAGIOS_UNKNOWN;
+		throw static_cast<int>(EXIT_NAGIOS_UNKNOWN);
 	}
 
 	int rc(EXIT_NAGIOS_OK);

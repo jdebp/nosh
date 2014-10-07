@@ -31,11 +31,11 @@ case "$1" in
 			swapexd \
 			syslogd \
 			tinydns \
-			ttylogin@tty6 \
 			volmand \
 			winbindd \
 			ypbind \
 			;
+#			ttylogin@tty6
 		do
 			system-control try-restart $i cyclog@$i
 		done

@@ -11,6 +11,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cerrno>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/socket.h>	// Necessary for the SO_REUSEPORT macro.
@@ -203,11 +204,26 @@ multi_line_comment (
 
 static
 std::string
+escape_newlines (
+	const std::string & s
+) {
+	std::string r;
+	for (std::string::const_iterator p(s.begin()); s.end() != p; ++p) {
+		const char c(*p);
+		if ('\n' == c) 
+			r += " \\";
+		r += c;
+	}
+	return r;
+}
+
+static
+std::string
 quote (
 	const std::string & s
 ) {
 	std::string r;
-	bool quote(false);
+	bool quote(s.empty());
 	for (std::string::const_iterator p(s.begin()); s.end() != p; ++p) {
 		const char c(*p);
 		if (!std::isalnum(c) && '/' != c && '-' != c && '_' != c && '.' != c) {
@@ -539,7 +555,7 @@ convert_systemd_units (
 	try {
 		const char * bundle_root_str(0);
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
-		popt::string_definition bundle_option('\0', "bundle-root", "Root directory for bundles.", "directory", bundle_root_str);
+		popt::string_definition bundle_option('\0', "bundle-root", "directory", "Root directory for bundles.", bundle_root_str);
 		popt::bool_definition unescape_instance_option('\0', "unescape-instance", "Unescape the instance part of a template instantiation.", unescape_instance);
 		popt::definition * main_table[] = {
 			&user_option,
@@ -682,6 +698,7 @@ convert_systemd_units (
 	value * systemdworkingdirectory(service_profile.use("service", "systemdworkingdirectory"));	// This is an extension to systemd.
 	value * execstart(service_profile.use("service", "execstart"));
 	value * execstartpre(service_profile.use("service", "execstartpre"));
+	value * execrestartpre(service_profile.use("service", "execrestartpre"));	// This is an extension to systemd.
 	value * execstoppost(service_profile.use("service", "execstoppost"));
 	value * limitnofile(service_profile.use("service", "limitnofile"));
 	value * limitcpu(service_profile.use("service", "limitcpu"));
@@ -1094,6 +1111,25 @@ convert_systemd_units (
 	// nosh is not suitable here, since the restart script is passed arguments.
 	restart_script << "#!/bin/sh\n" << multi_line_comment("Restart file generated from " + service_filename);
 	if (restartsec) restart_script << "sleep " << restartsec->last_setting() << "\n";
+	if (execrestartpre) {
+		std::stringstream s;
+		if (setuidgidall) s << envuidgid;
+		s << redirect;
+		s << softlimit;
+		if (chrootall) s << chroot;
+		s << chdir;
+		if (setuidgidall) s << setuidgid;
+		s << env;
+		s << um;
+		for (std::list<std::string>::const_iterator i(execstartpre->all_settings().begin()); execstartpre->all_settings().end() != i; ) {
+			std::list<std::string>::const_iterator j(i++);
+			if (execstartpre->all_settings().begin() != j) s << " ;\n"; 
+			if (execstartpre->all_settings().end() != i) s << "foreground "; 
+			const std::string & val(*j);
+			s << names.substitute(strip_leading_minus(val));
+		}
+		restart_script << escape_newlines(s.str()) << "\n";
+	}
 	if (restart && "always" == tolower(restart->last_setting())) {
 		restart_script << "exec true\t# ignore script arguments\n";
 	} else

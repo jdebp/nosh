@@ -680,6 +680,8 @@ attempt to be compatible with this mess.
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">convert-systemd-units</arg>
+<arg>--bundle-root <replaceable>root</replaceable></arg> 
+<arg>--unescape-instance</arg> 
 <group choice='req'>
 <arg choice='plain'><replaceable>name</replaceable>.target</arg>
 <arg choice='plain'><replaceable>name</replaceable>.socket</arg>
@@ -690,8 +692,10 @@ attempt to be compatible with this mess.
 
 <para>
 This subcommand takes some systemd unit files and generates from them a service
-bundle in the current directory that contains scripts, dependencies, and
-autoboot dependency configuration information.
+bundle in the current directory (or in the 
+<arg choice='plain'><replaceable>root</replaceable></arg>
+directory) that contains scripts, dependencies, and autoboot dependency
+configuration information.
 The bundle is not enabled by the conversion process, but can be started and
 enabled as it stands, with the <command>start</command> and
 <command>preset</command> subcommands, just like any other service bundle.
@@ -743,6 +747,13 @@ is specified, then that service unit file is converted using
 <replaceable>parameter</replaceable> for parameter substitution into a service
 bundle directory named
 <filename><replaceable>name</replaceable>@<replaceable>parameter</replaceable>/</filename>.
+</para>
+<para>
+If the <arg>--unescape-instance</arg> option is used, then
+<replaceable>parameter</replaceable> will be unescaped, from the systemd unit
+escaping, into its original pathname form.
+This is generally used where <replaceable>parameter</replaceable> represents
+something in the filesystem, such as a mount point for example.
 </para>
 </listitem>
 </itemizedlist>
@@ -866,6 +877,51 @@ This subcommand translates the preset information used by systemd into
 native preset information in the bundle directory for service/target
 <arg choice='plain'><replaceable>name</replaceable></arg>.
 </para>
+
+</refsection>
+
+<refsection><title>Nagios plug-in subcommand</title>
+
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">nagios-check-service</arg>
+<arg>--min-seconds <replaceable>seconds</replaceable></arg> 
+<arg choice='req' rep='repeat'><replaceable>name</replaceable></arg>
+</cmdsynopsis>
+
+<para>
+This subcommand is intended for use as a Nagios plug-in.
+It queries the status API in the bundle directory for service/target
+<arg choice='plain'><replaceable>name</replaceable></arg>.
+</para>
+
+<itemizedlist>
+<listitem>
+<para>
+If the service is up for longer than
+<arg choice='plain'><replaceable>seconds</replaceable></arg>
+seconds it returns a Nagios "OK" status.
+</para>
+</listitem>
+<listitem>
+<para>
+If the service is up, but for less than
+<arg choice='plain'><replaceable>seconds</replaceable></arg>
+seconds it returns a Nagios "WARNING" status and prints a line containing the
+service bundle directory name.
+It does the same if the service is still in the process of being loaded by the
+service manager, or in the starting or stopping states.
+</para>
+</listitem>
+<listitem>
+<para>
+If the service is unexpectedly down or unloaded, if the status API reports the
+service running in the future (because of clock skew somewhere), or if the
+service is in the failing state, it returns a Nagios "CRITICAL" status and
+prints a line containing the service bundle directory name.
+</para>
+</listitem>
+</itemizedlist>
 
 </refsection>
 

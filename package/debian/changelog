@@ -1,3 +1,16 @@
+nosh (1.8) unstable; urgency=low
+
+  * More cross-platform services: keepalived, dovecot, wicd
+  * More BSD services: ccd, timed, mroute4d, mroute6d, rwhod, ipxrouted, nfscbd, nfsuserd, bootparams
+  * system-control now has a built-in version subcommand.
+  * Fixed a bug with convert-systemd-units and Environment= settings that attempt to unset environment variables.
+  * Added an ExecRestartPre= setting to convert-systemd-units.
+  * Fixed a bug in the regular-services postrm script.
+  * Fixed a bug that prevented the fastXYZ system V shims from being recognized.
+  * Documented the nagios-check-service command.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Tue, 07 Oct 2014 23:17:56 +0100
+
 nosh (1.7) unstable; urgency=low
 
   * More cross-platform services: rsync nscd securelevel svnserve postgresql vsftpd

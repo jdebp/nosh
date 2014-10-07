@@ -31,7 +31,7 @@ bool
 stripfast (
 	const char * & prog
 ) {
-	if ('f' != prog[0] || 'a' != prog[0] || 's' != prog[0] || 't' != prog[0]) return false;
+	if ('f' != prog[0] || 'a' != prog[1] || 's' != prog[2] || 't' != prog[3]) return false;
 	prog += 4;
 	return true;
 }

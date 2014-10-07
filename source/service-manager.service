@@ -4,6 +4,7 @@
 
 [Unit]
 Description=Service manager
+After=local-fs.target
 
 [Service]
 ExecStart=/bin/service-manager

@@ -41,6 +41,7 @@ void system_control ( const char * & , std::vector<const char *> & ) ;
 void system_manager ( const char * & , std::vector<const char *> & ) ;
 void service_manager ( const char * & , std::vector<const char *> & ) ;
 void setsid ( const char * & , std::vector<const char *> & ) ;
+void system_version ( const char * & , std::vector<const char *> & ) ;
 
 extern const
 struct command 
@@ -48,6 +49,7 @@ commands[] = {
 	{	"session-manager",	system_manager		},
 	{	"systemctl",		system_control		},
 	{	"initctl",		system_control		},
+	{	"version",		system_version		},
 
 	// These are the system-control subcommands.
 	{	"init",				init			},

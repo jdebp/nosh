@@ -3,13 +3,12 @@
 ## **************************************************************************
 
 [Unit]
-Description=Erlang Port Mapper service
+Description=LVS and VRRP High Availability monitor
 
 [Service]
 systemdWorkingDirectory=false
-User=rabbitmq
-ExecStart=epmd
+ExecStart=keepalived -n
 Restart=always
 
 [Install]
-WantedBy=workstation.target
+WantedBy=basic.target

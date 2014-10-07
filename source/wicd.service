@@ -3,13 +3,12 @@
 ## **************************************************************************
 
 [Unit]
-Description=Erlang Port Mapper service
+Description=wicd service
 
 [Service]
 systemdWorkingDirectory=false
-User=rabbitmq
-ExecStart=epmd
+ExecStart=wicd -f
 Restart=always
 
 [Install]
-WantedBy=workstation.target
+WantedBy=server.target

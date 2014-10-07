@@ -1,8 +1,17 @@
 <refentry id="tai64n">
 
-<refmeta><refentrytitle>tai64n</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+<refmeta>
+<refentrytitle>tai64n</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.0</refmiscinfo>
+</refmeta>
 
-<refnamediv><refname>tai64n</refname><refpurpose>filter to translate external TAI64N timestamps</refpurpose></refnamediv>
+<refnamediv>
+<refname>tai64n</refname>
+<refpurpose>filter to prepend external TAI64N timestamps</refpurpose>
+</refnamediv>
 
 <refsynopsisdiv>
 <cmdsynopsis>

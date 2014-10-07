@@ -3,13 +3,12 @@
 ## **************************************************************************
 
 [Unit]
-Description=Erlang Port Mapper service
+Description=boot parameters daemon
 
 [Service]
 systemdWorkingDirectory=false
-User=rabbitmq
-ExecStart=epmd
+ExecStart=bootparamd
 Restart=always
 
 [Install]
-WantedBy=workstation.target
+WantedBy=server.target

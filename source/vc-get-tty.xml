@@ -6,7 +6,11 @@
 
 <refsynopsisdiv>
 <cmdsynopsis>
-<command>vc-get-tty</command> <arg>--long-hostname</arg> <arg>--term <replaceable>type</replaceable></arg> <arg choice='req'><replaceable>virtual-console-id</replaceable></arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+<command>vc-get-tty</command> 
+<arg>--long-hostname</arg> 
+<arg>--term <replaceable>type</replaceable></arg> 
+<arg choice='req'><replaceable>virtual-console-id</replaceable></arg> 
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 

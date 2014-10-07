@@ -513,7 +513,7 @@ setup_machine_id (
 
 	if (!args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Unexpected argument(s).");
-		throw EXIT_USAGE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 #if defined(__LINUX__) || defined(__linux__)

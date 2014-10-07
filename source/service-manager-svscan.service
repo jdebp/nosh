@@ -4,6 +4,7 @@
 
 [Unit]
 Description=Daemontools compatible service scanner
+After=local-fs.target
 
 [Service]
 ExecStart=/bin/service-dt-scanner /service/

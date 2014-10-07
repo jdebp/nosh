@@ -3,12 +3,11 @@
 ## **************************************************************************
 
 [Unit]
-Description=Erlang Port Mapper service
+Description=time daemon
 
 [Service]
 systemdWorkingDirectory=false
-User=rabbitmq
-ExecStart=epmd
+ExecStart=timed
 Restart=always
 
 [Install]

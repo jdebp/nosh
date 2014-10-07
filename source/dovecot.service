@@ -3,13 +3,12 @@
 ## **************************************************************************
 
 [Unit]
-Description=Erlang Port Mapper service
+Description=Dovecot service
 
 [Service]
 systemdWorkingDirectory=false
-User=rabbitmq
-ExecStart=epmd
+ExecStart=dovecot -F
 Restart=always
 
 [Install]
-WantedBy=workstation.target
+WantedBy=server.target
