@@ -1,6 +1,12 @@
 <refentry id="service-is-ok">
 
-<refmeta><refentrytitle>service-is-ok</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+<refmeta>
+<refentrytitle>service-is-ok</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.9</refmiscinfo>
+</refmeta>
 
 <refnamediv><refname>service-is-ok</refname><refname>svok</refname><refpurpose>daemontools compatibility service checker</refpurpose></refnamediv>
 

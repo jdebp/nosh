@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD mroute daemon
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=mrouted
+Restart=always
+
+[Install]
+WantedBy=workstation.target

@@ -112,19 +112,19 @@ vc_reset_tty (
 	bool no_utf_8(false);
 	bool no_newline(false);
 	bool no_tostop(false);
-	bool no_reset(false);
+	bool hard_reset(false);
 
 	const char * prog(basename_of(args[0]));
 	try {
 		popt::bool_definition no_newline_option('\0', "no-newline", "Do not print an initial newline.", no_newline);
 		popt::bool_definition no_utf_8_option('\0', "no-utf8", "Do not set UTF-8 input mode.", no_utf_8);
 		popt::bool_definition no_tostop_option('\0', "no-tostop", "Do not set the \"tostop\" line discipline flag.", no_tostop);
-		popt::bool_definition no_reset_option('\0', "no-reset", "Initialize, do not reset, the terminal.", no_reset);
+		popt::bool_definition hard_reset_option('\0', "hard-reset", "Reset the terminal before initializing it.", hard_reset);
 		popt::definition * top_table[] = {
 			&no_newline_option,
 			&no_utf_8_option,
 			&no_tostop_option,
-			&no_reset_option
+			&hard_reset_option
 		};
 		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "prog");
 
@@ -153,7 +153,7 @@ vc_reset_tty (
 		std::fprintf(stderr, "%s: WARNING: %s: %s: %s\n", prog, "KDSETMODE", "stdout", std::strerror(error));
 	}
 #endif
-	if (!no_reset)
+	if (hard_reset)
 		std::fputs(reset_string(), stdout);
 	std::fputs(initialization_string(), stdout);
 	std::fflush(stdout);

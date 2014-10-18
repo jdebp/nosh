@@ -7,7 +7,7 @@ Description=remote who service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=rwhod
+ExecStart=%p
 Restart=always
 
 [Install]

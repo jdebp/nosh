@@ -112,8 +112,8 @@ do
 done
 
 # Build all of the {new} directories.
-rm -rf -- config/standard-targets{new} config/sysinit-services{new} config/regular-services{new}
-mkdir -p config/standard-targets{new} config/sysinit-services{new} config/regular-services{new}
+rm -rf -- config/standard-targets{new} config/sysinit-services{new} config/regular-services{new} config/bsd-services{new}
+mkdir -p config/standard-targets{new} config/sysinit-services{new} config/regular-services{new} config/bsd-services{new}
 while read i
 do
 	command/system-control convert-systemd-units --bundle-root config/standard-targets{new}/ build/$i.target
@@ -142,6 +142,18 @@ do
 	command/system-control convert-systemd-units --bundle-root config/regular-services{new}/ build/cyclog@$i.service
 	ln -s ../cyclog@$i config/regular-services{new}/$i/log
 done < package/regular-sockets
+while read i
+do
+	command/system-control convert-systemd-units --bundle-root config/bsd-services{new}/ build/$i.service
+	command/system-control convert-systemd-units --bundle-root config/bsd-services{new}/ build/cyclog@$i.service
+	ln -s ../cyclog@$i config/bsd-services{new}/$i/log
+done < package/bsd-services
+while read i
+do
+	command/system-control convert-systemd-units --bundle-root config/bsd-services{new}/ build/$i.socket
+	command/system-control convert-systemd-units --bundle-root config/bsd-services{new}/ build/cyclog@$i.service
+	ln -s ../cyclog@$i config/bsd-services{new}/$i/log
+done < package/bsd-sockets
 rm -f -- config/sysinit-services{new}/sysinit-log/log
 rm -f -- config/sysinit-services{new}/devd/log
 ln -s ../devd-log config/sysinit-services{new}/devd/log
@@ -156,7 +168,7 @@ for i in service-manager.socket service-manager.service service-manager.conf sys
 do
 	mv -f -- config/"$i"{new} config/"$i"
 done 
-for i in standard-targets sysinit-services regular-services
+for i in standard-targets sysinit-services regular-services bsd-services
 do
 	rm -rf -- config/"$i"{old}
 	test -e config/"$i" && mv -f -- config/"$i" config/"$i"{old}

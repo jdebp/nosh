@@ -1,6 +1,12 @@
 <refentry id="pty-get-tty">
 
-<refmeta><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+<refmeta>
+<refentrytitle>pty-get-tty</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.9</refmiscinfo>
+</refmeta>
 
 <refnamediv><refname>pty-get-tty</refname><refpurpose>allocate a pseudo-terminal </refpurpose></refnamediv>
 

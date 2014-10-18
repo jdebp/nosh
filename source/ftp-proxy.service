@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD FTP proxy daemon that uses pf
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=ftp-proxy -d
+
+[Install]
+WantedBy=workstation.target

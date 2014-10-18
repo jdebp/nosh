@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=iSCSI initiator daemon
+
+[Service]
+systemdWorkingDirectory=false
+ExecStartPre=kldload -n iscsi
+# iscsid needs a proper option for telling it not to fork.  Until it has, this will have to do.
+ExecStart=iscsid -d
+
+[Install]
+WantedBy=server.target

@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=audit trail distribution daemon
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=auditdistd -F
+
+[Install]
+WantedBy=multi-user.target

@@ -1,3 +1,4 @@
+acpid
 exim4r
 exim4s
 ftp4d
@@ -10,4 +11,5 @@ rsync
 saned
 sshd
 svnserve
+systemd-rsyslog
 vsftpd

@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=APM daemon
+
+[Service]
+systemdWorkingDirectory=false
+# Strictly speaking, this check is specific to when hw.machine_arch is i386.
+ExecStartPre=sh -c '[ -e /dev/apmctl ] || echo "WARNING: /dev/apmctl not found; kernel is missing apm(4)"'
+ExecStart=apmd
+
+[Install]
+WantedBy=workstation.target

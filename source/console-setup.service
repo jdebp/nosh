@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Set up console
+DefaultDependencies=false
+EarlySupervise=true
+Wants=local-fs.target
+After=local-fs.target
+
+[Service]
+ExecStart=setupcon --save
+Restart=never
+
+[Install]
+WantedBy=sysinit.target

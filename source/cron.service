@@ -3,14 +3,11 @@
 ## **************************************************************************
 
 [Unit]
-Description=cron scheduling service
+Description=Regular background program processing daemon
 
 [Service]
 systemdWorkingDirectory=false
-EnvironmentFile=/etc/environment
 ExecStart=cron -f
-# For "Vixie" cron, rather than GNU cron, the command line is:
-#ExecStart=cron -s -x bit
 Restart=always
 
 [Install]

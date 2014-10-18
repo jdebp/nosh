@@ -7,7 +7,9 @@ Description=%p service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=%p -d
+# The import procedure is expected to have populated this directory with %p_flags.
+EnvironmentDirectory=env
+ExecStart=sh -c 'exec %p -d ${%p_flags}'
 Restart=always
 
 [Install]

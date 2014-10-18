@@ -1,6 +1,12 @@
 <refentry id="tai64nlocal">
 
-<refmeta><refentrytitle>tai4nlocal</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+<refmeta>
+<refentrytitle>tai4nlocal</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.9</refmiscinfo>
+</refmeta>
 
 <refnamediv><refname>tai64nlocal</refname><refpurpose>filter to translate external TAI64N timestamps</refpurpose></refnamediv>
 

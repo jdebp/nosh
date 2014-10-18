@@ -126,3 +126,12 @@ Suggests:
 Recommends: 
 Description: Regular socket-activated services
  This package provides the pre-packaged bundle directories for regular socket-activated services.
+
+Package: nosh-bsd-services
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management
+Suggests: 
+Recommends: 
+Description: BSD non-socket-activated services
+ This package provides the pre-packaged bundle directories for BSD-specific non-socket-activated services.
+

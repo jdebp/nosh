@@ -1,6 +1,12 @@
 <refentry id="fdredir">
 
-<refmeta><refentrytitle>fdredir</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+<refmeta>
+<refentrytitle>fdredir</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.9</refmiscinfo>
+</refmeta>
 
 <refnamediv><refname>fdredir</refname><refpurpose>redirect a file descriptor then chain</refpurpose></refnamediv>
 

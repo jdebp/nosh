@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=APM state
+
+[Service]
+Type=oneshot
+systemdWorkingDirectory=false
+ExecStart=apm -e enable
+ExecStopPost=apm -e disable
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

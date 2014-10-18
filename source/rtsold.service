@@ -7,7 +7,7 @@ Description=IPv6 router solicitation daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=rtsold -f
+ExecStart=%p -f
 Restart=always
 
 [Install]

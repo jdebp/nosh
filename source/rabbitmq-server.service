@@ -4,8 +4,8 @@
 
 [Unit]
 Description=Rabbit-MQ AMQP broker service
-Requires=epmd.service
 After=epmd.service
+Requires=epmd.service
 
 [Service]
 User=rabbitmq

@@ -30,17 +30,6 @@ const char * systemd_prefixes[] = {
 	"/run/", "/etc/", "/lib/", "/usr/lib/", "/usr/local/lib/"
 };
 
-static
-std::string
-tolower (
-	const std::string & s
-) {
-	std::string r;
-	for (std::string::const_iterator p(s.begin()); s.end() != p; ++p) 
-		r += std::tolower(*p);
-	return r;
-}
-
 static inline
 void
 split_name (
@@ -572,7 +561,7 @@ convert_systemd_units (
 		if (bundle_root_str) bundle_root = bundle_root_str + std::string("/");
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_USAGE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	if (args.empty()) {
@@ -676,6 +665,8 @@ convert_systemd_units (
 	value * maxconnections(socket_profile.use("socket", "maxconnections"));
 	value * keepalive(socket_profile.use("socket", "keepalive"));
 	value * socketmode(socket_profile.use("socket", "socketmode"));
+	value * passcredentials(socket_profile.use("socket", "passcredentials"));
+	value * passsecurity(socket_profile.use("socket", "passsecurity"));
 	value * nagle(socket_profile.use("socket", "nagle"));
 	value * ucspirules(socket_profile.use("socket", "ucspirules"));
 	value * freebind(socket_profile.use("socket", "freebind"));
@@ -995,7 +986,9 @@ convert_systemd_units (
 			if (is_local_socket_name(listenstream->last_setting())) {
 				run << "local-stream-socket-listen --systemd-compatibility ";
 				if (backlog) run << "--backlog " << quote(backlog->last_setting()) << " ";
-				if (socketmode) run << "--socketmode " << quote(socketmode->last_setting()) << " ";
+				if (socketmode) run << "--mode " << quote(socketmode->last_setting()) << " ";
+				if (passcredentials) run << "--pass-credentials ";
+				if (passsecurity) run << "--pass-security ";
 				run << quote(listenstream->last_setting()) << "\n";
 				run << envuidgid;
 				run << setsid;
@@ -1043,10 +1036,12 @@ convert_systemd_units (
 			}
 		}
 		if (listendatagram) {
-			if (is_local_socket_name(listenstream->last_setting())) {
+			if (is_local_socket_name(listendatagram->last_setting())) {
 				run << "local-datagram-socket-listen --systemd-compatibility ";
 				if (backlog) run << "--backlog " << quote(backlog->last_setting()) << " ";
-				if (socketmode) run << "--socketmode " << quote(socketmode->last_setting()) << " ";
+				if (socketmode) run << "--mode " << quote(socketmode->last_setting()) << " ";
+				if (passcredentials) run << "--pass-credentials ";
+				if (passsecurity) run << "--pass-security ";
 				run << quote(listendatagram->last_setting()) << "\n";
 				run << envuidgid;
 				run << setsid;

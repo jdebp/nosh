@@ -3,7 +3,7 @@ exec \
 /bin/exec \
 vc-get-tty "$1" -- \
 open-controlling-tty \
-vc-reset-tty \
+vc-reset-tty --hard-reset \
 login-prompt \
 login-banner /etc/issue \
 login-process \

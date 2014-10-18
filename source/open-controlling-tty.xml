@@ -1,6 +1,12 @@
 <refentry id="open-controlling-tty">
 
-<refmeta><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+<refmeta>
+<refentrytitle>open-controlling-tty</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.9</refmiscinfo>
+</refmeta>
 
 <refnamediv><refname>open-controlling-tty</refname><refpurpose>open a controlling terminal and prepare for login</refpurpose></refnamediv>
 

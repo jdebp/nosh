@@ -1,6 +1,12 @@
 <refentry id="tcp-socket-accept">
 
-<refmeta><refentrytitle>tcp-socket-accept</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+<refmeta>
+<refentrytitle>tcp-socket-accept</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.9</refmiscinfo>
+</refmeta>
 
 <refnamediv><refname>tcp-socket-accept</refname><refpurpose>accept incoming TCP connections and spawn a program per connection</refpurpose></refnamediv>
 

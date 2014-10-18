@@ -7,8 +7,9 @@ Description=Bluetooth link keys and PINs service
 
 [Service]
 systemdWorkingDirectory=false
+# The import procedure is expected to have populated this directory with %p_config.
 ExecStartPre=kldload -n ng_btsocket
-ExecStart=hcsecd -d
+ExecStart=sh -c 'exec %p -d -f "${%p_config:-/etc/bluetooth/%p.conf}"'
 Restart=always
 
 [Install]

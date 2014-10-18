@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=ACPI daemon
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=acpid -f -d
+
+[Install]
+WantedBy=workstation.target

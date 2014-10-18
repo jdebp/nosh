@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=SunRPC lock daemon
+Wants=nfsclient.service nfsd.service rpcbind.service rpcstatd.service
+After=rpcbind.service rpcstatd.service
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=rpc.lockd -d
+Restart=always
+
+[Install]
+WantedBy=server.target

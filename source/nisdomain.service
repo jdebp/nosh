@@ -7,8 +7,9 @@ Description=NIS domain name
 
 [Service]
 systemdWorkingDirectory=false
-EnvironmentFile=/etc/rc.conf
-ExecStart=sh -c 'domainname ${nisdomainname}'
+# The import procedure is expected to have populated this directory with nisdomainname.
+EnvironmentDirectory=env
+ExecStart=sh -c 'exec domainname ${nisdomainname}'
 RemainAfterExit=true
 
 [Install]

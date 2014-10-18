@@ -14,6 +14,7 @@ For copyright and licensing terms, see the file named COPYING.
 // These are the built-in commands visible in the BSD/SystemV compatibility utilities.
 
 void reboot_poweroff_halt_command ( const char * & , std::vector<const char *> & ) ;
+void rcctl ( const char * & , std::vector<const char *> & ) ;
 void wrap_system_control_subcommand ( const char * & , std::vector<const char *> & ) ;
 void telinit ( const char * & , std::vector<const char *> & ) ;
 void init ( const char * & , std::vector<const char *> & ) ;
@@ -37,9 +38,10 @@ commands[] = {
 	{	"normal",		wrap_system_control_subcommand		},
 	{	"telinit",		telinit					},
 	{	"init",			init					},
-	{	"service",		service,				},
-	{	"chkconfig",		chkconfig,				},
-	{	"invoke-rc.d",		invoke_rcd,				},
-	{	"update-rc.d",		update_rcd,				},
+	{	"service",		service					},
+	{	"chkconfig",		chkconfig				},
+	{	"invoke-rc.d",		invoke_rcd				},
+	{	"update-rc.d",		update_rcd				},
+	{	"rcctl",		rcctl					},
 };
 const std::size_t num_commands = sizeof commands/sizeof *commands;

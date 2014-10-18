@@ -7,8 +7,9 @@ Description=nsswitch caching service
 
 [Service]
 systemdWorkingDirectory=false
-EnvironmentFile=/etc/environment
-ExecStart=nscd -n
+# The import procedure is expected to have populated this directory with nscd_flags.
+EnvironmentFile=env
+ExecStart=sh -c 'exec nscd -n $(nscd_flags}'
 Restart=always
 
 [Install]

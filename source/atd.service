@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description="at" scheduling service
+Description=Deferred execution scheduler
 
 [Service]
 systemdWorkingDirectory=false

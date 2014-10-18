@@ -1,3 +1,14 @@
+nosh (1.9) unstable; urgency=low
+
+  * More BSD services: utx, apm, apmd, auditdistd, ctld, ftp-proxy, kfd, swapon, pwcheck, mrouted, rpcstatd, rpclockd, keyserv, iscsid, iscsictl, sysctl, yppasswdd, ypxfrd, ypupdated, ypset, ypserv, pppoed, msgs, vixiecron
+  * More Linux services: keyboard-setup, console-setup, pppd-dns, kerneloops, acpid
+  * A new rcctl shim supplies limited compatibility with the OpenBSD tool.
+  * Added convert-rcconf-presets for converting /etc/rc.conf{,.local} .
+  * Added a vc-ncurses-io command.
+  * The motd service is now named motd-dynamic, per the Debian init.d script of that name, allowing a BSD service to be named motd.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Sat, 18 Oct 2014 15:24:17 +0100
+
 nosh (1.8) unstable; urgency=low
 
   * More cross-platform services: keepalived, dovecot, wicd

@@ -1,8 +1,17 @@
 <refentry id="pty-run">
 
-<refmeta><refentrytitle>pty-run</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+<refmeta>
+<refentrytitle>pty-run</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.9</refmiscinfo>
+</refmeta>
 
-<refnamediv><refname>pty-run</refname><refpurpose>run a program under a pseudo-terminal </refpurpose></refnamediv>
+<refnamediv>
+<refname>pty-run</refname>
+<refpurpose>run a program under a pseudo-terminal </refpurpose>
+</refnamediv>
 
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -16,6 +25,8 @@
 <command>pty-run</command> is a utility that expects file descriptor 4 to be the master side of
 a pseudo-terminal and the <code>TTY</code> environment variable to be the full device
 filename of the slave side.
+(<citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+can be used to set this process state up.)
 </para>
 
 <para>
@@ -73,7 +84,7 @@ to its child.
 
 <listitem>
 <para>
-In the default if the <arg>-t</arg> option is used,
+In the default if the <arg>-t</arg> option is not used,
 it behaves in "pipe" mode.
 </para>
 

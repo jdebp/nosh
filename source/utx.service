@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=utmpx boot/shutdown record generator
+After=local-fs.target
+
+[Service]
+Type=oneshot
+systemdWorkingDirectory=false
+ExecStart=utx boot
+ExecStopPost=utx shutdown
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

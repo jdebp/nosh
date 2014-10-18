@@ -10,4 +10,5 @@ poweroff
 reboot
 rescue
 service
+rcctl
 telinit

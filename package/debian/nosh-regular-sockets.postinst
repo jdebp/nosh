@@ -2,14 +2,20 @@
 case "$1" in
 	configure)
 		for i in \
+			exim4r \
+			exim4s \
 			ftp4d \
 			ftp6d \
 			http6d \
+			kadmind \
+			kpasswdd \
 			qmail-smtpd \
-			exim4r \
-			exim4s \
-			sshd \
+			rsync \
 			saned \
+			sshd \
+			svnserve \
+			systemd-rsyslog \
+			vsftpd \
 			;
 		do
 			system-control preset $i

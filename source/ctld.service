@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=CAM Target Layer/iSCSI target daemon
+
+[Service]
+systemdWorkingDirectory=false
+ExecStartPre=kldload -n ctl
+# ctld needs a proper option for telling it not to fork.  Until it has, this will have to do.
+ExecStart=ctld -d
+Restart=always
+
+[Install]
+WantedBy=workstation.target

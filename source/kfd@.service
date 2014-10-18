@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=KF service
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=kfd
+Restart=always
+
+[Install]
+WantedBy=server.target

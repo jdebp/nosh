@@ -7,7 +7,7 @@ Description=IPv6 mroute daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=mroute6d
+ExecStart=pim6dd
 Restart=always
 
 [Install]

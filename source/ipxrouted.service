@@ -7,7 +7,7 @@ Description=IPX route daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=ipxrouted
+ExecStart=IPXrouted
 Restart=always
 
 [Install]

@@ -106,6 +106,14 @@ wrap_system_control_subcommand (
 }
 
 void
+rcctl (
+	const char * & next_prog,
+	std::vector<const char *> & args
+) {
+	next_prog = args[0] = "system-control";
+}
+
+void
 init ( 
 	const char * & next_prog,
 	std::vector<const char *> & args

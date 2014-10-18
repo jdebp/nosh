@@ -33,14 +33,18 @@ local_datagram_socket_listen (
 	const char * prog(basename_of(args[0]));
 	signed long uid(-1), gid(-1), mode(0700);
 	bool has_uid(false), has_gid(false), has_mode(false);
-	bool systemd_compatibility(false);
+	bool systemd_compatibility(false), pass_credentials(false), pass_security(false);
 	try {
 		popt::bool_definition systemd_compatibility_option('\0', "systemd-compatibility", "Set the $LISTEN_FDS and $LISTEN_PID environment variables for compatibility with systemd.", systemd_compatibility);
+		popt::bool_definition pass_credentials_option('\0', "pass-credentials", "Specify that credentials can be passed over the socket.", pass_credentials);
+		popt::bool_definition pass_security_option('\0', "pass-security", "Specify that security can be passed over the socket.", pass_security);
 		popt::signed_number_definition uid_option('u', "uid", "number", "Specify the UID for the bound socket filename.", uid, 0);
 		popt::signed_number_definition gid_option('g', "gid", "number", "Specify the GID for the bound socket filename.", gid, 0);
 		popt::signed_number_definition mode_option('m', "mode", "number", "Specify the permissions for the bound socket filename.", mode, 0);
 		popt::definition * top_table[] = {
 			&systemd_compatibility_option,
+			&pass_credentials_option,
+			&pass_security_option,
 			&uid_option,
 			&gid_option,
 			&mode_option
@@ -103,6 +107,18 @@ exit_error:
 	if (has_mode) {
 		if (0 > chmod(listenpath, mode)) goto exit_error;
 	}
+#if defined(SO_PASSCRED)
+	if (pass_credentials) {
+		int one(1);
+		if (0 > setsockopt(s, SOL_SOCKET, SO_PASSCRED, &one, sizeof one)) goto exit_error;
+	}
+#endif
+#if defined(SO_PASSSEC)
+	if (pass_credentials) {
+		int one(1);
+		if (0 > setsockopt(s, SOL_SOCKET, SO_PASSSEC, &one, sizeof one)) goto exit_error;
+	}
+#endif
 
 	if (0 > dup2(s, LISTEN_SOCKET_FILENO)) goto exit_error;
 	if (LISTEN_SOCKET_FILENO != s) close(s);

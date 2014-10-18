@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=sysctl settings
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=sh -c 'for f in /etc/sysctl.conf /etc/sysctl.conf.local ; do [ -r $f ] && sysctl -i -f $f ; done'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

@@ -144,6 +144,10 @@ std::string
 rtrim (
 	const std::string & s
 );
-
+extern
+std::string
+tolower (
+	const std::string & s
+);
 
 #endif

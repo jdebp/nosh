@@ -6,4 +6,4 @@ libraries="builtins.a utils.a"
 [ "`uname`" = "FreeBSD" ] || uuid=-luuid
 [ "`uname`" = "FreeBSD" ] && static="-static"
 redo-ifchange link ${objects} ${libraries}
-exec ./link "$3" ${objects} ${libraries} ${kqueue} ${uuid} ${static}
+exec ./link "$3" ${objects} ${libraries} ${kqueue} ${uuid} -lncursesw ${static}

@@ -10,7 +10,7 @@ Before=multi-user.target
 [Service]
 systemdWorkingDirectory=false
 ExecStart=powerd -v
-ExecStopPost=sysctl dev.cpu.0.freq=`sysctl -n dev.cpu.0.freq_levels | sed -e 's:/.*::'`
+ExecStopPost=sh -c 'sysctl dev.cpu.0.freq=`sysctl -n dev.cpu.0.freq_levels | sed -e \'s:/.*::\'`'
 
 [Install]
 WantedBy=workstation.target

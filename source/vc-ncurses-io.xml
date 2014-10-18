@@ -1,0 +1,73 @@
+<refentry id="vc-ncurses-io">
+
+<refmeta>
+<refentrytitle>vc-ncurses-io</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.9</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>vc-ncurses-io</refname>
+<refpurpose>realize a (user-space) virtual console on a(nother) terminal with ncurses</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>vc-ncurses-io</command>
+<arg choice='req'><replaceable>filename</replaceable></arg>
+<arg choice='req'><replaceable>fifoname</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>vc-ncurses-io</command> is the I/O back-end for a (user-space) virtual
+console, that realizes the virtual console on a(nother) terminal.
+It uses wide-character ncurses (sometimes a.k.a. ncursesw) to do so, and thus
+expects that terminal to be already connected to its standard input and
+standard output.
+</para>
+
+<para>
+It opens the character/attribute buffer file <replaceable>filename</replaceable> and
+the input FIFO <replaceable>fifoname</replaceable>.
+These are the "master side" interfaces of the virtual console.
+It is the user's responsibility to ensure that these refer to the same,
+single, virtual console.
+</para>
+
+<para>
+If then enters a loop where it simultaneously:
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+writes all data received from its standard input to the input FIFO, using
+ncurses to retrive the input; and
+</para>
+</listitem>
+
+<listitem>
+<para>
+writes the contents of the character/attribute buffer file to its standard
+output, using ncursesw to write the output.
+</para>
+</listitem>
+
+</itemizedlist>
+
+<para>
+It only requires sufficient privileges to access the file and the FIFO.
+Superuser privileges are not necessary.
+The recommended configuration is that the file and the FIFO are (respectively)
+readable and writable by a dedicated unprivileged user or group.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

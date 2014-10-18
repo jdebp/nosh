@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=SSH service
+Description=SSH key generation
 
 [Service]
 systemdWorkingDirectory=false

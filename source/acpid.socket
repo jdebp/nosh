@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=ACPI daemon socket
+
+[Socket]
+Backlog=2
+MaxConnections=2
+ListenStream=/run/acpid.socket
+Accept=false
+
+[Install]
+WantedBy=server.target

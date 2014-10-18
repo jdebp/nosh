@@ -5,7 +5,7 @@
 <manvolnum>8</manvolnum>
 <refmiscinfo class="manual">administrator commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.0</refmiscinfo>
+<refmiscinfo class="version">1.9</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -21,6 +21,7 @@
 <refname>fasthalt</refname>
 <refname>fastpoweroff</refname>
 <refname>service</refname>
+<refname>rcctl</refname>
 <refname>chkconfig</refname>
 <refname>update-rc.d</refname>
 <refname>invoke-rc.d</refname>
@@ -79,6 +80,11 @@
 <command>chkconfig</command>
 <arg choice="req"><replaceable>name</replaceable></arg>
 <arg choice="req"><replaceable>command</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>rcctl</command>
+<arg choice="req"><replaceable>command</replaceable></arg>
+<arg choice="req"><replaceable>name</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
 <command>update-rc.d</command>
@@ -265,6 +271,23 @@ Note that the
 <arg choice="plain">start</arg> and <arg choice="plain">stop</arg>
 subcommands of the original tool have been deprecated.
 This command makes no attempt to support any such mechanism.
+</para>
+
+<para>
+Invoked as 
+<command>rcctl</command>
+<arg choice="plain"><replaceable>command</replaceable></arg>
+<arg choice="plain"><replaceable>name</replaceable></arg>,
+the program chains to
+<command>system-control</command>
+<arg choice="plain"><replaceable>command</replaceable></arg>
+<arg choice="plain"><replaceable>name</replaceable></arg>.
+It makes no attempt itself to validate <replaceable>command</replaceable>,
+which can be any of the subcommands supported by
+<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+However, for best results restrict <replaceable>command</replaceable> to one of
+<arg choice="plain">enable</arg>, <arg choice="plain">disable</arg>, or <arg
+choice="plain">status</arg>.
 </para>
 
 <para>

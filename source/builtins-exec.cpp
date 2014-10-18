@@ -20,6 +20,7 @@ extern void chroot ( const char * &, std::vector<const char *> & );
 extern void umask ( const char * &, std::vector<const char *> & );
 extern void vc_get_tty ( const char * &, std::vector<const char *> & );
 extern void vc_reset_tty ( const char * &, std::vector<const char *> & );
+extern void vc_ncurses_io ( const char * &, std::vector<const char *> & );
 extern void open_controlling_tty ( const char * &, std::vector<const char *> & );
 extern void pty_get_tty ( const char * &, std::vector<const char *> & );
 extern void pty_run ( const char * &, std::vector<const char *> & );
@@ -76,6 +77,7 @@ commands[] = {
 	{	"umask",			umask				},
 	{	"vc-get-tty",			vc_get_tty			},
 	{	"vc-reset-tty",			vc_reset_tty			},
+	{	"vc-ncurses-io",		vc_ncurses_io			},
 	{	"open-controlling-tty",		open_controlling_tty		},
 	{	"login-banner",			login_banner			},
 	{	"login-process",		login_process			},

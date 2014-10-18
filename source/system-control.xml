@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">administrator commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.0</refmiscinfo>
+<refmiscinfo class="version">1.9</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -859,7 +859,7 @@ those mechanisms.
 </itemizedlist>
 
 </refsection>
-<refsection><title>preset conversion subcommand</title>
+<refsection><title>preset conversion subcommands</title>
 
 <cmdsynopsis>
 <command>system-control</command>
@@ -871,11 +871,30 @@ those mechanisms.
 <arg choice='plain'><replaceable>name</replaceable>.service</arg>
 </group>
 </cmdsynopsis>
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">convert-rcconf-presets</arg>
+<group choice='req' rep='repeat'>
+<arg choice='plain'><replaceable>name</replaceable></arg>
+<arg choice='plain'><replaceable>name</replaceable>.target</arg>
+<arg choice='plain'><replaceable>name</replaceable>.socket</arg>
+<arg choice='plain'><replaceable>name</replaceable>.service</arg>
+</group>
+</cmdsynopsis>
 
 <para>
-This subcommand translates the preset information used by systemd into
+These subcommands translate preset information used by other systems into
 native preset information in the bundle directory for service/target
 <arg choice='plain'><replaceable>name</replaceable></arg>.
+<command>convert-systemd-presets</command> converts systemd preset information.
+<command>convert-rcconf-presets</command> converts
+<filename>/etc/rc.conf</filename> and <filename>/etc/rc.conf.local</filename>
+preset information, specifically the <arg
+choice='plain'><replaceable>name</replaceable>_enable</arg> variable,
+interpreting the values <code>true</code>, <code>1</code>, <code>yes</code>,
+and <code>on</code> as enable, and any other values (including specifically
+<code>false</code>, <code>0</code>, <code>no</code>, and <code>off</code>) as
+disable.
 </para>
 
 </refsection>

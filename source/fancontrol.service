@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=fan control service
+Description=fan control daemon
 
 [Service]
 Type=forking

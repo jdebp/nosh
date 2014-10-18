@@ -8,10 +8,11 @@ After=local-fs.target
 
 [Service]
 systemdWorkingDirectory=false
-EnvironmentFile=-/etc/default/%P
-ExecStartPre=sh -c 'exec quotaon "${quotaon_flags}"'
+# The import procedure is expected to have populated this directory with quotaon_flags, quotaoff_flags, and quotacheck_flags.
+EnvironmentDirectory=env
+ExecStartPre=sh -c 'exec quotacheck "${quotacheck_flags}"'
+ExecStart=sh -c 'exec quotaon "${quotaon_flags}"'
 ExecStopPost=sh -c 'exec quotaoff "${quotaoff_flags}"'
-ExecStart=true
 RemainAfterExit=yes
 
 [Install]

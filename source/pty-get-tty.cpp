@@ -44,19 +44,13 @@ pty_get_tty (
 				));
 	if (fd == -1) {
 error_exit:
-		{
-			const int error(errno);
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "ptmx", std::strerror(error));
-		}
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "ptmx", std::strerror(error));
 		if (fd >= 0) close(fd);
 		throw EXIT_FAILURE;
 	}
 	
-	if (0 != grantpt(fd) || 0 != unlockpt(fd)) {
-		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "ptmx", std::strerror(error));
-		throw EXIT_FAILURE;
-	}
+	if (0 != grantpt(fd) || 0 != unlockpt(fd)) goto error_exit;
 
 	const char * tty(ptsname(fd));
 	if (!tty) goto error_exit;

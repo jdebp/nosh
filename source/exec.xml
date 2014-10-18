@@ -1,6 +1,12 @@
 <refentry id="exec">
 
-<refmeta><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+<refmeta>
+<refentrytitle>exec</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.9</refmiscinfo>
+</refmeta>
 
 <refnamediv><refname>exec</refname><refpurpose>chain</refpurpose></refnamediv>
 
@@ -76,7 +82,9 @@ The alternative names are:
 <command>softlimit</command>, <command>tcp-socket-accept</command>,
 <command>tcp-socket-listen</command>, <command>ulimit</command>,
 <command>umask</command>, <command>unsetenv</command>,
-<command>vc-get-tty</command>, and <command>vc-reset-tty</command>,
+<command>vc-get-tty</command>, 
+<command>vc-ncurses-io</command>, 
+and <command>vc-reset-tty</command>,
 See their individual manual pages for details.
 </para>
 

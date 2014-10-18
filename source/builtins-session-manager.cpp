@@ -35,6 +35,7 @@ void try_restart ( const char * & , std::vector<const char *> & ) ;
 void is_active ( const char * & , std::vector<const char *> & ) ;
 void convert_systemd_units ( const char * & , std::vector<const char *> & ) ;
 void convert_systemd_presets ( const char * & , std::vector<const char *> & ) ;
+void convert_rcconf_presets ( const char * & , std::vector<const char *> & ) ;
 void nagios_check ( const char * & , std::vector<const char *> & ) ;
 void cyclog ( const char * & , std::vector<const char *> & ) ;
 void system_control ( const char * & , std::vector<const char *> & ) ;
@@ -85,6 +86,7 @@ commands[] = {
 	{	"is-active",			is_active		},
 	{	"convert-systemd-units",	convert_systemd_units	},
 	{	"convert-systemd-presets",	convert_systemd_presets	},
+	{	"convert-rcconf-presets",	convert_rcconf_presets	},
 	{	"nagios-check-service",		nagios_check		},
 
 	// These are spawned by session-manager.

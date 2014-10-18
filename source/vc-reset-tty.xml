@@ -1,13 +1,19 @@
 <refentry id="vc-reset-tty">
 
-<refmeta><refentrytitle>vc-reset-tty</refentrytitle><manvolnum>1</manvolnum><refmiscinfo class="manual">user commands</refmiscinfo><refmiscinfo class="source">nosh</refmiscinfo><refmiscinfo class="version">1.0</refmiscinfo></refmeta>
+<refmeta>
+<refentrytitle>vc-reset-tty</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.9</refmiscinfo>
+</refmeta>
 
 <refnamediv><refname>vc-reset-tty</refname><refpurpose>chain-load utility for resetting virtual console terminals</refpurpose></refnamediv>
 
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>vc-reset-tty</command>
-<arg>--no-reset</arg>
+<arg>--hard-reset</arg>
 <arg>--no-newline</arg>
 <arg>--no-utf8</arg>
 <arg>--no-tostop</arg>
@@ -76,7 +82,7 @@ The <code>iutf8</code> option is set, unless the <arg>--no-utf8</arg> command-li
 terminal state, including tabstops, margins, windows. scrolling mode, and
 overstrike mode.
 Tabstops are reset to every 8th column.
-Unless the <arg>--no-reset</arg> command line option is used, additional escape
+If the <arg>--hard-reset</arg> command line option is used, additional escape
 sequences are written to hard reset the terminal from an unknown state,
 including resetting the palette.
 </para>

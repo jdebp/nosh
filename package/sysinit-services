@@ -5,8 +5,10 @@ devd-log
 dmesg
 hostname
 ldconfig
+keyboard-setup
+console-setup
 machine-id
-motd
+motd-dynamic
 newsyslog
 sane-console
 sysinit-log

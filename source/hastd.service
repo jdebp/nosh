@@ -7,6 +7,7 @@ Description=High Availability Storage service
 
 [Service]
 systemdWorkingDirectory=false
+ExecStartPre=kldload -n geom_gate:g_gate
 # The daemon should properly clean itself up at SIGTERM; if it does not, that is a bug.
 ExecStart=hastd -F
 Restart=always

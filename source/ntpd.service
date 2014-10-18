@@ -9,8 +9,6 @@ Description=BSD NTP daemon
 systemdWorkingDirectory=false
 ExecStart=ntpd -n -g -f /var/db/ntpd.drift
 Restart=always
-StandardOutput=inherit
-StandardError=inherit
 
 [Install]
 WantedBy=workstation.target

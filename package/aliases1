@@ -46,6 +46,7 @@ exec	umask
 exec	unsetenv
 exec	userenv
 exec	vc-get-tty
+exec	vc-ncurses-io
 exec	vc-reset-tty
 foreground	background
 session-manager	cyclog
@@ -53,6 +54,7 @@ session-manager	system-control
 session-manager	service-manager
 system-control	convert-systemd-presets
 system-control	convert-systemd-units
+system-control	convert-rcconf-presets
 system-control	systemctl
 system-control	initctl
 system-control	start

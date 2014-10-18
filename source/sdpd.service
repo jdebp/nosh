@@ -7,8 +7,10 @@ Description=Bluetooth Service Discovery Protocol service
 
 [Service]
 systemdWorkingDirectory=false
+# The import procedure is expected to have populated this directory with %p_control.
+EnvironmentDirectory=env
 ExecStartPre=kldload -n ng_btsocket
-ExecStart=sdpd -d
+ExecStart=sh -c 'exec sdpd -d -c ${%p_control:-/run/sdpd}'
 Restart=always
 
 [Install]

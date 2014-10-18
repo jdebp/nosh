@@ -7,8 +7,8 @@ Description=packet filter service
 
 [Service]
 systemdWorkingDirectory=false
-EnvironmentFile=-/etc/rc.conf
-EnvironmentFile=-/etc/rc.conf.local
+# The import procedure is expected to have popluated this directory with pf_rules and pf_flags.
+EnvironmentDirectory=env
 ExecStartPre=pfctl -Fall
 ExecStartPre=pfctl -e -q
 ExecStart=foreground sh -c 'exec pfctl -f "$pf_rules" $pf_flags' ; pause

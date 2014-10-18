@@ -8,7 +8,9 @@ Description=NIS binding daemon
 [Service]
 Type=forking
 systemdWorkingDirectory=false
-ExecStart=ypbind
+# The import procedure is expected to have populated this directory with nis_client_flags.
+EnvironmentDirectory=env
+ExecStart=sh -c 'exec ypbind ${nis_client_flags}'
 Restart=always
 
 [Install]

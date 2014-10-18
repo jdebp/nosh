@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=turn swap on
+DefaultDependencies=false
+EarlySupervise=true
+
+[Service]
+Type=oneshot
+systemdWorkingDirectory=false
+ExecStart=swapon -a
+RemainAfterExit=yes
+
+[Install]
+WantedBy=sysinit.target

@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=KF socket
+
+[Socket]
+Backlog=2
+MaxConnections=2
+Nagle=false
+BindIPv6Only=both
+ListenStream=kf
+UCSPIRules=true
+Accept=true
+
+[Install]
+WantedBy=server.target
