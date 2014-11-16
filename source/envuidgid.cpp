@@ -3,12 +3,20 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
+#if defined(__LINUX__) || defined(__linux__)
+#define _BSD_SOURCE
+#endif
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <cerrno>
 #include <sys/types.h>
+#if defined(__LINUX__) || defined(__linux__)
+#include <grp.h>
+#else
+#include <unistd.h>
+#endif
 #include <pwd.h>
 #include "popt.h"
 #include "utils.h"
@@ -23,8 +31,13 @@ envuidgid (
 	std::vector<const char *> & args
 ) {
 	const char * prog(basename_of(args[0]));
+	bool supplementary(false);
 	try {
-		popt::top_table_definition main_option(0, 0, "Main options", "account prog");
+		popt::bool_definition supplementary_option('s', "supplementary", "Set the supplementary GIDs from the group database as well.", supplementary);
+		popt::definition * top_table[] = {
+			&supplementary_option
+		};
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "account prog");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -53,10 +66,26 @@ exit_error:
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, account, error ? std::strerror(error) : "No such user.");
 		throw static_cast<int>(EXIT_TEMPORARY_FAILURE);	// Bernstein daemontools compatibility
 	}
+	if (supplementary) {
+		int n(0);	// Zero initialization is important!
+		getgrouplist(account, p->pw_gid, 0, &n);
+		std::vector<gid_t> groups(n);
+		n = groups.size();
+		if (0 > getgrouplist(account, p->pw_gid, groups.data(), &n)) goto exit_error;
+		std::string gidlist;
+		for (std::vector<gid_t>::const_iterator i(groups.begin()); groups.end() != i; ++i) {
+			char gid[64];
+			snprintf(gid, sizeof gid, "%u", *i);
+			if (!gidlist.empty()) gidlist += ",";
+			gidlist += gid;
+		}
+		if (0 > setenv("GIDLIST", gidlist.c_str(), 1)) goto exit_error;
+	} else {
+		if (0 > unsetenv("GIDLIST")) goto exit_error;
+	}
 	char uid[64], gid[64];
 	snprintf(uid, sizeof uid, "%u", p->pw_uid);
 	snprintf(gid, sizeof gid, "%u", p->pw_gid);
-
-	if (0 >setenv("UID", uid, 1)) goto exit_error;
-	if (0 >setenv("GID", gid, 1)) goto exit_error;
+	if (0 > setenv("UID", uid, 1)) goto exit_error;
+	if (0 > setenv("GID", gid, 1)) goto exit_error;
 }

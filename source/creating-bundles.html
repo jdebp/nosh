@@ -1,18 +1,18 @@
 <title>Creating bundles</title>
 <link rel="Up" href="index.html" title="nosh Guide" />
 <link rel="Next" href="converting-systemd-units.html" title="Converting systemd units" />
-<link rel="Prev" href="anatomy-of-login-service.html" title="Anatomy of a login service" />
-<h2>
+<link rel="Prev" href="anatomy-of-sysinit-service.html" title="Anatomy of a sysinit service" />
+<h1>
 Creating bundles
-</h2>
+</h1>
 
 <p>
 If you are unlucky enough to have a package that does not supply service bundle directories for its services, you have some options.
 </p>
 
-<h3>
+<h2>
 You can build a bundle using parts from some public <code>run</code> script collections.
-</h3>
+</h2>
 
 <p>
 <a href="http://smarden.org/runit/runscripts.html">Gerrit Pape made a collection of some run scripts some years ago.</a>
@@ -34,9 +34,9 @@ Several of the scripts can be simplified <em>yet further</em> with use of <code>
 Some of them also rely upon tools such as <code>chpst</code> and <code>tcpsvd</code>, which one of course replaces with the equivalent daemontools-alike tool(s) and some combination of <a href="tcp-socket-listen.html"><code>tcp-socket-listen</code></a>, <a href="tcp-socket-accept.html"><code>tcp-socket-accept</code></a>, and <a href="ucspi-socket-rules-check.html"><code>ucspi-socket-rules-check</code></a>.
 </p>
 
-<h3>
+<h2>
 You can import a systemd <em>service unit</em> file.
-</h3>
+</h2>
 
 <p>
 <a href="converting-systemd-units.html">
@@ -50,9 +50,9 @@ This can cope with many systemd service units, as long as they aren't Linux-spec
 The import utility will display warnings about anything that it didn't understand or ignored.
 </p>
 
-<h3>
+<h2>
 You can simply write a bundle.
-</h3>
+</h2>
 
 <p>
 As mentioned above, minimal <code>start</code>, <code>stop</code>, and <code>restart</code> scripts are very simple.

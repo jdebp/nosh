@@ -4,6 +4,7 @@
 
 [Unit]
 Description=Bonjour service
+After=dbus.service
 
 [Service]
 systemdWorkingDirectory=false

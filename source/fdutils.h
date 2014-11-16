@@ -191,17 +191,6 @@ set_non_blocking (
 	return fcntl(fd, F_SETFL, flags);
 }
 
-extern inline
-int
-reset_close_on_exec (
-	int fd
-) {
-	int flags(fcntl(fd, F_GETFD));
-	if (0 > flags) return flags;
-	flags &= ~FD_CLOEXEC;
-	return fcntl(fd, F_SETFD, flags);
-}
-
 extern
 int
 pipe_close_on_exec (

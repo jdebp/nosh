@@ -103,6 +103,7 @@ namespace popt {
 		void do_usage(processor &);
 		void do_help(processor &);
 		const char * arguments_description;
+		using table_definition::execute;
 	};
 	struct named_definition : public definition {
 	public:

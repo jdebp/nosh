@@ -8,23 +8,38 @@
 <refmiscinfo class="version">1.9</refmiscinfo>
 </refmeta>
 
-<refnamediv><refname>envuidgid</refname><refpurpose>add UID and GID environment variables then chain</refpurpose></refnamediv>
+<refnamediv>
+<refname>envuidgid</refname>
+<refpurpose>add UID and GID environment variables then chain</refpurpose>
+</refnamediv>
 
 <refsynopsisdiv>
 <cmdsynopsis>
-<command>envuidgid</command> <arg choice='req'><replaceable>account</replaceable></arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+<command>envuidgid</command> 
+<arg>--supplementary</arg>
+<arg choice='req'><replaceable>account</replaceable></arg> 
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection><title>Description</title>
 
 <para>
-<command>envuidgid</command> is a chain-loading utility that sets the <code>UID</code> and <code>GID</code>
-environment variables to the values for <replaceable>account</replaceable> in
-the system account database and then chain loads to
-<replaceable>next-prog</replaceable> with the
+<command>envuidgid</command> is a chain-loading utility that sets the
+<code>UID</code> and <code>GID</code> environment variables to the values for
+<replaceable>account</replaceable> in the system account database and then
+chain loads to <replaceable>next-prog</replaceable> with the
 <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 function.  
+</para>
+
+<para>
+If the <arg>--supplementary</arg> option is used, it will also set the
+<code>GIDLIST</code> environment variable to the (comma-separated) list of
+supplementary GIDs for the groups to which account belongs, as listed in the
+groups database. 
+Without that option, it ignores the group database and unsets the
+<code>GIDLIST</code> environment variable entirely.
 </para>
 
 <para>

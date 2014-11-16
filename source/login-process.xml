@@ -8,7 +8,10 @@
 <refmiscinfo class="version">1.9</refmiscinfo>
 </refmeta>
 
-<refnamediv><refname>login-process</refname><refpurpose>chain-load utility for recording login processes in utmp/wtmp</refpurpose></refnamediv>
+<refnamediv>
+<refname>login-process</refname>
+<refpurpose>chain-load utility for recording login accounting entries in utmp/wtmp</refpurpose>
+</refnamediv>
 
 <refsynopsisdiv>
 <refsection><title>MODERN BSD</title>
@@ -21,6 +24,7 @@
 <command>login-process</command>
 <arg>--utmp-filename <replaceable>filename</replaceable></arg>
 <arg>--wtmp-filename <replaceable>filename</replaceable></arg>
+<arg>--id <replaceable>id</replaceable></arg>
 <arg>--getty</arg>
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
@@ -30,8 +34,8 @@
 <refsection><title>Description</title>
 
 <para>
-<command>login-process</command> is a chain-loading utility that records itself
-as a "login" process in the <filename>utmp</filename> and
+<command>login-process</command> is a chain-loading utility that is used to
+record login accounting entries in the <filename>utmp</filename> and
 <filename>wtmp</filename> databases, and then (if successful) chain loads to
 <replaceable>next-prog</replaceable> with the
 <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
@@ -50,6 +54,24 @@ and thus be the login process so recorded.
 <command>login-process</command> makes no alteration to process state.
 </para>
 
+<para>
+The function of <command>login-process</command> is to perform the actions that
+used to be performed by 
+<citerefentry><refentrytitle>init</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>getty</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+in a virtual terminal login service.
+In such a service, using the nosh toolset and running under 
+<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>getty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+is replaced by a set of simpler chain-loading tools tailored for virtual terminals
+that do not have a "getty" state, and the service is not spawned by or monitored by an
+<citerefentry><refentrytitle>init</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+program at all, so there is no real "init" state for a terminal either.
+The accounting entries produced by <command>login-process</command> are thus compatibility
+features at best.
+</para>
+
 <refsection><title>MODERN BSD BEHAVIOUR</title>
 
 <para>
@@ -57,41 +79,100 @@ Modern BSD operating systems have a completely new user accounting database and
 have no notion of "login" or "init" accounting entries at all
 (see
 <citerefentry><refentrytitle>utmpx</refentrytitle><manvolnum>3</manvolnum></citerefentry>).
-This utility effectively does nothing on such operating systems.
+There are simply no accounting database entries for terminals where no-one is
+currently logged in.
+The compatibility terminal statuses that <command>login-process</command>
+records do not exist.
 </para>
 
-</refsection><refsection><title>OLD SYSTEM V BEHAVIOUR</title>
+<para>
+This utility effectively does nothing on such operating systems, and need not be used at all.
+</para>
+
+</refsection>
+
+<refsection><title>OLD SYSTEM V BEHAVIOUR</title>
 
 <para>
-The locations of the <filename>utmp</filename> and <filename>wtmp</filename> files are derived at compile time
-from a system header when the utility is built from source.
+On old System V systems, the accounting database is described by
+<citerefentry><refentrytitle>utmpx</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
+<command>login-process</command> writes <code>LOGIN_PROCESS</code> records in
+the accounting database, or <code>INIT_PROCESS</code> records if the
+<arg choice='plain'>--getty</arg> command line option is used.
+(The user names are, respectively, "LOGIN" and "GETTY", although most old
+System V accounting utilities won't report the actual contents of the user name
+field for such record types.)
+</para>
+
+<para>
+The locations of the <filename>utmp</filename> and <filename>wtmp</filename>
+files are derived at compile time from a system header when the utility is
+built from source.
 To override them at runtime, use the <arg>--utmp-filename</arg> and <arg>--wtmp-filename</arg>
 options.
 </para>
 
 <para>
-<command>login-process</command> determines its own process ID and the basename of its
-controlling TTY.  
-Using those, it locates the appropriate record in <filename>utmp</filename> to overwrite,
-which matches one or the other or both.
-If it fails to find a match, it unconditionally extends <filename>utmp</filename> with a new
+It always extends <filename>wtmp</filename> with the new accounting record.
+It locates a record in <filename>utmp</filename> to overwrite in the
+conventional manner of the
+<citerefentry><refentrytitle>pututxline</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+function.  
+This is, roughly:
+</para>
+<orderedlist>
+<listitem><para>
+It overwrites any entry that matches its own process ID.
+Such entries are, in normal operation, the results of earlier terminal "states"
+being written to the accounting database by the same login service process.
+</para></listitem>
+<listitem><para>
+Failing that, it overwrites any entry that matches its <filename>inittab</filename> ID.
+<command>login-process</command> is not responsible for erasing records from <filename>utmp</filename>.
+Properly that is the domain of 
+<citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry> 
+when the user's login shell terminates, although some old
+<citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry> 
+implementations do not do this, leading to <filename>utmp</filename> records
+not being marked "dead" or erased.
+Re-using the "undead" <filename>utmp</filename> records for dead processes
+whose <filename>utmp</filename> records have not been cleaned up is why
+<command>login-process</command> also matches on the
+<filename>inittab</filename> ID.
+</para>
+</listitem>
+<listitem><para>
+Failing that, it unconditionally extends <filename>utmp</filename> with a new
 record.
-It always extends <filename>wtmp</filename> with that same record.
+</para></listitem>
+</orderedlist>
+
+<refsection><title><filename>inittab</filename> IDs</title>
+
+<para>
+Historically, an <filename>inittab</filename> ID was the "id" field from the record
+in <filename>/etc/inittab</filename> that describes the login service.
+There were, of course, several problems with that design, not the least of which is
+that login services were not informed what their IDs were.
+The old
+<citerefentry><refentrytitle>getty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+programs had to derive the ID from the terminal line name, the datum that they
+<emphasis>were</emphasis> supplied, and the ID was thus strongly tied to the
+terminal line name, causing problems if <filename>inittab</filename> did not
+have the same ID.
 </para>
 
 <para>
-The type of the record is set to <code>LOGIN_PROCESS</code> (see
-<citerefentry><refentrytitle>utmpx</refentrytitle><manvolnum>3</manvolnum></citerefentry>)
-and the username is set to "LOGIN", unless the <code>--getty</code> option is
-used in which case the type is <code>INIT_PROCESS</code> and the username "GETTY".
-The line is set to the basename of the controlling TTY, and the id is set
-to whatever trailing numeric portion thereof exists.
-(So, for example, if the controlling TTY is <filename>/dev/tty13</filename>, the line will be 
-<code>tty13</code> and the id will be <code>13</code>.)
-</para>
-
-<para>
-The name of the controlling TTY is determined from the value of the <code>TTY</code>
+<command>login-process</command> derives the <filename>inittab</filename> ID in
+the same way, determining it from the <filename>utmp</filename> terminal line
+name, unless forcibly overridden with the <arg choice='plain'>--id</arg>
+command option.
+The <filename>utmp</filename> terminal line name in turn is simply the name of
+the controlling TTY name with any "<code>/dev/</code>" or
+"<code>/run/dev/</code>" stripped.
+The controlling TTY name is determined from the value of the <code>TTY</code>
 environment variable, if present.
 This will be the case if <command>login-process</command> has been invoked within a chain
 that has run 
@@ -100,39 +181,49 @@ that has run
 or an equivalent 
 <citerefentry><refentrytitle>getty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 program.
-If absent, the 
+If the environment variable is absent, the 
 <citerefentry><refentrytitle>ttyname</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 library function is called.
 </para>
 
-<refsection><title>SECURITY</title>
+<para>
+When determining the <filename>inittab</filename> ID from the
+<filename>utmp</filename> terminal line name:
+</para>
+<orderedlist>
+<listitem><para>
+If the terminal line name begins with "<code>tty</code>", "<code>tts</code>", 
+"<code>pts</code>", or "<code>pty</code>" the ID is the remainder of the string.
+(So "<code>pts/5</code>" becomes "<code>/5</code>" and "<code>tty5</code>" becomes "<code>5</code>".)
+</para></listitem>
+<listitem><para>
+If the terminal line name begins with "<code>vc</code>" and ends with "<code>/tty</code>", 
+as is conventionally the case with user-space virtual terminals,
+the ID is the string less the "<code>/tty</code>" suffix.
+(So "<code>vc1/tty</code>" becomes "<code>vc1</code>".)
+</para></listitem>
+<listitem><para>
+Otherwise the ID is the string.
+(So "<code>vty/5</code>" remains "<code>vty/5</code>".)
+</para></listitem>
+</orderedlist>
+<para>
+In an ideal world, the last would be the sole mechanism.
+This complicated song and dance is for compatibility with other programs that write to the
+accounting database, in particular X Window System terminal emulators that also use
+pseudo-terminals.
+</para>
+
+</refsection>
+<refsection><title>Security</title>
 
 <para>
 The program requires permission to read and write to <filename>utmp</filename> and append (write) to <filename>wtmp</filename>.
 Lack of permission will result in the program aborting with an error.
 </para>
 
-<para>
-<command>login-process</command> is not responsible for erasing records from <filename>utmp</filename>.
-That is done by <citerefentry><refentrytitle>init</refentrytitle><manvolnum>1</manvolnum></citerefentry> when it reaps a child.
-If the process running <command>login-process</command> is not (at termination)
-a descendant of
-<citerefentry><refentrytitle>init</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-the <filename>utmp</filename> record written will not be marked "dead".
-Re-using the "undead" <filename>utmp</filename> records for dead processes that
-<citerefentry><refentrytitle>init</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-never saw is why <command>login-process</command> also matches on the basename
-of the controlling TTY.
-</para>
+</refsection>
 
-</refsection><refsection><title>BUGS</title>
-
-<para>
-Although not strictly a bug in this program, it is worth mentionining here that
-the <citerefentry><refentrytitle>who</refentrytitle><manvolnum>1</manvolnum></citerefentry> utility doesn't display the user name if the record type is
-<code>INIT_PROCESS</code>.
-</para>
-
-</refsection></refsection></refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection></refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
 
 </refentry>

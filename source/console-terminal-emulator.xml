@@ -1,0 +1,505 @@
+<refentry id="console-terminal-emulator">
+
+<refmeta>
+<refentrytitle>console-terminal-emulator</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.9</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>console-terminal-emulator</refname>
+<refpurpose>emulate a real terminal using a pseudo-terminal</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>console-terminal-emulator</command>
+<arg choice='req'><replaceable>directory</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>console-terminal-emulator</command> is a utility that expects file descriptor
+4 to be the master side of a pseudo-terminal and the <code>TTY</code>
+environment variable to be the full device filename of the slave side.
+(<citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+can be used to set this process state up.)
+</para>
+
+<para>
+First it sets up the various files in <replaceable>directory</replaceable>, opening
+the input FIFO for reading and the display buffers for reading and writing.
+The FIFOs are created unconditionally, and opened in non-blocking mode.
+The display buffers are created if they do not exist.
+All created display buffer files have permissions rw-r-----.
+All created input FIFO files have permissions rw--w----.
+</para>
+
+<para>
+It then enters a loop where it simultaneously:
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+processes all data received from the master side as terminal output, handling
+printing characters, control characters, escape sequences, and control
+sequences.
+</para>
+</listitem>
+
+<listitem>
+<para>
+processes all input events from the input FIFO, processing window requests and
+sending terminal character and escape sequences to the master side.
+</para>
+</listitem>
+
+</itemizedlist>
+
+<para>
+It finishes when the master side signals hangup (i.e. when the line discipline
+would set modem control lines on a real serial device to signal hangup because
+the last slave file descriptor is closed) and there are no more received data
+to output.
+At termination, it unlinks the file for the slave side, and erases the display
+as if by a Form Feed.
+</para>
+
+</refsection>
+
+<refsection><title>FILES</title>
+
+<para>
+The files used are as follows:
+</para>
+
+<variablelist>
+<varlistentry>
+<term><replaceable>directory</replaceable><filename>/tty</filename></term>
+<listitem><para>
+A stable and predictable name for the slave side of the pseudo-terminal device.
+This is a link to the device, if possible, or a symbolic link if not.
+(It is usually not.
+On Linux, the pseudo-terminal devices are on a filesystem of their own, which
+would make a link a cross-filesystem link; and on BSDs the <code>devfs</code>
+driver disallows the creation of directories under <filename>/dev</filename>
+forcing <replaceable>directory</replaceable> to be on another filesystem.)
+</para><para>
+If <replaceable>directory</replaceable> is <filename>/run/dev/vc1</filename>, for
+example, then the stable name for the terminal, for use in login services, will
+be <filename>/run/dev/vc1/tty</filename>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><replaceable>directory</replaceable><filename>/input</filename></term>
+<listitem><para>
+The input FIFO, through which renderer processes send keyboard and mouse events.
+Events are in a uniform packet format, which the terminal emulator converts
+into appropriate escape sequences.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><replaceable>directory</replaceable><filename>/display</filename></term>
+<listitem><para>
+The UTF-32, 24-bit colour, display buffer.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><replaceable>directory</replaceable><filename>/vcsa</filename></term>
+<listitem><para>
+An 8-bit character set, 3-bit colour, display buffer that is compatible with
+the Linux vcsa devices for kernel virtual terminals.
+This is provided for compatibility with screen reader softwares.
+</para></listitem>
+</varlistentry>
+</variablelist>
+
+</refsection>
+
+<refsection><title>Terminal output</title>
+
+<para>
+<command>console-terminal-emulator</command> emulates the character sequence processing
+logic of a hardware terminal, taking the data received from the master side of the
+pseudo-terminal and translating them into modifications to the screen buffer data
+files.
+</para>
+
+<para>
+All character data are first decoded from UTF-8 to a stream of Unicode code
+points.
+The decoding is directly from UTF-8 to the code points; in particular, UTF-16
+is not employed as an intermediary step.
+If a UTF-8 sequence decodes to one of the reserved code points used for UTF-16,
+no special treatment is given, and the code point is treated as any other.
+</para>
+
+<para>
+The decoder has to do something with invalid UTF-8 encodings, including overlong
+and incomplete character sequences.
+Whatever code point they decode to, such characters are not processed as control
+characters or as parts of control/escape sequences.
+They abort any control/escape sequence that they interrupt, and if not
+incomplete encodings they are printed as ordinary printing characters even if
+they are the code points for control characters.
+This behaviour should not be relied upon, and programs should not send such
+UTF-8 sequences to a terminal.
+</para>
+
+<para>
+The terminal emulator maintains a current set of character attributes,
+24-bit RGB foregrond colour, and 24-bit RGB background colour.
+These are combined with character code points when writing to the character
+cells of each screen buffer.
+</para>
+
+<refsection><title>vcsa buffer</title>
+
+<para>
+The <replaceable>directory</replaceable><filename>/vcsa</filename> file is
+structured as per the Linux character device file of that name, as a 4-byte
+header giving size and cursor position information followed by a series of
+2-byte character and attribute pairs in IBM PC CGA format,
+It is implemented mainly as a compatibility mechanism for the benefit of
+terminal rendering softwares that expect Linux vcsa devices, such as screen
+readers for the blind or partially sighted.
+</para>
+
+<para>
+The terminal emulator does not recognize nor handle CSI sequences that deal with
+8-bit character sets.
+The vcsa screen buffer is always ISO 8859-1; with Unicode code points outwith
+that range converted to code point 255.
+To handle a wider range of characters, terminal rendering softwares should use the
+Unicode screen buffer.
+Code points in the ranges 0x00 to 0x1F and 0x80 to 0x9F may appear, and terminal
+rendering softwares are expected to render these with some form of ordinary
+printing graphic.
+</para>
+
+<para>
+The 24-bit RGB foreground and background colour values for character cells are
+mapped to 3-bit CGA by comparing the relative intensities of red, green, and blue.
+The "bright foreground" and "bright background" CGA attribute bits are taken from
+the boldface and blink terminal attributes, respectively.
+No attempt is made to provide MDA or VGA in monochrome mode attributes, such as
+underline.
+To handle the full range of attributes, terminal rendering softwares should use
+the Unicode screen buffer.
+</para>
+
+</refsection>
+
+<refsection><title>Unicode buffer</title>
+
+<para>
+The <replaceable>directory</replaceable><filename>/display</filename> file 
+begins with a 16-byte header:
+</para>
+<orderedlist>
+<listitem><para>4-byte UCS-32 Byte Order Mark in host byte order.</para></listitem>
+<listitem><para>2-byte width in host byte order.</para></listitem>
+<listitem><para>2-byte height in host byte order.</para></listitem>
+<listitem><para>2-byte cursor X position in host byte order.</para></listitem>
+<listitem><para>2-byte cursor Y position in host byte order.</para></listitem>
+<listitem><para>cursor glyph type byte.</para></listitem>
+<listitem><para>cursor attributes byte.</para></listitem>
+<listitem><para>Reserved bytes.</para></listitem>
+</orderedlist>
+<para>
+That is followed by a series of 16-byte records, one per character cell, containing:
+</para>
+<orderedlist>
+<listitem><para>Reserved byte, used for padding.</para></listitem>
+<listitem><para>Foreground red value byte.</para></listitem>
+<listitem><para>Foreground green value byte.</para></listitem>
+<listitem><para>Foreground blue value byte.</para></listitem>
+<listitem><para>Attributes.</para></listitem>
+<listitem><para>Background red value byte.</para></listitem>
+<listitem><para>Background green value byte.</para></listitem>
+<listitem><para>Background blue value byte.</para></listitem>
+<listitem><para>4-byte UCS-32 value in host byte order.</para></listitem>
+<listitem><para>Reserved bytes.</para></listitem>
+</orderedlist>
+
+<para>
+Unassigned code points, reserved code points, ontrol code points, combining
+code points, and zero-width code points may appear, and terminal rendering
+softwares are expected to render these with some form of ordinary printing
+graphic.
+</para>
+
+</refsection>
+
+<refsection><title>Printing characters, Control characters, escape sequences, and control sequences</title>
+
+<para>
+Non-control characters are printed as-is, using the currently set attributes,
+foreground colour, and background colour.
+After each character is printed, the cursor position is advanced.
+</para>
+
+<para>
+By default, the emulator has automatic right margins turned on, so that writing
+a character in the last column automatically returns to the first column and
+moves down a row.
+If automatic right margins are turned off, writing a character in the last
+column does not move down a row or return to the first column.
+</para>
+
+<para>
+By default, the emulator also has scrolling turned on, so that moving down
+from the last row scrolls the buffer up and moving up from the first row
+scrolls the buffer down.
+If scrolling is turned off, moving down from the last row or moving up from the
+first row have no effect.
+Scrolling only applies to cursor advancement by printing characters or the
+Newline, Index, or Reverse Index control characters.
+It does not apply to cursor motion control sequences.
+</para>
+
+<para>
+Code points in the ranges U+0000 to U+001F and U+0080 to U+009F are control
+characters.
+They are always processed, even in the middle of escape or control sequences.
+All control characters are no-ops except for the following:
+</para>
+
+<variablelist>
+<varlistentry>
+<term><code>FF</code></term>
+<listitem><para>Form feed.  Move to 0,0 and clear all cells to a space chasracter.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>CR</code></term>
+<listitem><para>Carriage return.  Move to column 0.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>NEL</code></term>
+<listitem><para>Newline.  Move to column 0 and one row down.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>LF</code>, <code>VT</code>, and <code>IND</code></term>
+<listitem><para>Linefeed/Vertical tab/Index.  Move one row down, remaining in the current column.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>RI</code></term>
+<listitem><para>Reverse index.  Move one row up, remaining in the current column.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>TAB</code></term>
+<listitem><para>Horizontal tab.  Move to the next tabstop, or the last column.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>BS</code></term>
+<listitem><para>Backspace.  Nondestructively move to the previous column, stopping at the first column.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>DEL</code></term>
+<listitem><para>Delete.  Delete the character at the cursor position, moving the remainder of the row to the left and padding the final column with a space.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>HTS</code></term>
+<listitem><para>Horizontal tab set.  Set a tabstop at the current column.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>CAN</code></term>
+<listitem><para>Cancel.  Cancel any control/escape sequence currently in progress.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>ESC</code></term>
+<listitem><para>Escape.  Cancel any control/escape sequence currently in progress and begin an escape sequence.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>CSI</code></term>
+<listitem><para>Control sequence introducer.  Cancel any control/escape sequence currently in progress and begin a control sequence.</para></listitem>
+</varlistentry>
+</variablelist>
+
+<para>
+Escape sequences are multiple-character sequences comprising the ESC character,
+an optional intermediate character in the range U+0020 to U+002F, and
+a single final character in the range U+0030 to U+007E.
+</para>
+
+<para>
+The two-character 7-bit mechanism of ECMA-48 section 5 is available,
+although it is unneeded given that the terminal emulator is 8-bit clean
+and employs UTF-8 as standard.
+The entire U+0080 to U+009F control character range is accessible, by
+emitting <code>ESC</code> followed by a character in the U+0040 to U+005F
+range.  
+So <code>NEL</code> can be emitted as either the single character U+0085 or as
+the two-character sequence U+001B U+0045.
+(Of course, U+0085 encodes to two characters in UTF-8.)
+</para>
+<para>
+Control sequences are multiple-character sequences comprising the CSI character
+followed optionally by an intermediate character in the range U+0020 to U+002F
+followed by up to 16 digit sequences separated by semi-colons (<code>;</code>)
+and terminated by a single final character in the range U+0040 to U+007E.
+The digit sequences are parameters to the action, and zero-length digit sequences are
+a parameter with the value zero.
+In most cases, a control sequence with N parameters is equivalent to N such control
+sequences in order each with one of the parameters.
+</para>
+
+<para>
+The Unicode screen buffer uses, as described, 24-bit RGB colour for foreground and
+background for each colour cell.
+The ANSI colour attributes set by the attribute-set control sequence map from the
+3-bit RGB ANSI colours to 24-bit RGB using 255 for a 1 bit and 0 for a 0 bit.
+</para>
+
+</refsection>
+
+<refsection><title>Terminal input</title>
+
+<para>
+The <replaceable>directory</replaceable><filename>/input</filename> FIFO 
+receives a sequence of 4-byte messages.
+To avoid message tearing, renderers must ensure that they do not write
+messages uaing multiple system calls.
+A message is a 32-bit word in host byte order.
+The most significante byte denotes the message type and the interpretation
+of the remainder of the message.
+</para>
+<variablelist>
+<varlistentry>
+<term><code>0x00nnnnnn</code></term>
+<listitem><para>A null message.  This is ignored</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>0x01cccccc</code></term>
+<listitem> <para>
+UCS32 character.  
+This is UTF-8 encoded and sent through to the terminal line discipline as terminal input.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>0x0Ekkkkmm</code></term>
+<listitem><para>
+An extended key.  
+The key number is <code>kkkk</code> and <code>mm</code> is a set of bitflags
+indicating the current state of modifier keys.
+The numbering of extended keys largely follows the ID numbers used for keys in
+the USB HID protocol, with some exceptions, and a number of additions for keys
+that are not present in USB.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>0x0Fkkkkmm</code></term>
+<listitem><para>
+A function key.  
+The function key number is <code>kkkk</code> and <code>mm</code> is a set of
+bitflags indicating the current state of modifier keys.
+</para></listitem>
+</varlistentry>
+</variablelist>
+
+<para>
+Modifiers do not change one extended key into another or change a function key
+number.
+Mappings such as "PC Style/VT Style" emulations (where the key legend does not
+match the produced function and key actions are determined by physical position 
+of the underlying real key on the realizing device),
+NumLock and Shift switching the mode of a keypad between editing/cursor keys
+and numbers, 
+multiple rows of function keys being emulated by a single row, and
+function pad keys mapping to keypad function keys, 
+are the domain of renderers.
+In input messages, all of these mappings are expected to have been done, and
+the key value is the mapped-to legend.
+The extended key and function key numbers represent an abstract full terminal
+keyboard with main, function, cursor/editing, system, application, and
+ancillary keypads, unfolded (as it were) from the less complete realizing 
+device keyboards where these overlap.
+</para>
+
+</refsection>
+
+</refsection>
+
+<refsection><title>Differences from terminals and documented standards</title>
+
+<para>
+The terminal emulator does not replicate all features of a real hardware terminal.
+Its goal is to provide a workalike for (the TUI parts of the) the virtual
+consoles that are/were built in to the Linux and BSD operating system kernels.
+There is no support for the historical features of real terminal hardwares such as
+attached printers, page switching, status lines, XON/XOFF modem flow control, 
+programmable function keys, alternative (WYSE/TVI) control/escape sequences,
+and graphics modes.
+Rather, the terminal emulator is aimed at handling the outputs of TUI
+programs that use the "<code>linux</code>" terminal type (for the Linux kernel
+virtual terminals) the "<code>wsvt25</code>" terminal type (for NetBSD kernel
+virtual terminals) or the "<code>xterm</code>"
+terminal types (for FreeBSD kernel virtual terminals).
+(These are the terminal types set by
+<citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
+</para>
+
+<para>
+The terminal emulator also has no dealing in the things that are the domain of
+separate rendering tools.
+The modular nature of user-space virtual terminals means that the terminal
+emulator has no knowledge of the actual devices used to realize the terminal,
+and that there can be zero or many renderers for any given virtual terminal.
+There is no support for font definitions, window titles, 256-colour VGA
+palettes, VGA-specific overscan and underline, VESA power, screen-savers,
+or multi-mode keypads.
+</para>
+
+<para>
+The terminal emulator is 8-bit clean and employs UTF-8 as standard.  
+Therefore, the terminal emulator has no need for mechanisms to switch 8-bit
+code pages amongst multiple character sets.  
+There is no ISO 2022 support.
+</para>
+
+<para>
+The two-character 7-bit mechanism of ECMA-48 (section 5) is not
+only present, but is more completely implemented than in several kernel console
+terminal emulators, which usually only implement the 7-bit aliases for
+CSI and OSC.
+</para>
+
+<para>
+Both ECMA-48 and the 
+DEC VT520 <citetitle>Video Terminal Programmer Information</citetitle>
+<citebiblioid>EK-VT520-RM</citebiblioid> 
+reference are straightforward and clear about numeric parameters to cursor
+motion and screen editing control sequences: a value of 0 is given no special
+meaning and just means zero rows/columns/whatever.
+However, that is not the behaviour of the Linux or FreeBSD kernel virtual terminal
+emulators, both of which replace any zero parameters with the value 1.
+Therefore, because of the aforementioned goal, this terminal emulator does the same
+and does not follow the ECMA-48 standard or the DEC VT520 documentation.
+</para>
+
+<para>
+Neither ECMA-48 nor the 
+DEC VT520 <citetitle>Video Terminal Programmer Information</citetitle>
+<citebiblioid>EK-VT520-RM</citebiblioid> 
+reference document a quirk of most DEC VT-family emulators: the
+wrapping caused by automatic margins.
+In actual implementations, including the FreeBSD kernel virtual terminal
+emulator, a wrap, caused by printing a graphic in the last column with
+automatic margins set on, is held pending until the next graphic character is
+printed, as long as the cursor column remains the same.
+This is largely undocumented behaviour, but it is behaviour that many programs
+(including the prompt display of the Z Shell, for example) rely upon.
+So it is implemented here.
+</para>
+
+</refsection>
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

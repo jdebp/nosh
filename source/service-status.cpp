@@ -22,7 +22,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "service-manager-client.h"
 #include "service-manager.h"
 
-/* Main function ************************************************************
+/* Pretty coloured output ***************************************************
 // **************************************************************************
 */
 
@@ -81,29 +81,33 @@ state_of (
 	}
 }
 
-int
-main (
-	int argc, 
-	const char * argv[] 
+/* Main function ************************************************************
+// **************************************************************************
+*/
+
+void
+service_status (
+	const char * & next_prog,
+	std::vector<const char *> & args
 ) {
-	if (argc < 1) return EXIT_FAILURE;
-	const char * prog(basename_of(argv[0]));
-	std::vector<const char *> args(argv, argv + argc);
+	const char * prog(basename_of(args[0]));
+
 	try {
-		popt::top_table_definition main_option(0, 0, "Main options", "directory");
+		popt::top_table_definition main_option(0, 0, "Main options", "directories...");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
 		p.process(true /* strictly options before arguments */);
 		args = new_args;
-		if (p.stopped()) return EXIT_SUCCESS;
+		next_prog = arg0_of(args);
+		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		return EXIT_USAGE;
+		throw EXIT_USAGE;
 	}
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing directory name(s).");
-		return EXIT_USAGE;
+		throw EXIT_USAGE;
 	}
 
 	bool no_colours(!isatty(STDOUT_FILENO));
@@ -223,5 +227,5 @@ main (
 			std::fputc('\n', stdout);
 		}
 	}
-	return EXIT_SUCCESS;
+	throw EXIT_SUCCESS;
 }

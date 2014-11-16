@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=kernel module loader for vboxnetadp
+EarlySupervise=true
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=system-control load-kernel-module vboxnetadp
+ExecStopPost=system-control unload-kernel-module vboxnetadp
+RemainAfterExit=yes
+
+[Install]
+WantedBy=virtualbox.target

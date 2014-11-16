@@ -16,8 +16,8 @@ using namespace popt;
 compound_named_definition::~compound_named_definition() {}
 bool compound_named_definition::execute(processor & proc, char c)
 {
-	if (char short_name = query_short_name()) {
-		if (short_name == c) {
+	if (char the_short_name = query_short_name()) {
+		if (the_short_name == c) {
 			if (const char * text = proc.next_arg()) {
 				action(proc, text);
 				return true;
@@ -30,8 +30,8 @@ bool compound_named_definition::execute(processor & proc, char c)
 bool compound_named_definition::execute(processor & proc, char c, const char * text)
 {
 	if (!*text) return false;
-	if (char short_name = query_short_name()) {
-		if (short_name == c) {
+	if (char the_short_name = query_short_name()) {
+		if (the_short_name == c) {
 			action(proc, text);
 			return true;
 		}
@@ -40,8 +40,8 @@ bool compound_named_definition::execute(processor & proc, char c, const char * t
 }
 bool compound_named_definition::execute(processor & proc, const char * s)
 {
-	if (const char * long_name = query_long_name()) {
-		if (0 == std::strcmp(long_name, s)) {
+	if (const char * the_long_name = query_long_name()) {
+		if (0 == std::strcmp(the_long_name, s)) {
 			if (const char * text = proc.next_arg()) {
 				action(proc, text);
 				return true;

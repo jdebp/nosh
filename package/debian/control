@@ -30,14 +30,10 @@ Description: Minimal non-shell script processor and various chain-load utilities
  * local-stream-socket-accept, local-stream-socket-listen,
  * udp-socket-listen,
  * tcp-socket-accept, tcp-socket-listen, 
- .
- Further commands are useful for TUI login and TTY/PTY management:
- * login-banner,login-process, login-prompt, open-controlling-tty,
- * pty-get-tty, pty-run, vc-get-tty, vc-reset-tty
 
 Package: nosh-service-management
 Architecture: amd64
-Depends: ${shlibs:Depends}, nosh-exec
+Depends: ${shlibs:Depends}
 Suggests: 
 Recommends: 
 Description: Service and system management utilities
@@ -51,6 +47,20 @@ Description: Service and system management utilities
  It also provides compatibility commands for those familiar with daemontools and daemontools-encore.
  * svc, svok, svscan, svshow, svstat, svup
  The shims simply invoke native service management commands.
+
+Package: nosh-terminal-management
+Architecture: amd64
+Depends: ${shlibs:Depends}
+Suggests: 
+Recommends: 
+Description: Virtual terminal, pseudo-terminal, and TUI login tools
+ This package provides tools for creating and using pseudo-terminals and virtual consoles.
+ .
+ Included here are tools for TUI login:
+ * login-banner,login-process, login-prompt, open-controlling-tty, ttylogin-starter
+ .
+ Also present are commands for pseudo-terminals and virtual consoles:
+ * console-terminal-emulator, console-ncurses-renderer, pty-get-tty, pty-run, vc-get-tty, vc-reset-tty
 
 Package: nosh-systemv-shims
 Architecture: amd64
@@ -134,4 +144,12 @@ Suggests:
 Recommends: 
 Description: BSD non-socket-activated services
  This package provides the pre-packaged bundle directories for BSD-specific non-socket-activated services.
+
+Package: nosh-bsd-sockets
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management
+Suggests: 
+Recommends: 
+Description: BSD socket-activated services
+ This package provides the pre-packaged bundle directories for BSD-specific socket-activated services.
 

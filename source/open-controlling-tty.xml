@@ -8,20 +8,23 @@
 <refmiscinfo class="version">1.9</refmiscinfo>
 </refmeta>
 
-<refnamediv><refname>open-controlling-tty</refname><refpurpose>open a controlling terminal and prepare for login</refpurpose></refnamediv>
+<refnamediv>
+<refname>open-controlling-tty</refname>
+<refpurpose>open a controlling terminal and prepare for login</refpurpose>
+</refnamediv>
 
 <refsynopsisdiv>
 <refsection><title>BSD</title>
 <cmdsynopsis>
 <command>open-controlling-tty</command> 
-<arg>--no-revoke</arg> 
+<arg>--revoke</arg> 
 <arg>--exclusive</arg> 
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsection><refsection><title>Linux</title>
 <cmdsynopsis>
 <command>open-controlling-tty</command> 
-<arg>--no-vhangup</arg> 
+<arg>--vhangup</arg> 
 <arg>--exclusive</arg> 
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
@@ -89,10 +92,11 @@ function to put the terminal device into "exclusive" mode.
 <refsection><title>Linux</title>
 
 <para>
-Unless the <arg>--no-vhangup</arg> command line option is used, which
-disables calling the
+If <arg>--vhangup</arg> command line option is used,
+which tells it to call the
 <citerefentry><refentrytitle>vhangup</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-system call, <command>open-controlling-tty</command> has to open the terminal
+system call, 
+<command>open-controlling-tty</command> has to open the terminal
 device file twice, once so that it can disconnect/hangup existing processes,
 which of course disconnects itself at the same time, and once again to gain the
 controlling TTY afterwards.
@@ -110,7 +114,7 @@ system call.
 Instead, on BSD
 <command>open-controlling-tty</command> calls
 <citerefentry><refentrytitle>revoke</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-before opening the terminal device file, unless the <arg>--no-revoke</arg>
+before opening the terminal device file, if the <arg>--revoke</arg>
 command line option is used.
 A similar race condition exists, except that it is between the call to
 <citerefentry><refentrytitle>revoke</refentrytitle><manvolnum>2</manvolnum></citerefentry>
@@ -124,21 +128,51 @@ Again, the character device file could be unlinked or otherwise altered in betwe
 
 <para>
 To restrict the processes able to take advantage of these races to just those
-programs running as the current user or the superuser, system administrators
-should ensure that the directory containing the character device file is not
-writable by untrusted accounts; and programs that invoke
+programs running as the current user or the superuser:
+</para>
+<itemizedlist>
+<listitem><para>
+System administrators should ensure that the directory containing the character
+device file is not writable by untrusted accounts.
+</para></listitem>
+<listitem><para>
+Programs that invoke
 <command>open-controlling-tty</command> should ensure that the character device
 file is owned by the effective UID of the process, and has <code>rw-</code>
 permissions for that owner alone, no other user or group having any
 permissions.
+</para><para>
 The
 <citerefentry><refentrytitle>grantpt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-library function does the latter.
+library function does this for pseudo-terminals.
 <citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-calls this function, and
+calls this function; and
 <citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 performs the moral equivalent for virtual consoles.
-</para>
+(On the BSDs, pseudo-terminal slave devices are created with these UID and permissions in
+the first place, and the library function is in fact a no-op.)
+</para></listitem>
+<listitem><para>
+Programs that invoke
+<command>open-controlling-tty</command> should ensure that neither it nor any other program
+can open the character device file until the ownership has been properly set.
+</para><para>
+The
+<citerefentry><refentrytitle>unlockpt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+library function does this for pseudo-terminals.
+<citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+calls this function.
+(On the BSDs, because
+<citerefentry><refentrytitle>grantpt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+is a no-op, this is a no-op as well.)
+Unfortunately, there is no moral equivalent for kernel-supplied virtual consoles, and nothing
+that
+<citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+can do.
+However, userspace virtual consoles use pseudo-terminals and
+<citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para></listitem>
+</itemizedlist>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
 

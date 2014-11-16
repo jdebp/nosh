@@ -279,73 +279,6 @@ open_logging_pipe (
 
 static inline
 void
-process_env_dir (
-	const char * prog,
-	const char * dir,
-	int scan_dir_fd
-) {
-	DIR * scan_dir(fdopendir(scan_dir_fd));
-	if (!scan_dir) {
-exit_scan:
-		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, dir, std::strerror(error));
-		close(scan_dir_fd);
-		return;
-	}
-	for (;;) {
-		errno = 0;
-		const dirent * entry(readdir(scan_dir));
-		if (!entry) {
-			if (errno) goto exit_scan;
-			break;
-		}
-#if defined(_DIRENT_HAVE_D_TYPE)
-		if (DT_REG != entry->d_type && DT_LNK != entry->d_type) {
-			if (DT_DIR != entry->d_type)
-				std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, dir, entry->d_name, "Not a regular file.");
-			continue;
-		}
-#endif
-#if defined(_DIRENT_HAVE_D_NAMLEN)
-		if (1 > entry->d_namlen) continue;
-#endif
-		if ('.' == entry->d_name[0]) continue;
-
-		const int var_file_fd(open_read_at(scan_dir_fd, entry->d_name));
-		if (0 > var_file_fd) {
-bad_file:
-			const int error(errno);
-			std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, dir, entry->d_name, std::strerror(error));
-			if (0 <= var_file_fd) close(var_file_fd);
-			continue;
-		}
-		struct stat s;
-		if (0 > fstat(var_file_fd, &s)) goto bad_file;
-		if (!S_ISREG(s.st_mode)) {
-			if (!S_ISDIR(s.st_mode))
-				std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, dir, entry->d_name, "Not a regular file.");
-			close(var_file_fd);
-			continue;
-		}
-		if (0 == s.st_size) {
-			if (0 > unsetenv(entry->d_name)) {
-				const int error(errno);
-				std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dir, entry->d_name, std::strerror(error));
-			}
-			close(var_file_fd);
-		} else {
-			const std::string val(read_env_file(prog, dir, entry->d_name, var_file_fd));
-			if (0 > setenv(entry->d_name, val.c_str(), 1)) {
-				const int error(errno);
-				std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dir, entry->d_name, std::strerror(error));
-			}
-		}
-	}
-	closedir(scan_dir);
-}
-
-static inline
-void
 setup_process_state(
 	const bool is_system,
 	const char * prog
@@ -371,7 +304,7 @@ setup_process_state(
 			if (ENOENT != error)
 				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "/etc/locale.d", std::strerror(error));
 		} else
-			process_env_dir(prog, "/etc/locale.d", scan_dir_fd);
+			process_env_dir(prog, "/etc/locale.d", scan_dir_fd, true /*ignore errors*/, false /*first lines only*/, false /*no chomping*/);
 
 		for (std::size_t fi(0); fi < sizeof env_files/sizeof *env_files; ++fi) {
 			const char * filename(env_files[fi]);
@@ -449,6 +382,7 @@ initialize_system_clock_timezone(
 	const int seconds_west(-l->tm_gmtoff);	// It is important that this is an int.
 
 #if defined(__LINUX__) || defined(__linux__)
+	(void)prog;	// Silences a compiler warning about an unused parameter in this branch of the conditional compilation.
 	if (utc)
 		settimeofday(ztv, &tz);	// Prevent the next call from adjusting the system clock.
 	// Set the RTC/FAT local time offset, and (if not UTC) adjust the system clock from local-time-as-if-UTC to UTC.
@@ -618,14 +552,36 @@ end_system()
 	reboot(RB_AUTOBOOT);
 }
 
+static
+const char *
+system_manager_roots[] = {
+	"/var/log/system-manager",
+	"/var/system-manager/log",
+	"/var/tmp/system-manager/log",
+	"/run/system-manager/log"
+};
+
+static inline
+void
+change_to_system_manager_log_root (
+	const bool is_system
+) {
+	if (is_system) {
+		for (const char ** r(system_manager_roots); r < system_manager_roots + sizeof system_manager_roots/sizeof *system_manager_roots; ++r)
+			if (0 <= chdir(*r))
+				return;
+	} else
+		chdir((xdg_runtime_dir() + "/system-manager").c_str());
+}
+
 static inline
 const char *
 construct_system_manager_log_name (
 	const bool is_system,
 	std::string & name_buf
 ) {
-	if (is_system) return "/run/system-manager/log";
-	name_buf = xdg_runtime_dir() + "/system-manager/log.";
+	if (is_system) return ".";
+	name_buf = xdg_runtime_dir() + "log.";
 	const int id(query_manager_pid(is_system));
 	char idbuf[64];
 	snprintf(idbuf, sizeof idbuf, "%d", id);
@@ -937,6 +893,7 @@ common_manager (
 				const int error(errno);
 				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
 			} else if (0 == cyclog_pid) {
+				change_to_system_manager_log_root(is_system);
 				std::string name_buf;
 				const char * log_name(construct_system_manager_log_name(is_system, name_buf));
 #if defined(__LINUX__) || defined(__linux__)

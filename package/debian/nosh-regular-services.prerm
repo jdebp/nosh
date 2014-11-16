@@ -5,7 +5,7 @@ case "$1" in
 			anacron \
 			atd \
 			avahi-daemon \
-			cron \
+			gnucron \
 			cups \
 			dbus \
 			dnscache \
@@ -14,6 +14,7 @@ case "$1" in
 			fancontrol \
 			fscd \
 			hcsecd \
+			mongodb \
 			moused \
 			mysql \
 			nisdomain \
@@ -31,7 +32,7 @@ case "$1" in
 			swapexd \
 			syslogd \
 			tinydns \
-			ttylogin@tty6 \
+			ttylogin-starter \
 			volmand \
 			winbindd \
 			ypbind \

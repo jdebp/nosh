@@ -36,7 +36,10 @@ void is_active ( const char * & , std::vector<const char *> & ) ;
 void convert_systemd_units ( const char * & , std::vector<const char *> & ) ;
 void convert_systemd_presets ( const char * & , std::vector<const char *> & ) ;
 void convert_rcconf_presets ( const char * & , std::vector<const char *> & ) ;
+void convert_ttys_presets ( const char * & , std::vector<const char *> & ) ;
 void nagios_check ( const char * & , std::vector<const char *> & ) ;
+void load_kernel_module ( const char * & , std::vector<const char *> & ) ;
+void unload_kernel_module ( const char * & , std::vector<const char *> & ) ;
 void cyclog ( const char * & , std::vector<const char *> & ) ;
 void system_control ( const char * & , std::vector<const char *> & ) ;
 void system_manager ( const char * & , std::vector<const char *> & ) ;
@@ -87,7 +90,10 @@ commands[] = {
 	{	"convert-systemd-units",	convert_systemd_units	},
 	{	"convert-systemd-presets",	convert_systemd_presets	},
 	{	"convert-rcconf-presets",	convert_rcconf_presets	},
+	{	"convert-ttys-presets",		convert_ttys_presets	},
 	{	"nagios-check-service",		nagios_check		},
+	{	"load-kernel-module",		load_kernel_module	},
+	{	"unload-kernel-module",		unload_kernel_module	},
 
 	// These are spawned by session-manager.
 	{	"service-manager",	service_manager		},

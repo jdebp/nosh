@@ -14,16 +14,10 @@ line-banner
 local-datagram-socket-listen
 local-stream-socket-listen
 local-stream-socket-accept
-login-banner
-login-process
-login-prompt
 make-private-fs
 nosh
-open-controlling-tty
 pipe
 prependpath
-pty-get-tty
-pty-run
 read-conf
 recordio
 set-dynamic-hostname
@@ -46,5 +40,3 @@ umask
 unsetenv
 unshare
 userenv
-vc-get-tty
-vc-reset-tty

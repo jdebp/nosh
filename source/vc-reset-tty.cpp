@@ -113,6 +113,7 @@ vc_reset_tty (
 	bool no_newline(false);
 	bool no_tostop(false);
 	bool hard_reset(false);
+	bool set_text_mode(false);
 
 	const char * prog(basename_of(args[0]));
 	try {
@@ -120,11 +121,13 @@ vc_reset_tty (
 		popt::bool_definition no_utf_8_option('\0', "no-utf8", "Do not set UTF-8 input mode.", no_utf_8);
 		popt::bool_definition no_tostop_option('\0', "no-tostop", "Do not set the \"tostop\" line discipline flag.", no_tostop);
 		popt::bool_definition hard_reset_option('\0', "hard-reset", "Reset the terminal before initializing it.", hard_reset);
+		popt::bool_definition set_text_mode_option('\0', "text-mode", "Invoke the ioctl for setting text mode on kernel virtual console.", set_text_mode);
 		popt::definition * top_table[] = {
 			&no_newline_option,
 			&no_utf_8_option,
 			&no_tostop_option,
-			&hard_reset_option
+			&hard_reset_option,
+			&set_text_mode_option
 		};
 		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "prog");
 
@@ -147,12 +150,14 @@ vc_reset_tty (
 
 	tcsetattr_nointr(STDOUT_FILENO, TCSAFLUSH, sane(no_tostop, no_utf_8));
 
+	if (set_text_mode) {
 #if defined(__LINUX__) || defined(__linux__)
-	if (0 > ioctl(STDOUT_FILENO, KDSETMODE, KD_TEXT)) {
-		const int error(errno);
-		std::fprintf(stderr, "%s: WARNING: %s: %s: %s\n", prog, "KDSETMODE", "stdout", std::strerror(error));
-	}
+		if (0 > ioctl(STDOUT_FILENO, KDSETMODE, KD_TEXT)) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: WARNING: %s: %s: %s\n", prog, "KDSETMODE", "stdout", std::strerror(error));
+		}
 #endif
+	}
 	if (hard_reset)
 		std::fputs(reset_string(), stdout);
 	std::fputs(initialization_string(), stdout);

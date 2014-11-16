@@ -44,7 +44,7 @@ log (
 	else
 	while (len) {
 		std::fprintf(stderr, "%u: %c ", pid, dir);
-		if (const char * nl = static_cast<char *>(std::memchr(ptr, '\n', len))) {
+		if (const char * nl = static_cast<const char *>(std::memchr(ptr, '\n', len))) {
 			const std::size_t l(nl - ptr);
 			std::fwrite(ptr, l, 1, stderr);
 			std::fputc(' ', stderr);

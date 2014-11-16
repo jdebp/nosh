@@ -5,7 +5,7 @@
 build: build-arch build-indep 
 
 binary: binary-arch binary-indep 
-	for i in exec service-management systemd-services systemv-shims systemd-shims upstart-shims guide standard-targets sysinit-services regular-services regular-sockets ; \
+	for i in exec terminal-management service-management systemd-services systemv-shims systemd-shims upstart-shims guide standard-targets sysinit-services regular-services regular-sockets bsd-services bsd-sockets ; \
 	do \
 		dpkg -b debian/nosh-"$$i" ../ || exit 1 ; \
 	done
@@ -19,16 +19,16 @@ build-indep:
 	@true
 
 binary-arch: build-arch install-arch
-	for i in exec service-management systemv-shims systemd-shims upstart-shims ; \
+	for i in exec terminal-management service-management systemv-shims systemd-shims upstart-shims ; \
 	do \
 		${RM} debian/substvars ; \
 		dpkg-shlibdeps debian/nosh-"$$i"/usr/local/bin/* || exit 1 ; \
-		if [ "$$i" != exec ] ; then dpkg-shlibdeps debian/nosh-"$$i"/usr/local/sbin/* || exit 1 ; fi ; \
+		if [ "$$i" != exec ] && [ "$$i" != terminal-management ] ; then dpkg-shlibdeps debian/nosh-"$$i"/usr/local/sbin/* || exit 1 ; fi ; \
 		dpkg-gencontrol -pnosh-"$$i" -Pdebian/nosh-"$$i" || exit 1 ; \
 	done
 
 binary-indep: build-indep install-indep
-	for i in guide systemd-services standard-targets sysinit-services regular-services regular-sockets ; \
+	for i in guide systemd-services standard-targets sysinit-services regular-services regular-sockets bsd-services bsd-sockets ; \
 	do \
 		${RM} debian/substvars ; \
 		dpkg-gencontrol -pnosh-"$$i" -Pdebian/nosh-"$$i" || exit 1 ; \
@@ -37,13 +37,13 @@ binary-indep: build-indep install-indep
 install-common:
 	install -d -m 0755 debian/tmp/DEBIAN
 	package/export debian/tmp/
-	for i in exec service-management systemd-services systemv-shims systemd-shims upstart-shims guide standard-targets sysinit-services regular-services regular-sockets ; \
+	for i in exec terminal-management service-management systemd-services systemv-shims systemd-shims upstart-shims guide standard-targets sysinit-services regular-services regular-sockets bsd-services bsd-sockets ; \
 	do \
 		install -d -m 0755 debian/nosh-"$$i"/DEBIAN || exit 1 ; \
 	done
 
 install-arch: install-common
-	for i in exec service-management systemv-shims systemd-shims upstart-shims ; \
+	for i in exec terminal-management service-management systemv-shims systemd-shims upstart-shims ; \
 	do \
 		install -d -m 0755 debian/nosh-"$$i"/usr/local/bin || exit 1 ; \
 		while read j ; \
@@ -66,7 +66,7 @@ install-arch: install-common
 	done
 
 install-indep: install-common
-	for i in exec service-management systemv-shims systemd-shims upstart-shims ; \
+	for i in exec terminal-management service-management systemv-shims systemd-shims upstart-shims ; \
 	do \
 		install -d -m 0755 debian/nosh-"$$i"/usr/local/man/man1 || exit 1 ; \
 		while read j ; \
@@ -117,7 +117,7 @@ install-indep: install-common
 			cp -a -t debian/nosh-sysinit-services/etc/sv/ debian/tmp/etc/sv/fsck@"$$j" || exit 1 ; \
 		done < package/"$$i" ; \
 	done
-	for i in regular-services regular-sockets ; \
+	for i in regular-services regular-sockets bsd-services bsd-sockets ; \
 	do \
 		install -d -m 0755 debian/nosh-"$$i"/var/sv || exit 1 ; \
 		while read j ; \
@@ -139,7 +139,7 @@ install-indep: install-common
 		install -d -m 0755 debian/nosh-"$$i"/usr/local/share/doc/nosh || exit 1 ; \
 		cp -a debian/tmp/share/doc/nosh debian/nosh-"$$i"/usr/local/share/doc/ || exit 1 ; \
 	done
-	for i in standard-targets sysinit-services regular-services regular-sockets ; \
+	for i in standard-targets sysinit-services regular-services regular-sockets bsd-services bsd-sockets ; \
 	do \
 		for j in preinst postinst prerm postrm ; \
 		do \
@@ -152,7 +152,7 @@ install-indep: install-common
 
 clean:
 	${RM} debian/files debian/substvars
-	for i in guide exec service-management systemd-services systemv-shims systemd-shims upstart-shims standard-targets sysinit-services regular-services regular-sockets ; \
+	for i in guide exec terminal-management service-management systemd-services systemv-shims systemd-shims upstart-shims standard-targets sysinit-services regular-services regular-sockets bsd-services bsd-sockets ; \
 	do \
 		${RM} -r debian/nosh-"$$i"/ || exit 1 ; \
 	done

@@ -8,14 +8,17 @@
 <refmiscinfo class="version">1.9</refmiscinfo>
 </refmeta>
 
-<refnamediv><refname>vc-get-tty</refname><refpurpose>set up the environment appropriate to a virtual terminal and chain</refpurpose></refnamediv>
+<refnamediv>
+<refname>vc-get-tty</refname>
+<refpurpose>set up the environment appropriate to a virtual terminal and chain</refpurpose>
+</refnamediv>
 
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>vc-get-tty</command> 
 <arg>--long-hostname</arg> 
 <arg>--term <replaceable>type</replaceable></arg> 
-<arg choice='req'><replaceable>virtual-console-id</replaceable></arg> 
+<arg choice='req'><replaceable>terminal-device-name</replaceable></arg> 
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -23,37 +26,36 @@
 <refsection><title>Description</title>
 
 <para>
-<command>vc-get-tty</command> is a chain-loading utility that sets up environment variables
-appropriate to a specified virtual console, secures the device against access
-by other users, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+<command>vc-get-tty</command> is a chain-loading utility that sets up
+environment variables appropriate to a specified virtual console, secures the
+device against access by other users, and then chain loads to
+<replaceable>next-prog</replaceable> with the
+<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 function.  
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>vc-get-tty</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command line options,
+which <command>vc-get-tty</command> will ignore.
 </para>
 
 <para>
-<command>vc-get-tty</command> sets the <code>TTY</code> environment variable to the full device filename 
-of the controlling terminal.
-Programs such as <citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>login-banner</refentrytitle><manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>login-process</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-will make use of this environment variable as the name of the controlling
-terminal.
+<command>vc-get-tty</command> sets the <code>TTY</code> environment variable to
+the full device filename of the controlling terminal.
+Programs such as 
+<citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, 
+<citerefentry><refentrytitle>login-banner</refentrytitle><manvolnum>1</manvolnum></citerefentry> and 
+<citerefentry><refentrytitle>login-process</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+will make use of this environment variable as the name of the controlling terminal.
 </para>
 
 <para>
-It determines the terminal character device filename from the passed virtual
-console ID.
-This can be just the device filename itself, a basename (such as <code>tty1</code>),
-or a number (such as <code>6</code>).
-If it is a basename, <command>vc-get-tty</command> will simply prefix it with <code>/dev/</code>.
-If it is a number, <command>vc-get-tty</command> tries first prefixing <code>/dev/vc/</code>, and looks
-for a filename, and then tries prefixing <code>/dev/tty</code>.
-(This allows one to use the same invocation of <command>vc-get-tty</command>
-whether one has
-<citerefentry><refentrytitle>devfs</refentrytitle><manvolnum>4</manvolnum></citerefentry>
-or
-<citerefentry><refentrytitle>udev</refentrytitle><manvolnum>8</manvolnum></citerefentry>.)
+It determines the terminal character device filename from the passed name.
+This can be just the absolute pathname of the device file itself or a relative
+pathname (such as <code>tty1</code>).
+If it is a relative pathname, <command>vc-get-tty</command> tries first
+prefixing <code>/dev/</code>, and looks for a file, and then tries
+prefixing <code>/run/dev/</code>.
 </para>
 
 <para>
@@ -64,7 +66,9 @@ library function.
 If the <code>--long-hostname</code> command line option is present, the machine
 hostname is assigned to the variable as-is.
 Otherwise, it is truncated at the first dot.
-Programs such as <citerefentry><refentrytitle>login-process</refentrytitle><manvolnum>1</manvolnum></citerefentry> will make use of this environment variable.
+Programs such as
+<citerefentry><refentrytitle>login-process</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+will make use of this environment variable.
 </para>
 
 <para>
@@ -86,6 +90,7 @@ The terminal types for virtual consoles on Linux are fixed as <code>linux</code>
 
 <listitem>
 <para>
+The terminal types for virtual consoles on FreeBSD are fixed as <code>xterm</code>.
 In theory, the console driver on FreeBSD could emulate either
 <code>xterm</code> or <code>cons25</code>.
 But in practice <code>cons25</code> has been obsolete ever since the move (in FreeBSD
@@ -97,6 +102,7 @@ escape sequence handler.
 <listitem>
 <para>
 The terminal types for virtual consoles on NetBSD are fixed as <code>wsvt25</code>.
+In theory, NetBSD also supports <code>sun</code> and <code>dumb</code> terminals.
 </para>
 </listitem>
 
@@ -112,17 +118,21 @@ decade and a half (as of 2013) on Linux.
 </refsection><refsection><title>SECURITY</title>
 
 <para>
-<command>vc-get-tty</command> expects to be run either directly from <citerefentry><refentrytitle>init</refentrytitle><manvolnum>1</manvolnum></citerefentry> or under a daemon
-supervisor of some sort.
-As such, it expects to start up with an <replaceable>already</replaceable> safe environment, open file
-descriptors, and resource limits for a process that is running under the aegis
-of the superuser.
+<command>vc-get-tty</command> expects to be run either directly from 
+<citerefentry><refentrytitle>init</refentrytitle><manvolnum>1</manvolnum></citerefentry> 
+or under a daemon supervisor of some sort.
+As such, it expects to start up with an <replaceable>already</replaceable> safe
+environment, open file descriptors, and resource limits for a process that is
+running under the aegis of the superuser.
 </para>
 
 <para>
-To prevent a race condition in <citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> (q.v.), <command>vc-get-tty</command>
-ensures that the virtual console is owned by the effective UID of the process,
-and has <code>rw-------</code> permissions.
+To prevent a race condition in 
+<citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> 
+(q.v.), 
+<command>vc-get-tty</command> ensures that the virtual console is owned
+by the effective UID of the process, and has <code>rw-------</code>
+permissions.
 </para>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

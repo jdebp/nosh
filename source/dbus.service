@@ -3,12 +3,16 @@
 ## **************************************************************************
 
 [Unit]
-Description=Device bus service
+Description=System-wide "Desktop" bus service
 After=machine-id.service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStartPre=sh -c 'mkdir -p /run/dbus ; mkdir -p /var/db/dbus ; [ ! -r /var/db/dbus/machine-id ] && ln -s /etc/machine-id /var/db/dbus/ ; rm -f /run/dbus/dbus.pid'
+ExecStartPre=mkdir -p /run/dbus
+ExecStartPre=mkdir -p /var/db/dbus
+ExecStartPre=sh -c '[ -r /var/db/dbus/machine-id ] || ln -s /etc/machine-id /var/db/dbus/'
+ExecStartPre=rm -f /run/dbus/dbus.pid
+# BSD dbus doesn't support --pidfile, even thought that would be nice here.
 ExecStart=dbus-daemon --system --nofork
 Restart=always
 

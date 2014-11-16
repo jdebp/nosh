@@ -15,3 +15,11 @@ sysinit-log
 kmod@autofs
 kmod@unix
 kmod@ipv6
+kmod@vboxadd
+kmod@vboxdrv
+kmod@vboxguest
+kmod@vboxnetadp
+kmod@vboxnetflt
+kmod@vboxpci
+kmod@vboxsf
+kmod@vboxvideo

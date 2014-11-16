@@ -2,5 +2,5 @@
 pty-get-tty
 pty-run -t
 setsid
-open-controlling-tty --exclusive --no-vhangup --
+open-controlling-tty --exclusive --
 $@

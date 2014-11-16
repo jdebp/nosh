@@ -1,4 +1,5 @@
 acpid
+bcron-spool
 exim4r
 exim4s
 ftp4d
@@ -12,4 +13,5 @@ saned
 sshd
 svnserve
 systemd-rsyslog
+uuidd
 vsftpd

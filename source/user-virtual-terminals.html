@@ -1,0 +1,83 @@
+<title>user-space virtual terminals</title>
+<link rel="Up" href="index.html" title="nosh Guide" />
+<link rel="Prev" href="kernel-virtual-terminals.html" title="kernel virtual terminals" />
+<link rel="Next" href="troubleshooting.html" title="Troubleshooting" />
+<h1>
+user-space virtual terminals
+</h1>
+
+<p>
+As an augmentation to, or a complete replacement for, kernel virtual terminals, this package also allows you to set up user-space virtual terminals.
+A user-space virtual terminal comprises four things:
+</p>
+<ul>
+<li><p>a pseudo-terminal</p></li>
+<li><p><a href="virtual-terminal-login.html">a TUI login service</a> that has the pseudo-terminal as its controlling terminal</p></li>
+<li><p>a console-terminal-emulator process, that conects the pseudo-terminal to a display buffer and an input FIFO</p></li>
+<li><p>one or more renderer processes, that connect the display buffer and input FIFO to real I/O devices of some kind</p></li>
+</ul>
+
+<h2>
+terminal emulator services
+</h2>
+
+<p>
+Each user-space virtual terminal has one service, running <a href="console-terminal-emulator.html"><code>console-terminal-emulator</code></a>.
+This duplicates the function of the old-style kernel terminal emulator code, but as an application-mode process outwith the kernel.
+</p>
+
+<p>
+It is explicitly <em>not</em> an emulator for any model of real terminal.
+Its function is to correctly cope with the outputs of programs that are using (according to operating system) the <code>linux</code>, <code>wscon25</code>, or <code>xterm</code> entries in the termcap/terminfo databases; those being the entries that are used for kernel terminal emulators.
+In other words, one should be able to switch from a kernel virtual terminal to a user-space virtual terminal without changing the terminal type used in the ttylogin service.
+</p>
+
+<p>
+It is the terminal emulator service that creates the <code>tty</code> device file, and so the terminal emulator service must start before any TUI login service for that terminal does.
+A <code>console-terminal-emulator@1.service</code> must be ordered before its corresponding <code>ttylogin@1.service</code> in the startup sequence with an appropriate symbolic link in the latter's service bundle's <code>after/</code> directory, for example.
+</p>
+
+<p>
+Terminal emulator services do not require superuser privileges at any stage; and for best security should be run under the aegis of an unprivileged account dedicated to the service(s).
+</p>
+
+<h2>
+renderers
+</h2>
+
+<p>
+The relationship between renderers and terminals is many-to-many.
+A renderer may be a simple renderer, that handles just one user-space virtual terminal.
+Or it may be a complex renderer that handles multiple user-space virtual terminals, multiplexing their displays onto its output device, and allowing the user to switch amongst virtual terminals with a hotkey sequence, or a mouse action of some kind.
+One can also attach multiple display-only renderers to a single user-space virtual terminal with no ill-effects.
+All renderers will render concurrently.
+</p>
+
+<p>
+The lifetimes of renderers do not affect the lifetimes of the associated virtual terminals.
+One can detach all renderers from a user-space virtual terminal, and it will continue operating, its output stored in its display buffer file, unaffected.
+This differentiates user-space virtual terminals from, say, X Window System terminal programs, which signal hangup to the session leader programs running in the terminal when rendering is commanded to close its window.
+</p>
+
+<p>
+Renderers only require access to the files of the user-space virtual terminals that they are attached to, and to the various I/O devices that they are rendering the virtual terminal with.
+The exact security model depends from the kind of renderer, and there are many possible kinds; one could have:
+</p>
+<ul>
+<li><p>
+<a href="console-ncurses-renderer"><code>console-ncurses-renderer</code></a> &mdash; a renderer that uses wide character ncurses (ncursesw) to render one user-space virtual terminal on the console that the renderer itself is attached to.
+This renderer needs no additional privileged access to anything apart from the files of the user-space virtual terminal.
+</p></li>
+<li><p>
+a renderer that uses a framebuffer device, and mouse and keyboard input devices, rendering multiple user-space virtual terminals and allowing one to switch amongst them using hotkeys and mouse actions.
+This renderer initially needs additional privileged access to the device files, in order to open them, but can drop privileges afterwards.
+</p></li>
+<li><p>
+a renderer that renders multiple user-space virtual terminals using X Window System windows, and allowing one to switch amongst them using hotkeys and mouse actions.
+This renderer initially needs no additional privileged access.
+</p></li>
+<li><p>
+a renderer that renders one user-space virtual terminal on a Braille device.
+This renderer initially needs additional privileged access to the Braille device file, in order to open it, but can drop privileges afterwards.
+</p></li>
+</ul>

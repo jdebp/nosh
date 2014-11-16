@@ -13,4 +13,4 @@ ListenStream=smtp
 Accept=true
 MaxConnections=16
 UCSPIRules=true
-Nagle=false
+NoDelay=false

@@ -125,31 +125,32 @@ exit_scan:
 // **************************************************************************
 */
 
-int
-main (
-	int argc, 
-	const char * argv[] 
+void
+service_dt_scanner (
+	const char * & next_prog,
+	std::vector<const char *> & args
 ) {
+	const char * prog(basename_of(args[0]));
+
 	const bool is_system(true);
-	if (argc < 1) return EXIT_FAILURE;
-	const char * prog(basename_of(argv[0]));
-	if (argc != 2) {
-		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Incorrect number of arguments.");
-		return EXIT_FAILURE;
+	if (2 != args.size()) {
+		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "One directory name is required.");
+		throw EXIT_FAILURE;
 	}
+	const char * const scan_directory(args[1]);
 
 	const int queue(kqueue());
 	if (0 > queue) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kqueue", std::strerror(error));
-		return EXIT_FAILURE;
+		throw EXIT_FAILURE;
 	}
 
-	const int scan_dir_fd(open_dir_at(AT_FDCWD, argv[1]));
+	const int scan_dir_fd(open_dir_at(AT_FDCWD, scan_directory));
 	if (0 > scan_dir_fd) {
 		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, argv[1], std::strerror(error));
-		return EXIT_FAILURE;
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, scan_directory, std::strerror(error));
+		throw EXIT_FAILURE;
 	}
 
 	{
@@ -158,15 +159,15 @@ main (
 		if (0 > kevent(queue, e, sizeof e/sizeof *e, 0, 0, 0)) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
-			return EXIT_FAILURE;
+			throw EXIT_FAILURE;
 		}
 	}
 
 	umask(0);
 
 	const int socket_fd(connect_service_manager_socket(is_system, prog));
-	if (0 > socket_fd) return EXIT_FAILURE;
-	rescan(prog, argv[1], socket_fd, scan_dir_fd);
+	if (0 > socket_fd) throw EXIT_FAILURE;
+	rescan(prog, scan_directory, socket_fd, scan_dir_fd);
 
 	for (;;) {
 		try {
@@ -175,12 +176,12 @@ main (
 				const int error(errno);
 				if (EINTR == error) continue;
 				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
-				return EXIT_FAILURE;
+				throw EXIT_FAILURE;
 			}
 			switch (e.filter) {
 				case EVFILT_VNODE:
 					if (e.ident == static_cast<uintptr_t>(scan_dir_fd))
-						rescan(prog, argv[1], socket_fd, scan_dir_fd);
+						rescan(prog, scan_directory, socket_fd, scan_dir_fd);
 					else
 						std::fprintf(stderr, "%s: DEBUG: vnode event ident %lu fflags %x\n", prog, e.ident, e.fflags);
 					break;

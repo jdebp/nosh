@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%P-%I server
+
+[Service]
+systemdWorkingDirectory=false
+EnvironmentFile=-/etc/sysconfig/%P-%I
+ExecStart=swift-%I /etc/swift/%I-server.conf
+Restart=always
+
+[Install]
+WantedBy=server.target

@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Regular background program processing daemon
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=cron -f
+Restart=always
+
+[Install]
+WantedBy=workstation.target

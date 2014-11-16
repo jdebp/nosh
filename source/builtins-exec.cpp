@@ -18,15 +18,6 @@ extern void nosh ( const char * &, std::vector<const char *> & );
 extern void chdir ( const char * &, std::vector<const char *> & );
 extern void chroot ( const char * &, std::vector<const char *> & );
 extern void umask ( const char * &, std::vector<const char *> & );
-extern void vc_get_tty ( const char * &, std::vector<const char *> & );
-extern void vc_reset_tty ( const char * &, std::vector<const char *> & );
-extern void vc_ncurses_io ( const char * &, std::vector<const char *> & );
-extern void open_controlling_tty ( const char * &, std::vector<const char *> & );
-extern void pty_get_tty ( const char * &, std::vector<const char *> & );
-extern void pty_run ( const char * &, std::vector<const char *> & );
-extern void login_banner ( const char * &, std::vector<const char *> & );
-extern void login_process ( const char * &, std::vector<const char *> & );
-extern void login_prompt ( const char * &, std::vector<const char *> & );
 extern void setsid ( const char * &, std::vector<const char *> & );
 extern void setpgrp ( const char * &, std::vector<const char *> & );
 extern void setenv ( const char * &, std::vector<const char *> & );
@@ -75,15 +66,6 @@ commands[] = {
 	{	"chdir",			chdir				},
 	{	"chroot",			chroot				},
 	{	"umask",			umask				},
-	{	"vc-get-tty",			vc_get_tty			},
-	{	"vc-reset-tty",			vc_reset_tty			},
-	{	"vc-ncurses-io",		vc_ncurses_io			},
-	{	"open-controlling-tty",		open_controlling_tty		},
-	{	"login-banner",			login_banner			},
-	{	"login-process",		login_process			},
-	{	"login-prompt",			login_prompt			},
-	{	"pty-get-tty",			pty_get_tty			},
-	{	"pty-run",			pty_run				},
 	{	"setsid",			setsid				},
 	{	"setpgrp",			setpgrp				},
 	{	"setenv",			setenv				},

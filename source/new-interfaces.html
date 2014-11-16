@@ -2,17 +2,17 @@
 <link rel="Up" href="index.html" title="nosh Guide" />
 <link rel="Prev" href="familiar-interfaces.html" title="Interfaces that you are used to" />
 <link rel="Next" href="anatomy-of-regular-service.html" title="Anatomy of a typical service" />
-<h2>
+<h1>
 Interfaces that are new
-</h2>
+</h1>
 
 <p>
 nosh incorporates several interfaces and mechanisms that might be new to you:
 </p>
 
-<h3>
+<h2>
 Bundle directories
-</h3>
+</h2>
 
 <p>
 Service and supervise directories are stored as two (of several) subdirectories of an over all service <em>bundle directory</em>.
@@ -32,9 +32,9 @@ By convention, these "sysinit" bundles live in <code>/etc/sv</code>.
 Since their supervise directories must be writable at run-time, they are symbolic links to directories that live under <code>/run/system-manager/early-supervise</code>.)
 </p>
 
-<h3>
+<h2>
 Distinct managers
-</h3>
+</h2>
 
 <p>
 The <em>service</em> manager is not the <em>system</em> manager.
@@ -47,9 +47,9 @@ The system manager manages the state machine for the system as a whole, with the
 They are quite different when compared in detail, though.)
 </p>
 
-<h3>
+<h2>
 Distinct scanners
-</h3>
+</h2>
 
 <p>
 The service <em>manager</em> is not the service <em>scanner</em>.
@@ -69,9 +69,9 @@ Running <a href="system-manager.html"><code>system-manager</code></a> as process
 Instead, <a href="system-control.html"><code>system-control</code></a> institutes the full service/target bundle interdependency framework.
 </p>
 
-<h3>
+<h2>
 <code>restart</code> scripts
-</h3>
+</h2>
 
 <p>
 Whenever the last service process for a service that is in the "running" state finishes, the service manager runs the service's <code>restart</code> program.
@@ -92,9 +92,9 @@ More complex <code>restart</code> scripts can &hellip;
 <li><p>&hellip; perform service-specific cleanup/reset actions.</p></li>
 </ul>
 
-<h3>
+<h2>
 Standard targets
-</h3>
+</h2>
 
 <p>
 This package has more standard targets than systemd:

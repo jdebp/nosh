@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Guenter's bcron submission socket
+
+[Socket]
+Backlog=2
+ListenStream=/run/bcron-spool
+Accept=true
+MaxConnections=16
+UCSPIRules=true
+
+[Install]
+WantedBy=server.target

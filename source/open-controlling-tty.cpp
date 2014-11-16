@@ -29,25 +29,25 @@ open_controlling_tty (
 	std::vector<const char *> & args
 ) {
 #if defined(_GNU_SOURCE)
-	bool no_vhangup(false);
+	bool vhangup(false);
 #else
-	bool no_revoke(false);
+	bool revoke(false);
 #endif
 	bool exclusive(false);
 
 	const char * prog(basename_of(args[0]));
 	try {
 #if defined(_GNU_SOURCE)
-		popt::bool_definition no_vhangup_option('\0', "no-vhangup", "Do not execute the vhangup call.", no_vhangup);
+		popt::bool_definition vhangup_option('\0', "vhangup", "Execute the vhangup call.", vhangup);
 #else
-		popt::bool_definition no_revoke_option('\0', "no-revoke", "Do not execute the revoke call.", no_revoke);
+		popt::bool_definition revoke_option('\0', "revoke", "Execute the revoke call.", revoke);
 #endif
 		popt::bool_definition exclusive_option('\0', "exclusive", "Attempt to set exclusive mode.", exclusive);
 		popt::definition * top_table[] = {
 #if defined(_GNU_SOURCE)
-			&no_vhangup_option,
+			&vhangup_option,
 #else
-			&no_revoke_option,
+			&revoke_option,
 #endif
 			&exclusive_option
 		};
@@ -71,8 +71,8 @@ open_controlling_tty (
 	}
 
 #if !defined(_GNU_SOURCE)
-	if (!no_revoke) {
-		if (0 > revoke(tty)) {
+	if (revoke) {
+		if (0 > ::revoke(tty)) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, "revoke", tty, std::strerror(error));
 			throw EXIT_FAILURE;
@@ -106,20 +106,13 @@ close_exit:
 
 	// This is the BSD way of acquiring the controlling TTY.
 	// On Linux, the 1 flag causes the forcible removal of this controlling TTY from existing processes, if we have the privileges.
-	// BSD ignores the flag.
-	if (0 > ioctl(fd, TIOCSCTTY, 1)) 
-#if defined(__LINUX__) || defined(__linux__)
-	{
-		// But sometimes it fails for no good reason.
+	if (0 > ioctl(fd, TIOCSCTTY, 1)) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: WARNING: %s: %s: %s\n", prog, "TIOCSCTTY", tty, std::strerror(error));
 	}
-#else
-	goto error_exit;
-#endif
 
 #if defined(_GNU_SOURCE)
-	if (!no_vhangup) {
+	if (vhangup) {
 		// We are be about to do vhangup() with an open fd to the TTY.
 		// We don't want to be terminated by the hangup signal ourselves.
 		struct sigaction sa;
@@ -129,7 +122,7 @@ close_exit:
 		sigaction(SIGHUP,&sa,NULL);
 
 		// Unfortunately, the TTY has to actually ALREADY be OUR controlling TTY for this to work.
-		if (vhangup()) goto error_exit;
+		if (::vhangup()) goto error_exit;
 
 		sa.sa_handler=SIG_DFL;
 		sa.sa_flags=0;

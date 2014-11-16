@@ -2,9 +2,9 @@
 <link rel="Up" href="index.html" title="nosh Guide" />
 <link rel="Next" href="startup-and-shutdown.html" title="Startup and shutdown" />
 <link rel="Prev" href="creating-bundles.html" title="Creating bundles" />
-<h2>
+<h1>
 Importing systemd unit files
-</h2>
+</h1>
 
 <p>
 The native mechanism for this system is the service bundle.
@@ -14,9 +14,9 @@ This conversion program allows software packagers to quickly construct a service
 (It also allows system administrators to do this in the case that software packagers have not.)
 </p>
 
-<h3>
+<h2>
 What can be imported
-</h3>
+</h2>
 
 <p>
 Five kinds of unit can be converted:
@@ -42,9 +42,9 @@ There are a few restrictions:
 These cover a large number of unit files, in practice.
 </p>
 
-<h3>
+<h2>
 What import does
-</h3>
+</h2>
 
 <p>
 <a href="convert-systemd-units.html"><code>convert-systemd-units</code></a> breaks down the unit files and builds <code>run</code>, <code>start</code>, and <code>service</code> scripts that use the various utility programs to set up a service's run-time environment in the way specified by the unit files.
@@ -56,16 +56,16 @@ A <code>User=</code> directive becomes a <a href="setuidgid.html"><code>setuidgi
 The conversion deals with several quirks of systemd:
 </p>
 <ul>
-<li><p>It's not documented, but systemd always sets the <code>HOME</code> environment variable whenever a <code>User=</code> directive says to change the user account.</p></li>
+<li><p>It was undocumented for a long time that systemd always sets the <code>HOME</code>, <code>USER</code>, and <code>LOGNAME</code> environment variables whenever a <code>User=</code> directive says to change the user account.</p></li>
 <li><p>It's not documented, but systemd always changes directory when it starts a service.  It explicitly changes to the root directory when no <code>WorkingDirectory=</code> directive is given.  
 The daemontools convention is for services to be run in their service directories.  
 Some daemons have been found to rely upon the undocumented systemd behaviour of being in the root directory.</p></li>
 <li><p>A fair few directives can occur in both a socket unit or its associated service unit.</p></li>
 </ul>
 
-<h3>
+<h2>
 Extensions to the systemd unit specification
-</h3>
+</h2>
 
 <p>
 There are several extensions to the systemd unit specification provided by the conversion process, to allow a unit file to specify things that systemd doesn't have but that service bundles have:
@@ -74,6 +74,10 @@ There are several extensions to the systemd unit specification provided by the c
 <li><p>
 The <code>systemdWorkingDirectory=</code> setting (defaulting to <code>true</code>) if <code>false</code> causes the generated bundle to not bother mimicking the working directory quirk of systemd.
 Set this on services and targets where the daemon program is happy to run in the <code>service</code> directory.
+</p></li>
+<li><p>
+The <code>systemdUserEnvironment=</code> setting (defaulting to <code>true</code>) if <code>false</code> causes the generated bundle to not bother mimicking the user environment variables quirk of systemd.
+Set this on services and targets where the daemon program has no need for the <code>HOME</code>, <code>USER</code>, <code>LOGNAME</code>, or <code>SHELL</code> environment variables.
 </p></li>
 <li><p>
 The <code>ExecStart=</code> setting does not require that the program be named with an absolute pathname, unlike systemd.

@@ -26,7 +26,8 @@ do
 done
 (
 	cat package/commands1
-	awk '{ if ($1 == "exec" || $1 == "session-manager") print $2 ; }' package/aliases1
+	awk '{ if ($1 == "exec" || $1 == "session-manager" || $1 == "console-terminal-emulator") print $2 ; }' package/aliases1
+	awk '{ if ($1 == "service-control" && $2 != "svc") print $2 ; }' package/aliases1
 ) | while read i
 do
 	rm -f -- manual/"$i".1{new}
@@ -40,7 +41,8 @@ do
 	cp -p -f -- build/"$i".8 manual/"$i".8{new}
 done
 (
-	awk '{ if ($1 != "exec" && $1 != "session-manager") print $0 ; }' package/aliases1
+	awk '{ if ($1 != "exec" && $1 != "session-manager" && $1 != "console-terminal-emulator" && $1 != "service-control") print $0 ; }' package/aliases1
+	awk '{ if ($1 == "service-control" && $2 == "svc") print $0 ; }' package/aliases1
 ) | while read command alias
 do
 	ln -f -s -- "${command}".1 manual/"${alias}".1{new}
@@ -51,7 +53,8 @@ do
 done < package/aliases8
 (
 	cat package/guidepages package/commands1 package/commands8
-	awk '{ if ($1 == "exec" || $1 == "session-manager") print $2 ; }' package/aliases1
+	awk '{ if ($1 == "exec" || $1 == "session-manager" || $1 == "console-terminal-emulator") print $2 ; }' package/aliases1
+	awk '{ if ($1 == "service-control" && $2 != "svc") print $2 ; }' package/aliases1
 ) | while read i
 do
 	rm -f -- guide/"$i".html{new}
@@ -59,7 +62,8 @@ do
 done
 (
 	cat package/aliases8
-	awk '{ if ($1 != "exec" && $1 != "session-manager") print $0 ; }' package/aliases1
+	awk '{ if ($1 != "exec" && $1 != "session-manager" && $1 != "console-terminal-emulator" && $1 != "service-control") print $0 ; }' package/aliases1
+	awk '{ if ($1 == "service-control" && $2 == "svc") print $0 ; }' package/aliases1
 ) | while read command alias
 do
 	ln -f -s -- "${command}".html guide/"${alias}".html{new}
@@ -68,14 +72,16 @@ done
 # Rename the ...{new} files.
 (
 	cat package/commands1 package/commands8
-	awk '{ if ($1 == "exec" || $1 == "session-manager") print $2 ; }' package/aliases1
+	awk '{ if ($1 == "exec" || $1 == "session-manager" || $1 == "console-terminal-emulator") print $2 ; }' package/aliases1
+	awk '{ if ($1 == "service-control" && $2 != "svc") print $2 ; }' package/aliases1
 ) | while read i
 do
 	mv -f -- command/"$i"{new} command/"$i"
 done
 (
 	cat package/commands1
-	awk '{ if ($1 == "exec" || $1 == "session-manager") print $2 ; }' package/aliases1
+	awk '{ if ($1 == "exec" || $1 == "session-manager" || $1 == "console-terminal-emulator") print $2 ; }' package/aliases1
+	awk '{ if ($1 == "service-control" && $2 != "svc") print $2 ; }' package/aliases1
 ) | while read i
 do
 	mv -f -- manual/"$i".1{new} manual/"$i".1
@@ -85,7 +91,8 @@ do
 	mv -f -- manual/"$i".8{new} manual/"$i".8
 done < package/commands8
 (
-	awk '{ if ($1 != "exec" && $1 != "session-manager") print $0 ; }' package/aliases1
+	awk '{ if ($1 != "exec" && $1 != "session-manager" && $1 != "console-terminal-emulator" && $1 != "service-control") print $0 ; }' package/aliases1
+	awk '{ if ($1 == "service-control" && $2 == "svc") print $0 ; }' package/aliases1
 ) | while read command alias
 do
 	mv -f -- manual/"${alias}".1{new} manual/"${alias}".1
@@ -98,14 +105,16 @@ do
 done < package/aliases8
 (
 	cat package/guidepages package/commands1 package/commands8
-	awk '{ if ($1 == "exec" || $1 == "session-manager") print $2 ; }' package/aliases1
+	awk '{ if ($1 == "exec" || $1 == "session-manager" || $1 == "console-terminal-emulator") print $2 ; }' package/aliases1
+	awk '{ if ($1 == "service-control" && $2 != "svc") print $2 ; }' package/aliases1
 ) | while read i
 do
 	mv -f -- guide/"$i".html{new} guide/"$i".html
 done
 (
 	cat package/aliases8
-	awk '{ if ($1 != "exec" && $1 != "session-manager") print $0 ; }' package/aliases1
+	awk '{ if ($1 != "exec" && $1 != "session-manager" && $1 != "console-terminal-emulator" && $1 != "service-control") print $0 ; }' package/aliases1
+	awk '{ if ($1 == "service-control" && $2 == "svc") print $0 ; }' package/aliases1
 ) | while read command alias
 do
 	mv -f -- guide/"${alias}".html{new} guide/"${alias}".html
@@ -132,13 +141,13 @@ do
 done < package/sysinit-mounts
 while read i
 do
-	command/system-control convert-systemd-units --bundle-root config/regular-services{new}/ build/$i.service
+	command/system-control convert-systemd-units --bundle-root config/regular-services{new}/ --unescape-instance build/$i.service
 	command/system-control convert-systemd-units --bundle-root config/regular-services{new}/ build/cyclog@$i.service
 	ln -s ../cyclog@$i config/regular-services{new}/$i/log
 done < package/regular-services
 while read i
 do
-	command/system-control convert-systemd-units --bundle-root config/regular-services{new}/ build/$i.socket
+	command/system-control convert-systemd-units --bundle-root config/regular-services{new}/ --unescape-instance build/$i.socket
 	command/system-control convert-systemd-units --bundle-root config/regular-services{new}/ build/cyclog@$i.service
 	ln -s ../cyclog@$i config/regular-services{new}/$i/log
 done < package/regular-sockets
@@ -159,12 +168,12 @@ rm -f -- config/sysinit-services{new}/devd/log
 ln -s ../devd-log config/sysinit-services{new}/devd/log
 
 # Rename the ...{new} directories.
-for i in service-manager.socket service-manager.service service-manager.conf system-manager.conf service-manager-svscan.path service-manager-svscan.service
+for i in service-manager.socket service-manager.service service-manager.conf system-manager.conf terminal-emulator.conf service-manager-svscan.path service-manager-svscan.service
 do
 	rm -f -- config/"$i"{new}
 	cp -p -f -- build/"$i" config/"$i"{new}
 done
-for i in service-manager.socket service-manager.service service-manager.conf system-manager.conf service-manager-svscan.path service-manager-svscan.service
+for i in service-manager.socket service-manager.service service-manager.conf system-manager.conf terminal-emulator.conf service-manager-svscan.path service-manager-svscan.service
 do
 	mv -f -- config/"$i"{new} config/"$i"
 done 

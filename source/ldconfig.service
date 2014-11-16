@@ -7,6 +7,7 @@ Description=Initialise the dynamic loader database sysinit service
 DefaultDependencies=false
 EarlySupervise=true
 After=local-fs.target
+Wants=local-fs.target
 
 [Service]
 systemdWorkingDirectory=false

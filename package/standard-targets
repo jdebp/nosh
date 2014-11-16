@@ -13,4 +13,5 @@ server
 shutdown
 sockets
 sysinit
+virtualbox
 workstation

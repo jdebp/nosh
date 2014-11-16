@@ -8,7 +8,7 @@ Description=KF socket
 [Socket]
 Backlog=2
 MaxConnections=2
-Nagle=false
+NoDelay=false
 BindIPv6Only=both
 ListenStream=kf
 UCSPIRules=true

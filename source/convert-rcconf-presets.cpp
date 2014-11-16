@@ -16,7 +16,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <new>
 #include <memory>
 #include <unistd.h>
-#include <dirent.h>
 #include <fcntl.h>
 #include "utils.h"
 #include "fdutils.h"
@@ -86,11 +85,7 @@ convert_rcconf_presets (
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
-		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
-		popt::definition * main_table[] = {
-			&user_option
-		};
-		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "service(s)...");
+		popt::top_table_definition main_option(0, 0, "Main options", "service(s)...");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);

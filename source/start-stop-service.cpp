@@ -102,8 +102,8 @@ add_bundle (
 		return 0;
 	}
 	const unsigned wants (
-		0 == want ? bundle::WANT_STOP :
-		1 == want ? bundle::WANT_START :
+		0 == want ? static_cast<unsigned>(bundle::WANT_STOP) :
+		1 == want ? static_cast<unsigned>(bundle::WANT_START) :
 		want_for(bundle_dir_fd)
 	);
 	bundle_info_map::iterator bundle_i(bundles.find(bundle_dir_s));
@@ -421,7 +421,7 @@ start_stop_common (
 
 	// Load any services (into the service manager) that are about to be started but that are not already loaded.
 	// Do the same for their log services, even if those log services are not part of the calculated bundle set.
-	// This is because the service manager must have the log service loaded in order to send the main service's output to the right place, even if the log service isn't being acted upon here.
+	// This is because the service manager must have the log service loaded in order to plumb the main service's output to the right place, even if the log service isn't being acted upon here.
 	for (bundle_pointer_list::const_iterator i(sorted.begin()); sorted.end() != i; ++i) {
 		bundle & b(**i);
 		if (bundle::WANT_START != b.wants) continue;

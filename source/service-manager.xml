@@ -269,7 +269,7 @@ script.)
 However, <filename>restart</filename> is invoked with two pieces of information, which together
 represent the most recent exit status of the <filename>run</filename> program, that allow
 finer control over the restart decision, if desired.
-The two pieces of information are its two command line arguments.
+The two pieces of information are its three command line arguments.
 </para>
 
 <para>
@@ -282,9 +282,15 @@ the "good" termination signals <code>SIGTERM</code>, <code>SIGPIPE</code>, <code
 </para>
 
 <para>
-The second is either (for <code>exit</code>) the decimal exit status of the process or
-(for everything else) a symbolic designation or decimal code of the specific
-signal, if the first argument is not specific enough to make a decision.
+The second is either (for <code>exit</code>) the decimal exit status of the
+process or (for everything else) a symbolic designation (falling back to a
+decimal code) of the specific signal, if the first argument is not specific
+enough to make a decision.
+</para>
+
+<para>
+For convenience, the third is (for other than <code>exit</code>) always the
+decimal code of the specific signal.
 </para>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

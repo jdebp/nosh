@@ -79,6 +79,9 @@ safe_execvp (
 
 		const int fd(open_exec_at(AT_FDCWD, buf.get()));
 		if (0 <= fd) {
+#if !defined(__LINUX__) && !defined(__linux__)
+			set_close_on_exec(fd, false);	// because otherwise executable scripts won't see a valid /dev/fd/N .
+#endif
 			fexecve(fd, const_cast<char **>(args), environ);
 			const int saved_error(errno);
 			close(fd);

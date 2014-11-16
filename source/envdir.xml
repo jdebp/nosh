@@ -12,7 +12,11 @@
 
 <refsynopsisdiv>
 <cmdsynopsis>
-<command>envdir</command> <arg choice='req'><replaceable>dir</replaceable></arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+<command>envdir</command> 
+<arg choice='opt'>--ignore-nodir</arg> 
+<arg choice='opt'>--full</arg> 
+<arg choice='req'><replaceable>dir</replaceable></arg> 
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -21,11 +25,18 @@
 <para>
 <command>envdir</command> is a chain-loading utility that sets and unsets environment variables
 according to the files in <replaceable>dir</replaceable>
-and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+and then chain loads to <replaceable>next-prog</replaceable> with the 
+<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
 </para>
 
 <para>
 <replaceable>next-prog</replaceable> may contain its own command line options, which <command>envdir</command> will ignore.
+</para>
+
+<para>
+Unless the <arg choice='opt'>--ignore-nodir</arg> command line option is used,
+the non-existence of <replaceable>dir</replaceable>, or it being something
+other than a directory, is a fatal error.
 </para>
 
 <para>
@@ -42,9 +53,15 @@ If the file is empty, <command>envdir</command> unsets the variable <filename>fi
 
 <listitem>
 <para>
-Otherwise <command>envdir</command> sets the variable <filename>file</filename>, overwriting its existing value
-if it has one, to the first line of the contents of <filename>file</filename>, after turning NUL
-characters into LF characters.
+Otherwise <command>envdir</command> sets the variable
+<filename>file</filename>, overwriting its existing value if it has one, to the
+contents of <filename>file</filename>, after turning NUL characters into LF
+characters.
+</para>
+<para>
+If the <arg choice='opt'>--full</arg> command line option is used,
+<command>envdir</command> uses the full contents of <filename>file</filename>;
+otherwise it uses just the first line of those contents.
 </para>
 </listitem>
 

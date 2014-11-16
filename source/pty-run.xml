@@ -101,6 +101,17 @@ If the child process stops with a stop signal, it simply sends it a
 <replaceable>next-prog</replaceable> may contain its own command line options, which <command>pty-run</command> will ignore.
 </para>
 
+</refsection><refsection><title>SECURITY</title>
+
+<para>
+<command>pty-run</command> does not touch the slave side device at all.
+The slave device race condition that must be avoided for
+<citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> 
+(q.v.) and similar slave-side programs
+should have already been handled by whatever created the pseudo-terminal (e.g.
+<citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+</para>
+
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
 
 </refentry>

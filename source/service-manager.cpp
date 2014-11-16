@@ -165,7 +165,7 @@ static inline
 const char *
 signame (
 	int signo,
-	char snbuf[16]
+	char codebuf[16]
 ) {
 	switch (signo) {
 		case SIGKILL:	return "KILL";
@@ -179,8 +179,7 @@ signame (
 		case SIGSEGV:	return "SEGV";
 		case SIGFPE:	return "FPE";
 	}
-	snprintf(snbuf, 16, "%u", signo);
-	return snbuf;
+	return codebuf;
 }
 
 static inline
@@ -463,7 +462,7 @@ service::enter_state (
 	if (has_processes()) return;
 
 	const char * const * a(0);
-	const char * restart_args[] = { "restart", 0, 0, 0 };
+	const char * restart_args[] = { "restart", 0, 0, 0, 0 };
 	switch (activity) {
 		default:	sleep(1); write_status(); return;
 		case NONE:	write_status(); return;
@@ -498,19 +497,21 @@ service::enter_state (
 
 	// Child process only from now on.
 
-	char snbuf[16];
+	char codebuf[16];
 	switch (activity) {
 		default:	break;
 		case RESTART:	
 			if (WIFSIGNALED(process_status)) {
 				const int signo(WTERMSIG(process_status));
 				restart_args[1] = classify_signal(signo);
-				restart_args[2] = signame(signo, snbuf);
+				snprintf(codebuf, sizeof codebuf, "%u", signo);
+				restart_args[2] = signame(signo, codebuf);
+				restart_args[3] = codebuf;
 			} else {
 				const int code(WEXITSTATUS(process_status));
 				restart_args[1] = "exit";
-				snprintf(snbuf, 16, "%u", code);
-				restart_args[2] = snbuf;
+				snprintf(codebuf, sizeof codebuf, "%u", code);
+				restart_args[2] = codebuf;
 			}
 			break;
 	}
@@ -631,11 +632,11 @@ service::reap (
 	change_state_if_necessary(original_signals);
 }
 
-#if defined(__LINUX__) || defined(__linux__)
-
 /* Signal handlers **********************************************************
 // **************************************************************************
 */
+
+#if defined(__LINUX__) || defined(__linux__)
 
 static sig_atomic_t child_signalled = false;
 
@@ -1065,6 +1066,7 @@ service_manager (
 		struct sigaction sa;
 		sa.sa_flags=0;
 		sigemptyset(&sa.sa_mask);
+		// We use a sig_ignore function rather than SIG_IGN so that all signals are automatically reset to their default actions on execve().
 		sa.sa_handler=sig_ignore;
 		sigaction(SIGHUP,&sa,NULL);
 		sigaction(SIGTERM,&sa,NULL);

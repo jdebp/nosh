@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Guenter's bcron scheduling daemon
+
+[Service]
+systemdWorkingDirectory=false
+EnvironmentDirectory=env
+ExecStart=bcron
+Restart=always
+
+[Install]
+WantedBy=server.target

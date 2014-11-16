@@ -39,14 +39,13 @@ void control_character_definition::action(popt::processor &)
 // **************************************************************************
 */
 
-int
-main (
-	int argc, 
-	const char * argv[] 
+void
+service_control (
+	const char * & next_prog,
+	std::vector<const char *> & args
 ) {
-	if (argc < 1) return EXIT_FAILURE;
-	const char * prog(basename_of(argv[0]));
-	std::vector<const char *> args(argv, argv + argc);
+	const char * prog(basename_of(args[0]));
+
 	std::string controls;
 	try {
 		control_character_definition up_option('u', "up", "Bring the service up, if it is not up already.", 'u', controls);
@@ -89,15 +88,16 @@ main (
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
 		p.process(true /* strictly options before arguments */);
 		args = new_args;
-		if (p.stopped()) return EXIT_SUCCESS;
+		next_prog = arg0_of(args);
+		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		return EXIT_USAGE;
+		throw EXIT_USAGE;
 	}
 
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing directory name(s).");
-		return EXIT_USAGE;
+		throw EXIT_USAGE;
 	}
 
 	sigset_t original_signals;
@@ -159,5 +159,6 @@ main (
 		}
 		close(control_fd), control_fd = -1;
 	}
-	return EXIT_SUCCESS;
+
+	throw EXIT_SUCCESS;
 }

@@ -1,22 +1,22 @@
 <title>Troubleshooting</title>
 <link rel="Up" href="index.html" title="nosh Guide" />
-<link rel="Prev" href="logging.html" title="Logging" />
-<h2>
+<link rel="Prev" href="user-virtual-terminals.html" title="user-space virtual terminals" />
+<h1>
 Troubleshooting
-</h2>
+</h1>
 
-<h3>
+<h2>
 A service is continually switching between the "running" and "failed" states, and shows an uptime of 0 seconds (or 1 second).
-</h3>
+</h2>
 
 <p>
 <a href="http://homepage.ntlworld.com./jonathan.deboynepollard/FGA/daemontools-service-not-staying-up.html">
 This service is failing to start properly; investigate its log and check its run script.</a>
 </p>
 
-<h3>
+<h2>
 A service is stuck in the "starting", "failed", or "stopping" states.
-</h3>
+</h2>
 
 <p>
 The <a href="service-control.html"><code>service-control</code> command</a> causes the service manager to send signals to the service process(es).
@@ -30,9 +30,9 @@ The "fsck@" service <code>fsck</code>s a volume in its "starting" state, for exa
 These long-running initialization actions are <em>not</em> necessarily stuck just because they take a long time.
 </p>
 
-<h3>
+<h2>
 The system bootstrap never starts the "normal" target.
-</h3>
+</h2>
 
 <ul>
 <li><p>
@@ -49,9 +49,9 @@ Notice that "sysinit" services locate their <code>supervise</code> directories u
 </p></li>
 </ul>
 
-<h3>
+<h2>
 A "log" service is marked as "initially started" by <code>svstat</code> but the daemontools-compatible bootstrap doesn't start it.
-</h3>
+</h2>
 
 <p>
 This is actually the expected behaviour.

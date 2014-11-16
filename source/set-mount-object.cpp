@@ -81,14 +81,14 @@ set_mount_object (
 	}
 
 	struct iovec iov[] = {
-		FSPATH,			MAKE_IOVEC(""),
-		FROM,			{ const_cast<char *>(dir), std::strlen(dir) },
+		FROM,			MAKE_IOVEC(""),
+		FSPATH,			{ const_cast<char *>(dir), std::strlen(dir) },
 		FSTYPE,			MAKE_IOVEC(""),
 	};
 
 	if (0 > nmount(iov, sizeof iov/sizeof *iov, flags)) {
 		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s\n", prog, std::strerror(error));
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, dir, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
 }

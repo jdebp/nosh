@@ -8,7 +8,6 @@ Description=Regular background program processing daemon
 [Service]
 Type=forking
 systemdWorkingDirectory=false
-EnvironmentFile=/etc/environment
 ExecStart=cron -s -x bit
 Restart=always
 

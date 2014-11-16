@@ -102,6 +102,16 @@ read_file (
 	FILE *
 ) ;
 extern
+bool
+process_env_dir (
+	const char * prog,
+	const char * dir,
+	int scan_dir_fd,
+	bool ignore_errors,
+	bool full,
+	bool chomp
+) ;
+extern
 std::string
 convert (
 	const struct iovec & v
@@ -113,12 +123,20 @@ fspath_from_mount (
 	unsigned int ioc
 ) ;
 extern
+bool
+read_line (
+	FILE * f,
+	std::string & l
+) ;
+extern
 std::string
 read_env_file (
 	const char * prog,
 	const char * dir,
 	const char * basename,
-	int fd
+	int fd,
+	bool full,
+	bool chomp
 ) ;
 extern
 bool

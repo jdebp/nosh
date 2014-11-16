@@ -52,7 +52,7 @@ read_conf (
 	FILE * f(std::fopen(file, "r"));
 	if (!f) {
 		const int error(errno);
-		std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, file, std::strerror(error));
+		std::fprintf(stderr, "%s: %s: %s: %s\n", prog, oknofile ? "WARNING": "ERROR", file, std::strerror(error));
 		if (oknofile) return;
 		throw EXIT_FAILURE;
 	}

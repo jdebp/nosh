@@ -7,7 +7,7 @@
 [Socket]
 Backlog=2
 MaxConnections=2
-Nagle=false
+NoDelay=false
 ListenStream=0:21
 UCSPIRules=true
 Accept=true

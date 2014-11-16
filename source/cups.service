@@ -8,6 +8,9 @@ Description=Common Unix Printing Service
 [Service]
 systemdWorkingDirectory=false
 ExecStart=cupsd -f
+## This works around a security hole in hplib where it opens sensitive files with predictable names in /tmp/ .
+## https://securityblog.redhat.com/2014/04/09/new-red-hat-enterprise-linux-7-security-feature-privatetmp/
+PrivateTmp=true
 Restart=always
 
 [Install]

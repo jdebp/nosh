@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=util-linux UUID listening daemon
+
+[Service]
+systemdWorkingDirectory=false
+User=uuidd
+ExecStartPre=mkdir -m 0755 /run/uuidd
+ExecStartPre=chown uuidd:uuidd /run/uuidd/
+ExecStart=uuidd --socket-activation
+
+[Install]
+WantedBy=workstation.target

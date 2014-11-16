@@ -1,0 +1,174 @@
+<refentry id="console-ncurses-renderer">
+
+<refmeta>
+<refentrytitle>console-ncurses-renderer</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.9</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>console-ncurses-renderer</refname>
+<refpurpose>realize a user-space virtual terminal on another terminal with ncurses</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>console-ncurses-renderer</command>
+<arg choice='opt'>--display-only</arg>
+<arg choice='req'><replaceable>filename</replaceable></arg>
+<arg choice='req'><replaceable>fifoname</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>console-ncurses-renderer</command> is the I/O back-end for a
+(user-space) virtual terminal, that realizes the virtual terminal on another
+terminal.
+It uses wide-character ncurses (sometimes a.k.a. ncursesw) to do so, and thus
+expects that terminal to be already connected to its standard input and
+standard output.
+</para>
+
+<para>
+It opens the character/attribute buffer file
+<replaceable>filename</replaceable> and the input FIFO
+<replaceable>fifoname</replaceable>.
+These are the "master side" interfaces of the user-space virtual terminal,
+as detailed in
+<citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+It is the user's responsibility to ensure that these refer to the same,
+single, user-space virtual terminal.
+</para>
+
+<para>
+It then enters a loop where it simultaneously:
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+(unless the <arg choice='plain'>--display-only</arg> option is used)
+writes all data received from its standard input to the input FIFO, using
+ncurses to retrive the input; and
+</para>
+</listitem>
+
+<listitem>
+<para>
+writes the contents of the character/attribute buffer file to its standard
+output, using ncursesw to write the output.
+</para>
+</listitem>
+
+</itemizedlist>
+
+</refsection>
+
+<refsection><title>Security</title>
+
+<para>
+<command>console-ncurses-renderer</command> 
+only requires sufficient privileges to access the file and the FIFO.
+Superuser privileges are not necessary.
+The recommended configuration is that the file and the FIFO are (respectively)
+readable and writable by a dedicated unprivileged user or group.
+</para>
+
+<para>
+It does not attempt to create the file or FIFO if they do not exist,
+because this would create them with the wrong owner and group,
+and thus requires no write access to their containing directory.
+</para>
+
+</refsection>
+
+<refsection><title>Limitations</title>
+
+<para>
+Because it employs ncursesw, <command>console-ncurses-renderer</command> has
+several limitations compared to a renderer with a more powerful rendering
+mechanism:
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+There is essentially only one modifier key for most editing keys, shift;
+and even that isn't available for some editing keys.
+</para>
+</listitem>
+
+<listitem>
+<para>
+There's no distinction made between auxiliary keypad keys (in application
+mode) and editing/cursor keypad keys.
+</para>
+</listitem>
+
+<listitem>
+<para>
+There are no modifiers for function keys.
+You may find that the realizing terminal translates function keys plus
+modifiers into differently numbered sets of function keys, in any case.
+This is a common trick employed by terminals with only one row of
+function keys.
+</para>
+</listitem>
+
+<listitem>
+<para>
+The placeholders for control and zero-width characters in the display buffer
+are not visually very informative.
+</para>
+</listitem>
+
+<listitem>
+<para>
+Display attributes are badly translated by or entirely missing on the
+realizing terminal.
+For examples:
+Blink is not implemented; or is displayed as a bright background colour.
+Underline and italics are not implemented.
+Concealed text is not concealed.
+</para>
+</listitem>
+
+<listitem>
+<para>
+The ncursesw colour system does not lend itself to 24-bit RGB.
+It is, in the terminology of the 
+<citerefentry><refentrytitle>termcap</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+manual page, "HP-like" rather than "Tektronix-like".
+This means that colours are specified indirectly, first via one of
+64 (at minimum) colour pairs that pair up foreground and background
+colours; and then via an (at minimum) 8-entry colour palette.
+The maximum number of simultaneously on-screen colours is nowhere near
+the size of the 24-bit RGB colour space, and is in fact 8 as standard.
+</para>
+</listitem>
+</itemizedlist>
+
+</refsection>
+
+<refsection><title>Bugs</title>
+
+<para>
+If you run <command>console-ncurses-renderer</command> outputting to the very
+same user space virtual terminal whose display it is rendering (and input it is
+generating), you will get a loop.
+Because of the modular nature of user space virtual terminals, it is not possible
+for <command>console-ncurses-renderer</command> to detect this.
+Don't do it.
+</para>
+
+</refsection>
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

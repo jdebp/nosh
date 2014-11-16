@@ -1,4 +1,3 @@
-anatomy-of-login-service
 anatomy-of-regular-service
 anatomy-of-regular-socket
 anatomy-of-sysinit-service
@@ -8,9 +7,13 @@ creating-bundles
 familiar-interfaces
 index
 introduction
+kernel-virtual-terminals
 logging
 mounting
 new-interfaces
 startup-and-shutdown
 svscan-startup
+terminals
 troubleshooting
+user-virtual-terminals
+virtual-terminal-login

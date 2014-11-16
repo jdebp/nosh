@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Terminal emulator driving %I
+Before=ttylogin@%i-tty.service
+
+[Service]
+systemdWorkingDirectory=false
+User=daemon
+Group=tty
+ExecStart=pty-get-tty console-terminal-emulator /run/dev/%I
+Restart=always
+RestartSec=0
+
+[Install]
+WantedBy=ttylogin@%i-tty.service

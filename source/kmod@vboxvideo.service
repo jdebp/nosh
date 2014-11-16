@@ -3,17 +3,14 @@
 ## **************************************************************************
 
 [Unit]
-Description=Create the "dynamic" part of the Message Of The Day
-DefaultDependencies=false
+Description=kernel module loader for vboxvideo
 EarlySupervise=true
-Wants=local-fs.target
-After=local-fs.target
 
 [Service]
-WorkingDirectory=/run/
-Umask=0033
-ExecStart=sh -c 'exec uname -srm > motd.dynamic'
+systemdWorkingDirectory=false
+ExecStart=system-control load-kernel-module vboxvideo
+ExecStopPost=system-control unload-kernel-module vboxvideo
 RemainAfterExit=yes
 
 [Install]
-WantedBy=sysinit.target
+WantedBy=virtualbox.target

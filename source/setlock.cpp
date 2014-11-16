@@ -58,5 +58,5 @@ setlock (
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, filename, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	reset_close_on_exec(fd);
+	set_close_on_exec(fd, false);
 }

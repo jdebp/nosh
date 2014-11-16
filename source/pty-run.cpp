@@ -11,6 +11,9 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cerrno>
 #include <sys/types.h>
 #include <sys/event.h>
+#if defined(__LINUX__) || defined(__linux__)
+#include <sys/poll.h>
+#endif
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <termios.h>
@@ -18,61 +21,32 @@ For copyright and licensing terms, see the file named COPYING.
 #include "popt.h"
 #include "utils.h"
 
-/* Main function ************************************************************
+enum { PTY_MASTER_FILENO = 4 };
+
+/* Signal handling **********************************************************
 // **************************************************************************
 */
 
-enum { PTY_MASTER_FILENO = 4 };
-
-static bool pass_through(false);
-static termios original_attr;
-
-static sig_atomic_t child_signalled = false;
+static sig_atomic_t child_signalled(false), window_resized(false), program_continued(false), terminate_signalled(false), interrupt_signalled(false), hangup_signalled(false);
 
 static
 void
-sig_pipe (
+handle_signal (
 	int signo
 ) {
-	if (SIGPIPE != signo) return;
-}
-
-static
-void
-sig_child (
-	int signo
-) {
-	if (SIGCHLD != signo) return;
-	child_signalled = true;
-}
-
-static
-void
-sig_winch (
-	int signo
-) {
-	if (SIGWINCH != signo) return;
-	if (pass_through) {
-		static winsize size;
-		if (0 <= tcgetwinsz_nointr(STDIN_FILENO, size))
-			tcsetwinsz_nointr(PTY_MASTER_FILENO, size);
+	switch (signo) {
+		case SIGCHLD:	child_signalled = true; break;
+		case SIGWINCH:	window_resized = true; break;
+		case SIGCONT:	program_continued = true; break;
+		case SIGTERM:	terminate_signalled = true; break;
+		case SIGINT:	interrupt_signalled = true; break;
+		case SIGHUP:	hangup_signalled = true; break;
 	}
 }
 
-static
-void
-sig_cont (
-	int signo
-) {
-	if (SIGCONT != signo) return;
-	if (pass_through) {
-		static winsize size;
-		if (0 <= tcgetattr_nointr(STDIN_FILENO, original_attr))
-			tcsetattr_nointr(STDIN_FILENO, TCSADRAIN, make_raw(original_attr));
-		if (0 <= tcgetwinsz_nointr(STDIN_FILENO, size))
-			tcsetwinsz_nointr(PTY_MASTER_FILENO, size);
-	}
-}
+/* Main function ************************************************************
+// **************************************************************************
+*/
 
 void
 pty_run ( 
@@ -81,6 +55,7 @@ pty_run (
 ) {
 	const char * prog(basename_of(args[0]));
 
+	bool pass_through(false);
 	try {
 		popt::bool_definition pass_through_option('t', "mirror", "Operate in pass-through TTY mode.", pass_through);
 		popt::definition * top_table[] = {
@@ -117,41 +92,32 @@ pty_run (
 		return;
 	}
 
-	char inb[1024], outb[1024];
-	size_t inl(0), outl(0);
-	bool ine(false), oute(false);
+	// It would be alright to use kqueue here, because we don't fork child processes from this point onwards.
+	// However, the Linux kevent() implementation has a bug somewhere that causes it to always return an EVFILT_READ event for TTYs, even if a read would in fact block.
 
+#if defined(__LINUX__) || defined(__linux__)
 	struct sigaction sa;
 	sa.sa_flags=0;
 	sigemptyset(&sa.sa_mask);
-	sa.sa_handler=sig_child;
+	sa.sa_handler=handle_signal;
 	sigaction(SIGCHLD,&sa,NULL);
-	sa.sa_handler=sig_pipe;
+	sigaction(SIGTERM,&sa,NULL);
+	sigaction(SIGINT,&sa,NULL);
+	sigaction(SIGHUP,&sa,NULL);
 	sigaction(SIGPIPE,&sa,NULL);
 	if (pass_through) {
-		sa.sa_handler=sig_cont;
 		sigaction(SIGCONT,&sa,NULL);
-		sa.sa_handler=sig_winch;
 		sigaction(SIGWINCH,&sa,NULL);
 	}
 
-	sig_cont (SIGCONT);
-
-	int status(0);
-
-#if defined(__LINUX__) || defined(__linux__)
-	const int PTY_MASTER_OUT_FILENO(PTY_MASTER_FILENO);
-	const int PTY_MASTER_IN_FILENO(dup(PTY_MASTER_FILENO));
-	if (0 > PTY_MASTER_IN_FILENO) {
-		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "dup", std::strerror(error));
-		throw EXIT_FAILURE;
-	}
+	pollfd p[3];
+	p[0].fd = STDIN_FILENO;
+	p[0].events = POLLIN|POLLHUP;
+	p[1].fd = STDOUT_FILENO;
+	p[1].events = POLLOUT|POLLHUP;
+	p[2].fd = PTY_MASTER_FILENO;
+	p[2].events = POLLIN|POLLOUT|POLLHUP;
 #else
-	const int PTY_MASTER_OUT_FILENO(PTY_MASTER_FILENO);
-	const int PTY_MASTER_IN_FILENO(PTY_MASTER_FILENO);
-#endif
-
 	const int queue(kqueue());
 	if (0 > queue) {
 		const int error(errno);
@@ -159,41 +125,103 @@ pty_run (
 		throw EXIT_FAILURE;
 	}
 
-	struct kevent p[4];
-	EV_SET(&p[0], STDIN_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
-	EV_SET(&p[1], STDOUT_FILENO, EVFILT_WRITE, EV_ADD, 0, 0, 0);
-	EV_SET(&p[2], PTY_MASTER_IN_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
-	EV_SET(&p[3], PTY_MASTER_OUT_FILENO, EVFILT_WRITE, EV_ADD, 0, 0, 0);
-	if (0 > kevent(queue, p, sizeof p/sizeof *p, 0, 0, 0)) {
-		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
-		throw EXIT_FAILURE;
-	}
+	struct kevent p[16];
 
-	while ((!ine || inl) && (!oute || outl)) {
+	{
+		struct sigaction sa;
+		sa.sa_flags=0;
+		sigemptyset(&sa.sa_mask);
+		// We only need to set handlers for those signals that would otherwise directly terminate the process.
+		sa.sa_handler=SIG_IGN;
+		sigaction(SIGTERM,&sa,NULL);
+		sigaction(SIGINT,&sa,NULL);
+		sigaction(SIGHUP,&sa,NULL);
+		sigaction(SIGPIPE,&sa,NULL);
+
+		size_t index(0);
+		EV_SET(&p[index++], STDIN_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
+		EV_SET(&p[index++], STDOUT_FILENO, EVFILT_WRITE, EV_ADD, 0, 0, 0);
+		EV_SET(&p[index++], PTY_MASTER_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
+		EV_SET(&p[index++], PTY_MASTER_FILENO, EVFILT_WRITE, EV_ADD, 0, 0, 0);
+		EV_SET(&p[index++], SIGCHLD, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		if (pass_through) {
+		EV_SET(&p[index++], SIGCONT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		EV_SET(&p[index++], SIGWINCH, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		}
+		EV_SET(&p[index++], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		EV_SET(&p[index++], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		EV_SET(&p[index++], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		EV_SET(&p[index++], SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		if (0 > kevent(queue, p, index, 0, 0, 0)) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
+			throw EXIT_FAILURE;
+		}
+	}
+#endif
+
+	char inb[1024], outb[1024];
+	size_t inl(0), outl(0);
+	bool ine(false), oute(false);
+	int status(0);
+	termios original_attr;
+
+	program_continued = true;
+
+	while (!WIFEXITED(status) || !oute || outl) {
+		if (terminate_signalled||interrupt_signalled||hangup_signalled) {
+			if (!WIFEXITED(status)) {
+				if (terminate_signalled) kill(child, SIGTERM);
+				if (interrupt_signalled) kill(child, SIGINT);
+				if (hangup_signalled) kill(child, SIGHUP);
+			}
+			break;
+		}
 		if (child_signalled) {
+			child_signalled = false;
 			for (;;) {
-				pid_t c = waitpid(child, &status, WNOHANG|WUNTRACED);
+				const pid_t c(waitpid(-1, &status, WNOHANG|WUNTRACED));
 				if (c <= 0) break;
+				if (c != child) continue;
 				if (WIFSTOPPED(status)) {
 					if (!pass_through) {
 						kill(c, SIGCONT);
 					}
 				}
 			}
-			child_signalled = false;
+		}
+		if (pass_through && window_resized) {
+			window_resized = false;
+			static winsize size;
+			if (0 <= tcgetwinsz_nointr(STDIN_FILENO, size))
+				tcsetwinsz_nointr(PTY_MASTER_FILENO, size);
+		}
+		if (pass_through && program_continued) {
+			program_continued = false;
+			static winsize size;
+			if (0 <= tcgetattr_nointr(STDIN_FILENO, original_attr))
+				tcsetattr_nointr(STDIN_FILENO, TCSADRAIN, make_raw(original_attr));
+			if (0 <= tcgetwinsz_nointr(STDIN_FILENO, size))
+				tcsetwinsz_nointr(PTY_MASTER_FILENO, size);
 		}
 
+#if defined(__LINUX__) || defined(__linux__)
+		if (outl) p[1].events |= POLLOUT; else p[1].events &= ~POLLOUT;
+		if (inl) p[2].events |= POLLOUT; else p[2].events &= ~POLLOUT;
+
+		const int rc(poll(p, sizeof p/sizeof *p, -1));
+#else
 		// Read from stdin if we have emptied the in buffer and haven't hit EOF.
 		EV_SET(&p[0], STDIN_FILENO, EVFILT_READ, !ine && !inl ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
 		// Read from master if we have emptied the out buffer and haven't hit EOF.
-		EV_SET(&p[2], PTY_MASTER_IN_FILENO, EVFILT_READ, !oute && !outl ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
+		EV_SET(&p[2], PTY_MASTER_FILENO, EVFILT_READ, !oute && !outl ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
 		// Write to stdout if we have things in the out buffer.
 		EV_SET(&p[1], STDOUT_FILENO, EVFILT_WRITE, outl ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
 		// Write to master if we have things in the in buffer.
-		EV_SET(&p[3], PTY_MASTER_OUT_FILENO, EVFILT_WRITE, inl ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
+		EV_SET(&p[3], PTY_MASTER_FILENO, EVFILT_WRITE, inl ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
 
 		const int rc(kevent(queue, p, 4, p, sizeof p/sizeof *p, 0));
+#endif
 
 		if (0 > rc) {
 			if (EINTR == errno) continue;
@@ -206,49 +234,69 @@ pty_run (
 			throw EXIT_FAILURE;
 		}
 
-#if defined(DEBUG)
-		if (0 != rc)
-			std::fprintf(stderr, "%s: DEBUG: ine %i inl %lu oute %i outl %lu, rc = %i\n", prog, ine, inl, oute, outl, rc);
-#endif
+#if defined(__LINUX__) || defined(__linux__)
+		const bool stdin_ready(p[0].revents & POLLIN);
+		const bool stdout_ready(p[1].revents & POLLOUT);
+		const bool masterin_ready(p[2].revents & POLLIN);
+		const bool masterout_ready(p[2].revents & POLLOUT);
+		const bool master_hangup(p[2].revents & POLLHUP);
+#else
+		bool stdin_ready(false), stdout_ready(false), masterin_ready(false), masterout_ready(false), master_hangup(false);
 
 		for (size_t i(0); i < static_cast<size_t>(rc); ++i) {
-#if defined(DEBUG)
-			std::fprintf(stderr, "%s: DEBUG: i %lu: filter %i ident %lu flags %i data %i\n", prog, i, p[i].filter, p[i].ident, p[i].flags, p[i].data);
+			const struct kevent & e(p[i]);
+			if (EVFILT_SIGNAL == e.filter)
+				handle_signal(e.ident);
+			if (EVFILT_READ == e.filter && STDIN_FILENO == e.ident)
+				stdin_ready = true;
+			if (EVFILT_WRITE == e.filter && STDOUT_FILENO == e.ident)
+				stdout_ready = true;
+			if (EVFILT_READ == e.filter && PTY_MASTER_FILENO == e.ident) {
+				masterin_ready = true;
+				master_hangup |= EV_EOF & e.flags;
+			}
+			if (EVFILT_WRITE == e.filter && PTY_MASTER_FILENO == e.ident)
+				masterout_ready = true;
+		}
 #endif
-			if (EVFILT_READ == p[i].filter && STDIN_FILENO == p[i].ident) {
+
+		if (stdin_ready) {
+			if (!inl) {
 				const int l(read(STDIN_FILENO, inb, sizeof inb));
 				if (l > 0) 
 					inl = l;
 				else if (0 == l)
 					ine = true;
 			}
-			if (EVFILT_WRITE == p[i].filter && STDOUT_FILENO == p[i].ident) {
+		}
+		if (stdout_ready) {
+			if (outl) {
 				const int l(write(STDOUT_FILENO, outb, outl));
 				if (l > 0) {
 					memmove(outb, outb + l, outl - l);
 					outl -= l;
 				}
 			}
-			if (EVFILT_READ == p[i].filter && PTY_MASTER_IN_FILENO == p[i].ident && EV_EOF != p[i].flags) {
-				const int l(read(PTY_MASTER_IN_FILENO, outb, sizeof outb));
+		}
+		if (masterin_ready) {
+			if (!outl) {
+				const int l(read(PTY_MASTER_FILENO, outb, sizeof outb));
 				if (l > 0) 
 					outl = l;
 				else if (0 == l)
 					oute = true;
 			}
-			if (EVFILT_READ == p[i].filter && PTY_MASTER_IN_FILENO == p[i].ident && EV_EOF == p[i].flags) {
-				if (!outl) oute = true;
-			}
-			if (EVFILT_WRITE == p[i].filter && PTY_MASTER_OUT_FILENO == p[i].ident) {
-				const int l(write(PTY_MASTER_OUT_FILENO, inb, inl));
+		}
+		if (master_hangup)
+			oute = true;
+		if (masterout_ready) {
+			if (inl) {
+				const int l(write(PTY_MASTER_FILENO, inb, inl));
 				if (l > 0) {
 					memmove(inb, inb + l, inl - l);
 					inl -= l;
 				}
 			}
-#if defined(DEBUG)
-			std::fprintf(stderr, "%s: DEBUG: ine %i inl %lu oute %i outl %lu\n", prog, ine, inl, oute, outl);
-#endif
 		}
 	}
 

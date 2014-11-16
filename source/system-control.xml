@@ -881,21 +881,50 @@ those mechanisms.
 <arg choice='plain'><replaceable>name</replaceable>.service</arg>
 </group>
 </cmdsynopsis>
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">convert-ttys-presets</arg>
+<arg choice='opt'>--prefix <replaceable>prefix</replaceable></arg> 
+<group choice='req' rep='repeat'>
+<arg choice='plain'><replaceable>name</replaceable></arg>
+<arg choice='plain'><replaceable>name</replaceable>.target</arg>
+<arg choice='plain'><replaceable>name</replaceable>.socket</arg>
+<arg choice='plain'><replaceable>name</replaceable>.service</arg>
+</group>
+</cmdsynopsis>
 
 <para>
 These subcommands translate preset information used by other systems into
 native preset information in the bundle directory for service/target
 <arg choice='plain'><replaceable>name</replaceable></arg>.
+</para>
+<itemizedlist>
+<listitem><para>
 <command>convert-systemd-presets</command> converts systemd preset information.
+</para></listitem>
+<listitem><para>
 <command>convert-rcconf-presets</command> converts
 <filename>/etc/rc.conf</filename> and <filename>/etc/rc.conf.local</filename>
-preset information, specifically the <arg
-choice='plain'><replaceable>name</replaceable>_enable</arg> variable,
+preset information, specifically the 
+<arg choice='plain'><replaceable>name</replaceable>_enable</arg> 
+variable,
 interpreting the values <code>true</code>, <code>1</code>, <code>yes</code>,
 and <code>on</code> as enable, and any other values (including specifically
 <code>false</code>, <code>0</code>, <code>no</code>, and <code>off</code>) as
 disable.
-</para>
+</para></listitem>
+<listitem><para>
+<command>convert-ttys-presets</command> converts <filename>/etc/ttys</filename>
+preset information, specifically the <code>on</code> and <code>off</code> flags
+as enable and disable, respectively.
+The <arg choice='plain'>--prefix</arg> command line argument can be used to
+prefix the service name with <replaceable>prefix</replaceable>; 
+allowing one to use the ordinary TTY device name as
+<replaceable>name</replaceable> and combine it with a "templatized" bundle name
+prefix such as <code>ttylogin@</code>, <code>getty@</code>, or
+<code>autovt@</code>.
+</para></listitem>
+</itemizedlist>
 
 </refsection>
 
@@ -941,6 +970,33 @@ prints a line containing the service bundle directory name.
 </para>
 </listitem>
 </itemizedlist>
+
+</refsection>
+
+<refsection><title>Kernel module management subcommands</title>
+
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">load-kernel-module</arg>
+<arg choice='req' rep='repeat'><replaceable>module</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">unload-kernel-module</arg>
+<arg choice='req' rep='repeat'><replaceable>module</replaceable></arg>
+</cmdsynopsis>
+
+<para>
+These subcommands provide a minimal operating-system-neutral kernel module
+loading and unloading mechanism, for use in cross-platform service bundles.
+They devolve to the appropriate operating system commands, which are
+<citerefentry><refentrytitle>kldload</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>kldunload</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+on BSD and
+<citerefentry><refentrytitle>modprobe</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+(without or with the <arg choice='plain'>--remove</arg> option) on Linux.
+</para>
 
 </refsection>
 

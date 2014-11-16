@@ -28,11 +28,32 @@
 <refpurpose>BSD/System V compatibility utilities for system and service control</refpurpose>
 </refnamediv>
 
-<refsynopsisdiv>
-<cmdsynopsis>
-<command>init</command>
-<arg choice="opt" rep="repeat"><replaceable>args</replaceable></arg>
-</cmdsynopsis>
+<refsection><title>Description</title>
+
+<para>
+<command>init</command> is a multiple personality program, whose function varies
+according to what name it is invoked as.
+</para>
+
+<para>
+The various commands that it provides are compatibility shims only; they do not
+support the full capabilities of the original commands, only a common-use
+subset for providing an easy migration path for old BSD and System V habits and
+scripts.
+Avoid using them if possible.
+</para>
+
+<para>
+It is preferable, although not ideal, to have systemd and upstart habits and
+use the
+<citerefentry><refentrytitle>systemctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>initctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+compatibility commands instead.
+</para>
+
+<refsection><title>Compatibility system control commands</title>
+
 <cmdsynopsis>
 <command>reboot</command>
 <group choice="opt">
@@ -66,70 +87,6 @@
 <cmdsynopsis><command>emergency</command></cmdsynopsis>
 <cmdsynopsis><command>rescue</command></cmdsynopsis>
 <cmdsynopsis><command>normal</command></cmdsynopsis>
-<cmdsynopsis>
-<command>service</command>
-<arg choice="req"><replaceable>name</replaceable></arg>
-<arg choice="req"><replaceable>command</replaceable></arg>
-</cmdsynopsis>
-<cmdsynopsis>
-<command>invoke-rc.d</command>
-<arg choice="req"><replaceable>name</replaceable></arg>
-<arg choice="req"><replaceable>command</replaceable></arg>
-</cmdsynopsis>
-<cmdsynopsis>
-<command>chkconfig</command>
-<arg choice="req"><replaceable>name</replaceable></arg>
-<arg choice="req"><replaceable>command</replaceable></arg>
-</cmdsynopsis>
-<cmdsynopsis>
-<command>rcctl</command>
-<arg choice="req"><replaceable>command</replaceable></arg>
-<arg choice="req"><replaceable>name</replaceable></arg>
-</cmdsynopsis>
-<cmdsynopsis>
-<command>update-rc.d</command>
-<arg choice="req"><replaceable>name</replaceable></arg>
-<arg choice="req"><replaceable>command</replaceable></arg>
-</cmdsynopsis>
-<cmdsynopsis>
-<command>telinit</command>
-<group choice="plain">
-<arg choice="req">0</arg>
-<arg choice="req">1</arg>
-<arg choice="req">5</arg>
-<arg choice="req">6</arg>
-<arg choice="req">h</arg>
-<arg choice="req">m</arg>
-<arg choice="req">s</arg>
-</group>
-</cmdsynopsis>
-</refsynopsisdiv>
-
-<refsection><title>Description</title>
-
-<para>
-<command>init</command> is a multiple personality program, whose function varies
-according to what name it is invoked as.
-</para>
-
-<para>
-The various commands that it provides are compatibility shims only; they do not
-support the full capabilities of the original commands, only a common-use
-subset for providing an easy migration path for old BSD and System V habits and
-scripts.
-Avoid using them if possible.
-</para>
-
-<para>
-It is preferable, although not ideal, to have systemd and upstart habits and
-use the
-<citerefentry><refentrytitle>systemctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-and
-<citerefentry><refentrytitle>initctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-compatibility commands instead.
-</para>
-
-<refsection><title>Compatibility system control commands</title>
 
 <para>
 Invoked as one of the system control commands
@@ -180,6 +137,32 @@ if invoked as <command>reboot</command>, <command>halt</command>, or
 
 </refsection>
 <refsection><title>Compatibility service control and configuration commands</title>
+
+<cmdsynopsis>
+<command>service</command>
+<arg choice="req"><replaceable>name</replaceable></arg>
+<arg choice="req"><replaceable>command</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>invoke-rc.d</command>
+<arg choice="req"><replaceable>name</replaceable></arg>
+<arg choice="req"><replaceable>command</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>update-rc.d</command>
+<arg choice="req"><replaceable>name</replaceable></arg>
+<arg choice="req"><replaceable>command</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>rcctl</command>
+<arg choice="req"><replaceable>command</replaceable></arg>
+<arg choice="req"><replaceable>name</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>chkconfig</command>
+<arg choice="req"><replaceable>name</replaceable></arg>
+<arg choice="req"><replaceable>command</replaceable></arg>
+</cmdsynopsis>
 
 <para>
 Invoked as 
@@ -310,6 +293,11 @@ platform to platform outwith these two subcommands) is supported.
 </refsection>
 <refsection><title>Compatibility bootstrap utility</title>
 
+<cmdsynopsis>
+<command>init</command>
+<arg choice="opt" rep="repeat"><replaceable>args</replaceable></arg>
+</cmdsynopsis>
+
 <para>
 Invoked as <command>init</command> the program simply chain loads to either
 <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>
@@ -350,6 +338,19 @@ directly, instead.
 
 </refsection>
 <refsection><title>Compatibility system control utility</title>
+
+<cmdsynopsis>
+<command>telinit</command>
+<group choice="plain">
+<arg choice="req">0</arg>
+<arg choice="req">1</arg>
+<arg choice="req">5</arg>
+<arg choice="req">6</arg>
+<arg choice="req">h</arg>
+<arg choice="req">m</arg>
+<arg choice="req">s</arg>
+</group>
+</cmdsynopsis>
 
 <para>
 Invoked as <command>telinit</command> the program chain loads to one of the

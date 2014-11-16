@@ -1,0 +1,143 @@
+<title>Terminals</title>
+<link rel="Up" href="index.html" title="nosh Guide" />
+<link rel="Next" href="kernel-virtual-terminals.html" title="kernel virtual terminals" />
+<link rel="Prev" href="logging.html" title="Logging" />
+<h1>
+Virtual terminal login
+</h1>
+
+<p>
+This package contains tools for running and managing TUI login services on both kernel and user-space virtual terminals.
+It also contains pre-written service bundles for such TUI login services.
+</p>
+
+<h2>
+Example service bundle <code>run</code> scripts
+</h2>
+
+<p>
+The <code>run</code> scripts are interpreted by <a href="nosh.html"><code>nosh</code></a> and are created from a template with the terminal name hardwired.
+
+<p>
+A <code>run</code> script to provide TUI login on kernel virtual terminal <code>/dev/ttyv4</code> would be something like this:
+</p>
+<blockquote><pre>#!/bin/nosh
+setsid
+vc-get-tty ttyv4
+open-controlling-tty
+vc-reset-tty
+login-banner /etc/issue
+login</pre></blockquote>
+
+<p>
+A <code>run</code> script for a service to provide TUI login on user-space virtual terminal <code>/run/dev/vc1</code> would be something like:
+</p>
+<blockquote><pre>#!/bin/nosh
+setsid
+vc-get-tty vc1/tty
+open-controlling-tty
+vc-reset-tty
+login-banner /etc/issue
+login</pre></blockquote>
+
+<h2>
+Script composition and the toolset
+</h2>
+
+<p>
+The <code>run</code> scripts for these services use the chain loading tools to do what one would otherwise do with <code>fgetty</code> or <code>mingetty</code>.
+They are even more minimal than "minimal <code>getty</code>" is, and cut out much of the functionality of a full <code>getty</code> that is either invariant or non-existent on virtual terminals.
+</p>
+
+<p>
+Several parts of this are specialized, hardwiring things that are variable in general, but that are in fact invariant for virtual terminals.
+</p>
+<ul>
+<li><p>
+Serial-line getty programs like <code>mgetty</code> and <code>agetty</code> deal in things like modem connect strings, serial line speeds, modem flow control, parity, dial-out interlocks, and suchlike.
+None of those things apply to virtual terminals; and the tools are simpler for having no dealings with them.
+</p></li>
+<li><p>
+As their names suggest, <a href="vc-get-tty.html"><code>vc-get-tty</code></a> and <a href="vc-reset-tty.html"><code>vc-reset-tty</code></a> are specialized tools for virtual terminals; the former only knows about the terminal types for virtual terminals, and the latter only knows about the control sequences for resetting virtual terminals.
+Both the terminal types and their control sequences are fixed by the user-space terminal emulator or the terminal emulator in the operating system kernel, and won't change in the way that real terminals attached to serial lines can.
+</p></li>
+</ul>
+
+<p>
+The chain <code>login-banner /etc/issue login</code> is a common sequence for login services.
+<code>run</code> scripts are recomposable and this chain is an example of that.
+One can adjust the behaviour of the service to suit particular needs by altering the tool chain or particular tool options.
+For examples:
+</p>
+<ul>
+<li><p>
+Some <code>login</code> programs employ an idle timeout feature, whereby they exit if login has not completed within a set period of time, such as 60 seconds.
+Terminal login as a proper service, managed by a service manager, operates suboptimally if the service is continually exiting, because <code>login</code> has timed out, every 60 seconds.
+At the very least, it is annoying chaff in the service logs.
+One way to fix this is to remove the timeout from <code>login</code>'s configuration file, whatever that may be, of course.
+Another is to put <a href="login-prompt.html"><code>login-prompt</code></a> into the chain:
+</p>
+<blockquote><pre>login-prompt login-banner /etc/issue login</pre></blockquote>
+<p>
+Having <code>login-prompt</code> run first ensures that the service does not keep timing out and exiting.
+The prompt that it displays is of course familiar Unix behaviour, that mimics the behaviour of serial line <code>getty</code> services on variable-speed lines.
+They can require that one press Return several times as the program attempts to guess the correct terminal line speed to set.
+</p></li>
+<li><p>
+<code>login</code> programs handle the creation, and often nowadays the cleanup, of <code>utmpx</code> database entries for successful logins.
+On modern BSDs the notion of <code>utmpx</code> records for anything other than the logged-in state of a terminal has been abolished.
+Linux still retains the old notion of terminals that are in the "init", "getty", and "login" states, even though they no longer apply.
+(The "init" state has no meaning for systems where the terminal login service isn't managed by process #1 any more; and as can be seen here there is no real "getty" state for kernel virtual terminals as most of the serial line functions of <code>getty</code> don't apply.)
+To maintain such additional records one simply inserts <a href="login-process.html"><code>login-process</code></a> into the chain:
+</p>
+<blockquote><pre>login-prompt login-banner /etc/issue login-process login</pre></blockquote>
+</li>
+<li><p>
+On Linux and BSDs, kernel virtual terminals may retain terminal state from previous logins that affects the viewability of subsequent logins.
+Existing processes can also end up retaining open file descriptors for the terminal device.
+To forcibly reset a virtual console, using mechanisms that are specific to kernel virtual consoles, one can employ the <code>--hard-reset</code>, <code>--text-mode</code> and other options to <code>vc-reset-tty</code>; and to forcibly remove access to open file descriptors one can employ the <code>--vhangup</code> or <code>--revoke</code> options to <a href="open-controlling-tty.html"><code>open-controlling-tty</code></a>.
+</p></li>
+</ul>
+
+<p>
+There are some differences between user-space and kernel virtual terminals that simplify such scripts yet further:
+</p>
+<ul>
+<li><p>
+User-space virtual terminals are created afresh (a new pseudo-terminal master and slave pair) at service start, so there is no need for the <code>--revoke</code> or <code>--vhangup</code> option to <code>open-controlling-tty</code>,
+</p></li>
+<li><p>
+User-space virtual terminals are initialized into a sane state (both the line discipline and the terminal emulator's attributes, colours, and character repertoire) at start, so there is no need for the <code>--hard-reset</code> option to <code>vc-reset-tty</code>,
+</p></li>
+<li><p>
+User-space virtual terminals do not have a graphics mode, so there is no need for the <code>--text-mode</code> option to <code>vc-reset-tty</code>.
+</p></li>
+</ul>
+
+<h2>
+BSD tools for <code>ttylogin</code> service management via <code>/etc/ttys</code>
+</h2>
+
+<p>
+<code>ttylogin</code> services can of course be managed just like ordinary services, enabling them so that they auto-start at bootup and starting and stopping them with normal service control commands.
+However, one might decide to retain the BSD <code>/etc/ttys</code> mechanism as the master settings list for all terminals.
+This is done with a preset conversion command, which one invokes whenever changes are made to <code>/etc/ttys</code> (just as one has to run conversion commands to take human format data and place it in the actual machine-readable database files when one has made changes to things like <code>/etc/passwd</code> and <code>/etc/termcap</code>).
+</p>
+
+<p>
+The <a href="convert-ttys-presets.html"><code>convert-ttys-presets</code></a> command can convert the on/off information for individual virtual terminals that is stored in <code>/etc/ttys</code> into enable/disable presets for the matching <code>ttylogin</code> services.
+In order to pick up changes to <code>/etc/ttys</code> when they are made one:
+</p>
+<ol>
+<li><p>
+&hellip; runs <code>system-control&nbsp;convert-ttys-presets&nbsp;--prefix&nbsp;ttylogin@&nbsp;ttyv{0,1,2,3,4,5,6,7,8}</code> to convert the records in <code>/etc/ttys</code> into preset information for the <code>ttylogin@ttyv{0,1,2,3,4,5,6,7,8}.service</code> services; and
+</p></li>
+<li><p>
+&hellip; runs <code>system-control&nbsp;preset&nbsp;ttylogin@ttyv{0,1,2,3,4,5,6,7,8}.service</code> to enable or disable the service according to the preset information.
+(One can also run <code>system-control&nbsp;reset&nbsp;ttylogin@ttyv{0,1,2,3,4,5,6,7,8}.service</code> to immediately start or stop the service according to the preset information.)
+</p></li>
+</ol>
+
+<p>
+Note that this allows one to list both kernel and user-space virtual terminals in <code>/etc/ttys</code>, alongside one another.
+</p>

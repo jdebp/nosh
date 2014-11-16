@@ -16,7 +16,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sys/types.h>
 #include <sys/socket.h>	// Necessary for the SO_REUSEPORT macro.
 #include <netinet/in.h>	// Necessary for the IPV6_V6ONLY macro.
-#include <dirent.h>
 #include <unistd.h>
 #include <pwd.h>
 #include "utils.h"
@@ -162,6 +161,21 @@ split_list (
 }
 
 static
+bool
+strip_leading_minus (
+	const std::string & s,
+	std::string & r
+) {
+	if (s.length() < 1 || '-' != s[0]) {
+		r = s;
+		return false;
+	} else {
+		r = s.substr(1, std::string::npos);
+		return true;
+	}
+}
+
+static
 std::string
 strip_leading_minus (
 	const std::string & s
@@ -224,6 +238,14 @@ quote (
 	}
 	if (quote) r = "\"" + r + "\"";
 	return r;
+}
+
+static inline
+std::string
+leading_slashify (
+	const std::string & s
+) {
+	return "/" == s.substr(0, 1) ? s : "/" + s;
 }
 
 struct names {
@@ -334,6 +356,7 @@ names::substitute (
 			case 'p': r += query_escaped_prefix(); break;
 			case 'P': r += query_prefix(); break;
 			case 'i': r += query_escaped_instance(); break;
+			case 'f': r += leading_slashify(query_instance()); break;
 			case 'I': r += query_instance(); break;
 			case 'n': r += query_escaped_unit_basename(); break;
 			case 'N': r += query_unit_basename(); break;
@@ -399,21 +422,6 @@ is_section_heading (
 	if (!bracketed(line)) return false;
 	section = tolower(line.substr(1, line.length() - 2));
 	return true;
-}
-
-static inline
-bool
-read_line (
-	FILE * f,
-	std::string & l
-) {
-	l.clear();
-	for (;;) {
-		const int c(std::fgetc(f));
-		if (EOF == c) return !l.empty();
-		if ('\n' == c) return true;
-		l += static_cast<unsigned char>(c);
-	}
 }
 
 static
@@ -665,9 +673,11 @@ convert_systemd_units (
 	value * maxconnections(socket_profile.use("socket", "maxconnections"));
 	value * keepalive(socket_profile.use("socket", "keepalive"));
 	value * socketmode(socket_profile.use("socket", "socketmode"));
+	value * socketuser(socket_profile.use("socket", "socketuser"));
+	value * socketgroup(socket_profile.use("socket", "socketgroup"));
 	value * passcredentials(socket_profile.use("socket", "passcredentials"));
 	value * passsecurity(socket_profile.use("socket", "passsecurity"));
-	value * nagle(socket_profile.use("socket", "nagle"));
+	value * nodelay(socket_profile.use("socket", "nodelay"));
 	value * ucspirules(socket_profile.use("socket", "ucspirules"));
 	value * freebind(socket_profile.use("socket", "freebind"));
 	value * socket_before(socket_profile.use("unit", "before"));
@@ -687,6 +697,7 @@ convert_systemd_units (
 	value * workingdirectory(service_profile.use("service", "workingdirectory"));
 	value * rootdirectory(service_profile.use("service", "rootdirectory"));
 	value * systemdworkingdirectory(service_profile.use("service", "systemdworkingdirectory"));	// This is an extension to systemd.
+	value * systemduserenvironment(service_profile.use("service", "systemduserenvironment"));	// This is an extension to systemd.
 	value * execstart(service_profile.use("service", "execstart"));
 	value * execstartpre(service_profile.use("service", "execstartpre"));
 	value * execrestartpre(service_profile.use("service", "execrestartpre"));	// This is an extension to systemd.
@@ -713,9 +724,12 @@ convert_systemd_units (
 	value * environmentdirectory(service_profile.use("service", "environmentdirectory"));	// This is an extension to systemd.
 	value * environmentuser(service_profile.use("service", "environmentuser"));	// This is an extension to systemd.
 	value * environmentappendpath(service_profile.use("service", "environmentappendpath"));	// This is an extension to systemd.
+#if defined(__LINUX__) || defined(__linux__)
+	value * utmpidentifier(service_profile.use("service", "utmpidentifier"));
+#endif
 	value * ttypath(service_profile.use("service", "ttypath"));
 	value * ttyreset(service_profile.use("service", "ttyreset"));
-	value * ttyprompt(service_profile.use("service", "ttyprompt"));
+	value * ttyprompt(service_profile.use("service", "ttyprompt"));	// This is an extension to systemd.
 	value * ttyvhangup(service_profile.use("service", "ttyvhangup"));
 //	value * ttyvtdisallocate(service_profile.use("service", "ttyvtdisallocate"));
 	value * remainafterexit(service_profile.use("service", "remainafterexit"));
@@ -749,7 +763,8 @@ convert_systemd_units (
 		std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, service_filename.c_str(), type->last_setting().c_str(), "Only simple services are supported.");
 		throw EXIT_FAILURE;
 	}
-	if (!execstart && !is_target) {
+	const bool is_oneshot(type && "oneshot" == tolower(type->last_setting()));
+	if (!execstart && !is_target && !is_oneshot) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, service_filename.c_str(), "Missing mandatory ExecStart entry.");
 		throw EXIT_FAILURE;
 	}
@@ -825,13 +840,18 @@ convert_systemd_units (
 			setuidgid += "setuidgid-fromenv\n";
 		} else
 			setuidgid += "setuidgid " + quote(u) + "\n";
-		if (passwd * pw = getpwnam(u.c_str())) {
-			// This replicates a systemd bug.
-			if (pw->pw_dir)
-				setuidgid += "setenv HOME " + quote(pw->pw_dir) + "\n";
-			// This replicates a systemd useless feature.
-			if (pw->pw_shell)
-				setuidgid += "setenv SHELL " + quote(pw->pw_shell) + "\n";
+		if (is_bool_true(systemduserenvironment, true)) {
+			if (passwd * pw = getpwnam(u.c_str())) {
+				// These replicate systemd useless features.
+				if (pw->pw_dir)
+					setuidgid += "setenv HOME " + quote(pw->pw_dir) + "\n";
+				if (pw->pw_shell)
+					setuidgid += "setenv SHELL " + quote(pw->pw_shell) + "\n";
+				if (pw->pw_name) {
+					setuidgid += "setenv USER " + quote(pw->pw_name) + "\n";
+					setuidgid += "setenv LOGNAME " + quote(pw->pw_name) + "\n";
+				}
+			}
 		}
 	} else {
 		if (group)
@@ -860,8 +880,9 @@ convert_systemd_units (
 	std::string env;
 	if (environmentfile) {
 		for (std::list<std::string>::const_iterator i(environmentfile->all_settings().begin()); environmentfile->all_settings().end() != i; ++i) {
-			const std::string & val(*i);
-			env += "read-conf " + quote(names.substitute(val)) + "\n";
+			std::string val;
+			const bool minus(strip_leading_minus(*i, val));
+			env += "read-conf " + ((minus ? "--oknofile " : "") + quote(names.substitute(val))) + "\n";
 		}
 	}
 	if (environmentdirectory) {
@@ -899,7 +920,6 @@ convert_systemd_units (
 	}
 	std::string um;
 	if (umask) um += "umask " + quote(umask->last_setting()) + "\n";
-	const bool is_oneshot(type && "oneshot" == tolower(type->last_setting()));
 	const bool is_remain(is_bool_true(remainafterexit, false));
 	const bool stdin_socket(standardinput && "socket" == tolower(standardinput->last_setting()));
 	const bool stdin_tty(standardinput && ("tty" == tolower(standardinput->last_setting()) || "tty-force" == tolower(standardinput->last_setting())));
@@ -914,11 +934,11 @@ convert_systemd_units (
 	if (ttypath || stdin_tty) redirect += "vc-get-tty " + quote(tty) + "\n";
 	if (stdin_tty) {
 		redirect += "open-controlling-tty";
-		if (!is_bool_true(ttyvhangup, false)) 
+		if (is_bool_true(ttyvhangup, false)) 
 #if defined(__LINUX__) || defined(__linux__)
-			redirect += " --no-vhangup";
+			redirect += " --vhangup";
 #else
-			redirect += " --no-revoke";
+			redirect += " --revoke";
 #endif
 		redirect += "\n";
 	}
@@ -927,6 +947,11 @@ convert_systemd_units (
 	if (stdin_tty) {
 		if (is_bool_true(ttyreset, false)) login_prompt += "vc-reset-tty\n";
 		if (is_bool_true(ttyprompt, false)) login_prompt += "login-prompt\n";
+#if defined(__LINUX__) || defined(__linux__)
+		login_prompt += "login-process";
+		if (utmpidentifier) login_prompt += " --id " + quote(names.substitute(utmpidentifier->last_setting()));
+		login_prompt += "\n";
+#endif
 	}
 
 	// Open the service script files.
@@ -987,6 +1012,8 @@ convert_systemd_units (
 				run << "local-stream-socket-listen --systemd-compatibility ";
 				if (backlog) run << "--backlog " << quote(backlog->last_setting()) << " ";
 				if (socketmode) run << "--mode " << quote(socketmode->last_setting()) << " ";
+				if (socketuser) run << "--uid " << quote(socketuser->last_setting()) << " ";
+				if (socketgroup) run << "--gid " << quote(socketgroup->last_setting()) << " ";
 				if (passcredentials) run << "--pass-credentials ";
 				if (passsecurity) run << "--pass-security ";
 				run << quote(listenstream->last_setting()) << "\n";
@@ -1030,7 +1057,7 @@ convert_systemd_units (
 					run << "tcp-socket-accept ";
 					if (maxconnections) run << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
 					if (is_bool_true(keepalive, false)) run << "--keepalives ";
-					if (!is_bool_true(nagle, true)) run << "--no-delay ";
+					if (!is_bool_true(nodelay, true)) run << "--no-delay ";
 					run << "\n";
 				}
 			}
@@ -1040,6 +1067,8 @@ convert_systemd_units (
 				run << "local-datagram-socket-listen --systemd-compatibility ";
 				if (backlog) run << "--backlog " << quote(backlog->last_setting()) << " ";
 				if (socketmode) run << "--mode " << quote(socketmode->last_setting()) << " ";
+				if (socketuser) run << "--uid " << quote(socketuser->last_setting()) << " ";
+				if (socketgroup) run << "--gid " << quote(socketgroup->last_setting()) << " ";
 				if (passcredentials) run << "--pass-credentials ";
 				if (passsecurity) run << "--pass-security ";
 				run << quote(listendatagram->last_setting()) << "\n";
@@ -1101,6 +1130,15 @@ convert_systemd_units (
 		service << um;
 		service << login_prompt;
 	}
+	if (is_oneshot) {
+		if (execstartpre) {
+			for (std::list<std::string>::const_iterator i(execstartpre->all_settings().begin()); execstartpre->all_settings().end() != i; ++i ) {
+				service << "foreground "; 
+				service << names.substitute(strip_leading_minus(*i));
+				service << " ;\n"; 
+			}
+		}
+	}
 	service << (execstart ? names.substitute(strip_leading_minus(execstart->last_setting())) : is_remain ? "true" : "pause") << "\n";
 
 	// nosh is not suitable here, since the restart script is passed arguments.
@@ -1135,18 +1173,18 @@ convert_systemd_units (
 		const bool 
 			on_true (restart &&  ("on-success" == tolower(restart->last_setting()))),
 			on_false(restart &&  ("on-failure" == tolower(restart->last_setting()))),
-			on_abort(restart && (("on-failure" == tolower(restart->last_setting())) || ("on-abort" == tolower(restart->last_setting())))), 
-			on_crash(on_abort),
-			on_kill (on_abort),
-			on_term (on_abort);
+			on_term (restart && (("on-failure" == tolower(restart->last_setting())) || ("on-abort" == tolower(restart->last_setting())))), 
+			on_abort(restart && (("on-failure" == tolower(restart->last_setting())) || ("on-abort" == tolower(restart->last_setting())) || ("on-abnormal" == tolower(restart->last_setting())))), 
+			on_crash(restart && (("on-failure" == tolower(restart->last_setting())) || ("on-abort" == tolower(restart->last_setting())) || ("on-abnormal" == tolower(restart->last_setting())))), 
+			on_kill (restart && (("on-failure" == tolower(restart->last_setting())) || ("on-abort" == tolower(restart->last_setting())) || ("on-abnormal" == tolower(restart->last_setting())))); 
 		restart_script << 
 			"case \"$1\" in\n"
 			"\te*)\n"
 			"\t\tif [ \"$2\" -ne 0 ]\n"
 			"\t\tthen\n"
-			"\t\texec " << (on_false ? "true" : "false") << "\n"
+			"\t\t\texec " << (on_false ? "true" : "false") << "\n"
 			"\t\telse\n"
-			"\t\texec " << (on_true  ? "true" : "false") << "\n"
+			"\t\t\texec " << (on_true  ? "true" : "false") << "\n"
 			"\t\tfi\n"
 			"\t\t;;\n"
 			"\tt*)\n"

@@ -16,8 +16,8 @@ using namespace popt;
 simple_named_definition::~simple_named_definition() {}
 bool simple_named_definition::execute(processor & proc, char c)
 {
-	if (char short_name = query_short_name()) {
-		if (short_name == c) {
+	if (char the_short_name = query_short_name()) {
+		if (the_short_name == c) {
 			action(proc);
 			return true;
 		}
@@ -30,8 +30,8 @@ bool simple_named_definition::execute(processor &, char, const char *)
 }
 bool simple_named_definition::execute(processor & proc, const char * s)
 {
-	if (const char * long_name = query_long_name()) {
-		if (0 == std::strcmp(long_name, s)) {
+	if (const char * the_long_name = query_long_name()) {
+		if (0 == std::strcmp(the_long_name, s)) {
 			action(proc);
 			return true;
 		}

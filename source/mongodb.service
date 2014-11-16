@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=MongoDB database server daemon
+
+[Service]
+User=mongodb
+ExecStart=mongod
+Restart=always
+
+[Install]
+WantedBy=server.target

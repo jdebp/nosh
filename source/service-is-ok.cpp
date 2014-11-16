@@ -20,14 +20,12 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-int
-main (
-	int argc, 
-	const char * argv[] 
+void
+service_is_ok (
+	const char * & next_prog,
+	std::vector<const char *> & args
 ) {
-	if (argc < 1) return EXIT_FAILURE;
-	const char * prog(basename_of(argv[0]));
-	std::vector<const char *> args(argv, argv + argc);
+	const char * prog(basename_of(args[0]));
 	try {
 		popt::top_table_definition main_option(0, 0, "Main options", "directory");
 
@@ -35,21 +33,24 @@ main (
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
 		p.process(true /* strictly options before arguments */);
 		args = new_args;
-		if (p.stopped()) return EXIT_SUCCESS;
+		next_prog = arg0_of(args);
+		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		return EXIT_USAGE;
+		throw EXIT_USAGE;
 	}
+
 	if (1 != args.size()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "One directory name is required.");
-		return EXIT_USAGE;
+		throw EXIT_USAGE;
 	}
 	const char * name(args[0]);
 	const int dir_fd(open_dir_at(AT_FDCWD, name));
-	if (0 > dir_fd) return EXIT_TEMPORARY_FAILURE;
+	if (0 > dir_fd) throw EXIT_TEMPORARY_FAILURE;
 	const int ok_fd(open_writeexisting_at(dir_fd, "ok"));
-	if (0 <= ok_fd) return EXIT_SUCCESS;
+	if (0 <= ok_fd) throw EXIT_SUCCESS;
 	const int supervise_ok_fd(open_writeexisting_at(dir_fd, "supervise/ok"));
-	if (0 <= supervise_ok_fd) return EXIT_SUCCESS;
-	return EXIT_PERMANENT_FAILURE;
+	if (0 <= supervise_ok_fd) throw EXIT_SUCCESS;
+
+	throw EXIT_PERMANENT_FAILURE;
 }

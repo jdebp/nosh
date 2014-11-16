@@ -12,7 +12,7 @@ ListenStream=kerberos-adm
 Accept=true
 MaxConnections=16
 UCSPIRules=true
-Nagle=false
+NoDelay=false
 
 [Install]
 WantedBy=server.target

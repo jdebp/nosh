@@ -8,11 +8,18 @@
 <refmiscinfo class="version">1.9</refmiscinfo>
 </refmeta>
 
-<refnamediv><refname>exec</refname><refpurpose>chain</refpurpose></refnamediv>
+<refnamediv>
+<refname>exec</refname>
+<refpurpose>chain</refpurpose>
+</refnamediv>
 
 <refsynopsisdiv>
 <cmdsynopsis>
-<command>exec</command> <arg>--login</arg> <arg>--clear</arg> <arg>--arg0 <replaceable>string</replaceable></arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+<command>exec</command> 
+<arg>--login</arg> 
+<arg>--clear</arg> 
+<arg>--arg0 <replaceable>string</replaceable></arg> 
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -53,7 +60,8 @@ of the argument list that it passes to <replaceable>next-prog</replaceable>, whi
 the name of the command in <replaceable>next-prog</replaceable>, with the supplied string.
 If the <arg>--login</arg> command line option is used, then the first element of
 the argument list has a dash (<code>-</code>) prepended, which is the convention
-for signalling shells that they are being invoked directly by <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+for signalling shells that they are being invoked directly by 
+<citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 This happens after any substitution because of <arg>--arg0</arg>.
 </para>
 
@@ -70,21 +78,18 @@ The alternative names are:
 <command>local-datagram-socket-accept</command>,
 <command>local-stream-socket-accept</command>,
 <command>local-stream-socket-listen</command>, 
-<command>login-banner</command>,
-<command>login-process</command>, <command>login-prompt</command>,
-<command>nosh</command>, <command>open-controlling-tty</command>,
-<command>prependpath</command>, <command>pty-get-tty</command>,
-<command>pty-run</command>, <command>read-conf</command>,
+<command>nosh</command>,
+<command>prependpath</command>, 
+<command>read-conf</command>,
 <command>set-dynamic-hostname</command>,
 <command>setenv</command>, <command>setuidgid-fromenv</command>, <command>setlock</command>,
 <command>setpgrp</command>, <command>setsid</command>,
 <command>setuidgid</command>, 
 <command>softlimit</command>, <command>tcp-socket-accept</command>,
 <command>tcp-socket-listen</command>, <command>ulimit</command>,
-<command>umask</command>, <command>unsetenv</command>,
-<command>vc-get-tty</command>, 
-<command>vc-ncurses-io</command>, 
-and <command>vc-reset-tty</command>,
+<command>umask</command>, 
+and
+<command>unsetenv</command>,
 See their individual manual pages for details.
 </para>
 
@@ -102,22 +107,21 @@ If invoked with prefixes, they will be run as ordinary overlaid programs via
 <refsection><title>AESTHETICS</title>
 
 <para>
-<command>login-prompt</command> and <command>tcp-socket-accept</command> are built-in commands.
-Because of this, daemons that run <command>tcp-socket-accept</command> chain loaded from other programs
-such as <command>tcp-socket-listen</command> will appear in a <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>1</manvolnum></citerefentry> listing to be running the chain of
-commands that preceded it.
-Similarly, a virtual terminal login process running <command>login-prompt</command> will appear
-to be running the chain of commands that led up to it, starting from
-<command>vc-get-tty</command>.
+<command>tcp-socket-accept</command> is a built-in command
+Because of this, daemons that run it chain loaded from other programs
+such as <command>tcp-socket-listen</command> will appear in a 
+<citerefentry><refentrytitle>ps</refentrytitle><manvolnum>1</manvolnum></citerefentry> 
+listing to be running the chain of commands that preceded it.
 </para>
 
 <para>
 This may be aesthetically unpleasing.
-The way to address it is simply to run <command>login-prompt</command> and <command>tcp-socket-accept</command>
-as ordinary external commands, by referencing them via their full pathnames.
+The way to address it is simply to run <command>tcp-socket-accept</command>
+as an ordinary external command, by referencing it via its full pathname.
 The operating system will as a consequence overwrite the process' argument list
-visible with <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>1</manvolnum></citerefentry> with the arguments as they are by the time those programs
-are run.
+visible with 
+<citerefentry><refentrytitle>ps</refentrytitle><manvolnum>1</manvolnum></citerefentry> 
+with the arguments as they are by the time that program is run.
 </para>
 
 </refsection><refsection><title>SECURITY</title>

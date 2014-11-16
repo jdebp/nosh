@@ -28,6 +28,36 @@ strip_dev (
 ) {
 	if (0 == strncmp(s, "/dev/", 5))
 		return s + 5;
+	if (0 == strncmp(s, "/run/dev/", 9))
+		return s + 9;
+	return s;
+}
+
+static inline
+std::string
+id_from (
+	const char * s
+) {
+#if defined(__LINUX__) || defined(__linux__)
+	if (0 == strncmp(s, "tty", 3)
+	||  0 == strncmp(s, "tts", 3) 
+	||  0 == strncmp(s, "pty", 3) 
+	||  0 == strncmp(s, "pts", 3)) {
+		std::string id(s);
+		const std::string::size_type l(id.length());
+		if (l > 4 && "/tty" == id.substr(l - 4))
+			id = id.substr(0, l-4);
+		return id;
+	}
+	if (0 == strncmp(s, "vc", 2)) {
+		std::string id(s);
+		const std::string::size_type l(id.length());
+		if (l > 4 && "/tty" == id.substr(l - 4))
+			id = id.substr(0, l-4);
+		return id;
+	}
+#endif
+	while (*s && !std::isdigit(*s)) ++s;
 	return s;
 }
 
@@ -47,17 +77,20 @@ login_process (
 	bool is_getty(false);
 
 	const char * prog(basename_of(args[0]));
+	const char * override_id(0);
 	try {
 #if defined(_PATH_UTMP) && defined(_PATH_WTMP)
 		popt::string_definition utmp_filename_option('\0', "utmp-filename", "filename", "Specify an alternative utmp filename.", utmp_filename);
 		popt::string_definition wtmp_filename_option('\0', "wtmp-filename", "filename", "Specify an alternative wtmp filename.", wtmp_filename);
 #endif
+		popt::string_definition id_option('i', "id", "string", "Override the TTY name and use this ID.", override_id);
 		popt::bool_definition getty_option('\0', "getty", "Specify an INIT process rather than a LOGIN process.", is_getty);
 		popt::definition * top_table[] = {
 #if defined(_PATH_UTMP) && defined(_PATH_WTMP)
 			&utmp_filename_option,
 			&wtmp_filename_option,
 #endif
+			&id_option,
 			&getty_option
 		};
 		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "prog");
@@ -81,8 +114,7 @@ login_process (
 	}
 	const char * host(std::getenv("HOST"));
 	const char * line(strip_dev(tty));
-	const char * id(line);
-	while (*id && !std::isdigit(*id)) ++id;
+	const std::string id(override_id ? override_id : id_from(line));
 
 	struct utmpx u;
 
@@ -99,7 +131,7 @@ login_process (
 		if (my_pid != u.ut_pid) {
 			std::memset(&u, '\0', sizeof u);
 			u.ut_pid = my_pid;
-			std::strncpy(u.ut_id, id, sizeof u.ut_id);
+			std::strncpy(u.ut_id, id.c_str(), sizeof u.ut_id);
 		}
 		std::strncpy(u.ut_user, is_getty ? "GETTY" : "LOGIN", sizeof u.ut_user);
 		std::strncpy(u.ut_line, line, sizeof u.ut_line);
@@ -127,7 +159,7 @@ login_process (
 #else
 	std::memset(&u, '\0', sizeof u);
 	u.ut_pid = getpid();
-	std::strncpy(u.ut_id, id, sizeof u.ut_id);
+	std::strncpy(u.ut_id, id.c_str(), sizeof u.ut_id);
 	std::strncpy(u.ut_user, is_getty ? "GETTY" : "LOGIN", sizeof u.ut_user);
 	std::strncpy(u.ut_line, line, sizeof u.ut_line);
 	if (host)

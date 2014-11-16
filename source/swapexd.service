@@ -8,7 +8,7 @@ Description=BSD swapex daemon
 [Service]
 systemdWorkingDirectory=false
 ExecStart=swapexd -p
-Restart=always
+#Restart=always
 
 [Install]
 WantedBy=workstation.target

@@ -13,7 +13,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <dirent.h>
 #include <unistd.h>
 #include "utils.h"
-#include "popt.h"
 #include "fdutils.h"
 
 std::string
@@ -21,7 +20,9 @@ read_env_file (
 	const char * prog,
 	const char * dir,
 	const char * basename,
-	int fd
+	int fd,
+	bool full,
+	bool chomp
 ) {
 	std::string r;
 	FILE * f(fdopen(fd, "r"));
@@ -34,7 +35,9 @@ exit_error:
 	for (;;) {
 		int c(std::fgetc(f));
 		if (std::feof(f)) break;
-		if ('\n' == c) break;
+		if ('\n' == c) {
+			if (!full) break;
+		}
 		if ('\0' == c) c = '\n';
 		r += char(c);
 	}

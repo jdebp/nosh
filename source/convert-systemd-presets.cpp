@@ -32,21 +32,6 @@ For copyright and licensing terms, see the file named COPYING.
 
 static inline
 bool
-read_line (
-	FILE * f,
-	std::string & l
-) {
-	l.clear();
-	for (;;) {
-		const int c(std::fgetc(f));
-		if (EOF == c) return !l.empty();
-		if ('\n' == c) return true;
-		l += static_cast<unsigned char>(c);
-	}
-}
-
-static inline
-bool
 initial_space (
 	const std::string & s
 ) {

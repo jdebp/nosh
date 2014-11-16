@@ -1,10 +1,8 @@
-#!/bin/sh -e
-exec \
-/bin/exec \
-vc-get-tty "$1" -- \
-open-controlling-tty \
-vc-reset-tty --hard-reset \
-login-prompt \
-login-banner /etc/issue \
-login-process \
+#!/command/execlineb -S0
+vc-get-tty "$1"
+open-controlling-tty
+vc-reset-tty --hard-reset
+login-prompt
+login-banner /etc/issue
+login-process
 login

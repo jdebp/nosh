@@ -36,8 +36,7 @@ default_term()
 	// cons25 has fallen into desuetude and the new (as of 2010) emulator is xterm.
 	return "xterm";
 #elif defined(__NetBSD__)
-	// This is properly the case.
-	// vt220 is a compatible subset, and not really correct.
+	// This is the case for consoles configured as "vt100".
 	return "wsvt25";
 #else
 	// OpenBSD can change the emulator at kernel configuration time and at runtime.
@@ -129,23 +128,17 @@ vc_get_tty (
 	std::string tty_str;
 	const char * tty(tty_base);
 	if ('/' != tty[0]) {
-		if (std::isdigit(tty[0])) {
-			// If the basename begins with a digit, attempt to expand into either /dev/vc/N or /dev/ttyN .
-			// This allows using N consistently whether one has udev (/dev/ttyN) or devfs (/dev/vc/N).
-			struct stat buf;
-			tty_str = "/dev/vc/";
-			tty_str += tty_base;
+		// Attempt to expand into either /dev/XXX or /run/dev/XXX .
+		struct stat buf;
+		tty_str = "/dev/";
+		tty_str += tty_base;
+		if (0 == stat(tty_str.c_str(), &buf)) 
 			tty = tty_str.c_str();
-			if (stat(tty, &buf) && ENOENT == errno) {
-				tty_str = "/dev/tty";
-				tty_str += tty_base;
+		else {
+			tty_str = "/run/dev/";
+			tty_str += tty_base;
+			if (0 == stat(tty_str.c_str(), &buf)) 
 				tty = tty_str.c_str();
-			}
-		} else {
-			// Just treat as a filename in /dev/ .
-			tty_str = "/dev/";
-			tty_str += tty_base;
-			tty = tty_str.c_str();
 		}
 	}
 	std::vector<char> hostname(sysconf(_SC_HOST_NAME_MAX) + 1);

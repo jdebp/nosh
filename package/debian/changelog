@@ -1,3 +1,28 @@
+nosh (1.10) unstable; urgency=low
+
+  * Fixed a bug with ExecStartPre in one-shot services that was causing mount@.service to fail.
+  * Added a --id option to login-process and support for the UTmpIdentifier setting in convert-systemd-units.
+  * envuidgid now can optionally set the supplementary groups in the GIDLIST environment variable.
+  * Added ttylogin-starter and a service to run it.
+  * Fixed a bug in pty-run on Linux that was caused by a bug in libkqueue where it always returns an EVFILT_READ for a terminal device even if a read would block.
+  * Fixed a bug in set-mount-object that was causing it to always fail.
+  * Added convert-ttys-presets for converting /etc/ttys .
+  * Now that systemd has an option for disabling the Nagle algorithm for TCP sockets, convert-systemd-units looks for a NoDelay= option not a Nagle= option as it used to.
+  * Now that systemd has an option for setting AF_LOCAL socket ownership, convert-systemd-units translates it to the option that local-*-socket-listen already had.
+  * convert-systemd-units now translates to using the --oknofile option to read-conf as appropriate.
+  * Added console-terminal-emulator for doing terminal emulation behind a pseudo-terminal.
+  * The terminal utilities are now separately packaged and in a separate program image file.
+  * vc-ncurses-io has changed name to console-ncurses-renderer.
+  * The terminal management part of the Guide has been expanded.
+  * More Linux services: uuidd
+  * Formerly BSD-only VirtualBox services are now cross-platform: kmod@vboxvideo, kmod@vboxsf, kmod@vboxpci, kmod@vboxnetflt, kmod@vboxnetadp, kmod@vboxguest, kmod@vboxdrv, kmod@vboxadd, VBoxService
+  * More cross-platform services: openstack-swift@{object,container,account}{,-auditor,-updater,-replicator}, terminal-emulator@
+  * vc-get-tty no longer supports the 6th Edition UNIX historical mechanism of using unadorned terminal numbers.
+  * system-control now has load-kernel-module and unload-kernel-module verbs that devolve to the platform-specific commands.
+  * Fixed a clangism with static_cast<> and casting away const.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Sun, 16 Nov 2014 00:59:26 +0000
+
 nosh (1.9) unstable; urgency=low
 
   * More BSD services: utx, apm, apmd, auditdistd, ctld, ftp-proxy, kfd, swapon, pwcheck, mrouted, rpcstatd, rpclockd, keyserv, iscsid, iscsictl, sysctl, yppasswdd, ypxfrd, ypupdated, ypset, ypserv, pppoed, msgs, vixiecron

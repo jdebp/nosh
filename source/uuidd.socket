@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=util-linux UUID server socket
+
+[Socket]
+ListenStream=/run/uuidd/request
+Accept=no
+
+[Install]
+WantedBy=workstation.target

@@ -1,0 +1,31 @@
+<title>Terminals</title>
+<link rel="Up" href="index.html" title="nosh Guide" />
+<link rel="Next" href="virtual-terminal-login.html" title="virtual terminal login" />
+<link rel="Prev" href="logging.html" title="Logging" />
+<h1>
+Terminals
+</h1>
+
+<p>
+Using the tools in the toolset one can set up services that handle TUI login on virtual (i.e. not physical hardware) terminals, and that provide virtual terminals entirely within application mode code, supplementing or even replacing the virtual terminals provided by a Linux or BSD operating system kernel.
+</p>
+
+<p>
+To log on over virtual terminals, kernel or user-space,
+<a href="virtual-terminal-login.html">one sets up <code>ttylogin</code> services</a>.
+</p>
+
+<p>
+<a href="kernel-virtual-terminals.html">To use kernel virtual terminals one arranges for such services to be enabled and (demand-)started.</a>
+</p>
+
+<p>
+<a href="user-virtual-terminals.html">Setting up user-space virtual terminals involves similar services, additional <code>console-terminal-emulator</code> services, and renderers.</a>
+</p>
+
+<p>
+A TUI login service over a physical serial line to a real terminal (or something pretending to be a real terminal) is of course a simple service, started and stopped and enabled and disabled in the usual way.
+A <code>run</code> script for such a service, in this case to invoke <code>mgetty</code> on <code>/dev/ttyS1</code>, looks like this:
+</p>
+<blockquote><pre>#!/bin/nosh
+mgetty ttyS1</pre></blockquote>

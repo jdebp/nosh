@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=kernel module loader for vboxsf
+EarlySupervise=true
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=system-control load-kernel-module vboxsf
+ExecStopPost=system-control unload-kernel-module vboxsf
+RemainAfterExit=yes
+
+[Install]
+WantedBy=virtualbox.target
