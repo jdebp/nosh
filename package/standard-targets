@@ -13,5 +13,6 @@ server
 shutdown
 sockets
 sysinit
+update
 virtualbox
 workstation

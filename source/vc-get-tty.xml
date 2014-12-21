@@ -54,8 +54,10 @@ It determines the terminal character device filename from the passed name.
 This can be just the absolute pathname of the device file itself or a relative
 pathname (such as <code>tty1</code>).
 If it is a relative pathname, <command>vc-get-tty</command> tries first
-prefixing <code>/dev/</code>, and looks for a file, and then tries
-prefixing <code>/run/dev/</code>.
+prefixing <code>/dev/</code> and looking for a file, 
+then prefixing <code>/var/dev/</code>,
+and 
+then prefixing <code>/run/dev/</code>.
 </para>
 
 <para>

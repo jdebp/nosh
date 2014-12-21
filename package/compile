@@ -5,4 +5,7 @@ then
 	echo "You are not in the right directory." 1>&2
 	exit 100
 fi
-./package/prepare && ./package/make && ./package/makeinstall
+./package/prepare
+./package/make
+./package/makeinstall
+true

@@ -20,6 +20,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include "popt.h"
 #include "utils.h"
+#include "ttyutils.h"
 
 enum { PTY_MASTER_FILENO = 4 };
 

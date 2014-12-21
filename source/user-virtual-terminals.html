@@ -14,7 +14,7 @@ A user-space virtual terminal comprises four things:
 <li><p>a pseudo-terminal</p></li>
 <li><p><a href="virtual-terminal-login.html">a TUI login service</a> that has the pseudo-terminal as its controlling terminal</p></li>
 <li><p>a console-terminal-emulator process, that conects the pseudo-terminal to a display buffer and an input FIFO</p></li>
-<li><p>one or more renderer processes, that connect the display buffer and input FIFO to real I/O devices of some kind</p></li>
+<li><p>one or more realizer processes, that connect the display buffer and input FIFO to real I/O devices of some kind</p></li>
 </ul>
 
 <h2>
@@ -28,7 +28,7 @@ This duplicates the function of the old-style kernel terminal emulator code, but
 
 <p>
 It is explicitly <em>not</em> an emulator for any model of real terminal.
-Its function is to correctly cope with the outputs of programs that are using (according to operating system) the <code>linux</code>, <code>wscon25</code>, or <code>xterm</code> entries in the termcap/terminfo databases; those being the entries that are used for kernel terminal emulators.
+Its function is to correctly cope with the outputs of programs that are using (according to operating system) the <code>linux</code>, <code>wsvt25</code>, or <code>xterm</code> entries in the termcap/terminfo databases; those being the entries that are used for kernel terminal emulators.
 In other words, one should be able to switch from a kernel virtual terminal to a user-space virtual terminal without changing the terminal type used in the ttylogin service.
 </p>
 
@@ -42,42 +42,44 @@ Terminal emulator services do not require superuser privileges at any stage; and
 </p>
 
 <h2>
-renderers
+realizers
 </h2>
 
 <p>
-The relationship between renderers and terminals is many-to-many.
-A renderer may be a simple renderer, that handles just one user-space virtual terminal.
-Or it may be a complex renderer that handles multiple user-space virtual terminals, multiplexing their displays onto its output device, and allowing the user to switch amongst virtual terminals with a hotkey sequence, or a mouse action of some kind.
-One can also attach multiple display-only renderers to a single user-space virtual terminal with no ill-effects.
-All renderers will render concurrently.
+The relationship between realizers and terminals is many-to-many.
+A realizer may be a simple realizer, that handles just one user-space virtual terminal.
+Or it may be a complex realizer that handles multiple user-space virtual terminals, multiplexing their displays onto its output device, and allowing the user to switch amongst virtual terminals with a hotkey sequence, or a mouse action of some kind.
+One can also attach multiple display-only realizers to a single user-space virtual terminal with no ill-effects.
+All realizers will operate concurrently.
 </p>
 
 <p>
-The lifetimes of renderers do not affect the lifetimes of the associated virtual terminals.
-One can detach all renderers from a user-space virtual terminal, and it will continue operating, its output stored in its display buffer file, unaffected.
+The lifetimes of realizers do not affect the lifetimes of the associated virtual terminals.
+One can detach all realizers from a user-space virtual terminal, and it will continue operating, its output stored in its display buffer file, unaffected.
 This differentiates user-space virtual terminals from, say, X Window System terminal programs, which signal hangup to the session leader programs running in the terminal when rendering is commanded to close its window.
 </p>
 
 <p>
-Renderers only require access to the files of the user-space virtual terminals that they are attached to, and to the various I/O devices that they are rendering the virtual terminal with.
-The exact security model depends from the kind of renderer, and there are many possible kinds; one could have:
+Realizers only require access to the files of the user-space virtual terminals that they are attached to, and to the various I/O devices that they are realizing the virtual terminal with.
+The exact security model depends from the kind of realizer, and there are many possible kinds; one could have:
 </p>
 <ul>
 <li><p>
-<a href="console-ncurses-renderer"><code>console-ncurses-renderer</code></a> &mdash; a renderer that uses wide character ncurses (ncursesw) to render one user-space virtual terminal on the console that the renderer itself is attached to.
-This renderer needs no additional privileged access to anything apart from the files of the user-space virtual terminal.
+<a href="console-ncurses-realizer"><code>console-ncurses-realizer</code></a> &mdash; 
+a realizer that uses wide character ncurses (ncursesw) to render one user-space virtual terminal on the console that the realizer itself is attached to.
+This realizer needs no additional privileged access to anything apart from the files of the user-space virtual terminal.
 </p></li>
 <li><p>
-a renderer that uses a framebuffer device, and mouse and keyboard input devices, rendering multiple user-space virtual terminals and allowing one to switch amongst them using hotkeys and mouse actions.
-This renderer initially needs additional privileged access to the device files, in order to open them, but can drop privileges afterwards.
+<a href="console-fb-realizer"><code>console-fb-realizer</code></a> &mdash; 
+a realizer that uses a framebuffer device, and mouse and keyboard input devices, realizing multiple user-space virtual terminals and allowing one to switch amongst them using hotkeys and mouse actions.
+This realizer initially needs additional privileged access to the device files, in order to open them, but can drop privileges afterwards.
 </p></li>
 <li><p>
-a renderer that renders multiple user-space virtual terminals using X Window System windows, and allowing one to switch amongst them using hotkeys and mouse actions.
-This renderer initially needs no additional privileged access.
+a realizer that realizes multiple user-space virtual terminals using X Window System windows, and allowing one to switch amongst them using hotkeys and mouse actions.
+This realizer initially needs no additional privileged access.
 </p></li>
 <li><p>
-a renderer that renders one user-space virtual terminal on a Braille device.
-This renderer initially needs additional privileged access to the Braille device file, in order to open it, but can drop privileges afterwards.
+a realizer that realizes one user-space virtual terminal on a Braille device.
+This realizer initially needs additional privileged access to the Braille device file, in order to open it, but can drop privileges afterwards.
 </p></li>
 </ul>

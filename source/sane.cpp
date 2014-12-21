@@ -5,7 +5,7 @@ For copyright and licensing terms, see the file named COPYING.
 
 #include <unistd.h>
 #include <termios.h>
-#include "utils.h"
+#include "ttyutils.h"
 
 termios
 sane (

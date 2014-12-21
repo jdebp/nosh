@@ -60,7 +60,7 @@ Description: Virtual terminal, pseudo-terminal, and TUI login tools
  * login-banner,login-process, login-prompt, open-controlling-tty, ttylogin-starter
  .
  Also present are commands for pseudo-terminals and virtual consoles:
- * console-terminal-emulator, console-ncurses-renderer, pty-get-tty, pty-run, vc-get-tty, vc-reset-tty
+ * console-terminal-emulator, console-ncurses-realizer, console-fb-realizer, pty-get-tty, pty-run, vc-get-tty, vc-reset-tty
 
 Package: nosh-systemv-shims
 Architecture: amd64

@@ -11,6 +11,9 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cerrno>
 #include <sys/poll.h>
 #include <unistd.h>
+#if defined(__LINUX__) || defined(__linux__)
+#include <linux/vt.h>
+#endif
 #include "popt.h"
 #include "fdutils.h"
 #include "utils.h"
@@ -19,7 +22,9 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
+#if defined(__LINUX__) || defined(__linux__)
 static const char active[] = "active";
+#endif
 
 // This must have static storage duration as we are using it in args.
 static std::string service_name;
@@ -33,18 +38,21 @@ ttylogin_starter (
 #if defined(__LINUX__) || defined(__linux__)
 	const char * class_dir("/sys/class/tty");
 	const char * tty("tty0");
+	unsigned long num_ttys(MAX_NR_CONSOLES);
 #endif
 	bool verbose(false);
 	try {
 #if defined(__LINUX__) || defined(__linux__)
 		popt::string_definition class_option('\0', "class", "directory", "Specify the sysfs TTY class for kernel virtual consoles.", class_dir);
 		popt::string_definition tty_option('\0', "tty", "tty-name", "Specify the sysfs TTY name for the 0th kernel virtual console.", tty);
+		popt::unsigned_number_definition num_ttys_option('n', "num-ttys", "number", "Number of kernel virtual terminals.", num_ttys, 0);
 #endif
 		popt::bool_definition verbose_option('v', "verbose", "Verbose mode.", verbose);
 		popt::definition * top_table[] = {
 #if defined(__LINUX__) || defined(__linux__)
 			&class_option,
 			&tty_option,
+			&num_ttys_option,
 #endif
 			&verbose_option
 		};
@@ -95,6 +103,14 @@ ttylogin_starter (
 		throw EXIT_FAILURE;
 	}
 	close(tty_dir_fd);
+
+	// Pre-create the kernel virtual terminals so that the user can switch to them in the first place.
+	for (unsigned n(0U); n < num_ttys; ++n) {
+		char b[32];
+		snprintf(b, sizeof b, "/dev/tty%u", n);
+		const int tty_fd(open_readwriteexisting_at(AT_FDCWD, b));
+		if (0 <= tty_fd) close(tty_fd);
+	}
 
 	FILE * active_file(fdopen(active_file_fd, "r"));
 	if (!active_file) {

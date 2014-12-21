@@ -15,6 +15,7 @@
 <command>envdir</command> 
 <arg choice='opt'>--ignore-nodir</arg> 
 <arg choice='opt'>--full</arg> 
+<arg choice='opt'>--chomp</arg> 
 <arg choice='req'><replaceable>dir</replaceable></arg> 
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
@@ -47,7 +48,8 @@ For each file <filename>file</filename> in <replaceable>dir</replaceable>:
 
 <listitem>
 <para>
-If the file is empty, <command>envdir</command> unsets the variable <filename>file</filename> if it is set.
+If the file is empty, <command>envdir</command> unsets the variable
+<filename>file</filename> if it is set.
 </para>
 </listitem>
 
@@ -63,14 +65,19 @@ If the <arg choice='opt'>--full</arg> command line option is used,
 <command>envdir</command> uses the full contents of <filename>file</filename>;
 otherwise it uses just the first line of those contents.
 </para>
+<para>
+If the <arg choice='opt'>--chomp</arg> command line option is used,
+each line used has leading and trailing whitespace characters trimmed.
+</para>
 </listitem>
 
 </itemizedlist>
 
 <para>
-<command>envdir</command> skips directory entries that aren't regular files (or symbolic links
-to regular files), trying not to even attempt to open them if the operating
-system's directory scanning ability includes the reporting of entry types.
+<command>envdir</command> skips directory entries that aren't regular files (or
+symbolic links to regular files), trying not to even attempt to open them if
+the operating system's directory scanning ability includes the reporting of
+entry types.
 It also skips entries whose names begin with a dot.
 </para>
 
@@ -87,10 +94,12 @@ included in the variable's value in the environment.
 
 <para>
 Although not strictly a bug in this program, it is worth noting that the
-GNU C library and the BSD Library both have memory leaks in their <citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>3</manvolnum></citerefentry> functions,
-used by this program.
+GNU C library and the BSD Library both have memory leaks in their 
+<citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>3</manvolnum></citerefentry> 
+functions, used by this program.
 You can work around these bugs by ensuring that <replaceable>next-prog</replaceable> is
-not a built-in command (see <citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+not a built-in command 
+(see <citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
 </para>
 
 </refsection><refsection><title>See also</title>

@@ -32,13 +32,20 @@ exit_error:
 		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dir, basename, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	for (;;) {
+	for (bool ltrim(chomp);;) {
 		int c(std::fgetc(f));
 		if (std::feof(f)) break;
 		if ('\n' == c) {
+			if (chomp) r = rtrim(r);
 			if (!full) break;
+			ltrim = chomp;
+		} else {
+			if ('\0' == c) c = '\n';
+			if (ltrim) {
+				if (std::isspace(c)) continue;
+				ltrim = false;
+			}
 		}
-		if ('\0' == c) c = '\n';
 		r += char(c);
 	}
 	if (std::ferror(f)) goto exit_error;

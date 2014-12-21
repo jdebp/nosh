@@ -29,7 +29,7 @@ do_rpc_call (
 	struct msghdr msg = {
 		0, 0,
 		v, sizeof v/sizeof *v,
-		buf, sizeof buf,
+		buf, static_cast<socklen_t>(sizeof buf),
 		0
 	};
 	struct cmsghdr *cmsg(CMSG_FIRSTHDR(&msg));

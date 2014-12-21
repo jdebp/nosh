@@ -27,16 +27,15 @@ public:
 	public:
 		typedef unsigned short coordinate;
 		virtual void WriteLatin1Characters(std::size_t, const char *) = 0;
+		virtual void WriteControl1Character(uint8_t) = 0;
+		virtual void Set8BitControl1(bool) = 0;
 		virtual void ReportSize(coordinate w, coordinate h) = 0;
 	};
 	typedef uint8_t coordinate;
 	SoftTerm(ScreenBuffer & s, KeyboardBuffer & k);
 	~SoftTerm();
 	void Write(uint32_t character, bool decoder_error, bool overlong);
-	void Resize(coordinate columns, coordinate rows);
 protected:
-	void ProcessControlCharacter(uint32_t character);
-
 	ScreenBuffer & screen;
 	KeyboardBuffer & keyboard;
 	coordinate x, y, saved_x, saved_y, w, h, top_margin, bottom_margin;
@@ -46,7 +45,7 @@ protected:
 	bool tab_pins[256];
 	enum { NORMAL, ESCAPE1, ESCAPE2, CONTROL } state;
 	bool scrolling, seen_arg_digit, overstrike;
-	bool automatic_right_margin;
+	bool automatic_right_margin, background_colour_erase;
 	/// This emulates an undocumented DEC VT mechanism, the details of which are in the manual.
 	bool advance_pending;
 	CharacterCell::attribute_type attributes, saved_attributes;
@@ -81,16 +80,19 @@ protected:
 		APC = 0x9f,
 	};
 
+	void Resize(coordinate columns, coordinate rows);
 	void UpdateCursorPos();
 	void UpdateCursorType();
 	void SetScrollMargins();
 
 	bool IsControl(uint32_t);
 	bool IsIntermediate(uint32_t);
+	bool IsIntermediateOrParameter(uint32_t);
 	void Print(uint32_t);
 	void Escape1(uint32_t);
 	void Escape2(uint32_t);
 	void ControlSequence(uint32_t);
+	void ProcessControlCharacter(uint32_t character);
 
 	void ResetArgs();
 	void FinishArg(unsigned int d);
@@ -107,13 +109,18 @@ protected:
 	void SetModes(bool);
 	void SetAttributes();
 	void SendDeviceAttributes();
+	void SendDeviceStatusReports();
 	void SaveAttributes();
 	void RestoreAttributes();
 	void SetAttribute(unsigned int);
-	void SendDeviceAttribute(unsigned int);
-	void SendPrivateDeviceAttribute(unsigned int);
+	void SendPrimaryDeviceAttribute(unsigned int);
+	void SendSecondaryDeviceAttribute(unsigned int);
+	void SendTertiaryDeviceAttribute(unsigned int);
+	void SendDeviceStatusReport(unsigned int);
+	void SendPrivateDeviceStatusReport(unsigned int);
 	void SetMode(unsigned int, bool);
 	void SetPrivateMode(unsigned int, bool);
+	void SetLinesPerPage();
 
 	void ClearDisplay(uint32_t c = ' ');
 	void ClearLine();
@@ -123,6 +130,7 @@ protected:
 	void ClearFromBOL();
 	void EraseInDisplay();
 	void EraseInLine();
+	CharacterCell ErasureCell();
 
 	void GotoYX();
 	void SaveCursor();

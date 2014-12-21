@@ -23,9 +23,9 @@ struct CursorSprite {
 };
 struct CharacterCell {
 	struct colour_type {
-		colour_type(uint8_t r, uint8_t g, uint8_t b) : red(r), green(g), blue(b) {}
-		colour_type() : red(), green(), blue() {}
-		uint8_t red, green, blue;
+		colour_type(uint8_t a, uint8_t r, uint8_t g, uint8_t b) : alpha(a), red(r), green(g), blue(b) {}
+		colour_type() : alpha(), red(), green(), blue() {}
+		uint8_t alpha, red, green, blue;
 	};
 	typedef uint8_t attribute_type;
 

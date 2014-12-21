@@ -80,5 +80,8 @@ console-terminal-emulator	pty-get-tty
 console-terminal-emulator	pty-run
 console-terminal-emulator	ttylogin-starter
 console-terminal-emulator	vc-get-tty
-console-terminal-emulator	console-ncurses-renderer
+console-terminal-emulator	console-ncurses-realizer
+console-terminal-emulator	console-convert-kbdmap
+console-terminal-emulator	console-fb-realizer
+console-terminal-emulator	console-multiplexor
 console-terminal-emulator	vc-reset-tty

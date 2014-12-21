@@ -1,3 +1,16 @@
+nosh (1.11) unstable; urgency=low
+
+  * SoftTerm now produces some more (largely dummy) DEC VT status report control sequences.
+  * convert-ttys-presets now supports the new onifconsole flag.
+  * envdir now has a --chomp option.
+  * system-control init now has an --update option.
+  * Fixed an OBOE in SoftTerm's implementation of HPA and VPA.
+  * console-ncurses-renderer has changed name to console-ncurses-realizer.
+  * Added a console-fb-realizer, a console-multiplexer, and a console-convert-kbdmap command.
+  * SoftTerm now supports switchable background colour erase.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Sun, 21 Dec 2014 18:42:40 +0000
+
 nosh (1.10) unstable; urgency=low
 
   * Fixed a bug with ExecStartPre in one-shot services that was causing mount@.service to fail.

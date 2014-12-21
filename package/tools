@@ -18,13 +18,13 @@ if type >/dev/null clang++
 then
 	echo clang++ > cxx
 	echo > cppflags
-	echo -g -pthread -Os -Wall -Wextra -Wshadow -Wcast-qual -Wsynth -Woverloaded-virtual -Wcast-align -integrated-as > cxxflags
+	echo -g -pthread -std=gnu++11 -Os -Wall -Wextra -Wshadow -Wcast-qual -Wsynth -Woverloaded-virtual -Wcast-align -integrated-as > cxxflags
 	echo -g -pthread > ldflags
 elif type >/dev/null g++
 then
 	echo g++ > cxx
 	echo > cppflags
-	echo -g -pthread -Os -Wall -Wextra -Wshadow -Wcast-qual -Wsynth -Woverloaded-virtual -Wcast-align > cxxflags
+	echo -g -pthread -std=gnu++11 -Os -Wall -Wextra -Wshadow -Wcast-qual -Wsynth -Woverloaded-virtual -Wcast-align > cxxflags
 	echo -g -pthread > ldflags
 elif type >/dev/null owcc
 then

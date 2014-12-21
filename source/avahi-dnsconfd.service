@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Bonjour DNS service
+After=avahi-daemon.service
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=avahi-dnsconfd
+Restart=always
+
+[Install]
+WantedBy=workstation.target

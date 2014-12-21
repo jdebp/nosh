@@ -212,7 +212,7 @@ logger::unlink_oldest_file() {
 	closedir(scan_dir);
 	if (!seen_old) return 1;
 	if (total > max_total_size) {
-		std::fprintf(stderr, "Removed  %s/%s to reclaim %"PRIu64" bytes\n", dir_name, earliest_old, reclaim);
+		std::fprintf(stderr, "Removed  %s/%s to reclaim %"  PRIu64 " bytes\n", dir_name, earliest_old, reclaim);
 		unlinkat(dir_fd, earliest_old, 0);
 		total -= reclaim;
 	}

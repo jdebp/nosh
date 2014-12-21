@@ -6,7 +6,10 @@ open-controlling-tty
 pty-get-tty
 pty-run
 console-terminal-emulator
-console-ncurses-renderer
+console-ncurses-realizer
+console-fb-realizer
+console-multiplexor
+console-convert-kbdmap
 ttylogin-starter
 vc-get-tty
 vc-reset-tty

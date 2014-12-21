@@ -22,9 +22,11 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include "popt.h"
 #include "fdutils.h"
+#include "ttyutils.h"
 #include "utils.h"
 #include "SoftTerm.h"
 #include "InputMessage.h"
+#include "FileDescriptorOwner.h"
 
 enum { PTY_MASTER_FILENO = 4 };
 
@@ -155,10 +157,11 @@ UTF8Decoder::SendUTF8(uint_fast8_t c)
 */
 
 class VCSA : 
-	public SoftTerm::ScreenBuffer 
+	public SoftTerm::ScreenBuffer,
+	public FileDescriptorOwner
 {
 public:
-	VCSA(int d) : fd(d) {}
+	VCSA(int d) : FileDescriptorOwner(d) {}
 	virtual void WriteNCells(coordinate p, coordinate n, const CharacterCell & c);
 	virtual void ScrollUp(coordinate s, coordinate e, coordinate n, const CharacterCell & c);
 	virtual void ScrollDown(coordinate s, coordinate e, coordinate n, const CharacterCell & c);
@@ -166,7 +169,6 @@ public:
 	virtual void SetCursorType(CursorSprite::glyph_type, CursorSprite::attribute_type);
 	virtual void SetSize(coordinate w, coordinate h);
 protected:
-	const int fd;
 	void MakeCA(char ca[2], const CharacterCell & c);
 	enum { CELL_LENGTH = 2U, HEADER_LENGTH = 4U };
 	off_t MakeOffset(coordinate s) { return HEADER_LENGTH + CELL_LENGTH * s; }
@@ -290,10 +292,12 @@ VCSA::SetSize(coordinate w, coordinate h)
 */
 
 class UnicodeBuffer : 
-	public SoftTerm::ScreenBuffer 
+	public SoftTerm::ScreenBuffer,
+	public FileDescriptorOwner
 {
 public:
-	UnicodeBuffer(int d);
+	UnicodeBuffer(int d) : FileDescriptorOwner(d) {}
+	void WriteBOM();
 	virtual void WriteNCells(coordinate p, coordinate n, const CharacterCell & c);
 	virtual void ScrollUp(coordinate s, coordinate e, coordinate n, const CharacterCell & c);
 	virtual void ScrollDown(coordinate s, coordinate e, coordinate n, const CharacterCell & c);
@@ -301,14 +305,13 @@ public:
 	virtual void SetCursorType(CursorSprite::glyph_type, CursorSprite::attribute_type);
 	virtual void SetSize(coordinate w, coordinate h);
 protected:
-	const int fd;
 	enum { CELL_LENGTH = 16U, HEADER_LENGTH = 16U };
 	void MakeCA(char c[CELL_LENGTH], const CharacterCell & cell);
 	off_t MakeOffset(coordinate s) { return HEADER_LENGTH + CELL_LENGTH * static_cast<off_t>(s); }
 };
 
-UnicodeBuffer::UnicodeBuffer(int d) : 
-	fd(d) 
+void
+UnicodeBuffer::WriteBOM() 
 {
 	const uint32_t bom(0xFEFF);
 	pwrite(fd, &bom, sizeof bom, 0U);
@@ -317,16 +320,16 @@ UnicodeBuffer::UnicodeBuffer(int d) :
 void 
 UnicodeBuffer::MakeCA(char c[CELL_LENGTH], const CharacterCell & cell)
 {
-	c[0] = cell.attributes;
+	c[0] = cell.foreground.alpha;
 	c[1] = cell.foreground.red;
 	c[2] = cell.foreground.green;
 	c[3] = cell.foreground.blue;
-	c[4] = 0;
+	c[4] = cell.background.alpha;
 	c[5] = cell.background.red;
 	c[6] = cell.background.green;
 	c[7] = cell.background.blue;
 	std::memcpy(&c[8], &cell.character, 4);
-	c[12] = 0;
+	c[12] = cell.attributes;
 	c[13] = 0;
 	c[14] = 0;
 	c[15] = 0;
@@ -403,42 +406,57 @@ UnicodeBuffer::SetSize(coordinate w, coordinate h)
 // **************************************************************************
 */
 
+namespace {
 class InputFIFO :
-	public SoftTerm::KeyboardBuffer
+	public SoftTerm::KeyboardBuffer,
+	public FileDescriptorOwner
 {
 public:
-	InputFIFO(int, int);
+	enum Emulation { SCO_CONSOLE, LINUX_CONSOLE, NETBSD_CONSOLE, XTERM_PC, DECVT };
+	InputFIFO(int, int, Emulation);
 	void ReadInput();
 	void WriteOutput();
 	bool OutputAvailable() { return output_pending > 0U; }
 	bool HasInputSpace() { return output_pending < sizeof output_buffer; }
 protected:
-	const int input_fd, master_fd;
+	const int master_fd;
 	virtual void WriteLatin1Characters(std::size_t, const char *);
+	virtual void WriteControl1Character(uint8_t);
+	virtual void Set8BitControl1(bool);
 	virtual void ReportSize(coordinate w, coordinate h);
 	void WriteRawCharacters(std::size_t, const char *);
 	void WriteRawCharacters(const char * s) { WriteRawCharacters(std::strlen(s), s); }
+	void WriteCSI() { WriteControl1Character('\x9b'); }
+	void WriteSS3() { WriteControl1Character('\x8f'); }
 	void WriteUnicodeCharacter(uint32_t c);
 	void WriteCSISequence(unsigned m, char c);
 	void WriteSS3Sequence(unsigned m, char c);
-	void WriteDECVTFunctionKey(unsigned n, unsigned m);
-	void WriteLinuxFunctionKey(unsigned m, char c);
+	void WriteFunctionKeyDECVT1(unsigned n, unsigned m);
+	void WriteFunctionKeyLinuxConsole2(unsigned m, char c);
+	void WriteFunctionKeySCOConsole1(char c);
+	void WriteFunctionKeyDECVT(uint16_t k, uint8_t m);
+	void WriteFunctionKeySCOConsole(uint16_t k, uint8_t m);
+	void WriteFunctionKey(uint16_t k, uint8_t m);
 	void WriteExtendedKeyDECVT(uint16_t k, uint8_t m);
 	void WriteExtendedKeySCOConsole(uint16_t k, uint8_t m);
 	void WriteExtendedKeyLinuxConsole(uint16_t k, uint8_t m);
 	void WriteExtendedKeyNetBSDConsole(uint16_t k, uint8_t m);
 	void WriteExtendedKeyXTermPCMode(uint16_t k, uint8_t m);
 	void WriteExtendedKey(uint16_t k, uint8_t m);
-	void WriteFunctionKey(uint16_t k, uint8_t m);
-	char input_buffer[4];
+	const Emulation emulation;
+	bool send_8bit_controls;
+	char input_buffer[256];
 	std::size_t input_read;
 	char output_buffer[4096];
 	std::size_t output_pending;
 };
+}
 
-InputFIFO::InputFIFO(int i, int m) : 
-	input_fd(i),
+InputFIFO::InputFIFO(int i, int m, Emulation e) : 
+	FileDescriptorOwner(i),
 	master_fd(m),
+	emulation(e),
+	send_8bit_controls(false),
 	input_read(0U),
 	output_pending(0U)
 {
@@ -447,7 +465,7 @@ InputFIFO::InputFIFO(int i, int m) :
 void 
 InputFIFO::WriteRawCharacters(std::size_t l, const char * p)
 {
-	if (l > sizeof output_buffer - output_pending)
+	if (l > (sizeof output_buffer - output_pending))
 		l = sizeof output_buffer - output_pending;
 	std::memmove(output_buffer + output_pending, p, l);
 	output_pending += l;
@@ -496,102 +514,191 @@ InputFIFO::WriteUnicodeCharacter(uint32_t c)
 	} else
 	if (c < 0x00000800) {
 		const char s[2] = { 
-			0xC0 | (0x1F & (c >> 6U)),
-			0x80 | (0x3F & (c >> 0U)),
+			static_cast<char>(0xC0 | (0x1F & (c >> 6U))),
+			static_cast<char>(0x80 | (0x3F & (c >> 0U))),
 		};
 		WriteRawCharacters(sizeof s, s);
 	} else
-	if (c < 0x00001000) {
+	if (c < 0x00010000) {
 		const char s[3] = { 
-			0xE0 | (0x0F & (c >> 12U)),
-			0x80 | (0x3F & (c >> 6U)),
-			0x80 | (0x3F & (c >> 0U)),
+			static_cast<char>(0xE0 | (0x0F & (c >> 12U))),
+			static_cast<char>(0x80 | (0x3F & (c >> 6U))),
+			static_cast<char>(0x80 | (0x3F & (c >> 0U))),
 		};
 		WriteRawCharacters(sizeof s, s);
 	} else
-	if (c < 0x00020000) {
+	if (c < 0x00200000) {
 		const char s[4] = { 
-			0xF0 | (0x07 & (c >> 18U)),
-			0x80 | (0x3F & (c >> 12U)),
-			0x80 | (0x3F & (c >> 6U)),
-			0x80 | (0x3F & (c >> 0U)),
+			static_cast<char>(0xF0 | (0x07 & (c >> 18U))),
+			static_cast<char>(0x80 | (0x3F & (c >> 12U))),
+			static_cast<char>(0x80 | (0x3F & (c >> 6U))),
+			static_cast<char>(0x80 | (0x3F & (c >> 0U))),
 		};
 		WriteRawCharacters(sizeof s, s);
 	} else
-	if (c < 0x00400000) {
+	if (c < 0x04000000) {
 		const char s[5] = { 
-			0xF8 | (0x03 & (c >> 24U)),
-			0x80 | (0x3F & (c >> 18U)),
-			0x80 | (0x3F & (c >> 12U)),
-			0x80 | (0x3F & (c >> 6U)),
-			0x80 | (0x3F & (c >> 0U)),
+			static_cast<char>(0xF8 | (0x03 & (c >> 24U))),
+			static_cast<char>(0x80 | (0x3F & (c >> 18U))),
+			static_cast<char>(0x80 | (0x3F & (c >> 12U))),
+			static_cast<char>(0x80 | (0x3F & (c >> 6U))),
+			static_cast<char>(0x80 | (0x3F & (c >> 0U))),
 		};
 		WriteRawCharacters(sizeof s, s);
 	} else
 	{
 		const char s[6] = { 
-			0xFC | (0x01 & (c >> 30U)),
-			0x80 | (0x3F & (c >> 24U)),
-			0x80 | (0x3F & (c >> 18U)),
-			0x80 | (0x3F & (c >> 12U)),
-			0x80 | (0x3F & (c >> 6U)),
-			0x80 | (0x3F & (c >> 0U)),
+			static_cast<char>(0xFC | (0x01 & (c >> 30U))),
+			static_cast<char>(0x80 | (0x3F & (c >> 24U))),
+			static_cast<char>(0x80 | (0x3F & (c >> 18U))),
+			static_cast<char>(0x80 | (0x3F & (c >> 12U))),
+			static_cast<char>(0x80 | (0x3F & (c >> 6U))),
+			static_cast<char>(0x80 | (0x3F & (c >> 0U))),
 		};
 		WriteRawCharacters(sizeof s, s);
 	}
 }
 
 void 
+InputFIFO::WriteControl1Character(uint8_t c)
+{
+	if (send_8bit_controls)
+		WriteUnicodeCharacter(c);
+	else {
+		WriteUnicodeCharacter('\x1b');
+		WriteUnicodeCharacter(c - 0x40);
+	}
+}
+
+void 
+InputFIFO::Set8BitControl1(bool b)
+{
+	send_8bit_controls = b;
+}
+
+void 
 InputFIFO::WriteCSISequence(unsigned m, char c)
 {
+	WriteCSI();
 	char b[16];
 	if (0 != m)
-		snprintf(b, sizeof b, "\x1b[1;%u%c", m + 1U, c);
+		snprintf(b, sizeof b, "1;%u%c", m + 1U, c);
 	else
-		snprintf(b, sizeof b, "\x1b[%c", c);
+		snprintf(b, sizeof b, "%c", c);
 	WriteRawCharacters(b);
 }
 
 void 
 InputFIFO::WriteSS3Sequence(unsigned m, char c)
 {
+	WriteSS3();
 	char b[16];
 	if (0 != m)
-		snprintf(b, sizeof b, "\x1bO1;%u%c", m + 1U, c);
+		snprintf(b, sizeof b, "1;%u%c", m + 1U, c);
 	else
-		snprintf(b, sizeof b, "\x1bO%c", c);
+		snprintf(b, sizeof b, "%c", c);
+	WriteRawCharacters(b);
+}
+
+/// \brief DECFNK
+void 
+InputFIFO::WriteFunctionKeyDECVT1(unsigned n, unsigned m)
+{
+	WriteCSI();
+	char b[16];
+	if (0 != m)
+		snprintf(b, sizeof b, "%u;%u~", n, m + 1U);
+	else
+		snprintf(b, sizeof b, "%u~", n);
 	WriteRawCharacters(b);
 }
 
 void 
-InputFIFO::WriteDECVTFunctionKey(unsigned n, unsigned m)
+InputFIFO::WriteFunctionKeyLinuxConsole2(unsigned m, char c)
 {
+	WriteCSI();
 	char b[16];
 	if (0 != m)
-		snprintf(b, sizeof b, "\x1b[%u;%u~", n, m + 1U);
+		snprintf(b, sizeof b, "[1;%u%c", m + 1U, c);
 	else
-		snprintf(b, sizeof b, "\x1b[%u~", n);
+		snprintf(b, sizeof b, "[%c", c);
 	WriteRawCharacters(b);
 }
 
 void 
-InputFIFO::WriteLinuxFunctionKey(unsigned m, char c)
+InputFIFO::WriteFunctionKeySCOConsole1(char c)
 {
+	WriteCSI();
 	char b[16];
-	if (0 != m)
-		snprintf(b, sizeof b, "\x1b[[1;%u%c", m + 1U, c);
-	else
-		snprintf(b, sizeof b, "\x1b[[%c", c);
+	snprintf(b, sizeof b, "%c", c);
 	WriteRawCharacters(b);
+}
+
+void 
+InputFIFO::WriteFunctionKeyDECVT(uint16_t k, uint8_t m)
+{
+	switch (k) {
+		case 1:		WriteFunctionKeyDECVT1(11U,m); break;
+		case 2:		WriteFunctionKeyDECVT1(12U,m); break;
+		case 3:		WriteFunctionKeyDECVT1(13U,m); break;
+		case 4:		WriteFunctionKeyDECVT1(14U,m); break;
+		case 5:		WriteFunctionKeyDECVT1(15U,m); break;
+		case 6:		WriteFunctionKeyDECVT1(17U,m); break;
+		case 7:		WriteFunctionKeyDECVT1(18U,m); break;
+		case 8:		WriteFunctionKeyDECVT1(19U,m); break;
+		case 9:		WriteFunctionKeyDECVT1(20U,m); break;
+		case 10:	WriteFunctionKeyDECVT1(21U,m); break;
+		case 11:	WriteFunctionKeyDECVT1(23U,m); break;
+		case 12:	WriteFunctionKeyDECVT1(24U,m); break;
+		case 13:	WriteFunctionKeyDECVT1(25U,m); break;
+		case 14:	WriteFunctionKeyDECVT1(26U,m); break;
+		case 15:	WriteFunctionKeyDECVT1(28U,m); break;
+		case 16:	WriteFunctionKeyDECVT1(29U,m); break;
+		case 17:	WriteFunctionKeyDECVT1(31U,m); break;
+		case 18:	WriteFunctionKeyDECVT1(32U,m); break;
+		case 19:	WriteFunctionKeyDECVT1(33U,m); break;
+		case 20:	WriteFunctionKeyDECVT1(34U,m); break;
+		default:
+			std::fprintf(stderr, "WARNING: %s: %" PRIx32 "\n", "Unknown function key", k);
+			break;
+	}
+}
+
+void 
+InputFIFO::WriteFunctionKeySCOConsole(uint16_t k, uint8_t /*m*/)
+{
+	static const char other[9] = "@[<]^_'{";
+	if (15U > k)
+		WriteFunctionKeySCOConsole1(k - 1U + 'M');
+	else
+	if (40U > k)
+		WriteFunctionKeySCOConsole1(k - 40U + 'a');
+	else
+	if (48U > k)
+		WriteFunctionKeySCOConsole1(other[k - 40U]);
+}
+
+void 
+InputFIFO::WriteFunctionKey(uint16_t k, uint8_t m)
+{
+	switch (emulation) {
+		case SCO_CONSOLE:	return WriteFunctionKeySCOConsole(k, m);
+		case LINUX_CONSOLE:
+		case XTERM_PC:	
+		case NETBSD_CONSOLE:
+		default:		return WriteFunctionKeyDECVT(k, m);
+	}
 }
 
 // These are the sequences defined by the DEC VT520 programmers' reference.
 // Most termcaps/terminfos describe this as "vt220".
+//
+// * This doesn't implement ALT+arrows turning into function keys 7 to 10.
 void 
 InputFIFO::WriteExtendedKeyDECVT(uint16_t k, uint8_t m)
 {
 	switch (k) {
-	// The auxiliary keypad is in permanent application mode.
+	// The calculator keypad is in permanent application mode.
 		case EXTENDED_KEY_PAD_ASTERISK:		WriteSS3Sequence(m,'j'); break;
 		case EXTENDED_KEY_PAD_PLUS:		WriteSS3Sequence(m,'k'); break;
 		case EXTENDED_KEY_PAD_COMMA:		WriteSS3Sequence(m,'l'); break;
@@ -603,7 +710,7 @@ InputFIFO::WriteExtendedKeyDECVT(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_PAD_DOWN:		WriteSS3Sequence(m,'r'); break;
 		case EXTENDED_KEY_PAD_PAGE_DOWN:	WriteSS3Sequence(m,'s'); break;
 		case EXTENDED_KEY_PAD_LEFT:		WriteSS3Sequence(m,'t'); break;
-		case EXTENDED_KEY_PAD_CENTER:		WriteSS3Sequence(m,'u'); break;
+		case EXTENDED_KEY_PAD_CENTRE:		WriteSS3Sequence(m,'u'); break;
 		case EXTENDED_KEY_PAD_RIGHT:		WriteSS3Sequence(m,'v'); break;
 		case EXTENDED_KEY_PAD_HOME:		WriteSS3Sequence(m,'w'); break;
 		case EXTENDED_KEY_PAD_UP:		WriteSS3Sequence(m,'x'); break;
@@ -621,41 +728,41 @@ InputFIFO::WriteExtendedKeyDECVT(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_DOWN_ARROW:		WriteCSISequence(m,'B'); break;
 		case EXTENDED_KEY_RIGHT_ARROW:		WriteCSISequence(m,'C'); break;
 		case EXTENDED_KEY_LEFT_ARROW:		WriteCSISequence(m,'D'); break;
-		case EXTENDED_KEY_CENTER:		WriteCSISequence(m,'E'); break;
+		case EXTENDED_KEY_CENTRE:		WriteCSISequence(m,'E'); break;
 		case EXTENDED_KEY_END:			WriteCSISequence(m,'F'); break;
 		case EXTENDED_KEY_HOME:			WriteCSISequence(m,'H'); break;
 		case EXTENDED_KEY_BACKTAB:		WriteCSISequence(m,'Z'); break;
-		case EXTENDED_KEY_FIND:			WriteDECVTFunctionKey(1U,m); break;
+		case EXTENDED_KEY_FIND:			WriteFunctionKeyDECVT1(1U,m); break;
 		case EXTENDED_KEY_INS_CHAR:		// This is not a DEC VT key, but we make it equivalent to:
-		case EXTENDED_KEY_INSERT:		WriteDECVTFunctionKey(2U,m); break;
+		case EXTENDED_KEY_INSERT:		WriteFunctionKeyDECVT1(2U,m); break;
 		case EXTENDED_KEY_DEL_CHAR:		// This is not a DEC VT key, but we make it equivalent to:
-		case EXTENDED_KEY_DELETE:		WriteDECVTFunctionKey(3U,m); break;
-		case EXTENDED_KEY_SELECT:		WriteDECVTFunctionKey(4U,m); break;
-		case EXTENDED_KEY_PREVIOUS:		WriteDECVTFunctionKey(5U,m); break;
-		case EXTENDED_KEY_PAGE_UP:		WriteDECVTFunctionKey(5U,m); break;
-		case EXTENDED_KEY_NEXT:			WriteDECVTFunctionKey(6U,m); break;
-		case EXTENDED_KEY_PAGE_DOWN:		WriteDECVTFunctionKey(6U,m); break;
+		case EXTENDED_KEY_DELETE:		WriteFunctionKeyDECVT1(3U,m); break;
+		case EXTENDED_KEY_SELECT:		WriteFunctionKeyDECVT1(4U,m); break;
+		case EXTENDED_KEY_PREVIOUS:		WriteFunctionKeyDECVT1(5U,m); break;
+		case EXTENDED_KEY_PAGE_UP:		WriteFunctionKeyDECVT1(5U,m); break;
+		case EXTENDED_KEY_NEXT:			WriteFunctionKeyDECVT1(6U,m); break;
+		case EXTENDED_KEY_PAGE_DOWN:		WriteFunctionKeyDECVT1(6U,m); break;
 		case EXTENDED_KEY_BACKSPACE:		WriteRawCharacters("\x08"); break;
+		case EXTENDED_KEY_RETURN_OR_ENTER:	WriteRawCharacters("\x0D"); break;
 		default:
-			std::fprintf(stderr, "WARNING: %s: %"PRIx32"\n", "Unknown extended key", k);
+			std::fprintf(stderr, "WARNING: %s: %" PRIx32 "\n", "Unknown extended key", k);
 			break;
 	}
 }
 
 // These are the sequences defined by xterm's PC mode.
 // It is also what the FreeBSD kernel has aimed to produce since version 9.0.
-// Note that FreeBSD's teken-based xterm-alike console is idiosyncratic and has already been replaced with yet another rewrite.
 // Where FreeBSD differs from xterm's PC mode, we stick with xterm; as that is the documented goal of FreeBSD after all.
 //
 // Some important differences from xterm's VT220 mode:
 //  * Editing/cursor keypad cursor keys use SS3 (not CSI) and a different set of final characters.
-//  * Auxiliary keypad cursor keys use CSI (not SS3) and the final characters of the equivalent cursor keypad keys.
-//  * Auxiliary keypad insert, delete, page up, and page down are not distinguished from the equivalent editing pad keys.
+//  * Calculator keypad cursor keys use CSI (not SS3) and the final characters of the equivalent cursor keypad keys.
+//  * Calculator keypad insert, delete, page up, and page down are not distinguished from the equivalent editing pad keys.
 void 
 InputFIFO::WriteExtendedKeyXTermPCMode(uint16_t k, uint8_t m)
 {
 	switch (k) {
-	// The auxiliary keypad is in permanent application mode.
+	// The calculator keypad is in permanent application mode.
 		case EXTENDED_KEY_PAD_ASTERISK:		WriteSS3Sequence(m,'j'); break;
 		case EXTENDED_KEY_PAD_PLUS:		WriteSS3Sequence(m,'k'); break;
 		case EXTENDED_KEY_PAD_COMMA:		WriteSS3Sequence(m,'l'); break;
@@ -665,7 +772,7 @@ InputFIFO::WriteExtendedKeyXTermPCMode(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_PAD_DOWN:		WriteCSISequence(m,'B'); break;
 		case EXTENDED_KEY_PAD_RIGHT:		WriteCSISequence(m,'C'); break;
 		case EXTENDED_KEY_PAD_LEFT:		WriteCSISequence(m,'D'); break;
-		case EXTENDED_KEY_PAD_CENTER:		WriteCSISequence(m,'E'); break;
+		case EXTENDED_KEY_PAD_CENTRE:		WriteCSISequence(m,'E'); break;
 		case EXTENDED_KEY_PAD_END:		WriteCSISequence(m,'F'); break;
 		case EXTENDED_KEY_PAD_HOME:		WriteCSISequence(m,'H'); break;
 		case EXTENDED_KEY_PAD_ENTER:		WriteSS3Sequence(m,'M'); break;
@@ -677,33 +784,34 @@ InputFIFO::WriteExtendedKeyXTermPCMode(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_PAD_EQUALS:		WriteSS3Sequence(m,'X'); break;
 		case EXTENDED_KEY_PAD_EQUALS_AS400:	WriteSS3Sequence(m,'X'); break;
 	// The editing keys are in permanent normal mode.
-		case EXTENDED_KEY_SCROLL_UP:		WriteSS3Sequence(INPUT_MODIFIER_SHIFT,'A'); break;
+		case EXTENDED_KEY_SCROLL_UP:		WriteSS3Sequence(INPUT_MODIFIER_LEVEL2,'A'); break;
 		case EXTENDED_KEY_UP_ARROW:		WriteSS3Sequence(m,'A'); break;
-		case EXTENDED_KEY_SCROLL_DOWN:		WriteSS3Sequence(INPUT_MODIFIER_SHIFT,'B'); break;
+		case EXTENDED_KEY_SCROLL_DOWN:		WriteSS3Sequence(INPUT_MODIFIER_LEVEL2,'B'); break;
 		case EXTENDED_KEY_DOWN_ARROW:		WriteSS3Sequence(m,'B'); break;
 		case EXTENDED_KEY_RIGHT_ARROW:		WriteSS3Sequence(m,'C'); break;
 		case EXTENDED_KEY_LEFT_ARROW:		WriteSS3Sequence(m,'D'); break;
-		case EXTENDED_KEY_CENTER:		WriteSS3Sequence(m,'E'); break;
+		case EXTENDED_KEY_CENTRE:		WriteSS3Sequence(m,'E'); break;
 		case EXTENDED_KEY_END:			WriteSS3Sequence(m,'F'); break;
 		case EXTENDED_KEY_HOME:			WriteSS3Sequence(m,'H'); break;
 		case EXTENDED_KEY_BACKTAB:		WriteCSISequence(m,'Z'); break;
-		case EXTENDED_KEY_FIND:			WriteDECVTFunctionKey(1U,m); break;
+		case EXTENDED_KEY_FIND:			WriteFunctionKeyDECVT1(1U,m); break;
 		case EXTENDED_KEY_INS_CHAR:		// This is not an xterm key, but we make it equivalent to:
 		case EXTENDED_KEY_PAD_INSERT:		// this, which xterm does not distinguish from:
-		case EXTENDED_KEY_INSERT:		WriteDECVTFunctionKey(2U,m); break;
+		case EXTENDED_KEY_INSERT:		WriteFunctionKeyDECVT1(2U,m); break;
 		case EXTENDED_KEY_DEL_CHAR:		// This is not an xterm key, but we make it equivalent to:
 		case EXTENDED_KEY_PAD_DELETE:		// this, which xterm does not distinguish from:
-		case EXTENDED_KEY_DELETE:		WriteDECVTFunctionKey(3U,m); break;
-		case EXTENDED_KEY_SELECT:		WriteDECVTFunctionKey(4U,m); break;
-		case EXTENDED_KEY_PREVIOUS:		WriteDECVTFunctionKey(5U,m); break;
+		case EXTENDED_KEY_DELETE:		WriteFunctionKeyDECVT1(3U,m); break;
+		case EXTENDED_KEY_SELECT:		WriteFunctionKeyDECVT1(4U,m); break;
+		case EXTENDED_KEY_PREVIOUS:		WriteFunctionKeyDECVT1(5U,m); break;
 		case EXTENDED_KEY_PAD_PAGE_UP:		// xterm does not distinguish this from:
-		case EXTENDED_KEY_PAGE_UP:		WriteDECVTFunctionKey(5U,m); break;
-		case EXTENDED_KEY_NEXT:			WriteDECVTFunctionKey(6U,m); break;
+		case EXTENDED_KEY_PAGE_UP:		WriteFunctionKeyDECVT1(5U,m); break;
+		case EXTENDED_KEY_NEXT:			WriteFunctionKeyDECVT1(6U,m); break;
 		case EXTENDED_KEY_PAD_PAGE_DOWN:	// xterm does not distinguish this from:
-		case EXTENDED_KEY_PAGE_DOWN:		WriteDECVTFunctionKey(6U,m); break;
+		case EXTENDED_KEY_PAGE_DOWN:		WriteFunctionKeyDECVT1(6U,m); break;
 		case EXTENDED_KEY_BACKSPACE:		WriteRawCharacters("\x08"); break;
+		case EXTENDED_KEY_RETURN_OR_ENTER:	WriteRawCharacters("\x0D"); break;
 		default:
-			std::fprintf(stderr, "WARNING: %s: %"PRIx32"\n", "Unknown extended key", k);
+			std::fprintf(stderr, "WARNING: %s: %" PRIx32 "\n", "Unknown extended key", k);
 			break;
 	}
 }
@@ -711,8 +819,8 @@ InputFIFO::WriteExtendedKeyXTermPCMode(uint16_t k, uint8_t m)
 // This is what a DEC VT520 produces in SCO Console mode.
 //
 // This emulation is fairly feature-poor:
-//  * It makes no distinction between the auxiliary keypad keys and the equivalent editing/cursor keypad keys.
-//  * It makes no distinction between the auxiliary keypad keys and the equivalent main keypad keys.
+//  * It makes no distinction between the calculator keypad keys and the equivalent editing/cursor keypad keys.
+//  * It makes no distinction between the calculator keypad keys and the equivalent main keypad keys.
 void 
 InputFIFO::WriteExtendedKeySCOConsole(uint16_t k, uint8_t m)
 {
@@ -725,8 +833,8 @@ InputFIFO::WriteExtendedKeySCOConsole(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_RIGHT_ARROW:		WriteCSISequence(m,'C'); break;
 		case EXTENDED_KEY_PAD_LEFT:		// The SCO console does not distinguish this from:
 		case EXTENDED_KEY_LEFT_ARROW:		WriteCSISequence(m,'D'); break;
-		case EXTENDED_KEY_PAD_CENTER:		// The SCO console does not distinguish this from:
-		case EXTENDED_KEY_CENTER:		WriteCSISequence(m,'E'); break;
+		case EXTENDED_KEY_PAD_CENTRE:		// The SCO console does not distinguish this from:
+		case EXTENDED_KEY_CENTRE:		WriteCSISequence(m,'E'); break;
 		case EXTENDED_KEY_PAD_END:		// The SCO console does not distinguish this from:
 		case EXTENDED_KEY_END:			WriteCSISequence(m,'F'); break;
 		case EXTENDED_KEY_PAD_PAGE_DOWN:	// The SCO console does not distinguish this from:
@@ -754,12 +862,11 @@ InputFIFO::WriteExtendedKeySCOConsole(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_PAD_PLUS:		WriteRawCharacters("+"); break;
 		case EXTENDED_KEY_PAD_EQUALS:		WriteRawCharacters("="); break;
 		case EXTENDED_KEY_PAD_EQUALS_AS400:	WriteRawCharacters("="); break;
-		case EXTENDED_KEY_TAB:			WriteRawCharacters("\x09"); break;
 		case EXTENDED_KEY_DEL_CHAR:		// This is not a SCO console key, but we make it equivalent to:
 		case EXTENDED_KEY_PAD_DELETE:		// this, which the SCO console does not distinguish from:
 		case EXTENDED_KEY_DELETE:		WriteRawCharacters("\x7F"); break;
 		default:
-			std::fprintf(stderr, "WARNING: %s: %"PRIx32"\n", "Unknown extended key", k);
+			std::fprintf(stderr, "WARNING: %s: %" PRIx32 "\n", "Unknown extended key", k);
 			break;
 	}
 }
@@ -768,9 +875,9 @@ InputFIFO::WriteExtendedKeySCOConsole(uint16_t k, uint8_t m)
 // The termcap/terminfo name is "linux".
 //
 // This emulation is fairly feature-poor:
-//  * It makes no distinction between the auxiliary keypad keys and the equivalent editing/cursor keypad keys.
-//  * It makes no distinction between the auxiliary keypad keys and the equivalent main keypad keys.
-//  * Auxiliary keypad function keys send sequences too similar to cursor keys.
+//  * It makes no distinction between the calculator keypad keys and the equivalent editing/cursor keypad keys.
+//  * It makes no distinction between the calculator keypad keys and the equivalent main keypad keys.
+//  * Calculator keypad function keys send sequences too similar to cursor keys.
 //  * If a program accidentally uses a vt1xx/vt2xx/xterm/wsvt TERM setting, HOME and END will look like FIND and SELECT.
 void 
 InputFIFO::WriteExtendedKeyLinuxConsole(uint16_t k, uint8_t m)
@@ -784,27 +891,27 @@ InputFIFO::WriteExtendedKeyLinuxConsole(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_RIGHT_ARROW:		WriteCSISequence(m,'C'); break;
 		case EXTENDED_KEY_PAD_LEFT:		// The Linux console does not distinguish this from:
 		case EXTENDED_KEY_LEFT_ARROW:		WriteCSISequence(m,'D'); break;
-		case EXTENDED_KEY_PAD_CENTER:		// The Linux console does not distinguish this from:
-		case EXTENDED_KEY_CENTER:		WriteCSISequence(m,'G'); break;
-		case EXTENDED_KEY_PAD_F1:		WriteLinuxFunctionKey(m,'A'); break;
-		case EXTENDED_KEY_PAD_F2:		WriteLinuxFunctionKey(m,'B'); break;
-		case EXTENDED_KEY_PAD_F3:		WriteLinuxFunctionKey(m,'C'); break;
-		case EXTENDED_KEY_PAD_F4:		WriteLinuxFunctionKey(m,'D'); break;
-		case EXTENDED_KEY_PAD_F5:		WriteLinuxFunctionKey(m,'E'); break;
+		case EXTENDED_KEY_PAD_CENTRE:		// The Linux console does not distinguish this from:
+		case EXTENDED_KEY_CENTRE:		WriteCSISequence(m,'G'); break;
+		case EXTENDED_KEY_PAD_F1:		WriteFunctionKeyLinuxConsole2(m,'A'); break;
+		case EXTENDED_KEY_PAD_F2:		WriteFunctionKeyLinuxConsole2(m,'B'); break;
+		case EXTENDED_KEY_PAD_F3:		WriteFunctionKeyLinuxConsole2(m,'C'); break;
+		case EXTENDED_KEY_PAD_F4:		WriteFunctionKeyLinuxConsole2(m,'D'); break;
+		case EXTENDED_KEY_PAD_F5:		WriteFunctionKeyLinuxConsole2(m,'E'); break;
 		case EXTENDED_KEY_HOME:			// The Linux console does not distinguish this from:
-		case EXTENDED_KEY_PAD_HOME:		WriteDECVTFunctionKey(1U,m); break;
+		case EXTENDED_KEY_PAD_HOME:		WriteFunctionKeyDECVT1(1U,m); break;
 		case EXTENDED_KEY_INS_CHAR:		// This is not a Linux console key, but we make it equivalent to:
 		case EXTENDED_KEY_INSERT:		// this, which the Linux console does not distinguish from:
-		case EXTENDED_KEY_PAD_INSERT:		WriteDECVTFunctionKey(2U,m); break;
+		case EXTENDED_KEY_PAD_INSERT:		WriteFunctionKeyDECVT1(2U,m); break;
 		case EXTENDED_KEY_DEL_CHAR:		// This is not a Linux console key, but we make it equivalent to:
 		case EXTENDED_KEY_DELETE:		// this, which the Linux console does not distinguish from:
-		case EXTENDED_KEY_PAD_DELETE:		WriteDECVTFunctionKey(3U,m); break;
+		case EXTENDED_KEY_PAD_DELETE:		WriteFunctionKeyDECVT1(3U,m); break;
 		case EXTENDED_KEY_END:			// The Linux console does not distinguish this from:
-		case EXTENDED_KEY_PAD_END:		WriteDECVTFunctionKey(4U,m); break;
+		case EXTENDED_KEY_PAD_END:		WriteFunctionKeyDECVT1(4U,m); break;
 		case EXTENDED_KEY_PAGE_UP:		// The Linux console does not distinguish this from:
-		case EXTENDED_KEY_PAD_PAGE_UP:		WriteDECVTFunctionKey(5U,m); break;
+		case EXTENDED_KEY_PAD_PAGE_UP:		WriteFunctionKeyDECVT1(5U,m); break;
 		case EXTENDED_KEY_PAGE_DOWN:		// The Linux console does not distinguish this from:
-		case EXTENDED_KEY_PAD_PAGE_DOWN:	WriteDECVTFunctionKey(6U,m); break;
+		case EXTENDED_KEY_PAD_PAGE_DOWN:	WriteFunctionKeyDECVT1(6U,m); break;
 		case EXTENDED_KEY_BACKTAB:		WriteCSISequence(m,'Z'); break;
 		case EXTENDED_KEY_BACKSPACE:		WriteRawCharacters("\x7F"); break;
 		case EXTENDED_KEY_RETURN_OR_ENTER:	WriteRawCharacters("\x0D"); break;
@@ -816,9 +923,8 @@ InputFIFO::WriteExtendedKeyLinuxConsole(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_PAD_PLUS:		WriteRawCharacters("+"); break;
 		case EXTENDED_KEY_PAD_EQUALS:		WriteRawCharacters("="); break;
 		case EXTENDED_KEY_PAD_EQUALS_AS400:	WriteRawCharacters("="); break;
-		case EXTENDED_KEY_TAB:			WriteRawCharacters("\x09"); break;
 		default:
-			std::fprintf(stderr, "WARNING: %s: %"PRIx32"\n", "Unknown extended key", k);
+			std::fprintf(stderr, "WARNING: %s: %" PRIx32 "\n", "Unknown extended key", k);
 			break;
 	}
 }
@@ -827,8 +933,8 @@ InputFIFO::WriteExtendedKeyLinuxConsole(uint16_t k, uint8_t m)
 // The termcap/terminfo name is "wsvt".
 //
 // This emulation is fairly feature-poor:
-//  * It makes no distinction between the auxiliary keypad keys and the equivalent editing/cursor keypad keys.
-//  * It makes no distinction between the auxiliary keypad keys and the equivalent main keypad keys.
+//  * It makes no distinction between the calculator keypad keys and the equivalent editing/cursor keypad keys.
+//  * It makes no distinction between the calculator keypad keys and the equivalent main keypad keys.
 void 
 InputFIFO::WriteExtendedKeyNetBSDConsole(uint16_t k, uint8_t m)
 {
@@ -841,8 +947,8 @@ InputFIFO::WriteExtendedKeyNetBSDConsole(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_RIGHT_ARROW:		WriteCSISequence(m,'C'); break;
 		case EXTENDED_KEY_PAD_LEFT:		// The NetBSD console does not distinguish this from:
 		case EXTENDED_KEY_LEFT_ARROW:		WriteCSISequence(m,'D'); break;
-		case EXTENDED_KEY_PAD_CENTER:		// The NetBSD console does not distinguish this from:
-		case EXTENDED_KEY_CENTER:		WriteCSISequence(m,'E'); break;
+		case EXTENDED_KEY_PAD_CENTRE:		// The NetBSD console does not distinguish this from:
+		case EXTENDED_KEY_CENTRE:		WriteCSISequence(m,'E'); break;
 		case EXTENDED_KEY_INS_CHAR:		// This is not a NetBSD console key, but we make it equivalent to:
 		case EXTENDED_KEY_PAD_INSERT:		// this, which the NetBSD console does not distinguish from:
 		case EXTENDED_KEY_INSERT:		WriteCSISequence(m,'L'); break;
@@ -852,16 +958,16 @@ InputFIFO::WriteExtendedKeyNetBSDConsole(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_PAD_F4:		WriteCSISequence(m,'S'); break;
 		case EXTENDED_KEY_PAD_F5:		WriteCSISequence(m,'T'); break;
 		case EXTENDED_KEY_BACKTAB:		WriteCSISequence(m,'Z'); break;
-		case EXTENDED_KEY_FIND:			WriteDECVTFunctionKey(1U,m); break;
-		case EXTENDED_KEY_SELECT:		WriteDECVTFunctionKey(4U,m); break;
+		case EXTENDED_KEY_FIND:			WriteFunctionKeyDECVT1(1U,m); break;
+		case EXTENDED_KEY_SELECT:		WriteFunctionKeyDECVT1(4U,m); break;
 		case EXTENDED_KEY_PAD_PAGE_DOWN:	// The NetBSD console does not distinguish this from:
-		case EXTENDED_KEY_PAGE_DOWN:		WriteDECVTFunctionKey(6U,m); break;
+		case EXTENDED_KEY_PAGE_DOWN:		WriteFunctionKeyDECVT1(6U,m); break;
 		case EXTENDED_KEY_PAD_PAGE_UP:		// The NetBSD console does not distinguish this from:
-		case EXTENDED_KEY_PAGE_UP:		WriteDECVTFunctionKey(6U,m); break;
+		case EXTENDED_KEY_PAGE_UP:		WriteFunctionKeyDECVT1(6U,m); break;
 		case EXTENDED_KEY_PAD_HOME:		// The NetBSD console does not distinguish this from:
-		case EXTENDED_KEY_HOME:			WriteDECVTFunctionKey(7U,m); break;
+		case EXTENDED_KEY_HOME:			WriteFunctionKeyDECVT1(7U,m); break;
 		case EXTENDED_KEY_PAD_END:		// The NetBSD console does not distinguish this from:
-		case EXTENDED_KEY_END:			WriteDECVTFunctionKey(8U,m); break;
+		case EXTENDED_KEY_END:			WriteFunctionKeyDECVT1(8U,m); break;
 		case EXTENDED_KEY_BACKSPACE:		WriteRawCharacters("\x08"); break;
 		case EXTENDED_KEY_RETURN_OR_ENTER:	WriteRawCharacters("\x0D"); break;
 		case EXTENDED_KEY_PAD_ENTER:		WriteRawCharacters("\x0A"); break;
@@ -872,12 +978,11 @@ InputFIFO::WriteExtendedKeyNetBSDConsole(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_PAD_PLUS:		WriteRawCharacters("+"); break;
 		case EXTENDED_KEY_PAD_EQUALS:		WriteRawCharacters("="); break;
 		case EXTENDED_KEY_PAD_EQUALS_AS400:	WriteRawCharacters("="); break;
-		case EXTENDED_KEY_TAB:			WriteRawCharacters("\x09"); break;
 		case EXTENDED_KEY_DEL_CHAR:		// This is not a NetBSD console key, but we make it equivalent to:
 		case EXTENDED_KEY_PAD_DELETE:		// this, which the NetBSD console does not distinguish from:
 		case EXTENDED_KEY_DELETE:		WriteRawCharacters("\x7F"); break;
 		default:
-			std::fprintf(stderr, "WARNING: %s: %"PRIx32"\n", "Unknown extended key", k);
+			std::fprintf(stderr, "WARNING: %s: %" PRIx32 "\n", "Unknown extended key", k);
 			break;
 	}
 }
@@ -885,64 +990,32 @@ InputFIFO::WriteExtendedKeyNetBSDConsole(uint16_t k, uint8_t m)
 void 
 InputFIFO::WriteExtendedKey(uint16_t k, uint8_t m)
 {
-#if defined(__LINUX__) || defined(__linux__)
-	return WriteExtendedKeyLinuxConsole(k, m);
-#elif defined(__FreeBSD__) || defined(__DragonFly__)
-	return WriteExtendedKeyXTermPCMode(k, m);
-#elif defined(__NetBSD__)
-	return WriteExtendedKeyNetBSDConsole(k, m);
-#else
-	return WriteExtendedKeyDECVT(k, m);
-#	error "Don't know what the terminal type for your console driver is."
-#endif
-}
-
-void 
-InputFIFO::WriteFunctionKey(uint16_t k, uint8_t m)
-{
-	switch (k) {
-		case 1:		WriteDECVTFunctionKey(11U,m); break;
-		case 2:		WriteDECVTFunctionKey(12U,m); break;
-		case 3:		WriteDECVTFunctionKey(13U,m); break;
-		case 4:		WriteDECVTFunctionKey(14U,m); break;
-		case 5:		WriteDECVTFunctionKey(15U,m); break;
-		case 6:		WriteDECVTFunctionKey(17U,m); break;
-		case 7:		WriteDECVTFunctionKey(18U,m); break;
-		case 8:		WriteDECVTFunctionKey(19U,m); break;
-		case 9:		WriteDECVTFunctionKey(20U,m); break;
-		case 10:	WriteDECVTFunctionKey(21U,m); break;
-		case 11:	WriteDECVTFunctionKey(23U,m); break;
-		case 12:	WriteDECVTFunctionKey(24U,m); break;
-		case 13:	WriteDECVTFunctionKey(25U,m); break;
-		case 14:	WriteDECVTFunctionKey(26U,m); break;
-		case 15:	WriteDECVTFunctionKey(28U,m); break;
-		case 16:	WriteDECVTFunctionKey(29U,m); break;
-		case 17:	WriteDECVTFunctionKey(31U,m); break;
-		case 18:	WriteDECVTFunctionKey(32U,m); break;
-		case 19:	WriteDECVTFunctionKey(33U,m); break;
-		case 20:	WriteDECVTFunctionKey(34U,m); break;
-		default:
-			std::fprintf(stderr, "WARNING: %s: %"PRIx32"\n", "Unknown function key", k);
-			break;
+	switch (emulation) {
+		case SCO_CONSOLE:	return WriteExtendedKeySCOConsole(k, m);
+		case LINUX_CONSOLE:	return WriteExtendedKeyLinuxConsole(k, m);
+		case XTERM_PC:		return WriteExtendedKeyXTermPCMode(k, m);
+		case NETBSD_CONSOLE:	return WriteExtendedKeyNetBSDConsole(k, m);
+		default:		return WriteExtendedKeyDECVT(k, m);
 	}
 }
 
 void
 InputFIFO::ReadInput()
 {
-	const int l(read(input_fd, input_buffer + input_read, sizeof input_buffer - input_read));
+	const int l(read(fd, input_buffer + input_read, sizeof input_buffer - input_read));
 	if (l > 0)
 		input_read += l;
-	if (input_read >= sizeof input_buffer) {
+	while (input_read >= 4U) {
 		uint32_t b;
 		std::memcpy(&b, input_buffer, 4U);
 		input_read -= 4U;
+		std::memmove(input_buffer, input_buffer + 4U, input_read);
 		switch (b & INPUT_MSG_MASK) {
 			case INPUT_MSG_UCS24:	WriteUnicodeCharacter(b & 0x00FFFFFF); break;
 			case INPUT_MSG_EKEY:	WriteExtendedKey((b >> 8U) & 0xFFFF, b & 0xFF); break;
 			case INPUT_MSG_FKEY:	WriteFunctionKey((b >> 8U) & 0xFF, b & 0xFF); break;
 			default:
-				std::fprintf(stderr, "WARNING: %s: %"PRIx32"\n", "Unknown input message", b);
+				std::fprintf(stderr, "WARNING: %s: %" PRIx32 "\n", "Unknown input message", b);
 				break;
 		}
 	}
@@ -1067,6 +1140,25 @@ handle_signal (
 	}
 }
 
+/* Emulation options ********************************************************
+// **************************************************************************
+*/
+
+struct emulation_definition : public popt::simple_named_definition {
+public:
+	emulation_definition(char s, const char * l, const char * d, InputFIFO::Emulation & e, InputFIFO::Emulation v) : simple_named_definition(s, l, d), emulation(e), value(v) {}
+	virtual void action(popt::processor &);
+	virtual ~emulation_definition();
+protected:
+	InputFIFO::Emulation & emulation;
+	InputFIFO::Emulation value;
+};
+emulation_definition::~emulation_definition() {}
+void emulation_definition::action(popt::processor &)
+{
+	emulation = value;
+}
+
 /* Main function ************************************************************
 // **************************************************************************
 */
@@ -1077,9 +1169,30 @@ console_terminal_emulator (
 	std::vector<const char *> & args
 ) {
 	const char * prog(basename_of(args[0]));
+#if defined(__LINUX__) || defined(__linux__)
+	InputFIFO::Emulation emulation(InputFIFO::LINUX_CONSOLE);
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
+	InputFIFO::Emulation emulation(InputFIFO::XTERM_PC);
+#elif defined(__NetBSD__)
+	InputFIFO::Emulation emulation(InputFIFO::NETBSD_CONSOLE);
+#else
+	InputFIFO::Emulation emulation(InputFIFO::DECVT);
+#endif
 
 	try {
-		popt::top_table_definition main_option(0, 0, "Main options", "directory");
+		emulation_definition linux_option('\0', "linux", "Emulate the Linux virtual console.", emulation, InputFIFO::LINUX_CONSOLE);
+		emulation_definition sco_option('\0', "sco", "Emulate the SCO virtual console.", emulation, InputFIFO::SCO_CONSOLE);
+		emulation_definition freebsd_option('\0', "freebsd", "Emulate the FreeBSD virtual console.", emulation, InputFIFO::XTERM_PC);
+		emulation_definition netbsd_option('\0', "netbsd", "Emulate the NetBSD virtual console.", emulation, InputFIFO::NETBSD_CONSOLE);
+		emulation_definition decvt_option('\0', "decvt", "Emulate the DEC VT.", emulation, InputFIFO::DECVT);
+		popt::definition * top_table[] = {
+			&linux_option,
+			&sco_option,
+			&freebsd_option,
+			&netbsd_option,
+			&decvt_option
+		};
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "directory");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -1109,24 +1222,24 @@ console_terminal_emulator (
 		throw EXIT_FAILURE;
 	}
 
-	const int dir_fd(open_dir_at(AT_FDCWD, dirname));
-	if (0 > dir_fd) {
+	FileDescriptorOwner dir_fd(open_dir_at(AT_FDCWD, dirname));
+	if (0 > dir_fd.get()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s/: %s\n", prog, dirname, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
 
 	// We need an explicit lock file, because we cannot lock FIFOs.
-	const int lock_fd(open_lockfile_at(dir_fd, "lock"));
-	if (0 > lock_fd) {
+	FileDescriptorOwner lock_fd(open_lockfile_at(dir_fd.get(), "lock"));
+	if (0 > lock_fd.get()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dirname, "lock", std::strerror(error));
 		throw EXIT_FAILURE;
 	}
 	// We are allowed to open the read end of a FIFO in non-blocking mode without having to wait for a writer.
-	mkfifoat(dir_fd, "input", 0620);
-	const int input_fd(open_read_at(dir_fd, "input"));
-	if (0 > input_fd) {
+	mkfifoat(dir_fd.get(), "input", 0620);
+	InputFIFO keyboard(open_read_at(dir_fd.get(), "input"), PTY_MASTER_FILENO, emulation);
+	if (0 > keyboard.get()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dirname, "input", std::strerror(error));
 		throw EXIT_FAILURE;
@@ -1134,27 +1247,27 @@ console_terminal_emulator (
 	// We have to keep a client (write) end descriptor open to the input FIFO.
 	// Otherwise, the first console client process triggers POLLHUP when it closes its end.
 	// Opening the FIFO for read+write isn't standard, although it would work on Linux.
-	const int input_write_fd(open_writeexisting_at(dir_fd, "input"));
-	if (0 > input_write_fd) {
+	FileDescriptorOwner input_write_fd(open_writeexisting_at(dir_fd.get(), "input"));
+	if (0 > input_write_fd.get()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dirname, "input", std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	const int vcsa_fd(open_readwritecreate_at(dir_fd, "vcsa", 0640));
-	if (0 > vcsa_fd) {
+	VCSA vbuffer(open_readwritecreate_at(dir_fd.get(), "vcsa", 0640));
+	if (0 > vbuffer.get()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dirname, "vcsa", std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	const int unicode_fd(open_readwritecreate_at(dir_fd, "display", 0640));
-	if (0 > unicode_fd) {
+	UnicodeBuffer ubuffer(open_readwritecreate_at(dir_fd.get(), "display", 0640));
+	if (0 > ubuffer.get()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dirname, "display", std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	unlinkat(dir_fd, "tty", 0);
-	if (0 > linkat(AT_FDCWD, tty, dir_fd, "tty", 0)) {
-		if (0 > symlinkat(tty, dir_fd, "tty")) {
+	unlinkat(dir_fd.get(), "tty", 0);
+	if (0 > linkat(AT_FDCWD, tty, dir_fd.get(), "tty", 0)) {
+		if (0 > symlinkat(tty, dir_fd.get(), "tty")) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s -> %s/tty: %s\n", prog, tty, dirname, std::strerror(error));
 			throw EXIT_FAILURE;
@@ -1176,7 +1289,7 @@ console_terminal_emulator (
 	pollfd p[2];
 	p[0].fd = PTY_MASTER_FILENO;
 	p[0].events = POLLIN|POLLOUT|POLLHUP;
-	p[1].fd = input_fd;
+	p[1].fd = keyboard.get();
 	p[1].events = POLLIN;
 #else
 	const int queue(kqueue());
@@ -1201,7 +1314,7 @@ console_terminal_emulator (
 		size_t index(0);
 		EV_SET(&p[index++], PTY_MASTER_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
 		EV_SET(&p[index++], PTY_MASTER_FILENO, EVFILT_WRITE, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], input_fd, EVFILT_READ, EV_ADD, 0, 0, 0);
+		EV_SET(&p[index++], keyboard.get(), EVFILT_READ, EV_ADD, 0, 0, 0);
 		EV_SET(&p[index++], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 		EV_SET(&p[index++], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 		EV_SET(&p[index++], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
@@ -1213,9 +1326,7 @@ console_terminal_emulator (
 	}
 #endif
 
-	InputFIFO keyboard(input_fd, PTY_MASTER_FILENO);
-	VCSA vbuffer(vcsa_fd);
-	UnicodeBuffer ubuffer(unicode_fd);
+	ubuffer.WriteBOM();
 	MultipleBuffer mbuffer;
 	mbuffer.Add(&ubuffer);
 	mbuffer.Add(&vbuffer);
@@ -1230,7 +1341,7 @@ console_terminal_emulator (
 		const int rc(poll(p, sizeof p/sizeof *p, -1));
 #else
 		EV_SET(&p[0], PTY_MASTER_FILENO, EVFILT_WRITE, keyboard.OutputAvailable() ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
-		EV_SET(&p[1], input_fd, EVFILT_READ, keyboard.HasInputSpace() ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
+		EV_SET(&p[1], keyboard.get(), EVFILT_READ, keyboard.HasInputSpace() ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
 		const int rc(kevent(queue, p, 1, p, sizeof p/sizeof *p, 0));
 #endif
 
@@ -1257,7 +1368,7 @@ console_terminal_emulator (
 				masterin_ready = true;
 				master_hangup |= EV_EOF & e.flags;
 			}
-			if (EVFILT_READ == e.filter && input_fd == static_cast<int>(e.ident)) {
+			if (EVFILT_READ == e.filter && keyboard.get() == static_cast<int>(e.ident)) {
 				fifo_ready = true;
 				fifo_hangup |= EV_EOF & e.flags;
 			}
@@ -1283,6 +1394,6 @@ console_terminal_emulator (
 			keyboard.WriteOutput();
 	}
 
-	unlinkat(dir_fd, "tty", 0);
+	unlinkat(dir_fd.get(), "tty", 0);
 	throw EXIT_SUCCESS;
 }

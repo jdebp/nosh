@@ -160,10 +160,10 @@ write_numeric_uint64_value(
 	uint_least64_t value
 ) {
 	if (json) {
-		std::fprintf(stdout, "%c%s:%"PRIu64, inner_comma, to_json_string(name).c_str(), value);
+		std::fprintf(stdout, "%c%s:%" PRIu64, inner_comma, to_json_string(name).c_str(), value);
 		inner_comma = ',';
 	} else
-		std::fprintf(stdout, "%s=%"PRIu64"\n", name, value);
+		std::fprintf(stdout, "%s=%" PRIu64 "\n", name, value);
 }
 
 static inline

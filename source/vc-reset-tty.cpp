@@ -16,6 +16,7 @@ For copyright and licensing terms, see the file named COPYING.
 #endif
 #include "popt.h"
 #include "utils.h"
+#include "ttyutils.h"
 
 /* terminal processing ******************************************************
 // **************************************************************************

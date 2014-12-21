@@ -1076,6 +1076,10 @@ service_manager (
 		sigaction(SIGPIPE,&sa,NULL);
 	}
 #else
+#if defined(PR_SET_CHILD_SUBREAPER)
+	prctl(PR_SET_CHILD_SUBREAPER, 1);
+#endif
+
 	for (unsigned i(0U); i < listen_fds; ++i) {
 		pollfd p;
 		p.fd = LISTEN_SOCKET_FILENO + i;

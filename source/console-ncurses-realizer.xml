@@ -1,7 +1,7 @@
-<refentry id="console-ncurses-renderer">
+<refentry id="console-ncurses-realizer">
 
 <refmeta>
-<refentrytitle>console-ncurses-renderer</refentrytitle>
+<refentrytitle>console-ncurses-realizer</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
@@ -9,23 +9,22 @@
 </refmeta>
 
 <refnamediv>
-<refname>console-ncurses-renderer</refname>
+<refname>console-ncurses-realizer</refname>
 <refpurpose>realize a user-space virtual terminal on another terminal with ncurses</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>
 <cmdsynopsis>
-<command>console-ncurses-renderer</command>
+<command>console-ncurses-realizer</command>
 <arg choice='opt'>--display-only</arg>
-<arg choice='req'><replaceable>filename</replaceable></arg>
-<arg choice='req'><replaceable>fifoname</replaceable></arg>
+<arg choice='req'><replaceable>vcname</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection><title>Description</title>
 
 <para>
-<command>console-ncurses-renderer</command> is the I/O back-end for a
+<command>console-ncurses-realizer</command> is the I/O back-end for a
 (user-space) virtual terminal, that realizes the virtual terminal on another
 terminal.
 It uses wide-character ncurses (sometimes a.k.a. ncursesw) to do so, and thus
@@ -35,13 +34,12 @@ standard output.
 
 <para>
 It opens the character/attribute buffer file
-<replaceable>filename</replaceable> and the input FIFO
-<replaceable>fifoname</replaceable>.
+<filename><replaceable>vcname</replaceable>/display</filename> 
+and the input FIFO
+<filename><replaceable>vcname</replaceable>/input</filename>.
 These are the "master side" interfaces of the user-space virtual terminal,
 as detailed in
 <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-It is the user's responsibility to ensure that these refer to the same,
-single, user-space virtual terminal.
 </para>
 
 <para>
@@ -72,7 +70,7 @@ output, using ncursesw to write the output.
 <refsection><title>Security</title>
 
 <para>
-<command>console-ncurses-renderer</command> 
+<command>console-ncurses-realizer</command> 
 only requires sufficient privileges to access the file and the FIFO.
 Superuser privileges are not necessary.
 The recommended configuration is that the file and the FIFO are (respectively)
@@ -90,8 +88,8 @@ and thus requires no write access to their containing directory.
 <refsection><title>Limitations</title>
 
 <para>
-Because it employs ncursesw, <command>console-ncurses-renderer</command> has
-several limitations compared to a renderer with a more powerful rendering
+Because it employs ncursesw, <command>console-ncurses-realizer</command> has
+several limitations compared to a realizer with a more powerful rendering
 mechanism:
 </para>
 
@@ -106,7 +104,7 @@ and even that isn't available for some editing keys.
 
 <listitem>
 <para>
-There's no distinction made between auxiliary keypad keys (in application
+There's no distinction made between calculator keypad keys (in application
 mode) and editing/cursor keypad keys.
 </para>
 </listitem>
@@ -159,11 +157,11 @@ the size of the 24-bit RGB colour space, and is in fact 8 as standard.
 <refsection><title>Bugs</title>
 
 <para>
-If you run <command>console-ncurses-renderer</command> outputting to the very
+If you run <command>console-ncurses-realizer</command> outputting to the very
 same user space virtual terminal whose display it is rendering (and input it is
 generating), you will get a loop.
 Because of the modular nature of user space virtual terminals, it is not possible
-for <command>console-ncurses-renderer</command> to detect this.
+for <command>console-ncurses-realizer</command> to detect this.
 Don't do it.
 </para>
 

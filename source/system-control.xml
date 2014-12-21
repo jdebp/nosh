@@ -585,6 +585,7 @@ or
 <command>system-control</command>
 <arg choice="req">init</arg>
 <arg>--user</arg>
+<arg>--update</arg>
 <arg>-s</arg>
 <arg>-b</arg>
 <arg>-a</arg>
@@ -615,56 +616,62 @@ expect (variants of) this syntax.
 
 <listitem>
 <para>
-With <arg>-b</arg> the <code>emergency</code> target is activated.
-This should bring up no (non-sysinit) services, mount no (non-system) volumes,
-and bring up a secure login user interface.
+With <arg choice='plain'>-b</arg> the <code>emergency</code> target is activated.
 </para>
 </listitem>
 
 <listitem>
 <para>
-Without <arg>-b</arg> but with <arg>-s</arg> the <code>rescue</code> target is
-activated.
-This should bring up with it enough services to facilitate a "rescue"
-environment, and a secure login user interface.
+Without <arg choice='plain'>-b</arg> but with <arg choice='plain'>-s</arg> the
+<code>rescue</code> target is activated.
 </para>
 </listitem>
 
 <listitem>
 <para>
-Without <arg>-b</arg> or <arg>-s</arg> the <code>normal</code> target is activated.
-This should bring up with it all of the services involved in the normal
-operation of the system, and an administrator-defined set of multiple login
-user interfaces that may include both TUI and GUI login prompts.
+Without <arg choice='plain'>-b</arg> or <arg choice='plain'>-s</arg> but with
+<arg choice='plain'>--update</arg> the <code>update</code> target is activated.
+</para>
+</listitem>
+
+<listitem>
+<para>
+Without <arg choice='plain'>-b</arg> or <arg choice='plain'>-s</arg> or 
+<arg choice='plain'>--update</arg> the <code>normal</code> target is activated.
 </para>
 </listitem>
 
 </itemizedlist>
 
 <para>
+The expected behaviour of these standard targets is decribed further on, in the
+section on standard targets.
+</para>
+
+<para>
 Old boot loaders may also pass other options to process #1, and hence to
 <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry> 
 and the <command>init</command> subcommand.  
-These include an <arg>-a</arg> command line option indicating an "unattended"
-boot (a.k.a. an "autoboot"), and an <arg>-f</arg> command line option,
+These include an <arg choice='plain'>-a</arg> command line option indicating an "unattended"
+boot (a.k.a. an "autoboot"), and an <arg choice='plain'>-f</arg> command line option,
 indicating a boot that skips certain lengthy disc checks (a.k.a. a "fastboot").
 These options are undocumented, non-standardized, and nowadays obsolete on many
 systems:
 </para>
 
 <itemizedlist>
-<listitem><para>LILO passes <arg>-a</arg>.</para></listitem>
-<listitem><para>FreeBSD's boot loader passes <arg>-f</arg> to mean skipping lengthy
+<listitem><para>LILO passes <arg choice='plain'>-a</arg>.</para></listitem>
+<listitem><para>FreeBSD's boot loader passes <arg choice='plain'>-f</arg> to mean skipping lengthy
 daemon, not disc, checks; and confusingly calls it "autoboot" even though the
 bootstrap might have used the attended <command>boot</command>
 rather than the unattended <command>autoboot</command> command. (See
 <citerefentry><refentrytitle>loader</refentrytitle><manvolnum>8</manvolnum></citerefentry> and
 <citerefentry><refentrytitle>rc</refentrytitle><manvolnum>8</manvolnum></citerefentry>.)
 </para></listitem>
-<listitem><para>OpenBSD documents <arg>-f</arg> as no longer implemented, in favour of a <filename>/fastboot</filename> flag file.</para></listitem>
+<listitem><para>OpenBSD documents <arg choice='plain'>-f</arg> as no longer implemented, in favour of a <filename>/fastboot</filename> flag file.</para></listitem>
 <listitem><para>systemd's
 <citerefentry><refentrytitle>systemd-fsck</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-uses a <arg>fsck.mode</arg> kernel command line option instead, and has
+uses a <arg choice='plain'>fsck.mode</arg> kernel command line option instead, and has
 no equivalent at all for "autoboot".  </para></listitem>
 <listitem><para>upstart has no equivalent at all for either.</para></listitem>
 </itemizedlist>
@@ -1024,6 +1031,10 @@ Three standard targets are started by the <command>init</command> subcommand.
 <para>
 This target is the normal target started by the <command>init</command>
 subcommand.
+This should bring up with it all of the services involved in the normal
+operation of the system, and an administrator-defined set of multiple login
+user interfaces that may include both TUI and GUI login prompts.
+</para><para>
 It "wants" the <filename>workstation</filename>,
 <filename>server</filename>, and <filename>multi-user</filename> targets.
 Thus starting it starts the union of all services wanted by those
@@ -1040,8 +1051,11 @@ multi-user services are brought up in parallel.
 <listitem><para>
 This target is the target started by the <command>init</command>
 subcommand with the <arg>-b</arg> option.
-It brings up "emergency mode" services, such as a secure login
+Starting it is intended to bring up the system in "emergency mode",
+bringing up no (non-sysinit) services, mounting no (non-system) volumes,
+and bringing up just "emergency mode" services, such as a secure login
 on the default terminal.
+</para><para>
 It "wants" no other targets or services, although <filename>sysinit</filename>
 will have already been started as part of system manager initialization.
 So in "emergency mode" (if nothing else has been started) only the system
@@ -1054,8 +1068,26 @@ filesystems are available, and not necessarily even read-write.
 <listitem><para>
 This target is the target started by the <command>init</command>
 subcommand with the <arg>-s</arg> option.
+Starting it is intended to bring up the system in "rescue mode",
+bringing up with it the fundamental system initialization services
+and a secure login user interface.
+</para><para>
 It "wants" the <filename>sysinit</filename> target.
-Starting it is intended to bring up the system in "rescue mode".
+It "wants" the <filename>sysinit</filename> target, but not the
+<filename>basic</filename> target.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><filename>update</filename></term>
+<listitem><para>
+This target is the target started by the <command>init</command>
+subcommand with the <arg>--update</arg> option.
+Starting it is intended to bring up the system in "update mode",
+bringing up with it the fundamental system initialization services
+and the system update utility.
+</para><para>
+It "wants" the <filename>sysinit</filename> target.
 It "wants" the <filename>sysinit</filename> target, but not the
 <filename>basic</filename> target.
 </para></listitem>

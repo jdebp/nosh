@@ -128,17 +128,23 @@ vc_get_tty (
 	std::string tty_str;
 	const char * tty(tty_base);
 	if ('/' != tty[0]) {
-		// Attempt to expand into either /dev/XXX or /run/dev/XXX .
+		// Attempt to expand into either /dev/XXX, /var/dev/XXX, or /run/dev/XXX .
 		struct stat buf;
 		tty_str = "/dev/";
 		tty_str += tty_base;
 		if (0 == stat(tty_str.c_str(), &buf)) 
 			tty = tty_str.c_str();
 		else {
-			tty_str = "/run/dev/";
+			tty_str = "/var/dev/";
 			tty_str += tty_base;
 			if (0 == stat(tty_str.c_str(), &buf)) 
 				tty = tty_str.c_str();
+			else {
+				tty_str = "/run/dev/";
+				tty_str += tty_base;
+				if (0 == stat(tty_str.c_str(), &buf)) 
+					tty = tty_str.c_str();
+			}
 		}
 	}
 	std::vector<char> hostname(sysconf(_SC_HOST_NAME_MAX) + 1);

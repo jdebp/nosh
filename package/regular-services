@@ -2,6 +2,7 @@ anacron
 atd
 auditd
 avahi-daemon
+avahi-dnsconfd
 bcron-start
 bcron-update
 bootparams
@@ -90,7 +91,9 @@ ttylogin@ttyv6
 ttylogin@ttyv7
 ttylogin@ttyv8
 ttylogin@vc1-tty
+ttylogin@vc2-tty
 terminal-emulator@vc1
+terminal-emulator@vc2
 VBoxService
 volmand
 watchdogd

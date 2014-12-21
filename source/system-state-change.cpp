@@ -360,18 +360,20 @@ init (
 	std::vector<const char *> & args
 ) {
 	const char * prog(basename_of(args[0]));
-	bool rescue_mode(false), emergency_mode(false);
+	bool rescue_mode(false), emergency_mode(false), update_mode(false);
 	try {
 		bool ignore;
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
 		popt::bool_definition rescue_option('s', "single", "Start in rescue mode.", rescue_mode);
 		popt::bool_definition emergency_option('b', "emergency", "Start in emergency mode.", emergency_mode);
+		popt::bool_definition update_option('o', "update", "Start in update mode.", update_mode);
 		popt::bool_definition autoboot_option('a', "autoboot", "Compatibility option, ignored.", ignore);
 		popt::bool_definition fastboot_option('f', "fastboot", "Compatibility option, ignored.", ignore);
 		popt::definition * top_table[] = {
 			&user_option,
 			&rescue_option,
 			&emergency_option,
+			&update_option,
 			&autoboot_option,
 			&fastboot_option,
 		};
@@ -388,12 +390,14 @@ init (
 		throw EXIT_FAILURE;
 	}
 
-	if (args.empty() || emergency_mode || rescue_mode) {
+	if (args.empty() || emergency_mode || rescue_mode || update_mode) {
 		args.clear();
 		if (emergency_mode)
 			args.insert(args.end(), "emergency");
 		else if (rescue_mode)
 			args.insert(args.end(), "rescue");
+		else if (update_mode)
+			args.insert(args.end(), "update");
 		else
 			args.insert(args.end(), "normal");
 		args.insert(args.end(), 0);

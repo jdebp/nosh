@@ -13,7 +13,10 @@ For copyright and licensing terms, see the file named COPYING.
 
 // These are the built-in commands visible in nosh and exec.
 
-extern void console_ncurses_renderer ( const char * &, std::vector<const char *> & );
+extern void console_ncurses_realizer ( const char * &, std::vector<const char *> & );
+extern void console_fb_realizer ( const char * &, std::vector<const char *> & );
+extern void console_multiplexor ( const char * &, std::vector<const char *> & );
+extern void console_convert_kbdmap ( const char * &, std::vector<const char *> & );
 extern void console_terminal_emulator ( const char * &, std::vector<const char *> & );
 extern void detach_controlling_tty ( const char * &, std::vector<const char *> & );
 extern void login_banner ( const char * &, std::vector<const char *> & );
@@ -29,7 +32,10 @@ extern void vc_reset_tty ( const char * &, std::vector<const char *> & );
 extern const
 struct command 
 commands[] = {
-	{	"console-ncurses-renderer",	console_ncurses_renderer	},
+	{	"console-ncurses-realizer",	console_ncurses_realizer	},
+	{	"console-fb-realizer",		console_fb_realizer		},
+	{	"console-multiplexor",		console_multiplexor		},
+	{	"console-convert-kbdmap",	console_convert_kbdmap		},
 	{	"console-terminal-emulator",	console_terminal_emulator	},
 	{	"detach-controlling-tty",	detach_controlling_tty		},
 	{	"login-banner",			login_banner			},

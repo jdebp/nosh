@@ -5,6 +5,7 @@ case "$1" in
 			anacron \
 			atd \
 			avahi-daemon \
+			avahi-dnsconfd \
 			gnucron \
 			cups \
 			dbus \

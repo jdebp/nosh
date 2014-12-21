@@ -26,9 +26,11 @@ For copyright and licensing terms, see the file named COPYING.
 #include <term.h>
 #include "utils.h"
 #include "fdutils.h"
+#include "ttyutils.h"
 #include "popt.h"
 #include "CharacterCell.h"
 #include "InputMessage.h"
+#include "FileDescriptorOwner.h"
 
 /* Support routines  ********************************************************
 // **************************************************************************
@@ -55,85 +57,85 @@ MessageFromNCursesKey (
 		case KEY_DOWN:		return MessageForExtendedKey(EXTENDED_KEY_DOWN_ARROW, 0);
 		case KEY_UP:		return MessageForExtendedKey(EXTENDED_KEY_UP_ARROW, 0);
 		case KEY_LEFT:		return MessageForExtendedKey(EXTENDED_KEY_LEFT_ARROW, 0);
-		case KEY_SLEFT:		return MessageForExtendedKey(EXTENDED_KEY_LEFT_ARROW, INPUT_MODIFIER_SHIFT);
+		case KEY_SLEFT:		return MessageForExtendedKey(EXTENDED_KEY_LEFT_ARROW, INPUT_MODIFIER_LEVEL2);
 		case KEY_RIGHT:		return MessageForExtendedKey(EXTENDED_KEY_RIGHT_ARROW, 0);
-		case KEY_SRIGHT:	return MessageForExtendedKey(EXTENDED_KEY_RIGHT_ARROW, INPUT_MODIFIER_SHIFT);
+		case KEY_SRIGHT:	return MessageForExtendedKey(EXTENDED_KEY_RIGHT_ARROW, INPUT_MODIFIER_LEVEL2);
 		case KEY_LL:		return MessageForExtendedKey(EXTENDED_KEY_LL_ARROW, 0);
 		case KEY_HOME:		return MessageForExtendedKey(EXTENDED_KEY_PAD_HOME, 0);
-		case KEY_SHOME:		return MessageForExtendedKey(EXTENDED_KEY_PAD_HOME, INPUT_MODIFIER_SHIFT);
+		case KEY_SHOME:		return MessageForExtendedKey(EXTENDED_KEY_PAD_HOME, INPUT_MODIFIER_LEVEL2);
 		case KEY_END:		return MessageForExtendedKey(EXTENDED_KEY_PAD_END, 0);
-		case KEY_SEND:		return MessageForExtendedKey(EXTENDED_KEY_PAD_END, INPUT_MODIFIER_SHIFT);
+		case KEY_SEND:		return MessageForExtendedKey(EXTENDED_KEY_PAD_END, INPUT_MODIFIER_LEVEL2);
 		case KEY_NPAGE:		return MessageForExtendedKey(EXTENDED_KEY_PAD_PAGE_DOWN, 0);	
 		case KEY_PPAGE:		return MessageForExtendedKey(EXTENDED_KEY_PAD_PAGE_UP, 0);
 		case KEY_ENTER:		return MessageForExtendedKey(EXTENDED_KEY_PAD_ENTER, 0);
 		case KEY_A1:		return MessageForExtendedKey(EXTENDED_KEY_PAD_HOME, 0);
 		case KEY_A3:		return MessageForExtendedKey(EXTENDED_KEY_PAD_PAGE_UP, 0);
-		case KEY_B2:		return MessageForExtendedKey(EXTENDED_KEY_PAD_CENTER, 0);
+		case KEY_B2:		return MessageForExtendedKey(EXTENDED_KEY_PAD_CENTRE, 0);
 		case KEY_C1:		return MessageForExtendedKey(EXTENDED_KEY_PAD_END, 0);
 		case KEY_C3:		return MessageForExtendedKey(EXTENDED_KEY_PAD_PAGE_DOWN, 0);
 		case KEY_BTAB:		return MessageForExtendedKey(EXTENDED_KEY_BACKTAB, 0);
 		case KEY_BACKSPACE:	return MessageForExtendedKey(EXTENDED_KEY_BACKSPACE, 0);
 		case KEY_DL:		return MessageForExtendedKey(EXTENDED_KEY_DEL_LINE, 0);
-		case KEY_SDL:		return MessageForExtendedKey(EXTENDED_KEY_DEL_LINE, INPUT_MODIFIER_SHIFT);
+		case KEY_SDL:		return MessageForExtendedKey(EXTENDED_KEY_DEL_LINE, INPUT_MODIFIER_LEVEL2);
 		case KEY_IL:		return MessageForExtendedKey(EXTENDED_KEY_INS_LINE, 0);
 		case KEY_DC:		return MessageForExtendedKey(EXTENDED_KEY_DEL_CHAR, 0);
-		case KEY_SDC:		return MessageForExtendedKey(EXTENDED_KEY_DEL_CHAR, INPUT_MODIFIER_SHIFT);
+		case KEY_SDC:		return MessageForExtendedKey(EXTENDED_KEY_DEL_CHAR, INPUT_MODIFIER_LEVEL2);
 		case KEY_IC:		return MessageForExtendedKey(EXTENDED_KEY_INS_CHAR, 0);
-		case KEY_SIC:		return MessageForExtendedKey(EXTENDED_KEY_INS_CHAR, INPUT_MODIFIER_SHIFT);
+		case KEY_SIC:		return MessageForExtendedKey(EXTENDED_KEY_INS_CHAR, INPUT_MODIFIER_LEVEL2);
 #if 0
 		case KEY_EIC:		return MessageForExtendedKey(EXTENDED_KEY_, 0);	
 #endif
 		case KEY_FIND:		return MessageForExtendedKey(EXTENDED_KEY_FIND, 0);
-		case KEY_SFIND:		return MessageForExtendedKey(EXTENDED_KEY_FIND, INPUT_MODIFIER_SHIFT);
+		case KEY_SFIND:		return MessageForExtendedKey(EXTENDED_KEY_FIND, INPUT_MODIFIER_LEVEL2);
 		case KEY_HELP:		return MessageForExtendedKey(EXTENDED_KEY_HELP, 0);
-		case KEY_SHELP:		return MessageForExtendedKey(EXTENDED_KEY_HELP, INPUT_MODIFIER_SHIFT);
+		case KEY_SHELP:		return MessageForExtendedKey(EXTENDED_KEY_HELP, INPUT_MODIFIER_LEVEL2);
 		case KEY_CANCEL:	return MessageForExtendedKey(EXTENDED_KEY_CANCEL, 0);
-		case KEY_SCANCEL:	return MessageForExtendedKey(EXTENDED_KEY_CANCEL, INPUT_MODIFIER_SHIFT);
+		case KEY_SCANCEL:	return MessageForExtendedKey(EXTENDED_KEY_CANCEL, INPUT_MODIFIER_LEVEL2);
 		case KEY_COPY:		return MessageForExtendedKey(EXTENDED_KEY_COPY, 0);	
-		case KEY_SCOPY:		return MessageForExtendedKey(EXTENDED_KEY_COPY, INPUT_MODIFIER_SHIFT);
+		case KEY_SCOPY:		return MessageForExtendedKey(EXTENDED_KEY_COPY, INPUT_MODIFIER_LEVEL2);
 		case KEY_UNDO:		return MessageForExtendedKey(EXTENDED_KEY_UNDO, 0);
-		case KEY_SUNDO:		return MessageForExtendedKey(EXTENDED_KEY_UNDO, INPUT_MODIFIER_SHIFT);
+		case KEY_SUNDO:		return MessageForExtendedKey(EXTENDED_KEY_UNDO, INPUT_MODIFIER_LEVEL2);
 		case KEY_SELECT:	return MessageForExtendedKey(EXTENDED_KEY_SELECT, 0);
 		case KEY_NEXT:		return MessageForExtendedKey(EXTENDED_KEY_NEXT, 0);	
-		case KEY_SNEXT:		return MessageForExtendedKey(EXTENDED_KEY_NEXT, INPUT_MODIFIER_SHIFT);
+		case KEY_SNEXT:		return MessageForExtendedKey(EXTENDED_KEY_NEXT, INPUT_MODIFIER_LEVEL2);
 		case KEY_PREVIOUS:	return MessageForExtendedKey(EXTENDED_KEY_PREVIOUS, 0);
-		case KEY_SPREVIOUS:	return MessageForExtendedKey(EXTENDED_KEY_PREVIOUS, INPUT_MODIFIER_SHIFT);
+		case KEY_SPREVIOUS:	return MessageForExtendedKey(EXTENDED_KEY_PREVIOUS, INPUT_MODIFIER_LEVEL2);
 		case KEY_PRINT:		return MessageForExtendedKey(EXTENDED_KEY_PRINT, 0);	// This is not Print Screen.
-		case KEY_SPRINT:	return MessageForExtendedKey(EXTENDED_KEY_PRINT, INPUT_MODIFIER_SHIFT);	// This is not Print Screen.
+		case KEY_SPRINT:	return MessageForExtendedKey(EXTENDED_KEY_PRINT, INPUT_MODIFIER_LEVEL2);	// This is not Print Screen.
 		case KEY_BEG:		return MessageForExtendedKey(EXTENDED_KEY_BEGIN, 0);
-		case KEY_SBEG:		return MessageForExtendedKey(EXTENDED_KEY_BEGIN, INPUT_MODIFIER_SHIFT);
+		case KEY_SBEG:		return MessageForExtendedKey(EXTENDED_KEY_BEGIN, INPUT_MODIFIER_LEVEL2);
 		case KEY_CLOSE:		return MessageForExtendedKey(EXTENDED_KEY_CLOSE, 0);
 		case KEY_COMMAND:	return MessageForExtendedKey(EXTENDED_KEY_COMMAND, 0);
-		case KEY_SCOMMAND:	return MessageForExtendedKey(EXTENDED_KEY_COMMAND, INPUT_MODIFIER_SHIFT);
+		case KEY_SCOMMAND:	return MessageForExtendedKey(EXTENDED_KEY_COMMAND, INPUT_MODIFIER_LEVEL2);
 		case KEY_CREATE:	return MessageForExtendedKey(EXTENDED_KEY_CREATE, 0);
-		case KEY_SCREATE:	return MessageForExtendedKey(EXTENDED_KEY_CREATE, INPUT_MODIFIER_SHIFT);
+		case KEY_SCREATE:	return MessageForExtendedKey(EXTENDED_KEY_CREATE, INPUT_MODIFIER_LEVEL2);
 		case KEY_EXIT:		return MessageForExtendedKey(EXTENDED_KEY_EXIT, 0);
-		case KEY_SEXIT:		return MessageForExtendedKey(EXTENDED_KEY_EXIT, INPUT_MODIFIER_SHIFT);
+		case KEY_SEXIT:		return MessageForExtendedKey(EXTENDED_KEY_EXIT, INPUT_MODIFIER_LEVEL2);
 		case KEY_MARK:		return MessageForExtendedKey(EXTENDED_KEY_MARK, 0);
 		case KEY_MESSAGE:	return MessageForExtendedKey(EXTENDED_KEY_MESSAGE, 0);
-		case KEY_SMESSAGE:	return MessageForExtendedKey(EXTENDED_KEY_MESSAGE, INPUT_MODIFIER_SHIFT);
+		case KEY_SMESSAGE:	return MessageForExtendedKey(EXTENDED_KEY_MESSAGE, INPUT_MODIFIER_LEVEL2);
 		case KEY_MOVE:		return MessageForExtendedKey(EXTENDED_KEY_MOVE, 0);
-		case KEY_SMOVE:		return MessageForExtendedKey(EXTENDED_KEY_MOVE, INPUT_MODIFIER_SHIFT);
+		case KEY_SMOVE:		return MessageForExtendedKey(EXTENDED_KEY_MOVE, INPUT_MODIFIER_LEVEL2);
 		case KEY_OPEN:		return MessageForExtendedKey(EXTENDED_KEY_OPEN, 0);
 		case KEY_OPTIONS:	return MessageForExtendedKey(EXTENDED_KEY_OPTIONS, 0);
-		case KEY_SOPTIONS:	return MessageForExtendedKey(EXTENDED_KEY_OPTIONS, INPUT_MODIFIER_SHIFT);	
+		case KEY_SOPTIONS:	return MessageForExtendedKey(EXTENDED_KEY_OPTIONS, INPUT_MODIFIER_LEVEL2);	
 		case KEY_REDO:		return MessageForExtendedKey(EXTENDED_KEY_REDO, 0);
-		case KEY_SREDO:		return MessageForExtendedKey(EXTENDED_KEY_REDO, INPUT_MODIFIER_SHIFT);	
+		case KEY_SREDO:		return MessageForExtendedKey(EXTENDED_KEY_REDO, INPUT_MODIFIER_LEVEL2);	
 		case KEY_REFERENCE:	return MessageForExtendedKey(EXTENDED_KEY_REFERENCE, 0);
 		case KEY_REFRESH:	return MessageForExtendedKey(EXTENDED_KEY_REFRESH, 0);	
 		case KEY_REPLACE:	return MessageForExtendedKey(EXTENDED_KEY_REPLACE, 0);
-		case KEY_SREPLACE:	return MessageForExtendedKey(EXTENDED_KEY_REPLACE, INPUT_MODIFIER_SHIFT);
+		case KEY_SREPLACE:	return MessageForExtendedKey(EXTENDED_KEY_REPLACE, INPUT_MODIFIER_LEVEL2);
 		case KEY_RESTART:	return MessageForExtendedKey(EXTENDED_KEY_RESTART, 0);
 		case KEY_RESUME:	return MessageForExtendedKey(EXTENDED_KEY_RESUME, 0);
-		case KEY_SRSUME:	return MessageForExtendedKey(EXTENDED_KEY_RESUME, INPUT_MODIFIER_SHIFT);
+		case KEY_SRSUME:	return MessageForExtendedKey(EXTENDED_KEY_RESUME, INPUT_MODIFIER_LEVEL2);
 		case KEY_SAVE:		return MessageForExtendedKey(EXTENDED_KEY_SAVE, 0);
-		case KEY_SSAVE:		return MessageForExtendedKey(EXTENDED_KEY_SAVE, INPUT_MODIFIER_SHIFT);
+		case KEY_SSAVE:		return MessageForExtendedKey(EXTENDED_KEY_SAVE, INPUT_MODIFIER_LEVEL2);
 		case KEY_SUSPEND:	return MessageForExtendedKey(EXTENDED_KEY_SUSPEND, 0);
-		case KEY_SSUSPEND:	return MessageForExtendedKey(EXTENDED_KEY_SUSPEND, INPUT_MODIFIER_SHIFT);
+		case KEY_SSUSPEND:	return MessageForExtendedKey(EXTENDED_KEY_SUSPEND, INPUT_MODIFIER_LEVEL2);
 		case KEY_CLEAR:		return MessageForExtendedKey(EXTENDED_KEY_CLR_SCR, 0);
 		case KEY_EOS:		return MessageForExtendedKey(EXTENDED_KEY_CLR_EOS, 0);
 		case KEY_EOL:		return MessageForExtendedKey(EXTENDED_KEY_CLR_EOL, 0);
-		case KEY_SEOL:		return MessageForExtendedKey(EXTENDED_KEY_CLR_EOL, INPUT_MODIFIER_SHIFT);
+		case KEY_SEOL:		return MessageForExtendedKey(EXTENDED_KEY_CLR_EOL, INPUT_MODIFIER_LEVEL2);
 		case KEY_SF:		return MessageForExtendedKey(EXTENDED_KEY_SCROLL_DOWN, 0);
 		case KEY_SR:		return MessageForExtendedKey(EXTENDED_KEY_SCROLL_UP, 0);
 		case KEY_STAB:		return MessageForExtendedKey(EXTENDED_KEY_SET_TAB, 0);
@@ -217,13 +219,14 @@ attributes_from_cga_attribute (
 }
 #endif
 
-// ncursesw doesn't have a real 24-bit colour mechanism.
+// ncursesw doesn't have a real 32-bit colour mechanism.
 // The RGB system that it does have is in fact a colour palette, and unusable for our purposes.
 
-// So we map the 24-bit colours used in the display buffer into 3-bit RGB (which is them mapped to the 3-bit BGR used by ncursesw) using a "greatest intensity wins" approach.
+// So we map the 32-bit colours used in the display buffer into 3-bit RGB (which is them mapped to the 3-bit BGR used by ncursesw) using a "greatest intensity wins" approach.
 static inline
 unsigned char
-cga_colour_from_rgb (
+cga_colour_from_argb (
+	unsigned char /*alpha*/,
 	unsigned char red,
 	unsigned char green,
 	unsigned char blue
@@ -306,10 +309,10 @@ redraw (
 			std::fread(b, sizeof b, 1U, buffer_file);
 			wchar_t ws[2] = { L'\0', L'\0' };
 			memcpy(&ws[0], &b[8], 4);
-			const unsigned char fg_cga(cga_colour_from_rgb(b[1], b[2], b[3]));
-			const unsigned char bg_cga(cga_colour_from_rgb(b[5], b[6], b[7]));
+			const unsigned char fg_cga(cga_colour_from_argb(b[0], b[1], b[2], b[3]));
+			const unsigned char bg_cga(cga_colour_from_argb(b[4], b[5], b[6], b[7]));
 			cchar_t cc;
-			setcchar(&cc, ws, attributes_from_cell(b[0]), colour_pair(fg_cga, bg_cga), 0);
+			setcchar(&cc, ws, attributes_from_cell(b[12]), colour_pair(fg_cga, bg_cga), 0);
 			// This doesn't necessarily do the right thing with control, combining, and zero-width code points, but they are unlikely to occur in the buffer in the first place as the terminal emulator will have dealt with them.
 			mvwadd_wch(window, row, col, &cc);
 		}
@@ -399,7 +402,7 @@ closedown()
 */
 
 void
-console_ncurses_renderer ( 
+console_ncurses_realizer ( 
 	const char * & /*next_prog*/,
 	std::vector<const char *> & args
 ) {
@@ -410,7 +413,7 @@ console_ncurses_renderer (
 		popt::definition * top_table[] = {
 			&display_only_option
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "filename fifoname");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "dirname");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -425,40 +428,38 @@ console_ncurses_renderer (
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing file name.");
 		throw EXIT_FAILURE;
 	}
-	const char * buffer_filename(args.front());
-	args.erase(args.begin());
-	if (args.empty()) {
-		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing FIFO name.");
-		throw EXIT_FAILURE;
-	}
-	const char * fifoname(args.front());
+	const char * dirname(args.front());
 	args.erase(args.begin());
 	if (!args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, args.front(), "Unexpected argument.");
 		throw static_cast<int>(EXIT_USAGE);
 	}
 
-	const int buffer_fd(open_read_at(AT_FDCWD, buffer_filename));
-	if (buffer_fd < 0) {
+	FileDescriptorOwner dir_fd(open_dir_at(AT_FDCWD, dirname));
+	if (0 > dir_fd.get()) {
 		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, buffer_filename, std::strerror(error));
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, dirname, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	const int input_fd(display_only ? -1 : open_writeexisting_at(AT_FDCWD, fifoname));
-	if (!display_only && input_fd < 0) {
+	FileDescriptorOwner input_fd(display_only ? -1 : open_writeexisting_at(dir_fd.get(), "input"));
+	if (!display_only && input_fd.get() < 0) {
 		const int error(errno);
-		close(buffer_fd);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, fifoname, std::strerror(error));
+		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dirname, "input", std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	FILE * buffer_file(fdopen(buffer_fd, "r"));
+	FileDescriptorOwner buffer_fd(open_read_at(dir_fd.get(), "display"));
+	if (0 > buffer_fd.get()) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dirname, "display", std::strerror(error));
+		throw EXIT_FAILURE;
+	}
+	FILE * const buffer_file(fdopen(buffer_fd.get(), "r"));
 	if (!buffer_file) {
 		const int error(errno);
-		close(buffer_fd);
-		if (-1 != input_fd) close(input_fd);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, buffer_filename, std::strerror(error));
+		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dirname, "display", std::strerror(error));
 		throw EXIT_FAILURE;
 	}
+	buffer_fd.release();
 
 	// Without this, ncursesw operates in 8-bit compatibility mode.
 	std::setlocale(LC_ALL, "");
@@ -479,7 +480,7 @@ console_ncurses_renderer (
 	struct kevent p[2];
 	{
 		std::size_t index(0U);
-		EV_SET(&p[index++], buffer_fd, EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE, 0, 0);
+		EV_SET(&p[index++], fileno(buffer_file), EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE, 0, 0);
 		if (!display_only)
 			EV_SET(&p[index++], STDIN_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
 		if (0 > kevent(queue, p, index, 0, 0, 0)) {
@@ -510,13 +511,12 @@ console_ncurses_renderer (
 			if (EINTR == error) continue;
 			closedown();
 			std::fclose(buffer_file);
-			if (-1 != input_fd) close(input_fd);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "poll", std::strerror(error));
 			throw EXIT_FAILURE;
 		}
 
 		for (size_t i(0); i < static_cast<size_t>(rc); ++i) {
-			if (EVFILT_VNODE == p[i].filter && buffer_fd == static_cast<int>(p[i].ident)) {
+			if (EVFILT_VNODE == p[i].filter && fileno(buffer_file) == static_cast<int>(p[i].ident)) {
 				redraw(buffer_file);
 				repaint();
 			}
@@ -527,13 +527,13 @@ console_ncurses_renderer (
 					case OK:
 						if (c < 0x01000000) {
 							const uint32_t b(MessageForUCS24(c));
-							write(input_fd, &b, sizeof b);
+							write(input_fd.get(), &b, sizeof b);
 						}
 						break;
 					case KEY_CODE_YES:
 					{
 						const uint32_t b(MessageFromNCursesKey(c));
-						write(input_fd, &b, sizeof b);
+						write(input_fd.get(), &b, sizeof b);
 						break;
 					}
 				}
@@ -543,6 +543,5 @@ console_ncurses_renderer (
 
 	closedown();
 	std::fclose(buffer_file);
-	if (-1 != input_fd) close(input_fd);
 	throw EXIT_SUCCESS;
 }

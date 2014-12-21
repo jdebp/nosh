@@ -4,7 +4,7 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 #include <termios.h>
-#include "utils.h"
+#include "ttyutils.h"
 
 termios
 make_raw (

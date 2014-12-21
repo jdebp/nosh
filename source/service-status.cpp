@@ -206,12 +206,12 @@ service_status (
 				uint64_t days(hours / 24U);
 				hours %= 24U;
 				if (days > 0U)
-					std::fprintf(stdout, " %"PRIu64"d", days);
+					std::fprintf(stdout, " %" PRIu64 "d", days);
 				if (days > 0 || hours > 0U)
-					std::fprintf(stdout, " %"PRIu64"h", hours);
+					std::fprintf(stdout, " %" PRIu64 "h", hours);
 				if (days > 0 || hours > 0U || mins > 0U)
-					std::fprintf(stdout, " %"PRIu64"m", mins);
-				std::fprintf(stdout, " %"PRIu64"s ago", secs);
+					std::fprintf(stdout, " %" PRIu64 "m", mins);
+				std::fprintf(stdout, " %" PRIu64 "s ago", secs);
 			}
 			const char * const paused(status[16] ? ", paused" : "");
 			const char * const want('u' == status[17] ? ", want up" : 'O' == status[17] ? ", once at most" : 'o' == status[17] ? ", once" : 'd' == status[17] ? ", want down" : "");

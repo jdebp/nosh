@@ -1,0 +1,22 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=System update target
+DefaultDependencies=false
+EarlySupervise=true
+Wants=sysinit.target
+Before=shutdown.target
+
+[Service]
+systemdWorkingDirectory=false
+PermissionsStartOnly=true
+SessionLeader=true
+TTYPath=console
+StandardInput=tty
+ExecStart=system-update
+Restart=always
+
+[Install]
+StoppedBy=shutdown.target
