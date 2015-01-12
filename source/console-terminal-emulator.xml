@@ -16,11 +16,12 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>console-terminal-emulator</command>
-<arg choice='opt'><replaceable>--linux</replaceable></arg>
-<arg choice='opt'><replaceable>--sco</replaceable></arg>
-<arg choice='opt'><replaceable>--freebsd</replaceable></arg>
-<arg choice='opt'><replaceable>--netbsd</replaceable></arg>
-<arg choice='opt'><replaceable>--decvt</replaceable></arg>
+<arg choice='opt'>--linux</arg>
+<arg choice='opt'>--sco</arg>
+<arg choice='opt'>--freebsd</arg>
+<arg choice='opt'>--netbsd</arg>
+<arg choice='opt'>--decvt</arg>
+<arg choice='opt'>--vcsa</arg>
 <arg choice='req'><replaceable>directory</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -160,7 +161,12 @@ UTF-8 sequences to a terminal.
 <refsection><title>vcsa buffer</title>
 
 <para>
-The <replaceable>directory</replaceable><filename>/vcsa</filename> file is
+The <arg choice='plain'>--vcsa</arg> command line option enables output to the 
+<replaceable>directory</replaceable><filename>/vcsa</filename> file.
+</para>
+
+<para>
+This file is
 structured as per the Linux character device file of that name, as a 4-byte
 header giving size and cursor position information followed by a series of
 2-byte character and attribute pairs in IBM PC CGA format,
@@ -247,10 +253,6 @@ All control characters are no-ops except for the following:
 
 <variablelist>
 <varlistentry>
-<term><code>FF</code></term>
-<listitem><para>Form feed.  Move to 0,0 and clear all cells to a space chasracter.</para></listitem>
-</varlistentry>
-<varlistentry>
 <term><code>CR</code></term>
 <listitem><para>Carriage return.  Move to column 0.</para></listitem>
 </varlistentry>
@@ -259,7 +261,7 @@ All control characters are no-ops except for the following:
 <listitem><para>Newline.  Move to column 0 and one row down.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term><code>LF</code>, <code>VT</code>, and <code>IND</code></term>
+<term><code>LF</code>, <code>VT</code>, <code>FF</code>, and <code>IND</code></term>
 <listitem><para>Linefeed/Vertical tab/Index.  Move one row down, remaining in the current column.</para></listitem>
 </varlistentry>
 <varlistentry>
@@ -609,22 +611,30 @@ be recognized at all.
 </para>
 
 <para>
-On a DEC terminal function keys F1 to F5 are "terminal local" functions
-by default, and there are PAD_F1 to PAD_F4 keys on the calculator keypad.
-On the Linux, FreeBSD, NetBSD, and SCO consoles, there are no F1 to F5 keys at
-all (since those consoles are not terminals and do not have those "terminal
-local" functions in the first place), and the keys with those legends actually
-act as DEC PAD_F1 to PAD_F5 keys.
-DEC terminals can be programmed to make F1 to F4 non-local, and there are
-defined DECFNK control sequences for F1 to F5 in non-local mode.
-The terminal emulator <emphasis>always</emphasis> sends these DECFNK control
-sequences for function keys F1 to F5, and has no notion of a "local" mode
-for those keys.
-It sends the appropriate control sequences for the PAD_F1 to PAD_F5 extended
-keys, too.
-It is up to a realizer to determine in what situation a real function key,
-on the realizing keyboard, sends a F1 to F5 function key message and in what
-situation it sends a PAD_F1 to PAD_F5 extended key message.
+The terminal emulator generates the DECFNK sequences for
+<emphasis>all</emphasis> function keys, and the <emphasis>different</emphasis>
+DEC control sequences for the PAD_F1 to PAD_F4 extended keys.
+The Linux, FreeBSD, NetBSD, and SCO consoles all substitute PAD_F1 to PAD_F4
+for the F1 to F4 keys, and have no equivalents for the true F1 to F5 keys on an
+actual DEC terminal which are what the DECFNK sequences (from 11 to 15)
+designate.
+None of this remapping, however, is the domain of the terminal emulator.
+The terminal emulator input protocol deals in a set of "true DEC VT"
+function keys and separate extended PAD_F1 to PAD_F4 keys, as if there were
+a real DEC VT and keys F1 to F5 were all (even the always-local F5) set to 
+non-local mode.
+It is entirely up to each realizer to determine what keys on the realizing
+keyboard generate function key input messages and what real keys generate
+extended key input messages.
+</para>
+
+<para>
+Similarly, the terminal emulator has no dealings in numlock, nor in local
+editing cursor key modes.
+The calculator keypad keys always generate their "application mode",
+a.k.a. "numlock off", control sequences; and the cursor/editing keypad
+keys always generate their "application mode" sequences.
+Such mode switching is an internal matter for realizers.
 </para>
 
 </refsection>

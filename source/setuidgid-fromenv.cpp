@@ -37,37 +37,53 @@ setuidgid_fromenv (
 		throw EXIT_FAILURE;
 	}
 
+	std::vector<gid_t> groups;
+	gid_t gid(-1);
+	uid_t uid(-1);
 	if (const char * text = std::getenv("GID")) {
 		const char * old(text);
-		gid_t gid = std::strtoul(text, const_cast<char **>(&text), 0);
+		gid = std::strtoul(text, const_cast<char **>(&text), 0);
 		if (text == old || *text) {
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, old, "Not a number.");
 			throw EXIT_FAILURE;
-		}
-		gid_t groups[1] = { gid };
-		if (0 > setgroups(sizeof groups/sizeof *groups, groups) || 0 > setgid(gid)) {
-			const int error(errno);
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, old, std::strerror(error));
-			throw static_cast<int>(EXIT_TEMPORARY_FAILURE);	// Bernstein daemontools compatibility
 		}
 	} else {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "GID", "Missing environment variable.");
 		throw EXIT_FAILURE;
 	}
+	if (const char * p = std::getenv("GIDLIST")) {
+		for ( const char * e(0); *p; p = e) {
+			e = std::strchr(p, ',');
+			if (!e) e = std::strchr(p, '\0');
+			const std::string v(p, e);
+			const char * text(v.c_str()), * old(text);
+			const gid_t g(std::strtoul(text, const_cast<char **>(&text), 0));
+			if (text == old || *text) {
+				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, old, "Not a number.");
+				throw EXIT_FAILURE;
+			}
+			groups.push_back(g);
+		}
+	}
+	if (groups.empty())
+		groups.push_back(gid);
 	if (const char * text = std::getenv("UID")) {
 		const char * old(text);
-		uid_t uid = std::strtoul(text, const_cast<char **>(&text), 0);
+		uid = std::strtoul(text, const_cast<char **>(&text), 0);
 		if (text == old || *text) {
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, old, "Not a number.");
 			throw EXIT_FAILURE;
-		}
-		if (0 > setuid(uid)) {
-			const int error(errno);
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, old, std::strerror(error));
-			throw static_cast<int>(EXIT_TEMPORARY_FAILURE);	// Bernstein daemontools compatibility
 		}
 	} else {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "UID", "Missing environment variable.");
 		throw EXIT_FAILURE;
 	}
+	if (0 > setgroups(groups.size(), groups.data())) {
+exit_error:
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s\n", prog, std::strerror(error));
+		throw static_cast<int>(EXIT_TEMPORARY_FAILURE);	// Bernstein daemontools compatibility
+	}
+	if (0 > setgid(gid)) goto exit_error;
+	if (0 > setuid(uid)) goto exit_error;
 }

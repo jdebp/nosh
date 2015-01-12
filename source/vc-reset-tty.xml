@@ -65,19 +65,24 @@ command, with several exceptions:
 
 <listitem>
 <para>
-The <code>istrip</code> option is not set.  8-bit cleanliness is the norm nowadays.
+The <code>istrip</code> option is not set.
+8-bit cleanliness is the norm nowadays.
 </para>
 </listitem>
 
 <listitem>
 <para>
-The <code>tostop</code> option is set, unless the <arg>--no-tostop</arg> command-line option has been used.  Job control is the norm nowadays.
+The <code>tostop</code> option is set, unless the <arg>--no-tostop</arg> command-line option has been used.
+Job control is the norm nowadays.
 </para>
 </listitem>
 
 <listitem>
 <para>
-The <code>iutf8</code> option is set, unless the <arg>--no-utf8</arg> command-line option has been used.  UTF-8 is the norm nowadays.
+The <code>iutf8</code> option is set, unless the <arg>--no-utf8</arg> command-line option has been used.
+UTF-8 is the norm nowadays, and
+<citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+sends UTF-8 input sequences to virtual terminals.
 </para>
 </listitem>
 

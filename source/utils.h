@@ -7,6 +7,7 @@ For copyright and licensing terms, see the file named COPYING.
 #define INCLUDE_UTILS_H
 
 #include <vector>
+#include <list>
 #include <string>
 #include <cstddef>
 #include <cstdlib>
@@ -138,6 +139,16 @@ extern
 unsigned 
 val ( 
 	const std::string & s 
+) ;
+extern
+std::list<std::string>
+split_list (
+	const std::string & s
+) ;
+extern
+std::string
+multi_line_comment (
+	const std::string & s
 ) ;
 
 #endif

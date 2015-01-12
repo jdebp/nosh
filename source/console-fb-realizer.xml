@@ -18,6 +18,7 @@
 <command>console-fb-realizer</command>
 <arg choice='opt'>--display-only</arg>
 <arg choice='req'>--kernel-vt <replaceable>filename</replaceable></arg>
+<arg choice='req'>--vtfont <replaceable>filename</replaceable></arg>
 <arg choice='req'>--font-medium-r <replaceable>filename</replaceable></arg>
 <arg choice='req'>--font-medium-o <replaceable>filename</replaceable></arg>
 <arg choice='req'>--font-medium-i <replaceable>filename</replaceable></arg>
@@ -148,7 +149,32 @@ prior settings upon its termination.
 <refsection><title>Fonts</title>
 
 <para>
-Fonts are loaded via use of the
+Virtual terminal display buffers have faint, boldface, italic,
+strikethrough, and underline attributes for character cells.
+Only faint, boldface, and italic involve font support, mapping to four font
+weights (light, medium, demibold, and bold) and two slants (upright and italic).
+Strikethrough and underline attributes are rendered not through font selection
+but by overwriting the non-strikethrough non-underline glphys with appropriate
+horizontal lines.
+If faint and demibold weights are unavailable, the faint attribute is emulated
+by shading the foreground and background colours towards black.
+If bold weight is unavailable, the bold attribute is rendered by overlaying a
+glyph with a shifted copy of itself.
+If italic stroke is unavailable, the italic attribute is rendered as
+<emphasis>oblique</emphasis> by shifting the upright glyph.
+(Oblique is not the same as italic, note, and is often an inferior substitute
+for it.)
+</para>
+
+<para>
+Fonts are loaded from font files, which may be either in the FreeBSD/PC-BSD
+"vtfont" format or in the straight 8 by 16 unadorned bitmap format used by
+FreeBSD's "syscons".
+(To convert an Adobe BDF format font file to "vtfont" format, use the FreeBSD
+<citerefentry><refentrytitle>vtfontcvt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+utility.)
+Font files are specified by the <replaceable>filename</replaceable> in the
+<arg choice='plain'>--vtfont</arg>,
 <arg choice='plain'>--font-medium-r</arg>,
 <arg choice='plain'>--font-medium-o</arg>,
 <arg choice='plain'>--font-medium-i</arg>,
@@ -156,11 +182,31 @@ Fonts are loaded via use of the
 <arg choice='plain'>--font-bold-o</arg>, and
 <arg choice='plain'>--font-bold-i</arg>
 command-line options.
-Each <replaceable>filename</replaceable> is a font file in either the
-FreeBSD "vtfont" format or in the straight 8 by 16 unadorned bitmap format
-used by FreeBSD's "syscons".
-(To convert an Adobe BDF format font file to "vtfont" format, use
-<citerefentry><refentrytitle>vtfondcvt</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
+Fonts must be monospace fonts with a height of 8, 14, 15, or 16 and a width of
+8, 9, 12, or 16.
+All glyphs are rendered in a 16 by 16 bounding square, with 8 by 8 pixel
+fonts doubled to 16 by 16 pixels.
+</para>
+
+<para>
+The weight and slant are encoded via these command-line options, because not
+all supported font formats include meta-information aboud weight and slant
+in the file itself (usually it is encoded in the filename).
+The "vtfont" format does, however.
+It has glyph sets for four different combinations of weight and slant
+(upright, upright bold, italic, and italic bold).
+To load all four sets of glyphs, one can load the font with all four of the
+<arg choice='plain'>--font-medium-r</arg>,
+<arg choice='plain'>--font-medium-i</arg>,
+<arg choice='plain'>--font-bold-r</arg>, and
+<arg choice='plain'>--font-bold-i</arg>
+command-line options.
+Each option individually loads only those glyphs that match the weight and
+slant that the option specifies, providing fine-grained control of what glyphs
+are used from what "vtfont" font.
+To load all glyphs from the font with the appropriate weights and slants,
+without the repetition, use the <arg choice='plain'>--vtfont</arg> command-line
+option.
 </para>
 
 <para>
@@ -175,44 +221,6 @@ Glyph List 4.
 Bear in mind that the W1G character set does not include line drawing, block,
 arrow, and other characters that are commonly employed by TUI systems to draw
 UI widgets; whereas WGL4 does.)
-</para>
-
-<para>
-Virtual terminal display buffers have faint, boldface, italic,
-strikethrough, and underline attributes for character cells.
-Only faint, boldface, and italic involve font support, mapping to four font
-weights (light, medium, demibold, and bold) and two slants (upright and italic).
-Strikethrough and underline attributes are rendered not through font selection
-but by overwriting the non-strikethrough non-underline glphys with appropriate
-horizontal lines.
-If faint and demibold weights are unavailable, the faint attribute is ignored.
-If bold weight is unavailable, the bold attribute is rendered by overlaying a
-glyph with a shifted copy of itself.
-If italic stroke is unavailable, the italic attribute is rendered as
-<emphasis>oblique</emphasis> by shifting the upright glyph.
-(Oblique is not the same as italic, note, and is often an inferior substitute
-for it.)
-</para>
-
-<para>
-<command>console-fb-realizer</command> requires monospace fonts with a
-height of 8 or 16 and a width of 8, 9, 12, or 16.
-All glyphs are rendered in a 16 by 16 bounding square, with 8 pixel
-fonts doubled to 16 pixels.
-The weight and slant are encoded via the command-line option used to
-load the font, because not all supported font formats include this 
-meta-information.
-The "vtfont" format can, optionally, contain four different combinations
-of weight and slant (upright, upright bold, italic, and italic bold).
-To load all four sets of glyphs, it is necessary to load the font with all
-four of the
-<arg choice='plain'>--font-medium-r</arg>,
-<arg choice='plain'>--font-medium-i</arg>,
-<arg choice='plain'>--font-bold-r</arg>, and
-<arg choice='plain'>--font-bold-i</arg>
-command-line options.
-Each option individually loads only those glyphs that match the weight and
-slant.
 </para>
 
 <para>
@@ -268,7 +276,7 @@ What keys act as these modifiers is of course determined by the keyboard
 layout: but often the level 2 modifiers are the shift keys; the level 3 modifier
 is the "Option" (Apple keyboards) or "AltGr" (IBM PC/AT keyboards) key; and
 super is the "Command"/'Apple" (Apple keyboards), "Meta" (Sun keyboards),
-or "Windows" (MIcrosoft keyboards) key.
+or "Windows" (Microsoft keyboards) key.
 </para>
 
 <para>
@@ -533,6 +541,97 @@ for why the base, unmodified, key is the PAD_F1 key, not the F1 key.
 </para></listitem>
 </varlistentry>
 </variablelist>
+
+</refsection>
+
+<refsection><title>Dead keys</title>
+
+<para>
+So-called "dead" keys are otherwise ordinary UCS24 keys in a keyboard map,
+except that they denote Unicode combining characters; i.e. characters
+in the "Me" ("Mark, Enclosing") and "Mn" ("Mark, Non-spacing") Unicode
+code point categories.
+<command>console-fb-realizer</command> remembers such "dead" keys, without
+transmitting them to the input FIFO as they are pressed (or autorepeated).
+It attempts to combine them with the next non-combining character keypress.
+In this respect it behaves mostly according to ISO/IEC 9995-3 and DIN/EN 2137:
+</para>
+
+<itemizedlist>
+<listitem><para>
+<command>console-fb-realizer</command> implements the extra so-called
+"peculiar" combinations given by the ISO and DIN standards (and also found in
+several other national keyboard standards).
+These are applied before attempting any Unicode composition.
+Most of these involve:
+</para>
+<variablelist>
+<varlistentry>
+<term><code>COMBINING SHORT STROKE OVERLAY</code> (U+0335)</term>
+<listitem><para>
+In ISO 9995-3 keyboard layouts this is
+<code>Group2</code>+<code>Level3</code>+<code>C08</code>
+(<code>Shift</code>+<code>Option</code>, <code>Option</code>+<code>'K'</code> on
+the U.S. International keyboard).
+Unicode does not define any compositions using this combining character.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>COMBINING LONG SOLIDUS OVERLAY</code> (U+0338)</term>
+<listitem><para>
+In ISO 9995-3 keyboard layouts this is
+<code>Group2</code>+<code>Level3</code>+<code>C09</code>
+(<code>Shift</code>+<code>Option</code>, <code>Option</code>+<code>'L'</code>
+on the U.S. International keyboard).
+Unicode also defines compositions using this combining character.
+The ISO 9995-3 compositions overlap in only one case, which is the same in both
+ISO 9995-3 and Unicode.
+</para></listitem>
+</varlistentry>
+</variablelist>
+</listitem>
+<listitem><para>
+The ISO and DIN standards define "peculiar" combinations with the space
+character that generate standalone accents.
+Any sequence of "dead" keys followed by Space generates a sequence of
+precomposed non-combining accent characters that correspond to the combining
+characters.
+</para></listitem>
+<listitem><para>
+The ISO and DIN standards are not specific about Unicode combining characters.
+<command>console-fb-realizer</command> applies the "canonical" composition
+rules given by Unicode, attempting to produce a stream of input characters
+in Unicode Normalized Form C.
+Any leftover combining characters that cannot be precomposed are treated as
+if combined with Space, and emitted before the composed character.
+This differs from Unicode Normalization, where leftover combining characters
+always follow the "starter" character.
+Having leftover combining characters precede the composed character both
+mimicks the existing behaviour of "dead" keys on several systems and
+is least surprising to the typist as it (roughly) preserves typed order.
+(Typed order is not entirely preserved; the "dead" keys are sorted by
+Unicode combining class as a side-effect of NFC composition.)
+</para></listitem>
+<listitem><para>
+Not all input is in Unicode Normalized Form C.
+The ISO and DIN standards define a "pass-through" mechanism that allows a
+typist to enter combining characters as-is: any sequence of "dead" keys
+followed by the Zero-Width Non-Joiner (entered as
+<code>Group2</code>+<code>Level2</code>+<code>A03</code> in ISO 9995-3 keyboard
+layouts; which is <code>Shift</code>+<code>Option</code>,
+<code>Shift</code>+<code>Space</code> on the U.S. International keyboard)
+generates that sequence of non-combining characters in typed order.
+</para></listitem>
+<listitem><para>
+Full Unicode Normalization is not performed.
+In particular, if the typist enters a precomposed character after the
+"dead" keys, it is not decomposed before the composition rules are applied.
+This is done in order not to surprise the typist.
+Full Unicode NFD decomposition followed by Unicode NFC composition could
+result in different leftover combining characters in some cases.
+It also would perform various one-way transformations.
+</para></listitem>
+</itemizedlist>
 
 </refsection>
 

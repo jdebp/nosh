@@ -26,14 +26,15 @@ public:
 			bool Contains (uint32_t) const;
 		};
 		typedef std::vector<UnicodeMapEntry> UnicodeMap;
-		enum Weight { LIGHT, MEDIUM, DEMIBOLD, BOLD, BLACK };
-		enum Slant { UPRIGHT, ITALIC, OBLIQUE };
+		enum Weight { LIGHT, MEDIUM, DEMIBOLD, BOLD, BLACK, NUM_WEIGHTS };
+		enum Slant { UPRIGHT, ITALIC, OBLIQUE, NUM_SLANTS };
 
 		Font ( Weight w, Slant s, unsigned short y, unsigned short x ) : weight(w), slant(s), height(y), width(x) {}
 		virtual ~Font() = 0;
 
 		UnicodeMap::const_iterator end() const { return unicode_map.end(); }
 		UnicodeMap::const_iterator find(uint32_t) const;
+		bool empty() const { return unicode_map.empty(); }
 		Weight query_weight() const { return weight; }
 		Slant query_slant() const { return slant; }
 		unsigned short query_height() const { return height; }
@@ -78,6 +79,9 @@ public:
 	MemoryFont * AddMemoryFont(Font::Weight, Font::Slant, unsigned short y, unsigned short x, void * b, std::size_t z, std::size_t o);
 	MemoryMappedFont * AddMemoryMappedFont(Font::Weight, Font::Slant, unsigned short y, unsigned short x, void * b, std::size_t z, std::size_t o);
 	FileFont * AddFileFont(int, Font::Weight, Font::Slant, unsigned short y, unsigned short x);
+
+	bool has_bold() const;
+	bool has_faint() const;
 
 	virtual const uint16_t * ReadGlyph (uint32_t character, bool bold, bool faint, bool italic);
 protected:

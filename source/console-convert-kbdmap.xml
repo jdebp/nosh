@@ -57,10 +57,11 @@ keycodes above 128 being the "group2" equivalents to keycodes 128 lower.
 However, in actual "group 2" keymaps invariably the second four columns
 duplicate the first four.
 So, in order to fit the BSD keymap into group 1, leaving the ISO 9995-3
-common group 2 in group 2, level1 and level2 of group 1 in the converted
-keymap are taken from the first four columns of group 1 in the BSD keymap,
-and level3 and level4 of group 2 in the converted keymap are taken from
-the first four columns  of group 2 in the BSD keymap.
+common group 2 in group 2, the redundancy in the BSD keymap is eliminated:
+level1 and level2 of group 1 in the converted keymap are taken from the first
+four columns of group 1 in the BSD keymap, and level3 and level4 of group 1 in
+the converted keymap are taken from the first four columns of group 2 in the
+BSD keymap.
 </para></listitem>
 <listitem><para>
 Keycode 0x5D (decimal 93, the "AltGr" or "Option" key) with level2 modifier in
@@ -129,28 +130,58 @@ The "<code>dapo</code>" action has no direct Unicode combining character equival
 as there is no "combining apostrophe" Unicode code point.
 This is a BSDism that isn't used in BSD-supplied keymaps, but that is used in
 third-party keymaps for currency characters.
+However, it is redundant.
 The ISO 9995-3 common group 2 that is underlaid beneath all BSD keymaps
 actually has keys for all of the currency characters that "<code>dapo</code>"
 is often used for:
 </para>
 <variablelist>
 <varlistentry>
-<term>Pound</term><listitem><para>Group2+Level2+'3'</para></listitem>
+<term>Pound</term>
+<listitem><para>
+<code>Group2</code>+<code>Level2</code>+<code>E03</code> 
+(<code>Shift</code>+<code>Option</code>,<code>Option</code>+<code>'3'</code>)
+</para></listitem>
 </varlistentry>
 <varlistentry>
-<term>Yen</term><listitem><para>Group2+Level2+'Y'</para></listitem>
+<term>Yen</term>
+<listitem><para>
+<code>Group2</code>+<code>Level2</code>+<code>D06</code> 
+(<code>Shift</code>+<code>Option</code>,<code>Option</code>+<code>'Y'</code>)
+</para></listitem>
 </varlistentry>
 <varlistentry>
-<term>Euro</term><listitem><para>Group2+Level2+'4'</para></listitem>
+<term>Euro</term>
+<listitem><para>
+<code>Group2</code>+<code>Level2</code>+<code>E04</code> 
+(<code>Shift</code>+<code>Option</code>,<code>Option</code>+<code>'4'</code>)
+</para></listitem>
 </varlistentry>
 <varlistentry>
-<term>Dollar</term><listitem><para>Group2+Level3+','</para></listitem>
+<term>Dollar</term>
+<listitem><para>
+<code>Group2</code>+<code>Level3</code>+<code>B08</code> 
+(<code>Shift</code>+<code>Option</code>,<code>Option</code>+<code>','</code>)
+</para></listitem>
 </varlistentry>
 <varlistentry>
-<term>cent</term><listitem><para>Group2+Level1+'c'</para></listitem>
+<term>cent</term>
+<listitem><para>
+<code>Group2</code>+<code>Level1</code>+<code>B02</code> 
+(<code>Shift</code>+<code>Option</code>,<code>Option</code>+<code>'c'</code>)
+</para></listitem>
 </varlistentry>
 </variablelist>
 </listitem>
+<listitem><para>
+BSD keymaps hardwire the BS and DEL control characters for the backspace key.
+However,
+<citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+supplies a soft-settable backspace action that can be programmed using the
+DECBKM control sequence (DEC private mode 67).
+To allow specifying this from BSD keymaps, the convertor adds a "bspace"
+extension to the BSD keymap keyword set.
+</para></listitem>
 </itemizedlist>
 
 </refsection>

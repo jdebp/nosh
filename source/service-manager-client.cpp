@@ -230,6 +230,26 @@ is_up (
 }
 
 void
+make_service (
+	const int bundle_dir_fd
+) {
+	mkdirat(bundle_dir_fd, "service", 0755);
+}
+
+void
+make_orderings_and_relations (
+	const int bundle_dir_fd
+) {
+	mkdirat(bundle_dir_fd, "after", 0755);
+	mkdirat(bundle_dir_fd, "before", 0755);
+	mkdirat(bundle_dir_fd, "wants", 0755);
+	mkdirat(bundle_dir_fd, "conflicts", 0755);
+	mkdirat(bundle_dir_fd, "wanted-by", 0755);
+	mkdirat(bundle_dir_fd, "required-by", 0755);
+	mkdirat(bundle_dir_fd, "stopped-by", 0755);
+}
+
+void
 make_supervise (
 	const int bundle_dir_fd
 ) {

@@ -4,6 +4,7 @@ service-is-ok	svok
 service-status	svstat
 service-show	svshow
 service-dt-scanner	svscan
+system-control	convert-fstab-services
 system-control	convert-systemd-units
 system-control	convert-ttys-presets
 system-control	convert-systemd-presets

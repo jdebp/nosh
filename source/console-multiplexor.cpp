@@ -201,8 +201,9 @@ handle_input_event(
 				VirtualTerminalList::iterator next_vt(vts.begin());
 				for (uint16_t i(0U); next_vt != vts.end(); ++i, ++next_vt) {
 					if (i >= f) {
+						const bool changed(current_vt != next_vt);
 						current_vt = next_vt;
-						update_needed = true;
+						update_needed |= changed;
 						break;
 					}
 				}
@@ -219,8 +220,10 @@ handle_input_event(
 					case CONSUMER_KEY_TASK_MANAGER:
 						break;
 					case CONSUMER_KEY_SELECT_TASK:
-						current_vt = vts.begin();
-						update_needed = true;
+						if (current_vt != vts.begin()) {
+							current_vt = vts.begin();
+							update_needed = true;
+						}
 						break;
 					case CONSUMER_KEY_NEXT_TASK:
 					{
@@ -254,7 +257,7 @@ handle_input_event(
 static inline
 void
 copy (
-	VirtualTerminal & vt,
+	const VirtualTerminal & vt,
 	FILE * const buffer_file
 ) {
 	std::rewind(buffer_file);
@@ -413,7 +416,9 @@ console_multiplexor (
 	for (VirtualTerminalList::const_iterator t(vts.begin()); t != vts.end(); ++t) {
 		const VirtualTerminal & vt(**t);
 		std::size_t index(0U);
+#if !defined(__LINUX__) && !defined(__linux__)
 		EV_SET(&p[index++], vt.query_buffer_fd(), EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE, 0, 0);
+#endif
 		EV_SET(&p[index++], vt.query_input_fd(), EVFILT_WRITE, EV_ADD, 0, 0, 0);
 		if (0 > kevent(queue, p, index, 0, 0, 0)) {
 			const int error(errno);
@@ -424,21 +429,45 @@ console_multiplexor (
 
 	update_needed = true;
 
+	VirtualTerminalList::iterator old_vt(vts.end());
+
 	while (true) {
 		if (terminate_signalled||interrupt_signalled||hangup_signalled) 
 			break;
 		if (update_needed) {
 			update_needed = false;
-			VirtualTerminal & vt(**current_vt);
+			const VirtualTerminal & vt(**current_vt);
 			copy(vt, buffer_file);
+		}
+		if (old_vt != current_vt) {
+			const VirtualTerminal & vt(**current_vt);
 			symlinkat(vt.query_dir_name(), dir_fd.get(), "active.new");
 			renameat(dir_fd.get(), "active.new", dir_fd.get(), "active");
+#if defined(__LINUX__) || defined(__linux__)
+			// A Linux bug prevents EV_DISABLE working on EVFILT_VNODE filters, so we have to EV_ADD and EV_DELETE.
+			std::size_t index(0U);
+			EV_SET(&p[index++], (*current_vt)->query_buffer_fd(), EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE, 0, 0);
+			if (old_vt != vts.end())
+				EV_SET(&p[index++], (*old_vt)->query_buffer_fd(), EVFILT_VNODE, EV_DELETE, NOTE_WRITE, 0, 0);
+			if (0 > kevent(queue, p, index, 0, 0, 0)) {
+				const int error(errno);
+				if (ENOENT != error) {		// This works around a Linux bug when disabling a disabled event.
+					std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
+					throw EXIT_FAILURE;
+				}
+			}
+#endif
+			old_vt = current_vt;
 		}
 
 		for (VirtualTerminalList::iterator t(vts.begin()); t != vts.end(); ++t) {
 			const VirtualTerminal & vt(**t);
 			std::size_t index(0U);
 			EV_SET(&p[index++], vt.query_input_fd(), EVFILT_WRITE, vt.MessageAvailable() ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
+#if !defined(__LINUX__) && !defined(__linux__)
+			// A Linux bug prevents EV_DISABLE working on EVFILT_VNODE filters.
+			EV_SET(&p[index++], vt.query_buffer_fd(), EVFILT_VNODE, t == current_vt ? EV_ENABLE : EV_DISABLE, NOTE_WRITE, 0, 0);
+#endif
 			if (0 > kevent(queue, p, index, 0, 0, 0)) {
 				const int error(errno);
 #if defined(__LINUX__) || defined(__linux__)
@@ -454,6 +483,9 @@ console_multiplexor (
 		if (0 > rc) {
 			const int error(errno);
 			if (EINTR == error) continue;
+#if defined(__LINUX__) || defined(__linux__)
+			if (ENOENT == error) continue;	// This works around a Linux bug.
+#endif
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "poll", std::strerror(error));
 			throw EXIT_FAILURE;
 		}

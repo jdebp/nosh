@@ -8,6 +8,11 @@ For copyright and licensing terms, see the file named COPYING.
 #include <stdint.h>
 #include <cstddef>
 #include <sys/mman.h>
+#if defined(__LINUX__) || defined(__linux__)
+#include <endian.h>
+#else
+#include <sys/endian.h>
+#endif
 #include "Monospace16x16Font.h"
 #include "CompositeFont.h"
 #include "vtfont.h"
@@ -103,8 +108,8 @@ CombinedFont::FileFont::Read(std::size_t g, uint16_t b[16])
 		}
 	} else {
 		uint16_t glyph[16];
-		pread(fd, glyph, original_height < sizeof glyph ? original_height : sizeof glyph, start);
-		for (unsigned row(0U); row < original_height; ++row) b[row] = glyph[row];
+		pread(fd, glyph, original_height * sizeof *glyph < sizeof glyph ? original_height * sizeof *glyph : sizeof glyph, start);
+		for (unsigned row(0U); row < original_height; ++row) b[row] = be16toh(glyph[row]);
 		for (unsigned row(original_height); row < 16U; ++row) b[row] = 0U;
 	}
 }
@@ -154,6 +159,28 @@ CombinedFont::AddFileFont(int d, Font::Weight w, Font::Slant s, unsigned short y
 	FileFont * f(new FileFont(d, w, s, y, x));
 	if (f) fonts.push_back(f);
 	return f;
+}
+
+bool 
+CombinedFont::has_bold() const
+{
+	for (FontList::const_iterator fontit(fonts.begin()); fontit != fonts.end(); ++fontit) {
+		const Font * font(*fontit);
+		if (Font::LIGHT == font->query_weight() && !font->empty()) 
+			return true;
+	}
+	return false;
+}
+
+bool 
+CombinedFont::has_faint() const
+{
+	for (FontList::const_iterator fontit(fonts.begin()); fontit != fonts.end(); ++fontit) {
+		const Font * font(*fontit);
+		if (Font::BOLD == font->query_weight() && !font->empty()) 
+			return true;
+	}
+	return false;
 }
 
 const uint16_t * 
@@ -238,4 +265,3 @@ CombinedFont::ReadGlyph (uint32_t character, bool bold, bool faint, bool italic)
 		return f;
 	return 0;
 }
-

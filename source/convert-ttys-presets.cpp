@@ -6,8 +6,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include <vector>
 #include <map>
 #include <set>
-#include <set>
 #include <memory>
+#include <new>
 #include <iostream>
 #include <cstddef>
 #include <cstdlib>
@@ -15,8 +15,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstring>
 #include <cerrno>
 #include <cctype>
-#include <new>
-#include <memory>
 #if !defined(__LINUX__) && !defined(__linux__)
 #include <sys/types.h>
 #include <sys/sysctl.h>

@@ -9,6 +9,7 @@ console-terminal-emulator
 console-ncurses-realizer
 console-fb-realizer
 console-multiplexor
+console-resize
 console-convert-kbdmap
 ttylogin-starter
 vc-get-tty

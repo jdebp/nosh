@@ -21,8 +21,10 @@ For copyright and licensing terms, see the file named COPYING.
 #include "utils.h"
 #include "fdutils.h"
 #include "common-manager.h"
+#include "service-manager-client.h"
 #include "popt.h"
 #include "FileStar.h"
+#include "FileDescriptorOwner.h"
 
 static 
 const char * systemd_prefixes[] = {
@@ -139,28 +141,6 @@ struct profile {
 };
 
 static
-std::list<std::string>
-split_list (
-	const std::string & s
-) {
-	std::list<std::string> r;
-	std::string q;
-	for (std::string::size_type p(0); s.length() != p; ++p) {
-		const char c(s[p]);
-		if (!std::isspace(c)) {
-			q += c;
-		} else {
-			if (!q.empty()) {
-				r.push_back(q);
-				q.clear();
-			}
-		}
-	}
-	if (!q.empty()) r.push_back(q);
-	return r;
-}
-
-static
 bool
 strip_leading_minus (
 	const std::string & s,
@@ -182,27 +162,6 @@ strip_leading_minus (
 ) {
 	if (s.length() < 1 || '-' != s[0]) return s;
 	return s.substr(1, std::string::npos);
-}
-
-static
-std::string
-multi_line_comment (
-	const std::string & s
-) {
-	std::string r;
-	bool bol(true);
-	for (std::string::const_iterator p(s.begin()); s.end() != p; ++p) {
-		const char c(*p);
-		if ('\n' == c) 
-			bol = true;
-		else if (bol) {
-			r += '#';
-			bol = false;
-		}
-		r += c;
-	}
-	if (!bol) r += '\n';
-	return r;
 }
 
 static
@@ -446,15 +405,16 @@ static
 void
 create_link (
 	const char * prog,
+	int bundle_dir_fd,
 	const std::string & target,
 	const std::string & link
 ) {
-	if (0 > unlinkat(AT_FDCWD, link.c_str(), 0)) {
+	if (0 > unlinkat(bundle_dir_fd, link.c_str(), 0)) {
 		const int error(errno);
 		if (ENOENT != error)
 			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, link.c_str(), std::strerror(error));
 	}
-	if (0 > symlinkat(target.c_str(), AT_FDCWD, link.c_str())) {
+	if (0 > symlinkat(target.c_str(), bundle_dir_fd, link.c_str())) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, link.c_str(), std::strerror(error));
 	}
@@ -465,8 +425,8 @@ void
 create_links (
 	const char * prog,
 	const bool is_target,
+	int bundle_dir_fd,
 	const std::string & names,
-	const std::string & service_basename,
 	const std::string & subdir
 ) {
 	const std::list<std::string> list(split_list(names));
@@ -478,23 +438,23 @@ create_links (
 				target = "../../" + base;
 			else
 				target = "/etc/system-manager/targets/" + base;
-			link = service_basename + subdir + base;
+			link = subdir + base;
 		} else
 		if (ends_in(name, ".service", base)) {
 			if (is_target)
 				target = "/var/sv/" + base;
 			else
 				target = "../../" + base;
-			link = service_basename + subdir + base;
+			link = subdir + base;
 		} else 
 		{
 			if (is_target)
 				target = "/var/sv/" + base;
 			else
 				target = "../../" + name;
-			link = service_basename + subdir + name;
+			link = subdir + name;
 		}
-		create_link(prog, target, link);
+		create_link(prog, bundle_dir_fd, target, link);
 	}
 }
 
@@ -790,17 +750,23 @@ convert_systemd_units (
 
 	const std::string service_dirname(names.query_bundle_dirname() + "/service");
 
-	mkdir(names.query_bundle_dirname().c_str(), 0755);
-	mkdir(service_dirname.c_str(), 0755);
-	mkdir((names.query_bundle_dirname() + "/after").c_str(), 0755);
-	mkdir((names.query_bundle_dirname() + "/before").c_str(), 0755);
-	mkdir((names.query_bundle_dirname() + "/wants").c_str(), 0755);
-	mkdir((names.query_bundle_dirname() + "/conflicts").c_str(), 0755);
-	mkdir((names.query_bundle_dirname() + "/wanted-by").c_str(), 0755);
-	mkdir((names.query_bundle_dirname() + "/required-by").c_str(), 0755);
-	mkdir((names.query_bundle_dirname() + "/stopped-by").c_str(), 0755);
+	mkdirat(AT_FDCWD, names.query_bundle_dirname().c_str(), 0755);
+	const FileDescriptorOwner bundle_dir_fd(open_dir_at(AT_FDCWD, (names.query_bundle_dirname() + "/").c_str()));
+	if (0 > bundle_dir_fd.get()) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, names.query_bundle_dirname().c_str(), std::strerror(error));
+		throw EXIT_FAILURE;
+	}
+	make_service(bundle_dir_fd.get());
+	make_orderings_and_relations(bundle_dir_fd.get());
+	const FileDescriptorOwner service_dir_fd(open_service_dir(bundle_dir_fd.get()));
+	if (0 > service_dir_fd.get()) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, names.query_bundle_dirname().c_str(), "service", std::strerror(error));
+		throw EXIT_FAILURE;
+	}
 
-#define CREATE_LINKS(p,i,l,b,s) (l ? create_links ((p),(i),names.substitute((l)->last_setting()),(b),(s)) : static_cast<void>(0))
+#define CREATE_LINKS(l,s) (l ? create_links (prog,is_target,bundle_dir_fd.get(),names.substitute((l)->last_setting()),(s)) : static_cast<void>(0))
 
 	// Construct various common command strings.
 
@@ -1225,24 +1191,24 @@ convert_systemd_units (
 
 	// Set the dependency and installation information.
 
-	CREATE_LINKS(prog, is_target, socket_after, names.query_bundle_dirname(), "/after/");
-	CREATE_LINKS(prog, is_target, service_after, names.query_bundle_dirname(), "/after/");
-	CREATE_LINKS(prog, is_target, socket_before, names.query_bundle_dirname(), "/before/");
-	CREATE_LINKS(prog, is_target, service_before, names.query_bundle_dirname(), "/before/");
-	CREATE_LINKS(prog, is_target, socket_wants, names.query_bundle_dirname(), "/wants/");
-	CREATE_LINKS(prog, is_target, service_wants, names.query_bundle_dirname(), "/wants/");
-	CREATE_LINKS(prog, is_target, socket_requires, names.query_bundle_dirname(), "/wants/");
-	CREATE_LINKS(prog, is_target, service_requires, names.query_bundle_dirname(), "/wants/");
-	CREATE_LINKS(prog, is_target, socket_requisite, names.query_bundle_dirname(), "/wants/");
-	CREATE_LINKS(prog, is_target, service_requisite, names.query_bundle_dirname(), "/wants/");
-	CREATE_LINKS(prog, is_target, socket_conflicts, names.query_bundle_dirname(), "/conflicts/");
-	CREATE_LINKS(prog, is_target, service_conflicts, names.query_bundle_dirname(), "/conflicts/");
-	CREATE_LINKS(prog, is_target, socket_wantedby, names.query_bundle_dirname(), "/wanted-by/");
-	CREATE_LINKS(prog, is_target, service_wantedby, names.query_bundle_dirname(), "/wanted-by/");
-	CREATE_LINKS(prog, is_target, socket_requiredby, names.query_bundle_dirname(), "/wanted-by/");
-	CREATE_LINKS(prog, is_target, service_requiredby, names.query_bundle_dirname(), "/wanted-by/");
-	CREATE_LINKS(prog, is_target, socket_stoppedby, names.query_bundle_dirname(), "/stopped-by/");
-	CREATE_LINKS(prog, is_target, service_stoppedby, names.query_bundle_dirname(), "/stopped-by/");
+	CREATE_LINKS(socket_after, "after/");
+	CREATE_LINKS(service_after, "after/");
+	CREATE_LINKS(socket_before, "before/");
+	CREATE_LINKS(service_before, "before/");
+	CREATE_LINKS(socket_wants, "wants/");
+	CREATE_LINKS(service_wants, "wants/");
+	CREATE_LINKS(socket_requires, "wants/");
+	CREATE_LINKS(service_requires, "wants/");
+	CREATE_LINKS(socket_requisite, "wants/");
+	CREATE_LINKS(service_requisite, "wants/");
+	CREATE_LINKS(socket_conflicts, "conflicts/");
+	CREATE_LINKS(service_conflicts, "conflicts/");
+	CREATE_LINKS(socket_wantedby, "wanted-by/");
+	CREATE_LINKS(service_wantedby, "wanted-by/");
+	CREATE_LINKS(socket_requiredby, "wanted-by/");
+	CREATE_LINKS(service_requiredby, "wanted-by/");
+	CREATE_LINKS(socket_stoppedby, "stopped-by/");
+	CREATE_LINKS(service_stoppedby, "stopped-by/");
 	const bool defaultdependencies(
 			(is_socket_activated && is_bool_true(socket_defaultdependencies, true)) || 
 			is_bool_true(service_defaultdependencies, true)
@@ -1253,14 +1219,14 @@ convert_systemd_units (
 	);
 	if (defaultdependencies) {
 		if (is_socket_activated)
-			create_links(prog, is_target, "sockets.target", names.query_bundle_dirname(), "/wanted-by/");
-		create_links(prog, is_target, "basic.target", names.query_bundle_dirname(), "/after/");
-		create_links(prog, is_target, "basic.target", names.query_bundle_dirname(), "/wants/");
-		create_links(prog, is_target, "shutdown.target", names.query_bundle_dirname(), "/before/");
-		create_links(prog, is_target, "shutdown.target", names.query_bundle_dirname(), "/stopped-by/");
+			create_links(prog, is_target, bundle_dir_fd.get(), "sockets.target", "wanted-by/");
+		create_links(prog, is_target, bundle_dir_fd.get(), "basic.target", "after/");
+		create_links(prog, is_target, bundle_dir_fd.get(), "basic.target", "wants/");
+		create_links(prog, is_target, bundle_dir_fd.get(), "shutdown.target", "before/");
+		create_links(prog, is_target, bundle_dir_fd.get(), "shutdown.target", "stopped-by/");
 	}
 	if (earlysupervise) {
-		create_link(prog, "/run/system-manager/early-supervise/" + names.query_bundle_basename(), names.query_bundle_dirname() + "/supervise");
+		create_link(prog, bundle_dir_fd.get(), "/run/system-manager/early-supervise/" + names.query_bundle_basename(), "supervise");
 	}
 
 	// Issue the final reports.

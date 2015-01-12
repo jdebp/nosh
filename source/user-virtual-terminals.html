@@ -71,8 +71,8 @@ This realizer needs no additional privileged access to anything apart from the f
 </p></li>
 <li><p>
 <a href="console-fb-realizer"><code>console-fb-realizer</code></a> &mdash; 
-a realizer that uses a framebuffer device, and mouse and keyboard input devices, realizing multiple user-space virtual terminals and allowing one to switch amongst them using hotkeys and mouse actions.
-This realizer initially needs additional privileged access to the device files, in order to open them, but can drop privileges afterwards.
+a realizer that uses a framebuffer device, and mouse and keyboard input devices, realizing one user-space virtual terminals.
+This realizer needs additional privileged access to the device files, in order to open them at startup, but needs no more privileges than that.
 </p></li>
 <li><p>
 a realizer that realizes multiple user-space virtual terminals using X Window System windows, and allowing one to switch amongst them using hotkeys and mouse actions.

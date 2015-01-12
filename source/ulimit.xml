@@ -12,7 +12,11 @@
 
 <refsynopsisdiv>
 <cmdsynopsis>
-<command>ulimit</command> <arg>-H</arg> <arg>-S</arg> <arg rep='repeat'><replaceable>limits</replaceable></arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+<command>ulimit</command> 
+<arg choice='opt'>-H</arg> 
+<arg choice='opt'>-S</arg> 
+<arg choice='opt' rep='repeat'><replaceable>limits</replaceable></arg> 
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 

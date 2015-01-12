@@ -156,6 +156,7 @@ UTF8Decoder::SendUTF8(uint_fast8_t c)
 // **************************************************************************
 */
 
+namespace {
 class VCSA : 
 	public SoftTerm::ScreenBuffer,
 	public FileDescriptorOwner
@@ -163,6 +164,7 @@ class VCSA :
 public:
 	VCSA(int d) : FileDescriptorOwner(d) {}
 	virtual void WriteNCells(coordinate p, coordinate n, const CharacterCell & c);
+	virtual void CopyNCells(coordinate d, coordinate s, coordinate n);
 	virtual void ScrollUp(coordinate s, coordinate e, coordinate n, const CharacterCell & c);
 	virtual void ScrollDown(coordinate s, coordinate e, coordinate n, const CharacterCell & c);
 	virtual void SetCursorPos(coordinate x, coordinate y);
@@ -173,6 +175,7 @@ protected:
 	enum { CELL_LENGTH = 2U, HEADER_LENGTH = 4U };
 	off_t MakeOffset(coordinate s) { return HEADER_LENGTH + CELL_LENGTH * s; }
 };
+}
 
 static
 unsigned char
@@ -229,6 +232,36 @@ VCSA::WriteNCells(coordinate s, coordinate n, const CharacterCell & c)
 	MakeCA(ca, c);
 	for (coordinate i(0U); i < n; ++i)
 		pwrite(fd, ca, sizeof ca, MakeOffset(s + i));
+}
+
+void 
+VCSA::CopyNCells(coordinate d, coordinate s, coordinate n)
+{
+	char ca[2];
+	if (d < s) {
+		while (n) {
+			const off_t target(MakeOffset(d));
+			const off_t source(MakeOffset(s));
+			pread(fd, ca, sizeof ca, source);
+			pwrite(fd, ca, sizeof ca, target);
+			++s;
+			++d;
+			--n;
+		}
+	} else 
+	if (d > s) {
+		s += n;
+		d += n;
+		while (n) {
+			--s;
+			--d;
+			--n;
+			const off_t target(MakeOffset(d));
+			const off_t source(MakeOffset(s));
+			pread(fd, ca, sizeof ca, source);
+			pwrite(fd, ca, sizeof ca, target);
+		}
+	}
 }
 
 void 
@@ -291,6 +324,7 @@ VCSA::SetSize(coordinate w, coordinate h)
 // **************************************************************************
 */
 
+namespace {
 class UnicodeBuffer : 
 	public SoftTerm::ScreenBuffer,
 	public FileDescriptorOwner
@@ -299,6 +333,7 @@ public:
 	UnicodeBuffer(int d) : FileDescriptorOwner(d) {}
 	void WriteBOM();
 	virtual void WriteNCells(coordinate p, coordinate n, const CharacterCell & c);
+	virtual void CopyNCells(coordinate d, coordinate s, coordinate n);
 	virtual void ScrollUp(coordinate s, coordinate e, coordinate n, const CharacterCell & c);
 	virtual void ScrollDown(coordinate s, coordinate e, coordinate n, const CharacterCell & c);
 	virtual void SetCursorPos(coordinate x, coordinate y);
@@ -309,6 +344,7 @@ protected:
 	void MakeCA(char c[CELL_LENGTH], const CharacterCell & cell);
 	off_t MakeOffset(coordinate s) { return HEADER_LENGTH + CELL_LENGTH * static_cast<off_t>(s); }
 };
+}
 
 void
 UnicodeBuffer::WriteBOM() 
@@ -342,6 +378,36 @@ UnicodeBuffer::WriteNCells(coordinate s, coordinate n, const CharacterCell & c)
 	MakeCA(ca, c);
 	for (coordinate i(0U); i < n; ++i)
 		pwrite(fd, ca, sizeof ca, MakeOffset(s + i));
+}
+
+void 
+UnicodeBuffer::CopyNCells(coordinate d, coordinate s, coordinate n)
+{
+	char ca[CELL_LENGTH];
+	if (d < s) {
+		while (n) {
+			const off_t target(MakeOffset(d));
+			const off_t source(MakeOffset(s));
+			pread(fd, ca, sizeof ca, source);
+			pwrite(fd, ca, sizeof ca, target);
+			++s;
+			++d;
+			--n;
+		}
+	} else 
+	if (d > s) {
+		s += n;
+		d += n;
+		while (n) {
+			--s;
+			--d;
+			--n;
+			const off_t target(MakeOffset(d));
+			const off_t source(MakeOffset(s));
+			pread(fd, ca, sizeof ca, source);
+			pwrite(fd, ca, sizeof ca, target);
+		}
+	}
 }
 
 void 
@@ -423,12 +489,14 @@ protected:
 	virtual void WriteLatin1Characters(std::size_t, const char *);
 	virtual void WriteControl1Character(uint8_t);
 	virtual void Set8BitControl1(bool);
+	virtual void SetBackspaceIsBS(bool);
 	virtual void ReportSize(coordinate w, coordinate h);
 	void WriteRawCharacters(std::size_t, const char *);
 	void WriteRawCharacters(const char * s) { WriteRawCharacters(std::strlen(s), s); }
 	void WriteCSI() { WriteControl1Character('\x9b'); }
 	void WriteSS3() { WriteControl1Character('\x8f'); }
 	void WriteUnicodeCharacter(uint32_t c);
+	void WriteBackspaceOrDEL();
 	void WriteCSISequence(unsigned m, char c);
 	void WriteSS3Sequence(unsigned m, char c);
 	void WriteFunctionKeyDECVT1(unsigned n, unsigned m);
@@ -444,7 +512,7 @@ protected:
 	void WriteExtendedKeyXTermPCMode(uint16_t k, uint8_t m);
 	void WriteExtendedKey(uint16_t k, uint8_t m);
 	const Emulation emulation;
-	bool send_8bit_controls;
+	bool send_8bit_controls, backspace_is_bs;
 	char input_buffer[256];
 	std::size_t input_read;
 	char output_buffer[4096];
@@ -457,6 +525,7 @@ InputFIFO::InputFIFO(int i, int m, Emulation e) :
 	master_fd(m),
 	emulation(e),
 	send_8bit_controls(false),
+	backspace_is_bs(false),
 	input_read(0U),
 	output_pending(0U)
 {
@@ -577,6 +646,18 @@ InputFIFO::Set8BitControl1(bool b)
 }
 
 void 
+InputFIFO::SetBackspaceIsBS(bool b)
+{
+	backspace_is_bs = b;
+}
+
+void
+InputFIFO::WriteBackspaceOrDEL()
+{
+	WriteRawCharacters(backspace_is_bs ? "\x08" : "\x7F"); 
+}
+
+void 
 InputFIFO::WriteCSISequence(unsigned m, char c)
 {
 	WriteCSI();
@@ -658,6 +739,8 @@ InputFIFO::WriteFunctionKeyDECVT(uint16_t k, uint8_t m)
 		case 18:	WriteFunctionKeyDECVT1(32U,m); break;
 		case 19:	WriteFunctionKeyDECVT1(33U,m); break;
 		case 20:	WriteFunctionKeyDECVT1(34U,m); break;
+		case 21:	WriteFunctionKeyDECVT1(35U,m); break;
+		case 22:	WriteFunctionKeyDECVT1(36U,m); break;
 		default:
 			std::fprintf(stderr, "WARNING: %s: %" PRIx32 "\n", "Unknown function key", k);
 			break;
@@ -698,7 +781,7 @@ void
 InputFIFO::WriteExtendedKeyDECVT(uint16_t k, uint8_t m)
 {
 	switch (k) {
-	// The calculator keypad is in permanent application mode.
+	// The calculator keypad is in permanent application mode; as NumLock has no meaning here.
 		case EXTENDED_KEY_PAD_ASTERISK:		WriteSS3Sequence(m,'j'); break;
 		case EXTENDED_KEY_PAD_PLUS:		WriteSS3Sequence(m,'k'); break;
 		case EXTENDED_KEY_PAD_COMMA:		WriteSS3Sequence(m,'l'); break;
@@ -723,7 +806,7 @@ InputFIFO::WriteExtendedKeyDECVT(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_PAD_F5:		WriteSS3Sequence(m,'T'); break;
 		case EXTENDED_KEY_PAD_EQUALS:		WriteSS3Sequence(m,'X'); break;
 		case EXTENDED_KEY_PAD_EQUALS_AS400:	WriteSS3Sequence(m,'X'); break;
-	// The editing keys are in permanent ANSI mode.
+	// The editing keys are in permanent application mode; as local editing has no meaning here.
 		case EXTENDED_KEY_UP_ARROW:		WriteCSISequence(m,'A'); break;
 		case EXTENDED_KEY_DOWN_ARROW:		WriteCSISequence(m,'B'); break;
 		case EXTENDED_KEY_RIGHT_ARROW:		WriteCSISequence(m,'C'); break;
@@ -742,7 +825,7 @@ InputFIFO::WriteExtendedKeyDECVT(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_PAGE_UP:		WriteFunctionKeyDECVT1(5U,m); break;
 		case EXTENDED_KEY_NEXT:			WriteFunctionKeyDECVT1(6U,m); break;
 		case EXTENDED_KEY_PAGE_DOWN:		WriteFunctionKeyDECVT1(6U,m); break;
-		case EXTENDED_KEY_BACKSPACE:		WriteRawCharacters("\x08"); break;
+		case EXTENDED_KEY_BACKSPACE:		WriteBackspaceOrDEL(); break;
 		case EXTENDED_KEY_RETURN_OR_ENTER:	WriteRawCharacters("\x0D"); break;
 		default:
 			std::fprintf(stderr, "WARNING: %s: %" PRIx32 "\n", "Unknown extended key", k);
@@ -762,7 +845,7 @@ void
 InputFIFO::WriteExtendedKeyXTermPCMode(uint16_t k, uint8_t m)
 {
 	switch (k) {
-	// The calculator keypad is in permanent application mode.
+	// The calculator keypad is in permanent application mode; as NumLock has no meaning here.
 		case EXTENDED_KEY_PAD_ASTERISK:		WriteSS3Sequence(m,'j'); break;
 		case EXTENDED_KEY_PAD_PLUS:		WriteSS3Sequence(m,'k'); break;
 		case EXTENDED_KEY_PAD_COMMA:		WriteSS3Sequence(m,'l'); break;
@@ -775,6 +858,7 @@ InputFIFO::WriteExtendedKeyXTermPCMode(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_PAD_CENTRE:		WriteCSISequence(m,'E'); break;
 		case EXTENDED_KEY_PAD_END:		WriteCSISequence(m,'F'); break;
 		case EXTENDED_KEY_PAD_HOME:		WriteCSISequence(m,'H'); break;
+		case EXTENDED_KEY_PAD_TAB:		WriteSS3Sequence(m,'I'); break;
 		case EXTENDED_KEY_PAD_ENTER:		WriteSS3Sequence(m,'M'); break;
 		case EXTENDED_KEY_PAD_F1:		WriteSS3Sequence(m,'P'); break;
 		case EXTENDED_KEY_PAD_F2:		WriteSS3Sequence(m,'Q'); break;
@@ -783,7 +867,7 @@ InputFIFO::WriteExtendedKeyXTermPCMode(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_PAD_F5:		WriteSS3Sequence(m,'T'); break;
 		case EXTENDED_KEY_PAD_EQUALS:		WriteSS3Sequence(m,'X'); break;
 		case EXTENDED_KEY_PAD_EQUALS_AS400:	WriteSS3Sequence(m,'X'); break;
-	// The editing keys are in permanent normal mode.
+	// The editing keys are in permanent normal mode; as local editing has no meaning here.
 		case EXTENDED_KEY_SCROLL_UP:		WriteSS3Sequence(INPUT_MODIFIER_LEVEL2,'A'); break;
 		case EXTENDED_KEY_UP_ARROW:		WriteSS3Sequence(m,'A'); break;
 		case EXTENDED_KEY_SCROLL_DOWN:		WriteSS3Sequence(INPUT_MODIFIER_LEVEL2,'B'); break;
@@ -808,7 +892,7 @@ InputFIFO::WriteExtendedKeyXTermPCMode(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_NEXT:			WriteFunctionKeyDECVT1(6U,m); break;
 		case EXTENDED_KEY_PAD_PAGE_DOWN:	// xterm does not distinguish this from:
 		case EXTENDED_KEY_PAGE_DOWN:		WriteFunctionKeyDECVT1(6U,m); break;
-		case EXTENDED_KEY_BACKSPACE:		WriteRawCharacters("\x08"); break;
+		case EXTENDED_KEY_BACKSPACE:		WriteBackspaceOrDEL(); break;
 		case EXTENDED_KEY_RETURN_OR_ENTER:	WriteRawCharacters("\x0D"); break;
 		default:
 			std::fprintf(stderr, "WARNING: %s: %" PRIx32 "\n", "Unknown extended key", k);
@@ -852,7 +936,7 @@ InputFIFO::WriteExtendedKeySCOConsole(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_PAD_F4:		WriteCSISequence(m,'S'); break;
 		case EXTENDED_KEY_PAD_F5:		WriteCSISequence(m,'T'); break;
 		case EXTENDED_KEY_BACKTAB:		WriteCSISequence(m,'Z'); break;
-		case EXTENDED_KEY_BACKSPACE:		WriteRawCharacters("\x08"); break;
+		case EXTENDED_KEY_BACKSPACE:		WriteBackspaceOrDEL(); break;
 		case EXTENDED_KEY_RETURN_OR_ENTER:	WriteRawCharacters("\x0D"); break;
 		case EXTENDED_KEY_PAD_ENTER:		WriteRawCharacters("\x0A"); break;
 		case EXTENDED_KEY_PAD_COMMA:		WriteRawCharacters(","); break;
@@ -913,7 +997,7 @@ InputFIFO::WriteExtendedKeyLinuxConsole(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_PAGE_DOWN:		// The Linux console does not distinguish this from:
 		case EXTENDED_KEY_PAD_PAGE_DOWN:	WriteFunctionKeyDECVT1(6U,m); break;
 		case EXTENDED_KEY_BACKTAB:		WriteCSISequence(m,'Z'); break;
-		case EXTENDED_KEY_BACKSPACE:		WriteRawCharacters("\x7F"); break;
+		case EXTENDED_KEY_BACKSPACE:		WriteBackspaceOrDEL(); break;
 		case EXTENDED_KEY_RETURN_OR_ENTER:	WriteRawCharacters("\x0D"); break;
 		case EXTENDED_KEY_PAD_ENTER:		WriteRawCharacters("\x0A"); break;
 		case EXTENDED_KEY_PAD_COMMA:		WriteRawCharacters(","); break;
@@ -968,7 +1052,7 @@ InputFIFO::WriteExtendedKeyNetBSDConsole(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_HOME:			WriteFunctionKeyDECVT1(7U,m); break;
 		case EXTENDED_KEY_PAD_END:		// The NetBSD console does not distinguish this from:
 		case EXTENDED_KEY_END:			WriteFunctionKeyDECVT1(8U,m); break;
-		case EXTENDED_KEY_BACKSPACE:		WriteRawCharacters("\x08"); break;
+		case EXTENDED_KEY_BACKSPACE:		WriteBackspaceOrDEL(); break;
 		case EXTENDED_KEY_RETURN_OR_ENTER:	WriteRawCharacters("\x0D"); break;
 		case EXTENDED_KEY_PAD_ENTER:		WriteRawCharacters("\x0A"); break;
 		case EXTENDED_KEY_PAD_COMMA:		WriteRawCharacters(","); break;
@@ -1035,6 +1119,7 @@ InputFIFO::WriteOutput()
 // **************************************************************************
 */
 
+namespace {
 class MultipleBuffer : 
 	public SoftTerm::ScreenBuffer 
 {
@@ -1043,6 +1128,7 @@ public:
 	~MultipleBuffer();
 	void Add(SoftTerm::ScreenBuffer * v) { buffers.push_back(v); }
 	virtual void WriteNCells(coordinate p, coordinate n, const CharacterCell & c);
+	virtual void CopyNCells(coordinate d, coordinate s, coordinate n);
 	virtual void ScrollUp(coordinate s, coordinate e, coordinate n, const CharacterCell & c);
 	virtual void ScrollDown(coordinate s, coordinate e, coordinate n, const CharacterCell & c);
 	virtual void SetCursorPos(coordinate x, coordinate y);
@@ -1052,6 +1138,7 @@ protected:
 	typedef std::list<SoftTerm::ScreenBuffer *> Buffers;
 	Buffers buffers;
 };
+}
 
 MultipleBuffer::MultipleBuffer() 
 {
@@ -1066,6 +1153,13 @@ MultipleBuffer::WriteNCells(coordinate s, coordinate n, const CharacterCell & c)
 {
 	for (Buffers::iterator i(buffers.begin()); buffers.end() != i; ++i)
 		(*i)->WriteNCells(s, n, c);
+}
+
+void 
+MultipleBuffer::CopyNCells(coordinate d, coordinate s, coordinate n)
+{
+	for (Buffers::iterator i(buffers.begin()); buffers.end() != i; ++i)
+		(*i)->CopyNCells(d, s, n);
 }
 
 void 
@@ -1107,6 +1201,7 @@ MultipleBuffer::SetSize(coordinate w, coordinate h)
 // **************************************************************************
 */
 
+namespace {
 class UnicodeSoftTerm : 
 	public UTF8Decoder::UCS32CharacterSink,
 	public SoftTerm
@@ -1115,6 +1210,7 @@ public:
 	UnicodeSoftTerm(ScreenBuffer & s, KeyboardBuffer & k) : SoftTerm(s, k) {}
 	virtual void Write(uint32_t character, bool decoder_error, bool overlong);
 };
+}
 
 void 
 UnicodeSoftTerm::Write(uint32_t character, bool decoder_error, bool overlong)
@@ -1178,6 +1274,7 @@ console_terminal_emulator (
 #else
 	InputFIFO::Emulation emulation(InputFIFO::DECVT);
 #endif
+	bool vcsa(false);
 
 	try {
 		emulation_definition linux_option('\0', "linux", "Emulate the Linux virtual console.", emulation, InputFIFO::LINUX_CONSOLE);
@@ -1185,12 +1282,14 @@ console_terminal_emulator (
 		emulation_definition freebsd_option('\0', "freebsd", "Emulate the FreeBSD virtual console.", emulation, InputFIFO::XTERM_PC);
 		emulation_definition netbsd_option('\0', "netbsd", "Emulate the NetBSD virtual console.", emulation, InputFIFO::NETBSD_CONSOLE);
 		emulation_definition decvt_option('\0', "decvt", "Emulate the DEC VT.", emulation, InputFIFO::DECVT);
+		popt::bool_definition vcsa_option('\0', "vcsa", "Maintain a vcsa-compatible display buffer.", vcsa);
 		popt::definition * top_table[] = {
 			&linux_option,
 			&sco_option,
 			&freebsd_option,
 			&netbsd_option,
-			&decvt_option
+			&decvt_option,
+			&vcsa_option
 		};
 		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "directory");
 
@@ -1329,7 +1428,8 @@ console_terminal_emulator (
 	ubuffer.WriteBOM();
 	MultipleBuffer mbuffer;
 	mbuffer.Add(&ubuffer);
-	mbuffer.Add(&vbuffer);
+	if (vcsa)
+		mbuffer.Add(&vbuffer);
 	UnicodeSoftTerm emulator(mbuffer, keyboard);
 	UTF8Decoder decoder(emulator);
 

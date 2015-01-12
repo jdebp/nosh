@@ -1,3 +1,20 @@
+nosh (1.12) unstable; urgency=low
+
+  * setuidgid-fromenv now recognizes the GIDLIST environment variable.
+  * vcsa output from console-terminal-emulator is now optional.
+  * Fixed an endianness bug in console-fb-realizer when reading fonts wider than 8 pixels.
+  * Fixed a mis-use of _POSIX_VDISABLE that was manifesting as some (the rarer) dead keys plus space turning into an erase character.
+  * In sane mode, the erase character is now DEL and erase2 (BSD only) is BS.  This more closely corresponds with BSD stty sane behaviour.
+  * console-terminal-emulator now supports the DECBKM control sequence that allows switching the backspace key between BS and DEL.  There is a "bspace" extension to BSD kbdmaps for taking advantage of this.
+  * SoftTerm now implements DEC Origin Mode.
+  * SoftTerm now implements DEC VT520 left and right margins, with xterm's DECLRMM bodge for distingushing between DECSLRM and SCOSC.
+  * SoftTerm no longer treats Form Feed as a Clear Screen command.
+  * SoftTerm now implements DECSCPP and DECSNLS and a console-resize command has been added.
+  * console-multiplexor now no longer wakes up for changes to background virtual terminal display buffers.
+  * console-multiplexor now only re-creates symbolic links when the foreground virtual terminal is switched, rather than on every update.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Mon, 12 Jan 2015 13:26:31 +0000
+
 nosh (1.11) unstable; urgency=low
 
   * SoftTerm now produces some more (largely dummy) DEC VT status report control sequences.

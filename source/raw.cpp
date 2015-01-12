@@ -6,6 +6,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <termios.h>
 #include "ttyutils.h"
 
+// Like the BSD cfmakeraw(), but tries harder.
 termios
 make_raw (
 	const termios & ti
@@ -18,6 +19,7 @@ make_raw (
 			);
 	t.c_oflag &= ~(OPOST|ONLCR);
 	t.c_cflag &= ~(CSIZE|PARENB);
+	t.c_cflag |= CS8;
 	t.c_lflag &= ~(ISIG|ICANON|IEXTEN|ECHO|ECHOE|ECHOK|ECHOCTL|ECHOKE|ECHONL);
 	return t;
 }

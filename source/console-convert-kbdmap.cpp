@@ -392,7 +392,6 @@ static
 const struct bsd_kbdmap_item {
 	uint32_t action;
 	const char * name;
-	bool operator < ( const bsd_kbdmap_item & b ) const { return 0 < std::strcmp(name, b.name); }
 } bsd_actions[]= {
 	{	NOOP(1),				"nop"		},	// This is not actually in the BSD doco; but it is in lots of keymap files.
 	{	UCSA(0x00),				"nul"		},
@@ -430,7 +429,6 @@ const struct bsd_kbdmap_item {
 	{	UCSA(0x1F),				"us"		},
 	{	UCSA(0x20),				"sp"		},
 	{	UCSA(0x7F),				"del"		},
-	
 	{	UCSA(0x0300),				"dgra"		},
 	{	UCSA(0x0301),				"dacu"		},
 	{	UCSA(0x0302),				"dcir"		},
@@ -476,6 +474,7 @@ const struct bsd_kbdmap_item {
 	{	LOCK(KBDMAP_MODIFIER_NUM),		"nlock"		},
 	{	LOCK(KBDMAP_MODIFIER_SCROLL),		"slock"		},
 	{	EXTE(EXTENDED_KEY_BACKTAB),		"btab"		},
+	{	EXTE(EXTENDED_KEY_BACKSPACE),		"bspace"	},	// This is an extension to the BSD format that allows use of the DEC VT switchable backspace mechanism.
 	{	CONS(CONSUMER_KEY_NEXT_TASK),		"nscr"		},
 	{	CONS(CONSUMER_KEY_PREVIOUS_TASK),	"pscr"		},
 	{	CONS(CONSUMER_KEY_LOCK),		"saver"		},

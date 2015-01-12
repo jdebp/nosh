@@ -17,6 +17,7 @@ public:
 	public:
 		typedef unsigned short coordinate;
 		virtual void WriteNCells(coordinate s, coordinate n, const CharacterCell & c) = 0;
+		virtual void CopyNCells(coordinate d, coordinate s, coordinate n) = 0;
 		virtual void ScrollUp(coordinate s, coordinate e, coordinate n, const CharacterCell & c) = 0;
 		virtual void ScrollDown(coordinate s, coordinate e, coordinate n, const CharacterCell & c) = 0;
 		virtual void SetCursorPos(coordinate x, coordinate y) = 0;
@@ -29,6 +30,7 @@ public:
 		virtual void WriteLatin1Characters(std::size_t, const char *) = 0;
 		virtual void WriteControl1Character(uint8_t) = 0;
 		virtual void Set8BitControl1(bool) = 0;
+		virtual void SetBackspaceIsBS(bool) = 0;
 		virtual void ReportSize(coordinate w, coordinate h) = 0;
 	};
 	typedef uint8_t coordinate;
@@ -38,14 +40,26 @@ public:
 protected:
 	ScreenBuffer & screen;
 	KeyboardBuffer & keyboard;
-	coordinate x, y, saved_x, saved_y, w, h, top_margin, bottom_margin;
+	struct xy {
+		coordinate x, y;
+		xy();
+	} active_cursor, saved_cursor, scroll_origin, display_origin;
+	struct wh {
+		coordinate w, h;
+		wh();
+	} scroll_margin, display_margin;
 	std::size_t argc;
 	unsigned int args[16];
-	char intermediate;
+	bool seen_arg_digit;
+	char first_private_parameter, last_intermediate;
 	bool tab_pins[256];
-	enum { NORMAL, ESCAPE1, ESCAPE2, CONTROL } state;
-	bool scrolling, seen_arg_digit, overstrike;
-	bool automatic_right_margin, background_colour_erase;
+	enum { NORMAL, ESCAPE1, ESCAPE2, CONTROL1, CONTROL2 } state;
+	bool scrolling, overstrike;
+	struct mode {
+		bool automatic_right_margin, background_colour_erase, origin, left_right_margins;
+		mode();
+	} active_modes, saved_modes;
+	bool no_clear_screen_on_column_change;
 	/// This emulates an undocumented DEC VT mechanism, the details of which are in the manual.
 	bool advance_pending;
 	CharacterCell::attribute_type attributes, saved_attributes;
@@ -83,18 +97,20 @@ protected:
 	void Resize(coordinate columns, coordinate rows);
 	void UpdateCursorPos();
 	void UpdateCursorType();
-	void SetScrollMargins();
+	void SetTopBottomMargins();
+	void SetLeftRightMargins();
+	void ResetMargins();
 
 	bool IsControl(uint32_t);
 	bool IsIntermediate(uint32_t);
-	bool IsIntermediateOrParameter(uint32_t);
+	bool IsParameter(uint32_t);
 	void Print(uint32_t);
 	void Escape1(uint32_t);
 	void Escape2(uint32_t);
 	void ControlSequence(uint32_t);
 	void ProcessControlCharacter(uint32_t character);
 
-	void ResetArgs();
+	void ResetControlSequence();
 	void FinishArg(unsigned int d);
 	coordinate SumArgs();
 
@@ -103,25 +119,37 @@ protected:
 	void ClearAllTabstops();
 	bool IsTabstopAt(coordinate p) { return tab_pins[p % (sizeof tab_pins/sizeof *tab_pins)]; }
 	void SetTabstopAt(coordinate p, bool v) { tab_pins[p % (sizeof tab_pins/sizeof *tab_pins)] = v; }
-	void HorizontalTab(coordinate n);
-	void BackwardsHorizontalTab(coordinate n);
+	void HorizontalTab(coordinate n, bool);
+	void BackwardsHorizontalTab(coordinate n, bool);
 
 	void SetModes(bool);
+	void SetMode(unsigned int, bool);
+	void SetPrivateModes(bool);
+	void SetPrivateMode(unsigned int, bool);
 	void SetAttributes();
-	void SendDeviceAttributes();
-	void SendDeviceStatusReports();
+	void SCOSCorDESCSLRM();
+	void SendPrimaryDeviceAttributes();
+	void SendSecondaryDeviceAttributes();
+	void SendTertiaryDeviceAttributes();
+	void SetLinuxCursorType();
+	void SetCursorStyle();
 	void SaveAttributes();
 	void RestoreAttributes();
 	void SetAttribute(unsigned int);
 	void SendPrimaryDeviceAttribute(unsigned int);
 	void SendSecondaryDeviceAttribute(unsigned int);
 	void SendTertiaryDeviceAttribute(unsigned int);
+	void SendDeviceStatusReports();
 	void SendDeviceStatusReport(unsigned int);
+	void SendPrivateDeviceStatusReports();
 	void SendPrivateDeviceStatusReport(unsigned int);
-	void SetMode(unsigned int, bool);
-	void SetPrivateMode(unsigned int, bool);
+	void SaveModes();
+	void RestoreModes();
 	void SetLinesPerPage();
+	void SetColumnsPerPage();
+	void SetScrollbackBuffer(bool);
 
+	CharacterCell ErasureCell(uint32_t c = ' ');
 	void ClearDisplay(uint32_t c = ' ');
 	void ClearLine();
 	void ClearToEOD();
@@ -130,30 +158,32 @@ protected:
 	void ClearFromBOL();
 	void EraseInDisplay();
 	void EraseInLine();
-	CharacterCell ErasureCell();
+	void ScrollUp(coordinate);
+	void ScrollDown(coordinate);
+	void ScrollLeft(coordinate);
+	void ScrollRight(coordinate);
+	void EraseCharacters(coordinate);
+	void DeleteCharacters(coordinate);
+	void InsertCharacters(coordinate);
+	void DeleteLines(coordinate);
+	void InsertLines(coordinate);
+	void DeleteLinesInScrollAreaAt(coordinate, coordinate);
+	void InsertLinesInScrollAreaAt(coordinate, coordinate);
 
 	void GotoYX();
 	void SaveCursor();
 	void RestoreCursor();
 	bool WillWrap();
 	void Advance();
-	void Index();
-	void ReverseIndex();
 	void GotoX(coordinate);
 	void GotoY(coordinate);
 	void Home();
 	void CarriageReturn();
-	void ScrollDown(coordinate);
-	void ScrollUp(coordinate);
-	void CursorDown(coordinate);
-	void CursorUp(coordinate);
-	void CursorLeft(coordinate);
-	void CursorRight(coordinate);
-	void EraseCharacters(coordinate);
-	void DeleteCharacters(coordinate);
-	void InsertCharacters(coordinate);
-	void DeleteLines(coordinate);
-	void InsertLines(coordinate);
+	void CarriageReturnNoUpdate();
+	void CursorDown(coordinate, bool, bool);
+	void CursorUp(coordinate, bool, bool);
+	void CursorLeft(coordinate, bool, bool);
+	void CursorRight(coordinate, bool, bool);
 };
 
 #endif

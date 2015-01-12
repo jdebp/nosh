@@ -26,22 +26,14 @@ static const CharacterCell::colour_type default_foreground(ALPHA_FOR_DEFAULT,128
 SoftTerm::SoftTerm(SoftTerm::ScreenBuffer & s, SoftTerm::KeyboardBuffer & k) :
 	screen(s),
 	keyboard(k),
-	x(0U), 
-	y(0U),
-	saved_x(0U), 
-	saved_y(0U),
-	w(80U), 
-	h(25U),
-	top_margin(0U),
-	bottom_margin(24U),
 	argc(0U),
-	intermediate('\0'),
+	seen_arg_digit(false),
+	first_private_parameter('\0'),
+	last_intermediate('\0'),
 	state(NORMAL),
 	scrolling(true),
-	seen_arg_digit(false),
 	overstrike(true),
-	automatic_right_margin(true),
-	background_colour_erase(true),
+	no_clear_screen_on_column_change(false),
 	advance_pending(false),
 	attributes(0),
 	foreground(default_foreground),
@@ -49,15 +41,39 @@ SoftTerm::SoftTerm(SoftTerm::ScreenBuffer & s, SoftTerm::KeyboardBuffer & k) :
 	cursor_type(CursorSprite::BOX),
 	cursor_attributes(CursorSprite::VISIBLE|CursorSprite::BLINK)
 {
-	Resize(w, h);
+	Resize(display_origin.x + display_margin.w, display_origin.y + display_margin.h);
 	ClearAllTabstops();
 	UpdateCursorType();
-	ProcessControlCharacter(FF);
+	Home();
+	ClearDisplay();
 }
 
 SoftTerm::~SoftTerm()
 {
-	ProcessControlCharacter(FF);
+	// For security, we erase several sources of information about old terminal sessions.
+	Resize(80U, 25U);
+	Home();
+	ClearDisplay();
+}
+
+SoftTerm::xy::xy() : 
+	x(0U), 
+	y(0U) 
+{
+}
+
+SoftTerm::wh::wh() : 
+	w(80U), 
+	h(25U) 
+{
+}
+
+SoftTerm::mode::mode() : 
+	automatic_right_margin(true), 
+	background_colour_erase(true), 
+	origin(false),
+	left_right_margins(false)
+{
 }
 
 /* Top-level control functions **********************************************
@@ -65,18 +81,37 @@ SoftTerm::~SoftTerm()
 */
 
 void 
-SoftTerm::Resize(coordinate columns, coordinate rows)
-{
-	if (columns) w = columns;
-	if (rows) h = rows;
-	screen.SetSize(w, h);
-	keyboard.ReportSize(w, h);
-	if (top_margin >= h)
-		top_margin = 0U;
-	if (bottom_margin >= h)
-		bottom_margin = h - 1U;
-	if (x >= columns) x = columns - 1U;
-	if (y >= rows) y = rows - 1U;
+SoftTerm::Resize(
+	coordinate columns, 
+	coordinate rows
+) {
+	if (columns)  {
+		if (display_origin.x >= columns)
+			display_origin.x = 0U;
+		display_margin.w = columns - display_origin.x; 
+	} else 
+		columns = display_origin.x + display_margin.w;
+	if (rows) {
+		if (display_origin.y >= rows)
+			display_origin.y = 0U;
+		display_margin.h = rows - display_origin.y; 
+	} else 
+		rows = display_origin.y + display_margin.h;
+
+	screen.SetSize(columns, rows);
+	keyboard.ReportSize(columns, rows);
+
+	if (scroll_origin.y >= rows)
+		scroll_origin.y = display_origin.y;
+	if (scroll_origin.y + scroll_margin.h > rows)
+		scroll_margin.h = rows - scroll_origin.y;
+	if (scroll_origin.x >= columns)
+		scroll_origin.x = display_origin.x;
+	if (scroll_origin.x + scroll_margin.w > columns)
+		scroll_margin.w = columns - scroll_origin.x;
+
+	if (active_cursor.x >= columns) active_cursor.x = columns - 1U;
+	if (active_cursor.y >= rows) active_cursor.y = rows - 1U;
 	UpdateCursorPos();
 }
 
@@ -93,12 +128,13 @@ OneIfZero (
 }
 
 void 
-SoftTerm::ResetArgs()
+SoftTerm::ResetControlSequence()
 {
 	argc = 0U;
 	seen_arg_digit = false;
 	args[argc] = 0;
-	intermediate = '\0';
+	first_private_parameter = '\0';
+	last_intermediate = '\0';
 }
 
 void 
@@ -129,94 +165,151 @@ SoftTerm::SumArgs()
 */
 
 CharacterCell 
-SoftTerm::ErasureCell()
+SoftTerm::ErasureCell(uint32_t c)
 {
-	return CharacterCell(' ', attributes, foreground, background_colour_erase ? background : default_background);
+	return CharacterCell(c, attributes, foreground, active_modes.background_colour_erase ? background : default_background);
 }
 
 void 
 SoftTerm::ClearDisplay(uint32_t c)
 {
-	const ScreenBuffer::coordinate l(ScreenBuffer::coordinate(w) * h);
-	screen.WriteNCells(0, l, CharacterCell(c, attributes, foreground, background));
+	// Erasure ignores margins.
+	const ScreenBuffer::coordinate stride(ScreenBuffer::coordinate(display_margin.w) + display_origin.x);
+	const ScreenBuffer::coordinate s(stride * display_origin.y);
+	const ScreenBuffer::coordinate l(stride * display_margin.h);
+	screen.WriteNCells(s, l, ErasureCell(c));
 }
 
 void 
 SoftTerm::ClearLine()
 {
-	const ScreenBuffer::coordinate s(ScreenBuffer::coordinate(w) * y);
-	screen.WriteNCells(s, w, ErasureCell());
+	// Erasure ignores margins.
+	const ScreenBuffer::coordinate stride(ScreenBuffer::coordinate(display_margin.w) + display_origin.x);
+	const ScreenBuffer::coordinate s(stride * active_cursor.y + display_origin.x);
+	screen.WriteNCells(s, display_margin.w, ErasureCell());
 }
 
 void 
 SoftTerm::ClearToEOD()
 {
-	const ScreenBuffer::coordinate s(ScreenBuffer::coordinate(w) * y + x);
-	const ScreenBuffer::coordinate l(ScreenBuffer::coordinate(w) * (h - 1U - y) + (w - x));
+	// Erasure ignores margins.
+	const ScreenBuffer::coordinate stride(ScreenBuffer::coordinate(display_margin.w) + display_origin.x);
+	const ScreenBuffer::coordinate rows(ScreenBuffer::coordinate(display_margin.h) + display_origin.y);
+	const ScreenBuffer::coordinate s(stride * active_cursor.y + active_cursor.x);
+	const ScreenBuffer::coordinate l(stride * (rows - 1U - active_cursor.y) + (stride - active_cursor.x));
 	screen.WriteNCells(s, l, ErasureCell());
 }
 
 void 
 SoftTerm::ClearToEOL()
 {
-	const ScreenBuffer::coordinate s(ScreenBuffer::coordinate(w) * y + x);
-	screen.WriteNCells(s, w - x, ErasureCell());
+	// Erasure ignores margins.
+	const ScreenBuffer::coordinate stride(ScreenBuffer::coordinate(display_margin.w) + display_origin.x);
+	const ScreenBuffer::coordinate s(stride * active_cursor.y + active_cursor.x);
+	screen.WriteNCells(s, stride - active_cursor.x, ErasureCell());
 }
 
 void 
 SoftTerm::ClearFromBOD()
 {
-	const ScreenBuffer::coordinate l(ScreenBuffer::coordinate(w) * y + x + 1U);
-	screen.WriteNCells(0, l, ErasureCell());
+	// Erasure ignores margins.
+	const ScreenBuffer::coordinate stride(ScreenBuffer::coordinate(display_margin.w) + display_origin.x);
+	const ScreenBuffer::coordinate s(stride * display_origin.y);
+	const ScreenBuffer::coordinate l(stride * (active_cursor.y - display_origin.y) + active_cursor.x + 1U);
+	screen.WriteNCells(s, l, ErasureCell());
 }
 
 void 
 SoftTerm::ClearFromBOL()
 {
-	const ScreenBuffer::coordinate s(ScreenBuffer::coordinate(w) * y);
-	screen.WriteNCells(s, x + 1U, ErasureCell());
+	// Erasure ignores margins.
+	const ScreenBuffer::coordinate stride(ScreenBuffer::coordinate(display_margin.w) + display_origin.x);
+	const ScreenBuffer::coordinate s(stride * active_cursor.y + display_origin.x);
+	screen.WriteNCells(s, active_cursor.x - display_origin.x + 1U, ErasureCell());
 }
 
 void 
 SoftTerm::EraseCharacters(coordinate n) 
 {
-	const ScreenBuffer::coordinate s(ScreenBuffer::coordinate(w) * y + x);
-	if (x + n >= w) n = w - 1U - x;
+	// Erasure ignores margins.
+	const ScreenBuffer::coordinate columns(ScreenBuffer::coordinate(display_margin.w) + display_origin.x);
+	const ScreenBuffer::coordinate s(columns * active_cursor.y + active_cursor.x);
+	if (active_cursor.x + n >= columns) n = columns - 1U - active_cursor.x;
 	screen.WriteNCells(s, n, ErasureCell());
 }
 
 void 
 SoftTerm::DeleteCharacters(coordinate n) 
 {
-	const ScreenBuffer::coordinate s(ScreenBuffer::coordinate(w) * y + x);
-	const ScreenBuffer::coordinate e(ScreenBuffer::coordinate(w) * y + w);
+	// Deletion always operates only inside the margins.
+	const ScreenBuffer::coordinate stride(ScreenBuffer::coordinate(display_margin.w) + display_origin.x);
+	const coordinate right_margin(scroll_origin.x + scroll_margin.w - 1U);
+	const ScreenBuffer::coordinate s(stride * active_cursor.y + active_cursor.x);
+	const ScreenBuffer::coordinate e(stride * active_cursor.y + right_margin + 1U);
 	screen.ScrollUp(s, e, n, ErasureCell());
 }
 
 void 
 SoftTerm::InsertCharacters(coordinate n) 
 {
-	const ScreenBuffer::coordinate s(ScreenBuffer::coordinate(w) * y + x);
-	const ScreenBuffer::coordinate e(ScreenBuffer::coordinate(w) * y + w);
+	// Insertion always operates only inside the margins.
+	const ScreenBuffer::coordinate stride(ScreenBuffer::coordinate(display_margin.w) + display_origin.x);
+	const coordinate right_margin(scroll_origin.x + scroll_margin.w - 1U);
+	const ScreenBuffer::coordinate s(stride * active_cursor.y + active_cursor.x);
+	const ScreenBuffer::coordinate e(stride * active_cursor.y + right_margin + 1U);
 	screen.ScrollDown(s, e, n, ErasureCell());
 }
 
 void 
-SoftTerm::DeleteLines(coordinate n) 
+SoftTerm::DeleteLinesInScrollAreaAt(coordinate top, coordinate n) 
 {
-	const ScreenBuffer::coordinate s(ScreenBuffer::coordinate(w) * y);
-	const ScreenBuffer::coordinate e(ScreenBuffer::coordinate(w) * bottom_margin + w);
-	const ScreenBuffer::coordinate l(ScreenBuffer::coordinate(w) * n);
-	screen.ScrollUp(s, e, l, ErasureCell());
+	const ScreenBuffer::coordinate stride(ScreenBuffer::coordinate(display_margin.w) + display_origin.x);
+	const coordinate bottom_margin(scroll_origin.y + scroll_margin.h - 1U);
+	const coordinate right_margin(scroll_origin.x + scroll_margin.w - 1U);
+	const coordinate left_margin(scroll_origin.x);
+	if (left_margin != 0U || right_margin != stride - 1U) {
+		const coordinate w(right_margin - left_margin + 1U);
+		for (ScreenBuffer::coordinate r(top); r <= bottom_margin - n; ++r) {
+			const ScreenBuffer::coordinate d(stride * r + left_margin);
+			const ScreenBuffer::coordinate s(stride * (r + n) + left_margin);
+			screen.CopyNCells(d, s, w);
+		}
+		for (ScreenBuffer::coordinate r(bottom_margin - n + 1U); r <= bottom_margin; ++r) {
+			const ScreenBuffer::coordinate d(stride * r + left_margin);
+			screen.WriteNCells(d, w, ErasureCell());
+		}
+	} else {
+		const ScreenBuffer::coordinate s(stride * top);
+		const ScreenBuffer::coordinate e(stride * (bottom_margin + 1U));
+		const ScreenBuffer::coordinate l(stride * n);
+		screen.ScrollUp(s, e, l, ErasureCell());
+	}
 }
 
 void 
-SoftTerm::InsertLines(coordinate n) 
+SoftTerm::InsertLinesInScrollAreaAt(coordinate top, coordinate n) 
 {
-	const ScreenBuffer::coordinate s(ScreenBuffer::coordinate(w) * y);
-	const ScreenBuffer::coordinate e(ScreenBuffer::coordinate(w) * bottom_margin + w);
-	const ScreenBuffer::coordinate l(ScreenBuffer::coordinate(w) * n);
-	screen.ScrollDown(s, e, l, ErasureCell());
+	const ScreenBuffer::coordinate stride(ScreenBuffer::coordinate(display_margin.w) + display_origin.x);
+	const coordinate right_margin(scroll_origin.x + scroll_margin.w - 1U);
+	const coordinate left_margin(scroll_origin.x);
+	const coordinate bottom_margin(scroll_origin.y + scroll_margin.h - 1U);
+	if (left_margin != 0U || right_margin != stride - 1U) {
+		const coordinate w(right_margin - left_margin + 1U);
+		for (ScreenBuffer::coordinate r(bottom_margin); r >= top + n; --r) {
+			const ScreenBuffer::coordinate d(stride * r + left_margin);
+			const ScreenBuffer::coordinate s(stride * (r - n) + left_margin);
+			screen.CopyNCells(d, s, w);
+		}
+		for (ScreenBuffer::coordinate r(top + n - 1U); r >= top; --r) {
+			const ScreenBuffer::coordinate d(stride * r + left_margin);
+			screen.WriteNCells(d, w, ErasureCell());
+		}
+	} else {
+		const ScreenBuffer::coordinate s(stride * top);
+		const ScreenBuffer::coordinate e(stride * (bottom_margin + 1U));
+		const ScreenBuffer::coordinate l(stride * n);
+		screen.ScrollDown(s, e, l, ErasureCell());
+	}
 }
 
 void 
@@ -243,6 +336,46 @@ SoftTerm::EraseInLine()
 	}
 }
 
+void 
+SoftTerm::InsertLines(coordinate n)
+{
+	// Insertion always operates only inside the margins.
+	InsertLinesInScrollAreaAt(active_cursor.y, n);
+}
+
+void 
+SoftTerm::DeleteLines(coordinate n)
+{
+	// Deletion always operates only inside the margins.
+	DeleteLinesInScrollAreaAt(active_cursor.y, n);
+}
+
+void 
+SoftTerm::ScrollDown(coordinate n)
+{
+	// Scrolling always operates only inside the margins.
+	InsertLinesInScrollAreaAt(scroll_origin.y, n);
+}
+
+void 
+SoftTerm::ScrollUp(coordinate n)
+{
+	// Scrolling always operates only inside the margins.
+	DeleteLinesInScrollAreaAt(scroll_origin.y, n);
+}
+
+void 
+SoftTerm::ScrollLeft(coordinate c)
+{
+	/// FIXME \bug Implement sideways-scrolling.
+}
+
+void 
+SoftTerm::ScrollRight(coordinate c)
+{
+	/// FIXME \bug Implement sideways-scrolling.
+}
+
 /* Tabulation ***************************************************************
 // **************************************************************************
 */
@@ -252,38 +385,44 @@ SoftTerm::TabClear()
 {
 	for (std::size_t i(0U); i < argc; ++i) {
 		switch (args[i]) {
-			case 0:	SetTabstopAt(x, false); break;
+			case 0:	SetTabstopAt(active_cursor.x, false); break;
 			case 3:	ClearAllTabstops(); break;
 		}
 	}
 }
 
 void 
-SoftTerm::HorizontalTab(coordinate n)
-{
+SoftTerm::HorizontalTab(
+	coordinate n,
+	bool apply_margins
+) {
 	advance_pending = false;
-	if (x + 1U < w && n) {
+	const coordinate right_margin(apply_margins ? scroll_origin.x + scroll_margin.w - 1U : display_origin.x + display_margin.w - 1U);
+	if (active_cursor.x < right_margin && n) {
 		do {
-			if (IsTabstopAt(++x)) {
+			if (IsTabstopAt(++active_cursor.x)) {
 				if (!n) break;
 				--n;
 			}
-		} while (x + 1U < w && n);
+		} while (active_cursor.x < right_margin && n);
 		UpdateCursorPos();
 	}
 }
 
 void 
-SoftTerm::BackwardsHorizontalTab(coordinate n)
-{
+SoftTerm::BackwardsHorizontalTab(
+	coordinate n,
+	bool apply_margins
+) {
 	advance_pending = false;
-	if (x > 0U && n) {
+	const coordinate left_margin(apply_margins ? scroll_origin.x : display_origin.x);
+	if (active_cursor.x > left_margin && n) {
 		do {
-			if (IsTabstopAt(--x)) {
+			if (IsTabstopAt(--active_cursor.x)) {
 				if (!n) break;
 				--n;
 			}
-		} while (x > 0U && n);
+		} while (active_cursor.x > left_margin && n);
 		UpdateCursorPos();
 	}
 }
@@ -291,7 +430,7 @@ SoftTerm::BackwardsHorizontalTab(coordinate n)
 void 
 SoftTerm::SetTabstop() 
 {
-	SetTabstopAt(x, true);
+	SetTabstopAt(active_cursor.x, true);
 }
 
 void 
@@ -308,7 +447,7 @@ SoftTerm::ClearAllTabstops()
 void 
 SoftTerm::UpdateCursorPos()
 {
-	screen.SetCursorPos(x, y);
+	screen.SetCursorPos(active_cursor.x, active_cursor.y);
 }
 
 void 
@@ -320,36 +459,40 @@ SoftTerm::UpdateCursorType()
 void 
 SoftTerm::SaveCursor()
 {
-	saved_x = x;
-	saved_y = y;
+	saved_cursor = active_cursor;
 }
 
 void 
 SoftTerm::RestoreCursor()
 {
 	advance_pending = false;
-	x = saved_x;
-	y = saved_y;
+	active_cursor = saved_cursor;
 	UpdateCursorPos();
 }
 
 bool 
 SoftTerm::WillWrap() 
 {
-	return x >= w - 1U && automatic_right_margin;
+	// Normal advance always operates only inside the margins.
+	const coordinate right_margin(scroll_origin.x + scroll_margin.w - 1U);
+	return active_cursor.x >= right_margin && active_modes.automatic_right_margin;
 }
 
 void 
 SoftTerm::Advance() 
 {
 	advance_pending = false;
-	if (x < w - 1U) {
-		++x;
+	// Normal advance always operates only inside the margins.
+	const coordinate right_margin(scroll_origin.x + scroll_margin.w - 1U);
+	if (active_cursor.x < right_margin) {
+		++active_cursor.x;
 		UpdateCursorPos();
-	} else if (automatic_right_margin) {
-		x = 0;
-		if (y < h - 1U)
-			++y;
+	} else if (active_modes.automatic_right_margin) {
+		const coordinate left_margin(scroll_origin.x);
+		const coordinate bottom_margin(scroll_origin.y + scroll_margin.h - 1U);
+		active_cursor.x = left_margin;
+		if (active_cursor.y < bottom_margin)
+			++active_cursor.y;
 		else if (scrolling)
 			ScrollUp(1U);
 		UpdateCursorPos();
@@ -357,71 +500,18 @@ SoftTerm::Advance()
 }
 
 void 
-SoftTerm::Index()
+SoftTerm::CarriageReturnNoUpdate()
 {
 	advance_pending = false;
-	coordinate n(1U);
-	if (y > bottom_margin) {
-		n += y - bottom_margin;
-		y = bottom_margin;
-		UpdateCursorPos();
-	}
-	if (y < bottom_margin) {
-		const coordinate l(bottom_margin - y);
-		if (l >= n) {
-			y += n;
-			n = 0U;
-		} else {
-			n -= l;
-			y = bottom_margin;
-		}
-		UpdateCursorPos();
-	}
-	if (n > 0U) {
-		if (scrolling)
-			ScrollUp(n);
-	}
+	// Normal return always operates only inside the margins.
+	const coordinate left_margin(scroll_origin.x);
+	active_cursor.x = left_margin;
 }
 
 void 
-SoftTerm::ReverseIndex()
+SoftTerm::CarriageReturn()
 {
-	advance_pending = false;
-	coordinate n(1U);
-	if (y < top_margin) {
-		n += top_margin - y;
-		y = top_margin;
-		UpdateCursorPos();
-	}
-	if (y > top_margin) {
-		if (y >= n) {
-			y -= n;
-			n = 0U;
-		} else {
-			n -= y;
-			y = top_margin;
-		}
-		UpdateCursorPos();
-	}
-	if (n > 0U) {
-		if (scrolling)
-			ScrollDown(n);
-	}
-}
-
-void 
-SoftTerm::GotoX(coordinate n)
-{
-	advance_pending = false;
-	x = n - 1U;
-	UpdateCursorPos();
-}
-
-void 
-SoftTerm::GotoY(coordinate n)
-{
-	advance_pending = false;
-	y = n - 1U;
+	CarriageReturnNoUpdate();
 	UpdateCursorPos();
 }
 
@@ -429,15 +519,32 @@ void
 SoftTerm::Home()
 {
 	advance_pending = false;
-	x = y = 0U;
+	if (active_modes.origin)
+		active_cursor = scroll_origin;
+	else
+		active_cursor = display_origin;
 	UpdateCursorPos();
 }
 
 void 
-SoftTerm::CarriageReturn()
+SoftTerm::GotoX(coordinate n)
 {
 	advance_pending = false;
-	x = 0U;
+	const coordinate columns(active_modes.origin ? scroll_margin.w : display_margin.w);
+	if (n > columns) n = columns;
+	n += (active_modes.origin ? scroll_origin.x : display_origin.x);
+	active_cursor.x = n - 1U;
+	UpdateCursorPos();
+}
+
+void 
+SoftTerm::GotoY(coordinate n)
+{
+	advance_pending = false;
+	const coordinate rows(active_modes.origin ? scroll_margin.h : display_margin.h);
+	if (n > rows) n = rows;
+	n += (active_modes.origin ? scroll_origin.y : display_origin.y);
+	active_cursor.y = n - 1U;
 	UpdateCursorPos();
 }
 
@@ -445,116 +552,161 @@ void
 SoftTerm::GotoYX()
 {
 	advance_pending = false;
-	y = argc > 0U ? OneIfZero(args[0U]) - 1U : 0U;
-	x = argc > 1U ? OneIfZero(args[1U]) - 1U : 0U;
+	coordinate n(argc > 0U ? OneIfZero(args[0U]) : 1U);
+	coordinate m(argc > 1U ? OneIfZero(args[1U]) : 1U);
+	const coordinate columns(active_modes.origin ? scroll_margin.w : display_margin.w);
+	const coordinate rows(active_modes.origin ? scroll_margin.h : display_margin.h);
+	if (n > rows) n = rows;
+	if (m > columns) m = columns;
+	n += (active_modes.origin ? scroll_origin.y : display_origin.y);
+	m += (active_modes.origin ? scroll_origin.x : display_origin.x);
+	active_cursor.y = n - 1U;
+	active_cursor.x = m - 1U;
 	UpdateCursorPos();
 }
 
 void 
-SoftTerm::SetScrollMargins()
+SoftTerm::SetTopBottomMargins()
 {
-	coordinate new_top_margin(argc > 0U ? OneIfZero(args[0U]) - 1U : 0U);
-	coordinate new_bottom_margin(argc > 1U && args[1U] > 0U ? args[1U] - 1U : h - 1U);
+	coordinate new_top_margin(argc > 0U ? OneIfZero(args[0U]) - 1U : display_origin.y);
+	coordinate new_bottom_margin(argc > 1U && args[1U] > 0U ? args[1U] - 1U : display_origin.y + display_margin.h - 1U);
 	if (new_top_margin < new_bottom_margin) {
-		top_margin = new_top_margin;
-		bottom_margin = new_bottom_margin;
-		x = y = 0U;
-		UpdateCursorPos();
+		scroll_origin.y = new_top_margin;
+		scroll_margin.h = new_bottom_margin - new_top_margin + 1U;
+		Home();
 	}
 }
 
 void 
-SoftTerm::CursorUp(coordinate n)
+SoftTerm::SetLeftRightMargins()
 {
-	advance_pending = false;
-	if (y < top_margin) {
-		n += top_margin - y;
-		y = top_margin;
-		UpdateCursorPos();
-	}
-	if (y > top_margin) {
-		if (y >= n) {
-			y -= n;
-			n = 0U;
-		} else {
-			n -= y;
-			y = top_margin;
-		}
-		UpdateCursorPos();
+	if (!active_modes.left_right_margins) return;
+	coordinate new_left_margin(argc > 0U ? OneIfZero(args[0U]) - 1U : display_origin.y);
+	coordinate new_right_margin(argc > 1U && args[1U] > 0U ? args[1U] - 1U : display_origin.y + display_margin.w - 1U);
+	if (new_left_margin < new_right_margin) {
+		scroll_origin.x = new_left_margin;
+		scroll_margin.w = new_right_margin - new_left_margin + 1U;
+		Home();
 	}
 }
 
 void 
-SoftTerm::CursorDown(coordinate n)
+SoftTerm::ResetMargins()
 {
+	scroll_origin = display_origin;
+	scroll_margin = display_margin;
+}
+
+void 
+SoftTerm::CursorUp(
+	coordinate n,
+	bool apply_margins,
+	bool scroll_at_top
+) {
 	advance_pending = false;
-	if (y > bottom_margin) {
-		n += y - bottom_margin;
-		y = bottom_margin;
-		UpdateCursorPos();
-	}
-	if (y < bottom_margin) {
-		const coordinate l(bottom_margin - y);
+	coordinate top_margin(scroll_origin.y), top(top_margin);
+	if (active_cursor.y < top)
+		top = display_origin.y;
+	if (active_cursor.y > top) {
+		const coordinate l(active_cursor.y - top);
 		if (l >= n) {
-			y += n;
+			active_cursor.y -= n;
 			n = 0U;
 		} else {
 			n -= l;
-			y = bottom_margin;
+			active_cursor.y = top;
 		}
 		UpdateCursorPos();
 	}
-}
-
-void 
-SoftTerm::CursorLeft(coordinate n)
-{
-	advance_pending = false;
-	if (x > 0U) {
-		if (x >= n) {
-			x -= n;
-			n = 0U;
-		} else {
-			n -= x;
-			x = 0U;
-		}
+	if (apply_margins && active_cursor.y < top_margin) {
+		active_cursor.y = top_margin;
 		UpdateCursorPos();
-	}
+	} else if (n > 0U && scroll_at_top)
+		ScrollDown(n);
 }
 
 void 
-SoftTerm::CursorRight(coordinate n)
-{
+SoftTerm::CursorDown(
+	coordinate n,
+	bool apply_margins,
+	bool scroll_at_bottom
+) {
 	advance_pending = false;
-	if (x < w - 1U) {
-		const coordinate l(w - 1U - x);
+	coordinate bottom_margin(scroll_origin.y + scroll_margin.h - 1U), bot(bottom_margin);
+	if (active_cursor.y > bot)
+		bot = display_origin.y + display_margin.h - 1U;
+	if (active_cursor.y < bot) {
+		const coordinate l(bot - active_cursor.y);
 		if (l >= n) {
-			x += n;
+			active_cursor.y += n;
 			n = 0U;
 		} else {
 			n -= l;
-			x = w - 1U;
+			active_cursor.y = bot;
 		}
 		UpdateCursorPos();
 	}
+	if (apply_margins && active_cursor.y > bottom_margin) {
+		active_cursor.y = bottom_margin;
+		UpdateCursorPos();
+	} else if (n > 0U && scroll_at_bottom)
+		ScrollUp(n);
 }
 
 void 
-SoftTerm::ScrollDown(coordinate c)
-{
-	const ScreenBuffer::coordinate s(ScreenBuffer::coordinate(w) * top_margin);
-	const ScreenBuffer::coordinate e(ScreenBuffer::coordinate(w) * bottom_margin + w);
-	const ScreenBuffer::coordinate l(ScreenBuffer::coordinate(w) * c);
-	screen.ScrollDown(s, e, l, ErasureCell());
+SoftTerm::CursorLeft(
+	coordinate n,
+	bool apply_margins,
+	bool scroll_at_left
+) {
+	advance_pending = false;
+	coordinate left_margin(scroll_origin.x), lmm(left_margin);
+	if (active_cursor.x > lmm)
+		lmm = display_origin.x;
+	if (active_cursor.x > lmm) {
+		const coordinate l(active_cursor.x - lmm);
+		if (l >= n) {
+			active_cursor.x -= n;
+			n = 0U;
+		} else {
+			n -= l;
+			active_cursor.x = lmm;
+		}
+		UpdateCursorPos();
+	}
+	if (apply_margins && active_cursor.x < left_margin) {
+		active_cursor.x = left_margin;
+		UpdateCursorPos();
+	} else if (n > 0U && scroll_at_left)
+		ScrollRight(n);
 }
 
 void 
-SoftTerm::ScrollUp(coordinate c)
-{
-	const ScreenBuffer::coordinate s(ScreenBuffer::coordinate(w) * top_margin);
-	const ScreenBuffer::coordinate e(ScreenBuffer::coordinate(w) * (bottom_margin + 1U));
-	const ScreenBuffer::coordinate l(ScreenBuffer::coordinate(w) * c);
-	screen.ScrollUp(s, e, l, ErasureCell());
+SoftTerm::CursorRight(
+	coordinate n,
+	bool apply_margins,
+	bool scroll_at_right
+) {
+	advance_pending = false;
+	coordinate right_margin(scroll_origin.x + scroll_margin.w - 1U), rmm(right_margin);
+	if (active_cursor.x > rmm)
+		rmm = display_origin.x + display_margin.w - 1U;
+	if (active_cursor.x < rmm) {
+		const coordinate l(rmm - active_cursor.x);
+		if (l >= n) {
+			active_cursor.x += n;
+			n = 0U;
+		} else {
+			n -= l;
+			active_cursor.x = rmm;
+		}
+		UpdateCursorPos();
+	}
+	if (apply_margins && active_cursor.x > right_margin) {
+		active_cursor.x = right_margin;
+		UpdateCursorPos();
+	} else if (n > 0U && scroll_at_right)
+		ScrollLeft(n);
 }
 
 /* Colours, modes, and attributes *******************************************
@@ -563,19 +715,30 @@ SoftTerm::ScrollUp(coordinate c)
 
 static 
 CharacterCell::colour_type
-Map256Colour (
+Map16Colour (
 	uint8_t c
 ) {
+	c %= 16U;
 	if (7U == c) {
 		// Dark white is brighter than bright black.
-		return CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,0xC0,0xC0,0xC0);
+		return CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,0xBF,0xBF,0xBF);
 	} else if (4U == c) {
 		// Everyone fusses about dark blue, and no choice is perfect.
-		return CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,0x00,0x00,0xA0);
-	} else if (c < 16U) {
+		return CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,0x00,0x00,0xBF);
+	} else {
 		if (8U == c) c = 7U;	// Substitute original dark white for bright black, which otherwise would work out the same as dark black.
 		const uint8_t h((c & 8U)? 255U : 127U), b(c & 4U), g(c & 2U), r(c & 1U);
 		return CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,r ? h : 0U,g ? h : 0U,b ? h : 0U);
+	}
+}
+
+static 
+CharacterCell::colour_type
+Map256Colour (
+	uint8_t c
+) {
+	if (c < 16U) {
+		return Map16Colour(c);
 	} else if (c < 232U) {
 		c -= 16U;
 		uint8_t b(c % 6U), g((c / 6U) % 6U), r(c / 36U);
@@ -613,11 +776,14 @@ void
 SoftTerm::SetModes(bool flag)
 {
 	for (std::size_t i(0U); i < argc; ++i)
-		switch (intermediate) {
-			case '\0':	SetMode (args[i], flag); break;
-			case '?':	SetPrivateMode (args[i], flag); break;
-			default:	break;
-		}
+		SetMode (args[i], flag);
+}
+
+void 
+SoftTerm::SetPrivateModes(bool flag)
+{
+	for (std::size_t i(0U); i < argc; ++i)
+		SetPrivateMode (args[i], flag);
 }
 
 void 
@@ -643,24 +809,20 @@ SoftTerm::SetAttribute(unsigned int a)
 		case 27U:	attributes &= ~CharacterCell::INVERSE; break;
 		case 28U:	attributes &= ~CharacterCell::INVISIBLE; break;
 		case 29U:	attributes &= ~CharacterCell::STRIKETHROUGH; break;
-		case 30U:	foreground = CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,0U,0U,0U); break;
-		case 31U:	foreground = CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,255U,0U,0U); break;
-		case 32U:	foreground = CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,0U,255U,0U); break;
-		case 33U:	foreground = CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,255U,255U,0U); break;
-		case 34U:	foreground = CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,0U,0U,255U); break;
-		case 35U:	foreground = CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,255U,0U,255U); break;
-		case 36U:	foreground = CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,0U,255U,255U); break;
-		case 37U:	foreground = CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,255U,255U,255U); break;
+		case 30U: case 31U: case 32U: case 33U:
+		case 34U: case 35U: case 36U: case 37U:	
+				foreground = Map16Colour(a -  30U + 8U * (a >  30U)); break;
 		case 39U:	foreground = default_foreground; break;
-		case 40U:	background = CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,0U,0U,0U); break;
-		case 41U:	background = CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,255U,0U,0U); break;
-		case 42U:	background = CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,0U,255U,0U); break;
-		case 43U:	background = CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,255U,255U,0U); break;
-		case 44U:	background = CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,0U,0U,255U); break;
-		case 45U:	background = CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,255U,0U,255U); break;
-		case 46U:	background = CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,0U,255U,255U); break;
-		case 47U:	background = CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,255U,255U,255U); break;
+		case 40U: case 41U: case 42U: case 43U:
+		case 44U: case 45U: case 46U: case 47U:	
+				background = Map16Colour(a -  40U + 8U * (a >  40U)); break;
 		case 49U:	background = default_background; break;
+		case 90U: case 91U: case 92U: case 93U:
+		case 94U: case 95U: case 96U: case 97U:	
+				foreground = Map16Colour(a -  90U + 8U * (a >  90U)); break;
+		case 100U: case 101U: case 102U: case 103U:
+		case 104U: case 105U: case 106U: case 107U:	
+				background = Map16Colour(a - 100U + 8U * (a > 100U)); break;
 		// ECMA-48 defines these as font changes.  We don't provide that.  
 		// The Linux console defines them as something else.  We don't provide that, either.
 		case 10U:	break;
@@ -688,9 +850,43 @@ void
 SoftTerm::SetLinesPerPage()
 {
 	if (argc) {
-		coordinate n(args[argc - 1U]);
-		if (n >= 25U)
-			Resize(w, n);
+		const coordinate n(args[argc - 1U]);
+		// The DEC VT minimum is 80 colums; we are more liberal since we are not constrained by CRT hardware.
+		if (n >= 2U) {
+			const coordinate columns(display_origin.x + display_margin.w);
+			Resize(columns, n);
+		}
+	}
+}
+
+void 
+SoftTerm::SetColumnsPerPage()
+{
+	if (argc) {
+		const coordinate n(args[argc - 1U]);
+		// The DEC VT minimum is 24 rows; we are more liberal since we are not constrained by CRT hardware.
+		// xterm is not strictly compatible here, as it gives quite different meanings to values of n less than 24.
+		// A true DEC VT520 rounds up to the lowest possible size, which is 24.
+		if (n >= 2U) {
+			const coordinate rows(display_origin.y + display_margin.h);
+			Resize(n, rows);
+		}
+	}
+}
+
+void 
+SoftTerm::SetScrollbackBuffer(bool f)
+{
+	const coordinate columns(display_origin.x + display_margin.w);
+
+	/// FIXME \bug This does not really work properly.
+	if (f) {
+		Resize(columns, display_margin.h + 25U);
+		ResetMargins();
+		display_origin.y = 25U;
+	} else {
+		display_origin.y = 0U;
+		Resize(columns, display_margin.h);
 	}
 }
 
@@ -709,11 +905,19 @@ void
 SoftTerm::SetPrivateMode(unsigned int a, bool f)
 {
 	switch (a) {
-		case 3U:
-			Resize(f ? 132U : 80U, h);
-			ProcessControlCharacter(FF);
+		case 3U:	// DECCOLM
+		{
+			const coordinate rows(display_origin.y + display_margin.h);
+			Resize(f ? 132U : 80U, rows);
+			if (!no_clear_screen_on_column_change) {
+				Home();
+				ClearDisplay();
+			}
+			ResetMargins();
 			break;
-		case 7U:	automatic_right_margin = f; break;
+		}
+		case 6U:	active_modes.origin = f; break;			// DECOM
+		case 7U:	active_modes.automatic_right_margin = f; break;	// DECAWM
 		case 12U:
 			if (f) 
 				cursor_attributes |= CursorSprite::BLINK;
@@ -721,14 +925,18 @@ SoftTerm::SetPrivateMode(unsigned int a, bool f)
 				cursor_attributes &= ~CursorSprite::BLINK;
 			UpdateCursorType();
 			break;
-		case 25U:
+		case 25U:	// DECTCEM
 			if (f) 
 				cursor_attributes |= CursorSprite::VISIBLE;
 			else
 				cursor_attributes &= ~CursorSprite::VISIBLE;
 			UpdateCursorType();
 			break;
-		case 117U:	background_colour_erase = f; break;
+		case 67U:	keyboard.SetBackspaceIsBS(f); break	;	// DECBKM
+		case 69U:	active_modes.left_right_margins = f; break;	// DECLRMM
+		case 95U:	no_clear_screen_on_column_change = f; break;	// DECNCSM
+		case 112U:	SetScrollbackBuffer(f); break;			// DECRPL
+		case 117U:	active_modes.background_colour_erase = f; break;	// DECECM
 		case 1U:	// DECCKM (application cursor keys)
 		case 8U:	// DECARM (autorepeat mode)
 		case 66U:	// DECNKM (ancillary keypad numeric mode)
@@ -737,7 +945,6 @@ SoftTerm::SetPrivateMode(unsigned int a, bool f)
 			break;
 		case 4U:	break;	// DECSCLM (slow scroll) is not useful.
 		case 5U:	// DECSCNM (light background) is not implemented.
-		case 6U:	// FIXME \bug DECOM (origin mode) is not implemented.
 		default:
 			std::clog << "Unknown private mode : " << a << "\n";
 			break;
@@ -745,15 +952,111 @@ SoftTerm::SetPrivateMode(unsigned int a, bool f)
 }
 
 void 
-SoftTerm::SendDeviceAttributes()
+SoftTerm::SaveModes()
+{
+	saved_modes = active_modes;
+}
+
+void 
+SoftTerm::RestoreModes()
+{
+	active_modes = saved_modes;
+}
+
+void 
+SoftTerm::SCOSCorDESCSLRM()
+{
+	// SCOSC (SCO console save cursor) is the same control sequence as DECSLRM (DEC VT set left and right margins).
+	// SCOSC is what the Linux and FreeBSD consoles implement and it is listed in the termcap/terminfo entries, so we cannot simply omit it.
+	// This is pretty much the same bodge to solve this as used by xterm.
+	if (active_modes.left_right_margins || argc > 0U)
+		SetLeftRightMargins();
+	else {
+		SaveCursor(); 
+		SaveAttributes(); 
+		SaveModes(); 
+	}
+}
+
+// This control sequence is implemented by the Linux virtual terminal and used by programs such as vim.
+// See Linux/Documentation/VGA-softcursor.txt .
+void 
+SoftTerm::SetLinuxCursorType()
+{
+	if (argc < 1U) return;
+	switch (args[0] & 0x0F) {
+		case 0U:
+			cursor_attributes |= CursorSprite::VISIBLE;
+			cursor_type = CursorSprite::BOX; 
+			break;
+		case 1U:
+			cursor_attributes &= ~CursorSprite::VISIBLE;
+			cursor_type = CursorSprite::UNDERLINE; 
+			break;
+		case 2U:
+			cursor_attributes |= CursorSprite::VISIBLE;
+			cursor_type = CursorSprite::UNDERLINE; 
+			break;
+		case 3U:
+		case 4U:
+		case 5U:
+			cursor_attributes |= CursorSprite::VISIBLE;
+			cursor_type = CursorSprite::BOX; 
+			break;
+		case 6U:
+		default:
+			cursor_attributes |= CursorSprite::VISIBLE;
+			cursor_type = CursorSprite::BLOCK; 
+			break;
+	}
+	UpdateCursorType();
+}
+
+void 
+SoftTerm::SetCursorStyle()
 {
 	for (std::size_t i(0U); i < argc; ++i)
-		switch (intermediate) {
-			case '\0':	SendPrimaryDeviceAttribute (args[i]); break;
-			case '>':	SendSecondaryDeviceAttribute (args[i]); break;
-			case '=':	SendTertiaryDeviceAttribute (args[i]); break;
-			default:	break;
+		switch (args[i]) {
+			case 0U:
+			case 1U:
+				cursor_attributes |= CursorSprite::BLINK;
+				cursor_type = CursorSprite::BLOCK; 
+				break;
+			case 2U:
+				cursor_attributes &= ~CursorSprite::BLINK;
+				cursor_type = CursorSprite::UNDERLINE; 
+				break;
+			case 3U:
+				cursor_attributes |= CursorSprite::BLINK;
+				cursor_type = CursorSprite::BLOCK; 
+				break;
+			case 4U:
+				cursor_attributes &= ~CursorSprite::BLINK;
+				cursor_type = CursorSprite::UNDERLINE; 
+				break;
 		}
+	UpdateCursorType();
+}
+
+void 
+SoftTerm::SendPrimaryDeviceAttributes()
+{
+	for (std::size_t i(0U); i < argc; ++i)
+		SendPrimaryDeviceAttribute (args[i]);
+}
+
+void 
+SoftTerm::SendSecondaryDeviceAttributes()
+{
+	for (std::size_t i(0U); i < argc; ++i)
+		SendSecondaryDeviceAttribute (args[i]);
+}
+
+void 
+SoftTerm::SendTertiaryDeviceAttributes()
+{
+	for (std::size_t i(0U); i < argc; ++i)
+		SendTertiaryDeviceAttribute (args[i]);
 }
 
 static 
@@ -834,11 +1137,14 @@ void
 SoftTerm::SendDeviceStatusReports()
 {
 	for (std::size_t i(0U); i < argc; ++i)
-		switch (intermediate) {
-			case '\0':	SendDeviceStatusReport (args[i]); break;
-			case '?':	SendPrivateDeviceStatusReport (args[i]); break;
-			default:	break;
-		}
+		SendDeviceStatusReport (args[i]);
+}
+
+void 
+SoftTerm::SendPrivateDeviceStatusReports()
+{
+	for (std::size_t i(0U); i < argc; ++i)
+		SendPrivateDeviceStatusReport (args[i]);
 }
 
 static 
@@ -858,7 +1164,7 @@ SoftTerm::SendDeviceStatusReport(unsigned int a)
 		case 6U:
 		{
 			char b[32];
-			const int n(snprintf(b, sizeof b, "%u;%uR", y + 1U, x + 1U));
+			const int n(snprintf(b, sizeof b, "%u;%uR", active_cursor.y + 1U, active_cursor.x + 1U));
 			keyboard.WriteControl1Character(CSI);
 			keyboard.WriteLatin1Characters(n, b); 
 			break;
@@ -903,7 +1209,7 @@ SoftTerm::SendPrivateDeviceStatusReport(unsigned int a)
 		case 6U:
 		{
 			char b[32];
-			const int n(snprintf(b, sizeof b, "%u;%u;1R", y + 1U, x + 1U));
+			const int n(snprintf(b, sizeof b, "%u;%u;1R", active_cursor.y + 1U, active_cursor.x + 1U));
 			keyboard.WriteControl1Character(CSI);
 			keyboard.WriteLatin1Characters(n, b); 
 			break;
@@ -939,9 +1245,9 @@ SoftTerm::IsControl(uint32_t character)
 
 inline
 bool 
-SoftTerm::IsIntermediateOrParameter(uint32_t character)
+SoftTerm::IsParameter(uint32_t character)
 {
-	return character >= 0x20 && character < 0x40;
+	return character >= 0x30 && character < 0x40;
 }
 
 inline
@@ -989,7 +1295,8 @@ SoftTerm::Write(uint32_t character, bool decoder_error, bool overlong)
 			else
 				Escape2(character);
 			break;
-		case CONTROL:
+		case CONTROL1:
+		case CONTROL2:
 			if (decoder_error || overlong)
 				state = NORMAL;
 			else if (overlong) {
@@ -1008,20 +1315,18 @@ SoftTerm::ProcessControlCharacter(uint32_t character)
 {
 	switch (character) {
 		case NUL:	break;
-		case FF:	Home(); ClearDisplay(); break;
 		case BEL:	/* TODO: bell */ std::clog << "TODO: bell\n"; break;
 		case CR:	CarriageReturn(); break;
-		case NEL:	CarriageReturn(); Index(); break;
-		case IND: case LF: case VT:
-				Index(); break;
-		case RI:
-				ReverseIndex(); break;
-		case TAB:	HorizontalTab(1U); break;
-		case BS:	CursorLeft(1U); break;
+		case NEL:	CarriageReturnNoUpdate(); CursorDown(1U, true, scrolling); break;
+		case IND: case LF: case VT: case FF:
+				CursorDown(1U, true, scrolling); break;
+		case RI:	CursorUp(1U, true, scrolling); break;
+		case TAB:	HorizontalTab(1U, true); break;
+		case BS:	CursorLeft(1U, true, false); break;
 		case DEL:	DeleteCharacters(1U); break;
 		case HTS:	SetTabstop(); break;
-		case ESC:	intermediate = '\0'; state = ESCAPE1; break;
-		case CSI:	state = CONTROL; ResetArgs(); break;
+		case ESC:	last_intermediate = '\0'; state = ESCAPE1; break;
+		case CSI:	state = CONTROL1; ResetControlSequence(); break;
 		case CAN:	state = NORMAL; break;
 		case SS2: case SS3: case DCS: case SOS: case ST: case OSC: case PM: case APC:
 				break;	// explicitly unsupported control characters
@@ -1037,15 +1342,20 @@ SoftTerm::Escape1(uint32_t character)
 		// This is known as "7-bit code extension" and is defined for the entire range.
 		ProcessControlCharacter(character + 0x40); 
 	} else if (IsIntermediate(character)) {
-		intermediate = static_cast<char>(character);
+		last_intermediate = static_cast<char>(character);
 		state = ESCAPE2;
 	} else switch (character) {
 		default:	state = NORMAL; break;
-		case '6':	ReverseIndex(); state = NORMAL; break;
-		case '7':	SaveCursor(); SaveAttributes(); state = NORMAL; break;
-		case '8':	RestoreCursor(); RestoreAttributes(); state = NORMAL; break;
-		case '9':	Index(); state = NORMAL; break;
+/* DECBI */	case '6':	CursorLeft(1U, true, true); state = NORMAL; break;
+/* DECSC */	case '7':	SaveCursor(); SaveAttributes(); SaveModes(); state = NORMAL; break;
+/* DECRC */	case '8':	RestoreCursor(); RestoreAttributes(); RestoreModes(); state = NORMAL; break;
+/* DECFI */	case '9':	CursorRight(1U, true, true); state = NORMAL; break;
 		case 'c':	/* TODO: RIS */ std::clog << "TODO: RIS\n"; state = NORMAL; break;
+		case '=':	// DECKPAM (keypad sends application-mode sequences)
+		case '>':	// DECKPNM (keypad sends numeric-mode sequences)
+			// The terminal emulator is entirely decoupled from the physical keyboard; making these meaningless.
+			state = NORMAL; 
+			break;
 	}
 }
 
@@ -1053,21 +1363,21 @@ void
 SoftTerm::Escape2(uint32_t character)
 {
 	if (IsIntermediate(character)) {
-		intermediate = static_cast<char>(character);
+		last_intermediate = static_cast<char>(character);
 	} else {
-		switch (intermediate) {
+		switch (last_intermediate) {
 			default:	break;
 			case ' ':
 				switch (character) {
 					default:	break;
-					case 'F':	keyboard.Set8BitControl1(false); break;
-					case 'G':	keyboard.Set8BitControl1(true); break;
+/* S7C1T */				case 'F':	keyboard.Set8BitControl1(false); break;
+/* S8C1T */				case 'G':	keyboard.Set8BitControl1(true); break;
 				}
 				break;
 			case '#':
 				switch (character) {
 					default:	break;
-					case '8':	ClearDisplay('E'); break;
+/* DECALN */				case '8':	ResetMargins(); Home(); ClearDisplay('E'); break;
 				}
 				break;
 		}
@@ -1078,29 +1388,42 @@ SoftTerm::Escape2(uint32_t character)
 void 
 SoftTerm::ControlSequence(uint32_t character)
 {
-	if (IsIntermediateOrParameter(character)) switch (character) {
+	if (!IsParameter(character))
+		state = CONTROL2;
+	else if (CONTROL1 != state) {
+		std::clog << "Out of sequence CSI parameter character : " << character << "\n";
+		state = NORMAL; 
+	} else switch (character) {
 		// Accumulate digits in arguments.
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
 			seen_arg_digit = true;
 			args[argc] = args[argc] > 999U ? 9999U : args[argc] * 10U + (character - '0');
 			return;
+		// ECMA-48 defines colon as a sub-argument delimiter.
+		// No-one uses it; not even ISO 8613-3 SGR 38/48 sequences.
+		case ':':
+			seen_arg_digit = false;
+			args[argc] = 0U;
+			return;
 		// Arguments may be semi-colon separated.
 		case ';':
 			FinishArg(0U); 
 			return;
-		// Everything else up to U+003F is an intermediate character.
-		// This allows '?' (DEC private) and other flags such as '<' and '>' which aren't strictly speaking intermediate characters.
+		// Everything else up to U+002F is a private parameter character, per ECMA-48 5.4.1.
+		// DEC VTs make use of '<', '=', '>', and '?'.
 		default:
-			if (0 == argc && !seen_arg_digit)
-				intermediate = static_cast<char>(character);
-			else {
-				std::clog << "Misplaced intermediate character in CSI sequence : " << character << "\n";
-				state = NORMAL;
-			}
+			if ('\x00' == first_private_parameter)
+				first_private_parameter = static_cast<char>(character);
 			return;
-
 	}
+
+	// We only reach this point in the CONTROL2 state.
+	if (IsIntermediate(character)) {
+		last_intermediate = static_cast<char>(character);
+		return;
+	}
+
 	// Finish the final argument, using the relevant defaults.
 	switch (character) {
 		case 'c':
@@ -1116,54 +1439,120 @@ SoftTerm::ControlSequence(uint32_t character)
 			if (argc < 2U) FinishArg(1U); 
 			break;
 		case 'r':
-			FinishArg(argc < 1U ? 1U : h); 
-			FinishArg(argc < 2U ? h : 0U); 
+		{
+			const coordinate columns(display_origin.x + display_margin.w);
+			FinishArg(argc < 1U ? 1U : columns); 
+			FinishArg(argc < 2U ? columns : 0U); 
 			break;
+		}
 		default:	
 			FinishArg(1U); 
 			break;
 	}
+
 	// Enact the action.
-	switch (character) {
-		case '@':	InsertCharacters(OneIfZero(SumArgs())); break;
-		case 'A':	CursorUp(OneIfZero(SumArgs())); break;
-		case 'B':	CursorDown(OneIfZero(SumArgs())); break;
-		case 'C':	CursorRight(OneIfZero(SumArgs())); break;
-		case 'D':	CursorLeft(OneIfZero(SumArgs())); break;
-		case 'E':	x = 0; CursorDown(OneIfZero(SumArgs())); break;
-		case 'F':	x = 0; CursorUp(OneIfZero(SumArgs())); break;
-		case 'G':	GotoX(OneIfZero(SumArgs())); break;
-		case 'H':	GotoYX(); break;
-		case 'I':	HorizontalTab(OneIfZero(SumArgs())); break;
-		case 'J':	EraseInDisplay(); break;
-		case 'K':	EraseInLine(); break;
-		case 'L':	InsertLines(OneIfZero(SumArgs())); break;
-		case 'M':	DeleteLines(OneIfZero(SumArgs())); break;
-		case 'P':	DeleteCharacters(OneIfZero(SumArgs())); break;
-		case 'X':	EraseCharacters(OneIfZero(SumArgs())); break;
-		case 'S':	ScrollUp(OneIfZero(SumArgs())); break;
-		case 'T':	ScrollDown(OneIfZero(SumArgs())); break;
-		case 'Z':	BackwardsHorizontalTab(OneIfZero(SumArgs())); break;
-		case '`':	GotoX(OneIfZero(SumArgs())); break;
-		case 'a':	CursorRight(OneIfZero(SumArgs())); break;
-		case 'c':	SendDeviceAttributes(); break;
-		case 'd':	GotoY(OneIfZero(SumArgs())); break;
-		case 'e':	CursorDown(OneIfZero(SumArgs())); break;
-		case 'f':	GotoYX(); break;
-		case 'g':	TabClear(); break;
-		case 'h':	SetModes(true); break;
-		case 'l':	SetModes(false); break;
-		case 'm':	SetAttributes(); break;
-		case 'n':	SendDeviceStatusReports(); break;
-		case 'r':	SetScrollMargins(); break;
-		case 's':	SaveCursor(); break;
-		case 't':	SetLinesPerPage(); break;
-		case 'u':	RestoreCursor(); break;
-		case 'x':	/* TODO: Set colours */ std::clog << "TODO: Set colours\n"; break;
+	if ('\0' == last_intermediate) {
+		if ('\0' == first_private_parameter) switch (character) {
+// ---- ECMA-defined final characters ----
+/* ICH */		case '@':	InsertCharacters(OneIfZero(SumArgs())); break;
+/* CUU */		case 'A':	CursorUp(OneIfZero(SumArgs()), false, false); break;
+/* CUD */		case 'B':	CursorDown(OneIfZero(SumArgs()), false, false); break;
+/* CUF */		case 'C':	CursorRight(OneIfZero(SumArgs()), false, true); break;
+/* CUB */		case 'D':	CursorLeft(OneIfZero(SumArgs()), false, true); break;
+/* CNL */		case 'E':	CarriageReturnNoUpdate(); CursorDown(OneIfZero(SumArgs()), true, false); break;
+/* CPL */		case 'F':	CarriageReturnNoUpdate(); CursorUp(OneIfZero(SumArgs()), true, false); break;
+/* CHA */		case 'G':	GotoX(OneIfZero(SumArgs())); break;
+/* CUP */		case 'H':	GotoYX(); break;
+/* CHT */		case 'I':	HorizontalTab(OneIfZero(SumArgs()), true); break;
+/* ED */		case 'J':	EraseInDisplay(); break;
+/* EK */		case 'K':	EraseInLine(); break;
+/* IL */		case 'L':	InsertLines(OneIfZero(SumArgs())); break;
+/* DL */		case 'M':	DeleteLines(OneIfZero(SumArgs())); break;
+/* EF */		case 'N':	break; // Erase Field has no applicability as there are no fields.
+/* EA */		case 'O':	break; // Erase Area has no applicability as there are no areas.
+/* DCH */		case 'P':	DeleteCharacters(OneIfZero(SumArgs())); break;
+/* SEE */		case 'Q':	break; // Set Editing Extent has no applicability as this is not a block mode terminal.
+/* CPR */		case 'R':	break; // Cursor Position Report is meaningless if received rather than sent.
+			case 'S':	ScrollUp(OneIfZero(SumArgs())); break;	/// FIXME \bug SU is a window pan, not a buffer scroll.
+			case 'T':	ScrollDown(OneIfZero(SumArgs())); break;	/// FIXME \bug SD is a window pan, not a buffer scroll.
+/* NP */		case 'U':	break; // Next Page has no applicability as there are no pages.
+/* PP */		case 'V':	break; // Previous Page has no applicability as there are no pages.
+/* ECH */		case 'X':	EraseCharacters(OneIfZero(SumArgs())); break;
+/* CBT */		case 'Z':	BackwardsHorizontalTab(OneIfZero(SumArgs()), true); break;
+/* HPA */		case '`':	GotoX(OneIfZero(SumArgs())); break;
+/* HPR */		case 'a':	CursorRight(OneIfZero(SumArgs()), true, false); break;
+/* REP */		case 'b':	break; // No-one needs repeat from a virtual terminal.
+/* DA */		case 'c':	SendPrimaryDeviceAttributes(); break;
+/* VPA */		case 'd':	GotoY(OneIfZero(SumArgs())); break;
+/* VPR */		case 'e':	CursorDown(OneIfZero(SumArgs()), true, false); break;
+/* HVP */		case 'f':	GotoYX(); break;
+/* TBC */		case 'g':	TabClear(); break;
+/* SM */		case 'h':	SetModes(true); break;
+/* MC */		case 'i':	break; // Media Copy has no applicability as there are no auxiliary devices.
+/* HPB */		case 'j':	CursorLeft(OneIfZero(SumArgs()), true, false); break;
+/* VPB */		case 'k':	CursorUp(OneIfZero(SumArgs()), true, false); break;
+/* RM */		case 'l':	SetModes(false); break;
+/* SGR */		case 'm':	SetAttributes(); break;
+/* DSR */		case 'n':	SendDeviceStatusReports(); break;
+/* DAQ */		case 'o':	break; // Define Area Qualification has no applicability as this is not a block mode terminal.
+// ---- ECMA private-use final characters begin here. ----
+/* DECSTBM */		case 'r':	SetTopBottomMargins(); break;
+			case 's':	SCOSCorDESCSLRM(); break;
+/* DECSLPP */		case 't':	SetLinesPerPage(); break;
+/* SCORC */		case 'u':	RestoreCursor(); RestoreAttributes(); RestoreModes(); break;
+			case 'x':	/* TODO: Set colours */ std::clog << "TODO: Set colours\n"; break;
+/* CTC */		case 'W':	/* TODO: Cursor Tabulation Control */ std::clog << "TODO: Cursor Tabulation Control\n"; break;
+/* CVT */		case 'Y':	/* TODO: Cursor Line Tabulation */ std::clog << "TODO: Cursor Line Tabulation\n"; break;
+/* SRS */		case '[':	break; // No-one needs reversed strings from a virtual terminal.
+/* PTX */		case '/':	break; // No-one needs parallel texts from a virtual terminal.
+/* SDS */		case ']':	break; // No-one needs directed strings from a virtual terminal.
+/* SIMD */		case '^':	break; // No-one needs implicit movement direction from a virtual terminal.
+			default:	
+				std::clog << "Unknown CSI terminator " << character << "\n";
+				break;
+		} else
+		if ('?' == first_private_parameter) switch (character) {
+			case 'c':	SetLinuxCursorType(); break;
+/* DECSM */		case 'h':	SetPrivateModes(true); break;
+/* DECRM */		case 'l':	SetPrivateModes(false); break;
+/* DECDSR */		case 'n':	SendPrivateDeviceStatusReports(); break;
+			default:	
+				std::clog << "Unknown DEC Private CSI " << first_private_parameter << ' ' << character << "\n";
+				break;
+		} else
+		if ('>' == first_private_parameter) switch (character) {
+/* DECDA2 */		case 'c':	SendSecondaryDeviceAttributes(); break;
+			default:	
+				std::clog << "Unknown DEC Private CSI " << first_private_parameter << ' ' << character << "\n";
+				break;
+		} else
+		if ('=' == first_private_parameter) switch (character) {
+/* DECDA3 */		case 'c':	SendTertiaryDeviceAttributes(); break;
+			default:	
+				std::clog << "Unknown DEC Private CSI " << first_private_parameter << ' ' << character << "\n";
+				break;
+		} else
+			std::clog << "Unknown DEC Private CSI " << first_private_parameter << ' ' << character << "\n";
+	} else
+	if ('$' == last_intermediate) switch (character) {
+/* DECSCPP */	case '|':	SetColumnsPerPage(); break;
 		default:	
-			std::clog << "Unknown CSI terminator : " << character << "\n";
+			std::clog << "Unknown CSI " << last_intermediate << ' ' << character << "\n";
 			break;
-	}
+	} else
+	if ('*' == last_intermediate) switch (character) {
+/* DECSNLS */	case '|':	SetLinesPerPage(); break;
+		default:	
+			std::clog << "Unknown CSI " << last_intermediate << ' ' << character << "\n";
+			break;
+	} else
+	if (' ' == last_intermediate) switch (character) {
+/* DECSCUSR */	case 'q':	SetCursorStyle(); break;
+		default:	
+			std::clog << "Unknown CSI " << last_intermediate << ' ' << character << "\n";
+			break;
+	} else
+		std::clog << "Unknown CSI " << last_intermediate << ' ' << character << "\n";
 	state = NORMAL; 
 }
 
@@ -1182,7 +1571,8 @@ SoftTerm::Print(uint32_t character)
 	) {
 		// Do nothing.
 	} else {
-		const ScreenBuffer::coordinate s(ScreenBuffer::coordinate(w) * y + x);
+		const coordinate columns(display_origin.x + display_margin.w);
+		const ScreenBuffer::coordinate s(columns * active_cursor.y + active_cursor.x);
 		if (UnicodeCategorization::IsMarkEnclosing(character)) {
 			screen.WriteNCells(s, 1U, CharacterCell(character, attributes, foreground, background));
 		} else {

@@ -7,4 +7,4 @@ then
 fi
 
 # Rebuild.
-redo --directory build -- all
+redo --directory build --jobs 2 -- all

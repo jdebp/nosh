@@ -509,6 +509,10 @@ console_ncurses_realizer (
 			if (resize_needed) continue;
 			const int error(errno);
 			if (EINTR == error) continue;
+#if defined(__LINUX__) || defined(__linux__)
+			if (EINVAL == error) continue;	// This works around a Linux bug when an inotify queue overflows.
+			if (0 == error) continue;	// This works around another Linux bug.
+#endif
 			closedown();
 			std::fclose(buffer_file);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "poll", std::strerror(error));

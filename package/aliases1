@@ -54,6 +54,7 @@ service-status	svstat
 session-manager	cyclog
 session-manager	service-manager
 session-manager	system-control
+system-control	convert-fstab-services
 system-control	convert-rcconf-presets
 system-control	convert-systemd-presets
 system-control	convert-systemd-units
@@ -84,4 +85,6 @@ console-terminal-emulator	console-ncurses-realizer
 console-terminal-emulator	console-convert-kbdmap
 console-terminal-emulator	console-fb-realizer
 console-terminal-emulator	console-multiplexor
+console-terminal-emulator	console-resize
 console-terminal-emulator	vc-reset-tty
+console-resize	resizecons

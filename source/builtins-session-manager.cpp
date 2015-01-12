@@ -33,6 +33,7 @@ void show_json ( const char * & , std::vector<const char *> & ) ;
 void status ( const char * & , std::vector<const char *> & ) ;
 void try_restart ( const char * & , std::vector<const char *> & ) ;
 void is_active ( const char * & , std::vector<const char *> & ) ;
+void convert_fstab_services ( const char * & , std::vector<const char *> & ) ;
 void convert_systemd_units ( const char * & , std::vector<const char *> & ) ;
 void convert_systemd_presets ( const char * & , std::vector<const char *> & ) ;
 void convert_rcconf_presets ( const char * & , std::vector<const char *> & ) ;
@@ -87,6 +88,7 @@ commands[] = {
 	{	"condrestart",			try_restart		},
 	{	"force-reload",			try_restart		},
 	{	"is-active",			is_active		},
+	{	"convert-fstab-services",	convert_fstab_services	},
 	{	"convert-systemd-units",	convert_systemd_units	},
 	{	"convert-systemd-presets",	convert_systemd_presets	},
 	{	"convert-rcconf-presets",	convert_rcconf_presets	},
