@@ -10,7 +10,7 @@ Type=forking
 systemdWorkingDirectory=false
 # The import procedure is expected to have populated this directory with nis_client_flags.
 EnvironmentDirectory=env
-ExecStart=sh -c 'exec ypbind ${nis_client_flags}'
+ExecStart=sh -c 'exec %p ${nis_client_flags}'
 Restart=always
 
 [Install]

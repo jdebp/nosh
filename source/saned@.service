@@ -8,6 +8,7 @@ Description=Scanner service
 [Service]
 User=saned
 systemdWorkingDirectory=false
+systemdUserEnvironment=no
 ExecStart=%P
 StandardInput=socket
 Restart=always

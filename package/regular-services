@@ -1,3 +1,4 @@
+kmod@geom_gate:g_gate
 anacron
 atd
 auditd
@@ -13,11 +14,11 @@ dnscache
 dovecot
 epmd
 exim4q
+fail2ban
 fancontrol
 fscd
 ftpproxy
 gssd
-hcsecd
 hastd
 ipxrouted
 keepalived
@@ -27,6 +28,7 @@ moused
 mroute4d
 mroute6d
 mysql
+nagios
 nisdomain
 nmbd
 nscd
@@ -47,7 +49,6 @@ route6d
 rpcbind
 rtsold
 rwhod
-sdpd
 securelevel
 smartd
 smbd

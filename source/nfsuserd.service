@@ -7,7 +7,7 @@ Description=NFS user daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=nfsuserd
+ExecStart=%p
 Restart=always
 
 [Install]

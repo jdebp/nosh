@@ -193,13 +193,11 @@ The weight and slant are encoded via these command-line options, because not
 all supported font formats include meta-information aboud weight and slant
 in the file itself (usually it is encoded in the filename).
 The "vtfont" format does, however.
-It has glyph sets for four different combinations of weight and slant
-(upright, upright bold, italic, and italic bold).
-To load all four sets of glyphs, one can load the font with all four of the
-<arg choice='plain'>--font-medium-r</arg>,
-<arg choice='plain'>--font-medium-i</arg>,
-<arg choice='plain'>--font-bold-r</arg>, and
-<arg choice='plain'>--font-bold-i</arg>
+It has glyph sets for two different combinations of weight and slant
+(upright and upright bold)
+To load both sets of glyphs, one can load the font with the
+<arg choice='plain'>--font-medium-r</arg> and the
+<arg choice='plain'>--font-bold-r</arg>
 command-line options.
 Each option individually loads only those glyphs that match the weight and
 slant that the option specifies, providing fine-grained control of what glyphs
@@ -281,7 +279,7 @@ or "Windows" (Microsoft keyboards) key.
 
 <para>
 The selection class code is first in each entry, and the code values are here
-designated by their UCS32 code points.
+designated by their UCS-4 code points.
 </para>
 
 <variablelist>
@@ -366,7 +364,7 @@ This is used for keys that have no action in the key map.
 <varlistentry>
 <term><code>0x01nnnnnn</code></term>
 <listitem><para>
-UCS24 key.
+UCS-3 key.
 On press or autorepeat,
 a unicode character message for the code point <code>nnnnnn</code> is sent to the input FIFO.
 </para></listitem>
@@ -547,7 +545,7 @@ for why the base, unmodified, key is the PAD_F1 key, not the F1 key.
 <refsection><title>Dead keys</title>
 
 <para>
-So-called "dead" keys are otherwise ordinary UCS24 keys in a keyboard map,
+So-called "dead" keys are otherwise ordinary UCS-3 keys in a keyboard map,
 except that they denote Unicode combining characters; i.e. characters
 in the "Me" ("Mark, Enclosing") and "Mn" ("Mark, Non-spacing") Unicode
 code point categories.

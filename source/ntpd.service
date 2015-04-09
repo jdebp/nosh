@@ -7,7 +7,7 @@ Description=BSD NTP daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=ntpd -n -g -f /var/db/ntpd.drift
+ExecStart=%p -n -g -f /var/db/%p.drift
 Restart=always
 
 [Install]

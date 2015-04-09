@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=IEEE 802.11 authenticator daemon
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=%p
+
+[Install]
+WantedBy=workstation.target

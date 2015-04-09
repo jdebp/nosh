@@ -10,7 +10,7 @@ systemdWorkingDirectory=false
 EnvironmentUser=tinydns-d
 EnvironmentDirectory=./env
 LimitDATA=300000
-ExecStart=tinydns
+ExecStart=%p
 Restart=always
 
 [Install]

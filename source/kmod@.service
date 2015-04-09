@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=kernel module loader for %i
+EarlySupervise=true
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=system-control load-kernel-module %i
+ExecStopPost=system-control unload-kernel-module %i
+RemainAfterExit=yes

@@ -934,6 +934,47 @@ prefix such as <code>ttylogin@</code>, <code>getty@</code>, or
 </itemizedlist>
 
 </refsection>
+<refsection><title>fstab conversion subcommand</title>
+
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">convert-fstab-services</arg>
+<arg>--bundle-root <replaceable>root</replaceable></arg> 
+</cmdsynopsis>
+
+<para>
+This subcommand takes the entries in <filename>/etc/fstab</filename> and
+generates from them a set of service bundles in the current directory (or in
+the 
+<arg choice='plain'><replaceable>root</replaceable></arg>
+directory) that contains scripts, dependencies, and autoboot dependency
+configuration information.
+The bundles are not enabled by the conversion process, but can be started and
+enabled as they stand, with the <command>start</command> and
+<command>preset</command> subcommands, just like any other service bundle.
+</para>
+
+<para>
+For each entry, a
+<filename>mount@<replaceable>directory</replaceable></filename> 
+bundle is always created.
+Where the entry is not marked <code>noauto</code> the bundle is created as
+<filename>wanted-by/</filename> the system <code>local-fs.target</code>,
+so that it is started during autoboot when it is enabled.
+</para>
+
+<para>
+If the entry specifies a "pass" number that is greater than zero, a
+<filename>fsck@<replaceable>directory</replaceable></filename> bundle is
+also created.
+It is ordered <filename>before/</filename> the respective
+<filename>mount@<replaceable>directory</replaceable></filename> bundle, and is
+<filename>wanted-by/</filename> it.
+So when the bundle is enabled <command>fsck</command> is run before the volume
+is actually mounted.
+</para>
+
+</refsection>
 
 <refsection><title>Nagios plug-in subcommand</title>
 
@@ -941,6 +982,7 @@ prefix such as <code>ttylogin@</code>, <code>getty@</code>, or
 <command>system-control</command>
 <arg choice="req">nagios-check-service</arg>
 <arg>--min-seconds <replaceable>seconds</replaceable></arg> 
+<arg choice="opt">--critical-if-below-min</arg>
 <arg choice='req' rep='repeat'><replaceable>name</replaceable></arg>
 </cmdsynopsis>
 
@@ -966,6 +1008,11 @@ seconds it returns a Nagios "WARNING" status and prints a line containing the
 service bundle directory name.
 It does the same if the service is still in the process of being loaded by the
 service manager, or in the starting or stopping states.
+The
+<arg choice="plain">--critical-if-below-min</arg>
+command line option changes the status returned for such up services to
+"CRITICAL", but does not alter the treatment of starting or stopping
+services.
 </para>
 </listitem>
 <listitem>

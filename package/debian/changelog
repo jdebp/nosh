@@ -1,3 +1,18 @@
+nosh (1.13) unstable; urgency=low
+
+  * Fixed a problem with handling "left+right" vt fonts that was being conflated with italic/oblique.
+  * On BSD console-fb-realizer now attempts to maintain the keyboard LED state.  Note that a quirk of VirtualBox, which employs subtle tricks like secret extra keypresses to keep host and guest keyboard lock states in synch, will make it seem like nothing is happening.
+  * SoftTerm now supports RIS and DECSTR.
+  * More cross-platform services: hostapd, kmod@, fail2ban, nagios
+  * More BSD services: bthidd
+  * Added an unload-when-stopped command.
+  * nagios-check-service now has a --critical-if-below-min option.
+  * service-dt-scanner no longer defaults to using input-activated log services.
+  * Added a convert-fstab-services command.
+  * SoftTerm now does VT52x sideways scrolling.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Thu, 09 Apr 2015 19:39:47 +0100
+
 nosh (1.12) unstable; urgency=low
 
   * setuidgid-fromenv now recognizes the GIDLIST environment variable.

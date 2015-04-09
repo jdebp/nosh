@@ -7,7 +7,7 @@ Description=Start TTY login services on all kernel virtual terminals
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=ttylogin-starter
+ExecStart=%P
 Restart=on-failure
 RestartSec=1
 

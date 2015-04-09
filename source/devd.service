@@ -12,7 +12,7 @@ After=local-fs.target
 [Service]
 systemdWorkingDirectory=false
 ExecStartPre=sysctl hw.bus.devctl_disable=0
-ExecStart=devd -d
+ExecStart=%p -d
 ExecStopPost=sysctl hw.bus.devctl_disable=1
 Restart=always
 

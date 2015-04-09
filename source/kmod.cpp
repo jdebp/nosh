@@ -43,6 +43,7 @@ load_kernel_module (
 	}
 
 #if !defined(__LINUX__) && !defined(__linux__)
+	args.insert(args.begin(), "-n");
 	args.insert(args.begin(), "kldload");
 #else
 	args.insert(args.begin(), "modprobe");
@@ -78,8 +79,8 @@ unload_kernel_module (
 #if !defined(__LINUX__) && !defined(__linux__)
 	args.insert(args.begin(), "kldunload");
 #else
-	args.insert(args.begin(), "modprobe");
 	args.insert(args.begin(), "--remove");
+	args.insert(args.begin(), "modprobe");
 #endif
 	next_prog = arg0_of(args);
 }

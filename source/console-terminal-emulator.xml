@@ -53,15 +53,15 @@ It then enters a loop where it simultaneously:
 
 <listitem>
 <para>
-processes all data received from the master side as terminal output, handling
-printing characters, control characters, escape sequences, and control
-sequences.
+processes all data received from the pseudo-terminal master side as terminal
+output, handling printing characters, control characters, escape sequences, and
+control sequences.
 </para>
 </listitem>
 
 <listitem>
 <para>
-processes all input events from the input FIFO, processing window requests and
+processes all input events from the input FIFO, 
 sending terminal character and escape sequences to the master side.
 </para>
 </listitem>
@@ -74,7 +74,7 @@ would set modem control lines on a real serial device to signal hangup because
 the last slave file descriptor is closed) and there are no more received data
 to output.
 At termination, it unlinks the file for the slave side, and erases the display
-as if by a Form Feed.
+as if by a Clear Display control sequence.
 </para>
 
 </refsection>
@@ -207,7 +207,7 @@ The <replaceable>directory</replaceable><filename>/display</filename> file
 begins with a 16-byte header:
 </para>
 <orderedlist>
-<listitem><para>4-byte UCS-32 Byte Order Mark in host byte order.</para></listitem>
+<listitem><para>4-byte UCS-4 Byte Order Mark in host byte order.</para></listitem>
 <listitem><para>2-byte width in host byte order.</para></listitem>
 <listitem><para>2-byte height in host byte order.</para></listitem>
 <listitem><para>2-byte cursor X position in host byte order.</para></listitem>
@@ -228,7 +228,7 @@ That is followed by a series of 16-byte records, one per character cell, contain
 <listitem><para>Background red value byte.</para></listitem>
 <listitem><para>Background green value byte.</para></listitem>
 <listitem><para>Background blue value byte.</para></listitem>
-<listitem><para>4-byte UCS-32 value in host byte order.</para></listitem>
+<listitem><para>4-byte UCS-4 value in host byte order.</para></listitem>
 <listitem><para>Attributes.</para></listitem>
 <listitem><para>Reserved bytes.</para></listitem>
 </orderedlist>
@@ -361,9 +361,27 @@ U+009B or as the two-character sequence U+001B U+005B.
 
 <para>
 Control sequences are multiple-character sequences comprising the CSI character
+followed by parameter characters in the range U+0030 to U+003F
 followed optionally by an intermediate character in the range U+0020 to U+002F
-followed by up to 16 digit sequences separated by semi-colons (<code>;</code>)
 and terminated by a single final character in the range U+0040 to U+007E.
+</para>
+
+<para>
+The parameter characters are normally the digits and semi-colon (U+003B),
+comprising up to 16 semi-colon separated digit sequences, with an initial
+character in the range U+003C to U+003F denoting a DEC vendor-private control
+sequence that is an extension to ECMA-48.
+ECMA-48 defines colon (U+003A) as a sub-parameter separator, but no control
+sequence recognized by the terminal emulator makes use of this and all leading
+sequences of sub-parameters in any parameter are simply ignored.
+More than 16 parameters simply causes leading parameters to be discarded.
+As an extension to DEC, the terminal allows vendor-private characters anywhere
+in the parameter character sequence, rather than only in the initial position,
+ignoring all but the last one.  
+However, this is largely to simplify implementation and should not be relied upon.
+</para>
+
+<para>
 The digit sequences are parameters to the action, and zero-length digit sequences are
 a parameter with the value zero.
 In most cases, a control sequence with N parameters is equivalent to N such control
@@ -384,12 +402,26 @@ foreground and background colours.
 </para>
 
 <para>
-The ANSI colour attributes set by the attribute-set control sequence map from 
+The ANSI colour attributes set by the SGR control sequence map from 
 the 3-bit RGB ANSI colours to 24-bit RGB using 255 for a 1 bit and 0 for a 0 bit.
-The terminal emulator also supports the xterm 256-colour extension, providing
-the conventional mapping of 16 "standard" colours, a 24 value grayscale, and
-a 6 by 6 by 6 colour cube.
+The terminal emulator also supports the ISO 8613-6 SGR colour extensions, that
+are often misattributed to xterm:
 </para>
+<itemizedlist>
+<listitem>
+<para>
+The indexed colour extension (SGR 38:5 and SGR 48:5) has the conventional
+mapping of 16 "standard" colours, a 24 value grayscale, and a 6 by 6 by 6
+colour cube.
+</para>
+</listitem>
+<listitem>
+<para>
+The RGB direct colour extension (SGR 38:2 and SGR 48:2) simply sets the 24-bit
+RGB values directly.
+</para>
+</listitem>
+</itemizedlist>
 
 <para>
 When characters or lines are deleted, or characters or lines or the screen
@@ -490,7 +522,7 @@ of the remainder of the message.
 <term><code>0x01cccccc</code></term>
 <listitem> <para>
 Unicode character.  
-The UCS32 code point is <code>cccccc</code>,
+The UCS-4 code point is <code>cccccc</code>,
 This is UTF-8 encoded and sent through to the terminal line discipline as terminal input.
 </para></listitem>
 </varlistentry>
@@ -709,6 +741,28 @@ emulator, have this mechanism.
 This is largely undocumented behaviour, but it is behaviour that many programs
 (including the prompt display of the Z Shell, for example) rely upon.
 So it is implemented here.
+</para>
+
+<para>
+ECMA-48 permits parameters to CSI control sequence to comprise sequences
+of sub-parameters separated by colons, meaning that a full parameter list
+is a semi-colon separated sequence of colon-separated subsequences.
+ISO 8613-6 SGR colour extensions were intended to make use of this
+mechanism, with colour values being encoded as sub-parameters behind a
+leading 38 or 48 sub-parameter.
+That standard explicitly states in section 13.1.8 that "Pe" values are
+separated by character "3/10" (i.e. U+003A).
+This would have resulted in SGR sequences that were unambiguous, since it
+would not be possible to mistake a sub-parameter specifying a colour value
+for an SGR attribute code:
+CSI <code>1;4;38:5:14;48:2:3:7:224m</code>.
+A long-standing misunderstanding/misreading on the parts of many people has
+led, however, to most programs (from terminfo to the Linux kernel terminal
+emulator) sending and expecting semi-colons instead of colons, leading to
+ambiguous SGR sequences:
+CSI <code>1;4;38;5;14;48;2;3;7;224m</code>.
+For compatibility, the terminal emulator has to do the same; even though it
+would be good to fix this 20-year-old bug.
 </para>
 
 </refsection>

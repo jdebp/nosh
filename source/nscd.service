@@ -9,7 +9,7 @@ Description=nsswitch caching service
 systemdWorkingDirectory=false
 # The import procedure is expected to have populated this directory with nscd_flags.
 EnvironmentFile=env
-ExecStart=sh -c 'exec nscd -n $(nscd_flags}'
+ExecStart=sh -c 'exec %p -n $(%p_flags}'
 Restart=always
 
 [Install]

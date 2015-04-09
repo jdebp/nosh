@@ -7,7 +7,7 @@ Description=BSD PBI daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=pbid
+ExecStart=%p
 Restart=always
 
 [Install]

@@ -8,6 +8,7 @@ Before=ttylogin@%i-tty.service
 
 [Service]
 systemdWorkingDirectory=false
+systemdUserEnvironment=no
 User=daemon
 Group=tty
 ExecStart=pty-get-tty console-terminal-emulator /run/dev/%I

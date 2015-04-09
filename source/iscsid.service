@@ -4,12 +4,13 @@
 
 [Unit]
 Description=iSCSI initiator daemon
+Wants=kmod@iscsi
+After=kmod@iscsi
 
 [Service]
 systemdWorkingDirectory=false
-ExecStartPre=kldload -n iscsi
 # iscsid needs a proper option for telling it not to fork.  Until it has, this will have to do.
-ExecStart=iscsid -d
+ExecStart=%p -d
 
 [Install]
 WantedBy=server.target

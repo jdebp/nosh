@@ -7,7 +7,7 @@ Description=RARP service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=rarpd -d -f -a
+ExecStart=%p -d -f -a
 Restart=always
 
 [Install]

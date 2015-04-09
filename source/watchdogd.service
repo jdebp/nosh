@@ -7,7 +7,7 @@ Description=BSD kernel watchdog daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=watchdogd -d
+ExecStart=%p -d
 Restart=always
 
 [Install]

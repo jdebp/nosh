@@ -8,7 +8,7 @@ Description=fan control daemon
 [Service]
 Type=forking
 systemdWorkingDirectory=false
-ExecStart=fancontrol
+ExecStart=%p
 Restart=always
 
 [Install]

@@ -1,0 +1,21 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD accounting service
+
+[Service]
+# Marking this as oneshot means that it doesn't enter the "running" state until the accton command has exited.
+Type=oneshot
+systemdWorkingDirectory=false
+ExecStartPre=mkdir -p -m 0755 /var/account
+ExecStartPre=touch /var/account/acct
+ExecStartPre=chmod 0644 /var/account/acct
+ExecStart=accton /var/account/acct
+ExecStopPost=accton
+RemainAfterExit=yes
+Restart=always
+
+[Install]
+WantedBy=workstation.target

@@ -7,7 +7,7 @@ Description=Tool to automatically collect and submit crash signatures
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=kerneloops --nodaemon
+ExecStart=%p --nodaemon
 Restart=always
 
 [Install]

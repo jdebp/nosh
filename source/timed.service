@@ -7,7 +7,7 @@ Description=time daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=timed
+ExecStart=%p
 Restart=always
 
 [Install]

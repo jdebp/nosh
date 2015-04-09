@@ -6,6 +6,8 @@
 Description=MongoDB database server daemon
 
 [Service]
+systemdWorkingDirectory=false
+systemdUserEnvironment=no
 User=mongodb
 ExecStart=mongod
 Restart=always

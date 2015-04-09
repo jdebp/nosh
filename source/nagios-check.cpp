@@ -204,10 +204,13 @@ nagios_check (
 	std::vector<const char *> & args
 ) {
 	const char * prog(basename_of(args[0]));
+	bool critical_if_below_min(false);
 	try {
 		popt::unsigned_number_definition min_seconds_option('s', "min-seconds", "seconds", "Specify the minimum number of seconds for a service to be running.", min_seconds, 0);
+		popt::bool_definition critical_if_below_min_option('\0', "critical-if-below-min", "Being below the minimum number of seconds is a critical failure.", critical_if_below_min);
 		popt::definition * main_table[] = {
-			&min_seconds_option
+			&min_seconds_option,
+			&critical_if_below_min_option
 		};
 		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "service(s)...");
 
@@ -242,7 +245,7 @@ nagios_check (
 	print("stopped", stopped, rc, EXIT_NAGIOS_CRITICAL);
 	print("failed/restarting", failed, rc, EXIT_NAGIOS_CRITICAL);
 	print("still loading", loading, rc, EXIT_NAGIOS_WARNING);
-	print("below minimum runtime", below_min_seconds, rc, EXIT_NAGIOS_WARNING);
+	print("below minimum runtime", below_min_seconds, rc, critical_if_below_min ? EXIT_NAGIOS_CRITICAL : EXIT_NAGIOS_WARNING);
 	print("disabled", disabled, rc, EXIT_NAGIOS_OK);
 	if (EXIT_NAGIOS_OK == rc && disabled.empty())
 		std::fprintf(stdout, "OK\n");

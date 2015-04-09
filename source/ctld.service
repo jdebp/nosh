@@ -4,12 +4,13 @@
 
 [Unit]
 Description=CAM Target Layer/iSCSI target daemon
+Wants=kmod@ctl
+After=kmod@ctl
 
 [Service]
 systemdWorkingDirectory=false
-ExecStartPre=kldload -n ctl
 # ctld needs a proper option for telling it not to fork.  Until it has, this will have to do.
-ExecStart=ctld -d
+ExecStart=%p -d
 Restart=always
 
 [Install]

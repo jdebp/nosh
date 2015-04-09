@@ -38,12 +38,12 @@ service_is_up (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_USAGE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	if (1 != args.size()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "One directory name is required.");
-		throw EXIT_USAGE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	const char * name(args[0]);

@@ -10,7 +10,7 @@ EarlySupervise=true
 [Service]
 Umask=0022
 systemdWorkingDirectory=false
-ExecStart=fdredir --write 1 /run/dmesg.boot dmesg
+ExecStart=fdredir --write 1 /run/dmesg.boot %p
 RemainAfterExit=yes
 
 [Install]

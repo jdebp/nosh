@@ -7,7 +7,7 @@ Description=NFS client side callback daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=nfscbd
+ExecStart=%p
 Restart=always
 
 [Install]

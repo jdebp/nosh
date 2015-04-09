@@ -98,6 +98,7 @@ static
 void
 create_link (
 	const char * prog,
+	const char * name,
 	int bundle_dir_fd,
 	const std::string & target,
 	const std::string & link
@@ -105,11 +106,11 @@ create_link (
 	if (0 > unlinkat(bundle_dir_fd, link.c_str(), 0)) {
 		const int error(errno);
 		if (ENOENT != error)
-			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, link.c_str(), std::strerror(error));
+			std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, name, link.c_str(), std::strerror(error));
 	}
 	if (0 > symlinkat(target.c_str(), bundle_dir_fd, link.c_str())) {
 		const int error(errno);
-		std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, link.c_str(), std::strerror(error));
+		std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, name, link.c_str(), std::strerror(error));
 	}
 }
 
@@ -117,6 +118,7 @@ static
 void
 create_links (
 	const char * prog,
+	const char * bund,
 	int bundle_dir_fd,
 	const std::string & names,
 	const std::string & subdir
@@ -137,7 +139,7 @@ create_links (
 			target = "/var/sv/" + name;
 			link = subdir + name;
 		}
-		create_link(prog, bundle_dir_fd, target, link);
+		create_link(prog, bund, bundle_dir_fd, target, link);
 	}
 }
 
@@ -145,10 +147,11 @@ static
 void
 make_default_dependencies (
 	const char * prog,
+	const char * name,
 	const int bundle_dir_fd
 ) {
-	create_links(prog, bundle_dir_fd, "shutdown.target", "before/");
-	create_links(prog, bundle_dir_fd, "shutdown.target", "stopped-by/");
+	create_links(prog, name, bundle_dir_fd, "shutdown.target", "before/");
+	create_links(prog, name, bundle_dir_fd, "shutdown.target", "stopped-by/");
 }
 
 static
@@ -205,7 +208,7 @@ convert_fstab_services (
 	std::vector<const char *> & args
 ) {
 	const char * prog(basename_of(args[0]));
-	const char * bundle_root("/run/sv");
+	const char * bundle_root(0);
 	bool overwrite(false);
 	try {
 		popt::bool_definition overwrite_option('o', "overwrite", "Update/overwrite an existing service bundle.", overwrite);
@@ -235,7 +238,10 @@ convert_fstab_services (
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Unable to open fstab database.");
 		throw static_cast<int>(EXIT_TEMPORARY_FAILURE);
 	}
-	mkdirat(AT_FDCWD, bundle_root, 0755);
+	if (bundle_root)
+		mkdirat(AT_FDCWD, bundle_root, 0755);
+	else
+		bundle_root = ".";
 	const FileDescriptorOwner bundle_root_fd(open_dir_at(AT_FDCWD, bundle_root));
 	if (0 > bundle_root_fd.get()) {
 		const int error(errno);
@@ -248,6 +254,7 @@ convert_fstab_services (
 		const char * fstype(entry->fs_vfstype);
 		const char * options(entry->fs_mntops);
 		const char * type(entry->fs_type);
+		const bool fsck(entry->fs_passno > 0);
 
 		if (!what || !where) continue;
 
@@ -257,96 +264,105 @@ convert_fstab_services (
 		&&  (0 != std::strcmp(type, "ro"))
 		) continue;
 
-		const std::string mount_bundle_dirname("mount@" + escape(where));
 		const std::string fsck_bundle_dirname("fsck@" + escape(where));
+		const std::string mount_bundle_dirname("mount@" + escape(where));
 
-		if (0 > mkdirat(bundle_root_fd.get(), mount_bundle_dirname.c_str(), 0755)) {
-			const int error(errno);
-			if (EEXIST != error || !overwrite) {
-				std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, bundle_root, mount_bundle_dirname.c_str(), std::strerror(error));
-				continue;
+		if (fsck) {
+			if (0 > mkdirat(bundle_root_fd.get(), fsck_bundle_dirname.c_str(), 0755)) {
+				const int error(errno);
+				if (EEXIST != error || !overwrite) {
+					std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, bundle_root, fsck_bundle_dirname.c_str(), std::strerror(error));
+					continue;
+				}
 			}
-		}
-		if (0 > mkdirat(bundle_root_fd.get(), fsck_bundle_dirname.c_str(), 0755)) {
-			const int error(errno);
-			if (EEXIST != error || !overwrite) {
-				std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, bundle_root, fsck_bundle_dirname.c_str(), std::strerror(error));
-				continue;
+
+			const FileDescriptorOwner fsck_bundle_dir_fd(open_dir_at(bundle_root_fd.get(), fsck_bundle_dirname.c_str()));
+			if (0 > fsck_bundle_dir_fd.get()) {
+				const int error(errno);
+				std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, bundle_root, fsck_bundle_dirname.c_str(), std::strerror(error));
+				throw EXIT_FAILURE;
 			}
-		}
 
-		const FileDescriptorOwner mount_bundle_dir_fd(open_dir_at(bundle_root_fd.get(), mount_bundle_dirname.c_str()));
-		if (0 > mount_bundle_dir_fd.get()) {
-			const int error(errno);
-			std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, bundle_root, mount_bundle_dirname.c_str(), std::strerror(error));
-			throw EXIT_FAILURE;
-		}
-		const FileDescriptorOwner fsck_bundle_dir_fd(open_dir_at(bundle_root_fd.get(), fsck_bundle_dirname.c_str()));
-		if (0 > fsck_bundle_dir_fd.get()) {
-			const int error(errno);
-			std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, bundle_root, fsck_bundle_dirname.c_str(), std::strerror(error));
-			throw EXIT_FAILURE;
-		}
+			const std::string bundle_fullname(bundle_root + ("/" + fsck_bundle_dirname));
 
-		make_service(mount_bundle_dir_fd.get());
-		make_service(fsck_bundle_dir_fd.get());
-		make_orderings_and_relations(mount_bundle_dir_fd.get());
-		make_orderings_and_relations(fsck_bundle_dir_fd.get());
-		make_default_dependencies(prog, mount_bundle_dir_fd.get());
-		make_default_dependencies(prog, fsck_bundle_dir_fd.get());
-		create_link(prog, mount_bundle_dir_fd.get(), bundle_root + ("/" + mount_bundle_dirname), "stopped-by/shutdown/conflicts/" + mount_bundle_dirname);
-		create_link(prog, fsck_bundle_dir_fd.get(), bundle_root + ("/" + fsck_bundle_dirname), "stopped-by/shutdown/conflicts/" + fsck_bundle_dirname);
-		create_link(prog, mount_bundle_dir_fd.get(), bundle_root + ("/" + mount_bundle_dirname), "stopped-by/shutdown/after/" + mount_bundle_dirname);
-		create_link(prog, fsck_bundle_dir_fd.get(), bundle_root + ("/" + fsck_bundle_dirname), "stopped-by/shutdown/after/" + fsck_bundle_dirname);
-		make_run_and_restart(prog, bundle_root + ("/" + mount_bundle_dirname) + "/service", "true");
-		make_run_and_restart(prog, bundle_root + ("/" + fsck_bundle_dirname) + "/service", "false");
+			make_service(fsck_bundle_dir_fd.get());
+			make_orderings_and_relations(fsck_bundle_dir_fd.get());
+			make_default_dependencies(prog, fsck_bundle_dirname.c_str(), fsck_bundle_dir_fd.get());
+			make_run_and_restart(prog, bundle_fullname + "/service", "false");
 
-		std::ofstream mount_start, mount_stop;
-		open(prog, mount_start, bundle_root + ("/" + mount_bundle_dirname) + "/service/start");
-		open(prog, mount_stop, bundle_root + ("/" + mount_bundle_dirname) + "/service/stop");
-		std::ofstream fsck_start, fsck_stop;
-		open(prog, fsck_start, bundle_root + ("/" + fsck_bundle_dirname) + "/service/start");
-		open(prog, fsck_stop, bundle_root + ("/" + fsck_bundle_dirname) + "/service/stop");
+			create_link(prog, fsck_bundle_dirname.c_str(), fsck_bundle_dir_fd.get(), "../../" + mount_bundle_dirname, "before/" + mount_bundle_dirname);
+			create_link(prog, fsck_bundle_dirname.c_str(), fsck_bundle_dir_fd.get(), "../../" + mount_bundle_dirname, "wanted-by/" + mount_bundle_dirname);
 
-		const std::list<std::string> mount_options(split_options(options));
+			create_link(prog, fsck_bundle_dirname.c_str(), fsck_bundle_dir_fd.get(), "/run/system-manager/early-supervise/" + fsck_bundle_dirname, "supervise");
 
-		create_link(prog, fsck_bundle_dir_fd.get(), "../../" + mount_bundle_dirname, "before/" + mount_bundle_dirname);
-		create_link(prog, fsck_bundle_dir_fd.get(), "../../" + mount_bundle_dirname, "wanted-by/" + mount_bundle_dirname);
-		create_link(prog, fsck_bundle_dir_fd.get(), bundle_root + ("/" + mount_bundle_dirname), "wanted-by/" + mount_bundle_dirname + "/wants/" + fsck_bundle_dirname);
-		if (!has_option(mount_options, "noauto")) {
-			create_links(prog, mount_bundle_dir_fd.get(), "local-fs.target", "wanted-by/");
-			create_link(prog, mount_bundle_dir_fd.get(), bundle_root + ("/" + mount_bundle_dirname), "wanted-by/local-fs/wants/" + mount_bundle_dirname);
-		}
+			std::ofstream fsck_start, fsck_stop;
+			open(prog, fsck_start, bundle_fullname + "/service/start");
+			open(prog, fsck_stop, bundle_fullname + "/service/stop");
 
-		mount_start 
-			<< "#!/bin/nosh\n" 
-			<< multi_line_comment("Start mount " + quote(what) + " " + quote(where) + ".")
-			<< "mount\n";
-		if (fstype) mount_start << "-t " << quote(fstype) << "\n";
-		if (options) mount_start << "-o " << quote(options) << "\n";
-		mount_start << quote(what) << "\n" << quote(where) << "\n";
-
-		mount_stop 
-			<< "#!/bin/nosh\n" 
-			<< multi_line_comment("Stop mount " + quote(what) + " " + quote(where) + ".")
-			<< "umount\n";
-		mount_stop << quote(where) << "\n";
-
-		fsck_start 
-			<< "#!/bin/nosh\n" 
-			<< multi_line_comment("Start fsck " + quote(what) + ".")
-			<< "fsck\n"
+			fsck_start 
+				<< "#!/bin/nosh\n" 
+				<< multi_line_comment("Start fsck " + quote(what) + ".")
+				<< "fsck\n"
 #if defined(__LINUX__) || defined(__linux__)
-			"-p # preen mode\n"
+				"-p # preen mode\n"
 #else
-			"-C # Skip if clean.\n-p # preen mode\n"
+				"-C # Skip if clean.\n-p # preen mode\n"
 #endif
-			<< quote(what) << "\n";
+				<< quote(what) << "\n";
 
-		fsck_stop 
-			<< "#!/bin/nosh\n" 
-			<< multi_line_comment("Stop fsck " + quote(what) + ".")
-			<< "true\n";
+			fsck_stop 
+				<< "#!/bin/nosh\n" 
+				<< multi_line_comment("Stop fsck " + quote(what) + ".")
+				<< "true\n";
+		}
+		{
+			if (0 > mkdirat(bundle_root_fd.get(), mount_bundle_dirname.c_str(), 0755)) {
+				const int error(errno);
+				if (EEXIST != error || !overwrite) {
+					std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, bundle_root, mount_bundle_dirname.c_str(), std::strerror(error));
+					continue;
+				}
+			}
+
+			const FileDescriptorOwner mount_bundle_dir_fd(open_dir_at(bundle_root_fd.get(), mount_bundle_dirname.c_str()));
+			if (0 > mount_bundle_dir_fd.get()) {
+				const int error(errno);
+				std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, bundle_root, mount_bundle_dirname.c_str(), std::strerror(error));
+				throw EXIT_FAILURE;
+			}
+
+			const std::string bundle_fullname(bundle_root + ("/" + mount_bundle_dirname));
+
+			make_service(mount_bundle_dir_fd.get());
+			make_orderings_and_relations(mount_bundle_dir_fd.get());
+			make_default_dependencies(prog, mount_bundle_dirname.c_str(), mount_bundle_dir_fd.get());
+			make_run_and_restart(prog, bundle_fullname + "/service", "true");
+
+			const std::list<std::string> mount_options(split_options(options));
+
+			if (!has_option(mount_options, "noauto"))
+				create_links(prog, mount_bundle_dirname.c_str(), mount_bundle_dir_fd.get(), "local-fs.target", "wanted-by/");
+
+			create_link(prog, mount_bundle_dirname.c_str(), mount_bundle_dir_fd.get(), "/run/system-manager/early-supervise/" + mount_bundle_dirname, "supervise");
+
+			std::ofstream mount_start, mount_stop;
+			open(prog, mount_start, bundle_fullname + "/service/start");
+			open(prog, mount_stop, bundle_fullname + "/service/stop");
+
+			mount_start 
+				<< "#!/bin/nosh\n" 
+				<< multi_line_comment("Start mount " + quote(what) + " " + quote(where) + ".")
+				<< "mount\n";
+			if (fstype) mount_start << "-t " << quote(fstype) << "\n";
+			if (options) mount_start << "-o " << quote(options) << "\n";
+			mount_start << quote(what) << "\n" << quote(where) << "\n";
+
+			mount_stop 
+				<< "#!/bin/nosh\n" 
+				<< multi_line_comment("Stop mount " + quote(what) + " " + quote(where) + ".")
+				<< "umount\n";
+			mount_stop << quote(where) << "\n";
+		}
 	}
 	endfsent();
 

@@ -7,7 +7,7 @@ Description=Deferred execution scheduler
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=atd -f
+ExecStart=%p -f
 Restart=always
 
 [Install]

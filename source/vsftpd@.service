@@ -9,7 +9,7 @@ Description=FTP service over IP4 using vsftp
 systemdWorkingDirectory=false
 LimitData=300000
 User=vsftpd
-ExecStart=/var/vsftpd/bin/vsftpd
+ExecStart=/var/vsftpd/bin/%p
 Restart=always
 
 [Install]

@@ -9,7 +9,7 @@ After=rpcbind.service ypset.service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=keyserv
+ExecStart=%p
 Restart=always
 
 [Install]

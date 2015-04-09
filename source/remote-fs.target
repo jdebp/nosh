@@ -9,6 +9,8 @@ EarlySupervise=true
 Before=shutdown.target
 
 [Service]
+systemdWorkingDirectory=false
+systemdUserEnvironment=no
 User=nobody
 systemdWorkingDirectory=false
 # This is a pseudo-daemon that does not have a running process.

@@ -8,7 +8,7 @@ Description=line printer service
 [Service]
 systemdWorkingDirectory=false
 ExecStartPre=chkprintcap
-ExecStart=lpd
+ExecStart=%p
 Restart=always
 
 [Install]

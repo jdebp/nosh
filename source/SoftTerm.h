@@ -52,7 +52,8 @@ protected:
 	unsigned int args[16];
 	bool seen_arg_digit;
 	char first_private_parameter, last_intermediate;
-	bool tab_pins[256];
+	bool h_tab_pins[256];
+	bool v_tab_pins[256];
 	enum { NORMAL, ESCAPE1, ESCAPE2, CONTROL1, CONTROL2 } state;
 	bool scrolling, overstrike;
 	struct mode {
@@ -94,6 +95,9 @@ protected:
 		APC = 0x9f,
 	};
 
+	void ResetToInitialState();
+	void SoftReset();
+
 	void Resize(coordinate columns, coordinate rows);
 	void UpdateCursorPos();
 	void UpdateCursorType();
@@ -114,19 +118,26 @@ protected:
 	void FinishArg(unsigned int d);
 	coordinate SumArgs();
 
-	void SetTabstop();
-	void TabClear();
-	void ClearAllTabstops();
-	bool IsTabstopAt(coordinate p) { return tab_pins[p % (sizeof tab_pins/sizeof *tab_pins)]; }
-	void SetTabstopAt(coordinate p, bool v) { tab_pins[p % (sizeof tab_pins/sizeof *tab_pins)] = v; }
+	void SetHorizontalTabstop();
+	void ClearAllHorizontalTabstops();
+	void ClearAllVerticalTabstops();
 	void HorizontalTab(coordinate n, bool);
 	void BackwardsHorizontalTab(coordinate n, bool);
+	void VerticalTab(coordinate n, bool);
+	void TabControl();
+	void TabClear();
+
+	bool IsVerticalTabstopAt(coordinate p) { return v_tab_pins[p % (sizeof v_tab_pins/sizeof *v_tab_pins)]; }
+	void SetVerticalTabstopAt(coordinate p, bool v) { v_tab_pins[p % (sizeof v_tab_pins/sizeof *v_tab_pins)] = v; }
+	bool IsHorizontalTabstopAt(coordinate p) { return h_tab_pins[p % (sizeof h_tab_pins/sizeof *h_tab_pins)]; }
+	void SetHorizontalTabstopAt(coordinate p, bool v) { h_tab_pins[p % (sizeof h_tab_pins/sizeof *h_tab_pins)] = v; }
 
 	void SetModes(bool);
 	void SetMode(unsigned int, bool);
 	void SetPrivateModes(bool);
 	void SetPrivateMode(unsigned int, bool);
 	void SetAttributes();
+	void SGR0();
 	void SCOSCorDESCSLRM();
 	void SendPrimaryDeviceAttributes();
 	void SendSecondaryDeviceAttributes();
@@ -169,6 +180,8 @@ protected:
 	void InsertLines(coordinate);
 	void DeleteLinesInScrollAreaAt(coordinate, coordinate);
 	void InsertLinesInScrollAreaAt(coordinate, coordinate);
+	void DeleteColumnsInScrollAreaAt(coordinate, coordinate);
+	void InsertColumnsInScrollAreaAt(coordinate, coordinate);
 
 	void GotoYX();
 	void SaveCursor();

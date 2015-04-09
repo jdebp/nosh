@@ -392,7 +392,8 @@ static
 const struct bsd_kbdmap_item {
 	uint32_t action;
 	const char * name;
-} bsd_actions[]= {
+} 
+bsd_actions[]= {
 	{	NOOP(1),				"nop"		},	// This is not actually in the BSD doco; but it is in lots of keymap files.
 	{	UCSA(0x00),				"nul"		},
 	{	UCSA(0x01),				"soh"		},
@@ -475,6 +476,9 @@ const struct bsd_kbdmap_item {
 	{	LOCK(KBDMAP_MODIFIER_SCROLL),		"slock"		},
 	{	EXTE(EXTENDED_KEY_BACKTAB),		"btab"		},
 	{	EXTE(EXTENDED_KEY_BACKSPACE),		"bspace"	},	// This is an extension to the BSD format that allows use of the DEC VT switchable backspace mechanism.
+	{	MMNT(KBDMAP_MODIFIER_1ST_GROUP2),	"g2shift"	},	// This is an extension to the BSD format that allows group 2 shift.
+	{	LTCH(KBDMAP_MODIFIER_1ST_GROUP2),	"g2latch"	},	// This is an extension to the BSD format that allows group 2 latch.
+	{	LOCK(KBDMAP_MODIFIER_1ST_GROUP2),	"g2lock"	},	// This is an extension to the BSD format that allows group 2 lock.
 	{	CONS(CONSUMER_KEY_NEXT_TASK),		"nscr"		},
 	{	CONS(CONSUMER_KEY_PREVIOUS_TASK),	"pscr"		},
 	{	CONS(CONSUMER_KEY_LOCK),		"saver"		},

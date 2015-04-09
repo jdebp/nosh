@@ -130,13 +130,19 @@ entries ( const bsd_vtfont_header & header, unsigned int n )
 }
 
 static inline
+bool
+has_right ( const bsd_vtfont_header & header, unsigned int n )
+{
+	return entries(header, n + 1U) > 0U;
+}
+
+static inline
 void
 LoadFont (
 	const char * prog,
 	CombinedFont & font,
 	CombinedFont::Font::Weight weight,
 	CombinedFont::Font::Slant slant,
-	unsigned vtfont_index,
 	const char * name
 ) {
 	FileDescriptorOwner font_fd(open_read_at(AT_FDCWD, name));
@@ -152,27 +158,68 @@ bad_file:
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
+
 	bsd_vtfont_header header;
 	if (0 > pread(font_fd.get(), header, 0U)) goto bad_file;
-	if (good(header)) {
-		if (appropriate(header)) {
-			if (CombinedFont::FileFont * f = font.AddFileFont(font_fd.release(), weight, slant, header.height, header.width)) {
-				bsd_vtfont_map_entry me;
-				const off_t start(f->GlyphOffset(header.glyphs) + sizeof me * skipped_entries(header, vtfont_index));
-				for (unsigned c(0U); c < entries(header, vtfont_index); ++c) {
-					if (0 > pread(f->get(), me, start + c * sizeof me)) goto bad_file;
-					f->AddMapping(me.character, me.glyph, me.count + 1U);
-				}
-			}
-		} else {
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, "Not an appropriately sized font");
-			throw EXIT_FAILURE;
-		}
-	} else {
+	if (!good(header)) {
 		void * const base(mmap(0, t.st_size, PROT_READ, MAP_SHARED, font_fd.get(), 0));
 		if (MAP_FAILED == base) goto bad_file;
 		if (CombinedFont::MemoryMappedFont * f = font.AddMemoryMappedFont(weight, slant, 8U, 8U, base, t.st_size, 0U))
 			f->AddMapping(0x00000000, 0U, t.st_size / 8U);
+		return;
+	} else 
+	if (!appropriate(header)) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, "Not an appropriately sized font");
+		throw EXIT_FAILURE;
+	} else
+	if (CombinedFont::Font::UPRIGHT != slant) 
+		return;
+
+	unsigned vtfont_index; 
+	switch (weight) {
+		case CombinedFont::Font::MEDIUM:	vtfont_index = 0U; break;
+		case CombinedFont::Font::BOLD:		vtfont_index = 2U; break;
+		case CombinedFont::Font::LIGHT:
+		case CombinedFont::Font::DEMIBOLD:
+		case CombinedFont::Font::BLACK:
+		default:
+			return;
+	}
+
+	if (header.height <= 8U && header.width <= 8U) {
+		if (CombinedFont::SmallFileFont * f = font.AddSmallFileFont(font_fd.release(), weight, slant, header.height, header.width)) {
+			bsd_vtfont_map_entry me;
+			const off_t start(f->GlyphOffset(header.glyphs) + sizeof me * skipped_entries(header, vtfont_index));
+			for (unsigned c(0U); c < entries(header, vtfont_index); ++c) {
+				if (0 > pread(f->get(), me, start + c * sizeof me)) goto bad_file;
+				f->AddMapping(me.character, me.glyph, me.count + 1U);
+			}
+		}
+	} else
+	if (header.width > 8U || !has_right(header, vtfont_index)) {
+		if (CombinedFont::LeftFileFont * f = font.AddLeftFileFont(font_fd.release(), weight, slant, header.height, header.width)) {
+			bsd_vtfont_map_entry me;
+			const off_t start(f->GlyphOffset(header.glyphs) + sizeof me * skipped_entries(header, vtfont_index));
+			for (unsigned c(0U); c < entries(header, vtfont_index); ++c) {
+				if (0 > pread(f->get(), me, start + c * sizeof me)) goto bad_file;
+				f->AddMapping(me.character, me.glyph, me.count + 1U);
+			}
+		}
+	} else
+	{
+		if (CombinedFont::LeftRightFileFont * f = font.AddLeftRightFileFont(font_fd.release(), weight, slant, header.height, header.width)) {
+			bsd_vtfont_map_entry me;
+			const off_t left_start(f->GlyphOffset(header.glyphs) + sizeof me * skipped_entries(header, vtfont_index));
+			for (unsigned c(0U); c < entries(header, vtfont_index); ++c) {
+				if (0 > pread(f->get(), me, left_start + c * sizeof me)) goto bad_file;
+				f->AddLeftMapping(me.character, me.glyph, me.count + 1U);
+			}
+			const off_t right_start(f->GlyphOffset(header.glyphs) + sizeof me * skipped_entries(header, vtfont_index + 1U));
+			for (unsigned c(0U); c < entries(header, vtfont_index + 1U); ++c) {
+				if (0 > pread(f->get(), me, right_start + c * sizeof me)) goto bad_file;
+				f->AddRightMapping(me.character, me.glyph, me.count + 1U);
+			}
+		}
 	}
 }
 
@@ -201,28 +248,6 @@ void fontspec_definition::action(popt::processor &, const char * text)
 {
 	FontSpec v = { text, weight, slant };
 	specs.push_back(v);
-}
-
-static inline
-unsigned
-vtfont_index (
-	CombinedFont::Font::Weight weight,
-	CombinedFont::Font::Slant slant
-) {
-	unsigned s(slant > 0U);
-	switch (weight) {
-		case CombinedFont::Font::LIGHT:
-		case CombinedFont::Font::MEDIUM:
-			return s + 0U;
-		case CombinedFont::Font::DEMIBOLD:
-		case CombinedFont::Font::BOLD:
-			return s + 2U;
-		case CombinedFont::Font::BLACK:
-			return s + 4U;
-		default:
-			break;
-	}
-	return -1U;
 }
 
 /* Keyboard layouts *********************************************************
@@ -318,6 +343,9 @@ public:
 	std::size_t funcable_index() const;
 	void event(uint16_t, uint8_t, uint32_t);
 	void unlatch() { latch_state = 0U; }
+	bool num_LED() const { return num_lock(); }
+	bool caps_LED() const { return caps_lock()||level2_lock(); }
+	bool scroll_LED() const { return group2(); }
 
 #if !defined(__LINUX__) && !defined(__linux__)
 	void set_pressed(uint8_t code, bool v) { pressed[code] = v; }
@@ -2358,6 +2386,11 @@ static inline
 void
 Enact (
 	const uint32_t cmd,
+#if !defined(__LINUX__) && !defined(__linux__)
+	KeyboardIO & event_fd,
+#else
+	FileDescriptorOwner & event_fd,
+#endif
 	KeyboardModifierState & r,
 	VirtualTerminal & vt,
 	uint32_t v
@@ -2370,6 +2403,9 @@ Enact (
 			const uint32_t c(cmd & 0x00FFFFFF);
 			vt.WriteInputUCS24(c);
 			r.unlatch();
+#if !defined(__LINUX__) && !defined(__linux__)
+			event_fd.set_LEDs(r.caps_LED(), r.num_LED(), r.scroll_LED());
+#endif
 			break;
 		}
 		case KBDMAP_ACTION_MODIFIER:
@@ -2377,6 +2413,9 @@ Enact (
 			const uint32_t k((cmd & 0x00FFFF00) >> 8U);
 			const uint32_t c(cmd & 0x000000FF);
 			r.event(k, c, v);
+#if !defined(__LINUX__) && !defined(__linux__)
+			event_fd.set_LEDs(r.caps_LED(), r.num_LED(), r.scroll_LED());
+#endif
 			break;
 		}
 		case 0x06000000:
@@ -2390,6 +2429,9 @@ Enact (
 			vt.ClearDeadKeys();
 			vt.WriteInputMessage(MessageForSession(s, r.modifiers()));
 			r.unlatch();
+#if !defined(__LINUX__) && !defined(__linux__)
+			event_fd.set_LEDs(r.caps_LED(), r.num_LED(), r.scroll_LED());
+#endif
 			break;
 		}
 		case KBDMAP_ACTION_SYSTEM:
@@ -2399,6 +2441,9 @@ Enact (
 			vt.ClearDeadKeys();
 			vt.WriteInputMessage(MessageForSystemKey(k, r.modifiers()));
 			r.unlatch();
+#if !defined(__LINUX__) && !defined(__linux__)
+			event_fd.set_LEDs(r.caps_LED(), r.num_LED(), r.scroll_LED());
+#endif
 			break;
 		}
 		case KBDMAP_ACTION_CONSUMER:
@@ -2408,6 +2453,9 @@ Enact (
 			vt.ClearDeadKeys();
 			vt.WriteInputMessage(MessageForConsumerKey(k, r.modifiers()));
 			r.unlatch();
+#if !defined(__LINUX__) && !defined(__linux__)
+			event_fd.set_LEDs(r.caps_LED(), r.num_LED(), r.scroll_LED());
+#endif
 			break;
 		}
 		case KBDMAP_ACTION_EXTENDED:
@@ -2417,6 +2465,9 @@ Enact (
 			vt.ClearDeadKeys();
 			vt.WriteInputMessage(MessageForExtendedKey(k, r.modifiers()));
 			r.unlatch();
+#if !defined(__LINUX__) && !defined(__linux__)
+			event_fd.set_LEDs(r.caps_LED(), r.num_LED(), r.scroll_LED());
+#endif
 			break;
 		}
 		case KBDMAP_ACTION_FUNCTION:
@@ -2426,6 +2477,9 @@ Enact (
 			vt.ClearDeadKeys();
 			vt.WriteInputMessage(MessageForFunctionKey(k, r.modifiers()));
 			r.unlatch();
+#if !defined(__LINUX__) && !defined(__linux__)
+			event_fd.set_LEDs(r.caps_LED(), r.num_LED(), r.scroll_LED());
+#endif
 			break;
 		}
 		case KBDMAP_ACTION_FUNCTION1:
@@ -2435,6 +2489,9 @@ Enact (
 			vt.ClearDeadKeys();
 			vt.WriteInputMessage(MessageForFunctionKey(k, r.nolevel_nogroup_noctrl_modifiers()));
 			r.unlatch();
+#if !defined(__LINUX__) && !defined(__linux__)
+			event_fd.set_LEDs(r.caps_LED(), r.num_LED(), r.scroll_LED());
+#endif
 			break;
 		}
 	}
@@ -2459,7 +2516,11 @@ query_parameter (
 static inline
 void
 handle_input_event(
+#if !defined(__LINUX__) && !defined(__linux__)
+	KeyboardIO & event_fd,
+#else
 	FileDescriptorOwner & event_fd,
+#endif
 	KeyboardModifierState & r, 
 	const KeyboardMap & keymap,
 	VirtualTerminal & vt
@@ -2493,7 +2554,7 @@ handle_input_event(
 		const kbdmap_entry & action(keymap[row][col]);
 		const std::size_t o(query_parameter(action.cmd, r));
 		if (o >= sizeof action.p/sizeof *action.p) continue;
-		Enact(action.p[o], r, vt, value);
+		Enact(action.p[o], event_fd, r, vt, value);
 	}
 }
 
@@ -2583,7 +2644,7 @@ console_fb_realizer (
 			for (CombinedFont::Font::Slant slant(static_cast<CombinedFont::Font::Slant>(0)); slant < CombinedFont::Font::NUM_SLANTS; slant = static_cast<CombinedFont::Font::Slant>(slant + 1)) {
 				if (n->weight != -1 && n->weight != weight) continue;
 				if (n->slant != -1 && n->slant != slant) continue;
-				LoadFont(prog, font, weight, slant, vtfont_index(weight, slant), n->name.c_str());
+				LoadFont(prog, font, weight, slant, n->name.c_str());
 			}
 		}
 	}

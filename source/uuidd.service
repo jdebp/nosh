@@ -7,10 +7,11 @@ Description=util-linux UUID listening daemon
 
 [Service]
 systemdWorkingDirectory=false
+systemdUserEnvironment=no
 User=uuidd
-ExecStartPre=mkdir -m 0755 /run/uuidd
-ExecStartPre=chown uuidd:uuidd /run/uuidd/
-ExecStart=uuidd --socket-activation
+ExecStartPre=mkdir -m 0755 /run/%p
+ExecStartPre=chown %p:%p /run/%p
+ExecStart=%p --socket-activation
 
 [Install]
 WantedBy=workstation.target

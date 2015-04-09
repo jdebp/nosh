@@ -11,6 +11,7 @@ Wants=local-fs.target
 Before=shutdown.target
 
 [Service]
+systemdUserEnvironment=no
 PermissionsStartOnly=true
 User=log
 WorkingDirectory=/var/log/sv

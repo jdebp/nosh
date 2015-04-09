@@ -7,7 +7,7 @@ Description=LVS and VRRP High Availability monitor
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=keepalived -n
+ExecStart=%p -n
 Restart=always
 
 [Install]

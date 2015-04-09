@@ -7,7 +7,7 @@ Description=kmod loader for autofs4
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=sh -c '[ -d /sys/class/misc/autofs4/ ] || kmod modprobe autofs4'
+ExecStart=sh -c '[ -d /sys/class/misc/autofs4/ ] || system-control load-kernel-module autofs4'
 RemainAfterExit=yes
 
 [Install]

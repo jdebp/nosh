@@ -47,6 +47,7 @@ void system_manager ( const char * & , std::vector<const char *> & ) ;
 void service_manager ( const char * & , std::vector<const char *> & ) ;
 void setsid ( const char * & , std::vector<const char *> & ) ;
 void system_version ( const char * & , std::vector<const char *> & ) ;
+void unload_when_stopped ( const char * & , std::vector<const char *> & ) ;
 
 extern const
 struct command 
@@ -88,6 +89,7 @@ commands[] = {
 	{	"condrestart",			try_restart		},
 	{	"force-reload",			try_restart		},
 	{	"is-active",			is_active		},
+	{	"unload-when-stopped",		unload_when_stopped	},
 	{	"convert-fstab-services",	convert_fstab_services	},
 	{	"convert-systemd-units",	convert_systemd_units	},
 	{	"convert-systemd-presets",	convert_systemd_presets	},

@@ -7,7 +7,7 @@ Description=kmod loader for unix
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=sh -c '[ -d /proc/net/unix/ ] || kmod modprobe unix'
+ExecStart=sh -c '[ -d /proc/net/unix/ ] || system-control load-kernel-module unix'
 RemainAfterExit=yes
 
 [Install]

@@ -7,7 +7,7 @@ Description=BSD mouse daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=moused -f -p /dev/psm0 -t auto
+ExecStart=%p -f -p /dev/psm0 -t auto
 Restart=always
 
 [Install]

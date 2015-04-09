@@ -10,7 +10,7 @@ systemdWorkingDirectory=false
 EnvironmentDirectory=./env
 EnvironmentUser=dnscache-d
 LimitNOFILE=250
-ExecStart=fdredir -r 0 seed dnscache
+ExecStart=fdredir -r 0 seed %p
 Restart=always
 
 [Install]

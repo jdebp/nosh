@@ -5,6 +5,7 @@
 [Unit]
 Description=Yellow Pages password daemon
 Wants=rpcbind.service ypserv.service nis_client.service
+After=nisdomain.service
 
 [Service]
 Type=forking

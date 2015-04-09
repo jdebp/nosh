@@ -16,10 +16,12 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>service-dt-scanner</command>
+<arg choice='opt'>--input-activation</arg>
 <arg choice='req'><replaceable>directory</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
 <command>svscan</command>
+<arg choice='opt'>--input-activation</arg>
 <arg choice='req'><replaceable>directory</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -76,8 +78,10 @@ for bundle directories.)
 
 <para>
 <command>service-dt-scanner</command> tells the service manager to both load
-and start "main" services, but only to load "log" services, setting them to be
-input-activated.
+and start the "main" and "log" services; unless the
+<arg choice='plain'>--input-activation</arg>
+command-line option is used, in which case the "log" service is only loaded
+and marked to be input-activated.
 It tells the service manager to plumb the standard input of the "log" service
 to the standard output and standard error of the "main" service.
 </para>

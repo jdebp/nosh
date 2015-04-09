@@ -8,8 +8,8 @@ Description=APM state
 [Service]
 Type=oneshot
 systemdWorkingDirectory=false
-ExecStart=apm -e enable
-ExecStopPost=apm -e disable
+ExecStart=%p -e enable
+ExecStopPost=%p -e disable
 RemainAfterExit=yes
 
 [Install]

@@ -8,7 +8,7 @@ Description=anacron scheduling service
 [Service]
 systemdWorkingDirectory=false
 ExecStartPre=on_ac_power
-ExecStart=anacron -d -s
+ExecStart=%p -d -s
 Restart=always
 
 [Install]

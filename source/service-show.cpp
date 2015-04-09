@@ -292,11 +292,11 @@ service_show (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_USAGE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing directory name(s).");
-		throw EXIT_USAGE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	write_document_start();

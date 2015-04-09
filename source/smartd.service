@@ -7,7 +7,7 @@ Description=SMART monitoring daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=smartd -n
+ExecStart=%ptd -n
 Restart=always
 
 [Install]

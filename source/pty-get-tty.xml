@@ -59,7 +59,9 @@ Thus <replaceable>next-prog</replaceable> will inherit the <code>TERM</code> env
 (as far as the kernel is concerned anyway) original controlling terminal.
 </para>
 
-</refsection><refsection><title>SECURITY</title>
+</refsection>
+
+<refsection><title>SECURITY</title>
 
 <refsection><title>Linux</title>
 
@@ -90,6 +92,34 @@ pseudo-terminals are created with these permissions and UID in the first place.
 
 </refsection>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection>
+
+<refsection><title>See also</title>
+
+<variablelist>
+<varlistentry>
+<term>
+<citerefentry><refentrytitle>pty-run</refentrytitle><manvolnum>1</manvolnum></citerefentry> 
+</term>
+<listitem>
+used to run a program attached to the newly created pseudo-terminal,
+passing its input and output to standard input and standard output
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> 
+</term>
+<listitem>
+use to run a terminal emulator on the newly created pseudo-terminal,
+that sends and responds to the same control sequences as the kernel's
+built-in terminal emulator for (kernel) virtual terminals
+</listitem>
+</varlistentry>
+</variablelist>
+
+</refsection>
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
 
 </refentry>

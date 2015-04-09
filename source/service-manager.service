@@ -7,5 +7,6 @@ Description=Service manager
 After=local-fs.target
 
 [Service]
+systemdWorkingDirectory=false
 ExecStart=/bin/service-manager
 TimeoutSec=10

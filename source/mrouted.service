@@ -7,7 +7,7 @@ Description=BSD mroute daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=mrouted
+ExecStart=%p
 Restart=always
 
 [Install]

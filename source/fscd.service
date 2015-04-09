@@ -9,7 +9,7 @@ Description=FreeBSD service control daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=fscd -v
+ExecStart=%p -v
 Restart=always
 
 [Install]

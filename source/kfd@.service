@@ -7,7 +7,7 @@ Description=KF service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=kfd
+ExecStart=%p
 Restart=always
 
 [Install]

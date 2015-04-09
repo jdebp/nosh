@@ -9,7 +9,7 @@ Description=GSS-API service
 systemdWorkingDirectory=false
 # The import procedure is expected to have populated this directory with gssd_flags.
 EnvironmentDirectory=env
-ExecStart=sh -c 'exec gssd -d ${gssd_flags}'
+ExecStart=sh -c 'exec %p -d ${%p_flags}'
 Restart=always
 
 [Install]

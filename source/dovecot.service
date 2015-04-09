@@ -7,7 +7,7 @@ Description=Dovecot service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=dovecot -F
+ExecStart=%p -F
 Restart=always
 
 [Install]

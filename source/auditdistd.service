@@ -7,7 +7,7 @@ Description=audit trail distribution daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=auditdistd -F
+ExecStart=%p -F
 
 [Install]
 WantedBy=multi-user.target

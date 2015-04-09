@@ -7,8 +7,9 @@ Description=Sockets milestone for systemd compatibility
 DefaultDependencies=false
 
 [Service]
-User=nobody
 systemdWorkingDirectory=false
+systemdUserEnvironment=no
+User=nobody
 # This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
 ExecStart=true

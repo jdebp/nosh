@@ -31,6 +31,7 @@ KeyboardIO::restore()
 	if (-1 != fd) {
 		tcsetattr_nointr(fd, TCSADRAIN, original_attr);
 		ioctl(fd, KDSKBMODE, kbmode);
+		ioctl(fd, KDSETLED, -1U);
 	}
 }
 
@@ -44,7 +45,15 @@ KeyboardIO::save_and_set_code_mode()
 #else
 		ioctl(fd, KDSKBMODE, K_CODE);
 #endif
+		ioctl(fd, KDSETLED, 0U);
 		if (0 <= tcgetattr_nointr(fd, original_attr))
 			tcsetattr_nointr(fd, TCSADRAIN, make_raw(original_attr));
 	}
+}
+
+void 
+KeyboardIO::set_LEDs(bool c, bool n, bool s)
+{
+	if (-1 != fd)
+		ioctl(fd, KDSETLED, (c ? LED_CAP : 0)|(n ? LED_NUM : 0)|(s ? LED_SCR : 0));
 }

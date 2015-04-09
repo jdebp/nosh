@@ -10,7 +10,7 @@ systemdWorkingDirectory=false
 # The import procedure is expected to have populated this directory with auditd_flags.
 EnvironmentDirectory=env
 # The daemon should properly clean itself up at SIGTERM; if it does not, that is a bug.
-ExecStart=sh -c 'exec auditd -d ${auditd_flags}'
+ExecStart=sh -c 'exec %p -d ${%p_flags}'
 Restart=always
 
 [Install]

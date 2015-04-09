@@ -7,7 +7,7 @@ Description=wicd service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=wicd -f
+ExecStart=%p -f
 Restart=always
 
 [Install]

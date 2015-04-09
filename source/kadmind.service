@@ -8,7 +8,7 @@ Wants=kerberos.service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=kadmind
+ExecStart=%p
 
 [Install]
 WantedBy=workstation.target

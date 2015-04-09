@@ -10,7 +10,7 @@ Conflicts=sshd.socket
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=sshd -D -e
+ExecStart=%p -D -e
 
 [Install]
 WantedBy=server.target

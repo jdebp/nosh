@@ -18,6 +18,7 @@ public:
 	~KeyboardIO();
 	void save_and_set_code_mode();
 	void restore();
+	void set_LEDs(bool c, bool n, bool s);
 protected:
 	termios original_attr;
 	long kbmode;

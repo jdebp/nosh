@@ -7,7 +7,7 @@ Description=ACPI daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=acpid -f -d
+ExecStart=%p -f -d
 
 [Install]
 WantedBy=workstation.target

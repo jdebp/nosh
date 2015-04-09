@@ -9,7 +9,7 @@ After=rpcbind.service nfsclient.service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=amd
+ExecStart=%p
 Restart=always
 
 [Install]

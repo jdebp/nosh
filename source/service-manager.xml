@@ -81,7 +81,7 @@ a <filename>run</filename> file, which is the executable file for the service pr
 
 <listitem>
 <para>
-an <filename>start</filename> file, which is the executable file to be run when a service is
+a <filename>start</filename> file, which is the executable file to be run when a service is
 first brought up (but not when it is automatically restarted);
 </para>
 </listitem>

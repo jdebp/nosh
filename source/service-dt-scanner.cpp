@@ -13,6 +13,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sys/event.h>
 #include <dirent.h>
 #include <unistd.h>
+#include "popt.h"
 #include "utils.h"
 #include "fdutils.h"
 #include "service-manager.h"
@@ -28,8 +29,9 @@ void
 rescan (
 	const char * prog,
 	const char * name,
-	int socket_fd,
-	int retained_scan_dir_fd
+	const int socket_fd,
+	const int retained_scan_dir_fd,
+	const bool input_activation
 ) {
 	const int scan_dir_fd(dup(retained_scan_dir_fd));
 	if (0 > scan_dir_fd) {
@@ -88,8 +90,19 @@ exit_scan:
 									load(prog, socket_fd, log_name, log_supervise_dir_fd, log_service_dir_fd, true, false);
 								}
 								plumb(prog, socket_fd, supervise_dir_fd, log_supervise_dir_fd);
-								if (!log_was_already_loaded)
-									make_input_activated(prog, socket_fd, log_supervise_dir_fd);
+								if (!log_was_already_loaded) {
+									if (input_activation) 
+										make_input_activated(prog, socket_fd, log_supervise_dir_fd);
+									else {
+										if (is_initially_up(log_service_dir_fd)) {
+											if (!wait_ok(log_supervise_dir_fd, 5000))
+												std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, entry->d_name, "log/supervise/ok", "Unable to load service bundle.");
+											else
+												start(log_supervise_dir_fd);
+										} else
+											std::fprintf(stderr, "%s: INFO: %s/%s: %s\n", prog, entry->d_name, "log", "Service is initially down.");
+									}
+								}
 								close(log_supervise_dir_fd);
 							} else
 								std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, entry->d_name, "log/supervise", std::strerror(errno));
@@ -133,11 +146,30 @@ service_dt_scanner (
 	const char * prog(basename_of(args[0]));
 
 	const bool is_system(true);
-	if (2 != args.size()) {
+	bool input_activation(false);
+	try {
+		popt::bool_definition input_activation_option('\0', "input-activation", "Use input activation for log services.", input_activation);
+		popt::definition * top_table[] = {
+			&input_activation_option
+		};
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "directory");
+
+		std::vector<const char *> new_args;
+		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
+		p.process(true /* strictly options before arguments */);
+		args = new_args;
+		next_prog = arg0_of(args);
+		if (p.stopped()) throw EXIT_SUCCESS;
+	} catch (const popt::error & e) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
+		throw EXIT_FAILURE;
+	}
+
+	if (1 != args.size()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "One directory name is required.");
 		throw EXIT_FAILURE;
 	}
-	const char * const scan_directory(args[1]);
+	const char * const scan_directory(args[0]);
 
 	const int queue(kqueue());
 	if (0 > queue) {
@@ -167,7 +199,7 @@ service_dt_scanner (
 
 	const int socket_fd(connect_service_manager_socket(is_system, prog));
 	if (0 > socket_fd) throw EXIT_FAILURE;
-	rescan(prog, scan_directory, socket_fd, scan_dir_fd);
+	rescan(prog, scan_directory, socket_fd, scan_dir_fd, input_activation);
 
 	for (;;) {
 		try {
@@ -181,7 +213,7 @@ service_dt_scanner (
 			switch (e.filter) {
 				case EVFILT_VNODE:
 					if (e.ident == static_cast<uintptr_t>(scan_dir_fd))
-						rescan(prog, scan_directory, socket_fd, scan_dir_fd);
+						rescan(prog, scan_directory, socket_fd, scan_dir_fd, input_activation);
 					else
 						std::fprintf(stderr, "%s: DEBUG: vnode event ident %lu fflags %x\n", prog, e.ident, e.fflags);
 					break;

@@ -7,7 +7,7 @@ Description=Name service switch daemon for SAMBA
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=winbindd -F -s /usr/local/etc/smb.conf
+ExecStart=%p -F -s /usr/local/etc/smb.conf
 Restart=always
 
 [Install]

@@ -10,9 +10,9 @@ Wants=local-fs.target
 After=local-fs.target
 
 [Service]
-WorkingDirectory=/run/
+systemdWorkingDirectory=off
 Umask=0033
-ExecStart=sh -c 'exec uname -srm > motd.dynamic'
+ExecStart=fdredir --write 1 /run/motd.dynamic uname -srm
 RemainAfterExit=yes
 
 [Install]

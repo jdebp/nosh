@@ -9,8 +9,8 @@ After=local-fs.target
 [Service]
 Type=oneshot
 systemdWorkingDirectory=false
-ExecStart=utx boot
-ExecStopPost=utx shutdown
+ExecStart=%p boot
+ExecStopPost=%p shutdown
 RemainAfterExit=yes
 
 [Install]

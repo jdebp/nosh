@@ -7,7 +7,7 @@ Description=SAMBA file and print services daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=smbd -F -s /usr/local/etc/smb.conf
+ExecStart=%p -F -s /usr/local/etc/smb.conf
 Restart=always
 
 [Install]

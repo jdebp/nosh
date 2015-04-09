@@ -7,7 +7,7 @@ Description=basic SNMP service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=bsnmpd -d
+ExecStart=%p -d
 Restart=always
 
 [Install]

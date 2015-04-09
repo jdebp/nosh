@@ -29,6 +29,12 @@ make_input_activated (
 	int socket_fd,
 	int supervise_dir_fd
 );
+void
+unload (
+	const char * prog,
+	int socket_fd,
+	int supervise_dir_fd
+);
 int
 start (
 	int supervise_dir_fd

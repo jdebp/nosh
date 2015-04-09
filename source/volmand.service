@@ -8,7 +8,7 @@ Description=BSD volume manager daemon
 [Service]
 systemdWorkingDirectory=false
 ProcessGroupLeader=true
-ExecStart=volmand daemon
+ExecStart=%p daemon
 Restart=always
 
 [Install]

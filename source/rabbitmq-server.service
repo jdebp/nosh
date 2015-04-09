@@ -8,8 +8,10 @@ After=epmd.service
 Requires=epmd.service
 
 [Service]
+WorkingDirectory=/var/lib/rabbitmq
+systemdUserEnvironment=yes
 User=rabbitmq
-ExecStart=/usr/lib/rabbitmq/bin/rabbitmq-server
+ExecStart=/usr/lib/rabbitmq/bin/%P
 Restart=always
 
 [Install]

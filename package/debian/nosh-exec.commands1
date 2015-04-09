@@ -16,6 +16,7 @@ local-stream-socket-listen
 local-stream-socket-accept
 make-private-fs
 nosh
+pause
 pipe
 prependpath
 read-conf

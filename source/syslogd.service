@@ -7,7 +7,7 @@ Description=Old-style system log daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=syslogd -c -ss
+ExecStart=%p -c -ss
 Restart=always
 
 [Install]

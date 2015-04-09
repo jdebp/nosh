@@ -42,10 +42,12 @@ SoftTerm::SoftTerm(SoftTerm::ScreenBuffer & s, SoftTerm::KeyboardBuffer & k) :
 	cursor_attributes(CursorSprite::VISIBLE|CursorSprite::BLINK)
 {
 	Resize(display_origin.x + display_margin.w, display_origin.y + display_margin.h);
-	ClearAllTabstops();
+	ClearAllHorizontalTabstops();
+	ClearAllVerticalTabstops();
 	UpdateCursorType();
 	Home();
 	ClearDisplay();
+	keyboard.SetBackspaceIsBS(false);
 }
 
 SoftTerm::~SoftTerm()
@@ -313,6 +315,42 @@ SoftTerm::InsertLinesInScrollAreaAt(coordinate top, coordinate n)
 }
 
 void 
+SoftTerm::DeleteColumnsInScrollAreaAt(coordinate left, coordinate n) 
+{
+	const ScreenBuffer::coordinate stride(ScreenBuffer::coordinate(display_margin.w) + display_origin.x);
+	const coordinate bottom_margin(scroll_origin.y + scroll_margin.h - 1U);
+	const coordinate top_margin(scroll_origin.y);
+	const coordinate right_margin(scroll_origin.x + scroll_margin.w - 1U);
+	if (left >= right_margin) return;
+	if (n > right_margin - left) n = right_margin - left;
+	const coordinate w(right_margin - left - n);
+	for (ScreenBuffer::coordinate r(top_margin); r <= bottom_margin; ++r) {
+		const ScreenBuffer::coordinate d(stride * r + left);
+		const ScreenBuffer::coordinate s(stride * r + left + n);
+		screen.CopyNCells(d, s, w);
+		screen.WriteNCells(d + w, n, ErasureCell());
+	}
+}
+
+void 
+SoftTerm::InsertColumnsInScrollAreaAt(coordinate left, coordinate n) 
+{
+	const ScreenBuffer::coordinate stride(ScreenBuffer::coordinate(display_margin.w) + display_origin.x);
+	const coordinate bottom_margin(scroll_origin.y + scroll_margin.h - 1U);
+	const coordinate top_margin(scroll_origin.y);
+	const coordinate right_margin(scroll_origin.x + scroll_margin.w - 1U);
+	if (left >= right_margin) return;
+	if (n > right_margin - left) n = right_margin - left;
+	const coordinate w(scroll_margin.w - left - n);
+	for (ScreenBuffer::coordinate r(top_margin); r <= bottom_margin; ++r) {
+		const ScreenBuffer::coordinate d(stride * r + left + n);
+		const ScreenBuffer::coordinate s(stride * r + left);
+		screen.CopyNCells(d, s, w);
+		screen.WriteNCells(s, n, ErasureCell());
+	}
+}
+
+void 
 SoftTerm::EraseInDisplay()
 {
 	for (std::size_t i(0U); i < argc; ++i) {
@@ -365,15 +403,17 @@ SoftTerm::ScrollUp(coordinate n)
 }
 
 void 
-SoftTerm::ScrollLeft(coordinate c)
+SoftTerm::ScrollLeft(coordinate n)
 {
-	/// FIXME \bug Implement sideways-scrolling.
+	// Scrolling always operates only inside the margins.
+	DeleteColumnsInScrollAreaAt(scroll_origin.x, n);
 }
 
 void 
-SoftTerm::ScrollRight(coordinate c)
+SoftTerm::ScrollRight(coordinate n)
 {
-	/// FIXME \bug Implement sideways-scrolling.
+	// Scrolling always operates only inside the margins.
+	InsertColumnsInScrollAreaAt(scroll_origin.x, n);
 }
 
 /* Tabulation ***************************************************************
@@ -381,12 +421,32 @@ SoftTerm::ScrollRight(coordinate c)
 */
 
 void 
+SoftTerm::TabControl()
+{
+	for (std::size_t i(0U); i < argc; ++i) {
+		switch (args[i]) {
+			case 0:	SetHorizontalTabstopAt(active_cursor.x, true); break;
+			case 1:	SetVerticalTabstopAt(active_cursor.y, true); break;
+			case 2:	SetHorizontalTabstopAt(active_cursor.x, false); break;
+			case 3:	SetVerticalTabstopAt(active_cursor.x, false); break;
+			case 4: // Effectively the same as ...
+			case 5:	ClearAllHorizontalTabstops(); break;
+			case 6:	ClearAllVerticalTabstops(); break;
+		}
+	}
+}
+
+void 
 SoftTerm::TabClear()
 {
 	for (std::size_t i(0U); i < argc; ++i) {
 		switch (args[i]) {
-			case 0:	SetTabstopAt(active_cursor.x, false); break;
-			case 3:	ClearAllTabstops(); break;
+			case 0:	SetHorizontalTabstopAt(active_cursor.x, false); break;
+			case 1:	SetHorizontalTabstopAt(active_cursor.x, false); break;
+			case 2: // Effectively the same as ...
+			case 3:	ClearAllHorizontalTabstops(); break;
+			case 4:	ClearAllVerticalTabstops(); break;
+			case 5:	ClearAllHorizontalTabstops(); ClearAllVerticalTabstops(); break;
 		}
 	}
 }
@@ -400,7 +460,7 @@ SoftTerm::HorizontalTab(
 	const coordinate right_margin(apply_margins ? scroll_origin.x + scroll_margin.w - 1U : display_origin.x + display_margin.w - 1U);
 	if (active_cursor.x < right_margin && n) {
 		do {
-			if (IsTabstopAt(++active_cursor.x)) {
+			if (IsHorizontalTabstopAt(++active_cursor.x)) {
 				if (!n) break;
 				--n;
 			}
@@ -418,7 +478,7 @@ SoftTerm::BackwardsHorizontalTab(
 	const coordinate left_margin(apply_margins ? scroll_origin.x : display_origin.x);
 	if (active_cursor.x > left_margin && n) {
 		do {
-			if (IsTabstopAt(--active_cursor.x)) {
+			if (IsHorizontalTabstopAt(--active_cursor.x)) {
 				if (!n) break;
 				--n;
 			}
@@ -428,16 +488,41 @@ SoftTerm::BackwardsHorizontalTab(
 }
 
 void 
-SoftTerm::SetTabstop() 
-{
-	SetTabstopAt(active_cursor.x, true);
+SoftTerm::VerticalTab(
+	coordinate n,
+	bool apply_margins
+) {
+	advance_pending = false;
+	const coordinate bottom_margin(apply_margins ? scroll_origin.y + scroll_margin.h - 1U : display_origin.y + display_margin.h - 1U);
+	if (active_cursor.y < bottom_margin && n) {
+		do {
+			if (IsVerticalTabstopAt(++active_cursor.y)) {
+				if (!n) break;
+				--n;
+			}
+		} while (active_cursor.y < bottom_margin && n);
+		UpdateCursorPos();
+	}
 }
 
 void 
-SoftTerm::ClearAllTabstops()
+SoftTerm::SetHorizontalTabstop() 
+{
+	SetHorizontalTabstopAt(active_cursor.x, true);
+}
+
+void 
+SoftTerm::ClearAllHorizontalTabstops()
 {
 	for (unsigned short p(0U); p < 256U; ++p)
-		SetTabstopAt(p, false);
+		SetHorizontalTabstopAt(p, false);
+}
+
+void 
+SoftTerm::ClearAllVerticalTabstops()
+{
+	for (unsigned short p(0U); p < 256U; ++p)
+		SetVerticalTabstopAt(p, false);
 }
 
 /* Cursor motion ************************************************************
@@ -786,6 +871,14 @@ SoftTerm::SetPrivateModes(bool flag)
 		SetPrivateMode (args[i], flag);
 }
 
+void
+SoftTerm::SGR0()
+{
+	attributes = 0U; 
+	foreground = default_foreground; 
+	background = default_background; 
+}
+
 void 
 SoftTerm::SetAttribute(unsigned int a)
 {
@@ -793,7 +886,7 @@ SoftTerm::SetAttribute(unsigned int a)
 		default:
 			std::clog << "Unknown attribute : " << a << "\n";
 			break;
-		case 0U:	attributes = 0U; foreground = default_foreground; background = default_background; break;
+		case 0U:	SGR0(); break;
 		case 1U:	attributes |= CharacterCell::BOLD; break;
 		case 2U:	attributes |= CharacterCell::FAINT; break;
 		case 3U:	attributes |= CharacterCell::ITALIC; break;
@@ -1315,7 +1408,7 @@ SoftTerm::ProcessControlCharacter(uint32_t character)
 {
 	switch (character) {
 		case NUL:	break;
-		case BEL:	/* TODO: bell */ std::clog << "TODO: bell\n"; break;
+		case BEL:	/* TODO: bell */ break;
 		case CR:	CarriageReturn(); break;
 		case NEL:	CarriageReturnNoUpdate(); CursorDown(1U, true, scrolling); break;
 		case IND: case LF: case VT: case FF:
@@ -1324,7 +1417,7 @@ SoftTerm::ProcessControlCharacter(uint32_t character)
 		case TAB:	HorizontalTab(1U, true); break;
 		case BS:	CursorLeft(1U, true, false); break;
 		case DEL:	DeleteCharacters(1U); break;
-		case HTS:	SetTabstop(); break;
+		case HTS:	SetHorizontalTabstop(); break;
 		case ESC:	last_intermediate = '\0'; state = ESCAPE1; break;
 		case CSI:	state = CONTROL1; ResetControlSequence(); break;
 		case CAN:	state = NORMAL; break;
@@ -1332,6 +1425,40 @@ SoftTerm::ProcessControlCharacter(uint32_t character)
 				break;	// explicitly unsupported control characters
 		default:	break;
 	}
+}
+
+void
+SoftTerm::SoftReset()
+{
+	advance_pending = false;
+	saved_cursor = display_origin;
+	ResetMargins(); 
+	cursor_attributes = CursorSprite::VISIBLE|CursorSprite::BLINK;
+	cursor_type = CursorSprite::BLOCK; 
+	UpdateCursorType();
+	SGR0();
+	active_modes = mode();
+	scrolling = true;
+	overstrike = true;
+}
+
+void
+SoftTerm::ResetToInitialState()
+{
+	Resize(80U, 25U);
+	Home(); 
+	ClearDisplay(); 
+	ResetMargins(); 
+	cursor_attributes = CursorSprite::VISIBLE|CursorSprite::BLINK;
+	cursor_type = CursorSprite::BLOCK; 
+	UpdateCursorType();
+	SGR0();
+	keyboard.SetBackspaceIsBS(false);
+	saved_modes = active_modes = mode();
+	saved_cursor = active_cursor;
+	no_clear_screen_on_column_change = false;
+	scrolling = true;
+	overstrike = true;
 }
 
 void 
@@ -1350,7 +1477,7 @@ SoftTerm::Escape1(uint32_t character)
 /* DECSC */	case '7':	SaveCursor(); SaveAttributes(); SaveModes(); state = NORMAL; break;
 /* DECRC */	case '8':	RestoreCursor(); RestoreAttributes(); RestoreModes(); state = NORMAL; break;
 /* DECFI */	case '9':	CursorRight(1U, true, true); state = NORMAL; break;
-		case 'c':	/* TODO: RIS */ std::clog << "TODO: RIS\n"; state = NORMAL; break;
+/* RIS */	case 'c':	ResetToInitialState(); state = NORMAL; break;
 		case '=':	// DECKPAM (keypad sends application-mode sequences)
 		case '>':	// DECKPNM (keypad sends numeric-mode sequences)
 			// The terminal emulator is entirely decoupled from the physical keyboard; making these meaningless.
@@ -1477,8 +1604,14 @@ SoftTerm::ControlSequence(uint32_t character)
 			case 'T':	ScrollDown(OneIfZero(SumArgs())); break;	/// FIXME \bug SD is a window pan, not a buffer scroll.
 /* NP */		case 'U':	break; // Next Page has no applicability as there are no pages.
 /* PP */		case 'V':	break; // Previous Page has no applicability as there are no pages.
+/* CTC */		case 'W':	TabControl(); break;
 /* ECH */		case 'X':	EraseCharacters(OneIfZero(SumArgs())); break;
+/* CVT */		case 'Y':	VerticalTab(OneIfZero(SumArgs()), true); break;
 /* CBT */		case 'Z':	BackwardsHorizontalTab(OneIfZero(SumArgs()), true); break;
+/* SRS */		case '[':	break; // No-one needs reversed strings from a virtual terminal.
+/* PTX */		case '\\':	break; // No-one needs parallel texts from a virtual terminal.
+/* SDS */		case ']':	break; // No-one needs directed strings from a virtual terminal.
+/* SIMD */		case '^':	break; // No-one needs implicit movement direction from a virtual terminal.
 /* HPA */		case '`':	GotoX(OneIfZero(SumArgs())); break;
 /* HPR */		case 'a':	CursorRight(OneIfZero(SumArgs()), true, false); break;
 /* REP */		case 'b':	break; // No-one needs repeat from a virtual terminal.
@@ -1500,13 +1633,6 @@ SoftTerm::ControlSequence(uint32_t character)
 			case 's':	SCOSCorDESCSLRM(); break;
 /* DECSLPP */		case 't':	SetLinesPerPage(); break;
 /* SCORC */		case 'u':	RestoreCursor(); RestoreAttributes(); RestoreModes(); break;
-			case 'x':	/* TODO: Set colours */ std::clog << "TODO: Set colours\n"; break;
-/* CTC */		case 'W':	/* TODO: Cursor Tabulation Control */ std::clog << "TODO: Cursor Tabulation Control\n"; break;
-/* CVT */		case 'Y':	/* TODO: Cursor Line Tabulation */ std::clog << "TODO: Cursor Line Tabulation\n"; break;
-/* SRS */		case '[':	break; // No-one needs reversed strings from a virtual terminal.
-/* PTX */		case '/':	break; // No-one needs parallel texts from a virtual terminal.
-/* SDS */		case ']':	break; // No-one needs directed strings from a virtual terminal.
-/* SIMD */		case '^':	break; // No-one needs implicit movement direction from a virtual terminal.
 			default:	
 				std::clog << "Unknown CSI terminator " << character << "\n";
 				break;
@@ -1548,6 +1674,14 @@ SoftTerm::ControlSequence(uint32_t character)
 	} else
 	if (' ' == last_intermediate) switch (character) {
 /* DECSCUSR */	case 'q':	SetCursorStyle(); break;
+/* SL */	case '@':	ScrollLeft(OneIfZero(SumArgs())); break;
+/* SR */	case 'A':	ScrollRight(OneIfZero(SumArgs())); break;
+		default:	
+			std::clog << "Unknown CSI " << last_intermediate << ' ' << character << "\n";
+			break;
+	} else
+	if ('!' == last_intermediate) switch (character) {
+/* DECSTR */	case 'p':	SoftReset(); break;
 		default:	
 			std::clog << "Unknown CSI " << last_intermediate << ' ' << character << "\n";
 			break;

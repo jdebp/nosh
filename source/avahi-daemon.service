@@ -8,7 +8,7 @@ After=dbus.service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=avahi-daemon
+ExecStart=%P
 Restart=always
 
 [Install]

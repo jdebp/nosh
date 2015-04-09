@@ -4,12 +4,13 @@
 
 [Unit]
 Description=High Availability Storage service
+Wants=kmod@geom_gate:g_gate
+After=kmod@geom_gate:g_gate
 
 [Service]
 systemdWorkingDirectory=false
-ExecStartPre=kldload -n geom_gate:g_gate
 # The daemon should properly clean itself up at SIGTERM; if it does not, that is a bug.
-ExecStart=hastd -F
+ExecStart=%p -F
 Restart=always
 
 [Install]

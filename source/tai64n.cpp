@@ -79,7 +79,7 @@ main (
 		if (p.stopped()) return EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		return EXIT_USAGE;
+		return static_cast<int>(EXIT_USAGE);
 	}
 	if (args.empty()) {
 		if (!process(prog, "<stdin>", STDIN_FILENO))

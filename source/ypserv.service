@@ -5,6 +5,7 @@
 [Unit]
 Description=Yellow Pages server daemon
 Wants=rpcbind.service
+After=nisdomain.service
 
 [Service]
 Type=forking

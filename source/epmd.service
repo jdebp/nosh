@@ -8,7 +8,7 @@ Description=Erlang Port Mapper service
 [Service]
 systemdWorkingDirectory=false
 User=rabbitmq
-ExecStart=epmd
+ExecStart=%p
 Restart=always
 
 [Install]

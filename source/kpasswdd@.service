@@ -7,7 +7,7 @@ Description=Kerberos v5 password daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=kpasswdd
+ExecStart=%p
 Restart=always
 
 [Install]

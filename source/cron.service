@@ -7,7 +7,7 @@ Description=Regular background program processing daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=cron -f
+ExecStart=%p -f
 Restart=always
 
 [Install]
