@@ -8,7 +8,7 @@ Description=Kerberos v5 password socket
 [Socket]
 Backlog=2
 BindIPv6Only=both
-ListenStream=kpasswd5
+ListenStream=kpasswd
 Accept=true
 MaxConnections=16
 UCSPIRules=true

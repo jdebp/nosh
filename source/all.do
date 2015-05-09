@@ -1,5 +1,6 @@
 #!/bin/sh -e
 redo-ifchange version.h
+redo-ifchange ttylogin@.service
 commands1="exec service-control session-manager tai64n tai64nlocal console-terminal-emulator"
 commands8="init system-manager"
 extra_1_manpages="appendpath chdir chroot clearenv console-convert-kbdmap console-fb-realizer console-multiplexor console-ncurses-realizer console-resize cyclog detach-controlling-tty envdir envuidgid false fdmove fdredir foreground line-banner local-datagram-socket-listen local-stream-socket-accept local-stream-socket-listen login-banner login-process login-prompt make-private-fs nosh open-controlling-tty pause pipe prependpath pty-get-tty pty-run read-conf recordio service-dt-scanner service-is-ok service-is-up service-manager service-show service-status set-dynamic-hostname set-mount-object setenv setlock setpgrp setsid setuidgid setuidgid-fromenv setup-machine-id softlimit system-control tcp-socket-accept tcp-socket-listen true ttylogin-starter ucspi-socket-rules-check udp-socket-listen udp-socket-listen ulimit umask unsetenv unshare userenv vc-get-tty vc-reset-tty"

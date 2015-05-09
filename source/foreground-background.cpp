@@ -48,7 +48,7 @@ foreground_background_common (
 	std::vector<const char *> lhs, rhs, *c = &lhs;
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
 		const char * arg(*i);
-		if (0 == std::strcmp(sep, arg)) {
+		if (c != &rhs && 0 == std::strcmp(sep, arg)) {
 			c = &rhs;
 		} else {
 			c->push_back(arg);

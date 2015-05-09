@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%P %I server
+
+[Service]
+systemdWorkingDirectory=false
+ExecStartPre=/var/ossec/bin/%P-%I -t
+ExecStart=/var/ossec/bin/%P-%I -f
+
+[Install]
+WantedBy=server.target

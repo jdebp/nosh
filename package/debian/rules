@@ -1,16 +1,9 @@
 #!/usr/bin/make -sf
 
-.PHONY: build build-arch build-indep binary binary-arch binary-indep install install-arch install-indep install-common clean
+.PHONY: build build-arch build-indep binary binary-arch binary-indep install install-arch install-indep install-common clean install-indep-doco install-indep-bundles install-indep-units
 
+# The Debian package builder targets this in order to make the package contents.
 build: build-arch build-indep 
-
-binary: binary-arch binary-indep 
-	for i in exec terminal-management service-management systemd-services systemv-shims systemd-shims upstart-shims guide standard-targets sysinit-services regular-services regular-sockets bsd-services bsd-sockets ; \
-	do \
-		dpkg -b debian/nosh-"$$i" ../ || exit 1 ; \
-	done
-
-install: install-arch install-indep 
 
 build-arch:
 	package/compile
@@ -18,26 +11,50 @@ build-arch:
 build-indep:
 	@true
 
+# The Debian package builder targets this in order to clean the build areas.
+clean:
+	${RM} debian/files debian/substvars
+	for i in guide exec terminal-management service-management systemd-services systemv-shims systemd-shims upstart-shims bundles run-kernel-vt run-user-vt ; \
+	do \
+		${RM} -r debian/nosh-"$$i"/ || exit 1 ; \
+	done
+	${RM} -r debian/tmp/
+
+# The Debian package builder targets this in order to make the .deb files.
+binary: binary-arch binary-indep 
+	for i in exec terminal-management service-management systemd-services systemv-shims systemd-shims upstart-shims guide bundles run-kernel-vt run-user-vt ; \
+	do \
+		dpkg -b debian/nosh-"$$i" ../ || exit 1 ; \
+	done
+
 binary-arch: build-arch install-arch
-	for i in exec terminal-management service-management systemv-shims systemd-shims upstart-shims ; \
+	for i in exec terminal-management ; \
 	do \
 		${RM} debian/substvars ; \
 		dpkg-shlibdeps debian/nosh-"$$i"/usr/local/bin/* || exit 1 ; \
-		if [ "$$i" != exec ] && [ "$$i" != terminal-management ] ; then dpkg-shlibdeps debian/nosh-"$$i"/usr/local/sbin/* || exit 1 ; fi ; \
+		dpkg-gencontrol -pnosh-"$$i" -Pdebian/nosh-"$$i" || exit 1 ; \
+	done
+	for i in service-management systemv-shims systemd-shims upstart-shims ; \
+	do \
+		${RM} debian/substvars ; \
+		dpkg-shlibdeps debian/nosh-"$$i"/usr/local/bin/* || exit 1 ; \
+		dpkg-shlibdeps debian/nosh-"$$i"/usr/local/sbin/* || exit 1 ; \
 		dpkg-gencontrol -pnosh-"$$i" -Pdebian/nosh-"$$i" || exit 1 ; \
 	done
 
 binary-indep: build-indep install-indep
-	for i in guide systemd-services standard-targets sysinit-services regular-services regular-sockets bsd-services bsd-sockets ; \
+	for i in guide systemd-services bundles run-kernel-vt run-user-vt ; \
 	do \
 		${RM} debian/substvars ; \
 		dpkg-gencontrol -pnosh-"$$i" -Pdebian/nosh-"$$i" || exit 1 ; \
 	done
 
+install: install-arch install-indep 
+
 install-common:
 	install -d -m 0755 debian/tmp/DEBIAN
 	package/export debian/tmp/
-	for i in exec terminal-management service-management systemd-services systemv-shims systemd-shims upstart-shims guide standard-targets sysinit-services regular-services regular-sockets bsd-services bsd-sockets ; \
+	for i in exec terminal-management service-management systemd-services systemv-shims systemd-shims upstart-shims guide bundles run-kernel-vt run-user-vt ; \
 	do \
 		install -d -m 0755 debian/nosh-"$$i"/DEBIAN || exit 1 ; \
 	done
@@ -65,7 +82,7 @@ install-arch: install-common
 		done < debian/nosh-"$$i".aliases8 ; \
 	done
 
-install-indep: install-common
+install-indep-doco:
 	for i in exec terminal-management service-management systemv-shims systemd-shims upstart-shims ; \
 	do \
 		install -d -m 0755 debian/nosh-"$$i"/usr/local/man/man1 || exit 1 ; \
@@ -86,60 +103,64 @@ install-indep: install-common
 		do \
 			ln -f -s "$$c".8 debian/nosh-"$$i"/usr/local/man/man8/"$$a".8 || exit 1 ; \
 		done < debian/nosh-"$$i".aliases8 ; \
-	done ; \
-	for i in systemd-services ; \
-	do \
-		install -d -m 0755 debian/nosh-"$$i"/usr/local/lib/systemd/system || exit 1 ; \
-		install -d -m 0755 debian/nosh-"$$i"/usr/local/lib/tmpfiles.d || exit 1 ; \
-		while read j ; \
-		do \
-			ln -f -t debian/nosh-"$$i"/usr/local/lib/systemd/system/ debian/tmp/lib/systemd/system/"$$j" || exit 1 ; \
-		done < debian/nosh-"$$i".systemd ; \
-		while read j ; \
-		do \
-			ln -f -t debian/nosh-"$$i"/usr/local/lib/tmpfiles.d/ debian/tmp/lib/tmpfiles.d/"$$j" || exit 1 ; \
-		done < debian/nosh-"$$i".tmpfilesd ; \
-	done
-	for i in sysinit-services ; \
-	do \
-		install -d -m 0755 debian/nosh-"$$i"/etc/sv || exit 1 ; \
-		while read j ; \
-		do \
-			cp -a -t debian/nosh-"$$i"/etc/sv/ debian/tmp/etc/sv/"$$j" || exit 1 ; \
-		done < package/"$$i" ; \
-	done
-	for i in sysinit-mounts ; \
-	do \
-		install -d -m 0755 debian/nosh-sysinit-services/etc/sv || exit 1 ; \
-		while read j ; \
-		do \
-			cp -a -t debian/nosh-sysinit-services/etc/sv/ debian/tmp/etc/sv/mount@"$$j" || exit 1 ; \
-			cp -a -t debian/nosh-sysinit-services/etc/sv/ debian/tmp/etc/sv/fsck@"$$j" || exit 1 ; \
-		done < package/"$$i" ; \
-	done
-	for i in regular-services regular-sockets bsd-services bsd-sockets ; \
-	do \
-		install -d -m 0755 debian/nosh-"$$i"/var/sv || exit 1 ; \
-		while read j ; \
-		do \
-			cp -a -t debian/nosh-"$$i"/var/sv/ debian/tmp/var/sv/"$$j" || exit 1 ; \
-			cp -a -t debian/nosh-"$$i"/var/sv/ debian/tmp/var/sv/cyclog@"$$j" || exit 1 ; \
-		done < package/"$$i" ; \
-	done
-	for i in standard-targets ; \
-	do \
-		install -d -m 0755 debian/nosh-"$$i"/etc/system-manager/targets || exit 1 ; \
-		while read j ; \
-		do \
-			cp -a -t debian/nosh-"$$i"/etc/system-manager/targets/ debian/tmp/etc/system-manager/targets/"$$j" || exit 1 ; \
-		done < package/"$$i" ; \
 	done
 	for i in guide ; \
 	do \
 		install -d -m 0755 debian/nosh-"$$i"/usr/local/share/doc/nosh || exit 1 ; \
 		cp -a debian/tmp/share/doc/nosh debian/nosh-"$$i"/usr/local/share/doc/ || exit 1 ; \
 	done
-	for i in standard-targets sysinit-services regular-services regular-sockets bsd-services bsd-sockets ; \
+
+install-indep-bundles:
+	for i in bundles run-kernel-vt run-user-vt ; \
+	do \
+		install -d -m 0755 debian/nosh-"$$i"/var/sv || exit 1 ; \
+		install -d -m 0755 debian/nosh-"$$i"/etc/sv || exit 1 ; \
+		install -d -m 0755 debian/nosh-"$$i"/etc/system-manager/targets || exit 1 ; \
+	done
+	while read j ; \
+	do \
+		cp -a -t debian/nosh-run-kernel-vt/var/sv/ debian/tmp/var/sv/"$$j" || exit 1 ; \
+		cp -a -t debian/nosh-run-kernel-vt/var/sv/ debian/tmp/var/sv/cyclog@"$$j" || exit 1 ; \
+	done < package/kernel-vt-services
+	while read j ; \
+	do \
+		cp -a -t debian/nosh-run-user-vt/var/sv/ debian/tmp/var/sv/"$$j" || exit 1 ; \
+		cp -a -t debian/nosh-run-user-vt/var/sv/ debian/tmp/var/sv/cyclog@"$$j" || exit 1 ; \
+	done < package/user-vt-services
+	cat package/common-services package/common-sockets package/common-ttys package/linux-ttys | \
+	while read j ; \
+	do \
+		cp -a -t debian/nosh-bundles/var/sv/ debian/tmp/var/sv/"$$j" || exit 1 ; \
+		cp -a -t debian/nosh-bundles/var/sv/ debian/tmp/var/sv/cyclog@"$$j" || exit 1 ; \
+	done
+	while read j ; \
+	do \
+		cp -a -t debian/nosh-bundles/etc/system-manager/targets/ debian/tmp/etc/system-manager/targets/"$$j" || exit 1 ; \
+	done < package/standard-targets
+	while read j ; \
+	do \
+		cp -a -t debian/nosh-bundles/etc/sv/ debian/tmp/etc/sv/mount@"$$j" || exit 1 ; \
+		cp -a -t debian/nosh-bundles/etc/sv/ debian/tmp/etc/sv/fsck@"$$j" || exit 1 ; \
+	done < package/sysinit-mounts
+	while read j ; \
+	do \
+		cp -a -t debian/nosh-bundles/etc/sv/ debian/tmp/etc/sv/"$$j" || exit 1 ; \
+	done < package/sysinit-services 
+
+install-indep-units:
+	install -d -m 0755 debian/nosh-systemd-services/usr/local/lib/systemd/system || exit 1 ;
+	install -d -m 0755 debian/nosh-systemd-services/usr/local/lib/tmpfiles.d || exit 1 ;
+	while read j ; \
+	do \
+		ln -f -t debian/nosh-systemd-services/usr/local/lib/systemd/system/ debian/tmp/lib/systemd/system/"$$j" || exit 1 ; \
+	done < package/systemd-services ;
+	while read j ; \
+	do \
+		ln -f -t debian/nosh-systemd-services/usr/local/lib/tmpfiles.d/ debian/tmp/lib/tmpfiles.d/"$$j" || exit 1 ; \
+	done < package/tmpfiles-snippets ;
+
+install-indep: install-common install-indep-doco install-indep-bundles install-indep-units
+	for i in exec bundles run-kernel-vt run-user-vt systemd-services ; \
 	do \
 		for j in preinst postinst prerm postrm ; \
 		do \
@@ -149,11 +170,3 @@ install-indep: install-common
 			fi ; \
 		done ; \
 	done
-
-clean:
-	${RM} debian/files debian/substvars
-	for i in guide exec terminal-management service-management systemd-services systemv-shims systemd-shims upstart-shims standard-targets sysinit-services regular-services regular-sockets bsd-services bsd-sockets ; \
-	do \
-		${RM} -r debian/nosh-"$$i"/ || exit 1 ; \
-	done
-	${RM} -r debian/tmp/

@@ -209,8 +209,8 @@ leading_slashify (
 
 struct names {
 	names(const char * a) : arg_name(a) { split_name(a, unit_dirname, unit_basename); }
-	void set_prefix(const std::string & v, bool esc) { set(esc, escaped_prefix, prefix, v); }
-	void set_instance(const std::string & v, bool esc) { set(esc, escaped_instance, instance, v); }
+	void set_prefix(const std::string & v, bool esc, bool alt) { set(esc, alt, escaped_prefix, prefix, v); }
+	void set_instance(const std::string & v, bool esc, bool alt) { set(esc, alt, escaped_instance, instance, v); }
 	void set_bundle_basename(const std::string & v) { bundle_basename = v; }
 	void set_bundle_dirname(const std::string & v) { bundle_dirname = v; }
 	const std::string & query_arg_name () const { return arg_name; }
@@ -224,26 +224,28 @@ struct names {
 	const std::string & query_bundle_basename () const { return bundle_basename; }
 	const std::string & query_bundle_dirname () const { return bundle_dirname; }
 	std::string substitute ( const std::string & );
+	std::list<std::string> substitute ( const std::list<std::string> & );
 protected:
 	std::string arg_name, unit_dirname, unit_basename, escaped_unit_basename, prefix, escaped_prefix, instance, escaped_instance, bundle_basename, bundle_dirname;
-	static std::string unescape ( const std::string & );
-	static std::string escape ( const std::string & );
-	void set ( bool esc, std::string & escaped, std::string & normal, const std::string & value ) {
+	static std::string unescape ( bool, const std::string & );
+	static std::string escape ( bool, const std::string & );
+	void set ( bool esc, bool at, std::string & escaped, std::string & normal, const std::string & value ) {
 		if (esc)
-			normal = unescape(escaped = value);
+			normal = unescape(at, escaped = value);
 		else
-			escaped = escape(normal = value);
+			escaped = escape(at, normal = value);
 	}
 };
 
 std::string 
 names::unescape ( 
+	bool alt,
 	const std::string & s
 ) {
 	std::string r;
 	for (std::string::const_iterator e(s.end()), q(s.begin()); e != q; ) {
 		char c(*q++);
-		if ('-' == c) {
+		if (!alt && '-' == c) {
 			r += '/';
 		} else
 		if ('\\' != c) {
@@ -258,10 +260,11 @@ names::unescape (
 				r += c;
 			else {
 				unsigned v(0U);
-				for (;;) {
+				for (unsigned n(0U);n < 2U; ++n) {
 					if (e == q) break;
 					c = *q;
 					if (!std::isxdigit(c)) break;
+					++q;
 					c = std::isdigit(c) ? (c - '0') : (std::tolower(c) - 'a' + 10);
 					v = (v << 4) | c;
 				}
@@ -274,22 +277,21 @@ names::unescape (
 
 std::string 
 names::escape ( 
+	bool alt,
 	const std::string & s
 ) {
 	std::string r;
 	for (std::string::const_iterator e(s.end()), q(s.begin()); e != q; ) {
 		char c(*q++);
-		if ('/' == c) {
+		if (!alt && '/' == c) {
 			r += '-';
 		} else
-		if ('-' != c) {
-			r += c;
-		} else
-		{
+		if (!alt ? '-' == c : '@' == c || '/' == c || '\\' == c) {
 			char buf[6];
 			snprintf(buf, sizeof buf, "\\x%02x", c);
 			r += std::string(buf);
-		}
+		} else
+			r += c;
 	}
 	return r;
 }
@@ -322,6 +324,16 @@ names::substitute (
 			case '%': default:	r += '%'; r += c; break;
 		}
 	}
+	return r;
+}
+
+std::list<std::string> 
+names::substitute ( 
+	const std::list<std::string> & l
+) {
+	std::list<std::string> r;
+	for (std::list<std::string>::const_iterator i(l.begin()); l.end() != i; ++i)
+		r.push_back(substitute(*i));
 	return r;
 }
 
@@ -508,16 +520,18 @@ convert_systemd_units (
 ) {
 	const char * prog(basename_of(args[0]));
 	std::string bundle_root;
-	bool unescape_instance(false), unescape_prefix(false);
+	bool unescape_instance(false), unescape_prefix(false), alt_escape(false);
 	try {
 		const char * bundle_root_str(0);
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
 		popt::string_definition bundle_option('\0', "bundle-root", "directory", "Root directory for bundles.", bundle_root_str);
 		popt::bool_definition unescape_instance_option('\0', "unescape-instance", "Unescape the instance part of a template instantiation.", unescape_instance);
+		popt::bool_definition alt_escape_option('\0', "alt-escape", "Use an alternative escape algorithm.", alt_escape);
 		popt::definition * main_table[] = {
 			&user_option,
 			&bundle_option,
-			&unescape_instance_option
+			&unescape_instance_option,
+			&alt_escape_option
 		};
 		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "");
 
@@ -587,20 +601,20 @@ convert_systemd_units (
 		std::string service_unit_name;
 		if (is_socket_activated) {
 			value * accept(socket_profile.use("socket", "accept"));
-			names.set_prefix(names.query_bundle_basename(), unescape_prefix);
+			names.set_prefix(names.query_bundle_basename(), unescape_prefix, alt_escape);
 			is_socket_accept = is_bool_true(accept, false);
 			service_unit_name = names.query_unit_dirname() + names.query_prefix() + (is_socket_accept ? "@" : "") + ".service";
 			service_file = find(service_unit_name, service_filename);
 		} else {
-			names.set_prefix(names.query_bundle_basename(), unescape_prefix);
+			names.set_prefix(names.query_bundle_basename(), unescape_prefix, alt_escape);
 			service_unit_name = names.query_arg_name();
 			service_file = find(service_unit_name, service_filename);
 			if (!service_file && ENOENT == errno) {
 				std::string::size_type atc(names.query_bundle_basename().find('@'));
 				if (names.query_bundle_basename().npos != atc) {
-					names.set_prefix(names.query_unit_basename().substr(0, atc), unescape_prefix);
+					names.set_prefix(names.query_unit_basename().substr(0, atc), unescape_prefix, alt_escape);
 					++atc;
-					names.set_instance(names.query_bundle_basename().substr(atc, names.query_bundle_basename().npos), unescape_instance);
+					names.set_instance(names.query_bundle_basename().substr(atc, names.query_bundle_basename().npos), unescape_instance, alt_escape);
 					service_unit_name = names.query_unit_dirname() + names.query_prefix() + "@.service";
 					service_file = find(service_unit_name, service_filename);
 				}
@@ -861,7 +875,7 @@ convert_systemd_units (
 	if (environment) {
 		for (std::list<std::string>::const_iterator i(environment->all_settings().begin()); environment->all_settings().end() != i; ++i) {
 			const std::string & datum(*i);
-			const std::list<std::string> list(split_list(names.substitute(datum)));
+			const std::list<std::string> list(names.substitute(split_list(datum)));
 			for (std::list<std::string>::const_iterator j(list.begin()); list.end() != j; ++j) {
 				const std::string & s(*j);
 				const std::string::size_type eq(s.find('='));
@@ -874,7 +888,7 @@ convert_systemd_units (
 	if (environmentappendpath) {
 		for (std::list<std::string>::const_iterator i(environmentappendpath->all_settings().begin()); environmentappendpath->all_settings().end() != i; ++i) {
 			const std::string & datum(*i);
-			const std::list<std::string> list(split_list(names.substitute(datum)));
+			const std::list<std::string> list(names.substitute(split_list(datum)));
 			for (std::list<std::string>::const_iterator j(list.begin()); list.end() != j; ++j) {
 				const std::string & s(*j);
 				const std::string::size_type eq(s.find('='));

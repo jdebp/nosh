@@ -1,0 +1,26 @@
+#!/bin/sh
+case "$1" in
+	remove|purge)
+		for i in \
+			ttylogin-starter \
+			ttylogin@tty1 \
+			ttylogin@tty2 \
+			ttylogin@tty3 \
+			ttylogin@tty4 \
+			ttylogin@tty5 \
+			ttylogin@tty6 \
+			ttylogin@tty7 \
+			ttylogin@tty8 \
+			ttylogin@tty9 \
+			ttylogin@tty10 \
+			ttylogin@tty11 \
+			ttylogin@tty12 \
+			;
+		do
+			system-control disable $i.service cyclog@$i.service
+			system-control stop $i.service cyclog@$i.service
+# Don't delete the cyclog@ user because the log files still exist.
+		done
+		;;
+esac
+

@@ -40,27 +40,65 @@ initial_space (
 
 static inline
 bool
-matches (
-	const std::string & s,
-	const std::string & n
+wildmat (
+	std::string::const_iterator p,
+	const std::string::const_iterator & pe,
+	std::string::const_iterator n,
+	const std::string::const_iterator & ne
 ) {
-	std::string name;
-	if (ends_in(s, ".target", name)) {
-		return n == name;
-	} else
-	if (ends_in(s, ".service", name)) {
-		return n == name;
-	} else
-	if (ends_in(s, ".socket", name)) {
-		return n == name;
-	} else
-		return n == s;
+	for (;;) {
+		if (p == pe && n == ne) return true;
+		if (p == pe || n == ne) return false;
+		switch (*p) {
+			case '*':
+				do { ++p; } while (p != pe && '*' == *p);
+				for (std::string::const_iterator b(ne); b != n; --b)
+					if (wildmat(p, pe, b, ne)) 
+						return true;
+				break;
+			case '\\':
+				++p;
+				if (p == pe) return false;
+				// Fall through to:
+			default:
+				if (*p != *n) return false;
+				// Fall through to:
+			case '?':
+				++p;
+				++n;
+				break;
+		}
+	}
+}
+
+static inline
+bool
+wildmat (
+	const std::string & pattern,
+	const std::string & name
+) {
+	return wildmat(pattern.begin(), pattern.end(), name.begin(), name.end());
+}
+
+static inline
+bool
+matches (
+	const std::string & pattern,
+	const std::string & name,
+	const std::string & suffix
+) {
+	std::string base;
+	if (ends_in(pattern, suffix, base))
+		return wildmat(base, name);
+	else
+		return wildmat(pattern, name);
 }
 
 static
 bool
 scan (
 	const std::string & name,
+	const std::string & suffix,
 	FILE * file,
 	bool & wants_enable
 ) {
@@ -71,14 +109,14 @@ scan (
 		std::string remainder;
 		if (begins_with(line, "enable", remainder) && initial_space(remainder)) {
 			remainder = rtrim(ltrim(remainder));
-			if (matches(remainder, name)) {
+			if (matches(remainder, name, suffix)) {
 				wants_enable = true;
 				return true;
 			}
 		} else
 		if (begins_with(line, "disable", remainder) && initial_space(remainder)) {
 			remainder = rtrim(ltrim(remainder));
-			if (matches(remainder, name)) {
+			if (matches(remainder, name, suffix)) {
 				wants_enable = false;
 				return true;
 			}
@@ -100,9 +138,10 @@ preset_directories[] = {
 static inline
 bool
 systemd_wants_enable_preset (
-	const std::string & name
+	const std::string & name,
+	const std::string & suffix
 ) {
-	bool wants_enable(false);
+	bool wants_enable(true);
 	std::string earliest;
 	for (size_t i(0); i < sizeof preset_directories/sizeof *preset_directories; ++i) {
 		const std::string preset_dir_name(preset_directories[i]);
@@ -126,7 +165,7 @@ systemd_wants_enable_preset (
 			const std::string p(preset_dir_name + d_name);
 			FileStar preset_file(std::fopen(p.c_str(), "rt"));
 			if (!preset_file) continue;
-			if (scan(name, preset_file, wants_enable))
+			if (scan(name, suffix, preset_file, wants_enable))
 				earliest = d_name;
 		}
 		closedir(preset_dir);
@@ -159,8 +198,8 @@ convert_systemd_presets (
 	}
 
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
-		std::string path, name;
-		const int bundle_dir_fd(open_bundle_directory(*i, path, name));
+		std::string path, name, suffix;
+		const int bundle_dir_fd(open_bundle_directory(*i, path, name, suffix));
 		if (0 > bundle_dir_fd) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, *i, std::strerror(error));
@@ -173,7 +212,7 @@ convert_systemd_presets (
 			close(bundle_dir_fd);
 			continue;
 		}
-		if (systemd_wants_enable_preset(name)) {
+		if (systemd_wants_enable_preset(name, suffix)) {
 			const int rc(unlinkat(service_dir_fd, "down", 0));
 			if (0 > rc && ENOENT != errno) {
 				const int error(errno);

@@ -213,7 +213,7 @@ wait_ok (
 }
 
 bool
-is_up (
+is_running (
 	const int supervise_dir_fd
 ) {
 	const int status_fd(open_read_at(supervise_dir_fd, "status"));
@@ -226,6 +226,23 @@ is_up (
 		return encore_status_running == status[18];
 	} else {
 		return status[12] || status[13] || status[14] || status[15];
+	}
+}
+
+bool
+is_stopped (
+	const int supervise_dir_fd
+) {
+	const int status_fd(open_read_at(supervise_dir_fd, "status"));
+	if (0 > status_fd) return false;
+	char status[20];
+	const int n(read(status_fd, status, sizeof status));
+	close(status_fd);
+	if (18 > n) return false;
+	if (20 <= n) {
+		return encore_status_stopped == status[18];
+	} else {
+		return !status[12] && !status[13] && !status[14] && !status[15];
 	}
 }
 

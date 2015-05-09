@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Wi-Fi Protected Access client daemon
+After=dbus.service
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=%P -u
+Restart=always
+
+[Install]
+WantedBy=workstation.target

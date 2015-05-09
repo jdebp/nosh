@@ -7,11 +7,7 @@ then
 fi
 
 # Create and populate the build directory.
-if [ \! -d build ]
-then
-	mkdir -p build
-	./package/tools
-fi
+[ \! -d build ] && mkdir -p build
 (
 	cd source && find . -type d
 ) | (

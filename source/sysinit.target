@@ -17,4 +17,5 @@ RemainAfterExit=yes
 ExecStart=true
 
 [Install]
+WantedBy=basic.target
 StoppedBy=shutdown.target

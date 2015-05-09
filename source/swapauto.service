@@ -4,12 +4,15 @@
 
 [Unit]
 Description=%P service
+DefaultDependencies=false
+EarlySupervise=true
 
 [Service]
 systemdWorkingDirectory=false
 ExecStartPre=swapon -a
 ExecStart=true
+ExecStopPost=swapoff -a
 RemainAfterExit=yes
 
 [Install]
-WantedBy=workstation.target
+WantedBy=sysinit.target

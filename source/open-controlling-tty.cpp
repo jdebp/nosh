@@ -85,7 +85,9 @@ open_controlling_tty (
 	// So we just use the BSD mechanism, which works on both the BSDs and Linux.
 	int fd(open(tty, O_RDWR|O_NOCTTY, 0));
 	if (fd < 0) {
+#if defined(_GNU_SOURCE)
 error_exit:
+#endif
 		{
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, tty, std::strerror(error));

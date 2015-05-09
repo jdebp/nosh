@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=openstack %P %I server
+
+[Service]
+systemdWorkingDirectory=false
+EnvironmentFile=-/etc/sysconfig/%P-%I
+ExecStart=%P-%I /etc/%P/%I-server.conf
+Restart=always
+
+[Install]
+WantedBy=server.target

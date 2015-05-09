@@ -1,5 +1,6 @@
 acpid
 bcron-spool
+avahi-daemon
 exim4r
 exim4s
 ftp4d
@@ -7,11 +8,12 @@ ftp6d
 http6d
 kadmind
 kpasswdd
+org.cups.cups-lpd
 qmail-smtpd
 rsync
 saned
 sshd
 svnserve
-systemd-rsyslog
 uuidd
+systemd-rsyslog
 vsftpd

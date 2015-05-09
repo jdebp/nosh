@@ -127,8 +127,8 @@ add_bundle_searching_path (
 	const char * arg,
 	int want
 ) {
-	std::string path, name;
-	const int bundle_dir_fd(open_bundle_directory (arg, path, name));
+	std::string path, name, suffix;
+	const int bundle_dir_fd(open_bundle_directory (arg, path, name, suffix));
 	if (0 > bundle_dir_fd) return 0;
 	return add_bundle(bundles, bundle_dir_fd, path, name, want);
 }
@@ -481,10 +481,10 @@ start_stop_common (
 				bool is_done(true);
 				switch (b.wants) {
 					case bundle::WANT_START:
-						is_done = 0 <= b.supervise_dir_fd && is_ok(b.supervise_dir_fd) && is_up(b.supervise_dir_fd);
+						is_done = 0 <= b.supervise_dir_fd && is_ok(b.supervise_dir_fd) && is_running(b.supervise_dir_fd);
 						break;
 					case bundle::WANT_STOP:
-						is_done = 0 <= b.supervise_dir_fd && !(is_ok(b.supervise_dir_fd) && is_up(b.supervise_dir_fd));
+						is_done = 0 <= b.supervise_dir_fd && (!is_ok(b.supervise_dir_fd) || is_stopped(b.supervise_dir_fd));
 						break;
 				}
 				if (is_done) {

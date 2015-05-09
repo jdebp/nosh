@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Bonjour control socket
+
+[Socket]
+Backlog=2
+ListenStream=/run/avahi-daemon/socket
+
+[Install]
+WantedBy=server.target

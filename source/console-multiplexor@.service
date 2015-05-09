@@ -1,0 +1,20 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Virtual console multiplexor driving %I
+
+[Service]
+systemdWorkingDirectory=false
+systemdUserEnvironment=no
+User=daemon
+Group=tty
+PermissionsStartOnly=yes
+ExecStartPre=mkdir -m 02755 -p /run/dev /run/dev/%I
+ExecStartPre=chown daemon:tty /run/dev/%I
+ExecStart=sh -c 'exec console-multiplexor /run/dev/%I vc[0-9]*'
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

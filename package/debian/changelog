@@ -1,3 +1,19 @@
+nosh (1.14) unstable; urgency=low
+
+  * More cross-platform services: deluged, deluge-web, multilog@, sissylog@, openvpn@, wpa_supplicant, polkitd, timedated, localed, hostnamed, NetworkManager, ModemManager, sickbeard, plexmediaserver, ossec@dbd, ossec@agentlessd, ossec@csyslogd, ossec@execd, ossec@agentd, ossec@logcollector, ossec@syscheckd, ossec@maild, ossec@analysisd, ossec@remoted, ossec@monitord
+  * The cups.service service has been renamed org.cups.cups.service to follow the service names used by CUPS packaging.
+  * Fixed a bug in foreground and background where nested separators on the right-hand-side were not being preserved.
+  * The previous regular sockets, sysinit services, and standard targets packages are now all merged into the bundles package.
+  * There is now a new user VT package that runs new-style user VT services.
+  * There is now a new kernel VT package that runs old-style kernel VT services.
+  * The nosh-systemd-services package now automatically runs various nosh subsystems under systemd.
+  * The maintainer scripts now create the cyclog@ user accounts, convert any systemd presets, and preset the services.
+  * Fixed a bug in service-is-{ok,up} where a non-int exception was being thrown.
+  * Fixed a bug in convert-systemd-units where it wasn't handling quoted whitespace in settings that take lists.
+  * openstack-swift@.service is now swift@.service to make the usernames shorter.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Sat, 09 May 2015 16:58:02 +0100
+
 nosh (1.13) unstable; urgency=low
 
   * Fixed a problem with handling "left+right" vt fonts that was being conflated with italic/oblique.

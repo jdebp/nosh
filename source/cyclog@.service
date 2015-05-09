@@ -4,12 +4,12 @@
 
 [Unit]
 Description=Standard format %P logging service for %I
-Before=%I.service
+Before=%i.service
 
 [Service]
 systemdUserEnvironment=no
 WorkingDirectory=/var/log/sv/
-User=%I-log
+User=%i-log
 ExecStart=%P %I/
 Restart=always
 

@@ -10,8 +10,10 @@ console-setup
 machine-id
 motd-dynamic
 newsyslog
+nextboot
 sane-console
 sysinit-log
+swapauto
 kmod@autofs
 kmod@unix
 kmod@ipv6

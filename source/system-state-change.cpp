@@ -143,6 +143,7 @@ sysinit (
 
 /* System control commands **************************************************
 // **************************************************************************
+// These are the built-in state change commands in system-control.
 */
 
 void
@@ -367,8 +368,8 @@ init (
 		popt::bool_definition rescue_option('s', "single", "Start in rescue mode.", rescue_mode);
 		popt::bool_definition emergency_option('b', "emergency", "Start in emergency mode.", emergency_mode);
 		popt::bool_definition update_option('o', "update", "Start in update mode.", update_mode);
-		popt::bool_definition autoboot_option('a', "autoboot", "Compatibility option, ignored.", ignore);
-		popt::bool_definition fastboot_option('f', "fastboot", "Compatibility option, ignored.", ignore);
+		popt::bool_definition autoboot_option('a', 0, "Compatibility option, ignored.", ignore);
+		popt::bool_definition fastboot_option('f', 0, "Compatibility option, ignored.", ignore);
 		popt::definition * top_table[] = {
 			&user_option,
 			&rescue_option,

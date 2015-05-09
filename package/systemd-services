@@ -2,3 +2,5 @@ service-manager.socket
 service-manager.service
 service-manager-svscan.path
 service-manager-svscan.service
+system-control-normal.service
+vc-getty@.service

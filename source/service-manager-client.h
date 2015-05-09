@@ -61,7 +61,11 @@ wait_ok (
 	int timeout
 );
 bool
-is_up (
+is_running (
+	const int supervise_dir_fd
+);
+bool
+is_stopped (
 	const int supervise_dir_fd
 );
 void

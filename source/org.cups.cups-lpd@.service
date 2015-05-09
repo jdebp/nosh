@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Common Unix Printing Service's LPD shim
+
+[Service]
+systemdWorkingDirectory=false
+User=lp
+ExecStart=cupsd-lpd
+Restart=always
+
+[Install]
+WantedBy=server.target

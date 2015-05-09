@@ -3,11 +3,12 @@
 ## **************************************************************************
 
 [Unit]
-Description=BSD FTP proxy daemon that uses pf
+Description=FTP proxy daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=%p -d
+ExecStart=ftp-proxy -d
+Restart=always
 
 [Install]
 WantedBy=workstation.target

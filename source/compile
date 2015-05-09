@@ -1,8 +1,8 @@
 #!/bin/sh -e
-redo-ifchange ./cxx ./cxxflags
+redo-ifchange ./cxx ./cxxflags ./cppflags
 read cxx < ./cxx
 read cxxflags < ./cxxflags
-cppflags="-I . -I /usr/include/kqueue"
+read cppflags < ./cppflags
 if g++ -E --usage >/dev/null 2>&1
 then
 	${cxx} ${cxxflags} ${cppflags} -o "$1" -c "$2"

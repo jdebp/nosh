@@ -48,21 +48,21 @@ service_is_up (
 
 	const char * name(args[0]);
 	int dir_fd(open_dir_at(AT_FDCWD, name));
-	if (0 > dir_fd) throw EXIT_TEMPORARY_FAILURE;
+	if (0 > dir_fd) throw static_cast<int>(EXIT_TEMPORARY_FAILURE);
 	int ok_fd(open_writeexisting_at(dir_fd, "ok"));
 	if (0 > ok_fd) {
 		const int old_dir_fd(dir_fd);
 		dir_fd = open_dir_at(dir_fd, "supervise");
 		close(old_dir_fd);
-		if (0 > dir_fd) throw EXIT_TEMPORARY_FAILURE;
+		if (0 > dir_fd) throw static_cast<int>(EXIT_TEMPORARY_FAILURE);
 		ok_fd = open_writeexisting_at(dir_fd, "ok");
-		if (0 > ok_fd) throw EXIT_TEMPORARY_FAILURE;
+		if (0 > ok_fd) throw static_cast<int>(EXIT_TEMPORARY_FAILURE);
 	}
 	const int status_fd(open_read_at(dir_fd, "status"));
-	if (0 > status_fd) throw EXIT_TEMPORARY_FAILURE;
+	if (0 > status_fd) throw static_cast<int>(EXIT_TEMPORARY_FAILURE);
 	char status[20];
 	const int n(read(status_fd, status, sizeof status));
-	if (0 > n) throw EXIT_TEMPORARY_FAILURE;
+	if (0 > n) throw static_cast<int>(EXIT_TEMPORARY_FAILURE);
 	if (18 <= n) {
 		if (20 <= n) {
 			// This is the same as daemontools-encore, but subtly different from the nagios-check-service command.
@@ -71,5 +71,5 @@ service_is_up (
 			if (status[12] || status[13] || status[14] || status[15]) throw EXIT_SUCCESS;
 		}
 	}
-	throw EXIT_PERMANENT_FAILURE;
+	throw static_cast<int>(EXIT_PERMANENT_FAILURE);
 }

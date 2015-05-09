@@ -52,11 +52,13 @@ int
 open_bundle_directory (
 	const char * arg,
 	std::string & path,
-	std::string & name
+	std::string & name,
+	std::string & suffix
 ) {
 	if (const char * slash = std::strchr(arg, '/')) {
 		path = std::string(arg, slash + 1);
 		name = std::string(slash + 1);
+		suffix = std::string();
 		return open_dir_at(AT_FDCWD, (path + name + "/").c_str());
 	}
 
@@ -73,10 +75,11 @@ open_bundle_directory (
 			scan_for_service = true;
 		} else
 		{
-			scan_for_target = scan_for_service = true;
 			name = a;
+			scan_for_target = scan_for_service = true;
 		}
 		if (scan_for_target) {
+			suffix = ".target";
 			for ( const char * const * q(target_bundle_prefixes); q < target_bundle_prefixes + sizeof target_bundle_prefixes/sizeof *target_bundle_prefixes; ++q) {
 				path = *q;
 				const int bundle_dir_fd(open_dir_at(AT_FDCWD, (path + name + "/").c_str()));
@@ -84,6 +87,7 @@ open_bundle_directory (
 			}
 		}
 		if (scan_for_service) {
+			suffix = ".service";
 			for ( const char * const * q(service_bundle_prefixes); q < service_bundle_prefixes + sizeof service_bundle_prefixes/sizeof *service_bundle_prefixes; ++q) {
 				path = *q;
 				const int bundle_dir_fd(open_dir_at(AT_FDCWD, (path + name + "/").c_str()));
@@ -94,6 +98,7 @@ open_bundle_directory (
 
 	path = std::string();
 	name = a;
+	suffix = std::string();
 	return open_dir_at(AT_FDCWD, (path + name + "/").c_str());
 }
 

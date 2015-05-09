@@ -94,58 +94,43 @@ do
 	ln -f -- "${root}"sbin/"${command}" "${root}"sbin/"${alias}"{new}
 	mv -f -- "${root}"sbin/"${alias}"{new} "${root}"sbin/"${alias}"
 done < package/aliases8
-for i in service-manager.socket service-manager.service service-manager-svscan.path service-manager-svscan.service
+while read i
 do
 	cp -p -f -- config/"$i" "${root}"lib/systemd/system/"$i"{new}
 	mv -f -- "${root}"lib/systemd/system/"$i"{new} "${root}"lib/systemd/system/"$i"
-done 
-for i in service-manager system-manager terminal-emulator
+done < package/systemd-services
+while read i
 do
-	cp -p -f -- config/"$i.conf" "${root}"lib/tmpfiles.d/"$i.conf"{new}
-	mv -f -- "${root}"lib/tmpfiles.d/"$i.conf"{new} "${root}"lib/tmpfiles.d/"$i.conf"
-done 
+	cp -p -f -- config/"$i" "${root}"lib/tmpfiles.d/"$i"{new}
+	mv -f -- "${root}"lib/tmpfiles.d/"$i"{new} "${root}"lib/tmpfiles.d/"$i"
+done < package/tmpfiles-snippets
 while read i
 do
 	rm -f -- "${root}"etc/system-manager/targets/"$i"/service/remain
-	(cd config/standard-targets/ && tar -c -f - "$i")|(cd "${root}"etc/system-manager/targets/ && tar -x -f -)
+	(cd config/targets/ && tar -c -f - "$i")|(cd "${root}"etc/system-manager/targets/ && tar -x -f -)
 done < package/standard-targets
 while read i
 do
 	rm -f -- "${root}"etc/sv/"$i"/service/remain
-	(cd config/sysinit-services/ && tar -c -f - "$i")|(cd "${root}"etc/sv/ && tar -x -f -)
+	(cd config/services/ && tar -c -f - "$i")|(cd "${root}"etc/sv/ && tar -x -f -)
 done < package/sysinit-services
 while read i
 do
 	rm -f -- "${root}"etc/sv/mount@"$i"/service/remain
 	rm -f -- "${root}"etc/sv/fsck@"$i"/service/remain
-	(cd config/sysinit-services/ && tar -c -f - mount@"$i")|(cd "${root}"etc/sv/ && tar -x -f -)
-	(cd config/sysinit-services/ && tar -c -f - fsck@"$i")|(cd "${root}"etc/sv/ && tar -x -f -)
+	(cd config/services/ && tar -c -f - mount@"$i")|(cd "${root}"etc/sv/ && tar -x -f -)
+	(cd config/services/ && tar -c -f - fsck@"$i")|(cd "${root}"etc/sv/ && tar -x -f -)
 done < package/sysinit-mounts
-while read i
+(
+	cat package/common-services package/common-sockets package/common-ttys package/kernel-vt-services package/user-vt-services 
+	case "`uname`" in
+	Linux) cat package/linux-ttys ;;
+	*BSD) cat package/bsd-services package/bsd-sockets package/bsd-ttys ;;
+	esac
+) | while read i
 do
 	rm -f -- "${root}"var/sv/"$i"/service/remain
 	rm -f -- "${root}"var/sv/cyclog@"$i"/service/remain
-	(cd config/regular-services/ && tar -c -f - "$i")|(cd "${root}"var/sv/ && tar -x -f -)
-	(cd config/regular-services/ && tar -c -f - cyclog@"$i")|(cd "${root}"var/sv/ && tar -x -f -)
-done < package/regular-services
-while read i
-do
-	rm -f -- "${root}"var/sv/"$i"/service/remain
-	rm -f -- "${root}"var/sv/cyclog@"$i"/service/remain
-	(cd config/regular-services/ && tar -c -f - "$i")|(cd "${root}"var/sv/ && tar -x -f -)
-	(cd config/regular-services/ && tar -c -f - cyclog@"$i")|(cd "${root}"var/sv/ && tar -x -f -)
-done < package/regular-sockets
-while read i
-do
-	rm -f -- "${root}"var/sv/"$i"/service/remain
-	rm -f -- "${root}"var/sv/cyclog@"$i"/service/remain
-	(cd config/bsd-services/ && tar -c -f - "$i")|(cd "${root}"var/sv/ && tar -x -f -)
-	(cd config/bsd-services/ && tar -c -f - cyclog@"$i")|(cd "${root}"var/sv/ && tar -x -f -)
-done < package/bsd-services
-while read i
-do
-	rm -f -- "${root}"var/sv/"$i"/service/remain
-	rm -f -- "${root}"var/sv/cyclog@"$i"/service/remain
-	(cd config/bsd-services/ && tar -c -f - "$i")|(cd "${root}"var/sv/ && tar -x -f -)
-	(cd config/bsd-services/ && tar -c -f - cyclog@"$i")|(cd "${root}"var/sv/ && tar -x -f -)
-done < package/bsd-sockets
+	(cd config/services/ && tar -c -f - "$i")|(cd "${root}"var/sv/ && tar -x -f -)
+	(cd config/services/ && tar -c -f - cyclog@"$i")|(cd "${root}"var/sv/ && tar -x -f -)
+done

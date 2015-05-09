@@ -3,11 +3,12 @@
 ## **************************************************************************
 
 [Unit]
-Description=FTP proxy daemon
+Description="policy kit" daemon
+After=dbus.service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=ftp-proxy -d
+ExecStart=/usr/lib/policykit-1/polkitd --no-debug
 Restart=always
 
 [Install]

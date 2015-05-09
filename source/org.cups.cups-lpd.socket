@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Common Unix Printing Service's LPD shim socket
+
+[Socket]
+Backlog=2
+MaxConnections=2
+ListenStream=515
+Accept=true
+
+[Install]
+WantedBy=server.target

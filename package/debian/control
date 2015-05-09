@@ -6,7 +6,7 @@ Build-Depends: redo
 
 Package: nosh-guide
 Architecture: amd64
-Depends: ${shlibs:Depends}
+Depends:
 Suggests: 
 Recommends: 
 Description: User guide for the various nosh-* packages.
@@ -50,7 +50,7 @@ Description: Service and system management utilities
 
 Package: nosh-terminal-management
 Architecture: amd64
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, nosh-service-management (>=1.14)
 Suggests: 
 Recommends: 
 Description: Virtual terminal, pseudo-terminal, and TUI login tools
@@ -77,7 +77,7 @@ Description: System V shim service and system management utilities
 
 Package: nosh-systemd-shims
 Architecture: amd64
-Depends: ${shlibs:Depends}, nosh-service-management
+Depends: nosh-service-management
 Suggests: 
 Recommends: 
 Description: systemd shim service and system management utilities
@@ -88,7 +88,7 @@ Description: systemd shim service and system management utilities
 
 Package: nosh-upstart-shims
 Architecture: amd64
-Depends: ${shlibs:Depends}, nosh-service-management
+Depends: nosh-service-management
 Suggests: 
 Recommends: 
 Description: upstart shim service and system management utilities
@@ -99,57 +99,41 @@ Description: upstart shim service and system management utilities
 
 Package: nosh-systemd-services
 Architecture: amd64
-Depends: ${shlibs:Depends}, nosh-service-management, systemd
+Depends: nosh-service-management, systemd, nosh-bundles
 Suggests: 
 Recommends: 
 Description: systemd services for running the nosh service manager and daemontools service scanner
  This package provides systemd service units for running the nosh service manager and daemontools service scanner under systemd, instead of running the nosh service manager.
+ It presets systemd services that:
+  * run the nosh service-manager server under systemd;
+  * run the nosh service-dt-scanner (a.k.a. svscan) service under systemd; and
+  * start the nosh normal.target and its dependencies.
+ It disables the nosh sysinit.target, on the basis that systemd is doing that part of the work.
 
-Package: nosh-standard-targets
+Package: nosh-bundles
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management
+Depends: nosh-exec, nosh-service-management (>=1.14)
 Suggests: 
 Recommends: 
-Description: Standard targets for the system manager
- This package provides the pre-packaged bundle directories for the standard targets (normal, workstation, server, multi-user, and so on).
+Conflicts: nosh-standard-targets, nosh-sysinit-services, nosh-bsd-services, nosh-bsd-sockets, nosh-regular-sockets, nosh-regular-services
+Description: Service bundles
+ This package provides pre-packaged bundle directories for 
+  * the standard targets (normal, workstation, server, multi-user, and so on);
+  * the system initialization services; and
+  * regular services.
 
-Package: nosh-sysinit-services
+Package: nosh-run-kernel-vt
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management
+Depends: nosh-exec, nosh-service-management (>=1.14), nosh-terminal-management, nosh-bundles
 Suggests: 
 Recommends: 
-Description: System initialization services
- This package provides the pre-packaged bundle directories for system initialization services.
+Description: Run old-style kernel virtual terminals
+ This package runs old-style kernel virtual terminals, using the kernel virtual terminal device files and a service that auto-starts ttylogin services (on demand if possible).
 
-Package: nosh-regular-services
+Package: nosh-run-user-vt
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management
+Depends: nosh-exec, nosh-service-management (>=1.14), nosh-terminal-management, nosh-bundles
 Suggests: 
 Recommends: 
-Description: Regular non-socket-activated services
- This package provides the pre-packaged bundle directories for regular non-socket-activated services.
-
-Package: nosh-regular-sockets
-Architecture: amd64
-Depends: nosh-exec, nosh-service-management
-Suggests: 
-Recommends: 
-Description: Regular socket-activated services
- This package provides the pre-packaged bundle directories for regular socket-activated services.
-
-Package: nosh-bsd-services
-Architecture: amd64
-Depends: nosh-exec, nosh-service-management
-Suggests: 
-Recommends: 
-Description: BSD non-socket-activated services
- This package provides the pre-packaged bundle directories for BSD-specific non-socket-activated services.
-
-Package: nosh-bsd-sockets
-Architecture: amd64
-Depends: nosh-exec, nosh-service-management
-Suggests: 
-Recommends: 
-Description: BSD socket-activated services
- This package provides the pre-packaged bundle directories for BSD-specific socket-activated services.
-
+Description: Run new-style application-mode virtual terminals
+ This package runs new-style application-mode virtual terminals, rendered via the (first) framebuffer and the input event stream.

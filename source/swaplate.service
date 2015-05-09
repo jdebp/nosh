@@ -9,8 +9,8 @@ After=swapauto.service
 [Service]
 systemdWorkingDirectory=false
 ExecStartPre=swapon -aL
-ExecStopPost=swapoff -aL
 ExecStart=true
+ExecStopPost=swapoff -aL
 RemainAfterExit=yes
 
 [Install]

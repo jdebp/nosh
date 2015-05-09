@@ -1,0 +1,19 @@
+#!/bin/sh
+case "$1" in
+	upgrade)
+		# Don't restart the terminal emulators; they will use the new code at next login.
+		for i in \
+			console-fb-realizer@head0 \
+			;
+		do
+			if system-control is-loaded $i.service
+			then
+				system-control try-restart $i.service
+			fi
+			if system-control is-loaded cyclog@$i.service
+			then
+				system-control try-restart cyclog@$i.service
+			fi
+		done
+		;;
+esac

@@ -8,6 +8,8 @@ After=dbus.service
 
 [Service]
 systemdWorkingDirectory=false
+ExecStartPre=mkdir -m 02755 /run/avahi-daemon
+ExecStartPre=chown avahi /run/avahi-daemon
 ExecStart=%P
 Restart=always
 

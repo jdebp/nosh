@@ -3,11 +3,11 @@
 ## **************************************************************************
 
 [Unit]
-Description=BSD swapex daemon
+Description=PC-BSD Swap Extender daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=swapexd -p
+ExecStart=swapexd
 #Restart=always
 
 [Install]

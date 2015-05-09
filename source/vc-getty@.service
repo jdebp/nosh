@@ -1,0 +1,20 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Virtual Console login on %I
+BindTo=dev-%i.device
+After=dev-%i.device systemd-user-sessions.service plymouth-quit-wait.service
+Before=getty.target
+
+[Service]
+ExecStart=-/bin/exec vc-get-tty "%I" open-controlling-tty vc-reset-tty login-banner /etc/issue login-process /bin/login
+Restart=always
+UtmpIdentifier=%I
+TTYPath=/dev/%I
+KillMode=process
+KillSignal=SIGHUP
+
+[Install]
+Alias=getty.target.wants/getty@tty1.service

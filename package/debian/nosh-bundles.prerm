@@ -1,0 +1,128 @@
+#!/bin/sh
+case "$1" in
+	remove|purge)
+		for I in \
+			anacron \
+			atd \
+			avahi-dnsconfd \
+			bcron-start \
+			bcron-update \
+			bootparams \
+			dbus \
+			deluged \
+			deluge-web \
+			dnscache \
+			dovecot \
+			epmd \
+			exim4q \
+			fail2ban \
+			fancontrol \
+			fscd \
+			gnucron \
+			hostnamed \
+			keepalived \
+			kerneloops \
+			lm-sensors \
+			localed \
+			ModemManager \
+			mongodb \
+			moused \
+			mysql \
+			nagios \
+			NetworkManager \
+			nisdomain \
+			nmbd \
+			ntpd \
+			openvpn@client \
+			openvpn@server \
+			org.cups.cupsd \
+			ossec@agentd \
+			ossec@agentlessd \
+			ossec@analysisd \
+			ossec@csyslogd \
+			ossec@dbd \
+			ossec@execd \
+			ossec@logcollector \
+			ossec@maild \
+			ossec@monitord \
+			ossec@remoted \
+			ossec@syscheckd \
+			pbid \
+			plexmediaserver \
+			polkitd \
+			postgresql \
+			powerd \
+			pppd-dns \
+			qmail-send \
+			rabbitmq-server \
+			rpcbind \
+			samba \
+			sickbeard \
+			smartd \
+			smbd \
+			sshdgenkeys \
+			swapauto \
+			swift@account \
+			swift@account-auditor \
+			swift@account-replicator \
+			swift@account-updater \
+			swift@container \
+			swift@container-auditor \
+			swift@container-replicator \
+			swift@container-updater \
+			swift@object \
+			swift@object-auditor \
+			swift@object-replicator \
+			swift@object-updater \
+			syslogd \
+			timedated \
+			tinydns \
+			update-binfmts \
+			volmand \
+			wicd \
+			winbindd \
+			wpa_supplicant \
+			ypbind \
+			;
+		do
+			system-control disable $I.service cyclog@$I.service
+			system-control stop $I.service cyclog@$I.service
+# Don't delete the cyclog@ user because the log files still exist.
+		done
+		for i in \
+			acpid \
+			avahi-daemon \
+			bcron-spool \
+			exim4r \
+			exim4s \
+			ftp4d \
+			ftp6d \
+			http6d \
+			kadmind \
+			kpasswdd \
+			org.cups.cups-lpd \
+			qmail-smtpd \
+			rsync \
+			saned \
+			sshd \
+			svnserve \
+			systemd-rsyslog \
+			uuidd \
+			vsftpd \
+			;
+		do
+			system-control disable $i.service cyclog@$i.service
+			system-control stop $i.service cyclog@$i.service
+# Don't delete the cyclog@ user because the log files still exist.
+		done
+		for i in \
+			server \
+			workstation \
+			multi-user \
+			;
+		do
+			system-control disable $i.target
+			system-control stop $i.target
+		done
+		;;
+esac

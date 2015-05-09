@@ -55,8 +55,8 @@ unload_when_stopped (
 	if (0 > socket_fd.get()) throw EXIT_FAILURE;
 
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
-		std::string path, name;
-		FileDescriptorOwner bundle_dir_fd(open_bundle_directory(*i, path, name));
+		std::string path, name, suffix;
+		FileDescriptorOwner bundle_dir_fd(open_bundle_directory(*i, path, name, suffix));
 		if (0 > bundle_dir_fd.get()) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, *i, std::strerror(error));

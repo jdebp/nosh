@@ -12,7 +12,8 @@ fi
 # But released files can be links to other released files, of course.
 mkdir -p command manual config guide
 
-# Build all of the ...{new} files.
+# ##############################################################################
+# Build all of the ...{new} files in ./command and ./manual.
 cat package/commands1 package/commands8 | while read i
 do
 	rm -f -- command/"$i"{new}
@@ -69,7 +70,8 @@ do
 	ln -f -s -- "${command}".html guide/"${alias}".html{new}
 done
 
-# Rename the ...{new} files.
+# ##############################################################################
+# Rename the ...{new} files in ./command and ./manual.
 (
 	cat package/commands1 package/commands8
 	awk '{ if ($1 == "exec" || $1 == "session-manager" || $1 == "console-terminal-emulator") print $2 ; }' package/aliases1
@@ -120,66 +122,87 @@ do
 	mv -f -- guide/"${alias}".html{new} guide/"${alias}".html
 done
 
-# Build all of the {new} directories.
-rm -rf -- config/standard-targets{new} config/sysinit-services{new} config/regular-services{new} config/bsd-services{new}
-mkdir -p config/standard-targets{new} config/sysinit-services{new} config/regular-services{new} config/bsd-services{new}
+# ##############################################################################
+# Build all of the {new} directories in ./config.
+rm -rf -- config/targets{new} config/services{new}
+mkdir -p config/targets{new} config/services{new}
 while read i
 do
-	command/system-control convert-systemd-units --bundle-root config/standard-targets{new}/ build/$i.target
+	command/system-control convert-systemd-units --bundle-root config/targets{new}/ build/$i.target
 done < package/standard-targets
 while read i
 do
-	command/system-control convert-systemd-units --bundle-root config/sysinit-services{new}/ build/$i.service
-	ln -s ../sysinit-log config/sysinit-services{new}/$i/log
-done < package/sysinit-services
-while read i
-do
-	command/system-control convert-systemd-units --bundle-root config/sysinit-services{new}/ --unescape-instance build/mount@$i.service
-	ln -s ../sysinit-log config/sysinit-services{new}/mount@$i/log
-	command/system-control convert-systemd-units --bundle-root config/sysinit-services{new}/ --unescape-instance build/fsck@$i.service
-	ln -s ../sysinit-log config/sysinit-services{new}/fsck@$i/log
+	command/system-control convert-systemd-units --bundle-root config/services{new}/ --unescape-instance build/mount@$i.service
+	ln -s ../sysinit-log config/services{new}/mount@$i/log
+	command/system-control convert-systemd-units --bundle-root config/services{new}/ --unescape-instance build/fsck@$i.service
+	ln -s ../sysinit-log config/services{new}/fsck@$i/log
 done < package/sysinit-mounts
+cat package/common-services package/bsd-services package/sysinit-services |
 while read i
 do
-	command/system-control convert-systemd-units --bundle-root config/regular-services{new}/ --unescape-instance build/$i.service
-	command/system-control convert-systemd-units --bundle-root config/regular-services{new}/ build/cyclog@$i.service
-	ln -s ../cyclog@$i config/regular-services{new}/$i/log
-done < package/regular-services
+	command/system-control convert-systemd-units --bundle-root config/services{new}/ build/$i.service
+done
+cat package/kernel-vt-services package/user-vt-services package/bsd-ttys package/linux-ttys package/common-ttys |
 while read i
 do
-	command/system-control convert-systemd-units --bundle-root config/regular-services{new}/ --unescape-instance build/$i.socket
-	command/system-control convert-systemd-units --bundle-root config/regular-services{new}/ build/cyclog@$i.service
-	ln -s ../cyclog@$i config/regular-services{new}/$i/log
-done < package/regular-sockets
+	command/system-control convert-systemd-units --bundle-root config/services{new}/ --unescape-instance build/$i.service
+done
+cat package/common-sockets package/bsd-sockets |
 while read i
 do
-	command/system-control convert-systemd-units --bundle-root config/bsd-services{new}/ build/$i.service
-	command/system-control convert-systemd-units --bundle-root config/bsd-services{new}/ build/cyclog@$i.service
-	ln -s ../cyclog@$i config/bsd-services{new}/$i/log
-done < package/bsd-services
+	command/system-control convert-systemd-units --bundle-root config/services{new}/ build/$i.socket
+done
 while read i
 do
-	command/system-control convert-systemd-units --bundle-root config/bsd-services{new}/ build/$i.socket
-	command/system-control convert-systemd-units --bundle-root config/bsd-services{new}/ build/cyclog@$i.service
-	ln -s ../cyclog@$i config/bsd-services{new}/$i/log
-done < package/bsd-sockets
-rm -f -- config/sysinit-services{new}/sysinit-log/log
-rm -f -- config/sysinit-services{new}/devd/log
-ln -s ../devd-log config/sysinit-services{new}/devd/log
+	ln -s ../sysinit-log config/services{new}/$i/log
+done < package/sysinit-services
+cat package/common-services package/common-sockets package/bsd-services package/bsd-sockets package/kernel-vt-services package/user-vt-services |
+while read I
+do
+	command/system-control convert-systemd-units --bundle-root config/services{new}/ --alt-escape build/cyclog@"$I".service
+	ln -s ../cyclog@$I config/services{new}/$I/log
+done
+cat package/common-ttys package/bsd-ttys package/linux-ttys |
+while read I
+do
+	command/system-control convert-systemd-units --bundle-root config/services{new}/ --alt-escape build/cyclog@"$I".service
+	ln -s ../cyclog@$I config/services{new}/$I/log
+done
+for i in 1 2 3 ; do ln -s -- /run/dev/vc"$i" config/services{new}/console-multiplexor@head0/service/ ; done
+mkdir -m 0755 config/services{new}/console-fb-realizer@head0/service/kbdmaps
+mkdir -m 0755 config/services{new}/console-fb-realizer@head0/service/fonts
+ln -s -- kbdmaps/us.kbdmap config/services{new}/console-fb-realizer@head0/service/kbdmap
+case "`uname`" in
+Linux) ln -s /dev/fb0 config/services{new}/console-fb-realizer@head0/service/fb ; ln -s /dev/input/event0 config/services{new}/console-fb-realizer@head0/service/event ;;
+*BSD) ln -s /dev/ttyv0 config/services{new}/console-fb-realizer@head0/service/fb ; ln -s /dev/ttyv0 config/services{new}/console-fb-realizer@head0/service/event ;;
+esac
+ln -s ../../ttylogin@tty1 ../../ttylogin@ttyv0 config/services{new}/console-fb-realizer@head0/conflicts/
+rm -f -- config/services{new}/sysinit-log/log
+rm -f -- config/services{new}/devd/log
+ln -s ../devd-log config/services{new}/devd/log
+fgrep -l "envdir env" config/services{new}/*/service/run |
+sed -e 's/run$/env/' |
+xargs mkdir -m 0755 --
 
-# Rename the ...{new} directories.
-for i in service-manager.socket service-manager.service service-manager.conf system-manager.conf terminal-emulator.conf service-manager-svscan.path service-manager-svscan.service
+# ##############################################################################
+# Build all of the {new} files in ./config.
+cat package/systemd-services package/tmpfiles-snippets |
+while read i
 do
 	rm -f -- config/"$i"{new}
 	cp -p -f -- build/"$i" config/"$i"{new}
 done
-for i in service-manager.socket service-manager.service service-manager.conf system-manager.conf terminal-emulator.conf service-manager-svscan.path service-manager-svscan.service
+
+# ##############################################################################
+# Rename the ...{new} directories and files in ./config.
+cat package/systemd-services package/tmpfiles-snippets |
+while read i
 do
 	mv -f -- config/"$i"{new} config/"$i"
 done 
-for i in standard-targets sysinit-services regular-services bsd-services
+for i in targets services
 do
-	rm -rf -- config/"$i"{old}
 	test -e config/"$i" && mv -f -- config/"$i" config/"$i"{old}
 	mv -f -- config/"$i"{new} config/"$i"
+	rm -rf -- config/"$i"{old}
 done

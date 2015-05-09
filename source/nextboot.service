@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Delete the just-used nextboot information
+DefaultDependencies=false
+EarlySupervise=true
+Wants=local-fs.target
+After=local-fs.target
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=nextboot -D
+Restart=never
+
+[Install]
+WantedBy=sysinit.target

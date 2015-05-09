@@ -1,4 +1,4 @@
-/* COPYING ******************************************************************
+/* coPYING ******************************************************************
 For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
@@ -151,7 +151,7 @@ ttylogin_starter (
 				service_name = "ttylogin@" + ttyname + ".service";
 				args.clear();
 				args.insert(args.end(), "system-control");
-				args.insert(args.end(), "start");
+				args.insert(args.end(), "reset");
 				if (verbose)
 					args.insert(args.end(), "--verbose");
 				args.insert(args.end(), service_name.c_str());

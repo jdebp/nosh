@@ -14,6 +14,7 @@ Type=oneshot
 systemdWorkingDirectory=false
 ExecStartPre=%P %I
 ExecStart=true
+ExecStopPost=u%P %I
 RemainAfterExit=yes
 
 [Install]

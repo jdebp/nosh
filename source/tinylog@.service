@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Standard format %P logging service for %I
+Before=%I.service
+
+[Service]
+systemdUserEnvironment=no
+WorkingDirectory=/var/log/sv/
+User=%I-log
+ExecStart=%P -t %I/
+Restart=always
+
+[Install]
+WantedBy=workstation.target

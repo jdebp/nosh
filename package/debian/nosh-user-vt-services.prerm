@@ -1,0 +1,14 @@
+#!/bin/sh
+case "$1" in
+	remove|purge)
+		for i in \
+			console-fb-realizer@head0 \
+			console-multiplexor@head0 \
+			;
+		do
+			system-control disable $i.service cyclog@$i.service
+			system-control stop $i.service cyclog@$i.service
+# Don't delete the cyclog@ user because the log files still exist.
+		done
+		;;
+esac

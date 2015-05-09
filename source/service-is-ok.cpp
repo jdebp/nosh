@@ -1,4 +1,4 @@
-/* COPYING ******************************************************************
+/* coPYING ******************************************************************
 For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
@@ -46,11 +46,11 @@ service_is_ok (
 	}
 	const char * name(args[0]);
 	const int dir_fd(open_dir_at(AT_FDCWD, name));
-	if (0 > dir_fd) throw EXIT_TEMPORARY_FAILURE;
+	if (0 > dir_fd) throw static_cast<int>(EXIT_TEMPORARY_FAILURE);
 	const int ok_fd(open_writeexisting_at(dir_fd, "ok"));
 	if (0 <= ok_fd) throw EXIT_SUCCESS;
 	const int supervise_ok_fd(open_writeexisting_at(dir_fd, "supervise/ok"));
 	if (0 <= supervise_ok_fd) throw EXIT_SUCCESS;
 
-	throw EXIT_PERMANENT_FAILURE;
+	throw static_cast<int>(EXIT_PERMANENT_FAILURE);
 }

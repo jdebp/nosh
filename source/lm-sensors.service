@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=hardware sensor chip initialization
+
+[Service]
+systemdWorkingDirectory=false
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=foreground sensors -s ; sensors
+
+[Install]
+WantedBy=workstation.target

@@ -12,6 +12,7 @@ For copyright and licensing terms, see the file named COPYING.
 
 /* Table of commands ********************************************************
 // **************************************************************************
+// These are the built-in commands in the BSD/SystemV compatibility utilities.
 */
 
 // There are no extra personalities over and above the built-in commands.

@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%P service using "%I" configuration
+After=syslog.target
+
+[Service]
+PrivateTmp=true
+WorkingDirectory=/etc/%P/
+ExecStart=%P --config %I.conf
+Restart=always
+LimitNPROC=10
+
+[Install]
+WantedBy=server.target

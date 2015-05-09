@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Deluge BitTorrent client
+
+[Service]
+systemdWorkingDirectory=false
+User=deluge
+Group=deluge
+Umask=037
+ExecStart=%p --do-not-daemonize
+Restart=on-failure
+
+[Install]
+WantedBy=server.target

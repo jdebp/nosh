@@ -7,5 +7,5 @@ Description=Daemontools compatible service scanner
 After=local-fs.target
 
 [Service]
-systemdWorkingDirectory=false
+#systemdWorkingDirectory=false
 ExecStart=/bin/service-dt-scanner /service/

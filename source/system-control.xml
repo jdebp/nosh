@@ -564,6 +564,11 @@ administrator has chosen.
 <arg choice="req">is-active</arg>
 <arg rep='repeat'><replaceable>names</replaceable></arg>
 </cmdsynopsis>
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">is-loaded</arg>
+<arg rep='repeat'><replaceable>names</replaceable></arg>
+</cmdsynopsis>
 
 <para>
 <command>system-control</command> takes each of the
@@ -574,8 +579,9 @@ directory names, and chains to (respectively)
 <citerefentry><refentrytitle>service-show</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 with the <arg>--terminate</arg> option,
+<citerefentry><refentrytitle>service-is-up</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 or
-<citerefentry><refentrytitle>service-is-up</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+<citerefentry><refentrytitle>service-is-ok</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 </refsection>
@@ -584,12 +590,21 @@ or
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">init</arg>
-<arg>--user</arg>
-<arg>--update</arg>
-<arg>-s</arg>
-<arg>-b</arg>
-<arg>-a</arg>
-<arg>-f</arg>
+<arg choice="opt">--user</arg>
+<group choice="opt">
+<arg choice="plain">-o</arg>
+<arg choice="plain">--update</arg>
+</group>
+<group choice="opt">
+<arg choice="plain">-s</arg>
+<arg choice="plain">--single</arg>
+</group>
+<group choice="opt">
+<arg choice="plain">-b</arg>
+<arg choice="plain">--emergency</arg>
+</group>
+<arg choice="opt">-a</arg>
+<arg choice="opt">-f</arg>
 </cmdsynopsis>
 
 <para>
@@ -598,39 +613,36 @@ This subcommand is spawned by
 and
 <citerefentry><refentrytitle>session-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>
 as their initial action.
+As such, its command line syntax is modelled on what boot loaders and kernels
+tend to supply to process #1.
+</para>
+
+<para>
 It activates (as if by the <arg choice="req">activate</arg> subcommand)
-one of three targets.
-Its command line syntax is modelled on those of the BSD
-<citerefentry><refentrytitle>init</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-command and the old Linux
-<citerefentry><refentrytitle>init</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-command (not to be confused with the syntaxes of the later
-<citerefentry><refentrytitle>upstart</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-or
-<citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-note) as its command line arguments originate in boot loaders and kernels that
-expect (variants of) this syntax.
+one of four standard targets:
 </para>
 
 <itemizedlist>
 
 <listitem>
 <para>
-With <arg choice='plain'>-b</arg> the <code>emergency</code> target is activated.
+<arg choice='plain'>-b</arg> overrides <arg choice='plain'>-s</arg> and <arg
+choice='plain'>--update</arg> and causes the <code>emergency</code> target to
+be activated.
 </para>
 </listitem>
 
 <listitem>
 <para>
-Without <arg choice='plain'>-b</arg> but with <arg choice='plain'>-s</arg> the
-<code>rescue</code> target is activated.
+<arg choice='plain'>-s</arg> overrides <arg choice='plain'>--update</arg> 
+and causes the <code>rescue</code> target to be activated.
 </para>
 </listitem>
 
 <listitem>
 <para>
-Without <arg choice='plain'>-b</arg> or <arg choice='plain'>-s</arg> but with
-<arg choice='plain'>--update</arg> the <code>update</code> target is activated.
+<arg choice='plain'>--update</arg> causes the <code>update</code> target to be
+activated.
 </para>
 </listitem>
 
@@ -644,41 +656,20 @@ Without <arg choice='plain'>-b</arg> or <arg choice='plain'>-s</arg> or
 </itemizedlist>
 
 <para>
-The expected behaviour of these standard targets is decribed further on, in the
+The expected behaviour of these standard targets is described further on, in the
 section on standard targets.
 </para>
 
 <para>
-Old boot loaders may also pass other options to process #1, and hence to
-<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry> 
-and the <command>init</command> subcommand.  
-These include an <arg choice='plain'>-a</arg> command line option indicating an "unattended"
-boot (a.k.a. an "autoboot"), and an <arg choice='plain'>-f</arg> command line option,
-indicating a boot that skips certain lengthy disc checks (a.k.a. a "fastboot").
-These options are undocumented, non-standardized, and nowadays obsolete on many
-systems:
-</para>
-
-<itemizedlist>
-<listitem><para>LILO passes <arg choice='plain'>-a</arg>.</para></listitem>
-<listitem><para>FreeBSD's boot loader passes <arg choice='plain'>-f</arg> to mean skipping lengthy
-daemon, not disc, checks; and confusingly calls it "autoboot" even though the
-bootstrap might have used the attended <command>boot</command>
-rather than the unattended <command>autoboot</command> command. (See
-<citerefentry><refentrytitle>loader</refentrytitle><manvolnum>8</manvolnum></citerefentry> and
-<citerefentry><refentrytitle>rc</refentrytitle><manvolnum>8</manvolnum></citerefentry>.)
-</para></listitem>
-<listitem><para>OpenBSD documents <arg choice='plain'>-f</arg> as no longer implemented, in favour of a <filename>/fastboot</filename> flag file.</para></listitem>
-<listitem><para>systemd's
-<citerefentry><refentrytitle>systemd-fsck</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-uses a <arg choice='plain'>fsck.mode</arg> kernel command line option instead, and has
-no equivalent at all for "autoboot".  </para></listitem>
-<listitem><para>upstart has no equivalent at all for either.</para></listitem>
-</itemizedlist>
-
-<para>
-<command>system-control</command> <arg choice='req'>init</arg> makes no
-attempt to be compatible with this mess.
+LILO, the FreeBSD
+<citerefentry><refentrytitle>loader</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+and others may cause 
+<arg choice='plain'>-a</arg> or <arg choice='plain'>-f</arg> 
+options to be passed. 
+Their meanings are non-standard, largely or even wholly undocumented,
+inconsistent across platforms and toolsets, considered obsolete in their
+original forms, and without application here.
+The options are ignored.
 </para>
 
 </refsection>
