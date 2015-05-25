@@ -28,6 +28,7 @@ void enable ( const char * & , std::vector<const char *> & ) ;
 void disable ( const char * & , std::vector<const char *> & ) ;
 void preset ( const char * & , std::vector<const char *> & ) ;
 void init ( const char * & , std::vector<const char *> & ) ;
+void cat ( const char * & , std::vector<const char *> & ) ;
 void show ( const char * & , std::vector<const char *> & ) ;
 void show_json ( const char * & , std::vector<const char *> & ) ;
 void status ( const char * & , std::vector<const char *> & ) ;
@@ -53,10 +54,11 @@ void unload_when_stopped ( const char * & , std::vector<const char *> & ) ;
 extern const
 struct command 
 commands[] = {
-	{	"session-manager",	system_manager		},
+	// These are personalities that are also available as built-in commands in order to prevent surprises.
+	{	"system-control",	system_control		},
 	{	"systemctl",		system_control		},
 	{	"initctl",		system_control		},
-	{	"version",		system_version		},
+	{	"rcctl",		system_control		},
 
 	// These are the system-control subcommands.
 	{	"init",				init			},
@@ -73,7 +75,6 @@ commands[] = {
 	{	"normal",			normal			},
 	{	"default",			normal			},
 	{	"sysinit",			sysinit			},
-	{	"cyclog",			cyclog			},
 	{	"activate",			activate		},
 	{	"start",			activate		},
 	{	"deactivate",			deactivate		},
@@ -83,6 +84,7 @@ commands[] = {
 	{	"enable",			enable			},
 	{	"disable",			disable			},
 	{	"preset",			preset			},
+	{	"cat",				cat			},
 	{	"show",				show			},
 	{	"show-json",			show_json		},
 	{	"status",			status			},
@@ -100,9 +102,14 @@ commands[] = {
 	{	"nagios-check-service",		nagios_check		},
 	{	"load-kernel-module",		load_kernel_module	},
 	{	"unload-kernel-module",		unload_kernel_module	},
-
-	// These are spawned by session-manager.
-	{	"service-manager",	service_manager		},
-	{	"system-control",	system_control		},
+	{	"version",			system_version		},
 };
 const std::size_t num_commands = sizeof commands/sizeof *commands;
+
+extern const
+struct command 
+personalities[] = {
+	{	"session-manager",	system_manager		},
+	{	"service-manager",	service_manager		},
+};
+const std::size_t num_personalities = sizeof personalities/sizeof *personalities;

@@ -1,6 +1,58 @@
-#!/bin/sh
+#!/bin/sh -
+escape() {
+echo "$1"|sed -e 's/@/\\x40/g'
+}
 case "$1" in
 	remove|purge)
+# Don't delete the cyclog@ users because the log files still exist.
+		for I in \
+			tty1 \
+			tty2 \
+			tty3 \
+			tty4 \
+			tty5 \
+			tty6 \
+			tty7 \
+			tty8 \
+			tty9 \
+			tty10 \
+			tty11 \
+			tty12 \
+			vc1-tty \
+			vc2-tty \
+			vc3-tty \
+			;
+		do
+			i="`escape ttylogin@"$I"`"
+			system-control disable ttylogin@$I.service cyclog@ttylogin@$I.service
+			if system-control is-loaded ttylogin@$I.service
+			then
+				system-control unload-when-stopped ttylogin@$I.service
+				system-control stop ttylogin@$I.service
+			fi
+			if system-control is-loaded cyclog@ttylogin@$I.service
+			then
+				system-control unload-when-stopped cyclog@ttylogin@$I.service
+				system-control stop cyclog@ttylogin@$I.service
+			fi
+		done
+		for i in \
+			ttylogin-starter \
+			console-fb-realizer@head0 \
+			;
+		do
+			system-control disable $I.service cyclog@$I.service
+			if system-control is-loaded $I.service
+			then
+				system-control unload-when-stopped $I.service
+				system-control stop $I.service
+			fi
+			if system-control is-loaded cyclog@$I.service
+			then
+				system-control unload-when-stopped cyclog@$I.service
+				system-control stop cyclog@$I.service
+			fi
+		done
 		for I in \
 			anacron \
 			atd \
@@ -8,6 +60,9 @@ case "$1" in
 			bcron-start \
 			bcron-update \
 			bootparams \
+			cleanuucp \
+			console-kit-daemon \
+			console-multiplexor@head0 \
 			dbus \
 			deluged \
 			deluge-web \
@@ -18,18 +73,23 @@ case "$1" in
 			fail2ban \
 			fancontrol \
 			fscd \
+			gitlab-unicorn \
+			gitlab-sidekiq \
 			gnucron \
 			hostnamed \
 			keepalived \
 			kerneloops \
 			lm-sensors \
 			localed \
+			mailcatcher \
 			ModemManager \
 			mongodb \
+			motd-dynamic \
 			moused \
 			mysql \
 			nagios \
 			NetworkManager \
+			nginx \
 			nisdomain \
 			nmbd \
 			ntpd \
@@ -74,10 +134,14 @@ case "$1" in
 			swift@object-auditor \
 			swift@object-replicator \
 			swift@object-updater \
-			syslogd \
+			wettsteinsyslogd \
+			terminal-emulator@vc1 \
+			terminal-emulator@vc2 \
+			terminal-emulator@vc3 \
 			timedated \
 			tinydns \
 			update-binfmts \
+			VBoxService \
 			volmand \
 			wicd \
 			winbindd \
@@ -86,8 +150,16 @@ case "$1" in
 			;
 		do
 			system-control disable $I.service cyclog@$I.service
-			system-control stop $I.service cyclog@$I.service
-# Don't delete the cyclog@ user because the log files still exist.
+			if system-control is-loaded $I.service
+			then
+				system-control unload-when-stopped $I.service
+				system-control stop $I.service
+			fi
+			if system-control is-loaded cyclog@$I.service
+			then
+				system-control unload-when-stopped cyclog@$I.service
+				system-control stop cyclog@$I.service
+			fi
 		done
 		for i in \
 			acpid \
@@ -95,34 +167,62 @@ case "$1" in
 			bcron-spool \
 			exim4r \
 			exim4s \
+			fcgiwrap \
 			ftp4d \
 			ftp6d \
 			http6d \
 			kadmind \
+			klogd \
 			kpasswdd \
 			org.cups.cups-lpd \
-			qmail-smtpd \
+			qmail-smtp-relay \
+			qmail-smtp-submission \
 			rsync \
 			saned \
 			sshd \
 			svnserve \
-			systemd-rsyslog \
+			local-syslog-read \
+			local-rsyslogd \
+			local-syslogd \
+			systemd-syslog-read \
+			systemd-rsyslogd \
+			systemd-syslogd \
+			udp-syslog-read \
+			udp-rsyslogd \
+			udp-syslogd \
 			uuidd \
 			vsftpd \
 			;
 		do
 			system-control disable $i.service cyclog@$i.service
-			system-control stop $i.service cyclog@$i.service
-# Don't delete the cyclog@ user because the log files still exist.
+			if system-control is-loaded $i.service
+			then
+				system-control unload-when-stopped $i.service
+				system-control stop $i.service
+			fi
+			if system-control is-loaded cyclog@$i.service
+			then
+				system-control unload-when-stopped cyclog@$i.service
+				system-control stop cyclog@$i.service
+			fi
 		done
 		for i in \
+			sysinit \
+			basic \
+			local-fs \
+			local-fs-pre \
+			remote-fs \
 			server \
 			workstation \
 			multi-user \
 			;
 		do
 			system-control disable $i.target
-			system-control stop $i.target
+			if system-control is-loaded $i.target
+			then
+				system-control unload-when-stopped $i.target
+				system-control stop $i.target
+			fi
 		done
 		;;
 esac

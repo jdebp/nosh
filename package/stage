@@ -1,0 +1,150 @@
+#!/bin/mksh -e
+# See http://skarnet.org./software/compile.html
+if [ \! -d package -o \! -d source ] 
+then
+	echo "You are not in the right directory." 1>&2 
+	exit 100
+fi
+if ! test $# -ge 2
+then
+	echo "Two arguments are required." 1>&2 
+	exit 100
+fi
+
+src="${1}"
+dest="${2}"
+
+# binaries and doco
+for i in exec terminal-management service-management systemv-shims systemd-shims upstart-shims ;
+do
+	if test -s package/nosh-"$i".commands1 || test -s package/nosh-"$i".aliases1 ;
+	then
+		install -d -m 0755 "${dest}"/nosh-"$i"/usr/local/bin 
+		install -d -m 0755 "${dest}"/nosh-"$i"/usr/local/man/man1 
+	fi
+	while read j ;
+	do
+		ln -f -- "${src}"/bin/"$j" "${dest}"/nosh-"$i"/usr/local/bin/ 
+		ln -f -- "${src}"/man/man1/"$j".1 "${dest}"/nosh-"$i"/usr/local/man/man1/ 
+	done < package/nosh-"$i".commands1 ;
+
+	if test -s package/nosh-"$i".commands8 || test -s package/nosh-"$i".aliases8 ;
+	then
+		install -d -m 0755 "${dest}"/nosh-"$i"/usr/local/sbin 
+		install -d -m 0755 "${dest}"/nosh-"$i"/usr/local/man/man8 
+	fi
+	while read j ;
+	do
+		ln -f -- "${src}"/sbin/"$j" "${dest}"/nosh-"$i"/usr/local/sbin/ 
+		ln -f -- "${src}"/man/man8/"$j".8 "${dest}"/nosh-"$i"/usr/local/man/man8/ 
+	done < package/nosh-"$i".commands8 ;
+
+	while read c a ;
+	do
+		ln -f -s "$c" "${dest}"/nosh-"$i"/usr/local/bin/"$a" 
+		ln -f -s "$c".1 "${dest}"/nosh-"$i"/usr/local/man/man1/"$a".1 
+	done < package/nosh-"$i".aliases1 ;
+
+	while read c a ;
+	do
+		ln -f -s "$c" "${dest}"/nosh-"$i"/usr/local/sbin/"$a" 
+		ln -f -s "$c".8 "${dest}"/nosh-"$i"/usr/local/man/man8/"$a".8 
+	done < package/nosh-"$i".aliases8 ;
+done
+install -d -m 0755 "${dest}"/nosh-exec/bin 
+for j in nosh exec
+do
+	cp -a -l -- "${dest}"/nosh-exec/usr/local/bin/"$j" "${dest}"/nosh-exec/bin/
+done
+install -d -m 0755 "${dest}"/nosh-service-management/sbin 
+install -d -m 0755 "${dest}"/nosh-service-management/bin 
+for j in system-control
+do
+	cp -a -l -- "${dest}"/nosh-service-management/usr/local/bin/"$j" "${dest}"/nosh-service-management/bin/
+done
+for j in system-manager
+do
+	cp -a -l -- "${dest}"/nosh-service-management/usr/local/sbin/"$j" "${dest}"/nosh-service-management/sbin/
+done
+
+# more doco
+for i in guide ;
+do
+	install -d -m 0755 "${dest}"/nosh-"$i"/usr/local/share/doc/nosh 
+	cp -a -- "${src}"/share/doc/nosh "${dest}"/nosh-"$i"/usr/local/share/doc/ 
+done
+
+# bundles
+for i in bundles run-kernel-vt run-user-vt ;
+do
+	install -d -m 0755 "${dest}"/nosh-"$i"/var/sv 
+	install -d -m 0755 "${dest}"/nosh-"$i"/etc/sv 
+	install -d -m 0755 "${dest}"/nosh-"$i"/etc/system-manager/targets 
+done
+(
+cat package/common-kernel-vt-services 
+case "`uname`" in
+Linux)	cat package/linux-kernel-vt-services ;;
+esac
+) | while read j ;
+do
+	cp -a -- "${src}"/var/sv/"$j" "${dest}"/nosh-run-kernel-vt/var/sv/ 
+	cp -a -- "${src}"/var/sv/cyclog@"$j" "${dest}"/nosh-run-kernel-vt/var/sv/ 
+done
+while read j ;
+do
+	cp -a -- "${src}"/var/sv/"$j" "${dest}"/nosh-run-user-vt/var/sv/ 
+	cp -a -- "${src}"/var/sv/cyclog@"$j" "${dest}"/nosh-run-user-vt/var/sv/ 
+done < package/user-vt-services
+(
+cat package/common-services package/common-sockets package/common-ttys 
+case "`uname`" in
+Linux)	cat package/linux-services package/linux-sockets package/linux-ttys ;;
+*BSD)	cat package/bsd-services package/bsd-sockets package/bsd-ttys ;;
+esac
+) | while read j ;
+do
+	cp -a -- "${src}"/var/sv/"$j" "${dest}"/nosh-bundles/var/sv/
+	cp -a -- "${src}"/var/sv/cyclog@"$j" "${dest}"/nosh-bundles/var/sv/
+done
+while read j ;
+do
+	cp -a -- "${src}"/etc/system-manager/targets/"$j" "${dest}"/nosh-bundles/etc/system-manager/targets/
+done < package/standard-targets
+while read j ;
+do
+	cp -a -- "${src}"/etc/sv/mount@"$j" "${dest}"/nosh-bundles/etc/sv/
+	cp -a -- "${src}"/etc/sv/fsck@"$j" "${dest}"/nosh-bundles/etc/sv/
+done < package/sysinit-mounts
+(
+cat package/common-sysinit-services 
+case "`uname`" in
+Linux)	cat package/linux-sysinit-services ;;
+*BSD)	cat package/bsd-sysinit-services ;;
+esac
+) | while read j ;
+do
+	cp -a -- "${src}"/etc/sv/"$j" "${dest}"/nosh-bundles/etc/sv/
+done
+
+# units
+install -d -m 0755 "${dest}"/nosh-run-via-systemd/usr/local/lib/systemd/system 
+install -d -m 0755 "${dest}"/nosh-run-via-systemd/usr/local/lib/tmpfiles.d 
+install -d -m 0755 "${dest}"/nosh-run-via-systemd/usr/local/lib/systemd/system-preset 
+install -d -m 0755 "${dest}"/nosh-bundles/etc/system-manager/presets 
+while read j ;
+do
+	ln -f -- "${src}"/lib/systemd/system/"$j" "${dest}"/nosh-run-via-systemd/usr/local/lib/systemd/system/
+done < package/systemd-services ;
+while read j ;
+do
+	ln -f -- "${src}"/lib/tmpfiles.d/"$j" "${dest}"/nosh-run-via-systemd/usr/local/lib/tmpfiles.d/
+done < package/tmpfiles-snippets ;
+while read j ;
+do
+	ln -f -- "${src}"/etc/system-manager/presets/"$j" "${dest}"/nosh-bundles/etc/system-manager/presets/
+done < package/nosh-presets ;
+while read j ;
+do
+	ln -f -- "${src}"/lib/systemd/system-preset/"$j" "${dest}"/nosh-run-via-systemd/usr/local/lib/systemd/system-preset/
+done < package/systemd-presets ;

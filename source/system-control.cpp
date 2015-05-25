@@ -121,7 +121,6 @@ system_control (
 		popt::bool_definition no_pager_option('\0', "no-pager", "Compatibility option.  Ignored.", no_pager);
 		popt::bool_definition no_reload_option('\0', "no-reload", "Compatibility option.  Ignored.", no_reload);
 		popt::bool_definition quiet_option('\0', "quite", "Compatibility option.  Ignored.", quiet);
-
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
 		popt::definition * top_table[] = {
 			&user_option,
@@ -129,7 +128,18 @@ system_control (
 			&no_legend_option,
 			&no_pager_option
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "halt|reboot|poweroff|emergency|rescue|normal|init|start|stop|try-restart|enable|disable|preset|show|status|convert-systemd-units args...");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", 
+				"halt|reboot|poweroff|"
+				"emergency|rescue|normal|init|sysinit|"
+				"start|stop|try-restart|enable|disable|preset|reset|unload-when-stopped|"
+				"is-active|is-loaded|"
+				"cat|show|status|show-json|"
+				"convert-systemd-units|convert-systemd-presets|"
+				"convert-ttys-presets|convert-rcconf-presets|convert-fstab-services|"
+				"nagios-check-services|load-kernel-module|unload-kernel-module|"
+				"version"
+				" args..."
+		);
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);

@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=collector for RFC 5426
+
+[Service]
+systemdWorkingDirectory=false
+systemdUserEnvironment=false
+User=syslogd
+# Don't use %p; this unit is also accessed via a symbolic link.
+ExecStart=syslog-read
+Restart=always
+
+[Install]
+WantedBy=workstation.target

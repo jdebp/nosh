@@ -80,7 +80,7 @@ pty_run (
 		throw EXIT_FAILURE;
 	}
 
-	int child = fork();
+	const int child(fork());
 
 	if (0 > child) {
 		const int error(errno);

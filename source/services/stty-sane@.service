@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Set the line discipline on the %i TTY to the "sane" state
+DefaultDependencies=false
+EarlySupervise=true
+Before=local-fs-pre.target
+Conflicts=sane-console.service
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=fdredir --update 0 /dev/%i fdmove -c 1 0 fdmove -c 2 1 stty sane
+RemainAfterExit=yes
+
+[Install]
+WantedBy=sysinit.target

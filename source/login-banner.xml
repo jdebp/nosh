@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.9</refmiscinfo>
+<refmiscinfo class="version">1.15</refmiscinfo>
 </refmeta>
 
 <refnamediv><refname>login-banner</refname><refpurpose>chain-load utility for printing login banners</refpurpose></refnamediv>

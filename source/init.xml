@@ -5,7 +5,7 @@
 <manvolnum>8</manvolnum>
 <refmiscinfo class="manual">administrator commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.9</refmiscinfo>
+<refmiscinfo class="version">1.15</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -138,30 +138,116 @@ if invoked as <command>reboot</command>, <command>halt</command>, or
 </refsection>
 <refsection><title>Compatibility service control and configuration commands</title>
 
+<para>
+These commands are all shims around
+<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+As such, they all operate on native nosh services, not on
+old BSD or System V shell scripts.
+Their actions are defined in terms of service management actions, not
+in terms of running shell scripts.
+For example: 
+<command>service</command> 
+<arg choice="plain"><replaceable>name</replaceable></arg>
+<arg choice="plain">start</arg>
+has the meaning of starting a named service, not of invoking a shell
+script with an argument.
+</para>
+
+<para>
+These commands and will enforce correct service dependencies and start/stop
+orderings, unlike the original BSD and System 5 service management systems.
+For individual control of services without orderings or dependencies, use
+<citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+or
+<citerefentry><refentrytitle>service-status</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+directly instead.
+</para>
+
+<refsection><title>Maintainer script utilities</title>
+
+<cmdsynopsis>
+<command>invoke-rc.d</command>
+<arg choice="req"><replaceable>name</replaceable></arg>
+<group choice="req">
+<arg choice="plain">start</arg>
+<arg choice="plain">stop</arg>
+</group>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>update-rc.d</command>
+<arg choice="req"><replaceable>name</replaceable></arg>
+<group choice="req">
+<arg choice="plain">enable</arg>
+<arg choice="plain">disable</arg>
+<arg choice="plain">remove</arg>
+<arg choice="plain">defaults</arg>
+</group>
+</cmdsynopsis>
+
+<para>
+Avoid using these commands outwith package installation/uninstallation
+scripts.
+They are tailored for such use in particular.
+</para>
+
+<para>
+Invoked as 
+<command>invoke-rc.d</command>
+<arg choice="plain"><replaceable>name</replaceable></arg>
+<arg choice="plain"><replaceable>command1</replaceable></arg>,
+the program chains to
+<command>system-control</command>
+<arg choice="plain"><replaceable>command2</replaceable></arg>
+<arg choice="plain"><replaceable>name</replaceable></arg>.
+<replaceable>command1</replaceable> may only be one of 
+<arg choice="plain">start</arg> or <arg choice="plain">stop</arg>, which are
+translated to <arg choice="plain">reset</arg> and 
+<arg choice="plain">stop</arg> (respectively) for
+<replaceable>command2</replaceable>.
+The behaviour that it is designed to be backwards compatible with only starts a
+service in response to the <arg choice="plain">start</arg> subcommand if the
+administrator has configured the service to auto-start.
+Hence the replacement of <arg choice="plain">start</arg> by
+<arg choice="plain">reset</arg>.
+</para>
+
+<para>
+Invoked as 
+<command>update-rc.d</command>
+<arg choice="plain"><replaceable>name</replaceable></arg>
+<arg choice="plain"><replaceable>command1</replaceable></arg>,
+the program chains to
+<command>system-control</command>
+<arg choice="plain"><replaceable>command2</replaceable></arg>
+<arg choice="plain"><replaceable>name</replaceable></arg>.
+<replaceable>command1</replaceable> may only be one of 
+<arg choice="plain">enable</arg>, <arg choice="plain">disable</arg>, 
+<arg choice="plain">remove</arg>, or <arg choice="plain">defaults</arg>, 
+which are translated to 
+<arg choice="plain">enable</arg>, <arg choice="plain">disable</arg>, 
+<arg choice="plain">disable</arg>, and <arg choice="plain">preset</arg> 
+(respectively) for <replaceable>command2</replaceable>.
+Note that the
+<arg choice="plain">start</arg> and <arg choice="plain">stop</arg>
+subcommands of the original tool have been deprecated.
+This command makes no attempt to support any such mechanism.
+</para>
+
+</refsection>
+<refsection><title>Old-style Linux service control</title>
+
 <cmdsynopsis>
 <command>service</command>
 <arg choice="req"><replaceable>name</replaceable></arg>
 <arg choice="req"><replaceable>command</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
-<command>invoke-rc.d</command>
-<arg choice="req"><replaceable>name</replaceable></arg>
-<arg choice="req"><replaceable>command</replaceable></arg>
-</cmdsynopsis>
-<cmdsynopsis>
-<command>update-rc.d</command>
-<arg choice="req"><replaceable>name</replaceable></arg>
-<arg choice="req"><replaceable>command</replaceable></arg>
-</cmdsynopsis>
-<cmdsynopsis>
-<command>rcctl</command>
-<arg choice="req"><replaceable>command</replaceable></arg>
-<arg choice="req"><replaceable>name</replaceable></arg>
-</cmdsynopsis>
-<cmdsynopsis>
 <command>chkconfig</command>
 <arg choice="req"><replaceable>name</replaceable></arg>
-<arg choice="req"><replaceable>command</replaceable></arg>
+<group choice="req">
+<arg choice="plain">on</arg>
+<arg choice="plain">off</arg>
+</group>
 </cmdsynopsis>
 
 <para>
@@ -183,98 +269,6 @@ choice="plain">status</arg>.
 
 <para>
 Invoked as 
-<command>invoke-rc.d</command>
-<arg choice="plain"><replaceable>name</replaceable></arg>
-<arg choice="plain"><replaceable>command1</replaceable></arg>,
-the program chains to
-<command>system-control</command>
-<arg choice="plain"><replaceable>command2</replaceable></arg>
-<arg choice="plain"><replaceable>name</replaceable></arg>.
-<replaceable>command1</replaceable> may only be one of <arg
-choice="plain">start</arg> or <arg choice="plain">stop</arg>, which are
-translated to <arg choice="plain">reset</arg> and <arg
-choice="plain">stop</arg> (respectively) for
-<replaceable>command2</replaceable>.
-Avoid using this command outwith package installation/uninstallation
-scripts.
-It is tailored for such use.
-In particular, notice that it does not necessarily start a service
-when the <arg choice="plain">start</arg> subcommand is used.
-The behaviour that it is designed to be backwards compatible with only starts a
-service in response to the <arg choice="plain">start</arg> subcommand if the
-administrator has configured the service to auto-start.
-</para>
-
-<para>
-These two commands all operate on native nosh services, of course, not on
-old BSD or System V shell scripts.
-Their actions are defined in terms of service management actions, not
-in terms of shell scripts.
-For example: 
-<command>service</command> 
-<arg choice="plain"><replaceable>name</replaceable></arg>
-<arg choice="plain">start</arg>
-has the meaning of starting a named service, not of invoking a shell
-script with an argument.
-</para>
-
-<para>
-The old BSD and System V service management systems do not enforce correct
-service dependencies and start/stop orderings.
-These commands are based upon 
-<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-and hence do.
-For individual control of services without orderings or dependencies, use
-<citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-or
-<citerefentry><refentrytitle>service-status</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-directly instead.
-</para>
-
-<para>
-Invoked as 
-<command>update-rc.d</command>
-<arg choice="plain"><replaceable>name</replaceable></arg>
-<arg choice="plain"><replaceable>command1</replaceable></arg>,
-the program chains to
-<command>system-control</command>
-<arg choice="plain"><replaceable>command2</replaceable></arg>
-<arg choice="plain"><replaceable>name</replaceable></arg>.
-<replaceable>command1</replaceable> may only be one of 
-<arg choice="plain">enable</arg>, <arg choice="plain">disable</arg>, 
-<arg choice="plain">remove</arg>, or <arg choice="plain">defaults</arg>, 
-which are translated to 
-<arg choice="plain">enable</arg>, <arg choice="plain">disable</arg>, 
-<arg choice="plain">disable</arg>, and <arg choice="plain">preset</arg> 
-(respectively) for <replaceable>command2</replaceable>.
-Avoid using this command outwith package installation/uninstallation
-scripts.
-It is tailored for such use.
-Note that the
-<arg choice="plain">start</arg> and <arg choice="plain">stop</arg>
-subcommands of the original tool have been deprecated.
-This command makes no attempt to support any such mechanism.
-</para>
-
-<para>
-Invoked as 
-<command>rcctl</command>
-<arg choice="plain"><replaceable>command</replaceable></arg>
-<arg choice="plain"><replaceable>name</replaceable></arg>,
-the program chains to
-<command>system-control</command>
-<arg choice="plain"><replaceable>command</replaceable></arg>
-<arg choice="plain"><replaceable>name</replaceable></arg>.
-It makes no attempt itself to validate <replaceable>command</replaceable>,
-which can be any of the subcommands supported by
-<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-However, for best results restrict <replaceable>command</replaceable> to one of
-<arg choice="plain">enable</arg>, <arg choice="plain">disable</arg>, or <arg
-choice="plain">status</arg>.
-</para>
-
-<para>
-Invoked as 
 <command>chkconfig</command>
 <arg choice="plain"><replaceable>name</replaceable></arg>
 <arg choice="plain"><replaceable>command1</replaceable></arg>,
@@ -286,9 +280,68 @@ the program chains to
 choice="plain">on</arg> or <arg choice="plain">off</arg>, which are translated
 to <arg choice="plain">enable</arg> and <arg choice="plain">disable</arg>
 (respectively) for <replaceable>command2</replaceable>.
-No other functionality of the original tool (whose operation varies from
-platform to platform outwith these two subcommands) is supported.
+No other functionality of the original tool (whose operation varies
+incompatibly from platform to platform outwith these two subcommands) is
+supported.
 </para>
+
+</refsection>
+<refsection><title>OpenBSD service control</title>
+
+<cmdsynopsis>
+<command>rcctl</command>
+<arg choice="req"><replaceable>command</replaceable></arg>
+<arg choice="req"><replaceable>name</replaceable></arg>
+</cmdsynopsis>
+
+<para>
+Invoked as 
+<command>rcctl</command>
+<arg choice="plain"><replaceable>command</replaceable></arg>
+<arg choice="plain"><replaceable>name</replaceable></arg>,
+unless
+<arg choice="plain"><replaceable>command</replaceable></arg>
+is either <arg choice="plain">set</arg> or <arg choice="plain">get</arg> the
+program chains to
+<command>system-control</command>
+<arg choice="plain"><replaceable>command</replaceable></arg>
+<arg choice="plain"><replaceable>name</replaceable></arg>.
+It makes no attempt itself to validate <replaceable>command</replaceable>,
+which can be any of the subcommands supported by
+<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+<arg choice="plain">set</arg> is replaced with
+<arg choice="plain">set-service-env</arg>
+or
+<arg choice="plain">unset-service-env</arg>, 
+according to whether a value is supplied as a fifth argument.
+<arg choice="plain">get</arg> is replaced with
+<arg choice="plain">print-service-env</arg>.
+</para>
+
+<para>
+Do not use
+<command>rcctl</command>
+<arg choice="plain">set</arg>
+<arg choice="plain"><replaceable>name</replaceable></arg>
+<arg choice="plain">status</arg> 
+to enable or disable services.
+This is not even correct for the original tool, as only OpenBSD uses variables
+named <replaceable>name</replaceable><code>_status</code> in the first place.
+Other BSDs have different names which won't work with this OpenBSD-specific
+syntax.
+In contrast,
+<command>rcctl</command>
+<arg choice="plain">enable</arg>
+<arg choice="plain"><replaceable>name</replaceable></arg>
+and
+<command>rcctl</command>
+<arg choice="plain">disable</arg>
+<arg choice="plain"><replaceable>name</replaceable></arg>,
+defined as equivalents in the original OpenBSD tool,
+will work portably.
+</para>
+
+</refsection>
 
 </refsection>
 <refsection><title>Compatibility bootstrap utility</title>

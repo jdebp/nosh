@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=syslog socket used for network clients
+
+[Socket]
+ListenDatagram=514
+BindIPv6Only=both
+
+[Install]
+WantedBy=workstation.target

@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%P service for device %I
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=%P -d %I
+Restart=always
+
+[Install]
+WantedBy=workstation.target

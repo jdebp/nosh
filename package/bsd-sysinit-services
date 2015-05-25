@@ -1,0 +1,12 @@
+background-fsck
+devd
+devd-log
+kernel-vt-kbdcontrol
+kernel-vt-vidcontrol
+nextboot
+kmod@sysvmsg
+kmod@sysvsem
+kmod@sysvshm
+kmod@svr4
+kmod@linux
+bsd-ldconfig

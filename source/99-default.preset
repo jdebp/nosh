@@ -1,0 +1,10 @@
+#
+# Prevent all not explicitly enabled services and sockets from being enabled.
+#
+# This is not a systemd preset.  
+# It goes in a special nosh system-manager preset directory.
+# It is used by the nosh-bundles package in order to avoid auto-starting hundreds of potentially not-installed service bundles.
+#
+
+disable	*.service
+disable	*.socket

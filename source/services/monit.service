@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=monitoring service
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=%p -I
+Restart=always
+
+[Install]
+WantedBy=workstation.target

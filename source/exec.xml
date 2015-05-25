@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.9</refmiscinfo>
+<refmiscinfo class="version">1.15</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -74,6 +74,7 @@ The alternative names are:
 <command>appendpath</command>, <command>chdir</command>,
 <command>chroot</command>, <command>clearenv</command>,
 <command>envuidgid</command>, <command>fdmove</command>,
+<command>fifo-listen</command>, 
 <command>line-banner</command>, 
 <command>local-datagram-socket-accept</command>,
 <command>local-stream-socket-accept</command>,
@@ -88,8 +89,9 @@ The alternative names are:
 <command>softlimit</command>, <command>tcp-socket-accept</command>,
 <command>tcp-socket-listen</command>, <command>ulimit</command>,
 <command>umask</command>, 
-and
 <command>unsetenv</command>,
+and
+<command>userenv</command>.
 See their individual manual pages for details.
 </para>
 

@@ -1,12 +1,13 @@
 <title>Logging</title>
 <link rel="Up" href="index.html" title="nosh Guide" />
 <link rel="Prev" href="mounting.html" title="Mounting filesystems" />
-<link rel="Next" href="Terminals.html" title="Terminals" />
+<link rel="Next" href="terminals.html" title="Terminals" />
 <h1>
 Logging
 </h1>
 
 <p>
+In daemontools, a "main" service could optionally have a similar "log" service associated with it, the output of the one fed into the input of the other.
 Successors to daemontools, such as 
 <a href="http://untroubled.org/daemontools-encore/">daemontools-encore</a> and 
 <a href="http://smarden.org/runit/">runit</a>, have proceeded in the direction of hardwiring a 1:1 relationship between a "main" service and a "log" service, to the extent of making the utility commands non-orthogonal for "log" services.
@@ -34,14 +35,6 @@ In practice there are two common scenarios.
 </p>
 
 <p>
-The system manager starts a logging daemon, an instance of <a href="cyclog.html"><code>cyclog</code></a>, whose standard input is connected to the read end of a pipe, the write end of which is connected to the standard output/error of the service manager process.
-If a service is not plumbed to another service, then it inherits its standard output and standard error from the service manager, and its log output goes to that logging daemon.
-However, that logging daemon logs to a temporary filesystem (the log files being written to <code>/run/system-manager/log</code>) and has an intentionally small cap on the log file sizes.
-It is not suitable for general-purpose logging, and is intended to log just the output of the service manager itself, and perhaps the (fairly humdrum) outputs of <code>cyclog</code> logging daemons.
-All other daemons should, properly, be plumbed to a logging service.
-</p>
-
-<p>
 In the first scenario there is, as with the old daemontools, 
 <a href="http://untroubled.org/daemontools-encore/">daemontools-encore</a>, and 
 <a href="http://smarden.org/runit/">runit</a> systems, one logging service for each logged service.
@@ -58,3 +51,13 @@ Were these permanently running daemon processes all emitting log output all of t
 But the "sysinit" services that are plumbed to "sysinit-log" in fact do most of their work in their <code>startup</code> programs and have heavy ordering dependencies upon one another.
 They have one period of activity, and it usually doesn't overlap the activities of the other services.
 </p>
+
+<p>
+There is also logging for the service manager itself.
+The system manager starts a logging daemon, an instance of <a href="cyclog.html"><code>cyclog</code></a>, whose standard input is connected to the read end of a pipe, the write end of which is connected to the standard output/error of the service manager process.
+If a service is not plumbed to another service, then it inherits its standard output and standard error from the service manager, and its log output goes to that logging daemon.
+However, that logging daemon logs to a temporary filesystem (the log files being written to <code>/run/system-manager/log</code>) and has an intentionally small cap on the log file sizes.
+It is not suitable for general-purpose logging, and is intended to log just the output of the service manager itself, and perhaps the (fairly humdrum) outputs of <code>cyclog</code> logging daemons.
+All other daemons should, properly, be plumbed to a logging service.
+</p>
+

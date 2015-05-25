@@ -9,6 +9,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstdlib>
 #include <cstring>
 #include <cerrno>
+#include <ctime>
 #include <inttypes.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -21,6 +22,22 @@ For copyright and licensing terms, see the file named COPYING.
 #include "popt.h"
 #include "service-manager-client.h"
 #include "service-manager.h"
+
+/* Time *********************************************************************
+// **************************************************************************
+*/
+
+static inline
+struct tm
+convert(
+	const uint64_t & s
+) {
+	const uint64_t secs(s - 0x4000000000000000ULL - 10U);
+	const std::time_t t(secs);
+	struct tm tm;
+	localtime_r(&t, &tm);
+	return tm;
+}
 
 /* Pretty coloured output ***************************************************
 // **************************************************************************
@@ -92,8 +109,16 @@ service_status (
 ) {
 	const char * prog(basename_of(args[0]));
 
+	bool long_form(0 != std::strcmp(prog, "svstat"));
+	bool colours(isatty(STDOUT_FILENO));
 	try {
-		popt::top_table_definition main_option(0, 0, "Main options", "directories...");
+		popt::bool_definition long_form_option('\0', "long", "Output in a longer form.", long_form);
+		popt::bool_definition colours_option('\0', "colour", "Output in colour if the terminal is capable of it.", colours);
+		popt::definition * top_table[] = {
+			&long_form_option,
+			&colours_option
+		};
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "directories...");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -110,18 +135,17 @@ service_status (
 		throw static_cast<int>(EXIT_USAGE);
 	}
 
-	bool no_colours(!isatty(STDOUT_FILENO));
-	if (!no_colours) {
+	if (colours) {
 		int err;
 		if (OK != setupterm(0, STDOUT_FILENO, &err))
-			no_colours = false;
+			colours = false;
 	}
 
 	timespec now;
 	clock_gettime(CLOCK_REALTIME, &now);
 	const uint64_t z(0x4000000000000000ULL + now.tv_sec + 10U);
 
-	reset_colour(no_colours);
+	reset_colour(!colours);
 
 	for (std::vector<const char *>::const_iterator i(args.begin()); i != args.end(); ++i) {
 		const char * name(*i);
@@ -179,10 +203,11 @@ service_status (
 			const uint32_t p(unpack_littleendian(status + 12, 4));
 
 			std::fprintf(stdout, "%s: ", name);
+			if (long_form) std::fprintf(stdout, "\n\tState   : ");
 			if (b < 20) {
-				set_colour_of_state(no_colours, p ? encore_status_running : encore_status_stopped);
+				set_colour_of_state(!colours, p ? encore_status_running : encore_status_stopped);
 				std::fprintf(stdout, "%s", p ? "up" : "down");
-				reset_colour(no_colours);
+				reset_colour(!colours);
 				// supervise doesn't turn off the want flag.
 				if (p) {
 					if ('u' == status[17]) status[17] = '\0';
@@ -191,13 +216,19 @@ service_status (
 				}
 			} else {
 				const char state(status[18]);
-				set_colour_of_state(no_colours, state);
+				set_colour_of_state(!colours, state);
 				std::fprintf(stdout, "%s", state_of(state));
-				reset_colour(no_colours);
+				reset_colour(!colours);
 			}
-			if (p)
+			if (p && !long_form)
 				std::fprintf(stdout, " (pid %u)", p);
 			if (z >= s) {
+				char buf[64];
+				const struct tm t(convert(s));
+				const size_t len(std::strftime(buf, sizeof buf, "%F %T %z", &t));
+				std::fputs(" since ", stdout);
+				std::fwrite(buf, len, 1U, stdout);
+				std::fputc(';', stdout);
 				uint64_t secs(z - s);
 				uint64_t mins(secs / 60U);
 				secs %= 60U;
@@ -213,7 +244,13 @@ service_status (
 					std::fprintf(stdout, " %" PRIu64 "m", mins);
 				std::fprintf(stdout, " %" PRIu64 "s ago", secs);
 			}
-			const char * const paused(status[16] ? ", paused" : "");
+			if (long_form) {
+				if (p)
+					std::fprintf(stdout, "\n\tMain PID: %u", p);
+				std::fprintf(stdout, "\n\tConfig  : ");
+			} else
+				std::fputs(". ", stdout);
+			const char * const paused(status[16] ? "paused" : "");
 			const char * const want('u' == status[17] ? ", want up" : 'O' == status[17] ? ", once at most" : 'o' == status[17] ? ", once" : 'd' == status[17] ? ", want down" : "");
 			std::fprintf(stdout, "%s%s", paused, want);
 			const bool is_up(b < 20 ? p : encore_status_stopped != status[18]);

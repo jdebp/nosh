@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Generic SMTP Relay socket
+
+[Socket]
+Backlog=2
+BindIPv6Only=both
+ListenStream=smtp
+Accept=true
+MaxConnections=16
+UCSPIRules=true
+NoDelay=false
+
+[Install]
+WantedBy=server.target

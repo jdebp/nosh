@@ -56,6 +56,12 @@ extern void pause ( const char * &, std::vector<const char *> & );
 extern void unshare ( const char * &, std::vector<const char *> & );
 extern void make_private_fs ( const char * &, std::vector<const char *> & );
 extern void set_mount_object ( const char * &, std::vector<const char *> & );
+extern void syslog_read ( const char * &, std::vector<const char *> & );
+extern void klog_read ( const char * &, std::vector<const char *> & );
+extern void fifo_listen ( const char * &, std::vector<const char *> & );
+extern void cyclog ( const char * &, std::vector<const char *> & );
+extern void tai64n ( const char * &, std::vector<const char *> & );
+extern void tai64nlocal ( const char * &, std::vector<const char *> & );
 
 extern const
 struct command 
@@ -104,5 +110,19 @@ commands[] = {
 	{	"unshare",			unshare				},
 	{	"set-mount-object",		set_mount_object		},
 	{	"make-private-fs",		make_private_fs			},
+	{	"syslog-read",			syslog_read			},
+	{	"klog-read",			klog_read			},
+	{	"fifo-listen",			fifo_listen			},
+	{	"cyclog",			cyclog				},
+	{	"tai64n",			tai64n				},
+	{	"tai64nlocal",			tai64nlocal			},
 };
 const std::size_t num_commands = sizeof commands/sizeof *commands;
+
+// There are no extra personalities over and above the built-in commands.
+extern const
+struct command 
+personalities[] = {
+	{	0,			0,			},
+};
+const std::size_t num_personalities = 0;

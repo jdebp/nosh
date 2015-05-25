@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">administrator commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.9</refmiscinfo>
+<refmiscinfo class="version">1.15</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -585,6 +585,30 @@ or
 </para>
 
 </refsection>
+<refsection><title>service program dump subcommands</title>
+
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">cat</arg>
+<arg rep='repeat'><replaceable>names</replaceable></arg>
+</cmdsynopsis>
+
+<para>
+<command>system-control</command> takes each of the
+<arg rep='repeat'><replaceable>names</replaceable></arg>,
+searches for the corresponding service bundle directory, 
+changes to the corresponding service directory, 
+and runs 
+<citerefentry><refentrytitle>grep</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+to dump the contents of the
+<filename>start</filename>,
+<filename>stop</filename>,
+<filename>run</filename>, and
+<filename>restart</filename>
+files.
+</para>
+
+</refsection>
 <refsection><title>init subcommand</title>
 
 <cmdsynopsis>
@@ -679,6 +703,7 @@ The options are ignored.
 <command>system-control</command>
 <arg choice="req">convert-systemd-units</arg>
 <arg>--bundle-root <replaceable>root</replaceable></arg> 
+<arg>--alt-escape</arg> 
 <arg>--unescape-instance</arg> 
 <group choice='req'>
 <arg choice='plain'><replaceable>name</replaceable>.target</arg>
@@ -745,13 +770,31 @@ is specified, then that service unit file is converted using
 <replaceable>parameter</replaceable> for parameter substitution into a service
 bundle directory named
 <filename><replaceable>name</replaceable>@<replaceable>parameter</replaceable>/</filename>.
+The systemd dual escaped+unescaped forms are available in parameter substitution.
 </para>
 <para>
+Normally <replaceable>parameter</replaceable> is taken to be the unescaped form
+and is escaped during parameter substitution.
 If the <arg>--unescape-instance</arg> option is used, then
-<replaceable>parameter</replaceable> will be unescaped, from the systemd unit
-escaping, into its original pathname form.
+<replaceable>parameter</replaceable> is instead taken to be the escaped form
+and will be unescaped into its original pathname form.
 This is generally used where <replaceable>parameter</replaceable> represents
-something in the filesystem, such as a mount point for example.
+something in the filesystem, but has to be pre-escaped in order to result in a
+service bundle directory name without pathname components.
+</para>
+<para>
+The normal escaping algorithm is the conventional systemd one that escapes
+<filename>/</filename> and <filename>-</filename>.
+If the <arg>--alt-escape</arg> option is used, then
+an alternative escaping algorithm that escapes
+<filename>/</filename>, 
+<filename>\</filename>,
+<filename>,</filename>,
+<filename>:</filename>, and 
+<filename>@</filename>
+is used instead.
+This is generally used where the unescaped form is something in the filesystem
+and the escaped form is an account name in an account database.
 </para>
 </listitem>
 </itemizedlist>
@@ -899,6 +942,11 @@ native preset information in the bundle directory for service/target
 <itemizedlist>
 <listitem><para>
 <command>convert-systemd-presets</command> converts systemd preset information.
+In addition to the conventional systemd directories, it also searches
+<filename>/run/system-manager/presets/</filename> and
+<filename>/etc/system-manager/presets/</filename>.
+As with systemd the default state, in the absence of an explicit preset, is
+"enabled".
 </para></listitem>
 <listitem><para>
 <command>convert-rcconf-presets</command> converts
@@ -915,12 +963,17 @@ disable.
 <command>convert-ttys-presets</command> converts <filename>/etc/ttys</filename>
 preset information, specifically the <code>on</code> and <code>off</code> flags
 as enable and disable, respectively.
+<replaceable>name</replaceable> matches the terminal name field in
+<filename>/etc/ttys</filename> records.
 The <arg choice='plain'>--prefix</arg> command line argument can be used to
-prefix the service name with <replaceable>prefix</replaceable>; 
+change the service that is preset from <replaceable>name</replaceable>
+to <replaceable>prefix</replaceable><replaceable>name</replaceable> ; 
 allowing one to use the ordinary TTY device name as
 <replaceable>name</replaceable> and combine it with a "templatized" bundle name
 prefix such as <code>ttylogin@</code>, <code>getty@</code>, or
 <code>autovt@</code>.
+If <filename>/etc/ttys</filename> does not exist, as is usually the case on
+Linux operating systems, all TTYs default to preset enabled.
 </para></listitem>
 </itemizedlist>
 

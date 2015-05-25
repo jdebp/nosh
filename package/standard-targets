@@ -2,6 +2,7 @@ basic
 emergency
 halt
 local-fs
+local-fs-pre
 multi-user
 name-services
 normal

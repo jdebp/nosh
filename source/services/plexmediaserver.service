@@ -1,0 +1,21 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Plex Media Server for Linux
+
+[Service]
+Environment="PLEX_MEDIA_SERVER_APPLICATION_SUPPORT_DIR=/var/lib/plexmediaserver/Library/Application Support"
+Environment=PLEX_MEDIA_SERVER_HOME=/usr/lib/plexmediaserver
+Environment=PLEX_MEDIA_SERVER_MAX_PLUGIN_PROCS=6
+Environment=PLEX_MEDIA_SERVER_TMPDIR=/tmp
+Environment=LD_LIBRARY_PATH=/usr/lib/plexmediaserver
+ExecStartPre=mkdir -p "${PLEX_MEDIA_SERVER_APPLICATION_SUPPORT_DIR}"
+ExecStart='/usr/lib/plexmediaserver/Plex Media Server'
+User=plex
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=server.target

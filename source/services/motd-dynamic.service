@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Create the "dynamic" part of the Message Of The Day
+
+[Service]
+Type=oneshot
+systemdWorkingDirectory=off
+Umask=0033
+ExecStart=fdredir --write 1 /run/motd.dynamic uname -srm
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

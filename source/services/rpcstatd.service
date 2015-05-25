@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=SunRPC host status daemon
+Wants=nfsclient.service nfsd.service rpcbind.service
+After=rpcbind.service
+
+[Service]
+systemdWorkingDirectory=false
+# The import procedure is expected to have populated this directory with flags.
+EnvironmentDirectory=env
+ExecStart=rpc.statd -d ${flags}
+Restart=always
+
+[Install]
+WantedBy=server.target

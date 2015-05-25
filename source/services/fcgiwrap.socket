@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=nginx's Fast CGI wrapper socket
+
+[Socket]
+Backlog=2
+MaxConnections=2
+ListenStream=/run/%P.socket
+
+[Install]
+WantedBy=server.target
+

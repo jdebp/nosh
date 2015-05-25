@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=nginx HTTP content server
+
+[Service]
+Type=forking
+systemdWorkingDirectory=false
+ExecStart=%P
+PrivateTmp=true
+Restart=always
+
+[Install]
+WantedBy=server.target

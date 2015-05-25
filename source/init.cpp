@@ -10,19 +10,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include "utils.h"
 #include "popt.h"
 
-/* Table of commands ********************************************************
-// **************************************************************************
-// These are the built-in commands in the BSD/SystemV compatibility utilities.
-*/
-
-// There are no extra personalities over and above the built-in commands.
-extern const
-struct command 
-personalities[] = {
-	{	"",		0		},
-};
-const std::size_t num_personalities = 0;
-
 /* System commands **********************************************************
 // **************************************************************************
 */
@@ -112,6 +99,16 @@ rcctl (
 	std::vector<const char *> & args
 ) {
 	next_prog = args[0] = "system-control";
+	if (args.size() > 1) {
+		if (0 == std::strcmp(args[1], "set")) {
+			if (args.size() > 4)
+				args[1] = "set-service-env";
+			else
+				args[1] = "unset-service-env";
+		} else
+		if (0 == std::strcmp(args[1], "get")) 
+			args[1] = "print-service-env";
+	}
 }
 
 void

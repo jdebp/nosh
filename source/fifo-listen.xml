@@ -1,0 +1,84 @@
+<refentry id="fifo-listen">
+
+<refmeta>
+<refentrytitle>fifo-listen</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.15</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>fifo-listen</refname>
+<refpurpose>open the read end of a FIFO and chain</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>fifo-listen</command>
+<arg>--uid <replaceable>number</replaceable></arg>
+<arg>--gid <replaceable>number</replaceable></arg>
+<arg>--mode <replaceable>number</replaceable></arg>
+<arg>--systemd-compatibility</arg>
+<arg choice='req'><replaceable>path</replaceable></arg>
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>fifo-listen</command> is a chain-loading utility that opens the read
+end of the FIFO at <replaceable>path</replaceable>,
+sets the FIFO to file descriptor 3 (closing whatever that descriptor was),
+and then chain loads to <replaceable>next-prog</replaceable> with the
+<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+function.
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>fifo-listen</command> will ignore.
+</para>
+
+<para>
+After opening it, using the permissions specified with the <arg>--mode</arg>
+command line argument (if supplied).  <command>fifo-listen</command> changes
+the owner UID of the FIFO to that specified with the <arg>--uid</arg> command
+line argument (if supplied), and changes the GID of the FIFO to that specified
+with the <arg>--gid</arg> command line argument (if supplied).
+The normal conventions for numbers apply, so for octal permissions use a leading
+zero.
+Symbolic permissions and account names are not supported.
+</para>
+
+<para>
+The <arg>--systemd-compatibility</arg> option causes <command>fifo-listen</command> to set the
+<code>LISTEN_FDS</code> environment variable to 1, and the <code>LISTEN_PID</code> environment
+variable to its own process ID.
+This is for compatibility with daemons that expect to be run under 
+<citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+<para>
+For compatibility with daemons that expect to be run under 
+<citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry>, 
+inheriting the listening socket as their standard input, simply use
+<command>fdmove</command> <arg choice="plain">0</arg> <arg choice="plain">3</arg> 
+in <replaceable>next-prog</replaceable>.
+See <citerefentry><refentrytitle>fdmove</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+</refsection>
+<refsection><title>Security</title>
+
+<para>
+<command>fifo-listen</command> will successfully open, change ownership of, and
+change permissions of <replaceable>path</replaceable> even if it is not a FIFO.
+This is to allow its use with non-FIFO files such as <filename>/proc/kmsg</filename>
+and <filename>/dev/klog</filename>.
+</para>
+
+</refsection>
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

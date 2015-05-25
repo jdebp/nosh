@@ -29,3 +29,15 @@ fi
 		ln -f ../source/"$i" "${dir}" 2>/dev/null || ln -s -f ../source/"$i" "${dir}"
 	done
 )
+(
+	cd source && find . -type l
+) | (
+	cd build	# The syntax of ln -s makes more sense if we are in the target directory.
+	while read i
+	do
+		dir="`dirname $i`"
+		# Try to create a hard link, and fall back to a copy.
+		# The source and build directories aren't necessarily on the same disc volume.
+		ln -f ../source/"$i" "${dir}" 2>/dev/null || cp -a -f ../source/"$i" "${dir}"
+	done
+)

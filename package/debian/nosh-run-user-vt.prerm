@@ -1,13 +1,20 @@
-#!/bin/sh
+#!/bin/sh -
 case "$1" in
 	remove|purge)
 		for i in \
 			console-fb-realizer@head0 \
 			;
 		do
-			system-control disable $i.service cyclog@$i.service
-			system-control stop $i.service cyclog@$i.service
-# Don't delete the cyclog@ user because the log files still exist.
+			if system-control is-loaded $i.service
+			then
+				system-control unload-when-stopped $i.service
+				system-control stop $i.service
+			fi
+			if system-control is-loaded cyclog@$i.service
+			then
+				system-control unload-when-stopped cyclog@$i.service
+				system-control stop cyclog@$i.service
+			fi
 		done
 		;;
 esac

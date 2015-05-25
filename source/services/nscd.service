@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=nsswitch caching service
+
+[Service]
+systemdWorkingDirectory=false
+# The import procedure is expected to have populated this directory with nscd_flags.
+EnvironmentFile=env
+ExecStart=%p -n $(%p_flags}
+Restart=always
+
+[Install]
+WantedBy=workstation.target

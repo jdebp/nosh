@@ -154,14 +154,12 @@ process (
 // **************************************************************************
 */
 
-int
-main (
-	int argc, 
-	const char * argv[] 
+void
+tai64nlocal (
+	const char * & /*next_prog*/,
+	std::vector<const char *> & args
 ) {
-	if (argc < 1) return EXIT_FAILURE;
-	const char * prog(basename_of(argv[0]));
-	std::vector<const char *> args(argv, argv + argc);
+	const char * prog(basename_of(args[0]));
 	try {
 		popt::bool_definition non_standard_option('l', "local-format", "Use the locale-specific local format for date and time.", non_standard);
 		popt::definition * top_table[] = {
@@ -173,14 +171,14 @@ main (
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
 		p.process(true /* strictly options before arguments */);
 		args = new_args;
-		if (p.stopped()) return EXIT_SUCCESS;
+		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		return static_cast<int>(EXIT_USAGE);
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	if (args.empty()) {
 		if (!process(prog, "<stdin>", STDIN_FILENO))
-			return EXIT_TEMPORARY_FAILURE;
+			throw static_cast<int>(EXIT_TEMPORARY_FAILURE);	// Bernstein daemontools compatibility
 	} else {
 		for (std::vector<const char *>::const_iterator i(args.begin()); i != args.end(); ++i) {
 			const char * name(*i);
@@ -188,12 +186,12 @@ main (
 			if (0 > fd) {
 				const int error(errno);
 				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, std::strerror(error));
-				return EXIT_PERMANENT_FAILURE;
+				throw static_cast<int>(EXIT_PERMANENT_FAILURE);	// Bernstein daemontools compatibility
 			}
 			if (!process(prog, name, fd))
-				return EXIT_TEMPORARY_FAILURE;
+				throw static_cast<int>(EXIT_TEMPORARY_FAILURE);	// Bernstein daemontools compatibility
 			close(fd);
 		}
 	}
-	return EXIT_SUCCESS;
+	throw EXIT_SUCCESS;
 }

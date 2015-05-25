@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Vixie/ISC DHCP over IPv4 server on %i
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=dhcpd -4 -f -d -q %i
+
+[Install]
+WantedBy=server.target

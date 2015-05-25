@@ -127,7 +127,14 @@ exit_error:
 #if defined(__LINUX__) || defined(__linux__)
 	if (0 > setsockopt(s, SOL_IP, IP_FREEBIND, &bind_to_any_i, sizeof bind_to_any_i)) goto exit_error;
 #else
-	if (0 > setsockopt(s, IPPROTO_IP, IP_BINDANY, &bind_to_any_i, sizeof bind_to_any_i)) goto exit_error;
+	switch (info->ai_family) {
+		case AF_INET:
+			if (0 > setsockopt(s, IPPROTO_IPV4, IP_BINDANY, &bind_to_any_i, sizeof bind_to_any_i)) goto exit_error;
+			break;
+		case AF_INET6:
+			if (0 > setsockopt(s, IPPROTO_IPV6, IP_BINDANY, &bind_to_any_i, sizeof bind_to_any_i)) goto exit_error;
+			break;
+	}
 #endif
 	if (AF_INET6 == info->ai_family) {
 #if defined(IPV6_V6ONLY)

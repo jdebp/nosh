@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.9</refmiscinfo>
+<refmiscinfo class="version">1.15</refmiscinfo>
 </refmeta>
 
 <refnamediv><refname>tcp-socket-accept</refname><refpurpose>accept incoming TCP connections and spawn a program per connection</refpurpose></refnamediv>

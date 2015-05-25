@@ -80,6 +80,7 @@ bool
 ttys_wants_enable_preset (
 	const std::string & name
 ) {
+	if (!setttyent()) return true;
 	const struct ttyent *entry(getttynam(name.c_str()));
 	const bool r(entry && is_on(*entry));
 	endttyent();

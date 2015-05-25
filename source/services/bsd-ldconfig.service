@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Initialise the dynamic loader database sysinit service
+DefaultDependencies=false
+EarlySupervise=true
+After=local-fs.target
+Wants=local-fs.target
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=sh -c '/compat/linux/sbin/ldconfig -C /compat/linux/etc/ld.so.cache'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=sysinit.target

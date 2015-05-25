@@ -1,0 +1,64 @@
+#
+# Explicitly enable basic services and targets.
+#
+# This is not a systemd preset.  
+# It goes in a special nosh system-manager preset directory.
+# It is used by the nosh-bundles package in order to enable certain mandatory basics without which a system simply won't work.
+#
+
+enable	cyclog@acpid.service
+enable	cyclog@console-fb-realizer@head0.service
+enable	cyclog@console-kit-daemon.service
+enable	cyclog@console-multiplexor@head0.service
+enable	cyclog@kerneloops.service
+enable	cyclog@ModemManager.service
+enable	cyclog@NetworkManager.service
+enable	cyclog@polkitd.service
+enable	cyclog@terminal-emulator@*.service
+enable	cyclog@ttylogin@*.service
+enable	cyclog@ttylogin-starter.service
+enable	cyclog@update-binfmts.service
+enable	cyclog@wpa_supplicant.service
+enable	acpid.service
+enable	console-fb-realizer@head0.service
+enable	console-kit-daemon.service
+enable	console-multiplexor@head0.service
+enable	kerneloops.service
+enable	ModemManager.service
+enable	NetworkManager.service
+enable	polkitd.service
+enable	terminal-emulator@*.service
+enable	ttylogin@*.service
+enable	ttylogin-starter.service
+enable	update-binfmts.service
+enable	wpa_supplicant.service
+
+enable	sysinit-log.service
+enable	background-fsck.service
+enable	cleanspool.service
+enable	devd-log.service
+enable	devd.service
+enable	dmesg.service
+enable	newsyslog.service
+enable	ldconfig.service
+enable	machine-id.service
+enable	motd.service
+enable	motd-dynamic.service
+enable	nextboot.service
+enable	securelevel.service
+enable	swapauto.service
+enable	sane-console.service
+enable	fsck@-usr.service
+enable	fsck@-var.service
+enable	mount@-.service
+enable	mount@-usr.service
+enable	mount@-var.service
+enable	klogd.service
+
+enable	basic.target
+enable	local-fs.target
+enable	local-fs-pre.target
+enable	remote-fs.target
+enable	server.target
+enable	workstation.target
+enable	multi-user.target

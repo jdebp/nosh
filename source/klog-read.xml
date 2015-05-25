@@ -1,0 +1,90 @@
+<refentry id="klog-read">
+
+<refmeta>
+<refentrytitle>klog-read</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.15</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>klog-read</refname>
+<refpurpose>kernel log server</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>klog-read</command> 
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>klog-read</command> is a kernel log server that feeds a log-writing
+service of some sort.
+It loops forever, reading log messages and writing them to its standard error.
+Usually, the source of the messages is the kernel.
+</para>
+
+<para>
+No attempt is made to rectify messages, or even modify them at all.
+</para>
+
+<para>
+It expects file descriptor 3 to be a FIFO that has been set up, with
+<citerefentry><refentrytitle>fifo-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+or similar, to listen for incoming messages.
+Usually, its standard error will be redirected to an instance of
+<citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+or similar.
+This will place an absolute timestamp on each log message when the message was
+sent to the log file by the log service, in addition to the relative timestamp
+(time since bootstrap) placed by the kernel.
+</para>
+
+<para>
+This server does expect a stream input, however.
+It is not suitable for use with UDP or AF_LOCAL syslog sockets, which
+are datagram-based.
+</para>
+
+</refsection>
+
+<refsection><title>SECURITY</title>
+
+<para>
+Unlike other kernel log servers, this server has no need to be run as the
+superuser.
+It writes to no files or directories, requires no ownership of any files or
+directories, and does not even need privileged permissions for FIFO access
+since it expects to inherit its FIFO already opened from the 
+process that chain-loaded it.
+</para>
+
+<para>
+Message content is as secure as the underlying transport.
+Note that Linux kernels allow (privileged) processes to
+write arbitrary log content <emphasis>to</emphasis> the kernel
+log buffer.
+The kernel provides no defences against forgery, no defences against malformed
+character encodings or control characters, nor authentication mechanisms for
+clients.
+It is indeed only in newer kernels that defences against flooding by
+application mode code have been introduced.
+</para>
+
+<para>
+This server does not interpret or execute message content received,
+and does no message categorization or other such processing based
+upon potentially attacker-supplied information.
+Its read buffer is a fixed size, with no size calculations at all, let alone
+ones based upon potentially attacker-supplied length fields.
+</para>
+
+</refsection>
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

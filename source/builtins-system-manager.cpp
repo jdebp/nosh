@@ -25,11 +25,6 @@ void service_manager ( const char * & , std::vector<const char *> & ) ;
 extern const
 struct command 
 commands[] = {
-	{	"system-manager",	system_manager		},
-	{	"systemd",		system_manager		},
-	{	"systemctl",		system_control		},
-	{	"initctl",		system_control		},
-
 	// These are the system-control subcommands used by system-manager.
 	{	"init",			init			},
 	{	"sysinit",		sysinit			},
@@ -43,3 +38,12 @@ commands[] = {
 	{	"cyclog",		cyclog			},
 };
 const std::size_t num_commands = sizeof commands/sizeof *commands;
+
+extern const
+struct command 
+personalities[] = {
+	{	"system-manager",	system_manager		},
+	{	"init",			system_manager,		},
+	{	"systemd",		system_manager		},
+};
+const std::size_t num_personalities = sizeof personalities/sizeof *personalities;

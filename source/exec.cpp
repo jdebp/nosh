@@ -13,18 +13,6 @@ For copyright and licensing terms, see the file named COPYING.
 extern "C" int clearenv();
 #endif
 
-/* Table of commands ********************************************************
-// **************************************************************************
-*/
-
-// There are no extra personalities over and above the built-in commands.
-extern const
-struct command 
-personalities[] = {
-	{	0,			0,			},
-};
-const std::size_t num_personalities = 0;
-
 /* Main function ************************************************************
 // **************************************************************************
 */

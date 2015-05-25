@@ -1,3 +1,21 @@
+nosh (1.15) unstable; urgency=low
+
+  * The build system now generates service bundles in a different way.  This should have no effect on the result, but builds will be more correct and result in fewer gratuitous bundle rewrites.
+  * More cross-platform services: mailcatcher, gitlab-unicorn, gitlab-sidekiq, monit, vixiedhcp6d@, vixiedhcp4d@, nginx, fcgiwrap
+  * service-status now prints a timestamp before the relative time.
+  * The build process now attempts to generate some keyboard maps.
+  * convert-ttys-presets now defaults to enabled in the absence of /etc/ttys .
+  * There is now a local-fs-pre target for ordering things before mounts/fscks.
+  * The console-setup and keyboard-setup services have been replaced by kernel-vt-{setfont,loadkeys,vidcontrol,kbdcontrol} services that are only used with kernel virtual terminals.
+  * There is now an emergency-login program, accessible as a built-in from open-controlling-tty et al..
+  * package/stage now exists to perform common package image staging tasks.
+  * service-status now defaults to a longer form, with svstat retaining the shorter form and gaining a --long option.
+  * convert-systemd-units recognizes shell variable expansions and employs the shell.
+  * The qmail and exim4 SMTP Relay/Submission services now share a socket definition, and have been renamed.
+  * The nosh-systemd-services package is now named nosh-run-via-systemd for consistency with the other nosh-run-* package names.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Mon, 25 May 2015 15:53:03 +0100
+
 nosh (1.14) unstable; urgency=low
 
   * More cross-platform services: deluged, deluge-web, multilog@, sissylog@, openvpn@, wpa_supplicant, polkitd, timedated, localed, hostnamed, NetworkManager, ModemManager, sickbeard, plexmediaserver, ossec@dbd, ossec@agentlessd, ossec@csyslogd, ossec@execd, ossec@agentd, ossec@logcollector, ossec@syscheckd, ossec@maild, ossec@analysisd, ossec@remoted, ossec@monitord

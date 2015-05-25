@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Background filesystem check sysinit service
+DefaultDependencies=false
+EarlySupervise=true
+
+[Service]
+EnvironmentDirectory=env
+ExecStartPre=sleep ${delay}
+ExecStart=fsck -B -p
+RemainAfterExit=yes
+
+[Install]
+WantedBy=sysinit.target

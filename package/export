@@ -6,131 +6,175 @@ then
 	exit 100
 fi
 
-root="${1-/usr/local/}"
+root1="${1-/usr/local/}"
+root2="${2-/}"
 user="`id -un`"
 group="`id -gn`"
 
-mkdir -p "${root}"bin/ "${root}"sbin/ "${root}"man/man1 "${root}"man/man8 "${root}"lib/systemd/system "${root}"lib/tmpfiles.d "${root}"var/sv "${root}"etc/sv "${root}"etc/system-manager/targets "${root}"share/doc/nosh
+mkdir -p "${root1}"bin/ "${root1}"sbin/ "${root1}"man/man1 "${root1}"man/man8 "${root1}"lib/systemd/system "${root1}"lib/tmpfiles.d "${root1}"lib/systemd/system-preset "${root1}"share/doc/nosh
+mkdir -p "${root2}"bin/ "${root2}"sbin/ "${root2}"var/sv "${root2}"etc/sv "${root2}"etc/system-manager/targets "${root2}"etc/system-manager/presets
 
 (
 	cat package/commands1
-	awk '{ if ($1 == "exec" || $1 == "session-manager" || $1 == "console-terminal-emulator") print $2 ; }' package/aliases1
+	awk '{ if ($1 == "exec" || $1 == "session-manager" || $1 == "console-terminal-emulator" || $1 == "service-control" || $1 == "system-control") print $2 ; }' package/aliases1
 	awk '{ if ($1 == "service-control" && $2 != "svc") print $2 ; }' package/aliases1
 ) | while read i
 do
 	# Manual page
-	rm -f -- "${root}"man/man1/"$i.1"{new}
-	install -m 0644 -o "${user}" -g "${group}" -p -- manual/"$i.1" "${root}"man/man1/"$i.1"{new}
-	mv -f -- "${root}"man/man1/"$i.1"{new} "${root}"man/man1/"$i.1"
+	rm -f -- "${root1}"man/man1/"$i.1"{new}
+	install -m 0644 -o "${user}" -g "${group}" -p -- manual/"$i.1" "${root1}"man/man1/"$i.1"{new}
+	mv -f -- "${root1}"man/man1/"$i.1"{new} "${root1}"man/man1/"$i.1"
 done
 (
-	awk '{ if ($1 != "exec" && $1 != "session-manager" && $1 != "console-terminal-emulator" && $1 != "service-control") print $0 ; }' package/aliases1 
+	awk '{ if ($1 != "exec" && $1 != "session-manager" && $1 != "console-terminal-emulator" && $1 != "service-control" && $1 != "system-control") print $0 ; }' package/aliases1 
 ) | while read command alias
 do
-	# Manual page
-	ln -f -s -- "${command}.1" "${root}"man/man1/"${alias}.1"{new}
-	mv -f -- "${root}"man/man1/"${alias}.1"{new} "${root}"man/man1/"${alias}.1"
+	# Manual page symbolic links
+	ln -f -s -- "${command}.1" "${root1}"man/man1/"${alias}.1"{new}
+	mv -f -- "${root1}"man/man1/"${alias}.1"{new} "${root1}"man/man1/"${alias}.1"
 done
 (
 	cat package/commands8
 ) | while read i
 do
 	# Manual page
-	rm -f -- "${root}"man/man8/"$i.8"{new}
-	install -m 0644 -o "${user}" -g "${group}" -p -- manual/"$i.8" "${root}"man/man8/"$i.8"{new}
-	mv -f -- "${root}"man/man8/"$i.8"{new} "${root}"man/man8/"$i.8"
+	rm -f -- "${root1}"man/man8/"$i.8"{new}
+	install -m 0644 -o "${user}" -g "${group}" -p -- manual/"$i.8" "${root1}"man/man8/"$i.8"{new}
+	mv -f -- "${root1}"man/man8/"$i.8"{new} "${root1}"man/man8/"$i.8"
 done
 (
 	awk '{ if ($1 != "session-manager") print $0 ; }' package/aliases8
 ) | while read command alias
 do
-	# Manual page
-	ln -f -s -- "${command}.8" "${root}"man/man8/"${alias}.8"{new}
-	mv -f -- "${root}"man/man8/"${alias}.8"{new} "${root}"man/man8/"${alias}.8"
+	# Manual page symbolic links
+	ln -f -s -- "${command}.8" "${root1}"man/man8/"${alias}.8"{new}
+	mv -f -- "${root1}"man/man8/"${alias}.8"{new} "${root1}"man/man8/"${alias}.8"
 done
 (
 	cat package/guidepages package/commands1 package/commands8
-	awk '{ if ($1 == "exec" || $1 == "session-manager" || $1 == "console-terminal-emulator") print $2 ; }' package/aliases1
+	awk '{ if ($1 == "exec" || $1 == "session-manager" || $1 == "console-terminal-emulator" || $1 == "service-control" || $1 == "system-control") print $2 ; }' package/aliases1
 	awk '{ if ($1 == "service-control" && $2 != "svc") print $2 ; }' package/aliases1
 ) | while read i
 do
 	# Documentation
-	rm -f -- "${root}"share/doc/nosh/"$i.html"{new}
-	install -m 0644 -o "${user}" -g "${group}" -p -- guide/"$i.html" "${root}"share/doc/nosh/"$i.html"{new}
-	mv -f -- "${root}"share/doc/nosh/"$i.html"{new} "${root}"share/doc/nosh/"$i.html"
+	rm -f -- "${root1}"share/doc/nosh/"$i.html"{new}
+	install -m 0644 -o "${user}" -g "${group}" -p -- guide/"$i.html" "${root1}"share/doc/nosh/"$i.html"{new}
+	mv -f -- "${root1}"share/doc/nosh/"$i.html"{new} "${root1}"share/doc/nosh/"$i.html"
 done
 (
-	awk '{ if ($1 != "exec" && $1 != "session-manager" && $1 != "console-terminal-emulator" && $1 != "service-control") print $0 ; }' package/aliases1 
+	awk '{ if ($1 != "exec" && $1 != "session-manager" && $1 != "console-terminal-emulator" && $1 != "service-control" && $1 != "system-control") print $0 ; }' package/aliases1 
 	awk '{ if ($1 != "session-manager") print $0 ; }' package/aliases8
 ) | while read command alias
 do
 	# Documentation
-	ln -f -s -- "${command}.html" "${root}"share/doc/nosh/"${alias}.html"{new}
-	mv -f -- "${root}"share/doc/nosh/"${alias}.html"{new} "${root}"share/doc/nosh/"${alias}.html"
+	ln -f -s -- "${command}.html" "${root1}"share/doc/nosh/"${alias}.html"{new}
+	mv -f -- "${root1}"share/doc/nosh/"${alias}.html"{new} "${root1}"share/doc/nosh/"${alias}.html"
 done
 while read i
 do
 	# Executable
-	rm -f -- "${root}"bin/"$i"{new}
-	install -m 0755 -o "${user}" -g "${group}" -p -- command/"$i" "${root}"bin/"$i"{new}
-	mv -f -- "${root}"bin/"$i"{new} "${root}"bin/"$i"
+	rm -f -- "${root1}"bin/"$i"{new}
+	install -m 0755 -o "${user}" -g "${group}" -p -- command/"$i" "${root1}"bin/"$i"{new}
+	mv -f -- "${root1}"bin/"$i"{new} "${root1}"bin/"$i"
 done < package/commands1
 while read i
 do
 	# Executable
-	rm -f -- "${root}"sbin/"$i"{new}
-	install -m 0755 -o "${user}" -g "${group}" -p -- command/"$i" "${root}"sbin/"$i"{new}
-	mv -f -- "${root}"sbin/"$i"{new} "${root}"sbin/"$i"
+	rm -f -- "${root1}"sbin/"$i"{new}
+	install -m 0755 -o "${user}" -g "${group}" -p -- command/"$i" "${root1}"sbin/"$i"{new}
+	mv -f -- "${root1}"sbin/"$i"{new} "${root1}"sbin/"$i"
 done < package/commands8
 while read command alias
 do
 	# Hard link alias
-	ln -f -- "${root}"bin/"${command}" "${root}"bin/"${alias}"{new}
-	mv -f -- "${root}"bin/"${alias}"{new} "${root}"bin/"${alias}"
+	ln -f -- "${root1}"bin/"${command}" "${root1}"bin/"${alias}"{new}
+	mv -f -- "${root1}"bin/"${alias}"{new} "${root1}"bin/"${alias}"
 done < package/aliases1
 while read command alias
 do
 	# Hard link alias
-	ln -f -- "${root}"sbin/"${command}" "${root}"sbin/"${alias}"{new}
-	mv -f -- "${root}"sbin/"${alias}"{new} "${root}"sbin/"${alias}"
+	ln -f -- "${root1}"sbin/"${command}" "${root1}"sbin/"${alias}"{new}
+	mv -f -- "${root1}"sbin/"${alias}"{new} "${root1}"sbin/"${alias}"
 done < package/aliases8
+for j in nosh exec system-control
+do
+	# Unmerged /usr binaries to /bin
+	rm -f -- "${root2}"bin/"$j"{new}
+	ln -f -- "${root1}"bin/"$j" "${root2}"bin/"$j"{new} 2>/dev/null ||
+	install -m 0755 -o "${user}" -g "${group}" -p -- "${root1}"bin/"$j" "${root2}"bin/"$j"{new}
+	mv -f -- "${root2}"bin/"$j"{new} "${root2}"bin/"$j"
+done
+for j in system-manager
+do
+	# Unmerged /usr binaries to /sbin
+	rm -f -- "${root2}"sbin/"$j"{new}
+	ln -f -- "${root1}"sbin/"$j" "${root2}"sbin/"$j"{new} 2>/dev/null ||
+	install -m 0755 -o "${user}" -g "${group}" -p -- "${root1}"sbin/"$j" "${root2}"sbin/"$j"{new}
+	mv -f -- "${root2}"sbin/"$j"{new} "${root2}"sbin/"$j"
+done
 while read i
 do
-	cp -p -f -- config/"$i" "${root}"lib/systemd/system/"$i"{new}
-	mv -f -- "${root}"lib/systemd/system/"$i"{new} "${root}"lib/systemd/system/"$i"
+	# systemd service units
+	cp -p -f -l -- config/"$i" "${root1}"lib/systemd/system/"$i"{new}
+	mv -f -- "${root1}"lib/systemd/system/"$i"{new} "${root1}"lib/systemd/system/"$i"
 done < package/systemd-services
 while read i
 do
-	cp -p -f -- config/"$i" "${root}"lib/tmpfiles.d/"$i"{new}
-	mv -f -- "${root}"lib/tmpfiles.d/"$i"{new} "${root}"lib/tmpfiles.d/"$i"
+	# systemd temp files
+	cp -p -f -- config/"$i" "${root1}"lib/tmpfiles.d/"$i"{new}
+	mv -f -- "${root1}"lib/tmpfiles.d/"$i"{new} "${root1}"lib/tmpfiles.d/"$i"
 done < package/tmpfiles-snippets
+cat package/systemd-presets |
 while read i
 do
-	rm -f -- "${root}"etc/system-manager/targets/"$i"/service/remain
-	(cd config/targets/ && tar -c -f - "$i")|(cd "${root}"etc/system-manager/targets/ && tar -x -f -)
+	# systemd presets
+	cp -p -f -- config/"$i" "${root1}"lib/systemd/system-preset/"$i"{new}
+	mv -f -- "${root1}"lib/systemd/system-preset/"$i"{new} "${root1}"lib/systemd/system-preset/"$i"
+done
+cat package/nosh-presets |
+while read i
+do
+	# override systemd presets when importing to nosh
+	cp -p -f -- config/"$i" "${root2}"etc/system-manager/presets/"$i"{new}
+	mv -f -- "${root2}"etc/system-manager/presets/"$i"{new} "${root2}"etc/system-manager/presets/"$i"
+done
+while read i
+do
+	# standard target bundles
+	rm -f -- "${root2}"etc/system-manager/targets/"$i"/service/remain
+	(cd config/targets/ && tar -c -f - "$i")|(cd "${root2}"etc/system-manager/targets/ && tar -x -f -)
 done < package/standard-targets
-while read i
-do
-	rm -f -- "${root}"etc/sv/"$i"/service/remain
-	(cd config/services/ && tar -c -f - "$i")|(cd "${root}"etc/sv/ && tar -x -f -)
-done < package/sysinit-services
-while read i
-do
-	rm -f -- "${root}"etc/sv/mount@"$i"/service/remain
-	rm -f -- "${root}"etc/sv/fsck@"$i"/service/remain
-	(cd config/services/ && tar -c -f - mount@"$i")|(cd "${root}"etc/sv/ && tar -x -f -)
-	(cd config/services/ && tar -c -f - fsck@"$i")|(cd "${root}"etc/sv/ && tar -x -f -)
-done < package/sysinit-mounts
 (
-	cat package/common-services package/common-sockets package/common-ttys package/kernel-vt-services package/user-vt-services 
+	cat package/common-sysinit-services 
 	case "`uname`" in
-	Linux) cat package/linux-ttys ;;
-	*BSD) cat package/bsd-services package/bsd-sockets package/bsd-ttys ;;
+	Linux) cat package/linux-sysinit-services ;;
+	*BSD) cat package/bsd-sysinit-services ;;
 	esac
 ) | while read i
 do
-	rm -f -- "${root}"var/sv/"$i"/service/remain
-	rm -f -- "${root}"var/sv/cyclog@"$i"/service/remain
-	(cd config/services/ && tar -c -f - "$i")|(cd "${root}"var/sv/ && tar -x -f -)
-	(cd config/services/ && tar -c -f - cyclog@"$i")|(cd "${root}"var/sv/ && tar -x -f -)
+	# sysinit service bundles
+	rm -f -- "${root2}"etc/sv/"$i"/service/remain
+	(cd config/services/ && tar -c -f - "$i")|(cd "${root2}"etc/sv/ && tar -x -f -)
+done
+while read i
+do
+	# mount service bundles
+	rm -f -- "${root2}"etc/sv/mount@"$i"/service/remain
+	rm -f -- "${root2}"etc/sv/fsck@"$i"/service/remain
+	(cd config/services/ && tar -c -f - mount@"$i")|(cd "${root2}"etc/sv/ && tar -x -f -)
+	(cd config/services/ && tar -c -f - fsck@"$i")|(cd "${root2}"etc/sv/ && tar -x -f -)
+done < package/sysinit-mounts
+(
+	cat package/common-services package/common-sockets package/common-ttys package/common-kernel-vt-services package/user-vt-services 
+	case "`uname`" in
+	Linux) cat package/linux-services package/linux-sockets package/linux-ttys package/linux-kernel-vt-services ;;
+	*BSD) cat package/bsd-services package/bsd-sockets package/bsd-ttys package/bsd-kernel-vt-services ;;
+	esac
+) | while read i
+do
+	# service bundles
+	rm -f -- "${root2}"var/sv/"$i"/service/remain
+	rm -f -- "${root2}"var/sv/cyclog@"$i"/service/remain
+	(cd config/services/ && tar -c -f - "$i")|(cd "${root2}"var/sv/ && tar -x -f -)
+	(cd config/services/ && tar -c -f - cyclog@"$i")|(cd "${root2}"var/sv/ && tar -x -f -)
 done

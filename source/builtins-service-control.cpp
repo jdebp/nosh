@@ -37,3 +37,11 @@ commands[] = {
 	{	"svscan",			service_dt_scanner		},
 };
 const std::size_t num_commands = sizeof commands/sizeof *commands;
+
+// There are no extra personalities over and above the built-in commands.
+extern const
+struct command 
+personalities[] = {
+	{	0,			0,			},
+};
+const std::size_t num_personalities = 0;

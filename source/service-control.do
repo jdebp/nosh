@@ -1,6 +1,6 @@
 #!/bin/sh -e
 main="`basename "$1"`"
-objects="${main}.o main-exec.o builtins-service-control.o"
+objects="main-exec.o builtins-service-control.o"
 libraries="builtins.a utils.a"
 [ "`uname`" = "FreeBSD" ] || kqueue=-lkqueue
 [ "`uname`" = "FreeBSD" ] || rt=-lrt

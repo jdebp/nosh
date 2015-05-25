@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Bluetooth link keys and PINs service
+Wants=kmod@ng_btsocket
+After=kmod@ng_btsocket
+
+[Service]
+systemdWorkingDirectory=false
+# The import procedure is expected to have populated this directory with config.
+EnvironmentDirectory=env
+ExecStart=%p -d -f "${config:-/etc/bluetooth/%p.conf}"
+Restart=always
+
+[Install]
+WantedBy=workstation.target

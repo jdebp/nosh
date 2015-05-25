@@ -379,9 +379,10 @@ cyclog (
 	sigaction(SIGHUP,&sa,NULL);
 	sigaction(SIGTERM,&sa,NULL);
 	sigaction(SIGINT,&sa,NULL);
-	sigaction(SIGPIPE,&sa,NULL);
-	sigaction(SIGALRM,&sa,NULL);
 	sigaction(SIGTSTP,&sa,NULL);
+	sigaction(SIGALRM,&sa,NULL);
+	sigaction(SIGPIPE,&sa,NULL);
+	sigaction(SIGQUIT,&sa,NULL);
 #endif
 
 	const int queue(kqueue());
@@ -391,7 +392,7 @@ cyclog (
 		throw EXIT_FAILURE;
 	}
 
-	struct kevent p[7];
+	struct kevent p[8];
 	EV_SET(&p[0], STDIN_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
 	EV_SET(&p[1], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 	EV_SET(&p[2], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
@@ -399,6 +400,7 @@ cyclog (
 	EV_SET(&p[4], SIGTSTP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 	EV_SET(&p[5], SIGALRM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 	EV_SET(&p[6], SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	EV_SET(&p[7], SIGQUIT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 	if (0 > kevent(queue, p, sizeof p/sizeof *p, 0, 0, 0)) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
@@ -440,21 +442,22 @@ cyclog (
 				}
 			} else
 			if (EVFILT_SIGNAL == p[i].filter) {
-			       switch (p[i].ident) {
-				       case SIGTERM:
-				       case SIGHUP:
-				       case SIGPIPE:
-				       case SIGINT:
+				switch (p[i].ident) {
+					case SIGHUP:
+					case SIGTERM:
+					case SIGINT:
+					case SIGPIPE:
+					case SIGQUIT:
 						std::fprintf(stderr, "%s: INFO: %s\n", prog, "Terminated.");
 						goto terminated;
-				       case SIGALRM:
+					case SIGALRM:
 						std::fprintf(stderr, "%s: INFO: %s\n", prog, "Forced log rotation.");
 						for (logger * l(logger::first); l; l = l->next) {
 							l->end();
 							l->rotate();
 						}
 						break;
-				       case SIGTSTP:
+					case SIGTSTP:
 						std::fprintf(stderr, "%s: INFO: %s\n", prog, "Paused.");
 						raise(SIGSTOP);
 						std::fprintf(stderr, "%s: INFO: %s\n", prog, "Continued.");

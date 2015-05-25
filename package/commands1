@@ -1,6 +1,4 @@
 exec
-session-manager
+system-control
 service-control
-tai64n
-tai64nlocal
 console-terminal-emulator

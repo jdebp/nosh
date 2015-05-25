@@ -1,0 +1,19 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=packet filter service
+
+[Service]
+systemdWorkingDirectory=false
+# The import procedure is expected to have popluated this directory with rules and flags.
+EnvironmentDirectory=env
+ExecStartPre=pfctl -Fall
+ExecStartPre=pfctl -e -q
+ExecStart=pfctl -f "$rules" $flags
+ExecStopPost=pfctl -d -q
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target server.target

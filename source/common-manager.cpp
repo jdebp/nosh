@@ -1019,14 +1019,3 @@ system_manager (
 	const bool is_system(1 == getpid());
 	common_manager(is_system, next_prog, args);
 }
-
-/* Table of commands ********************************************************
-// **************************************************************************
-*/
-
-extern const
-struct command 
-personalities[] = {
-	{	"init",			system_manager,			},
-};
-const std::size_t num_personalities = sizeof personalities/sizeof *personalities;

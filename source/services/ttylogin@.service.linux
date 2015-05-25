@@ -1,0 +1,27 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Standard login on %I
+After=motd-dynamic.service
+
+[Service]
+systemdWorkingDirectory=false
+SessionLeader=true
+StandardInput=tty
+StandardOutput=inherit
+ExecStart=login-banner /etc/issue.vc login
+Restart=always
+RestartSec=0
+# This isn't appropriate for modern service management systems, and doesn't even do anything on BSDs.
+#UtmpIdentifier=%I
+TTYPath=%I
+TTYReset=yes
+# Use "yes" for more security on kernel virtual terminals.
+TTYVHangup=no
+# Use "yes" if login has a timeout and it is enabled.
+TTYPrompt=no
+
+[Install]
+WantedBy=multi-user.target

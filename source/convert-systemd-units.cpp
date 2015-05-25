@@ -207,6 +207,37 @@ leading_slashify (
 	return "/" == s.substr(0, 1) ? s : "/" + s;
 }
 
+static inline
+std::string
+shell_expand (
+	const std::string & s
+) {
+	enum { NORMAL, DQUOT, SQUOT } state(NORMAL);
+	for (std::string::const_iterator p(s.begin()); s.end() != p; ++p) {
+		const char c(*p);
+		switch (state) {
+			case NORMAL:
+				if ('\\' == c && p != s.end()) ++p;
+				else if ('\'' == c) state = SQUOT;
+				else if ('\"' == c) state = DQUOT;
+				else if ('$' == c)
+					return "sh -c " + quote("exec " + s);
+				break;
+			case DQUOT:
+				if ('\\' == c && p != s.end()) ++p;
+				else if ('\"' == c) state = NORMAL;
+				else if ('$' == c)
+					return "sh -c " + quote("exec " + s);
+				break;
+			case SQUOT:
+				if ('\\' == c && p != s.end()) ++p;
+				else if ('\'' == c) state = NORMAL;
+				break;
+		}
+	}
+	return s;
+}
+
 struct names {
 	names(const char * a) : arg_name(a) { split_name(a, unit_dirname, unit_basename); }
 	void set_prefix(const std::string & v, bool esc, bool alt) { set(esc, alt, escaped_prefix, prefix, v); }
@@ -286,7 +317,7 @@ names::escape (
 		if (!alt && '/' == c) {
 			r += '-';
 		} else
-		if (!alt ? '-' == c : '@' == c || '/' == c || '\\' == c) {
+		if (!alt ? '-' == c : '@' == c || '/' == c || '\\' == c || ':' == c || ',' == c) {
 			char buf[6];
 			snprintf(buf, sizeof buf, "\\x%02x", c);
 			r += std::string(buf);
@@ -437,6 +468,7 @@ void
 create_links (
 	const char * prog,
 	const bool is_target,
+	const bool etc_service,
 	int bundle_dir_fd,
 	const std::string & names,
 	const std::string & subdir
@@ -453,7 +485,7 @@ create_links (
 			link = subdir + base;
 		} else
 		if (ends_in(name, ".service", base)) {
-			if (is_target)
+			if (is_target||etc_service)
 				target = "/var/sv/" + base;
 			else
 				target = "../../" + base;
@@ -520,18 +552,20 @@ convert_systemd_units (
 ) {
 	const char * prog(basename_of(args[0]));
 	std::string bundle_root;
-	bool unescape_instance(false), unescape_prefix(false), alt_escape(false);
+	bool unescape_instance(false), unescape_prefix(false), alt_escape(false), etc_service(false);
 	try {
 		const char * bundle_root_str(0);
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
 		popt::string_definition bundle_option('\0', "bundle-root", "directory", "Root directory for bundles.", bundle_root_str);
 		popt::bool_definition unescape_instance_option('\0', "unescape-instance", "Unescape the instance part of a template instantiation.", unescape_instance);
 		popt::bool_definition alt_escape_option('\0', "alt-escape", "Use an alternative escape algorithm.", alt_escape);
+		popt::bool_definition etc_service_option('\0', "etc-service", "Consider this service to live away from the normal service bundle group.", etc_service);
 		popt::definition * main_table[] = {
 			&user_option,
 			&bundle_option,
 			&unescape_instance_option,
-			&alt_escape_option
+			&alt_escape_option,
+			&etc_service_option
 		};
 		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "");
 
@@ -636,6 +670,7 @@ convert_systemd_units (
 	}
 
 	value * listenstream(socket_profile.use("socket", "listenstream"));
+	value * listenfifo(socket_profile.use("socket", "listenfifo"));
 	value * listendatagram(socket_profile.use("socket", "listendatagram"));
 #if defined(IPV6_V6ONLY)
 	value * bindipv6only(socket_profile.use("socket", "bindipv6only"));
@@ -743,13 +778,19 @@ convert_systemd_units (
 		throw EXIT_FAILURE;
 	}
 	if (is_socket_activated) {
-		if (!listenstream && !listendatagram) {
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, socket_filename.c_str(), "Missing mandatory ListenStream/ListenDatagram entry.");
+		if (!listenstream && !listendatagram && !listenfifo) {
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, socket_filename.c_str(), "Missing mandatory ListenStream/ListenDatagram/ListenFIFO entry.");
 			throw EXIT_FAILURE;
 		}
 		if (listendatagram) {
 			if (is_socket_accept) {
 				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, socket_filename.c_str(), "ListenDatagram sockets may not have Accept=yes.");
+				throw EXIT_FAILURE;
+			}
+		}
+		if (listenfifo) {
+			if (is_socket_accept) {
+				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, socket_filename.c_str(), "ListenFIFO sockets may not have Accept=yes.");
 				throw EXIT_FAILURE;
 			}
 		}
@@ -780,7 +821,7 @@ convert_systemd_units (
 		throw EXIT_FAILURE;
 	}
 
-#define CREATE_LINKS(l,s) (l ? create_links (prog,is_target,bundle_dir_fd.get(),names.substitute((l)->last_setting()),(s)) : static_cast<void>(0))
+#define CREATE_LINKS(l,s) (l ? create_links (prog,is_target,etc_service,bundle_dir_fd.get(),names.substitute((l)->last_setting()),(s)) : static_cast<void>(0))
 
 	// Construct various common command strings.
 
@@ -820,19 +861,9 @@ convert_systemd_units (
 			setuidgid += "setuidgid-fromenv\n";
 		} else
 			setuidgid += "setuidgid " + quote(u) + "\n";
-		if (is_bool_true(systemduserenvironment, true)) {
-			if (passwd * pw = getpwnam(u.c_str())) {
-				// These replicate systemd useless features.
-				if (pw->pw_dir)
-					setuidgid += "setenv HOME " + quote(pw->pw_dir) + "\n";
-				if (pw->pw_shell)
-					setuidgid += "setenv SHELL " + quote(pw->pw_shell) + "\n";
-				if (pw->pw_name) {
-					setuidgid += "setenv USER " + quote(pw->pw_name) + "\n";
-					setuidgid += "setenv LOGNAME " + quote(pw->pw_name) + "\n";
-				}
-			}
-		}
+		if (is_bool_true(systemduserenvironment, true))
+			// This replicates systemd useless features.
+			setuidgid += "userenv\n";
 	} else {
 		if (group)
 			setuidgid += "setgid " + quote(names.substitute(group->last_setting())) + "\n";
@@ -928,9 +959,8 @@ convert_systemd_units (
 		if (is_bool_true(ttyreset, false)) login_prompt += "vc-reset-tty\n";
 		if (is_bool_true(ttyprompt, false)) login_prompt += "login-prompt\n";
 #if defined(__LINUX__) || defined(__linux__)
-		login_prompt += "login-process";
-		if (utmpidentifier) login_prompt += " --id " + quote(names.substitute(utmpidentifier->last_setting()));
-		login_prompt += "\n";
+		if (utmpidentifier)
+			login_prompt += "login-process --id " + quote(names.substitute(utmpidentifier->last_setting())) + "\n";
 #endif
 	}
 
@@ -966,7 +996,7 @@ convert_systemd_units (
 				if (execstartpre->all_settings().begin() != j) start << " ;\n"; 
 				if (execstartpre->all_settings().end() != i) start << "foreground "; 
 				const std::string & val(*j);
-				start << names.substitute(strip_leading_minus(val));
+				start << names.substitute(shell_expand(strip_leading_minus(val)));
 			}
 			start << "\n";
 		} else 
@@ -1083,6 +1113,25 @@ convert_systemd_units (
 				run << um;
 			}
 		}
+		if (listenfifo) {
+			run << "fifo-listen --systemd-compatibility ";
+			if (backlog) run << "--backlog " << quote(backlog->last_setting()) << " ";
+			if (socketmode) run << "--mode " << quote(socketmode->last_setting()) << " ";
+			if (socketuser) run << "--uid " << quote(socketuser->last_setting()) << " ";
+			if (socketgroup) run << "--gid " << quote(socketgroup->last_setting()) << " ";
+			if (passcredentials) run << "--pass-credentials ";
+			if (passsecurity) run << "--pass-security ";
+			run << quote(listenfifo->last_setting()) << "\n";
+			run << envuidgid;
+			run << setsid;
+			run << redirect;
+			run << softlimit;
+			run << chroot;
+			run << chdir;
+			run << setuidgid;
+			run << env;
+			run << um;
+		}
 		if (is_bool_true(ucspirules, false)) run << "ucspi-socket-rules-check\n";
 		run << "./service\n";
 		service << "#!/bin/nosh\n" << multi_line_comment("Service file generated from " + service_filename);
@@ -1114,12 +1163,12 @@ convert_systemd_units (
 		if (execstartpre) {
 			for (std::list<std::string>::const_iterator i(execstartpre->all_settings().begin()); execstartpre->all_settings().end() != i; ++i ) {
 				service << "foreground "; 
-				service << names.substitute(strip_leading_minus(*i));
+				service << names.substitute(shell_expand(strip_leading_minus(*i)));
 				service << " ;\n"; 
 			}
 		}
 	}
-	service << (execstart ? names.substitute(strip_leading_minus(execstart->last_setting())) : is_remain ? "true" : "pause") << "\n";
+	service << (execstart ? names.substitute(shell_expand(strip_leading_minus(execstart->last_setting()))) : is_remain ? "true" : "pause") << "\n";
 
 	// nosh is not suitable here, since the restart script is passed arguments.
 	restart_script << "#!/bin/sh\n" << multi_line_comment("Restart file generated from " + service_filename);
@@ -1139,7 +1188,7 @@ convert_systemd_units (
 			if (execstartpre->all_settings().begin() != j) s << " ;\n"; 
 			if (execstartpre->all_settings().end() != i) s << "foreground "; 
 			const std::string & val(*j);
-			s << names.substitute(strip_leading_minus(val));
+			s << names.substitute(shell_expand(strip_leading_minus(val)));
 		}
 		restart_script << escape_newlines(s.str()) << "\n";
 	}
@@ -1233,11 +1282,11 @@ convert_systemd_units (
 	);
 	if (defaultdependencies) {
 		if (is_socket_activated)
-			create_links(prog, is_target, bundle_dir_fd.get(), "sockets.target", "wanted-by/");
-		create_links(prog, is_target, bundle_dir_fd.get(), "basic.target", "after/");
-		create_links(prog, is_target, bundle_dir_fd.get(), "basic.target", "wants/");
-		create_links(prog, is_target, bundle_dir_fd.get(), "shutdown.target", "before/");
-		create_links(prog, is_target, bundle_dir_fd.get(), "shutdown.target", "stopped-by/");
+			create_links(prog, is_target, etc_service, bundle_dir_fd.get(), "sockets.target", "wanted-by/");
+		create_links(prog, is_target, etc_service, bundle_dir_fd.get(), "basic.target", "after/");
+		create_links(prog, is_target, etc_service, bundle_dir_fd.get(), "basic.target", "wants/");
+		create_links(prog, is_target, etc_service, bundle_dir_fd.get(), "shutdown.target", "before/");
+		create_links(prog, is_target, etc_service, bundle_dir_fd.get(), "shutdown.target", "stopped-by/");
 	}
 	if (earlysupervise) {
 		create_link(prog, bundle_dir_fd.get(), "/run/system-manager/early-supervise/" + names.query_bundle_basename(), "supervise");

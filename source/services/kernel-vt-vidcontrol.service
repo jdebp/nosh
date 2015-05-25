@@ -1,0 +1,20 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Set up kernel virtual terminal font
+DefaultDependencies=false
+EarlySupervise=true
+## The point of this service is to set up the kernel VTs really early, so that one can interact with fsck.
+Before=local-fs-pre.target
+
+[Service]
+systemdWorkingDirectory=false
+EnvironmentFile=-/etc/rc.conf
+EnvironmentFile=-/etc/rc.conf.local
+ExecStart=vidcontrol ${font8x16:+-f 8x16} ${font8x16} ${font8x14:+-f 8x14} ${font8x14} ${font8x8:+-f 8x8} ${font8x8} ${blanktime:+-t} ${blanktime} ${scrnmap:+-l} ${scrnmap} ${cursor:+-c} ${cursor} ${allscreens_flags}
+Restart=never
+
+[Install]
+WantedBy=sysinit.target

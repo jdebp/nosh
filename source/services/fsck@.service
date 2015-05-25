@@ -1,0 +1,19 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Filesystem check the %I volume
+DefaultDependencies=false
+EarlySupervise=true
+Before=mount@%i.service
+After=local-fs-pre.target
+
+[Service]
+Type=oneshot
+ExecStart=%P -C -p %I
+systemdWorkingDirectory=false
+RemainAfterExit=yes
+
+[Install]
+WantedBy=mount@%i.service

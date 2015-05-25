@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Collector for kernel log messages
+
+[Service]
+systemdWorkingDirectory=false
+systemdUserEnvironment=false
+User=klogd
+ExecStart=klog-read
+Restart=always
+
+[Install]
+WantedBy=workstation.target

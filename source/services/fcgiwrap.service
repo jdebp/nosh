@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=nginx's Fast CGI wrapper server
+
+[Service]
+systemdWorkingDirectory=false
+User=http
+ExecStart=%P
+PrivateTmp=true
+Restart=always
+
+[Install]
+WantedBy=server.target
+

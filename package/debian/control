@@ -26,6 +26,7 @@ Description: Minimal non-shell script processor and various chain-load utilities
  .
  Also present are commands useful for daemon implementations:
  * false, line-banner, true, recordio, setlock,
+ * fifo--listen,
  * local-datagram-socket-listen,
  * local-stream-socket-accept, local-stream-socket-listen,
  * udp-socket-listen,
@@ -97,11 +98,12 @@ Description: upstart shim service and system management utilities
  .
  The shims simply invoke native service management commands.
 
-Package: nosh-systemd-services
+Package: nosh-run-via-systemd
 Architecture: amd64
 Depends: nosh-service-management, systemd, nosh-bundles
 Suggests: 
 Recommends: 
+Conflicts: nosh-systemd-services
 Description: systemd services for running the nosh service manager and daemontools service scanner
  This package provides systemd service units for running the nosh service manager and daemontools service scanner under systemd, instead of running the nosh service manager.
  It presets systemd services that:

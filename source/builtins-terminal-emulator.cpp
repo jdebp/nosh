@@ -20,6 +20,7 @@ extern void console_ncurses_realizer ( const char * &, std::vector<const char *>
 extern void console_resize ( const char * &, std::vector<const char *> & );
 extern void console_terminal_emulator ( const char * &, std::vector<const char *> & );
 extern void detach_controlling_tty ( const char * &, std::vector<const char *> & );
+extern void emergency_login ( const char * &, std::vector<const char *> & );
 extern void login_banner ( const char * &, std::vector<const char *> & );
 extern void login_process ( const char * &, std::vector<const char *> & );
 extern void login_prompt ( const char * &, std::vector<const char *> & );
@@ -40,6 +41,7 @@ commands[] = {
 	{	"console-resize",		console_resize			},
 	{	"console-terminal-emulator",	console_terminal_emulator	},
 	{	"detach-controlling-tty",	detach_controlling_tty		},
+	{	"emergency-login",		emergency_login			},
 	{	"login-banner",			login_banner			},
 	{	"login-process",		login_process			},
 	{	"login-prompt",			login_prompt			},
@@ -52,3 +54,11 @@ commands[] = {
 	{	"vc-reset-tty",			vc_reset_tty			},
 };
 const std::size_t num_commands = sizeof commands/sizeof *commands;
+
+// There are no extra personalities over and above the built-in commands.
+extern const
+struct command 
+personalities[] = {
+	{	0,			0,			},
+};
+const std::size_t num_personalities = 0;

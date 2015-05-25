@@ -1,0 +1,28 @@
+#!/bin/sh -
+case "$1" in
+	configure)
+		for i in service-manager system-manager terminal-emulator
+		do
+			systemd-tmpfiles --create /usr/local/lib/tmpfiles.d/$i.conf
+		done
+		systemctl preset service-manager.socket
+		if systemctl is-enabled --quiet service-manager.socket 
+		then
+			systemctl start --no-ask-password service-manager.socket
+		fi
+		system-control convert-systemd-presets sysinit.target
+		system-control preset sysinit.target
+		systemctl preset system-control-normal.service
+		if systemctl is-enabled --quiet system-control-normal.service 
+		then
+			systemctl start --no-ask-password system-control-normal.service
+		systemctl preset service-manager-svscan.path
+		if systemctl is-enabled --quiet service-manager-svscan.path 
+		then
+			systemctl start --no-ask-password service-manager-svscan.path
+		fi
+		fi
+		;;
+esac
+
+

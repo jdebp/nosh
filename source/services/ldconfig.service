@@ -1,0 +1,20 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Initialise the dynamic loader database sysinit service
+DefaultDependencies=false
+EarlySupervise=true
+After=local-fs.target
+Wants=local-fs.target
+
+[Service]
+systemdWorkingDirectory=false
+# The import procedure is expected to have populated this directory with paths, paths_aout, and paths32.
+EnvironmentDirectory=env
+ExecStart=sh -c '%p -elf /lib /usr/lib /usr/local/lib ${paths} /etc/ld-elf.so.conf ; %p -32 /lib /usr/lib /usr/local/lib ${paths32} /etc/ld-elf32.so.conf ; %p -aout /lib/aout /usr/lib/aout /usr/local/lib/aout ${paths_aout=${ldconfig_paths}} /etc/ld.so.conf'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=sysinit.target

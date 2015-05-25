@@ -1,0 +1,19 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%P service
+After=local-fs.target
+
+[Service]
+systemdWorkingDirectory=false
+# The import procedure is expected to have populated this directory with on_flags, off_flags, and check_flags.
+EnvironmentDirectory=env
+ExecStartPre=quotacheck "${check_flags}"
+ExecStart=quotaon "${on_flags}"
+ExecStopPost=quotaoff "${off_flags}"
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

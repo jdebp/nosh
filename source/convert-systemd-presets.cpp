@@ -128,7 +128,9 @@ scan (
 static
 const char *
 preset_directories[] = {
+	"/run/system-manager/presets/",
 	"/run/systemd/system-preset/",
+	"/etc/system-manager/presets/",
 	"/etc/systemd/system-preset/",
 	"/usr/systemd/system-preset/",
 	"/usr/lib/systemd/system-preset/",
@@ -163,7 +165,9 @@ systemd_wants_enable_preset (
 			const std::string d_name(entry->d_name);
 			if (!earliest.empty() && earliest <= d_name) continue;
 			const std::string p(preset_dir_name + d_name);
-			FileStar preset_file(std::fopen(p.c_str(), "rt"));
+			const int f(open_read_at(preset_dir_fd, entry->d_name));
+			if (0 > f) continue;
+			FileStar preset_file(fdopen(f, "rt"));
 			if (!preset_file) continue;
 			if (scan(name, suffix, preset_file, wants_enable))
 				earliest = d_name;

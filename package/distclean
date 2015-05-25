@@ -5,4 +5,4 @@ then
 	exit 100
 fi
 
-rm -rf build/ debian/ command/ manual/ config/
+rm -rf build/ debian/ command/ manual/ config/ guide/

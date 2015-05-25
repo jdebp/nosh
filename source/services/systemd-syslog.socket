@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=syslog socket used when attaching syslog daemons to the systemd journal
+
+[Socket]
+ListenDatagram=/run/systemd/journal/syslog
+SocketMode=0666
+PassCredentials=yes
+PassSecurity=yes
+
+[Install]
+WantedBy=workstation.target

@@ -7,4 +7,8 @@ then
 fi
 
 # Rebuild.
-redo --directory build --jobs 2 -- all
+case "`uname`" in
+Linux) cpus="`fgrep -c processor /proc/cpuinfo`" ;;
+*BSD) cpus=4 ;;
+esac
+redo --directory build --jobs "${cpus}" -- all
