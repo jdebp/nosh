@@ -127,9 +127,9 @@ It sets the hardwired default environment:
 </para>
 <itemizedlist>
 <listitem>
-<para><code>PATH</code>=<filename>/usr/local/bin</filename>:<filename>/usr/local/sbin</filename>:<filename>/usr/bin</filename>:<filename>/usr/sbin</filename>:<filename>/bin</filename>:<filename>/sbin</filename></para>
+<para><envar>PATH</envar>=<filename>/usr/local/bin</filename>:<filename>/usr/local/sbin</filename>:<filename>/usr/bin</filename>:<filename>/usr/sbin</filename>:<filename>/bin</filename>:<filename>/sbin</filename></para>
 </listitem>
-<listitem><para><code>LANG</code>=<code>C</code></para></listitem>
+<listitem><para><envar>LANG</envar>=<code>C</code></para></listitem>
 </itemizedlist>
 </listitem>
 
@@ -152,7 +152,7 @@ the first file that is found (and can be opened for reading) in the list:
 </orderedlist>
 <para>
 As the names indicate, this default environment is only expected to comprise
-locale-controlling variables such as <code>LANG</code>.
+locale-controlling variables such as <envar>LANG</envar>.
 </para>
 </listitem>
 

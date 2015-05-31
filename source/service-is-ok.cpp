@@ -14,7 +14,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "utils.h"
 #include "fdutils.h"
 #include "popt.h"
-#include "service-manager.h"
+#include "service-manager-client.h"
 
 /* Main function ************************************************************
 // **************************************************************************
@@ -44,13 +44,15 @@ service_is_ok (
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "One directory name is required.");
 		throw static_cast<int>(EXIT_USAGE);
 	}
-	const char * name(args[0]);
-	const int dir_fd(open_dir_at(AT_FDCWD, name));
-	if (0 > dir_fd) throw static_cast<int>(EXIT_TEMPORARY_FAILURE);
-	const int ok_fd(open_writeexisting_at(dir_fd, "ok"));
-	if (0 <= ok_fd) throw EXIT_SUCCESS;
-	const int supervise_ok_fd(open_writeexisting_at(dir_fd, "supervise/ok"));
-	if (0 <= supervise_ok_fd) throw EXIT_SUCCESS;
 
-	throw static_cast<int>(EXIT_PERMANENT_FAILURE);
+	const char * name(args[0]);
+	const int bundle_dir_fd(open_dir_at(AT_FDCWD, name));
+	if (0 > bundle_dir_fd) throw static_cast<int>(EXIT_TEMPORARY_FAILURE);
+	const int supervise_dir_fd(open_supervise_dir(bundle_dir_fd));
+	if (0 > supervise_dir_fd) throw static_cast<int>(EXIT_TEMPORARY_FAILURE);
+
+	if (is_ok(supervise_dir_fd)) 
+		throw EXIT_SUCCESS;
+	else 
+		throw static_cast<int>(EXIT_PERMANENT_FAILURE);
 }

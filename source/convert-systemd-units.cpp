@@ -481,6 +481,9 @@ create_links (
 			if (is_target)
 				target = "../../" + base;
 			else
+			if (etc_service)
+				target = "../../../system-manager/targets/" + base;
+			else
 				target = "/etc/system-manager/targets/" + base;
 			link = subdir + base;
 		} else
@@ -492,8 +495,8 @@ create_links (
 			link = subdir + base;
 		} else 
 		{
-			if (is_target)
-				target = "/var/sv/" + base;
+			if (is_target||etc_service)
+				target = "/var/sv/" + name;
 			else
 				target = "../../" + name;
 			link = subdir + name;

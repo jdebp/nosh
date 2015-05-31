@@ -1,0 +1,6 @@
+#!/bin/sh -
+case "$1" in
+	remove|purge)
+		system-control preset sysinit.target dbus.socket
+		;;
+esac

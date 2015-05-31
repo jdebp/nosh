@@ -4,7 +4,7 @@
 
 [Unit]
 Description=Standard format %P logging service for %I
-Before=%i.service
+Before=%I.service
 
 [Service]
 systemdUserEnvironment=no

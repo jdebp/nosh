@@ -221,11 +221,15 @@ the program chains to
 <arg choice="plain"><replaceable>command2</replaceable></arg>
 <arg choice="plain"><replaceable>name</replaceable></arg>.
 <replaceable>command1</replaceable> may only be one of 
-<arg choice="plain">enable</arg>, <arg choice="plain">disable</arg>, 
-<arg choice="plain">remove</arg>, or <arg choice="plain">defaults</arg>, 
+<arg choice="plain">defaults</arg>, 
+<arg choice="plain">enable</arg>, 
+<arg choice="plain">disable</arg>, or
+<arg choice="plain">remove</arg>, 
 which are translated to 
-<arg choice="plain">enable</arg>, <arg choice="plain">disable</arg>, 
-<arg choice="plain">disable</arg>, and <arg choice="plain">preset</arg> 
+<arg choice="plain">preset</arg>,
+<arg choice="plain">preset</arg>,
+<arg choice="plain">disable</arg>, and 
+<arg choice="plain">disable</arg>
 (respectively) for <replaceable>command2</replaceable>.
 Note that the
 <arg choice="plain">start</arg> and <arg choice="plain">stop</arg>

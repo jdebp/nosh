@@ -1,0 +1,2 @@
+enable	cyclog@NetworkManager.service
+enable	NetworkManager.service

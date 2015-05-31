@@ -15,5 +15,6 @@ shutdown
 sockets
 sysinit
 update
-virtualbox
+virtualbox-host
+virtualbox-guest
 workstation

@@ -17,6 +17,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sys/event.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <sys/un.h>
 #include <netinet/udp.h>
 #include <netinet/ip.h>
 #include <netinet/in.h>
@@ -36,7 +37,10 @@ process_message (
 	int socket_fd
 ) {
 	char msg[65536];	// RFC 5426 maximum legal size
-	sockaddr_storage remoteaddr;
+	union {
+		sockaddr_storage s;
+		sockaddr_un u;
+	} remoteaddr;
 	socklen_t addrlen(sizeof remoteaddr);
 	const int rc(recvfrom(socket_fd, &msg, sizeof msg, 0, reinterpret_cast<sockaddr *>(&remoteaddr), &addrlen));
 	if (0 > rc) {
@@ -44,7 +48,7 @@ process_message (
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "recv", std::strerror(error));
 		return;
 	}
-	switch (remoteaddr.ss_family) {
+	switch (remoteaddr.s.ss_family) {
 		case AF_INET:
 		{
 			const struct sockaddr_in & remoteaddr4(*reinterpret_cast<const struct sockaddr_in *>(&remoteaddr));
@@ -59,6 +63,12 @@ process_message (
 			char ip[INET6_ADDRSTRLEN];
 			if (0 != inet_ntop(remoteaddr6.sin6_family, &remoteaddr6.sin6_addr, ip, sizeof ip))
 				std::clog << ip << ':' << ntohs(remoteaddr6.sin6_port) << ": ";
+			break;
+		}
+		case AF_LOCAL:
+		{
+			if (addrlen > offsetof(sockaddr_un, sun_path) && remoteaddr.u.sun_path[0])
+				std::clog << remoteaddr.u.sun_path << ": ";
 			break;
 		}
 		default:

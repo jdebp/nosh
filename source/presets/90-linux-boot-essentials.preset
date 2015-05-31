@@ -1,0 +1,15 @@
+#
+# Explicitly enable basic services and targets.
+#
+# This is not a systemd preset.  
+# It goes in a special nosh system-manager preset directory.
+# It is used by the nosh-bundles package in order to enable certain mandatory basics without which a system simply won't work.
+#
+
+# Ordinary services
+enable	cyclog@acpid.service
+enable	cyclog@kerneloops.service
+enable	cyclog@update-binfmts.service
+enable	acpid.service
+enable	kerneloops.service
+enable	update-binfmts.service

@@ -49,7 +49,7 @@ about the local socket connection.
 <variablelist>
 
 <varlistentry>
-<term><code>PROTO</code></term>
+<term><envar>PROTO</envar></term>
 <listitem>
 <para>
 This always has the value <code>UNIX</code>.
@@ -58,7 +58,7 @@ This always has the value <code>UNIX</code>.
 </varlistentry>
 
 <varlistentry>
-<term><code>UNIXLOCALPATH</code></term>
+<term><envar>UNIXLOCALPATH</envar></term>
 <listitem>
 <para>
 The local (server) pathname of the socket.
@@ -67,7 +67,7 @@ The local (server) pathname of the socket.
 </varlistentry>
 
 <varlistentry>
-<term><code>UNIXREMOTEPATH</code></term>
+<term><envar>UNIXREMOTEPATH</envar></term>
 <listitem>
 <para>
 The remote (client) pathname of the socket.
@@ -76,7 +76,7 @@ The remote (client) pathname of the socket.
 </varlistentry>
 
 <varlistentry>
-<term><code>UNIXREMOTEPID</code></term>
+<term><envar>UNIXREMOTEPID</envar></term>
 <listitem>
 <para>
 The PID of the remote (client) process that connected.
@@ -85,7 +85,7 @@ The PID of the remote (client) process that connected.
 </varlistentry>
 
 <varlistentry>
-<term><code>UNIXREMOTEUID</code></term>
+<term><envar>UNIXREMOTEUID</envar></term>
 <listitem>
 <para>
 The effective UID of the remote (client) process that connected.
@@ -94,7 +94,7 @@ The effective UID of the remote (client) process that connected.
 </varlistentry>
 
 <varlistentry>
-<term><code>UNIXREMOTEGID</code></term>
+<term><envar>UNIXREMOTEGID</envar></term>
 <listitem>
 <para>
 The effective GID of the remote (client) process that connected.

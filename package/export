@@ -131,8 +131,16 @@ do
 	cp -p -f -- config/"$i" "${root1}"lib/systemd/system-preset/"$i"{new}
 	mv -f -- "${root1}"lib/systemd/system-preset/"$i"{new} "${root1}"lib/systemd/system-preset/"$i"
 done
-cat package/nosh-presets |
-while read i
+(
+	for i in bundles run-via-systemd run-virtualbox-guest run-freedesktop-kits run-user-vt run-kernel-vt ; 
+	do
+		cat package/common-nosh-$i-presets 
+		case "`uname`" in
+		Linux) cat package/linux-nosh-$i-presets ;;
+		*BSD) cat package/bsd-nosh-$i-presets ;;
+		esac
+	done
+) | while read i
 do
 	# override systemd presets when importing to nosh
 	cp -p -f -- config/"$i" "${root2}"etc/system-manager/presets/"$i"{new}
@@ -165,10 +173,10 @@ do
 	(cd config/services/ && tar -c -f - fsck@"$i")|(cd "${root2}"etc/sv/ && tar -x -f -)
 done < package/sysinit-mounts
 (
-	cat package/common-services package/common-sockets package/common-ttys package/common-kernel-vt-services package/user-vt-services 
+	cat package/common-services package/common-sockets package/common-ttys
 	case "`uname`" in
-	Linux) cat package/linux-services package/linux-sockets package/linux-ttys package/linux-kernel-vt-services ;;
-	*BSD) cat package/bsd-services package/bsd-sockets package/bsd-ttys package/bsd-kernel-vt-services ;;
+	Linux) cat package/linux-services package/linux-sockets package/linux-ttys ;;
+	*BSD) cat package/bsd-services package/bsd-sockets package/bsd-ttys ;;
 	esac
 ) | while read i
 do

@@ -1,0 +1,97 @@
+#!/bin/sh -e
+if [ \! -d package -o \! -d bsd ]
+then
+	echo "You are not in the right directory." 1>&2
+	exit 100
+fi
+if [ $# -lt 2 ]
+then
+	echo "usage: $0 name staging-dir" 1>&2
+	exit 100
+fi
+name="$1"
+dir="$2"
+(
+	echo "name: ${name}"
+	echo "prefix: /"
+	echo "origin: local/${name}"
+	echo "comment: ."
+	echo "maintainer: J.deBoynePollard"
+	echo "www: http:/homepage.ntlworld.com./j.deboynepollard/Softwares/nosh.html"
+	basename `/bin/pwd` | sed -e 's/^.*-\([[:digit:]][[:alnum:].]*\)$/version: "\1"/'
+	if test -r bsd/"${name}".deps
+	then
+		echo "deps: {"
+		while read k
+		do
+			pkg query "  %n: { version: \"%v\", origin: %o }" "$k" || true
+		done < bsd/"${name}".deps
+		echo "}"
+	fi
+	if test -r bsd/"${name}".conflicts
+	then
+		echo "# pkg issue #772 opened 2014-04-09"
+		echo -n "conflicts_is_undocumented_and_broken: ["
+		comma=""
+		while read k
+		do
+			echo -n "${comma} $k"
+			comma=","
+		done < bsd/"${name}".conflicts
+		echo " ]"
+	fi
+	if test -r bsd/"${name}".desc
+	then
+		echo "desc: <<ENDOFTHETEXT"
+		sed -e 's/^/  /' bsd/"${name}".desc
+		echo "ENDOFTHETEXT"
+	fi
+	echo "scripts: {"
+	for j in pre- post- ""
+	do
+		for k in install deinstall upgrade
+		do
+			s="$j$k"
+			if test -r bsd/"${name}"."$s"
+			then
+				echo "  $s: <<ENDOFTHETEXT"
+				sed -e 's/^/    /' bsd/"${name}"."$s"
+				echo "ENDOFTHETEXT"
+			fi
+		done
+	done
+	echo "}"
+	cd "${dir}"
+	echo "directories: {"
+	for j in *bin usr var etc
+	do
+		test -d "$j" && find "$j" -type d
+	done | while read k
+	do
+		(
+			eval `stat -s $k`
+			st_mode="`echo ${st_mode}|cut -c 3-`"
+			echo "\"/$k\":" "{" "uname:root;" "gname:wheel;" "perm:${st_mode};" "}"
+		)
+	done
+	echo "}"
+	echo "files: {"
+	for j in *bin usr var etc
+	do
+		test -d "$j" && find "$j" -type f -o -type l
+	done | while read k
+	do
+		echo -n "  "
+		if test -L "$k"
+		then
+			echo "\"/$k\":" "'-'"
+		else
+			eval `stat -s $k`
+			st_mode="`echo ${st_mode}|cut -c 3-`"
+			sum="`sha256 -q $k`"
+			echo "\"/$k\":" "{" "sum:${sum};" "uname:root;" "gname:wheel;" "perm:${st_mode};" "}"
+		fi
+	done
+	echo "}"
+) > ${dir}/+MANIFEST
+true

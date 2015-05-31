@@ -1,0 +1,19 @@
+#
+# Enable user virtual terminal services
+#
+# This is not a systemd preset.
+# It goes in a special nosh system-manager preset directory.
+# It is used by the nosh-bundles package in order to enable certain mandatory basics without which a system simply won't work.
+#
+
+enable	ttylogin@vc*.service
+enable	cyclog@ttylogin@vc*.service
+enable	terminal-emulator@vc*.service
+enable	cyclog@terminal-emulator@vc*.service
+enable	console-fb-realizer@*.service
+enable	cyclog@console-fb-realizer@*.service
+enable	console-multiplexor@*.service
+enable	cyclog@console-multiplexor@*.service
+
+enable	kernel-vt-*.service
+

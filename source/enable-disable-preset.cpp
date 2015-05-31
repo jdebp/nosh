@@ -16,6 +16,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <memory>
 #include <unistd.h>
 #include <dirent.h>
+#include <ttyent.h>
 #include <fcntl.h>
 #include "utils.h"
 #include "fdutils.h"
@@ -23,8 +24,9 @@ For copyright and licensing terms, see the file named COPYING.
 #include "service-manager.h"
 #include "common-manager.h"
 #include "popt.h"
+#include "FileStar.h"
 
-/* System control subcommands ***********************************************
+/* Common Internals *********************************************************
 // **************************************************************************
 */
 
@@ -95,15 +97,325 @@ enable_disable (
 }
 
 static inline
-bool
-determine_preset (
+void
+enable_disable ( 
+	const char * prog,
+	bool make,
+	const std::string & arg,
+	const std::string & path,
 	const int bundle_dir_fd
 ) {
-	int service_dir_fd(open_service_dir(bundle_dir_fd));
-	const bool preset(is_initially_up(service_dir_fd));
+	enable_disable(prog, make, path, bundle_dir_fd, "wanted-by", "wants");
+	enable_disable(prog, make, path, bundle_dir_fd, "stopped-by", "conflicts");
+	enable_disable(prog, make, path, bundle_dir_fd, "stopped-by", "after");
+	const int service_dir_fd(open_service_dir(bundle_dir_fd));
+	if (make) {
+		const int rc(unlinkat(service_dir_fd, "down", 0));
+		if (0 > rc && ENOENT != errno) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: ERROR: %s: %s/%s: %s\n", prog, arg.c_str(), path.c_str(), "down", std::strerror(error));
+		}
+	} else {
+		const int fd(open_writecreate_at(service_dir_fd, "down", 0600));
+		if (0 > fd) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: ERROR: %s: %s/%s: %s\n", prog, arg.c_str(), path.c_str(), "down", std::strerror(error));
+		} else
+			close(fd);
+	}
 	close(service_dir_fd);
-	return preset;
 }
+
+/* Preset information *******************************************************
+// **************************************************************************
+*/
+
+static inline
+bool
+checkyesno (
+	const std::string & s
+) {
+	if ("0" == s) return false;
+	if ("1" == s) return true;
+	const std::string l(tolower(s));
+	if ("no" == l) return false;
+	if ("yes" == l) return true;
+	if ("NO" == l) return false;
+	if ("YES" == l) return true;
+	if ("false" == l) return false;
+	if ("true" == l) return true;
+	if ("off" == l) return false;
+	if ("on" == l) return true;
+	return false;
+}
+
+static
+const char *
+rcconf_files[] = {
+	"/etc/rc.conf.local",
+	"/etc/rc.conf",
+};
+
+static inline
+bool	/// \returns setting \retval true explicit \retval false defaulted
+query_rcconf_preset (
+	bool & wants,	///< always set to a value
+	const char * prog,
+	const std::string & name
+) {
+	const std::string wanted(name + "_enable");
+	for (size_t i(0); i < sizeof rcconf_files/sizeof *rcconf_files; ++i) {
+		const std::string rcconf_file(rcconf_files[i]);
+		FILE * f(std::fopen(rcconf_file.c_str(), "r"));
+		if (!f) continue;
+		std::vector<std::string> env_strings(read_file(prog, rcconf_file.c_str(), f));
+		for (std::vector<std::string>::const_iterator j(env_strings.begin()); j != env_strings.end(); ++j) {
+			const std::string & s(*j);
+			const std::string::size_type p(s.find('='));
+			const std::string var(s.substr(0, p));
+			if (var != wanted) continue;
+			const std::string val(p == std::string::npos ? std::string() : s.substr(p + 1, std::string::npos));
+			std::fprintf(stderr, "%s: INFO: %s: checking %s\n", prog, var.c_str(), val.c_str());
+			wants = checkyesno(val);
+			return true;
+		}
+	}
+	wants = false;
+	return false;
+}
+
+static inline
+bool
+initial_space (
+	const std::string & s
+) {
+	return s.length() > 0 && std::isspace(s[0]);
+}
+
+static inline
+bool
+wildmat (
+	std::string::const_iterator p,
+	const std::string::const_iterator & pe,
+	std::string::const_iterator n,
+	const std::string::const_iterator & ne
+) {
+	for (;;) {
+		if (p == pe && n == ne) return true;
+		if (p == pe || n == ne) return false;
+		switch (*p) {
+			case '*':
+				do { ++p; } while (p != pe && '*' == *p);
+				for (std::string::const_iterator b(ne); b != n; --b)
+					if (wildmat(p, pe, b, ne)) 
+						return true;
+				break;
+			case '\\':
+				++p;
+				if (p == pe) return false;
+				// Fall through to:
+			default:
+				if (*p != *n) return false;
+				// Fall through to:
+			case '?':
+				++p;
+				++n;
+				break;
+		}
+	}
+}
+
+static inline
+bool
+wildmat (
+	const std::string & pattern,
+	const std::string & name
+) {
+	return wildmat(pattern.begin(), pattern.end(), name.begin(), name.end());
+}
+
+static inline
+bool
+matches (
+	const std::string & pattern,
+	const std::string & name,
+	const std::string & suffix
+) {
+	std::string base;
+	if (ends_in(pattern, suffix, base))
+		return wildmat(base, name);
+	else
+		return wildmat(pattern, name);
+}
+
+static
+bool
+scan (
+	const std::string & name,
+	const std::string & suffix,
+	FILE * file,
+	bool & wants_enable
+) {
+	for (std::string line; read_line(file, line); ) {
+		line = ltrim(line);
+		if (line.length() < 1) continue;
+		if ('#' == line[0] || ';' == line[0]) continue;
+		std::string remainder;
+		if (begins_with(line, "enable", remainder) && initial_space(remainder)) {
+			remainder = rtrim(ltrim(remainder));
+			if (matches(remainder, name, suffix)) {
+				wants_enable = true;
+				return true;
+			}
+		} else
+		if (begins_with(line, "disable", remainder) && initial_space(remainder)) {
+			remainder = rtrim(ltrim(remainder));
+			if (matches(remainder, name, suffix)) {
+				wants_enable = false;
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+static
+const char *
+preset_directories[] = {
+	"/etc/system-manager/presets/",
+	"/etc/systemd/system-preset/",
+	"/usr/share/system-manager/presets/",
+	"/lib/systemd/system-preset/",
+	"/usr/lib/systemd/system-preset/",
+	"/usr/local/etc/system-manager/presets/",
+	"/usr/local/lib/systemd/system-preset/",
+};
+
+static inline
+bool	/// \returns setting \retval true explicit \retval false defaulted
+query_systemd_preset (
+	bool & wants,	///< always set to a value
+	const std::string & name,
+	const std::string & suffix
+) {
+	wants = true;
+	std::string earliest;
+	for (size_t i(0); i < sizeof preset_directories/sizeof *preset_directories; ++i) {
+		const std::string preset_dir_name(preset_directories[i]);
+		const int preset_dir_fd(open_dir_at(AT_FDCWD, preset_dir_name.c_str()));
+		if (preset_dir_fd < 0) continue;
+		DIR * preset_dir(fdopendir(preset_dir_fd));
+		if (!preset_dir) continue;
+		for (;;) {
+			errno = 0;
+			const dirent * entry(readdir(preset_dir));
+			if (!entry) break;
+#if defined(_DIRENT_HAVE_D_TYPE)
+			if (DT_REG != entry->d_type && DT_LNK != entry->d_type) continue;
+#endif
+#if defined(_DIRENT_HAVE_D_NAMLEN)
+			if (1 > entry->d_namlen) continue;
+#endif
+			if ('.' == entry->d_name[0]) continue;
+			const std::string d_name(entry->d_name);
+			if (!earliest.empty() && earliest <= d_name) continue;
+			const std::string p(preset_dir_name + d_name);
+			const int f(open_read_at(preset_dir_fd, entry->d_name));
+			if (0 > f) continue;
+			FileStar preset_file(fdopen(f, "rt"));
+			if (!preset_file) continue;
+			if (scan(name, suffix, preset_file, wants))
+				earliest = d_name;
+		}
+		closedir(preset_dir);
+	}
+	return !earliest.empty();
+}
+
+#if defined(TTY_ONIFCONSOLE)
+static inline
+bool
+is_current_console (
+	const struct ttyent & entry
+) {
+#if !defined(__LINUX__) && !defined(__linux__)
+	int oid[CTL_MAXNAME];
+	std::size_t len(sizeof oid/sizeof *oid);
+	const int r(sysctlnametomib("kern.console", oid, &len));
+	if (0 > r) return false;
+	std::size_t siz;
+	const int s(sysctl(oid, len, 0, &siz, 0, 0));
+	if (0 > s) return false;
+	std::auto_ptr<char> buf(new(std::nothrow) char[siz]);
+	const int t(sysctl(oid, len, buf, &siz, 0, 0));
+	if (0 > t) return false;
+	const char * avail(std::strchr(buf, '/'));
+	if (!avail) return false;
+	*avail++ = '\0';
+	for (const char * p(buf), * e(0); *p; p = e) {
+		e = std::strchr(p, ',');
+		if (e) *e++ = '\0'; else e = std::strchr(p, '\0');
+		if (0 == std::strcmp(p, entry.ty_name)) return true;
+	}
+#endif
+	return false;
+}
+#endif
+
+static inline
+bool
+is_on (
+	const struct ttyent & entry
+) {
+	return (entry.ty_status & TTY_ON) 
+#if defined(TTY_ONIFCONSOLE)
+		|| ((entry.ty_status & TTY_ONIFCONSOLE) && is_current_console(entry))
+#endif
+	;
+}
+
+static inline
+bool	/// \returns setting \retval true explicit \retval false defaulted
+query_ttys_preset (
+	bool & wants,	///< always set to a value
+	const std::string & name
+) {
+	if (!setttyent()) {
+		wants = true;
+		return false;
+	}
+	const struct ttyent *entry(getttynam(name.c_str()));
+	wants = entry && is_on(*entry);
+	endttyent();
+	return entry != 0;
+}
+
+static inline
+bool
+determine_preset (
+	const char * prog,
+	bool system,
+	bool rcconf,
+	bool ttys,
+	const std::string & prefix,
+	const std::string & name,
+	const std::string & suffix
+) {
+	bool wants(false);
+	// systemd (and system-manager) settings take precedence over compatibility ones.
+	if (system && query_systemd_preset(wants, prefix + name, suffix))
+		return wants;
+	// The newer BSD rc.conf takes precedence over the older Sixth Edition ttys .
+	if (rcconf && query_rcconf_preset(wants, prog, prefix + name))
+		return wants;
+	if (ttys && query_ttys_preset(wants, name))
+		return wants;
+	return wants;
+}
+
+/* System control subcommands ***********************************************
+// **************************************************************************
+*/
 
 void
 enable ( 
@@ -131,17 +443,14 @@ enable (
 
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
 		std::string path, name, suffix;
-		const int bundle_dir_fd(open_bundle_directory(*i, path, name, suffix));
+		const int bundle_dir_fd(open_bundle_directory("", *i, path, name, suffix));
 		if (0 > bundle_dir_fd) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, *i, std::strerror(error));
 			continue;
 		}
 		const std::string p(path + name);
-		const bool make(true);
-		enable_disable(prog, make, p, bundle_dir_fd, "wanted-by", "wants");
-		enable_disable(prog, make, p, bundle_dir_fd, "stopped-by", "conflicts");
-		enable_disable(prog, make, p, bundle_dir_fd, "stopped-by", "after");
+		enable_disable(prog, true, *i, p, bundle_dir_fd);
 		close(bundle_dir_fd);
 	}
 
@@ -174,17 +483,14 @@ disable (
 
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
 		std::string path, name, suffix;
-		const int bundle_dir_fd(open_bundle_directory(*i, path, name, suffix));
+		const int bundle_dir_fd(open_bundle_directory("", *i, path, name, suffix));
 		if (0 > bundle_dir_fd) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, *i, std::strerror(error));
 			continue;
 		}
 		const std::string p(path + name);
-		const bool make(false);
-		enable_disable(prog, make, p, bundle_dir_fd, "wanted-by", "wants");
-		enable_disable(prog, make, p, bundle_dir_fd, "stopped-by", "conflicts");
-		enable_disable(prog, make, p, bundle_dir_fd, "stopped-by", "after");
+		enable_disable(prog, false, *i, p, bundle_dir_fd);
 		close(bundle_dir_fd);
 	}
 
@@ -197,10 +503,22 @@ preset (
 	std::vector<const char *> & args
 ) {
 	const char * prog(basename_of(args[0]));
+	const char * prefix("");
+	bool no_rcconf(false), no_system(false), ttys(false), dry_run(false);
 	try {
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
+		popt::bool_definition no_system_option('\0', "no-systemd", "Do not process system-manager/systemd preset files.", no_system);
+		popt::bool_definition no_rcconf_option('\0', "no-rcconf", "Do not process /etc/rc.conf presets.", no_rcconf);
+		popt::bool_definition ttys_option('\0', "ttys", "Process /etc/ttys presets.", ttys);
+		popt::bool_definition dry_run_option('n', "dry-run", "Don't actually enact the enable/disable.", dry_run);
+		popt::string_definition prefix_option('p', "prefix", "string", "Prefix each name with this (template) name.", prefix);
 		popt::definition * main_table[] = {
-			&user_option
+			&user_option,
+			&no_system_option,
+			&no_rcconf_option,
+			&ttys_option,
+			&dry_run_option,
+			&prefix_option
 		};
 		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "service(s)...");
 
@@ -215,19 +533,20 @@ preset (
 		throw EXIT_FAILURE;
 	}
 
+	const std::string p(prefix);
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
 		std::string path, name, suffix;
-		const int bundle_dir_fd(open_bundle_directory(*i, path, name, suffix));
+		const int bundle_dir_fd(open_bundle_directory(prefix, *i, path, name, suffix));
 		if (0 > bundle_dir_fd) {
 			const int error(errno);
-			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, *i, std::strerror(error));
+			std::fprintf(stderr, "%s: ERROR: %s%s: %s\n", prog, prefix, name.c_str(), std::strerror(error));
 			continue;
 		}
-		const std::string p(path + name);
-		const bool make(determine_preset(bundle_dir_fd));
-		enable_disable(prog, make, p, bundle_dir_fd, "wanted-by", "wants");
-		enable_disable(prog, make, p, bundle_dir_fd, "stopped-by", "conflicts");
-		enable_disable(prog, make, p, bundle_dir_fd, "stopped-by", "after");
+		const bool make(determine_preset(prog, !no_system, !no_rcconf, ttys, p, name, suffix));
+		if (dry_run)
+			std::fprintf(stdout, "%s %s\n", make ? "enable" : "disable", (path + p + name).c_str());
+		else
+			enable_disable(prog, make, p + *i, path + p + name, bundle_dir_fd);
 		close(bundle_dir_fd);
 	}
 

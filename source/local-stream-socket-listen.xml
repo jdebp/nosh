@@ -61,7 +61,7 @@ Symbolic permissions and account names are not supported.
 
 <para>
 The <arg>--systemd-compatibility</arg> option causes <command>local-stream-socket-listen</command> to set the
-<code>LISTEN_FDS</code> environment variable to 1, and the <code>LISTEN_PID</code> environment
+<envar>LISTEN_FDS</envar> environment variable to 1, and the <envar>LISTEN_PID</envar> environment
 variable to its own process ID.
 This is for compatibility with daemons that expect to be run under 
 <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.

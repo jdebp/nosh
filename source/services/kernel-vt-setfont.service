@@ -12,7 +12,8 @@ Before=local-fs-pre.target
 [Service]
 systemdWorkingDirectory=false
 EnvironmentFile=-/etc/vconsole.conf
-ExecStart=setfont -C /dev/vt0 ${FONT} ${FONT_MAP:+-m} ${FONT_MAP} ${FONT_UNIMAP:+-u} ${FONT_UNIMAP}
+ExecStart=setfont -C /dev/tty0 ${FONT} ${FONT_MAP:+-m} ${FONT_MAP} ${FONT_UNIMAP:+-u} ${FONT_UNIMAP}
+RemainAfterExit=yes
 Restart=never
 
 [Install]

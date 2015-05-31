@@ -1,10 +1,12 @@
 #!/bin/sh -
 case "$1" in
 	remove|purge)
+		# Stop the auto-starter first!
 		for i in \
 			ttylogin-starter \
 			;
 		do
+			system-control disable $i.service cyclog@$i.service
 			if system-control is-loaded $i.service
 			then
 				system-control unload-when-stopped $i.service
@@ -16,6 +18,46 @@ case "$1" in
 				system-control stop cyclog@$i.service
 			fi
 		done
+		# kernel TTYs
+		for i in \
+			tty1 \
+			tty2 \
+			tty3 \
+			tty4 \
+			tty5 \
+			tty6 \
+			tty7 \
+			tty8 \
+			tty9 \
+			tty10 \
+			tty11 \
+			tty12 \
+			;
+		do
+			system-control disable ttylogin@$i.service cyclog@ttylogin@$i.service
+			if system-control is-loaded ttylogin@$i.service
+			then
+				system-control unload-when-stopped ttylogin@$i.service
+				system-control stop ttylogin@$i.service
+			fi
+			if system-control is-loaded cyclog@ttylogin@$i.service
+			then
+				system-control unload-when-stopped cyclog@ttylogin@$i.service
+				system-control stop cyclog@ttylogin@$i.service
+			fi
+		done
+		# TTY ancillaries
+		for i in \
+			kernel-vt-loadkeys \
+			kernel-vt-setfont \
+			;
+		do
+			system-control disable $i.service
+			if system-control is-loaded $i.service
+			then
+				system-control unload-when-stopped $i.service
+				system-control stop $i.service
+			fi
+		done
 		;;
 esac
-

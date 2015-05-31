@@ -48,7 +48,7 @@ scripts that wrap a shell's built-in <command>false</command> command.
 This is a security problem, as significant care must be taken to ensure that
 the shell correctly deals with people who symbolically link the script to other
 names (such as <filename>-i</filename>), who supply extra script arguments,
-and who set environment variables such as <code>IFS</code>.
+and who set environment variables such as <envar>IFS</envar>.
 </para>
 
 <para>

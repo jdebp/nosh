@@ -621,7 +621,7 @@ virtual console sends them, in any mode.
 Most consoles use the non-standard DECFNK sequences instead, for function keys
 and for some (to varying extents) extended keys.
 However, there is a wide degree of variance amongst consoles that can cause problems
-if the <code>TERM</code> environment variable (and hence termcap/terminfo terminal 
+if the <envar>TERM</envar> environment variable (and hence termcap/terminfo terminal 
 type) used by applications connected to the slave side of the terminal does not
 match the console emulation being employed by the terminal emulator.
 </para>
@@ -636,7 +636,7 @@ This has two major consequences:
 If the terminal emulator is in Linux console mode, <code>HOME</code> and
 <code>END</code> will not be correctly recognized if the <code>TERM</code>
 environment variable does not also specify "linux"; and if the terminal
-emulator is in another mode but the <code>TERM</code> environment variable
+emulator is in another mode but the <envar>TERM</envar> environment variable
 is set to "linux", <code>FIND</code> and <code>SELECT</code> will
 incorrectly recognized and <code>HOME</code> and <code>END</code> will not
 be recognized at all.

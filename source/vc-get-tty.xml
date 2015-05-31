@@ -40,7 +40,7 @@ which <command>vc-get-tty</command> will ignore.
 </para>
 
 <para>
-<command>vc-get-tty</command> sets the <code>TTY</code> environment variable to
+<command>vc-get-tty</command> sets the <envar>TTY</envar> environment variable to
 the full device filename of the controlling terminal.
 Programs such as 
 <citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, 
@@ -61,7 +61,7 @@ then prefixing <code>/run/dev/</code>.
 </para>
 
 <para>
-<command>vc-get-tty</command> sets the <code>HOST</code> environment variable to the machine
+<command>vc-get-tty</command> sets the <envar>HOST</envar> environment variable to the machine
 hostname, as obtained from the 
 <citerefentry><refentrytitle>gethostname</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 library function.
@@ -74,7 +74,7 @@ will make use of this environment variable.
 </para>
 
 <para>
-<command>vc-get-tty</command> sets the <code>TERM</code> environment variable to a system-dependent
+<command>vc-get-tty</command> sets the <envar>TERM</envar> environment variable to a system-dependent
 default for virtual consoles.
 It <replaceable>does not</replaceable> make any attempt to deduce terminal types, as the gettys that
 talk to serial terminals do, or read the BSD <filename>/etc/ttys</filename> database.

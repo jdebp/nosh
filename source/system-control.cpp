@@ -50,6 +50,7 @@ service_bundle_prefixes[5] = {
 
 int
 open_bundle_directory (
+	const char * prefix,
 	const char * arg,
 	std::string & path,
 	std::string & name,
@@ -59,10 +60,10 @@ open_bundle_directory (
 		path = std::string(arg, slash + 1);
 		name = std::string(slash + 1);
 		suffix = std::string();
-		return open_dir_at(AT_FDCWD, (path + name + "/").c_str());
+		return open_dir_at(AT_FDCWD, (path + prefix + name + "/").c_str());
 	}
 
-	const std::string a(arg);
+	const std::string p(prefix), a(arg);
 	if (!local_session_mode) {
 		bool scan_for_target(false), scan_for_service(false);
 		if (ends_in(a, ".target", name)) {
@@ -82,7 +83,7 @@ open_bundle_directory (
 			suffix = ".target";
 			for ( const char * const * q(target_bundle_prefixes); q < target_bundle_prefixes + sizeof target_bundle_prefixes/sizeof *target_bundle_prefixes; ++q) {
 				path = *q;
-				const int bundle_dir_fd(open_dir_at(AT_FDCWD, (path + name + "/").c_str()));
+				const int bundle_dir_fd(open_dir_at(AT_FDCWD, (path + p + name + "/").c_str()));
 				if (0 <= bundle_dir_fd) return bundle_dir_fd;
 			}
 		}
@@ -90,7 +91,7 @@ open_bundle_directory (
 			suffix = ".service";
 			for ( const char * const * q(service_bundle_prefixes); q < service_bundle_prefixes + sizeof service_bundle_prefixes/sizeof *service_bundle_prefixes; ++q) {
 				path = *q;
-				const int bundle_dir_fd(open_dir_at(AT_FDCWD, (path + name + "/").c_str()));
+				const int bundle_dir_fd(open_dir_at(AT_FDCWD, (path + p + name + "/").c_str()));
 				if (0 <= bundle_dir_fd) return bundle_dir_fd;
 			}
 		}
@@ -99,7 +100,7 @@ open_bundle_directory (
 	path = std::string();
 	name = a;
 	suffix = std::string();
-	return open_dir_at(AT_FDCWD, (path + name + "/").c_str());
+	return open_dir_at(AT_FDCWD, (path + p + name + "/").c_str());
 }
 
 /* The system-control command ***********************************************
@@ -134,8 +135,7 @@ system_control (
 				"start|stop|try-restart|enable|disable|preset|reset|unload-when-stopped|"
 				"is-active|is-loaded|"
 				"cat|show|status|show-json|"
-				"convert-systemd-units|convert-systemd-presets|"
-				"convert-ttys-presets|convert-rcconf-presets|convert-fstab-services|"
+				"convert-systemd-units|convert-fstab-services|"
 				"nagios-check-services|load-kernel-module|unload-kernel-module|"
 				"version"
 				" args..."

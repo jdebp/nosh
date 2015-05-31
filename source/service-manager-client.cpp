@@ -212,37 +212,37 @@ wait_ok (
 	}
 }
 
-bool
-is_running (
+int	/// \returns status \retval -1 error \retval 0 not running \retval 1 running
+running_status (
 	const int supervise_dir_fd
 ) {
 	const int status_fd(open_read_at(supervise_dir_fd, "status"));
-	if (0 > status_fd) return false;
+	if (0 > status_fd) return -1;
 	char status[20];
 	const int n(read(status_fd, status, sizeof status));
 	close(status_fd);
-	if (18 > n) return false;
+	if (18 > n) return -1;
 	if (20 <= n) {
-		return encore_status_running == status[18];
+		return encore_status_running == status[18] ? 1 : 0;
 	} else {
-		return status[12] || status[13] || status[14] || status[15];
+		return status[12] || status[13] || status[14] || status[15] ? 1 : 0;
 	}
 }
 
-bool
-is_stopped (
+int	/// \returns status \retval -1 error \retval 0 not stopped \retval 1 stopped
+stopped_status (
 	const int supervise_dir_fd
 ) {
 	const int status_fd(open_read_at(supervise_dir_fd, "status"));
-	if (0 > status_fd) return false;
+	if (0 > status_fd) return -1;
 	char status[20];
 	const int n(read(status_fd, status, sizeof status));
 	close(status_fd);
-	if (18 > n) return false;
+	if (18 > n) return -1;
 	if (20 <= n) {
-		return encore_status_stopped == status[18];
+		return encore_status_stopped == status[18] ? 1 : 0;
 	} else {
-		return !status[12] && !status[13] && !status[14] && !status[15];
+		return !status[12] && !status[13] && !status[14] && !status[15] ? 1 : 0;
 	}
 }
 

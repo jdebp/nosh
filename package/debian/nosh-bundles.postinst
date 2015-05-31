@@ -1,57 +1,10 @@
 #!/bin/sh -
-escape() {
-echo "$1"|sed -e 's/@/\\x40/g'
-}
-addloguser() {
-getent passwd "$1" > /dev/null || useradd --shell /bin/false "$1"
-}
-addlog() {
-mkdir -m 0750 -p /var/log/sv/"$2"
-setfacl -m u:"$1"-log:rwx -m g:adm:rx /var/log/sv/"$2"
-}
+escape() { echo "$1"|sed -e 's/@/\\x40/g' ; }
+addloguser() { getent passwd "$1" > /dev/null || useradd --shell /bin/false "$1" ; }
+addlog() { mkdir -m 0750 -p /var/log/sv/"$2" ; setfacl -m u:"$1"-log:rwx -m g:adm:rx /var/log/sv/"$2" ; }
 case "$1" in
 	configure)
-		for I in \
-			vc1-tty \
-			vc2-tty \
-			vc3-tty \
-			;
-		do
-			i="`escape ttylogin@"$I"`"
-			addloguser "$i"-log
-			addlog "$i" ttylogin@"$I"
-			system-control convert-ttys-presets --prefix ttylogin@ $I.service
-			system-control preset ttylogin@$I.service cyclog@ttylogin@$I.service
-		done
-		for I in \
-			tty1 \
-			tty2 \
-			tty3 \
-			tty4 \
-			tty5 \
-			tty6 \
-			tty7 \
-			tty8 \
-			tty9 \
-			tty10 \
-			tty11 \
-			tty12 \
-			;
-		do
-			i="`escape ttylogin@"$I"`"
-			addloguser "$i"-log
-			addlog "$i" ttylogin@"$I"
-			system-control convert-ttys-presets --prefix ttylogin@ $I.service
-		done
-		for i in \
-			ttylogin-starter \
-			console-fb-realizer@head0 \
-			;
-		do
-			addloguser "$i"-log
-			addlog "$i" "$i"
-			system-control convert-systemd-presets $i.service cyclog@$i.service
-		done
+		# common services
 		for I in \
 			anacron \
 			atd \
@@ -60,15 +13,12 @@ case "$1" in
 			bcron-update \
 			bootparams \
 			cleanuucp \
-			console-kit-daemon \
-			console-multiplexor@head0 \
-			dbus \
 			deluged \
 			deluge-web \
 			dnscache \
 			dovecot \
 			epmd \
-			exim4q \
+			exim4-queue \
 			fail2ban \
 			fancontrol \
 			fscd \
@@ -77,7 +27,6 @@ case "$1" in
 			gnucron \
 			hostnamed \
 			keepalived \
-			kerneloops \
 			lm-sensors \
 			localed \
 			mailcatcher \
@@ -106,12 +55,12 @@ case "$1" in
 			ossec@monitord \
 			ossec@remoted \
 			ossec@syscheckd \
-			pbid \
+			packagekit \
 			plexmediaserver \
-			polkitd \
 			postgresql \
 			powerd \
 			pppd-dns \
+			pulseaudio \
 			qmail-send \
 			rabbitmq-server \
 			rpcbind \
@@ -120,7 +69,6 @@ case "$1" in
 			smartd \
 			smbd \
 			sshdgenkeys \
-			swapauto \
 			swift@account \
 			swift@account-auditor \
 			swift@account-replicator \
@@ -134,13 +82,8 @@ case "$1" in
 			swift@object-replicator \
 			swift@object-updater \
 			wettsteinsyslogd \
-			terminal-emulator@vc1 \
-			terminal-emulator@vc2 \
-			terminal-emulator@vc3 \
 			timedated \
 			tinydns \
-			update-binfmts \
-			VBoxService \
 			volmand \
 			wicd \
 			winbindd \
@@ -151,15 +94,15 @@ case "$1" in
 			i="`escape "$I"`"
 			addloguser "$i"-log
 			addlog "$i" "$I"
-			system-control convert-systemd-presets $I.service cyclog@$I.service
 			system-control preset $I.service cyclog@$I.service
 		done
+		# common sockets
 		for I in \
-			acpid \
 			avahi-daemon \
 			bcron-spool \
-			exim4r \
-			exim4s \
+			dbus \
+			exim4-smtp-relay \
+			exim4-smtp-submission \
 			fcgiwrap \
 			ftp4d \
 			ftp6d \
@@ -190,9 +133,61 @@ case "$1" in
 			i="`escape "$I"`"
 			addloguser "$i"-log
 			addlog "$i" "$I"
-			system-control convert-systemd-presets $I.socket
+			system-control preset $I.socket cyclog@$I.service
+		done
+		# common sysinit services
+		for I in \
+			dmesg \
+			hostname \
+			kmod@autofs \
+			kmod@ipv6 \
+			kmod@unix \
+			kmod@vboxadd \
+			kmod@vboxdrv \
+			kmod@vboxguest \
+			kmod@vboxnetadp \
+			kmod@vboxnetflt \
+			kmod@vboxpci \
+			kmod@vboxsf \
+			kmod@vboxvideo \
+			machine-id \
+			sysinit-log \
+			swapauto \
+			stty-sane@console \
+			emergency-login@console \
+			;
+		do
+			system-control preset $I.service
+		done
+		# Linux services
+		for I in \
+			console-kit-daemon \
+			kerneloops \
+			update-binfmts \
+			wettsteinsyslogd \
+			;
+		do
+			i="`escape "$I"`"
+			addloguser "$i"-log
+			addlog "$i" "$I"
 			system-control preset $I.service cyclog@$I.service
 		done
+		# Linux sockets
+		for I in \
+			acpid \
+			systemd-syslog-read \
+			systemd-rsyslogd \
+			systemd-syslogd \
+			;
+		do
+			i="`escape "$I"`"
+			addloguser "$i"-log
+			addlog "$i" "$I"
+			system-control preset $I.socket cyclog@$I.service
+		done
+		# Linux sysinit services
+		:
+		# targets
 		for I in \
 			sysinit \
 			basic \
@@ -204,7 +199,6 @@ case "$1" in
 			multi-user \
 			;
 		do
-			system-control convert-systemd-presets $I.target
 			system-control preset $I.target
 		done
 		;;

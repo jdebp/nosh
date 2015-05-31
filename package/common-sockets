@@ -1,6 +1,6 @@
-acpid
-bcron-spool
 avahi-daemon
+bcron-spool
+dbus
 exim4-smtp-relay
 exim4-smtp-submission
 fcgiwrap
@@ -11,6 +11,9 @@ initctld
 kadmind
 klogd
 kpasswdd
+local-rsyslogd
+local-syslogd
+local-syslog-read
 org.cups.cups-lpd
 qmail-smtp-relay
 qmail-smtp-submission
@@ -18,11 +21,8 @@ rsync
 saned
 sshd
 svnserve
-uuidd
-vsftpd
-local-syslog-read
-local-rsyslogd
-local-syslogd
-udp-syslog-read
 udp-rsyslogd
 udp-syslogd
+udp-syslog-read
+uuidd
+vsftpd

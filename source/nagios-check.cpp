@@ -229,7 +229,7 @@ nagios_check (
 	std::vector<std::string> not_loaded, loading, clock_skewed, stopped, disabled, below_min_seconds, failed;
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
 		std::string path, name, suffix;
-		const int bundle_dir_fd(open_bundle_directory(*i, path, name, suffix));
+		const int bundle_dir_fd(open_bundle_directory("", *i, path, name, suffix));
 		const std::string p(path + name);
 		if (0 > bundle_dir_fd) {
 			const int error(errno);

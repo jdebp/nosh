@@ -1,0 +1,2 @@
+enable	cyclog@polkitd.service
+enable	polkitd.service

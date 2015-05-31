@@ -1,0 +1,8 @@
+#!/bin/sh -
+for i in \
+	polkitd \
+	;
+do
+	system-control preset $i.service cyclog@$i.service
+	system-control reset $i.service cyclog@$i.service
+done

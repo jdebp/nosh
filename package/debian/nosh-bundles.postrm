@@ -1,37 +1,8 @@
 #!/bin/sh -
-escape() {
-echo "$1"|sed -e 's/@/\\x40/g'
-}
+escape() { echo "$1"|sed -e 's/@/\\x40/g' ; }
 case "$1" in
 	upgrade)
-		for I in \
-			tty1 \
-			tty2 \
-			tty3 \
-			tty4 \
-			tty5 \
-			tty6 \
-			tty7 \
-			tty8 \
-			tty9 \
-			tty10 \
-			tty11 \
-			tty12 \
-			vc1-tty \
-			vc2-tty \
-			vc3-tty \
-			;
-		do
-			i="`escape ttylogin@"$I"`"
-			if system-control is-loaded ttylogin@$I.service
-			then
-				system-control try-restart ttylogin@$I.service
-			fi
-			if system-control is-loaded cyclog@ttylogin@$I.service
-			then
-				system-control try-restart cyclog@ttylogin@$I.service
-			fi
-		done
+		# common services
 		for I in \
 			anacron \
 			atd \
@@ -40,16 +11,12 @@ case "$1" in
 			bcron-update \
 			bootparams \
 			cleanuucp \
-			console-fb-realizer@head0 \
-			console-kit-daemon \
-			console-multiplexor@head0 \
-			dbus \
 			deluged \
 			deluge-web \
 			dnscache \
 			dovecot \
 			epmd \
-			exim4q \
+			exim4-queue \
 			fail2ban \
 			fancontrol \
 			fscd \
@@ -58,7 +25,6 @@ case "$1" in
 			gnucron \
 			hostnamed \
 			keepalived \
-			kerneloops \
 			lm-sensors \
 			localed \
 			mailcatcher \
@@ -87,12 +53,12 @@ case "$1" in
 			ossec@monitord \
 			ossec@remoted \
 			ossec@syscheckd \
-			pbid \
+			packagekit \
 			plexmediaserver \
-			polkitd \
 			postgresql \
 			powerd \
 			pppd-dns \
+			pulseaudio \
 			qmail-send \
 			rabbitmq-server \
 			rpcbind \
@@ -101,7 +67,6 @@ case "$1" in
 			smartd \
 			smbd \
 			sshdgenkeys \
-			swapauto \
 			swift@account \
 			swift@account-auditor \
 			swift@account-replicator \
@@ -115,14 +80,8 @@ case "$1" in
 			swift@object-replicator \
 			swift@object-updater \
 			wettsteinsyslogd \
-			terminal-emulator@vc1 \
-			terminal-emulator@vc2 \
-			terminal-emulator@vc3 \
 			timedated \
 			tinydns \
-			ttylogin-starter \
-			update-binfmts \
-			VBoxService \
 			volmand \
 			wicd \
 			winbindd \
@@ -139,12 +98,13 @@ case "$1" in
 				system-control try-restart cyclog@$I.service
 			fi
 		done
+		# common sockets
 		for i in \
-			acpid \
 			avahi-daemon \
 			bcron-spool \
-			exim4r \
-			exim4s \
+			dbus \
+			exim4-smtp-relay \
+			exim4-smtp-submission \
 			fcgiwrap \
 			ftp4d \
 			ftp6d \
@@ -170,6 +130,40 @@ case "$1" in
 			udp-syslogd \
 			uuidd \
 			vsftpd \
+			;
+		do
+			if system-control is-loaded $i.service 2>/dev/null 
+			then
+				system-control try-restart $i.service
+			fi
+			if system-control is-loaded cyclog@$i.service 2>/dev/null 
+			then
+				system-control try-restart cyclog@$i.service
+			fi
+		done
+		# Linux services
+		for I in \
+			console-kit-daemon \
+			kerneloops \
+			update-binfmts \
+			wettsteinsyslogd \
+			;
+		do
+			if system-control is-loaded $I.service
+			then
+				system-control try-restart $I.service
+			fi
+			if system-control is-loaded cyclog@$I.service
+			then
+				system-control try-restart cyclog@$I.service
+			fi
+		done
+		# Linux sockets
+		for i in \
+			acpid \
+			systemd-syslog-read \
+			systemd-rsyslogd \
+			systemd-syslogd \
 			;
 		do
 			if system-control is-loaded $i.service 2>/dev/null 

@@ -35,19 +35,19 @@ The following environment variables are set:
 <variablelist>
 
 <varlistentry>
-<term><code>UID</code></term>
+<term><envar>UID</envar></term>
 <listitem><para>Set to the (decimal) numeric value of the process's effective user ID.</para> </listitem>
 </varlistentry><varlistentry>
-<term><code>GID</code></term>
+<term><envar>GID</envar></term>
 <listitem><para>Set to the (decimal) numeric value of the process's effective group ID.</para> </listitem>
 </varlistentry><varlistentry>
-<term><code>HOME</code></term>
+<term><envar>HOME</envar></term>
 <listitem><para>Set to the pathname of the user's home directory, as given in the system account database.</para> </listitem>
 </varlistentry><varlistentry>
-<term><code>SHELL</code></term>
+<term><envar>SHELL</envar></term>
 <listitem><para>Set to the pathname of the user's shell program, as given in the system account database.</para> </listitem>
 </varlistentry><varlistentry>
-<term><code>USER</code> and <code>LOGNAME</code></term>
+<term><envar>USER</envar> and <envar>LOGNAME</envar></term>
 <listitem><para>Set to the user's name, as given in the system account database.</para> </listitem>
 </varlistentry>
 

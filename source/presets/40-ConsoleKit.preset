@@ -1,0 +1,2 @@
+enable	cyclog@console-kit-daemon.service
+enable	console-kit-daemon.service

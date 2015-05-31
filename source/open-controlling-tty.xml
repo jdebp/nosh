@@ -45,7 +45,7 @@ chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refe
 
 <para>
 <command>open-controlling-tty</command> expects to inherit the terminal
-character device filename to open as the value of the <code>TTY</code>
+character device filename to open as the value of the <envar>TTY</envar>
 environment variable, which it expects to have been set up by a program such as
 <citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 or

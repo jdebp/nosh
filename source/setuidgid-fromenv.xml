@@ -32,8 +32,8 @@ function.
 
 <para>
 The real+effective UID and real+effective GID are set to the values given in
-the <code>UID</code> and <code>GID</code> environment variables.
-If the <code>GIDLIST</code> environment variable exists, it is taken to be a
+the <envar>UID</envar> and <envar>GID</envar> environment variables.
+If the <envar>GIDLIST</envar> environment variable exists, it is taken to be a
 list of GIDs which <command>setuidgid-fromenv</command> sets as the process
 list of supplementary GIDs.
 Otherwise, if it does not exist, the supplementary GIDs list is set to just

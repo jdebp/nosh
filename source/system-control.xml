@@ -464,13 +464,13 @@ use
 The <command>reset</command> command is intended to be used by package
 installer programs.
 It is translated into either <command>start</command> or
-<command>stop</command> according to a system/administrator-supplied
-preset flag.
+<command>stop</command> according to whether the service is enabled or
+disabled.
 This allows package installers to remain in blissful ignorance of whether a
 service should be started or stopped after installing the package for it.
-Instead, the package installer simply executes the <command>reset</command>
-command and the service is started or stopped according to whatever the
-administrator has chosen.
+Instead, the package installer simply executes the <command>preset</command>
+command and then the <command>reset</command> command and the service is
+started or stopped according to whatever the administrator has chosen.
 </para>
 
 <para>
@@ -494,6 +494,11 @@ equivalent to <command>start</command>.
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">preset</arg>
+<arg choice='opt'>--prefix <replaceable>prefix</replaceable></arg> 
+<arg choice='opt'>--no_system</arg> 
+<arg choice='opt'>--no_rcconf</arg> 
+<arg choice='opt'>--ttys</arg> 
+<arg choice='opt'>--dry-run</arg> 
 <arg rep='repeat'><replaceable>names</replaceable></arg>
 </cmdsynopsis>
 
@@ -527,15 +532,84 @@ and disabling the service involves removing those links.
 <para>
 The <command>preset</command> command is intended to be used by package
 installer programs.
-It is translated into either <command>enable</command> or
+It is translated 
+into either <command>enable</command> or
 <command>disable</command> according to a system/administrator-supplied
-preset flag.
+preset flag (unless the <arg choice='plain'>--dry-run</arg> command line 
+argument is used, causing it to take no actual action).
 This allows package installers to remain in blissful ignorance of whether a
 service should be enabled or disabled after installing the package for it.
 Instead, the package installer simply executes the <command>preset</command>
 command and the service is set to whatever enabled or disabled status the
 administrator has chosen.
 </para>
+
+<para>
+The service/socket/target that is preset
+is <replaceable>prefix</replaceable><replaceable>name</replaceable>,
+with <replaceable>prefix</replaceable> specifiable via the
+<arg choice='plain'>--prefix</arg> command line argument.
+Preset information can be taken from one of several sources:
+</para>
+<itemizedlist>
+<listitem><para>
+(unless the <arg choice="plain">--no-system</arg> command line option is set)
+systemd and system-manager preset information given in <filename>*.preset</filename> files in the following directories:
+</para>
+<orderedlist>
+<listitem><para><filename>/etc/system-manager/presets/</filename></para></listitem>
+<listitem><para><filename>/etc/systemd/system-preset/</filename></para></listitem>
+<listitem><para><filename>/usr/share/system-manager/presets/</filename></para></listitem>
+<listitem><para><filename>/lib/systemd/system-preset/</filename></para></listitem>
+<listitem><para><filename>/usr/lib/systemd/system-preset/</filename></para></listitem>
+<listitem><para><filename>/usr/local/etc/system-manager/presets/</filename></para></listitem>
+<listitem><para><filename>/usr/local/lib/systemd/system-preset/</filename></para></listitem>
+</orderedlist>
+<para>
+systemd has four places for preset files.
+Although its doco lists one more (<filename>/run/systemd/system-preset</filename>) this is not actually the case and it would be ephemeral anyway; so <command>preset</command> does not look at it either.
+In addition to those <command>preset</command> looks in extra directories where systemd presets can be overridden by system-manager-specific information; allowing a system administrator or package writer to preset things one way for systemd and another way for the <command>preset</command> command.
+</para>
+<para>
+As with systemd 
+earlier preset directories override later ones;
+the contents of files with lexically earlier names override the contents of files with lexically later names;
+and
+the default state, in the absence of an explicit preset, is "enabled".
+Directives are matched against
+<replaceable>prefix</replaceable><replaceable>name</replaceable>.
+</para></listitem>
+<listitem><para>
+(unless the <arg choice="plain">--no-rcconf</arg> command line option is set)
+<filename>/etc/rc.conf</filename> and <filename>/etc/rc.conf.local</filename>
+preset information, specifically the 
+<envar><replaceable>prefix</replaceable><replaceable>name</replaceable>_enable</envar> 
+variable,
+interpreting the values <code>true</code>, <code>1</code>, <code>yes</code>,
+and <code>on</code> as enable, and any other values (including specifically
+<code>false</code>, <code>0</code>, <code>no</code>, and <code>off</code>) as
+disable.
+</para></listitem>
+<listitem><para>
+(if the <arg choice="plain">--ttys</arg> command line option is set)
+<filename>/etc/ttys</filename>
+preset information, specifically the <code>on</code> and <code>off</code> flags
+as enable and disable, respectively.
+The <code>onifconsole</code> flag is also recognized and processed with reference to the currently active console device (on BSD systems only).
+If <filename>/etc/ttys</filename> does not exist, as is usually the case on
+Linux operating systems, all TTYs default to preset enabled.
+</para>
+<para>
+The terminal names are matched against just <replaceable>name</replaceable>.
+This allows one to use an ordinary TTY device name as
+<replaceable>name</replaceable> and combine it with a "templatized" bundle name
+<replaceable>prefix</replaceable> such as 
+<code>ttylogin@</code>, 
+<code>getty@</code>, 
+or
+<code>autovt@</code>.
+</para></listitem>
+</itemizedlist>
 
 </refsection>
 <refsection><title>service status/control subcommands</title>
@@ -569,6 +643,11 @@ administrator has chosen.
 <arg choice="req">is-loaded</arg>
 <arg rep='repeat'><replaceable>names</replaceable></arg>
 </cmdsynopsis>
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">is-enabled</arg>
+<arg rep='repeat'><replaceable>names</replaceable></arg>
+</cmdsynopsis>
 
 <para>
 <command>system-control</command> takes each of the
@@ -580,8 +659,9 @@ directory names, and chains to (respectively)
 <citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 with the <arg>--terminate</arg> option,
 <citerefentry><refentrytitle>service-is-up</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-or
 <citerefentry><refentrytitle>service-is-ok</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+or
+<citerefentry><refentrytitle>service-is-enabled</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 </refsection>
@@ -897,84 +977,6 @@ those mechanisms.
 
 </listitem>
 
-</itemizedlist>
-
-</refsection>
-<refsection><title>preset conversion subcommands</title>
-
-<cmdsynopsis>
-<command>system-control</command>
-<arg choice="req">convert-systemd-presets</arg>
-<group choice='req' rep='repeat'>
-<arg choice='plain'><replaceable>name</replaceable></arg>
-<arg choice='plain'><replaceable>name</replaceable>.target</arg>
-<arg choice='plain'><replaceable>name</replaceable>.socket</arg>
-<arg choice='plain'><replaceable>name</replaceable>.service</arg>
-</group>
-</cmdsynopsis>
-<cmdsynopsis>
-<command>system-control</command>
-<arg choice="req">convert-rcconf-presets</arg>
-<group choice='req' rep='repeat'>
-<arg choice='plain'><replaceable>name</replaceable></arg>
-<arg choice='plain'><replaceable>name</replaceable>.target</arg>
-<arg choice='plain'><replaceable>name</replaceable>.socket</arg>
-<arg choice='plain'><replaceable>name</replaceable>.service</arg>
-</group>
-</cmdsynopsis>
-<cmdsynopsis>
-<command>system-control</command>
-<arg choice="req">convert-ttys-presets</arg>
-<arg choice='opt'>--prefix <replaceable>prefix</replaceable></arg> 
-<group choice='req' rep='repeat'>
-<arg choice='plain'><replaceable>name</replaceable></arg>
-<arg choice='plain'><replaceable>name</replaceable>.target</arg>
-<arg choice='plain'><replaceable>name</replaceable>.socket</arg>
-<arg choice='plain'><replaceable>name</replaceable>.service</arg>
-</group>
-</cmdsynopsis>
-
-<para>
-These subcommands translate preset information used by other systems into
-native preset information in the bundle directory for service/target
-<arg choice='plain'><replaceable>name</replaceable></arg>.
-</para>
-<itemizedlist>
-<listitem><para>
-<command>convert-systemd-presets</command> converts systemd preset information.
-In addition to the conventional systemd directories, it also searches
-<filename>/run/system-manager/presets/</filename> and
-<filename>/etc/system-manager/presets/</filename>.
-As with systemd the default state, in the absence of an explicit preset, is
-"enabled".
-</para></listitem>
-<listitem><para>
-<command>convert-rcconf-presets</command> converts
-<filename>/etc/rc.conf</filename> and <filename>/etc/rc.conf.local</filename>
-preset information, specifically the 
-<arg choice='plain'><replaceable>name</replaceable>_enable</arg> 
-variable,
-interpreting the values <code>true</code>, <code>1</code>, <code>yes</code>,
-and <code>on</code> as enable, and any other values (including specifically
-<code>false</code>, <code>0</code>, <code>no</code>, and <code>off</code>) as
-disable.
-</para></listitem>
-<listitem><para>
-<command>convert-ttys-presets</command> converts <filename>/etc/ttys</filename>
-preset information, specifically the <code>on</code> and <code>off</code> flags
-as enable and disable, respectively.
-<replaceable>name</replaceable> matches the terminal name field in
-<filename>/etc/ttys</filename> records.
-The <arg choice='plain'>--prefix</arg> command line argument can be used to
-change the service that is preset from <replaceable>name</replaceable>
-to <replaceable>prefix</replaceable><replaceable>name</replaceable> ; 
-allowing one to use the ordinary TTY device name as
-<replaceable>name</replaceable> and combine it with a "templatized" bundle name
-prefix such as <code>ttylogin@</code>, <code>getty@</code>, or
-<code>autovt@</code>.
-If <filename>/etc/ttys</filename> does not exist, as is usually the case on
-Linux operating systems, all TTYs default to preset enabled.
-</para></listitem>
 </itemizedlist>
 
 </refsection>

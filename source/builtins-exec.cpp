@@ -56,9 +56,9 @@ extern void pause ( const char * &, std::vector<const char *> & );
 extern void unshare ( const char * &, std::vector<const char *> & );
 extern void make_private_fs ( const char * &, std::vector<const char *> & );
 extern void set_mount_object ( const char * &, std::vector<const char *> & );
+extern void fifo_listen ( const char * &, std::vector<const char *> & );
 extern void syslog_read ( const char * &, std::vector<const char *> & );
 extern void klog_read ( const char * &, std::vector<const char *> & );
-extern void fifo_listen ( const char * &, std::vector<const char *> & );
 extern void cyclog ( const char * &, std::vector<const char *> & );
 extern void tai64n ( const char * &, std::vector<const char *> & );
 extern void tai64nlocal ( const char * &, std::vector<const char *> & );
@@ -79,9 +79,6 @@ commands[] = {
 	{	"envdir",			envdir				},
 	{	"clearenv",			clearenv			},
 	{	"userenv",			userenv				},
-	{	"tcp-socket-accept",		tcp_socket_accept		},
-	{	"tcp-socket-listen",		tcp_socket_listen		},
-	{	"udp-socket-listen",		udp_socket_listen		},
 	{	"ulimit",			ulimit				},
 	{	"softlimit",			softlimit			},
 	{	"envuidgid",			envuidgid			},
@@ -92,37 +89,38 @@ commands[] = {
 	{	"fdredir",			fdredir				},
 	{	"read-conf",			read_conf			},
 	{	"setlock",			setlock				},
-	{	"local-datagram-socket-listen",	local_datagram_socket_listen	},
-	{	"local-stream-socket-listen",	local_stream_socket_listen	},
-	{	"local-stream-socket-accept",	local_stream_socket_accept	},
 	{	"appendpath",			appendpath			},
 	{	"prependpath",			prependpath			},
 	{	"recordio",			recordio			},
 	{	"true",				true_command			},
 	{	"false",			false_command			},
-	{	"set-dynamic-hostname",		set_dynamic_hostname		},
-	{	"setup-machine-id",		setup_machine_id		},
 	{	"pipe",				pipe				},
 	{	"foreground",			foreground			},
 	{	"background",			background			},
-	{	"ucspi-socket-rules-check",	ucspi_socket_rules_check	},
 	{	"pause",			pause				},
 	{	"unshare",			unshare				},
 	{	"set-mount-object",		set_mount_object		},
 	{	"make-private-fs",		make_private_fs			},
-	{	"syslog-read",			syslog_read			},
-	{	"klog-read",			klog_read			},
 	{	"fifo-listen",			fifo_listen			},
-	{	"cyclog",			cyclog				},
+	{	"tcp-socket-listen",		tcp_socket_listen		},
+	{	"local-datagram-socket-listen",	local_datagram_socket_listen	},
+	{	"local-stream-socket-listen",	local_stream_socket_listen	},
+	{	"ucspi-socket-rules-check",	ucspi_socket_rules_check	},
 	{	"tai64n",			tai64n				},
 	{	"tai64nlocal",			tai64nlocal			},
+	{	"set-dynamic-hostname",		set_dynamic_hostname		},
+	{	"setup-machine-id",		setup_machine_id		},
 };
 const std::size_t num_commands = sizeof commands/sizeof *commands;
 
-// There are no extra personalities over and above the built-in commands.
 extern const
 struct command 
 personalities[] = {
-	{	0,			0,			},
+	{	"udp-socket-listen",		udp_socket_listen		},
+	{	"tcp-socket-accept",		tcp_socket_accept		},
+	{	"local-stream-socket-accept",	local_stream_socket_accept	},
+	{	"syslog-read",			syslog_read			},
+	{	"klog-read",			klog_read			},
+	{	"cyclog",			cyclog				},
 };
-const std::size_t num_personalities = 0;
+const std::size_t num_personalities = sizeof personalities/sizeof *personalities;

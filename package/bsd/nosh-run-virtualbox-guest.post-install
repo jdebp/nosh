@@ -1,0 +1,33 @@
+#!/bin/sh -
+addloguser() { getent passwd "$1" > /dev/null || pw useradd "$1" -s /bin/false ; }
+addlog() { mkdir -m 0755 -p /var/log/sv/"$2" ; chown "$1"-log /var/log/sv/"$2" ; }
+add_user() { getent passwd "$1" > /dev/null || pw useradd "$1" -s /bin/false ; }
+add_group() { getent group "$1" > /dev/null || pw groupadd "$1" ; }
+add_user vboxadd
+add_group vboxsf
+for i in \
+	VBoxService \
+	;
+do
+	addloguser "$i"-log
+	addlog "$i" "$I"
+	system-control preset $i.service cyclog@$i.service
+	system-control reset $i.service cyclog@$i.service
+done
+for i in \
+	kmod@vboxguest \
+	kmod@vboxsf \
+	kmod@vboxvideo \
+	kmod@vboxadd \
+	;
+do
+	system-control preset $i.service
+	system-control reset $i.service
+done
+for i in \
+	virtualbox-guest \
+	;
+do
+	system-control preset $i.target
+	system-control reset $i.target
+done

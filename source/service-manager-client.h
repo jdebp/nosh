@@ -60,12 +60,12 @@ wait_ok (
 	const int supervise_dir_fd,
 	int timeout
 );
-bool
-is_running (
+int
+running_status (
 	const int supervise_dir_fd
 );
-bool
-is_stopped (
+int
+stopped_status (
 	const int supervise_dir_fd
 );
 void

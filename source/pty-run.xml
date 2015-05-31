@@ -23,7 +23,7 @@
 
 <para>
 <command>pty-run</command> is a utility that expects file descriptor 4 to be the master side of
-a pseudo-terminal and the <code>TTY</code> environment variable to be the full device
+a pseudo-terminal and the <envar>TTY</envar> environment variable to be the full device
 filename of the slave side.
 (<citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 can be used to set this process state up.)

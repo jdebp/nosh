@@ -48,14 +48,3 @@ You have an enabled service whose <code>supervise</code> directory is on a read-
 Notice that "sysinit" services locate their <code>supervise</code> directories under <code>/run/system-manager/early-supervise/</code> for this reason.
 </p></li>
 </ul>
-
-<h2>
-A "log" service is marked as "initially started" by <code>svstat</code> but the daemontools-compatible bootstrap doesn't start it.
-</h2>
-
-<p>
-This is actually the expected behaviour.
-<a href="service-dt-scanner.html"><code>service-dt-scanner</code></a> uses an experimental service manager mechanism for logging services that causes them to be only started when something is written by the "main" service to the pipe that joins the services.
-Note that <a href="system-control.html"><code>system-control</code></a> doesn't make use of this mechanism.
-You will never see this outwith the daemontools-compatible bootstrap.
-</p>

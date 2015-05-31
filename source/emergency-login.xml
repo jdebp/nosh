@@ -78,7 +78,7 @@ It ignores all settings in the account database relating to password expiry.
 <listitem><para>
 It tries hard to execute a shell.
 If it cannot execute the shell listed in the account record, it attempts to
-fall back to the program denoted by the <code>SHELL</code> environment
+fall back to the program denoted by the <envar>SHELL</envar> environment
 variable, or the program hardwired as the platform's <code>_PATH_BSHELL</code>
 setting at compilation time.
 </para></listitem>

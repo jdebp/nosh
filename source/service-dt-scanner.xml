@@ -101,10 +101,10 @@ command.)
 <para>
 Like daemontools and daemontools-encore, <command>service-dt-scanner</command>
 looks for the <filename>down</filename> file in the service directory, because
-it is persistent configuration information rather than a transient part of the
-control/status API.
-This means that the service directory needs to be read-write if services'
-<filename>down</filename> configurations are to be adjusted.
+it is persistent configuration information that remains across reboot 
+rather than a transient part of the control/status API.
+This means that the service directory needs to be read-write when services
+are enabled and disabled.
 </para>
 
 </refsection></refsection><refsection><title>COMPATIBILITY</title>

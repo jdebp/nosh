@@ -1,3 +1,15 @@
+nosh (1.16) unstable; urgency=low
+
+  * The BSD packages now have maintainer scripts.
+  * There is now a nosh-run-virtualbox-guest package that incorporates running VirtualBox Guest Additions.
+  * More cross-platform services: pulseaudio
+  * A bug has been fixed where the kernel-vt-* services were not marked as RemainAfterExit.
+  * update-rc.d now translates enable to preset.
+  * The functionality of convert-{rcconf,ttys,systemd}-presets is now rolled into preset.
+  * There is now a service-is-enabled command.  system-control now has is-enabled that chains to it.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Sun, 31 May 2015 17:57:21 +0100
+
 nosh (1.15) unstable; urgency=low
 
   * The build system now generates service bundles in a different way.  This should have no effect on the result, but builds will be more correct and result in fewer gratuitous bundle rewrites.

@@ -52,19 +52,23 @@ do
 	done < package/nosh-"$i".aliases8 ;
 done
 install -d -m 0755 "${dest}"/nosh-exec/bin 
-for j in nosh exec
+for j in exec
 do
-	cp -a -l -- "${dest}"/nosh-exec/usr/local/bin/"$j" "${dest}"/nosh-exec/bin/
+	cp -a -- "${dest}"/nosh-exec/usr/local/bin/"$j" "${dest}"/nosh-exec/bin/
+done
+for j in nosh cyclog
+do
+	cp -a -l -- "${dest}"/nosh-exec/bin/exec "${dest}"/nosh-exec/bin/"$j"
 done
 install -d -m 0755 "${dest}"/nosh-service-management/sbin 
 install -d -m 0755 "${dest}"/nosh-service-management/bin 
 for j in system-control
 do
-	cp -a -l -- "${dest}"/nosh-service-management/usr/local/bin/"$j" "${dest}"/nosh-service-management/bin/
+	cp -a -- "${dest}"/nosh-service-management/usr/local/bin/"$j" "${dest}"/nosh-service-management/bin/
 done
 for j in system-manager
 do
-	cp -a -l -- "${dest}"/nosh-service-management/usr/local/sbin/"$j" "${dest}"/nosh-service-management/sbin/
+	cp -a -- "${dest}"/nosh-service-management/usr/local/sbin/"$j" "${dest}"/nosh-service-management/sbin/
 done
 
 # more doco
@@ -75,27 +79,12 @@ do
 done
 
 # bundles
-for i in bundles run-kernel-vt run-user-vt ;
+for i in bundles ;
 do
 	install -d -m 0755 "${dest}"/nosh-"$i"/var/sv 
 	install -d -m 0755 "${dest}"/nosh-"$i"/etc/sv 
 	install -d -m 0755 "${dest}"/nosh-"$i"/etc/system-manager/targets 
 done
-(
-cat package/common-kernel-vt-services 
-case "`uname`" in
-Linux)	cat package/linux-kernel-vt-services ;;
-esac
-) | while read j ;
-do
-	cp -a -- "${src}"/var/sv/"$j" "${dest}"/nosh-run-kernel-vt/var/sv/ 
-	cp -a -- "${src}"/var/sv/cyclog@"$j" "${dest}"/nosh-run-kernel-vt/var/sv/ 
-done
-while read j ;
-do
-	cp -a -- "${src}"/var/sv/"$j" "${dest}"/nosh-run-user-vt/var/sv/ 
-	cp -a -- "${src}"/var/sv/cyclog@"$j" "${dest}"/nosh-run-user-vt/var/sv/ 
-done < package/user-vt-services
 (
 cat package/common-services package/common-sockets package/common-ttys 
 case "`uname`" in
@@ -131,7 +120,6 @@ done
 install -d -m 0755 "${dest}"/nosh-run-via-systemd/usr/local/lib/systemd/system 
 install -d -m 0755 "${dest}"/nosh-run-via-systemd/usr/local/lib/tmpfiles.d 
 install -d -m 0755 "${dest}"/nosh-run-via-systemd/usr/local/lib/systemd/system-preset 
-install -d -m 0755 "${dest}"/nosh-bundles/etc/system-manager/presets 
 while read j ;
 do
 	ln -f -- "${src}"/lib/systemd/system/"$j" "${dest}"/nosh-run-via-systemd/usr/local/lib/systemd/system/
@@ -140,10 +128,20 @@ while read j ;
 do
 	ln -f -- "${src}"/lib/tmpfiles.d/"$j" "${dest}"/nosh-run-via-systemd/usr/local/lib/tmpfiles.d/
 done < package/tmpfiles-snippets ;
-while read j ;
+for i in bundles run-via-systemd run-virtualbox-guest run-freedesktop-kits run-user-vt run-kernel-vt
 do
-	ln -f -- "${src}"/etc/system-manager/presets/"$j" "${dest}"/nosh-bundles/etc/system-manager/presets/
-done < package/nosh-presets ;
+	install -d -m 0755 "${dest}"/nosh-"$i"/usr/local/etc/system-manager/presets 
+	(
+	cat package/common-nosh-"$i"-presets
+	case "`uname`" in
+	Linux)	cat package/linux-nosh-"$i"-presets ;;
+	*BSD)	cat package/bsd-nosh-"$i"-presets ;;
+	esac
+	) | while read j ;
+	do
+		ln -f -- "${src}"/etc/system-manager/presets/"$j" "${dest}"/nosh-"$i"/usr/local/etc/system-manager/presets/
+	done
+done
 while read j ;
 do
 	ln -f -- "${src}"/lib/systemd/system-preset/"$j" "${dest}"/nosh-run-via-systemd/usr/local/lib/systemd/system-preset/

@@ -11,4 +11,4 @@ ExecStart=VBoxService -f
 Restart=always
 
 [Install]
-WantedBy=virtualbox.target
+WantedBy=virtualbox-guest.target

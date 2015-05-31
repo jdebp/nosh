@@ -1,0 +1,54 @@
+<refentry id="service-is-enabled">
+
+<refmeta>
+<refentrytitle>service-is-enabled</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.15</refmiscinfo>
+</refmeta>
+
+<refnamediv><refname>service-is-enabled</refname><refpurpose>service checker</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>service-is-enabled</command>
+<arg choice='req'><replaceable>directory</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>service-is-enabled</command> checks to see whether a service is
+currently enabled.
+<replaceable>directory</replaceable> is either a service directory or a
+bundle directory with a service directory named <filename>service</filename> 
+within it.
+</para>
+
+<para>
+A service is considered enabled if its service directory does not contain a 
+<filename>down</filename> file.
+</para>
+
+<para>
+The result is signalled by the exit code, which is 0 upon success, 111
+if the directory does not exist or some other error occurred, and 100
+if the <filename>down</filename> exists.
+</para>
+
+<para>
+For more on service and supervise directories, see <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+</refsection><refsection><title>COMPATIBILITY</title>
+
+<para>
+For daemontools and daemontools-encore compatibility, this command is also
+available as <command>svok</command>.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

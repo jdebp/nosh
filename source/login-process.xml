@@ -172,7 +172,7 @@ command option.
 The <filename>utmp</filename> terminal line name in turn is simply the name of
 the controlling TTY name with any "<code>/dev/</code>" or
 "<code>/run/dev/</code>" stripped.
-The controlling TTY name is determined from the value of the <code>TTY</code>
+The controlling TTY name is determined from the value of the <envar>TTY</envar>
 environment variable, if present.
 This will be the case if <command>login-process</command> has been invoked within a chain
 that has run 

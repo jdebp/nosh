@@ -112,31 +112,3 @@ User-space virtual terminals are initialized into a sane state (both the line di
 User-space virtual terminals do not have a graphics mode, so there is no need for the <code>--text-mode</code> option to <code>vc-reset-tty</code>.
 </p></li>
 </ul>
-
-<h2>
-BSD tools for <code>ttylogin</code> service management via <code>/etc/ttys</code>
-</h2>
-
-<p>
-<code>ttylogin</code> services can of course be managed just like ordinary services, enabling them so that they auto-start at bootup and starting and stopping them with normal service control commands.
-However, one might decide to retain the BSD <code>/etc/ttys</code> mechanism as the master settings list for all terminals.
-This is done with a preset conversion command, which one invokes whenever changes are made to <code>/etc/ttys</code> (just as one has to run conversion commands to take human format data and place it in the actual machine-readable database files when one has made changes to things like <code>/etc/passwd</code> and <code>/etc/termcap</code>).
-</p>
-
-<p>
-The <a href="convert-ttys-presets.html"><code>convert-ttys-presets</code></a> command can convert the on/off information for individual virtual terminals that is stored in <code>/etc/ttys</code> into enable/disable presets for the matching <code>ttylogin</code> services.
-In order to pick up changes to <code>/etc/ttys</code> when they are made one:
-</p>
-<ol>
-<li><p>
-&hellip; runs <code>system-control&nbsp;convert-ttys-presets&nbsp;--prefix&nbsp;ttylogin@&nbsp;ttyv{0,1,2,3,4,5,6,7,8}</code> to convert the records in <code>/etc/ttys</code> into preset information for the <code>ttylogin@ttyv{0,1,2,3,4,5,6,7,8}.service</code> services; and
-</p></li>
-<li><p>
-&hellip; runs <code>system-control&nbsp;preset&nbsp;ttylogin@ttyv{0,1,2,3,4,5,6,7,8}.service</code> to enable or disable the service according to the preset information.
-(One can also run <code>system-control&nbsp;reset&nbsp;ttylogin@ttyv{0,1,2,3,4,5,6,7,8}.service</code> to immediately start or stop the service according to the preset information.)
-</p></li>
-</ol>
-
-<p>
-Note that this allows one to list both kernel and user-space virtual terminals in <code>/etc/ttys</code>, alongside one another.
-</p>

@@ -154,7 +154,7 @@ update_rcd (
 	}
 
 	if (0 == std::strcmp("enable", command))
-		;	// Don't touch it.
+		command = "preset";
 	else
 	if (0 == std::strcmp("disable", command))
 		;	// Don't touch it.

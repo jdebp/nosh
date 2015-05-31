@@ -1,0 +1,42 @@
+#!/bin/sh -
+escape() { echo "$1"|sed -e 's/@/\\x40/g' ; }
+addloguser() { getent passwd "$1" > /dev/null || pw useradd "$1" -s /bin/false ; }
+addlog() { mkdir -m 0755 -p /var/log/sv/"$2" ; chown "$1"-log /var/log/sv/"$2" ; }
+# kernel TTYs
+for I in \
+	ttyv0 \
+	ttyv1 \
+	ttyv2 \
+	ttyv3 \
+	ttyv4 \
+	ttyv5 \
+	ttyv6 \
+	ttyv7 \
+	ttyv8 \
+	ttyv9 \
+	ttyva \
+	ttyvb \
+	ttyvc \
+	ttyvd \
+	ttyve \
+	ttyvf \
+	;
+do
+	i="`escape ttylogin@"$I"`"
+	addloguser "$i"-log
+	addlog "$i" ttylogin@"$I"
+	system-control preset --ttys --prefix ttylogin@ $I.service
+	system-control preset --ttys --prefix cyclog@ttylogin@ $I.service
+done
+# TTY ancillaries
+for i in \
+	kernel-vt-kbdcontrol \
+	kernel-vt-vidcontrol \
+	ttylogin-starter \
+	;
+do
+	addloguser "$i"-log
+	addlog "$i" "$i"
+	system-control preset $i.service cyclog@$i.service
+	system-control reset $i.service cyclog@$i.service
+done

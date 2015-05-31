@@ -14,7 +14,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "utils.h"
 #include "fdutils.h"
 #include "popt.h"
-#include "service-manager.h"
+#include "service-manager-client.h"
 
 /* Main function ************************************************************
 // **************************************************************************
@@ -47,29 +47,17 @@ service_is_up (
 	}
 
 	const char * name(args[0]);
-	int dir_fd(open_dir_at(AT_FDCWD, name));
-	if (0 > dir_fd) throw static_cast<int>(EXIT_TEMPORARY_FAILURE);
-	int ok_fd(open_writeexisting_at(dir_fd, "ok"));
-	if (0 > ok_fd) {
-		const int old_dir_fd(dir_fd);
-		dir_fd = open_dir_at(dir_fd, "supervise");
-		close(old_dir_fd);
-		if (0 > dir_fd) throw static_cast<int>(EXIT_TEMPORARY_FAILURE);
-		ok_fd = open_writeexisting_at(dir_fd, "ok");
-		if (0 > ok_fd) throw static_cast<int>(EXIT_TEMPORARY_FAILURE);
+	const int bundle_dir_fd(open_dir_at(AT_FDCWD, name));
+	if (0 > bundle_dir_fd) throw static_cast<int>(EXIT_TEMPORARY_FAILURE);
+	const int supervise_dir_fd(open_supervise_dir(bundle_dir_fd));
+	if (0 > supervise_dir_fd) throw static_cast<int>(EXIT_TEMPORARY_FAILURE);
+
+	int ok_fd(open_writeexisting_at(supervise_dir_fd, "ok"));
+	if (0 > ok_fd) throw static_cast<int>(EXIT_TEMPORARY_FAILURE);
+
+	switch (running_status(supervise_dir_fd)) {
+		case  0:	throw static_cast<int>(EXIT_PERMANENT_FAILURE);
+		case  1:	throw EXIT_SUCCESS;
+		default:	throw static_cast<int>(EXIT_TEMPORARY_FAILURE);
 	}
-	const int status_fd(open_read_at(dir_fd, "status"));
-	if (0 > status_fd) throw static_cast<int>(EXIT_TEMPORARY_FAILURE);
-	char status[20];
-	const int n(read(status_fd, status, sizeof status));
-	if (0 > n) throw static_cast<int>(EXIT_TEMPORARY_FAILURE);
-	if (18 <= n) {
-		if (20 <= n) {
-			// This is the same as daemontools-encore, but subtly different from the nagios-check-service command.
-			if (encore_status_running == status[18] || encore_status_starting == status[18]) throw EXIT_SUCCESS;
-		} else {
-			if (status[12] || status[13] || status[14] || status[15]) throw EXIT_SUCCESS;
-		}
-	}
-	throw static_cast<int>(EXIT_PERMANENT_FAILURE);
 }

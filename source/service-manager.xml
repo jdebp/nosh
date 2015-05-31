@@ -118,18 +118,45 @@ and then chain to the service program proper.
 </para>
 
 <para>
-A service directory can also contain ancillary files required by the service
-itself, varying from service to service.  
+A service directory can also contain:
+</para>
+<itemizedlist>
+<listitem>
+<para>
+ancillary files required by the service itself, varying from service to service.  
+For examples:
+</para>
+<itemizedlist>
+<listitem>
+<para>
 A
 <citerefentry><refentrytitle>tcp-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 service could have an access-control database managed by
-<citerefentry><refentrytitle>ucspi-socket-rules-check</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-for example.
+<citerefentry><refentrytitle>ucspi-socket-rules-check</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
-
+</listitem>
+<listitem>
 <para>
-Other tools may use further files in a service directory.
-<command>service-dt-scanner</command> recognizes a <filename>down</filename> file, for example.
+Many services have <filename>env</filename> subdirectories read by
+<citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+in order to control daemon process environment variables.
+</para>
+</listitem>
+</itemizedlist>
+</listitem>
+<listitem>
+<para>
+further files used by other tools.
+<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+creates/deletes and
+<citerefentry><refentrytitle>service-is-enabled</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>service-dt-scanner</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+look for a <filename>down</filename> file, for example.
+</para>
+</listitem>
+</itemizedlist>
+<para>
 These files are ignored by <command>service-manager</command>.
 </para>
 

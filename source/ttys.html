@@ -1,0 +1,38 @@
+<title>ttylogin service management via /etc/ttys</title>
+<link rel="Up" href="external-formats.html" title="External formats" />
+<h1>
+<code>ttylogin</code> service management via <code>/etc/ttys</code>
+</h1>
+
+<p>
+<a href="virtual-terminal-login.html"><code>ttylogin</code> services</a> can of course be managed just like ordinary services, enabling them so that they auto-start at bootup and starting and stopping them with normal <a href="system-control"><code>system-control</code></a> commands.
+However, one might decide to retain the BSD <code>/etc/ttys</code> mechanism as the master settings list for all terminals.
+</p>
+
+<p>
+This is done with the <a href="preset.html"><code>preset</code></a> command, which can take the on/off information for individual virtual terminals that is stored in <code>/etc/ttys</code> and enable/disable the matching <code>ttylogin</code> services.
+</p>
+
+<p>
+In order to determine presets using <code>/etc/ttys</code> one runs two things:
+</p>
+<ol>
+<li><p>
+In order to first enable or disable the relevant <code>ttylogin@ttyv{0,1,2,3,4,5,6,7,8}.service</code> service one runs 
+</p>
+<blockquote><code>system-control&nbsp;preset&nbsp;--ttys&nbsp;--prefix&nbsp;ttylogin@&nbsp;ttyv{0,1,2,3,4,5,6,7,8}</code></blockquote> 
+<p>
+This takes the preset information given in the matching <code>ttyv{0,1,2,3,4,5,6,7,8}</code> records in <code>/etc/ttys</code>.
+</p>
+</li>
+<li><p>
+In order to immediately start or stop the relevant service one also runs
+</p>
+<blockquote><code>system-control&nbsp;reset&nbsp;ttylogin@ttyv{0,1,2,3,4,5,6,7,8}.service</code></blockquote>
+</p>
+</li>
+</ol>
+
+<p>
+Note that this allows one to list both kernel and user-space virtual terminals in <code>/etc/ttys</code>, alongside one another.
+</p>

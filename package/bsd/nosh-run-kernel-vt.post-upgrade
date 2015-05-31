@@ -1,0 +1,45 @@
+#!/bin/sh -
+for I in \
+	ttyv0 \
+	ttyv1 \
+	ttyv2 \
+	ttyv3 \
+	ttyv4 \
+	ttyv5 \
+	ttyv6 \
+	ttyv7 \
+	ttyv8 \
+	ttyv9 \
+	ttyva \
+	ttyvb \
+	ttyvc \
+	ttyvd \
+	ttyve \
+	ttyvf \
+	;
+do
+	i="ttylogin@$I"
+	if system-control is-loaded $i.service
+	then
+		system-control try-restart $i.service
+	fi
+	if system-control is-loaded cyclog@$i.service
+	then
+		system-control try-restart cyclog@$i.service
+	fi
+done
+for i in \
+	kernel-vt-kbdcontrol \
+	kernel-vt-vidcontrol \
+	ttylogin-starter \
+	;
+do
+	if system-control is-loaded $i.service
+	then
+		system-control try-restart $i.service
+	fi
+	if system-control is-loaded cyclog@$i.service
+	then
+		system-control try-restart cyclog@$i.service
+	fi
+done

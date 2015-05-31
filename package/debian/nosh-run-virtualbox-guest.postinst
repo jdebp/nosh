@@ -1,0 +1,39 @@
+#!/bin/sh -
+escape() { echo "$1"|sed -e 's/@/\\x40/g' ; }
+addloguser() { getent passwd "$1" > /dev/null || useradd --shell /bin/false "$1" ; }
+addlog() { mkdir -m 0750 -p /var/log/sv/"$2" ; setfacl -m u:"$1"-log:rwx -m g:adm:rx /var/log/sv/"$2" ; }
+add_user() { getent passwd "$1" > /dev/null || useradd --shell /bin/false "$1" ; }
+add_group() { getent group "$1" > /dev/null || groupadd "$1" ; }
+case "$1" in
+	configure)
+		add_user vboxadd
+		add_group vboxsf
+		for I in \
+			VBoxService \
+			;
+		do
+			i="`escape "$I"`"
+			addloguser "$i"-log
+			addlog "$i" "$I"
+			system-control preset $i.service cyclog@$i.service
+			system-control reset $i.service cyclog@$i.service
+		done
+		for i in \
+			kmod@vboxguest \
+			kmod@vboxsf \
+			kmod@vboxvideo \
+			kmod@vboxadd \
+			;
+		do
+			system-control preset $i.service
+			system-control reset $i.service
+		done
+		for i in \
+			virtualbox-guest \
+			;
+		do
+			system-control preset $i.target
+			system-control reset $i.target
+		done
+		;;
+esac

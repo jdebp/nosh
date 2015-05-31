@@ -1,3 +1,4 @@
+acpid
 systemd-syslog-read
 systemd-rsyslogd
 systemd-syslogd

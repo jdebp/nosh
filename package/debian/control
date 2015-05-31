@@ -98,23 +98,9 @@ Description: upstart shim service and system management utilities
  .
  The shims simply invoke native service management commands.
 
-Package: nosh-run-via-systemd
-Architecture: amd64
-Depends: nosh-service-management, systemd, nosh-bundles
-Suggests: 
-Recommends: 
-Conflicts: nosh-systemd-services
-Description: systemd services for running the nosh service manager and daemontools service scanner
- This package provides systemd service units for running the nosh service manager and daemontools service scanner under systemd, instead of running the nosh service manager.
- It presets systemd services that:
-  * run the nosh service-manager server under systemd;
-  * run the nosh service-dt-scanner (a.k.a. svscan) service under systemd; and
-  * start the nosh normal.target and its dependencies.
- It disables the nosh sysinit.target, on the basis that systemd is doing that part of the work.
-
 Package: nosh-bundles
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.14)
+Depends: nosh-exec, nosh-service-management (>=1.16)
 Suggests: 
 Recommends: 
 Conflicts: nosh-standard-targets, nosh-sysinit-services, nosh-bsd-services, nosh-bsd-sockets, nosh-regular-sockets, nosh-regular-services
@@ -126,7 +112,7 @@ Description: Service bundles
 
 Package: nosh-run-kernel-vt
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.14), nosh-terminal-management, nosh-bundles
+Depends: nosh-exec, nosh-service-management (>=1.16), nosh-terminal-management, nosh-bundles
 Suggests: 
 Recommends: 
 Description: Run old-style kernel virtual terminals
@@ -134,8 +120,44 @@ Description: Run old-style kernel virtual terminals
 
 Package: nosh-run-user-vt
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.14), nosh-terminal-management, nosh-bundles
+Depends: nosh-exec, nosh-service-management (>=1.16), nosh-terminal-management, nosh-bundles
 Suggests: 
 Recommends: 
 Description: Run new-style application-mode virtual terminals
  This package runs new-style application-mode virtual terminals, rendered via the (first) framebuffer and the input event stream.
+
+Package: nosh-run-via-systemd
+Architecture: amd64
+Depends: nosh-service-management (>=1.16), systemd, nosh-bundles
+Suggests: 
+Recommends: 
+Conflicts: nosh-systemd-services
+Description: Run the nosh service manager and daemontools service scanner via systemd
+ This package provides systemd service units for running the nosh service manager and daemontools service scanner under systemd, instead of running the nosh service manager.
+ It presets systemd services that:
+  * run the nosh service-manager server under systemd;
+  * run the nosh service-dt-scanner (a.k.a. svscan) service under systemd; and
+  * start the nosh normal.target and its dependencies.
+ It disables the nosh sysinit.target, on the basis that systemd is doing that part of the work.
+
+Package: nosh-run-virtualbox-guest
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles
+Suggests: 
+Recommends: 
+Description: Run VirtualBox guest additions
+ This package runs VirtualBox guest additions.
+
+Package: nosh-run-freedesktop-kits
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles
+Suggests: 
+Recommends: 
+Description: Run the various "kit" programs from freedesktop.org
+ This package runs the various "kit" programs from freedesktop.org:
+  * NetworkManager
+  * ModemManager
+  * PolicyKit
+  * PackageKit
+  * ConsoleKit
+

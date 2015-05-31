@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=VirtualBox guest machine target
+EarlySupervise=true
+
+[Service]
+systemdWorkingDirectory=false
+systemdUserEnvironment=no
+User=nobody
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
+ExecStart=true
+
+[Install]
+WantedBy=workstation.target

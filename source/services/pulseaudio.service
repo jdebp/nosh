@@ -1,0 +1,9 @@
+[Unit]
+Description=PulseAudio Daemon
+ 
+[Install]
+WantedBy=multi-user.target
+ 
+[Service]
+PrivateTmp=true
+ExecStart=pulseaudio --system --disallow-exit --disallow-module-loading

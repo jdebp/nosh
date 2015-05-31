@@ -1,0 +1,2 @@
+enable	cyclog@packagekit.service
+enable	packagekit.service

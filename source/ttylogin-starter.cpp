@@ -27,7 +27,7 @@ static const char active[] = "active";
 #endif
 
 // This must have static storage duration as we are using it in args.
-static std::string service_name;
+static std::string service_name, log_service_name;
 
 void
 ttylogin_starter ( 
@@ -35,6 +35,8 @@ ttylogin_starter (
 	std::vector<const char *> & args
 ) {
 	const char * prog(basename_of(args[0]));
+	const char * prefix("ttylogin@");
+	const char * log_prefix("cyclog@");
 #if defined(__LINUX__) || defined(__linux__)
 	const char * class_dir("/sys/class/tty");
 	const char * tty("tty0");
@@ -48,12 +50,16 @@ ttylogin_starter (
 		popt::unsigned_number_definition num_ttys_option('n', "num-ttys", "number", "Number of kernel virtual terminals.", num_ttys, 0);
 #endif
 		popt::bool_definition verbose_option('v', "verbose", "Verbose mode.", verbose);
+		popt::string_definition prefix_option('p', "prefix", "string", "Prefix each TTY name with this (template) name.", prefix);
+		popt::string_definition log_prefix_option('\0', "log-prefix", "string", "Specify the prefix for the log service name.", log_prefix);
 		popt::definition * top_table[] = {
 #if defined(__LINUX__) || defined(__linux__)
 			&class_option,
 			&tty_option,
 			&num_ttys_option,
 #endif
+			&prefix_option,
+			&log_prefix_option,
 			&verbose_option
 		};
 		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "prog");
@@ -148,13 +154,15 @@ ttylogin_starter (
 				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
 			} else if (0 == system_control_pid) {
 				std::fclose(active_file);
-				service_name = "ttylogin@" + ttyname + ".service";
+				service_name = prefix + ttyname + ".service";
+				log_service_name = log_prefix + service_name;
 				args.clear();
 				args.insert(args.end(), "system-control");
 				args.insert(args.end(), "reset");
 				if (verbose)
 					args.insert(args.end(), "--verbose");
 				args.insert(args.end(), service_name.c_str());
+				args.insert(args.end(), log_service_name.c_str());
 				args.insert(args.end(), 0);
 				next_prog = arg0_of(args);
 				return;
@@ -170,13 +178,15 @@ ttylogin_starter (
 		} else if (0 == system_control_pid) {
 			char ttyname[64];
 			snprintf(ttyname, sizeof ttyname, "ttyv%x", i);
-			service_name = (std::string("ttylogin@") + ttyname) + ".service";
+			service_name = (std::string(prefix) + ttyname) + ".service";
+			log_service_name = log_prefix + service_name;
 			args.clear();
 			args.insert(args.end(), "system-control");
 			args.insert(args.end(), "start");
 			if (verbose)
 				args.insert(args.end(), "--verbose");
 			args.insert(args.end(), service_name.c_str());
+			args.insert(args.end(), log_service_name.c_str());
 			args.insert(args.end(), 0);
 			next_prog = arg0_of(args);
 			return;

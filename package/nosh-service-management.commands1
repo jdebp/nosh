@@ -1,8 +1,5 @@
 convert-fstab-services
-convert-rcconf-presets
-convert-systemd-presets
 convert-systemd-units
-convert-ttys-presets
 cyclog
 load-kernel-module
 service-control

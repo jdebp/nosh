@@ -71,7 +71,7 @@ sysinit-log)
 	log=
 	sysinit=--etc-service
 	;;
-mount@*|fsck@*|kmod@*|emergency-login@*)
+mount@*|fsck@*)
 	log="../sysinit-log"
 	sysinit=--etc-service
 	;;
@@ -97,6 +97,14 @@ esac
 test -n "${log}" && ln -s -f "${log}" services.new/"${base}"/log
 
 case "${base}" in
+cyclog@ttylogin@*)
+	rm -f -- services.new/"${base}"/wanted-by/workstation
+	ln -s -f -- ../../"${base#cyclog@}" services.new/"${base}"/wanted-by/
+	;;
+cyclog@VBoxService)
+	rm -f -- services.new/"${base}"/wanted-by/workstation
+	ln -f -s -- /etc/system-manager/targets/virtualbox-guest services.new/"${base}"/wanted-by/
+	;;
 console-multiplexor@head0)
 	for i in 1 2 3
 	do 

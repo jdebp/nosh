@@ -33,6 +33,7 @@ newsyslog
 nfscbd
 nfsuserd
 nscd
+pbid
 pf
 pwcheck
 quota

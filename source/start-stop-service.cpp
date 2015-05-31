@@ -77,10 +77,10 @@ unsigned
 want_for (
 	int bundle_dir_fd
 ) {
-	int service_dir_fd(open_service_dir(bundle_dir_fd));
-	const bool preset(is_initially_up(service_dir_fd));
+	const int service_dir_fd(open_service_dir(bundle_dir_fd));
+	const bool want(is_initially_up(service_dir_fd));
 	close(service_dir_fd);
-	return preset ? bundle::WANT_START : bundle::WANT_STOP;
+	return want ? bundle::WANT_START : bundle::WANT_STOP;
 }
 
 typedef std::map<struct index, bundle> bundle_info_map;
@@ -102,8 +102,8 @@ add_bundle (
 		return 0;
 	}
 	const unsigned wants (
-		0 == want ? static_cast<unsigned>(bundle::WANT_STOP) :
-		1 == want ? static_cast<unsigned>(bundle::WANT_START) :
+		STOP == want ? static_cast<unsigned>(bundle::WANT_STOP) :
+		START == want ? static_cast<unsigned>(bundle::WANT_START) :
 		want_for(bundle_dir_fd)
 	);
 	bundle_info_map::iterator bundle_i(bundles.find(bundle_dir_s));
@@ -128,7 +128,7 @@ add_bundle_searching_path (
 	int want
 ) {
 	std::string path, name, suffix;
-	const int bundle_dir_fd(open_bundle_directory (arg, path, name, suffix));
+	const int bundle_dir_fd(open_bundle_directory ("", arg, path, name, suffix));
 	if (0 > bundle_dir_fd) return 0;
 	return add_bundle(bundles, bundle_dir_fd, path, name, want);
 }
@@ -481,10 +481,10 @@ start_stop_common (
 				bool is_done(true);
 				switch (b.wants) {
 					case bundle::WANT_START:
-						is_done = 0 <= b.supervise_dir_fd && is_ok(b.supervise_dir_fd) && is_running(b.supervise_dir_fd);
+						is_done = 0 <= b.supervise_dir_fd && is_ok(b.supervise_dir_fd) && 0 < running_status(b.supervise_dir_fd);
 						break;
 					case bundle::WANT_STOP:
-						is_done = 0 <= b.supervise_dir_fd && (!is_ok(b.supervise_dir_fd) || is_stopped(b.supervise_dir_fd));
+						is_done = 0 <= b.supervise_dir_fd && (!is_ok(b.supervise_dir_fd) || 0 < stopped_status(b.supervise_dir_fd));
 						break;
 				}
 				if (is_done) {

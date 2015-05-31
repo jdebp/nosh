@@ -1,0 +1,228 @@
+#!/bin/sh -
+# common services
+for I in \
+	anacron \
+	atd \
+	avahi-dnsconfd \
+	bcron-start \
+	bcron-update \
+	bootparams \
+	cleanuucp \
+	deluged \
+	deluge-web \
+	dnscache \
+	dovecot \
+	epmd \
+	exim4-queue \
+	fail2ban \
+	fancontrol \
+	fscd \
+	gitlab-unicorn \
+	gitlab-sidekiq \
+	gnucron \
+	hostnamed \
+	keepalived \
+	lm-sensors \
+	localed \
+	mailcatcher \
+	ModemManager \
+	mongodb \
+	motd-dynamic \
+	moused \
+	mysql \
+	nagios \
+	NetworkManager \
+	nginx \
+	nisdomain \
+	nmbd \
+	ntpd \
+	openvpn@client \
+	openvpn@server \
+	org.cups.cupsd \
+	ossec@agentd \
+	ossec@agentlessd \
+	ossec@analysisd \
+	ossec@csyslogd \
+	ossec@dbd \
+	ossec@execd \
+	ossec@logcollector \
+	ossec@maild \
+	ossec@monitord \
+	ossec@remoted \
+	ossec@syscheckd \
+	packagekit \
+	plexmediaserver \
+	postgresql \
+	powerd \
+	pppd-dns \
+	pulseaudio \
+	qmail-send \
+	rabbitmq-server \
+	rpcbind \
+	samba \
+	sickbeard \
+	smartd \
+	smbd \
+	sshdgenkeys \
+	swift@account \
+	swift@account-auditor \
+	swift@account-replicator \
+	swift@account-updater \
+	swift@container \
+	swift@container-auditor \
+	swift@container-replicator \
+	swift@container-updater \
+	swift@object \
+	swift@object-auditor \
+	swift@object-replicator \
+	swift@object-updater \
+	timedated \
+	tinydns \
+	volmand \
+	wicd \
+	winbindd \
+	wpa_supplicant \
+	ypbind \
+	;
+do
+	if system-control is-loaded $I.service
+	then
+		system-control try-restart $I.service
+	fi
+	if system-control is-loaded cyclog@$I.service
+	then
+		system-control try-restart cyclog@$I.service
+	fi
+done
+# common sockets
+for i in \
+	avahi-daemon \
+	bcron-spool \
+	dbus \
+	exim4-smtp-relay \
+	exim4-smtp-submission \
+	fcgiwrap \
+	ftp4d \
+	ftp6d \
+	http6d \
+	kadmind \
+	klogd \
+	kpasswdd \
+	org.cups.cups-lpd \
+	qmail-smtp-relay \
+	qmail-smtp-submission \
+	rsync \
+	saned \
+	sshd \
+	svnserve \
+	local-syslog-read \
+	local-rsyslogd \
+	local-syslogd \
+	udp-syslog-read \
+	udp-rsyslogd \
+	udp-syslogd \
+	uuidd \
+	vsftpd \
+	;
+do
+	if system-control is-loaded $i.service 2>/dev/null 
+	then
+		system-control try-restart $i.service
+	fi
+	if system-control is-loaded cyclog@$i.service 2>/dev/null 
+	then
+		system-control try-restart cyclog@$i.service
+	fi
+done
+# BSD services
+for i in \
+	accounting \
+	amd \
+	apm \
+	apmd \
+	auditd \
+	auditdistd \
+	bsdstats \
+	bsnmpd \
+	bthidd \
+	ccd \
+	ctld \
+	dhclient@em0 \
+	ftp-proxy \
+	gssd \
+	hastd \
+	hcsecd \
+	ipxrouted \
+	iscsictl \
+	iscsid \
+	keyserv \
+	kmod@ctl \
+	kmod@geom_gate:g_gate \
+	kmod@iscsi \
+	kmod@kbdmux \
+	kmod@ng_btsocket \
+	kmod@vkbd \
+	lpd \
+	mroute4d \
+	mroute6d \
+	mrouted \
+	msgs \
+	newsyslog \
+	nfscbd \
+	nfsuserd \
+	nscd \
+	pbid \
+	pf \
+	pwcheck \
+	quota \
+	rarpd \
+	route6d \
+	routed \
+	rpclockd \
+	rpcstatd \
+	rtsold \
+	rwhod \
+	sdpd \
+	securelevel \
+	swapexd \
+	swaplate \
+	sysctl \
+	syslogd \
+	timed \
+	utx \
+	vixiecron \
+	vixiedhcp4d@eth0 \
+	vixiedhcp6d@eth0 \
+	watchdogd \
+	yppasswdd \
+	ypserv \
+	ypset \
+	ypupdated \
+	ypxfrd \
+	zfs \
+	zfs-jailed \
+	;
+do
+	if system-control is-loaded $i.service 2>/dev/null 
+	then
+		system-control try-restart $i.service
+	fi
+	if system-control is-loaded cyclog@$i.service 2>/dev/null 
+	then
+		system-control try-restart cyclog@$i.service
+	fi
+done
+# BSD sockets
+for i in \
+	kfd \
+	;
+do
+	if system-control is-loaded $i.service 2>/dev/null 
+	then
+		system-control try-restart $i.service
+	fi
+	if system-control is-loaded cyclog@$i.service 2>/dev/null 
+	then
+		system-control try-restart cyclog@$i.service
+	fi
+done

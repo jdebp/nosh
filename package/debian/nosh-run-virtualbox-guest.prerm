@@ -1,0 +1,46 @@
+#!/bin/sh -
+case "$1" in
+	remove|purge)
+		for i in \
+			VBoxService \
+			;
+		do
+			system-control disable $i.service cyclog@$i.service
+			if system-control is-loaded $i.service
+			then
+				system-control unload-when-stopped $i.service
+				system-control stop $i.service
+			fi
+			if system-control is-loaded cyclog@$i.service
+			then
+				system-control unload-when-stopped cyclog@$i.service
+				system-control stop cyclog@$i.service
+			fi
+		done
+		for i in \
+			kmod@vboxguest \
+			kmod@vboxsf \
+			kmod@vboxvideo \
+			kmod@vboxadd \
+			;
+		do
+			system-control disable $i.service
+			if system-control is-loaded $i.service
+			then
+				system-control unload-when-stopped $i.service
+				system-control stop $i.service
+			fi
+		done
+		for i in \
+			virtualbox-guest \
+			;
+		do
+			system-control disable $i.target
+			if system-control is-loaded $i.target
+			then
+				system-control unload-when-stopped $i.target
+				system-control stop $i.target
+			fi
+		done
+		;;
+esac

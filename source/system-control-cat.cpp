@@ -51,7 +51,7 @@ cat (
 
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
 		std::string path, name, suffix;
-		const int bundle_dir_fd(open_bundle_directory(*i, path, name, suffix));
+		const int bundle_dir_fd(open_bundle_directory("", *i, path, name, suffix));
 		if (0 > bundle_dir_fd) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, *i, std::strerror(error));
@@ -79,7 +79,7 @@ cat (
 			args.insert(args.end(), "start");
 			args.insert(args.end(), "stop");
 			args.insert(args.end(), "run");
-			if (0 <= access("service", F_OK));
+			if (0 <= access("service", F_OK))
 				args.insert(args.end(), "service");
 			args.insert(args.end(), "restart");
 			args.insert(args.end(), 0);

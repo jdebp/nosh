@@ -26,6 +26,7 @@ do
 	ln -f -- command/"${command}"{new} command/"${alias}"{new}
 done
 (
+	# All of the commands that have their own manual pages
 	cat package/commands1
 	awk '{ if ($1 == "exec" || $1 == "console-terminal-emulator") print $2 ; }' package/aliases1
 	awk '{ if ($1 == "system-control" && $2 != "systemctl") print $2 ; }' package/aliases1
@@ -36,6 +37,7 @@ do
 	cp -p -f -- build/"$i".1 manual/"$i".1{new}
 done
 (
+	# All of the commands that have their own manual pages
 	cat package/commands8
 ) | while read i
 do
@@ -43,6 +45,7 @@ do
 	cp -p -f -- build/"$i".8 manual/"$i".8{new}
 done
 (
+	# Aliased manual pages
 	awk '{ if ($1 != "exec" && $1 != "console-terminal-emulator" && $1 != "system-control" && $1 != "service-control") print $0 ; }' package/aliases1
 	awk '{ if ($1 == "system-control" && $2 == "systemctl") print $0 ; }' package/aliases1
 	awk '{ if ($1 == "service-control" && $2 == "svc") print $0 ; }' package/aliases1
@@ -53,8 +56,10 @@ done
 while read command alias
 do
 	ln -f -s -- "${command}".8 manual/"${alias}".8{new}
+	# Aliased manual pages
 done < package/aliases8
 (
+	# All of the commands that have their own manual pages
 	cat package/guidepages package/commands1 package/commands8
 	awk '{ if ($1 == "exec" || $1 == "console-terminal-emulator") print $2 ; }' package/aliases1
 	awk '{ if ($1 == "system-control" && $2 != "systemctl") print $2 ; }' package/aliases1
@@ -65,6 +70,7 @@ do
 	cp -p -f -- build/"$i".html guide/"$i".html{new}
 done
 (
+	# Aliased manual pages
 	cat package/aliases8
 	awk '{ if ($1 != "exec" && $1 != "console-terminal-emulator" && $1 != "system-control" && $1 != "service-control") print $0 ; }' package/aliases1
 	awk '{ if ($1 == "system-control" && $2 == "systemctl") print $0 ; }' package/aliases1
@@ -149,7 +155,7 @@ while read i
 do
 	cp -a build/services/$i config/services{new}/
 done
-cat package/common-services package/bsd-services package/linux-services package/common-sockets package/bsd-sockets package/linux-sockets package/common-kernel-vt-services package/bsd-kernel-vt-services package/linux-kernel-vt-services package/user-vt-services package/common-ttys package/bsd-ttys package/linux-ttys |
+cat package/common-services package/bsd-services package/linux-services package/common-sockets package/bsd-sockets package/linux-sockets package/common-ttys package/bsd-ttys package/linux-ttys |
 while read i
 do
 	cp -a build/services/$i config/services{new}/
@@ -158,17 +164,32 @@ done
 
 # ##############################################################################
 # Build all of the {new} files in ./config.
-cat package/systemd-services package/tmpfiles-snippets package/systemd-presets package/nosh-presets |
+cat package/systemd-services package/tmpfiles-snippets package/systemd-presets |
 while read i
 do
 	rm -f -- config/"$i"{new}
-	cp -p -f -- build/"$i" config/"$i"{new}
+	cp -p -f -- build/systemd/"$i" config/"$i"{new}
+done
+(
+for i in bundles run-via-systemd run-virtualbox-guest run-freedesktop-kits run-user-vt run-kernel-vt
+do
+	cat package/common-nosh-"$i"-presets package/linux-nosh-"$i"-presets package/bsd-nosh-"$i"-presets 
+done
+) | while read i
+do
+	rm -f -- config/"$i"{new}
+	cp -p -f -- build/presets/"$i" config/"$i"{new}
 done
 
 # ##############################################################################
 # Rename the ...{new} directories and files in ./config.
-cat package/systemd-services package/tmpfiles-snippets package/systemd-presets package/nosh-presets |
-while read i
+(
+cat package/systemd-services package/tmpfiles-snippets package/systemd-presets 
+for i in bundles run-via-systemd run-virtualbox-guest run-freedesktop-kits run-user-vt run-kernel-vt
+do
+	cat package/common-nosh-"$i"-presets package/linux-nosh-"$i"-presets package/bsd-nosh-"$i"-presets 
+done
+) | while read i
 do
 	mv -f -- config/"$i"{new} config/"$i"
 done 

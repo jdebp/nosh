@@ -6,9 +6,11 @@
 Description=nginx HTTP content server
 
 [Service]
+# Per Debian bug #728015, design and implementation errors prevent "daemon off" from working.
+# It's erroneously conflated with a "no signals" mode.
 Type=forking
 systemdWorkingDirectory=false
-ExecStart=%P
+ExecStart=%P -g "error_log stderr error;"
 PrivateTmp=true
 Restart=always
 

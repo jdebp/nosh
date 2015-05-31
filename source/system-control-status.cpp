@@ -29,7 +29,7 @@ lookup_bundle_directories (
 	std::vector<std::string> r;
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
 		std::string path, name, suffix;
-		const int rc(open_bundle_directory(*i, path, name, suffix));
+		const int rc(open_bundle_directory("", *i, path, name, suffix));
 		if (0 > rc) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, *i, std::strerror(error));
@@ -140,4 +140,12 @@ is_loaded (
 	std::vector<const char *> & args
 ) {
 	common_subcommand(next_prog, args, "service-is-ok", NULL);
+}
+
+void
+is_enabled ( 
+	const char * & next_prog,
+	std::vector<const char *> & args
+) {
+	common_subcommand(next_prog, args, "service-is-enabled", NULL);
 }

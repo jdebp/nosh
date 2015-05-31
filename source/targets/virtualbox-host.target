@@ -1,0 +1,22 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=VirtualBox host machine target
+EarlySupervise=true
+Wants=kmod@vboxdrv
+Wants=kmod@vboxnetadp
+Wants=kmod@vboxnetflt
+Wants=kmod@vboxpci
+
+[Service]
+systemdWorkingDirectory=false
+systemdUserEnvironment=no
+User=nobody
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
+ExecStart=true
+
+[Install]
+WantedBy=workstation.target

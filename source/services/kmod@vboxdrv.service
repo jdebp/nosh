@@ -13,4 +13,4 @@ ExecStopPost=system-control unload-kernel-module vboxdrv
 RemainAfterExit=yes
 
 [Install]
-WantedBy=virtualbox.target
+WantedBy=virtualbox-host.target

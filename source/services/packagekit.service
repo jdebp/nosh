@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%P daemon
+After=dbus.service
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=/usr/lib/%P/%Pd
+Restart=always
+
+[Install]
+WantedBy=workstation.target

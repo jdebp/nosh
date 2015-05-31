@@ -13,4 +13,4 @@ ExecStopPost=system-control unload-kernel-module vboxsf
 RemainAfterExit=yes
 
 [Install]
-WantedBy=virtualbox.target
+WantedBy=virtualbox-guest.target

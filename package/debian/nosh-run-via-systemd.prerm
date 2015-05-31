@@ -3,8 +3,6 @@ case "$1" in
 	remove|purge)
 		systemctl disable system-control-normal.service
 		systemctl stop system-control-normal.service
-		system-control convert-systemd-presets sysinit.target
-		system-control preset sysinit.target
 		systemctl disable service-manager-svscan.path
 		systemctl stop service-manager-svscan.path service-manager-svscan.service
 		systemctl disable service-manager.socket

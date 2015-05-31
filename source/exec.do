@@ -1,6 +1,6 @@
 #!/bin/sh -e
 main="`basename "$1"`"
-objects="main-${main}.o builtins-${main}.o"
+objects="main-exec.o builtins-${main}.o"
 libraries="builtins.a utils.a"
 [ "`uname`" = "FreeBSD" ] || kqueue=-lkqueue
 [ "`uname`" = "FreeBSD" ] || uuid=-luuid

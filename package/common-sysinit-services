@@ -1,12 +1,11 @@
 dmesg
 hostname
-ldconfig
 machine-id
 sysinit-log
 swapauto
 kmod@autofs
-kmod@unix
 kmod@ipv6
+kmod@unix
 kmod@vboxadd
 kmod@vboxdrv
 kmod@vboxguest

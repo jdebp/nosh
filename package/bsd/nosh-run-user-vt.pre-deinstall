@@ -1,0 +1,47 @@
+#!/bin/sh -
+for I in \
+	vc1 \
+	vc2 \
+	vc3 \
+	;
+do
+	system-control disable ttylogin@"$I"-tty.service cyclog@ttylogin@"$I"-tty.service
+	if system-control is-loaded ttylogin@"$I"-tty.service
+	then
+		system-control unload-when-stopped ttylogin@"$I"-tty.service
+		system-control stop ttylogin@"$I"-tty.service
+	fi
+	if system-control is-loaded cyclog@ttylogin@"$I"-tty.service
+	then
+		system-control unload-when-stopped cyclog@ttylogin@"$I"-tty.service
+		system-control stop cyclog@ttylogin@"$I"-tty.service
+	fi
+	system-control disable terminal-emulator@"$I".service cyclog@terminal-emulator@"$I".service
+	if system-control is-loaded terminal-emulator@"$I".service
+	then
+		system-control unload-when-stopped terminal-emulator@"$I".service
+		system-control stop terminal-emulator@"$I".service
+	fi
+	if system-control is-loaded cyclog@terminal-emulator@"$I".service
+	then
+		system-control unload-when-stopped cyclog@terminal-emulator@"$I".service
+		system-control stop cyclog@terminal-emulator@"$I".service
+	fi
+done
+for i in \
+	console-fb-realizer@head0 \
+	console-multiplexor@head0 \
+	;
+do
+	system-control disable $i.service cyclog@$i.service
+	if system-control is-loaded $i.service
+	then
+		system-control unload-when-stopped $i.service
+		system-control stop $i.service
+	fi
+	if system-control is-loaded cyclog@$i.service
+	then
+		system-control unload-when-stopped cyclog@$i.service
+		system-control stop cyclog@$i.service
+	fi
+done

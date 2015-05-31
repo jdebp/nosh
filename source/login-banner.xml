@@ -121,7 +121,7 @@ The program requires permission to read <filename>utmp</filename> and the templa
 or even a terminal or a character device at all.
 It can be used to display login banners to arbitrary destinations, even to
 sockets and to files.
-(Although one must ensure that it always inherits a <code>TTY</code> environment
+(Although one must ensure that it always inherits a <envar>TTY</envar> environment
 variable in such cases, so that the <code>\l</code> escape sequence expands to the
 appropriate thing, and not to the name of some irrelevant controlling 
 terminal.)

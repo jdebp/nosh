@@ -11,7 +11,7 @@ systemdWorkingDirectory=false
 SessionLeader=true
 StandardInput=tty
 StandardOutput=inherit
-ExecStartPre=echo Rescue/Emergency mode log-in:
+ExecStartPre=echo Emergency mode log-in:
 ExecStart=emergency-login
 Restart=always
 RestartSec=0
@@ -19,4 +19,4 @@ TTYPath=%I
 TTYReset=yes
 
 [Install]
-WantedBy=emergency.target rescue.target
+WantedBy=emergency.target

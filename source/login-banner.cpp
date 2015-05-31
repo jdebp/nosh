@@ -30,6 +30,10 @@ strip_dev (
 ) {
 	if (0 == strncmp(s, "/dev/", 5))
 		return s + 5;
+	if (0 == strncmp(s, "/run/dev/", 9))
+		return s + 9;
+	if (0 == strncmp(s, "/var/dev/", 9))
+		return s + 9;
 	return s;
 }
 

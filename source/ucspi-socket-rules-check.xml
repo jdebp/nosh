@@ -45,7 +45,7 @@ If the access checks fail, it exits without running anything.
 <refsection><title>Searching for access control rules</title>
 
 <para>
-Overall behaviour is guided by the value of the <code>PROTO</code> environment
+Overall behaviour is guided by the value of the <envar>PROTO</envar> environment
 variable.
 </para>
 
@@ -53,7 +53,7 @@ variable.
 
 <listitem>
 <para>
-If <code>PROTO</code> has the value <code>UNIX</code>:
+If <envar>PROTO</envar> has the value <code>UNIX</code>:
 </para>
 
 <orderedlist>
@@ -94,7 +94,7 @@ Otherwise access is denied.
 
 <listitem>
 <para>
-If <code>PROTO</code> has the value <code>TCP</code>:
+If <envar>PROTO</envar> has the value <code>TCP</code>:
 </para>
 
 <orderedlist>
@@ -108,7 +108,7 @@ A group of directories, forming progressively larger supernets of the IP address
 <itemizedlist>
 <listitem>
 <para>
-If the value of <code>TCPREMOTEIP</code> is a human-readable IPv4 address,
+If the value of <envar>TCPREMOTEIP</envar> is a human-readable IPv4 address,
 then, for each prefix length <code>N</code> from 32 down to 0 an <code>IP</code> string
 is constructed using the netmask
 <code><replaceable>$TCPREMOTEIP</replaceable>/<replaceable>$N</replaceable></code>,
@@ -123,7 +123,7 @@ Thus <filename>ip4/0.0.0.0_0</filename> is a catch-all rule.
 </listitem>
 <listitem>
 <para>
-If the value of <code>TCPREMOTEIP</code> is a human-readable IPv6 address,
+If the value of <envar>TCPREMOTEIP</envar> is a human-readable IPv6 address,
 then, for each prefix length <code>N</code> from 128 down to 0 an <code>IP</code> string
 is constructed using the netmask
 <code><replaceable>$TCPREMOTEIP</replaceable>/<replaceable>$N</replaceable></code>,

@@ -9,4 +9,4 @@ kmod@sysvsem
 kmod@sysvshm
 kmod@svr4
 kmod@linux
-bsd-ldconfig
+ldconfig
