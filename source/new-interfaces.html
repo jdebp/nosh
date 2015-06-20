@@ -21,7 +21,7 @@ Other subdirectories contain symbolic links that define service interrelationshi
 
 <p>
 Bundle directories can live anywhere that one likes in the filesystem.
-The <a href="system-control.html"><code>system-control</code></a> program locates various standard targets in the <code>/etc/system-manager/targets</code> directory.
+The <a href="system-control.html"><code>system-control</code></a> program locates various standard targets in the <code>/etc/service-bundles/targets</code> directory.
 But those targets refer to other services (and targets) via symbolic links, which can point anywhere in the filesystem.
 </p>
 
@@ -29,7 +29,7 @@ But those targets refer to other services (and targets) via symbolic links, whic
 (A slight restriction on this is also the fairly obvious one: 
 Bundles for services and targets that are started in parallel with, or before, mounting the non-root filesystems must live on the root filesystem.
 By convention, these "sysinit" bundles live in <code>/etc/sv</code>.
-Since their supervise directories must be writable at run-time, they are symbolic links to directories that live under <code>/run/system-manager/early-supervise</code>.)
+Since their supervise directories must be writable at run-time, they are symbolic links to directories that live under <code>/run/service-bundles/early-supervise</code>.)
 </p>
 
 <h2>
@@ -119,7 +119,5 @@ It also has fewer standard targets than systemd:
 <li><p>
 There are no "runlevel" targets.  
 There is no concept of run-levels, full stop.  
-This not only reflects the roots of the package in BSDs, which do not have run levels, but also reflects the fact that run-levels are an outdated (Solaris 10 replaced them with symbolic "milestones" that have names like <code>multi-user</code> in 2005.) hodge-podge (Multi-user bootstrap with an X server can be run-level 2, 4, or 5, depending from which system one uses.) that are best avoided.
-You are strongly encouraged to un-learn the idea of run-levels.
 </p></li>
 </ul>

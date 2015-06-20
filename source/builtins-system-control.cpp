@@ -28,10 +28,13 @@ extern void enable ( const char * & , std::vector<const char *> & ) ;
 extern void disable ( const char * & , std::vector<const char *> & ) ;
 extern void preset ( const char * & , std::vector<const char *> & ) ;
 extern void init ( const char * & , std::vector<const char *> & ) ;
+extern void find ( const char * & , std::vector<const char *> & ) ;
 extern void cat ( const char * & , std::vector<const char *> & ) ;
 extern void show ( const char * & , std::vector<const char *> & ) ;
 extern void show_json ( const char * & , std::vector<const char *> & ) ;
 extern void status ( const char * & , std::vector<const char *> & ) ;
+extern void print_service_env ( const char * & , std::vector<const char *> & ) ;
+extern void set_service_env ( const char * & , std::vector<const char *> & ) ;
 extern void try_restart ( const char * & , std::vector<const char *> & ) ;
 extern void is_active ( const char * & , std::vector<const char *> & ) ;
 extern void is_loaded ( const char * & , std::vector<const char *> & ) ;
@@ -97,10 +100,13 @@ commands[] = {
 	{	"enable",			enable			},
 	{	"disable",			disable			},
 	{	"preset",			preset			},
+	{	"find",				find			},
 	{	"cat",				cat			},
 	{	"show",				show			},
 	{	"show-json",			show_json		},
 	{	"status",			status			},
+	{	"print-service-env",		print_service_env	},
+	{	"set-service-env",		set_service_env		},
 	{	"try-restart",			try_restart		},
 	{	"condrestart",			try_restart		},
 	{	"force-reload",			try_restart		},

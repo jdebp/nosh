@@ -8,7 +8,6 @@
 
 enable	ttylogin-starter.service
 enable	cyclog@ttylogin-starter.service
-enable	ttylogin@tty*.service
-enable	cyclog@ttylogin@tty*.service
 
+enable	cyclog@kernel-vt-*.service
 enable	kernel-vt-*.service

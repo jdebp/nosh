@@ -3,9 +3,8 @@
 ## **************************************************************************
 
 [Unit]
-Description=Dump kernel boot log sysinit service
+Description=Dump kernel boot log
 DefaultDependencies=false
-EarlySupervise=true
 
 [Service]
 Umask=0022

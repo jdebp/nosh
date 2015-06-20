@@ -3,12 +3,12 @@
 ## **************************************************************************
 
 [Unit]
-Description=%P service for mixer device %I
+Description=%p service for mixer device %I
 
 [Service]
 systemdWorkingDirectory=false
-ExecStartPre=sh -c '%P -f /dev/%I `cat /var/db/%I-state`'
-ExecStopPost=fdredir --write 1 /var/db/%I-state %P -f /dev/%I -s 
+ExecStartPre=sh -c '%p -f /dev/%I `cat /var/db/%I-state`'
+ExecStopPost=fdredir --write 1 /var/db/%I-state %p -f /dev/%I -s 
 RemainAfterExit=yes
 
 [Install]

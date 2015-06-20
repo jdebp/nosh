@@ -1,5 +1,5 @@
 #!/bin/sh -
-escape() { echo "$1"|sed -e 's/@/\\x40/g' ; }
+escape() { echo "$1"|sed -e 's/_/_x5f/g' -e 's/@/_x40/g' -e 's/:/_x3a/g' ; }
 addloguser() { getent passwd "$1" > /dev/null || pw useradd "$1" -s /bin/false ; }
 addlog() { mkdir -m 0755 -p /var/log/sv/"$2" ; chown "$1"-log /var/log/sv/"$2" ; }
 addtty() { grep -q "^$1\>" /etc/ttys || echo >> /etc/ttys "$1" "/bin/false" "xterm" "on" "secure" ; }
@@ -13,7 +13,7 @@ do
 	i="`escape terminal-emulator@"$I"`"
 	addloguser "$i"-log
 	addlog "$i" terminal-emulator@"$I"
-	addtty "$i"
+	addtty "$I"-tty
 	system-control preset --ttys --prefix terminal-emulator@ $I.service
 	system-control preset --ttys --prefix cyclog@terminal-emulator@ $I.service
 	system-control reset cyclog@terminal-emulator@$I.service
@@ -28,19 +28,20 @@ do
 	i="`escape ttylogin@"$I"-tty`"
 	addloguser "$i"-log
 	addlog "$i" ttylogin@"$I"-tty
-	addtty "$i"
 	system-control preset --ttys --prefix ttylogin@ "$I"-tty.service
 	system-control preset --ttys --prefix cyclog@ttylogin@ "$I"-tty.service
 	system-control reset ttylogin@"$I"-tty.service cyclog@ttylogin@"$I"-tty.service
 done
 # TTY ancillaries
-for i in \
+for I in \
 	console-fb-realizer@head0 \
 	console-multiplexor@head0 \
 	;
 do
+	i="`escape \"$I\"`"
 	addloguser "$i"-log
-	addlog "$i" "$i"
-	system-control preset $i.service cyclog@$i.service
-	system-control reset $i.service cyclog@$i.service
+	addlog "$i" "$I"
+	system-control preset $I.service
+	system-control preset --prefix cyclog@ $I.service
+	system-control reset $I.service cyclog@$I.service
 done

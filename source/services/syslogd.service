@@ -7,6 +7,7 @@ Description=Vanilla BSD system log daemon
 
 [Service]
 systemdWorkingDirectory=false
+EnvironmentDirectory=env
 # Don't use %p; this unit is accessed via a symbolic link.
 ExecStart=syslogd -c -ss
 Restart=always

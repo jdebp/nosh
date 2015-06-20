@@ -3,9 +3,9 @@
 ## **************************************************************************
 
 [Unit]
-Description=Set up the machine ID sysinit service
+Description=Set up the machine ID
 DefaultDependencies=false
-EarlySupervise=true
+After=local-fs.target
 
 [Service]
 systemdWorkingDirectory=false

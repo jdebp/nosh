@@ -63,11 +63,11 @@ So, too, are <code>run</code> scripts.
 The service interdependencies and orderings are usually quite simple, too:
 </p>
 <blockquote><pre>mkdir -p wants after before stopped-by wanted-by
-ln -s /etc/system-manager/targets/basic after/
-ln -s /etc/system-manager/targets/basic wants/
-ln -s /etc/system-manager/targets/shutdown before/
-ln -s /etc/system-manager/targets/shutdown stopped-by/
-ln -s /etc/system-manager/targets/workstation wanted-by/</pre></blockquote>
+ln -s /etc/service-bundles/targets/basic after/
+ln -s /etc/service-bundles/targets/basic wants/
+ln -s /etc/service-bundles/targets/shutdown before/
+ln -s /etc/service-bundles/targets/shutdown stopped-by/
+ln -s /etc/service-bundles/targets/workstation wanted-by/</pre></blockquote>
 
 <p>
 Tailor this according to need, of course.

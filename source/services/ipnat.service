@@ -1,0 +1,20 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD NAT rules service
+Requires=kmod@ipl
+
+[Service]
+# Marking this as oneshot means that it doesn't enter the "running" state until the accton command has exited.
+Type=oneshot
+systemdWorkingDirectory=false
+EnvironmentDirectory=env
+ExecStart=${program} -F -C ${flags} -f ${rules}
+ExecStart=${program} -F -C ${flags}
+RemainAfterExit=yes
+Restart=on-abort
+
+[Install]
+WantedBy=workstation.target

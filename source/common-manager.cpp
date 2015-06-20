@@ -246,9 +246,17 @@ const char *
 manager_directories[] = {
 	"/run/system-manager",
 	"/run/system-manager/log",
-	"/run/system-manager/early-supervise",
+	"/run/service-bundles",
+	"/run/service-bundles/early-supervise",
 	"/run/service-manager",
 	"/run/user"
+};
+
+static
+const struct api_symlink manager_symlinks[] = 
+{
+	// Compatibilitu with early supervise bundles from version 1.16 and earlier.
+	{	"/run/system-manager/early-supervise",	"../service-bundles/early-supervise"		},
 };
 
 /* Utilities for the main program *******************************************
@@ -463,6 +471,13 @@ make_needed_run_directories(
 			const int error(errno);
 			if (EEXIST != error)
 				std::fprintf(stderr, "%s: ERROR: %s: %s: %s\n", prog, "mkdir", dirname, std::strerror(error));
+		}
+	}
+	for (std::size_t fi(0); fi < sizeof manager_symlinks/sizeof *manager_symlinks; ++fi) {
+		const api_symlink * const i(manager_symlinks + fi);
+		if (0 > symlink(i->target, i->name)) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: ERROR: %s: %s: %s\n", prog, "symlink", i->name, std::strerror(error));
 		}
 	}
 }

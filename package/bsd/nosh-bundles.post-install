@@ -1,9 +1,8 @@
 #!/bin/sh -
-escape() { echo "$1"|sed -e 's/@/\\x40/g' ; }
+escape() { echo "$1"|sed -e 's/_/_x5f/g' -e 's/@/_x40/g' -e 's/:/_x3a/g' ; }
 addloguser() { getent passwd "$1" > /dev/null || pw useradd "$1" -s /bin/false ; }
 addlog() { mkdir -m 0755 -p /var/log/sv/"$2" ; chown "$1"-log /var/log/sv/"$2" ; }
-addtty() { grep -q "^$1\>" /etc/ttys || echo >> /etc/ttys "$1" "/bin/false" "xterm" "on" "secure" ; }
-# common services
+# common services with dedicated log services
 for I in \
 	anacron \
 	atd \
@@ -11,7 +10,9 @@ for I in \
 	bcron-start \
 	bcron-update \
 	bootparams \
+	ccpd \
 	cleanuucp \
+	ddclient \
 	deluged \
 	deluge-web \
 	dnscache \
@@ -26,6 +27,10 @@ for I in \
 	gnucron \
 	hostnamed \
 	keepalived \
+	kmod@vboxdrv \
+	kmod@vboxnetadp \
+	kmod@vboxnetflt \
+	kmod@vboxpci \
 	lm-sensors \
 	localed \
 	mailcatcher \
@@ -36,13 +41,16 @@ for I in \
 	mysql \
 	nagios \
 	NetworkManager \
+	nfsd \
 	nginx \
 	nisdomain \
 	nmbd \
 	ntpd \
+	ntpdate \
 	openvpn@client \
 	openvpn@server \
 	org.cups.cupsd \
+	org.cups.cups-cancel \
 	ossec@agentd \
 	ossec@agentlessd \
 	ossec@analysisd \
@@ -92,7 +100,8 @@ do
 	i="`escape "$I"`"
 	addloguser "$i"-log
 	addlog "$i" "$I"
-	system-control preset $I.service cyclog@$I.service
+	system-control preset $I.service
+	system-control preset --prefix cyclog@ $I.service
 done
 # common sockets
 for I in \
@@ -128,29 +137,22 @@ do
 	i="`escape "$I"`"
 	addloguser "$i"-log
 	addlog "$i" "$I"
-	system-control preset $I.socket cyclog@$I.service
+	system-control preset $I.socket
+	system-control preset --prefix cyclog@ $I.service
 done
-# common sysinit services
+# common services that fan in to a single logger
 for I in \
 	dmesg \
 	hostname \
-	kmod@autofs \
-	kmod@ipv6 \
-	kmod@unix \
-	kmod@vboxdrv \
-	kmod@vboxnetadp \
-	kmod@vboxnetflt \
-	kmod@vboxpci \
 	machine-id \
 	sysinit-log \
-	swapauto \
 	stty-sane@console \
 	emergency-login@console \
 	;
 do
 	system-control preset $I.service
 done
-# BSD services
+# BSD services with dedicated log services
 for I in \
 	accounting \
 	amd \
@@ -163,21 +165,68 @@ for I in \
 	bthidd \
 	ccd \
 	ctld \
+	crashinfo \
+	ddb \
 	dhclient@em0 \
 	ftp-proxy \
 	gssd \
 	hastd \
 	hcsecd \
+	ipfs \
+	ipmon \
+	ipnat \
 	ipxrouted \
 	iscsictl \
 	iscsid \
 	keyserv \
 	kmod@ctl \
-	kmod@geom_gate:g_gate \
+	kmod@fuse \
+	kmod@geom_gate \
+	kmod@ibcs2 \
+	kmod@ipl \
 	kmod@iscsi \
 	kmod@kbdmux \
 	kmod@ng_btsocket \
 	kmod@vkbd \
+	kmod@pf \
+	kmod@pflog \
+	kmod@pfsync \
+	kmod@acpi_video \
+	kmod@bwi_v3_ucode \
+	kmod@bwn_v4_ucode \
+	kmod@cuse4bsd \
+	kmod@ext2fs \
+	kmod@fdescfs \
+	kmod@geom_uzip \
+	kmod@if_bwi \
+	kmod@if_bwn \
+	kmod@iwn1000fw \
+	kmod@iwn4965fw \
+	kmod@iwn5000fw \
+	kmod@iwn5150fw \
+	kmod@iwn6000fw \
+	kmod@iwn6000g2afw \
+	kmod@iwn6000g2bfw \
+	kmod@iwn6050fw \
+	kmod@libiconv \
+	kmod@libmchain \
+	kmod@linsysfs \
+	kmod@mmc \
+	kmod@mmcsd \
+	kmod@msdosfs_iconv \
+	kmod@ng_ubt \
+	kmod@ntfs \
+	kmod@ntfs_iconv \
+	kmod@pefs \
+	kmod@reiserfs \
+	kmod@runfw \
+	kmod@scd \
+	kmod@sem \
+	kmod@smbfs \
+	kmod@udf \
+	kmod@udf_iconv \
+	kmod@xfs \
+	ldconfig \
 	lpd \
 	mroute4d \
 	mroute6d \
@@ -189,6 +238,8 @@ for I in \
 	nscd \
 	pbid \
 	pf \
+	pflog \
+	pfsync \
 	pwcheck \
 	quota \
 	rarpd \
@@ -198,6 +249,7 @@ for I in \
 	rpcstatd \
 	rtsold \
 	rwhod \
+	savecore \
 	sdpd \
 	securelevel \
 	swapexd \
@@ -205,6 +257,7 @@ for I in \
 	sysctl \
 	syslogd \
 	timed \
+	unbound \
 	utx \
 	vixiecron \
 	vixiedhcp4d@eth0 \
@@ -222,7 +275,8 @@ do
 	i="`escape "$I"`"
 	addloguser "$i"-log
 	addlog "$i" "$I"
-	system-control preset $I.service cyclog@$I.service
+	system-control preset $I.service
+	system-control preset --prefix cyclog@ $I.service
 done
 # BSD sockets
 for I in \
@@ -232,19 +286,19 @@ do
 	i="`escape "$I"`"
 	addloguser "$i"-log
 	addlog "$i" "$I"
-	system-control preset $I.socket cyclog@$I.service
+	system-control preset $I.socket
+	system-control preset --prefix cyclog@ $I.service
 done
-# BSD sysinit services
+# BSD services that fan in to a single logger
 for I in \
 	background-fsck \
 	devd \
 	devd-log \
+	kmod@linux \
 	kmod@sysvmsg \
 	kmod@sysvsem \
 	kmod@sysvshm \
 	kmod@svr4 \
-	kmod@linux \
-	ldconfig \
 	nextboot \
 	swaplate \
 	;
@@ -255,10 +309,13 @@ done
 for I in \
 	sysinit \
 	basic \
+	dumpauto \
 	local-fs \
 	local-fs-pre \
 	remote-fs \
 	server \
+	swapauto \
+	swaplate \
 	workstation \
 	multi-user \
 	;

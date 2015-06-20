@@ -8,7 +8,8 @@ Description=bsdstats service
 [Service]
 systemdWorkingDirectory=false
 ExecStart=/usr/local/etc/periodic/monthly/300.statistics -nodelay
-Restart=always
+Restart=on-failure
+RemainAfterExit=yes
 
 [Install]
 WantedBy=workstation.target

@@ -5,7 +5,6 @@
 [Unit]
 Description=Mount the %I filesystem (or remount from a initial read-only mount)
 DefaultDependencies=false
-EarlySupervise=true
 Before=local-fs.target
 After=local-fs-pre.target
 
@@ -13,9 +12,9 @@ After=local-fs-pre.target
 # Marking this as oneshot means that it doesn't enter the "running" state until the mount command has exited.
 Type=oneshot
 systemdWorkingDirectory=false
-ExecStartPre=%P %I
+ExecStartPre=%p %I
 ExecStart=true
-ExecStopPost=u%P %I
+ExecStopPost=u%p %I
 RemainAfterExit=yes
 
 [Install]

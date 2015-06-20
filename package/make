@@ -1,8 +1,13 @@
 #!/bin/sh -e
 # See http://skarnet.org./software/compile.html
-if [ \! -d package -o \! -d source ]
+if [ \! -d package ] || [ \! -d source ]
 then
 	echo "You are not in the right directory." 1>&2
+	exit 100
+fi
+if [ \! -d build ]
+then
+	echo "You have not prepared the build area." 1>&2
 	exit 100
 fi
 
@@ -11,4 +16,4 @@ case "`uname`" in
 Linux) cpus="`fgrep -c processor /proc/cpuinfo`" ;;
 *BSD) cpus=4 ;;
 esac
-redo --directory build --jobs "${cpus}" -- all
+exec redo --directory build --jobs "${cpus}" -- all

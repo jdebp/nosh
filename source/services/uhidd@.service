@@ -3,13 +3,13 @@
 ## **************************************************************************
 
 [Unit]
-Description=%P service for device %I
+Description=%p service for device %I
 Wants=kmod@vkbd
 After=kmod@vkbd
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=%P -d %I
+ExecStart=%p -d %I
 Restart=always
 
 [Install]

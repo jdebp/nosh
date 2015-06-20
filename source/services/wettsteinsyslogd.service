@@ -6,6 +6,7 @@
 Description=Wettstein system log daemon
 
 [Service]
+EnvironmentDirectory=env
 systemdWorkingDirectory=false
 # The old-style Wettstein syslogd (sysklogd package) is not socket-activatable and (despite what its manual page claims) is quite different in command-line usage to the original BSD syslogd that it is purportedly based upon.
 ExecStart=syslogd -n

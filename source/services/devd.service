@@ -5,7 +5,6 @@
 [Unit]
 Description=devd daemon
 DefaultDependencies=false
-EarlySupervise=true
 Before=shutdown.target
 After=local-fs.target
 

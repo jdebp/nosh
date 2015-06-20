@@ -1,0 +1,9 @@
+background-fsck
+devd
+devd-log
+kmod@linux
+kmod@svr4
+kmod@sysvmsg
+kmod@sysvsem
+kmod@sysvshm
+nextboot

@@ -8,7 +8,7 @@ Description=Bernstein's content DNS server daemon
 [Service]
 systemdWorkingDirectory=false
 EnvironmentUser=tinydns-d
-EnvironmentDirectory=./env
+EnvironmentDirectory=env
 LimitDATA=300000
 ExecStart=%p
 Restart=always

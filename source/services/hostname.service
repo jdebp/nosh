@@ -3,9 +3,8 @@
 ## **************************************************************************
 
 [Unit]
-Description=Set the dynamic hostname sysinit service
+Description=Set the dynamic hostname
 DefaultDependencies=false
-EarlySupervise=true
 Wants=local-fs.target
 After=local-fs.target
 

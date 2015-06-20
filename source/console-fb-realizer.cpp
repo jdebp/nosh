@@ -2788,7 +2788,7 @@ console_fb_realizer (
 			throw EXIT_FAILURE;
 		}
 
-		for (size_t i(0); i < static_cast<size_t>(rc); ++i) {
+		for (std::size_t i(0); i < static_cast<std::size_t>(rc); ++i) {
 			const struct kevent & e(p[i]);
 			if (EVFILT_VNODE == e.filter) {
 				if (vt.query_buffer_fd() == static_cast<int>(e.ident)) {

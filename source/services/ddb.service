@@ -3,13 +3,15 @@
 ## **************************************************************************
 
 [Unit]
-Description=%P-%I server
+Description=BSD kernel debugger configuration
+Requires=dumpauto.target
 
 [Service]
+Type=oneshot
+EnvironmentDirectory=env
 systemdWorkingDirectory=false
-EnvironmentFile=-/etc/sysconfig/%P-%I
-ExecStart=swift-%I /etc/swift/%I-server.conf
-Restart=always
+ExecStart=test -r ${config} && test -n "`sysctl -Nq debug.ddb.scripting.scripts`" && %p ${config}
+RemainAfterExit=yes
 
 [Install]
-WantedBy=server.target
+WantedBy=workstation.target

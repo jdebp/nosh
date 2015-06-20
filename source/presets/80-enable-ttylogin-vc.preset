@@ -1,0 +1,10 @@
+#
+# Enable user virtual terminal login services
+#
+# This is not a systemd preset.
+# It goes in a special nosh system-manager preset directory.
+# It is used by the nosh-run-user-vt package in order to enable TTY login services on user-space virtual terminals.
+#
+
+enable	ttylogin@vc*.service
+enable	cyclog@ttylogin@vc*.service

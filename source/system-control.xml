@@ -102,7 +102,7 @@ simply follows symbolic links, by convention service bundle directories
 generally live under <filename>/etc/sv</filename>,
 <filename>/run/sv</filename>, or <filename>/var/sv</filename>; and target
 bundle directories generally live under
-<filename>/etc/system-manager/targets</filename>.
+<filename>/etc/service-bundles/targets</filename>.
 </para>
 
 <para>
@@ -162,7 +162,7 @@ When bundles are on a read-only filesystem, such as a CD-ROM,
 <filename>supervise</filename> must be a symbolic link pointing to a directory
 on a read-write filesystem, since supervise directories must be writable.
 One might choose a subdirectory of
-<filename>/run/system-manager/early-supervise/</filename> for example.
+<filename>/run/service-bundles/early-supervise/</filename> for example.
 <command>system-control</command> attempts to create the target of such a
 symbolic link before attempting to load the service, to avoid a chicken-and-egg
 situation with "sysinit" services that are set up this way.
@@ -306,9 +306,9 @@ A <arg choice='plain'><replaceable>name</replaceable></arg> that ends in
 in the standard locations for target bundles:
 </para>
 <orderedlist>
-<listitem><para><filename>/run/system-manager/targets/</filename></para></listitem>
-<listitem><para><filename>/etc/system-manager/targets/</filename></para></listitem>
-<listitem><para><filename>/var/system-manager/targets/</filename></para></listitem>
+<listitem><para><filename>/run/service-bundles/targets/</filename></para></listitem>
+<listitem><para><filename>/etc/service-bundles/targets/</filename></para></listitem>
+<listitem><para><filename>/var/service-bundles/targets/</filename></para></listitem>
 </orderedlist>
 </listitem>
 <listitem><para>
@@ -495,8 +495,8 @@ equivalent to <command>start</command>.
 <command>system-control</command>
 <arg choice="req">preset</arg>
 <arg choice='opt'>--prefix <replaceable>prefix</replaceable></arg> 
-<arg choice='opt'>--no_system</arg> 
-<arg choice='opt'>--no_rcconf</arg> 
+<arg choice='opt'>--no-system</arg> 
+<arg choice='opt'>--no-rcconf</arg> 
 <arg choice='opt'>--ttys</arg> 
 <arg choice='opt'>--dry-run</arg> 
 <arg rep='repeat'><replaceable>names</replaceable></arg>
@@ -557,12 +557,12 @@ Preset information can be taken from one of several sources:
 systemd and system-manager preset information given in <filename>*.preset</filename> files in the following directories:
 </para>
 <orderedlist>
-<listitem><para><filename>/etc/system-manager/presets/</filename></para></listitem>
+<listitem><para><filename>/etc/system-control/presets/</filename></para></listitem>
 <listitem><para><filename>/etc/systemd/system-preset/</filename></para></listitem>
-<listitem><para><filename>/usr/share/system-manager/presets/</filename></para></listitem>
+<listitem><para><filename>/usr/share/system-control/presets/</filename></para></listitem>
 <listitem><para><filename>/lib/systemd/system-preset/</filename></para></listitem>
 <listitem><para><filename>/usr/lib/systemd/system-preset/</filename></para></listitem>
-<listitem><para><filename>/usr/local/etc/system-manager/presets/</filename></para></listitem>
+<listitem><para><filename>/usr/local/etc/system-control/presets/</filename></para></listitem>
 <listitem><para><filename>/usr/local/lib/systemd/system-preset/</filename></para></listitem>
 </orderedlist>
 <para>
@@ -571,8 +571,7 @@ Although its doco lists one more (<filename>/run/systemd/system-preset</filename
 In addition to those <command>preset</command> looks in extra directories where systemd presets can be overridden by system-manager-specific information; allowing a system administrator or package writer to preset things one way for systemd and another way for the <command>preset</command> command.
 </para>
 <para>
-As with systemd 
-earlier preset directories override later ones;
+As with systemd earlier preset directories override later ones;
 the contents of files with lexically earlier names override the contents of files with lexically later names;
 and
 the default state, in the absence of an explicit preset, is "enabled".
@@ -583,12 +582,22 @@ Directives are matched against
 (unless the <arg choice="plain">--no-rcconf</arg> command line option is set)
 <filename>/etc/rc.conf</filename> and <filename>/etc/rc.conf.local</filename>
 preset information, specifically the 
-<envar><replaceable>prefix</replaceable><replaceable>name</replaceable>_enable</envar> 
+<envar><replaceable>name</replaceable>_enable</envar> 
 variable,
 interpreting the values <code>true</code>, <code>1</code>, <code>yes</code>,
 and <code>on</code> as enable, and any other values (including specifically
 <code>false</code>, <code>0</code>, <code>no</code>, and <code>off</code>) as
 disable.
+</para>
+<para>
+The variable names are matched against just <replaceable>name</replaceable>
+to allow one to use a main service name as
+<replaceable>name</replaceable> and combine it with a log service template
+<replaceable>prefix</replaceable> such as 
+<code>cyclog@</code> or <code>s6-multilog@</code>, 
+on the grounds that tradition
+<filename>/etc/rc.conf</filename> and <filename>/etc/rc.conf.local</filename>
+contents do not make explicit provision for separate logging services.
 </para></listitem>
 <listitem><para>
 (if the <arg choice="plain">--ttys</arg> command line option is set)
@@ -596,18 +605,29 @@ disable.
 preset information, specifically the <code>on</code> and <code>off</code> flags
 as enable and disable, respectively.
 The <code>onifconsole</code> flag is also recognized and processed with reference to the currently active console device (on BSD systems only).
-If <filename>/etc/ttys</filename> does not exist, as is usually the case on
-Linux operating systems, all TTYs default to preset enabled.
+If <filename>/etc/ttys</filename> does not exist, as is usually the case on Linux operating systems, all TTYs default to preset enabled.
 </para>
 <para>
 The terminal names are matched against just <replaceable>name</replaceable>.
-This allows one to use an ordinary TTY device name as
-<replaceable>name</replaceable> and combine it with a "templatized" bundle name
-<replaceable>prefix</replaceable> such as 
+This allows one to use an ordinary TTY device name as <replaceable>name</replaceable> and combine it with a "templatized" bundle name <replaceable>prefix</replaceable> such as 
 <code>ttylogin@</code>, 
 <code>getty@</code>, 
 or
 <code>autovt@</code>.
+</para></listitem>
+<listitem><para>
+(if the <arg choice="plain">--fstab</arg> command line option is set)
+<filename>/etc/fstab</filename> preset information, specifically the <code>noauto</code> flag as disable.
+</para>
+<para>
+The device and directory names are matched against just <replaceable>name</replaceable>, after unescaping it.
+This allows one to use an ordinary device or directory name as <replaceable>name</replaceable> and combine it with a "templatized" bundle name <replaceable>prefix</replaceable> such as 
+<code>mount@</code>, 
+<code>fsck@</code>, 
+<code>swap@</code>, 
+or
+<code>dump@</code>.
+This is designed in particular for use with service bundles generated by the <command>convert-fstab-services</command> subcommand.
 </para></listitem>
 </itemizedlist>
 
@@ -784,7 +804,8 @@ The options are ignored.
 <arg choice="req">convert-systemd-units</arg>
 <arg>--bundle-root <replaceable>root</replaceable></arg> 
 <arg>--alt-escape</arg> 
-<arg>--unescape-instance</arg> 
+<arg>--etc-bundle</arg> 
+<arg>--escape-instance</arg> 
 <group choice='req'>
 <arg choice='plain'><replaceable>name</replaceable>.target</arg>
 <arg choice='plain'><replaceable>name</replaceable>.socket</arg>
@@ -794,14 +815,8 @@ The options are ignored.
 </cmdsynopsis>
 
 <para>
-This subcommand takes some systemd unit files and generates from them a service
-bundle in the current directory (or in the 
-<arg choice='plain'><replaceable>root</replaceable></arg>
-directory) that contains scripts, dependencies, and autoboot dependency
-configuration information.
-The bundle is not enabled by the conversion process, but can be started and
-enabled as it stands, with the <command>start</command> and
-<command>preset</command> subcommands, just like any other service bundle.
+This subcommand takes some systemd unit files and generates from them a service bundle in the current directory (or in the <arg choice='plain'><replaceable>root</replaceable></arg> directory) that contains scripts, dependencies, and autoboot dependency configuration information.
+The bundle is not enabled by the conversion process, but can be started and enabled as it stands, with the <command>start</command> and <command>preset</command> subcommands, just like any other service bundle.
 </para>
 
 <para>
@@ -817,74 +832,55 @@ then that target unit file is converted into a target bundle directory named
 </listitem>
 <listitem>
 <para>
-If <filename><replaceable>name</replaceable>.socket</filename> is specified,
-and it has <code>Accept=true</code>, then it is combined with a
-<filename><replaceable>name</replaceable>@.service</filename> service unit
-file
-to make a service bundle directory named
-<filename><replaceable>name</replaceable>/</filename>.
+If <filename><replaceable>name</replaceable>.socket</filename> is specified, and it has <code>Accept=true</code>, then it is combined with a <filename><replaceable>name</replaceable>@.service</filename> service unit file to make a service bundle directory named <filename><replaceable>name</replaceable>/</filename>.
 </para>
 </listitem>
 <listitem>
 <para>
-If <filename><replaceable>name</replaceable>.socket</filename> is specified,
-and it has <code>Accept=false</code>, then it is combined with a
-<filename><replaceable>name</replaceable>.service</filename> service unit
-file
-to make a service bundle directory named
-<filename><replaceable>name</replaceable>/</filename>.
+If <filename><replaceable>name</replaceable>.socket</filename> is specified, and it has <code>Accept=false</code>, then it is combined with a <filename><replaceable>name</replaceable>.service</filename> service unit file to make a service bundle directory named <filename><replaceable>name</replaceable>/</filename>.
 </para>
 </listitem>
 <listitem>
 <para>
-If <filename><replaceable>name</replaceable>.service</filename> is specified,
-then that service unit file is converted into a service bundle directory named
-<filename><replaceable>name</replaceable>/</filename>.
+If <filename><replaceable>name</replaceable>.service</filename> is specified, then that service unit file is converted into a service bundle directory named <filename><replaceable>name</replaceable>/</filename>.
 </para>
 </listitem>
 <listitem>
 <para>
-If
-<filename><replaceable>name</replaceable>@<replaceable>parameter</replaceable>.service</filename>
-is specified, then that service unit file is converted using
-<replaceable>parameter</replaceable> for parameter substitution into a service
-bundle directory named
-<filename><replaceable>name</replaceable>@<replaceable>parameter</replaceable>/</filename>.
+If <filename><replaceable>name</replaceable>@<replaceable>parameter</replaceable>.service</filename> is specified, then that service unit file is converted using <replaceable>parameter</replaceable> for parameter substitution into a service bundle directory named <filename><replaceable>name</replaceable>@<replaceable>parameter</replaceable>/</filename>.
 The systemd dual escaped+unescaped forms are available in parameter substitution.
 </para>
 <para>
-Normally <replaceable>parameter</replaceable> is taken to be the unescaped form
-and is escaped during parameter substitution.
-If the <arg>--unescape-instance</arg> option is used, then
-<replaceable>parameter</replaceable> is instead taken to be the escaped form
-and will be unescaped into its original pathname form.
-This is generally used where <replaceable>parameter</replaceable> represents
-something in the filesystem, but has to be pre-escaped in order to result in a
-service bundle directory name without pathname components.
+Normally <replaceable>parameter</replaceable> is taken to be the escaped form and is unescaped during parameter substitution.
+This is generally used where <replaceable>parameter</replaceable> represents something in the filesystem, but has had to be pre-escaped in order to result in a service name without pathname components.
+If the <arg choice='plain'>--escape-instance</arg> option is used, then <replaceable>parameter</replaceable> is instead taken to be the original, unescaped, pathname form and will be escaped into its service name form.
 </para>
 <para>
-The normal escaping algorithm is the conventional systemd one that escapes
-<filename>/</filename> and <filename>-</filename>.
-If the <arg>--alt-escape</arg> option is used, then
-an alternative escaping algorithm that escapes
+The normal escaping algorithm is the conventional systemd one that escapes <filename>/</filename> and <filename>-</filename>.
+If the <arg choice='plain'>--alt-escape</arg> option is used, then an alternative escaping algorithm that escapes
 <filename>/</filename>, 
 <filename>\</filename>,
 <filename>,</filename>,
 <filename>:</filename>, and 
 <filename>@</filename>
 is used instead.
-This is generally used where the unescaped form is something in the filesystem
-and the escaped form is an account name in an account database.
+</para>
+<para>
+The <arg choice='plain'>--alt-escape</arg> and <arg choice='plain'>--escape-instance</arg> options are generally used together, such that the <replaceable>parameter</replaceable> is the unescaped service bundle directory name and the escaped form is (for example) an account name in an account database.
 </para>
 </listitem>
 </itemizedlist>
 
 <para>
-Conversion of every possible systemd unit file to a service bundle requires a
-human being.
-This subcommand converts systemd units that fall within certain bounds, which
-(given that most services are fairly simple) should be the majority of systemd
-units in existence.
+Unit files can reference other services.
+The assumption is that all service bundles are under one common <arg choice='plain'><replaceable>root</replaceable></arg> and all target bundles under another; so service-to-service dependencies and orderings can be relative pathnames whilst service-to-target and target-to-service dependenceis and orderings have to be absolute pathnames.
+The <arg choice='plain'>--etc-bundle</arg> option changes this assumption, such that target bundles are now assumed to be reachable with relative pathnames from the converted service bundle; as is the case for special early bootstrap service bundles that live in <filename>/etc/service-bundles/services/</filename>.
+It also forces the bundle to be marked as an <code>EarlySupervise</code> bundle whose <filename>supervise/</filename> directory lives in a tmpfs.
+</para>
+
+<para>
+Conversion of every possible systemd unit file to a service bundle requires a human being.
+This subcommand converts systemd units that fall within certain bounds, which (given that most services are fairly simple) should be the majority of systemd units in existence.
 These bounds are:
 </para>
 
@@ -894,8 +890,7 @@ These bounds are:
 <para>
 The service must be a simple, forking, or oneshot service.
 DBus and notify services are not converted.
-For best results, avoid having forking services in the first place, and change
-them into simple services wherever possible.
+For best results, avoid having forking services in the first place, and change them into simple services wherever possible.
 </para>
 </listitem>
 
@@ -910,18 +905,15 @@ The <filename>run</filename>/<filename>service</filename> script makes use of
 <citerefentry><refentrytitle>tcp-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and
 <citerefentry><refentrytitle>local-stream-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 to spawn services, either to listen to the accepting socket or to respond on connecting sockets.
-FIFOs and sequential packet sockets are not supported, in the absence of similar
-tools.
+FIFOs and sequential packet sockets are not supported, in the absence of similar tools.
 </para>
 </listitem>
 
 <listitem>
 
 <para>
-Some of the more esoteric mechanisms, and any undocumented settings, in systemd
-are not converted.
-The converter will print a warning for any setting in the unit files that it
-does not use for conversion.
+Some of the more esoteric mechanisms, and any undocumented settings, in systemd are not converted.
+The converter will print a warning for any setting in the unit files that it does not use for conversion.
 These will include:
 </para>
 
@@ -929,26 +921,20 @@ These will include:
 
 <listitem>
 <para>
-Specialized options for conditionally enabling the service, such as
-<code>conditionpathexists</code> and <code>conditiondirectorynotempty</code>,
-are not converted.
-These are almost always in practice used to make services run on specific
-platforms and not on others, and should be replaced with hooks into the
-<command>preset</command> mechanism.
+Specialized options for conditionally enabling the service, such as <code>conditionpathexists</code> and <code>conditiondirectorynotempty</code>, are not converted.
+These are almost always in practice used to make services run on specific platforms and not on others, or dependent from the presence of installed packages, and should be replaced with hooks into the <command>preset</command> mechanism.
 </para>
 </listitem>
 
 <listitem>
 <para>
-Other highly specialized options that even systemd recommends against, such as
-<code>fsckpassno</code>, are not converted.
+Other highly specialized options that even systemd recommends against, such as <code>fsckpassno</code>, are not converted.
 </para>
 </listitem>
 
 <listitem>
 <para>
-Specialized options for TTY management, such as
-<code>standardinput=tty-force</code>, are not converted.
+Specialized options for TTY management, such as <code>standardinput=tty-force</code>, are not converted.
 Instead of these, employ the
 <citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
@@ -959,17 +945,14 @@ and related utilities in the <filename>run</filename> script.
 <listitem>
 <para>
 Non-standard substitutes for <code>SIGTERM</code> via <code>killsignal</code> are not converted.
-In practice, this is primarily used to substitute <code>SIGHUP</code> for
-use with "services" that are actually interactive login shells.
+In practice, this is primarily used to substitute <code>SIGHUP</code> for use with "services" that are actually interactive login shells.
 </para>
 </listitem>
 
 <listitem>
 <para>
-Linux-only mechanisms such as <code>capabilityboundingset</code>, I/O
-scheduling, and control groups are not converted.
-This is merely down to a lack of known chaining commands for manipulating
-those mechanisms.
+Linux-only mechanisms such as <code>capabilityboundingset</code>, I/O scheduling, and control groups are not converted.
+This is merely down to a lack of known chaining commands for manipulating those mechanisms.
 </para>
 </listitem>
 
@@ -985,39 +968,73 @@ those mechanisms.
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">convert-fstab-services</arg>
+<arg>--etc-bundle</arg> 
 <arg>--bundle-root <replaceable>root</replaceable></arg> 
 </cmdsynopsis>
 
 <para>
-This subcommand takes the entries in <filename>/etc/fstab</filename> and
-generates from them a set of service bundles in the current directory (or in
-the 
-<arg choice='plain'><replaceable>root</replaceable></arg>
-directory) that contains scripts, dependencies, and autoboot dependency
-configuration information.
-The bundles are not enabled by the conversion process, but can be started and
-enabled as they stand, with the <command>start</command> and
-<command>preset</command> subcommands, just like any other service bundle.
+This subcommand takes the entries in <filename>/etc/fstab</filename> and generates from them a set of service bundles in the current directory (or in the <arg choice='plain'><replaceable>root</replaceable></arg> directory) that contains scripts, dependencies, and autoboot dependency configuration information.
+</para>
+
+<itemizedlist>
+<listitem>
+<para>
+For each swap entry:
+</para>
+
+<itemizedlist>
+<listitem>
+<para>
+It always creates a <filename>swap@<replaceable>device</replaceable></filename> bundle.
+The bundle is created as <filename>wanted-by/</filename> either the system <code>swapauto.target</code> or the system <code>swaplate.target</code>, so that it is started during autoboot when it is enabled.
+The choice depends from whether the entry is marked <code>late</code>.
+</para>
+<para>
+If the entry is marked <code>discard</code> then it creates a bundle that passes the <arg choice='plain'>--discard</arg> flag to <citerefentry><refentrytitle>swapon</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+If the entry is marked <code>pri=<replaceable>N</replaceable></code> then it creates a bundle that passes the <arg choice='plain'>--priority <replaceable>N</replaceable></arg> flag.
+</para>
+</listitem>
+<listitem>
+<para>
+It always creates a <filename>dump@<replaceable>device</replaceable></filename> bundle.
+The bundle is created as <filename>wanted-by/</filename> the system <code>dumpauto.target</code>, so that it is started during autoboot when it is enabled.
+</para>
+</listitem>
+</itemizedlist>
+
+</listitem>
+<listitem>
+<para>
+For each non-swap entry:
+</para>
+<itemizedlist>
+<listitem>
+<para>
+It always creates a <filename>mount@<replaceable>directory</replaceable></filename> bundle.
+The bundle is created as <filename>wanted-by/</filename> the system <code>local-fs.target</code>, so that it is started during autoboot when it is enabled.
+</para>
+</listitem>
+<listitem>
+<para>
+If the entry specifies a "pass" number that is greater than zero, it also creates <filename>fsck@<replaceable>directory</replaceable></filename> bundle.
+It is ordered <filename>before/</filename> the respective <filename>mount@<replaceable>directory</replaceable></filename> bundle, and is <filename>wanted-by/</filename> it.
+So when the bundle is enabled <command>fsck</command> is run before the volume is actually mounted.
+</para>
+</listitem>
+</itemizedlist>
+
+</listitem>
+</itemizedlist>
+
+<para>
+The bundles are not enabled by the conversion process, but can be started and enabled as they stand, with the <command>start</command> and <command>preset</command> subcommands, just like any other service bundle.
+With <command>preset</command> the <arg choice='plain'>--fstab</arg> option is appropriate of course.
 </para>
 
 <para>
-For each entry, a
-<filename>mount@<replaceable>directory</replaceable></filename> 
-bundle is always created.
-Where the entry is not marked <code>noauto</code> the bundle is created as
-<filename>wanted-by/</filename> the system <code>local-fs.target</code>,
-so that it is started during autoboot when it is enabled.
-</para>
-
-<para>
-If the entry specifies a "pass" number that is greater than zero, a
-<filename>fsck@<replaceable>directory</replaceable></filename> bundle is
-also created.
-It is ordered <filename>before/</filename> the respective
-<filename>mount@<replaceable>directory</replaceable></filename> bundle, and is
-<filename>wanted-by/</filename> it.
-So when the bundle is enabled <command>fsck</command> is run before the volume
-is actually mounted.
+The assumption is that all service bundles are under one common <arg choice='plain'><replaceable>root</replaceable></arg> and all target bundles under another; so service-to-service dependencies and orderings can be relative pathnames whilst service-to-target and target-to-service dependenceis and orderings have to be absolute pathnames.
+The <arg choice='plain'>--etc-bundle</arg> option changes this assumption, such that target bundles are now assumed to be reachable with relative pathnames from the converted service bundle; as is the case for special early bootstrap service bundles that live in <filename>/etc/service-bundles/services/</filename>.
+It also forces the bundle to be marked as an <code>EarlySupervise</code> bundle whose <filename>supervise/</filename> directory lives in a tmpfs.
 </para>
 
 </refsection>
@@ -1107,7 +1124,7 @@ on BSD and
 <para>
 Several standard targets are defined.
 They conventionally live in the
-<filename>/etc/system-manager/targets/</filename> directory.
+<filename>/etc/service-bundles/targets/</filename> directory.
 </para>
 
 <para>
@@ -1122,76 +1139,51 @@ Three standard targets are started by the <command>init</command> subcommand.
 </term>
 <listitem>
 <para>
-This target is the normal target started by the <command>init</command>
-subcommand.
-This should bring up with it all of the services involved in the normal
-operation of the system, and an administrator-defined set of multiple login
-user interfaces that may include both TUI and GUI login prompts.
+This target is the normal target started by the <command>init</command> subcommand.
+This should bring up with it all of the services involved in the normal operation of the system, and an administrator-defined set of multiple login user interfaces that may include both TUI and GUI login prompts.
 </para><para>
-It "wants" the <filename>workstation</filename>,
-<filename>server</filename>, and <filename>multi-user</filename> targets.
-Thus starting it starts the union of all services wanted by those
-targets.
+It "wants" the <filename>workstation</filename>, <filename>server</filename>, and <filename>multi-user</filename> targets.
+Thus starting it starts the union of all services wanted by those targets.
 It is not ordered with respect to those targets.
-So in the absence of orderings in between the individual services wanted by
-those targets, defined in their bundles, all wanted workstation, server, and
-multi-user services are brought up in parallel.
+So in the absence of orderings in between the individual services wanted by those targets, defined in their bundles, all wanted workstation, server, and multi-user services are brought up in parallel.
 </para>
 </listitem>
 </varlistentry>
 
 <varlistentry><term><filename>emergency</filename></term>
 <listitem><para>
-This target is the target started by the <command>init</command>
-subcommand with the <arg>-b</arg> option.
-Starting it is intended to bring up the system in "emergency mode",
-bringing up no (non-sysinit) services, mounting no (non-system) volumes,
-and bringing up just "emergency mode" services, such as a secure login
-on the default terminal.
+This target is the target started by the <command>init</command> subcommand with the <arg>-b</arg> option.
+Starting it is intended to bring up the system in "emergency mode", bringing up no (non-sysinit) services, mounting no (non-system) volumes, and bringing up just "emergency mode" services, such as a secure login on the default terminal.
 </para><para>
-It "wants" no other targets or services, although <filename>sysinit</filename>
-will have already been started as part of system manager initialization.
-So in "emergency mode" (if nothing else has been started) only the system
-filesystems are available, and not necessarily even read-write.
+It "wants" no other targets or services, although <filename>sysinit</filename> will have already been started as part of system manager initialization.
+So in "emergency mode" (if nothing else has been started) only the system filesystems are available, and not necessarily even read-write.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><filename>rescue</filename></term>
 <listitem><para>
-This target is the target started by the <command>init</command>
-subcommand with the <arg>-s</arg> option.
-Starting it is intended to bring up the system in "rescue mode",
-bringing up with it the fundamental system initialization services
-and a secure login user interface.
+This target is the target started by the <command>init</command> subcommand with the <arg>-s</arg> option.
+Starting it is intended to bring up the system in "rescue mode", bringing up with it the fundamental system initialization services and a secure login user interface.
 </para><para>
-It "wants" the <filename>sysinit</filename> target.
-It "wants" the <filename>sysinit</filename> target, but not the
-<filename>basic</filename> target.
+It "wants" the <filename>sysinit</filename> target, but not the <filename>basic</filename> target.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><filename>update</filename></term>
 <listitem><para>
-This target is the target started by the <command>init</command>
-subcommand with the <arg>--update</arg> option.
-Starting it is intended to bring up the system in "update mode",
-bringing up with it the fundamental system initialization services
-and the system update utility.
+This target is the target started by the <command>init</command> subcommand with the <arg>--update</arg> option.
+Starting it is intended to bring up the system in "update mode", bringing up with it the fundamental system initialization services and the system update utility.
 </para><para>
-It "wants" the <filename>sysinit</filename> target.
-It "wants" the <filename>sysinit</filename> target, but not the
-<filename>basic</filename> target.
+It "wants" the <filename>sysinit</filename> target, but not the <filename>basic</filename> target.
 </para></listitem>
 </varlistentry>
 
 </variablelist>
 
 <para>
-The <command>poweroff</command>, <command>halt</command>, and
-<command>reboot</command> subcommands invoke several standard targets
-indirectly.
+The <command>poweroff</command>, <command>halt</command>, and <command>reboot</command> subcommands invoke several standard targets indirectly.
 </para>
 
 <variablelist>
@@ -1201,16 +1193,10 @@ indirectly.
 <term><filename>halt</filename></term>
 <term><filename>reboot</filename></term>
 <listitem><para>
-These three targets both "want" the <filename>shutdown</filename> target and
-order themselves to start after it.
-Thus starting them shuts down all services and then, once this has been done,
-starts these targets.
-They are usually started by the System Manager, in response to system control
-commands requesting system reboot, halt, or power off.
-When they (finally) start, they invoke the <command>reboot</command>,
-<command>halt</command>, and <command>poweroff</command> subcommands of
-<command>system-control</command> with the <arg choice="req">-f</arg>
-command-line option.
+These three targets both "want" the <filename>shutdown</filename> target and order themselves to start after it.
+Thus starting them shuts down all services and then, once this has been done, starts these targets.
+They are usually started by the System Manager, in response to system control commands requesting system reboot, halt, or power off.
+When they (finally) start, they invoke the <command>reboot</command>, <command>halt</command>, and <command>poweroff</command> subcommands of <command>system-control</command> with the <arg choice="req">-f</arg> command-line option.
 This signals the System Manager to enact the actual reboot, halt, or power-off action.
 </para></listitem>
 </varlistentry>
@@ -1227,48 +1213,35 @@ is process #1, system halt operates as follows:
 <listitem>
 <para>
 The superuser runs <command>system-control</command> <arg choice='req'>halt</arg>.
-This sends <code>SIGUSR1</code> (on BSD) or <code>SIGRTMIN + 3</code> (on Linux)
-to the system manager process.
+This sends <code>SIGUSR1</code> (on BSD) or <code>SIGRTMIN + 3</code> (on Linux) to the system manager process.
 </para>
 </listitem>
 <listitem>
 <para>
-In response to that signal, the system manager runs
-<command>system-control</command> <arg choice='req'>activate</arg> <arg choice="plain">halt</arg>.
+In response to that signal, the system manager runs <command>system-control</command> <arg choice='req'>activate</arg> <arg choice="plain">halt</arg>.
 </para>
 </listitem>
 <listitem>
 <para>
-<command>system-control</command> does everything necessary for activating the
-<filename>halt</filename> target, including stopping all other (conflicting)
-services and targets.
-In the service control ordering starting the <filename>halt</filename> target
-comes after processing every other service, because of the ordering between
-<filename>halt</filename> and <filename>shutdown</filename> and between
-<filename>shutdown</filename> and everything else.
+<command>system-control</command> does everything necessary for activating the <filename>halt</filename> target, including stopping all other (conflicting) services and targets.
+In the service control ordering starting the <filename>halt</filename> target comes after processing every other service, because of the ordering between <filename>halt</filename> and <filename>shutdown</filename> and between <filename>shutdown</filename> and everything else.
 </para>
 </listitem>
 <listitem>
 <para>
-When the <filename>halt</filename> target is finally started it runs
-<command>system-control</command> <arg choice='req'>halt</arg> <arg choice="req">-f</arg>.
+When the <filename>halt</filename> target is finally started it runs <command>system-control</command> <arg choice='req'>halt</arg> <arg choice="req">-f</arg>.
 This sends <code>SIGRTMIN + 13</code> to the system manager process.
 </para>
 </listitem>
 <listitem>
 <para>
-In response to that signal, the system manager performs the finalization action
-of actually telling the operating system kernel to halt the system, after various
-standard system shutdown actions such as flushing the filesystem cache.
+In response to that signal, the system manager performs the finalization action of actually telling the operating system kernel to halt the system, after various standard system shutdown actions such as flushing the filesystem cache.
 </para>
 </listitem>
 </orderedlist>
 
 <para>
-User-supplied services and targets that are auto-started at system bootstrap
-should list themselves in the <filename>wants/</filename> and
-<filename>conflicts/</filename> lists of subordinate targets (via the
-<command>enable</command> and <command>disable</command> subcommands).
+User-supplied services and targets that are auto-started at system bootstrap should list themselves in the <filename>wants/</filename> and <filename>conflicts/</filename> lists of subordinate targets (via the <command>enable</command> and <command>disable</command> subcommands).
 These targets are usually not started explicitly.
 </para>
 
@@ -1276,38 +1249,28 @@ These targets are usually not started explicitly.
 
 <varlistentry><term><filename>workstation</filename></term>
 <listitem><para>
-All services that normally form part of bringing the system up as a "workstation"
-should be listed in this target's 
-<filename>wants/</filename> list.
-Such services will include things such as the
-<citerefentry><refentrytitle>cron</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-daemon.
-This target "wants" the <filename>basic</filename> target, so starting it
-(directly or indirectly) will bring the basic system up.
+All services that normally form part of bringing the system up as a "workstation" should be listed in this target's <filename>wants/</filename> list.
+Such services will include things such as the <citerefentry><refentrytitle>cron</refentrytitle><manvolnum>1</manvolnum></citerefentry> daemon.
+This target "wants" the <filename>basic</filename> target, so starting it (directly or indirectly) will bring the basic system up.
+It is a collection that is used to group services, but is not an ordering milestone and has no <filename>before/</filename> or <filename>after/</filename> relationships.
 </para></listitem>
 </varlistentry>
 
 <varlistentry><term><filename>server</filename></term>
 <listitem><para>
-All services that normally form part of bringing the system up as a "server"
-should be listed in this target's 
-<filename>wants/</filename> list.
-Such services will include things such as HTTP/FTP/SMTP daemons, and
-daemons that provide services over the network.
-This target "wants" the <filename>basic</filename> target, so starting it
-(directly or indirectly) will bring the basic system up.
+All services that normally form part of bringing the system up as a "server" should be listed in this target's <filename>wants/</filename> list.
+Such services will include things such as HTTP/FTP/SMTP daemons, and daemons that provide services over the network.
+This target "wants" the <filename>basic</filename> target, so starting it (directly or indirectly) will bring the basic system up.
+It is a collection that is used to group services, but is not an ordering milestone and has no <filename>before/</filename> or <filename>after/</filename> relationships.
 </para></listitem>
 </varlistentry>
 
 <varlistentry><term><filename>multi-user</filename></term>
 <listitem><para>
-All services that normally form part of bringing up multi-user logins
-should be listed in this target's 
-<filename>wants/</filename> list.
-Such services will include things such as the login services for terminals
-(real and virtual) and X.
-This target "wants" the <filename>basic</filename> target, so starting it
-(directly or indirectly) will bring the basic system up.
+All services that normally form part of bringing up multi-user logins should be listed in this target's <filename>wants/</filename> list.
+Such services will include things such as the login services for terminals (real and virtual) and X.
+This target "wants" the <filename>basic</filename> target, so starting it (directly or indirectly) will bring the basic system up.
+It is a collection that is used to group services, but is not an ordering milestone and has no <filename>before/</filename> or <filename>after/</filename> relationships.
 </para></listitem>
 </varlistentry>
 
@@ -1315,13 +1278,8 @@ This target "wants" the <filename>basic</filename> target, so starting it
 <listitem><para>
 Starting this target is intended to shut down all running normal services.
 All normal services should be in this target's <filename>conflicts/</filename> list.
-It is also an ordering milestone, in that all services listed in its
-<filename>conflicts/</filename> list should also be listed in its
-<filename>after/</filename> list.
-<filename>shutdown</filename> is then listed in the <filename>after/</filename>
-list of the <filename>poweroff</filename>, <filename>halt</filename>, and
-<filename>reboot</filename> target to ensure that they are only started after
-the system has entered "shutdown mode".
+It is also an ordering milestone, in that all services listed in its <filename>conflicts/</filename> list should also be listed in its <filename>after/</filename> list.
+<filename>shutdown</filename> is then listed in the <filename>after/</filename> list of the <filename>poweroff</filename>, <filename>halt</filename>, and <filename>reboot</filename> target to ensure that they are only started after the system has entered "shutdown mode".
 </para></listitem>
 </varlistentry>
 
@@ -1335,75 +1293,79 @@ Core services and targets are incorporated into a set of further subordinate tar
 
 <varlistentry><term><filename>basic</filename></term>
 <listitem><para>
-This target implies the "basic" system, excluding all workstation, server,
-and multi-user services.
+This target implies the "basic" system, excluding all workstation, server, and multi-user services.
 It "wants" the <filename>sysinit</filename> target.
-It is not an ordering milestone and has an empty <filename>after/</filename>
-list.
+It is a collection that is used to group services, but is not an ordering milestone and has no <filename>before/</filename> or <filename>after/</filename> relationships.
 </para></listitem>
 </varlistentry>
 
 <varlistentry><term><filename>sysinit</filename></term>
 <listitem><para>
-All fundamental system initialization services and steps should be listed in
-this target's <filename>wants/</filename> list.
-Such services will include things such as the <filename>hostname</filename>
-service that runs
-<citerefentry><refentrytitle>set-dynamic-hostname</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-the <filename>machine-id</filename> service that runs
-<citerefentry><refentrytitle>setup-machine-id</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-the <filename>local-fs</filename> target, and the
-<filename>remote-fs</filename> target.
-It is not an ordering milestone and has an empty <filename>after/</filename>
-list.
+All fundamental system initialization services and steps should be listed in this target's <filename>wants/</filename> list.
+Such services will include things such as the <filename>hostname</filename> service that runs <citerefentry><refentrytitle>set-dynamic-hostname</refentrytitle><manvolnum>1</manvolnum></citerefentry>, the <filename>machine-id</filename> service that runs <citerefentry><refentrytitle>setup-machine-id</refentrytitle><manvolnum>1</manvolnum></citerefentry>, the <filename>local-fs</filename> target, and the <filename>remote-fs</filename> target.
+It is a collection that is used to group all such services, but is not an ordering milestone and has no <filename>before/</filename> or <filename>after/</filename> relationships.
 </para></listitem>
 </varlistentry>
 
 <varlistentry><term><filename>local-fs</filename></term>
 <listitem><para>
-All system initialization services and steps for checking and mounting local
-filesystems, including remounting the root filesystem in read-write mode,
-should be listed in this target's <filename>wants/</filename> and
-<filename>after/</filename> lists.
-This target is an ordering milestone, in that all services listed in its
-<filename>wants/</filename> list should also be listed in its
-<filename>after/</filename> list.
-One can thus list <filename>local-fs</filename> in the
-<filename>after/</filename> list of a service or target to ensure that it is
-only brought up after local filesystems have been mounted and checked.
+This "local filesystems" target is an ordering milestone and a collection, in that all services listed in its <filename>wants/</filename> list should also be listed in its <filename>after/</filename> list.
+All system initialization services and steps for checking and mounting local filesystems, including remounting the root filesystem in read-write mode, should be in those lists.
+One can thus list <filename>local-fs</filename> in the <filename>after/</filename> list of a service or target to ensure that it is only brought up after local filesystems have been mounted and checked.
 </para>
 <para>
-Note that services encompassed by this target may not rely upon filesystems
-being checked and mounted, nor upon the root filesystem being mounted
-read-write.
-To handle the latter, in particular, their <filename>supervise/</filename>
-subdirectories should be symbolic links to a suitable subdirectory of
-<filename>/run/system-manager/early-supervise</filename>.
+Note that services encompassed by this target may not rely upon filesystems being checked and mounted, nor upon the root filesystem being mounted read-write.
+To handle the latter, in particular, their <filename>supervise/</filename> subdirectories should be symbolic links to a suitable subdirectory of <filename>/run/service-bundles/early-supervise</filename>.
 </para></listitem>
 </varlistentry>
 
 <varlistentry><term><filename>remote-fs</filename></term>
 <listitem><para>
-All system initialization services and steps for checking and mounting remote
-filesystems should be listed in this target's <filename>wants/</filename> and
-<filename>after/</filename> lists.
-This target is an ordering milestone, in that all services listed in its
-<filename>wants/</filename> list should also be listed in its
-<filename>after/</filename> list.
-One can thus list <filename>remote-fs</filename> in the
-<filename>after/</filename> list of a service or target to ensure that it is
-only brought up after remote filesystems have been mounted and checked.
+This "remote filesystems" target is an ordering milestone and a collection, in that all services listed in its <filename>wants/</filename> list should also be listed in its <filename>after/</filename> list.
+All system initialization services and steps for checking and mounting remote filesystems should be in those lists.
+One can thus list <filename>remote-fs</filename> in the <filename>after/</filename> list of a service or target to ensure that it is only brought up after remote filesystems have been mounted and checked.
+</para></listitem>
+</varlistentry>
+
+<varlistentry><term><filename>local-fs-pre</filename></term>
+<listitem><para>
+This "local filesystems precursor" target is not a collection; its <filename>wants/</filename> list should be empty.
+It is solely an ordering milestone, that is brought in only if the services that want to order before it are themselves brought in.
+It exists because system initialization services that need to occur before any filesystem checks or mounts, usually special services that initialize an interactive UI for <citerefentry><refentrytitle>fsck</refentrytitle><manvolnum>1</manvolnum></citerefentry>, do not have another way to hold the checks/mounts from commencing until they are done.
+Such services should list this target in their <filename>before/</filename> lists and <filename>wants/</filename> lists.
+Filesystem checks and mounts should list this target (only) in their <filename>after/</filename> lists, so that they order relative to it if the target is brought in but do not themselves bring it in.
 </para></listitem>
 </varlistentry>
 
 <varlistentry><term><filename>name-services</filename></term>
 <listitem><para>
-This target is primarily an ordering milestone.
-All services that are involved in providing local name/address lookup services
-should be listed in its <filename>after/</filename> list.
-One can thus list <filename>name-services</filename> in the
-<filename>after/</filename> list of a service or target to ensure that it is
-only brought up after local name/address lookup service is available.
+This target is not a collection.
+It is solely an ordering milestone, that is brought in only when the services that want to order before it are themselves brought in.
+It exists because some name/address services lookup clients cannot be caused via the client-server communications mechanism itself to block indefinitely until the server is ready; and so have to have an explicit ordering to order them before any respective servers.
+One lists <filename>name-services</filename> in the <filename>after/</filename> list of a service or target to ensure that it is only brought up after such name/address lookup services are available.
+By not including it in their <filename>wants/</filename> lists, however, they do not themselves being it in if there are no name/address lookup services that require hard ordering.
+All services that are involved in providing local name/address lookup services should be listed in its <filename>after/</filename> and its <filename>wants/</filename> lists.
+</para></listitem>
+</varlistentry>
+
+<varlistentry><term><filename>swapauto</filename></term>
+<listitem><para>
+This target is a collection that is wanted by "sysinit"; it is not an ordering milestone.
+All "auto" "swap" services should be listed in its <filename>wants/</filename> lists.
+</para></listitem>
+</varlistentry>
+
+<varlistentry><term><filename>swaplate</filename></term>
+<listitem><para>
+This target is a collection that is wanted by "sysinit"; it is not an ordering milestone.
+All "late" "swap" services should be listed in its <filename>wants/</filename> lists.
+</para></listitem>
+</varlistentry>
+
+<varlistentry><term><filename>dumpauto</filename></term>
+<listitem><para>
+This target is a collection that is wanted by "sysinit"; it is not an ordering milestone.
+All "dump" services should be listed in its <filename>wants/</filename> lists.
 </para></listitem>
 </varlistentry>
 

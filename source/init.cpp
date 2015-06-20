@@ -100,13 +100,10 @@ rcctl (
 ) {
 	next_prog = args[0] = "system-control";
 	if (args.size() > 1) {
-		if (0 == std::strcmp(args[1], "set")) {
-			if (args.size() > 4)
-				args[1] = "set-service-env";
-			else
-				args[1] = "unset-service-env";
-		} else
-		if (0 == std::strcmp(args[1], "get")) 
+		if (0 == std::strcmp(args[1], "set"))
+			args[1] = "set-service-env";
+		else
+		if (0 == std::strcmp(args[1], "get"))
 			args[1] = "print-service-env";
 	}
 }

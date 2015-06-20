@@ -1,6 +1,6 @@
-#!/bin/mksh -e
+#!/bin/sh -e
 # See http://skarnet.org./software/compile.html
-if [ \! -d package -o \! -d source ] 
+if [ \! -d package ] || [ \! -d source ] 
 then
 	echo "You are not in the right directory." 1>&2 
 	exit 100
@@ -82,8 +82,9 @@ done
 for i in bundles ;
 do
 	install -d -m 0755 "${dest}"/nosh-"$i"/var/sv 
-	install -d -m 0755 "${dest}"/nosh-"$i"/etc/sv 
-	install -d -m 0755 "${dest}"/nosh-"$i"/etc/system-manager/targets 
+	install -d -m 0755 "${dest}"/nosh-"$i"/etc/service-bundles/services 
+	install -d -m 0755 "${dest}"/nosh-"$i"/etc/service-bundles/targets 
+	install -d -m 0755 "${dest}"/nosh-"$i"/etc/system-control/convert 
 done
 (
 cat package/common-services package/common-sockets package/common-ttys 
@@ -98,22 +99,22 @@ do
 done
 while read j ;
 do
-	cp -a -- "${src}"/etc/system-manager/targets/"$j" "${dest}"/nosh-bundles/etc/system-manager/targets/
+	cp -a -- "${src}"/etc/service-bundles/targets/"$j" "${dest}"/nosh-bundles/etc/service-bundles/targets/
 done < package/standard-targets
 while read j ;
 do
-	cp -a -- "${src}"/etc/sv/mount@"$j" "${dest}"/nosh-bundles/etc/sv/
-	cp -a -- "${src}"/etc/sv/fsck@"$j" "${dest}"/nosh-bundles/etc/sv/
-done < package/sysinit-mounts
+	cp -a -- "${src}"/etc/service-bundles/services/mount@"$j" "${dest}"/nosh-bundles/etc/service-bundles/services/
+	cp -a -- "${src}"/etc/service-bundles/services/fsck@"$j" "${dest}"/nosh-bundles/etc/service-bundles/services/
+done < package/common-mounts
 (
-cat package/common-sysinit-services 
+cat package/common-etc-services 
 case "`uname`" in
-Linux)	cat package/linux-sysinit-services ;;
-*BSD)	cat package/bsd-sysinit-services ;;
+Linux)	cat package/linux-etc-services ;;
+*BSD)	cat package/bsd-etc-services ;;
 esac
 ) | while read j ;
 do
-	cp -a -- "${src}"/etc/sv/"$j" "${dest}"/nosh-bundles/etc/sv/
+	cp -a -- "${src}"/etc/service-bundles/services/"$j" "${dest}"/nosh-bundles/etc/service-bundles/services/
 done
 
 # units
@@ -128,9 +129,9 @@ while read j ;
 do
 	ln -f -- "${src}"/lib/tmpfiles.d/"$j" "${dest}"/nosh-run-via-systemd/usr/local/lib/tmpfiles.d/
 done < package/tmpfiles-snippets ;
-for i in bundles run-via-systemd run-virtualbox-guest run-freedesktop-kits run-user-vt run-kernel-vt
+for i in bundles run-via-systemd run-virtualbox-guest run-freedesktop-kits run-user-vt run-kernel-vt run-appletalk
 do
-	install -d -m 0755 "${dest}"/nosh-"$i"/usr/local/etc/system-manager/presets 
+	install -d -m 0755 "${dest}"/nosh-"$i"/usr/local/etc/system-control/presets 
 	(
 	cat package/common-nosh-"$i"-presets
 	case "`uname`" in
@@ -139,10 +140,16 @@ do
 	esac
 	) | while read j ;
 	do
-		ln -f -- "${src}"/etc/system-manager/presets/"$j" "${dest}"/nosh-"$i"/usr/local/etc/system-manager/presets/
+		ln -f -- "${src}"/etc/system-control/presets/"$j" "${dest}"/nosh-"$i"/usr/local/etc/system-control/presets/
 	done
 done
 while read j ;
 do
 	ln -f -- "${src}"/lib/systemd/system-preset/"$j" "${dest}"/nosh-run-via-systemd/usr/local/lib/systemd/system-preset/
 done < package/systemd-presets ;
+
+# Conversion tools
+for j in all.do general-services.do kernel-modules.do terminal-services.do volumes.do dnscache.do tinydns.do
+do
+	ln -f -- "${src}"/etc/system-control/convert/"$j" "${dest}"/nosh-bundles/etc/system-control/convert/
+done

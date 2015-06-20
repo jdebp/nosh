@@ -3,6 +3,10 @@ case "$1" in
 	remove|purge)
 		for i in \
 			VBoxService \
+			kmod@vboxguest \
+			kmod@vboxsf \
+			kmod@vboxvideo \
+			kmod@vboxadd \
 			;
 		do
 			system-control disable $i.service cyclog@$i.service
@@ -15,20 +19,6 @@ case "$1" in
 			then
 				system-control unload-when-stopped cyclog@$i.service
 				system-control stop cyclog@$i.service
-			fi
-		done
-		for i in \
-			kmod@vboxguest \
-			kmod@vboxsf \
-			kmod@vboxvideo \
-			kmod@vboxadd \
-			;
-		do
-			system-control disable $i.service
-			if system-control is-loaded $i.service
-			then
-				system-control unload-when-stopped $i.service
-				system-control stop $i.service
 			fi
 		done
 		for i in \

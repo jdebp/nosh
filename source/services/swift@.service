@@ -3,12 +3,12 @@
 ## **************************************************************************
 
 [Unit]
-Description=openstack %P %I server
+Description=openstack %p %i server
 
 [Service]
 systemdWorkingDirectory=false
-EnvironmentFile=-/etc/sysconfig/%P-%I
-ExecStart=%P-%I /etc/%P/%I-server.conf
+EnvironmentFile=-/etc/sysconfig/%p-%i
+ExecStart=%p-%i /etc/%p/%i-server.conf
 Restart=always
 
 [Install]

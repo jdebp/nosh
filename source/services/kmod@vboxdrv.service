@@ -4,7 +4,6 @@
 
 [Unit]
 Description=kernel module loader for vboxdrv
-EarlySupervise=true
 
 [Service]
 systemdWorkingDirectory=false

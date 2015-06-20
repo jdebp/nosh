@@ -204,8 +204,46 @@ ucspi_socket_rules_check (
 			std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Access denied.");
 		throw EXIT_FAILURE;
 	} else
+	if (0 == std::strcmp(proto, "TCP6")) {
+		const char * ip(std::getenv("TCP6REMOTEIP"));
+		if (!ip) {
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "TCP6REMOTEIP", "Missing environment variable.");
+			throw EXIT_FAILURE;
+		}
+		struct in_addr addr4;
+		struct in6_addr addr6;
+		if (0 < inet_pton(AF_INET, ip, &addr4)) {
+			const std::string dir("ip4/");
+			for (unsigned prefix_length(33); prefix_length > 0; ) {
+				--prefix_length;
+				const struct in_addr net4(make_mask4(prefix_length) & addr4);
+				char buf[INET_ADDRSTRLEN], suffix[32];
+				inet_ntop(AF_INET, &net4, buf, sizeof buf);
+				snprintf(suffix, sizeof suffix, "_%u", prefix_length);
+				if (allowed(prog, (dir + buf) + suffix)) return;
+			}
+		} else 
+		if (0 < inet_pton(AF_INET6, ip, &addr6)) {
+			const std::string dir("ip6/");
+			for (unsigned prefix_length(129); prefix_length > 0; ) {
+				--prefix_length;
+				const struct in6_addr net6(make_mask6(prefix_length) & addr6);
+				char buf[INET6_ADDRSTRLEN], suffix[32];
+				inet_ntop(AF_INET6, &net6, buf, sizeof buf);
+				snprintf(suffix, sizeof suffix, "_%u", prefix_length);
+				if (allowed(prog, (dir + buf) + suffix)) return;
+			}
+		} else 
+		{
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, ip, "Invalid IP address.");
+			throw EXIT_FAILURE;
+		}
+		if (verbose)
+			std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Access denied.");
+		throw EXIT_FAILURE;
+	} else
 	{
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, proto, "Valid values are \"UNIX\" and \"TCP\".");
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, proto, "Valid values are \"UNIX\", \"TCP\", and \"TCP6\".");
 		throw EXIT_FAILURE;
 	}
 }

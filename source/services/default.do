@@ -2,6 +2,16 @@
 name="$1"
 base="`basename \"${name}\"`"
 
+ifchange_follow() {
+	local i l
+	for i
+	do	
+		l="`readlink \"$i\"`" || true
+		[ -n "$l" ] && redo-ifchange "`dirname \"$i\"`/$l"
+		redo-ifchange "$i"
+	done
+}
+
 redo-ifchange system-control 
 
 case "${base}" in
@@ -22,10 +32,10 @@ case "${base}" in
 		unit="${name}".socket
 		if test -e "${name}"@.service
 		then
-			redo-ifchange "`readlink -f \"${name}"@.service`" "${name}"@.service
+			ifchange_follow "${name}"@.service
 		else
 			redo-ifcreate "${name}"@.service
-			redo-ifchange "`readlink -f \"${name}".service`" "${name}".service
+			ifchange_follow "${name}".service
 		fi
 	elif test -e "${name}".service
 	then
@@ -39,7 +49,7 @@ case "${base}" in
 	;;
 esac
 
-redo-ifchange "`readlink -f \"${unitfile}\"`" "${unitfile}"
+ifchange_follow "${unitfile}"
 
 mkdir -p services.new
 
@@ -47,10 +57,7 @@ rm -r -f services.new/"${base}"
 
 case "${base}" in
 cyclog@*)
-	escape="--alt-escape"
-	;;
-mount@*|fsck@*|ttylogin@*|console-multiplexor@*|console-fb-realizer@*)
-	escape="--unescape-instance"
+	escape="--alt-escape --escape-instance"
 	;;
 *)
 	escape=
@@ -58,41 +65,41 @@ mount@*|fsck@*|ttylogin@*|console-multiplexor@*|console-fb-realizer@*)
 esac
 
 case "`uname`" in
-Linux)	sysinit_services="../package/common-sysinit-services ../package/linux-sysinit-services" ;;
-*BSD)	sysinit_services="../package/common-sysinit-services ../package/bsd-sysinit-services" ;;
+Linux)	etc_services="../package/common-etc-services ../package/linux-etc-services" ;;
+*BSD)	etc_services="../package/common-etc-services ../package/bsd-etc-services" ;;
 esac
 
 case "${base}" in
 cyclog@*) 
 	log=
-	sysinit=
+	etc=
 	;;
 sysinit-log) 
 	log=
-	sysinit=--etc-service
+	etc=--etc-bundle
 	;;
 mount@*|fsck@*)
 	log="../sysinit-log"
-	sysinit=--etc-service
+	etc=--etc-bundle
 	;;
 devd)
 	log="../${base}-log"
-	sysinit=--etc-service
+	etc=--etc-bundle
 	;;
 *) 
-	redo-ifchange -- ${sysinit_services}
-	if fgrep -q -- "${base}" ${sysinit_services}
+	redo-ifchange -- ${etc_services}
+	if grep -q -- "^${base}\$" ${etc_services}
 	then
 		log="../sysinit-log"
-		sysinit=--etc-service
+		etc=--etc-bundle
 	else
 		log="../cyclog@${base}"
-		sysinit=
+		etc=
 	fi
 	;;
 esac
 
-./system-control convert-systemd-units ${escape} ${sysinit} --bundle-root services.new/ "${unit}"
+./system-control convert-systemd-units ${escape} ${etc} --bundle-root services.new/ "${unit}"
 
 test -n "${log}" && ln -s -f "${log}" services.new/"${base}"/log
 
@@ -103,7 +110,7 @@ cyclog@ttylogin@*)
 	;;
 cyclog@VBoxService)
 	rm -f -- services.new/"${base}"/wanted-by/workstation
-	ln -f -s -- /etc/system-manager/targets/virtualbox-guest services.new/"${base}"/wanted-by/
+	ln -f -s -- /etc/service-bundles/targets/virtualbox-guest services.new/"${base}"/wanted-by/
 	;;
 console-multiplexor@head0)
 	for i in 1 2 3
@@ -138,7 +145,7 @@ console-fb-realizer@head0)
 	;;
 esac
 
-if grep -q "envdir env" services.new/"${base}"/service/run 
+if grep -q "envdir env" services.new/"${base}"/service/start services.new/"${base}"/service/run services.new/"${base}"/service/stop
 then
 	mkdir -m 0755 services.new/"${base}"/service/env
 fi

@@ -8,7 +8,7 @@ After=motd-dynamic.service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=%P
+ExecStart=%p
 Restart=on-failure
 RestartSec=1
 

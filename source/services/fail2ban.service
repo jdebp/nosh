@@ -8,9 +8,10 @@ Description=Fail2ban Service
 [Service]
 Type=forking
 systemdWorkingDirectory=false
-ExecStart=fail2ban-client -x start
-ExecStopPost=fail2ban-client stop
-Restart=always
+RuntimeDirectory=%p
+ExecStart=fail2ban-client -f -v start
+ExecStopPost=fail2ban-client -x stop
+Restart=on-abort
 
 [Install]
 WantedBy=server.target

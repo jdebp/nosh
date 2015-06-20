@@ -1,0 +1,6 @@
+dmesg
+emergency-login@console
+hostname
+machine-id
+stty-sane@console
+sysinit-log

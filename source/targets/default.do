@@ -32,7 +32,7 @@ redo-ifchange "${unitfile}"
 
 mkdir -p targets.new
 
-./system-control convert-systemd-units --bundle-root targets.new/ "${unit}"
+./system-control convert-systemd-units --etc-bundle --bundle-root targets.new/ "${unit}"
 
 rm -r -f -- "$3"
 mv -- targets.new/"${base}" "$3"

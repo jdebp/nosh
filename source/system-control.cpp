@@ -36,12 +36,14 @@ bool local_session_mode(false);
 static 
 const char * const 
 target_bundle_prefixes[3] = {
-	"/run/system-manager/targets/", 
-	"/etc/system-manager/targets/", 
-	"/var/system-manager/targets/"
+	"/run/service-bundles/targets/", 
+	"/etc/service-bundles/targets/", 
+	"/var/service-bundles/targets/"
 }, * const
-service_bundle_prefixes[5] = {
+service_bundle_prefixes[7] = {
+	"/run/service-bundles/services/", 
 	"/run/sv/", 
+	"/etc/service-bundles/services/", 
 	"/etc/sv/", 
 	"/var/local/sv/",
 	"/var/sv/",
@@ -135,6 +137,7 @@ system_control (
 				"start|stop|try-restart|enable|disable|preset|reset|unload-when-stopped|"
 				"is-active|is-loaded|"
 				"cat|show|status|show-json|"
+				"set-service-env|print-service-env|"
 				"convert-systemd-units|convert-fstab-services|"
 				"nagios-check-services|load-kernel-module|unload-kernel-module|"
 				"version"

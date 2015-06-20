@@ -5,8 +5,8 @@
 
 [Unit]
 Description=Virtual console realizer for %I
-After=console-multiplexor@%I.service
-Wants=console-multiplexor@%I.service
+After=console-multiplexor@%i.service
+Wants=console-multiplexor@%i.service
 
 [Service]
 systemdWorkingDirectory=false
@@ -17,7 +17,7 @@ SessionLeader=yes
 ExecStartPre=chown daemon:tty ${TTY}
 ExecStartPre=setfacl -m u:daemon:r event
 ExecStartPre=setfacl -m u:daemon:rw fb
-ExecStart=open-controlling-tty setuidgid daemon sh -c 'exec console-fb-realizer ${FONTS} ${KERNEL_VT} --bold-as-colour fb event kbdmap /run/dev/%I/'
+ExecStart=open-controlling-tty setuidgid daemon %p ${FONTS} ${KERNEL_VT} --bold-as-colour fb event kbdmap /run/dev/%I/
 Restart=always
 
 [Install]

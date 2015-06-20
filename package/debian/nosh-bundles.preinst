@@ -1,0 +1,26 @@
+#!/bin/sh -
+case "$1" in
+	upgrade)
+		# Convert from the old 1.16 and earlier directory structure.
+		mkdir -m 0755 -p -- /etc/service-bundles
+		if [ \! -L /etc/system-manager/targets ] && [ -d /etc/system-manager/targets ]
+		then
+			mv -i -- /etc/system-manager/targets /etc/service-bundles/
+			ln -s -f -- ../service-bundles/targets /etc/system-manager
+		fi
+		if [ \! -L /etc/sv ] && [ -d /etc/sv ]
+		then
+			mv -i -- /etc/sv /etc/service-bundles/services
+			ln -s -f -- service-bundles/services /etc/sv
+		fi
+		for d in / /usr/local/
+		do
+			mkdir -m 0755 -p -- "${d}"etc/system-control
+			if [ \! -L "${d}"etc/system-manager/presets ] && [ -d "${d}"etc/system-manager/presets ]
+			then
+				mv -i -- "${d}"etc/system-manager/presets "${d}"etc/system-control/
+				ln -s -f -- ../system-control/presets "${d}"etc/system-manager
+			fi
+		done
+		;;
+esac

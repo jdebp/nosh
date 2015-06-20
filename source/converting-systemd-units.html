@@ -95,8 +95,8 @@ The <code>EnvironmentUser=</code> setting specifies an account to be recorded in
 Set this on a service where the main daemon program changes its own process UID and GID, but expects to be told via environment variables what UID and GID to run as.
 </p></li>
 <li><p>
-The <code>EarlySupervise=</code> setting (defaulting to <code>false</code>) if <code>true</code> causes the generated bundle to use a <code>supervise</code> directory in <code>/run/system-manager/early-supervise/</code>.
-This is for avoiding access to <code>/var</code> before it is mounted, during the bootstrap process, and is mainly used for "sysinit" services and system targets.
+The <code>EarlySupervise=</code> setting (defaulting to <code>true</code> for "etc" bundles and <code>false</code> for others) if <code>true</code> causes the generated bundle to use a <code>supervise</code> directory in <code>/run/service-bundles/early-supervise/</code>.
+This is for avoiding access to <code>/var</code> before it is mounted, during the bootstrap process, and is mainly used for "sysinit" services and system targets that are in <code>/etc</code>.
 </p></li>
 <li><p>
 The <code>StoppedBy=</code> setting defines a <code>stopped-by</code> relationship to other services, stored in the generated bundle.

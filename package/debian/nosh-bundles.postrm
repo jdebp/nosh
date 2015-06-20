@@ -10,7 +10,9 @@ case "$1" in
 			bcron-start \
 			bcron-update \
 			bootparams \
+			ccpd \
 			cleanuucp \
+			ddclient \
 			deluged \
 			deluge-web \
 			dnscache \
@@ -35,13 +37,16 @@ case "$1" in
 			mysql \
 			nagios \
 			NetworkManager \
+			nfsd \
 			nginx \
 			nisdomain \
 			nmbd \
 			ntpd \
+			ntpdate \
 			openvpn@client \
 			openvpn@server \
 			org.cups.cupsd \
+			org.cups.cups-cancel \
 			ossec@agentd \
 			ossec@agentlessd \
 			ossec@analysisd \

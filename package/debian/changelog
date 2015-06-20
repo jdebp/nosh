@@ -1,3 +1,21 @@
+nosh (1.17) unstable; urgency=low
+
+  * More BSD services: pflogd, kmod@pflog, pfsync, kmod@pfsync, kmod@pf, savecore, crashinfo, kmod@fuse, ipmon, ipfs, ddb, unbound, nfsd
+  * More cross-platform services: org.cups.cups-cancel, ccpd, dumpauto, swapauto, swaplate, ntpdate, ddclient
+  * Fixed a problem with the maintscript for nosh-run-user-vt that was adding bogus /etc/ttys entries.
+  * Fixed a problem with the maintscript for nosh-run-kernel-vt that was starting things incorrectly.
+  * Fixed a dependency/relationship symbolic link problem caused by poor searching of the etc-services lists.
+  * Fixed a problem where fsck@ was not being brought in by mount@.
+  * The directories in /etc have been rationalized to make the symbolic links cleaner and to remove system-manager from the name.
+    * /etc/service-bundles/services <- /etc/sv
+    * /etc/service-bundles/targets <- /etc/system-manager/targets
+    * /etc/system-control/presets <- /etc/system-manager/presets
+  * The get and set subcommands for rcctl have been implemented.
+  * convert-systemd-units now handles RuntimeDirectory= .
+  * There's the start of a system for importing external configuration information.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Sat, 20 Jun 2015 19:30:27 +0100
+
 nosh (1.16) unstable; urgency=low
 
   * The BSD packages now have maintainer scripts.

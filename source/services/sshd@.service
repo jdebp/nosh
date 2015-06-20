@@ -9,7 +9,7 @@ After=sshdgenkeys.service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=%P -i -e
+ExecStart=%p -i -e
 Restart=always
 
 [Install]

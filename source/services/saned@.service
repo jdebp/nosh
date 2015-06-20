@@ -9,7 +9,7 @@ Description=Scanner service
 User=saned
 systemdWorkingDirectory=false
 systemdUserEnvironment=no
-ExecStart=%P
+ExecStart=%p
 StandardInput=socket
 Restart=always
 

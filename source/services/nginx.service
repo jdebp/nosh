@@ -10,7 +10,7 @@ Description=nginx HTTP content server
 # It's erroneously conflated with a "no signals" mode.
 Type=forking
 systemdWorkingDirectory=false
-ExecStart=%P -g "error_log stderr error;"
+ExecStart=%p -g "error_log stderr error;"
 PrivateTmp=true
 Restart=always
 

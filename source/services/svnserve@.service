@@ -7,7 +7,7 @@ Description=svnserve per-connection service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=%P -i
+ExecStart=%p -i
 Restart=always
 
 [Install]

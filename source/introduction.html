@@ -6,70 +6,99 @@ Introduction
 </h1>
 
 <p>
-This package provides a full system-management and service-management toolset for BSDs and for Linux.
+This package provides a full system-management, service-management, terminal-management, and logging toolset for BSDs and for Linux.
 </p>
 
 <h2>
-Introduction for BSD users
+Design fundamentals
 </h2>
 
 <p>
-For BSD users, the package provides five distinctive major features:
+The basic design elements of the package are these:
 </p>
+
 <ul>
-<li><p>Parallel and ordered service startup.
-If you've ever waited impatiently for <code>/etc/rc.delay</code> to stop <code>sleep</code>ing you'll appreciate this.
-nosh starts (and stops) daemons in parallel, calculating a grouping, and a start/stop order, based upon inter-service ordering dependencies.
-</p></li>
-<li><p>Service startup that only runs the enabled services.
-The NetBSD <code>rc.d</code> mechanism always runs every shell script, relying upon shell scripts to disable themselves when they see a <code>foo_enable=NO</code> shell variable.
+<li> <p> 
+<strong> The filesystem is the database. </strong> 
+The service management system is arranged around <em>service bundles</em>.
+Everything about a service bundle, including its interrelationships with other bundles, is stored in the filesystem.
+Bootstrap milestones/targets are just more service bundles, in the filesystem.
+</p> </li>
+<li> <p> 
+<strong> The filesystem is the API. </strong> 
+The control/status API of the service manager is a suite of FIFOs and ordinary files in the filesystem.
+Similarly, the I/O interfaces between components of the user-space virtual terminal system are FIFOs and ordinary files in the filesystem.
+</p> </li>
+<li> <p> 
+<strong> As little parsing should be done at run-time as possible. </strong>
+Parsers are common security vulnerabilities, time sinks, or just plain old sources of bugs.
+Parsing of things such as human-readable configuration files is done at configuration, or reconfiguration, time; not at run-time.
+A special simplified "non-shell" scripting language &mdash; that has no overheads relating to "rc" files, interactive modes, complex grammars, or shell variables &mdash; is supplied for writing d&aelig;mon <code>run</code> programs.
+</p> </li>
+<li> <p> 
+<strong> d&aelig;mons are run, not spawned. </strong>
+The program that is configured in a service bundle is expected to <em>be</em> the d&aelig;mon, not to spawn it.
+</p> </li>
+<li> <p> 
+<strong> d&aelig;mons are insulated from one another using ordinary multi-user operating system facilities. </strong>
+d&aelig;mon processes run under the aegises of different user accounts,
+They thus cannot signal, debug, or otherwise directly affect one another.
+Compromised main d&aelig;mons cannot rewrite, and may not even be able to access, their own logs.
+Compromised log d&aelig;mon accounts don't lead to <em>all</em> logs being compromised, or to compromise of main d&aelig;mons.
+</p> </li>
+<li> <p> 
+<strong> Ownership of files and directories is a permission, and it isn't always granted. </strong>
+It is the permission to grant other permissions.
+Logging d&aelig;mons run under dedicated user accounts that only own the log files, but don't own the log directories.
+Compromised log d&aelig;mon accounts cannot grant direct access to confidential log files by altering (normally restricted) log directory access permissions.
+Some d&aelig;mon user accounts own no files nor directories at all, and so have no ability to grant permissions.
+</p> </li>
+<li> <p> 
+<strong> Process state is constructed with small chain-loading tools. </strong> 
+The toolset for doing things like dropping superuser privileges to running as an ordinary user comprises a suite of small, simple to audit, tools that use the operating system's <code>execve()</code> function to execute the next program in the chain.
+As an optimization, eliminating the startup and teardown cost of the runtime libraries in programs whose actual function is often a mere handful of system calls, several chain loading tools can execute directly from one to the next, using a simple-to-audit "built in commands" mechanism.
+</p> </li>
+<li> <p> 
+<strong> Bootstrap time is not build again and again time. </strong> 
+There is no repeated building of things, over and over again at bootstrap time, that can be built <em>once</em> and then stored in the filesystem to be re-used without further ado.
+</p> </li>
+<li> <p> 
+<strong> The primary foreign configuration formats are systemd units and BSD databases. </strong> 
+The world is already, independently, doing the work of replacing Linux "System 5" <code>rc</code> scripts, and has been since 2011.
+Nowadays, "other people's stuff" comes with systemd units.
+Likewise, replacing the NetBSD <code>rc</code> scripts has been a large part of the nosh project and the majority is now replaced with service bundles and a mechanism for generatig service bundles from the BSD databases such as <code>/etc/fstab</code>.
+Those are therefore the primary foreign configuration file formats that are addressed by conversion/import tools.
+</p> </li>
+</ul>
+
+<h2>
+Differentiation from other systems
+</h2>
+
+<p>
+Here are some of the distinctive major features where the system is different by design from existing systems.
+</p>
+
+<ul>
+<li> <p>
+<strong> System bootstrap only runs the enabled services. </strong>
+The NetBSD <code>rc</code> mechanism always runs every shell script, relying upon shell scripts to <em>disable themselves</em> when they see a <code>foo_enable=NO</code> shell variable.
 nosh simply doesn't run disabled services at all at boot time.
-</p></li>
-<li><p>An extensible set of named system states.
-As standard the package supplies <code>rescue</code> for single-user mode, <code>normal</code> for multi-user mode, and <code>emergency</code> for a bare bones emergency mode.
-One can create further states of one's own.</p></li>
-<li><p>Daemon tracking.
-PID files are tantamount to a loaded gun left lying around for a system administrator to shoot random processes with.
-Parsing the output of <code>ps</code> with shell script is even worse.
-The service manager tracks services properly, without stale information lying around and without race conditions.
-</p></li>
-<li><p>The ability to import many systemd service and socket units.</p></li>
-</ul>
-
-<h2>
-Introduction for Debian users
-</h2>
-
-<p>
-nosh targets two groups of Debian users.
-</p>
-
-<ul>
-<li><p><strong>Debian users who aren't using the Linux kernel</strong> cannot use systemd.</p>
-<p>
-But the nosh toolset can run on the BSD kernel.  It runs on real BSD, after all.
-Those people can use the supplied conversion tool to import many systemd service and socket unit files into the service manager's native service bundle format.
-So as more and more services in the Debian world (and indeed in the Arch, Ubuntu, Mint, and other worlds) start coming supplied with systemd units to start them, one has a mechanism for importing them for use with the nosh package service manager on non-Linux kernels.
-</p>
-<p>Furthermore, some systemd-acquired habits and knowledge carry over.  For examples:</p>
-<ul>
-<li><p>The command to enable a service is still <code>systemctl enable <i>name</i></code>.</p></li>
-<li><p>The command to poweroff the system is still <code>systemctl poweroff</code>.</p></li>
-<li><p>There's a target named "local-fs" and it is mostly what a system administrator used to systemd or the LSB might expect it to be.</p></li>
-<li><p>Familiar mechanisms such as <code>/etc/machine-id</code> and <code>/etc/hostname</code>, and their associated boot-time initialization services, are available.</p></li>
-</ul>
-<p>
-nosh isn't systemd, though.  There are some distinctive features:
-</p>
-<ul>
-<li><p>System management and service management are properly distinct.</p></li>
-<li><p>Parsing at run-time is avoided.
-There are no XML parsers or .INI file parsers running in either the service manager or the system manager processes.
-</p></li>
-</ul>
-</li>
-<li><p><strong>Debian users who like the daemontools way of working</strong> can now overcome the traditional problem with "daemontools as the system manager": that it isn't enough on its own.
-</p><p>
+</p> </li>
+<li> <p> 
+<strong> No in-memory service database. </strong> 
+The filesystem is the database.
+systemd operates in some cases by generating services on the fly, in memory in the service manager process itself.
+In the nosh service manager, <em>all</em> service bundles exist in, and are accessible via, the filesystem.
+If something is generated on the fly, it is generated on the fly <em>in the filesystem</em>.
+Fewer things are generated on the fly, however, as bootstrap time is not build again and again time.
+</p> </li>
+<li> <p> 
+<strong>System management and service management are properly distinct.</strong>
+They are not done by a single program, and system state is not conflated with service state.
+</p> </li>
+<li> <p> 
+<strong> No daemontools-style thundering herds. </strong> 
 daemontools, 
 <a href="http://untroubled.org/daemontools-encore/">daemontools-encore</a>, 
 <a href="http://skarnet.org/software/s6/">s6</a>, 
@@ -78,5 +107,53 @@ daemontools,
 The traditional mechanism for addressing this is the "thundering herd solution": keep bringing a service up, once per second, until its dependences are up and it finally stays up.
 This is suboptimal, to say the least; and it ignores the problem of proper shutdown ordering entirely.
 nosh provides the same daemontools mechanisms, but builds a full service and system management mechanism on top of them.
+</p> </li>
+<li> <p>
+There are no XML parsers or .INI file parsers running in either the service manager or the system manager processes.
+</p> </li>
+</ul>
+
+<p>
+For other differences, see <a href="new-interfaces.html">the section on new interfaces</a>.
+</p>
+
+<h2>
+Similarity with other systems
+</h2>
+
+<p>
+Here are some of the ways ways where the advances in design are the same as those of other systems.
+</p>
+
+<ul>
+<li><p>
+<strong>No <code>/etc/inittab</code>.</strong>
+It comes as a surprise to some, but System 5 <code>init</code> was never the only game in town.
+Over the 1990s and 2000s, many alternative process #1 programs were published.
+Of those <em>only one</em>, Nikola Vladov's <a href="http://riemann.fmi.uni-sofia.bg/ninit/"><code>ninit</code></a>, maintained compatibility with System 5 <code>/etc/inittab</code>.
+<em>No other</em> replacements for System 5 <code>init</code> did &mdash; not <code>finit</code>, not <code>minit</code>, not <code>runit-init</code>, not upstart, not systemd, not any of the others.
+Nor does the nosh package.
+</p> </li>
+<li><p>
+<strong>No run levels.</strong>
+This not only reflects the roots of the package in BSDs, which never had run levels in the first place, but also reflects the fact that run-levels are an outdated (Solaris 10 replaced them with symbolic "milestones" that have names like <code>multi-user</code> in 2005.) hodge-podge (Multi-user bootstrap with an X server can be run-level 2, 4, or 5, depending from which system one uses.) that are best avoided.
+You are strongly encouraged to un-learn the idea of run-levels.
+</p> </li>
+<li><p>
+<strong> Proper, safe, reliable daemon tracking. </strong>
+PID files are tantamount to a loaded gun left lying around for a system administrator to shoot random processes with.
+Parsing the output of <code>ps</code> with shell script is even worse.
+The service manager tracks services properly, without stale information lying around and without race conditions.
+</p></li>
+<li><p>
+<strong> Parallel and ordered service startup. </strong>
+If you've ever waited impatiently for <code>/etc/rc.delay</code> to stop <code>sleep</code>ing you'll appreciate this.
+nosh service management starts (and stops) daemons in parallel, calculating a grouping, and a start/stop order, based upon inter-service ordering dependencies.
 </p></li>
 </ul>
+
+<p>
+For other similarities, see <a href="familiar-interfaces.html">the section on familiar interfaces</a>.
+</p>
+
+<h2>

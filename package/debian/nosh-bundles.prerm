@@ -2,7 +2,7 @@
 case "$1" in
 	remove|purge)
 # Don't delete the cyclog@ users because the log files still exist.
-		# common services
+		# common services with dedicated log services
 		for I in \
 			anacron \
 			atd \
@@ -10,7 +10,9 @@ case "$1" in
 			bcron-start \
 			bcron-update \
 			bootparams \
+			ccpd \
 			cleanuucp \
+			ddclient \
 			deluged \
 			deluge-web \
 			dnscache \
@@ -25,6 +27,10 @@ case "$1" in
 			gnucron \
 			hostnamed \
 			keepalived \
+			kmod@vboxdrv \
+			kmod@vboxnetadp \
+			kmod@vboxnetflt \
+			kmod@vboxpci \
 			lm-sensors \
 			localed \
 			mailcatcher \
@@ -35,13 +41,16 @@ case "$1" in
 			mysql \
 			nagios \
 			NetworkManager \
+			nfsd \
 			nginx \
 			nisdomain \
 			nmbd \
 			ntpd \
+			ntpdate \
 			openvpn@client \
 			openvpn@server \
 			org.cups.cupsd \
+			org.cups.cups-cancel \
 			ossec@agentd \
 			ossec@agentlessd \
 			ossec@analysisd \
@@ -147,20 +156,15 @@ case "$1" in
 				system-control stop cyclog@$i.service
 			fi
 		done
-		# common sysinit services
+		# common services that fan in to a single logger
 		for i in \
 			dmesg \
 			hostname \
 			kmod@autofs \
 			kmod@ipv6 \
 			kmod@unix \
-			kmod@vboxdrv \
-			kmod@vboxnetadp \
-			kmod@vboxnetflt \
-			kmod@vboxpci \
 			machine-id \
 			sysinit-log \
-			swapauto \
 			stty-sane@console \
 			emergency-login@console \
 			;
@@ -168,7 +172,7 @@ case "$1" in
 			system-control unload-when-stopped $i.service
 			system-control stop $i.service
 		done
-		# Linux services
+		# Linux services with dedicated log services
 		for I in \
 			console-kit-daemon \
 			kerneloops \
@@ -208,16 +212,19 @@ case "$1" in
 				system-control stop cyclog@$i.service
 			fi
 		done
-		# Linux sysinit services
+		# Linux services that fan in to a single logger
 		:
 		# targets
 		for i in \
 			sysinit \
 			basic \
+			dumpauto \
 			local-fs \
 			local-fs-pre \
 			remote-fs \
 			server \
+			swapauto \
+			swaplate \
 			workstation \
 			multi-user \
 			;

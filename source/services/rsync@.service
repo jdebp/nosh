@@ -7,7 +7,7 @@ Description=rsync per-connection service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=%P --daemon
+ExecStart=%p --daemon
 Restart=always
 
 [Install]

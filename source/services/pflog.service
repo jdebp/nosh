@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=PF logger daemon
+After=kmod@%p
+Wants=kmod@%p
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=ifconfig %p0 up
+ExecStart=%pd -D
+ExecStopPost=ifconfig %p0 down
+
+[Install]
+WantedBy=workstation.target

@@ -1,0 +1,19 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Save and restore NAT rules and state information across a reboot
+After=ipnat.service
+Wants=ipnat.service
+
+[Service]
+ExecStart=%p -R -v
+ExecStopPost=mkdir -m 0700 /var/db/ipf
+ExecStopPost=chown root:wheel /var/db/ipf
+ExecStopPost=%p -W -v
+systemdWorkingDirectory=false
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

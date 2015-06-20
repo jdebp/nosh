@@ -9,3 +9,4 @@
 enable	VBoxService.service
 enable	cyclog@VBoxService.service
 enable	kmod@vbox*.service
+enable	cyclog@kmod@vbox*.service

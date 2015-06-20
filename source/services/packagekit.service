@@ -3,12 +3,12 @@
 ## **************************************************************************
 
 [Unit]
-Description=%P daemon
+Description=%p daemon
 After=dbus.service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=/usr/lib/%P/%Pd
+ExecStart=/usr/lib/%p/%pd
 Restart=always
 
 [Install]

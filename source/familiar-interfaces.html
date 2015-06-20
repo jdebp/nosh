@@ -42,13 +42,21 @@ The <code>status</code> file incorporates the
 The service and system management mechanism is intentionally similar to systemd.
 </p>
 <ul>
-<li><p>The standard target bundles have familiar names: "multi-user", "local-fs", "remote-fs", "sysinit", and so forth.
-There are some differences in the details ("multi-user" is a sub-target, not a main target, for example) but the gist is the same.</p></li>
 <li><p>
-The <a href="system-control.html"><code>system-control</code></a> utility can be used under the name <code>systemctl</code>, and supports some of the subcommands from systemd's command of the same name: 
-<code>enable</code>, <code>disable</code>, <code>preset</code>, <code>start</code>, <code>stop</code>, <code>status</code>, <code>show</code>, <code>reboot</code>, <code>poweroff</code>, and so forth.</p></li>
+The standard target bundles have familiar names: "multi-user", "local-fs", "remote-fs", "sysinit", and so forth.
+There are some differences in the details ("multi-user" is a sub-target, not a main target, for example) but the gist is the same  (The "local-fs" target is mostly what a system administrator used to systemd or the LSB might expect it to be, for example.)
+</p></li>
+<li><p>
+The <a href="system-control.html"><code>system-control</code></a> utility can be used under the name <code>systemctl</code>, and supports some of the subcommands from systemd's command of the same name: <code>enable</code>, <code>disable</code>, <code>preset</code>, <code>start</code>, <code>stop</code>, <code>status</code>, <code>show</code>, <code>reboot</code>, <code>poweroff</code>, and so forth.
+</p>
+<ul>
+<li><p>The command to enable a service is still <code>systemctl enable <i>name</i></code>.</p></li>
+<li><p>The command to poweroff the system is still <code>systemctl poweroff</code>.</p></li>
+</ul>
+</li>
 <li><p>The service management mechanism shares systemd's notion of services that are "enabled" so that they are activated automatically at (normal) bootup.</p></li>
 <li><p>An extended set of systemd signals (<code>SIGRTMIN + n</code>) is made available on BSD, in addition to the small set of conventional BSD signals.</p></li>
+<li><p>Familiar mechanisms such as <code>/etc/machine-id</code> and <code>/etc/hostname</code>, and their associated boot-time initialization services, are available.</p></li>
 </ul>
 
 <p>
@@ -58,24 +66,23 @@ The system management control mechanism and toolset are similar to BSD's and Lin
 <li><p>One sends signals to process #1 to change system states.</p></li>
 <li><p>
 The <a href="service.html"><code>service</code></a>, <a href="rcctl.html"><code>rcctl</code></a>, <a href="chkconfig.html"><code>chkconfig</code></a>, <a href="halt.html"><code>halt</code></a>, <a href="poweroff.html"><code>poweroff</code></a>, <a href="reboot.html"><code>reboot</code></a>, and <a href="telinit.html"><code>telinit</code></a> tools provide a compatibility subset of the BSD and Linux System V tools of the same names.
+<ul>
+<li><p>The command to enable a service is still <code>rcctl enable <i>name</i></code>.</p></li>
+</ul>
 </p></li>
 </ul>
 
 <p>
-The scripting utilities parallel daemontools, 
-<a href="http://skarnet.org/software/s6/">s6</a>, and 
-<a href="http://untroubled.org/daemontools-encore/">daemontools-encore</a>.
+The scripting utilities parallel daemontools, <a href="http://skarnet.org/software/s6/">s6</a>, and <a href="http://untroubled.org/daemontools-encore/">daemontools-encore</a>.
 </p>
 <ul>
 <li><p>All of the daemontools chain-loading commands are available: <a href="envdir.html"><code>envdir</code></a>, <a href="envuidgid.html"><code>envuidgid</code></a>, <a href="setlock.html"><code>setlock</code></a>, <a href="setuidgid.html"><code>setuidgid</code></a>, and <a href="softlimit.html"><code>softlimit</code></a>.  
 <code>pgrphack</code> is replaced by <a href="setsid.html"><code>setsid</code></a> and <a href="setpgrp.html"><code>setpgrp</code></a>.  
 <code>multilog</code> is replaced by <a href="cyclog.html"><code>cyclog</code></a> (which was in fact the logging command in older versions of daemontools).</p></li>
-<li><p>Socket utilities use the 
-<a href="http://cr.yp.to/proto/ucspi-tcp.txt">UCSPI-TCP</a>, 
-UCSPI-UDP, and 
-UCSPI-LOCAL conventions.</p></li>
-<li><p>Socket utilities can also use 
-<a href="http://freedesktop.org/software/systemd/man/sd_listen_fds.html">systemd's LISTEN_FDS convention</a>.</p></li>
+<li><p>
+Socket utilities use the <a href="http://homepage.ntlworld.com./jonathan.deboynepollard/FGA/UCSPI.html">UCSPI-TCP, UCSPI-UDP, and UCSPI-LOCAL conventions.</a></p></li>
+<li><p>Socket utilities can also use <a href="http://freedesktop.org/software/systemd/man/sd_listen_fds.html">systemd's LISTEN_FDS convention</a>.
+</p></li>
 </ul>
 
 <p>

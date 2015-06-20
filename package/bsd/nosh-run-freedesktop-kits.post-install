@@ -1,8 +1,13 @@
 #!/bin/sh -
-for i in \
+for I in \
+	console-kit-daemon \
+	ModemManager \
+	NetworkManager \
+	packagekit \
 	polkitd \
 	;
 do
-	system-control preset $i.service cyclog@$i.service
-	system-control reset $i.service cyclog@$i.service
+	system-control preset $I.service
+	system-control preset --prefix cyclog@ $I.service
+	system-control reset $I.service cyclog@$I.service
 done

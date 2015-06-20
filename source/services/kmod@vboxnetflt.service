@@ -4,7 +4,6 @@
 
 [Unit]
 Description=kernel module loader for vboxnetflt
-EarlySupervise=true
 
 [Service]
 systemdWorkingDirectory=false

@@ -2,7 +2,7 @@ Source: nosh
 Section: admin
 Priority: optional
 Maintainer: Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@ntlworld.com>
-Build-Depends: redo
+Build-Depends: redo, libkqueue-dev, xmlto
 
 Package: nosh-guide
 Architecture: amd64
@@ -68,11 +68,13 @@ Architecture: amd64
 Depends: ${shlibs:Depends}, nosh-service-management
 Suggests: 
 Recommends: 
-Description: System V shim service and system management utilities
- This package provides shims for old-style System V system management commands.
+Description: BSD and System 5 shim service and system management utilities
+ This package provides shims for old-style BSD and System 5 system management commands.
  * service, chkconfig
- * init, telinit, halt, fasthalt, poweroff, fastpoweroff, reboot, fastboot
+ * init, telinit, halt, poweroff, reboot
  * emergency, normal, rescue
+ * fasthalt, fastpoweroff, fastboot
+ * rcctl
  .
  The shims simply invoke native service management commands.
 
@@ -160,4 +162,16 @@ Description: Run the various "kit" programs from freedesktop.org
   * PolicyKit
   * PackageKit
   * ConsoleKit
+
+Package: nosh-run-appletalk
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles
+Suggests: 
+Recommends: 
+Description: Run the various AppleTalk services
+ This package runs the various services for AppleTalk:
+  * File server
+  * Print server
+  * Timelord
+  * dbd
 

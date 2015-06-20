@@ -5,11 +5,10 @@
 [Unit]
 Description=BSD password file lock check
 DefaultDependencies=false
-EarlySupervise=true
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=sh -c '[ -f /etc/ptmp ] && echo "ERROR: password file may be incorrect -- /etc/ptmp exists"'
+ExecStart=sh -c '[ -f /etc/ptmp ] && echo 1>&2 "ERROR: password file may be incorrect -- /etc/ptmp exists"'
 RemainAfterExit=yes
 
 [Install]

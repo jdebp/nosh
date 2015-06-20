@@ -4,7 +4,7 @@ addloguser() { getent passwd "$1" > /dev/null || useradd --shell /bin/false "$1"
 addlog() { mkdir -m 0750 -p /var/log/sv/"$2" ; setfacl -m u:"$1"-log:rwx -m g:adm:rx /var/log/sv/"$2" ; }
 case "$1" in
 	configure)
-		# common services
+		# common services with dedicated log services
 		for I in \
 			anacron \
 			atd \
@@ -12,7 +12,9 @@ case "$1" in
 			bcron-start \
 			bcron-update \
 			bootparams \
+			ccpd \
 			cleanuucp \
+			ddclient \
 			deluged \
 			deluge-web \
 			dnscache \
@@ -27,6 +29,10 @@ case "$1" in
 			gnucron \
 			hostnamed \
 			keepalived \
+			kmod@vboxdrv \
+			kmod@vboxnetadp \
+			kmod@vboxnetflt \
+			kmod@vboxpci \
 			lm-sensors \
 			localed \
 			mailcatcher \
@@ -37,13 +43,16 @@ case "$1" in
 			mysql \
 			nagios \
 			NetworkManager \
+			nfsd \
 			nginx \
 			nisdomain \
 			nmbd \
 			ntpd \
+			ntpdate \
 			openvpn@client \
 			openvpn@server \
 			org.cups.cupsd \
+			org.cups.cups-cancel \
 			ossec@agentd \
 			ossec@agentlessd \
 			ossec@analysisd \
@@ -94,7 +103,8 @@ case "$1" in
 			i="`escape "$I"`"
 			addloguser "$i"-log
 			addlog "$i" "$I"
-			system-control preset $I.service cyclog@$I.service
+			system-control preset $I.service
+			system-control preset --prefix cyclog@ $I.service
 		done
 		# common sockets
 		for I in \
@@ -133,33 +143,25 @@ case "$1" in
 			i="`escape "$I"`"
 			addloguser "$i"-log
 			addlog "$i" "$I"
-			system-control preset $I.socket cyclog@$I.service
+			system-control preset $I.socket
+			system-control preset --prefix cyclog@ $I.service
 		done
-		# common sysinit services
+		# common services that fan in to a single logger
 		for I in \
 			dmesg \
 			hostname \
 			kmod@autofs \
 			kmod@ipv6 \
 			kmod@unix \
-			kmod@vboxadd \
-			kmod@vboxdrv \
-			kmod@vboxguest \
-			kmod@vboxnetadp \
-			kmod@vboxnetflt \
-			kmod@vboxpci \
-			kmod@vboxsf \
-			kmod@vboxvideo \
 			machine-id \
 			sysinit-log \
-			swapauto \
 			stty-sane@console \
 			emergency-login@console \
 			;
 		do
 			system-control preset $I.service
 		done
-		# Linux services
+		# Linux services with dedicated log services
 		for I in \
 			console-kit-daemon \
 			kerneloops \
@@ -170,7 +172,8 @@ case "$1" in
 			i="`escape "$I"`"
 			addloguser "$i"-log
 			addlog "$i" "$I"
-			system-control preset $I.service cyclog@$I.service
+			system-control preset $I.service
+			system-control preset --prefix cyclog@ $I.service
 		done
 		# Linux sockets
 		for I in \
@@ -183,18 +186,22 @@ case "$1" in
 			i="`escape "$I"`"
 			addloguser "$i"-log
 			addlog "$i" "$I"
-			system-control preset $I.socket cyclog@$I.service
+			system-control preset $I.socket
+			system-control preset --prefix cyclog@ $I.service
 		done
-		# Linux sysinit services
+		# Linux services that fan in to a single logger
 		:
 		# targets
 		for I in \
 			sysinit \
 			basic \
+			dumpauto \
 			local-fs \
 			local-fs-pre \
 			remote-fs \
 			server \
+			swapauto \
+			swaplate \
 			workstation \
 			multi-user \
 			;

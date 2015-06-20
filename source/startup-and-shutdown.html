@@ -46,7 +46,7 @@ After the target is started, the system is expected to have performed fundamenta
 </ul>
 <p>
 Note that fundamental initialization cannot rely upon a writable root filesystem or the presence of the filesystems that contain the bundle directories for "regular" services.
-So all "sysinit" services and targets have to have supervise directories under <code>/run/system-manager/early-supervise/</code>. 
+So all "sysinit" services and targets have to have supervise directories under <code>/run/service-bundles/early-supervise/</code>. 
 And this is a separate step from starting the "normal" target later, even though that indirectly encompasses the "sysinit" target and would thus be expected to start all this, because at this point the service/target ordering and dependency mechanism might not even <em>find</em> "regular" services.
 So the "sysinit" target has to be started explicitly first, just to make it possible to find and load all other "regular" services and targets.
 </p>

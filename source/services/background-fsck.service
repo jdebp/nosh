@@ -3,13 +3,13 @@
 ## **************************************************************************
 
 [Unit]
-Description=Background filesystem check sysinit service
+Description=Background filesystem check
 DefaultDependencies=false
-EarlySupervise=true
 
 [Service]
+systemdWorkingDirectory=false
 EnvironmentDirectory=env
-ExecStartPre=sleep ${delay}
+ExecStartPre=sleep ${delay:-0}
 ExecStart=fsck -B -p
 RemainAfterExit=yes
 

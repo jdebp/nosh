@@ -1,0 +1,18 @@
+#
+# Enable AppleTalk services
+#
+# This is not a systemd preset.
+# It goes in a special nosh system-manager preset directory.
+# It is used by the nosh-run-appletalk package in order to enable the user-space virtual terminals themselves.
+#
+
+enable 	atalkd.service
+enable 	cyclog@atalkd.service
+enable 	papd.service
+enable 	cyclog@papd.service
+enable 	afpd.service
+enable 	cyclog@afpd.service
+enable 	timelord.service
+enable 	cyclog@timelord.service
+enable 	cnid_metad.service
+enable 	cyclog@cnid_metad.service

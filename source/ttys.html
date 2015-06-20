@@ -20,15 +20,17 @@ In order to determine presets using <code>/etc/ttys</code> one runs two things:
 <li><p>
 In order to first enable or disable the relevant <code>ttylogin@ttyv{0,1,2,3,4,5,6,7,8}.service</code> service one runs 
 </p>
-<blockquote><code>system-control&nbsp;preset&nbsp;--ttys&nbsp;--prefix&nbsp;ttylogin@&nbsp;ttyv{0,1,2,3,4,5,6,7,8}</code></blockquote> 
+<blockquote><pre>system-control&nbsp;preset&nbsp;--ttys&nbsp;--prefix&nbsp;ttylogin@&nbsp;ttyv{0,1,2,3,4,5,6,7,8}
+system-control&nbsp;preset&nbsp;--ttys&nbsp;--prefix&nbsp;cyclog@ttylogin@&nbsp;ttyv{0,1,2,3,4,5,6,7,8}</pre></blockquote> 
 <p>
-This takes the preset information given in the matching <code>ttyv{0,1,2,3,4,5,6,7,8}</code> records in <code>/etc/ttys</code>.
+This takes the preset information given in the matching <code>ttyv{0,1,2,3,4,5,6,7,8}</code> records in <code>/etc/ttys</code> and applies it to both the main login services and their associated logging services.
 </p>
 </li>
 <li><p>
 In order to immediately start or stop the relevant service one also runs
 </p>
-<blockquote><code>system-control&nbsp;reset&nbsp;ttylogin@ttyv{0,1,2,3,4,5,6,7,8}.service</code></blockquote>
+<blockquote><pre>system-control&nbsp;reset&nbsp;ttylogin@ttyv{0,1,2,3,4,5,6,7,8}
+system-control&nbsp;reset&nbsp;cyclog@ttylogin@ttyv{0,1,2,3,4,5,6,7,8}</pre></blockquote>
 </p>
 </li>
 </ol>

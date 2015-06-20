@@ -11,7 +11,7 @@ Requires=epmd.service
 WorkingDirectory=/var/lib/rabbitmq
 systemdUserEnvironment=yes
 User=rabbitmq
-ExecStart=/usr/lib/rabbitmq/bin/%P
+ExecStart=/usr/lib/rabbitmq/bin/%p
 Restart=always
 
 [Install]

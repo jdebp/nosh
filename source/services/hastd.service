@@ -4,8 +4,8 @@
 
 [Unit]
 Description=High Availability Storage service
-Wants=kmod@geom_gate:g_gate
-After=kmod@geom_gate:g_gate
+Wants=kmod@geom_gate
+After=kmod@geom_gate
 
 [Service]
 systemdWorkingDirectory=false

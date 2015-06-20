@@ -182,7 +182,7 @@ ttylogin_starter (
 			log_service_name = log_prefix + service_name;
 			args.clear();
 			args.insert(args.end(), "system-control");
-			args.insert(args.end(), "start");
+			args.insert(args.end(), "reset");
 			if (verbose)
 				args.insert(args.end(), "--verbose");
 			args.insert(args.end(), service_name.c_str());

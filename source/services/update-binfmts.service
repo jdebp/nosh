@@ -9,8 +9,8 @@ Conflicts=binfmt-support.service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=%P --enable
-ExecStopPost=%P --disable
+ExecStart=%p --enable
+ExecStopPost=%p --disable
 RemainAfterExit=true
 
 [Install]

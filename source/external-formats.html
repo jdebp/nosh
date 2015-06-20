@@ -11,18 +11,15 @@ The native mechanism for the system is the service bundle.
 However, one can <em>convert</em> and <em>import</em> service configuration from various external formats.
 </p>
 
-<p>
-<a href="converting-systemd-units.html">One can convert most systemd units</a>.
-</p>
+<ul>
+<li><p> <a href="converting-systemd-units.html">generating bundles from systemd units</a>  </p></li>
+<li><p> <a href="fstab.html">generating bundles from <code>/etc/fstab</code></a>  </p></li>
+<li><p> <a href="rcconf.html">importing settings from <code>/etc/rcconf</code></a>  </p></li>
+<li><p> <a href="ttys.html">importing settings from <code>/etc/ttys</code></a>  </p></li>
+</ul>
 
 <p>
-<a href="fstab.html"><code>/etc/fstab</code> has to be converted</a>.
-</p>
-
-<p>
-<a href="rcconf.html"><code>/etc/rcconf</code> has to be converted</a>.
-</p>
-
-<p>
-<a href="ttys.html">One can enable and disable ttylogin services from <code>/etc/ttys</code></a>.
+A suite of <code>redo</code> scripts in <code>/etc/system-control/convert/</code> are supplied for tying these altogether.
+Simply executing <code>redo&nbsp;all</code> in that directory will attempt to import from various external configuration formats into service bundles.
+Because this mechanism detects changes to source files, it means that it only performs conversion actions when source configuration files have changed.
 </p>

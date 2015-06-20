@@ -29,18 +29,13 @@ case "$1" in
 		for i in \
 			kernel-vt-loadkeys \
 			kernel-vt-setfont \
-			;
-		do
-			system-control preset $i.service
-			system-control reset $i.service
-		done
-		for i in \
 			ttylogin-starter \
 			;
 		do
 			addloguser "$i"-log
 			addlog "$i" "$i"
-			system-control preset $i.service cyclog@$i.service
+			system-control preset $i.service
+			system-control preset --prefix cyclog@ $i.service
 			system-control reset $i.service cyclog@$i.service
 		done
 		;;

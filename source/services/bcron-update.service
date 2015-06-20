@@ -8,7 +8,7 @@ Description=Guenter's bcron update daemon
 [Service]
 systemdWorkingDirectory=false
 EnvironmentDirectory=env
-ExecStart=%P /etc/crontab /etc/cron.d
+ExecStart=%p /etc/crontab /etc/cron.d
 Restart=always
 
 [Install]

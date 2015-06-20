@@ -8,7 +8,7 @@ Description=nginx's Fast CGI wrapper server
 [Service]
 systemdWorkingDirectory=false
 User=http
-ExecStart=%P
+ExecStart=%p
 PrivateTmp=true
 Restart=always
 

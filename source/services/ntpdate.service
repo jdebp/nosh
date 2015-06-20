@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD NTP daemon one-shot
+
+[Service]
+Type=oneshot
+EnvironmentDirectory=env
+systemdWorkingDirectory=false
+ExecStart=ntpd -n -q -g -f /var/db/ntpd.drift
+Restart=never
+
+[Install]
+WantedBy=workstation.target

@@ -1,5 +1,5 @@
 #!/bin/sh -
-escape() { echo "$1"|sed -e 's/@/\\x40/g' ; }
+escape() { echo "$1"|sed -e 's/_/_x5f/g' -e 's/@/_x40/g' -e 's/:/_x3a/g' ; }
 addloguser() { getent passwd "$1" > /dev/null || pw useradd "$1" -s /bin/false ; }
 addlog() { mkdir -m 0755 -p /var/log/sv/"$2" ; chown "$1"-log /var/log/sv/"$2" ; }
 # kernel TTYs
@@ -30,13 +30,14 @@ do
 done
 # TTY ancillaries
 for i in \
+	ttylogin-starter \
 	kernel-vt-kbdcontrol \
 	kernel-vt-vidcontrol \
-	ttylogin-starter \
 	;
 do
 	addloguser "$i"-log
 	addlog "$i" "$i"
-	system-control preset $i.service cyclog@$i.service
+	system-control preset $i.service
+	system-control preset --prefix cyclog@ $i.service
 	system-control reset $i.service cyclog@$i.service
 done

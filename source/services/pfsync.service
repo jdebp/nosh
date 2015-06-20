@@ -1,0 +1,19 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=PF logger daemon
+After=kmod@%p kmod@pf
+Requires=kmod@%p kmod@pf
+
+[Service]
+Type=oneshot
+EnvironmentDirectory=env
+systemdWorkingDirectory=false
+ExecStart=ifconfig %p0 up ${syncdev:+syncdev ${syncdev}} ${syncpeer:+syncpeer ${syncpeer}} ${ifconfig}
+ExecStopPost=ifconfig %p0 down -syncdev -syncpeer
+RemainAfterExit=true
+
+[Install]
+WantedBy=workstation.target

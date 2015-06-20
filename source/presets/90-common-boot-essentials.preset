@@ -19,16 +19,11 @@ enable	motd-dynamic.service
 enable	sysinit-log.service
 enable	dmesg.service
 enable	hostname.service
-enable	swapauto.service
 enable	machine-id.service
 enable	stty-sane@console.service
 enable	emergency-login@console.service
 enable	fsck@-.service
-enable	fsck@-usr.service
-enable	fsck@-var.service
 enable	mount@-.service
-enable	mount@-usr.service
-enable	mount@-var.service
 
 # Targets
 enable	sysinit.target
@@ -37,5 +32,7 @@ enable	local-fs.target
 enable	local-fs-pre.target
 enable	remote-fs.target
 enable	server.target
+enable	swapauto.target
+enable	swaplate.target
 enable	workstation.target
 enable	multi-user.target

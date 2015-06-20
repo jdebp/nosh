@@ -7,7 +7,7 @@ Description=Kerberos database daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=%P
+ExecStart=%p
 Restart=always
 
 [Install]

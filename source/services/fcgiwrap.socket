@@ -8,7 +8,7 @@ Description=nginx's Fast CGI wrapper socket
 [Socket]
 Backlog=2
 MaxConnections=2
-ListenStream=/run/%P.socket
+ListenStream=/run/%p.socket
 
 [Install]
 WantedBy=server.target

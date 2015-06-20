@@ -7,7 +7,7 @@ Description=ConsoleKit daemon
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=%P --no-daemon
+ExecStart=%p --no-daemon
 Restart=always
 
 [Install]

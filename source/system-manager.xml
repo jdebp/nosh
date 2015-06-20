@@ -391,6 +391,15 @@ Do not send these signals directly, as this does not shut down services in order
 <varlistentry>
 <term><code>SIGRTMIN + 10</code></term>
 <listitem><para>
+Spawn <command>system-control</command> <arg choice="plain">activate</arg> <arg choice="plain">sysinit</arg>.
+This will activate the <code>sysinit</code> target.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><code>SIGRTMIN + 11</code></term>
+<listitem><para>
 Spawn <command>system-control</command> <arg choice="plain">init</arg>,
 passing it the <arg rep='repeat'><replaceable>args</replaceable></arg> 
 that were supplied on its own command line.

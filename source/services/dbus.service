@@ -4,14 +4,13 @@
 
 [Unit]
 Description=System-wide "Desktop" bus service
-After=machine-id.service
+After=machine-id.service extra-shared-libraries.target
 
 [Service]
 systemdWorkingDirectory=false
-ExecStartPre=mkdir -p /run/dbus
-ExecStartPre=mkdir -p /var/db/dbus
-ExecStartPre=sh -c '[ -r /var/db/dbus/machine-id ] || ln -s /etc/machine-id /var/db/dbus/'
-ExecStartPre=rm -f /run/dbus/dbus.pid
+RuntimeDirectory=%p
+ExecStartPre=mkdir -p /var/db/%p
+ExecStartPre=sh -c '[ -r /var/db/%p/machine-id ] || ln -s /etc/machine-id /var/db/%p/'
 # BSD dbus doesn't support --nopidfile, even thought that would be nice here.
 ExecStart=dbus-daemon --system --nofork
 Restart=always

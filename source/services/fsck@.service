@@ -5,15 +5,16 @@
 [Unit]
 Description=Filesystem check the %I volume
 DefaultDependencies=false
-EarlySupervise=true
-Before=mount@%i.service
+# Use the non-suffixed form to ensure that we get a relative symbolic link.
+Before=mount@%i
 After=local-fs-pre.target
 
 [Service]
 Type=oneshot
-ExecStart=%P -C -p %I
+ExecStart=%p -C -p %I
 systemdWorkingDirectory=false
 RemainAfterExit=yes
 
 [Install]
-WantedBy=mount@%i.service
+# Use the non-suffixed form to ensure that we get a relative symbolic link.
+WantedBy=mount@%i

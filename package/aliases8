@@ -11,6 +11,6 @@ init	telinit
 init	service
 init	invoke-rc.d
 init	chkconfig
-init	rcctl
 init	update-rc.d
+init	rcctl
 system-manager	systemd

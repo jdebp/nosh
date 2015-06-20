@@ -2,8 +2,10 @@
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
 
+# Note that many BSDs no longer include UUCP.
+
 [Unit]
-Description=Clean-up UUCP spool directories service
+Description=Clean-up UUCP spool directories
 
 [Service]
 Type=oneshot
@@ -12,4 +14,4 @@ ExecStart=sh -c 'rm -r uucp/.Temp/* ; rm -r lock/*'
 RemainAfterExit=yes
 
 [Install]
-WantedBy=sysinit.target
+WantedBy=workstation.target

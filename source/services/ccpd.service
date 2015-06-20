@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Canon Advanced Printing Technology daemon for CUPS
+Requires=org.cups.cupsd.service
+After=org.cups.cupsd.service
+
+[Service]
+Type=forking
+ExecStart=%p
+
+[Install]
+WantedBy=workstation.target

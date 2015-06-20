@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=%P service
+Description=%p service
 After=local-fs.target
 
 [Service]

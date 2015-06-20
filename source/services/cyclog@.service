@@ -3,15 +3,17 @@
 ## **************************************************************************
 
 [Unit]
-Description=Standard format %P logging service for %I
+Description=Standard format %p logging service for %I
 Before=%I.service
 
 [Service]
 systemdUserEnvironment=no
 WorkingDirectory=/var/log/sv/
 User=%i-log
-ExecStart=%P %I/
+ExecStart=%p %I/
 Restart=always
 
 [Install]
+# Whatever the service being logged installs to, THIS service is a workstation service.
+# Logging to workstation log facilities is a workstation thing.
 WantedBy=workstation.target

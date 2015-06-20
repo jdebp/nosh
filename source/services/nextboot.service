@@ -3,9 +3,8 @@
 ## **************************************************************************
 
 [Unit]
-Description=Delete the just-used nextboot information
+Description=Delete the just-used nextboot information from /boot
 DefaultDependencies=false
-EarlySupervise=true
 Wants=local-fs.target
 After=local-fs.target
 

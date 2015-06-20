@@ -15,7 +15,8 @@ case "$1" in
 			i="`escape "$I"`"
 			addloguser "$i"-log
 			addlog "$i" "$I"
-			system-control preset $i.service cyclog@$i.service
+			system-control preset $i.service
+			system-control preset --prefix cyclog@ $i.service
 			system-control reset $i.service cyclog@$i.service
 		done
 		;;

@@ -3,11 +3,11 @@
 ## **************************************************************************
 
 [Unit]
-Description=%P service for device %I
+Description=%p service for device %i
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=%P -d %I
+ExecStart=%p -d %i
 Restart=always
 
 [Install]

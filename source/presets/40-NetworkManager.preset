@@ -1,2 +1,10 @@
+#
+# Enable NetworkManager services
+#
+# This is not a systemd preset.
+# It goes in a special nosh system-manager preset directory.
+# It is used by the nosh-run-freedesktop-kits package in order to enable the user-space virtual terminals themselves.
+#
+
 enable	cyclog@NetworkManager.service
 enable	NetworkManager.service

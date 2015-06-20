@@ -1,0 +1,20 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%p proxy DNS server daemon
+
+[Service]
+systemdWorkingDirectory=false
+systemdUserEnvironment=false
+PermissionsStartOnly=true
+EnvironmentDirectory=env
+User=%p
+ExecStartPre=local-%p-setup -u %p -w ${workdir:-/var/%p} -c ${config:-${workdir:-/var/%p}/%p.conf} -f ${forwardconf:-${workdir:-/var/%p}/forward.conf} -a ${anchor:-${workdir:-/var/%p}/root.key} ${forwarders}
+ExecStartPre=%p-anchor -a ${anchor:-${workdir:-/var/%p}/root.key}
+ExecStart=%p -c ${config:-${workdir:-/var/%p}/%p.conf} -d
+Restart=always
+
+[Install]
+WantedBy=workstation.target

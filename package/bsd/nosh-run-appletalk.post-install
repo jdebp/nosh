@@ -1,0 +1,20 @@
+#!/bin/sh -
+escape() { echo "$1"|sed -e 's/_/_x5f/g' -e 's/@/_x40/g' -e 's/:/_x3a/g' ; }
+addloguser() { getent passwd "$1" > /dev/null || pw useradd "$1" -s /bin/false ; }
+addlog() { mkdir -m 0755 -p /var/log/sv/"$2" ; chown "$1"-log /var/log/sv/"$2" ; }
+# BSD services
+for I in \
+	atalkd \
+	papd \
+	afpd \
+	timelord \
+	cnid_metad \
+	;
+do
+	i="`escape "$I"`"
+	addloguser "$i"-log
+	addlog "$i" "$I"
+	system-control preset $I.service
+	system-control preset --prefix cyclog@ $I.service
+	system-control reset $I.service cyclog@$I.service
+done

@@ -1,8 +1,13 @@
-#!/bin/mksh -e
+#!/bin/sh -e
 # See http://skarnet.org./software/compile.html
-if [ \! -d package -o \! -d source ] 
+if [ \! -d package ] || [ \! -d source ] 
 then
 	echo "You are not in the right directory." 1>&2 
+	exit 100
+fi
+if [ \! -d command ] || [ \! -d guide ] || [ \! -d manual ] || [ \! -d config ]
+then
+	echo "You have not installed the built items." 1>&2
 	exit 100
 fi
 
@@ -12,7 +17,7 @@ user="`id -un`"
 group="`id -gn`"
 
 mkdir -p "${root1}"bin/ "${root1}"sbin/ "${root1}"man/man1 "${root1}"man/man8 "${root1}"lib/systemd/system "${root1}"lib/tmpfiles.d "${root1}"lib/systemd/system-preset "${root1}"share/doc/nosh
-mkdir -p "${root2}"bin/ "${root2}"sbin/ "${root2}"var/sv "${root2}"etc/sv "${root2}"etc/system-manager/targets "${root2}"etc/system-manager/presets
+mkdir -p "${root2}"bin/ "${root2}"sbin/ "${root2}"var/sv "${root2}"etc/service-bundles/services "${root2}"etc/service-bundles/targets "${root2}"etc/system-control/presets "${root2}"etc/system-control/convert
 
 (
 	cat package/commands1
@@ -115,24 +120,24 @@ done
 while read i
 do
 	# systemd service units
-	cp -p -f -l -- config/"$i" "${root1}"lib/systemd/system/"$i"{new}
+	cp -p -f -l -- config/systemd/"$i" "${root1}"lib/systemd/system/"$i"{new}
 	mv -f -- "${root1}"lib/systemd/system/"$i"{new} "${root1}"lib/systemd/system/"$i"
 done < package/systemd-services
 while read i
 do
 	# systemd temp files
-	cp -p -f -- config/"$i" "${root1}"lib/tmpfiles.d/"$i"{new}
+	cp -p -f -- config/systemd/"$i" "${root1}"lib/tmpfiles.d/"$i"{new}
 	mv -f -- "${root1}"lib/tmpfiles.d/"$i"{new} "${root1}"lib/tmpfiles.d/"$i"
 done < package/tmpfiles-snippets
 cat package/systemd-presets |
 while read i
 do
 	# systemd presets
-	cp -p -f -- config/"$i" "${root1}"lib/systemd/system-preset/"$i"{new}
+	cp -p -f -- config/presets/"$i" "${root1}"lib/systemd/system-preset/"$i"{new}
 	mv -f -- "${root1}"lib/systemd/system-preset/"$i"{new} "${root1}"lib/systemd/system-preset/"$i"
 done
 (
-	for i in bundles run-via-systemd run-virtualbox-guest run-freedesktop-kits run-user-vt run-kernel-vt ; 
+	for i in bundles run-via-systemd run-virtualbox-guest run-freedesktop-kits run-user-vt run-kernel-vt run-appletalk 
 	do
 		cat package/common-nosh-$i-presets 
 		case "`uname`" in
@@ -143,35 +148,41 @@ done
 ) | while read i
 do
 	# override systemd presets when importing to nosh
-	cp -p -f -- config/"$i" "${root2}"etc/system-manager/presets/"$i"{new}
-	mv -f -- "${root2}"etc/system-manager/presets/"$i"{new} "${root2}"etc/system-manager/presets/"$i"
+	cp -p -f -- config/presets/"$i" "${root2}"etc/system-control/presets/"$i"{new}
+	mv -f -- "${root2}"etc/system-control/presets/"$i"{new} "${root2}"etc/system-control/presets/"$i"
+done
+for i in all.do general-services.do kernel-modules.do terminal-services.do volumes.do dnscache.do tinydns.do
+do
+	# conversion scripts for external formats
+	cp -p -f -- config/convert/"$i" "${root2}"etc/system-control/convert/"$i"{new}
+	mv -f -- "${root2}"etc/system-control/convert/"$i"{new} "${root2}"etc/system-control/convert/"$i"
 done
 while read i
 do
 	# standard target bundles
-	rm -f -- "${root2}"etc/system-manager/targets/"$i"/service/remain
-	(cd config/targets/ && tar -c -f - "$i")|(cd "${root2}"etc/system-manager/targets/ && tar -x -f -)
+	rm -f -- "${root2}"etc/service-bundles/targets/"$i"/service/remain
+	(cd config/targets/ && tar -c -f - "$i")|(cd "${root2}"etc/service-bundles/targets/ && tar -x -f -)
 done < package/standard-targets
 (
-	cat package/common-sysinit-services 
+	cat package/common-etc-services 
 	case "`uname`" in
-	Linux) cat package/linux-sysinit-services ;;
-	*BSD) cat package/bsd-sysinit-services ;;
+	Linux) cat package/linux-etc-services ;;
+	*BSD) cat package/bsd-etc-services ;;
 	esac
 ) | while read i
 do
-	# sysinit service bundles
-	rm -f -- "${root2}"etc/sv/"$i"/service/remain
-	(cd config/services/ && tar -c -f - "$i")|(cd "${root2}"etc/sv/ && tar -x -f -)
+	# etc service bundles
+	rm -f -- "${root2}"etc/service-bundles/services/"$i"/service/remain
+	(cd config/services/ && tar -c -f - "$i")|(cd "${root2}"etc/service-bundles/services/ && tar -x -f -)
 done
 while read i
 do
 	# mount service bundles
-	rm -f -- "${root2}"etc/sv/mount@"$i"/service/remain
-	rm -f -- "${root2}"etc/sv/fsck@"$i"/service/remain
-	(cd config/services/ && tar -c -f - mount@"$i")|(cd "${root2}"etc/sv/ && tar -x -f -)
-	(cd config/services/ && tar -c -f - fsck@"$i")|(cd "${root2}"etc/sv/ && tar -x -f -)
-done < package/sysinit-mounts
+	rm -f -- "${root2}"etc/service-bundles/services/mount@"$i"/service/remain
+	rm -f -- "${root2}"etc/service-bundles/services/fsck@"$i"/service/remain
+	(cd config/services/ && tar -c -f - mount@"$i")|(cd "${root2}"etc/service-bundles/services/ && tar -x -f -)
+	(cd config/services/ && tar -c -f - fsck@"$i")|(cd "${root2}"etc/service-bundles/services/ && tar -x -f -)
+done < package/common-mounts
 (
 	cat package/common-services package/common-sockets package/common-ttys
 	case "`uname`" in

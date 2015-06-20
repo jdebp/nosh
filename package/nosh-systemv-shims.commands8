@@ -1,8 +1,5 @@
 chkconfig
 emergency
-fastboot
-fasthalt
-fastpoweroff
 halt
 init
 normal
@@ -10,5 +7,5 @@ poweroff
 reboot
 rescue
 service
-rcctl
 telinit
+rcctl

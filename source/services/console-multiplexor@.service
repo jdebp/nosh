@@ -11,9 +11,11 @@ systemdUserEnvironment=no
 User=daemon
 Group=tty
 PermissionsStartOnly=yes
+#RuntimeDirectory=dev/%I
+#RuntimeDirectoryMode=02755
 ExecStartPre=mkdir -m 02755 -p /run/dev /run/dev/%I
 ExecStartPre=chown daemon:tty /run/dev/%I
-ExecStart=sh -c 'exec console-multiplexor /run/dev/%I vc[0-9]*'
+ExecStart=sh -c 'exec %p /run/dev/%I vc[0-9]*'
 Restart=always
 
 [Install]

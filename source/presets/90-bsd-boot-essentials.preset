@@ -7,14 +7,16 @@
 #
 
 # Ordinary services
-enable	cyclog@swaplate.service
-enable	swaplate.service
 enable	cyclog@newsyslog.service
 enable	newsyslog.service
+enable	cyclog@ldconfig.service
+enable	ldconfig.service
 
 # Sysinit services
 enable	background-fsck.service
 enable	devd-log.service
 enable	devd.service
-enable	ldconfig.service
 enable	nextboot.service
+
+# Targets
+enable	dumpauto.target

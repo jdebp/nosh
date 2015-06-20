@@ -1,0 +1,11 @@
+[Unit]
+Description=wso2 Carbon server
+After=network.target
+
+[Service]
+Environment=JAVA_HOME="/opt/jdk1.7.0_60"
+User=wso2user
+ExecStart=wso2server.sh
+
+[Install]
+WantedBy=server.target

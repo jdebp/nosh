@@ -3,12 +3,12 @@
 ## **************************************************************************
 
 [Unit]
-Description=systemd(-compatible) %P service
+Description=systemd(-compatible) %p service
 After=dbus.service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=%P
+ExecStart=%p
 Restart=always
 
 [Install]

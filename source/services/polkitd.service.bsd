@@ -4,7 +4,7 @@
 
 [Unit]
 Description="policy kit" daemon
-After=dbus.service
+After=dbus.service extra-shared-libraries.target
 
 [Service]
 systemdWorkingDirectory=false

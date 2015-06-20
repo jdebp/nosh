@@ -91,6 +91,24 @@ fspath_from_mount (
 	unsigned int ioc
 ) ;
 extern
+std::list<std::string>
+split_fstab_options (
+	const char * o
+) ;
+extern
+bool
+has_option (
+	const std::list<std::string> & options,
+	std::string prefix,
+	std::string & remainder
+) ;
+extern
+bool
+has_option (
+	const std::list<std::string> & options,
+	const std::string & opt
+) ;
+extern
 bool
 read_line (
 	FILE * f,

@@ -95,6 +95,14 @@ common_subcommand (
 }
 
 void
+find ( 
+	const char * & next_prog,
+	std::vector<const char *> & args
+) {
+	common_subcommand(next_prog, args, "ls", "-1d");
+}
+
+void
 show_json ( 
 	const char * & next_prog,
 	std::vector<const char *> & args

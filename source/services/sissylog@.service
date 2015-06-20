@@ -3,14 +3,14 @@
 ## **************************************************************************
 
 [Unit]
-Description=%P logging service for %I
+Description=%p logging service for %I
 Before=%I.service
 
 [Service]
 systemdUserEnvironment=no
 systemdWorkingDirectory=false
-User=%I-log
-ExecStart=%P %I
+User=%i-log
+ExecStart=%p %I
 Restart=always
 
 [Install]

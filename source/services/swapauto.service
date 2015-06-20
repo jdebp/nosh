@@ -2,10 +2,11 @@
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
 
+# This has been superceded by the swapauto target, and a raft of individually-generated swap@ services.
+
 [Unit]
-Description=%P service
+Description=%p service
 DefaultDependencies=false
-EarlySupervise=true
 
 [Service]
 systemdWorkingDirectory=false

@@ -5,9 +5,9 @@
 [Unit]
 Description=Set up kernel virtual terminal keyboard map
 DefaultDependencies=false
-EarlySupervise=true
-## The point of this service is to set up the kernel VTs really early, so that one can interact with fsck.
-Before=local-fs-pre.target
+# The point of this service is to set up the kernel VTs really early, so that one can interact with fsck.
+# Unfortunately, the kbd and vid utilities on BSD require that /usr/share be checked and mounted.
+Wants=local-fs.target
 
 [Service]
 systemdWorkingDirectory=false

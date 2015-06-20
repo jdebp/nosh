@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=NFS daemon (NFSv4 enabled)
+Requires=kmod@nfsd
+Wants=rpcbind.service mountd.service nfsuserd.servie
+
+[Service]
+EnvironmentDirectory=env
+systemdWorkingDirectory=false
+ExecStart=%p -d ${flags}
+Restart=never
+
+[Install]
+WantedBy=server.target

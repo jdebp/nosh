@@ -24,5 +24,11 @@ This compilation is not done on the fly, but only needs to be done every time th
 Likewise, <code>/etc/fstab</code> undergoes a "compile" step that only has to happen every time that the file is changed.
 The "compiler" tool is the <a href="convert-fstab-services.html"><code>convert-fstab-services</code></a> command.
 It is used to generate a suite of service bundles from the contents of <code>/etc/fstab</code>.
-It generates a <code>mount@</code> bundle to mount each listed filesystem, and if <code>/etc/fstab</code> specifies, a <code>fsck@</code> bundle to check the filesystem ahead of mounting it.
+It generates:
+</p>
+<ul>
+<li><p> a <code>mount@</code> bundle to mount and unmount each listed filesystem; </p></li>
+<li><p> if <code>/etc/fstab</code> specifies, a <code>fsck@</code> bundle to check each filesystem ahead of mounting it; </p></li>
+<li><p> on the BSDs only, a <code>dump@</code> bundle to turn crash dumping on and off for each dump device; </p></li>
+<li><p> a <code>swap@</code> bundle to turn swap on and off for each swap device. </p></li>
 </p>

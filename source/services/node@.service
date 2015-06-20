@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%p service for %i
+
+[Service]
+systemdWorkingDirectory=false
+ExecStart=%p %i
+Restart=always
+
+[Install]
+WantedBy=server.target

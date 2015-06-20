@@ -52,11 +52,16 @@ case "$1" in
 			kernel-vt-setfont \
 			;
 		do
-			system-control disable $i.service
+			system-control disable $i.service cyclog@$i.service
 			if system-control is-loaded $i.service
 			then
 				system-control unload-when-stopped $i.service
 				system-control stop $i.service
+			fi
+			if system-control is-loaded cyclog@$i.service
+			then
+				system-control unload-when-stopped cyclog@$i.service
+				system-control stop cyclog@$i.service
 			fi
 		done
 		;;

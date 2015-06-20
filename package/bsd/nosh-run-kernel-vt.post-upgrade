@@ -29,9 +29,9 @@ do
 	fi
 done
 for i in \
+	ttylogin-starter \
 	kernel-vt-kbdcontrol \
 	kernel-vt-vidcontrol \
-	ttylogin-starter \
 	;
 do
 	if system-control is-loaded $i.service

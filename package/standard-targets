@@ -1,6 +1,8 @@
 basic
 emergency
 halt
+extra-shared-libraries
+dumpauto
 local-fs
 local-fs-pre
 multi-user
@@ -13,6 +15,8 @@ rescue
 server
 shutdown
 sockets
+swapauto
+swaplate
 sysinit
 update
 virtualbox-host

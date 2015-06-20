@@ -5,7 +5,6 @@
 [Unit]
 Description=Combined logger for most sysinit services
 DefaultDependencies=false
-EarlySupervise=true
 After=local-fs.target
 Wants=local-fs.target
 Before=shutdown.target

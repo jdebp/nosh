@@ -8,7 +8,7 @@ After=dbus.service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=%P -u
+ExecStart=%p -u
 Restart=always
 
 [Install]

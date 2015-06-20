@@ -4,12 +4,12 @@
 
 [Unit]
 Description=powerd regular service
-EarlySupervise=true
 Before=multi-user.target
 
 [Service]
+EnvironmentDirectory=env
 systemdWorkingDirectory=false
-ExecStart=%p -v
+ExecStart=%p -v ${flags}
 ExecStopPost=sh -c 'sysctl dev.cpu.0.freq=`sysctl -n dev.cpu.0.freq_levels | sed -e \'s:/.*::\'`'
 
 [Install]

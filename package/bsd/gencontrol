@@ -68,11 +68,9 @@ dir="$2"
 		test -d "$j" && find "$j" -type d
 	done | while read k
 	do
-		(
-			eval `stat -s $k`
-			st_mode="`echo ${st_mode}|cut -c 3-`"
-			echo "\"/$k\":" "{" "uname:root;" "gname:wheel;" "perm:${st_mode};" "}"
-		)
+		eval `stat -s $k`
+		st_mode="`echo ${st_mode}|cut -c 3-`"
+		echo "\"/$k\":" "{" "uname:root;" "gname:wheel;" "perm:${st_mode};" "}"
 	done
 	echo "}"
 	echo "files: {"
@@ -89,6 +87,7 @@ dir="$2"
 			eval `stat -s $k`
 			st_mode="`echo ${st_mode}|cut -c 3-`"
 			sum="`sha256 -q $k`"
+			sleep 0.15
 			echo "\"/$k\":" "{" "sum:${sum};" "uname:root;" "gname:wheel;" "perm:${st_mode};" "}"
 		fi
 	done

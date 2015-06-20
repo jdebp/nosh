@@ -1,4 +1,11 @@
+kmod@autofs
+kmod@ipv6
+kmod@unix
+kmod@loop
+kmod@uvesafb
 console-kit-daemon
+kernel-vt-loadkeys
+kernel-vt-setfont
 kerneloops
 update-binfmts
 wettsteinsyslogd

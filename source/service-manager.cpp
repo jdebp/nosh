@@ -1131,58 +1131,62 @@ service_manager (
 				std::fprintf(stderr, "%s: INFO: %s %lu %s\n", prog, "Shutdown requested but there are", services.size(), "services still active.");
 			}
 #if !defined(__LINUX__) && !defined(__linux__)
-			struct kevent e;
-			if (0 > kevent(queue, 0, 0, &e, 1, 0)) {
+			struct kevent p[64];
+			const int rc(kevent(queue, 0, 0, p, sizeof p/sizeof *p, 0));
+			if (0 > rc) {
 				const int error(errno);
 				if (EINTR == error) continue;
 				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
 				throw EXIT_FAILURE;
 			}
-			switch (e.filter) {
-				case EVFILT_READ:
-					if (LISTEN_SOCKET_FILENO <= static_cast<int>(e.ident) && LISTEN_SOCKET_FILENO + static_cast<int>(listen_fds) > static_cast<int>(e.ident))
-						control_message(e.ident);
-					else
-						input_ready_event(original_signals, e.ident);
-					break;
-				case EVFILT_SIGNAL:
-					switch (e.ident) {
-						case SIGTERM:
-						case SIGINT:
-						case SIGQUIT:
-						case SIGHUP:
-							std::fprintf(stderr, "%s: DEBUG: stop signalled\n", prog);
-							stop_and_unload_all(original_signals);
-							std::fprintf(stderr, "%s: DEBUG: setting in_shutdown to true\n", prog);
-							in_shutdown = true;
-							break;
-						case SIGCHLD:
-							reaper(original_signals);
-							break;
-						case SIGPIPE:
-						case SIGTSTP:
-						default:
-							std::fprintf(stderr, "%s: DEBUG: signal event ident %lu fflags %x\n", prog, e.ident, e.fflags);
-							break;
-					}
-					break;
-				case EVFILT_VNODE:
-					std::fprintf(stderr, "%s: DEBUG: vnode event ident %lu fflags %x\n", prog, e.ident, e.fflags);
-					break;
-				case EVFILT_PROC:
-					if (e.fflags & NOTE_FORK) {
+			for (std::size_t i(0); i < static_cast<std::size_t>(rc); ++i) {
+				const struct kevent & e(p[i]);
+				switch (e.filter) {
+					case EVFILT_READ:
+						if (LISTEN_SOCKET_FILENO <= static_cast<int>(e.ident) && LISTEN_SOCKET_FILENO + static_cast<int>(listen_fds) > static_cast<int>(e.ident))
+							control_message(e.ident);
+						else
+							input_ready_event(original_signals, e.ident);
+						break;
+					case EVFILT_SIGNAL:
+						switch (e.ident) {
+							case SIGTERM:
+							case SIGINT:
+							case SIGQUIT:
+							case SIGHUP:
+								std::fprintf(stderr, "%s: DEBUG: stop signalled\n", prog);
+								stop_and_unload_all(original_signals);
+								std::fprintf(stderr, "%s: DEBUG: setting in_shutdown to true\n", prog);
+								in_shutdown = true;
+								break;
+							case SIGCHLD:
+								reaper(original_signals);
+								break;
+							case SIGPIPE:
+							case SIGTSTP:
+							default:
+								std::fprintf(stderr, "%s: DEBUG: signal event ident %lu fflags %x\n", prog, e.ident, e.fflags);
+								break;
+						}
+						break;
+					case EVFILT_VNODE:
+						std::fprintf(stderr, "%s: DEBUG: vnode event ident %lu fflags %x\n", prog, e.ident, e.fflags);
+						break;
+					case EVFILT_PROC:
+						if (e.fflags & NOTE_FORK) {
 #if defined(DEBUG)
-						std::fprintf(stderr, "%s: DEBUG: proc event PID %lu forked\n", prog, e.ident);
+							std::fprintf(stderr, "%s: DEBUG: proc event PID %lu forked\n", prog, e.ident);
 #endif
-					}
-					if (e.fflags & NOTE_EXIT)
-						reap(original_signals, e.data, e.ident);
-					if (e.fflags & NOTE_CHILD)
-						register_forked_child(e.ident, e.data);
-					break;
-				default:
-					std::fprintf(stderr, "%s: DEBUG: event filter %hd ident %lu fflags %x\n", prog, e.filter, e.ident, e.fflags);
-					break;
+						}
+						if (e.fflags & NOTE_EXIT)
+							reap(original_signals, e.data, e.ident);
+						if (e.fflags & NOTE_CHILD)
+							register_forked_child(e.ident, e.data);
+						break;
+					default:
+						std::fprintf(stderr, "%s: DEBUG: event filter %hd ident %lu fflags %x\n", prog, e.filter, e.ident, e.fflags);
+						break;
+				}
 			}
 #else
 			if (child_signalled) {

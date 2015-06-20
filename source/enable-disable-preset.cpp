@@ -17,6 +17,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include <dirent.h>
 #include <ttyent.h>
+#include <fstab.h>
 #include <fcntl.h>
 #include "utils.h"
 #include "fdutils.h"
@@ -31,7 +32,7 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 static inline
-void
+bool
 enable_disable ( 
 	const char * prog,
 	bool make,
@@ -47,21 +48,24 @@ enable_disable (
 		const int error(errno);
 		if (ENOENT != error)
 			std::fprintf(stderr, "%s: WARNING: %s: %s\n", prog, source_dir_name.c_str(), std::strerror(error));
-		return;
+		return false;
 	}
 	DIR * source_dir(fdopendir(source_dir_fd));
 	if (!source_dir) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, source_dir_name.c_str(), std::strerror(error));
-		return;
+		return false;
 	}
+	bool failed(false);
 	for (;;) {
 		errno = 0;
 		const dirent * entry(readdir(source_dir));
 		if (!entry) {
 			const int error(errno);
-			if (error)
+			if (error) {
 				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, source_dir_name.c_str(), std::strerror(error));
+				failed = true;
+			}
 			break;
 		}
 #if defined(_DIRENT_HAVE_D_TYPE)
@@ -76,28 +80,33 @@ enable_disable (
 		if (0 > target_dir_fd) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, source_dir_name.c_str(), entry->d_name, std::strerror(error));
+			failed = true;
 			continue;
 		}
 		if (make)
 			mkdirat(target_dir_fd, target.c_str(), 0755);
 		if (0 > unlinkat(target_dir_fd, (target + "/" + base).c_str(), 0)) {
 			const int error(errno);
-			if (ENOENT != error)
+			if (ENOENT != error) {
 				std::fprintf(stderr, "%s: ERROR: %s/%s/%s/%s: %s\n", prog, source_dir_name.c_str(), entry->d_name, target.c_str(), base.c_str(), std::strerror(error));
+				failed = true;
+			}
 		}
 		if (make) {
 			if (0 > symlinkat(path.c_str(), target_dir_fd, (target + "/" + base).c_str())) {
 				const int error(errno);
 				std::fprintf(stderr, "%s: ERROR: %s/%s/%s/%s: %s\n", prog, source_dir_name.c_str(), entry->d_name, target.c_str(), base.c_str(), std::strerror(error));
+				failed = true;
 			}
 		}
 		close(target_dir_fd);
 	}
 	closedir(source_dir);
+	return !failed;
 }
 
 static inline
-void
+bool
 enable_disable ( 
 	const char * prog,
 	bool make,
@@ -105,25 +114,32 @@ enable_disable (
 	const std::string & path,
 	const int bundle_dir_fd
 ) {
-	enable_disable(prog, make, path, bundle_dir_fd, "wanted-by", "wants");
-	enable_disable(prog, make, path, bundle_dir_fd, "stopped-by", "conflicts");
-	enable_disable(prog, make, path, bundle_dir_fd, "stopped-by", "after");
+	bool failed(false);
+	if (!enable_disable(prog, make, path, bundle_dir_fd, "wanted-by", "wants"))
+		failed = true;
+	if (!enable_disable(prog, make, path, bundle_dir_fd, "stopped-by", "conflicts"))
+		failed = true;
+	if (!enable_disable(prog, make, path, bundle_dir_fd, "stopped-by", "after"))
+		failed = true;
 	const int service_dir_fd(open_service_dir(bundle_dir_fd));
 	if (make) {
 		const int rc(unlinkat(service_dir_fd, "down", 0));
 		if (0 > rc && ENOENT != errno) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s: %s/%s: %s\n", prog, arg.c_str(), path.c_str(), "down", std::strerror(error));
+			failed = true;
 		}
 	} else {
 		const int fd(open_writecreate_at(service_dir_fd, "down", 0600));
 		if (0 > fd) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s: %s/%s: %s\n", prog, arg.c_str(), path.c_str(), "down", std::strerror(error));
+			failed = true;
 		} else
 			close(fd);
 	}
 	close(service_dir_fd);
+	return !failed;
 }
 
 /* Preset information *******************************************************
@@ -140,8 +156,6 @@ checkyesno (
 	const std::string l(tolower(s));
 	if ("no" == l) return false;
 	if ("yes" == l) return true;
-	if ("NO" == l) return false;
-	if ("YES" == l) return true;
 	if ("false" == l) return false;
 	if ("true" == l) return true;
 	if ("off" == l) return false;
@@ -175,7 +189,6 @@ query_rcconf_preset (
 			const std::string var(s.substr(0, p));
 			if (var != wanted) continue;
 			const std::string val(p == std::string::npos ? std::string() : s.substr(p + 1, std::string::npos));
-			std::fprintf(stderr, "%s: INFO: %s: checking %s\n", prog, var.c_str(), val.c_str());
 			wants = checkyesno(val);
 			return true;
 		}
@@ -282,12 +295,12 @@ scan (
 static
 const char *
 preset_directories[] = {
-	"/etc/system-manager/presets/",
+	"/etc/system-control/presets/",
 	"/etc/systemd/system-preset/",
-	"/usr/share/system-manager/presets/",
+	"/usr/share/system-control/presets/",
 	"/lib/systemd/system-preset/",
 	"/usr/lib/systemd/system-preset/",
-	"/usr/local/etc/system-manager/presets/",
+	"/usr/local/etc/system-control/presets/",
 	"/usr/local/lib/systemd/system-preset/",
 };
 
@@ -391,12 +404,78 @@ query_ttys_preset (
 }
 
 static inline
+std::string 
+unescape ( 
+	const std::string & s
+) {
+	std::string r;
+	for (std::string::const_iterator e(s.end()), q(s.begin()); e != q; ) {
+		char c(*q++);
+		if ('-' == c) {
+			r += '/';
+		} else
+		if ('\\' != c) {
+			r += c;
+		} else
+		if (e == q) {
+			r += c;
+		} else
+		{
+			c = *q++;
+			if ('X' != c && 'x' != c)
+				r += c;
+			else {
+				unsigned v(0U);
+				for (unsigned n(0U);n < 2U; ++n) {
+					if (e == q) break;
+					c = *q;
+					if (!std::isxdigit(c)) break;
+					++q;
+					c = std::isdigit(c) ? (c - '0') : (std::tolower(c) - 'a' + 10);
+					v = (v << 4) | c;
+				}
+				r += char(v);
+			}
+		}
+	}
+	return r;
+}
+
+static inline
+bool
+is_auto (
+	const struct fstab & entry
+) {
+	const std::list<std::string> options(split_fstab_options(entry.fs_mntops));
+	return !has_option(options, "noauto");
+}
+
+static inline
+bool	/// \returns setting \retval true explicit \retval false defaulted
+query_fstab_preset (
+	bool & wants,	///< always set to a value
+	const std::string & escaped_name
+) {
+	if (!setfsent()) {
+		wants = true;
+		return false;
+	}
+	const std::string name(unescape(escaped_name));
+	const struct fstab *entry(getfsfile(name.c_str()));
+	if (!entry) entry = getfsspec(name.c_str());
+	wants = entry && is_auto(*entry);
+	endfsent();
+	return entry != 0;
+}
+
+static inline
 bool
 determine_preset (
 	const char * prog,
 	bool system,
 	bool rcconf,
 	bool ttys,
+	bool fstab,
 	const std::string & prefix,
 	const std::string & name,
 	const std::string & suffix
@@ -406,9 +485,11 @@ determine_preset (
 	if (system && query_systemd_preset(wants, prefix + name, suffix))
 		return wants;
 	// The newer BSD rc.conf takes precedence over the older Sixth Edition ttys .
-	if (rcconf && query_rcconf_preset(wants, prog, prefix + name))
+	if (rcconf && query_rcconf_preset(wants, prog, name))
 		return wants;
 	if (ttys && query_ttys_preset(wants, name))
+		return wants;
+	if (fstab && query_fstab_preset(wants, name))
 		return wants;
 	return wants;
 }
@@ -441,6 +522,7 @@ enable (
 		throw EXIT_FAILURE;
 	}
 
+	bool failed(false);
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
 		std::string path, name, suffix;
 		const int bundle_dir_fd(open_bundle_directory("", *i, path, name, suffix));
@@ -450,11 +532,12 @@ enable (
 			continue;
 		}
 		const std::string p(path + name);
-		enable_disable(prog, true, *i, p, bundle_dir_fd);
+		if (!enable_disable(prog, true, *i, p, bundle_dir_fd))
+			failed = true;
 		close(bundle_dir_fd);
 	}
 
-	throw EXIT_SUCCESS;
+	throw failed ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
 void
@@ -481,6 +564,7 @@ disable (
 		throw EXIT_FAILURE;
 	}
 
+	bool failed(false);
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
 		std::string path, name, suffix;
 		const int bundle_dir_fd(open_bundle_directory("", *i, path, name, suffix));
@@ -490,11 +574,12 @@ disable (
 			continue;
 		}
 		const std::string p(path + name);
-		enable_disable(prog, false, *i, p, bundle_dir_fd);
+		if (!enable_disable(prog, false, *i, p, bundle_dir_fd))
+			failed = true;
 		close(bundle_dir_fd);
 	}
 
-	throw EXIT_SUCCESS;
+	throw failed ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
 void
@@ -504,12 +589,13 @@ preset (
 ) {
 	const char * prog(basename_of(args[0]));
 	const char * prefix("");
-	bool no_rcconf(false), no_system(false), ttys(false), dry_run(false);
+	bool no_rcconf(false), no_system(false), ttys(false), fstab(false), dry_run(false);
 	try {
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
 		popt::bool_definition no_system_option('\0', "no-systemd", "Do not process system-manager/systemd preset files.", no_system);
 		popt::bool_definition no_rcconf_option('\0', "no-rcconf", "Do not process /etc/rc.conf presets.", no_rcconf);
 		popt::bool_definition ttys_option('\0', "ttys", "Process /etc/ttys presets.", ttys);
+		popt::bool_definition fstab_option('\0', "fstab", "Process /etc/fstab presets.", fstab);
 		popt::bool_definition dry_run_option('n', "dry-run", "Don't actually enact the enable/disable.", dry_run);
 		popt::string_definition prefix_option('p', "prefix", "string", "Prefix each name with this (template) name.", prefix);
 		popt::definition * main_table[] = {
@@ -517,6 +603,7 @@ preset (
 			&no_system_option,
 			&no_rcconf_option,
 			&ttys_option,
+			&fstab_option,
 			&dry_run_option,
 			&prefix_option
 		};
@@ -533,6 +620,7 @@ preset (
 		throw EXIT_FAILURE;
 	}
 
+	bool failed(false);
 	const std::string p(prefix);
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
 		std::string path, name, suffix;
@@ -540,15 +628,17 @@ preset (
 		if (0 > bundle_dir_fd) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s%s: %s\n", prog, prefix, name.c_str(), std::strerror(error));
+			failed = true;
 			continue;
 		}
-		const bool make(determine_preset(prog, !no_system, !no_rcconf, ttys, p, name, suffix));
+		const bool make(determine_preset(prog, !no_system, !no_rcconf, ttys, fstab, p, name, suffix));
 		if (dry_run)
 			std::fprintf(stdout, "%s %s\n", make ? "enable" : "disable", (path + p + name).c_str());
 		else
-			enable_disable(prog, make, p + *i, path + p + name, bundle_dir_fd);
+		if (!enable_disable(prog, make, p + *i, path + p + name, bundle_dir_fd))
+			failed = true;;
 		close(bundle_dir_fd);
 	}
 
-	throw EXIT_SUCCESS;
+	throw failed ? EXIT_FAILURE : EXIT_SUCCESS;
 }

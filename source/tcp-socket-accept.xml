@@ -74,6 +74,16 @@ The local (server) port number of the accepted socket.
 </varlistentry>
 
 <varlistentry><term> 
+<envar>TCPLOCALHOST</envar>
+</term><listitem>
+<para>
+The value of <replaceable>hostname</replaceable> set by the
+<arg>--localname</arg> option; guaranteed unset if that option is not used.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term> 
 <envar>TCPREMOTEIP</envar>
 </term><listitem>
 <para>
@@ -91,6 +101,24 @@ The remote (server) port number of the accepted socket.
 </listitem>
 </varlistentry>
 
+<varlistentry><term> 
+<envar>TCPREMOTEINFO</envar>
+</term><listitem>
+<para>
+Guaranteed unset.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term> 
+<envar>TCPREMOTEHOST</envar>
+</term><listitem>
+<para>
+Guaranteed unset.
+</para>
+</listitem>
+</varlistentry>
+
 </variablelist>
 
 <para>
@@ -101,11 +129,6 @@ If it is reached, <command>tcp-socket-accept</command> stops accepting new conne
 until one or more child processes exit.
 <command>tcp-socket-accept</command> always limits the number of connections, and has
 no notion of an "unlimited" number of connections.
-</para>
-
-<para>
-If the <arg>--localname</arg> option is used, it disables lookup of the local host name
-from the IP address, and instead substitutes the supplied name.
 </para>
 
 <para>

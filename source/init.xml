@@ -314,10 +314,7 @@ It makes no attempt itself to validate <replaceable>command</replaceable>,
 which can be any of the subcommands supported by
 <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 <arg choice="plain">set</arg> is replaced with
-<arg choice="plain">set-service-env</arg>
-or
-<arg choice="plain">unset-service-env</arg>, 
-according to whether a value is supplied as a fifth argument.
+<arg choice="plain">set-service-env</arg>.
 <arg choice="plain">get</arg> is replaced with
 <arg choice="plain">print-service-env</arg>.
 </para>

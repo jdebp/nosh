@@ -3,14 +3,14 @@
 ## **************************************************************************
 
 [Unit]
-Description=Standard format %P logging service for %I
+Description=Standard format %p logging service for %I
 Before=%I.service
 
 [Service]
 systemdUserEnvironment=no
 WorkingDirectory=/var/log/sv/
-User=%I-log
-ExecStart=%P t ./%I/
+User=%i-log
+ExecStart=%p t ./%I/
 Restart=always
 
 [Install]

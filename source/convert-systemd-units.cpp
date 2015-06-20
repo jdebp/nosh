@@ -262,11 +262,19 @@ protected:
 	static std::string escape ( bool, const std::string & );
 	void set ( bool esc, bool at, std::string & escaped, std::string & normal, const std::string & value ) {
 		if (esc)
-			normal = unescape(at, escaped = value);
-		else
 			escaped = escape(at, normal = value);
+		else
+			normal = unescape(at, escaped = value);
 	}
 };
+
+#if defined(__LINUX__) || defined(__linux__)
+// Linux useradd allows backslash in user/group names.
+static const char ESCAPE_CHAR('\\');
+#else
+// BSD pw useradd is stricter.
+static const char ESCAPE_CHAR('_');
+#endif
 
 std::string 
 names::unescape ( 
@@ -279,7 +287,7 @@ names::unescape (
 		if (!alt && '-' == c) {
 			r += '/';
 		} else
-		if ('\\' != c) {
+		if (ESCAPE_CHAR != c) {
 			r += c;
 		} else
 		if (e == q) {
@@ -312,17 +320,29 @@ names::escape (
 	const std::string & s
 ) {
 	std::string r;
-	for (std::string::const_iterator e(s.end()), q(s.begin()); e != q; ) {
-		char c(*q++);
-		if (!alt && '/' == c) {
-			r += '-';
-		} else
-		if (!alt ? '-' == c : '@' == c || '/' == c || '\\' == c || ':' == c || ',' == c) {
-			char buf[6];
-			snprintf(buf, sizeof buf, "\\x%02x", c);
-			r += std::string(buf);
-		} else
-			r += c;
+	if (alt) {
+		for (std::string::const_iterator e(s.end()), q(s.begin()); e != q; ) {
+			const char c(*q++);
+			if (ESCAPE_CHAR == c || '\\' == c || '@' == c || '/' == c || ':' == c || ',' == c) {
+				char buf[6];
+				snprintf(buf, sizeof buf, "%cx%02x", ESCAPE_CHAR, c);
+				r += std::string(buf);
+			} else
+				r += c;
+		}
+	} else {
+		for (std::string::const_iterator e(s.end()), q(s.begin()); e != q; ) {
+			const char c(*q++);
+			if ('/' == c) {
+				r += '-';
+			} else
+			if (ESCAPE_CHAR == c || '-' == c) {
+				char buf[6];
+				snprintf(buf, sizeof buf, "%cx%02x", ESCAPE_CHAR, c);
+				r += std::string(buf);
+			} else
+				r += c;
+		}
 	}
 	return r;
 }
@@ -468,7 +488,7 @@ void
 create_links (
 	const char * prog,
 	const bool is_target,
-	const bool etc_service,
+	const bool etc_bundle,
 	int bundle_dir_fd,
 	const std::string & names,
 	const std::string & subdir
@@ -478,27 +498,24 @@ create_links (
 		const std::string & name(*i);
 		std::string base, link, target;
 		if (ends_in(name, ".target", base)) {
-			if (is_target)
-				target = "../../" + base;
-			else
-			if (etc_service)
-				target = "../../../system-manager/targets/" + base;
-			else
-				target = "/etc/system-manager/targets/" + base;
+			if (etc_bundle) {
+				if (is_target)
+					target = "../../" + base;
+				else
+					target = "../../../targets/" + base;
+			} else
+				target = "/etc/service-bundles/targets/" + base;
 			link = subdir + base;
 		} else
 		if (ends_in(name, ".service", base)) {
-			if (is_target||etc_service)
+			if (etc_bundle)
 				target = "/var/sv/" + base;
 			else
 				target = "../../" + base;
 			link = subdir + base;
 		} else 
 		{
-			if (is_target||etc_service)
-				target = "/var/sv/" + name;
-			else
-				target = "../../" + name;
+			target = "../../" + name;
 			link = subdir + name;
 		}
 		create_link(prog, bundle_dir_fd, target, link);
@@ -555,20 +572,20 @@ convert_systemd_units (
 ) {
 	const char * prog(basename_of(args[0]));
 	std::string bundle_root;
-	bool unescape_instance(false), unescape_prefix(false), alt_escape(false), etc_service(false);
+	bool escape_instance(false), escape_prefix(false), alt_escape(false), etc_bundle(false);
 	try {
 		const char * bundle_root_str(0);
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
 		popt::string_definition bundle_option('\0', "bundle-root", "directory", "Root directory for bundles.", bundle_root_str);
-		popt::bool_definition unescape_instance_option('\0', "unescape-instance", "Unescape the instance part of a template instantiation.", unescape_instance);
+		popt::bool_definition escape_instance_option('\0', "escape-instance", "Escape the instance part of a template instantiation.", escape_instance);
 		popt::bool_definition alt_escape_option('\0', "alt-escape", "Use an alternative escape algorithm.", alt_escape);
-		popt::bool_definition etc_service_option('\0', "etc-service", "Consider this service to live away from the normal service bundle group.", etc_service);
+		popt::bool_definition etc_bundle_option('\0', "etc-bundle", "Consider this service to live away from the normal service bundle group.", etc_bundle);
 		popt::definition * main_table[] = {
 			&user_option,
 			&bundle_option,
-			&unescape_instance_option,
+			&escape_instance_option,
 			&alt_escape_option,
-			&etc_service_option
+			&etc_bundle_option
 		};
 		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "");
 
@@ -638,21 +655,21 @@ convert_systemd_units (
 		std::string service_unit_name;
 		if (is_socket_activated) {
 			value * accept(socket_profile.use("socket", "accept"));
-			names.set_prefix(names.query_bundle_basename(), unescape_prefix, alt_escape);
+			names.set_prefix(names.query_bundle_basename(), escape_prefix, alt_escape);
 			is_socket_accept = is_bool_true(accept, false);
-			service_unit_name = names.query_unit_dirname() + names.query_prefix() + (is_socket_accept ? "@" : "") + ".service";
+			service_unit_name = names.query_unit_dirname() + names.query_escaped_prefix() + (is_socket_accept ? "@" : "") + ".service";
 			service_file = find(service_unit_name, service_filename);
 		} else {
-			names.set_prefix(names.query_bundle_basename(), unescape_prefix, alt_escape);
+			names.set_prefix(names.query_bundle_basename(), escape_prefix, alt_escape);
 			service_unit_name = names.query_arg_name();
 			service_file = find(service_unit_name, service_filename);
 			if (!service_file && ENOENT == errno) {
 				std::string::size_type atc(names.query_bundle_basename().find('@'));
 				if (names.query_bundle_basename().npos != atc) {
-					names.set_prefix(names.query_unit_basename().substr(0, atc), unescape_prefix, alt_escape);
+					names.set_prefix(names.query_unit_basename().substr(0, atc), escape_prefix, alt_escape);
 					++atc;
-					names.set_instance(names.query_bundle_basename().substr(atc, names.query_bundle_basename().npos), unescape_instance, alt_escape);
-					service_unit_name = names.query_unit_dirname() + names.query_prefix() + "@.service";
+					names.set_instance(names.query_bundle_basename().substr(atc, names.query_bundle_basename().npos), escape_instance, alt_escape);
+					service_unit_name = names.query_unit_dirname() + names.query_escaped_prefix() + "@.service";
 					service_file = find(service_unit_name, service_filename);
 				}
 			}
@@ -708,6 +725,8 @@ convert_systemd_units (
 	value * type(service_profile.use("service", "type"));
 	value * workingdirectory(service_profile.use("service", "workingdirectory"));
 	value * rootdirectory(service_profile.use("service", "rootdirectory"));
+	value * runtimedirectory(service_profile.use("service", "runtimedirectory"));
+	value * runtimedirectorymode(service_profile.use("service", "runtimedirectorymode"));
 	value * systemdworkingdirectory(service_profile.use("service", "systemdworkingdirectory"));	// This is an extension to systemd.
 	value * systemduserenvironment(service_profile.use("service", "systemduserenvironment"));	// This is an extension to systemd.
 	value * execstart(service_profile.use("service", "execstart"));
@@ -803,6 +822,22 @@ convert_systemd_units (
 		std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, service_filename.c_str(), killmode->last_setting().c_str(), "Unsupported service stop mechanism.");
 		throw EXIT_FAILURE;
 	}
+	if (runtimedirectory) {
+		for (std::list<std::string>::const_iterator i(runtimedirectory->all_settings().begin()); runtimedirectory->all_settings().end() != i; ++i) {
+			const std::string dir(names.substitute(*i));
+			// Yes, this is more draconian than systemd.
+			if (dir.length() < 1 || '.' == dir[0]) {
+				std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, service_filename.c_str(), dir.c_str(), "Hidden runtime directories are not permitted.");
+				throw EXIT_FAILURE;
+			}
+			// This is something that we are going to pass to the "rm" command run as the superuser, remember.
+			const std::string::size_type slash(dir.find('/'));
+			if (std::string::npos != slash) {
+				std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, service_filename.c_str(), dir.c_str(), "Slash is not permitted in runtime directory names.");
+				throw EXIT_FAILURE;
+			}
+		}
+	}
 
 	// Make the directories.
 
@@ -824,7 +859,7 @@ convert_systemd_units (
 		throw EXIT_FAILURE;
 	}
 
-#define CREATE_LINKS(l,s) (l ? create_links (prog,is_target,etc_service,bundle_dir_fd.get(),names.substitute((l)->last_setting()),(s)) : static_cast<void>(0))
+#define CREATE_LINKS(l,s) (l ? create_links (prog,is_target,etc_bundle,bundle_dir_fd.get(),names.substitute((l)->last_setting()),(s)) : static_cast<void>(0))
 
 	// Construct various common command strings.
 
@@ -878,6 +913,23 @@ convert_systemd_units (
 		chdir += "chdir " + quote(names.substitute(workingdirectory->last_setting())) + "\n";
 	else if (rootdirectory || is_bool_true(systemdworkingdirectory, true))
 		chdir += "chdir /\n";
+	std::string createrundir, removerundir;
+	if (runtimedirectory) {
+		for (std::list<std::string>::const_iterator i(runtimedirectory->all_settings().begin()); runtimedirectory->all_settings().end() != i; ++i) {
+			const std::string dir("/run/" + names.substitute(*i));
+			createrundir += "foreground mkdir";
+			if (runtimedirectorymode) createrundir += " -m " + quote(runtimedirectorymode->last_setting());
+			createrundir += " -- " + quote(dir) + " ;\n";
+			if (user) {
+				createrundir += "foreground chown " + quote(names.substitute(user->last_setting()));
+				if (group)
+					createrundir += ":" + quote(names.substitute(group->last_setting()));
+				createrundir += " -- " + quote(dir) + " ;\n";
+			}
+			// The trailing slash is a(nother) safety measure, to help ensure that this is a directory that we are removing, uncondintally, as the superuser.
+			removerundir += "foreground rm -r -f -- " + quote(dir) + "/ ;\n";
+		}
+	}
 	std::string softlimit;
 	if (limitnofile||limitcpu||limitcore||limitnproc||limitfsize||limitas||limitdata||limitmemory) {
 		softlimit += "softlimit";
@@ -985,23 +1037,27 @@ convert_systemd_units (
 
 	if (!is_oneshot) {
 		start << "#!/bin/nosh\n" << multi_line_comment("Start file generated from " + service_filename);
-		if (execstartpre) {
+		if (execstartpre || runtimedirectory) {
 			if (setuidgidall) start << envuidgid;
 			start << redirect;
 			start << softlimit;
+			start << createrundir;
 			if (chrootall) start << chroot;
 			start << chdir;
 			if (setuidgidall) start << setuidgid;
 			start << env;
 			start << um;
-			for (std::list<std::string>::const_iterator i(execstartpre->all_settings().begin()); execstartpre->all_settings().end() != i; ) {
-				std::list<std::string>::const_iterator j(i++);
-				if (execstartpre->all_settings().begin() != j) start << " ;\n"; 
-				if (execstartpre->all_settings().end() != i) start << "foreground "; 
-				const std::string & val(*j);
-				start << names.substitute(shell_expand(strip_leading_minus(val)));
-			}
-			start << "\n";
+			if (execstartpre) {
+				for (std::list<std::string>::const_iterator i(execstartpre->all_settings().begin()); execstartpre->all_settings().end() != i; ) {
+					std::list<std::string>::const_iterator j(i++);
+					if (execstartpre->all_settings().begin() != j) start << " ;\n"; 
+					if (execstartpre->all_settings().end() != i) start << "foreground "; 
+					const std::string & val(*j);
+					start << names.substitute(shell_expand(strip_leading_minus(val)));
+				}
+				start << "\n";
+			} else
+				start << "true\n";
 		} else 
 			start << "true\n";
 	} else {
@@ -1236,22 +1292,26 @@ convert_systemd_units (
 	}
 
 	stop << "#!/bin/nosh\n" << multi_line_comment("Stop file generated from " + service_filename);
-	if (execstoppost) {
+	if (execstoppost || runtimedirectory) {
 		if (setuidgidall) stop << envuidgid;
 		stop << softlimit;
 		if (chrootall) stop << chroot;
+		stop << removerundir;
 		stop << chdir;
 		if (setuidgidall) stop << setuidgid;
 		stop << env;
 		stop << um;
-		for (std::list<std::string>::const_iterator i(execstoppost->all_settings().begin()); execstoppost->all_settings().end() != i; ) {
-			std::list<std::string>::const_iterator j(i++);
-			if (execstoppost->all_settings().begin() != j) stop << " ;\n"; 
-			if (execstoppost->all_settings().end() != i) stop << "foreground "; 
-			const std::string & val(*j);
-			stop << names.substitute(strip_leading_minus(val));
-		}
-		stop << "\n";
+		if (execstoppost) {
+			for (std::list<std::string>::const_iterator i(execstoppost->all_settings().begin()); execstoppost->all_settings().end() != i; ) {
+				std::list<std::string>::const_iterator j(i++);
+				if (execstoppost->all_settings().begin() != j) stop << " ;\n"; 
+				if (execstoppost->all_settings().end() != i) stop << "foreground "; 
+				const std::string & val(*j);
+				stop << names.substitute(strip_leading_minus(val));
+			}
+			stop << "\n";
+		} else
+			stop << "true\n";
 	} else 
 		stop << "true\n";
 
@@ -1280,19 +1340,19 @@ convert_systemd_units (
 			is_bool_true(service_defaultdependencies, true)
 	);
 	const bool earlysupervise(
-			(is_socket_activated && is_bool_true(socket_earlysupervise, false)) || 
-			is_bool_true(service_earlysupervise, false)
+			(is_socket_activated && is_bool_true(socket_earlysupervise, etc_bundle)) || 
+			is_bool_true(service_earlysupervise, etc_bundle)
 	);
 	if (defaultdependencies) {
 		if (is_socket_activated)
-			create_links(prog, is_target, etc_service, bundle_dir_fd.get(), "sockets.target", "wanted-by/");
-		create_links(prog, is_target, etc_service, bundle_dir_fd.get(), "basic.target", "after/");
-		create_links(prog, is_target, etc_service, bundle_dir_fd.get(), "basic.target", "wants/");
-		create_links(prog, is_target, etc_service, bundle_dir_fd.get(), "shutdown.target", "before/");
-		create_links(prog, is_target, etc_service, bundle_dir_fd.get(), "shutdown.target", "stopped-by/");
+			create_links(prog, is_target, etc_bundle, bundle_dir_fd.get(), "sockets.target", "wanted-by/");
+		create_links(prog, is_target, etc_bundle, bundle_dir_fd.get(), "basic.target", "after/");
+		create_links(prog, is_target, etc_bundle, bundle_dir_fd.get(), "basic.target", "wants/");
+		create_links(prog, is_target, etc_bundle, bundle_dir_fd.get(), "shutdown.target", "before/");
+		create_links(prog, is_target, etc_bundle, bundle_dir_fd.get(), "shutdown.target", "stopped-by/");
 	}
 	if (earlysupervise) {
-		create_link(prog, bundle_dir_fd.get(), "/run/system-manager/early-supervise/" + names.query_bundle_basename(), "supervise");
+		create_link(prog, bundle_dir_fd.get(), "/run/service-bundles/early-supervise/" + names.query_bundle_basename(), "supervise");
 	}
 
 	// Issue the final reports.
