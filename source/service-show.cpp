@@ -378,8 +378,10 @@ service_show (
 			if (b >= 20)
 				write_string_value("DaemontoolsEncoreState", state_of(status[18]));
 			write_numeric_int_value("MainPID", p);
-			const uint64_t z(s - 0x4000000000000000ULL - 10U);
-			write_numeric_uint64_value("Timestamp", z);
+			write_numeric_uint64_value("Timestamp", s);
+			bool leap;
+			const uint64_t z(tai64_to_time(s, leap));
+			write_numeric_uint64_value("UTCTimestamp", z);
 			const char * const want('u' == status[17] ? "up" : 'O' == status[17] ? "once at most" : 'o' == status[17] ? "once" : 'd' == status[17] ? "down" : "nothing");
 			write_string_value("Want", want);
 			write_boolean_value("Paused", status[16]);

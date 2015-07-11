@@ -31,20 +31,88 @@ These long-running initialization actions are <em>not</em> necessarily stuck jus
 </p>
 
 <h2>
-The system bootstrap never starts the "normal" target.
+The system bootstrap never fully completes
 </h2>
 
+<p>
+Troubleshoot this by:
+</p>
 <ul>
 <li><p>
-You have your <code>/usr</code> and <code>/var</code> filesystems on separate volumes and you haven't run <code>system-control enable mount@-usr mount@-var</code>.
-These mount services are not enabled as shipped.
-You have to enable them if you have separate <code>/usr</code> and <code>/var</code> volumes.
-</p></li>
+&hellip; looking at the logs, if possible.
+The system manager's own log output can be seen in <code>/run/system-manager/log/</code>.
+</p>
 <li><p>
-Service A specifies that it is to be started after service B (or service B has specified that it is to start before service A), one or both services are directly or indirectly wanted by the "normal" target, and service B has failed to start.
-</p></li>
-<li><p>
-You have an enabled service whose <code>supervise</code> directory is on a read-only filesystem.
-Notice that "sysinit" services locate their <code>supervise</code> directories under <code>/run/service-bundles/early-supervise/</code> for this reason.
-</p></li>
+&hellip; watching the bootstrap process interactively.
+Start the system in rescue mode, then bring up the "normal" target interactively with:
+<p>
+<blockquote><pre>system-control start --verbose normal</pre></blockquote>
+</li>
 </ul>
+
+<p>
+Watch for things that are "BLOCKED" and note how far through the boot process <code>system-control</code> gets.
+</p>
+
+<h3>
+<code>system-control</code> experiences a conflict
+</h3>
+
+<p>
+The most common conflict is one between kernel virtual terminals and user-mode virtual terminals &mdash; the <code>ttylogin@ttyv1</code> service conflicting with the <code>console-fb-realizer@head0</code> service.
+This is hard, but not impossible, to cause.
+Simply disable the one or the other service.
+</p>
+
+<h3>
+Volumes are not mounted, and services needing those volumes to be mounted cannot start
+</h3>
+
+<p>
+The <code>mount@</code> services that mount volumes are not enabled in the base service bundles package.
+</p>
+
+<p>
+Specifically, if you have your <code>/usr</code> and <code>/var</code> filesystems on separate volumes and you haven't enabled the <code>mount@-usr</code> and <code>mount@-var</code> services then many other services will fail not only to start but even to be found by the "normal" target when <code>system-control</code> goes looking for its dependencies.
+</p>
+
+<p>
+You must enable these services.
+This can be done explicitly, or by <a href="external-formats.html">the autoconfiguration system of <code>redo</code> scripts</a>, which will create and enable mount services based upon the contents of <code>/etc/fstab</code>.
+</p>
+
+<h3>
+Services remain blocked
+</h3>
+
+<p>
+In this scenario service A specifies that it is to be started after service B (or service B has specified that it is to start before service A), one or both services are directly or indirectly wanted by the "normal" target, and service B has failed to start.
+</p>
+
+<p>
+Look at service B's own logs, and the output of
+</p>
+<blockquote><pre>system-control status B</pre></blockquote>
+
+<h3>
+The service manager reports errors when attempting to load a service
+</h3>
+
+<p>
+The most common cause of this is that you have an enabled service whose <code>supervise</code> directory is on a read-only filesystem.
+The service manager is thus unable to create/update the control/status API files in that directory.
+</p>
+
+<p>
+Notice that "sysinit" services <a href="startup-and-shutdown.html#sysinit">locate their <code>supervise</code> directories under <code>/run/service-bundles/early-supervise/</code> for this very reason</a>.
+The point where they are loaded by the service manager is well before the point that the <code>/var</code> or <code>/</code> volumes are mounted read-write.
+</p>
+
+<h2>
+An <code>/etc/fstab</code> entry is ignored.
+</h2>
+
+<p>
+The conversion utility ignores entries that are not marked as <code>rw</code>, <code>rq</code>, <code>ro</code>, or <code>sw</code>.
+Ensure that the entry is marked with a correct mount type.
+</p>

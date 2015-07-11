@@ -3,12 +3,12 @@ case "$1" in
 	upgrade)
 		# Convert from the old 1.16 and earlier directory structure.
 		mkdir -m 0755 -p -- /etc/service-bundles
-		if [ \! -L /etc/system-manager/targets ] && [ -d /etc/system-manager/targets ]
+		if [ \! -L /etc/system-manager/targets ] && [ -d /etc/system-manager/targets ] && [ \! -e /etc/service-bundles/targets ]
 		then
 			mv -i -- /etc/system-manager/targets /etc/service-bundles/
 			ln -s -f -- ../service-bundles/targets /etc/system-manager
 		fi
-		if [ \! -L /etc/sv ] && [ -d /etc/sv ]
+		if [ \! -L /etc/sv ] && [ -d /etc/sv ] && [ \! -e /etc/service-bundles/services ]
 		then
 			mv -i -- /etc/sv /etc/service-bundles/services
 			ln -s -f -- service-bundles/services /etc/sv

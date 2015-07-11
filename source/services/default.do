@@ -86,6 +86,14 @@ devd)
 	log="../${base}-log"
 	etc=--etc-bundle
 	;;
+udev|udev-trigger-add@*)
+	log="../udev-log"
+	etc=--etc-bundle
+	;;
+busybox-mdev|busybox-mdev-rescan)
+	log="../mdev-log"
+	etc=--etc-bundle
+	;;
 *) 
 	redo-ifchange -- ${etc_services}
 	if grep -q -- "^${base}\$" ${etc_services}
@@ -104,6 +112,15 @@ esac
 test -n "${log}" && ln -s -f "${log}" services.new/"${base}"/log
 
 case "${base}" in
+kmod@vboxadd|kmod@vboxsf|kmod@vboxguest|kmod@vboxvideo)
+	ln -f -s -- /etc/service-bundles/targets/virtualbox-guest services.new/"${base}"/wanted-by/
+	;;
+kmod@vboxdrv|kmod@vboxnetadp|kmod@vboxnetflt|kmod@vboxpci)
+	ln -f -s -- /etc/service-bundles/targets/virtualbox-host services.new/"${base}"/wanted-by/
+	;;
+kmod@uvesafb)
+	ln -f -s -- /etc/service-bundles/targets/frame-buffer services.new/"${base}"/wanted-by/
+	;;
 cyclog@ttylogin@*)
 	rm -f -- services.new/"${base}"/wanted-by/workstation
 	ln -s -f -- ../../"${base#cyclog@}" services.new/"${base}"/wanted-by/
@@ -124,7 +141,6 @@ console-fb-realizer@head0)
 
 	mkdir -m 0755 services.new/"${base}"/service/kbdmaps
 	mkdir -m 0755 services.new/"${base}"/service/fonts
-	ln -s -f ../../ttylogin@tty1 ../../ttylogin@ttyv0 services.new/"${base}"/conflicts/
 	ln -s -f kbdmaps/us.kbdmap services.new/"${base}"/service/kbdmap
 
 	case "`uname`" in
@@ -149,6 +165,9 @@ if grep -q "envdir env" services.new/"${base}"/service/start services.new/"${bas
 then
 	mkdir -m 0755 services.new/"${base}"/service/env
 fi
+
+test -e "${name}".tmpfiles && cp -a "${name}".tmpfiles services.new/"${base}"/service/
+test -e "${name}".helper && cp -a "${name}".helper services.new/"${base}"/service/
 
 rm -r -f -- "$3"
 mv -- services.new/"${base}" "$3"

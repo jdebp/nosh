@@ -2,6 +2,14 @@
 escape() { echo "$1"|sed -e 's/@/\\x40/g' ; }
 addloguser() { getent passwd "$1" > /dev/null || useradd --shell /bin/false "$1" ; }
 addlog() { mkdir -m 0750 -p /var/log/sv/"$2" ; setfacl -m u:"$1"-log:rwx -m g:adm:rx /var/log/sv/"$2" ; }
+# non-log users
+for I in \
+	klogd \
+	;
+do
+	i="`escape "$I"`"
+	addloguser "$i"
+done
 case "$1" in
 	configure)
 		# common services with dedicated log services
@@ -120,6 +128,7 @@ case "$1" in
 			kadmind \
 			klogd \
 			kpasswdd \
+			nagios-nrpe-server \
 			org.cups.cups-lpd \
 			qmail-smtp-relay \
 			qmail-smtp-submission \
@@ -150,9 +159,6 @@ case "$1" in
 		for I in \
 			dmesg \
 			hostname \
-			kmod@autofs \
-			kmod@ipv6 \
-			kmod@unix \
 			machine-id \
 			sysinit-log \
 			stty-sane@console \
@@ -165,6 +171,12 @@ case "$1" in
 		for I in \
 			console-kit-daemon \
 			kerneloops \
+			kmod@autofs \
+			kmod@ipv6 \
+			kmod@unix \
+			kmod@uvesafb \
+			linux-lockfiles \
+			static-networking \
 			update-binfmts \
 			wettsteinsyslogd \
 			;
@@ -190,14 +202,35 @@ case "$1" in
 			system-control preset --prefix cyclog@ $I.service
 		done
 		# Linux services that fan in to a single logger
-		:
+		for I in \
+			udev \
+			busybox-mdev \
+			;
+		do
+			i="`escape "$I"`"
+			addloguser "$i"-log
+			addlog "$i" "$I"
+			system-control preset $I.service
+		done
+		for I in \
+			udev-log \
+			udev-trigger-add@subsystems \
+			udev-trigger-add@devices \
+			busybox-mdev-log \
+			busybox-mdev-rescan \
+			;
+		do
+			system-control preset $I.service
+		done
 		# targets
 		for I in \
 			sysinit \
 			basic \
 			dumpauto \
+			frame-buffer \
 			local-fs \
 			local-fs-pre \
+			local-syslog \
 			remote-fs \
 			server \
 			swapauto \

@@ -5,14 +5,20 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.15</refmiscinfo>
+<refmiscinfo class="version">1.18</refmiscinfo>
 </refmeta>
 
 <refnamediv><refname>clearenv</refname><refpurpose>clear the entire environment then chain</refpurpose></refnamediv>
 
 <refsynopsisdiv>
 <cmdsynopsis>
-<command>clearenv</command> <arg>--keep-path</arg> <arg>--keep-user</arg> <arg>--keep-shell</arg> <arg>--keep-term</arg> <arg>--keep-locale</arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+<command>clearenv</command> 
+<arg>--keep-path</arg> 
+<arg>--keep-user</arg> 
+<arg>--keep-shell</arg> 
+<arg>--keep-term</arg> 
+<arg>--keep-locale</arg> 
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 

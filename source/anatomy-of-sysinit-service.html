@@ -29,10 +29,10 @@ Only a few, such as the devd and devd-log services, have long-lived daemon proce
 
 <p>
 The supervise directories for most "sysinit" services live under <code>/run</code>, because they must be writable before the filesystem containing <code>/etc</code> is remounted read-write.
-The service manager is told to load them, and thus needs to create their control/status API files, first thing in the bootstrap procedure.
+The service manager is told to load them, and thus needs to create their control/status API files, <a href="startup-and-shutdown.html#sysinit">first thing in the bootstrap procedure</a>.
 </p>
 
-<h2>
+<h2 id="etc">
 "etc" sysinit services
 </h2>
 

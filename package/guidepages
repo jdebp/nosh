@@ -20,6 +20,7 @@ rcconf
 startup-and-shutdown
 svscan-startup
 terminals
+timestamps
 troubleshooting
 ttys
 user-virtual-terminals

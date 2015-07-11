@@ -3,13 +3,15 @@
 ## **************************************************************************
 
 [Unit]
-Description=syslog socket used when attaching syslog daemons directly to local clients
 
 [Socket]
-ListenDatagram=/run/log
-SocketMode=0666
-PassCredentials=yes
-PassSecurity=yes
+Backlog=2
+BindIPv6Only=both
+ListenStream=5666
+Accept=true
+MaxConnections=4
+UCSPIRules=yes
+NoDelay=false
 
 [Install]
-WantedBy=workstation.target
+WantedBy=server.target

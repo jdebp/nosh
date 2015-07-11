@@ -2,6 +2,14 @@
 escape() { echo "$1"|sed -e 's/_/_x5f/g' -e 's/@/_x40/g' -e 's/:/_x3a/g' ; }
 addloguser() { getent passwd "$1" > /dev/null || pw useradd "$1" -s /bin/false ; }
 addlog() { mkdir -m 0755 -p /var/log/sv/"$2" ; chown "$1"-log /var/log/sv/"$2" ; }
+# non-log users
+for I in \
+	klogd \
+	;
+do
+	i="`escape "$I"`"
+	addloguser "$i"
+done
 # common services with dedicated log services
 for I in \
 	anacron \
@@ -117,6 +125,7 @@ for I in \
 	kadmind \
 	klogd \
 	kpasswdd \
+	nagios-nrpe-server \
 	org.cups.cups-lpd \
 	qmail-smtp-relay \
 	qmail-smtp-submission \
@@ -310,8 +319,10 @@ for I in \
 	sysinit \
 	basic \
 	dumpauto \
+	frame-buffer \
 	local-fs \
 	local-fs-pre \
+	local-syslog \
 	remote-fs \
 	server \
 	swapauto \

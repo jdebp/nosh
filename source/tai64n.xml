@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.15</refmiscinfo>
+<refmiscinfo class="version">1.18</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -23,46 +23,39 @@
 
 <para>
 <command>tai64n</command> reads a series of lines.  
-To each line it prefixes an <code>@</code> character, a TAI64N timestamp
-in external form (16 hexadecimal digits of seconds and 8 hexadecimal
-digits of nanoseconds), and a space.
+To each line it prefixes an <code>@</code> character, a TAI64N timestamp in external form (16 hexadecimal digits of seconds and 8 hexadecimal digits of nanoseconds), and a space.
 </para>
 
 <para>
-If no <replaceable>files</replaceable> are supplied, <command>tai64n</command> reads from its standard
-input until EOF.
+If no <replaceable>files</replaceable> are supplied, <command>tai64n</command> reads from its standard input until EOF.
 Otherwise it processes each named file in turn.
 In both cases it writes to its standard output.
 </para>
 
 <para>
-A trailing newline is silently added to any file (or to standard input) that
-ends with a partial line.
+A trailing newline is silently added to any file (or to standard input) that ends with a partial line.
 </para>
 
 <para>
-The timestamp is the time when <command>tai64n</command> processes the beginning of a line,
-which is slightly after it has read the beginning of that line.
-<command>tai6n</command> uses the <code>CLOCK_REALTIME</code> clock of the 
-<citerefentry><refentrytitle>clock_gettime</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-system call.
+The timestamp is the time when <command>tai64n</command> processes the beginning of a line, which is slightly after it has read the beginning of that line.
+<command>tai6n</command> uses the <code>CLOCK_REALTIME</code> clock of the <citerefentry><refentrytitle>clock_gettime</refentrytitle><manvolnum>2</manvolnum></citerefentry> system call.
 On many systems this has nanosecond resolution.
-Daemontools uses a timer with only microsecond resolution, and will produce
-different timestamps for the same events.
-</para>
-
-</refsection><refsection><title>TAI</title>
-
-<para>
-<command>tai64n</command> usually doesn't generate real TAI timestamps.
-Rather, it generates UTC-10 timestamps, in 96-bit external TAI64N form.
-But this is alright, since the programs that read the timestamps
-won't expect TAI either.
 </para>
 
 <para>
-Few programs, including the ones in daemontools, go to the bother of
-correctly converting UTC to TAI, but rather pretend that UTC-10 is TAI.
+<command>tai64n</command> attempts to generate correct TAI64N timestamps.
+On a Linux system where it detects an Olson "right" timezone currently in use, it knows that the system clock is TAI seconds since the Epoch and performs a simple conversion.
+On other Linux systems, and on BSDs, it assumes that the system clock is UTC seconds since the Epoch and attempts to correct for (known) UTC leap seconds in order to determine TAI.
+</para>
+
+</refsection><refsection><title>COMPATIBILITY</title>
+
+<para>
+daemontools' and daemontools-encore's <citerefentry><refentrytitle>tai64n</refentrytitle><manvolnum>1</manvolnum></citerefentry> uses a timer with only microsecond resolution, and for the same events will thus produce different timestamps to <command>tai64n</command>.
+</para>
+
+<para>
+See the timestamps section of the Nosh Guide for detailed information on the differences from daemontools, daemontools-encore, and other toolsets in how <command>tai64nlocal</command> handles TAI.
 </para>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

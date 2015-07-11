@@ -68,10 +68,13 @@ common_subcommand (
 	const char * arg
 ) {
 	const char * prog(basename_of(args[0]));
+	const char * log_lines(0);
 	try {
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
+		popt::string_definition log_lines_option('\0', "log-lines", "Control the number of log lines printed.", "number", log_lines);
 		popt::definition * main_table[] = {
-			&user_option
+			&user_option,
+			&log_lines_option
 		};
 		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "service(s)...");
 
@@ -90,6 +93,10 @@ common_subcommand (
 	args = convert(args_storage);
 	if (arg)
 		args.insert(args.begin(), arg);
+	if (log_lines) {
+		args.insert(args.begin(), log_lines);
+		args.insert(args.begin(), "--log-lines");
+	}
 	args.insert(args.begin(), command);
 	next_prog = arg0_of(args);
 }

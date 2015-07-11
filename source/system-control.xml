@@ -5,13 +5,14 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">administrator commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.15</refmiscinfo>
+<refmiscinfo class="version">1.18</refmiscinfo>
 </refmeta>
 
 <refnamediv>
 <refname>system-control</refname>
 <refname>systemctl</refname>
 <refname>initctl</refname>
+<refname>svcadm</refname>
 <refpurpose>process system control jobs, sending commands to the system manager and service manager</refpurpose>
 </refnamediv>
 
@@ -31,6 +32,11 @@
 <arg choice="req"><replaceable>command</replaceable></arg>
 <arg><replaceable>arguments or options</replaceable></arg>
 </cmdsynopsis>
+<cmdsynopsis>
+<command>svcadm</command>
+<arg choice="req"><replaceable>command</replaceable></arg>
+<arg><replaceable>arguments or options</replaceable></arg>
+</cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection><title>Description</title>
@@ -41,12 +47,10 @@
 </para>
 
 <para>
-For limited systemd compatibility, it is also available as
-<command>systemctl</command>.  
-Not all subcommands are supported, nor is placing subcommand options before the
-<replaceable>command</replaceable>.
-For similarly limited upstart compatibility, it is also available as
-<command>initctl</command>.  
+For limited systemd compatibility, it is also available as <command>systemctl</command>.  
+Not all subcommands are supported, nor is placing subcommand options before the <replaceable>command</replaceable>.
+For similarly limited upstart compatibility, it is also available as <command>initctl</command>.  
+For similarly limited SunOS compatibility, it is also available as <command>svcadm</command>.  
 </para>
 
 <para>
@@ -896,12 +900,13 @@ For best results, avoid having forking services in the first place, and change t
 
 <listitem>
 <para>
-Only TCP, UDP, local domain datagram, and local domain stream sockets are converted.
+Only TCP, UDP, local domain datagram, local domain stream, and netlink datagram sockets are converted.
 The <filename>run</filename>/<filename>service</filename> script makes use of
 <citerefentry><refentrytitle>udp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>tcp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>local-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>local-stream-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>netlink-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>tcp-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and
 <citerefentry><refentrytitle>local-stream-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 to spawn services, either to listen to the accepting socket or to respond on connecting sockets.

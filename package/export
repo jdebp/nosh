@@ -137,7 +137,7 @@ do
 	mv -f -- "${root1}"lib/systemd/system-preset/"$i"{new} "${root1}"lib/systemd/system-preset/"$i"
 done
 (
-	for i in bundles run-via-systemd run-virtualbox-guest run-freedesktop-kits run-user-vt run-kernel-vt run-appletalk 
+	for i in bundles run-via-systemd run-virtualbox-guest run-freedesktop-kits run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-local-syslog
 	do
 		cat package/common-nosh-$i-presets 
 		case "`uname`" in

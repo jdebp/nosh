@@ -3,13 +3,16 @@
 ## **************************************************************************
 
 [Unit]
-Description=kernel module loader for vboxsf
+Description=local syslog service milestone
+DefaultDependencies=false
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=system-control load-kernel-module vboxsf
-ExecStopPost=system-control unload-kernel-module vboxsf
+systemdUserEnvironment=no
+User=nobody
+systemdWorkingDirectory=false
+# This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
 
 [Install]
-WantedBy=virtualbox-guest.target
+WantedBy=workstation.target

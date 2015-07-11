@@ -5,6 +5,7 @@
 [Unit]
 Description="policy kit" daemon
 After=dbus.service
+After=local-syslog.target
 
 [Service]
 systemdWorkingDirectory=false

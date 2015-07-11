@@ -14,6 +14,7 @@ kpasswdd
 local-rsyslogd
 local-syslogd
 local-syslog-read
+nagios-nrpe-server
 org.cups.cups-lpd
 qmail-smtp-relay
 qmail-smtp-submission

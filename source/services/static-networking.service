@@ -1,0 +1,20 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+# There's no need for a BSD equivalent to this, using ifconfig -a up/down.
+# devd does all of the autoconfiguration on FreeBSD/PC-BSD.
+# This is needed on Linux systems where NetworkManager has been configured not to manage the [ifupdown] interfaces.
+
+[Unit]
+Description=Linux statically-configured network interface settings
+
+[Service]
+systemdWorkingDirectory=false
+ExecStartPre=mkdir -m 0755 /run/network
+ExecStart=ifup --verbose --all
+ExecStopPost=ifdown --verbose --all
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

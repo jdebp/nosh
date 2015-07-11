@@ -12,6 +12,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstddef>
 #include <cstdlib>
 #include <cstdio>
+#include <ctime>
+#include <stdint.h>
 
 enum {
 	EXIT_USAGE = EXIT_FAILURE,
@@ -167,6 +169,16 @@ extern
 std::string
 multi_line_comment (
 	const std::string & s
+) ;
+time_t
+tai64_to_time (
+	const uint64_t s,
+	bool & leap
+) ;
+uint64_t
+time_to_tai64 (
+	const std::time_t s,
+	bool leap
 ) ;
 
 #endif

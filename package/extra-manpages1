@@ -22,6 +22,7 @@ line-banner
 local-datagram-socket-listen
 local-stream-socket-accept
 local-stream-socket-listen
+netlink-datagram-socket-listen
 login-banner
 login-process
 login-prompt

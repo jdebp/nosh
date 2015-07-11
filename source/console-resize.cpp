@@ -86,7 +86,10 @@ console_resize (
 	else
 		std::cout << csi << rows << "*|";	// DECSNLS
 	std::cout << csi << "0;0r";			// DECSTBM
-	if (!lines_only)
+	if (!lines_only) {
+		std::cout << csi << "?69h";		// DECSLRMM true
 		std::cout << csi << "0;0s";		// DECSLRM
+		std::cout << csi << "?69l";		// DECSLRMM false
+	}
 	throw EXIT_SUCCESS;
 }

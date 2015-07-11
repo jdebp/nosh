@@ -15,6 +15,7 @@ User=log
 WorkingDirectory=/var/log/sv
 ExecStart=cyclog devd/
 Restart=always
+RestartSec=1
 
 [Install]
 WantedBy=sysinit.target

@@ -43,7 +43,7 @@ The "qmail-smtpd" service, for example, is plumbed to a "cyclog@qmail-smtpd" log
 <p>
 In the second scenario multiple services all fan-in to a single logging service.
 This scenario is exemplified by most of the "sysinit" services that are bundled with the package.
-They are all plumbed to a single "sysinit-log" logging service.
+<a href="anatomy-of-sysinit-service.html#etc">They are all plumbed to a single "sysinit-log" logging service</a>.
 This scenario has the disadvantage that the log outputs of multiple parallel concurrent service daemons are mashed together into a single log.
 Were these permanently running daemon processes all emitting log output all of the time, this would cause a mess.
 But the "sysinit" services that are plumbed to "sysinit-log" in fact do most of their work in their <code>startup</code> programs and have heavy ordering dependencies upon one another.

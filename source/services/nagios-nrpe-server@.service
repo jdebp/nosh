@@ -3,13 +3,14 @@
 ## **************************************************************************
 
 [Unit]
-Description=kernel module loader for vboxvideo
+Description=Nagios NRPE server
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=system-control load-kernel-module vboxvideo
-ExecStopPost=system-control unload-kernel-module vboxvideo
-RemainAfterExit=yes
+User=nagios
+ExecStart=nrpe -c /etc/nagios/nrpe.cfg --inetd
+Restart=no
+StandardInput=socket
 
 [Install]
-WantedBy=virtualbox-guest.target
+WantedBy=server.target

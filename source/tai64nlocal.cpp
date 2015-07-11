@@ -125,12 +125,14 @@ process (
 						}
 					} else
 					{
-						const uint64_t secs(convert(s, s_pos) - 0x4000000000000000ULL - 10U);
+						bool leap;
+						const std::time_t t(tai64_to_time(convert(s, s_pos), leap));
 						const uint32_t nano(convert(n, n_pos));
-						const std::time_t t(secs);
-						if (const struct tm * tm = localtime(&t)) {
+						struct tm tm;
+						if (localtime_r(&t, &tm)) {
+							if (leap) ++tm.tm_sec;
 							char fmt[64];
-							const int l(std::strftime(fmt, sizeof fmt, non_standard ? "%x %X" : "%F %T", tm));
+							const int l(std::strftime(fmt, sizeof fmt, non_standard ? "%x %X" : "%F %T", &tm));
 							std::fwrite(fmt, l, 1, stdout);
 							std::fprintf(stdout, ".%09" PRIu32, nano);
 						} else

@@ -1,0 +1,19 @@
+#!/bin/sh -
+case "$1" in
+	remove|purge)
+		for i in \
+			udev \
+			udev-log \
+			udev-trigger-add@subsystems \
+			udev-trigger-add@devices \
+			;
+		do
+			system-control disable $i.service cyclog@$i.service
+			if system-control is-loaded $i.service
+			then
+				system-control unload-when-stopped $i.service
+				system-control stop $i.service
+			fi
+		done
+		;;
+esac

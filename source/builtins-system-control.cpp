@@ -44,7 +44,6 @@ extern void convert_systemd_units ( const char * & , std::vector<const char *> &
 extern void nagios_check ( const char * & , std::vector<const char *> & ) ;
 extern void load_kernel_module ( const char * & , std::vector<const char *> & ) ;
 extern void unload_kernel_module ( const char * & , std::vector<const char *> & ) ;
-extern void cyclog ( const char * & , std::vector<const char *> & ) ;
 extern void system_control ( const char * & , std::vector<const char *> & ) ;
 extern void system_manager ( const char * & , std::vector<const char *> & ) ;
 extern void service_manager ( const char * & , std::vector<const char *> & ) ;
@@ -69,6 +68,7 @@ commands[] = {
 	{	"systemctl",		system_control		},
 	{	"initctl",		system_control		},
 	{	"rcctl",		system_control		},
+	{	"svcadm",		system_control		},
 	// system-control chains to these from its subcommands:
 	{	"service-is-enabled",	service_is_enabled	},
 	{	"service-is-ok",	service_is_ok		},

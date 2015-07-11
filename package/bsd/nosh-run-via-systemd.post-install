@@ -8,7 +8,7 @@ if systemd-systemctl is-enabled --quiet service-manager.socket
 then
 	systemd-systemctl start --no-ask-password service-manager.socket
 fi
-system-control preset sysinit.target
+system-control preset sysinit.target local-syslog.target
 systemd-systemctl preset system-control-normal.service
 if systemd-systemctl is-enabled --quiet system-control-normal.service 
 then

@@ -1,0 +1,67 @@
+<refentry id="netlink-datagram-socket-listen">
+
+<refmeta>
+<refentrytitle>netlink-datagram-socket-listen</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.18</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>netlink-datagram-socket-listen</refname>
+<refpurpose>create a socket listening for incoming TCP connections and chain</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>netlink-datagram-socket-listen</command>
+<arg>--raw</arg>
+<arg>--systemd-compatibility</arg>
+<arg choice='req'><replaceable>protocol</replaceable></arg>
+<arg choice='req'><replaceable>multicast-group</replaceable></arg>
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>netlink-datagram-socket-listen</command> is a chain-loading utility that opens a netlink datagram socket bound to <replaceable>protocol</replaceable> and <replaceable>multicast-group</replaceable>, sets the socket to file descriptor 3 (closing whatever that descriptor was), and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>netlink-datagram-socket-listen</command> will ignore.
+</para>
+
+<para>
+The <arg>--systemd-compatibility</arg> option causes <command>netlink-datagram-socket-listen</command> to set the <envar>LISTEN_FDS</envar> environment variable to 1, and the <envar>LISTEN_PID</envar> environment variable to its own process ID.
+This is for compatibility with daemons that expect to be run under <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+<para>
+For compatibility with daemons that expect to be run under <citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry>, inheriting the listening socket as their standard input, simply use <command>fdmove</command> <arg choice="plain">0</arg> <arg choice="plain">3</arg> in <replaceable>next-prog</replaceable>.
+See <citerefentry><refentrytitle>fdmove</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+<para>
+The netlink socket address family makes no distinction between the <code>SOCK_RAW</code> and the <code>SOCK_DGRAM</code> socket types.
+By default, a <code>SOCK_DGRAM</code> socket is opened.
+However, unfortunately, some netlink server programs do make such a distinction and require the use of <code>SOCK_RAW</code> for what is nominally a datagram socket.
+The <arg>--raw</arg> option causes <command>netlink-datagram-socket-listen</command> to open a <code>SOCK_RAW</code> socket, for the benefits of those programs.
+</para>
+
+</refsection><refsection><title>USAGE</title>
+
+<para>
+<command>netlink-datagram-socket-listen</command> can be used as a simple daemon monitored by <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+<command>netlink-datagram-socket-listen</command> overlaps the functionality of <citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry> (in the systemd-recommended configuration of <code>Accept=false</code> sockets).
+</para>
+
+<para>
+To change the process' UID and GID after opening the socket, simply chain through <citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

@@ -3,9 +3,12 @@
 ## **************************************************************************
 
 [Unit]
-[Install]
-WantedBy=server.target
+Description=SSH socket
+
 [Socket]
 ListenStream=22
 BindIPv6Only=both
 Accept=true
+
+[Install]
+WantedBy=server.target

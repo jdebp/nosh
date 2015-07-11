@@ -5,14 +5,18 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.15</refmiscinfo>
+<refmiscinfo class="version">1.18</refmiscinfo>
 </refmeta>
 
 <refnamediv><refname>setlock</refname><refpurpose>open an exclusive lock file then chain</refpurpose></refnamediv>
 
 <refsynopsisdiv>
 <cmdsynopsis>
-<command>setlock</command> <arg>--non-blocking</arg> <arg>--ignore</arg> <arg choice='req'><replaceable>file</replaceable></arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+<command>setlock</command> 
+<arg>--non-blocking</arg> 
+<arg>--ignore</arg> 
+<arg choice='req'><replaceable>file</replaceable></arg> 
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 

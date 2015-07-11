@@ -6,4 +6,5 @@
 # It is used by the nosh-bundles package in order to enable certain mandatory basics without which a system simply won't work.
 #
 
-disable sysinit.target
+disable	sysinit.target
+disable	local-syslog.target

@@ -16,6 +16,7 @@ exec	local-datagram-socket-listen
 exec	local-stream-socket-accept
 exec	local-stream-socket-listen
 exec	make-private-fs
+exec	netlink-datagram-socket-listen
 exec	nosh
 exec	pause
 exec	pipe
@@ -57,6 +58,7 @@ system-control	unload-kernel-module
 system-control	disable
 system-control	enable
 system-control	initctl
+system-control	svcadm
 system-control	preset
 system-control	reset
 system-control	show

@@ -5,6 +5,8 @@
 [Unit]
 Description=systemd(-compatible) %p service
 After=dbus.service
+# Don't want D-Bus in case the D-Bus daemon is not managed by service-manager.
+#Wants=dbus.service
 
 [Service]
 systemdWorkingDirectory=false

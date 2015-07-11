@@ -10,7 +10,6 @@
 enable	cyclog@dbus.service
 enable	cyclog@klogd.service
 enable	cyclog@motd-dynamic.service
-enable	dbus.socket
 enable	dbus.service
 enable	klogd.service
 enable	motd-dynamic.service
@@ -36,3 +35,4 @@ enable	swapauto.target
 enable	swaplate.target
 enable	workstation.target
 enable	multi-user.target
+enable	local-syslog.target

@@ -2,9 +2,11 @@ basic
 emergency
 halt
 extra-shared-libraries
+frame-buffer
 dumpauto
 local-fs
 local-fs-pre
+local-syslog
 multi-user
 name-services
 normal

@@ -3,13 +3,14 @@
 ## **************************************************************************
 
 [Unit]
-Description=kernel module loader for vboxadd
+Description=NFS mount daemon
+Wants=nfsd.service rpcbind.service
+After=rpcbind.service
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=system-control load-kernel-module vboxadd
-ExecStopPost=system-control unload-kernel-module vboxadd
-RemainAfterExit=yes
+ExecStart=mountd
+Restart=always
 
 [Install]
-WantedBy=virtualbox-guest.target
+WantedBy=server.target

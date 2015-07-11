@@ -3,13 +3,16 @@
 ## **************************************************************************
 
 [Unit]
-Description=kernel module loader for vboxnetadp
+Description=udev plug-and-play manager daemon
+DefaultDependencies=false
+Before=shutdown.target
+After=local-fs.target
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=system-control load-kernel-module vboxnetadp
-ExecStopPost=system-control unload-kernel-module vboxnetadp
-RemainAfterExit=yes
+ExecStart=%pd --debug
+Restart=on-abort
 
 [Install]
-WantedBy=virtualbox-host.target
+WantedBy=sysinit.target
+StoppedBy=shutdown.target

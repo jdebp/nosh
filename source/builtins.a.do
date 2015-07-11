@@ -1,4 +1,5 @@
 #!/bin/sh -e
 objects="builtins.o appendpath.o chdir.o chroot.o clearenv.o console-convert-kbdmap.o console-fb-realizer.o console-multiplexor.o console-ncurses-realizer.o console-resize.o convert-fstab-services.o convert-systemd-units.o cyclog.o detach-controlling-tty.o emergency-login.o envdir.o envuidgid.o exec.o false.o fdmove.o fdredir.o fifo-listen.o foreground-background.o klog-read.o kmod.o line-banner.o local-datagram-socket-listen.o local-stream-socket-accept.o local-stream-socket-listen.o login-banner.o login-process.o login-prompt.o make-private-fs.o nagios-check.o nosh.o open-controlling-tty.o pause.o pipe.o prependpath.o pty-get-tty.o pty-run.o read-conf.o recordio.o service-control.o service-dt-scanner.o service-is-enabled.o service-is-ok.o service-is-up.o service-manager.o service-show.o service-status.o service.o set-dynamic-hostname.o set-mount-object.o setenv.o setlock.o setpgrp.o setsid.o setuidgid-fromenv.o setuidgid.o setup-machine-id.o syslog-read.o system-version.o tai64n.o tai64nlocal.o tcp-socket-accept.o tcp-socket-listen.o true.o console-terminal-emulator.o ttylogin-starter.o ucspi-socket-rules-check.o udp-socket-listen.o ulimit.o unload-when-stopped.o umask.o unsetenv.o unshare.o userenv.o vc-get-tty.o vc-reset-tty.o"
-redo-ifchange ./archive ${objects}
-./archive "$3" ${objects}
+[ "`uname`" = "Linux" ] && extra="netlink-datagram-socket-listen.o"
+redo-ifchange ./archive ${objects} ${extra}
+./archive "$3" ${objects} ${extra}

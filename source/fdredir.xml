@@ -5,14 +5,17 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.15</refmiscinfo>
+<refmiscinfo class="version">1.18</refmiscinfo>
 </refmeta>
 
 <refnamediv><refname>fdredir</refname><refpurpose>redirect a file descriptor then chain</refpurpose></refnamediv>
 
 <refsynopsisdiv>
 <cmdsynopsis>
-<command>fdredir</command> <arg choice='req'><replaceable>fd</replaceable></arg> <arg choice='req'><replaceable>name</replaceable></arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+<command>fdredir</command> 
+<arg choice='req'><replaceable>fd</replaceable></arg> 
+<arg choice='req'><replaceable>name</replaceable></arg> 
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 

@@ -18,7 +18,10 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sys/prctl.h>
 #include <linux/kd.h>
 #include <fcntl.h>
+#include <mntent.h>
+#include "FileStar.h"
 #endif
+#include <sys/mount.h>
 #include <dirent.h>
 #include <unistd.h>
 #include <cstddef>
@@ -433,20 +436,72 @@ initialize_system_clock_timezone(
 }
 
 static inline
+int
+update_flag ( 
+	bool update 
+) {
+	return !update ? 0 :
+#if defined(__LINUX__) || defined(__linux__)
+		MS_REMOUNT
+#else
+		MNT_UPDATE
+#endif
+	;
+}
+
+static inline
+bool
+is_already_mounted (
+	const std::string & fspath
+) {
+#if defined(__LINUX__) || defined(__linux__)
+	// FIXME: Using the existing /dev populated by the initramfs doesn't work on Linux for some reason.
+	if ("/dev" == fspath) return false;
+#endif
+	struct stat b;
+	if (0 <= stat(fspath.c_str(), &b)) {
+		// This is traditional, and what FreeBSD/PC-BSD does.
+		// On-disc volumes on Linux mostly do this, too.
+		if (2 == b.st_ino)
+			return true;
+#if defined(__LINUX__) || defined(__linux__)
+		// Some virtual volumes on Linux do this, instead.
+		if (1 == b.st_ino)
+			return true;
+#endif
+	}
+#if defined(__LINUX__) || defined(__linux__)
+	// We're going to have to check this the long way around.
+	FileStar f(setmntent("/proc/self/mounts", "r"));
+	if (f.operator FILE *()) {
+		while (struct mntent * m = getmntent(f)) {
+			if (fspath == m->mnt_dir)
+				return true;
+		}
+	}
+#endif
+	return false;
+}
+
+static inline
 void
 setup_kernel_api_volumes_and_devices(
 	const char * prog
 ) {
 	for (std::vector<api_mount>::const_iterator i(api_mounts.begin()); api_mounts.end() != i; ++i) {
 		const std::string fspath(fspath_from_mount(i->iov, i->ioc));
+		bool update(false);
 		if (!fspath.empty()) {
 			if (0 > mkdir(fspath.c_str(), 0700)) {
 				const int error(errno);
 				if (EEXIST != error)
 					std::fprintf(stderr, "%s: ERROR: %s: %s: %s\n", prog, "mkdir", fspath.c_str(), std::strerror(error));
 			}
+			update = is_already_mounted(fspath);
+			if (update)
+				std::fprintf(stderr, "%s: INFO: %s: %s\n", prog, fspath.c_str(), "A volume is already mounted here.");
 		}
-		if (0 > nmount(i->iov, i->ioc, i->flags)) {
+		if (0 > nmount(i->iov, i->ioc, i->flags | update_flag(update))) {
 			const int error(errno);
 			if (EBUSY != error)
 				std::fprintf(stderr, "%s: ERROR: %s: %s: %s\n", prog, "nmount", i->name, std::strerror(error));
@@ -649,11 +704,6 @@ common_manager (
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
 		} else if (0 == shell) {
-#if defined(__LINUX__) || defined(__linux__)
-#	if defined(PR_SET_NAME)
-			prctl(PR_SET_NAME, "sh");
-#	endif
-#endif
 			setsid();
 			args.clear();
 			args.insert(args.end(), "/bin/sh");
@@ -842,9 +892,6 @@ common_manager (
 					std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
 				} else if (0 == system_control_pid) {
 #if defined(__LINUX__) || defined(__linux__)
-#	if defined(PR_SET_NAME)
-					prctl(PR_SET_NAME, "system-control");
-#	endif
 					sigprocmask(SIG_SETMASK, &original_signals, &masked_signals);
 #endif
 					default_all_signals();
@@ -875,9 +922,6 @@ common_manager (
 					std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
 				} else if (0 == system_control_pid) {
 #if defined(__LINUX__) || defined(__linux__)
-#	if defined(PR_SET_NAME)
-					prctl(PR_SET_NAME, "system-control");
-#	endif
 					sigprocmask(SIG_SETMASK, &original_signals, &masked_signals);
 #endif
 					default_all_signals();
@@ -912,9 +956,6 @@ common_manager (
 				std::string name_buf;
 				const char * log_name(construct_system_manager_log_name(is_system, name_buf));
 #if defined(__LINUX__) || defined(__linux__)
-#	if defined(PR_SET_NAME)
-				prctl(PR_SET_NAME, "cyclog");
-#	endif
 				sigprocmask(SIG_SETMASK, &original_signals, &masked_signals);
 #endif
 				if (is_system)
@@ -961,10 +1002,11 @@ common_manager (
 				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
 			} else if (0 == service_manager_pid) {
 #if defined(__LINUX__) || defined(__linux__)
-#	if defined(PR_SET_NAME)
-				prctl(PR_SET_NAME, "service-manager");
-#	endif
 				sigprocmask(SIG_SETMASK, &original_signals, &masked_signals);
+
+				// Linux's default file handle limit of 1024 is far too low for normal usage patterns.
+				const rlimit file_limit = { 16384U, 16384U };
+				setrlimit(RLIMIT_NOFILE, &file_limit);
 #endif
 				if (is_system)
 					setsid();

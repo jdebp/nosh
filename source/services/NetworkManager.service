@@ -4,9 +4,14 @@
 
 [Unit]
 Description=NetworkManager daemon
+After=dbus.service
+After=local-syslog.target
+# Don't want D-Bus in case the D-Bus daemon is not managed by service-manager.
+#Wants=dbus.service
 
 [Service]
 systemdWorkingDirectory=false
+ExecStartPre=mkdir -m 0755 /run/network
 ExecStart=%p --no-daemon
 Restart=always
 

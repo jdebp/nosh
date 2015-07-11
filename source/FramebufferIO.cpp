@@ -77,4 +77,3 @@ FramebufferIO::restore()
 #	error "Don't know how to control your framebuffer device."
 #endif
 }
-

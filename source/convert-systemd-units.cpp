@@ -391,12 +391,31 @@ names::substitute (
 static
 bool
 is_bool_true (
+	const value & v
+) {
+	const std::string r(tolower(v.last_setting()));
+	return "yes" == r || "on" == r || "true" == r;
+}
+
+static
+bool
+is_bool_true (
 	const value * v,
 	bool def
 ) {
 	if (!v) return def;
-	const std::string r(tolower(v->last_setting()));
-	return "yes" == r || "on" == r || "true" == r;
+	return is_bool_true(*v);
+}
+
+static
+bool
+is_bool_true (
+	const value * v,
+	const value * w,
+	bool def
+) {
+	if (!v) return is_bool_true(w, def);
+	return is_bool_true(*v);
 }
 
 static
@@ -431,6 +450,23 @@ split_ip_socket_name (
 		listenport = s.substr(colon + 1, std::string::npos);
 		if (bracketed(listenaddress))
 			listenaddress = listenaddress.substr(1, colon - 2);
+	}
+}
+
+static
+void
+split_netlink_socket_name (
+	const std::string & s, 
+	std::string & protocol, 
+	std::string & multicast_group
+) {
+	const std::string::size_type space(s.rfind(' '));
+	if (std::string::npos == space) {
+		multicast_group = "1";
+		protocol = s;
+	} else {
+		protocol = s.substr(0, space);
+		multicast_group = s.substr(space + 1, std::string::npos);
 	}
 }
 
@@ -691,6 +727,7 @@ convert_systemd_units (
 
 	value * listenstream(socket_profile.use("socket", "listenstream"));
 	value * listenfifo(socket_profile.use("socket", "listenfifo"));
+	value * listennetlink(socket_profile.use("socket", "listennetlink"));
 	value * listendatagram(socket_profile.use("socket", "listendatagram"));
 #if defined(IPV6_V6ONLY)
 	value * bindipv6only(socket_profile.use("socket", "bindipv6only"));
@@ -709,6 +746,8 @@ convert_systemd_units (
 	value * nodelay(socket_profile.use("socket", "nodelay"));
 	value * ucspirules(socket_profile.use("socket", "ucspirules"));
 	value * freebind(socket_profile.use("socket", "freebind"));
+	value * receivebuffer(socket_profile.use("socket", "receivebuffer"));
+	value * netlinkraw(socket_profile.use("socket", "netlinkraw"));	// This is an extension to systemd.
 	value * socket_before(socket_profile.use("unit", "before"));
 	value * socket_after(socket_profile.use("unit", "after"));
 	value * socket_conflicts(socket_profile.use("unit", "conflicts"));
@@ -800,7 +839,7 @@ convert_systemd_units (
 		throw EXIT_FAILURE;
 	}
 	if (is_socket_activated) {
-		if (!listenstream && !listendatagram && !listenfifo) {
+		if (!listenstream && !listendatagram && !listenfifo && !listennetlink) {
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, socket_filename.c_str(), "Missing mandatory ListenStream/ListenDatagram/ListenFIFO entry.");
 			throw EXIT_FAILURE;
 		}
@@ -813,6 +852,12 @@ convert_systemd_units (
 		if (listenfifo) {
 			if (is_socket_accept) {
 				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, socket_filename.c_str(), "ListenFIFO sockets may not have Accept=yes.");
+				throw EXIT_FAILURE;
+			}
+		}
+		if (listennetlink) {
+			if (is_socket_accept) {
+				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, socket_filename.c_str(), "ListenNetlink sockets may not have Accept=yes.");
 				throw EXIT_FAILURE;
 			}
 		}
@@ -1191,6 +1236,24 @@ convert_systemd_units (
 			run << env;
 			run << um;
 		}
+		if (listennetlink) {
+			std::string protocol, multicast_group;
+			split_netlink_socket_name(listennetlink->last_setting(), protocol, multicast_group);
+			run << "netlink-datagram-socket-listen --systemd-compatibility ";
+			if (is_bool_true(netlinkraw, false)) run << "--raw ";
+			if (backlog) run << "--backlog " << quote(backlog->last_setting()) << " ";
+			if (receivebuffer) run << "--receive-buffer-size " << quote(receivebuffer->last_setting()) << " ";
+			run << quote(protocol) << " " << quote(multicast_group) << "\n";
+			run << envuidgid;
+			run << setsid;
+			run << redirect;
+			run << softlimit;
+			run << chroot;
+			run << chdir;
+			run << setuidgid;
+			run << env;
+			run << um;
+		}
 		if (is_bool_true(ucspirules, false)) run << "ucspi-socket-rules-check\n";
 		run << "./service\n";
 		service << "#!/bin/nosh\n" << multi_line_comment("Service file generated from " + service_filename);
@@ -1336,11 +1399,11 @@ convert_systemd_units (
 	CREATE_LINKS(socket_stoppedby, "stopped-by/");
 	CREATE_LINKS(service_stoppedby, "stopped-by/");
 	const bool defaultdependencies(
-			(is_socket_activated && is_bool_true(socket_defaultdependencies, true)) || 
+			is_socket_activated ? is_bool_true(socket_defaultdependencies, service_defaultdependencies, true) :
 			is_bool_true(service_defaultdependencies, true)
 	);
 	const bool earlysupervise(
-			(is_socket_activated && is_bool_true(socket_earlysupervise, etc_bundle)) || 
+			is_socket_activated ? is_bool_true(socket_earlysupervise, service_earlysupervise, etc_bundle) :
 			is_bool_true(service_earlysupervise, etc_bundle)
 	);
 	if (defaultdependencies) {

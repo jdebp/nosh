@@ -117,6 +117,7 @@ case "$1" in
 			kadmind \
 			klogd \
 			kpasswdd \
+			nagios-nrpe-server \
 			org.cups.cups-lpd \
 			qmail-smtp-relay \
 			qmail-smtp-submission \
@@ -150,6 +151,7 @@ case "$1" in
 		for I in \
 			console-kit-daemon \
 			kerneloops \
+			linux-lockfiles \
 			update-binfmts \
 			wettsteinsyslogd \
 			;

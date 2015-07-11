@@ -944,7 +944,7 @@ SoftTerm::SetLinesPerPage()
 {
 	if (argc) {
 		const coordinate n(args[argc - 1U]);
-		// The DEC VT minimum is 80 colums; we are more liberal since we are not constrained by CRT hardware.
+		// The DEC VT minimum is 80 columns; we are more liberal since we are not constrained by CRT hardware.
 		if (n >= 2U) {
 			const coordinate columns(display_origin.x + display_margin.w);
 			Resize(columns, n);

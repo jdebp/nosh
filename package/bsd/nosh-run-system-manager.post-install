@@ -1,0 +1,2 @@
+#!/bin/sh -
+( cd /etc/system-control/convert/ && redo all )

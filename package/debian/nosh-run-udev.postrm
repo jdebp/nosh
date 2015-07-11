@@ -1,0 +1,18 @@
+#!/bin/sh -
+case "$1" in
+	upgrade)
+		for i in \
+			udev \
+			udev-log \
+			udev-trigger-add@subsystems \
+			udev-trigger-add@devices \
+			;
+		do
+			if system-control is-loaded $i.service
+			then
+				system-control try-restart $i.service
+			fi
+		done
+		;;
+esac
+

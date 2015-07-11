@@ -1,0 +1,21 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Target that encompasses whatever is necessary for using the FrameBuffer device
+DefaultDependencies=false
+EarlySupervise=true
+Before=shutdown.target
+
+[Service]
+systemdWorkingDirectory=false
+systemdUserEnvironment=no
+User=nobody
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
+ExecStart=true
+
+[Install]
+StoppedBy=shutdown.target
+WantedBy=workstation.target

@@ -4,6 +4,7 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 #include <vector>
+#include <limits>
 #include <cstdio>
 #include <cstdlib>
 #include <cerrno>
@@ -55,7 +56,7 @@ void resource_limit_definition::action(popt::processor &, const char * text)
 		val = std::strtoul(text, const_cast<char **>(&text), 0);
 		if (text == o || *text)
 			throw popt::error(o, "not a number");
-		if (val > (ULONG_MAX / scale))
+		if (val > (std::numeric_limits<rlim_t>::max() / scale))
 			throw popt::error(o, "rescaled number is too big");
 		val *= scale;
 	}
@@ -100,7 +101,7 @@ void memory_resource_limit_definition::action(popt::processor &, const char * te
 		val = std::strtoul(text, const_cast<char **>(&text), 0);
 		if (text == o || *text)
 			throw popt::error(o, "not a number");
-		if (val > (ULONG_MAX / scale))
+		if (val > (std::numeric_limits<rlim_t>::max() / scale))
 			throw popt::error(o, "rescaled number is too big");
 		val *= scale;
 	}

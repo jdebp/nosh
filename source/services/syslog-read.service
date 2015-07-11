@@ -14,4 +14,4 @@ ExecStart=syslog-read
 Restart=always
 
 [Install]
-WantedBy=workstation.target
+# This is enabled via the setting in the associated socket unit.

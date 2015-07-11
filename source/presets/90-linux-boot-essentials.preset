@@ -7,9 +7,14 @@
 #
 
 # Ordinary services
-enable	cyclog@acpid.service
-enable	cyclog@kerneloops.service
-enable	cyclog@update-binfmts.service
 enable	acpid.service
-enable	kerneloops.service
+enable	cyclog@acpid.service
 enable	update-binfmts.service
+enable	cyclog@update-binfmts.service
+enable	static-networking.service
+enable	cyclog@static-networking.service
+enable	linux-lockfiles.service
+enable	cyclog@linux-lockfiles.service
+
+# Targets
+enable	frame-buffer.target

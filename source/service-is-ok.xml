@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.15</refmiscinfo>
+<refmiscinfo class="version">1.18</refmiscinfo>
 </refmeta>
 
 <refnamediv><refname>service-is-ok</refname><refname>svok</refname><refpurpose>daemontools compatibility service checker</refpurpose></refnamediv>

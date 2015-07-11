@@ -1,0 +1,12 @@
+#
+# Enable systemd udev services
+#
+# This is not a systemd preset.
+# It goes in a special nosh system-manager preset directory.
+# It is used by the nosh-run-udev package in order to enable systemd udev plug-and-play device management services.
+#
+
+enable	udev.service
+enable	udev-log.service
+enable	udev-trigger-add@devices.service
+enable	udev-trigger-add@subsystems.service

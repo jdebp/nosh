@@ -112,6 +112,21 @@ Description: Service bundles
   * the system initialization services; and
   * regular services.
 
+Package: nosh-run-system-manager
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles, redo
+Suggests: 
+Recommends: nosh-run-kernel-vt | nosh-run-user-vt, nosh-systemv-shims, nosh-run-local-syslog
+Conflicts: nosh-run-via-systemd, upstart, sysvinit-core, systemd-sysv
+Provides: init
+Description: Run the various AppleTalk services
+ This package runs the nosh system manager as process #1.
+ . 
+ It does this by installing a symbolic link as /sbin/init .
+ . 
+ Note: This does not install any System 5 compatibility shim commands (halt, reboot, poweroff, &c.).
+ For those, install the (recommended) nosh-systemv-shims package.
+
 Package: nosh-run-kernel-vt
 Architecture: amd64
 Depends: nosh-exec, nosh-service-management (>=1.16), nosh-terminal-management, nosh-bundles
@@ -133,7 +148,7 @@ Architecture: amd64
 Depends: nosh-service-management (>=1.16), systemd, nosh-bundles
 Suggests: 
 Recommends: 
-Conflicts: nosh-systemd-services
+Replaces: nosh-systemd-services
 Description: Run the nosh service manager and daemontools service scanner via systemd
  This package provides systemd service units for running the nosh service manager and daemontools service scanner under systemd, instead of running the nosh service manager.
  It presets systemd services that:
@@ -154,7 +169,7 @@ Package: nosh-run-freedesktop-kits
 Architecture: amd64
 Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles
 Suggests: 
-Recommends: 
+Recommends: network-manager, modemmanager, packagekit, policykit-1, consolekit
 Description: Run the various "kit" programs from freedesktop.org
  This package runs the various "kit" programs from freedesktop.org:
   * NetworkManager
@@ -174,4 +189,31 @@ Description: Run the various AppleTalk services
   * Print server
   * Timelord
   * dbd
+
+Package: nosh-run-udev
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles
+Suggests: 
+Recommends: 
+Conflicts: nosh-run-busybox-mdev
+Description: Run udev as the device manager.
+ This package causes systemd udev to be run as the plug-and-play device manager.
+
+Package: nosh-run-busybox-mdev
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles
+Suggests: 
+Recommends: 
+Conflicts: nosh-run-udev
+Description: Run BusyBox mdev as the device manager.
+ This package causes BusyBox mdev to be run as the plug-and-play device manager.
+
+Package: nosh-run-local-syslog
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles
+Suggests: 
+Recommends: 
+Conflicts: systemd-sysv
+Description: Run the local syslog service.
+ This package causes the local-syslog-read service to run.
 

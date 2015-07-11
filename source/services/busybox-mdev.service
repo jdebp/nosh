@@ -3,13 +3,17 @@
 ## **************************************************************************
 
 [Unit]
-Description=kernel module loader for vboxnetflt
+Description=BusyBox mdev plug-and-play manager daemon
+DefaultDependencies=false
+Before=shutdown.target
+After=local-fs.target
 
 [Service]
 systemdWorkingDirectory=false
-ExecStart=system-control load-kernel-module vboxnetflt
-ExecStopPost=system-control unload-kernel-module vboxnetflt
-RemainAfterExit=yes
+#ExecStart=uevent-spawner busybox mdev
+ExecStart=uevent-spawner env
+Restart=on-abort
 
 [Install]
-WantedBy=virtualbox-host.target
+WantedBy=sysinit.target
+StoppedBy=shutdown.target

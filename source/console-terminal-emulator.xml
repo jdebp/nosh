@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.15</refmiscinfo>
+<refmiscinfo class="version">1.18</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -510,7 +510,7 @@ receives a sequence of 4-byte messages.
 To avoid message tearing, realizers must ensure that they do not write
 messages using multiple system calls.
 A message is a 32-bit word in host byte order.
-The most significante byte denotes the message type and the interpretation
+The most significant byte denotes the message type and the interpretation
 of the remainder of the message.
 </para>
 <variablelist>

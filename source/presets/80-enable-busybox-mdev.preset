@@ -1,0 +1,11 @@
+#
+# Enable busybox mdev services
+#
+# This is not a systemd preset.
+# It goes in a special nosh system-manager preset directory.
+# It is used by the nosh-run-busybox-mdev package in order to enable the busybox mdev plug-and-play device management services.
+#
+
+enable	busybox-mdev.service
+enable	busybox-mdev-log.service
+enable	busybox-mdev-rescan.service

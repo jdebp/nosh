@@ -117,7 +117,7 @@ exit_error:
 	}
 #endif
 #if defined(SO_PASSSEC)
-	if (pass_credentials) {
+	if (pass_security) {
 		int one(1);
 		if (0 > setsockopt(s, SOL_SOCKET, SO_PASSSEC, &one, sizeof one)) goto exit_error;
 	}

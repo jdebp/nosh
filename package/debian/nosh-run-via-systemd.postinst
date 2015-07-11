@@ -10,7 +10,9 @@ case "$1" in
 		then
 			systemctl start --no-ask-password service-manager.socket
 		fi
-		system-control preset sysinit.target dbus.socket
+		system-control preset sysinit.target dbus.socket local-syslog.target
+		system-control preset udev.socket udev-log.service udev-trigger-add@devices.service udev-trigger-add@subsystems.service
+		system-control preset busybox-mdev.socket busybox-mdev-log.service busybox-mdev-rescan.service
 		systemctl preset system-control-normal.service
 		if systemctl is-enabled --quiet system-control-normal.service 
 		then
@@ -23,5 +25,3 @@ case "$1" in
 		fi
 		;;
 esac
-
-

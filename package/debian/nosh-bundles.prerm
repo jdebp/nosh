@@ -124,6 +124,7 @@ case "$1" in
 			kadmind \
 			klogd \
 			kpasswdd \
+			nagios-nrpe-server \
 			org.cups.cups-lpd \
 			qmail-smtp-relay \
 			qmail-smtp-submission \
@@ -160,9 +161,6 @@ case "$1" in
 		for i in \
 			dmesg \
 			hostname \
-			kmod@autofs \
-			kmod@ipv6 \
-			kmod@unix \
 			machine-id \
 			sysinit-log \
 			stty-sane@console \
@@ -176,6 +174,12 @@ case "$1" in
 		for I in \
 			console-kit-daemon \
 			kerneloops \
+			kmod@autofs \
+			kmod@ipv6 \
+			kmod@unix \
+			kmod@uvesafb \
+			linux-lockfiles \
+			static-networking \
 			update-binfmts \
 			wettsteinsyslogd \
 			;
@@ -213,14 +217,42 @@ case "$1" in
 			fi
 		done
 		# Linux services that fan in to a single logger
-		:
+		for I in \
+			udev \
+			busybox-mdev \
+			;
+		do
+			system-control disable $I.service
+			if system-control is-loaded $I.service
+			then
+				system-control unload-when-stopped $I.service
+				system-control stop $I.service
+			fi
+		done
+		for I in \
+			udev-log \
+			udev-trigger-add@subsystems \
+			udev-trigger-add@devices \
+			busybox-mdev-log \
+			busybox-mdev-rescan \
+			;
+		do
+			system-control disable $I.service
+			if system-control is-loaded $I.service
+			then
+				system-control unload-when-stopped $I.service
+				system-control stop $I.service
+			fi
+		done
 		# targets
 		for i in \
 			sysinit \
 			basic \
 			dumpauto \
+			frame-buffer \
 			local-fs \
 			local-fs-pre \
+			local-syslog \
 			remote-fs \
 			server \
 			swapauto \

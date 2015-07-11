@@ -70,6 +70,8 @@ for j in system-manager
 do
 	cp -a -- "${dest}"/nosh-service-management/usr/local/sbin/"$j" "${dest}"/nosh-service-management/sbin/
 done
+install -d -m 0755 "${dest}"/nosh-run-system-manager/sbin 
+ln -f -s system-manager "${dest}"/nosh-run-system-manager/sbin/init
 
 # more doco
 for i in guide ;
@@ -129,7 +131,7 @@ while read j ;
 do
 	ln -f -- "${src}"/lib/tmpfiles.d/"$j" "${dest}"/nosh-run-via-systemd/usr/local/lib/tmpfiles.d/
 done < package/tmpfiles-snippets ;
-for i in bundles run-via-systemd run-virtualbox-guest run-freedesktop-kits run-user-vt run-kernel-vt run-appletalk
+for i in bundles run-via-systemd run-virtualbox-guest run-freedesktop-kits run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-local-syslog
 do
 	install -d -m 0755 "${dest}"/nosh-"$i"/usr/local/etc/system-control/presets 
 	(

@@ -5,6 +5,7 @@
 [Unit]
 Description=ModemManager daemon
 Before=NetworkManager.service
+After=local-syslog.target
 
 [Service]
 systemdWorkingDirectory=false

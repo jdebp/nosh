@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=Mount the %I filesystem (or remount from a initial read-only mount)
+Description=Mount the %I filesystem
 DefaultDependencies=false
 Before=local-fs.target
 After=local-fs-pre.target

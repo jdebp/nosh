@@ -79,7 +79,7 @@ check (
 ) {
 	timespec now;
 	clock_gettime(CLOCK_REALTIME, &now);
-	const uint64_t z(0x4000000000000000ULL + now.tv_sec + 10U);
+	const uint64_t z(time_to_tai64(now.tv_sec, false));
 
 	int supervise_dir_fd(open_supervise_dir(bundle_dir_fd));
 	if (0 > supervise_dir_fd) {

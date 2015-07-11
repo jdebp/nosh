@@ -4,6 +4,7 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 #define MAKE_IOVEC(x) { const_cast<char *>(x), sizeof x }
+#define ZERO_IOVEC() { 0, 0 }
 
 #define FROM MAKE_IOVEC("from")
 #define FSTYPE MAKE_IOVEC("fstype")

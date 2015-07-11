@@ -232,7 +232,7 @@ void logger::rotate() {
 	if (0 <= current_fd) {
 		timespec now;
 		clock_gettime(CLOCK_REALTIME, &now);
-		const uint64_t secs(0x4000000000000000ULL + now.tv_sec + 10U);
+		const uint64_t secs(time_to_tai64(now.tv_sec, false));
 		const uint32_t nano(now.tv_nsec);
 
 		char * name_u(0);
@@ -287,7 +287,7 @@ void logger::put (char c) {
 	if (bol) {
 		timespec now;
 		clock_gettime(CLOCK_REALTIME, &now);
-		const uint64_t secs(0x4000000000000000ULL + now.tv_sec + 10U);
+		const uint64_t secs(time_to_tai64(now.tv_sec, false));
 		const uint32_t nano(now.tv_nsec);
 		char stamp[27];
 		snprintf(stamp, sizeof stamp, "@%016" PRIx64 "%08" PRIx32 " ", secs, nano);

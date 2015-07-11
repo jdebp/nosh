@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.15</refmiscinfo>
+<refmiscinfo class="version">1.18</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -148,7 +148,9 @@ Service management is the remit of
 <command>service-dt-scanner</command> simply sends control messages.
 </para>
 
-</refsection><refsection><title>BUGS</title>
+</refsection>
+<!--
+<refsection><title>BUGS</title>
 
 <para>
 The Linux
@@ -169,6 +171,9 @@ mark as close-on-exec and doesn't clean up on
 Fortunately, <command>service-dt-scanner</command> neither forks nor execs.
 </para>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection>
+-->
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
 
 </refentry>

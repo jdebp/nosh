@@ -1,0 +1,10 @@
+#
+# Enable local-syslog-read services
+#
+# This is not a systemd preset.
+# It goes in a special nosh system-manager preset directory.
+# It is used by the nosh-run-local-syslog package in order to enable the services themselves.
+#
+
+enable	local-syslog-read.service
+enable	cyclog@local-syslog-read.service

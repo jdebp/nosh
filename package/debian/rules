@@ -1,6 +1,6 @@
 #!/usr/bin/make -sf
 
-.PHONY: build build-arch build-indep binary binary-arch binary-indep install install-arch install-indep install-common clean install-indep-doco install-indep-bundles install-indep-units
+.PHONY: build binary install clean
 
 # The Debian package builder targets this in order to make the package contents.
 build:
@@ -9,14 +9,14 @@ build:
 # The Debian package builder targets this in order to clean the build areas.
 clean:
 	${RM} debian/files debian/substvars
-	for i in guide exec terminal-management service-management systemv-shims systemd-shims upstart-shims bundles run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk ; \
+	for i in guide exec terminal-management service-management systemv-shims systemd-shims upstart-shims bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk run-udev run-busybox-mdev run-local-syslog ; \
 	do \
 		${RM} -r debian/nosh-"$$i"/ || exit 1 ; \
 	done
 	${RM} -r debian/tmp/
 
 # The Debian package builder targets this in order to make the .deb files.
-binary: install
+binary: stage
 	for i in exec terminal-management ; \
 	do \
 		${RM} debian/substvars ; \
@@ -36,25 +36,25 @@ binary: install
 		dpkg-shlibdeps debian/nosh-"$$i"/usr/local/sbin/* || exit 1 ; \
 		dpkg-gencontrol -pnosh-"$$i" -Pdebian/nosh-"$$i" || exit 1 ; \
 	done
-	for i in guide systemd-shims upstart-shims bundles run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk ; \
+	for i in guide systemd-shims upstart-shims bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk run-udev run-busybox-mdev run-local-syslog ; \
 	do \
 		${RM} debian/substvars ; \
 		dpkg-gencontrol -pnosh-"$$i" -Pdebian/nosh-"$$i" || exit 1 ; \
 	done
-	for i in exec terminal-management service-management systemv-shims systemd-shims upstart-shims guide bundles run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk ; \
+	for i in exec terminal-management service-management systemv-shims systemd-shims upstart-shims guide bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk run-udev run-busybox-mdev run-local-syslog ; \
 	do \
 		dpkg -b debian/nosh-"$$i" ../ || exit 1 ; \
 	done
 
-install:
+stage:
 	install -d -m 0755 debian/tmp/DEBIAN
 	package/export debian/tmp/ debian/tmp/ debian/tmp/
-	for i in exec terminal-management service-management systemv-shims systemd-shims upstart-shims guide bundles run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk ; \
+	for i in exec terminal-management service-management systemv-shims systemd-shims upstart-shims guide bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk run-udev run-busybox-mdev run-local-syslog ; \
 	do \
 		install -d -m 0755 debian/nosh-"$$i"/DEBIAN || exit 1 ; \
 	done
 	package/stage debian/tmp debian
-	for i in exec bundles run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk ; \
+	for i in exec bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk run-udev run-busybox-mdev run-local-syslog ; \
 	do \
 		for j in preinst postinst prerm postrm ; \
 		do \

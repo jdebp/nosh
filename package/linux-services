@@ -7,5 +7,7 @@ console-kit-daemon
 kernel-vt-loadkeys
 kernel-vt-setfont
 kerneloops
+linux-lockfiles
+static-networking
 update-binfmts
 wettsteinsyslogd

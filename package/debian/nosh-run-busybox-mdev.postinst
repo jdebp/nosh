@@ -1,0 +1,30 @@
+#!/bin/sh -
+escape() { echo "$1"|sed -e 's/@/\\x40/g' ; }
+add_log() { mkdir -m 0750 -p /var/log/sv/"$2" ; setfacl -m u:"$1"-log:rwx -m g:adm:rx /var/log/sv/"$2" ; }
+add_user() { getent passwd "$1" > /dev/null || useradd --shell /bin/false "$1" ; }
+add_group() { getent group "$1" > /dev/null || groupadd "$1" ; }
+case "$1" in
+	configure)
+		add_user vboxadd
+		add_group vboxsf
+		for I in \
+			busybox-mdev \
+			;
+		do
+			i="`escape "$I"`"
+			add_user "$i"-log
+			add_log "$i" "$I"
+			system-control preset $I.socket
+			system-control reset $I.socket
+		done
+		for I in \
+			busybox-mdev-log \
+			busybox-mdev-rescan \
+			;
+		do
+			i="`escape "$I"`"
+			system-control preset $I.service
+			system-control reset $I.service
+		done
+		;;
+esac

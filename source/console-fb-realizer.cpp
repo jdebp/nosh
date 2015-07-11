@@ -2351,11 +2351,13 @@ paint_backdrop (
 static inline
 void
 position (
+	unsigned quadrant,	///< 0, 1, 2, or 3
 	Compositor & r, 
 	VirtualTerminal & vt
 ) {
-	const unsigned short screen_y(vt.query_h() < r.query_h() ? r.query_h() - vt.query_h() : 0);	// Glue the terminal window to the bottom edge of the realizer screen buffer.
-	const unsigned short screen_x(/*vt.query_visible_w() < r.query_w() ? r.query_w() - vt.query_visible_w() :*/ 0);	// Glue the terminal window to the left-hand edge of the realizer screen buffer.
+	// Glue the terminal window to the edges of the realizer screen buffer.
+	const unsigned short screen_y(!(quadrant & 0x02) && vt.query_h() < r.query_h() ? r.query_h() - vt.query_h() : 0);
+	const unsigned short screen_x((1U == quadrant || 2U == quadrant) && vt.query_visible_w() < r.query_w() ? r.query_w() - vt.query_visible_w() : 0);
 	vt.set_position(screen_y, screen_x);
 	vt.set_visible_area(r.query_h() - screen_y, r.query_w() - screen_x);
 }
@@ -2572,11 +2574,13 @@ console_fb_realizer (
 	bool display_only(false);
 	bool bold_as_colour(false);
 	FontSpecList fonts;
+	unsigned long quadrant(3U);
 
 	try {
 		popt::bool_definition display_only_option('\0', "display-only", "Only render the display; do not send input.", display_only);
 		popt::bool_definition bold_as_colour_option('\0', "bold-as-colour", "Forcibly render boldface as a colour brightness change.", bold_as_colour);
 		popt::string_definition kernel_vt_option('\0', "kernel-vt", "device", "Use the kernel FB sharing protocol via this device.", kernel_vt);
+		popt::unsigned_number_definition quadrant_option('\0', "quadrant", "number", "Position the terminal in quadrant 0, 1, 2, or 3.", quadrant, 0);
 		fontspec_definition vtfont_option('\0', "vtfont", "filename", "Use this font as a vt font.", fonts, -1, -1);
 		fontspec_definition font_medium_r_option('\0', "font-medium-r", "filename", "Use this font as a medium-upright font.", fonts, CombinedFont::Font::MEDIUM, CombinedFont::Font::UPRIGHT);
 		fontspec_definition font_medium_o_option('\0', "font-medium-o", "filename", "Use this font as a medium-oblique font.", fonts, CombinedFont::Font::MEDIUM, CombinedFont::Font::OBLIQUE);
@@ -2588,6 +2592,7 @@ console_fb_realizer (
 			&display_only_option,
 			&bold_as_colour_option,
 			&kernel_vt_option,
+			&quadrant_option,
 			&vtfont_option,
 			&font_medium_r_option,
 			&font_medium_o_option,
@@ -2765,7 +2770,7 @@ console_fb_realizer (
 		if (update_needed) {
 			update_needed = false;
 			paint_backdrop(realizer);
-			position(realizer, vt);
+			position(quadrant, realizer, vt);
 			compose(realizer, vt);
 			set_cursor_pos(realizer, vt);
 			realizer.set_cursor_state(vt.query_cursor_state());

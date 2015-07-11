@@ -15,6 +15,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <kenv.h>
 #endif
 #include <unistd.h>
+#include "FileStar.h"
 #include "utils.h"
 #include "jail.h"
 #include "popt.h"
@@ -45,6 +46,18 @@ is_dynamic_hostname_set ()
 	std::vector<char> hostname(sysconf(_SC_HOST_NAME_MAX) + 1);
 	const int r(gethostname(hostname.data(), hostname.size()));
 	if (0 > r) return false;
+#if defined(__LINUX__) || defined(__linux__)
+	// The kernel's initial default counts as not set.
+	if ('(' == hostname[0]
+	&&  'n' == hostname[1]
+	&&  'o' == hostname[2]
+	&&  'n' == hostname[3]
+	&&  'e' == hostname[4]
+	&&  ')' == hostname[5]
+	&& '\0' == hostname[6]
+	)
+		return false;
+#endif
 	return hostname[0];
 }
 
@@ -80,11 +93,13 @@ set_dynamic_hostname (
 	std::vector<const char *> & args
 ) {
 	const char * prog(basename_of(args[0]));
-	bool force(false);
+	bool force(false), verbose(false);
 	try {
 		popt::bool_definition force_option('f', "force", "Force setting the dynamic hostname even if it is already set.", force);
+		popt::bool_definition verbose_option('v', "verbose", "Print messages.", verbose);
 		popt::definition * top_table[] = {
-			&force_option
+			&force_option,
+			&verbose_option
 		};
 		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "");
 
@@ -104,11 +119,17 @@ set_dynamic_hostname (
 		throw static_cast<int>(EXIT_USAGE);
 	}
 
-	if (am_in_jail() && !set_dynamic_hostname_is_allowed())
+	if (am_in_jail() && !set_dynamic_hostname_is_allowed()) {
+		if (verbose)
+			std::fprintf(stderr, "%s: INFO: %s\n", prog, "Cannot set the dynamic hostname in this jail.");
 		throw EXIT_SUCCESS;
+	}
 
-	if (!force && is_dynamic_hostname_set())
+	if (!force && is_dynamic_hostname_set()) {
+		if (verbose)
+			std::fprintf(stderr, "%s: INFO: %s\n", prog, "Dynamic hostname is already set; use --force to override.");
 		throw EXIT_SUCCESS;
+	}
 
 	unsetenv("HOSTNAME");
 	unsetenv("hostname");
@@ -119,7 +140,7 @@ set_dynamic_hostname (
 		for (std::size_t fi(0); fi < sizeof line_files/sizeof *line_files; ++fi) {
 			const char * filename(line_files[fi]);
 			const char * var(basename_of(filename));
-			FILE * f(std::fopen(filename, "r"));
+			FileStar f(std::fopen(filename, "r"));
 			if (!f) {
 				const int error(errno);
 				if (ENOENT != error)
@@ -128,22 +149,18 @@ set_dynamic_hostname (
 			}
 			try {
 				std::string val(read_first_line(f));
-				std::fclose(f);
-				f = 0;
 				if (val.length())
 					setenv(var, val.c_str(), 1);
 				h = get_static_hostname_env();
 			} catch (const char * r) {
 				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, filename, r);
 			}
-			if (f)
-				std::fclose(f);
 		}
 	}
 	if (!h) {
 		for (std::size_t fi(0); fi < sizeof env_files/sizeof *env_files; ++fi) {
 			const char * filename(env_files[fi]);
-			FILE * f(std::fopen(filename, "r"));
+			FileStar f(std::fopen(filename, "r"));
 			if (!f) {
 				const int error(errno);
 				if (ENOENT != error)
@@ -152,8 +169,6 @@ set_dynamic_hostname (
 			}
 			try {
 				std::vector<std::string> env_strings(read_file(f));
-				std::fclose(f);
-				f = 0;
 				for (std::vector<std::string>::const_iterator i(env_strings.begin()); i != env_strings.end(); ++i) {
 					const std::string & s(*i);
 					const std::string::size_type p(s.find('='));
@@ -165,8 +180,6 @@ set_dynamic_hostname (
 			} catch (const char * r) {
 				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, filename, r);
 			}
-			if (f)
-				std::fclose(f);
 		}
 	}
 #if !defined(__LINUX__) && !defined(__linux__)
@@ -189,5 +202,7 @@ set_dynamic_hostname (
 		throw EXIT_FAILURE;
 	}
 
+	if (verbose)
+		std::fprintf(stderr, "%s: INFO: %s %s\n", prog, "Dynamic hostname is", h);
 	throw EXIT_SUCCESS;
 }

@@ -8,6 +8,9 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstdlib>
 #include <cstring>
 #include <cerrno>
+#if defined(__LINUX__) || defined(__linux__)
+#include <sys/prctl.h>
+#endif
 #include "utils.h"
 
 /* Main function ************************************************************
@@ -29,6 +32,13 @@ main (
 		return EXIT_FAILURE;
 	}
 	try {
+#if defined(__LINUX__) || defined(__linux__)
+#	if defined(PR_SET_NAME)
+		// If we were run via fexec() then the "comm" name will be something uninformative like "4" or "5" (from "/proc/self/fd/5").
+		// Make it something informative.
+		prctl(PR_SET_NAME, prog);
+#	endif
+#endif
 		c->func(next_prog, args);
 		exec_terminal (prog, next_prog, args);
 	} catch (int r) {

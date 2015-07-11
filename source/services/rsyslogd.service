@@ -11,4 +11,4 @@ systemdWorkingDirectory=false
 ExecStart=rsyslogd -c5 -n -d
 
 [Install]
-WantedBy=workstation.target
+# This is enabled via the setting in the associated socket unit.

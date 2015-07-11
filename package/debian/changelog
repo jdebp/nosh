@@ -1,3 +1,19 @@
+nosh (1.18) unstable; urgency=low
+
+  * More Linux services: udev, udev-trigger-add@subsystems, udev-trigger-add@devices, busybox-mdev, busybox-mdev-rescan
+  * There is now a svcadm shim for system-control.
+  * convert-fstab-services deals with remote filesystem types better.
+  * cyclog, tai64n, and tai64nlocal now speak real TAI rather than UTC-10.
+  * service-dt-scanner handles spurious wakeups with no events better.
+  * console-resize now properly resets the left-right margins.
+  * There is now a netlink-datagram-socket-listen command and ListenNetlink sockets are now supported.
+  * local-syslog.socket is now correct for Linux.
+  * The hardwired mount@* and fsck@* service bundles have been removed.
+  * There are new nosh-run- packages for udev, busybox mdev and local-syslog.
+  * The new nosh-run-system-manager package pre-packages running system-manager as process #1 on Linux.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Sat, 11 Jul 2015 17:42:42 +0100
+
 nosh (1.17) unstable; urgency=low
 
   * More BSD services: pflogd, kmod@pflog, pfsync, kmod@pfsync, kmod@pf, savecore, crashinfo, kmod@fuse, ipmon, ipfs, ddb, unbound, nfsd

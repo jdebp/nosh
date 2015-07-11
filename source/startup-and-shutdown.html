@@ -30,7 +30,7 @@ The initialization action of the system management state machine is to spawn a p
 <li><p>
 In response to <code>SIGRTMIN + 10</code> the system management state machine spawns <code>system-control start sysinit</code>.
 </p></li>
-<li><p>
+<li id="sysinit"><p>
 <code>system-control</code> activates the "sysinit" target.
 This is a special system target that is expected to bring up "sysinit" services, and encompasses targets such as "local-fs".
 After the target is started, the system is expected to have performed fundamental initialization tasks such as:

@@ -16,6 +16,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <ctime>
 #include <stdint.h>
 #include <sys/socket.h>
+#include <sys/resource.h>
 #include <sys/types.h>
 #if !defined(__LINUX__) && !defined(__linux__)
 #include <sys/event.h>
@@ -238,7 +239,7 @@ service::stamp_time ()
 {
 	timespec now;
 	clock_gettime(CLOCK_REALTIME, &now);
-	const uint64_t s(0x4000000000000000ULL + now.tv_sec + 10U);
+	const uint64_t s(time_to_tai64(now.tv_sec, false));
 	const uint32_t n(now.tv_nsec);
 	const uint32_t p(has_processes() ? *processes.begin() : 0);
 	pack_bigendian(status +  0, s, 8);

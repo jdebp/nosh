@@ -4,7 +4,7 @@ target_lists="../package/standard-targets"
 mount_lists="../package/common-mounts"
 command1_lists="../package/commands1 ../package/extra-manpages1"
 command8_lists="../package/commands8 ../package/extra-manpages8"
-redo-ifchange version.h services/ttylogin@.service services/klogd.socket services/polkitd.service
+redo-ifchange version.h services/ttylogin@.service services/klogd.socket services/polkitd.service services/local-syslog.socket
 redo-ifchange ${service_lists} ${target_lists} ${mount_lists} ${command1_lists} ${command8_lists}
 cat ../package/commands1 ../package/commands8 | xargs redo-ifchange
 cat ${service_lists} |
@@ -18,12 +18,13 @@ while read i
 do
 	echo targets/"$i"
 done | xargs redo-ifchange
-cat ${mount_lists} |
+# Unlike the other lists, the list of mounts could be empty.
+cat /dev/null ${mount_lists} |
 while read i
 do
 	echo services/fsck@"$i"
 	echo services/mount@"$i"
-done | xargs redo-ifchange
+done | xargs -r redo-ifchange
 cat ${command1_lists} | 
 while read i
 do 

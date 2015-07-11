@@ -1,0 +1,7 @@
+udev
+udev-log
+udev-trigger-add@subsystems
+udev-trigger-add@devices
+busybox-mdev
+busybox-mdev-log
+busybox-mdev-rescan

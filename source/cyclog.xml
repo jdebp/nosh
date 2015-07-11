@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.15</refmiscinfo>
+<refmiscinfo class="version">1.18</refmiscinfo>
 </refmeta>
 
 <refnamediv><refname>cyclog</refname><refpurpose>safely log standard input to status files and log directories</refpurpose></refnamediv>
@@ -153,66 +153,51 @@ calculated by <command>cyclog</command>.
 </refsection><refsection><title>TIMESTAMPS</title>
 
 <para>
-<command>cyclog</command> writes a timestamp
-at the beginning of every line written to <filename>current</filename>, which is the time
-when it processes the beginning of a line.  
+<command>cyclog</command> writes a timestamp at the beginning of every line written to <filename>current</filename>, which is the time when it processes the beginning of a line.  
 This is slightly after it has read the beginning of that line.
-The timestamp is in TAI64N external form (16 hexadecimal digits of seconds and
-8 hexadecimal digits of nanoseconds), which can be converted to human-readable
-form using <citerefentry><refentrytitle>tai64nlocal</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+The timestamp is in TAI64N external form (16 hexadecimal digits of seconds and 8 hexadecimal digits of nanoseconds), which can be converted to human-readable form using <citerefentry><refentrytitle>tai64nlocal</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 <para>
-<command>cyclog</command> uses the <code>CLOCK_REALTIME</code> clock of the 
-<citerefentry><refentrytitle>clock_gettime</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-system call.
+<command>cyclog</command> uses the <code>CLOCK_REALTIME</code> clock of the <citerefentry><refentrytitle>clock_gettime</refentrytitle><manvolnum>2</manvolnum></citerefentry> system call.
 On many systems this has nanosecond resolution.
 </para>
 
 <para>
-<command>cyclog</command> usually doesn't generate real TAI timestamps.
-Rather, it generates UTC-10 timestamps, in 96-bit external TAI64N form.
-But this is alright, since the programs that read the timestamps
-won't expect TAI either.
-Few programs, including the ones in daemontools, go to the bother of
-correctly converting UTC to TAI, but rather pretend that UTC-10 is TAI.
+<command>cyclog</command> attempts to generate real TAI timestamps.
+On a Linux system where it detects an Olson "right" timezone currently in use, it knows that the system clock is TAI seconds since the Epoch and performs a simple conversion.
+On other Linux systems, and on BSDs, it assumes that the system clock is UTC seconds since the Epoch and attempts to correct for (known) UTC leap seconds in order to determine TAI.
 </para>
 
 </refsection></refsection><refsection><title>COMPATIBILITY</title>
 
 <para>
 A <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> utility was part of daemontools version 0.53.
-This utility is a workalike, with some minor additions to automatic log
-rotation and changes to log directory semantics.
+This utility is a workalike, with some minor additions to automatic log rotation and changes to log directory semantics.
 </para>
 
 <para>
-daemontools later replaced <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> with <citerefentry><refentrytitle>multilog</refentrytitle><manvolnum>1</manvolnum></citerefentry>, which treats its command
-arguments as a script and has the abilities to do pattern matching and run
-external commands.
-<command>cyclog</command> is intended for the commonest, simple, use cases of logging services
-where there is just one plain logging directory with no bells and whistles.
-As such, it does not implement a script syntax, does not have pattern matching,
-and does not invoke other programs at all.
+daemontools later replaced <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> with <citerefentry><refentrytitle>multilog</refentrytitle><manvolnum>1</manvolnum></citerefentry>, which treats its command arguments as a script and has the abilities to do pattern matching and run external commands.
+<command>cyclog</command> is intended for the commonest, simple, use cases of logging services where there is just one plain logging directory with no bells and whistles.
+As such, it does not implement a script syntax, does not have pattern matching, and does not invoke other programs at all.
 </para>
 
 <para>
-The version 0.53 <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> used permissions 0644 and 0444 to flag files that
-had not been written to disc.
-<command>cyclog</command> adopts the convention employed by the later <citerefentry><refentrytitle>multilog</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and
-thence <citerefentry><refentrytitle>s6-log</refentrytitle><manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>svlog</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+The version 0.53 <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> used permissions 0644 and 0444 to flag files that had not been written to disc.
+<command>cyclog</command> adopts the convention employed by the later <citerefentry><refentrytitle>multilog</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and thence <citerefentry><refentrytitle>s6-log</refentrytitle><manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>svlog</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 <para>
-The version 0.53 <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> used the TAI64 timestamp of when a log file was
-started as its timestamp.
+The version 0.53 <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> used the TAI64 timestamp of when a log file was started as its timestamp.
 Again <command>cyclog</command> adopts the convention employed by later tools.
 </para>
 
 <para>
-daemontools' and daemontools-encore's <citerefentry><refentrytitle>multilog</refentrytitle><manvolnum>1</manvolnum></citerefentry> uses a timer with only
-microsecond resolution, and for the same events will thus produce different
-timestamps to <command>cyclog</command>.
+daemontools' and daemontools-encore's <citerefentry><refentrytitle>multilog</refentrytitle><manvolnum>1</manvolnum></citerefentry> uses a timer with only microsecond resolution, and for the same events will thus produce different timestamps to <command>cyclog</command>.
+</para>
+
+<para>
+See the timestamps section of the Nosh Guide for detailed information on the differences from daemontools, daemontools-encore, and other toolsets in how <command>cyclog</command> handles TAI.
 </para>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

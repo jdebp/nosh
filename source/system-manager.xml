@@ -5,7 +5,7 @@
 <manvolnum>8</manvolnum>
 <refmiscinfo class="manual">administrator commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.15</refmiscinfo>
+<refmiscinfo class="version">1.18</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -494,7 +494,7 @@ a process' executable.)
 <term><filename>/run</filename></term>
 <listitem><para>A <code>tmpfs</code> filesystem is mounted here with options
 <code>nodev</code>, <code>nosuid</code>, <code>strictatime</code>,
-<code>size=10%</code>, and <code>mode=0755</code>.
+<code>size=20%</code>, and <code>mode=0755</code>.
 </para></listitem>
 </varlistentry>
 
@@ -589,7 +589,7 @@ compatibility with C/C++ libraries.
 <varlistentry>
 <term><filename>/run</filename></term>
 <listitem><para>A <code>tmpfs</code> filesystem is mounted here with options
-<code>nosuid</code> and <code>size=10%</code>.
+<code>nosuid</code> and <code>size=20%</code>.
 </para></listitem>
 </varlistentry>
 

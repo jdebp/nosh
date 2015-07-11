@@ -5,6 +5,7 @@
 [Unit]
 Description=Standard login on %I
 After=motd-dynamic.service
+After=hostname.service
 
 [Service]
 systemdWorkingDirectory=false

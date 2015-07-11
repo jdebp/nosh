@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.15</refmiscinfo>
+<refmiscinfo class="version">1.18</refmiscinfo>
 </refmeta>
 
 <refnamediv><refname>pipe</refname><refpurpose>execute two commands with a pipe between them</refpurpose></refnamediv>
@@ -24,77 +24,46 @@
 <refsection><title>Description</title>
 
 <para>
-<command>pipe</command> is a chain-loading utility that opens a pipe with the
-<citerefentry><refentrytitle>pipe</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-library function, and runs <replaceable>left-prog</replaceable> with its
-standard output writing to the pipe and <replaceable>right-prog</replaceable>
-with its standard input reading from the pipe.
-It chain loads one of the twain and runs the other as a child process created by
-<citerefentry><refentrytitle>fork</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
-Both are executed with the
-<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-function.
+<command>pipe</command> is a chain-loading utility that opens a pipe with the <citerefentry><refentrytitle>pipe</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function, and runs <replaceable>left-prog</replaceable> with its standard output writing to the pipe and <replaceable>right-prog</replaceable> with its standard input reading from the pipe.
+It chain loads one of the twain and runs the other as a child process created by <citerefentry><refentrytitle>fork</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
+Both are executed with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
 </para>
 
 <para>
-<replaceable>left-prog</replaceable> and <replaceable>right-prog</replaceable>
-may contain their own command line options, which <command>pipe</command> will
-ignore.
+<replaceable>left-prog</replaceable> and <replaceable>right-prog</replaceable> may contain their own command line options, which <command>pipe</command> will ignore.
 </para>
 
 <para> 
-Normally, in outwards mode, <replaceable>left-prog</replaceable> is chain loaded in the original
-process and <replaceable>right-prog</replaceable> is forked and run in the new
-child process.
-If the <arg choice='opt'>--inwards</arg> command line option is used,
-<replaceable>right-prog</replaceable> is chain loaded in the original process
-and <replaceable>left-prog</replaceable> is forked and run in the new child
-process.
+Normally, in outwards mode, <replaceable>left-prog</replaceable> is chain loaded in the original process and <replaceable>right-prog</replaceable> is forked and run in the new child process.
+If the <arg choice='opt'>--inwards</arg> command line option is used, <replaceable>right-prog</replaceable> is chain loaded in the original process and <replaceable>left-prog</replaceable> is forked and run in the new child process.
 </para>
 
 <para>
-The <arg choice='opt'>--separator</arg> command line option specifies an
-alternative separator argument, to scan for in place of 
-<arg choice='req'>|</arg>.
+The <arg choice='opt'>--separator</arg> command line option specifies an alternative separator argument, to scan for in place of <arg choice='req'>|</arg>.
 </para>
 
 </refsection>
 <refsection><title>Usage</title>
 
 <para>
-The primary use of <command>pipe</command> is from a
-<citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-script to enact a pipeline.
-When invoking <command>pipe</command> from within a shell script, remember that 
-<arg choice='req'>|</arg> 
-must be escaped or quoted in order to prevent the shell from recognizing it.
+The primary use of <command>pipe</command> is from a <citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry> script to enact a pipeline.
+When invoking <command>pipe</command> from within a shell script, remember that <arg choice='req'>|</arg> must be escaped or quoted in order to prevent the shell from recognizing it.
 </para>
 
 <para>
-<command>pipe</command> looks for the leftmost instance of
-<arg choice='req'>|</arg>,
-and separates left from right there.
-Further instances of
-<arg choice='req'>|</arg>
-in <replaceable>right-prog</replaceable> are left alone.
-This allows longer pipelines, by using another <command>pipe</command> in
-<replaceable>right-prog</replaceable>.
+<command>pipe</command> looks for the leftmost instance of <arg choice='req'>|</arg>, and separates left from right there.
+Further instances of <arg choice='req'>|</arg> in <replaceable>right-prog</replaceable> are left alone.
+This allows longer pipelines, by using another <command>pipe</command> in <replaceable>right-prog</replaceable>.
 For example:
 <userinput>pipe cat head body foot | pipe sort | uniq</userinput>
 </para>
 
 <para>
-Piping both standard error and standard output is done as it would be in a
-shell: by an explicit redirection in <replaceable>left-prog</replaceable>,
-using
-<citerefentry><refentrytitle>fdmove</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-or a similar utility.
+Piping both standard error and standard output is done as it would be in a shell: by an explicit redirection in <replaceable>left-prog</replaceable>, using <citerefentry><refentrytitle>fdmove</refentrytitle><manvolnum>1</manvolnum></citerefentry> or a similar utility.
 (In the shell, the explicit redirection would be <userinput>2>&amp;1</userinput>.)
-For example:
-<userinput>pipe fdmove -c 2 1 wibble | less</userinput>
-Remember that the rediection must be enacted within <replaceable>left-prog</replaceable>.
-<userinput>fdmove -c 2 1 pipe wibble | less</userinput>
-would redirect the standard error of the entire pipeline.
+For example: <userinput>pipe fdmove -c 2 1 wibble | less</userinput>
+Remember that the redirection must be enacted within <replaceable>left-prog</replaceable>.
+<userinput>fdmove -c 2 1 pipe wibble | less</userinput> would redirect the standard error of the entire pipeline.
 </para>
 
 </refsection>

@@ -636,7 +636,7 @@ preset (
 			std::fprintf(stdout, "%s %s\n", make ? "enable" : "disable", (path + p + name).c_str());
 		else
 		if (!enable_disable(prog, make, p + *i, path + p + name, bundle_dir_fd))
-			failed = true;;
+			failed = true;
 		close(bundle_dir_fd);
 	}
 
