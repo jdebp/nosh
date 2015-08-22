@@ -6,7 +6,6 @@
 Description=IPv4 mroute daemon
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=mrouted
 Restart=always
 

@@ -6,7 +6,8 @@
 Description=Erlang Port Mapper service
 
 [Service]
-systemdWorkingDirectory=false
+# FIXME: Is this really needed?
+systemdUserEnvironment=true
 User=rabbitmq
 ExecStart=%p
 Restart=always

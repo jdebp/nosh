@@ -6,7 +6,6 @@
 Description=configure the Concatenated Disc Driver
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=ccdconfig -C -v
 RemainAfterExit=yes
 

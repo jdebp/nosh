@@ -8,7 +8,6 @@ Requires=rpcbind.service nfsclient.service
 After=rpcbind.service nfsclient.service
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p
 Restart=always
 

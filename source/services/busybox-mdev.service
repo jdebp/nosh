@@ -7,11 +7,10 @@ Description=BusyBox mdev plug-and-play manager daemon
 DefaultDependencies=false
 Before=shutdown.target
 After=local-fs.target
+Conflicts=udev
 
 [Service]
-systemdWorkingDirectory=false
-#ExecStart=uevent-spawner busybox mdev
-ExecStart=uevent-spawner env
+ExecStart=clearenv --keep-path plug-and-play-event-handler --verbose busybox mdev
 Restart=on-abort
 
 [Install]

@@ -7,7 +7,6 @@ Description=AppleTalk print server daemon
 After=atalkd.service
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p -d
 Restart=always
 

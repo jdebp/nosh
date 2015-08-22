@@ -1,3 +1,7 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
 [Unit]
 Description=GitLab Unicorn Server
 Requires=redis.service
@@ -6,6 +10,8 @@ After=redis.service mysqld.service postgresql.service
 
 [Service]
 Type=simple
+# FIXME: Is this really needed?
+systemdUserEnvironment=true
 User=git
 WorkingDirectory=/home/git/gitlab
 Environment=RAILS_ENV=production

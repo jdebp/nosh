@@ -8,7 +8,6 @@ Description=BSD NTP daemon one-shot
 [Service]
 Type=oneshot
 EnvironmentDirectory=env
-systemdWorkingDirectory=false
 ExecStart=ntpd -n -q -g -f /var/db/ntpd.drift
 Restart=never
 

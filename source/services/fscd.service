@@ -8,7 +8,6 @@
 Description=FreeBSD service control daemon
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p -v
 Restart=always
 

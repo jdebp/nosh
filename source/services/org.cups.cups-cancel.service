@@ -8,7 +8,6 @@ Before=org.cups.cupsd.service
 
 [Service]
 Type=oneshot
-systemdWorkingDirectory=false
 ExecStart=cancel -a
 
 [Install]

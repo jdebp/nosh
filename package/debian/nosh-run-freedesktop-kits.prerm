@@ -2,11 +2,15 @@
 case "$1" in
 	remove|purge)
 		for i in \
+			colord \
+			colord-sane \
 			console-kit-daemon \
 			ModemManager \
 			NetworkManager \
 			packagekit \
 			polkitd \
+			udisks \
+			upower \
 			;
 		do
 			system-control disable $i.service cyclog@$i.service

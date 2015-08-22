@@ -17,6 +17,7 @@ clean:
 
 # The Debian package builder targets this in order to make the .deb files.
 binary: stage
+	${RM} debian/files
 	for i in exec terminal-management ; \
 	do \
 		${RM} debian/substvars ; \

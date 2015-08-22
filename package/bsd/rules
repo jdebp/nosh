@@ -10,7 +10,7 @@ build:
 
 # Target this in order to clean the build areas.
 clean:
-	for i in guide exec terminal-management service-management systemv-shims systemd-shims upstart-shims bundles run-system-manager run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk ; \
+	for i in guide exec terminal-management service-management systemv-shims systemd-shims upstart-shims bundles run-system-manager run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk run-local-syslog ; \
 	do \
 		rm -r -f bsd/nosh-"$$i"/ || exit 1 ; \
 	done

@@ -9,7 +9,6 @@ After=dbus.service
 #Wants=dbus.service
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p
 Restart=always
 

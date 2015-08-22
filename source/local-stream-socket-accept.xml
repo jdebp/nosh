@@ -26,14 +26,8 @@
 <refsection><title>Description</title>
 
 <para>
-<command>local-stream-socket-accept</command> expects file descriptor 3 to be a socket
-that has been set up with
-<citerefentry><refentrytitle>local-stream-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-to listen for incoming local socket connections.
-It loops forever, accepting local socket connections and (for each such
-connection) spawning <replaceable>next-prog</replaceable>, closing the
-listening socket in the child process and setting the connected socket as the
-child process' standard input and standard output.
+<command>local-stream-socket-accept</command> expects file descriptor 3 to be a socket that has been set up with <citerefentry><refentrytitle>local-stream-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry> to listen for incoming local socket connections.
+It loops forever, accepting local socket connections and (for each such connection) spawning <replaceable>next-prog</replaceable>, closing the listening socket in the child process and setting the connected socket as the child process' standard input and standard output.
 </para>
 
 <para>

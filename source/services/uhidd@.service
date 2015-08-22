@@ -8,7 +8,6 @@ Wants=kmod@vkbd
 After=kmod@vkbd
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p -d %I
 Restart=always
 

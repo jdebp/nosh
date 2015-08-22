@@ -2,6 +2,7 @@ appendpath
 chdir
 chroot
 clearenv
+console-clear
 console-convert-kbdmap
 console-fb-realizer
 console-multiplexor
@@ -27,10 +28,13 @@ login-banner
 login-process
 login-prompt
 make-private-fs
+monitor-fsck-progress
+monitored-fsck
 nosh
 open-controlling-tty
 pause
 pipe
+plug-and-play-event-handler
 prependpath
 pty-get-tty
 pty-run

@@ -8,7 +8,6 @@ Wants=nfsclient.service nfsd.service rpcbind.service rpcstatd.service
 After=rpcbind.service rpcstatd.service
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=rpc.lockd -d
 Restart=always
 

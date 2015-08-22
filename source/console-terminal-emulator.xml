@@ -53,28 +53,21 @@ It then enters a loop where it simultaneously:
 
 <listitem>
 <para>
-processes all data received from the pseudo-terminal master side as terminal
-output, handling printing characters, control characters, escape sequences, and
-control sequences.
+processes all data received from the pseudo-terminal master side as terminal output, handling printing characters, control characters, escape sequences, and control sequences.
 </para>
 </listitem>
 
 <listitem>
 <para>
-processes all input events from the input FIFO, 
-sending terminal character and escape sequences to the master side.
+processes all input events from the input FIFO, sending terminal character and escape sequences to the master side.
 </para>
 </listitem>
 
 </itemizedlist>
 
 <para>
-It finishes when the master side signals hangup (i.e. when the line discipline
-would set modem control lines on a real serial device to signal hangup because
-the last slave file descriptor is closed) and there are no more received data
-to output.
-At termination, it unlinks the file for the slave side, and erases the display
-as if by a Clear Display control sequence.
+It finishes when the master side signals hangup (i.e. when the line discipline would set modem control lines on a real serial device to signal hangup because the last slave file descriptor is closed) and there are no more received data to output.
+At termination, it unlinks the file for the slave side, and erases the display as if by a Clear Display control sequence.
 </para>
 
 </refsection>
@@ -92,22 +85,16 @@ The files used are as follows:
 A stable and predictable name for the slave side of the pseudo-terminal device.
 This is a link to the device, if possible, or a symbolic link if not.
 (It is usually not.
-On Linux, the pseudo-terminal devices are on a filesystem of their own, which
-would make a link a cross-filesystem link; and on BSDs the <code>devfs</code>
-driver disallows the creation of directories under <filename>/dev</filename>
-forcing <replaceable>directory</replaceable> to be on another filesystem.)
+On Linux, the pseudo-terminal devices are on a filesystem of their own, which would make a link a cross-filesystem link; and on BSDs the <code>devfs</code> driver disallows the creation of directories under <filename>/dev</filename> forcing <replaceable>directory</replaceable> to be on another filesystem.)
 </para><para>
-If <replaceable>directory</replaceable> is <filename>/run/dev/vc1</filename>, for
-example, then the stable name for the terminal, for use in login services, will
-be <filename>/run/dev/vc1/tty</filename>.
+If <replaceable>directory</replaceable> is <filename>/run/dev/vc1</filename>, for example, then the stable name for the terminal, for use in login services, will be <filename>/run/dev/vc1/tty</filename>.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term><replaceable>directory</replaceable><filename>/input</filename></term>
 <listitem><para>
 The input FIFO, through which realizer processes send keyboard and mouse events.
-Events are in a uniform packet format, which the terminal emulator converts
-into appropriate escape sequences.
+Events are in a uniform packet format, which the terminal emulator converts into appropriate escape sequences.
 </para></listitem>
 </varlistentry>
 <varlistentry>
@@ -131,19 +118,14 @@ This is provided for compatibility with screen reader softwares.
 <refsection><title>Terminal output</title>
 
 <para>
-<command>console-terminal-emulator</command> emulates the character sequence processing
-logic of a hardware terminal, taking the data received from the master side of the
-pseudo-terminal and translating them into modifications to the screen buffer data
-files.
+<command>console-terminal-emulator</command> emulates the character sequence processing logic of a hardware terminal, taking the data received from the master side of the pseudo-terminal and translating them into modifications to the screen buffer data files.
 </para>
 
 <para>
 All character data are first decoded from UTF-8 to a stream of Unicode code
 points.
-The decoding is directly from UTF-8 to the code points; in particular, UTF-16
-is not employed as an intermediary step.
-If a UTF-8 sequence decodes to one of the reserved code points used for UTF-16,
-no special treatment is given, and the code point is treated as any other.
+The decoding is directly from UTF-8 to the code points; in particular, UTF-16 is not employed as an intermediary step.
+If a UTF-8 sequence decodes to one of the reserved code points used for UTF-16, no special treatment is given, and the code point is treated as any other.
 </para>
 
 <para>
@@ -151,11 +133,8 @@ The decoder has to do something with invalid UTF-8 encodings, including overlong
 and incomplete character sequences.
 Whatever code point they decode to, such characters are not processed as control
 characters or as parts of control/escape sequences.
-They abort any control/escape sequence that they interrupt, and if not
-incomplete encodings they are printed as ordinary printing characters even if
-they are the code points for control characters.
-This behaviour should not be relied upon, and programs should not send such
-UTF-8 sequences to a terminal.
+They abort any control/escape sequence that they interrupt, and if not incomplete encodings they are printed as ordinary printing characters even if they are the code points for control characters.
+This behaviour should not be relied upon, and programs should not send such UTF-8 sequences to a terminal.
 </para>
 
 <refsection><title>vcsa buffer</title>
@@ -166,36 +145,22 @@ The <arg choice='plain'>--vcsa</arg> command line option enables output to the
 </para>
 
 <para>
-This file is
-structured as per the Linux character device file of that name, as a 4-byte
-header giving size and cursor position information followed by a series of
-2-byte character and attribute pairs in IBM PC CGA format,
-It is implemented mainly as a compatibility mechanism for the benefit of
-terminal realizing softwares that expect Linux vcsa devices, such as screen
-readers for the blind or partially sighted.
+This file is structured as per the Linux character device file of that name, as a 4-byte header giving size and cursor position information followed by a series of 2-byte character and attribute pairs in IBM PC CGA format.
+It is implemented mainly as a compatibility mechanism for the benefits of terminal realizing softwares that expect Linux vcsa devices, such as screen readers for the blind or partially sighted.
 </para>
 
 <para>
-The terminal emulator does not recognize nor handle CSI sequences that deal with
-8-bit character sets.
-The vcsa screen buffer is always ISO 8859-1; with Unicode code points outwith
-that range converted to code point 255.
-To handle a wider range of characters, terminal realizing softwares should use the
-Unicode screen buffer.
-Code points in the ranges 0x00 to 0x1F and 0x80 to 0x9F may appear, and terminal
-realizing softwares are expected to render these with some form of ordinary
-printing graphic.
+The terminal emulator does not recognize nor handle CSI sequences that deal with 8-bit character sets.
+The vcsa screen buffer is always ISO 8859-1; with Unicode code points outwith that range converted to code point 255.
+To handle a wider range of characters, terminal realizing softwares should use the Unicode screen buffer.
+Code points in the ranges 0x00 to 0x1F and 0x80 to 0x9F may appear, and terminal realizing softwares are expected to render these with some form of ordinary printing graphic.
 </para>
 
 <para>
-The 24-bit RGB foreground and background colour values for character cells are
-mapped to 3-bit CGA by comparing the relative intensities of red, green, and blue.
-The "bright foreground" and "bright background" CGA attribute bits are taken from
-the boldface and blink terminal attributes, respectively.
-No attempt is made to provide MDA or VGA in monochrome mode attributes, such as
-underline.
-To handle the full range of attributes, terminal realizing softwares should use
-the Unicode screen buffer.
+The 24-bit RGB foreground and background colour values for character cells are mapped to 3-bit CGA by comparing the relative intensities of red, green, and blue.
+The "bright foreground" and "bright background" CGA attribute bits are taken from the boldface and blink terminal attributes, respectively.
+No attempt is made to provide MDA or VGA in monochrome mode attributes, such as underline.
+To handle the full range of attributes, terminal realizing softwares should use the Unicode screen buffer.
 </para>
 
 </refsection>
@@ -234,10 +199,7 @@ That is followed by a series of 16-byte records, one per character cell, contain
 </orderedlist>
 
 <para>
-Unassigned code points, reserved code points, control code points, combining
-code points, and zero-width code points may appear, and terminal realizing
-softwares are expected to render these with some form of ordinary printing
-graphic.
+Unassigned code points, reserved code points, control code points, combining code points, and zero-width code points may appear, and terminal realizing softwares are expected to render these with some form of ordinary printing graphic.
 </para>
 
 </refsection>
@@ -245,8 +207,7 @@ graphic.
 <refsection><title>Control character processing</title>
 
 <para>
-Characters in the "Cc" ("Other, Control") Unicode code point category
-(a.k.a. "C0" and "C1" characters) are control characters. 
+Characters in the "Cc" ("Other, Control") Unicode code point category (a.k.a. "C0" and "C1" characters) are control characters. 
 They are always processed, even in the middle of escape or control sequences.
 All control characters are no-ops except for the following:
 </para>
@@ -310,9 +271,7 @@ Escape sequences are multiple-character sequences comprising:
 the ESC character, an optional intermediate character in the range U+0020 to
 U+002F, and a single final character in the range U+0040 to U+007E.
 </para><para>
-Most such escape sequences for real terminals are ISO 2022 character set
-switching sequences, which the terminal emulator has no need of since it
-uses UTF-8 natively, and so does not support.
+Most such escape sequences for real terminals are ISO 2022 character set switching sequences, which the terminal emulator has no need of since it uses UTF-8 natively, and so does not support.
 The only supported escape sequences are:
 </para>
 <variablelist>
@@ -360,32 +319,20 @@ U+009B or as the two-character sequence U+001B U+005B.
 <refsection><title>Control sequences</title>
 
 <para>
-Control sequences are multiple-character sequences comprising the CSI character
-followed by parameter characters in the range U+0030 to U+003F
-followed optionally by an intermediate character in the range U+0020 to U+002F
-and terminated by a single final character in the range U+0040 to U+007E.
+Control sequences are multiple-character sequences comprising the CSI character followed by parameter characters in the range U+0030 to U+003F followed optionally by an intermediate character in the range U+0020 to U+002F and terminated by a single final character in the range U+0040 to U+007E.
 </para>
 
 <para>
-The parameter characters are normally the digits and semi-colon (U+003B),
-comprising up to 16 semi-colon separated digit sequences, with an initial
-character in the range U+003C to U+003F denoting a DEC vendor-private control
-sequence that is an extension to ECMA-48.
-ECMA-48 defines colon (U+003A) as a sub-parameter separator, but no control
-sequence recognized by the terminal emulator makes use of this and all leading
-sequences of sub-parameters in any parameter are simply ignored.
+The parameter characters are normally the digits and semi-colon (U+003B), comprising up to 16 semi-colon separated digit sequences, with an initial character in the range U+003C to U+003F denoting a DEC vendor-private control sequence that is an extension to ECMA-48.
+ECMA-48 defines colon (U+003A) as a sub-parameter separator, but no control sequence recognized by the terminal emulator makes use of this and all leading sequences of sub-parameters in any parameter are simply ignored.
 More than 16 parameters simply causes leading parameters to be discarded.
-As an extension to DEC, the terminal allows vendor-private characters anywhere
-in the parameter character sequence, rather than only in the initial position,
-ignoring all but the last one.  
+As an extension to DEC, the terminal allows vendor-private characters anywhere in the parameter character sequence, rather than only in the initial position, ignoring all but the last one.  
 However, this is largely to simplify implementation and should not be relied upon.
 </para>
 
 <para>
-The digit sequences are parameters to the action, and zero-length digit sequences are
-a parameter with the value zero.
-In most cases, a control sequence with N parameters is equivalent to N such control
-sequences in order each with one of the parameters.
+The digit sequences are parameters to the action, and zero-length digit sequences are a parameter with the value zero.
+In most cases, a control sequence with N parameters is equivalent to N such control sequences in order each with one of the parameters.
 </para>
 
 </refsection>
@@ -395,17 +342,13 @@ sequences in order each with one of the parameters.
 <para>
 The terminal emulator maintains a current set of character attributes,
 a 24-bit RGB foregrond colour, and a 24-bit RGB background colour.
-These are combined with character code points when writing to the character
-cells of each screen buffer.
-Each character cell thus has its own, independent, attributes and 24-bit
-foreground and background colours.
+These are combined with character code points when writing to the character cells of each screen buffer.
+Each character cell thus has its own, independent, attributes and 24-bit foreground and background colours.
 </para>
 
 <para>
-The ANSI colour attributes set by the SGR control sequence map from 
-the 3-bit RGB ANSI colours to 24-bit RGB using 255 for a 1 bit and 0 for a 0 bit.
-The terminal emulator also supports the ISO 8613-6 SGR colour extensions, that
-are often misattributed to xterm:
+The ANSI colour attributes set by the SGR control sequence map from the 3-bit RGB ANSI colours to 24-bit RGB using 255 for a 1 bit and 0 for a 0 bit.
+The terminal emulator also supports the ISO 8613-6 SGR colour extensions, that are often misattributed to xterm:
 </para>
 <itemizedlist>
 <listitem>
@@ -559,36 +502,24 @@ discipline as terminal input.
 <term><code>0x0Fkkkkmm</code></term>
 <listitem><para>
 A function key.  
-The function key number is <code>kkkk</code> and <code>mm</code> is a set of
-bitflags indicating the current state of modifier keys.
-The terminal emulator sends the equivalent control sequence through to the line
-discipline as terminal input.
+The function key number is <code>kkkk</code> and <code>mm</code> is a set of bitflags indicating the current state of modifier keys.
+The terminal emulator sends the equivalent control sequence through to the line discipline as terminal input.
 </para></listitem>
 </varlistentry>
 </variablelist>
 
 <para>
-The modifier flags represent abstract level2, level3, control, group2, and 
-super modifiers.
-(See ISO 9995 for the concepts of levels and groups; super is an abstract
-"Command" or "GUI" modifier.)
-The input protocol does not comprise standalone events for modifier keys
-or associated modifier lock keys.
-The terminal emulator has no dealing in keyboard modifier state tracking; nor,
-similarly, does it deal in using modifiers to renumber function keys or to
-change dual-mode keypads.
+The modifier flags represent abstract level2, level3, control, group2, and super modifiers.
+(See ISO 9995 for the concepts of levels and groups; super is an abstract "Command" or "GUI" modifier.)
+The input protocol does not comprise standalone events for modifier keys or associated modifier lock keys.
+The terminal emulator has no dealing in keyboard modifier state tracking; nor, similarly, does it deal in using modifiers to renumber function keys or to change dual-mode keypads.
 Those are both the province of realizers.
 </para>
 
 <para>
-The numbering of system, extended, and consumer keys largely follows the ID
-numbers used for keys in the USB HID protocol, with some exceptions, and a
-number of additions for keys that are not present in USB.
-Importantly, keys that generate ordinary Unicode characters are sent as a
-Unicode character message and <emphasis>not</emphasis> as an extended key
-with the USB keycode.
-The terminal emulator has no dealing in keyboard maps and exactly how keystrokes
-translate to Unicode characters; which are the province of a realizer.
+The numbering of system, extended, and consumer keys largely follows the ID numbers used for keys in the USB HID protocol, with some exceptions, and a number of additions for keys that are not present in USB.
+Importantly, keys that generate ordinary Unicode characters are sent as a Unicode character message and <emphasis>not</emphasis> as an extended key with the USB keycode.
+The terminal emulator has no dealing in keyboard maps and exactly how keystrokes translate to Unicode characters; which are the province of a realizer.
 </para>
 
 </refsection>
@@ -596,76 +527,42 @@ translate to Unicode characters; which are the province of a realizer.
 <refsection><title>Control sequences</title>
 
 <para>
-Extended keys and function keys cause the terminal emulator to send control sequences
-through the line discipline to terminal input.
-What control sequences are sent depends from what console type the terminal emulator
-is set to: SCO console, Linux console, FreeBSD console, NetBSD console, or DEC VT.
+Extended keys and function keys cause the terminal emulator to send control sequences through the line discipline to terminal input.
+What control sequences are sent depends from what console type the terminal emulator is set to: SCO console, Linux console, FreeBSD console, NetBSD console, or DEC VT.
 </para>
 
 <para>
-No console terminal type defines control sequences for all keys, or distinct
-control sequences where it does define them.
-For example, the Linux console only defines control sequences for function keys
-from 1 to 20 and has no defined control sequences for function keys outwith
-that range.
+No console terminal type defines control sequences for all keys, or distinct control sequences where it does define them.
+For example, the Linux console only defines control sequences for function keys from 1 to 20 and has no defined control sequences for function keys outwith that range.
 (The SCO console defines control sequences for function keys from 1 to 48.)
-Similarly, the FreeBSD console, the Linux console, the SCO console, and the NetBSD
-console all make no distinction between the calculator keypad and the equivalent
-main keypad or cursor/editing keypad keys.
+Similarly, the FreeBSD console, the Linux console, the SCO console, and the NetBSD console all make no distinction between the calculator keypad and the equivalent main keypad or cursor/editing keypad keys.
 (The DEC VT520 does.)
 </para>
 
 <para>
-The ECMA-48 FNK sequences are not generated by the terminal emulator; no kernel
-virtual console sends them, in any mode.
-Most consoles use the non-standard DECFNK sequences instead, for function keys
-and for some (to varying extents) extended keys.
-However, there is a wide degree of variance amongst consoles that can cause problems
-if the <envar>TERM</envar> environment variable (and hence termcap/terminfo terminal 
-type) used by applications connected to the slave side of the terminal does not
-match the console emulation being employed by the terminal emulator.
+The ECMA-48 FNK sequences are not generated by the terminal emulator; no kernel virtual console sends them, in any mode.
+Most consoles use the non-standard DECFNK sequences instead, for function keys and for some (to varying extents) extended keys.
+However, there is a wide degree of variance amongst consoles that can cause problems if the <envar>TERM</envar> environment variable (and hence termcap/terminfo terminal type) used by applications connected to the slave side of the terminal does not match the console emulation being employed by the terminal emulator.
 </para>
 
 <para>
-The Linux console employs the DECFNK sequences for <code>FIND</code> and
-<code>SELECT</code> for the <code>HOME</code> and <code>END</code> keys.  
-The other consoles employ the DECFNK <code>FIND</code> and <code>SELECT</code>
-sequences for those keys, with different control sequences for <code>HOME</code>
-and <code>END</code> (as per a DEC VT520 in VT mode).
+The Linux console employs the DECFNK sequences for <code>FIND</code> and <code>SELECT</code> for the <code>HOME</code> and <code>END</code> keys.  
+The other consoles employ the DECFNK <code>FIND</code> and <code>SELECT</code> sequences for those keys, with different control sequences for <code>HOME</code> and <code>END</code> (as per a DEC VT520 in VT mode).
 This has two major consequences: 
-If the terminal emulator is in Linux console mode, <code>HOME</code> and
-<code>END</code> will not be correctly recognized if the <code>TERM</code>
-environment variable does not also specify "linux"; and if the terminal
-emulator is in another mode but the <envar>TERM</envar> environment variable
-is set to "linux", <code>FIND</code> and <code>SELECT</code> will
-incorrectly recognized and <code>HOME</code> and <code>END</code> will not
-be recognized at all.
+If the terminal emulator is in Linux console mode, <code>HOME</code> and <code>END</code> will not be correctly recognized if the <code>TERM</code> environment variable does not also specify "linux"; and if the terminal emulator is in another mode but the <envar>TERM</envar> environment variable is set to "linux", <code>FIND</code> and <code>SELECT</code> will incorrectly recognized and <code>HOME</code> and <code>END</code> will not be recognized at all.
 </para>
 
 <para>
-The terminal emulator generates the DECFNK sequences for
-<emphasis>all</emphasis> function keys, and the <emphasis>different</emphasis>
-DEC control sequences for the PAD_F1 to PAD_F4 extended keys.
-The Linux, FreeBSD, NetBSD, and SCO consoles all substitute PAD_F1 to PAD_F4
-for the F1 to F4 keys, and have no equivalents for the true F1 to F5 keys on an
-actual DEC terminal which are what the DECFNK sequences (from 11 to 15)
-designate.
+The terminal emulator generates the DECFNK sequences for <emphasis>all</emphasis> function keys, and the <emphasis>different</emphasis> DEC control sequences for the PAD_F1 to PAD_F4 extended keys.
+The Linux, FreeBSD, NetBSD, and SCO consoles all substitute PAD_F1 to PAD_F4 for the F1 to F4 keys, and have no equivalents for the true F1 to F5 keys on an actual DEC terminal which are what the DECFNK sequences (from 11 to 15) designate.
 None of this remapping, however, is the domain of the terminal emulator.
-The terminal emulator input protocol deals in a set of "true DEC VT"
-function keys and separate extended PAD_F1 to PAD_F4 keys, as if there were
-a real DEC VT and keys F1 to F5 were all (even the always-local F5) set to 
-non-local mode.
-It is entirely up to each realizer to determine what keys on the realizing
-keyboard generate function key input messages and what real keys generate
-extended key input messages.
+The terminal emulator input protocol deals in a set of "true DEC VT" function keys and separate extended PAD_F1 to PAD_F4 keys, as if there were a real DEC VT and keys F1 to F5 were all (even the always-local F5) set to non-local mode.
+It is entirely up to each realizer to determine what keys on the realizing keyboard generate function key input messages and what real keys generate extended key input messages.
 </para>
 
 <para>
-Similarly, the terminal emulator has no dealings in numlock, nor in local
-editing cursor key modes.
-The calculator keypad keys always generate their "application mode",
-a.k.a. "numlock off", control sequences; and the cursor/editing keypad
-keys always generate their "application mode" sequences.
+Similarly, the terminal emulator has no dealings in numlock, nor in local editing cursor key modes.
+The calculator keypad keys always generate their "application mode", a.k.a. "numlock off", control sequences; and the cursor/editing keypad keys always generate their "application mode" sequences.
 Such mode switching is an internal matter for realizers.
 </para>
 
@@ -677,92 +574,49 @@ Such mode switching is an internal matter for realizers.
 
 <para>
 The terminal emulator does not replicate all features of a real hardware terminal.
-Its goal is to provide a workalike for (the TUI parts of the) the virtual
-consoles that are/were built in to the Linux and BSD operating system kernels.
-There is no support for the historical features of real terminal hardwares such as
-attached printers, page switching, status lines, XON/XOFF modem flow control, 
-programmable function keys, alternative (WYSE/TVI) control/escape sequences,
-and graphics modes.
-Rather, the terminal emulator is aimed at handling the outputs of TUI
-programs that use the "<code>linux</code>" terminal type (for the Linux kernel
-virtual terminals) the "<code>wsvt25</code>" terminal type (for NetBSD kernel
-virtual terminals) or the "<code>xterm</code>"
-terminal types (for FreeBSD kernel virtual terminals).
-(These are the terminal types set by
-<citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
+Its goal is to provide a workalike for (the TUI parts of the) the virtual consoles that are/were built in to the Linux and BSD operating system kernels.
+There is no support for the historical features of real terminal hardwares such as attached printers, page switching, status lines, XON/XOFF modem flow control, programmable function keys, alternative (WYSE/TVI) control/escape sequences, and graphics modes.
+Rather, the terminal emulator is aimed at handling the outputs of TUI programs that use the "<code>linux</code>" terminal type (for the Linux kernel virtual terminals) the "<code>wsvt25</code>" terminal type (for NetBSD kernel virtual terminals) or the "<code>xterm</code>" terminal types (for FreeBSD kernel virtual terminals).
+(These are the terminal types set by <citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
 </para>
 
 <para>
 The terminal emulator also has no dealing in the things that are the domain of
 separate realizing tools.
-The modular nature of user-space virtual terminals means that the terminal
-emulator has no knowledge of the actual devices used to realize the terminal,
-and that there can be zero or many realizers for any given virtual terminal.
-There is no support for font definitions, window titles, 256-colour VGA
-palettes, VGA-specific overscan and underline, VESA power, screen-savers,
-or multi-mode keypads.
+The modular nature of user-space virtual terminals means that the terminal emulator has no knowledge of the actual devices used to realize the terminal, and that there can be zero or many realizers for any given virtual terminal.
+There is no support for font definitions, window titles, 256-colour VGA palettes, VGA-specific overscan and underline, VESA power, screen-savers, or multi-mode keypads.
 </para>
 
 <para>
 The terminal emulator is 8-bit clean and employs UTF-8 as standard.  
-Therefore, the terminal emulator has no need for mechanisms to switch 8-bit
-code pages amongst multiple character sets.  
+Therefore, the terminal emulator has no need for mechanisms to switch 8-bit code pages amongst multiple character sets.  
 There is no ISO 2022 support.
 </para>
 
 <para>
-The two-character 7-bit mechanism of ECMA-48 (section 5) is not
-only present, but is more completely implemented than in several kernel console
-terminal emulators, which usually only implement the 7-bit aliases for
-CSI and OSC.
+The two-character 7-bit mechanism of ECMA-48 (section 5) is not only present, but is more completely implemented than in several kernel console terminal emulators, which usually only implement the 7-bit aliases for CSI and OSC.
 </para>
 
 <para>
-Both ECMA-48 and the 
-DEC VT520 <citetitle>Video Terminal Programmer Information</citetitle>
-<citebiblioid>EK-VT520-RM</citebiblioid> 
-reference are straightforward and clear about numeric parameters to cursor
-motion and screen editing control sequences: a value of 0 is given no special
-meaning and just means zero rows/columns/whatever.
-However, that is not the behaviour of the Linux or FreeBSD kernel virtual terminal
-emulators, both of which replace any zero parameters with the value 1.
-Therefore, because of the aforementioned goal, this terminal emulator does the same
-and does not follow the ECMA-48 standard or the DEC VT520 documentation.
+Both ECMA-48 and the DEC VT520 <citetitle>Video Terminal Programmer Information</citetitle> <citebiblioid>EK-VT520-RM</citebiblioid> reference are straightforward and clear about numeric parameters to cursor motion and screen editing control sequences: a value of 0 is given no special meaning and just means zero rows/columns/whatever.
+However, that is not the behaviour of the Linux or FreeBSD kernel virtual terminal emulators, both of which replace any zero parameters with the value 1.
+Therefore, because of the aforementioned goal, this terminal emulator does the same and does not follow the ECMA-48 standard or the DEC VT520 documentation.
 </para>
 
 <para>
-Neither ECMA-48 nor the 
-DEC VT520 <citetitle>Video Terminal Programmer Information</citetitle>
-<citebiblioid>EK-VT520-RM</citebiblioid> 
-reference document a quirk of most DEC VT-family emulators: 
-holding line wrap pending.
-Actual implementations, including the FreeBSD kernel virtual terminal
-emulator, have this mechanism.
-This is largely undocumented behaviour, but it is behaviour that many programs
-(including the prompt display of the Z Shell, for example) rely upon.
+Neither ECMA-48 nor the DEC VT520 <citetitle>Video Terminal Programmer Information</citetitle> <citebiblioid>EK-VT520-RM</citebiblioid> reference document a quirk of most DEC VT-family emulators: holding line wrap pending.
+Actual implementations, including the FreeBSD kernel virtual terminal emulator, have this mechanism.
+This is largely undocumented behaviour, but it is behaviour that many programs (including the prompt display of the Z Shell, for example) rely upon.
 So it is implemented here.
 </para>
 
 <para>
-ECMA-48 permits parameters to CSI control sequence to comprise sequences
-of sub-parameters separated by colons, meaning that a full parameter list
-is a semi-colon separated sequence of colon-separated subsequences.
-ISO 8613-6 SGR colour extensions were intended to make use of this
-mechanism, with colour values being encoded as sub-parameters behind a
-leading 38 or 48 sub-parameter.
-That standard explicitly states in section 13.1.8 that "Pe" values are
-separated by character "3/10" (i.e. U+003A).
-This would have resulted in SGR sequences that were unambiguous, since it
-would not be possible to mistake a sub-parameter specifying a colour value
-for an SGR attribute code:
-CSI <code>1;4;38:5:14;48:2:3:7:224m</code>.
-A long-standing misunderstanding/misreading on the parts of many people has
-led, however, to most programs (from terminfo to the Linux kernel terminal
-emulator) sending and expecting semi-colons instead of colons, leading to
-ambiguous SGR sequences:
-CSI <code>1;4;38;5;14;48;2;3;7;224m</code>.
-For compatibility, the terminal emulator has to do the same; even though it
-would be good to fix this 20-year-old bug.
+ECMA-48 permits parameters to CSI control sequence to comprise sequences of sub-parameters separated by colons, meaning that a full parameter list is a semi-colon separated sequence of colon-separated subsequences.
+ISO 8613-6 SGR colour extensions were intended to make use of this mechanism, with colour values being encoded as sub-parameters behind a leading 38 or 48 sub-parameter.
+That standard explicitly states in section 13.1.8 that "Pe" values are separated by character "3/10" (i.e. U+003A).
+This would have resulted in SGR sequences that were unambiguous, since it would not be possible to mistake a sub-parameter specifying a colour value for an SGR attribute code: CSI <code>1;4;38:5:14;48:2:3:7:224m</code>.
+A long-standing misunderstanding/misreading on the parts of many people has led, however, to most programs (from terminfo to the Linux kernel terminal emulator) sending and expecting semi-colons instead of colons, leading to ambiguous SGR sequences: CSI <code>1;4;38;5;14;48;2;3;7;224m</code>.
+For compatibility, the terminal emulator has to do the same; even though it would be good to fix this 20-year-old bug.
 </para>
 
 </refsection>

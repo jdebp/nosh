@@ -6,7 +6,6 @@
 Description=FTP proxy daemon
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=ftp-proxy -d
 Restart=always
 

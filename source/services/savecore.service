@@ -7,7 +7,6 @@ Description=Save any core dumps found in any dump volumes
 
 [Service]
 Type=oneshot
-systemdWorkingDirectory=false
 EnvironmentDirectory=env
 ExecStart=%p ${flags} ${dumpdir:-/var/crash}
 RemainAfterExit=yes

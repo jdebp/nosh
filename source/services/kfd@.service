@@ -6,7 +6,6 @@
 Description=KF service
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p
 Restart=always
 

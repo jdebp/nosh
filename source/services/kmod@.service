@@ -6,7 +6,6 @@
 Description=kernel module loader for %i
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=system-control load-kernel-module %i
 ExecStopPost=system-control unload-kernel-module %i
 RemainAfterExit=yes

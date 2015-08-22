@@ -6,8 +6,6 @@
 Description=Nagios Core server
 
 [Service]
-systemdWorkingDirectory=false
-systemdUserEnvironment=no
 ExecStart=%p
 User=nagios
 Restart=no

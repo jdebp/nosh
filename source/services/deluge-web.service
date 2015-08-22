@@ -6,7 +6,8 @@
 Description=Deluge BitTorrent client
 
 [Service]
-systemdWorkingDirectory=false
+# FIXME: Is this really needed?
+systemdUserEnvironment=true
 User=deluge
 Group=deluge
 Umask=037

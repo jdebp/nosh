@@ -1,7 +1,7 @@
 #!/bin/sh -
 escape() { echo "$1"|sed -e 's/@/\\x40/g' ; }
-addloguser() { getent passwd "$1" > /dev/null || useradd --shell /bin/false "$1" ; }
-addlog() { mkdir -m 0750 -p /var/log/sv/"$2" ; setfacl -m u:"$1"-log:rwx -m g:adm:rx /var/log/sv/"$2" ; }
+add_user() { getent passwd "$1" > /dev/null || useradd --shell /bin/false "$1" ; }
+add_log() { mkdir -m 0750 -p /var/log/sv/"$2" ; setfacl -m u:"$1"-log:rwx -m g:adm:rx /var/log/sv/"$2" ; }
 case "$1" in
 	configure)
 		# user-mode TTYs
@@ -12,8 +12,8 @@ case "$1" in
 			;
 		do
 			i="`escape terminal-emulator@"$I"`"
-			addloguser "$i"-log
-			addlog "$i" terminal-emulator@"$I"
+			add_user "$i"-log
+			add_log "$i" terminal-emulator@"$I"
 			system-control preset --ttys --prefix terminal-emulator@ "$I".service
 			system-control preset --ttys --prefix cyclog@terminal-emulator@ "$I".service
 			system-control reset cyclog@terminal-emulator@$I.service
@@ -26,8 +26,8 @@ case "$1" in
 			;
 		do
 			i="`escape ttylogin@"$I"-tty`"
-			addloguser "$i"-log
-			addlog "$i" ttylogin@"$I"-tty
+			add_user "$i"-log
+			add_log "$i" ttylogin@"$I"-tty
 			system-control preset --ttys --prefix ttylogin@ "$I"-tty.service
 			system-control preset --ttys --prefix cyclog@ttylogin@ "$I"-tty.service
 			system-control reset ttylogin@"$I"-tty.service cyclog@ttylogin@"$I"-tty.service
@@ -39,8 +39,8 @@ case "$1" in
 			;
 		do
 			i="`escape "$I"`"
-			addloguser "$i"-log
-			addlog "$i" "$I"
+			add_user "$i"-log
+			add_log "$i" "$I"
 			system-control preset $I.service
 			system-control preset --prefix cyclog@ $I.service
 			system-control reset $I.service cyclog@$I.service

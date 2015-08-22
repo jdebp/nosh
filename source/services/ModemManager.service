@@ -8,7 +8,6 @@ Before=NetworkManager.service
 After=local-syslog.target
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=modem-manager
 Restart=on-failure
 RestartSec=1

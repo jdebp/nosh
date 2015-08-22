@@ -6,7 +6,6 @@
 Description=audit trail distribution daemon
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p -F
 
 [Install]

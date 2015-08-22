@@ -6,7 +6,6 @@
 Description=RARP service
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p -d -f -a
 Restart=always
 

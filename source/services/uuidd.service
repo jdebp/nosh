@@ -6,8 +6,6 @@
 Description=util-linux UUID listening daemon
 
 [Service]
-systemdWorkingDirectory=false
-systemdUserEnvironment=no
 User=uuidd
 RuntimeDirectory=%p
 RuntimeDirectoryMode=0755

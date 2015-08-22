@@ -6,7 +6,6 @@
 Description=BSD kernel watchdog daemon
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p -d
 Restart=always
 

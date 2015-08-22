@@ -9,7 +9,6 @@ Requires=dumpauto.target
 [Service]
 Type=oneshot
 EnvironmentDirectory=env
-systemdWorkingDirectory=false
 ExecStart=test -r ${config} && test -n "`sysctl -Nq debug.ddb.scripting.scripts`" && %p ${config}
 RemainAfterExit=yes
 

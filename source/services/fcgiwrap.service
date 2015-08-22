@@ -6,7 +6,8 @@
 Description=nginx's Fast CGI wrapper server
 
 [Service]
-systemdWorkingDirectory=false
+# FIXME: Is this really needed?
+systemdUserEnvironment=true
 User=http
 ExecStart=%p
 PrivateTmp=true

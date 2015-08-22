@@ -2,11 +2,15 @@
 case "$1" in
 	upgrade)
 		for i in \
+			colord \
+			colord-sane \
 			console-kit-daemon \
 			ModemManager \
 			NetworkManager \
 			packagekit \
 			polkitd \
+			udisks \
+			upower \
 			;
 		do
 			if system-control is-loaded $i.service

@@ -25,47 +25,32 @@
 <refsection><title>Description</title>
 
 <para>
-<command>ttylogin-starter</command> automatically runs
-<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-to <command>start</command> a <code>ttylogin@.service</code> service on each
-kernel virtual terminal.
+<command>ttylogin-starter</command> automatically runs <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> to <command>start</command> a <code>ttylogin@.service</code> service on each kernel virtual terminal.
 It is not applicable to user-space virtual terminals.
 </para>
 
 <para>
 If the services do not exist, it makes no attempt to create them.
-To control what virtual terminals have auto-started
-<code>ttylogin@.service</code> services, simply create such services only as
-appropriate.
+To control what virtual terminals have auto-started <code>ttylogin@.service</code> services, simply create such services only as appropriate.
 </para>
 
 <refsection><title>BSD BEHAVIOUR</title>
 
 <para>
-On BSD operating systems it simply and unconditionally starts services for all
-16 virtual terminals from <code>ttyv0</code> to <code>ttyvf</code>.
+On BSD operating systems it simply and unconditionally starts services for all 16 virtual terminals from <code>ttyv0</code> to <code>ttyvf</code>.
 </para>
 
 </refsection>
 <refsection><title>LINUX BEHAVIOUR</title>
 
 <para>
-On Linux, it monitors the state of the <code>/sys/class/tty/tty0/active</code> file with
-<citerefentry><refentrytitle>poll</refentrytitle><manvolnum>2</manvolnum></citerefentry>.
+On Linux, it monitors the state of the <code>/sys/class/tty/tty0/active</code> file with <citerefentry><refentrytitle>poll</refentrytitle><manvolnum>2</manvolnum></citerefentry>.
 This file reports the currently active kernel virtual terminal name.
-Each time that
-<citerefentry><refentrytitle>poll</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-reports a change in the currently active virtual terminal,
-<command>ttylogin-starter</command> issues a <command>system-control</command>
-<arg choice="plain">start</arg>
-command.
+Each time that <citerefentry><refentrytitle>poll</refentrytitle><manvolnum>2</manvolnum></citerefentry> reports a change in the currently active virtual terminal, <command>ttylogin-starter</command> issues a <command>system-control</command> <arg choice="plain">reset</arg> command.
 </para>
 
 <para>
-Alternative sysfs class names and "0th" TTY names, which combine to produce the
-aforementioned filename, can be specified with the <arg
-choice='plain'>--class</arg> and <arg choice='plain'>--tty</arg> command
-options, respectively.
+Alternative sysfs class names and "0th" TTY names, which combine to produce the aforementioned filename, can be specified with the <arg choice='plain'>--class</arg> and <arg choice='plain'>--tty</arg> command options, respectively.
 </para>
 
 </refsection>

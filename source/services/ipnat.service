@@ -9,7 +9,6 @@ Requires=kmod@ipl
 [Service]
 # Marking this as oneshot means that it doesn't enter the "running" state until the accton command has exited.
 Type=oneshot
-systemdWorkingDirectory=false
 EnvironmentDirectory=env
 ExecStart=${program} -F -C ${flags} -f ${rules}
 ExecStart=${program} -F -C ${flags}

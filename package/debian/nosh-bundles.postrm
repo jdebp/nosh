@@ -149,9 +149,13 @@ case "$1" in
 		done
 		# Linux services
 		for I in \
+			colord \
+			colord-sane \
 			console-kit-daemon \
 			kerneloops \
 			linux-lockfiles \
+			udisks \
+			upower \
 			update-binfmts \
 			wettsteinsyslogd \
 			;

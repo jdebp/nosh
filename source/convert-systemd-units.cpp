@@ -608,20 +608,23 @@ convert_systemd_units (
 ) {
 	const char * prog(basename_of(args[0]));
 	std::string bundle_root;
-	bool escape_instance(false), escape_prefix(false), alt_escape(false), etc_bundle(false);
+	bool escape_instance(false), escape_prefix(false), alt_escape(false), etc_bundle(false), systemd_quirks(true);
 	try {
 		const char * bundle_root_str(0);
+		bool no_systemd_quirks(false);
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
 		popt::string_definition bundle_option('\0', "bundle-root", "directory", "Root directory for bundles.", bundle_root_str);
 		popt::bool_definition escape_instance_option('\0', "escape-instance", "Escape the instance part of a template instantiation.", escape_instance);
 		popt::bool_definition alt_escape_option('\0', "alt-escape", "Use an alternative escape algorithm.", alt_escape);
 		popt::bool_definition etc_bundle_option('\0', "etc-bundle", "Consider this service to live away from the normal service bundle group.", etc_bundle);
+		popt::bool_definition no_systemd_quirks_option('\0', "no-systemd-quirks", "Turn off systemd quirks.", no_systemd_quirks);
 		popt::definition * main_table[] = {
 			&user_option,
 			&bundle_option,
 			&escape_instance_option,
 			&alt_escape_option,
-			&etc_bundle_option
+			&etc_bundle_option,
+			&no_systemd_quirks_option
 		};
 		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "");
 
@@ -631,6 +634,7 @@ convert_systemd_units (
 		args = new_args;
 		if (p.stopped()) throw EXIT_SUCCESS;
 		if (bundle_root_str) bundle_root = bundle_root_str + std::string("/");
+		systemd_quirks = !no_systemd_quirks;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
 		throw static_cast<int>(EXIT_USAGE);
@@ -944,7 +948,7 @@ convert_systemd_units (
 			setuidgid += "setuidgid-fromenv\n";
 		} else
 			setuidgid += "setuidgid " + quote(u) + "\n";
-		if (is_bool_true(systemduserenvironment, true))
+		if (is_bool_true(systemduserenvironment, systemd_quirks))
 			// This replicates systemd useless features.
 			setuidgid += "userenv\n";
 	} else {
@@ -956,7 +960,7 @@ convert_systemd_units (
 	std::string chdir;
 	if (workingdirectory)
 		chdir += "chdir " + quote(names.substitute(workingdirectory->last_setting())) + "\n";
-	else if (rootdirectory || is_bool_true(systemdworkingdirectory, true))
+	else if (rootdirectory || is_bool_true(systemdworkingdirectory, systemd_quirks))
 		chdir += "chdir /\n";
 	std::string createrundir, removerundir;
 	if (runtimedirectory) {

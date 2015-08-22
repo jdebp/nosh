@@ -6,7 +6,6 @@
 Description=AppleTalk daemon
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p
 Restart=always
 

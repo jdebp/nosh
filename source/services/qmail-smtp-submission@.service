@@ -6,8 +6,6 @@
 Description=Bernstein's qmail SMTP Relay daemon
 
 [Service]
-systemdWorkingDirectory=false
-systemdUserEnvironment=no
 EnvironmentDirectory=env
 LimitMEMORY=70000000
 User=qmaild

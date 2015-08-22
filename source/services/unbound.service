@@ -6,8 +6,6 @@
 Description=%p proxy DNS server daemon
 
 [Service]
-systemdWorkingDirectory=false
-systemdUserEnvironment=false
 PermissionsStartOnly=true
 EnvironmentDirectory=env
 User=%p

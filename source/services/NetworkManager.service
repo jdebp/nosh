@@ -10,7 +10,6 @@ After=local-syslog.target
 #Wants=dbus.service
 
 [Service]
-systemdWorkingDirectory=false
 ExecStartPre=mkdir -m 0755 /run/network
 ExecStart=%p --no-daemon
 Restart=always

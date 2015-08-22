@@ -102,7 +102,7 @@ Description: upstart shim service and system management utilities
 
 Package: nosh-bundles
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.16)
+Depends: nosh-exec, nosh-service-management (>=1.16), nosh-terminal-management
 Suggests: 
 Recommends: 
 Conflicts: nosh-standard-targets, nosh-sysinit-services, nosh-bsd-services, nosh-bsd-sockets, nosh-regular-sockets, nosh-regular-services
@@ -174,9 +174,12 @@ Description: Run the various "kit" programs from freedesktop.org
  This package runs the various "kit" programs from freedesktop.org:
   * NetworkManager
   * ModemManager
+  * ColourManager
   * PolicyKit
   * PackageKit
   * ConsoleKit
+  * UDisks
+  * UPower
 
 Package: nosh-run-appletalk
 Architecture: amd64

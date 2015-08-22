@@ -58,7 +58,7 @@ do
 done
 for j in nosh cyclog
 do
-	cp -a -l -- "${dest}"/nosh-exec/bin/exec "${dest}"/nosh-exec/bin/"$j"
+	cp -a -l -f -- "${dest}"/nosh-exec/bin/exec "${dest}"/nosh-exec/bin/"$j"
 done
 install -d -m 0755 "${dest}"/nosh-service-management/sbin 
 install -d -m 0755 "${dest}"/nosh-service-management/bin 

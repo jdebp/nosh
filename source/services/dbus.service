@@ -7,7 +7,6 @@ Description=System-wide "Desktop" bus service
 After=machine-id.service extra-shared-libraries.target
 
 [Service]
-systemdWorkingDirectory=false
 RuntimeDirectory=%p
 ExecStartPre=mkdir -p /var/db/%p
 ExecStartPre=sh -c '[ -r /var/db/%p/machine-id ] || ln -s /etc/machine-id /var/db/%p/'

@@ -7,7 +7,6 @@ Description=APM state
 
 [Service]
 Type=oneshot
-systemdWorkingDirectory=false
 ExecStart=%p -e enable
 ExecStopPost=%p -e disable
 RemainAfterExit=yes

@@ -8,7 +8,6 @@ Wants=nfsd.service rpcbind.service
 After=rpcbind.service
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=mountd
 Restart=always
 

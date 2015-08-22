@@ -17,8 +17,10 @@ local-datagram-socket-listen
 local-stream-socket-listen
 local-stream-socket-accept
 make-private-fs
+monitored-fsck
 nosh
 pause
+plug-and-play-event-handler
 pipe
 prependpath
 read-conf

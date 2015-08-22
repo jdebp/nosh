@@ -1,0 +1,12 @@
+#
+# Enable ColourManager services
+#
+# This is not a systemd preset.
+# It goes in a special nosh system-manager preset directory.
+# It is used by the nosh-run-freedesktop-kits package in order to enable the services themselves.
+#
+
+enable	cyclog@colord-sane.service
+enable	colord-sane.service
+enable	cyclog@colord.service
+enable	colord.service

@@ -8,7 +8,6 @@ After=dbus.service
 After=local-syslog.target
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=/usr/lib/policykit-1/polkitd --no-debug
 Restart=always
 

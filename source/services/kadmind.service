@@ -7,7 +7,6 @@ Description=Kerberos admin daemon
 Wants=kerberos.service
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p
 
 [Install]

@@ -9,7 +9,6 @@ Description=%p service
 After=swapauto.service
 
 [Service]
-systemdWorkingDirectory=false
 ExecStartPre=swapon -aL
 ExecStart=true
 ExecStopPost=swapoff -aL

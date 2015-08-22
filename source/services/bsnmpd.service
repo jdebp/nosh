@@ -6,7 +6,6 @@
 Description=basic SNMP service
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p -d
 Restart=always
 

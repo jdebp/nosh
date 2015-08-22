@@ -6,7 +6,6 @@
 Description=remote who service
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p
 Restart=always
 

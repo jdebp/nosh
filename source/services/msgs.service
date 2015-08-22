@@ -7,7 +7,6 @@ Description=Make a bounds file for msgs(1) if there isn't one already
 
 [Service]
 Type=oneshot
-systemdWorkingDirectory=false
 ExecStart=sh -c '[ -d /var/msgs ] && [ ! -f /var/msgs/bounds ] && [ ! -L /var/msgs/bounds ] && echo 0 > /var/msgs/bounds'
 RemainAfterExit=yes
 

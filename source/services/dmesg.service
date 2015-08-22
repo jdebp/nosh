@@ -3,12 +3,11 @@
 ## **************************************************************************
 
 [Unit]
-Description=Dump kernel boot log
+Description=Dump kernel boot log (obsoleted by klogd-read).
 DefaultDependencies=false
 
 [Service]
 Umask=0022
-systemdWorkingDirectory=false
 ExecStart=fdredir --write 1 /run/dmesg.boot %p
 RemainAfterExit=yes
 

@@ -6,7 +6,6 @@
 Description=rsync per-connection service
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p --daemon
 Restart=always
 

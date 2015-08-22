@@ -6,7 +6,6 @@
 Description=BSD volume manager daemon
 
 [Service]
-systemdWorkingDirectory=false
 ProcessGroupLeader=true
 ExecStart=%p daemon
 Restart=always

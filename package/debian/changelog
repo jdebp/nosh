@@ -1,3 +1,12 @@
+nosh (1.19) unstable; urgency=low
+
+  * More Linux services: udisks, upower, colord, colord-sane
+  * There are now monitored-fsck, monitor-fsck-progress, and plug-and-play-event-handler commands.
+  * The missing escape() shell function in the postinst for nosh-run-kernel-vt has been fixed.
+  * There is now a console-clear command, with an alias clear_console to replace the bash command by that name.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Sat, 22 Aug 2015 15:44:10 +0100
+
 nosh (1.18) unstable; urgency=low
 
   * More Linux services: udev, udev-trigger-add@subsystems, udev-trigger-add@devices, busybox-mdev, busybox-mdev-rescan

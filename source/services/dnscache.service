@@ -6,7 +6,6 @@
 Description=Bernstein's proxy DNS server daemon
 
 [Service]
-systemdWorkingDirectory=false
 EnvironmentDirectory=env
 EnvironmentUser=dnscache-d
 LimitNOFILE=250

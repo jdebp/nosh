@@ -7,7 +7,6 @@ Description=Fail2ban Service
 
 [Service]
 Type=forking
-systemdWorkingDirectory=false
 RuntimeDirectory=%p
 ExecStart=fail2ban-client -f -v start
 ExecStopPost=fail2ban-client -x stop

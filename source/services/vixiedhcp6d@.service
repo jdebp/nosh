@@ -6,7 +6,6 @@
 Description=Vixie/ISC DHCP over IPv6 server on %i
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=dhcpd -6 -f -d -q %i
 
 [Install]

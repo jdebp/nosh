@@ -71,7 +71,7 @@ common_subcommand (
 	const char * log_lines(0);
 	try {
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
-		popt::string_definition log_lines_option('\0', "log-lines", "Control the number of log lines printed.", "number", log_lines);
+		popt::string_definition log_lines_option('\0', "log-lines", "number", "Control the number of log lines printed.", log_lines);
 		popt::definition * main_table[] = {
 			&user_option,
 			&log_lines_option

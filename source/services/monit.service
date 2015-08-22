@@ -6,7 +6,6 @@
 Description=monitoring service
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p -I
 Restart=always
 

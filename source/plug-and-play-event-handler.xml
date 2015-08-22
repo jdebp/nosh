@@ -1,0 +1,76 @@
+<refentry id="plug-and-play-event-handler">
+
+<refmeta>
+<refentrytitle>plug-and-play-event-handler</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.18</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>plug-and-play-event-handler</refname>
+<refpurpose>adapt plug and play socket events to a handler API</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>plug-and-play-event-handler</command> 
+<arg choice='req'><replaceable>prog</replaceable></arg> 
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+There are two APIs for plug-and-play managent on Linux:
+One can specify a program to be run via the <filename>/proc/sys/kernel/hotplug</filename> file, or one can listen for plug-and-play event messages from the kernel via a netlink socket.
+The former has several problems:
+</para>
+<itemizedlist>
+<listitem><para>
+The kernel makes no effort not to run multiple instances of the program at once.
+This can result in PaP events being handled out of order, if it takes longer to process some events than others.
+There are also no limits on the number of instances of the plug-in that are run.
+</para></listitem>
+<listitem><para>
+There is no service control mechanism.
+The plug-in cannot be enabled/disabled started/stopped using normal daemon management tools.
+There are no ways to set resource limits or to control privileges.
+The startup/shutdown systems are not synchronized with them.
+</para></listitem>
+<listitem><para>
+The programs are run as unmanaged children of process #1.
+They are orphaned in the process tree, and not tracked by any service managers.
+</para></listitem>
+</itemizedlist>
+
+<para>
+<command>plug-and-play-event-handler</command> adapts plug-ins for the former to operate with the latter mechanism.
+</para>
+
+<para>
+It expects file descriptor 3 to be a datagram socket that has been set up to listen for incoming datagrams.
+(Usually this will be a netlink datagram, or raw, socket set up with with <citerefentry><refentrytitle>netlink-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+But <command>plug-and-play-event-handler</command> only requires that it be a datagram socket of some kind; and other socket types can theoretically be used.)
+It loops forever, reading datagrams.
+For each datagram read, it spawns <command><replaceable>prog</replaceable></command> as a child process, with the event message settings in its environment variables, as such plug-ins expect.
+</para>
+
+<para>
+It serializes invocations of <command><replaceable>prog</replaceable></command>.
+It will not read the next datagram until the previous instance has exited.
+If it is sent the "graceful" termination signals <code>SIGTERM</code>, <code>SIGINT</code>, or <code>SIGHUP</code> it waits for the child to exit before it exits itself.
+</para>
+
+</refsection><refsection><title>Bugs</title>
+
+<para>
+Although not strictly speaking a bug in this program, if the receive buffer size for the netlink socket is too small, the kernel can run out of buffers while enqueuing plug and play events.
+It does not recover from such a situation, leaving the plug and play manager broken until the next reboot.
+To avoid this, use the <arg choice='plain'>--receive-buffer-size</arg> option to <citerefentry><refentrytitle>netlink-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry> and pass a large size.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

@@ -8,7 +8,6 @@ DefaultDependencies=false
 After=local-fs.target
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=setup-machine-id
 RemainAfterExit=yes
 

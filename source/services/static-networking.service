@@ -10,7 +10,6 @@
 Description=Linux statically-configured network interface settings
 
 [Service]
-systemdWorkingDirectory=false
 ExecStartPre=mkdir -m 0755 /run/network
 ExecStart=ifup --verbose --all
 ExecStopPost=ifdown --verbose --all

@@ -8,7 +8,6 @@ Wants=kmod@iscsi
 After=kmod@iscsi
 
 [Service]
-systemdWorkingDirectory=false
 # iscsid needs a proper option for telling it not to fork.  Until it has, this will have to do.
 ExecStart=%p -d
 

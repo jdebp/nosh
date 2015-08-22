@@ -6,7 +6,6 @@
 Description=Guenter's bcron scheduling daemon
 
 [Service]
-systemdWorkingDirectory=false
 EnvironmentDirectory=env
 ExecStart=bcron
 Restart=always

@@ -6,7 +6,6 @@
 Description=Tool to automatically collect and submit crash signatures
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p --nodaemon
 Restart=always
 

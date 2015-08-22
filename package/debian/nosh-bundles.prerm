@@ -172,6 +172,8 @@ case "$1" in
 		done
 		# Linux services with dedicated log services
 		for I in \
+			colord \
+			colord-sane \
 			console-kit-daemon \
 			kerneloops \
 			kmod@autofs \
@@ -180,6 +182,8 @@ case "$1" in
 			kmod@uvesafb \
 			linux-lockfiles \
 			static-networking \
+			udisks \
+			upower \
 			update-binfmts \
 			wettsteinsyslogd \
 			;

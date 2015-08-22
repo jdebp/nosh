@@ -6,7 +6,6 @@
 Description=NFS client side callback daemon
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p
 Restart=always
 

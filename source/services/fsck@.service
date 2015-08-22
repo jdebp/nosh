@@ -12,7 +12,6 @@ After=local-fs-pre.target
 [Service]
 Type=oneshot
 ExecStart=%p -C -p %I
-systemdWorkingDirectory=false
 RemainAfterExit=yes
 
 [Install]

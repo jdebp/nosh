@@ -7,7 +7,6 @@ Description=Bonjour DNS service
 After=avahi-daemon.service
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p
 Restart=always
 

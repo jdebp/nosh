@@ -9,7 +9,6 @@ Description=%p service
 DefaultDependencies=false
 
 [Service]
-systemdWorkingDirectory=false
 ExecStartPre=swapon -a
 ExecStart=true
 ExecStopPost=swapoff -a

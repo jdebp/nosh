@@ -8,7 +8,6 @@ After=motd-dynamic.service
 After=hostname.service
 
 [Service]
-systemdWorkingDirectory=false
 SessionLeader=true
 StandardInput=tty
 StandardOutput=inherit

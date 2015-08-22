@@ -358,6 +358,11 @@ SoftTerm::EraseInDisplay()
 			case 0:	ClearToEOD(); break;
 			case 1:	ClearFromBOD(); break;
 			case 2:	ClearDisplay(); break;
+			// 3 is a Linux kernel terminal emulator extension introduced in 2011.
+			// It clears the display and also any off-screen buffers.
+			// The original xterm extension by Stephen P. Wall from 1999-06-12, and the PuTTY extension by Jacob Nevins in 2006, both clear only the off-screen buffers.
+			// We follow the originals.
+			case 3:	break;
 		}
 	}
 }

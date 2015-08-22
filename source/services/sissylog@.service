@@ -7,8 +7,6 @@ Description=%p logging service for %I
 Before=%I.service
 
 [Service]
-systemdUserEnvironment=no
-systemdWorkingDirectory=false
 User=%i-log
 ExecStart=%p %I
 Restart=always

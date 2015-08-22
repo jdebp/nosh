@@ -10,7 +10,6 @@ After=local-fs.target busybox-mdev.service
 
 [Service]
 Type=oneshot
-systemdWorkingDirectory=false
 ExecStart=busybox mdev -s
 Restart=never
 # This is an outrageous bodge.

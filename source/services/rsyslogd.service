@@ -6,7 +6,6 @@
 Description=rsyslog
 
 [Service]
-systemdWorkingDirectory=false
 # Don't use %p; this unit is accessed via a symbolic link.
 ExecStart=rsyslogd -c5 -n -d
 

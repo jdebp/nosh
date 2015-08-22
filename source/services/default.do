@@ -78,7 +78,7 @@ sysinit-log)
 	log=
 	etc=--etc-bundle
 	;;
-mount@*|fsck@*)
+mount@*|fsck@*|monitor-fsck-progress)
 	log="../sysinit-log"
 	etc=--etc-bundle
 	;;
@@ -91,7 +91,7 @@ udev|udev-trigger-add@*)
 	etc=--etc-bundle
 	;;
 busybox-mdev|busybox-mdev-rescan)
-	log="../mdev-log"
+	log="../busybox-mdev-log"
 	etc=--etc-bundle
 	;;
 *) 
@@ -107,9 +107,26 @@ busybox-mdev|busybox-mdev-rescan)
 	;;
 esac
 
-./system-control convert-systemd-units ${escape} ${etc} --bundle-root services.new/ "${unit}"
+./system-control convert-systemd-units --no-systemd-quirks ${escape} ${etc} --bundle-root services.new/ "${unit}"
 
 test -n "${log}" && ln -s -f "${log}" services.new/"${base}"/log
+
+if grep -q "envdir env" services.new/"${base}"/service/start services.new/"${base}"/service/run services.new/"${base}"/service/stop
+then
+	mkdir -m 0755 services.new/"${base}"/service/env
+fi
+
+case "${base}" in
+cyclog@*) 
+	ln -f -s -- /var/log/sv/"${base#cyclog@}" services.new/"${base}"/main
+	;;
+devd-log) 
+	ln -f -s -- /var/log/sv/devd services.new/"${base}"/main
+	;;
+sysinit-log) 
+	ln -f -s -- /var/log/sv/sysinit services.new/"${base}"/main
+	;;
+esac
 
 case "${base}" in
 kmod@vboxadd|kmod@vboxsf|kmod@vboxguest|kmod@vboxvideo)
@@ -135,6 +152,15 @@ console-multiplexor@head0)
 		ln -s -f /run/dev/vc"$i" services.new/"${base}"/service/
 	done
 	;;
+ttylogin@tty[0-9]*)
+	case "`uname`" in
+	Linux)
+		rm -f -- services.new/"${base}"/wanted-by/multi-user
+		;;
+	*BSD)
+		;;
+	esac
+	;;
 console-fb-realizer@head0)
 	redo-ifchange console-terminal-emulator
 	ln -s -f console-terminal-emulator console-convert-kbdmap
@@ -159,12 +185,22 @@ console-fb-realizer@head0)
 		;;
 	esac
 	;;
-esac
+dnscache)
+	mkdir -m 0755 services.new/"${base}"/service/root
+	mkdir -m 0755 services.new/"${base}"/service/root/ip
+	mkdir -m 0755 services.new/"${base}"/service/root/servers
+	;;
+tinydns)
+	mkdir -m 0755 services.new/"${base}"/service/root
 
-if grep -q "envdir env" services.new/"${base}"/service/start services.new/"${base}"/service/run services.new/"${base}"/service/stop
-then
-	mkdir -m 0755 services.new/"${base}"/service/env
-fi
+	for i in alias childns ns mx host
+	do
+		echo '#!/command/execlineb -S0' > services.new/"${base}"/service/root/add-"$i"
+		echo "tinydns-edit data data.new add $i \$@" >> services.new/"${base}"/service/root/add-"$i"
+		chmod 0755 services.new/"${base}"/service/root/add-"$i"
+	done
+	;;
+esac
 
 test -e "${name}".tmpfiles && cp -a "${name}".tmpfiles services.new/"${base}"/service/
 test -e "${name}".helper && cp -a "${name}".helper services.new/"${base}"/service/

@@ -7,9 +7,9 @@ Description=udev plug-and-play manager daemon
 DefaultDependencies=false
 Before=shutdown.target
 After=local-fs.target
+Conflicts=busybox-mdev
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%pd --debug
 Restart=on-abort
 

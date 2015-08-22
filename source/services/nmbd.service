@@ -6,7 +6,6 @@
 Description=SAMBA naming services daemon
 
 [Service]
-systemdWorkingDirectory=false
 RuntimeDirectory=samba
 RuntimeDirectoryMode=0755
 ExecStartPre=sh -c 'l="`testparm -s -v --parameter-name "lock directory" /usr/local/etc/smb.conf`" ; if [ -n "$l" ] && [ -d "$l" ] ; then for f in brlock.tdb browse.dat connections.tdb gencache.tdb locking.tdb messages.tdb namelist.debug sessionid.tdb unexpected.tdb ; do rm -f -- "$l"/"$f" ; done ; fi'

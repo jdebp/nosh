@@ -7,7 +7,6 @@ Description=BSD NTP daemon
 
 [Service]
 EnvironmentDirectory=env
-systemdWorkingDirectory=false
 ExecStart=%p -n -g -f /var/db/%p.drift
 Restart=always
 

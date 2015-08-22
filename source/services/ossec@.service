@@ -6,7 +6,6 @@
 Description=%p %i server
 
 [Service]
-systemdWorkingDirectory=false
 ExecStartPre=/var/ossec/bin/%p-%i -t
 ExecStart=/var/ossec/bin/%p-%i -f
 

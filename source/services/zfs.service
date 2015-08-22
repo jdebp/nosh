@@ -8,7 +8,6 @@ After=local-fs.target
 Conflicts=zfs-jailed.service
 
 [Service]
-systemdWorkingDirectory=false
 ExecStartPre=%p mount -v -a
 ExecStartPre=%p share -a
 ExecStartPre=sh -c 'test -r /etc/%p/exports || touch /etc/%p/exports'

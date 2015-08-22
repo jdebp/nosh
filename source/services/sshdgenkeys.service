@@ -6,7 +6,6 @@
 Description=SSH key generation
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=sh -c 'for t in rsa dsa ecdsa; do [ -f /etc/ssh/ssh_host_${t}_key ] || ssh-keygen -t ${t} -N "" -f /etc/ssh/ssh_host_${t}_key ; done'
 RemainAfterExit=yes
 

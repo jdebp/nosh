@@ -6,8 +6,6 @@
 Description=exim4 SMTP Submission daemon
 
 [Service]
-systemdWorkingDirectory=false
-systemdUserEnvironment=no
 EnvironmentDirectory=env
 LimitMEMORY=70000000
 User=exim4

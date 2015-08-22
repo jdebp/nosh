@@ -1,3 +1,7 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
 [Unit]
 Description=PulseAudio Daemon
  
@@ -5,5 +9,7 @@ Description=PulseAudio Daemon
 WantedBy=multi-user.target
  
 [Service]
+# FIXME: Is this really needed?
+systemdWorkingDirectory=on
 PrivateTmp=true
 ExecStart=pulseaudio --system --disallow-exit --disallow-module-loading

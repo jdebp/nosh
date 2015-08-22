@@ -8,7 +8,6 @@ Wants=nfsclient.service nfsd.service rpcbind.service
 After=rpcbind.service
 
 [Service]
-systemdWorkingDirectory=false
 # The import procedure is expected to have populated this directory with flags.
 EnvironmentDirectory=env
 ExecStart=rpc.statd -d ${flags}

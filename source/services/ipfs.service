@@ -12,7 +12,6 @@ ExecStart=%p -R -v
 ExecStopPost=mkdir -m 0700 /var/db/ipf
 ExecStopPost=chown root:wheel /var/db/ipf
 ExecStopPost=%p -W -v
-systemdWorkingDirectory=false
 RemainAfterExit=yes
 
 [Install]

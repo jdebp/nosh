@@ -203,7 +203,7 @@ service_status (
 	try {
 		popt::bool_definition long_form_option('\0', "long", "Output in a longer form.", long_form);
 		popt::bool_definition colours_option('\0', "colour", "Output in colour if the terminal is capable of it.", colours);
-		popt::string_definition log_lines_option('\0', "log-lines", "Control the number of log lines printed.", "number", log_lines);
+		popt::string_definition log_lines_option('\0', "log-lines", "number", "Control the number of log lines printed.", log_lines);
 		popt::definition * top_table[] = {
 			&long_form_option,
 			&colours_option,

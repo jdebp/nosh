@@ -9,7 +9,6 @@ Wants=local-fs.target
 After=local-fs.target
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=nextboot -D
 RemainAfterExit=true
 Restart=never

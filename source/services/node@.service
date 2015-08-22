@@ -6,7 +6,6 @@
 Description=%p service for %i
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p %i
 Restart=always
 

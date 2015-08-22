@@ -6,7 +6,6 @@
 Description=%p service
 
 [Service]
-systemdWorkingDirectory=false
 # The import procedure is expected to have populated this directory with flags.
 EnvironmentDirectory=env
 ExecStart=%p -d ${flags}

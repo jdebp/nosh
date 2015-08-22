@@ -6,7 +6,6 @@
 Description=boot parameters daemon
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=bootparamd
 Restart=always
 

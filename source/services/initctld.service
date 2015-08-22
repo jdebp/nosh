@@ -6,7 +6,6 @@
 Description=System 5 init compatibility daemon
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p
 
 [Install]

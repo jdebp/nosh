@@ -6,7 +6,6 @@
 Description=ACPI daemon
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p -f -d
 Restart=always
 

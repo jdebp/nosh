@@ -8,7 +8,6 @@ After=local-fs.target
 
 [Service]
 Type=oneshot
-systemdWorkingDirectory=false
 ExecStart=%p boot
 ExecStopPost=%p shutdown
 RemainAfterExit=yes

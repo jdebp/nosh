@@ -6,7 +6,6 @@
 Description=hardware sensor chip initialization
 
 [Service]
-systemdWorkingDirectory=false
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=foreground sensors -s ; sensors

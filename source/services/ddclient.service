@@ -6,7 +6,8 @@
 Description=Dynamic DNS update client
 
 [Service]
-systemdWorkingDirectory=false
+# FIXME: Is this really needed?
+systemdUserEnvironment=true
 User=%p
 ExecStart=%p --foreground
 Restart=always

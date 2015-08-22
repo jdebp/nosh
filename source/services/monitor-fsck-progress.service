@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=fsck combined progress information displayed on /dev/console
+DefaultDependencies=off
+
+[Service]
+StandardInput=tty
+StandardOutput=inherit
+User=daemon
+ExecStart=monitor-fsck-progress
+TTYPath=console
+
+[Install]

@@ -6,7 +6,6 @@
 Description=PC-BSD Swap Extender daemon
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=swapexd
 #Restart=always
 

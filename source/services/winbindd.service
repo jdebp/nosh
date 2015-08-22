@@ -7,7 +7,6 @@ Description=Name service switch daemon for SAMBA
 After=nmbd.service
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p -F -s /usr/local/etc/smb.conf
 Restart=always
 

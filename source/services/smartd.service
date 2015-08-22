@@ -6,7 +6,6 @@
 Description=SMART monitoring daemon
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p -n
 Restart=always
 

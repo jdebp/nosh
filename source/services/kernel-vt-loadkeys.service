@@ -3,18 +3,17 @@
 ## **************************************************************************
 
 [Unit]
-Description=Set up kernel virtual terminal keyboard map
-DefaultDependencies=false
+Description=Set up kernel virtual terminals keyboard map
 # The point of this service is to set up the kernel VTs really early, so that one can interact with fsck.
 # Unfortunately, the keys and font utilities on Linux require that /usr/share be checked and mounted.
+# And on the gripping hand, fsck is run non-interactively anyway.
 Wants=local-fs.target
 
 [Service]
-systemdWorkingDirectory=false
 EnvironmentFile=-/etc/vconsole.conf
 ExecStart=loadkeys --console /dev/tty0 --unicode ${KEYMAP} ${KEYMAP_TOGGLE}
 RemainAfterExit=yes
 Restart=never
 
 [Install]
-WantedBy=sysinit.target
+WantedBy=multi-user.target

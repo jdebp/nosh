@@ -8,7 +8,6 @@ After=local-fs.target
 Conflicts=zfs.service
 
 [Service]
-systemdWorkingDirectory=false
 ExecStartPre=zfs mount -v -a
 ExecStart=true
 ExecStopPost=zfs unmount -a

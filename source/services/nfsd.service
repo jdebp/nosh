@@ -9,7 +9,6 @@ Wants=rpcbind.service mountd.service nfsuserd.servie
 
 [Service]
 EnvironmentDirectory=env
-systemdWorkingDirectory=false
 ExecStart=%p -d ${flags}
 Restart=never
 

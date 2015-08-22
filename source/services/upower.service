@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=UPower daemon
+After=dbus.service
+After=local-syslog.target
+# Don't want D-Bus in case the D-Bus daemon is not managed by service-manager.
+#Wants=dbus.service
+
+[Service]
+ExecStart=/usr/lib/%p/%pd
+Restart=always
+
+[Install]
+WantedBy=workstation.target

@@ -1,8 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
 [Unit]
 Description=wso2 Carbon server
 After=network.target
 
 [Service]
+# FIXME: Is this really needed?
+systemdUserEnvironment=true
+# FIXME: Is this really needed?
+systemdWorkingDirectory=on
 Environment=JAVA_HOME="/opt/jdk1.7.0_60"
 User=wso2user
 ExecStart=wso2server.sh

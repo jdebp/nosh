@@ -7,7 +7,6 @@ Description=Standard format %p logging service for %I
 Before=%I.service
 
 [Service]
-systemdUserEnvironment=no
 WorkingDirectory=/var/log/sv/
 User=%i-log
 ExecStart=%p %I/

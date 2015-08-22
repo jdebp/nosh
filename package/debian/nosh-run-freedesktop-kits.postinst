@@ -5,11 +5,15 @@ addlog() { mkdir -m 0750 -p /var/log/sv/"$2" ; setfacl -m u:"$1"-log:rwx -m g:ad
 case "$1" in
 	configure)
 		for I in \
+			colord \
+			colord-sane \
 			console-kit-daemon \
 			ModemManager \
 			NetworkManager \
 			packagekit \
 			polkitd \
+			udisks \
+			upower \
 			;
 		do
 			i="`escape "$I"`"

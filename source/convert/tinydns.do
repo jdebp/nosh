@@ -13,15 +13,5 @@ set_if_unset tinydns ROOT "$s/service/root"
 
 rcctl get tinydns >> "$3"
 
-mkdir -p -m 0755 "$s/service/root"
-
-for i in alias childns ns mx host
-do
-	test -x "$s/service/root/add-$i" && continue
-	echo '#!/command/execlineb -S0' > "$s/service/root/add-$i"
-	echo "tinydns-edit data data.new add $i \$@" >> "$s/service/root/add-$i"
-	chmod +x "$s/service/root/add-$i"
-done
-
 test -r "$s/service/root/data" || echo '.' > "$s/service/root/data"
 test -r "$s/service/root/Makefile" || echo 'data.cdb : data ; tinydns-data' > "$s/service/root/Makefile"

@@ -10,8 +10,6 @@ Description=MongoDB database server daemon
 # But it creates transient sockets in the filesystem, that clients then talk to, under /tmp instead of under /run .
 # See RedHat bug #1047858.
 PrivateTmp=false
-systemdWorkingDirectory=false
-systemdUserEnvironment=no
 User=mongodb
 ExecStart=mongod
 Restart=always

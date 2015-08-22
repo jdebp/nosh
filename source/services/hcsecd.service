@@ -8,7 +8,6 @@ Wants=kmod@ng_btsocket
 After=kmod@ng_btsocket
 
 [Service]
-systemdWorkingDirectory=false
 # The import procedure is expected to have populated this directory with config.
 EnvironmentDirectory=env
 ExecStart=%p -d -f "${config:-/etc/bluetooth/%p.conf}"

@@ -65,12 +65,16 @@ extern void klog_read ( const char * &, std::vector<const char *> & );
 extern void cyclog ( const char * &, std::vector<const char *> & );
 extern void tai64n ( const char * &, std::vector<const char *> & );
 extern void tai64nlocal ( const char * &, std::vector<const char *> & );
+extern void monitored_fsck ( const char * &, std::vector<const char *> & );
+extern void plug_and_play_event_handler ( const char * &, std::vector<const char *> & );
 
 extern const
 struct command 
 commands[] = {
 	{	"exec",					command_exec			},
 	{	"nosh",					nosh				},
+
+	// Chain-loading non-terminals
 	{	"cd",					chdir				},
 	{	"chdir",				chdir				},
 	{	"chroot",				chroot				},
@@ -100,7 +104,6 @@ commands[] = {
 	{	"pipe",					pipe				},
 	{	"foreground",				foreground			},
 	{	"background",				background			},
-	{	"pause",				pause				},
 	{	"unshare",				unshare				},
 	{	"set-mount-object",			set_mount_object		},
 	{	"make-private-fs",			make_private_fs			},
@@ -113,6 +116,11 @@ commands[] = {
 	{	"netlink-datagram-socket-listen",	netlink_datagram_socket_listen	},
 #endif
 	{	"ucspi-socket-rules-check",		ucspi_socket_rules_check	},
+	{	"monitored-fsck",			monitored_fsck			},
+	{	"plug-and-play-event-handler",		plug_and_play_event_handler	},
+
+	// Terminals
+	{	"pause",				pause				},
 	{	"tai64n",				tai64n				},
 	{	"tai64nlocal",				tai64nlocal			},
 	{	"set-dynamic-hostname",			set_dynamic_hostname		},

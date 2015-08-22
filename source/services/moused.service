@@ -6,7 +6,6 @@
 Description=BSD mouse daemon
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p -f -p /dev/psm0 -t auto
 Restart=always
 

@@ -9,6 +9,7 @@ Requires=epmd.service
 
 [Service]
 WorkingDirectory=/var/lib/rabbitmq
+# FIXME: Is this really needed?
 systemdUserEnvironment=yes
 User=rabbitmq
 ExecStart=/usr/lib/rabbitmq/bin/%p

@@ -9,7 +9,6 @@ After=dbus.service
 #Wants=dbus.service
 
 [Service]
-systemdWorkingDirectory=false
 RuntimeDirectory=%p
 RuntimeDirectoryMode=02755
 ExecStartPre=chown avahi /run/%p

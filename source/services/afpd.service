@@ -7,7 +7,6 @@ Description=AppleTalk filing protocol daemon
 After=atalkd.service cnid_metad.service
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p -d
 Restart=always
 

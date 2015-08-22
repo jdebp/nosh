@@ -6,7 +6,6 @@
 Description=Regular background program processing daemon
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=cron -f
 Restart=always
 

@@ -11,7 +11,6 @@ After=local-fs-pre.target
 [Service]
 # Marking this as oneshot means that it doesn't enter the "running" state until the mount command has exited.
 Type=oneshot
-systemdWorkingDirectory=false
 ExecStartPre=%p %I
 ExecStart=true
 ExecStopPost=u%p %I

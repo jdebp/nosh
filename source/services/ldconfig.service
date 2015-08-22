@@ -11,7 +11,6 @@ Wants=local-fs.target
 
 [Service]
 Type=oneshot
-systemdWorkingDirectory=false
 # The import procedure is expected to have populated this directory with paths, paths_aout, and paths32.
 EnvironmentDirectory=env
 ExecStart=sh -c '%p -elf -v /lib /usr/lib /usr/local/lib ${paths} /etc/ld-elf.so.conf ; %p -32 -v /lib /usr/lib /usr/local/lib ${paths32} /etc/ld-elf32.so.conf ; %p -aout -v /lib/aout /usr/lib/aout /usr/local/lib/aout ${paths_aout=${paths}} /etc/ld.so.conf'

@@ -7,7 +7,6 @@ Description=Regular background program processing daemon
 
 [Service]
 Type=forking
-systemdWorkingDirectory=false
 ExecStart=cron -s -x bit
 Restart=always
 

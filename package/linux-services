@@ -3,11 +3,15 @@ kmod@ipv6
 kmod@unix
 kmod@loop
 kmod@uvesafb
+colord
+colord-sane
 console-kit-daemon
 kernel-vt-loadkeys
 kernel-vt-setfont
 kerneloops
 linux-lockfiles
 static-networking
+udisks
+upower
 update-binfmts
 wettsteinsyslogd

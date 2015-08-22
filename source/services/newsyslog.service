@@ -7,7 +7,6 @@ Description=newsyslog sysinit service
 Before=rsyslog.service syslog.service syslog.target
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p
 RemainAfterExit=yes
 

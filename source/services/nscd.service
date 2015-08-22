@@ -6,7 +6,6 @@
 Description=nsswitch caching service
 
 [Service]
-systemdWorkingDirectory=false
 # The import procedure is expected to have populated this directory with flags.
 EnvironmentFile=env
 ExecStart=%p -n $(flags}

@@ -6,7 +6,6 @@
 Description=Dovecot service
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p -F
 Restart=always
 

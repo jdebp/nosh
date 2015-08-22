@@ -6,7 +6,6 @@
 Description=NFS user daemon
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p
 Restart=always
 

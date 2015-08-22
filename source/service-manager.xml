@@ -28,31 +28,16 @@ upon failure.
 </para>
 
 <para>
-It expects file descriptor 3 to be a (datagram) socket that has been set up to
-listen for incoming datagrams.
-This is its main control socket, through which it receives requests to load,
-unload, and pipe together services from utilities such as
-<citerefentry><refentrytitle>service-dt-scanner</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-and
-<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
-It creates individual control FIFOs for each service, through which it receives requests to
-send signals the service and bring it up or down, from utilities such as
-<citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+It expects file descriptor 3 to be a (datagram) socket that has been set up to listen for incoming datagrams.
+This is its main control socket, through which it receives requests to load, unload, and pipe together services from utilities such as <citerefentry><refentrytitle>service-dt-scanner</refentrytitle><manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+It creates individual control FIFOs for each service, through which it receives requests to send signals the service and bring it up or down, from utilities such as <citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 <para>
-<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-invokes <command>service-manager</command> with the appropriate socket (which it sets up itself) 
-and output directed to a logging daemon.
-So also does
-<citerefentry><refentrytitle>session-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-Alternatively, <command>service-manager</command> can be started by
-<citerefentry><refentrytitle>local-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-which will set up the appropriate socket.
-(<command>service-manager</command> can even be started as a "socket-activated"
-daemon by
-<citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-with the systemd-recommended <code>Accept=false</code>.)
+<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry> invokes <command>service-manager</command> with the appropriate socket (which it sets up itself) and output directed to a logging daemon.
+So also does <citerefentry><refentrytitle>session-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Alternatively, <command>service-manager</command> can be started by <citerefentry><refentrytitle>local-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>, which will set up the appropriate socket.
+(<command>service-manager</command> can even be started as a "socket-activated" daemon by <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry> with the systemd-recommended <code>Accept=false</code>.)
 </para>
 
 </refsection><refsection><title>Services</title>
@@ -129,17 +114,12 @@ For examples:
 <itemizedlist>
 <listitem>
 <para>
-A
-<citerefentry><refentrytitle>tcp-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-service could have an access-control database managed by
-<citerefentry><refentrytitle>ucspi-socket-rules-check</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+A <citerefentry><refentrytitle>tcp-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry> service could have an access-control database managed by <citerefentry><refentrytitle>ucspi-socket-rules-check</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 </listitem>
 <listitem>
 <para>
-Many services have <filename>env</filename> subdirectories read by
-<citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-in order to control daemon process environment variables.
+Many services have <filename>env</filename> subdirectories read by <citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry> in order to control daemon process environment variables.
 </para>
 </listitem>
 </itemizedlist>

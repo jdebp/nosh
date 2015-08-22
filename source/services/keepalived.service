@@ -6,7 +6,6 @@
 Description=LVS and VRRP High Availability monitor
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p -n
 Restart=always
 

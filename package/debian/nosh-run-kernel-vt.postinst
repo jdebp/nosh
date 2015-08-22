@@ -1,6 +1,7 @@
 #!/bin/sh -
-addloguser() { getent passwd "$1" > /dev/null || useradd --shell /bin/false "$1" ; }
-addlog() { mkdir -m 0750 -p /var/log/sv/"$2" ; setfacl -m u:"$1"-log:rwx -m g:adm:rx /var/log/sv/"$2" ; }
+escape() { echo "$1"|sed -e 's/@/\\x40/g' ; }
+add_user() { getent passwd "$1" > /dev/null || useradd --shell /bin/false "$1" ; }
+add_log() { mkdir -m 0750 -p /var/log/sv/"$2" ; setfacl -m u:"$1"-log:rwx -m g:adm:rx /var/log/sv/"$2" ; }
 case "$1" in
 	configure)
 		# kernel TTYs
@@ -20,8 +21,8 @@ case "$1" in
 			;
 		do
 			i="`escape ttylogin@"$I"`"
-			addloguser "$i"-log
-			addlog "$i" ttylogin@"$I"
+			add_user "$i"-log
+			add_log "$i" ttylogin@"$I"
 			system-control preset --ttys --prefix ttylogin@ $I.service
 			system-control preset --ttys --prefix cyclog@ttylogin@ $I.service
 		done
@@ -32,8 +33,8 @@ case "$1" in
 			ttylogin-starter \
 			;
 		do
-			addloguser "$i"-log
-			addlog "$i" "$i"
+			add_user "$i"-log
+			add_log "$i" "$i"
 			system-control preset $i.service
 			system-control preset --prefix cyclog@ $i.service
 			system-control reset $i.service cyclog@$i.service

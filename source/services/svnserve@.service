@@ -6,7 +6,6 @@
 Description=svnserve per-connection service
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p -i
 Restart=always
 

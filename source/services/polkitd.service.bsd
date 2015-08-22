@@ -8,7 +8,6 @@ After=dbus.service extra-shared-libraries.target
 After=local-syslog.target
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=/usr/local/libexec/polkitd
 Restart=always
 

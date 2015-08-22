@@ -1,0 +1,115 @@
+<refentry id="console-clear">
+
+<refmeta>
+<refentrytitle>console-clear</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">administrator commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.18</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>console-clear</refname>
+<refname>clear_console</refname>
+<refpurpose>clear a user-space virtual terminal</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>console-clear</command>
+<arg choice='opt'>--7bit</arg> 
+<arg choice='opt'>--8bit</arg> 
+</cmdsynopsis>
+<cmdsynopsis>
+<command>clear_console</command>
+<arg choice='opt'>--7bit</arg> 
+<arg choice='opt'>--8bit</arg> 
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>console-clear</command> emits control sequences to its standard output that instruct a compatible terminal emulator to clear its entire output, both display and any off-screen buffers.
+</para>
+
+<para>
+It does not employ operating system and device specific <citerefentry><refentrytitle>ioctl</refentrytitle><manvolnum>2</manvolnum></citerefentry> calls, and so can be used remotely and with terminal emulators other than the ones built into operating system kernels.
+</para>
+
+<para>
+Rather, it emits simple terminal control sequences, as follows:
+</para>
+<itemizedlist>
+<listitem><para>
+To clear the display, it always emits the standard (ECMA-48) ED control sequence with argument value 2.
+</para></listitem>
+<listitem><para>
+To clear the off-screen "scrollback" buffer, it emits a non-standard extension to ED that replaces the argument value 2 with 3.
+</para></listitem>
+</itemizedlist>
+
+<para>
+If the <arg choice='plain'>--7bit</arg> command-line option is used, the CSI control character that begins all of the control sequences is sent using the ECMA-48 7-bit encoding scheme.
+If it is not used but the <arg choice='plain'>--8bit</arg> command-line option is used, the CSI control character is sent as a raw 8-bit character.
+By default, in the absence of either option, the CSI control character is sent encoded as UTF-8, in the expectation that the terminal is Unicode aware and decodes all output from UTF-8.
+</para>
+
+</refsection>
+
+<refsection><title>COMPATIBILITY</title>
+
+<para>
+For compatibility with the Bourne Again shell toolset, this command is also available as <command>clear_console</command>, whose functionality it duplicates.
+Unlike the Bourne Again shell toolset's <command>clear_console</command> command, this command is not specific to kernel virtual terminal character devices, does not involve switching virtual terminals (<ulink url="https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=791342">a process that can go wrong if an X server happens to be using the "other" virtual terminal</ulink>), and respects redirection of its standard output.
+</para>
+
+<para>
+This command makes no attempt to behave differently if its output is not to a terminal, since one might want to use it to generate the control sequences to send to a file, a pipe, or a non-terminal device.
+</para>
+
+<para>
+Moreover, it only works with compatible terminal emulators.
+It simply assumes that its standard output is a terminal device that understands these particular control sequences, as it has no way to know.
+There is a termcap/terminfo capability covering this, <varname>E3</varname>.
+However, annoyingly, in many Linux operating systems and the BSDs it isn't actually yet present in the terminfo database entries for any of the terminals that support the capability, resulting in capability detection by terminfo failing when it should succeed.
+</para>
+
+<para>
+Compatible terminal emulators are:
+</para>
+<itemizedlist>
+<listitem><para>
+<citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para><para>
+This is Unicode aware and correctly decodes the default UTF-8-encoded CSI sequence.
+UTF-8 encoding is mandatory, so using the <arg choice='plain'>--8bit</arg> option is inappropriate.
+However, note that the use case for <command>clear_console</command> is <ulink url="https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=331504">clearing the whole display buffer on user logoff</ulink>, which <command>console-terminal-emulator</command> does anyway, as standard.
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>xterm</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para><para>
+<ulink url="http://invisible-island.net/xterm/xterm.log.html#xterm_107">This extension was added on 1999-06-12 by Stephen P. Wall.</ulink>
+xterm requires the <arg choice='plain'>--7bit</arg> option be used as it does not ever treat UTF-8-encoded C1 characters as control characters, irrespective of the setting of its UTF-8 encoding options.
+This will work however xterm is configured.
+One can use the <arg choice='plain'>--8bit</arg> option instead if xterm is configured to be in plain 8-bit (<arg choice='plain'>+u8</arg>) mode.
+</para></listitem>
+<listitem><para>
+PuTTY
+</para><para>
+<ulink url="http://chiark.greenend.org.uk/~sgtatham/putty/wishlist/term-clear-scrollback.html">This extension was added in 2006 by Jacob Nevins.</ulink>
+PuTTY requires the <arg choice='plain'>--7bit</arg> option be used as it does not treat C1 characters as control characters, and only recognizes the 7-bit extension of ECMA-48 section 5 as C1 controls.
+</para></listitem>
+<listitem><para>
+the Linux kernel built-in terminal emulator
+</para><para>
+<ulink url="http://git.kernel.org/cgit/linux/kernel/git/next/linux-next.git/commit/?id=f8df13e0a901fe55631fed66562369b4dba40f8b">This extension was added in 2011</ulink>, albeit with slightly erroneously, differing from the long-standing xterm and PuTTY semantics of clearing <emphasis>only</emphasis> the scrollback buffer.
+</para></listitem>
+</itemizedlist>
+
+
+</refsection>
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

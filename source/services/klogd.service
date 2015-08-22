@@ -6,8 +6,6 @@
 Description=Collector for kernel log messages
 
 [Service]
-systemdWorkingDirectory=false
-systemdUserEnvironment=false
 User=klogd
 ExecStart=klog-read
 Restart=always

@@ -6,7 +6,6 @@
 Description=PPP over Ethernet daemon
 
 [Service]
-systemdWorkingDirectory=false
 # The import procedure is expected to have populated this directory with flags, interface, and provider.
 EnvironmentDirectory=env
 ExecStart=/usr/libexec/%p ${flags} -p ${provider} ${interface}

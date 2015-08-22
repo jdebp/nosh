@@ -8,7 +8,6 @@
 Description=FTP service over IP4 using Bernstein's publicfile
 
 [Service]
-systemdWorkingDirectory=false
 EnvironmentUser=publicfile
 LimitNOFILE=20
 LimitData=50000

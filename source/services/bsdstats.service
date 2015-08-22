@@ -6,7 +6,6 @@
 Description=bsdstats service
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=/usr/local/etc/periodic/monthly/300.statistics -nodelay
 Restart=on-failure
 RemainAfterExit=yes

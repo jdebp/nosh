@@ -8,7 +8,6 @@ Description=Analyze the last saved core dump
 [Service]
 Type=oneshot
 EnvironmentDirectory=env
-systemdWorkingDirectory=false
 ExecStart=%p ${flags} ${dumpdir:-/var/crash}
 RemainAfterExit=yes
 

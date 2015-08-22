@@ -6,7 +6,6 @@
 Description=IEEE 802.11 authenticator daemon
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p
 
 [Install]

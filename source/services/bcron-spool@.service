@@ -6,7 +6,8 @@
 Description=Guenter's bcron submission server
 
 [Service]
-systemdWorkingDirectory=false
+# FIXME: Is this really needed?
+systemdUserEnvironment=true
 EnvironmentDirectory=env
 LimitMEMORY=70000000
 User=cron

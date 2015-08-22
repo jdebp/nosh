@@ -6,7 +6,6 @@
 Description=VirtualBox guest additions daemon
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=VBoxService -f
 Restart=always
 

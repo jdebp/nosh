@@ -9,8 +9,6 @@ After=console-multiplexor@%i.service
 Wants=console-multiplexor@%i.service frame-buffer.target
 
 [Service]
-systemdWorkingDirectory=false
-systemdUserEnvironment=no
 PermissionsStartOnly=yes
 EnvironmentDirectory=env/
 SessionLeader=yes

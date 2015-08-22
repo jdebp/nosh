@@ -6,7 +6,6 @@
 Description=IPX route daemon
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=IPXrouted
 Restart=always
 

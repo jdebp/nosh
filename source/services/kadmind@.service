@@ -6,7 +6,6 @@
 Description=Kerberos database daemon
 
 [Service]
-systemdWorkingDirectory=false
 ExecStart=%p
 Restart=always
 
