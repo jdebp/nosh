@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Per-user %I service manager
+
+[Service]
+PermissionsStartOnly=yes
+User=%I
+ExecStartPre=sh -c "ln -s '%I' \"`id -u '%I'`\""
+ExecStart=session-manager
+Restart=always
+
+[Install]

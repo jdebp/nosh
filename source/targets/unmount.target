@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Unmount all mount points action target
+DefaultDependencies=false
+EarlySupervise=true
+After=shutdown.target
+
+[Service]
+User=nobody
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
+
+[Install]

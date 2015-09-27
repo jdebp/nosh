@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Enable Linux login accounting
+Before=sshd.service ttylogin-starter.service
+After=mount@-run.service mount@-.service
+
+[Service]
+Type=oneshot
+ExecStart=touch /run/utmp
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

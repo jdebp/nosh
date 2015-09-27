@@ -46,6 +46,8 @@ convert(
 // **************************************************************************
 */
 
+enum { COLOR_DEFAULT = 9 };
+
 static inline
 int
 colour_of_state (
@@ -58,8 +60,19 @@ colour_of_state (
 		case encore_status_running:	return COLOR_GREEN;
 		case encore_status_stopping:	return COLOR_YELLOW;
 		case encore_status_failed:	return COLOR_RED;
-		default:			return COLOR_BLUE;
+		default:			return COLOR_DEFAULT;
 	}
+}
+
+static inline
+void
+set_exception_colour (
+	bool no_colours
+) {
+	if (no_colours) return;
+	const char * s(tigetstr("setaf"));
+	if (!s || reinterpret_cast<const char *>(-1) == s) return;
+	tputs(tparm(s, COLOR_BLUE), 1, putchar);
 }
 
 static inline
@@ -81,8 +94,12 @@ reset_colour (
 ) {
 	if (no_colours) return;
 	const char * s(tigetstr("op"));
-	if (!s || reinterpret_cast<const char *>(-1) == s) return;
-	tputs(s, 1, putchar);
+	if (!s || reinterpret_cast<const char *>(-1) == s) {
+		s = tigetstr("setaf");
+		if (!s) return;
+		tputs(tparm(s, COLOR_DEFAULT), 1, putchar);
+	} else
+		tputs(s, 1, putchar);
 }
 
 static inline
@@ -107,20 +124,30 @@ display (
 	const char * name,
 	const bool long_form,
 	const bool colours,
+	const bool is_ok,
 	const bool initially_up,
 	const uint64_t z,
 	const int b,
 	char status[20]
 ) {
-	if (b < 18)
-		std::fprintf(stdout, "%s: loading\n", name);
-	else {
-		const uint64_t s(unpack_bigendian(status, 8));
-//			const uint32_t n(unpack_bigendian(status + 8, 4));
-		const uint32_t p(unpack_littleendian(status + 12, 4));
+	const uint64_t s(unpack_bigendian(status, 8));
+//	const uint32_t n(unpack_bigendian(status + 8, 4));
+	const uint32_t p(unpack_littleendian(status + 12, 4));
 
-		std::fprintf(stdout, "%s: ", name);
-		if (long_form) std::fprintf(stdout, "\n\tState   : ");
+	std::fprintf(stdout, "%s: ", name);
+	if (long_form) std::fprintf(stdout, "\n\tState   : ");
+	if (!is_ok) {
+		set_exception_colour(!colours);
+		std::fprintf(stdout, "No supervisor is running");
+		reset_colour(!colours);
+		std::fputc('\n', stdout);
+	} else
+	if (b < 18) {
+		set_exception_colour(!colours);
+		std::fprintf(stdout, "loading");
+		reset_colour(!colours);
+		std::fputc('\n', stdout);
+	} else {
 		if (b < 20) {
 			set_colour_of_state(!colours, p ? encore_status_running : encore_status_stopped);
 			std::fprintf(stdout, "%s", p ? "up" : "down");
@@ -166,11 +193,11 @@ display (
 		if (long_form) {
 			if (p)
 				std::fprintf(stdout, "\n\tMain PID: %u", p);
-			std::fprintf(stdout, "\n\tConfig  : %s%s%s%s%s", initially_up ? "enabled" : "disabled", *paused ? ", " : "", paused, *want ? ", " : "", want);
+			std::fprintf(stdout, "\n\tAction  : %s%s%s", paused, *want && *paused ? ", " : "", want);
 		} else {
 			std::fputs(". ", stdout);
 			const bool is_up(b < 20 ? p : encore_status_stopped != status[18]);
-			std::fprintf(stdout, "%s%s%s", paused, *want ? ", " : "", want);
+			std::fprintf(stdout, "%s%s%s", paused, *want && *paused ? ", " : "", want);
 			if (is_up != initially_up) {
 				std::fputs(", initially ", stdout);
 				if (initially_up)
@@ -181,6 +208,8 @@ display (
 		}
 		std::fputc('\n', stdout);
 	}
+	if (long_form)
+		std::fprintf(stdout, "\tConfig  : %s\n", initially_up ? "enabled" : "disabled");
 }
 
 // Used to preserve this argument when we return with new arguments.
@@ -257,27 +286,27 @@ service_status (
 		const FileDescriptorOwner service_dir_fd(open_service_dir(bundle_dir_fd.get()));
 
 		const bool initially_up(is_initially_up(service_dir_fd.get()));
+		char status[20];
 
 		const FileDescriptorOwner ok_fd(open_writeexisting_at(supervise_dir_fd.get(), "ok"));
 		if (0 > ok_fd.get()) {
 			const int error(errno);
-			if (ENXIO == error)
-				std::fprintf(stdout, "%s: No supervisor is running\n", name);
-			else
+			if (ENXIO != error) {
 				std::fprintf(stdout, "%s: %s: %s\n", name, "supervise/ok", std::strerror(error));
-			continue;
+				continue;
+			}
+			display(name, long_form, colours, false, initially_up, z, 0, status);
+		} else {
+			const FileDescriptorOwner status_fd(open_read_at(supervise_dir_fd.get(), "status"));
+			if (0 > status_fd.get()) {
+				const int error(errno);
+				std::fprintf(stdout, "%s: %s: %s\n", name, "status", std::strerror(error));
+				display(name, long_form, colours, true, initially_up, z, 0, status);
+			} else {
+				const int b(read(status_fd.get(), status, sizeof status));
+				display(name, long_form, colours, true, initially_up, z, b, status);
+			}
 		}
-
-		const FileDescriptorOwner status_fd(open_read_at(supervise_dir_fd.get(), "status"));
-		if (0 > status_fd.get()) {
-			const int error(errno);
-			std::fprintf(stdout, "%s: %s: %s\n", name, "status", std::strerror(error));
-			continue;
-		}
-		char status[20];
-		const int b(read(status_fd.get(), status, sizeof status));
-
-		display(name, long_form, colours, initially_up, z, b, status);
 
 		if (long_form) {
 			const FileDescriptorOwner log_main_dir_fd(open_dir_at(bundle_dir_fd.get(), "log/main/"));

@@ -1,0 +1,21 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Dimitris Papastamos' smdev plug-and-play manager one-shot initialization
+DefaultDependencies=false
+Before=shutdown.target
+After=local-fs.target suckless-mdev.service
+
+[Service]
+Type=oneshot
+ExecStart=smdev -s
+# This is an outrageous bodge.
+ExecStartPre=sleep 5
+Restart=never
+RemainAfterExit=true
+
+[Install]
+WantedBy=sysinit.target
+StoppedBy=shutdown.target

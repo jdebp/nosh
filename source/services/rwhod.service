@@ -6,6 +6,7 @@
 Description=remote who service
 
 [Service]
+EnvironmentDirectory=env
 ExecStart=%p
 Restart=always
 

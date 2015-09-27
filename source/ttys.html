@@ -5,12 +5,15 @@
 </h1>
 
 <p>
-<a href="virtual-terminal-login.html"><code>ttylogin</code> services</a> can of course be managed just like ordinary services, enabling them so that they auto-start at bootup and starting and stopping them with normal <a href="system-control"><code>system-control</code></a> commands.
-However, one might decide to retain the BSD <code>/etc/ttys</code> mechanism as the master settings list for all terminals.
+<a href="virtual-terminal-login.html"><code>ttylogin</code> services</a> can of course be managed just like ordinary services, enabling them so that they auto-start at bootup and starting and stopping them with normal <a href="system-control.html"><code>system-control</code></a> commands.
+The <a href="preset.html"><code>preset</code></a> command and the normal preset mechanisms can pre-set what services are enabled when they are installed, with (for example) lines in <code>/etc/system-control/presets/60-ttys.preset</code> saying:
 </p>
+<blockquote><pre>enable&nbsp;ttylogin@ttyv1
+enable&nbsp;cyclog@ttylogin@ttyv1</pre></blockquote>
 
 <p>
-This is done with the <a href="preset.html"><code>preset</code></a> command, which can take the on/off information for individual virtual terminals that is stored in <code>/etc/ttys</code> and enable/disable the matching <code>ttylogin</code> services.
+However, one might decide to retain the BSD <code>/etc/ttys</code> mechanism as the master settings list for all terminals.
+This is still done with the <a href="preset.html"><code>preset</code></a> command, which can also use the on/off information for individual virtual terminals that is stored in <code>/etc/ttys</code> as an alternative source of preset information for enabling/disabling the matching <code>ttylogin</code> services.
 </p>
 
 <p>

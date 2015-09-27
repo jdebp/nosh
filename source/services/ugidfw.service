@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD user/group access control
+Wants=kmod@mac_bsdextended
+After=kmod@mac_bsdextended
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=sh "${script:-/etc/rc.bsdextended}"
+RemainAfterExit=true
+
+[Install]
+WantedBy=workstation.target

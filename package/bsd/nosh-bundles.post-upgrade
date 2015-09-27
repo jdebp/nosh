@@ -9,6 +9,9 @@ for I in \
 	bootparams \
 	ccpd \
 	cleanuucp \
+	cleantmp \
+	cleanX \
+	console-kit-daemon \
 	ddclient \
 	deluged \
 	deluge-web \
@@ -18,14 +21,22 @@ for I in \
 	exim4-queue \
 	fail2ban \
 	fancontrol \
+	fcron \
+	ferm \
+	flow-capture \
 	fscd \
-	gitlab-unicorn \
+	gdm \
 	gitlab-sidekiq \
+	gitlab-unicorn \
 	gnucron \
 	hostnamed \
+	kdm@tty7 \
+	kdm@ttyv6 \
 	keepalived \
+	libvirtd \
 	lm-sensors \
 	localed \
+	lxdm \
 	mailcatcher \
 	ModemManager \
 	mongodb \
@@ -42,8 +53,8 @@ for I in \
 	ntpdate \
 	openvpn@client \
 	openvpn@server \
-	org.cups.cupsd \
 	org.cups.cups-cancel \
+	org.cups.cupsd \
 	ossec@agentd \
 	ossec@agentlessd \
 	ossec@analysisd \
@@ -56,7 +67,10 @@ for I in \
 	ossec@remoted \
 	ossec@syscheckd \
 	packagekit \
+	pdnsd \
 	plexmediaserver \
+	polipo \
+	polkitd \
 	postgresql \
 	powerd \
 	pppd-dns \
@@ -66,6 +80,7 @@ for I in \
 	rpcbind \
 	samba \
 	sickbeard \
+	slim \
 	smartd \
 	smbd \
 	sshdgenkeys \
@@ -81,8 +96,10 @@ for I in \
 	swift@object-auditor \
 	swift@object-replicator \
 	swift@object-updater \
+	sysctl \
 	timedated \
 	tinydns \
+	vnstat \
 	volmand \
 	wicd \
 	winbindd \
@@ -110,6 +127,7 @@ for i in \
 	ftp4d \
 	ftp6d \
 	http6d \
+	initctld \
 	kadmind \
 	klogd \
 	kpasswdd \
@@ -160,15 +178,17 @@ for i in \
 	gssd \
 	hastd \
 	hcsecd \
+	ipf \
 	ipfs \
 	ipmon \
 	ipnat \
+	ipsec \
 	ipxrouted \
 	iscsictl \
 	iscsid \
 	keyserv \
+	kmod@mac_bsdextended \
 	kmod@ctl \
-	kmod@fuse \
 	kmod@geom_gate \
 	kmod@ibcs2 \
 	kmod@ipl \
@@ -229,6 +249,7 @@ for i in \
 	pflog \
 	pfsync \
 	pwcheck \
+	pxeboot-resolvconf \
 	quota \
 	rarpd \
 	route6d \
@@ -240,11 +261,13 @@ for i in \
 	savecore \
 	sdpd \
 	securelevel \
+	snddetect \
 	swapexd \
 	swaplate \
-	sysctl \
 	syslogd \
 	timed \
+	ubthidhci \
+	ugidfw \
 	unbound \
 	utx \
 	vixiecron \

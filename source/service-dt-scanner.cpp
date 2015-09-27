@@ -72,7 +72,7 @@ exit_scan:
 					const bool was_already_loaded(is_ok(supervise_dir_fd));
 					if (!was_already_loaded) {
 						make_supervise_fifos(supervise_dir_fd);
-						load(prog, socket_fd, entry->d_name, supervise_dir_fd, service_dir_fd, false, false);
+						load(prog, socket_fd, entry->d_name, supervise_dir_fd, service_dir_fd);
 					}
 					const int log_bundle_dir_fd(open_dir_at(bundle_dir_fd, "log/"));
 					if (0 <= log_bundle_dir_fd) {
@@ -91,7 +91,8 @@ exit_scan:
 								const bool log_was_already_loaded(is_ok(log_supervise_dir_fd));
 								if (!log_was_already_loaded) {
 									make_supervise_fifos(log_supervise_dir_fd);
-									load(prog, socket_fd, log_name, log_supervise_dir_fd, log_service_dir_fd, true, false);
+									load(prog, socket_fd, log_name, log_supervise_dir_fd, log_service_dir_fd);
+									make_pipe_connectable(prog, socket_fd, log_supervise_dir_fd);
 								}
 								plumb(prog, socket_fd, supervise_dir_fd, log_supervise_dir_fd);
 								if (!log_was_already_loaded) {

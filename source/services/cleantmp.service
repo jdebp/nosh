@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Clean-up /tmp contents
+
+[Service]
+Type=oneshot
+WorkingDirectory=/tmp/
+ExecStart=./helper
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

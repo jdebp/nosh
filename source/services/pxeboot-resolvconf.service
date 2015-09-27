@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD use PXEBOOT DHCP-supplied DNS servers
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=pipe ./helper | sh -c 'exec resolvconf -a `kenv boot.netif.name`:dhcp4'
+RemainAfterExit=true
+
+[Install]
+WantedBy=workstation.target
+

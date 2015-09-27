@@ -55,10 +55,13 @@ service_control (
 		control_character_definition pause_option('p', "pause", "Send a SIGSTOP signal to the service, pausing it.", 'p', controls);
 		control_character_definition continue_option('c', "continue", "Send a SIGCONT signal to the service, continuing it.", 'c', controls);
 		control_character_definition hangup_option('h', "hangup", "Send a SIGHUP signal to the service.", 'h', controls);
+		control_character_definition hangup_main_option('H', "hangup-main", "Send a SIGHUP signal to only the main process of the service.", 'H', controls);
 		control_character_definition alarm_option('a', "alarm", "Send a SIGALRM signal to the service.", 'a', controls);
 		control_character_definition interrupt_option('i', "interrupt", "Send a SIGINT signal to the service.", 'i', controls);
 		control_character_definition terminate_option('t', "terminate", "Send a SIGTERM signal to the service.", 't', controls);
+		control_character_definition terminate_main_option('T', "terminate-main", "Send a SIGTERM signal to only the main process of the service.", 'T', controls);
 		control_character_definition kill_option('k', "kill", "Send a SIGKILL signal to the service.", 'k', controls);
+		control_character_definition kill_main_option('K', "kill-main", "Send a SIGKILL signal to only the main process of the service.", 'K', controls);
 		control_character_definition quit_option('q', "quit", "Send a SIGQUIT signal to the service.", 'q', controls);
 		control_character_definition usr1_option('1', "usr1", "Send a SIGUSR1 signal to the service.", '1', controls);
 		control_character_definition usr2_option('2', "usr2", "Send a SIGUSR2 signal to the service.", '2', controls);
@@ -72,10 +75,13 @@ service_control (
 			&pause_option,
 			&continue_option,
 			&hangup_option,
+			&hangup_main_option,
 			&alarm_option,
 			&interrupt_option,
 			&terminate_option,
+			&terminate_main_option,
 			&kill_option,
+			&kill_main_option,
 			&quit_option,
 			&usr1_option,
 			&usr2_option,

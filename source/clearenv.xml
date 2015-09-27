@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.18</refmiscinfo>
+<refmiscinfo class="version">1.20</refmiscinfo>
 </refmeta>
 
 <refnamediv><refname>clearenv</refname><refpurpose>clear the entire environment then chain</refpurpose></refnamediv>

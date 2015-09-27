@@ -1,9 +1,10 @@
 basic
+dumpauto
 emergency
-halt
 extra-shared-libraries
 frame-buffer
-dumpauto
+graphics
+halt
 local-fs
 local-fs-pre
 local-syslog
@@ -20,7 +21,8 @@ sockets
 swapauto
 swaplate
 sysinit
+unmount
 update
-virtualbox-host
 virtualbox-guest
+virtualbox-host
 workstation

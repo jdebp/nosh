@@ -11,12 +11,72 @@ BSD systems provide virtual terminals on devices <code>/dev/ttyv0</code> to <cod
 Linux systems provide virtual terminals on <code>/dev/tty1</code> to <code>/dev/tty12</code>.
 </p>
 
+<p>
+Their <a href="virtual-terminal-login.html"><code>ttylogin</code> services</a> can of course be managed just like ordinary services.
+The <a href="preset.html"><code>preset</code></a> command uses the ordinary preset file mechanism, but can also <a href="ttys.html">read the <code>/etc/ttys</code> file</a>.
+</p>
+
 <h2>
 Linux tools for <code>ttylogin</code> service management on demand
 </h2>
 
 <p>
-<code>ttylogin</code> services can of course be managed just like ordinary services, enabling them so that they auto-start at bootup and starting and stopping them with normal service control commands.
-However, on Linux one can leave all <code>ttylogin@</code> services for kernel virtual terminals disabled and make use of the <a href="ttylogin-starter.html"><code>ttylogin-starter</code></a> tool.
-This utility, for which there is a service bundle allowing one to run it itself as a service, starts <code>ttylogin</code> services on demand, as and when the user switches between kernel virtual terminals.
+On the BSDs, enabled <code>ttylogin@</code> services are started at bootstrap in the ordinary way, as they are <code>wanted-by/</code> the <code>multi-user</code> target.
 </p>
+
+<p>
+However, on Linux these services are not <code>wanted-by/</code> any bootstrap-activated target.
+Instead, they are activated on demand by the <a href="ttylogin-starter.html"><code>ttylogin-starter</code></a> tool.
+This utility, for which there is a service bundle allowing one to run it itself as a service, starts <code>ttylogin</code> services, as long as they are marked enabled, as and when the user switches between kernel virtual terminals.
+</p>
+
+<h2>
+Leaving room for X
+</h2>
+
+<p>
+An X server needs a virtual terminal allocated to it for the same reason that <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a> does: interlocking the use of the framebuffer and input event subsystem with the kernel's terminal emulator program.
+So if using kernel virtual terminals alongside an X server, either one starts the server directly from a login session on one of those terminals, or one reserves a virtual terminal for the X server.
+</p>
+
+<p>
+To do this, one simply disables the service.
+There are three ways to do this:
+</p>
+
+<ul>
+<li>
+<p>
+With presets:
+</p>
+<ul>
+<li>
+<p>
+If <a href="ttys.html">the <code>/etc/ttys</code> file is being used for presets</a>, one first presets the service off in that file.
+</p>
+<blockquote><pre>ttyv7&nbsp;/usr/bin/false&nbsp;xterm&nbsp;off&nbsp;secure</pre></blockquote>
+<p>
+Then one <a href="external-formats.html">uses the external formats conversion mechanism</a> to import that preset.
+</p>
+</li>
+<li>
+<p>
+One writes an ordinary preset with (for example) lines in <code>/etc/system-control/presets/60-ttys.preset</code> saying:
+<blockquote><pre>disable&nbsp;ttylogin@ttyv7</pre></blockquote>
+<p>
+Then one applies the preset:
+</p>
+<blockquote><pre>system-control&nbsp;preset&nbsp;ttylogin@ttyv7</pre></blockquote>
+</li>
+</ul>
+</li>
+<li>
+<p>
+Directly, disabling the service in the usual way:
+</p>
+<blockquote><pre>system-control&nbsp;disable&nbsp;ttylogin@ttyv7</pre></blockquote>
+<p>
+This will be overridden should presets be applied across <code>ttylogin@</code> services, which happens when installing/upgrading some nosh packages.
+</p>
+</li>
+</ul>

@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description="For Easy Rule Making" firewall
+
+[Service]
+Type=oneshot
+EnvironmentDirectory=env
+ExecStart=%p "${config:-/etc/%p.conf}"
+ExecStopPost=%p -f "${config:-/etc/%p.conf}"
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

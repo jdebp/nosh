@@ -8,12 +8,8 @@ EarlySupervise=true
 Wants=multi-user.target server.target workstation.target
 
 [Service]
-systemdWorkingDirectory=false
-systemdUserEnvironment=no
 User=nobody
-systemdWorkingDirectory=false
 # This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
-ExecStart=true
 
 [Install]

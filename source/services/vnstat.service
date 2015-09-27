@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Network traffic monitor
+
+[Service]
+ExecStart=%pd --nodaemon
+
+[Install]
+WantedBy=server.target

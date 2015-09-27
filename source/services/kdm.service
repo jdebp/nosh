@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=KDE display manager using virtual terminal %i
+
+[Service]
+ExecStart=%p -nodaemon %i
+Restart=always
+
+[Install]
+WantedBy=workstation.target

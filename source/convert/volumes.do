@@ -12,9 +12,10 @@ for i in mount fsck swap dump
 do
 	for j in /etc/service-bundles/services/$i@*
 	do
+		n="${j#/etc/service-bundles/services/$i@}"
 		rm -f -- "$j/log"
 		ln -s -- "../sysinit-log" "$j/log"
-		n="${j#/etc/service-bundles/services/$i@}"
+		system-control disable "$i@$n"
 		system-control preset --fstab --prefix "$i@" -- "$n"
 		if system-control is-enabled "$i@$n"
 		then
@@ -49,3 +50,5 @@ case "`uname`" in
 	done
 	;;
 esac
+
+redo-ifchange geom

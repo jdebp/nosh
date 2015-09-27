@@ -64,7 +64,7 @@ struct bundle {
 	bool ss_scanned;
 	// Our state machine guarantees that state transitions only ever increase the state value.
 	// Even though we don't make use of it, our logic requires at least one state between FORCED and DONE, for timed-out jobs to sit in.
-	enum { INITIAL, BLOCKED, ACTIONED, REREQUESTED = ACTIONED + 30, FORCED = REREQUESTED + 60, TIMEDOUT = FORCED + 30, DONE } ;
+	enum { INITIAL, BLOCKED, ACTIONED, REREQUESTED = ACTIONED + 30, ORDERED = REREQUESTED + 30, FORCED = ORDERED + 30, TIMEDOUT = FORCED + 30, DONE } ;
 	int job_state;
 	int order;
 	unsigned wants;
@@ -440,7 +440,10 @@ start_stop_common (
 				std::fprintf(stderr, "%s: LOAD: %s%s\n", prog, b.name.c_str(), run_on_empty ? " (remain)" : "");
 			if (!pretending) {
 				make_supervise_fifos (b.supervise_dir_fd);
-				load(prog, socket_fd, b.name.c_str(), b.supervise_dir_fd, service_dir_fd, true, run_on_empty);
+				load(prog, socket_fd, b.name.c_str(), b.supervise_dir_fd, service_dir_fd);
+				if (run_on_empty)
+					make_run_on_empty(prog, socket_fd, b.supervise_dir_fd);
+				make_pipe_connectable(prog, socket_fd, b.supervise_dir_fd);
 				if (!wait_ok(b.supervise_dir_fd, 5000)) {
 					std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, b.name.c_str(), "ok", "Unable to load service bundle.");
 					close(service_dir_fd);
@@ -460,7 +463,10 @@ start_stop_common (
 					std::fprintf(stderr, "%s: LOAD: %s%s\n", prog, (b.name + "/log").c_str(), run_on_empty ? " (remain)" : "");
 				if (!pretending) {
 					make_supervise_fifos (log_supervise_dir_fd);
-					load(prog, socket_fd, (b.name + "/log").c_str(), log_supervise_dir_fd, log_service_dir_fd, true, run_on_empty);
+					load(prog, socket_fd, (b.name + "/log").c_str(), log_supervise_dir_fd, log_service_dir_fd);
+					if (run_on_empty)
+						make_run_on_empty(prog, socket_fd, log_supervise_dir_fd);
+					make_pipe_connectable(prog, socket_fd, log_supervise_dir_fd);
 				}
 			}
 			if (!pretending)
@@ -509,46 +515,54 @@ start_stop_common (
 				}
 				if (b.ACTIONED > b.job_state) continue;
 			} 
-			if (b.FORCED == b.job_state || b.REREQUESTED == b.job_state || b.ACTIONED == b.job_state) {
+			if (b.FORCED == b.job_state || b.ORDERED == b.job_state || b.REREQUESTED == b.job_state || b.ACTIONED == b.job_state) {
 				switch (b.wants) {
 					case bundle::WANT_START:
 					{
 						if (0 > b.supervise_dir_fd) break;
 						const bool was_already_loaded(is_ok(b.supervise_dir_fd));
-						if (was_already_loaded) {
-							if (b.ACTIONED == b.job_state) {
-								if (verbose)
-									std::fprintf(stderr, "%s: START: %s%s\n", prog, b.path.c_str(), b.name.c_str());
-								if (!pretending)
-									start(b.supervise_dir_fd);
-							}
-						} else
+						if (!was_already_loaded)
 							std::fprintf(stderr, "%s: CANNOT START: %s%s\n", prog, b.path.c_str(), b.name.c_str());
+						else 
+						if (b.ACTIONED == b.job_state) {
+							if (verbose)
+								std::fprintf(stderr, "%s: START: %s%s\n", prog, b.path.c_str(), b.name.c_str());
+							if (!pretending)
+								start(b.supervise_dir_fd);
+						}
 						break;
 					}
 					case bundle::WANT_STOP:
 					{
 						if (0 > b.supervise_dir_fd) break;
 						const bool was_already_loaded(is_ok(b.supervise_dir_fd));
-						if (was_already_loaded) {
-							if (b.FORCED == b.job_state) {
-								if (verbose)
-									std::fprintf(stderr, "%s: KILL: %s%s\n", prog, b.path.c_str(), b.name.c_str());
-								if (!pretending)
-									kill_daemon(b.supervise_dir_fd);
-							} else if (b.REREQUESTED == b.job_state) {
-								if (verbose)
-									std::fprintf(stderr, "%s: TERM: %s%s\n", prog, b.path.c_str(), b.name.c_str());
-								if (!pretending)
-									terminate_daemon(b.supervise_dir_fd);
-							} else {
-								if (verbose)
-									std::fprintf(stderr, "%s: STOP: %s%s\n", prog, b.path.c_str(), b.name.c_str());
-								if (!pretending)
-									stop(b.supervise_dir_fd);
-							}
-						} else
+						if (!was_already_loaded)
 							std::fprintf(stderr, "%s: CANNOT STOP: %s%s\n", prog, b.path.c_str(), b.name.c_str());
+						else
+						if (b.FORCED == b.job_state) {
+							if (verbose)
+								std::fprintf(stderr, "%s: KILL: %s%s\n", prog, b.path.c_str(), b.name.c_str());
+							if (!pretending)
+								kill_daemon(b.supervise_dir_fd);
+						} else 
+						if (b.ORDERED == b.job_state) {
+							if (verbose)
+								std::fprintf(stderr, "%s: HANGUP: %s%s\n", prog, b.path.c_str(), b.name.c_str());
+							if (!pretending)
+								hangup_daemon(b.supervise_dir_fd);
+						} else 
+						if (b.REREQUESTED == b.job_state) {
+							if (verbose)
+								std::fprintf(stderr, "%s: TERM: %s%s\n", prog, b.path.c_str(), b.name.c_str());
+							if (!pretending)
+								terminate_daemon(b.supervise_dir_fd);
+						} else 
+						if (b.ACTIONED == b.job_state) {
+							if (verbose)
+								std::fprintf(stderr, "%s: STOP: %s%s\n", prog, b.path.c_str(), b.name.c_str());
+							if (!pretending)
+								stop(b.supervise_dir_fd);
+						}
 						break;
 					}
 				}

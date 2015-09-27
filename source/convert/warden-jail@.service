@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=PC-BSD Warden jail %i
+
+[Service]
+ExecStart=true %I
+
+[Install]
+WantedBy=warden.target

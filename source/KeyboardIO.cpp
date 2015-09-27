@@ -13,8 +13,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include "KeyboardIO.h"
 #include "ttyutils.h"
 
-KeyboardIO::KeyboardIO(int fd) : 
-	FileDescriptorOwner(fd),
+KeyboardIO::KeyboardIO(int pfd) : 
+	FileDescriptorOwner(pfd),
 	original_attr(),
 	kbmode(K_XLATE)
 {

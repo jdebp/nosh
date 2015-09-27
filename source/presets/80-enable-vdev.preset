@@ -1,0 +1,11 @@
+#
+# Enable Devuan vdev services
+#
+# This is not a systemd preset.
+# It goes in a special nosh system-manager preset directory.
+# It is used by the nosh-run-vdev package in order to enable the Devuan vdev plug-and-play device management services.
+#
+
+enable	vdev.service
+enable	vdev-log.service
+enable	vdev-rescan.service

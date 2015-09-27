@@ -5,456 +5,64 @@
 <manvolnum>8</manvolnum>
 <refmiscinfo class="manual">administrator commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.18</refmiscinfo>
+<refmiscinfo class="version">1.20</refmiscinfo>
 </refmeta>
 
 <refnamediv>
 <refname>init</refname>
-<refname>telinit</refname>
-<refname>reboot</refname>
-<refname>halt</refname>
-<refname>poweroff</refname>
-<refname>emergency</refname>
-<refname>rescue</refname>
-<refname>normal</refname>
-<refname>fastboot</refname>
-<refname>fasthalt</refname>
-<refname>fastpoweroff</refname>
-<refname>service</refname>
-<refname>rcctl</refname>
-<refname>chkconfig</refname>
-<refname>update-rc.d</refname>
-<refname>invoke-rc.d</refname>
-<refpurpose>BSD/System V compatibility utilities for system and service control</refpurpose>
+<refpurpose>the several init programs</refpurpose>
 </refnamediv>
 
 <refsection><title>Description</title>
 
 <para>
-<command>init</command> is a multiple personality program, whose function varies
-according to what name it is invoked as.
+A command named <command>init</command> is part of the AT&#x0026;T System 5 Interface Definition.
+It is specified solely as a control utility.
+The name of the program run by process #1 is not part of the SVID, and it is not required to be the same program as the <command>init</command> command.
 </para>
 
 <para>
-The various commands that it provides are compatibility shims only; they do not
-support the full capabilities of the original commands, only a common-use
-subset for providing an easy migration path for old BSD and System V habits and
-scripts.
-Avoid using them if possible.
+It is recommended that if you wish to retain System 5 habits you get into the habit of using <command>telinit</command> <arg choice='plain'><replaceable>runlevel</replaceable></arg> instead of <command>init</command> <arg choice='plain'><replaceable>runlevel</replaceable></arg>.
+This is because the latter will sometimes end up invoking <filename>/sbin/init</filename> and sometimes end up invoking <filename>/usr/local/sbin/init</filename>.
 </para>
 
-<para>
-It is preferable, although not ideal, to have systemd and upstart habits and
-use the
-<citerefentry><refentrytitle>systemctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-and
-<citerefentry><refentrytitle>initctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-compatibility commands instead.
-</para>
-
-<refsection><title>Compatibility system control commands</title>
-
-<cmdsynopsis>
-<command>reboot</command>
-<group choice="opt">
-<arg choice="plain">-f</arg>
-<arg choice="plain">--force</arg>
-</group>
-<arg choice="opt">--halt</arg>
-<arg choice="opt">--reboot</arg>
-<arg choice="opt">--poweroff</arg>
-</cmdsynopsis>
-<cmdsynopsis>
-<command>halt</command>
-<group choice="opt">
-<arg choice="plain">-f</arg>
-<arg choice="plain">--force</arg>
-</group>
-<arg choice="opt">--halt</arg>
-<arg choice="opt">--reboot</arg>
-<arg choice="opt">--poweroff</arg>
-</cmdsynopsis>
-<cmdsynopsis>
-<command>poweroff</command>
-<group choice="opt">
-<arg choice="plain">-f</arg>
-<arg choice="plain">--force</arg>
-</group>
-<arg choice="opt">--halt</arg>
-<arg choice="opt">--reboot</arg>
-<arg choice="opt">--poweroff</arg>
-</cmdsynopsis>
-<cmdsynopsis><command>emergency</command></cmdsynopsis>
-<cmdsynopsis><command>rescue</command></cmdsynopsis>
-<cmdsynopsis><command>normal</command></cmdsynopsis>
+<refsection><title><filename>/usr/local/sbin/init</filename></title>
 
 <para>
-Invoked as one of the system control commands
-<command>emergency</command>,
-<command>rescue</command>,
-or
-<command>normal</command>,
-it will chain to
-<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-inserting that as the 0th argument and passing the original arguments as the subcommand.
-</para>
-
-<para>
-Invoked as one of the system control commands <command>reboot</command>,
-<command>halt</command>, or <command>poweroff</command> it will normally chain to
-<citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-with the <arg>-r</arg>, <arg>-h</arg>, or <arg>-p</arg> command-line option
-respectively.
-<citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-is then responsible for issuing the relevant commands to the system manager.
-The <arg>--halt</arg>, <arg>--reboot</arg>, and <arg>--poweroff</arg>
-command-line options force which option is sent to
-<citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-for the benefits of system administrators who enjoy giving computers self-contradictory
-instructions like <command>reboot</command> <arg choice="plain">--halt</arg>.
-</para>
-
-<para>
-The <arg>--force</arg> command-line option specifies that the shutdown process
-should bypass service changes and enact the finalization action immediately.
-When it is used the command will instead chain to the <arg
-choice="req">reboot</arg>, <arg choice="req">halt</arg>, and <arg
-choice="req">poweroff</arg> subcommands of
-<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-passing the <arg>--force</arg> command-line option through.
-This will also bypass whatever actions
-<citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-would have taken, including writing warning messages to users and writing
-login accounting database entries.
-</para>
-
-<para>
-Invoked as one of the system control commands <command>fastboot</command>,
-<command>fasthalt</command>, or <command>fastpoweroff</command>, it will act as
-if invoked as <command>reboot</command>, <command>halt</command>, or
-<command>poweroff</command> with the <arg>--force</arg> command-line option.
+The nosh toolset's <filename>/usr/local/sbin/init</filename> is a System 5 compatibility shim that is an alias for <citerefentry><refentrytitle>telinit</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 </refsection>
-<refsection><title>Compatibility service control and configuration commands</title>
+<refsection><title><filename>/sbin/init</filename></title>
 
 <para>
-These commands are all shims around
-<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-As such, they all operate on native nosh services, not on
-old BSD or System V shell scripts.
-Their actions are defined in terms of service management actions, not
-in terms of running shell scripts.
-For example: 
-<command>service</command> 
-<arg choice="plain"><replaceable>name</replaceable></arg>
-<arg choice="plain">start</arg>
-has the meaning of starting a named service, not of invoking a shell
-script with an argument.
+<filename>/sbin/init</filename> is not a System 5 compatibility shim, and what program it invokes varies widely.
 </para>
 
-<para>
-These commands and will enforce correct service dependencies and start/stop
-orderings, unlike the original BSD and System 5 service management systems.
-For individual control of services without orderings or dependencies, use
-<citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-or
-<citerefentry><refentrytitle>service-status</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-directly instead.
-</para>
-
-<refsection><title>Maintainer script utilities</title>
-
-<cmdsynopsis>
-<command>invoke-rc.d</command>
-<arg choice="req"><replaceable>name</replaceable></arg>
-<group choice="req">
-<arg choice="plain">start</arg>
-<arg choice="plain">stop</arg>
-</group>
-</cmdsynopsis>
-<cmdsynopsis>
-<command>update-rc.d</command>
-<arg choice="req"><replaceable>name</replaceable></arg>
-<group choice="req">
-<arg choice="plain">enable</arg>
-<arg choice="plain">disable</arg>
-<arg choice="plain">remove</arg>
-<arg choice="plain">defaults</arg>
-</group>
-</cmdsynopsis>
+<refsection><title>On the BSDs</title>
 
 <para>
-Avoid using these commands outwith package installation/uninstallation
-scripts.
-They are tailored for such use in particular.
-</para>
-
-<para>
-Invoked as 
-<command>invoke-rc.d</command>
-<arg choice="plain"><replaceable>name</replaceable></arg>
-<arg choice="plain"><replaceable>command1</replaceable></arg>,
-the program chains to
-<command>system-control</command>
-<arg choice="plain"><replaceable>command2</replaceable></arg>
-<arg choice="plain"><replaceable>name</replaceable></arg>.
-<replaceable>command1</replaceable> may only be one of 
-<arg choice="plain">start</arg> or <arg choice="plain">stop</arg>, which are
-translated to <arg choice="plain">reset</arg> and 
-<arg choice="plain">stop</arg> (respectively) for
-<replaceable>command2</replaceable>.
-The behaviour that it is designed to be backwards compatible with only starts a
-service in response to the <arg choice="plain">start</arg> subcommand if the
-administrator has configured the service to auto-start.
-Hence the replacement of <arg choice="plain">start</arg> by
-<arg choice="plain">reset</arg>.
-</para>
-
-<para>
-Invoked as 
-<command>update-rc.d</command>
-<arg choice="plain"><replaceable>name</replaceable></arg>
-<arg choice="plain"><replaceable>command1</replaceable></arg>,
-the program chains to
-<command>system-control</command>
-<arg choice="plain"><replaceable>command2</replaceable></arg>
-<arg choice="plain"><replaceable>name</replaceable></arg>.
-<replaceable>command1</replaceable> may only be one of 
-<arg choice="plain">defaults</arg>, 
-<arg choice="plain">enable</arg>, 
-<arg choice="plain">disable</arg>, or
-<arg choice="plain">remove</arg>, 
-which are translated to 
-<arg choice="plain">preset</arg>,
-<arg choice="plain">preset</arg>,
-<arg choice="plain">disable</arg>, and 
-<arg choice="plain">disable</arg>
-(respectively) for <replaceable>command2</replaceable>.
-Note that the
-<arg choice="plain">start</arg> and <arg choice="plain">stop</arg>
-subcommands of the original tool have been deprecated.
-This command makes no attempt to support any such mechanism.
+<filename>/sbin/init</filename> is the original BSD <command>init</command>.
+It has limited System 5 compatibility compared to <command>telinit</command>.
 </para>
 
 </refsection>
-<refsection><title>Old-style Linux service control</title>
-
-<cmdsynopsis>
-<command>service</command>
-<arg choice="req"><replaceable>name</replaceable></arg>
-<arg choice="req"><replaceable>command</replaceable></arg>
-</cmdsynopsis>
-<cmdsynopsis>
-<command>chkconfig</command>
-<arg choice="req"><replaceable>name</replaceable></arg>
-<group choice="req">
-<arg choice="plain">on</arg>
-<arg choice="plain">off</arg>
-</group>
-</cmdsynopsis>
+<refsection><title>On Linux</title>
 
 <para>
-Invoked as 
-<command>service</command>
-<arg choice="plain"><replaceable>name</replaceable></arg>
-<arg choice="plain"><replaceable>command</replaceable></arg>,
-the program chains to
-<command>system-control</command>
-<arg choice="plain"><replaceable>command</replaceable></arg>
-<arg choice="plain"><replaceable>name</replaceable></arg>.
-It makes no attempt itself to validate <replaceable>command</replaceable>,
-which can be any of the subcommands supported by
-<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-However, for best results restrict <replaceable>command</replaceable> to one of
-<arg choice="plain">start</arg>, <arg choice="plain">stop</arg>, or <arg
-choice="plain">status</arg>.
+<filename>/sbin/init</filename> points to whatever program is run by process #1.
+That will be the nosh package's system manager or some other toolset's system manager.
+On Debian-family Linux operating systems, the (not universally implemented across all relevant packages) convention is for <filename>/sbin/init</filename> to be a symbolic link to the actual system manager program.
 </para>
 
 <para>
-Invoked as 
-<command>chkconfig</command>
-<arg choice="plain"><replaceable>name</replaceable></arg>
-<arg choice="plain"><replaceable>command1</replaceable></arg>,
-the program chains to
-<command>system-control</command>
-<arg choice="plain"><replaceable>command2</replaceable></arg>
-<arg choice="plain"><replaceable>name</replaceable></arg>.
-<replaceable>command1</replaceable> may only be one of <arg
-choice="plain">on</arg> or <arg choice="plain">off</arg>, which are translated
-to <arg choice="plain">enable</arg> and <arg choice="plain">disable</arg>
-(respectively) for <replaceable>command2</replaceable>.
-No other functionality of the original tool (whose operation varies
-incompatibly from platform to platform outwith these two subcommands) is
-supported.
+Several toolsets <emphasis>do not</emphasis> provide System 5 compatibility when <command>/sbin/init</command> is run other than as process #1.
+Upstart, for example, starts up a "session init" in this situation.
+Similarly, in the nosh toolset case, <filename>/sbin/init</filename> becomes <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> as process #1 and <citerefentry><refentrytitle>session-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> otherwise.
+Neither is designed to provide System 5 compatibility <command>init</command> functionality.
 </para>
 
 </refsection>
-<refsection><title>OpenBSD service control</title>
-
-<cmdsynopsis>
-<command>rcctl</command>
-<arg choice="req"><replaceable>command</replaceable></arg>
-<arg choice="req"><replaceable>name</replaceable></arg>
-</cmdsynopsis>
-
-<para>
-Invoked as 
-<command>rcctl</command>
-<arg choice="plain"><replaceable>command</replaceable></arg>
-<arg choice="plain"><replaceable>name</replaceable></arg>,
-unless
-<arg choice="plain"><replaceable>command</replaceable></arg>
-is either <arg choice="plain">set</arg> or <arg choice="plain">get</arg> the
-program chains to
-<command>system-control</command>
-<arg choice="plain"><replaceable>command</replaceable></arg>
-<arg choice="plain"><replaceable>name</replaceable></arg>.
-It makes no attempt itself to validate <replaceable>command</replaceable>,
-which can be any of the subcommands supported by
-<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-<arg choice="plain">set</arg> is replaced with
-<arg choice="plain">set-service-env</arg>.
-<arg choice="plain">get</arg> is replaced with
-<arg choice="plain">print-service-env</arg>.
-</para>
-
-<para>
-Do not use
-<command>rcctl</command>
-<arg choice="plain">set</arg>
-<arg choice="plain"><replaceable>name</replaceable></arg>
-<arg choice="plain">status</arg> 
-to enable or disable services.
-This is not even correct for the original tool, as only OpenBSD uses variables
-named <replaceable>name</replaceable><code>_status</code> in the first place.
-Other BSDs have different names which won't work with this OpenBSD-specific
-syntax.
-In contrast,
-<command>rcctl</command>
-<arg choice="plain">enable</arg>
-<arg choice="plain"><replaceable>name</replaceable></arg>
-and
-<command>rcctl</command>
-<arg choice="plain">disable</arg>
-<arg choice="plain"><replaceable>name</replaceable></arg>,
-defined as equivalents in the original OpenBSD tool,
-will work portably.
-</para>
-
-</refsection>
-
-</refsection>
-<refsection><title>Compatibility bootstrap utility</title>
-
-<cmdsynopsis>
-<command>init</command>
-<arg choice="opt" rep="repeat"><replaceable>args</replaceable></arg>
-</cmdsynopsis>
-
-<para>
-Invoked as <command>init</command> the program simply chain loads to either
-<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-or 
-<citerefentry><refentrytitle>telinit</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-with the
-<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-function, passing along all of its command line arguments (with one possible
-exception) as-is.  
-</para>
-
-<para>
-If it sees that it is process #1, it chains to
-<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
-It leaves the command line arguments alone.
-This means that
-<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-sees itself invoked under the name <command>init</command> and behaves accordingly.
-</para>
-
-<para>
-If it sees that it is not process #1, it chains to
-<citerefentry><refentrytitle>telinit</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-It replaces the first command line argument with <command>telinit</command>.
-This is so that
-<citerefentry><refentrytitle>telinit</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-sees itself invoked under that name and behaves accordingly.
-</para>
-
-<para>
-Because on some systems the executable is dynamically linked to libraries in
-<filename>/usr/lib</filename> and <filename>/usr/lib</filename> isn't present
-as boot time, it is a mistake to use this as process #1.
-Configure the system to invoke
-<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-directly, instead.
-</para>
-
-</refsection>
-<refsection><title>Compatibility system control utility</title>
-
-<cmdsynopsis>
-<command>telinit</command>
-<group choice="plain">
-<arg choice="req">0</arg>
-<arg choice="req">1</arg>
-<arg choice="req">5</arg>
-<arg choice="req">6</arg>
-<arg choice="req">h</arg>
-<arg choice="req">m</arg>
-<arg choice="req">s</arg>
-</group>
-</cmdsynopsis>
-
-<para>
-Invoked as <command>telinit</command> the program chain loads to one of the
-system control commands, selected by its first (non-option) argument:
-</para>
-
-<variablelist>
-
-<varlistentry>
-<term><arg choice="req">0</arg></term>
-<listitem><para><citerefentry><refentrytitle>poweroff</refentrytitle><manvolnum>8</manvolnum></citerefentry></para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><arg choice="req">1</arg> or <arg choice="req">s</arg></term>
-<listitem><para><citerefentry><refentrytitle>rescue</refentrytitle><manvolnum>8</manvolnum></citerefentry></para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><arg choice="req">5</arg> or <arg choice="req">m</arg></term>
-<listitem><para><citerefentry><refentrytitle>normal</refentrytitle><manvolnum>8</manvolnum></citerefentry></para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><arg choice="req">6</arg></term>
-<listitem><para><citerefentry><refentrytitle>reboot</refentrytitle><manvolnum>8</manvolnum></citerefentry></para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><arg choice="req">h</arg></term>
-<listitem><para><citerefentry><refentrytitle>halt</refentrytitle><manvolnum>8</manvolnum></citerefentry></para></listitem>
-</varlistentry>
-
-</variablelist>
-
-<para>
-It is a mistake to run this as process #1, thinking that it is an alias for
-<citerefentry><refentrytitle>init</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
-</para>
-
-<para>
-There is no <arg choice="req">q</arg> argument.
-This is deliberate.
-Its use case is running <command>telinit</command> <arg choice="plain">q</arg> after updating
-<filename>/etc/ttys</filename> or <filename>/etc/inittab</filename>.
-Any script that is updating those files and then expecting the system manager
-to re-read them is not targetting the correct configuration mechanisms, and
-is in error.
-</para>
-
 </refsection>
 </refsection>
 <refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

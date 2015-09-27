@@ -13,24 +13,27 @@ For copyright and licensing terms, see the file named COPYING.
 
 // These are the built-in commands visible in the statically linked system-manager.
 
-void init ( const char * & , std::vector<const char *> & ) ;
-void sysinit ( const char * & , std::vector<const char *> & ) ;
-void isolate ( const char * & , std::vector<const char *> & ) ;
-void activate ( const char * & , std::vector<const char *> & ) ;
-void cyclog ( const char * & , std::vector<const char *> & ) ;
-void system_control ( const char * & , std::vector<const char *> & ) ;
-void system_manager ( const char * & , std::vector<const char *> & ) ;
-void service_manager ( const char * & , std::vector<const char *> & ) ;
+extern void reboot_poweroff_halt_command ( const char * & , std::vector<const char *> & ) ;
+extern void emergency_rescue_normal_command ( const char * & , std::vector<const char *> & ) ;
+extern void isolate ( const char * & , std::vector<const char *> & ) ;
+extern void activate ( const char * & , std::vector<const char *> & ) ;
+extern void cyclog ( const char * & , std::vector<const char *> & ) ;
+extern void system_control ( const char * & , std::vector<const char *> & ) ;
+extern void init ( const char * & , std::vector<const char *> & ) ;
+extern void system_manager ( const char * & , std::vector<const char *> & ) ;
+extern void service_manager ( const char * & , std::vector<const char *> & ) ;
 
 extern const
 struct command 
 commands[] = {
 	// These are the system-control subcommands used by system-manager.
 	{	"init",			init			},
-	{	"sysinit",		sysinit			},
 	{	"isolate",		isolate			},
 	{	"activate",		activate		},
 	{	"start",		activate		},
+	{	"emergency",		emergency_rescue_normal_command	},
+	{	"rescue",		emergency_rescue_normal_command	},
+	{	"normal",		emergency_rescue_normal_command	},
 
 	// These are spawned by system-manager.
 	{	"service-manager",	service_manager		},

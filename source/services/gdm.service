@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=GNOME display manager
+Wants=polkitd.service
+
+[Service]
+ExecStart=%p -nodaemon
+Restart=always
+
+[Install]
+WantedBy=workstation.target

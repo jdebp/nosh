@@ -8,6 +8,7 @@ Wants=nfsd.service rpcbind.service
 After=rpcbind.service
 
 [Service]
+EnvironmentDirectory=env
 ExecStart=mountd
 Restart=always
 

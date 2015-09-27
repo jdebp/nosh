@@ -11,7 +11,7 @@ Wants=local-fs.target
 
 [Service]
 EnvironmentFile=-/etc/vconsole.conf
-ExecStart=loadkeys --console /dev/tty0 --unicode ${KEYMAP} ${KEYMAP_TOGGLE}
+ExecStart=loadkeys --console /dev/tty0 --unicode ${KEYMAP:-us} ${KEYMAP_TOGGLE}
 RemainAfterExit=yes
 Restart=never
 

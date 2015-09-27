@@ -11,10 +11,10 @@ After=local-fs.target busybox-mdev.service
 [Service]
 Type=oneshot
 ExecStart=busybox mdev -s
-Restart=never
 # This is an outrageous bodge.
 ExecStartPre=sleep 5
 Restart=never
+RemainAfterExit=yes
 
 [Install]
 WantedBy=sysinit.target

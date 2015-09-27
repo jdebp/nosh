@@ -1,0 +1,11 @@
+#
+# Enable suckless mdev services
+#
+# This is not a systemd preset.
+# It goes in a special nosh system-manager preset directory.
+# It is used by the nosh-run-suckless-mdev package in order to enable the suckless mdev plug-and-play device management services.
+#
+
+enable	suckless-mdev.service
+enable	suckless-mdev-log.service
+enable	suckless-mdev-rescan.service

@@ -7,11 +7,8 @@ Description=Server group target
 EarlySupervise=true
 
 [Service]
-systemdWorkingDirectory=false
-systemdUserEnvironment=no
 User=nobody
 # This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
-ExecStart=true
 
 [Install]

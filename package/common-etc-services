@@ -3,5 +3,4 @@ emergency-login@console
 monitor-fsck-progress
 hostname
 machine-id
-stty-sane@console
 sysinit-log

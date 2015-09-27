@@ -1,0 +1,25 @@
+#!/bin/sh -
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+cd /tmp/ || exit $?
+exceptions='! -name .
+! ( -type f -uid 0 -path ./.sujournal )
+! ( -type d -uid 0 -path ./.snap )
+! ( -type d -uid 0 -path ./lost+found )
+! ( -type f -uid 0 -path ./quota.user )
+! ( -type f -uid 0 -path ./aquota.user )
+! ( -type f -uid 0 -path ./quota.group )
+! ( -type f -uid 0 -path ./aquota.group )
+! ( -type f -uid 0 -path ./.journal )
+! ( -type f -uid 0 -path ./.clean )
+! ( -type f -uid 0 -path ./...security* )'
+case "`uname`" in
+Linux)	
+	find . -depth -xdev $exceptions ! -type d -delete
+	find . -depth -xdev $exceptions -type d -empty -delete
+	;;
+*BSD)
+	find -x . -depth $exceptions -delete
+	;;
+esac

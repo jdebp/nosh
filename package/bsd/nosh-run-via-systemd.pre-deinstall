@@ -1,7 +1,0 @@
-#!/bin/sh -
-systemd-systemctl disable system-control-normal.service
-systemd-systemctl stop system-control-normal.service
-systemd-systemctl disable service-manager-svscan.path
-systemd-systemctl stop service-manager-svscan.path service-manager-svscan.service
-systemd-systemctl disable service-manager.socket
-systemd-systemctl stop service-manager.socket service-manager.service

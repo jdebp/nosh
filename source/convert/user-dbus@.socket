@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Per-user "Desktop" bus socket
+
+[Socket]
+Backlog=2
+MaxConnections=2
+ListenStream=/run/user/%I/dbus/user_bus_socket
+Accept=false
+
+[Install]
+WantedBy=sockets.target

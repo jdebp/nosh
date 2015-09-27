@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Saltstack minion
+
+[Service]
+LimitNOFILE=8192
+ExecStart=%p
+
+[Install]
+WantedBy=workstation.target

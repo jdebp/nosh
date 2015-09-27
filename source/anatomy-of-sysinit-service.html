@@ -24,7 +24,7 @@ This utility performs boot-time actions that set up the <code>/etc/machine-id</c
 
 <p>
 Most "sysinit" services do their work in their <code>start</code> programs.
-Only a few, such as the devd and devd-log services, have long-lived daemon processes.
+Only a few, such as the the plug and play manager service and its log service, have long-lived daemon processes.
 </p>
 
 <p>
@@ -42,16 +42,16 @@ These are the "sysinit" services that are part of, or that precede, bringing up 
 </p>
 
 <p>
-Apart from devd, the "etc" sysinit services all use one single sysinit-log logging service.
-devd has its own devd-log logging service.
+Apart from the plug and play manager service, the "etc" sysinit services all use one single sysinit-log logging service.
+The plug and play manager service has its own logging service.
 </p>
 
 <p>
 The logging services have to come up after the filesystem containint <code>/var/log</code> is available and writable.
 Log data from the logged services sits in its input pipe until then.
 The consequence of this is that too much log output from "etc" sysinit services has the potential to deadlock the system.
-(Too much output from devd simply halts it until devd-log comes up.
-devd usually isn't in the critical path for mounting <code>/var/log</code> read-write.)
+(Too much output from the plug and play manager service simply halts it until its log service comes up.
+The plug and play manager usually isn't in the critical path for mounting <code>/var/log</code> read-write.)
 </p>
 
 <p>

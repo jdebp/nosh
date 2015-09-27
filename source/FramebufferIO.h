@@ -21,7 +21,7 @@ class FramebufferIO :
 	public FileDescriptorOwner
 {
 public:
-	FramebufferIO(int fd) : FileDescriptorOwner(fd) {}
+	FramebufferIO(int pfd) : FileDescriptorOwner(pfd) {}
 	~FramebufferIO();
 	void save_and_set_graphics_mode(const char *, const char *);
 	void restore();

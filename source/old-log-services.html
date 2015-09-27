@@ -50,7 +50,7 @@ It feeds an ordinary log service, so kernel logs end up in a normal, automatical
 
 <p>
 Plumbed together with <a href="local-datagram-socket-listen.html"><code>local-datagram-socket-listen</code></a>, <code>syslog-read</code> forms the <code>local-syslog-read</code> service.
-This service listens to the GNU C library's log socket (<code>/dev/log</code>) and writes out all that it receives.
+This service listens to the GNU C library's log socket (<code>/dev/log</code> on Linux, <code class='filename'>/run/log</code> on the BSDs) and writes out all that it receives.
 </p>
 
 <p>

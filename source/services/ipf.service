@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD IPF initialization/shutdown
+Before=server.target networking.target
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=foreground ${program:-%p} -E ; foreground ${program:-%p} -Fa -f "${rules}" "${flags}" ; ${program:-%p} -6 -f "${rules}" "${flags}"
+ExecStopPost=${program:-%p} -D
+RemainAfterExit=true
+
+[Install]
+WantedBy=workstation.target

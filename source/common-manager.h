@@ -29,7 +29,8 @@ extern const std::vector<api_mount> api_mounts;
 extern int query_manager_pid(const bool is_system);
 extern int listen_service_manager_socket(const bool is_system, const char * prog);
 extern int connect_service_manager_socket(const bool is_system, const char * prog);
-extern std::string xdg_runtime_dir();
+extern std::string login_user_runtime_dir();
+extern std::string effective_user_runtime_dir();
 
 extern bool local_session_mode;
 extern int open_bundle_directory ( const char * prefix, const char * arg, std::string & path, std::string & basename, std::string & suffix ) ;

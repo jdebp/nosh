@@ -16,6 +16,7 @@ For copyright and licensing terms, see the file named COPYING.
 #define _BSD_SOURCE 1
 #include <sys/ioctl.h>
 #include <sys/prctl.h>
+#include <sys/resource.h>
 #include <linux/kd.h>
 #include <fcntl.h>
 #include <mntent.h>
@@ -61,9 +62,8 @@ concat (
 // **************************************************************************
 */
 
-static sig_atomic_t start_signalled (true);
 static sig_atomic_t sysinit_signalled (false);
-static sig_atomic_t init_signalled (false);
+static sig_atomic_t init_signalled (true);
 static sig_atomic_t normal_signalled (false);
 static sig_atomic_t child_signalled (false);
 static sig_atomic_t rescue_signalled (false);
@@ -111,7 +111,6 @@ record_signal_system (
 				case 4:		poweroff_signalled = true; break;
 				case 5:		reboot_signalled = true; break;
 				case 10:	sysinit_signalled = true; break;
-				case 11:	init_signalled = true; break;
 				case 13:	fasthalt_signalled = true; break;
 				case 14:	fastpoweroff_signalled = true; break;
 				case 15:	fastreboot_signalled = true; break;
@@ -345,11 +344,7 @@ setup_process_state(
 				std::fclose(f);
 		}
 	} else {
-#if defined(__LINUX__) || defined(__linux__)
-#	if defined(PR_SET_CHILD_SUBREAPER)
-		prctl(PR_SET_CHILD_SUBREAPER, 1);
-#	endif
-#endif
+		subreaper(true);
 	}
 }
 
@@ -454,10 +449,6 @@ bool
 is_already_mounted (
 	const std::string & fspath
 ) {
-#if defined(__LINUX__) || defined(__linux__)
-	// FIXME: Using the existing /dev populated by the initramfs doesn't work on Linux for some reason.
-	if ("/dev" == fspath) return false;
-#endif
 	struct stat b;
 	if (0 <= stat(fspath.c_str(), &b)) {
 		// This is traditional, and what FreeBSD/PC-BSD does.
@@ -641,7 +632,7 @@ change_to_system_manager_log_root (
 			if (0 <= chdir(*r))
 				return;
 	} else
-		chdir((xdg_runtime_dir() + "/system-manager").c_str());
+		chdir((login_user_runtime_dir() + "system-manager").c_str());
 }
 
 static inline
@@ -651,7 +642,7 @@ construct_system_manager_log_name (
 	std::string & name_buf
 ) {
 	if (is_system) return ".";
-	name_buf = xdg_runtime_dir() + "log.";
+	name_buf = login_user_runtime_dir() + "log.";
 	const int id(query_manager_pid(is_system));
 	char idbuf[64];
 	snprintf(idbuf, sizeof idbuf, "%d", id);
@@ -747,8 +738,8 @@ common_manager (
 	EV_SET(&p[n++], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 	EV_SET(&p[n++], SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 	}
-	if (is_system) {
 	EV_SET(&p[n++], SIGRTMIN +  0, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	if (is_system) {
 	EV_SET(&p[n++], SIGRTMIN +  1, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 	EV_SET(&p[n++], SIGRTMIN +  2, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 	}
@@ -780,8 +771,8 @@ common_manager (
 	sigdelset(&masked_signals_during_poll, SIGPIPE);
 	}
 	sigdelset(&masked_signals_during_poll, SIGWINCH);
-	if (is_system) {
 	sigdelset(&masked_signals_during_poll, SIGRTMIN + 0);
+	if (is_system) {
 	sigdelset(&masked_signals_during_poll, SIGRTMIN + 1);
 	sigdelset(&masked_signals_during_poll, SIGRTMIN + 2);
 	}
@@ -818,6 +809,14 @@ common_manager (
 				if (c == cyclog_pid) {
 					std::fprintf(stderr, "%s: WARNING: %s (pid %i) ended status %i\n", prog, "cyclog", c, status);
 					cyclog_pid = -1;
+					// If cyclog abended, throttle respawns.
+					if (WIFSIGNALED(status) || (WIFEXITED(status) && 0 != WEXITSTATUS(status))) {
+						timespec t;
+						t.tv_sec = 0;
+						t.tv_nsec = 500000000; // 0.5 second
+						// If someone sends us a signal to do something, this will be interrupted.
+						nanosleep(&t, 0);
+					}
 				} else
 				if (c == system_control_pid) {
 					std::fprintf(stderr, "%s: INFO: %s (pid %i) ended status %i\n", prog, "system-control", c, status);
@@ -830,11 +829,6 @@ common_manager (
 		if (!has_system_control) {
 			const char * subcommand(0), * option(0);
 			bool verbose(true);
-			if (start_signalled) {
-				subcommand = "sysinit";
-				start_signalled = false;
-				verbose = false;
-			} else
 			if (sysinit_signalled) {
 				subcommand = "start";
 				option = "sysinit";
@@ -925,7 +919,7 @@ common_manager (
 					sigprocmask(SIG_SETMASK, &original_signals, &masked_signals);
 #endif
 					default_all_signals();
-					alarm(180);
+					alarm(420);
 					// Retain the original arguments and insert the following in front of them.
 					if (!is_system)
 						args.insert(args.begin(), "--user");

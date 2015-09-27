@@ -72,16 +72,24 @@ load (
 	int socket_fd,
 	const char * name,
 	int supervise_dir_fd,
-	int service_dir_fd,
-	bool want_pipe,
-	bool run_on_empty
+	int service_dir_fd
 ) {
 	service_manager_rpc_message m;
 	m.command = m.LOAD;
-	m.want_pipe = want_pipe;
-	m.run_on_empty = run_on_empty;
 	std::strncpy(m.name, name, sizeof m.name);
 	int fds[2] = { supervise_dir_fd, service_dir_fd };
+	do_rpc_call(prog, socket_fd, &m, sizeof m, fds, sizeof fds/sizeof *fds);
+}
+
+void
+make_pipe_connectable (
+	const char * prog,
+	int socket_fd,
+	int supervise_dir_fd
+) {
+	service_manager_rpc_message m;
+	m.command = m.MAKE_PIPE_CONNECTABLE;
+	int fds[1] = { supervise_dir_fd };
 	do_rpc_call(prog, socket_fd, &m, sizeof m, fds, sizeof fds/sizeof *fds);
 }
 
@@ -93,6 +101,18 @@ make_input_activated (
 ) {
 	service_manager_rpc_message m;
 	m.command = m.MAKE_INPUT_ACTIVATED;
+	int fds[1] = { supervise_dir_fd };
+	do_rpc_call(prog, socket_fd, &m, sizeof m, fds, sizeof fds/sizeof *fds);
+}
+
+void
+make_run_on_empty (
+	const char * prog,
+	int socket_fd,
+	int supervise_dir_fd
+) {
+	service_manager_rpc_message m;
+	m.command = m.MAKE_RUN_ON_EMPTY;
 	int fds[1] = { supervise_dir_fd };
 	do_rpc_call(prog, socket_fd, &m, sizeof m, fds, sizeof fds/sizeof *fds);
 }
@@ -157,6 +177,13 @@ kill_daemon (
 	int supervise_dir_fd
 ) {
 	return send_control_command(supervise_dir_fd, 'k');
+}
+
+int
+hangup_daemon (
+	int supervise_dir_fd
+) {
+	return send_control_command(supervise_dir_fd, 'h');
 }
 
 bool

@@ -8,6 +8,7 @@ Wants=rpcbind.service
 After=rpcbind.service ypset.service
 
 [Service]
+EnvironmentDirectory=env
 ExecStart=%p
 Restart=always
 

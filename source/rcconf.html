@@ -23,6 +23,13 @@ This is done by setting configuration variables, whose names are the name of the
 The <a href="system-control.html"><code>system-control&nbsp;preset</code></a> command automatically imports these settings when determining whether a service should be enabled or disabled.
 </p>
 
+<p>
+It only affects the enabled/disable state.
+A disabled service that does not automatically start at bootstrap can still be manually started later.
+The NetBSD <code>rc</code> system has no notion of being able to manually start disabled services, in contrast, as the NetBSD <code>rc</code> mechanism at bootstrap always attempts to start every service.
+The enable flag actually behaves as an inverted inhibitor, simply blocking all attempts to start the service, bootstrap or otherwise, rather than as a positive selector to select which services to automatically start.
+</p>
+
 <h2>
 Daemon environment information
 </h2>

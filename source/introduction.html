@@ -66,7 +66,7 @@ There is no repeated building of things, over and over again at bootstrap time, 
 <strong> The primary foreign configuration formats are systemd units and BSD databases. </strong> 
 The world is already, independently, doing the work of replacing Linux "System 5" <code>rc</code> scripts, and has been since 2011.
 Nowadays, "other people's stuff" comes with systemd units.
-Likewise, replacing the NetBSD <code>rc</code> scripts has been a large part of the nosh project and the majority is now replaced with service bundles and a mechanism for generatig service bundles from the BSD databases such as <code>/etc/fstab</code>.
+Likewise, replacing the NetBSD <code>rc</code> scripts has been a large part of the nosh project and the majority is now replaced with service bundles and a mechanism for generating service bundles from the BSD databases such as <code>/etc/fstab</code>.
 Those are therefore the primary foreign configuration file formats that are addressed by conversion/import tools.
 </p> </li>
 </ul>
@@ -89,6 +89,7 @@ nosh simply doesn't run disabled services at all at boot time.
 <strong> No in-memory service database. </strong> 
 The filesystem is the database.
 systemd operates in some cases by generating services on the fly, in memory in the service manager process itself.
+It maintains all services in memory, the source of the infamous "file changed on disk" message where what the service manager knows is out of synch with what's in the filesystem.
 In the nosh service manager, <em>all</em> service bundles exist in, and are accessible via, the filesystem.
 If something is generated on the fly, it is generated on the fly <em>in the filesystem</em>.
 Fewer things are generated on the fly, however, as bootstrap time is not build again and again time.

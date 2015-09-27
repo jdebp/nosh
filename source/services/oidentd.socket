@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=IDENT protocol (RFC 1413) socket
+
+[Socket]
+ListenStream=113
+Accept=yes
+
+[Install]
+WantedBy=sockets.target

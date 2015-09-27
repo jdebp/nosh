@@ -1,0 +1,21 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=System-wide "Desktop" bus service on the BSDs
+After=machine-id.service extra-shared-libraries.target
+
+[Service]
+RuntimeDirectory=%p
+RuntimeDirectoryMode=0755
+ExecStartPre=mkdir -p /var/db/%p
+ExecStartPre=sh -c '[ -r /var/db/%p/machine-id ] || ln -s /etc/machine-id /var/db/%p/'
+# BSD dbus doesn't support --nopidfile even though that would be nice here.
+# BSD dbus doesn't support --address=systemd: even though that would be the closest to our UCSPI-LOCAL.
+# BSD dbus doesn't support --address=unix:runtime=yes even though that a reasonable fallback that we could bodge.
+ExecStart=dbus-daemon --system --nofork --address=unix:path=/run/dbus/system_bus_socket
+Restart=always
+
+[Install]
+WantedBy=workstation.target

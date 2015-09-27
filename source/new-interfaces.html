@@ -28,7 +28,7 @@ But those targets refer to other services (and targets) via symbolic links, whic
 <p>
 (A slight restriction on this is also the fairly obvious one: 
 Bundles for services and targets that are started in parallel with, or before, mounting the non-root filesystems must live on the root filesystem.
-By convention, these "sysinit" bundles live in <code>/etc/sv</code>.
+By convention, these "sysinit" bundles live in <code>/etc/service-bundles/services</code>.
 Since their supervise directories must be writable at run-time, they are symbolic links to directories that live under <code>/run/service-bundles/early-supervise</code>.)
 </p>
 
@@ -44,7 +44,10 @@ The system manager manages the state machine for the system as a whole, with the
 
 <p>
 (Those familiar with Windows NT and ReactOS can see the system manager as akin to SMSS (the Session Manager Subsystem) which runs as process #1 and manages startup and shutdown, and the service manager as akin to SERVICES (the Service Controller) which manages service processes and provides an RPC API.
-They are quite different when compared in detail, though.)
+They are quite different when compared in detail, though.
+Those familiar with IBM AIX can see the system manager as akin to <code>init</code> and the service manager as akin to <code>srcmstr</code>.
+Similarly, those familiar with Solaris can see the system manager as akin to <code>init</code> and the service manager as akin to <code>svc.startd</code>.
+Again, there are differences in the details.)
 </p>
 
 <h2>
@@ -58,7 +61,7 @@ In daemontools (and in
 <a href="http://untroubled.org/daemontools-encore/">daemontools-encore</a>) the service scanner forks supervisory processes for services, directly.
 In this system the daemontools-compatibility service scanner, <a href="service-dt-scanner.html"><code>service-dt-scanner</code></a>, talks through the RPC API to the service manager, which forks the service processes.
 The service scanner is not the parent of service processes.
-Indeed, it can be treated as a service <em>itself</em> (running under something like systemd), and can be brought up and down.
+Indeed, it can be treated as a service <em>itself</em> (running under the service manager), and can be brought up and down.
 Traditional daemontools service scanners are not expected to be terminated, in contrast.
 </p>
 
@@ -97,7 +100,7 @@ Standard targets
 </h2>
 
 <p>
-This package has more standard targets than systemd:
+This package has more standard targets than systemd, taking notions of distinct "multi-user" and "server" from the Solaris SMF milestones system:
 </p>
 <ul>
 <li><p>Services that are part of running a workstation, as opposed to a server, machine are enabled by being added to the "wants" list of the standard "workstation" target.</p></li>
@@ -109,7 +112,9 @@ This package has more standard targets than systemd:
 It has different standard targets to systemd:
 </p>
 <ul>
-<li><p>The default target is named "normal", not "default".  "normal" encompasses "server", "workstation", and "multi-user".</p></li>
+<li><p>The default target is named "normal", not "default".
+"normal" encompasses "server", "workstation", and "multi-user".
+</p></li>
 </ul>
 
 <p>

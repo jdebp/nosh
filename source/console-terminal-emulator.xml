@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.18</refmiscinfo>
+<refmiscinfo class="version">1.20</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -494,7 +494,7 @@ of appropriate escape sequences and control sequences for representing them.
 An extended key.  
 The key number is <code>kkkk</code> and <code>mm</code> is a set of bitflags
 indicating the current state of modifier keys.
-The terminal emulator sends the equivalent conrtol sequence through to the line
+The terminal emulator sends the equivalent control sequence through to the line
 discipline as terminal input.
 </para></listitem>
 </varlistentry>
@@ -549,7 +549,7 @@ However, there is a wide degree of variance amongst consoles that can cause prob
 The Linux console employs the DECFNK sequences for <code>FIND</code> and <code>SELECT</code> for the <code>HOME</code> and <code>END</code> keys.  
 The other consoles employ the DECFNK <code>FIND</code> and <code>SELECT</code> sequences for those keys, with different control sequences for <code>HOME</code> and <code>END</code> (as per a DEC VT520 in VT mode).
 This has two major consequences: 
-If the terminal emulator is in Linux console mode, <code>HOME</code> and <code>END</code> will not be correctly recognized if the <code>TERM</code> environment variable does not also specify "linux"; and if the terminal emulator is in another mode but the <envar>TERM</envar> environment variable is set to "linux", <code>FIND</code> and <code>SELECT</code> will incorrectly recognized and <code>HOME</code> and <code>END</code> will not be recognized at all.
+If the terminal emulator is in Linux console mode, <code>HOME</code> and <code>END</code> will not be correctly recognized if the <code>TERM</code> environment variable does not also specify "linux"; and if the terminal emulator is in another mode but the <envar>TERM</envar> environment variable is set to "linux", <code>FIND</code> and <code>SELECT</code> will be incorrectly recognized and <code>HOME</code> and <code>END</code> will not be recognized at all.
 </para>
 
 <para>

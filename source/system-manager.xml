@@ -5,7 +5,7 @@
 <manvolnum>8</manvolnum>
 <refmiscinfo class="manual">administrator commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.18</refmiscinfo>
+<refmiscinfo class="version">1.20</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -18,24 +18,23 @@
 <command>system-manager</command>
 <arg rep='repeat'><replaceable>args</replaceable></arg> 
 </cmdsynopsis>
+<cmdsynopsis>
+<command>init</command>
+<arg rep='repeat'><replaceable>args</replaceable></arg> 
+</cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection><title>Description</title>
 
 <para>
-<command>system-manager</command> is meant to be invoked as process #1, either
-as the first user process of an entire system, or as the first process of a
-"container" running within a Linux PID namespace or a BSD jail.
+<command>system-manager</command> is meant to be invoked as process #1, either as the first user process of an entire system, or as the first process of a "container" running within a Linux PID namespace or a BSD jail.
 It will not operate correctly if it is not process #1.
-To manage per-user, local, sessions use
-<citerefentry><refentrytitle>session-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
-It should also not be confused with
-<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+To manage per-user, local, sessions use <citerefentry><refentrytitle>session-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+It should also not be confused with <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 <para>
-Its design is intended to keep process #1 simple, since the operating system
-regards it as a vital system process.
+Its design is intended to keep process #1 simple, since the operating system regards it as a vital system process.
 In particular:
 </para>
 
@@ -43,23 +42,17 @@ In particular:
 
 <listitem>
 <para>
-<command>system-manager</command> doesn't contain (or link to) library code for
-complex parsing and communications functionality, such as XML parsers and
-libraries for D-Bus, PAM, and udev.
+<command>system-manager</command> doesn't contain (or link to) library code for complex parsing and communications functionality, such as XML parsers and libraries for D-Bus, PAM, and udev.
 No parsing or RPC marshalling are done by process #1.
-It is also not involved in any Plug-and-Play device management or Desktop
-bus systems.
+It is also not involved in any Plug-and-Play device management or Desktop bus systems.
 </para>
 </listitem>
 
 <listitem>
 <para>
-Process #1 is the system manager, as distinguished from the service manager
-which is another process.
+Process #1 is the system manager, as distinguished from the service manager which is another process.
 Process #1 does not contain nor manage service state tables.
-It does not have open file handles to the service control FIFOs, and
-its operation is not complicated by mixing the system state with
-individual service states.
+It does not have open file handles to the service control FIFOs, and its operation is not complicated by mixing the system state with individual service states.
 </para>
 </listitem>
 
@@ -80,10 +73,8 @@ process setup, system setup, reaping, and responding to system events.
 <refsection><title>Process setup</title>
 
 <para>
-<command>system-manager</command> expects to be started in the normal state for
-process #1 (of the system or of a container/jail).
-It does very little to its process state, which is inherited by the service
-manager and the logger:
+<command>system-manager</command> expects to be started in the normal state for process #1 (of the system or of a container/jail).
+It does very little to its process state, which is inherited by the service manager and the logger:
 </para>
 
 <itemizedlist>
@@ -98,26 +89,19 @@ It sets itself as a session leader, as if by
 <listitem>
 <para>
 (On operating systems that support this)
-It calls
-<citerefentry><refentrytitle>setlogin</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-to set the session's login name to <code>root</code>.
+It calls <citerefentry><refentrytitle>setlogin</refentrytitle><manvolnum>2</manvolnum></citerefentry> to set the session's login name to <code>root</code>.
 </para>
 </listitem>
 
 <listitem>
 <para>
-It changes current directory to <filename>/</filename> as if by
-<citerefentry><refentrytitle>chdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-on the grounds that on some systems there is an "initrd" mechanism that might have
-left the current directory somewhere else.
+It changes current directory to <filename>/</filename> as if by <citerefentry><refentrytitle>chdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>, on the grounds that on some systems there is an "initrd" mechanism that might have left the current directory somewhere else.
 </para>
 </listitem>
 
 <listitem>
 <para>
-It resets the file/directory creation mask to 0000 as if by
-<citerefentry><refentrytitle>umask</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-on the same grounds.
+It resets the file/directory creation mask to 0000 as if by <citerefentry><refentrytitle>umask</refentrytitle><manvolnum>1</manvolnum></citerefentry>, on the same grounds.
 </para>
 </listitem>
 
@@ -136,12 +120,8 @@ It sets the hardwired default environment:
 <listitem>
 <para>
 It reads the administrator-configurable default environment.
-If the directory <filename>/etc/locale.d</filename> exists, it processes it
-as if by
-<citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-Otherwise it processes, as if by
-<citerefentry><refentrytitle>read-conf</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-the first file that is found (and can be opened for reading) in the list:
+If the directory <filename>/etc/locale.d</filename> exists, it processes it as if by <citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Otherwise it processes, as if by <citerefentry><refentrytitle>read-conf</refentrytitle><manvolnum>1</manvolnum></citerefentry>, the first file that is found (and can be opened for reading) in the list:
 </para>
 <orderedlist>
 <listitem><para><filename>/etc/locale.conf</filename></para></listitem>
@@ -151,8 +131,7 @@ the first file that is found (and can be opened for reading) in the list:
 <listitem><para><filename>/etc/sysconf/i18n</filename></para></listitem>
 </orderedlist>
 <para>
-As the names indicate, this default environment is only expected to comprise
-locale-controlling variables such as <envar>LANG</envar>.
+As the names indicate, this default environment is only expected to comprise locale-controlling variables such as <envar>LANG</envar>.
 </para>
 </listitem>
 
@@ -175,16 +154,13 @@ It mounts the "API" filesystems in their accustomed places.
 
 <listitem>
 <para>
-It creates the device nodes for various "early" devices that are
-required to exist before any plug-and-play device management services
-start up.
+It creates the device nodes for various "early" devices that are required to exist before any plug-and-play device management services start up.
 </para>
 </listitem>
 
 <listitem>
 <para>
-It instructs the kernel to send the signals for various optional system events
-such as <code>secure-attention-key</code> and <code>kbrequest</code>.
+It instructs the kernel to send the signals for various optional system events such as <code>secure-attention-key</code> and <code>kbrequest</code>.
 </para>
 </listitem>
 
@@ -199,8 +175,7 @@ It corrects the system clock.
 </refsection><refsection><title>Reaping</title>
 
 <para>
-<command>system-manager</command> operates as a "grim reaper", cleaning up
-after any child processes that exit.
+<command>system-manager</command> operates as a "grim reaper", cleaning up after any child processes that exit.
 The operating system re-parents any orphaned processes to it.
 <command>system-manager</command> spawns exactly three processes itself:
 </para>
@@ -243,31 +218,23 @@ If it terminates otherwise, <command>session-manager</command> simply re-spawns 
 </itemizedlist>
 
 <para>
-The write end of the aforementioned pipe is connected to the the standard
-outputs and standard errors of the service manager, the (ephemeral) service
-controllers, and of <command>system-manager</command> itself.
+The write end of the aforementioned pipe is connected to the the standard outputs and standard errors of the service manager, the (ephemeral) service controllers, and of <command>system-manager</command> itself.
 (Their standard input is connected to <filename>/dev/null</filename>.)
-<command>system-manager</command> retains open file descriptors to this pipe, so
-that no unsaved log data are lost should the logger unexpectedly exit.
+<command>system-manager</command> retains open file descriptors to this pipe, so that no unsaved log data are lost should the logger unexpectedly exit.
 </para>
 
 <para>
-The logger is intended to be just for the system manager, the service manager,
-and the service controllers.
+The logger is intended to be just for the system manager, the service manager, and the service controllers.
 Actual services should be plumbed to their own logging services.
-The logger is told to write its logfiles to
-<filename>/run/system-manager/log</filename>, which will by default be in
-a tmpfs filesystem, and to cap their maximum total size at 1MiB.
+The logger is told to write its logfiles to <filename>/run/system-manager/log</filename>, which will by default be in a tmpfs filesystem, and to cap their maximum total size at 1MiB.
 </para>
 
 </refsection><refsection><title>System event response</title>
 
 <para>
 The only IPC mechanism provided by <command>system-manager</command> is signals.
-(Commands to manipulate services are sent to the spawned service manager,
-not to the system manager.)
-System-wide events are flagged, by the kernel and by other programs,
-by sending various signals to process #1.
+(Commands to manipulate services are sent to the spawned service manager, not to the system manager.)
+System-wide events are flagged, by the kernel and by other programs, by sending various signals to process #1.
 <command>system-manager</command> responds to these signals as follows:
 </para>
 
@@ -298,11 +265,8 @@ target.
 <para>
 Activating these targets activates the <code>shutdown</code> target.
 Other targets do not imply shutdown.
-<code>shutdown</code> is configured to conflict with login services and all
-normal server and workstation services, and will hence cause them to be
-stopped.
-(This is written into the packaged target definitions, not hardwired into 
-<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>.)
+<code>shutdown</code> is configured to conflict with login services and all normal server and workstation services, and will hence cause them to be stopped.
+(This is written into the packaged target definitions, not hardwired into <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>.)
 </para>
 </listitem>
 </varlistentry>
@@ -366,8 +330,7 @@ This will activate the <code>secure-attention-key</code> target.
 </term>
 <listitem><para>
 Close the pipe, terminate the service manager, and wait a short while for it.
-If the system manager is the system-wide process #1, tell the kernel to flush
-its disc cache and (respectively) halt, power off, or reboot the system.
+If the system manager is the system-wide process #1, tell the kernel to flush its disc cache and (respectively) halt, power off, or reboot the system.
 Otherwise, if the system manager is running in a container/jail, just exit.
 </para>
 <para>
@@ -397,25 +360,10 @@ This will activate the <code>sysinit</code> target.
 </listitem>
 </varlistentry>
 
-<varlistentry>
-<term><code>SIGRTMIN + 11</code></term>
-<listitem><para>
-Spawn <command>system-control</command> <arg choice="plain">init</arg>,
-passing it the <arg rep='repeat'><replaceable>args</replaceable></arg> 
-that were supplied on its own command line.
-(For process #1 of the entire system, these options are supplied to
-the initial program by the boot loader via the kernel.
-In a container/jail, they are supplied by the container/jail configuration.)
-This will activate whatever target can be deduced from those arguments.
-</para>
-</listitem>
-</varlistentry>
-
 </variablelist>
 
 <para>
-What the <code>kbrequest</code> and <code>secure-attention-key</code> targets do is
-configured by the system administrator.
+What the <code>kbrequest</code> and <code>secure-attention-key</code> targets do is configured by the system administrator.
 </para>
 
 <itemizedlist>
@@ -433,14 +381,7 @@ command.
 
 <listitem>
 <para>
-For semantics more akin to those of Microsoft Windows NT,
-<code>secure-attention-key</code> 
-should run
-<citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-on a (secure) console, or the GUI equivalent on a secure desktop;
-and <code>kbrequest</code> should run
-<citerefentry><refentrytitle>vlock</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-or the GUI equivalent, similarly.
+For semantics more akin to those of Microsoft Windows NT, <code>secure-attention-key</code> should run <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry> on a (secure) console, or the GUI equivalent on a secure desktop; and <code>kbrequest</code> should run <citerefentry><refentrytitle>vlock</refentrytitle><manvolnum>1</manvolnum></citerefentry> or the GUI equivalent, similarly.
 </para>
 </listitem>
 
@@ -448,24 +389,16 @@ or the GUI equivalent, similarly.
 
 <para>
 <command>system-manager</command> startup is also treated as a system event.
-In response this "event" <command>system-manager</command> spawns 
-<command>system-control</command> 
-<arg choice="plain">start</arg>
-<arg choice="plain">sysinit</arg>.
-This sends the <code>SIGRTMIN + 10</code> and <code>SIGRTMIN + 11</code> signals
-back to process #1, instituting a two-phase initialization sequence similar to the
-<code>FILESYSTEMS</code> milestone mechanism in BSD operating systems.
-The first phase, the <code>sysinit</code> target, is expected to initialize as much of the
-system as necessary so that the second phase, <command>system-control</command>
-<arg choice="plain">init</arg>, can find all service and target bundles, including
-those that are not on the root filesystem.
+In response this "event" <command>system-manager</command> spawns <command>system-control</command> <arg choice="plain">init</arg>, passing it the <arg rep='repeat'><replaceable>args</replaceable></arg> that were supplied on its own command line.
+(For process #1 of the entire system, these options are supplied to the initial program by the boot loader via the kernel.
+In a container/jail, they are supplied by the container/jail configuration.)
+This calculates what to initialize, deduced from those arguments, and sends appropriate signals back to the system manager process.
 </para>
 
 </refsection></refsection><refsection><title>API filesystems and early devices</title>
 
 <para>
-"API" filesystems are filesystems that do not employ persistent backing storage,
-and that provide means for interrogating and configuring kernel mechanisms.
+"API" filesystems are filesystems that do not employ persistent backing storage, and that provide means for interrogating and configuring kernel mechanisms.
 They are thus effectively extensions to the kernel's system call API.
 </para>
 
@@ -475,65 +408,54 @@ They are thus effectively extensions to the kernel's system call API.
 
 <varlistentry>
 <term><filename>/proc</filename></term>
-<listitem><para>A <code>proc</code> filesystem is mounted here with options
-<code>nodev</code> and <code>nosuid</code>.
-(<code>noexec</code> is not used because that would disallow the trick of
-using <filename>/proc/<replaceable>N</replaceable>/exe</filename> to re-execute
-a process' executable.)
+<listitem><para>
+A <code>proc</code> filesystem is mounted here with options <code>nodev</code> and <code>nosuid</code>.
+(<code>noexec</code> is not used because that would disallow the trick of using <filename>/proc/<replaceable>N</replaceable>/exe</filename> to re-execute a process' executable.)
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><filename>/sys</filename></term>
-<listitem><para>The <code>sysfs</code> filesystem is mounted here with options
-<code>nodev</code>, <code>noexec</code>, and <code>nosuid</code>.
+<listitem><para>
+The <code>sysfs</code> filesystem is mounted here with options <code>nodev</code>, <code>noexec</code>, and <code>nosuid</code>.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><filename>/run</filename></term>
-<listitem><para>A <code>tmpfs</code> filesystem is mounted here with options
-<code>nodev</code>, <code>nosuid</code>, <code>strictatime</code>,
-<code>size=20%</code>, and <code>mode=0755</code>.
+<listitem><para>
+A <code>tmpfs</code> filesystem is mounted here with options <code>nodev</code>, <code>nosuid</code>, <code>strictatime</code>, <code>size=20%</code>, and <code>mode=0755</code>.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><filename>/run/shm</filename></term>
-<listitem><para>A <code>tmpfs</code> filesystem is mounted here with options
-<code>nodev</code>, <code>noexec</code>, <code>nosuid</code>,
-<code>strictatime</code>, <code>size=50%</code>, and <code>mode=01777</code>.
+<listitem><para>
+A <code>tmpfs</code> filesystem is mounted here with options <code>nodev</code>, <code>noexec</code>, <code>nosuid</code>, <code>strictatime</code>, <code>size=50%</code>, and <code>mode=01777</code>.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><filename>/dev</filename></term>
-<listitem><para>A <code>devtmpfs</code> filesystem is mounted here with options
-<code>noexec</code>, <code>nosuid</code>, <code>strictatime</code>, <code>size=10M</code>, 
-and <code>mode=0755</code>.
+<listitem><para>
+A <code>devtmpfs</code> filesystem is mounted here with options <code>nosuid</code>, <code>strictatime</code>, <code>size=10M</code>, and <code>mode=0755</code>.
+(<code>noexec</code> is not used because old versions of programs such as <code>/sbin/v86d</code> memory map devices such as <code>/dev/zero</code> with <code>PROT_EXEC</code> access for no good reason.
+The newer versions of such programs were fixed in the first decade of the 21st century.)
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><filename>/dev/pts</filename></term>
-<listitem><para>A <code>devpts</code> filesystem is mounted here with options
-<code>noexec</code>, <code>nosuid</code>, <code>ptmxmode=0666</code>,
-<code>gid=<replaceable>tty</replaceable></code>, <code>newinstance</code>, and
-<code>mode=0620</code>.
-<replaceable>tty</replaceable> is currently hardwired to <code>5</code>,
-because the library functions for reading the system account database require
-dynamic link library and network functionality that are inappropriate for
-process #1.
+<listitem><para>
+A <code>devpts</code> filesystem is mounted here with options <code>noexec</code>, <code>nosuid</code>, <code>ptmxmode=0666</code>, <code>gid=<replaceable>tty</replaceable></code>, <code>newinstance</code>, and <code>mode=0620</code>.
+<replaceable>tty</replaceable> is currently hardwired to <code>5</code>, because the library functions for reading the system account database require dynamic link library and network functionality that are inappropriate for process #1.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><filename>/dev/ptmx</filename></term>
 <listitem><para>
-This is symbolically linked to <filename>/dev/pts/ptmx</filename> to take
-advantage of the fact that the <code>devpts</code> filesystem nowadays provides
-a <filename>ptmx</filename> device node that is guaranteed correct for its own set
-of PTY devices.
+This is symbolically linked to <filename>/dev/pts/ptmx</filename> to take advantage of the fact that the <code>devpts</code> filesystem nowadays provides a <filename>ptmx</filename> device node that is guaranteed correct for its own set of PTY devices.
 With this, obtaining PTYs will work correctly even in a container.
 </para></listitem>
 </varlistentry>
@@ -541,9 +463,7 @@ With this, obtaining PTYs will work correctly even in a container.
 <varlistentry>
 <term><filename>/dev/fd</filename></term>
 <listitem><para>
-This is symbolically linked to <filename>/proc/self/fd</filename> for
-compatibility with BSD programs that expect a single <code>/dev/fd</code> tree
-for the current process.
+This is symbolically linked to <filename>/proc/self/fd</filename> for compatibility with BSD programs that expect a single <code>/dev/fd</code> tree for the current process.
 </para></listitem>
 </varlistentry>
 
@@ -557,19 +477,14 @@ This is symbolically linked to <filename>/proc/kcore</filename>.
 <varlistentry>
 <term><filename>/dev/stdin</filename>, <filename>/dev/stdout</filename>, and <filename>/dev/stderr</filename></term>
 <listitem><para>
-These are symbolically linked to 
-<filename>/proc/self/fd/0</filename>,
-<filename>/proc/self/fd/1</filename>, and
-<filename>/proc/self/fd/2</filename>,
-respectively.
+These are symbolically linked to <filename>/proc/self/fd/0</filename>, <filename>/proc/self/fd/1</filename>, and <filename>/proc/self/fd/2</filename>, respectively.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><filename>/dev/shm</filename></term>
 <listitem><para>
-This is symbolically linked to <filename>/run/shm</filename> for
-compatibility with C/C++ libraries.
+This is symbolically linked to <filename>/run/shm</filename> for compatibility with C/C++ libraries.
 </para></listitem>
 </varlistentry>
 
@@ -581,44 +496,43 @@ compatibility with C/C++ libraries.
 
 <varlistentry>
 <term><filename>/proc</filename></term>
-<listitem><para>A <code>procfs</code> filesystem is mounted here with options
-<code>nosuid</code>.
+<listitem><para>
+A <code>procfs</code> filesystem is mounted here with options <code>nosuid</code>.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><filename>/run</filename></term>
-<listitem><para>A <code>tmpfs</code> filesystem is mounted here with options
-<code>nosuid</code> and <code>size=20%</code>.
+<listitem><para>
+A <code>tmpfs</code> filesystem is mounted here with options <code>nosuid</code> and <code>size=20%</code>.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><filename>/run/shm</filename></term>
-<listitem><para>A <code>tmpfs</code> filesystem is mounted here with options
-<code>nosuid</code> and <code>size=50%</code>.
+<listitem><para>
+A <code>tmpfs</code> filesystem is mounted here with options <code>nosuid</code> and <code>size=50%</code>.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><filename>/dev</filename></term>
-<listitem><para>A <code>devfs</code> filesystem is mounted here with options
-<code>nosuid</code>.
+<listitem><para>
+A <code>devfs</code> filesystem is mounted here with options <code>nosuid</code>.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><filename>/dev/fd</filename></term>
-<listitem><para>A <code>fdescfs</code> filesystem is mounted here with options
-<code>nosuid</code>.
+<listitem><para>
+A <code>fdescfs</code> filesystem is mounted here with options <code>nosuid</code>.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><filename>/dev/shm</filename></term>
 <listitem><para>
-This is symbolically linked to <filename>/run/shm</filename> for
-compatibility with C/C++ libraries.
+This is symbolically linked to <filename>/run/shm</filename> for compatibility with C/C++ libraries.
 </para></listitem>
 </varlistentry>
 

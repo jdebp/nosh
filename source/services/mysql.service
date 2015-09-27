@@ -6,8 +6,11 @@
 Description=MySQL database server
 
 [Service]
+EnvironmentDirectory=env
 ExecStartPre=/usr/share/mysql/mysql-systemd-start pre
-ExecStart=mysqld --defaults-file=/etc/mysql/my.cnf --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib/mysql/plugin --socket=/run/mysqld/mysqld.sock --port=3306
+ExecStart=mysqld --defaults-file="${defaultsfile:-/etc/mysql/my.cnf}" --basedir="${basedir:-/usr}" --datadir="${datadir:-/var/lib/mysql}" --plugin-dir="${plugindir:-/usr/lib/mysql/plugin}" --socket="${socket:-/run/mysqld/mysqld.sock}" --port="${port:-3306}"
+RuntimeDirectory=mysqld
+RuntimeDirectoryMode=0755
 User=mysql
 # This works around a security hole in MySQL where it opens sensitive files with predictable names in /tmp/ .
 PrivateTmp=true

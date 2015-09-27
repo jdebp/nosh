@@ -7,12 +7,10 @@ Description=local syslog service milestone
 DefaultDependencies=false
 
 [Service]
-systemdWorkingDirectory=false
-systemdUserEnvironment=no
 User=nobody
-systemdWorkingDirectory=false
 # This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
 
 [Install]
 WantedBy=workstation.target
+StoppedBy=shutdown.target

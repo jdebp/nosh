@@ -9,15 +9,25 @@
 # One reason is that there will be a service for the underlying device, be it a virtual or a real terminal.
 #
 # Design:
+#   * The run-kernel-vt and run-user-vt packages use preset/disable in their post-install and post-deinstall scripts to enable/disable their particular login services.
 #   * On the BSDs, there will always be an /etc/ttys file, defining presets for tty login services.
-#     The run-kernel-vt and run-user-vt packages use preset/disable in their post-install and post-deinstall scripts to enable/disable their particular login services.
 #   * On Linux, there will usually not be an /etc/ttys file, and everything will be considered preset on.
-#     The run-kernel-vt package still uses preset/enable, but this has no effect on bootstrap auto-start as the kernel vt login services have no wanted-by.  Login services are started by the ttylogin-starter service, which uses reset.
-#     The run-user-vt package uses preset/enable, resulting in all login services being always enabled.
+#     All user VT login services are thus always enabled.
+#     Because kernel VT login services have no wanted-by, login services are started by the ttylogin-starter service, which uses reset.
+# See the Nosh Guide for more information.
 #
 
+set_if_unset() { if test -z "`system-control print-service-env \"$1\" \"$2\"`" ; then system-control set-service-env "$1" "$2" "$3" ; echo "$s: Defaulted $2 to $3." ; fi ; }
+
+case "`uname`" in
+Linux)
+	set_if_unset console-fb-realizer@head0 KERNEL_VT "--krnel-vt /dev/tty1"
+	set_if_unset console-fb-realizer@head0 TTY "/dev/tty1"
+	;;
+esac
+
 list_user_virtual_terminals() {
-	ls 2>/dev/null -d /run/dev/vc*
+	seq 1 3 | sed -e 's:^:/run/dev/vc:'
 }
 
 list_kernel_virtual_terminals() {

@@ -3,11 +3,11 @@
 ## **************************************************************************
 
 [Unit]
-Description=udev plug-and-play manager daemon
+Description=%p plug-and-play manager daemon
 DefaultDependencies=false
 Before=shutdown.target
-After=local-fs.target
-Conflicts=busybox-mdev
+After=local-fs.target local-syslog.target
+Conflicts=busybox-mdev vdev suckless-mdev
 
 [Service]
 ExecStart=%pd --debug

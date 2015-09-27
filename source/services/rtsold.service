@@ -6,6 +6,7 @@
 Description=IPv6 router solicitation daemon
 
 [Service]
+EnvironmentDirectory=env
 ExecStart=%p -f
 Restart=always
 

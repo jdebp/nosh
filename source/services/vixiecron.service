@@ -7,6 +7,7 @@ Description=Regular background program processing daemon
 
 [Service]
 Type=forking
+EnvironmentDirectory=env
 ExecStart=cron -s -x bit
 Restart=always
 

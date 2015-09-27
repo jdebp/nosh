@@ -6,7 +6,6 @@
 Description=System 5 init compatibility socket
 
 [Socket]
-Backlog=2
 ListenFIFO=/run/initctl
 SocketMode=0600
 

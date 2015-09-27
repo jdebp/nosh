@@ -6,6 +6,7 @@
 Description=RARP service
 
 [Service]
+EnvironmentDirectory=env
 ExecStart=%p -d -f -a
 Restart=always
 

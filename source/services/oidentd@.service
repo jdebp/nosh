@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Per-connection IDENT server
+
+[Service]
+User=nobody
+ExecStart=oidentd --foreground --stdio --nosyslog
+StandardInput=socket
+
+[Install]
+WantedBy=server.target

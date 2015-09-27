@@ -13,6 +13,7 @@ Wants=local-fs.target
 [Service]
 EnvironmentFile=-/etc/rc.conf
 EnvironmentFile=-/etc/rc.conf.local
+EnvironmentDirectory=env
 ExecStart=vidcontrol ${font8x16:+-f 8x16} ${font8x16} ${font8x14:+-f 8x14} ${font8x14} ${font8x8:+-f 8x8} ${font8x8} ${blanktime:+-t} ${blanktime} ${scrnmap:+-l} ${scrnmap} ${cursor:+-c} ${cursor} ${allscreens_flags}
 RemainAfterExit=yes
 Restart=never

@@ -1,0 +1,19 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD IP security initialization/shutdown
+DefaultDependencies=no
+Before=server.target networking.target remote-fs-pre.target shutdown.target
+After=local-fs.target
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=${program:-setkey} -f "${file:-/etc/%p.conf}"
+ExecStopPost=${program:-setkey} -F
+ExecStopPost=${program:-setkey} -F -P
+RemainAfterExit=true
+
+[Install]
+WantedBy=workstation.target

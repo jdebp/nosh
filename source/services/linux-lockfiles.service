@@ -6,6 +6,7 @@
 Description=Linux LFS lockfiles
 DefaultDependencies=false
 Before=mount@-run-lock.service
+After=mount@-run.service mount@-.service
 
 [Service]
 User=nobody
@@ -16,4 +17,4 @@ RemainAfterExit=yes
 ExecStart=true
 
 [Install]
-WantedBy=workstation.target
+WantedBy=sysinit.target

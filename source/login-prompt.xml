@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.18</refmiscinfo>
+<refmiscinfo class="version">1.20</refmiscinfo>
 </refmeta>
 
 <refnamediv><refname>login-prompt</refname><refpurpose>simple chain-load getty for prompting before login</refpurpose></refnamediv>
@@ -39,8 +39,7 @@ This prevents login processes from continually respawning on unused terminals.
 </para>
 
 <para>
-<command>login-prompt</command> expects the terminal and the line discipline to be in 
-relatively sane states.
+<command>login-prompt</command> expects the terminal and the line discipline to be in relatively sane states.
 To reset to these states, run <citerefentry><refentrytitle>vc-reset-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> or <citerefentry><refentrytitle>reset</refentrytitle><manvolnum>1</manvolnum></citerefentry> before
 <command>login-prompt</command>.
 </para>

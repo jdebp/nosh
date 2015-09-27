@@ -15,7 +15,7 @@ fi
 # The build and release directories need not be on the same disc volume.
 # And the files released must not be potentially overwritable and truncatable by the compiler/linker during subsequent builds.
 # But released files can be links to other released files, of course.
-mkdir -p command manual config guide
+mkdir -p -m 0755 command manual config guide
 
 # ##############################################################################
 # Build all of the ...{new} files in ./command and ./manual.
@@ -139,7 +139,7 @@ done
 # ##############################################################################
 # Build all of the {new} directories in ./config.
 rm -rf -- config/targets{new} config/services{new}
-mkdir -p config/targets{new} config/services{new}
+mkdir -p -m 0755 config/targets{new} config/services{new}
 while read i
 do
 	cp -a build/targets/$i config/targets{new}/
@@ -163,7 +163,7 @@ done
 
 # ##############################################################################
 # Build all of the {new} files in ./config.
-mkdir -p config/presets config/systemd config/convert
+mkdir -p -m 0755 config/presets config/systemd config/convert config/rc.d
 cat package/systemd-services package/tmpfiles-snippets |
 while read i
 do
@@ -172,20 +172,26 @@ do
 done
 (
 cat package/systemd-presets
-for i in bundles run-via-systemd run-virtualbox-guest run-freedesktop-kits run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-local-syslog
+for i in bundles run-via-systemd run-via-netbsd-rc run-virtualbox-guest run-freedesktop-kits run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog
 do
 	cat package/common-nosh-"$i"-presets package/linux-nosh-"$i"-presets package/bsd-nosh-"$i"-presets 
 done
-) | while read i
+) | awk '!x[$0]++' | while read i
 do
 	rm -f -- config/presets/"$i"{new}
 	cp -p -f -- build/presets/"$i" config/presets/"$i"{new}
 done
-for i in all.do general-services.do kernel-modules.do terminal-services.do volumes.do dnscache.do tinydns.do
+cat package/netbsd-rc-scripts |
+while read i
+do
+	rm -f -- config/rc.d/"$i"{new}
+	cp -p -f -- build/rc.d/"$i" config/rc.d/"$i"{new}
+done
+while read i
 do
 	rm -f -- config/convert/"$i"{new}
 	cp -p -f -- build/convert/"$i" config/convert/"$i"{new}
-done
+done < package/conversion-tools
 
 # ##############################################################################
 # Rename the ...{new} directories and files in ./config.
@@ -197,18 +203,22 @@ do
 done 
 (
 cat package/systemd-presets 
-for i in bundles run-via-systemd run-virtualbox-guest run-freedesktop-kits run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-local-syslog
+for i in bundles run-via-systemd run-via-netbsd-rc run-virtualbox-guest run-freedesktop-kits run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog
 do
 	cat package/common-nosh-"$i"-presets package/linux-nosh-"$i"-presets package/bsd-nosh-"$i"-presets 
 done
-) | while read i
+) | awk '!x[$0]++' | while read i
 do
 	mv -f -- config/presets/"$i"{new} config/presets/"$i"
 done 
-for i in all.do general-services.do kernel-modules.do terminal-services.do volumes.do dnscache.do tinydns.do
+while read i
+do
+	mv -f -- config/rc.d/"$i"{new} config/rc.d/"$i"
+done < package/netbsd-rc-scripts
+while read i
 do
 	mv -f -- config/convert/"$i"{new} config/convert/"$i"
-done
+done < package/conversion-tools
 for i in targets services
 do
 	test -e config/"$i" && mv -f -- config/"$i" config/"$i"{old}

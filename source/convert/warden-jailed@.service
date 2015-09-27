@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Run command within PC-BSD Warden jail %I
+
+[Service]
+JailID=%I
+ExecStart=true
+
+[Install]
+WantedBy=warden.target

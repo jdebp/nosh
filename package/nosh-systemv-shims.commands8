@@ -2,10 +2,12 @@ chkconfig
 emergency
 halt
 init
+initctl-read
 normal
 poweroff
+rcctl
 reboot
 rescue
 service
+shutdown
 telinit
-rcctl

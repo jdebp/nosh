@@ -21,3 +21,9 @@ do
 		ln -s -f -- ../system-control/presets "${d}"etc/system-manager
 	fi
 done
+
+# This service has been discontinued.
+if system-control is-enabled stty-sane@console 2>/dev/null
+then
+	system-control disable stty-sane@console
+fi

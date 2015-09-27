@@ -10,7 +10,6 @@ Wants=sysinit.target
 Before=shutdown.target
 
 [Service]
-systemdWorkingDirectory=false
 PermissionsStartOnly=true
 SessionLeader=true
 TTYPath=console

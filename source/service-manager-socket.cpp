@@ -9,7 +9,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstring>
 #include <string>
 #include <sys/types.h>
-#include <pwd.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -28,40 +27,6 @@ query_manager_pid(const bool is_system)
 	return static_cast<int>(l);
 }
 
-static const std::string slash("/");
-
-std::string
-xdg_runtime_dir()
-{
-	if (const char * runtime = std::getenv("XDG_RUNTIME_DIR")) {
-		return runtime + slash;
-	} else {
-		std::string r("/run/user/");
-		if (const char * l = getlogin()) {
-			r += l;
-		} else 
-		if (const char * u = std::getenv("USER")) {
-			r += u;
-		} else
-		if (const char * n = std::getenv("LOGNAME")) {
-			r += n;
-		} else
-#if !defined(__LINUX__) && !defined(__linux__)
-		if (struct passwd * p = getpwuid(geteuid())) {
-			r += p->pw_passwd;
-			endpwent();
-		} else
-		{
-			endpwent();
-#endif
-			r += "root";
-#if !defined(__LINUX__) && !defined(__linux__)
-		}
-#endif
-		return r + slash;
-	}
-}
-
 static inline
 const char *
 construct_service_manager_socket_name (
@@ -69,7 +34,7 @@ construct_service_manager_socket_name (
 	std::string & name_buf
 ) {
 	if (is_system) return "/run/service-manager/control";
-	name_buf = xdg_runtime_dir() + "service-manager/control.";
+	name_buf = effective_user_runtime_dir() + "service-manager/control.";
 	const int id(query_manager_pid(is_system));
 	char idbuf[64];
 	snprintf(idbuf, sizeof idbuf, "%d", id);

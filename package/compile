@@ -7,5 +7,4 @@ then
 fi
 ./package/prepare
 ./package/make
-./package/makeinstall
-true
+exec ./package/makeinstall

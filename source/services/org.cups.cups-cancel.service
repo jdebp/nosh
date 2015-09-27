@@ -9,6 +9,7 @@ Before=org.cups.cupsd.service
 [Service]
 Type=oneshot
 ExecStart=cancel -a
+RemainAfterExit=yes
 
 [Install]
 WantedBy=workstation.target

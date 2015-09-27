@@ -1,2 +1,0 @@
-#!/bin/sh -
-system-control preset sysinit.target

@@ -17,6 +17,7 @@ case "$1" in
 			system-control preset $I.service
 			system-control preset --prefix cyclog@ $I.service
 			system-control reset $I.service cyclog@$I.service
+			true
 		done
 		;;
 esac

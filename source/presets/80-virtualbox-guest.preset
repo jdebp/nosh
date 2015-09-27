@@ -6,6 +6,8 @@
 # It is used by the nosh-bundles package in order to enable certain mandatory basics without which a system simply won't work.
 #
 
+enable	virtualbox-guest.target
+
 enable	VBoxService.service
 enable	cyclog@VBoxService.service
 enable	kmod@vbox*.service

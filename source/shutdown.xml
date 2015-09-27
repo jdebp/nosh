@@ -1,0 +1,227 @@
+<refentry id="shutdown">
+
+<refmeta>
+<refentrytitle>shutdown</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo class="manual">administrator commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.20</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>shutdown</refname>
+<refpurpose>BSD/System V compatibility utility for system shutdown</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>shutdown</command>
+<arg choice="opt">--verbose</arg>
+<group choice="opt">
+<arg choice="plain">--halt</arg>
+<arg choice="plain">-H</arg>
+</group>
+<group choice="opt">
+<arg choice="plain">--poweroff</arg>
+<arg choice="plain">-P</arg>
+</group>
+<group choice="opt">
+<arg choice="plain">--reboot</arg>
+<arg choice="plain">-r</arg>
+</group>
+<group choice="opt">
+<arg choice="plain">--kick-off</arg>
+<arg choice="plain">-k</arg>
+</group>
+<arg choice="opt">-h</arg>
+<arg choice="opt">-p</arg>
+<arg choice="opt">--no-wall</arg>
+<group choice='plain'>
+<arg choice="plain">-g <replaceable>period</replaceable></arg>
+<arg choice="plain"><replaceable>time</replaceable></arg>
+</group>
+<arg choice="opt" rep="repeat"><replaceable>message</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>shutdown</command> shuts down the system, optionally waiting for a period and sending warnings to the terminals of logged-in users before calling <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+<refsection><title>Differences from older shutdown tools</title>
+
+<para>
+The upstart, old BSD, XENIX, UnixWare, and systemd <command>shutdown</command> commands all have different patterns (from one another) of intervals between warning messages being emitted.
+</para>
+
+<para>
+The first two require that the time to shutdown always be specified; the other three default to 1 minute from now in the absence of any specification.
+</para>
+
+<para>
+The upstart, old BSD, and System 5 systems incorporate the notion of shutting down to "single-user" mode, even though (on the BSDs at least) that was not strictly speaking possible as the switch to "multi-user" mode made a one-way change to the kernel secure level.
+As a consequence, their <command>shutdown</command> commands had the following semantics:
+</para>
+<itemizedlist>
+<listitem><para>
+With no options, the default action was to (attempt to) transition to "single-user" mode.
+</para></listitem>
+<listitem><para>
+The <arg choice='plain'>-r</arg> and <arg choice='plain'>-h</arg> options overrode that to select reboot or halt/poweroff.
+</para></listitem>
+<listitem><para>
+The <arg choice='plain'>-H</arg> and <group choice='plain'><arg choice='plain'>-p</arg><arg choice='plain'>-P</arg></group> options chose which of halt or poweroff was selected in the latter case, the default being determined by the capabilities of the operating system and platform (which might not support software power off).
+</para></listitem>
+</itemizedlist>
+
+<para>
+Their <command>shutdown</command> also wrote flag files, directly enacted system state changes, bypassed filesystem unmounts and cache flushes, and triggered kernel dumps.
+</para>
+
+</refsection>
+<refsection><title>Compatibility behaviour</title>
+
+<para>
+In this <command>shutdown</command>, the intervals between warning messages roughly follow the pattern used by the XENIX and UnixWare <command>shutdown</command> commands.
+</para>
+
+<para>
+Both the XENIX and UnixWare and the upstart, old BSD, and systemd ways of specifying when to shut down are supported.
+In order to avoid embarrassment resulting from unexpected defaults, explicitly specifying when shutdown should occur is mandatory.
+</para>
+
+<para>
+There is no "single-user" mode now.
+Its replacements are the <filename>emergency</filename> and <filename>rescue</filename> targets, described in <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>, which are startup targets that are not reachable via shutdown procedures.
+As a consequence, the compatibility behaviour is as follows:
+</para>
+<itemizedlist>
+<listitem><para>
+Poweroff is now the default action.
+The <arg choice='plain'>-h</arg> and <arg choice='plain'>-P</arg> options are considered to be on by default anyway, and thus have no effect.
+</para></listitem>
+<listitem><para>
+The <arg choice='plain'>-r</arg> and <arg choice='plain'>-H</arg> options select the non-default actions.
+</para></listitem>
+</itemizedlist>
+
+<para>
+The <arg choice='plain'>-o</arg>, <arg choice='plain'>-d</arg>, <arg choice='plain'>-n</arg>, <arg choice='plain'>-f</arg>, <arg choice='plain'>-F</arg>, and <arg choice='plain'>-t</arg> options from the old toolsets are all errors.
+</para>
+<itemizedlist>
+<listitem><para>
+Flag files, written to a potentially corrupt or dirty volume, are no longer the way to invoke filesystem checks.
+</para></listitem>
+<listitem><para>
+All system state changes are enacted by process #1, usually running <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+None are enacted directly.
+</para></listitem>
+<listitem><para>
+It is not permitted to bypass the filesystem cache flush, which is an integral part of the actions taken by <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> at shutdown.
+</para></listitem>
+<listitem><para>
+Service termination signals and intervals are not adjustable via the <command>shutdown</command> command.
+</para></listitem>
+</itemizedlist>
+
+</refsection>
+<refsection><title>Primary behaviour</title>
+
+<para>
+<command>shutdown</command> waits for a period, sending warning messages to logged-on user terminals with <citerefentry><refentrytitle>wall</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and then chains to the <arg choice='req'>poweroff</arg>, <arg choice='req'>halt</arg>, or <arg choice='req'>reboot</arg> subcommands of <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> to instruct the system manager to enact a state change.
+</para>
+
+<para>
+No checks are made to see whether the current user has permission to send messages to terminals, or to enact system state changes.
+The <citerefentry><refentrytitle>wall</refentrytitle><manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> commands are expected to perform all permissions checks.
+</para>
+
+<para>
+The warning messages comprise an indication of the impending system state change and how soon it will occur, plus whatever additional message text is supplied as <arg choice='plain' rep='repeat'><replaceable>message</replaceable></arg>.
+They can be disabled with the <arg choice='plain'>--no-wall</arg> option.
+</para>
+
+<para>
+The messages are sent during the period before the scheduled shutdown time, beginning at 86400 seconds beforehand.
+They are sent at 6-hourly intervals until the final 6 hours, at hourly intervals until the final hour, at 15-minute intervals until the final 15 minutes, at 5-minute intervals until the final 5 minutes, at 1 minute intervals until the final minute, at 15-second intervals until the final 15 seconds, and finally when the scheduled time is reached (or passed).
+</para>
+
+<para>
+When to shutdown must be specified either with a command line option or an argument:
+</para>
+<itemizedlist>
+<listitem><para>
+The <arg choice='plain'>-g</arg> (grace period) command line option specifies when with a relative time.
+It can be:
+</para>
+<variablelist>
+<varlistentry>
+<term><arg choice='plain'>now</arg></term>
+<listitem><para>
+This specifies no delay to shutdown.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><arg choice='plain'><replaceable>hours</replaceable>:<replaceable>minutes</replaceable></arg></term>
+<listitem><para>
+Shutdown scheduled for <replaceable>hours</replaceable> &#x00d7; 60 + <replaceable>minutes</replaceable> minutes from now.
+<replaceable>minutes</replaceable> may be greater than 60; <replaceable>hours</replaceable> may be greater than 24.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><arg choice='plain'><replaceable>minutes</replaceable></arg></term>
+<listitem><para>
+Shutdown scheduled for <replaceable>minutes</replaceable> minutes from now.
+</para></listitem>
+</varlistentry>
+</variablelist>
+</listitem>
+<listitem><para>
+<replaceable>time</replaceable> is a time specifier for either a relative or an absolute time.
+It can be:
+</para>
+<variablelist>
+<varlistentry>
+<term><arg choice='plain'>now</arg></term>
+<listitem><para>
+This specifies no delay to shutdown.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><arg choice='plain'>+<replaceable>minutes</replaceable></arg></term>
+<listitem><para>
+Shutdown scheduled for <replaceable>minutes</replaceable> minutes from now.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><arg choice='plain'><replaceable>HH</replaceable>:<replaceable>MM</replaceable></arg></term>
+<listitem><para>
+Shutdown scheduled for <replaceable>HH</replaceable>:<replaceable>MM</replaceable> today.
+This must be now or in the future; and a valid time.
+It is an absolute time that is not to be confused with the relative time used with the <arg choice='plain'>-g</arg> command line option.
+Note: The old BSD <command>shutdown</command> considers this to be a backwards compatibility syntax.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><arg choice='plain'><arg choice='opt'><arg choice='opt'><arg choice='opt'><arg choice='opt'><arg choice='opt'><replaceable>CC</replaceable></arg><replaceable>YY</replaceable></arg><replaceable>MM</replaceable></arg><replaceable>DD</replaceable></arg><replaceable>HH</replaceable></arg><replaceable>MM</replaceable></arg></term>
+<listitem><para>
+Shutdown scheduled for the given time, assuming the current century, year, month, and day as necessary.
+This must be now or in the future.
+</para></listitem>
+</varlistentry>
+</variablelist>
+</listitem>
+</itemizedlist>
+
+<para>
+The final state change request can be disabled with the <arg choice='plain'>--kick-off</arg> option.
+Its name derives from the notion that one can perform a partial switch to (the old) "single-user" mode which only logs out interactive users, kicking them off the system, although this mechanism has been superseded now that "single-user" mode no longer exists.
+</para>
+
+</refsection>
+</refsection>
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

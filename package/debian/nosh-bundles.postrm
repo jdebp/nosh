@@ -12,6 +12,9 @@ case "$1" in
 			bootparams \
 			ccpd \
 			cleanuucp \
+			cleantmp \
+			cleanX \
+			console-kit-daemon \
 			ddclient \
 			deluged \
 			deluge-web \
@@ -21,14 +24,22 @@ case "$1" in
 			exim4-queue \
 			fail2ban \
 			fancontrol \
+			fcron \
+			ferm \
+			flow-capture \
 			fscd \
-			gitlab-unicorn \
+			gdm \
 			gitlab-sidekiq \
+			gitlab-unicorn \
 			gnucron \
 			hostnamed \
+			kdm@tty7 \
+			kdm@ttyv6 \
 			keepalived \
+			libvirtd \
 			lm-sensors \
 			localed \
+			lxdm \
 			mailcatcher \
 			ModemManager \
 			mongodb \
@@ -45,8 +56,8 @@ case "$1" in
 			ntpdate \
 			openvpn@client \
 			openvpn@server \
-			org.cups.cupsd \
 			org.cups.cups-cancel \
+			org.cups.cupsd \
 			ossec@agentd \
 			ossec@agentlessd \
 			ossec@analysisd \
@@ -59,7 +70,10 @@ case "$1" in
 			ossec@remoted \
 			ossec@syscheckd \
 			packagekit \
+			pdnsd \
 			plexmediaserver \
+			polipo \
+			polkitd \
 			postgresql \
 			powerd \
 			pppd-dns \
@@ -69,6 +83,7 @@ case "$1" in
 			rpcbind \
 			samba \
 			sickbeard \
+			slim \
 			smartd \
 			smbd \
 			sshdgenkeys \
@@ -84,10 +99,12 @@ case "$1" in
 			swift@object-auditor \
 			swift@object-replicator \
 			swift@object-updater \
-			wettsteinsyslogd \
+			sysctl \
 			timedated \
 			tinydns \
+			vnstat \
 			volmand \
+			wettsteinsyslogd \
 			wicd \
 			winbindd \
 			wpa_supplicant \
@@ -114,6 +131,7 @@ case "$1" in
 			ftp4d \
 			ftp6d \
 			http6d \
+			initctld \
 			kadmind \
 			klogd \
 			kpasswdd \
@@ -151,9 +169,8 @@ case "$1" in
 		for I in \
 			colord \
 			colord-sane \
-			console-kit-daemon \
+			irqbalance \
 			kerneloops \
-			linux-lockfiles \
 			udisks \
 			upower \
 			update-binfmts \

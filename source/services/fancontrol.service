@@ -6,7 +6,6 @@
 Description=fan control daemon
 
 [Service]
-Type=forking
 ExecStart=%p
 Restart=always
 

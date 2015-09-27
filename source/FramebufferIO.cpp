@@ -44,9 +44,16 @@ FramebufferIO::save_and_set_graphics_mode(
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, fb_filename, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	video_mode = variable_info.vi_mode = M_VESA_FULL_1280;
+	video_mode = M_VESA_FULL_1280;
 	if ((0 > ioctl(fd, FBIO_SETMODE, &video_mode))
-	|| (0 > ioctl(fd, FBIO_ADPINFO, &adapter_info)) 
+	|| (0 > ioctl(fd, FBIO_GETMODE, &video_mode))
+	) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, fb_filename, std::strerror(error));
+		throw EXIT_FAILURE;
+	}
+	variable_info.vi_mode = video_mode;
+	if ((0 > ioctl(fd, FBIO_ADPINFO, &adapter_info)) 
 	|| (0 > ioctl(fd, FBIO_MODEINFO, &variable_info))
 	) {
 		const int error(errno);

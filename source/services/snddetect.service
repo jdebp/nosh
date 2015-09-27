@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=PC-BSD sound detection
+
+[Service]
+EnvironmentDirectory=env
+ExecStartPre=rm /tmp/unknownSound
+ExecStart=pc-sounddetect
+RemainAfterExit=true
+
+[Install]
+WantedBy=workstation.target

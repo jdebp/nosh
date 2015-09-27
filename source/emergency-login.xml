@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.18</refmiscinfo>
+<refmiscinfo class="version">1.20</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -22,15 +22,11 @@
 <refsection><title>Description</title>
 
 <para>
-<command>emergency-login</command> is a very simple login program that is
-designed to operate in the emergency and rescue modes (see
-<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+<command>emergency-login</command> is a very simple login program that is designed to operate in the emergency and rescue modes (see <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
 </para>
 
 <para>
-Its function is restricted compared to the usual
-<citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-program:
+Its function is restricted compared to the usual <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry> program:
 </para>
 
 <itemizedlist>
@@ -47,10 +43,7 @@ library functions.
 <listitem><para>
 It only allows login as the superuser.
 It looks up the account database entry by the superuser user ID, 0.
-If more than one record in the database has this ID, which one's password is used
-depends from how the
-<citerefentry><refentrytitle>getpwuid</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-library function works.
+If more than one record in the database has this ID, which one's password is used depends from how the <citerefentry><refentrytitle>getpwuid</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function works.
 </para></listitem>
 <listitem><para>
 It fails open in the event of a missing password (or shadow) file.
@@ -58,38 +51,28 @@ If
 <citerefentry><refentrytitle>getpwuid</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 (or
 <citerefentry><refentrytitle>getspnam</refentrytitle><manvolnum>3</manvolnum></citerefentry>)
-fails for some reason, it issues no prompt and acts as if the correct password had been
-entered.
+fails for some reason, it issues no prompt and acts as if the correct password had been entered.
 </para></listitem>
 <listitem><para>
 It does not record anything in the accounting logs.
-The filesystem containing them might not be mounted in emergency mode, or might be
-mounted read-only.
-For that and other reasons, it does not use
-<citerefentry><refentrytitle>syslog</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
+The filesystem containing them might not be mounted in emergency mode, or might be mounted read-only.
+For that and other reasons, it does not use <citerefentry><refentrytitle>syslog</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
 </para></listitem>
 <listitem><para>
-It ignores any <code>secure</code> settings in the TTYs database (if the operating
-system has one).
+It ignores any <code>secure</code> settings in the TTYs database (if the operating system has one).
 </para></listitem>
 <listitem><para>
 It ignores all settings in the account database relating to password expiry.
 </para></listitem>
 <listitem><para>
 It tries hard to execute a shell.
-If it cannot execute the shell listed in the account record, it attempts to
-fall back to the program denoted by the <envar>SHELL</envar> environment
-variable, or the program hardwired as the platform's <code>_PATH_BSHELL</code>
-setting at compilation time.
+If it cannot execute the shell listed in the account record, it attempts to fall back to the program denoted by the <envar>SHELL</envar> environment variable, or the program hardwired as the platform's <code>_PATH_BSHELL</code> setting at compilation time.
 </para></listitem>
 <listitem><para>
-It does not tell the shell that it is a login shell, in order that the shell
-does not attempt to source "rc" scripts that may not be appropriate for
-emergency/rescue mode.
+It does not tell the shell that it is a login shell, in order that the shell does not attempt to source "rc" scripts that may not be appropriate for emergency/rescue mode.
 </para></listitem>
 <listitem><para>
-It alters no environment variables at all, and does not attempt to
-change into a home directory.
+It alters no environment variables at all, and does not attempt to change into a home directory.
 </para></listitem>
 </itemizedlist>
 

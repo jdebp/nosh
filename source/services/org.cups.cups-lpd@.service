@@ -8,6 +8,7 @@ Description=Common Unix Printing Service's LPD shim
 [Service]
 # FIXME: Is this really needed?
 systemdUserEnvironment=true
+EnvironmentDirectory=env
 User=lp
 ExecStart=cupsd-lpd
 Restart=always

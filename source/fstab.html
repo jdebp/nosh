@@ -30,5 +30,7 @@ It generates:
 <li><p> a <code>mount@</code> bundle to mount and unmount each listed filesystem; </p></li>
 <li><p> if <code>/etc/fstab</code> specifies, a <code>fsck@</code> bundle to check each filesystem ahead of mounting it; </p></li>
 <li><p> on the BSDs only, a <code>dump@</code> bundle to turn crash dumping on and off for each dump device; </p></li>
+<li><p> for <code>*.bde</code> devices, a <code>gbde@</code> bundle to handle GEOM-Based Disc Encryption for that device; </p></li>
+<li><p> for <code>*.eli</code> devices, a <code>geli@</code> bundle to handle GEOM-ELI for that device; </p></li>
 <li><p> a <code>swap@</code> bundle to turn swap on and off for each swap device. </p></li>
 </p>

@@ -83,7 +83,7 @@ static const struct api_mount data[] =
 #if defined(__LINUX__) || defined(__linux__)
 	{	MAKE_DATA(proc),	MS_NOSUID|MS_NODEV				},
 	{	MAKE_DATA(sys),		MS_NOSUID|MS_NOEXEC|MS_NODEV			},
-	{	MAKE_DATA(dev),		MS_NOSUID|MS_STRICTATIME|MS_NOEXEC		},
+	{	MAKE_DATA(dev),		MS_NOSUID|MS_STRICTATIME			},
 	{	MAKE_DATA(pts),		MS_NOSUID|MS_STRICTATIME|MS_NOEXEC		},
 	{	MAKE_DATA(run),		MS_NOSUID|MS_STRICTATIME|MS_NODEV		},
 	{	MAKE_DATA(shm),		MS_NOSUID|MS_STRICTATIME|MS_NOEXEC|MS_NODEV	},

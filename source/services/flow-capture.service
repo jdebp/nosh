@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%p daemon for capturing flow data
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=%p $flags ${datadir:+-w} "${datadir}" "${localip}/${remoteip}/${port}"
+User=%p
+
+[Install]
+WantedBy=workstation.target

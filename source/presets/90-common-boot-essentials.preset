@@ -19,7 +19,6 @@ enable	sysinit-log.service
 enable	dmesg.service
 enable	hostname.service
 enable	machine-id.service
-enable	stty-sane@console.service
 enable	emergency-login@console.service
 enable	fsck@-.service
 enable	mount@-.service

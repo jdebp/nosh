@@ -13,13 +13,9 @@ For copyright and licensing terms, see the file named COPYING.
 
 // These are the built-in commands visible in the session-manager and system-control utililties.
 
-extern void reboot ( const char * & , std::vector<const char *> & ) ;
-extern void halt ( const char * & , std::vector<const char *> & ) ;
-extern void poweroff ( const char * & , std::vector<const char *> & ) ;
-extern void emergency ( const char * & , std::vector<const char *> & ) ;
-extern void rescue ( const char * & , std::vector<const char *> & ) ;
-extern void normal ( const char * & , std::vector<const char *> & ) ;
-extern void sysinit ( const char * & , std::vector<const char *> & ) ;
+extern void init ( const char * & , std::vector<const char *> & ) ;
+extern void reboot_poweroff_halt_command ( const char * & , std::vector<const char *> & ) ;
+extern void emergency_rescue_normal_command ( const char * & , std::vector<const char *> & ) ;
 extern void activate ( const char * & , std::vector<const char *> & ) ;
 extern void deactivate ( const char * & , std::vector<const char *> & ) ;
 extern void isolate ( const char * & , std::vector<const char *> & ) ;
@@ -27,7 +23,6 @@ extern void reset ( const char * & , std::vector<const char *> & ) ;
 extern void enable ( const char * & , std::vector<const char *> & ) ;
 extern void disable ( const char * & , std::vector<const char *> & ) ;
 extern void preset ( const char * & , std::vector<const char *> & ) ;
-extern void init ( const char * & , std::vector<const char *> & ) ;
 extern void find ( const char * & , std::vector<const char *> & ) ;
 extern void cat ( const char * & , std::vector<const char *> & ) ;
 extern void show ( const char * & , std::vector<const char *> & ) ;
@@ -77,20 +72,19 @@ commands[] = {
 	{	"service-status",	service_status		},
 
 	// These are the system-control subcommands.
+	{	"reboot",			reboot_poweroff_halt_command	},
+	{	"halt",				reboot_poweroff_halt_command	},
+	{	"poweroff",			reboot_poweroff_halt_command	},
+	{	"fastboot",			reboot_poweroff_halt_command	},
+	{	"fastreboot",			reboot_poweroff_halt_command	},
+	{	"fasthalt",			reboot_poweroff_halt_command	},
+	{	"fastpoweroff",			reboot_poweroff_halt_command	},
+	{	"emergency",			emergency_rescue_normal_command	},
+	{	"rescue",			emergency_rescue_normal_command	},
+	{	"single",			emergency_rescue_normal_command	},
+	{	"normal",			emergency_rescue_normal_command	},
+	{	"default",			emergency_rescue_normal_command	},
 	{	"init",				init			},
-	{	"reboot",			reboot			},
-	{	"halt",				halt			},
-	{	"poweroff",			poweroff		},
-	{	"fastboot",			reboot			},
-	{	"fastreboot",			reboot			},
-	{	"fasthalt",			halt			},
-	{	"fastpoweroff",			poweroff		},
-	{	"emergency",			emergency		},
-	{	"rescue",			rescue			},
-	{	"single",			rescue			},
-	{	"normal",			normal			},
-	{	"default",			normal			},
-	{	"sysinit",			sysinit			},
 	{	"activate",			activate		},
 	{	"start",			activate		},
 	{	"deactivate",			deactivate		},

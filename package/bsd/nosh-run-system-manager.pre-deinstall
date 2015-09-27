@@ -1,0 +1,6 @@
+#!/bin/sh -
+
+init_path="`sysrc -f /boot/loader.conf -n init_path`"
+init_path="${init_path#/sbin/system-manager}"
+init_path="${init_path#:}"
+sysrc -f /boot/loader.conf -n init_path="${init_path}"

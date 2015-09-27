@@ -7,10 +7,7 @@ Description=Collection for all (non-"late") "auto" swap services
 DefaultDependencies=false
 
 [Service]
-systemdWorkingDirectory=false
-systemdUserEnvironment=no
 User=nobody
-systemdWorkingDirectory=false
 # This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
 

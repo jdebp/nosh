@@ -1,7 +1,13 @@
-udev
-udev-log
-udev-trigger-add@subsystems
-udev-trigger-add@devices
 busybox-mdev
 busybox-mdev-log
 busybox-mdev-rescan
+linux-lockfiles
+suckless-mdev
+suckless-mdev-log
+suckless-mdev-rescan
+udev
+udev-log
+udev-trigger-add@devices
+udev-trigger-add@subsystems
+vdev
+vdev-log

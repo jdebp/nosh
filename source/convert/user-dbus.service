@@ -1,0 +1,21 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Per-user "Desktop" bus service
+
+[Service]
+PermissionsStartOnly=true
+User=%I
+ExecStartPre=mkdir -p -m 0750 /run/user/%I
+ExecStartPre=chown %I: /run/user/%I
+ExecStartPre=mkdir -p -m 0750 /run/user/%I/dbus
+ExecStartPre=chown %I: /run/user/%I/dbus
+# BSD dbus doesn't support --nopidfile, even though that would be nice here.
+# The --address=systemd: option is the closest to our UCSPI-LOCAL.
+ExecStart=dbus-daemon --session --nofork --address=systemd:
+Restart=always
+
+[Install]
+WantedBy=user@%I.target

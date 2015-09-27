@@ -10,12 +10,12 @@ Wants=sysinit.target
 Before=shutdown.target
 
 [Service]
-systemdWorkingDirectory=false
 PermissionsStartOnly=true
 SessionLeader=true
+TTYReset=true
 TTYPath=console
+TTYBannerLine=Rescue mode log-in.
 StandardInput=tty
-ExecStartPre=echo Rescue mode log-in:
 ExecStart=login
 Restart=always
 

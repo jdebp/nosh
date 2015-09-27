@@ -6,6 +6,7 @@
 Description=NFS client side callback daemon
 
 [Service]
+EnvironmentDirectory=env
 ExecStart=%p
 Restart=always
 

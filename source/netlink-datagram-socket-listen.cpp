@@ -147,7 +147,7 @@ exit_error:
 	}
 #endif
 #if defined(SO_RCVBUF)
-	{
+	if (has_rcvbuf) {
 		const int size(receive_buffer_size);
 		if (0 > setsockopt(s, SOL_SOCKET, SO_RCVBUFFORCE, &size, sizeof size)
 		&&  0 > setsockopt(s, SOL_SOCKET, SO_RCVBUF, &size, sizeof size)

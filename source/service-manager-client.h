@@ -19,12 +19,22 @@ load (
 	int socket_fd,
 	const char * name,
 	int supervise_dir_fd,
-	int service_dir_fd,
-	bool want_pipe,
-	bool run_on_empty
+	int service_dir_fd
+);
+void
+make_pipe_connectable (
+	const char * prog,
+	int socket_fd,
+	int supervise_dir_fd
 );
 void
 make_input_activated (
+	const char * prog,
+	int socket_fd,
+	int supervise_dir_fd
+);
+void
+make_run_on_empty (
 	const char * prog,
 	int socket_fd,
 	int supervise_dir_fd
@@ -49,6 +59,10 @@ terminate_daemon (
 );
 int
 kill_daemon (
+	int supervise_dir_fd
+);
+int
+hangup_daemon (
 	int supervise_dir_fd
 );
 bool

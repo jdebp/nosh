@@ -22,10 +22,13 @@ The service manager process and its logger process are joined, standard output+e
 The system manager keeps an open file descriptor for this pipe, so that its contents aren't lost in the event of a logger restart.
 </p></li>
 <li><p>
-The initialization action of the system management state machine is to spawn a process that runs <code>system-control sysinit</code>.
+The initialization action of the system management state machine is to spawn a process that runs <code>system-control init <i>arguments</i></code> where <i>arguments</i> are the arguments passed to the system manager itself at bootstrap.
+They will usually be flags such as <code>-b</code> or <code>-s</code>, to indicate "emergency" and "rescue" (formerly known as "single-user") modes.
 </p></li>
 <li><p>
-<a href="system-control.html"><code>system-control</code></a> simply sends <code>SIGRTMIN + 10</code> to process #1, followed by <code>SIGRTMIN + 11</code>.
+In normal mode, <a href="system-control.html"><code>system-control</code></a> simply sends <code>SIGRTMIN + 10</code> to process #1, followed by <code>SIGRTMIN + 0</code>.
+In rescue mode it sends <code>SIGRTMIN + 10</code>, followed by <code>SIGRTMIN + 1</code>.
+In emergency mode it sends just <code>SIGRTMIN + 2</code>.
 </p></li>
 <li><p>
 In response to <code>SIGRTMIN + 10</code> the system management state machine spawns <code>system-control start sysinit</code>.
@@ -36,9 +39,9 @@ This is a special system target that is expected to bring up "sysinit" services,
 After the target is started, the system is expected to have performed fundamental initialization tasks such as:
 </p>
 <ul>
-<li><p>mounting <code>/usr</code> and <code>/var</code> (if necessary),</p></li>
-<li><p>remounting <code>/</code> read-write,</p></li>
-<li><p>ensuring that <code>/etc/machine-id</code> is set,</p></li>
+<li><p>mounting <code class='filename'>/usr</code> and <code class='filename'>/var</code> (if necessary),</p></li>
+<li><p>remounting <code class='filename'>/</code> read-write,</p></li>
+<li><p>ensuring that <code class='filename'>/etc/machine-id</code> is set,</p></li>
 <li><p>loading kernel modules for things like IPv6 and local-domain sockets,</p></li>
 <li><p>squirrelling away the boot log somewhere,</p></li>
 <li><p>initializing the dynamic library loader, and</p></li>
@@ -52,12 +55,11 @@ So the "sysinit" target has to be started explicitly first, just to make it poss
 </p>
 </li>
 <li><p>
-In response to <code>SIGRTMIN + 11</code> the system management state machine runs <code>system-control init <i>arguments</i></code> where <i>arguments</i> are the arguments passed to the system manager itself at bootstrap.
-They will usually be flags such as <code>-b</code> or <code>-s</code>, to indicate "emergency" and "rescue" (formerly known as "single-user") modes.
+In response to <code>SIGRTMIN + 0</code>, <code>SIGRTMIN + 1</code>, or <code>SIGRTMIN + 2</code> the system management state machine spawns <code>system-control start</code> with the <code>normal</code>, <code>rescue</code>, or <code>emergency</code> target respectively.
 </p></li>
 <li><p>
 <code>system-control</code> activates the "normal", "rescue", or "emergency" targets, as if by <code>system-control start</code>.
-By now, <code>/usr</code> and <code>/var</code> are mounted, and the service/target ordering and dependency system will find all "regular" services and targets encompassed by these targets.
+By now, <code class='filaname'>/usr</code> and <code class='filaname'>/var</code> are mounted, and the service/target ordering and dependency system will find all "regular" services and targets encompassed by these targets.
 </p></li>
 </ol>
 
@@ -67,23 +69,33 @@ System shutdown
 
 <ol>
 <li><p>
-The administrator runs <code>system-control halt</code>, <code>system-control poweroff</code>, <code>system-control reboot</code>, or some other utility.
+The administrator runs <code class='command'>system-control halt</code>, <code>system-control poweroff</code>, <code>system-control reboot</code>, or some other utility.
 </p></li>
 <li><p>
 The utility sends the appropriate signal to process #1.
 (On BSD, these are the same signals as issued by the BSD <code>shutdown</code> command, for compatibility with that command.
 On Linux, these are the systemd signals.)
+</p><p>
+The administrator must have run <code class='command'>system-control</code> as the superuser in order to have permission to send signals to process #1.
 </p></li>
 <li><p>
 In response to the signal the system management state machine spawns <code>system-control start <i>target</i></code> where <i>target</i> is "halt", "reboot", or "poweroff".
 </p></li>
 <li><p>
 <code>system-control</code> starts the named target.
+</p>
+<ul>
+<li><p>
 All of these targets encompass the "shutdown" target, and as standard all "regular" services are marked as conflicting with that target (causing them to be stopped if it is started) and to be stopped <em>before</em> it is started.
 </p></li>
 <li><p>
+All of these targets encompass the "unmount" target, and as standard all "mount@" services are marked as conflicting with that target (causing them to be stopped if it is started) and to be stopped <em>before</em> it is started.
+</p></li>
+</ul>
+</li>
+<li><p>
 The "halt", "reboot", and "poweroff" targets are finally started.
-They are ordered to be started after the "shutdown" target has been started.
+They are ordered to be started after the "shutdown" and "unmount" targets have been started.
 Their <code>start</code> programs invoke <code>system-control halt --force</code>, <code>system-control poweroff --force</code>, or <code>system-control reboot --force</code>, as appropriate.
 </p></li>
 <li><p>

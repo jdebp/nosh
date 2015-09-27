@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.18</refmiscinfo>
+<refmiscinfo class="version">1.20</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -189,22 +189,12 @@ fonts doubled to 16 by 16 pixels.
 </para>
 
 <para>
-The weight and slant are encoded via these command-line options, because not
-all supported font formats include meta-information aboud weight and slant
-in the file itself (usually it is encoded in the filename).
+The weight and slant are encoded via these command-line options, because not all supported font formats include meta-information about weight and slant in the file itself (usually it is encoded in the filename).
 The "vtfont" format does, however.
-It has glyph sets for two different combinations of weight and slant
-(upright and upright bold)
-To load both sets of glyphs, one can load the font with the
-<arg choice='plain'>--font-medium-r</arg> and the
-<arg choice='plain'>--font-bold-r</arg>
-command-line options.
-Each option individually loads only those glyphs that match the weight and
-slant that the option specifies, providing fine-grained control of what glyphs
-are used from what "vtfont" font.
-To load all glyphs from the font with the appropriate weights and slants,
-without the repetition, use the <arg choice='plain'>--vtfont</arg> command-line
-option.
+It has glyph sets for two different combinations of weight and slant (upright and upright bold)
+To load both sets of glyphs, one can load the font with the <arg choice='plain'>--font-medium-r</arg> and the <arg choice='plain'>--font-bold-r</arg> command-line options.
+Each option individually loads only those glyphs that match the weight and slant that the option specifies, providing fine-grained control of what glyphs are used from what "vtfont" font.
+To load all glyphs from the font with the appropriate weights and slants, without the repetition, use the <arg choice='plain'>--vtfont</arg> command-line option.
 </para>
 
 <para>

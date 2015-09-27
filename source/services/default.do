@@ -74,6 +74,10 @@ cyclog@*)
 	log=
 	etc=
 	;;
+emergency-login@console) 
+	log=
+	etc=--etc-bundle
+	;;
 sysinit-log) 
 	log=
 	etc=--etc-bundle
@@ -92,6 +96,10 @@ udev|udev-trigger-add@*)
 	;;
 busybox-mdev|busybox-mdev-rescan)
 	log="../busybox-mdev-log"
+	etc=--etc-bundle
+	;;
+suckless-mdev|suckless-mdev-rescan)
+	log="../suckless-mdev-log"
 	etc=--etc-bundle
 	;;
 *) 
@@ -200,10 +208,21 @@ tinydns)
 		chmod 0755 services.new/"${base}"/service/root/add-"$i"
 	done
 	;;
+axfrdns)
+	ln -s ../../tinydns/service/root services.new/"${base}"/service/
+	;;
 esac
 
-test -e "${name}".tmpfiles && cp -a "${name}".tmpfiles services.new/"${base}"/service/
-test -e "${name}".helper && cp -a "${name}".helper services.new/"${base}"/service/
+if test -e "${name}".tmpfiles 
+then
+	redo-ifchange "${name}".tmpfiles 
+	cp -a "${name}".tmpfiles services.new/"${base}"/service/tmpfiles
+fi
+if test -e "${name}".helper
+then
+	redo-ifchange "${name}".helper
+	cp -a "${name}".helper services.new/"${base}"/service/helper
+fi
 
 rm -r -f -- "$3"
 mv -- services.new/"${base}" "$3"

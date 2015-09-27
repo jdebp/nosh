@@ -40,13 +40,14 @@ target_bundle_prefixes[3] = {
 	"/etc/service-bundles/targets/", 
 	"/var/service-bundles/targets/"
 }, * const
-service_bundle_prefixes[7] = {
+service_bundle_prefixes[8] = {
 	"/run/service-bundles/services/", 
 	"/run/sv/", 
 	"/etc/service-bundles/services/", 
 	"/etc/sv/", 
 	"/var/local/sv/",
 	"/var/sv/",
+	"/var/svc.d/",	// Wayne Marshall compatibility
 	"/service/"
 };
 

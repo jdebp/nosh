@@ -8,6 +8,7 @@ Requires=rpcbind.service nfsclient.service
 After=rpcbind.service nfsclient.service
 
 [Service]
+EnvironmentDirectory=env
 ExecStart=%p
 Restart=always
 

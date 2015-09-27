@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Per-user "Desktop" bus log service
+
+[Service]
+User=%I
+WorkingDirectory=/var/log/user/
+ExecStart=cyclog %I/dbus/
+Restart=always
+
+[Install]
+WantedBy=user@%I.target

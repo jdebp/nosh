@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">administrator commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.18</refmiscinfo>
+<refmiscinfo class="version">1.20</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -103,7 +103,7 @@ PuTTY requires the <arg choice='plain'>--7bit</arg> option be used as it does no
 <listitem><para>
 the Linux kernel built-in terminal emulator
 </para><para>
-<ulink url="http://git.kernel.org/cgit/linux/kernel/git/next/linux-next.git/commit/?id=f8df13e0a901fe55631fed66562369b4dba40f8b">This extension was added in 2011</ulink>, albeit with slightly erroneously, differing from the long-standing xterm and PuTTY semantics of clearing <emphasis>only</emphasis> the scrollback buffer.
+<ulink url="http://git.kernel.org/cgit/linux/kernel/git/next/linux-next.git/commit/?id=f8df13e0a901fe55631fed66562369b4dba40f8b">This extension was added in 2011</ulink>, albeit slightly erroneously, differing from the long-standing xterm and PuTTY semantics of clearing <emphasis>only</emphasis> the scrollback buffer.
 </para></listitem>
 </itemizedlist>
 

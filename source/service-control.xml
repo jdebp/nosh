@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.18</refmiscinfo>
+<refmiscinfo class="version">1.20</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -48,10 +48,8 @@ itself or a directory with a supervise directory named <filename>supervise</file
 </para>
 
 <para>
-The control commands are determined by command line options given
-to <command>service-control</command>.
-Commands are sent in first to last order of the options passed to <command>service-control</command>, 
-and each service is given all commands at once before going onto the next.
+The control commands are determined by command line options given to <command>service-control</command>.
+Commands are sent in first to last order of the options passed to <command>service-control</command>, and each service is given all commands at once before going onto the next.
 </para>
 
 <refsection><title>COMMANDS</title>
@@ -108,6 +106,13 @@ Send a 'h' command to send a SIGHUP signal to the service.
 </para>
 
 </listitem></varlistentry>
+<varlistentry><term><arg>--hangup-main</arg></term><listitem>
+
+<para>
+Send a 'H' command to send a SIGHUP signal to only the main process of the service.
+</para>
+
+</listitem></varlistentry>
 <varlistentry><term><arg>--alarm</arg></term><listitem>
 
 <para>
@@ -129,10 +134,24 @@ Send a 't' command to send a SIGTERM signal to the service.
 </para>
 
 </listitem></varlistentry>
+<varlistentry><term><arg>--terminate-main</arg></term><listitem>
+
+<para>
+Send a 'T' command to send a SIGTERM signal to only the main process of the service.
+</para>
+
+</listitem></varlistentry>
 <varlistentry><term><arg>--kill</arg></term><listitem>
 
 <para>
 Send a 'k' command to send a SIGKILL signal to the service.
+</para>
+
+</listitem></varlistentry>
+<varlistentry><term><arg>--kill-main</arg></term><listitem>
+
+<para>
+Send a 'K' command to send a SIGKILL signal to only the main process of the service.
 </para>
 
 </listitem></varlistentry>

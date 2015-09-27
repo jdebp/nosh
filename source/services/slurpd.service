@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=OpenLDAP %p daemon
+
+[Service]
+ExecStart=%p -d 0
+Restart=always
+
+[Install]
+WantedBy=server.target

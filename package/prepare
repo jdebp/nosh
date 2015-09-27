@@ -7,14 +7,14 @@ then
 fi
 
 # Create and populate the build directory.
-[ \! -d build ] && mkdir -p build
+[ \! -d build ] && mkdir -p -m 0755 build
 (
 	cd source && find . -type d
 ) | (
 	cd build
 	while read i
 	do
-		mkdir -p "$i"
+		mkdir -p -m 0755 "$i"
 	done
 )
 (
@@ -38,6 +38,10 @@ fi
 		dir="`dirname $i`"
 		# Try to create a hard link, and fall back to a copy.
 		# The source and build directories aren't necessarily on the same disc volume.
-		ln -f ../source/"$i" "${dir}" 2>/dev/null || cp -a -f ../source/"$i" "${dir}"
+		if ! ln -f ../source/"$i" "${dir}" 2>/dev/null
+		then
+			rm -f -- "$i"
+			cp -a -f -- ../source/"$i" "${dir}"
+		fi
 	done
 )

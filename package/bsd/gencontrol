@@ -68,28 +68,30 @@ dir="$2"
 		test -d "$j" && find "$j" -type d
 	done | while read k
 	do
-		eval `stat -s $k`
-		st_mode="`echo ${st_mode}|cut -c 3-`"
-		echo "\"/$k\":" "{" "uname:root;" "gname:wheel;" "perm:${st_mode};" "}"
+		echo "\"/$k\":" "{" "uname:root;" "gname:wheel;" "perm:`stat -f '%Lp' \"$k\"`;" "}"
 	done
 	echo "}"
 	echo "files: {"
 	for j in *bin usr var etc
 	do
-		test -d "$j" && find "$j" -type f -o -type l
+		test -d "$j" && find "$j" -type l
 	done | while read k
 	do
-		echo -n "  "
-		if test -L "$k"
-		then
-			echo "\"/$k\":" "'-'"
-		else
-			eval `stat -s $k`
-			st_mode="`echo ${st_mode}|cut -c 3-`"
-			sum="`sha256 -q $k`"
-			sleep 0.15
-			echo "\"/$k\":" "{" "sum:${sum};" "uname:root;" "gname:wheel;" "perm:${st_mode};" "}"
-		fi
+		echo "  " "\"/$k\":" "'-'"
+	done
+	for j in *bin usr var etc
+	do
+		test -d "$j" && find "$j" -type f
+	done | while read k
+	do
+		# The nonsense with sleeps and sync stops the FreeBSD 10 kernel from panicking.
+		sleep 0.2 ; sync
+		echo -n "  " "\"/$k\":" 
+		echo -n " {" "uname:root;" "gname:wheel;"
+		echo -n " sum:`sha256 -q $k`;"
+		echo -n " perm:`stat -f '%Lp' \"$k\"`;"
+		echo " }"
+		sleep 0.2 ; sync
 	done
 	echo "}"
 ) > ${dir}/+MANIFEST

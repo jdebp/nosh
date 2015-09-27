@@ -2271,7 +2271,7 @@ protected:
 };
 }
 
-KernelVTSubsystemLockout::KernelVTSubsystemLockout(int d, int release, int acquire) : 
+KernelVTSubsystemLockout::KernelVTSubsystemLockout(int d, int release_signal, int acquire_signal) : 
 	FileDescriptorOwner(d),
 	vtmode(),
 	kdmode(KD_TEXT)
@@ -2288,7 +2288,7 @@ KernelVTSubsystemLockout::KernelVTSubsystemLockout(int d, int release, int acqui
 {
 	if (-1 != fd) {
 		ioctl(fd, VT_GETMODE, &vtmode);
-		struct vt_mode m = { VT_PROCESS, 0, static_cast<short>(release), static_cast<char>(acquire), 0 };
+		struct vt_mode m = { VT_PROCESS, 0, static_cast<short>(release_signal), static_cast<char>(acquire_signal), 0 };
 		ioctl(fd, VT_SETMODE, &m);
 		ioctl(fd, KDGETMODE, &kdmode);
 		ioctl(fd, KDSETMODE, KD_GRAPHICS);

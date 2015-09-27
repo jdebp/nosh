@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Clean-up X socket directories
+
+[Service]
+Type=oneshot
+WorkingDirectory=/tmp/
+ExecStart=sh -c 'rm -r -f /tmp/.X11-unix /tmp/.XIM-unix /tmp/.ICE-unix /tmp/.font-unix /tmp/.X[0-9].lock ; mkdir -m 1777 /tmp/.X11-unix /tmp/.XIM-unix /tmp/.ICE-unix /tmp/.font-unix'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

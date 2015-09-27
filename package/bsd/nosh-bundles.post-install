@@ -1,14 +1,14 @@
 #!/bin/sh -
 escape() { echo "$1"|sed -e 's/_/_x5f/g' -e 's/@/_x40/g' -e 's/:/_x3a/g' ; }
-addloguser() { getent passwd "$1" > /dev/null || pw useradd "$1" -s /bin/false ; }
-addlog() { mkdir -m 0755 -p /var/log/sv/"$2" ; chown "$1"-log /var/log/sv/"$2" ; }
+add_log() { mkdir -m 0755 -p /var/log/sv/"$2" ; chown "$1"-log /var/log/sv/"$2" ; }
+add_user() { getent passwd "$1" > /dev/null || pw useradd "$1" -s /bin/false ; }
 # non-log users
 for I in \
 	klogd \
 	;
 do
 	i="`escape "$I"`"
-	addloguser "$i"
+	add_user "$i"
 done
 # common services with dedicated log services
 for I in \
@@ -20,6 +20,9 @@ for I in \
 	bootparams \
 	ccpd \
 	cleanuucp \
+	cleantmp \
+	cleanX \
+	console-kit-daemon \
 	ddclient \
 	deluged \
 	deluge-web \
@@ -29,18 +32,26 @@ for I in \
 	exim4-queue \
 	fail2ban \
 	fancontrol \
+	fcron \
+	ferm \
+	flow-capture \
 	fscd \
-	gitlab-unicorn \
+	gdm \
 	gitlab-sidekiq \
+	gitlab-unicorn \
 	gnucron \
 	hostnamed \
+	kdm@tty7 \
+	kdm@ttyv6 \
 	keepalived \
 	kmod@vboxdrv \
 	kmod@vboxnetadp \
 	kmod@vboxnetflt \
 	kmod@vboxpci \
+	libvirtd \
 	lm-sensors \
 	localed \
+	lxdm \
 	mailcatcher \
 	ModemManager \
 	mongodb \
@@ -57,8 +68,8 @@ for I in \
 	ntpdate \
 	openvpn@client \
 	openvpn@server \
-	org.cups.cupsd \
 	org.cups.cups-cancel \
+	org.cups.cupsd \
 	ossec@agentd \
 	ossec@agentlessd \
 	ossec@analysisd \
@@ -71,7 +82,10 @@ for I in \
 	ossec@remoted \
 	ossec@syscheckd \
 	packagekit \
+	pdnsd \
 	plexmediaserver \
+	polipo \
+	polkitd \
 	postgresql \
 	powerd \
 	pppd-dns \
@@ -81,6 +95,7 @@ for I in \
 	rpcbind \
 	samba \
 	sickbeard \
+	slim \
 	smartd \
 	smbd \
 	sshdgenkeys \
@@ -96,8 +111,10 @@ for I in \
 	swift@object-auditor \
 	swift@object-replicator \
 	swift@object-updater \
+	sysctl \
 	timedated \
 	tinydns \
+	vnstat \
 	volmand \
 	wicd \
 	winbindd \
@@ -106,8 +123,8 @@ for I in \
 	;
 do
 	i="`escape "$I"`"
-	addloguser "$i"-log
-	addlog "$i" "$I"
+	add_user "$i"-log
+	add_log "$i" "$I"
 	system-control preset $I.service
 	system-control preset --prefix cyclog@ $I.service
 done
@@ -122,6 +139,7 @@ for I in \
 	ftp4d \
 	ftp6d \
 	http6d \
+	initctld \
 	kadmind \
 	klogd \
 	kpasswdd \
@@ -144,8 +162,8 @@ for I in \
 	;
 do
 	i="`escape "$I"`"
-	addloguser "$i"-log
-	addlog "$i" "$I"
+	add_user "$i"-log
+	add_log "$i" "$I"
 	system-control preset $I.socket
 	system-control preset --prefix cyclog@ $I.service
 done
@@ -155,7 +173,6 @@ for I in \
 	hostname \
 	machine-id \
 	sysinit-log \
-	stty-sane@console \
 	emergency-login@console \
 	;
 do
@@ -181,15 +198,17 @@ for I in \
 	gssd \
 	hastd \
 	hcsecd \
+	ipf \
 	ipfs \
 	ipmon \
 	ipnat \
+	ipsec \
 	ipxrouted \
 	iscsictl \
 	iscsid \
 	keyserv \
+	kmod@mac_bsdextended \
 	kmod@ctl \
-	kmod@fuse \
 	kmod@geom_gate \
 	kmod@ibcs2 \
 	kmod@ipl \
@@ -250,6 +269,7 @@ for I in \
 	pflog \
 	pfsync \
 	pwcheck \
+	pxeboot-resolvconf \
 	quota \
 	rarpd \
 	route6d \
@@ -261,11 +281,13 @@ for I in \
 	savecore \
 	sdpd \
 	securelevel \
+	snddetect \
 	swapexd \
 	swaplate \
-	sysctl \
 	syslogd \
 	timed \
+	ubthidhci \
+	ugidfw \
 	unbound \
 	utx \
 	vixiecron \
@@ -282,8 +304,8 @@ for I in \
 	;
 do
 	i="`escape "$I"`"
-	addloguser "$i"-log
-	addlog "$i" "$I"
+	add_user "$i"-log
+	add_log "$i" "$I"
 	system-control preset $I.service
 	system-control preset --prefix cyclog@ $I.service
 done
@@ -293,8 +315,8 @@ for I in \
 	;
 do
 	i="`escape "$I"`"
-	addloguser "$i"-log
-	addlog "$i" "$I"
+	add_user "$i"-log
+	add_log "$i" "$I"
 	system-control preset $I.socket
 	system-control preset --prefix cyclog@ $I.service
 done
@@ -303,6 +325,7 @@ for I in \
 	background-fsck \
 	devd \
 	devd-log \
+	kmod@fuse \
 	kmod@linux \
 	kmod@sysvmsg \
 	kmod@sysvsem \

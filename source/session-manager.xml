@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">administrator commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.18</refmiscinfo>
+<refmiscinfo class="version">1.20</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -18,15 +18,18 @@
 <command>session-manager</command>
 <arg rep='repeat'><replaceable>args</replaceable></arg> 
 </cmdsynopsis>
+<cmdsynopsis>
+<command>init</command>
+<arg rep='repeat'><replaceable>args</replaceable></arg> 
+</cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection><title>Description</title>
 
 <para>
-<command>session-manager</command> can be used by individual users to manage local,
-per-user, sessions.  It is not meant to be run as process #1, and the system will not
-operate correctly if it is mis-used as process #1.  To manage a system, use
-<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+<command>session-manager</command> can be used by individual users to manage local, per-user, sessions.  
+It is not meant to be run as process #1, and the system will not operate correctly if it is mis-used as process #1.  
+To manage a system, use <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 <para>
@@ -35,33 +38,23 @@ process setup, reaping, and responding to session events.
 </para>
 
 <para>
-Unlike
-<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-it does no system setup.
-Mounting "API" filesystems, creating device nodes, and requesting
-the kernel for special system events are not session-local actions.
+Unlike <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry> it does no system setup.
+Mounting "API" filesystems, creating device nodes, and requesting the kernel for special system events are not session-local actions.
 </para>
 
 <refsection><title>Process setup</title>
 
 <para>
-<command>session-manager</command> expects to be started in the state that the
-user intends services to run as.
-It does very little to its process state, which is inherited by the service
-manager and the logger:
+<command>session-manager</command> expects to be started in the state that the user intends services to run as.
+It does very little to its process state, which is inherited by the service manager and the logger:
 </para>
 
 <itemizedlist>
 
 <listitem>
 <para>
-(On operating systems that support this) it calls
-<citerefentry><refentrytitle>prctl</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-to tell the kernel that it is a "local reaper".
-Any service processes started (directly or indirectly) by the
-<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-that lose their original parents will be re-parented to the
-<command>session-manager</command> process, which will "reap" them when they terminate.
+(On operating systems that support this) it calls <citerefentry><refentrytitle>prctl</refentrytitle><manvolnum>2</manvolnum></citerefentry> to tell the kernel that it is a "local reaper".
+Any service processes started (directly or indirectly) by the <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> that lose their original parents will be re-parented to the <command>session-manager</command> process, which will "reap" them when they terminate.
 This yields a slightly more informative process tree.
 </para>
 </listitem>
@@ -69,15 +62,13 @@ This yields a slightly more informative process tree.
 </itemizedlist>
 
 <para>
-<command>session-manager</command> does not duplicate functionality with
-peculiar special-purpose mechanisms of its own.
+<command>session-manager</command> does not duplicate functionality with peculiar special-purpose mechanisms of its own.
 So:
 </para>
 <itemizedlist>
 <listitem>
 <para>
-If you wish it to run in a particular directory, chain to it from
-<citerefentry><refentrytitle>chdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+If you wish it to run in a particular directory, chain to it from <citerefentry><refentrytitle>chdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 </listitem>
 <listitem>
@@ -109,10 +100,8 @@ If you wish it to run as a session leader, chain to it from
 </refsection><refsection><title>Reaping</title>
 
 <para>
-<command>session-manager</command> operates as a "grim reaper", cleaning up
-after any child processes that exit.
-The operating system (if this is supported) re-parents any orphaned descendent
-processes to it.
+<command>session-manager</command> operates as a "grim reaper", cleaning up after any child processes that exit.
+The operating system (if this is supported) re-parents any orphaned descendent processes to it.
 <command>session-manager</command> spawns exactly three processes itself:
 </para>
 
@@ -120,10 +109,7 @@ processes to it.
 
 <listitem>
 <para>
-After creating a local domain socket named
-<filename>$XDG_RUNTIME_DIR/service-manager/control.$MANAGER_PID</filename>
-it spawns an instance of
-<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+After creating a local domain socket named <filename>/run/user/<replaceable>$USER</replaceable>/service-manager/control.<replaceable>$MANAGER_PID</replaceable></filename> it spawns an instance of <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 This is the local service manager for the session, controlled through the socket.
 </para>
 </listitem>
@@ -164,22 +150,12 @@ that no unsaved log data are lost should the logger unexpectedly exit.
 The logger is intended to be just for the session manager, the service manager,
 and the service controllers.
 Actual services should be plumbed to their own logging services.
-The logger is told to write its logfiles to
-<filename>$XDG_RUNTIME_DIR/session-manager/log.$MANAGER_PID</filename>, 
-and to cap their maximum total size at 1MiB.
+The logger is told to write its logfiles to <filename>/run/user/<replaceable>$USER</replaceable>/session-manager/log.<replaceable>$MANAGER_PID</replaceable></filename>, and to cap their maximum total size at 1MiB.
 </para>
 
 <para>
-If the <code>$MANAGER_PID</code> variable is not set, the decimal value of the
-current process' session ID, as obtained through the
-<citerefentry><refentrytitle>getsid</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-library function, is substituted.
-If the <code>$XDG_RUNTIME_DIR</code> variable is not set, the name
-<filename>/run/user/$USER</filename> is substituted, where <code>$USER</code> is
-the result of the
-<citerefentry><refentrytitle>getlogin</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-library function (on systems that support it), or (failing that) the value of the
-<code>$LOGNAME</code> or <code>$USER</code> variables.
+If the <replaceable>$MANAGER_PID</replaceable> variable is not set, the decimal value of the current process' session ID, as obtained through the <citerefentry><refentrytitle>getsid</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function, is substituted.
+<replaceable>$USER</replaceable> is the result of the <citerefentry><refentrytitle>getlogin</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function (on the BSDs), or (failing that) the value of the <envar>$LOGNAME</envar> or <envar>$USER</envar> variables.
 </para>
 
 </refsection><refsection><title>Session event response</title>
@@ -246,21 +222,13 @@ Do not send these signals directly, as this does not shut down services in order
 </variablelist>
 
 <para>
-It ignores the <code>SIGTTIN</code>, <code>SIGTTOU</code>,
-<code>SIGTSTP</code>, and <code>SIGALRM</code> signals.
+It ignores the <code>SIGTTIN</code>, <code>SIGTTOU</code>, <code>SIGTSTP</code>, and <code>SIGALRM</code> signals.
 </para>
 
 <para>
 <command>session-manager</command> startup is also treated as a session event.
-In response this "event" <command>session-manager</command> spawns 
-<command>system-control</command> 
-<arg choice="plain">start</arg>
-<arg choice="plain">sysinit</arg>.
-This sends the <code>SIGRTMIN + 10</code> and <code>SIGRTMIN + 11</code> signals
-back to the session manager process, instituting a two-phase initialization sequence.
-The first phase, the <code>sysinit</code> target, is expected to initialize as much of the
-session as necessary so that the second phase, <command>system-control</command>
-<arg choice="plain">init</arg>, can do the rest.
+In response this "event" <command>session-manager</command> spawns <command>system-control</command> <arg choice='plain'>--user</arg> <arg choice="plain">init</arg>.
+This calculates what to initialize and sends appropriate signals back to the session manager process.
 </para>
 
 </refsection>

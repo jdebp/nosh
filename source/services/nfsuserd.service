@@ -6,6 +6,7 @@
 Description=NFS user daemon
 
 [Service]
+EnvironmentDirectory=env
 ExecStart=%p
 Restart=always
 

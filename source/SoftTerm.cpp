@@ -1035,14 +1035,32 @@ SoftTerm::SetPrivateMode(unsigned int a, bool f)
 		case 95U:	no_clear_screen_on_column_change = f; break;	// DECNCSM
 		case 112U:	SetScrollbackBuffer(f); break;			// DECRPL
 		case 117U:	active_modes.background_colour_erase = f; break;	// DECECM
+
+		// ############## Intentionally unimplemented private modes
 		case 1U:	// DECCKM (application cursor keys)
 		case 8U:	// DECARM (autorepeat mode)
 		case 66U:	// DECNKM (ancillary keypad numeric mode)
 		case 68U:	// DECKBUM (main keypad data processing mode)
 			// The terminal emulator is entirely decoupled from the physical keyboard; making these meaningless.
 			break;
+		case 1004U:	// xterm GUI focus event reports
+			// The terminal emulator is entirely decoupled from the realizer; making these meaningless.
+			break;
 		case 4U:	break;	// DECSCLM (slow scroll) is not useful.
-		case 5U:	// DECSCNM (light background) is not implemented.
+		case 9U:	break;	// This is an old ambiguous to decode mouse protocol, since superseded.
+		case 1001U:	break;	// This is a mouse grabber, tricky and largely unused in the wild.
+		case 1005U:	break;	// This is an old ambiguous to decode mouse protocol, since superseded.
+		case 1015U:	break;	// This is an old mouse protocol, since superseded.
+
+		// ############## As yet unimplemented or simply unknown private modes
+		case 5U:	// DECSCNM (light background/whole screen reverse video) is not implemented.
+#if 0 /// TODO:
+		case 1000U:	/// \todo SGR-style mouse event reports
+		case 1002U:	/// \todo SGR-style mouse event reports
+		case 1003U:	/// \todo SGR-style mouse event reports
+		case 1006U:	/// \todo SGR-style mouse event reports
+		case 1007U:	/// \todo Wheel mouse events when the alternate screen buffer is on
+#endif
 		default:
 			std::clog << "Unknown private mode : " << a << "\n";
 			break;

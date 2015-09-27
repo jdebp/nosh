@@ -10,6 +10,7 @@ Type=oneshot
 EnvironmentDirectory=env
 ExecStart=ntpd -n -q -g -f /var/db/ntpd.drift
 Restart=never
+RemainAfterExit=yes
 
 [Install]
 WantedBy=workstation.target

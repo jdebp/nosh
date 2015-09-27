@@ -92,6 +92,7 @@ protected:
 	void del_process(int);
 	bool has_processes() const { return !processes.empty(); }
 	void killall(int);
+	void killtop(int);
 	void add_input_ready_event(int);
 	void delete_input_ready_event(int);
 };
@@ -399,6 +400,16 @@ service::killall(
 	}
 }
 
+void 
+service::killtop(
+	int signo
+) {
+	if (has_processes()) {
+		const int pid(*processes.begin());
+		kill(pid, signo);
+	}
+}
+
 inline
 void 
 service::enact_control_message (
@@ -422,6 +433,9 @@ service::enact_control_message (
 			write_status();
 			change_state_if_necessary(original_signals);
 			break;
+		case 'H':	killtop(SIGHUP); break;
+		case 'K':	killtop(SIGKILL); break;
+		case 'T':	killtop(SIGTERM); break;
 		case '1':	killall(SIGUSR1); break;
 		case '2':	killall(SIGUSR2); break;
 		case 'a':	killall(SIGALRM); break;
@@ -728,9 +742,7 @@ void
 load (
 	const char * name,
 	int supervise_dir_fd,
-	int service_dir_fd,
-	bool want_pipe,
-	bool run_on_empty
+	int service_dir_fd
 ) {
 	struct stat service_dir_s;
 	if (!is_directory(service_dir_fd, service_dir_s)) return;
@@ -797,11 +809,6 @@ load (
 		s.control_client_fd = control_client_fd;
 		s.status_fd = status_fd;
 		s.service_dir_fd = service_dir_fd2;
-		if (want_pipe) {
-			if (0 <= pipe_close_on_exec(s.pipe_fds))
-				s.in = s.pipe_fds[0];
-		}
-		s.run_on_empty = run_on_empty;
 		std::strncpy(s.name, name, sizeof s.name);
 		s.stamp_time();
 		s.stamp_activity();
@@ -844,6 +851,39 @@ set_unload (
 		std::fprintf(stderr, "%s: DEBUG: unloading %s\n", prog, s.name);
 		services.erase(supervise_dir_i);
 	}
+}
+
+static
+void
+make_pipe_connectable (
+	int supervise_dir_fd
+) {
+	struct stat supervise_dir_s;
+	if (!is_directory(supervise_dir_fd, supervise_dir_s)) return;
+	service_map::iterator supervise_dir_i(services.find(supervise_dir_s));
+	if (supervise_dir_i == services.end()) return;
+	service & s(supervise_dir_i->second);
+
+	std::fprintf(stderr, "%s: DEBUG: add pipe for %s\n", prog, s.name);
+	if (-1 == s.pipe_fds[1] && -1 == s.pipe_fds[0]) {
+		if (0 <= pipe_close_on_exec(s.pipe_fds))
+			s.in = s.pipe_fds[0];
+	}
+}
+
+static
+void
+make_run_on_empty (
+	int supervise_dir_fd
+) {
+	struct stat supervise_dir_s;
+	if (!is_directory(supervise_dir_fd, supervise_dir_s)) return;
+	service_map::iterator supervise_dir_i(services.find(supervise_dir_s));
+	if (supervise_dir_i == services.end()) return;
+	service & s(supervise_dir_i->second);
+
+	std::fprintf(stderr, "%s: DEBUG: run-on-empty set for %s\n", prog, s.name);
+	s.run_on_empty = true;
 }
 
 /* Support functions ********************************************************
@@ -973,13 +1013,19 @@ control_message (
 					plumb(fds[0], fds[1]);
 					break;
 				case service_manager_rpc_message::LOAD:
-					load(m.name, fds[0], fds[1], m.want_pipe, m.run_on_empty);
+					load(m.name, fds[0], fds[1]);
 					break;
 				case service_manager_rpc_message::MAKE_INPUT_ACTIVATED:
 					make_input_activated(fds[0]);
 					break;
 				case service_manager_rpc_message::UNLOAD:
 					set_unload(fds[0]);
+					break;
+				case service_manager_rpc_message::MAKE_PIPE_CONNECTABLE:
+					make_pipe_connectable(fds[0]);
+					break;
+				case service_manager_rpc_message::MAKE_RUN_ON_EMPTY:
+					make_run_on_empty(fds[0]);
 					break;
 				default:
 					std::fprintf(stderr, "%s: WARNING: unknown control message command %u with %lu file descriptors\n", prog, m.command, count_fds);
@@ -1039,6 +1085,8 @@ service_manager (
 		throw EXIT_FAILURE;
 	}
 
+	subreaper(true);
+
 #if !defined(__LINUX__) && !defined(__linux__)
 	queue = kqueue();
 	if (0 > queue) {
@@ -1077,10 +1125,6 @@ service_manager (
 		sigaction(SIGPIPE,&sa,NULL);
 	}
 #else
-#if defined(PR_SET_CHILD_SUBREAPER)
-	prctl(PR_SET_CHILD_SUBREAPER, 1);
-#endif
-
 	for (unsigned i(0U); i < listen_fds; ++i) {
 		pollfd p;
 		p.fd = LISTEN_SOCKET_FILENO + i;
@@ -1132,7 +1176,7 @@ service_manager (
 				std::fprintf(stderr, "%s: INFO: %s %lu %s\n", prog, "Shutdown requested but there are", services.size(), "services still active.");
 			}
 #if !defined(__LINUX__) && !defined(__linux__)
-			struct kevent p[64];
+			struct kevent p[1024];
 			const int rc(kevent(queue, 0, 0, p, sizeof p/sizeof *p, 0));
 			if (0 > rc) {
 				const int error(errno);
@@ -1179,10 +1223,10 @@ service_manager (
 							std::fprintf(stderr, "%s: DEBUG: proc event PID %lu forked\n", prog, e.ident);
 #endif
 						}
-						if (e.fflags & NOTE_EXIT)
-							reap(original_signals, e.data, e.ident);
 						if (e.fflags & NOTE_CHILD)
 							register_forked_child(e.ident, e.data);
+						if (e.fflags & NOTE_EXIT)
+							reap(original_signals, e.data, e.ident);
 						break;
 					default:
 						std::fprintf(stderr, "%s: DEBUG: event filter %hd ident %lu fflags %x\n", prog, e.filter, e.ident, e.fflags);

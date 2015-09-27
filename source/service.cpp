@@ -204,30 +204,36 @@ chkconfig (
 	const char * service(args.front());
 	args.erase(args.begin());
 	if (args.empty()) {
-		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing command name.");
-		throw EXIT_FAILURE;
-	}
-	const char * command(args.front());
-	args.erase(args.begin());
-	if (!args.empty()) {
-		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Unrecognized extra arguments.");
-		throw EXIT_FAILURE;
-	}
+		args.clear();
+		args.insert(args.end(), "system-control");
+		args.insert(args.end(), "is-enabled");
+	} else {
+		const char * command(args.front());
+		args.erase(args.begin());
+		if (!args.empty()) {
+			std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Unrecognized extra arguments.");
+			throw EXIT_FAILURE;
+		}
 
-	if (0 == std::strcmp("on", command))
-		command = "enable";
-	else
-	if (0 == std::strcmp("off", command))
-		command = "disable";
-	else 
-	{
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, command, "Unsupported subcommand.");
-		throw EXIT_FAILURE;
-	}
+		if (0 == std::strcmp("reset", command))
+			command = "preset";
+		else
+		if (0 == std::strcmp("on", command))
+			command = "enable";
+		else
+		if (0 == std::strcmp("off", command))
+			command = "disable";
+		else 
+		{
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, command, "Unsupported subcommand.");
+			throw EXIT_FAILURE;
+		}
 
-	args.clear();
-	args.insert(args.end(), "system-control");
-	args.insert(args.end(), command);
+		args.clear();
+		args.insert(args.end(), "system-control");
+		args.insert(args.end(), command);
+		next_prog = arg0_of(args);
+	}
 	args.insert(args.end(), service);
 	next_prog = arg0_of(args);
 }

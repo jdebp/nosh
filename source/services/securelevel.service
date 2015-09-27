@@ -4,13 +4,12 @@
 
 [Unit]
 Description=security level raiser
-After=adjkerntz.service ifpw.service ipfilter.service pf.service
+After=adjkerntz.service ifpw.service ipfilter.service pf.service sysctl.service
 
 [Service]
 EnvironmentFile=-/etc/rc.conf
 EnvironmentFile=-/etc/rc.conf.local
-ExecStartPre=sh -c 'for f in /etc/sysctl.conf /etc/sysctl.conf.local ; do [ -r $f ] && sysctl -f $f ; done'
-ExecStart=sh -c '[ ${kern_securelevel} -ge 0 ] && sysctl kern.securelevel=${kern_securelevel}'
+ExecStart=sh -c 'test ${kern_securelevel} -ge 0 && sysctl kern.securelevel=${kern_securelevel}'
 RemainAfterExit=yes
 
 [Install]

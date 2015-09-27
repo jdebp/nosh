@@ -22,6 +22,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "common-manager.h"
 #include "popt.h"
 #include "FileDescriptorOwner.h"
+#include "bundle_creation.h"
 
 /* Utilities ****************************************************************
 // **************************************************************************
@@ -107,6 +108,20 @@ is_local_type (
 }
 
 static inline
+bool 
+is_preenable_type (
+	const char * fstype
+) {
+	fstype = strip_fuse(fstype);
+	return 
+		0 == std::strcmp(fstype, "ext2") ||
+		0 == std::strcmp(fstype, "ext3") ||
+		0 == std::strcmp(fstype, "ext4") ||
+		0 == std::strcmp(fstype, "ext")
+	;
+}
+
+static inline
 bool
 is_root(
 	const char * p
@@ -127,66 +142,6 @@ is_api_mountpoint(
 	return false;
 }
 
-static
-void
-create_link (
-	const char * prog,
-	const char * name,
-	int bundle_dir_fd,
-	const std::string & target,
-	const std::string & link
-) {
-	if (0 > unlinkat(bundle_dir_fd, link.c_str(), 0)) {
-		const int error(errno);
-		if (ENOENT != error)
-			std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, name, link.c_str(), std::strerror(error));
-	}
-	if (0 > symlinkat(target.c_str(), bundle_dir_fd, link.c_str())) {
-		const int error(errno);
-		std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, name, link.c_str(), std::strerror(error));
-	}
-}
-
-static
-void
-create_links (
-	const char * prog,
-	const char * bund,
-	const bool is_target,
-	const bool etc_bundle,
-	int bundle_dir_fd,
-	const std::string & names,
-	const std::string & subdir
-) {
-	const std::list<std::string> list(split_list(names));
-	for (std::list<std::string>::const_iterator i(list.begin()); list.end() != i; ++i) {
-		const std::string & name(*i);
-		std::string base, link, target;
-		if (ends_in(name, ".target", base)) {
-			if (etc_bundle) {
-				if (is_target)
-					target = "../../" + base;
-				else
-					target = "../../../targets/" + base;
-			} else
-				target = "/etc/service-bundles/targets/" + base;
-			link = subdir + base;
-		} else
-		if (ends_in(name, ".service", base)) {
-			if (etc_bundle)
-				target = "/var/sv/" + base;
-			else
-				target = "../../" + base;
-			link = subdir + base;
-		} else 
-		{
-			target = "../../" + name;
-			link = subdir + name;
-		}
-		create_link(prog, bund, bundle_dir_fd, target, link);
-	}
-}
-
 static 
 void
 make_default_dependencies (
@@ -194,10 +149,12 @@ make_default_dependencies (
 	const char * name,
 	const bool is_target,
 	const bool etc_bundle,
+	const bool root,
 	const int bundle_dir_fd
 ) {
 	create_links(prog, name, is_target, etc_bundle, bundle_dir_fd, "shutdown.target", "before/");
-	create_links(prog, name, is_target, etc_bundle, bundle_dir_fd, "shutdown.target", "stopped-by/");
+	if (!root)
+		create_links(prog, name, is_target, etc_bundle, bundle_dir_fd, "unmount.target", "stopped-by/");
 }
 
 static
@@ -236,8 +193,12 @@ void
 create_fsck_bundle (
 	const char * prog,
 	const char * what,
+	const bool preenable,
 	const bool local,
 	const bool overwrite,
+	const bool fuse,
+	const std::string * gbde,
+	const std::string * geli,
 	const bool etc_bundle,
 	int bundle_root_fd,
 	const char * bundle_root,
@@ -245,6 +206,7 @@ create_fsck_bundle (
 	const std::string & mount_bundle_dirname
 ) {
 	const bool is_target(false);
+	const bool root(false);
 
 	if (0 > mkdirat(bundle_root_fd, fsck_bundle_dirname.c_str(), 0755)) {
 		const int error(errno);
@@ -265,13 +227,28 @@ create_fsck_bundle (
 
 	make_service(fsck_bundle_dir_fd.get());
 	make_orderings_and_relations(fsck_bundle_dir_fd.get());
-	make_default_dependencies(prog, fsck_bundle_dirname.c_str(), is_target, etc_bundle, fsck_bundle_dir_fd.get());
+	make_default_dependencies(prog, fsck_bundle_dirname.c_str(), is_target, etc_bundle, root, fsck_bundle_dir_fd.get());
 	make_run_and_restart(prog, bundle_fullname + "/service", "false");
 
 	const char * const pre_target(local ? "local-fs-pre.target" : "remote-fs-pre.target");
 	create_links(prog, fsck_bundle_dirname.c_str(), is_target, etc_bundle, fsck_bundle_dir_fd.get(), pre_target, "after/");
 	create_link(prog, fsck_bundle_dirname.c_str(), fsck_bundle_dir_fd.get(), "../../" + mount_bundle_dirname, "before/" + mount_bundle_dirname);
 	create_link(prog, fsck_bundle_dirname.c_str(), fsck_bundle_dir_fd.get(), "../../" + mount_bundle_dirname, "wanted-by/" + mount_bundle_dirname);
+
+	if (fuse) {
+		create_link(prog, fsck_bundle_dirname.c_str(), fsck_bundle_dir_fd.get(), "../../kmod@fuse", "after/kmod@fuse");
+		create_link(prog, fsck_bundle_dirname.c_str(), fsck_bundle_dir_fd.get(), "../../kmod@fuse", "wants/kmod@fuse");
+	}
+	if (gbde) {
+		const std::string geom_service("gbde@" + escape(*gbde));
+		create_link(prog, fsck_bundle_dirname.c_str(), fsck_bundle_dir_fd.get(), "../../" + geom_service, "after/" + geom_service);
+		create_link(prog, fsck_bundle_dirname.c_str(), fsck_bundle_dir_fd.get(), "../../" + geom_service, "wants/" + geom_service);
+	}
+	if (geli) {
+		const std::string geom_service("geli@" + escape(*geli));
+		create_link(prog, fsck_bundle_dirname.c_str(), fsck_bundle_dir_fd.get(), "../../" + geom_service, "after/" + geom_service);
+		create_link(prog, fsck_bundle_dirname.c_str(), fsck_bundle_dir_fd.get(), "../../" + geom_service, "wants/" + geom_service);
+	}
 
 	create_link(prog, fsck_bundle_dirname.c_str(), fsck_bundle_dir_fd.get(), "/run/service-bundles/early-supervise/" + fsck_bundle_dirname, "supervise");
 
@@ -284,7 +261,7 @@ create_fsck_bundle (
 		<< multi_line_comment("Start fsck " + quote(what) + ".\nAuto-generated by convert-fstab-services.")
 		<< "monitored-fsck\n"
 #if defined(__LINUX__) || defined(__linux__)
-		"-p # preen mode\n"
+		<< (preenable ? "-p # preen mode\n" : "-a # unattended mode\n")
 #else
 		"-C # Skip if clean.\n-p # preen mode\n"
 #endif
@@ -305,14 +282,18 @@ create_mount_bundle (
 	const char * fstype,
 	const char * options,
 	const bool local,
-	const bool premounted,	///< by the system manager, kernel, or initramfs init
 	const bool overwrite,
+	const bool fuse,
+	const std::string * gbde,
+	const std::string * geli,
 	const bool etc_bundle,
 	int bundle_root_fd,
 	const char * bundle_root,
 	const std::string & mount_bundle_dirname
 ) {
 	const bool is_target(false);
+	const bool root(is_root(where));
+	const bool api(is_api_mountpoint(where));
 
 	if (0 > mkdirat(bundle_root_fd, mount_bundle_dirname.c_str(), 0755)) {
 		const int error(errno);
@@ -333,13 +314,28 @@ create_mount_bundle (
 
 	make_service(mount_bundle_dir_fd.get());
 	make_orderings_and_relations(mount_bundle_dir_fd.get());
-	make_default_dependencies(prog, mount_bundle_dirname.c_str(), is_target, etc_bundle, mount_bundle_dir_fd.get());
+	make_default_dependencies(prog, mount_bundle_dirname.c_str(), is_target, etc_bundle, root, mount_bundle_dir_fd.get());
 	make_run_and_restart(prog, bundle_fullname + "/service", "true");
 
 	const char * const target(local ? "local-fs.target" : "remote-fs.target");
 	const char * const pre_target(local ? "local-fs-pre.target" : "remote-fs-pre.target");
 	create_links(prog, mount_bundle_dirname.c_str(), is_target, etc_bundle, mount_bundle_dir_fd.get(), target, "wanted-by/");
 	create_links(prog, mount_bundle_dirname.c_str(), is_target, etc_bundle, mount_bundle_dir_fd.get(), pre_target, "after/");
+
+	if (fuse) {
+		create_link(prog, mount_bundle_dirname.c_str(), mount_bundle_dir_fd.get(), "../../kmod@fuse", "after/kmod@fuse");
+		create_link(prog, mount_bundle_dirname.c_str(), mount_bundle_dir_fd.get(), "../../kmod@fuse", "wants/kmod@fuse");
+	}
+	if (gbde) {
+		const std::string geom_service("gbde@" + escape(*gbde));
+		create_link(prog, mount_bundle_dirname.c_str(), mount_bundle_dir_fd.get(), "../../" + geom_service, "after/" + geom_service);
+		create_link(prog, mount_bundle_dirname.c_str(), mount_bundle_dir_fd.get(), "../../" + geom_service, "wants/" + geom_service);
+	}
+	if (geli) {
+		const std::string geom_service("geli@" + escape(*geli));
+		create_link(prog, mount_bundle_dirname.c_str(), mount_bundle_dir_fd.get(), "../../" + geom_service, "after/" + geom_service);
+		create_link(prog, mount_bundle_dirname.c_str(), mount_bundle_dir_fd.get(), "../../" + geom_service, "wants/" + geom_service);
+	}
 
 	create_link(prog, mount_bundle_dirname.c_str(), mount_bundle_dir_fd.get(), "/run/service-bundles/early-supervise/" + mount_bundle_dirname, "supervise");
 
@@ -353,17 +349,28 @@ create_mount_bundle (
 		<< "mount\n";
 	if (fstype) mount_start << "-t " << quote(fstype) << "\n";
 	if (options) mount_start << "-o " << quote(options) << "\n";
+	// We just remount the pre-mounted filesystems.
 #if defined(__LINUX__) || defined(__linux__)
-	if (premounted) mount_start << "-o remount\n";
+	if (api || root) mount_start << "-o remount\n";
 #else
-	if (premounted) mount_start << "-o update\n";
+	if (api || root) mount_start << "-o update\n";
 #endif
 	mount_start << quote(what) << "\n" << quote(where) << "\n";
 
 	mount_stop 
 		<< "#!/bin/nosh\n" 
-		<< multi_line_comment("Stop mount " + quote(what) + " " + quote(where) + ".\nAuto-generated by convert-fstab-services.")
-		<< "umount\n";
+		<< multi_line_comment("Stop mount " + quote(what) + " " + quote(where) + ".\nAuto-generated by convert-fstab-services.");
+	if (api || root) {
+		mount_stop << "mount\n";
+#if defined(__LINUX__) || defined(__linux__)
+		mount_stop << "-o remount\n";
+#else
+		mount_stop << "-o update\n";
+#endif
+		if (root)
+			mount_stop << "-o ro\n";
+	} else
+		mount_stop << "umount\n";
 	mount_stop << quote(where) << "\n";
 }
 
@@ -379,6 +386,7 @@ create_swap_bundle (
 	const std::list<std::string> & options_list
 ) {
 	const bool is_target(false);
+	const bool root(false);
 	const std::string swap_bundle_dirname("swap@" + escape(what));
 
 	if (0 > mkdirat(bundle_root_fd, swap_bundle_dirname.c_str(), 0755)) {
@@ -400,7 +408,7 @@ create_swap_bundle (
 
 	make_service(swap_bundle_dir_fd.get());
 	make_orderings_and_relations(swap_bundle_dir_fd.get());
-	make_default_dependencies(prog, swap_bundle_dirname.c_str(), is_target, etc_bundle, swap_bundle_dir_fd.get());
+	make_default_dependencies(prog, swap_bundle_dirname.c_str(), is_target, etc_bundle, root, swap_bundle_dir_fd.get());
 	make_run_and_restart(prog, bundle_fullname + "/service", "true");
 
 	if (!has_option(options_list, "late"))
@@ -441,6 +449,7 @@ create_dump_bundle (
 	const char * bundle_root
 ) {
 	const bool is_target(false);
+	const bool root(false);
 	const std::string dump_bundle_dirname("dump@" + escape(what));
 
 	if (0 > mkdirat(bundle_root_fd, dump_bundle_dirname.c_str(), 0755)) {
@@ -462,7 +471,7 @@ create_dump_bundle (
 
 	make_service(dump_bundle_dir_fd.get());
 	make_orderings_and_relations(dump_bundle_dir_fd.get());
-	make_default_dependencies(prog, dump_bundle_dirname.c_str(), is_target, etc_bundle, dump_bundle_dir_fd.get());
+	make_default_dependencies(prog, dump_bundle_dirname.c_str(), is_target, etc_bundle, root, dump_bundle_dir_fd.get());
 	make_run_and_restart(prog, bundle_fullname + "/service", "true");
 
 	create_links(prog, dump_bundle_dirname.c_str(), is_target, etc_bundle, dump_bundle_dir_fd.get(), "dumpauto.target", "wanted-by/");
@@ -553,11 +562,15 @@ convert_fstab_services (
 			const std::string fsck_bundle_dirname("fsck@" + escape(where));
 			const std::string mount_bundle_dirname("mount@" + escape(where));
 			const bool local(!has_option(options_list, "_nodev") && is_local_type(entry->fs_vfstype));
-			const bool premounted(is_api_mountpoint(where) || is_root(where));
+			const bool preenable(is_preenable_type(entry->fs_vfstype));
+			std::string gbde, geli, fuse;
+			const bool is_fuse(begins_with(basename_of(what), "fuse", fuse) && fuse.length() > 1 && std::isdigit(fuse[0]));
+			const bool is_gbde(ends_in(what, ".bde", gbde));
+			const bool is_geli(ends_in(what, ".eli", geli));
 
 			if (entry->fs_passno > 0)
-				create_fsck_bundle(prog, what, local, overwrite, etc_bundle, bundle_root_fd.get(), bundle_root, fsck_bundle_dirname, mount_bundle_dirname);
-			create_mount_bundle(prog, what, where, entry->fs_vfstype, entry->fs_mntops, local, premounted, overwrite, etc_bundle, bundle_root_fd.get(), bundle_root, mount_bundle_dirname);
+				create_fsck_bundle(prog, what, preenable, local, overwrite, is_fuse, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd.get(), bundle_root, fsck_bundle_dirname, mount_bundle_dirname);
+			create_mount_bundle(prog, what, where, entry->fs_vfstype, entry->fs_mntops, local, overwrite, is_fuse, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd.get(), bundle_root, mount_bundle_dirname);
 		} else
 		if (0 == std::strcmp(type, "sw")) {
 			create_swap_bundle(prog, what, overwrite, etc_bundle, bundle_root_fd.get(), bundle_root, options_list);

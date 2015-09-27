@@ -71,7 +71,10 @@ do
 	cp -a -- "${dest}"/nosh-service-management/usr/local/sbin/"$j" "${dest}"/nosh-service-management/sbin/
 done
 install -d -m 0755 "${dest}"/nosh-run-system-manager/sbin 
-ln -f -s system-manager "${dest}"/nosh-run-system-manager/sbin/init
+case "`uname`" in
+Linux)	ln -f -s system-manager "${dest}"/nosh-run-system-manager/sbin/init ;;
+*BSD)	;;
+esac
 
 # more doco
 for i in guide ;
@@ -120,6 +123,7 @@ do
 done
 
 # units
+install -d -m 0755 "${dest}"/nosh-run-via-netbsd-rc/usr/local/etc/rc.d 
 install -d -m 0755 "${dest}"/nosh-run-via-systemd/usr/local/lib/systemd/system 
 install -d -m 0755 "${dest}"/nosh-run-via-systemd/usr/local/lib/tmpfiles.d 
 install -d -m 0755 "${dest}"/nosh-run-via-systemd/usr/local/lib/systemd/system-preset 
@@ -131,7 +135,11 @@ while read j ;
 do
 	ln -f -- "${src}"/lib/tmpfiles.d/"$j" "${dest}"/nosh-run-via-systemd/usr/local/lib/tmpfiles.d/
 done < package/tmpfiles-snippets ;
-for i in bundles run-via-systemd run-virtualbox-guest run-freedesktop-kits run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-local-syslog
+while read j ;
+do
+	ln -f -- "${src}"/etc/rc.d/"$j" "${dest}"/nosh-run-via-netbsd-rc/usr/local/etc/rc.d/
+done < package/netbsd-rc-scripts ;
+for i in bundles run-via-systemd run-via-netbsd-rc run-virtualbox-guest run-freedesktop-kits run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog
 do
 	install -d -m 0755 "${dest}"/nosh-"$i"/usr/local/etc/system-control/presets 
 	(
@@ -151,7 +159,7 @@ do
 done < package/systemd-presets ;
 
 # Conversion tools
-for j in all.do general-services.do kernel-modules.do terminal-services.do volumes.do dnscache.do tinydns.do
+while read j ;
 do
 	ln -f -- "${src}"/etc/system-control/convert/"$j" "${dest}"/nosh-bundles/etc/system-control/convert/
-done
+done < package/conversion-tools

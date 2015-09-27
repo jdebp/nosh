@@ -4,7 +4,7 @@
 
 [Unit]
 Description=Save and restore NAT rules and state information across a reboot
-After=ipnat.service
+After=ipnat.service ipf.service
 Wants=ipnat.service
 
 [Service]

@@ -3,19 +3,20 @@
 ## **************************************************************************
 
 [Unit]
-Description=Standard login on %I
+Description=Emergency super-user login on %I
 Conflicts=ttylogin@%i.service getty@%i.service autovt@%i.service serial-getty@%i.service
+DefaultDependencies=false
 
 [Service]
 SessionLeader=true
 StandardInput=tty
 StandardOutput=inherit
-ExecStartPre=echo Emergency mode log-in:
 ExecStart=emergency-login
 Restart=always
 RestartSec=0
 TTYPath=%I
 TTYReset=yes
+TTYBannerLine=Emergency mode log-in.
 
 [Install]
 WantedBy=emergency.target

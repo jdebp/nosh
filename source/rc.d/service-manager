@@ -1,0 +1,25 @@
+#!/bin/sh
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+# PROVIDE: service-manager
+# REQUIRE: FILESYSTEMS
+# BEFORE: DAEMON
+# KEYWORD: nojail shutdown
+
+. /etc/rc.subr
+
+name="service_manager"
+rcvar="service_manager_enable"
+command="/usr/local/bin/prependpath"
+start_precmd="service_manager_precmd"
+command_args="PATH /usr/local/bin:/usr/local/sbin local-datagram-socket-listen /run/service-manager/control service-manager &"
+
+service_manager_precmd()
+{
+	mkdir -p /run/service-manager/log
+}
+
+load_rc_config $name
+run_rc_command "$1"

@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD Bluetooth HID HCI initialization/shutdown
+Before=bluetooth.service
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=usbconfig ${busnum:+-u} "${busnum}" ${addr:+-a} "${addr}" do_request 0x40 0 0 0 0
+RemainAfterExit=true
+
+[Install]
+WantedBy=workstation.target

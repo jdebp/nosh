@@ -1,6 +1,7 @@
 background-fsck
 devd
 devd-log
+kmod@fuse
 kmod@linux
 kmod@svr4
 kmod@sysvmsg

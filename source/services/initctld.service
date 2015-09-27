@@ -6,7 +6,8 @@
 Description=System 5 init compatibility daemon
 
 [Service]
-ExecStart=%p
+ExecStart=initctl-read
+Restart=always
 
 [Install]
 WantedBy=workstation.target

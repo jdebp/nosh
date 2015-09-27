@@ -1,3 +1,27 @@
+nosh (1.20) unstable; urgency=low
+
+  * The ways in which old-style runlevels passed from the boot loader are mapped to targets have been consolidated into one place: the system-control init subcommand.
+    * As a consequence telinit has been simplified.
+    * Most of the things that Linux boot loaders like to use, like "single" and "5", are now recognized.
+  * More cross-platform services: axfrdns, salt-minion, salt-master, salt-api, flow-capture, slapd, slurpd, polipo, pdnsp, bluetooth, fcron, vnstat, libvirtd, gdm, lxdm, slim, kdm@tty7, kdm@ttyv6, ferm
+  * More Linux services: vdev, suckless-mdev, suckless-mdev-rescan, irqbalance
+  * More BSD services: ipsec, ipfs, ugidfw, ubthidhci, snddetect, pxeboot-resolvconf
+  * There is now a separate unmount target that allows unmounts to be ordered after shutdown.
+  * The use of the XDG_RUNTIME_DIR environment variable has been eliminated, given how problematic it is with su .
+  * There are now services for running per-user Desktop Bus instances.
+  * emergency mode no longer mounts filesystems or pulls in the basic target.
+  * emergency and rescue modes now print a short banner line above every login prompt.
+  * stty-sane@console has been retired, as all routes to console interaction set the terminal modes anyway.
+  * monitor-fsck-progress has been improved, with colours, percentages, and progress bars.
+  * The orderings between the Desktop Bus service and some *Kit services have been tweaked to eliminate some out-of-order processing at shutdown.
+  * The system-control sysinit subcommand has been retired.
+  * service-control (a.k.a. svc) now supports -T, -K, and -H options.
+  * There is now a System 5/BSD compatibility shutdown command.
+  * There is now a geom configuration import.
+  * There is now a sppp configuration import.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Sun, 27 Sep 2015 17:41:20 +0100
+
 nosh (1.19) unstable; urgency=low
 
   * More Linux services: udisks, upower, colord, colord-sane

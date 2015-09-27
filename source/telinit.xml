@@ -1,0 +1,309 @@
+<refentry id="telinit">
+
+<refmeta>
+<refentrytitle>telinit</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo class="manual">administrator commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.20</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>telinit</refname>
+<refname>init</refname>
+<refname>reboot</refname>
+<refname>halt</refname>
+<refname>haltsys</refname>
+<refname>poweroff</refname>
+<refname>emergency</refname>
+<refname>rescue</refname>
+<refname>normal</refname>
+<refname>fastboot</refname>
+<refname>fasthalt</refname>
+<refname>fastpoweroff</refname>
+<refname>service</refname>
+<refname>rcctl</refname>
+<refname>chkconfig</refname>
+<refname>update-rc.d</refname>
+<refname>invoke-rc.d</refname>
+<refpurpose>BSD/System V compatibility utilities for system and service control</refpurpose>
+</refnamediv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>telinit</command> is a multiple personality program, whose function varies according to what name it is invoked as.
+</para>
+
+<para>
+The various commands that it provides are compatibility shims only; they do not support the full capabilities of the original commands, only a common-use subset for providing an easy migration path for old BSD and System V habits and scripts.
+Avoid using them if possible.
+</para>
+
+<para>
+It is preferable, although not ideal, to have systemd and upstart habits and use the <citerefentry><refentrytitle>systemctl</refentrytitle><manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>initctl</refentrytitle><manvolnum>1</manvolnum></citerefentry> compatibility commands instead.
+</para>
+
+<refsection><title>Compatibility system control commands</title>
+
+<para>
+These commands are all shims around <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>, either directly or indirectly via <citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+</para>
+
+<refsection><title>General</title>
+
+<cmdsynopsis>
+<command>telinit</command>
+<arg choice="opt" rep="repeat"><replaceable>args</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>init</command>
+<arg choice="opt" rep="repeat"><replaceable>args</replaceable></arg>
+</cmdsynopsis>
+
+<para>
+Invoked as <command>telinit</command> <arg choice="plain" rep='repeat'><replaceable>args</replaceable></arg> or as <command>init</command> <arg choice="plain" rep='repeat'><replaceable>args</replaceable></arg> the program chains to <command>system-control</command> <arg choice="plain">init</arg> <arg choice="plain" rep='repeat'><replaceable>args</replaceable></arg>.
+</para>
+
+<para>
+No attempt is made to validate <arg choice="plain"><replaceable>args</replaceable></arg>; however it must have the same form as is used by the loader and kernel to pass arguments to process #1 at bootstrap.
+See the <command>init</command> subcommand of <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry> for details.
+</para>
+
+<para>
+It is a mistake to run this as process #1, thinking that it is an alias for <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+It is not, and on some systems the executable is dynamically linked to libraries in <filename>/usr/lib</filename> which isn't present at boot time.
+Configure the system to invoke <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry> directly, optionally under the name <command>init</command>, instead.
+</para>
+
+<para>
+It is likewise a mistake to run this thinking that it is an alias for <citerefentry><refentrytitle>session-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+Again, invoke that directly, optionally under the name <command>init</command>.
+</para>
+
+</refsection>
+<refsection><title>Startup</title>
+<cmdsynopsis><command>emergency</command></cmdsynopsis>
+<cmdsynopsis><command>rescue</command></cmdsynopsis>
+<cmdsynopsis><command>normal</command></cmdsynopsis>
+
+<para>
+Invoked as one of the system control commands <command>emergency</command>, <command>rescue</command>, or <command>normal</command>, it will chain to <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry> inserting that as the 0th argument and passing the original arguments as the subcommand.
+</para>
+
+</refsection>
+<refsection><title>Shutdown</title>
+<cmdsynopsis>
+<command>reboot</command>
+<group choice="opt">
+<arg choice="plain">-f</arg>
+<arg choice="plain">--force</arg>
+</group>
+<arg choice="opt">--halt</arg>
+<arg choice="opt">--reboot</arg>
+<arg choice="opt">--poweroff</arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>halt</command>
+<group choice="opt">
+<arg choice="plain">-f</arg>
+<arg choice="plain">--force</arg>
+</group>
+<arg choice="opt">--halt</arg>
+<arg choice="opt">--reboot</arg>
+<arg choice="opt">--poweroff</arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>poweroff</command>
+<group choice="opt">
+<arg choice="plain">-f</arg>
+<arg choice="plain">--force</arg>
+</group>
+<arg choice="opt">--halt</arg>
+<arg choice="opt">--reboot</arg>
+<arg choice="opt">--poweroff</arg>
+</cmdsynopsis>
+
+<para>
+Invoked as one of the system control commands <command>reboot</command>, <command>halt</command>, or <command>poweroff</command> it will normally chain to <citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry> with the <arg>-r</arg>, <arg>-h</arg>, or <arg>-p</arg> command-line option respectively.
+<citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry> is then responsible for issuing the relevant commands to the system manager.
+The <arg>--halt</arg>, <arg>--reboot</arg>, and <arg>--poweroff</arg> command-line options force which option is sent to <citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry>, for the benefits of system administrators who enjoy giving computers self-contradictory instructions like <command>reboot</command> <arg choice="plain">--halt</arg>.
+</para>
+
+<para>
+The <arg>--force</arg> command-line option specifies that the shutdown process should bypass service changes and enact the finalization action immediately.
+When it is used the command will instead chain to the <arg choice="req">reboot</arg>, <arg choice="req">halt</arg>, and <arg choice="req">poweroff</arg> subcommands of <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>, passing the <arg>--force</arg> command-line option through.
+This will also bypass whatever actions <citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry> would have taken, including writing warning messages to users and writing login accounting database entries.
+</para>
+
+<para>
+Invoked as one of the system control commands <command>fastboot</command>, <command>fasthalt</command>, or <command>fastpoweroff</command>, it will act as if invoked as <command>reboot</command>, <command>halt</command>, or <command>poweroff</command> with the <arg>--force</arg> command-line option.
+</para>
+
+<para>
+<command>haltsys</command> is an alias for <command>halt</command> provided for rough compatibility with the XENIX and UnixWare extensions to System 5.
+It does not support their <arg choice='plain'>-d</arg> option, whose behaviour is strongly tied to those particular platforms.
+</para>
+
+</refsection>
+</refsection>
+<refsection><title>Compatibility service control and configuration commands</title>
+
+<para>
+These commands are all shims around <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+As such, they all operate on native nosh services, not on old BSD or System V shell scripts.
+Their actions are defined in terms of service management actions, not in terms of running shell scripts.
+For example: 
+<command>service</command> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice="plain">start</arg> has the meaning of starting a named service, not of invoking a shell script with an argument.
+</para>
+
+<para>
+These commands and will enforce correct service dependencies and start/stop orderings, unlike the original BSD and System 5 service management systems.
+For individual control of services without orderings or dependencies, use <citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> or <citerefentry><refentrytitle>service-status</refentrytitle><manvolnum>1</manvolnum></citerefentry> directly instead.
+</para>
+
+<refsection><title>Maintainer script utilities</title>
+
+<cmdsynopsis>
+<command>invoke-rc.d</command>
+<arg choice="req"><replaceable>name</replaceable></arg>
+<group choice="req">
+<arg choice="plain">start</arg>
+<arg choice="plain">stop</arg>
+</group>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>update-rc.d</command>
+<arg choice="req"><replaceable>name</replaceable></arg>
+<group choice="req">
+<arg choice="plain">enable</arg>
+<arg choice="plain">disable</arg>
+<arg choice="plain">remove</arg>
+<arg choice="plain">defaults</arg>
+</group>
+</cmdsynopsis>
+
+<para>
+Avoid using these commands outwith package installation/uninstallation scripts.
+They are tailored for such use in particular.
+</para>
+
+<para>
+Invoked as <command>invoke-rc.d</command> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice="plain"><replaceable>command1</replaceable></arg>, the program chains to <command>system-control</command> <arg choice="plain"><replaceable>command2</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>.
+<replaceable>command1</replaceable> may only be one of <arg choice="plain">start</arg> or <arg choice="plain">stop</arg>, which are translated to <arg choice="plain">reset</arg> and <arg choice="plain">stop</arg> (respectively) for <replaceable>command2</replaceable>.
+The behaviour that it is designed to be backwards compatible with only starts a service in response to the <arg choice="plain">start</arg> subcommand if the administrator has configured the service to auto-start.
+Hence the replacement of <arg choice="plain">start</arg> by <arg choice="plain">reset</arg>.
+</para>
+
+<para>
+Invoked as <command>update-rc.d</command> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice="plain"><replaceable>command1</replaceable></arg>, the program chains to <command>system-control</command> <arg choice="plain"><replaceable>command2</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>.
+<replaceable>command1</replaceable> may only be one of <arg choice="plain">defaults</arg>, <arg choice="plain">enable</arg>, <arg choice="plain">disable</arg>, or <arg choice="plain">remove</arg>, which are translated to <arg choice="plain">preset</arg>, <arg choice="plain">preset</arg>, <arg choice="plain">disable</arg>, and <arg choice="plain">disable</arg> (respectively) for <replaceable>command2</replaceable>.
+Note that the <arg choice="plain">start</arg> and <arg choice="plain">stop</arg> subcommands of the original tool have been deprecated.
+This command makes no attempt to support any such mechanism.
+</para>
+
+</refsection>
+<refsection><title>Old-style service control</title>
+
+<cmdsynopsis>
+<command>service</command>
+<arg choice="req"><replaceable>name</replaceable></arg>
+<arg choice="req"><replaceable>command</replaceable></arg>
+</cmdsynopsis>
+
+<para>
+Invoked as <command>service</command> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice="plain"><replaceable>command</replaceable></arg>, the program chains to <command>system-control</command> <arg choice="plain"><replaceable>command</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>.
+It makes no attempt itself to validate <replaceable>command</replaceable>, which can be any of the subcommands supported by <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+However, for best results restrict <replaceable>command</replaceable> to one of <arg choice="plain">start</arg>, <arg choice="plain">stop</arg>, or <arg choice="plain">status</arg>.
+</para>
+
+<para>
+Note that, unlike the BSD command, <command>service</command> can manually start and stop disabled services.
+</para>
+
+</refsection>
+<refsection><title>Old-style Linux service control</title>
+
+<cmdsynopsis>
+<command>chkconfig</command>
+<arg choice="req"><replaceable>name</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>chkconfig</command>
+<arg choice="req"><replaceable>name</replaceable></arg>
+<group choice="req">
+<arg choice="plain">reset</arg>
+<arg choice="plain">on</arg>
+<arg choice="plain">off</arg>
+</group>
+</cmdsynopsis>
+
+<para>
+Invoked as <command>chkconfig</command> <arg choice="plain"><replaceable>name</replaceable></arg>, the program chains to <command>system-control</command> <arg choice="plain">is-enabled</arg> <arg choice="plain"><replaceable>name</replaceable></arg>.
+</para>
+
+<para>
+Invoked as <command>chkconfig</command> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice="plain"><replaceable>command1</replaceable></arg>, the program chains to <command>system-control</command> <arg choice="plain"><replaceable>command2</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>.
+<replaceable>command1</replaceable> may only be one of <arg choice="plain">reset</arg>, <arg choice="plain">on</arg>, or <arg choice="plain">off</arg>, which are translated to <arg choice="plain">preset</arg>, <arg choice="plain">enable</arg>, and <arg choice="plain">disable</arg> (respectively) for <replaceable>command2</replaceable>.
+</para>
+
+<para>
+No other functionality of the original <command>chkconfig</command> tool (whose operation varies incompatibly from platform to platform outwith these two subcommands) is supported.
+</para>
+
+</refsection>
+<refsection><title>OpenBSD service control</title>
+
+<cmdsynopsis>
+<command>rcctl</command>
+<arg choice="req"><replaceable>command</replaceable></arg>
+<arg choice="req"><replaceable>name</replaceable></arg>
+</cmdsynopsis>
+
+<para>
+Invoked as <command>rcctl</command> <arg choice="plain"><replaceable>command</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>, unless <arg choice="plain"><replaceable>command</replaceable></arg> is either <arg choice="plain">set</arg> or <arg choice="plain">get</arg> the program chains to <command>system-control</command> <arg choice="plain"><replaceable>command</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>.
+It makes no attempt itself to validate <replaceable>command</replaceable>, which can be any of the subcommands supported by <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+<arg choice="plain">set</arg> is replaced with <arg choice="plain">set-service-env</arg>.
+<arg choice="plain">get</arg> is replaced with <arg choice="plain">print-service-env</arg>.
+</para>
+
+<para>
+Do not use <command>rcctl</command> <arg choice="plain">set</arg> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice="plain">status</arg> to enable or disable services.
+This is not even correct for the original tool, as only OpenBSD uses variables named <replaceable>name</replaceable><code>_status</code> in the first place.
+Other BSDs have different names which won't work with this OpenBSD-specific syntax.
+In contrast, <command>rcctl</command> <arg choice="plain">enable</arg> <arg choice="plain"><replaceable>name</replaceable></arg> and <command>rcctl</command> <arg choice="plain">disable</arg> <arg choice="plain"><replaceable>name</replaceable></arg>, defined as equivalents in the original OpenBSD tool, will work portably.
+</para>
+
+</refsection>
+
+</refsection>
+
+<refsection><title>telinit server</title>
+
+<cmdsynopsis>
+<command>initctl-read</command> 
+</cmdsynopsis>
+
+<para>
+<command>initctl-read</command> is a UCSPI telinit server.
+It loops forever, reading telinit request messages and executing the requested <command>telinit</command> commands.
+Almost no programs expect or use this interface, <ulink url="https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=657990#57">which the maintainers of the System 5 init package themselves consider to be private and deprecated</ulink>.
+</para>
+
+<para>
+It expects file descriptor 3 to be a FIFO that has been set up, with <citerefentry><refentrytitle>fifo-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry> or similar, to listen for incoming messages.
+Usually, its standard error will be redirected to an instance of <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> or similar.
+</para>
+
+<para>
+Although the telinit requests protocol defines a wide range of requests, all are dishonoured except for runlevel changes, which are simply passed over to <command>telinit</command> for enacting.
+No validation is made on the run level requested except that it be a printable character.
+</para>
+
+</refsection>
+
+</refsection>
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

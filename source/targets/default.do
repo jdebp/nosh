@@ -4,7 +4,7 @@ base="`basename \"${name}\"`"
 
 redo-ifchange system-control
 
-case "${name}" in
+case "${base}" in
 *@*) 
 	template="${name%%@*}"
 	if test -e "${template}"@.target
@@ -28,11 +28,14 @@ case "${name}" in
 	;;
 esac
 
-redo-ifchange "${unitfile}"
+test -n "${unitfile}" && redo-ifchange "${unitfile}"
 
 mkdir -p targets.new
 
-./system-control convert-systemd-units --etc-bundle --bundle-root targets.new/ "${unit}"
+if test -n "${unitfile}"
+then
+	./system-control convert-systemd-units --no-systemd-quirks --etc-bundle --bundle-root targets.new/ "${unit}"
+fi
 
 rm -r -f -- "$3"
 mv -- targets.new/"${base}" "$3"

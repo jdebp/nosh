@@ -71,7 +71,7 @@ Recommends:
 Description: BSD and System 5 shim service and system management utilities
  This package provides shims for old-style BSD and System 5 system management commands.
  * service, chkconfig
- * init, telinit, halt, poweroff, reboot
+ * init, shutdown, telinit, halt, poweroff, reboot
  * emergency, normal, rescue
  * fasthalt, fastpoweroff, fastboot
  * rcctl
@@ -122,7 +122,9 @@ Provides: init
 Description: Run the various AppleTalk services
  This package runs the nosh system manager as process #1.
  . 
- It does this by installing a symbolic link as /sbin/init .
+ It does this on FreeBSD/PC-BSD by modifying /boot/loader.conf .
+ . 
+ It does this on Linux by installing a symbolic link as /sbin/init .
  . 
  Note: This does not install any System 5 compatibility shim commands (halt, reboot, poweroff, &c.).
  For those, install the (recommended) nosh-systemv-shims package.
@@ -195,21 +197,39 @@ Description: Run the various AppleTalk services
 
 Package: nosh-run-udev
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles
+Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles, udev
 Suggests: 
 Recommends: 
-Conflicts: nosh-run-busybox-mdev
+Conflicts: nosh-run-busybox-mdev, nosh-run-suckless-mdev, nosh-run-vdev
 Description: Run udev as the device manager.
  This package causes systemd udev to be run as the plug-and-play device manager.
 
 Package: nosh-run-busybox-mdev
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles
+Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles, busybox
 Suggests: 
 Recommends: 
-Conflicts: nosh-run-udev
+Conflicts: nosh-run-udev, nosh-run-suckless-mdev, nosh-run-vdev
 Description: Run BusyBox mdev as the device manager.
  This package causes BusyBox mdev to be run as the plug-and-play device manager.
+
+Package: nosh-run-suckless-mdev
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles, smdev
+Suggests: 
+Recommends: 
+Conflicts: nosh-run-udev, nosh-run-suckless-mdev, nosh-run-vdev
+Description: Run SuckLess mdev as the device manager.
+ This package causes SuckLess mdev to be run as the plug-and-play device manager.
+
+Package: nosh-run-vdev
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles, vdev
+Suggests: 
+Recommends: 
+Conflicts: nosh-run-busybox-mdev, nosh-run-suckless-mdev, nosh-run-udev
+Description: Run vdev as the device manager.
+ This package causes Devuan vdev to be run as the plug-and-play device manager.
 
 Package: nosh-run-local-syslog
 Architecture: amd64

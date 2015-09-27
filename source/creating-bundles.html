@@ -71,5 +71,18 @@ ln -s /etc/service-bundles/targets/workstation wanted-by/</pre></blockquote>
 
 <p>
 Tailor this according to need, of course.
-The service may be wanted by the "server" or "multi-user" targets rather than by the "workstation" target, for example.
 </p>
+
+<p>
+The standard targets are akin to the Solaris SMF milestones, including having distinct "server", "workstation", and "multi-user" targets instead of one single target that mixes all three.
+A rough guide for converting from the NetBSD <code>rc.d</code> system is:
+</p>
+
+<dl>
+<dt><code>FILESYSTEMS</code></dt>
+<dd><p>This usually equivalent to the <code>local-fs</code> standard target, although cleanup services are usually related to the <code>sysinit</code> standard target instead.</p></dd>
+<dt><code>LOGIN</code></dt>
+<dd><p>This usually equivalent to the <code>multi-user</code> standard target.</p></dd>
+<dt><code>SERVERS</code> and <code>DAEMON</code></dt>
+<dd><p>One of the <code>workstation</code>, <code>server</code>, or <code>sysinit</code> standard targets is usually equivalent.</p></dd>
+</dl>

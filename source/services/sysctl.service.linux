@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=sysctl initialization
+
+[Service]
+Type=oneshot
+ExecStart=sysctl --system
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

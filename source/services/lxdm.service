@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=LXDE display manager
+
+[Service]
+ExecStart=%p
+Restart=always
+
+[Install]
+WantedBy=workstation.target

@@ -1,0 +1,17 @@
+#!/bin/sh -
+case "$1" in
+	upgrade)
+		for i in \
+			suckless-mdev \
+			suckless-mdev-log \
+			suckless-mdev-rescan \
+			;
+		do
+			if system-control is-loaded $i.service
+			then
+				system-control try-restart $i.service
+			fi
+		done
+		;;
+esac
+

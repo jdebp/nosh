@@ -180,5 +180,10 @@ time_to_tai64 (
 	const std::time_t s,
 	bool leap
 ) ;
+extern
+void
+subreaper (
+	bool on
+) ;
 
 #endif
