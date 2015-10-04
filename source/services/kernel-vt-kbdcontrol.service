@@ -14,7 +14,7 @@ Wants=local-fs.target
 EnvironmentFile=-/etc/rc.conf
 EnvironmentFile=-/etc/rc.conf.local
 EnvironmentDirectory=env
-ExecStart=kbdcontrol ${keyboard:+-k} ${keyboard} ${keymap:+-l} ${keymap} ${keyrate:+-r} ${keyrate} ${keybell:+-b} ${keybell} ${allscreens_kbdflags}
+ExecStart=kbdcontrol ${keyboard:+-k "${keyboard}"} ${keymap:+-l "${keymap}"} ${keyrate:+-r "${keyrate}"} ${keybell:+-b "${keybell}"} ${allscreens_kbdflags}
 RemainAfterExit=yes
 Restart=never
 

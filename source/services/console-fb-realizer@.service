@@ -1,5 +1,4 @@
 
-## **************************************************************************
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
 
@@ -12,10 +11,11 @@ Wants=console-multiplexor@%i.service frame-buffer.target
 PermissionsStartOnly=yes
 EnvironmentDirectory=env/
 SessionLeader=yes
-ExecStartPre=chown daemon:tty ${TTY}
-ExecStartPre=setfacl -m u:daemon:r event
-ExecStartPre=setfacl -m u:daemon:rw fb
-ExecStart=open-controlling-tty setuidgid daemon %p ${FONTS} ${KERNEL_VT} --bold-as-colour fb event kbdmap /run/dev/%I/
+ExecStart=sh -c 'test -c "${TTY}" && chown daemon:tty "${TTY}"'
+ExecStart=sh -c 'test -n "${FRAMEBUFFER}" && test -c "${FRAMEBUFFER}" && setfacl -m u:daemon:rw "${FRAMEBUFFER}"'
+ExecStart=sh -c 'test -n "${KEYBOARD}" && test -c "${KEYBOARD}" && setfacl -m u:daemon:r "${KEYBOARD}"'
+ExecStart=sh -c 'test -n "${MOUSE}" && test -c "${MOUSE}" && setfacl -m u:daemon:r "${MOUSE}"'
+ExecStart=fdmove -c 4 2 open-controlling-tty fdmove 2 4 setuidgid daemon %p ${FONTS} ${FLAGS} ${KERNEL_VT:+--kernel-vt "${KERNEL_VT}"} ${KEYBOARD:+--keyboard "${KEYBOARD}"} ${MOUSE:+--mouse "${MOUSE}"} /run/dev/%I/ "${FRAMEBUFFER}" "${KBDMAP}"
 Restart=always
 
 [Install]

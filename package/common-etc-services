@@ -4,3 +4,5 @@ monitor-fsck-progress
 hostname
 machine-id
 sysinit-log
+natd-log
+sppp-log

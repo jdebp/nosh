@@ -5,12 +5,10 @@
 [Unit]
 Description=ModemManager daemon
 Before=NetworkManager.service
-After=dbus.service
 After=local-syslog.target
-# Don't want D-Bus in case the D-Bus daemon is not managed by service-manager.
-#Wants=dbus.service
 
 [Service]
+Type=dbus
 ExecStart=modem-manager
 Restart=on-failure
 RestartSec=1

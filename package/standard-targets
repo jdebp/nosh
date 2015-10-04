@@ -5,6 +5,7 @@ extra-shared-libraries
 frame-buffer
 graphics
 halt
+jails
 local-fs
 local-fs-pre
 local-syslog
@@ -25,4 +26,5 @@ unmount
 update
 virtualbox-guest
 virtualbox-host
+warden
 workstation

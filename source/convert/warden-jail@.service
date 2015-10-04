@@ -6,7 +6,11 @@
 Description=PC-BSD Warden jail %i
 
 [Service]
-ExecStart=true %I
+Type=oneshot
+RemainAfterExit=true
+EnvironmentDirectory=env/
+ExecStart=jail -cm name=%I ${interface:+interface="$interface"} ${root:+path="$root"} ${hostname:+host.hostname="$hostname"} ${ip4:+ip4.addr="$ip4"${alias_ip4:+,}"$alias_ip4"} ${ip6:+ip6.addr="$ip6"${alias_ip6:+,}"$alias_ip6"} ${mount_procfs:+mount.procfs} ${mount_devfs:+mount.devfs} ${mount_fdescfs:+mount.fdescfs} ${allow_mount:+allow.mount} ${allow_sysvipc:+allow.sysvipc} ${devfs_ruleset:+devfs_ruleset="${devfs_ruleset}"} ${flags} persist
+ExecStopPost=jail -r %I
 
 [Install]
 WantedBy=warden.target

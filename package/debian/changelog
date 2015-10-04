@@ -1,3 +1,13 @@
+nosh (1.21) unstable; urgency=low
+
+  * The geli and gdbe fstab conversion is now completely implemented.
+  * The terminal emulator and the fb realizer now support mouse input.
+  * More BSD services: kmod@ipdivert, kmod"nfscl, nfsclient
+  * More Linux services: mdadm
+  * FreeBSD 9 and PC-BSD Warden jails are now imported.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Sun, 04 Oct 2015 17:01:13 +0100
+
 nosh (1.20) unstable; urgency=low
 
   * The ways in which old-style runlevels passed from the boot loader are mapped to targets have been consolidated into one place: the system-control init subcommand.

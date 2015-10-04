@@ -33,13 +33,25 @@ public:
 		virtual void SetBackspaceIsBS(bool) = 0;
 		virtual void ReportSize(coordinate w, coordinate h) = 0;
 	};
+	class MouseBuffer {
+	public:
+		virtual void SetSendXTermMouse(bool) = 0;
+		virtual void SetSendXTermMouseClicks(bool) = 0;
+		virtual void SetSendXTermMouseButtonMotions(bool) = 0;
+		virtual void SetSendXTermMouseNoButtonMotions(bool) = 0;
+		virtual void SetSendDECLocator(unsigned int) = 0;
+		virtual void SetSendDECLocatorPressEvent(bool) = 0;
+		virtual void SetSendDECLocatorReleaseEvent(bool) = 0;
+		virtual void RequestDECLocatorReport() = 0;
+	};
 	typedef uint8_t coordinate;
-	SoftTerm(ScreenBuffer & s, KeyboardBuffer & k);
+	SoftTerm(ScreenBuffer & s, KeyboardBuffer & k, MouseBuffer & m);
 	~SoftTerm();
 	void Write(uint32_t character, bool decoder_error, bool overlong);
 protected:
 	ScreenBuffer & screen;
 	KeyboardBuffer & keyboard;
+	MouseBuffer & mouse;
 	struct xy {
 		coordinate x, y;
 		xy();
@@ -197,6 +209,11 @@ protected:
 	void CursorUp(coordinate, bool, bool);
 	void CursorLeft(coordinate, bool, bool);
 	void CursorRight(coordinate, bool, bool);
+
+	void RequestLocatorReport();
+	void EnableLocatorReports();
+	void SelectLocatorEvents();
+	void SelectLocatorEvent(unsigned int);
 };
 
 #endif

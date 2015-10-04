@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Jails and jailed daemons collection
+DefaultDependencies=false
+
+[Service]
+User=nobody
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

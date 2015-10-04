@@ -4,11 +4,9 @@
 
 [Unit]
 Description=Bonjour service
-After=dbus.service
-# Don't want D-Bus in case the D-Bus daemon is not managed by service-manager.
-#Wants=dbus.service
 
 [Service]
+Type=dbus
 RuntimeDirectory=%p
 RuntimeDirectoryMode=02755
 ExecStartPre=chown avahi /run/%p

@@ -33,10 +33,12 @@ keyserv
 kmod@mac_bsdextended
 kmod@ctl
 kmod@geom_gate
+kmod@ipdivert
 kmod@ibcs2
 kmod@ipl
 kmod@iscsi
 kmod@kbdmux
+kmod@nfscl
 kmod@ng_btsocket
 kmod@pf
 kmod@pflog
@@ -85,6 +87,7 @@ mrouted
 msgs
 newsyslog
 nfscbd
+nfsclient
 nfsuserd
 nscd
 papd

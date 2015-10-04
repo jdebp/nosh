@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.20</refmiscinfo>
+<refmiscinfo class="version">1.21</refmiscinfo>
 </refmeta>
 
 <refnamediv><refname>true</refname><refpurpose>return success status</refpurpose></refnamediv>

@@ -701,10 +701,12 @@ class Realizer :
 {
 public:
 	~Realizer();
-	Realizer(coordinate y, coordinate x, bool, GraphicsInterface & g, Monospace16x16Font & mf);
+	Realizer(unsigned long y, unsigned long x, bool, GraphicsInterface & g, Monospace16x16Font & mf);
 
 	void paint_changed_cells_onto_framebuffer() { do_paint(false); }
 	void paint_all_cells_onto_framebuffer() { do_paint(true); }
+	static coordinate pixel_to_column(unsigned long x) { return x / CHARACTER_PIXEL_WIDTH; }
+	static coordinate pixel_to_row(unsigned long y) { return y / CHARACTER_PIXEL_HEIGHT; }
 
 protected:
 	typedef GraphicsInterface::GlyphBitmapHandle GlyphBitmapHandle;
@@ -734,13 +736,13 @@ protected:
 }
 
 Realizer::Realizer(
-	coordinate y, 
-	coordinate x, 
+	unsigned long y, 
+	unsigned long x, 
 	bool fc,
 	GraphicsInterface & g,
 	Monospace16x16Font & mf
 ) : 
-	Compositor(y / CHARACTER_PIXEL_HEIGHT, x / CHARACTER_PIXEL_WIDTH),
+	Compositor(pixel_to_row(y), pixel_to_column(x)),
 	faint_as_colour(fc),
 	gdi(g),
 	font(mf)
@@ -2391,7 +2393,7 @@ Enact (
 #if !defined(__LINUX__) && !defined(__linux__)
 	KeyboardIO & event_fd,
 #else
-	FileDescriptorOwner & event_fd,
+	const FileDescriptorOwner & event_fd,
 #endif
 	KeyboardModifierState & r,
 	VirtualTerminal & vt,
@@ -2517,11 +2519,11 @@ query_parameter (
 
 static inline
 void
-handle_input_event(
+handle_input_keyevent(
 #if !defined(__LINUX__) && !defined(__linux__)
 	KeyboardIO & event_fd,
 #else
-	FileDescriptorOwner & event_fd,
+	const FileDescriptorOwner & event_fd,
 #endif
 	KeyboardModifierState & r, 
 	const KeyboardMap & keymap,
@@ -2560,6 +2562,136 @@ handle_input_event(
 	}
 }
 
+#if defined(__LINUX__) || defined(__linux__)
+static inline
+void
+handle_input_mouse_abspos(
+	const uint16_t axis,
+	const unsigned long position,
+	const Realizer & r,
+	const FramebufferIO & fb,
+	const KeyboardModifierState & k, 
+	VirtualTerminal & vt
+) {
+	switch (axis) {
+		case ABS_X:
+		{
+			const unsigned long pixel((position * fb.query_xres()) / 32768U);
+			const Realizer::coordinate x(r.pixel_to_column(pixel));
+			vt.WriteInputMessage(MessageForMouseColumn(x, k.modifiers()));
+			break;
+		}
+		case ABS_Y:
+		{
+			const unsigned long pixel((position * fb.query_yres()) / 32768U);
+			const Realizer::coordinate y(r.pixel_to_row(pixel));
+			vt.WriteInputMessage(MessageForMouseRow(y, k.modifiers()));
+			break;
+		}
+		default:
+			std::clog << "DEBUG: Unknown axis " << axis << " position " << position << "/32768 absolute\n";
+			break;
+	}
+}
+
+static inline
+void
+handle_input_mouse_relpos(
+	const uint16_t axis,
+	int32_t offset,
+	const KeyboardModifierState & k, 
+	VirtualTerminal & vt
+) {
+	switch (axis) {
+		case REL_WHEEL:
+		{
+			if (offset < -128) offset = -128;
+			if (offset > 127) offset = 127;
+			vt.WriteInputMessage(MessageForMouseWheel(0U, offset, k.modifiers()));
+			break;
+		}
+		case REL_HWHEEL:
+		{
+			if (offset < -128) offset = -128;
+			if (offset > 127) offset = 127;
+			vt.WriteInputMessage(MessageForMouseWheel(1U, offset, k.modifiers()));
+			break;
+		}
+		default:
+			std::clog << "DEBUG: Unknown axis " << axis << " position " << offset << " relative\n";
+			break;
+	}
+}
+
+static inline
+int
+TranslateButton(
+	const uint16_t code
+) {
+	switch (code) {
+		default:		return -1;
+		case BTN_LEFT:		return 0;
+		case BTN_MIDDLE:	return 1;
+		case BTN_RIGHT:		return 2;
+		case BTN_SIDE:		return 3;
+		case BTN_EXTRA:		return 4;
+		case BTN_FORWARD:	return 5;
+		case BTN_BACK:		return 6;
+		case BTN_TASK:		return 7;
+	}
+}
+
+static inline
+void
+handle_input_mouse_button(
+	const uint16_t code,
+	const bool value,
+	const KeyboardModifierState & k, 
+	VirtualTerminal & vt
+) {
+	const int button(TranslateButton(code));
+	if (0 > button) {
+		std::clog << "DEBUG: Unknown button " << code << " with value " << value << "\n";
+		return;
+	}
+	vt.WriteInputMessage(MessageForMouseButton(button, value, k.modifiers()));
+}
+#endif
+
+static inline
+void
+handle_input_mouevent(
+	const FileDescriptorOwner & event_fd,
+	const Realizer & r,
+	const FramebufferIO & fb,
+	const KeyboardModifierState & k, 
+	VirtualTerminal & vt
+) {
+#if defined(__LINUX__) || defined(__linux__)
+	input_event b[16];
+#else
+	unsigned char b[16];
+#endif
+	const int n(read(event_fd.get(), b, sizeof b));
+	if (0 > n) return;
+	for (unsigned i(0); i * sizeof *b < static_cast<unsigned>(n); ++i) {
+#if defined(__LINUX__) || defined(__linux__)
+		const input_event & e(b[i]);
+		switch (e.type) {
+			case EV_ABS:
+				handle_input_mouse_abspos(e.code, e.value, r, fb, k, vt);
+				break;
+			case EV_REL:
+				handle_input_mouse_relpos(e.code, e.value, k, vt);
+				break;
+			case EV_KEY:
+				handle_input_mouse_button(e.code, e.value, k, vt);
+				break;
+		}
+#endif
+	}
+}
+
 /* Main function ************************************************************
 // **************************************************************************
 */
@@ -2571,15 +2703,17 @@ console_fb_realizer (
 ) {
 	const char * prog(basename_of(args[0]));
 	const char * kernel_vt(0);
-	bool display_only(false);
+	const char * keyboard_event_filename(0);
+	const char * mouse_event_filename(0);
 	bool bold_as_colour(false);
 	FontSpecList fonts;
 	unsigned long quadrant(3U);
 
 	try {
-		popt::bool_definition display_only_option('\0', "display-only", "Only render the display; do not send input.", display_only);
 		popt::bool_definition bold_as_colour_option('\0', "bold-as-colour", "Forcibly render boldface as a colour brightness change.", bold_as_colour);
 		popt::string_definition kernel_vt_option('\0', "kernel-vt", "device", "Use the kernel FB sharing protocol via this device.", kernel_vt);
+		popt::string_definition keyboard_option('\0', "keyboard", "device", "Use this keyboard input device.", keyboard_event_filename);
+		popt::string_definition mouse_option('\0', "mouse", "device", "Use this mouse input device.", mouse_event_filename);
 		popt::unsigned_number_definition quadrant_option('\0', "quadrant", "number", "Position the terminal in quadrant 0, 1, 2, or 3.", quadrant, 0);
 		fontspec_definition vtfont_option('\0', "vtfont", "filename", "Use this font as a vt font.", fonts, -1, -1);
 		fontspec_definition font_medium_r_option('\0', "font-medium-r", "filename", "Use this font as a medium-upright font.", fonts, CombinedFont::Font::MEDIUM, CombinedFont::Font::UPRIGHT);
@@ -2589,9 +2723,10 @@ console_fb_realizer (
 		fontspec_definition font_bold_o_option('\0', "font-bold-o", "filename", "Use this font as a bold-oblique font.", fonts, CombinedFont::Font::BOLD, CombinedFont::Font::OBLIQUE);
 		fontspec_definition font_bold_i_option('\0', "font-bold-i", "filename", "Use this font as a bold-italic font.", fonts, CombinedFont::Font::BOLD, CombinedFont::Font::ITALIC);
 		popt::definition * top_table[] = {
-			&display_only_option,
 			&bold_as_colour_option,
 			&kernel_vt_option,
+			&keyboard_option,
+			&mouse_option,
 			&quadrant_option,
 			&vtfont_option,
 			&font_medium_r_option,
@@ -2601,7 +2736,7 @@ console_fb_realizer (
 			&font_bold_o_option,
 			&font_bold_i_option,
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "framebuffer event-device kbd-map virtual-terminal");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "virtual-terminal framebuffer kbd-map");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -2614,28 +2749,22 @@ console_fb_realizer (
 	}
 
 	if (args.empty()) {
+		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing virtual terminal directory name.");
+		throw EXIT_FAILURE;
+	}
+	const char * vt_dirname(args.front());
+	args.erase(args.begin());
+	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing framebuffer device file name.");
 		throw EXIT_FAILURE;
 	}
 	const char * fb_filename(args.front());
 	args.erase(args.begin());
 	if (args.empty()) {
-		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing event device file name.");
-		throw EXIT_FAILURE;
-	}
-	const char * event_filename(args.front());
-	args.erase(args.begin());
-	if (args.empty()) {
-		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing virtual terminal directory name.");
-		throw EXIT_FAILURE;
-	}
-	const char * keymap_filename(args.front());
-	args.erase(args.begin());
-	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing keyboard map file name.");
 		throw EXIT_FAILURE;
 	}
-	const char * vt_dirname(args.front());
+	const char * keymap_filename(args.front());
 	args.erase(args.begin());
 	if (!args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, args.front(), "Unexpected argument.");
@@ -2654,9 +2783,13 @@ console_fb_realizer (
 		}
 	}
 
+	// Open files first.
+
 	KeyboardMap keymap;
 
 	LoadKeyMap(prog, keymap, keymap_filename);
+
+	// Now open devices.
 
 	FileDescriptorOwner vt_dir_fd(open_dir_at(AT_FDCWD, vt_dirname));
 	if (0 > vt_dir_fd.get()) {
@@ -2664,7 +2797,7 @@ console_fb_realizer (
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, vt_dirname, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	VirtualTerminal vt(display_only, prog, vt_dirname, vt_dir_fd.release());
+	VirtualTerminal vt(!keyboard_event_filename && !mouse_event_filename, prog, vt_dirname, vt_dir_fd.release());
 
 	FramebufferIO fb(open_readwriteexisting_at(AT_FDCWD, fb_filename));
 	if (fb.get() < 0) {
@@ -2673,13 +2806,20 @@ console_fb_realizer (
 		throw EXIT_FAILURE;
 	}
 #if !defined(__LINUX__) && !defined(__linux__)
-	KeyboardIO event(open_read_at(AT_FDCWD, event_filename));
+	KeyboardIO keyevent(keyboard_event_filename ? open_read_at(AT_FDCWD, keyboard_event_filename) : -1);
 #else
-	FileDescriptorOwner event(open_read_at(AT_FDCWD, event_filename));
+	FileDescriptorOwner keyevent(keyboard_event_filename ? open_read_at(AT_FDCWD, keyboard_event_filename) : -1);
 #endif
-	if (event.get() < 0) {
+	if (keyboard_event_filename && keyevent.get() < 0) {
 		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, event_filename, std::strerror(error));
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, keyboard_event_filename, std::strerror(error));
+		throw EXIT_FAILURE;
+	}
+
+	FileDescriptorOwner mouevent(mouse_event_filename ? open_read_at(AT_FDCWD, mouse_event_filename) : -1);
+	if (mouse_event_filename && mouevent.get() < 0) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, mouse_event_filename, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
 
@@ -2708,8 +2848,10 @@ console_fb_realizer (
 	{
 		std::size_t index(0U);
 		EV_SET(&p[index++], vt.query_buffer_fd(), EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE, 0, 0);
-		if (!display_only)
-			EV_SET(&p[index++], event.get(), EVFILT_READ, EV_ADD, 0, 0, 0);
+		if (keyboard_event_filename)
+			EV_SET(&p[index++], keyevent.get(), EVFILT_READ, EV_ADD, 0, 0, 0);
+		if (mouse_event_filename)
+			EV_SET(&p[index++], mouevent.get(), EVFILT_READ, EV_ADD, 0, 0, 0);
 		EV_SET(&p[index++], SIGWINCH, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 		EV_SET(&p[index++], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 		EV_SET(&p[index++], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
@@ -2737,7 +2879,7 @@ console_fb_realizer (
 
 	fb.save_and_set_graphics_mode(prog, fb_filename);
 #if !defined(__LINUX__) && !defined(__linux__)
-	event.save_and_set_code_mode();
+	keyevent.save_and_set_code_mode();
 #endif
 
 	void * const base(mmap(0, fb.query_size(), PROT_READ|PROT_WRITE, MAP_SHARED, fb.get(), 0));
@@ -2795,16 +2937,23 @@ console_fb_realizer (
 
 		for (std::size_t i(0); i < static_cast<std::size_t>(rc); ++i) {
 			const struct kevent & e(p[i]);
-			if (EVFILT_VNODE == e.filter) {
-				if (vt.query_buffer_fd() == static_cast<int>(e.ident)) {
-					vt.reload();
-					update_needed = true;
-				}
+			switch (e.filter) {
+				case EVFILT_VNODE:
+					if (vt.query_buffer_fd() == static_cast<int>(e.ident)) {
+						vt.reload();
+						update_needed = true;
+					}
+					break;
+				case EVFILT_SIGNAL:
+					handle_signal(e.ident);
+					break;
+				case EVFILT_READ:
+					if (keyevent.get() == static_cast<int>(e.ident)) 
+						handle_input_keyevent(keyevent, kbd, keymap, vt);
+					if (mouevent.get() == static_cast<int>(e.ident)) 
+						handle_input_mouevent(mouevent, realizer, fb, kbd, vt);
+					break;
 			}
-			if (EVFILT_SIGNAL == e.filter)
-				handle_signal(e.ident);
-			if (EVFILT_READ == e.filter && event.get() == static_cast<int>(e.ident)) 
-				handle_input_event(event, kbd, keymap, vt);
 		}
 	}
 

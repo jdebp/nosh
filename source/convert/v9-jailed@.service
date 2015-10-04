@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Run command within FreeBSD 9 jail %I
+Wants=v9-jail@%i
+After=v9-jail@%i
+
+[Service]
+JailID=%I
+EnvironmentDirectory=env
+ExecStart=${start:-true}
+ExecStopPost=${stop:-true}
+
+[Install]
+WantedBy=jails.target

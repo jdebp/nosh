@@ -171,6 +171,7 @@ case "$1" in
 			colord-sane \
 			irqbalance \
 			kerneloops \
+			mdadm \
 			udisks \
 			upower \
 			update-binfmts \

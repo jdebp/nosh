@@ -178,6 +178,8 @@ case "$1" in
 			dmesg \
 			hostname \
 			machine-id \
+			natd-log \
+			sppp-log \
 			sysinit-log \
 			emergency-login@console \
 			;
@@ -195,6 +197,7 @@ case "$1" in
 			kmod@unix \
 			kmod@uvesafb \
 			linux-utmp \
+			mdadm \
 			static-networking \
 			udisks \
 			upower \

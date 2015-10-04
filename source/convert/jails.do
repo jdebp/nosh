@@ -4,6 +4,16 @@
 # This is invoked by general-services.do .
 #
 
+for i in /etc/rc.conf.local /etc/rc.conf
+do
+	if test -e "$i"
+	then
+		redo-ifchange "$i"
+	else
+		redo-ifcreate "$i"
+	fi
+done
+
 conf=/etc/jail.conf
 if ! test -e "${conf}"
 then
@@ -12,3 +22,16 @@ then
 fi
 
 redo-ifchange "${conf}"
+
+for i in jail warden
+do
+	target="$i".target
+
+	system-control preset -- "$target"
+	if system-control is-enabled "$target"
+	then
+		echo >> "$3" on "$target"
+	else
+		echo >> "$3" off "$target"
+	fi
+done

@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.20</refmiscinfo>
+<refmiscinfo class="version">1.21</refmiscinfo>
 </refmeta>
 
 <refnamediv><refname>clearenv</refname><refpurpose>clear the entire environment then chain</refpurpose></refnamediv>
@@ -48,15 +48,8 @@ Similarly <arg>--keep-shell</arg> stops the clearing of <envar>SHELL</envar>;
 </refsection><refsection><title>BUGS</title>
 
 <para>
-Although not strictly a bug in this program, it is worth noting that the GNU C
-library and the BSD C library both have memory leaks in theur
-<citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-and
-<citerefentry><refentrytitle>clearenv</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-functions, used by this program.
-You can work around these bugs by ensuring that
-<replaceable>next-prog</replaceable> is not a built-in command (see
-<citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+Although not strictly a bug in this program, it is worth noting that the GNU C library and the BSD C library both have memory leaks in their <citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>3</manvolnum></citerefentry> and <citerefentry><refentrytitle>clearenv</refentrytitle><manvolnum>3</manvolnum></citerefentry> functions, used by this program.
+You can work around these bugs by ensuring that <replaceable>next-prog</replaceable> is not a built-in command (see <citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
 </para>
 
 </refsection><refsection><title>See also</title>

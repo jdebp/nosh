@@ -10,6 +10,7 @@ kmod@loop
 kmod@unix
 kmod@uvesafb
 linux-utmp
+mdadm
 static-networking
 update-binfmts
 wettsteinsyslogd

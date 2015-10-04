@@ -21,8 +21,18 @@ set_if_unset() { if test -z "`system-control print-service-env \"$1\" \"$2\"`" ;
 
 case "`uname`" in
 Linux)
-	set_if_unset console-fb-realizer@head0 KERNEL_VT "--krnel-vt /dev/tty1"
+	set_if_unset console-fb-realizer@head0 KERNEL_VT "/dev/tty1"
 	set_if_unset console-fb-realizer@head0 TTY "/dev/tty1"
+	set_if_unset console-fb-realizer@head0 FRAMEBUFFER /dev/fb0
+	set_if_unset console-fb-realizer@head0 KBDMAP kbdmaps/us.kbdmap
+	set_if_unset console-fb-realizer@head0 KEYBOARD /dev/input/event0
+	set_if_unset console-fb-realizer@head0 MOUSE /dev/input/event1
+	;;
+*BSD)
+	set_if_unset console-fb-realizer@head0 TTY "/dev/ttyv0"
+	set_if_unset console-fb-realizer@head0 FRAMEBUFFER /dev/ttyv0
+	set_if_unset console-fb-realizer@head0 KBDMAP kbdmaps/uk.kbdmap
+	set_if_unset console-fb-realizer@head0 KEYBOARD /dev/ttyv0
 	;;
 esac
 
@@ -46,7 +56,7 @@ list_real_terminals() {
 }
 
 # These files/directories not existing is not an error; but is a reason to rebuild when they appear.
-for i in /etc/ttys /dev /run/dev
+for i in /etc/ttys /dev
 do
 	if test -e "$i"
 	then

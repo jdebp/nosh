@@ -4,12 +4,10 @@
 
 [Unit]
 Description=ColourManager daemon
-After=dbus.service
 After=local-syslog.target
-# Don't want D-Bus in case the D-Bus daemon is not managed by service-manager.
-#Wants=dbus.service
 
 [Service]
+Type=dbus
 ExecStart=/usr/lib/x86_64-linux-gnu/colord/%p
 Restart=always
 

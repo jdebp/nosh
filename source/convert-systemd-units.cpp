@@ -790,11 +790,12 @@ convert_systemd_units (
 
 	// Actively prevent certain unsupported combinations.
 
-	if (type && "simple" != tolower(type->last_setting()) && "forking" != tolower(type->last_setting()) && "oneshot" != tolower(type->last_setting())) {
-		std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, service_filename.c_str(), type->last_setting().c_str(), "Only simple services are supported.");
+	if (type && "simple" != tolower(type->last_setting()) && "forking" != tolower(type->last_setting()) && "oneshot" != tolower(type->last_setting()) && "dbus" != tolower(type->last_setting())) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, service_filename.c_str(), type->last_setting().c_str(), "Not a supported service type.");
 		throw EXIT_FAILURE;
 	}
 	const bool is_oneshot(type && "oneshot" == tolower(type->last_setting()));
+	const bool is_dbus(type && "dbus" == tolower(type->last_setting()));
 	if (!execstart && !is_target && !is_oneshot) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, service_filename.c_str(), "Missing mandatory ExecStart entry.");
 		throw EXIT_FAILURE;
@@ -864,8 +865,6 @@ convert_systemd_units (
 		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, names.query_bundle_dirname().c_str(), "service", std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-
-#define CREATE_LINKS(l,s) (l ? create_links (prog,names.query_bundle_dirname().c_str(),is_target,etc_bundle,bundle_dir_fd.get(),names.substitute((l)->last_setting()),(s)) : static_cast<void>(0))
 
 	// Construct various common command strings.
 
@@ -1236,7 +1235,16 @@ convert_systemd_units (
 			}
 		}
 	}
-	service << (execstart ? names.substitute(shell_expand(strip_leading_minus(execstart->last_setting()))) : is_remain ? "true" : "pause") << "\n";
+	if (execstart) {
+		for (std::list<std::string>::const_iterator i(execstart->all_settings().begin()); execstart->all_settings().end() != i; ) {
+			std::list<std::string>::const_iterator j(i++);
+			if (execstart->all_settings().begin() != j) service << " ;\n"; 
+			if (execstart->all_settings().end() != i) service << "foreground "; 
+			const std::string & val(*j);
+			service << names.substitute(shell_expand(strip_leading_minus(val)));
+		}
+	} else
+		service << (is_remain ? "true" : "pause") << "\n";
 
 	// nosh is not suitable here, since the restart script is passed arguments.
 	restart_script << "#!/bin/sh\n" << multi_line_comment("Restart file generated from " + service_filename);
@@ -1324,7 +1332,7 @@ convert_systemd_units (
 				if (execstoppost->all_settings().begin() != j) stop << " ;\n"; 
 				if (execstoppost->all_settings().end() != i) stop << "foreground "; 
 				const std::string & val(*j);
-				stop << names.substitute(strip_leading_minus(val));
+				stop << names.substitute(shell_expand(strip_leading_minus(val)));
 			}
 			stop << "\n";
 		} else
@@ -1333,6 +1341,8 @@ convert_systemd_units (
 		stop << "true\n";
 
 	// Set the dependency and installation information.
+
+#define CREATE_LINKS(l,s) (l ? create_links (prog,names.query_bundle_dirname().c_str(),is_target,etc_bundle,bundle_dir_fd.get(),names.substitute((l)->last_setting()),(s)) : static_cast<void>(0))
 
 	CREATE_LINKS(socket_after, "after/");
 	CREATE_LINKS(service_after, "after/");
@@ -1363,6 +1373,13 @@ convert_systemd_units (
 	if (defaultdependencies) {
 		if (is_socket_activated)
 			create_links(prog, names.query_bundle_dirname().c_str(), is_target, etc_bundle, bundle_dir_fd.get(), "sockets.target", "wanted-by/");
+		if (is_dbus) {
+			create_links(prog, names.query_bundle_dirname().c_str(), is_target, etc_bundle, bundle_dir_fd.get(), "dbus.service", "after/");
+#if !defined(__LINUX__) && !defined(__linux__)
+			// Don't want D-Bus on Linux in case the D-Bus daemon is not managed by service-manager.
+			create_links(prog, names.query_bundle_dirname().c_str(), is_target, etc_bundle, bundle_dir_fd.get(), "dbus.service", "wants/");
+#endif
+		}
 		create_links(prog, names.query_bundle_dirname().c_str(), is_target, etc_bundle, bundle_dir_fd.get(), "basic.target", "after/");
 		create_links(prog, names.query_bundle_dirname().c_str(), is_target, etc_bundle, bundle_dir_fd.get(), "basic.target", "wants/");
 		create_links(prog, names.query_bundle_dirname().c_str(), is_target, etc_bundle, bundle_dir_fd.get(), "shutdown.target", "before/");

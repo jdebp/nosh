@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.20</refmiscinfo>
+<refmiscinfo class="version">1.21</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -29,16 +29,12 @@
 <refsection><title>Description</title>
 
 <para>
-<command>console-terminal-emulator</command> is a utility that expects file descriptor
-4 to be the master side of a pseudo-terminal and the <code>TTY</code>
-environment variable to be the full device filename of the slave side.
-(<citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-can be used to set this process state up.)
+<command>console-terminal-emulator</command> is a utility that expects file descriptor 4 to be the master side of a pseudo-terminal and the <code>TTY</code> environment variable to be the full device filename of the slave side.
+(<citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> can be used to set this process state up.)
 </para>
 
 <para>
-First it sets up the various files in <replaceable>directory</replaceable>, opening
-the input FIFO for reading and the display buffers for reading and writing.
+First it sets up the various files in <replaceable>directory</replaceable>, opening the input FIFO for reading and the display buffers for reading and writing.
 The FIFOs are created unconditionally, and opened in non-blocking mode.
 The display buffers are created if they do not exist.
 All created display buffer files have permissions rw-r-----.
@@ -479,23 +475,48 @@ System keys are ignored by the terminal emulator.
 </para></listitem>
 </varlistentry>
 <varlistentry>
+<term><code>0x04kkkkmm</code></term>
+<listitem><para>
+The absolute horizontal position of the mouse.
+The column number is <code>kkkk</code> and <code>mm</code> is a set of bitflags indicating the current state of modifier keys.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>0x05kkkkmm</code></term>
+<listitem><para>
+The absolute vertical position of the mouse.
+The row number is <code>kkkk</code> and <code>mm</code> is a set of bitflags indicating the current state of modifier keys.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>0x06kknnmm</code></term>
+<listitem><para>
+A mouse wheel motion.
+The wheel number is <code>kk</code>, the (signed) amount by which the wheel is scrolled is <code>nn</code>, and <code>mm</code> is a set of bitflags indicating the current state of modifier keys.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>0x07kkbbmm</code></term>
+<listitem><para>
+A mouse button.
+The button number is <code>kk</code>, its state is <code>bb</code>, and <code>mm</code> is a set of bitflags indicating the current state of modifier keys.
+The well-known buttons are numbered in DEC VT order: left, middle, right, side.
+</para></listitem>
+</varlistentry>
+<varlistentry>
 <term><code>0x0Ckkkkmm</code></term>
 <listitem><para>
 A consumer device key.  
-The key number is <code>kkkk</code> and <code>mm</code> is a set of bitflags
-indicating the current state of modifier keys.
-Consumer device keys are ignored by the terminal emulator, because of a lack
-of appropriate escape sequences and control sequences for representing them.
+The key number is <code>kkkk</code> and <code>mm</code> is a set of bitflags indicating the current state of modifier keys.
+Consumer device keys are ignored by the terminal emulator, because of a lack of appropriate escape sequences and control sequences for representing them.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term><code>0x0Ekkkkmm</code></term>
 <listitem><para>
 An extended key.  
-The key number is <code>kkkk</code> and <code>mm</code> is a set of bitflags
-indicating the current state of modifier keys.
-The terminal emulator sends the equivalent control sequence through to the line
-discipline as terminal input.
+The key number is <code>kkkk</code> and <code>mm</code> is a set of bitflags indicating the current state of modifier keys.
+The terminal emulator sends the equivalent control sequence through to the line discipline as terminal input.
 </para></listitem>
 </varlistentry>
 <varlistentry>
@@ -524,7 +545,34 @@ The terminal emulator has no dealing in keyboard maps and exactly how keystrokes
 
 </refsection>
 
-<refsection><title>Control sequences</title>
+<refsection><title>Control sequences for mouse</title>
+
+<para>
+The DEC status reports report that a locator is always present and available, and that it is a mouse device.
+</para>
+
+<para>
+Two mouse protocols are supported, the xterm Private Mode #1006 protocol and the DEC VT Locator protocol.
+These correspond to the <code>ttymouse=sgr</code> and <code>ttymouse=dec</code> settings in <command>vim</command>, respectively.
+These are superior to the unsupported xterm Private Mode #9 ("xterm.X10"), #1005 ("xterm.UTF-8"), and #1015 ("urxvt") protocols, for several reasons including avoiding encoding ambiguities and display dimension limits, and supersede them.
+</para>
+
+<para>
+In the DECPM #1006 protocol, the click-only (DECPM #1000), button motion (DECPM #1002), and all events (DECPM #1003) modes are all available.
+The mouse grabber mode (DECPM #1001) is not.
+</para>
+
+<para>
+In the DEC VT Locator protocol, only character coordinates are available, the terminal emulator having no dealings in displays; they being the province of a realizer and possibly not even be pixel-addressible.
+</para>
+
+</refsection>
+
+<refsection><title>Control sequences for keyboard</title>
+
+<para>
+The DEC status reports report that a keyboard is always present, with an unknown country layout.
+</para>
 
 <para>
 Extended keys and function keys cause the terminal emulator to send control sequences through the line discipline to terminal input.
@@ -575,16 +623,16 @@ Such mode switching is an internal matter for realizers.
 <para>
 The terminal emulator does not replicate all features of a real hardware terminal.
 Its goal is to provide a workalike for (the TUI parts of the) the virtual consoles that are/were built in to the Linux and BSD operating system kernels.
-There is no support for the historical features of real terminal hardwares such as attached printers, page switching, status lines, XON/XOFF modem flow control, programmable function keys, alternative (WYSE/TVI) control/escape sequences, and graphics modes.
+There is no support for the historical features of real terminal hardwares such as attached printers, page switching, status lines, XON/XOFF modem flow control, programmable function keys, alternative (WYSE/TVI) control/escape sequences, direct auxiliary serial device I/O, and graphics modes.
 Rather, the terminal emulator is aimed at handling the outputs of TUI programs that use the "<code>linux</code>" terminal type (for the Linux kernel virtual terminals) the "<code>wsvt25</code>" terminal type (for NetBSD kernel virtual terminals) or the "<code>xterm</code>" terminal types (for FreeBSD kernel virtual terminals).
 (These are the terminal types set by <citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
 </para>
 
 <para>
-The terminal emulator also has no dealing in the things that are the domain of
-separate realizing tools.
+The terminal emulator also has no dealing in the things that are the domain of separate realizing tools.
 The modular nature of user-space virtual terminals means that the terminal emulator has no knowledge of the actual devices used to realize the terminal, and that there can be zero or many realizers for any given virtual terminal.
 There is no support for font definitions, window titles, 256-colour VGA palettes, VGA-specific overscan and underline, VESA power, screen-savers, or multi-mode keypads.
+In response to device status report requests, it always responds with fixed information about a set of pseudo-devices.
 </para>
 
 <para>

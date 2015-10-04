@@ -113,6 +113,13 @@ netlink_datagram_socket_listen (
 	args.erase(args.begin());
 	next_prog = arg0_of(args);
 
+	const char * end(group);
+	const long groups(std::strtol(group, const_cast<char **>(&end), 0));
+	if (end == group || *end) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, group, "Bad group number.");
+		throw EXIT_FAILURE;
+	}
+
 	// FIXME: Can we even get a SIGPIPE from listen()?
 	sigset_t original_signals;
 	sigprocmask(SIG_SETMASK, 0, &original_signals);
@@ -122,7 +129,7 @@ netlink_datagram_socket_listen (
 
 	sockaddr_nl addr;
 	addr.nl_family = AF_NETLINK;
-	addr.nl_groups = -1U;
+	addr.nl_groups = groups;
 	addr.nl_pid = getpid();
 	addr.nl_pad = 0;
 

@@ -78,7 +78,7 @@ emergency-login@console)
 	log=
 	etc=--etc-bundle
 	;;
-sysinit-log) 
+sppp-log|natd-log|sysinit-log) 
 	log=
 	etc=--etc-bundle
 	;;
@@ -131,6 +131,12 @@ cyclog@*)
 devd-log) 
 	ln -f -s -- /var/log/sv/devd services.new/"${base}"/main
 	;;
+sppp-log) 
+	ln -f -s -- /var/log/sv/sppp services.new/"${base}"/main
+	;;
+natd-log) 
+	ln -f -s -- /var/log/sv/natd services.new/"${base}"/main
+	;;
 sysinit-log) 
 	ln -f -s -- /var/log/sv/sysinit services.new/"${base}"/main
 	;;
@@ -175,21 +181,18 @@ console-fb-realizer@head0)
 
 	mkdir -m 0755 services.new/"${base}"/service/kbdmaps
 	mkdir -m 0755 services.new/"${base}"/service/fonts
-	ln -s -f kbdmaps/us.kbdmap services.new/"${base}"/service/kbdmap
 
 	case "`uname`" in
 	Linux)
 		./console-convert-kbdmap /dev/null > services.new/"${base}"/service/kbdmaps/us.kbdmap
-		ln -s -f /dev/fb0 services.new/"${base}"/service/fb
-		ln -s -f /dev/input/event0 services.new/"${base}"/service/event
+		chmod 0644 services.new/"${base}"/service/kbdmaps/us.kbdmap
 		;;
 	*BSD)
 		for k in uk us ru de fr 
 		do
 			./console-convert-kbdmap /usr/share/vt/keymaps/"$k".kbd > services.new/"${base}"/service/kbdmaps/"$k".kbdmap
+			chmod 0644 services.new/"${base}"/service/kbdmaps/"$k".kbdmap
 		done
-		ln -s -f /dev/ttyv0 services.new/"${base}"/service/fb
-		ln -s -f /dev/ttyv0 services.new/"${base}"/service/event
 		;;
 	esac
 	;;

@@ -12,6 +12,10 @@ enum {
 	INPUT_MSG_MASK		= 0xFF000000,
 	INPUT_MSG_UCS24		= 0x01000000,
 	INPUT_MSG_SKEY		= 0x02000000,
+	INPUT_MSG_XPOS		= 0x04000000,
+	INPUT_MSG_YPOS		= 0x05000000,
+	INPUT_MSG_WHEEL		= 0x06000000,
+	INPUT_MSG_BUTTON	= 0x07000000,
 	INPUT_MSG_SESSION	= 0x0A000000,
 	INPUT_MSG_CKEY		= 0x0C000000,
 	INPUT_MSG_EKEY		= 0x0E000000,
@@ -318,5 +322,9 @@ extern inline uint32_t MessageForConsumerKey(uint16_t k, uint8_t m) { return INP
 extern inline uint32_t MessageForExtendedKey(uint16_t k, uint8_t m) { return INPUT_MSG_EKEY | (uint32_t(k) << 8U) | uint32_t(m & 0xFF); }
 extern inline uint32_t MessageForFunctionKey(uint8_t k, uint8_t m) { return INPUT_MSG_FKEY | (uint32_t(k & 0xFF) << 8U) | uint32_t(m & 0xFF); }
 extern inline uint32_t MessageForSession(uint16_t n, uint8_t m) { return INPUT_MSG_SESSION | (uint32_t(n) << 8U) | uint32_t(m & 0xFF); }
+extern inline uint32_t MessageForMouseColumn(uint16_t n, uint8_t m) { return INPUT_MSG_XPOS | (uint32_t(n) << 8U) | uint32_t(m & 0xFF); }
+extern inline uint32_t MessageForMouseRow(uint16_t n, uint8_t m) { return INPUT_MSG_YPOS | (uint32_t(n) << 8U) | uint32_t(m & 0xFF); }
+extern inline uint32_t MessageForMouseWheel(uint8_t n, uint8_t v, uint8_t m) { return INPUT_MSG_WHEEL | (uint32_t(n) << 16U) | (uint32_t(v) << 8U) | uint32_t(m & 0xFF); }
+extern inline uint32_t MessageForMouseButton(uint8_t n, uint8_t v, uint8_t m) { return INPUT_MSG_BUTTON | (uint32_t(n) << 16U) | (uint32_t(v) << 8U) | uint32_t(m & 0xFF); }
 
 #endif

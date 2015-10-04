@@ -49,6 +49,7 @@ do
 	fastboot)		continue ;;
 	fsck_y)			continue ;;
 	linux)			continue ;;
+	natd)			continue ;;
 	pcbsdinit)		continue ;;
 	sendmail*)		continue ;; # In the process of being dropped by the BSDs.
 	syslog)			continue ;;
@@ -57,6 +58,16 @@ do
 	svr4)			continue ;;
 	sysvipc)		continue ;;
 	ibcs2)			continue ;;
+	warden)			continue ;; # This is a target, not a service.
+	jail)			continue ;; # This is a target, not a service.
+	jail_mount)		continue ;; # This is a jail configuration item, not a service.
+	jail_devfs)		continue ;; # This is a jail configuration item, not a service.
+	jail_*_mount)		continue ;; # This is a jail configuration item, not a service.
+	jail_*_devfs)		continue ;; # This is a jail configuration item, not a service.
+	jail_*_fdescfs)		continue ;; # This is a jail configuration item, not a service.
+	jail_*_procfs)		continue ;; # This is a jail configuration item, not a service.
+	jail_*_linsysfs)	continue ;; # This is a jail configuration item, not a service.
+	jail_*_linprocfs)	continue ;; # This is a jail configuration item, not a service.
 
 	# Other variables we haven't got around to having bundles for, yet.
 	atm)			continue ;;
@@ -84,13 +95,11 @@ do
 	ipsec)			continue ;;
 	ipv6_gateway)		continue ;;
 	ipxgateway)		continue ;;
-	jail)			continue ;;
 	kdc)			continue ;;
 	kern_securelevel)	continue ;;
 	kldxref)		continue ;;
 	mixer)			continue ;;
 	moused_nondefault)	continue ;;
-	natd)			continue ;;
 	netwait)		continue ;;
 	nfs_client)		continue ;;
 	nfsv4_server)		continue ;;
@@ -113,7 +122,6 @@ do
 	ubthidhci)		continue ;;
 	uhidd)			continue ;;
 	virecover)		continue ;;
-	warden)			continue ;;
 	webcamd)		continue ;;
 
 	*)			service="$n" ;;
@@ -144,8 +152,8 @@ done
 
 case "`uname`" in
 *BSD)
-	redo-ifchange warden jails
+	redo-ifchange jails v9-jails warden
 	;;
 esac
 
-redo-ifchange dnscache tinydns axfrdns savecore sppp
+redo-ifchange dnscache tinydns axfrdns savecore sppp natd

@@ -190,6 +190,7 @@ for i in \
 	kmod@mac_bsdextended \
 	kmod@ctl \
 	kmod@geom_gate \
+	kmod@ipdivert \
 	kmod@ibcs2 \
 	kmod@ipl \
 	kmod@iscsi \
@@ -222,6 +223,7 @@ for i in \
 	kmod@mmc \
 	kmod@mmcsd \
 	kmod@msdosfs_iconv \
+	kmod@nfscl \
 	kmod@ng_ubt \
 	kmod@ntfs \
 	kmod@ntfs_iconv \
@@ -242,6 +244,7 @@ for i in \
 	msgs \
 	newsyslog \
 	nfscbd \
+	nfsclient \
 	nfsuserd \
 	nscd \
 	pbid \

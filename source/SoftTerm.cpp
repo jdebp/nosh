@@ -23,9 +23,10 @@ enum {
 
 static const CharacterCell::colour_type default_foreground(ALPHA_FOR_DEFAULT,128U,128U,128U), default_background(ALPHA_FOR_DEFAULT,0U,0U,0U);
 
-SoftTerm::SoftTerm(SoftTerm::ScreenBuffer & s, SoftTerm::KeyboardBuffer & k) :
+SoftTerm::SoftTerm(SoftTerm::ScreenBuffer & s, SoftTerm::KeyboardBuffer & k, SoftTerm::MouseBuffer & m) :
 	screen(s),
 	keyboard(k),
+	mouse(m),
 	argc(0U),
 	seen_arg_digit(false),
 	first_private_parameter('\0'),
@@ -814,7 +815,8 @@ Map16Colour (
 		return CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,0xBF,0xBF,0xBF);
 	} else if (4U == c) {
 		// Everyone fusses about dark blue, and no choice is perfect.
-		return CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,0x00,0x00,0xBF);
+		// This choice is Web Indigo.
+		return CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,0x4F,0x00,0x7F);
 	} else {
 		if (8U == c) c = 7U;	// Substitute original dark white for bright black, which otherwise would work out the same as dark black.
 		const uint8_t h((c & 8U)? 255U : 127U), b(c & 4U), g(c & 2U), r(c & 1U);
@@ -1035,6 +1037,10 @@ SoftTerm::SetPrivateMode(unsigned int a, bool f)
 		case 95U:	no_clear_screen_on_column_change = f; break;	// DECNCSM
 		case 112U:	SetScrollbackBuffer(f); break;			// DECRPL
 		case 117U:	active_modes.background_colour_erase = f; break;	// DECECM
+		case 1000U:	mouse.SetSendXTermMouseClicks(f); mouse.SetSendXTermMouseButtonMotions(false); mouse.SetSendXTermMouseNoButtonMotions(false); break;
+		case 1002U:	mouse.SetSendXTermMouseClicks(f); mouse.SetSendXTermMouseButtonMotions(f); mouse.SetSendXTermMouseNoButtonMotions(false); break;
+		case 1003U:	mouse.SetSendXTermMouseClicks(f); mouse.SetSendXTermMouseButtonMotions(f); mouse.SetSendXTermMouseNoButtonMotions(f); break;
+		case 1006U:	mouse.SetSendXTermMouse(f); break;
 
 		// ############## Intentionally unimplemented private modes
 		case 1U:	// DECCKM (application cursor keys)
@@ -1055,10 +1061,6 @@ SoftTerm::SetPrivateMode(unsigned int a, bool f)
 		// ############## As yet unimplemented or simply unknown private modes
 		case 5U:	// DECSCNM (light background/whole screen reverse video) is not implemented.
 #if 0 /// TODO:
-		case 1000U:	/// \todo SGR-style mouse event reports
-		case 1002U:	/// \todo SGR-style mouse event reports
-		case 1003U:	/// \todo SGR-style mouse event reports
-		case 1006U:	/// \todo SGR-style mouse event reports
 		case 1007U:	/// \todo Wheel mouse events when the alternate screen buffer is on
 #endif
 		default:
@@ -1318,6 +1320,36 @@ keyboard_status_report[] =
 	"5"		// PCXAL
 	"n";
 
+static 
+const char 
+locator_status_report[] = 
+	"?"		// DEC private
+	"50" 		// locator is present and enabled
+	"n";
+
+static 
+const char 
+locator_type_status_report[] = 
+	"?"		// DEC private
+	"57" 		// mouse reply
+	";"
+	"1"		// the locator is a mouse
+	"n";
+
+static 
+const char 
+data_integrity_report[] = 
+	"?"		// DEC private
+	"70" 		// serial communications errors are impossible
+	"n";
+
+static 
+const char 
+session_status_report[] = 
+	"?"		// DEC private
+	"83" 		// sessions are not available.
+	"n";
+
 void 
 SoftTerm::SendPrivateDeviceStatusReport(unsigned int a)
 {
@@ -1342,8 +1374,79 @@ SoftTerm::SendPrivateDeviceStatusReport(unsigned int a)
 			keyboard.WriteControl1Character(CSI);
 			keyboard.WriteLatin1Characters(sizeof keyboard_status_report - 1, keyboard_status_report); 
 			break;
+		case 53U:	// This is an xterm extension.
+		case 55U:	// This is the DEC-specified report number.
+			keyboard.WriteControl1Character(CSI);
+			keyboard.WriteLatin1Characters(sizeof locator_status_report - 1, locator_status_report); 
+			break;
+		case 56U:
+			keyboard.WriteControl1Character(CSI);
+			keyboard.WriteLatin1Characters(sizeof locator_type_status_report - 1, locator_type_status_report); 
+			break;
+		case 75U:
+			keyboard.WriteControl1Character(CSI);
+			keyboard.WriteLatin1Characters(sizeof data_integrity_report - 1, data_integrity_report); 
+			break;
+		case 85U:
+			keyboard.WriteControl1Character(CSI);
+			keyboard.WriteLatin1Characters(sizeof session_status_report - 1, session_status_report); 
+			break;
 		default:
 			std::clog << "Unknown device attribute request : " << a << "\n";
+			break;
+	}
+}
+
+/* Locator control **********************************************************
+// **************************************************************************
+*/
+
+void 
+SoftTerm::RequestLocatorReport()
+{
+	if (0 == argc)
+		mouse.RequestDECLocatorReport();
+	else
+	for (std::size_t i(0U); i < argc; ++i)
+		mouse.RequestDECLocatorReport();
+}
+
+void 
+SoftTerm::EnableLocatorReports()
+{
+	mouse.SetSendDECLocator(argc > 0U ? args[0U] : 0U);
+	if (2 <= argc && 1U == args[1U])
+		std::clog << "Pixel coordinate locator report request denied.\n";
+}
+
+void 
+SoftTerm::SelectLocatorEvents()
+{
+	if (0 == argc)
+		SelectLocatorEvent(0U);
+	else
+	for (std::size_t i(0U); i < argc; ++i)
+		SelectLocatorEvent(args[i]);
+}
+
+void 
+SoftTerm::SelectLocatorEvent(unsigned int a)
+{
+	switch (a) {
+		case 0:
+			mouse.SetSendDECLocatorPressEvent(false);
+			mouse.SetSendDECLocatorReleaseEvent(false);
+			break;
+		case 1:
+		case 2:
+			mouse.SetSendDECLocatorPressEvent(1 == a);
+			break;
+		case 3:
+		case 4:
+			mouse.SetSendDECLocatorReleaseEvent(3 == a);
+			break;
+		default:
+			std::clog << "Unknown locator event selected : " << a << "\n";
 			break;
 	}
 }
@@ -1575,30 +1678,65 @@ SoftTerm::ControlSequence(uint32_t character)
 	}
 
 	// Finish the final argument, using the relevant defaults.
-	switch (character) {
-		case 'c':
-		case 'g':
-		case 'm':
-		case 'J':
-		case 'K':
+	if ('\0' == last_intermediate) {
+		if ('\0' == first_private_parameter) switch (character) {
+			case 'c':
+			case 'g':
+			case 'm':
+			case 'J':
+			case 'K':
+				FinishArg(0U); 
+				break;
+			case 'H':
+			case 'f':
+				FinishArg(1U); 
+				if (argc < 2U) FinishArg(1U); 
+				break;
+			case 'r':
+			{
+				const coordinate columns(display_origin.x + display_margin.w);
+				FinishArg(argc < 1U ? 1U : columns); 
+				FinishArg(argc < 2U ? columns : 0U); 
+				break;
+			}
+			default:	
+				FinishArg(1U); 
+				break;
+		} else
+		if ('?' == first_private_parameter) {
+			FinishArg(1U); 
+		} else
+		if ('>' == first_private_parameter) {
+			FinishArg(1U); 
+		} else
+		if ('=' == first_private_parameter) {
+			FinishArg(1U); 
+		} else
+			FinishArg(1U); 
+	} else
+	if ('$' == last_intermediate) {
+		FinishArg(1U); 
+	} else
+	if ('*' == last_intermediate) {
+		FinishArg(1U); 
+	} else
+	if (' ' == last_intermediate) {
+		FinishArg(1U); 
+	} else
+	if ('!' == last_intermediate) {
+		FinishArg(1U); 
+	} else
+	if ('\'' == last_intermediate) switch (character) {
+/* DECSLE */	case '{':	
+/* DECRQLP */	case '|':	
+/* DECELR */	case 'z':	
 			FinishArg(0U); 
 			break;
-		case 'H':
-		case 'f':
-			FinishArg(1U); 
-			if (argc < 2U) FinishArg(1U); 
-			break;
-		case 'r':
-		{
-			const coordinate columns(display_origin.x + display_margin.w);
-			FinishArg(argc < 1U ? 1U : columns); 
-			FinishArg(argc < 2U ? columns : 0U); 
-			break;
-		}
 		default:	
 			FinishArg(1U); 
 			break;
-	}
+	} else
+		FinishArg(1U); 
 
 	// Enact the action.
 	if ('\0' == last_intermediate) {
@@ -1705,6 +1843,15 @@ SoftTerm::ControlSequence(uint32_t character)
 	} else
 	if ('!' == last_intermediate) switch (character) {
 /* DECSTR */	case 'p':	SoftReset(); break;
+		default:	
+			std::clog << "Unknown CSI " << last_intermediate << ' ' << character << "\n";
+			break;
+	} else
+	if ('\'' == last_intermediate) switch (character) {
+/* DECEFR */	case 'w':	break; // Enable Filter Rectangle implies a complex multi-window model that is beyond the scope of this emulation.
+/* DECSLE */	case '{':	SelectLocatorEvents(); break;
+/* DECRQLP */	case '|':	RequestLocatorReport(); break;
+/* DECELR */	case 'z':	EnableLocatorReports(); break;
 		default:	
 			std::clog << "Unknown CSI " << last_intermediate << ' ' << character << "\n";
 			break;

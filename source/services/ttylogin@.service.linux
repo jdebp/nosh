@@ -4,8 +4,7 @@
 
 [Unit]
 Description=Standard login on %I
-After=motd-dynamic.service
-After=hostname.service
+After=motd-dynamic.service hostname.service
 
 [Service]
 SessionLeader=true

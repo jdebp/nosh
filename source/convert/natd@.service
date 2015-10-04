@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD %p for %i
+Wants=kmod@ipdivert
+After=kmod@ipdivert
+
+[Service]
+Type=oneshot
+EnvironmentDirectory=env
+ExecStart=%p ${type} "%I" ${dhcp}
+
+[Install]
+WantedBy=server.target

@@ -52,6 +52,7 @@ Description: Service and system management utilities
 Package: nosh-terminal-management
 Architecture: amd64
 Depends: ${shlibs:Depends}, nosh-service-management (>=1.14)
+Breaks: nosh-bundles (<= 1.20)
 Suggests: 
 Recommends: 
 Description: Virtual terminal, pseudo-terminal, and TUI login tools
@@ -102,7 +103,7 @@ Description: upstart shim service and system management utilities
 
 Package: nosh-bundles
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.16), nosh-terminal-management
+Depends: nosh-exec, nosh-service-management (>=1.16), nosh-terminal-management (>= 1.21)
 Suggests: 
 Recommends: 
 Conflicts: nosh-standard-targets, nosh-sysinit-services, nosh-bsd-services, nosh-bsd-sockets, nosh-regular-sockets, nosh-regular-services

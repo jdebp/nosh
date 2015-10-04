@@ -28,11 +28,11 @@ Five kinds of unit can be converted:
 </ul>
 
 <p>
-There are a few restrictions:
+There are a few restrictions (summarized here, for details, see the <a href="convert-systemd-units.html"><code>convert-systemd-units</code></a> manual):
 </p>
 <ul>
 <li><p>The service must be a forking, oneshot, or simple service; not a dbus or notify service.</p></li>
-<li><p>The socket must be a TCP, UDP, local-domain stream, or local-domain datagram socket.  Sequenced packet socket and FIFOs are not convertible, although there's nothing in principle stopping (say) UCSPI-FIFO tools and conventions from being invented and used.</p></li>
+<li><p>The socket must be a TCP, UDP, local-domain stream, local-domain datagram, or netlink datagram socket.  Sequenced packet socket and FIFOs are not convertible, although there's nothing in principle stopping (say) UCSPI-FIFO tools and conventions from being invented and used.</p></li>
 <li><p>Some esoteric options are not convertible.  Nor are some Linux-kernel-only options.</p></li>
 </ul>
 
@@ -51,68 +51,7 @@ A <code>User=</code> directive becomes a <a href="setuidgid.html"><code>setuidgi
 </p>
 
 <p>
-The conversion deals with several quirks of systemd:
+Import can operate in either "ideal" mode or "quirks" mode.
+Quirks mode deals with several quirks of systemd and is the mode to use when taking existing unit files supplied with other packages.
+See the <a href="convert-systemd-units.html"><code>convert-systemd-units</code></a> manual for details.
 </p>
-<ul>
-<li><p>It was undocumented for a long time that systemd always sets the <code>HOME</code>, <code>USER</code>, and <code>LOGNAME</code> environment variables whenever a <code>User=</code> directive says to change the user account.</p></li>
-<li><p>It's not documented, but systemd always changes directory when it starts a service.  It explicitly changes to the root directory when no <code>WorkingDirectory=</code> directive is given.  
-The daemontools convention is for services to be run in their service directories.  
-Some daemons have been found to rely upon the undocumented systemd behaviour of being in the root directory.</p></li>
-<li><p>A fair few directives can occur in both a socket unit or its associated service unit.</p></li>
-</ul>
-
-<h2>
-Extensions to the systemd unit specification
-</h2>
-
-<p>
-There are several extensions to the systemd unit specification provided by the conversion process, to allow a unit file to specify things that systemd doesn't have but that service bundles have:
-</p>
-<ul>
-<li><p>
-The <code>systemdWorkingDirectory=</code> setting (defaulting to <code>true</code>) if <code>false</code> causes the generated bundle to not bother mimicking the working directory quirk of systemd.
-Set this on services and targets where the daemon program is happy to run in the <code>service</code> directory.
-</p></li>
-<li><p>
-The <code>systemdUserEnvironment=</code> setting (defaulting to <code>true</code>) if <code>false</code> causes the generated bundle to not bother mimicking the user environment variables quirk of systemd.
-Set this on services and targets where the daemon program has no need for the <code>HOME</code>, <code>USER</code>, <code>LOGNAME</code>, or <code>SHELL</code> environment variables.
-</p></li>
-<li><p>
-The <code>ExecStart=</code> setting does not require that the program be named with an absolute pathname, unlike systemd.
-Generated <code>run</code> scripts will use <code>nosh</code>, which searches the <code>PATH</code>.
-(systemd does not search <code>PATH</code>.)
-This makes it possible, for example, for a single service unit file to just say <code>ExecStart=cupsd</code> without needing to have two different unit files, one saying <code>ExecStart=/usr/sbin/cupsd</code> for Linux systems and one saying <code>ExecStart=/usr/local/sbin/cupsd</code> for BSD systems.
-</p></li>
-<li><p>
-The <code>LimitMemory=</code> setting translates to <a href="softlimit.html"><code>softlimit</code></a>'s <code>-m</code> option, to set multiple "memory" resource limits in one go.
-</p></li>
-<li><p>
-The <code>EnvironmentDirectory=</code> setting specifies a directory to be read by <a href="envdir.html"><code>envdir</code></a>.
-Set this on a service that is configured via an <code>envdir</code> environment directory.
-</p></li>
-<li><p>
-The <code>EnvironmentUser=</code> setting specifies an account to be recorded in the environment by <a href="envuidgid.html"><code>envuidgid</code></a>.
-Set this on a service where the main daemon program changes its own process UID and GID, but expects to be told via environment variables what UID and GID to run as.
-</p></li>
-<li><p>
-The <code>EarlySupervise=</code> setting (defaulting to <code>true</code> for "etc" bundles and <code>false</code> for others) if <code>true</code> causes the generated bundle to use a <code>supervise</code> directory in <code>/run/service-bundles/early-supervise/</code>.
-This is for avoiding access to <code>/var</code> before it is mounted, during the bootstrap process, and is mainly used for "sysinit" services and system targets that are in <code>/etc</code>.
-</p></li>
-<li><p>
-The <code>StoppedBy=</code> setting defines a <code>stopped-by</code> relationship to other services, stored in the generated bundle.
-This is the inverse of the <code>conflicts</code> relationship.
-By default, unless the <code>DefaultDependencies=false</code> setting is used, services are stopped by the "shutdown" target in addition to anything specified in this setting.
-</p></li>
-<li><p>
-The <code>ProcessGroupLeader=</code> setting (defaulting to <code>false</code>) if <code>true</code> causes the generated bundle to run the daemon as a process group leader with <a href="setpgrp.html"><code>setpgrp</code></a>.
-</p></li>
-<li><p>
-The <code>SessionLeader=</code> setting (defaulting to <code>false</code>) if <code>true</code> causes the generated bundle to run the daemon as a session leader with <a href="setsid.html"><code>setsid</code></a>.
-</p></li>
-<li><p>
-The <code>TTYPrompt=</code> setting (defaulting to <code>false</code>) if <code>true</code> causes the generated bundle to invoke <a href="login-prompt.html"><code>login-prompt</code></a>.
-</p></li>
-<li><p>
-The <code>ExecRestartPre=</code> setting allows one to specify extra commands to be run in the (automatically generated) <code>restart</code> script.
-</p></li>
-</ul>

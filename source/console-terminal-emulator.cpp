@@ -475,6 +475,7 @@ UnicodeBuffer::SetSize(coordinate w, coordinate h)
 namespace {
 class InputFIFO :
 	public SoftTerm::KeyboardBuffer,
+	public SoftTerm::MouseBuffer,
 	public FileDescriptorOwner
 {
 public:
@@ -491,6 +492,14 @@ protected:
 	virtual void Set8BitControl1(bool);
 	virtual void SetBackspaceIsBS(bool);
 	virtual void ReportSize(coordinate w, coordinate h);
+	virtual void SetSendXTermMouse(bool);
+	virtual void SetSendXTermMouseClicks(bool);
+	virtual void SetSendXTermMouseButtonMotions(bool);
+	virtual void SetSendXTermMouseNoButtonMotions(bool);
+	virtual void SetSendDECLocator(unsigned int);
+	virtual void SetSendDECLocatorPressEvent(bool);
+	virtual void SetSendDECLocatorReleaseEvent(bool);
+	virtual void RequestDECLocatorReport();
 	void WriteRawCharacters(std::size_t, const char *);
 	void WriteRawCharacters(const char * s) { WriteRawCharacters(std::strlen(s), s); }
 	void WriteCSI() { WriteControl1Character('\x9b'); }
@@ -511,12 +520,23 @@ protected:
 	void WriteExtendedKeyNetBSDConsole(uint16_t k, uint8_t m);
 	void WriteExtendedKeyXTermPCMode(uint16_t k, uint8_t m);
 	void WriteExtendedKey(uint16_t k, uint8_t m);
+	void SetMouseX(uint16_t p, uint8_t m);
+	void SetMouseY(uint16_t p, uint8_t m);
+	void SetMouseButton(uint8_t b, bool v, uint8_t m);
+	void WriteWheelMotion(uint8_t b, int8_t o, uint8_t m);
+	void WriteXTermMouse(int button);
+	void WriteDECLocatorReport(int button);
 	const Emulation emulation;
 	bool send_8bit_controls, backspace_is_bs;
+	bool send_xterm_mouse, send_xterm_mouse_clicks, send_xterm_mouse_button_motions, send_xterm_mouse_nobutton_motions, send_locator_press_events, send_locator_release_events;
+	unsigned int send_locator_mode;
 	char input_buffer[256];
 	std::size_t input_read;
 	char output_buffer[4096];
 	std::size_t output_pending;
+	uint16_t mouse_column, mouse_row;
+	uint8_t mouse_modifiers;
+	bool mouse_buttons[8];
 };
 }
 
@@ -526,9 +546,21 @@ InputFIFO::InputFIFO(int i, int m, Emulation e) :
 	emulation(e),
 	send_8bit_controls(false),
 	backspace_is_bs(false),
+	send_xterm_mouse(false), 
+	send_xterm_mouse_clicks(false), 
+	send_xterm_mouse_button_motions(false), 
+	send_xterm_mouse_nobutton_motions(false),
+	send_locator_press_events(false),
+	send_locator_release_events(false),
+	send_locator_mode(0U),
 	input_read(0U),
-	output_pending(0U)
+	output_pending(0U),
+	mouse_column(0U),
+	mouse_row(0U),
+	mouse_modifiers(0U)
 {
+	for (std::size_t j(0U); j < sizeof mouse_buttons/sizeof *mouse_buttons; ++j)
+		mouse_buttons[j] = false;
 }
 
 void 
@@ -649,6 +681,48 @@ void
 InputFIFO::SetBackspaceIsBS(bool b)
 {
 	backspace_is_bs = b;
+}
+
+void 
+InputFIFO::SetSendXTermMouse(bool b)
+{
+	send_xterm_mouse = b;
+}
+
+void 
+InputFIFO::SetSendXTermMouseClicks(bool b)
+{
+	send_xterm_mouse_clicks = b;
+}
+
+void 
+InputFIFO::SetSendXTermMouseButtonMotions(bool b)
+{
+	send_xterm_mouse_button_motions = b;
+}
+
+void 
+InputFIFO::SetSendXTermMouseNoButtonMotions(bool b)
+{
+	send_xterm_mouse_nobutton_motions = b;
+}
+
+void 
+InputFIFO::SetSendDECLocator(unsigned int mode)
+{
+	send_locator_mode = mode;
+}
+
+void 
+InputFIFO::SetSendDECLocatorPressEvent(bool b)
+{
+	send_locator_press_events = b;
+}
+
+void 
+InputFIFO::SetSendDECLocatorReleaseEvent(bool b)
+{
+	send_locator_release_events = b;
 }
 
 void
@@ -1083,6 +1157,142 @@ InputFIFO::WriteExtendedKey(uint16_t k, uint8_t m)
 	}
 }
 
+void 
+InputFIFO::WriteWheelMotion(uint8_t w, int8_t o, uint8_t m) 
+{
+	// The horizontal wheel (#1) is an extension to the xterm protocol.
+	mouse_modifiers = m; 
+	while (0 != o) {
+		if (0 > o) {
+			++o;
+			const int button(3 + 2 * w);
+			mouse_buttons[button] = true;
+			WriteXTermMouse(button);
+			WriteDECLocatorReport(button);
+			mouse_buttons[button] = false;
+			WriteXTermMouse(button);
+			WriteDECLocatorReport(button);
+		}
+		if (0 < o) {
+			--o;
+			const int button(4 + 2 * w);
+			mouse_buttons[button] = true;
+			WriteXTermMouse(button);
+			WriteDECLocatorReport(button);
+			mouse_buttons[button] = false;
+			WriteXTermMouse(button);
+			WriteDECLocatorReport(button);
+		}
+	}
+}
+
+void 
+InputFIFO::WriteXTermMouse(int button) 
+{
+	if (!send_xterm_mouse) return;
+	if (button < 0) {
+		for (std::size_t j(0U); j < sizeof mouse_buttons/sizeof *mouse_buttons; ++j)
+			if (mouse_buttons[j])
+				button = j;
+		if (button < 0 ? !send_xterm_mouse_nobutton_motions : !send_xterm_mouse_button_motions) return;
+	} else {
+		if (!send_xterm_mouse_clicks) return;
+	}
+
+	unsigned flags(0);
+	if (button < 0)
+		flags |= 32U;
+	else
+	if (button < 3)
+		flags |= button;
+	else
+	if (button < 6)
+		flags |= (button - 3) | 64U;
+
+	WriteCSI();
+	char b[32];
+	const char c(button < 0 || !mouse_buttons[button] ? 'm' : 'M');
+	snprintf(b, sizeof b, "<%u;%u;%u%c", flags, mouse_column, mouse_row, c);
+	WriteRawCharacters(b);
+}
+
+void 
+InputFIFO::WriteDECLocatorReport(int button) 
+{
+	if (!send_locator_mode) return;
+	if (0 <= button) {
+		if (static_cast<unsigned int>(button) >= sizeof mouse_buttons/sizeof *mouse_buttons) return;
+		if (mouse_buttons[button] ? !send_locator_press_events : !send_locator_release_events) return;
+	}
+
+	unsigned event(0U);
+	if (button < 0)
+		event = 1U;
+	else if (button < 4)
+		event = button * 2U + 2U + (mouse_buttons[button] ? 0U : 1U);
+	else
+		// This is an extension to the DEC protocol.
+		event = (button - 4) * 2U + 12U + (mouse_buttons[button] ? 0U : 1U);
+	unsigned buttons(0U);
+	for (std::size_t j(0U); j < sizeof mouse_buttons/sizeof *mouse_buttons; ++j)
+		if (mouse_buttons[j])
+			buttons |= 1U << j;
+
+	WriteCSI();
+	char b[32];
+	const unsigned int mouse_page(0U);
+	snprintf(b, sizeof b, "%u;%u;%u;%u;%u&w", event, buttons, mouse_row, mouse_column, mouse_page);
+	WriteRawCharacters(b);
+
+	// Turn oneshot mode off.
+	// Invalid buttons and suppressed reports don't turn oneshot mode off, because oneshot mode is from the point of view of the client.
+	if (2U == send_locator_mode) send_locator_mode = 0U;
+}
+
+void 
+InputFIFO::SetMouseX(uint16_t p, uint8_t m) 
+{
+	mouse_modifiers = m; 
+	if (mouse_column != p) {
+		mouse_column = p; 
+		WriteXTermMouse(-1);
+		// DEC Locator reports only report button events.
+	}
+}
+
+void 
+InputFIFO::SetMouseY(uint16_t p, uint8_t m) 
+{ 
+	mouse_modifiers = m; 
+	if (mouse_row != p) {
+		mouse_row = p; 
+		WriteXTermMouse(-1);
+		// DEC Locator reports only report button events.
+	}
+}
+
+void 
+InputFIFO::SetMouseButton(uint8_t b, bool v, uint8_t m) 
+{ 
+	mouse_modifiers = m; 
+	if (mouse_buttons[b] != v) {
+		mouse_buttons[b] = v; 
+		WriteXTermMouse(b);
+		WriteDECLocatorReport(b);
+	}
+}
+
+void 
+InputFIFO::RequestDECLocatorReport()
+{
+	if (0U == send_locator_mode) {
+		WriteCSI();
+		WriteRawCharacters("0&w");
+		return;
+	}
+	WriteDECLocatorReport(-1);
+}
+
 void
 InputFIFO::ReadInput()
 {
@@ -1098,6 +1308,10 @@ InputFIFO::ReadInput()
 			case INPUT_MSG_UCS24:	WriteUnicodeCharacter(b & 0x00FFFFFF); break;
 			case INPUT_MSG_EKEY:	WriteExtendedKey((b >> 8U) & 0xFFFF, b & 0xFF); break;
 			case INPUT_MSG_FKEY:	WriteFunctionKey((b >> 8U) & 0xFF, b & 0xFF); break;
+			case INPUT_MSG_XPOS:	SetMouseX((b >> 8U) & 0xFFFF, b & 0xFF); break;
+			case INPUT_MSG_YPOS:	SetMouseY((b >> 8U) & 0xFFFF, b & 0xFF); break;
+			case INPUT_MSG_WHEEL:	WriteWheelMotion((b >> 16U) & 0xFF, static_cast<int8_t>((b >> 8U) & 0xFF), b & 0xFF); break;
+			case INPUT_MSG_BUTTON:	SetMouseButton((b >> 16U) & 0xFF, (b >> 8U) & 0xFF, b & 0xFF); break;
 			default:
 				std::fprintf(stderr, "WARNING: %s: %" PRIx32 "\n", "Unknown input message", b);
 				break;
@@ -1207,7 +1421,7 @@ class UnicodeSoftTerm :
 	public SoftTerm
 {
 public:
-	UnicodeSoftTerm(ScreenBuffer & s, KeyboardBuffer & k) : SoftTerm(s, k) {}
+	UnicodeSoftTerm(ScreenBuffer & s, KeyboardBuffer & k, MouseBuffer & m) : SoftTerm(s, k, m) {}
 	virtual void Write(uint32_t character, bool decoder_error, bool overlong);
 };
 }
@@ -1337,8 +1551,8 @@ console_terminal_emulator (
 	}
 	// We are allowed to open the read end of a FIFO in non-blocking mode without having to wait for a writer.
 	mkfifoat(dir_fd.get(), "input", 0620);
-	InputFIFO keyboard(open_read_at(dir_fd.get(), "input"), PTY_MASTER_FILENO, emulation);
-	if (0 > keyboard.get()) {
+	InputFIFO input(open_read_at(dir_fd.get(), "input"), PTY_MASTER_FILENO, emulation);
+	if (0 > input.get()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dirname, "input", std::strerror(error));
 		throw EXIT_FAILURE;
@@ -1388,7 +1602,7 @@ console_terminal_emulator (
 	pollfd p[2];
 	p[0].fd = PTY_MASTER_FILENO;
 	p[0].events = POLLIN|POLLOUT|POLLHUP;
-	p[1].fd = keyboard.get();
+	p[1].fd = input.get();
 	p[1].events = POLLIN;
 #else
 	const int queue(kqueue());
@@ -1413,7 +1627,7 @@ console_terminal_emulator (
 		size_t index(0);
 		EV_SET(&p[index++], PTY_MASTER_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
 		EV_SET(&p[index++], PTY_MASTER_FILENO, EVFILT_WRITE, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], keyboard.get(), EVFILT_READ, EV_ADD, 0, 0, 0);
+		EV_SET(&p[index++], input.get(), EVFILT_READ, EV_ADD, 0, 0, 0);
 		EV_SET(&p[index++], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 		EV_SET(&p[index++], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 		EV_SET(&p[index++], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
@@ -1430,18 +1644,18 @@ console_terminal_emulator (
 	mbuffer.Add(&ubuffer);
 	if (vcsa)
 		mbuffer.Add(&vbuffer);
-	UnicodeSoftTerm emulator(mbuffer, keyboard);
+	UnicodeSoftTerm emulator(mbuffer, input, input);
 	UTF8Decoder decoder(emulator);
 
 	bool hangup(false);
 	while (!shutdown_signalled && !hangup) {
 #if defined(__LINUX__) || defined(__linux__)
-		if (keyboard.OutputAvailable()) p[0].events |= POLLOUT; else p[0].events &= ~POLLOUT;
-		if (keyboard.HasInputSpace()) p[1].events |= POLLIN; else p[1].events &= ~POLLIN;
+		if (input.OutputAvailable()) p[0].events |= POLLOUT; else p[0].events &= ~POLLOUT;
+		if (input.HasInputSpace()) p[1].events |= POLLIN; else p[1].events &= ~POLLIN;
 		const int rc(poll(p, sizeof p/sizeof *p, -1));
 #else
-		EV_SET(&p[0], PTY_MASTER_FILENO, EVFILT_WRITE, keyboard.OutputAvailable() ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
-		EV_SET(&p[1], keyboard.get(), EVFILT_READ, keyboard.HasInputSpace() ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
+		EV_SET(&p[0], PTY_MASTER_FILENO, EVFILT_WRITE, input.OutputAvailable() ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
+		EV_SET(&p[1], input.get(), EVFILT_READ, input.HasInputSpace() ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
 		const int rc(kevent(queue, p, 1, p, sizeof p/sizeof *p, 0));
 #endif
 
@@ -1468,7 +1682,7 @@ console_terminal_emulator (
 				masterin_ready = true;
 				master_hangup |= EV_EOF & e.flags;
 			}
-			if (EVFILT_READ == e.filter && keyboard.get() == static_cast<int>(e.ident)) {
+			if (EVFILT_READ == e.filter && input.get() == static_cast<int>(e.ident)) {
 				fifo_ready = true;
 				fifo_hangup |= EV_EOF & e.flags;
 			}
@@ -1487,11 +1701,11 @@ console_terminal_emulator (
 			}
 		}
 		if (fifo_ready)
-			keyboard.ReadInput();
+			input.ReadInput();
 		if (master_hangup)
 			hangup = true;
 		if (masterout_ready) 
-			keyboard.WriteOutput();
+			input.WriteOutput();
 	}
 
 	unlinkat(dir_fd.get(), "tty", 0);

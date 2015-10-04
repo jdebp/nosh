@@ -4,10 +4,10 @@
 
 [Unit]
 Description="policy kit" daemon
-After=dbus.service extra-shared-libraries.target
-After=local-syslog.target
+After=local-syslog.target extra-shared-libraries.target
 
 [Service]
+Type=dbus
 RuntimeDirectory=PolicyKit
 RuntimeDirectoryMode=0770
 ExecStart=/usr/local/libexec/polkitd

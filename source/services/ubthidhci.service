@@ -8,7 +8,7 @@ Before=bluetooth.service
 
 [Service]
 EnvironmentDirectory=env
-ExecStart=usbconfig ${busnum:+-u} "${busnum}" ${addr:+-a} "${addr}" do_request 0x40 0 0 0 0
+ExecStart=usbconfig ${busnum:+-u "${busnum}"} ${addr:+-a "${addr}"} do_request 0x40 0 0 0 0
 RemainAfterExit=true
 
 [Install]

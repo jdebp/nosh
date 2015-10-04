@@ -4,13 +4,11 @@
 
 [Unit]
 Description=%p daemon
-After=dbus.service
-# Don't want D-Bus in case the D-Bus daemon is not managed by service-manager.
-#Wants=dbus.service
 After=polkitd.service
 Wants=polkitd.service
 
 [Service]
+Type=dbus
 ExecStart=/usr/lib/%p/%pd
 Restart=always
 

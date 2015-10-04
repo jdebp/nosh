@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.20</refmiscinfo>
+<refmiscinfo class="version">1.21</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -16,8 +16,9 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>console-fb-realizer</command>
-<arg choice='opt'>--display-only</arg>
 <arg choice='req'>--kernel-vt <replaceable>filename</replaceable></arg>
+<arg choice='req'>--keyboard <replaceable>filename</replaceable></arg>
+<arg choice='req'>--mouse <replaceable>filename</replaceable></arg>
 <arg choice='req'>--vtfont <replaceable>filename</replaceable></arg>
 <arg choice='req'>--font-medium-r <replaceable>filename</replaceable></arg>
 <arg choice='req'>--font-medium-o <replaceable>filename</replaceable></arg>
@@ -25,39 +26,27 @@
 <arg choice='req'>--font-bold-r <replaceable>filename</replaceable></arg>
 <arg choice='req'>--font-bold-o <replaceable>filename</replaceable></arg>
 <arg choice='req'>--font-bold-i <replaceable>filename</replaceable></arg>
-<arg choice='req'><replaceable>fbname</replaceable></arg>
-<arg choice='req'><replaceable>eventname</replaceable></arg>
-<arg choice='req'><replaceable>kbdmapname</replaceable></arg>
 <arg choice='req'><replaceable>vcname</replaceable></arg>
+<arg choice='req'><replaceable>fbname</replaceable></arg>
+<arg choice='req'><replaceable>kbdmapname</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection><title>Description</title>
 
 <para>
-<command>console-fb-realizer</command> is the I/O back-end for a
-(user-space) virtual terminal, that realizes that virtual terminal
-with a framebuffer device and an event device.
+<command>console-fb-realizer</command> is the I/O back-end for a (user-space) virtual terminal, that realizes that virtual terminal with a framebuffer device and event devices.
 </para>
 
 <para>
-It opens the character/attribute buffer file
-<filename><replaceable>vcname</replaceable>/display</filename> 
-and the input FIFO
-<filename><replaceable>vcname</replaceable>/input</filename>.
-These are the "master side" interfaces of the user-space virtual terminal,
-as detailed in
-<citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+It opens the character/attribute buffer file <filename><replaceable>vcname</replaceable>/display</filename> and the input FIFO <filename><replaceable>vcname</replaceable>/input</filename>.
+These are the "master side" interfaces of the user-space virtual terminal, as detailed in <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 <para>
-It also opens the framebuffer device
-<replaceable>fbname</replaceable> and the event device
-<replaceable>eventname</replaceable>.
-These are the concrete devices with which the user-space virtual terminal
-is to be realized.
-It is the user's responsibility to ensure that these refer to the same,
-single, physical user station.
+It also opens the framebuffer device <replaceable>fbname</replaceable> and the event devices (if any) specified by the <arg choice='plain'>--keyboard</arg> and <arg choice='plain'>--mouse</arg> command line options.
+These are the concrete devices with which the user-space virtual terminal is to be realized.
+It is the user's responsibility to ensure that these refer to the same, single, physical user station.
 </para>
 
 <para>
@@ -68,16 +57,13 @@ It then enters a loop where it simultaneously:
 
 <listitem>
 <para>
-(unless the <arg choice='plain'>--display-only</arg> option is used)
-writes all data received from the input device to the input FIFO for the
-virtual terminal, translating to the abstract keyboard; and
+writes all data received from the input devices to the input FIFO for the virtual terminal, translating to the abstract keyboard and mouse; and
 </para>
 </listitem>
 
 <listitem>
 <para>
-renders the contents of the character/attribute buffer file for
-the virtual terminal on the framebuffer.
+renders the contents of the character/attribute buffer file for the virtual terminal on the framebuffer.
 </para>
 </listitem>
 
@@ -88,12 +74,8 @@ the virtual terminal on the framebuffer.
 <refsection><title>Multiple user stations</title>
 
 <para>
-Setting up multiple user stations is a simple matter of running multiple
-<command>console-fb-realizer</command> processes, each using the individual
-framebuffer and input event devices for a particular user station.
-Multiplexing one realizer across multiple virtual terminals is done with
-an intermediary such as
-<citerefentry><refentrytitle>console-multiplexor</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Setting up multiple user stations is a simple matter of running multiple <command>console-fb-realizer</command> processes, each using the individual framebuffer and input event devices for a particular user station.
+Multiplexing one realizer across multiple virtual terminals is done with an intermediary such as <citerefentry><refentrytitle>console-multiplexor</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 </refsection>
@@ -101,30 +83,19 @@ an intermediary such as
 <refsection><title>Sharing framebuffer and event devices</title>
 
 <para>
-In the simplest use case, <replaceable>fbname</replaceable> and
-<replaceable>eventname</replaceable> are wholly dedicated to this realizer, and
-are not shared with anything else.
+In the simplest use case, <replaceable>fbname</replaceable> and the keyboard and mouse event devices are wholly dedicated to this realizer, and are not shared with anything else.
 </para>
 
 <refsection><title>Linux</title>
 
 <para>
-On Linux, this can be the case as long as <replaceable>fbname</replaceable> and
-<replaceable>eventname</replaceable> are not also used by the kernel virtual
-terminal subsystem (or another program such as an X server).
-This will definitely be the case if the kernel has been compiled not to have a
-virtual terminal subsystem in the first place (and no X server has been
-instructed to use the same devices).
+On Linux, this can be the case as long as <replaceable>fbname</replaceable> and the event devices are not also used by the kernel virtual terminal subsystem (or another program such as an X server).
+This will definitely be the case if the kernel has been compiled not to have a virtual terminal subsystem in the first place (and no X server has been instructed to use the same devices).
 </para>
 
 <para>
-If the framebuffer and input event devices are also used by the kernel virtual
-terminal subsystem, however, then the <arg choice='plain'>--kernel-vt</arg>
-command-line option must be used to specify the
-<replaceable>filename</replaceable> of an appropriate kernel VT device.
-This device is used to negotiate, with the kernel VT subsystem and other
-cooperating systems (such as an X server), shared access to the framebuffer and
-to the input event subsystem.
+If the framebuffer and input event devices are also used by the kernel virtual terminal subsystem, however, then the <arg choice='plain'>--kernel-vt</arg> command-line option must be used to specify the <replaceable>filename</replaceable> of an appropriate kernel VT device.
+This device is used to negotiate, with the kernel VT subsystem and other cooperating systems (such as an X server), shared access to the framebuffer and to the input event subsystem.
 </para>
 
 </refsection>
@@ -132,14 +103,8 @@ to the input event subsystem.
 <refsection><title>FreeBSD and PC-BSD</title>
 
 <para>
-Neither FreeBSD nor PC-BSD provide direct access to raw framebuffer and input
-event devices; they are mediated through the kernel virtual terminal subsystem
-and one must use a kernel virtual terminal device as both
-<replaceable>fbname</replaceable> and <replaceable>eventname</replaceable>.
-<command>console-fb-realizer</command> switches the framebuffer device into
-graphics mode, the line discipline to raw mode, and the keyboard driver to
-deliver raw keycodes, for the duration; switching them back to their saved
-prior settings upon its termination.
+Neither FreeBSD nor PC-BSD provide direct access to raw framebuffer and input event devices; they are mediated through the kernel virtual terminal subsystem and one must use a kernel virtual terminal device as both <replaceable>fbname</replaceable> and the keyboard event device name.
+<command>console-fb-realizer</command> switches the framebuffer device into graphics mode, the line discipline to raw mode, and the keyboard driver to deliver raw keycodes, for the duration; switching them back to their saved prior settings upon its termination.
 </para>
 
 </refsection>
@@ -224,14 +189,10 @@ or the processes using the terminal.
 <refsection><title>Keyboard</title>
 
 <para>
-The input event device provides a sequence of keycode numbers, with attached
-press/release flags.
-These are translated to keyboard actions through use of a loadable
-keyboard map.
-Unfortunately, Linux and the BSDs do not agree on a single set of keycode 
-numbers, and cannot share one another's keyboard layout definitions.
-So the realizer first translates the non-portable Linux and BSD keycodes
-into a common set.
+The keyboard input event device provides a sequence of keycode numbers, with attached press/release flags.
+These are translated to keyboard actions through use of a loadable keyboard map.
+Unfortunately, Linux and the BSDs do not agree on a single set of keycode numbers, and cannot share one another's keyboard layout definitions.
+So the realizer first translates the non-portable Linux and BSD keycodes into a common set.
 It is this common set that is actually used in key maps.
 </para>
 
