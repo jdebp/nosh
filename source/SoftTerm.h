@@ -22,6 +22,7 @@ public:
 		virtual void ScrollDown(coordinate s, coordinate e, coordinate n, const CharacterCell & c) = 0;
 		virtual void SetCursorPos(coordinate x, coordinate y) = 0;
 		virtual void SetCursorType(CursorSprite::glyph_type, CursorSprite::attribute_type) = 0;
+		virtual void SetPointerType(PointerSprite::attribute_type) = 0;
 		virtual void SetSize(coordinate w, coordinate h) = 0;
 	};
 	class KeyboardBuffer {
@@ -79,6 +80,7 @@ protected:
 	CharacterCell::colour_type foreground, background, saved_foreground, saved_background;
 	CursorSprite::glyph_type cursor_type;
 	CursorSprite::attribute_type cursor_attributes;
+	bool send_DECLocator, send_XTermMouse;
 
 	enum {
 		NUL = '\0',
@@ -113,6 +115,7 @@ protected:
 	void Resize(coordinate columns, coordinate rows);
 	void UpdateCursorPos();
 	void UpdateCursorType();
+	void UpdatePointerType();
 	void SetTopBottomMargins();
 	void SetLeftRightMargins();
 	void ResetMargins();

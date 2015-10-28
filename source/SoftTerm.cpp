@@ -40,7 +40,9 @@ SoftTerm::SoftTerm(SoftTerm::ScreenBuffer & s, SoftTerm::KeyboardBuffer & k, Sof
 	foreground(default_foreground),
 	background(default_background),
 	cursor_type(CursorSprite::BOX),
-	cursor_attributes(CursorSprite::VISIBLE|CursorSprite::BLINK)
+	cursor_attributes(CursorSprite::VISIBLE|CursorSprite::BLINK),
+	send_DECLocator(false),
+	send_XTermMouse(false)
 {
 	Resize(display_origin.x + display_margin.w, display_origin.y + display_margin.h);
 	ClearAllHorizontalTabstops();
@@ -548,6 +550,13 @@ SoftTerm::UpdateCursorType()
 }
 
 void 
+SoftTerm::UpdatePointerType()
+{
+	const PointerSprite::attribute_type pointer_attributes(send_DECLocator || send_XTermMouse ? PointerSprite::VISIBLE : 0);
+	screen.SetPointerType(pointer_attributes);
+}
+
+void 
 SoftTerm::SaveCursor()
 {
 	saved_cursor = active_cursor;
@@ -1040,7 +1049,11 @@ SoftTerm::SetPrivateMode(unsigned int a, bool f)
 		case 1000U:	mouse.SetSendXTermMouseClicks(f); mouse.SetSendXTermMouseButtonMotions(false); mouse.SetSendXTermMouseNoButtonMotions(false); break;
 		case 1002U:	mouse.SetSendXTermMouseClicks(f); mouse.SetSendXTermMouseButtonMotions(f); mouse.SetSendXTermMouseNoButtonMotions(false); break;
 		case 1003U:	mouse.SetSendXTermMouseClicks(f); mouse.SetSendXTermMouseButtonMotions(f); mouse.SetSendXTermMouseNoButtonMotions(f); break;
-		case 1006U:	mouse.SetSendXTermMouse(f); break;
+		case 1006U:
+			send_XTermMouse = f;
+			mouse.SetSendXTermMouse(f);
+			UpdatePointerType();
+			break;
 
 		// ############## Intentionally unimplemented private modes
 		case 1U:	// DECCKM (application cursor keys)
@@ -1186,6 +1199,8 @@ vt220_device_attribute1[] =
 	"1" 		// ... with 132-column support
 	";" 
 	"22" 		// ... with ANSI colour capability
+	";" 
+	"29" 		// ... with a locator device
 	"c";
 
 void 
@@ -1414,7 +1429,9 @@ SoftTerm::RequestLocatorReport()
 void 
 SoftTerm::EnableLocatorReports()
 {
-	mouse.SetSendDECLocator(argc > 0U ? args[0U] : 0U);
+	send_DECLocator = argc > 0U ? args[0U] : false;
+	mouse.SetSendDECLocator(send_DECLocator);
+	UpdatePointerType();
 	if (2 <= argc && 1U == args[1U])
 		std::clog << "Pixel coordinate locator report request denied.\n";
 }

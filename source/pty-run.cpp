@@ -10,9 +10,10 @@ For copyright and licensing terms, see the file named COPYING.
 #include <csignal>
 #include <cerrno>
 #include <sys/types.h>
-#include <sys/event.h>
 #if defined(__LINUX__) || defined(__linux__)
-#include <sys/poll.h>
+#include "kqueue_linux.h"
+#else
+#include <sys/event.h>
 #endif
 #include <sys/wait.h>
 #include <sys/ioctl.h>
@@ -21,6 +22,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "popt.h"
 #include "utils.h"
 #include "ttyutils.h"
+#include "SignalManagement.h"
 
 enum { PTY_MASTER_FILENO = 4 };
 
@@ -93,32 +95,9 @@ pty_run (
 		return;
 	}
 
-	// It would be alright to use kqueue here, because we don't fork child processes from this point onwards.
-	// However, the Linux kevent() implementation has a bug somewhere that causes it to always return an EVFILT_READ event for TTYs, even if a read would in fact block.
+	ReserveSignalsForKQueue kqueue_reservation(SIGINT, SIGTERM, SIGHUP, SIGPIPE, SIGCHLD, SIGCONT, SIGWINCH, 0);
+	PreventDefaultForFatalSignals ignored_signals(SIGINT, SIGTERM, SIGHUP, SIGPIPE, 0);
 
-#if defined(__LINUX__) || defined(__linux__)
-	struct sigaction sa;
-	sa.sa_flags=0;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_handler=handle_signal;
-	sigaction(SIGCHLD,&sa,NULL);
-	sigaction(SIGTERM,&sa,NULL);
-	sigaction(SIGINT,&sa,NULL);
-	sigaction(SIGHUP,&sa,NULL);
-	sigaction(SIGPIPE,&sa,NULL);
-	if (pass_through) {
-		sigaction(SIGCONT,&sa,NULL);
-		sigaction(SIGWINCH,&sa,NULL);
-	}
-
-	pollfd p[3];
-	p[0].fd = STDIN_FILENO;
-	p[0].events = POLLIN|POLLHUP;
-	p[1].fd = STDOUT_FILENO;
-	p[1].events = POLLOUT|POLLHUP;
-	p[2].fd = PTY_MASTER_FILENO;
-	p[2].events = POLLIN|POLLOUT|POLLHUP;
-#else
 	const int queue(kqueue());
 	if (0 > queue) {
 		const int error(errno);
@@ -127,18 +106,7 @@ pty_run (
 	}
 
 	struct kevent p[16];
-
 	{
-		struct sigaction sa;
-		sa.sa_flags=0;
-		sigemptyset(&sa.sa_mask);
-		// We only need to set handlers for those signals that would otherwise directly terminate the process.
-		sa.sa_handler=SIG_IGN;
-		sigaction(SIGTERM,&sa,NULL);
-		sigaction(SIGINT,&sa,NULL);
-		sigaction(SIGHUP,&sa,NULL);
-		sigaction(SIGPIPE,&sa,NULL);
-
 		size_t index(0);
 		EV_SET(&p[index++], STDIN_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
 		EV_SET(&p[index++], STDOUT_FILENO, EVFILT_WRITE, EV_ADD, 0, 0, 0);
@@ -159,7 +127,6 @@ pty_run (
 			throw EXIT_FAILURE;
 		}
 	}
-#endif
 
 	char inb[1024], outb[1024];
 	size_t inl(0), outl(0);
@@ -206,12 +173,6 @@ pty_run (
 				tcsetwinsz_nointr(PTY_MASTER_FILENO, size);
 		}
 
-#if defined(__LINUX__) || defined(__linux__)
-		if (outl) p[1].events |= POLLOUT; else p[1].events &= ~POLLOUT;
-		if (inl) p[2].events |= POLLOUT; else p[2].events &= ~POLLOUT;
-
-		const int rc(poll(p, sizeof p/sizeof *p, -1));
-#else
 		// Read from stdin if we have emptied the in buffer and haven't hit EOF.
 		EV_SET(&p[0], STDIN_FILENO, EVFILT_READ, !ine && !inl ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
 		// Read from master if we have emptied the out buffer and haven't hit EOF.
@@ -222,7 +183,6 @@ pty_run (
 		EV_SET(&p[3], PTY_MASTER_FILENO, EVFILT_WRITE, inl ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
 
 		const int rc(kevent(queue, p, 4, p, sizeof p/sizeof *p, 0));
-#endif
 
 		if (0 > rc) {
 			if (EINTR == errno) continue;
@@ -235,13 +195,6 @@ pty_run (
 			throw EXIT_FAILURE;
 		}
 
-#if defined(__LINUX__) || defined(__linux__)
-		const bool stdin_ready(p[0].revents & POLLIN);
-		const bool stdout_ready(p[1].revents & POLLOUT);
-		const bool masterin_ready(p[2].revents & POLLIN);
-		const bool masterout_ready(p[2].revents & POLLOUT);
-		const bool master_hangup(p[2].revents & POLLHUP);
-#else
 		bool stdin_ready(false), stdout_ready(false), masterin_ready(false), masterout_ready(false), master_hangup(false);
 
 		for (size_t i(0); i < static_cast<size_t>(rc); ++i) {
@@ -259,7 +212,6 @@ pty_run (
 			if (EVFILT_WRITE == e.filter && PTY_MASTER_FILENO == e.ident)
 				masterout_ready = true;
 		}
-#endif
 
 		if (stdin_ready) {
 			if (!inl) {

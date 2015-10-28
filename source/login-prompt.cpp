@@ -8,7 +8,12 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstdlib>
 #include <cstring>
 #include <cerrno>
-#include <sys/poll.h>
+#if defined(__LINUX__) || defined(__linux__)
+#include "kqueue_linux.h"
+#else
+#include <sys/event.h>
+#endif
+#include "FileDescriptorOwner.h"
 #include <unistd.h>
 #include <termios.h>
 #include "popt.h"
@@ -39,10 +44,15 @@ login_prompt (
 	}
 
 	write(STDOUT_FILENO, "Press ENTER to log on:", sizeof "Press ENTER to log on:" - 1);
-	pollfd p;
-	p.fd = STDIN_FILENO;
-	p.events = POLLIN;
-	const int rc(poll(&p, 1, -1));
+	const FileDescriptorOwner queue(kqueue());
+	if (0 > queue.get()) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kqueue", std::strerror(error));
+		throw EXIT_FAILURE;
+	}
+	struct kevent p;
+	EV_SET(&p, STDOUT_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
+	const int rc(kevent(queue.get(), &p, 1, &p, 1, 0));
 	if (0 > rc) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "stdin", std::strerror(error));

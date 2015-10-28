@@ -14,7 +14,11 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cerrno>
 #include <stdint.h>
 #include <sys/stat.h>
+#if defined(__LINUX__) || defined(__linux__)
+#include "kqueue_linux.h"
+#else
 #include <sys/event.h>
+#endif
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -31,6 +35,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "CharacterCell.h"
 #include "InputMessage.h"
 #include "FileDescriptorOwner.h"
+#include "SignalManagement.h"
 
 /* Support routines  ********************************************************
 // **************************************************************************
@@ -279,7 +284,15 @@ attributes_from_cell(
 
 static sig_atomic_t resize_needed(false);
 
-static void sig_winch(int) { resize_needed = true; }
+static
+void
+handle_signal (
+	int signo
+) {
+	switch (signo) {
+		case SIGWINCH:	resize_needed = true; break;
+	}
+}
 
 static int old_cursor_state(-1), cursor_state(2);
 
@@ -464,11 +477,7 @@ console_ncurses_realizer (
 	// Without this, ncursesw operates in 8-bit compatibility mode.
 	std::setlocale(LC_ALL, "");
 
-	struct sigaction sa;
-	sa.sa_flags=0;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_handler=sig_winch;
-	sigaction(SIGWINCH,&sa,NULL);
+	ReserveSignalsForKQueue kqueue_reservation(SIGWINCH, 0);
 
 	const int queue(kqueue());
 	if (0 > queue) {
@@ -481,6 +490,7 @@ console_ncurses_realizer (
 	{
 		std::size_t index(0U);
 		EV_SET(&p[index++], fileno(buffer_file), EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE, 0, 0);
+		EV_SET(&p[index++], SIGWINCH, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 		if (!display_only)
 			EV_SET(&p[index++], STDIN_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
 		if (0 > kevent(queue, p, index, 0, 0, 0)) {
@@ -520,11 +530,14 @@ console_ncurses_realizer (
 		}
 
 		for (size_t i(0); i < static_cast<size_t>(rc); ++i) {
-			if (EVFILT_VNODE == p[i].filter && fileno(buffer_file) == static_cast<int>(p[i].ident)) {
+			const struct kevent & e(p[i]);
+			if (EVFILT_SIGNAL == e.filter)
+				handle_signal(e.ident);
+			if (EVFILT_VNODE == e.filter && fileno(buffer_file) == static_cast<int>(e.ident)) {
 				redraw(buffer_file);
 				repaint();
 			}
-			if (EVFILT_READ == p[i].filter && STDIN_FILENO == p[i].ident) {
+			if (EVFILT_READ == e.filter && STDIN_FILENO == e.ident) {
 				wint_t c;
 				switch (wget_wch(window, &c)) {
 					case ERR:	break;

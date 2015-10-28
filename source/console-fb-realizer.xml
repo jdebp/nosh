@@ -17,8 +17,9 @@
 <cmdsynopsis>
 <command>console-fb-realizer</command>
 <arg choice='req'>--kernel-vt <replaceable>filename</replaceable></arg>
-<arg choice='req'>--keyboard <replaceable>filename</replaceable></arg>
-<arg choice='req'>--mouse <replaceable>filename</replaceable></arg>
+<arg choice='req'>--input <replaceable>filename</replaceable></arg>
+<arg choice='req'>--atkeyboard <replaceable>filename</replaceable></arg>
+<arg choice='req'>--sysmouse <replaceable>filename</replaceable></arg>
 <arg choice='req'>--vtfont <replaceable>filename</replaceable></arg>
 <arg choice='req'>--font-medium-r <replaceable>filename</replaceable></arg>
 <arg choice='req'>--font-medium-o <replaceable>filename</replaceable></arg>
@@ -44,7 +45,7 @@ These are the "master side" interfaces of the user-space virtual terminal, as de
 </para>
 
 <para>
-It also opens the framebuffer device <replaceable>fbname</replaceable> and the event devices (if any) specified by the <arg choice='plain'>--keyboard</arg> and <arg choice='plain'>--mouse</arg> command line options.
+It also opens the framebuffer device <replaceable>fbname</replaceable> and the input devices (if any) specified by command line options.
 These are the concrete devices with which the user-space virtual terminal is to be realized.
 It is the user's responsibility to ensure that these refer to the same, single, physical user station.
 </para>
@@ -66,6 +67,38 @@ writes all data received from the input devices to the input FIFO for the virtua
 renders the contents of the character/attribute buffer file for the virtual terminal on the framebuffer.
 </para>
 </listitem>
+
+</itemizedlist>
+
+<para>
+The <arg choice='plain'>--input</arg> command line option designates the superior choices of input device for each platform.
+On Linux, they must designate event devices, using the evdev subsystem.
+On the BSDs they must designate USB HID devices, using the <citerefentry><refentrytitle>uhid</refentrytitle><manvolnum>4</manvolnum></citerefentry> protocol.
+</para>
+
+<para>
+On the BSDs the <arg choice='plain'>--atkeyboard</arg> and <arg choice='plain'>--sysmouse</arg> command line options designate inferior choices of input device, where the others are unavailable.
+The former must designate keyboard devices, using the <citerefentry><refentrytitle>atkbd</refentrytitle><manvolnum>4</manvolnum></citerefentry> protocol; and the latter the must designate mouse devices, using the <citerefentry><refentrytitle>mouse</refentrytitle><manvolnum>4</manvolnum></citerefentry> protocol.
+These systems are inferior because:
+</para>
+
+<itemizedlist>
+
+<listitem><para>
+The BSD sysmouse subsystem, <citerefentry><refentrytitle>moused</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and the various USB add-ons such as <citerefentry><refentrytitle>uhidd</refentrytitle><manvolnum>1</manvolnum></citerefentry>, are incapable of supporting absolute-position pointing devices, such as USB tablets.
+The protocols simply don't support the notion.
+</para><para>
+Transparent "mouse integration" under some virtual machine systems requires support for absolute-position pointing devices.
+</para></listitem>
+
+<listitem><para>
+The USB HID protocol and the Linux input event protocol do not need to specify the "type" of the device, as that is determined from the device's input stream.
+Any combination of mouse, tablet, and keyboard input events in a single device can be handled.
+</para></listitem>
+
+<listitem><para>
+The USB HID protocol and (to a lesser extent) the Linux input event protocol support extra keypads and more keys, including extra extended keys (equals, comma,  plus/minus, and brackets on the calculator keypad, for examples) and consumer device keys (calculator, WWW, and eject for examples).
+</para></listitem>
 
 </itemizedlist>
 
@@ -114,43 +147,21 @@ Neither FreeBSD nor PC-BSD provide direct access to raw framebuffer and input ev
 <refsection><title>Fonts</title>
 
 <para>
-Virtual terminal display buffers have faint, boldface, italic,
-strikethrough, and underline attributes for character cells.
-Only faint, boldface, and italic involve font support, mapping to four font
-weights (light, medium, demibold, and bold) and two slants (upright and italic).
-Strikethrough and underline attributes are rendered not through font selection
-but by overwriting the non-strikethrough non-underline glphys with appropriate
-horizontal lines.
-If faint and demibold weights are unavailable, the faint attribute is emulated
-by shading the foreground and background colours towards black.
-If bold weight is unavailable, the bold attribute is rendered by overlaying a
-glyph with a shifted copy of itself.
-If italic stroke is unavailable, the italic attribute is rendered as
-<emphasis>oblique</emphasis> by shifting the upright glyph.
-(Oblique is not the same as italic, note, and is often an inferior substitute
-for it.)
+Virtual terminal display buffers have faint, boldface, italic, strikethrough, and underline attributes for character cells.
+Only faint, boldface, and italic involve font support, mapping to four font weights (light, medium, demibold, and bold) and two slants (upright and italic).
+Strikethrough and underline attributes are rendered not through font selection but by overwriting the non-strikethrough non-underline glphys with appropriate horizontal lines.
+If faint and demibold weights are unavailable, the faint attribute is emulated by shading the foreground and background colours towards black.
+If bold weight is unavailable, the bold attribute is rendered by overlaying a glyph with a shifted copy of itself.
+If italic stroke is unavailable, the italic attribute is rendered as <emphasis>oblique</emphasis> by shifting the upright glyph.
+(Oblique is not the same as italic, note, and is often an inferior substitute for it.)
 </para>
 
 <para>
-Fonts are loaded from font files, which may be either in the FreeBSD/PC-BSD
-"vtfont" format or in the straight 8 by 16 unadorned bitmap format used by
-FreeBSD's "syscons".
-(To convert an Adobe BDF format font file to "vtfont" format, use the FreeBSD
-<citerefentry><refentrytitle>vtfontcvt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-utility.)
-Font files are specified by the <replaceable>filename</replaceable> in the
-<arg choice='plain'>--vtfont</arg>,
-<arg choice='plain'>--font-medium-r</arg>,
-<arg choice='plain'>--font-medium-o</arg>,
-<arg choice='plain'>--font-medium-i</arg>,
-<arg choice='plain'>--font-bold-r</arg>,
-<arg choice='plain'>--font-bold-o</arg>, and
-<arg choice='plain'>--font-bold-i</arg>
-command-line options.
-Fonts must be monospace fonts with a height of 8, 14, 15, or 16 and a width of
-8, 9, 12, or 16.
-All glyphs are rendered in a 16 by 16 bounding square, with 8 by 8 pixel
-fonts doubled to 16 by 16 pixels.
+Fonts are loaded from font files, which may be either in the FreeBSD/PC-BSD "vtfont" format or in the straight 8 by 16 unadorned bitmap format used by FreeBSD's "syscons".
+(To convert an Adobe BDF format font file to "vtfont" format, use the FreeBSD <citerefentry><refentrytitle>vtfontcvt</refentrytitle><manvolnum>1</manvolnum></citerefentry> utility.)
+Font files are specified by the <replaceable>filename</replaceable> in the <arg choice='plain'>--vtfont</arg>, <arg choice='plain'>--font-medium-r</arg>, <arg choice='plain'>--font-medium-o</arg>, <arg choice='plain'>--font-medium-i</arg>, <arg choice='plain'>--font-bold-r</arg>, <arg choice='plain'>--font-bold-o</arg>, and <arg choice='plain'>--font-bold-i</arg> command-line options.
+Fonts must be monospace fonts with a height of 8, 14, 15, or 16 and a width of 8, 9, 12, or 16.
+All glyphs are rendered in a 16 by 16 bounding square, with 8 by 8 pixel fonts doubled to 16 by 16 pixels.
 </para>
 
 <para>
@@ -163,25 +174,17 @@ To load all glyphs from the font with the appropriate weights and slants, withou
 </para>
 
 <para>
-With no fonts loaded, and for any characters which cannot be found in the
-loaded fonts, <command>console-fb-realizer</command> "greeks" its output,
-falling back to displaying a blank for any whitespace characters, a box for any
-C0 or C1 control characters, and a block for all other characters.
-Such "greeking" is of course illegible; and it is recommended that sufficient
-fonts be loaded in order to render at least the whole of Microsoft's Windows
-Glyph List 4.
+With no fonts loaded, and for any characters which cannot be found in the loaded fonts, <command>console-fb-realizer</command> "greeks" its output,
+falling back to displaying a blank for any whitespace characters, a box for any C0 or C1 control characters, and a block for all other characters.
+Such "greeking" is of course illegible; and it is recommended that sufficient fonts be loaded in order to render at least the whole of Microsoft's Windows Glyph List 4.
 (One might be tempted to simply cover the OpenType W1G character set instead.
-Bear in mind that the W1G character set does not include line drawing, block,
-arrow, and other characters that are commonly employed by TUI systems to draw
-UI widgets; whereas WGL4 does.)
+Bear in mind that the W1G character set does not include line drawing, block, arrow, and other characters that are commonly employed by TUI systems to draw UI widgets; whereas WGL4 does.)
 </para>
 
 <para>
 Fonts are loaded at program initialization and remain loaded thereafter.
-To change fonts, it is necessary to stop and restart
-<command>console-fb-realizer</command>.
-This does not, of course, affect the operation of the terminal emulator
-or the processes using the terminal.
+To change fonts, it is necessary to stop and restart <command>console-fb-realizer</command>.
+This does not, of course, affect the operation of the terminal emulator or the processes using the terminal.
 </para>
 
 </refsection>
@@ -197,109 +200,74 @@ It is this common set that is actually used in key maps.
 </para>
 
 <para>
-The map is stored in the file <replaceable>kbdmapname</replaceable>
-in machine-readable form.
-FreeBSD/PC-BSD keymaps can be compiled from the BSD
-<citerefentry><refentrytitle>kbdmap</refentrytitle><manvolnum>5</manvolnum></citerefentry>
-human-readable form to this machine-readable form with the
-<citerefentry><refentrytitle>console-convert-kbdmap</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-command.
+The map is stored in the file <replaceable>kbdmapname</replaceable> in machine-readable form.
+FreeBSD/PC-BSD keymaps can be compiled from the BSD <citerefentry><refentrytitle>kbdmap</refentrytitle><manvolnum>5</manvolnum></citerefentry> human-readable form to this machine-readable form with the <citerefentry><refentrytitle>console-convert-kbdmap</refentrytitle><manvolnum>1</manvolnum></citerefentry> command.
 </para>
 
 <refsection><title>Map files</title>
 
 <para>
-In machine-readable form, a map is a simple succession of map entries, 
-representing 17 "rows" of 16 "columns" per row, in row-major order.
+In machine-readable form, a map is a simple succession of map entries, representing 17 "rows" of 16 "columns" per row, in row-major order.
 Each map entry comprises twenty-four big-endian 32-bit integers.
 </para>
 
 <para>
-A map entry describes two things: a set of possible actions to be taken when
-the key is pressed and released, and how to select which action based upon the
-momentary keyboard modifier state.
-Keyboard modifiers comprise (in ISO 9995-1 terminology) modifiers for
-level 2, level 3, and group 2; for caps, num, and shift locks; and for
-super, alt, and control.
-What keys act as these modifiers is of course determined by the keyboard
-layout: but often the level 2 modifiers are the shift keys; the level 3 modifier
-is the "Option" (Apple keyboards) or "AltGr" (IBM PC/AT keyboards) key; and
-super is the "Command"/'Apple" (Apple keyboards), "Meta" (Sun keyboards),
-or "Windows" (Microsoft keyboards) key.
+A map entry describes two things: a set of possible actions to be taken when the key is pressed and released, and how to select which action based upon the momentary keyboard modifier state.
+Keyboard modifiers comprise (in ISO 9995-1 terminology) modifiers for level 2, level 3, and group 2; for caps, num, and shift locks; and for super, alt, and control.
+What keys act as these modifiers is of course determined by the keyboard layout: but often the level 2 modifiers are the shift keys; the level 3 modifier is the "Option" (Apple keyboards) or "AltGr" (IBM PC/AT keyboards) key; and super is the "Command"/'Apple" (Apple keyboards), "Meta" (Sun keyboards), or "Windows" (Microsoft keyboards) key.
 </para>
 
 <para>
-The selection class code is first in each entry, and the code values are here
-designated by their UCS-4 code points.
+The selection class code is first in each entry, and the code values are here designated by their UCS-4 code points.
 </para>
 
 <variablelist>
 <varlistentry>
 <term>'<code>p</code>' (U+00000070, "plain")</term>
 <listitem><para>
-The keyboard modifier state is entirely ignored and the first action is always
-chosen.
+The keyboard modifier state is entirely ignored and the first action is always chosen.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>'<code>s</code>' (U+00000073, "shiftable")</term>
 <listitem><para>
-When selecting an action, the sense of the level2 modifier state is inverted
-by the shift lock state.
-Shift lock operates like the typewriter facility of that name, locking
-on until either level2 modifier key is pressed.
-This is generally used for non-alphabetic keys that obey shift lock but
-not caps lock.
+When selecting an action, the sense of the level2 modifier state is inverted by the shift lock state.
+Shift lock operates like the typewriter facility of that name, locking on until either level2 modifier key is pressed.
+This is generally used for non-alphabetic keys that obey shift lock but not caps lock.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>'<code>c</code>' (U+00000063, "capsable")</term>
 <listitem><para>
-When selecting an action, the sense of the level2 modifier state is inverted
-by the OR-combined caps lock and shift lock states.
-This is generally used for alphabetic keys that obey caps lock and shift 
-lock.
+When selecting an action, the sense of the level2 modifier state is inverted by the OR-combined caps lock and shift lock states.
+This is generally used for alphabetic keys that obey caps lock and shift lock.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>'<code>n</code>' (U+0000006E, "numable")</term>
 <listitem><para>
-When selecting an action, the sense of the level2 modifier state is inverted
-by the OR-combined num lock and shift lock states.
-This is generally used for auxiliary keys that obey num lock and shift 
-lock.
+When selecting an action, the sense of the level2 modifier state is inverted by the OR-combined num lock and shift lock states.
+This is generally used for auxiliary keys that obey num lock and shift lock.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>'<code>f</code>' (U+00000066, "funcable")</term>
 <listitem><para>
-When selecting an action, the sense of the level2 modifier state is inverted
-by the shift lock state, and the level3 modifier state is replaced by the
-alt state.
-This is generally used for function block keys that obey shift lock but
-not caps lock.
+When selecting an action, the sense of the level2 modifier state is inverted by the shift lock state, and the level3 modifier state is replaced by the alt state.
+This is generally used for function block keys that obey shift lock but not caps lock.
 </para></listitem>
 </varlistentry>
 </variablelist>
 
 <para>
 The next seven 32-bit numbers are reserved, and should be set to zero.
-The actions, chosen according to the selection class, are the remaining
-sixteen 32-bit numbers.
-These denote the actions for various combinations of modifiers:
-none, level2, control, control+level2, level3, level2+level3, control+level3,
-control+level2+level3, group2, group2+level2, group2+control,
-group2+control+level2, group2+level3, group2+level2+level3,
-group2+control+level3, and group2+control+level2+level3, with inversions
-and replacements as aforementioned.
+The actions, chosen according to the selection class, are the remaining sixteen 32-bit numbers.
+These denote the actions for various combinations of modifiers: none, level2, control, control+level2, level3, level2+level3, control+level3, control+level2+level3, group2, group2+level2, group2+control, group2+control+level2, group2+level3, group2+level2+level3, group2+control+level3, and group2+control+level2+level3, with inversions and replacements as aforementioned.
 </para>
 
 <para>
-The most significant byte denotes the action type and the interpretation
-of the remainder of the action.
-(These are, intentionally, similar to the input protocol used by
-<citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-aimed at making debugging and trace analysis simpler.
+The most significant byte denotes the action type and the interpretation of the remainder of the action.
+(These are, intentionally, similar to the input protocol used by <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>, aimed at making debugging and trace analysis simpler.
 They are two distinct and separate protocols, however.)
 </para>
 
@@ -316,8 +284,7 @@ This is used for keys that have no action in the key map.
 <term><code>0x01nnnnnn</code></term>
 <listitem><para>
 UCS-3 key.
-On press or autorepeat,
-a unicode character message for the code point <code>nnnnnn</code> is sent to the input FIFO.
+On press or autorepeat, a unicode character message for the code point <code>nnnnnn</code> is sent to the input FIFO.
 </para></listitem>
 </varlistentry>
 <varlistentry>
@@ -325,9 +292,7 @@ a unicode character message for the code point <code>nnnnnn</code> is sent to th
 <listitem><para>
 Modifier key.
 Modifiers do not autorepeat.
-On press or release,
-the modifier key <code>nnnn</code> is enacted against the current keyboard modifier state
-according to the <code>cc</code> command.
+On press or release, the modifier key <code>nnnn</code> is enacted against the current keyboard modifier state according to the <code>cc</code> command.
 </para>
 <variablelist>
 <varlistentry>
@@ -359,50 +324,39 @@ it back off.
 <term><code>0x0Annnnxx</code></term>
 <listitem><para>
 Session selection key.
-On press or autorepeat,
-a session selection message for the session number <code>nnnn</code> is sent to the input FIFO.
+On press or autorepeat, a session selection message for the session number <code>nnnn</code> is sent to the input FIFO.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term><code>0x0Cnnnnxx</code></term>
 <listitem><para>
 Consumer key.
-On press or autorepeat,
-a consumer key message for the consumer key number <code>nnnn</code> is sent to the input FIFO.
+On press or autorepeat, a consumer key message for the consumer key number <code>nnnn</code> is sent to the input FIFO.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term><code>0x0Ennnnxx</code></term>
 <listitem><para>
 Extended key.
-On press or autorepeat,
-an extended key message for the extended key number <code>nnnn</code> is sent to the input FIFO.
+On press or autorepeat, an extended key message for the extended key number <code>nnnn</code> is sent to the input FIFO.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term><code>0x0Fnnnnxx</code></term>
 <listitem><para>
 Function key.
-On press or autorepeat,
-a function key message for the function key number <code>nnnn</code> is sent.
-This is used for keyboard layouts where the function key block has a large number
-of actual keys.
-The terminal emulator, and processes connected to the terminal, will see
-function keys with modifiers.
+On press or autorepeat, a function key message for the function key number <code>nnnn</code> is sent.
+This is used for keyboard layouts where the function key block has a large number of actual keys.
+The terminal emulator, and processes connected to the terminal, will see function keys with modifiers.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term><code>0x1Fnnnnxx</code></term>
 <listitem><para>
 Unmodifiable function key.
-On press or autorepeat,
-a function key message for the function key number <code>nnnn</code> is sent.
-The accompanying keyboard modifier state does not incorporate the level or
-group modifiers, which will never be seen by the terminal emulator or processes
-connected to the terminal.
-This is used for keyboard layouts where the function key block has a small
-number of actual keys and the level+group modifiers are used "locally" 
-(within the realizer) to simulate a larger key block.
+On press or autorepeat, a function key message for the function key number <code>nnnn</code> is sent.
+The accompanying keyboard modifier state does not incorporate the level or group modifiers, which will never be seen by the terminal emulator or processes connected to the terminal.
+This is used for keyboard layouts where the function key block has a small number of actual keys and the level+group modifiers are used "locally" (within the realizer) to simulate a larger key block.
 </para></listitem>
 </varlistentry>
 </variablelist>
@@ -412,9 +366,7 @@ number of actual keys and the level+group modifiers are used "locally"
 <refsection><title>Example keyboard map entries</title>
 
 <para>
-Keyboard maps are tailored, of course, to country, layout (QWERTY, AZERTY, Dvorak,
-Maltron, and so forth), and the physical layout of the keyboard (104 keys, 109 keys,
-124 keys, and so forth).
+Keyboard maps are tailored, of course, to country, layout (QWERTY, AZERTY, Dvorak, Maltron, and so forth), and the physical layout of the keyboard (104 keys, 109 keys, 124 keys, and so forth).
 Here are some example keymap entries:
 </para>
 <variablelist>
@@ -447,8 +399,7 @@ Here are some example keymap entries:
 </term>
 <listitem><para>
 '<code>S</code>' on the U.S. International IBM PC/AT keyboard, QWERTY layout.
-It varies according to caps lock, and produces '<code>&#xdf;</code>' and
-'<code>&#xa7;</code>' with the level 3 modifier.
+It varies according to caps lock, and produces '<code>&#xdf;</code>' and '<code>&#xa7;</code>' with the level 3 modifier.
 The control modifier always produces <code>DC3</code> (U+0013).
 </para></listitem>
 </varlistentry>
@@ -481,12 +432,9 @@ The control modifier always produces <code>DC3</code> (U+0013).
 </term>
 <listitem><para>
 F1 on the U.S. International IBM PC/AT keyboard, QWERTY layout.
-It ignores level 3, varying according to the level 2, alt, and control
-modifiers to produce either PAD_F1, F13, F25, and F37 or session switch commands
+It ignores level 3, varying according to the level 2, alt, and control modifiers to produce either PAD_F1, F13, F25, and F37 or session switch commands
 for sessions 1, 13, 25, and 37.
-See
-<citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-for why the base, unmodified, key is the PAD_F1 key, not the F1 key.
+See <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> for why the base, unmodified, key is the PAD_F1 key, not the F1 key.
 </para></listitem>
 </varlistentry>
 </variablelist>
@@ -496,21 +444,15 @@ for why the base, unmodified, key is the PAD_F1 key, not the F1 key.
 <refsection><title>Dead keys</title>
 
 <para>
-So-called "dead" keys are otherwise ordinary UCS-3 keys in a keyboard map,
-except that they denote Unicode combining characters; i.e. characters
-in the "Me" ("Mark, Enclosing") and "Mn" ("Mark, Non-spacing") Unicode
-code point categories.
-<command>console-fb-realizer</command> remembers such "dead" keys, without
-transmitting them to the input FIFO as they are pressed (or autorepeated).
+So-called "dead" keys are otherwise ordinary UCS-3 keys in a keyboard map, except that they denote Unicode combining characters; i.e. characters in the "Me" ("Mark, Enclosing") and "Mn" ("Mark, Non-spacing") Unicode code point categories.
+<command>console-fb-realizer</command> remembers such "dead" keys, without transmitting them to the input FIFO as they are pressed (or autorepeated).
 It attempts to combine them with the next non-combining character keypress.
 In this respect it behaves mostly according to ISO/IEC 9995-3 and DIN/EN 2137:
 </para>
 
 <itemizedlist>
 <listitem><para>
-<command>console-fb-realizer</command> implements the extra so-called
-"peculiar" combinations given by the ISO and DIN standards (and also found in
-several other national keyboard standards).
+<command>console-fb-realizer</command> implements the extra so-called "peculiar" combinations given by the ISO and DIN standards (and also found in several other national keyboard standards).
 These are applied before attempting any Unicode composition.
 Most of these involve:
 </para>
@@ -518,66 +460,41 @@ Most of these involve:
 <varlistentry>
 <term><code>COMBINING SHORT STROKE OVERLAY</code> (U+0335)</term>
 <listitem><para>
-In ISO 9995-3 keyboard layouts this is
-<code>Group2</code>+<code>Level3</code>+<code>C08</code>
-(<code>Shift</code>+<code>Option</code>, <code>Option</code>+<code>'K'</code> on
-the U.S. International keyboard).
+In ISO 9995-3 keyboard layouts this is <code>Group2</code>+<code>Level3</code>+<code>C08</code> (<code>Shift</code>+<code>Option</code>, <code>Option</code>+<code>'K'</code> on the U.S. International keyboard).
 Unicode does not define any compositions using this combining character.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term><code>COMBINING LONG SOLIDUS OVERLAY</code> (U+0338)</term>
 <listitem><para>
-In ISO 9995-3 keyboard layouts this is
-<code>Group2</code>+<code>Level3</code>+<code>C09</code>
-(<code>Shift</code>+<code>Option</code>, <code>Option</code>+<code>'L'</code>
-on the U.S. International keyboard).
+In ISO 9995-3 keyboard layouts this is <code>Group2</code>+<code>Level3</code>+<code>C09</code> (<code>Shift</code>+<code>Option</code>, <code>Option</code>+<code>'L'</code> on the U.S. International keyboard).
 Unicode also defines compositions using this combining character.
-The ISO 9995-3 compositions overlap in only one case, which is the same in both
-ISO 9995-3 and Unicode.
+The ISO 9995-3 compositions overlap in only one case, which is the same in both ISO 9995-3 and Unicode.
 </para></listitem>
 </varlistentry>
 </variablelist>
 </listitem>
 <listitem><para>
-The ISO and DIN standards define "peculiar" combinations with the space
-character that generate standalone accents.
-Any sequence of "dead" keys followed by Space generates a sequence of
-precomposed non-combining accent characters that correspond to the combining
-characters.
+The ISO and DIN standards define "peculiar" combinations with the space character that generate standalone accents.
+Any sequence of "dead" keys followed by Space generates a sequence of precomposed non-combining accent characters that correspond to the combining characters.
 </para></listitem>
 <listitem><para>
 The ISO and DIN standards are not specific about Unicode combining characters.
-<command>console-fb-realizer</command> applies the "canonical" composition
-rules given by Unicode, attempting to produce a stream of input characters
-in Unicode Normalized Form C.
-Any leftover combining characters that cannot be precomposed are treated as
-if combined with Space, and emitted before the composed character.
-This differs from Unicode Normalization, where leftover combining characters
-always follow the "starter" character.
-Having leftover combining characters precede the composed character both
-mimicks the existing behaviour of "dead" keys on several systems and
-is least surprising to the typist as it (roughly) preserves typed order.
-(Typed order is not entirely preserved; the "dead" keys are sorted by
-Unicode combining class as a side-effect of NFC composition.)
+<command>console-fb-realizer</command> applies the "canonical" composition rules given by Unicode, attempting to produce a stream of input characters in Unicode Normalized Form C.
+Any leftover combining characters that cannot be precomposed are treated as if combined with Space, and emitted before the composed character.
+This differs from Unicode Normalization, where leftover combining characters always follow the "starter" character.
+Having leftover combining characters precede the composed character both mimicks the existing behaviour of "dead" keys on several systems and is least surprising to the typist as it (roughly) preserves typed order.
+(Typed order is not entirely preserved; the "dead" keys are sorted by Unicode combining class as a side-effect of NFC composition.)
 </para></listitem>
 <listitem><para>
 Not all input is in Unicode Normalized Form C.
-The ISO and DIN standards define a "pass-through" mechanism that allows a
-typist to enter combining characters as-is: any sequence of "dead" keys
-followed by the Zero-Width Non-Joiner (entered as
-<code>Group2</code>+<code>Level2</code>+<code>A03</code> in ISO 9995-3 keyboard
-layouts; which is <code>Shift</code>+<code>Option</code>,
-<code>Shift</code>+<code>Space</code> on the U.S. International keyboard)
-generates that sequence of non-combining characters in typed order.
+The ISO and DIN standards define a "pass-through" mechanism that allows a typist to enter combining characters as-is: any sequence of "dead" keys followed by the Zero-Width Non-Joiner (entered as <code>Group2</code>+<code>Level2</code>+<code>A03</code> in ISO 9995-3 keyboard layouts; which is <code>Shift</code>+<code>Option</code>, <code>Shift</code>+<code>Space</code> on the U.S. International keyboard) generates that sequence of non-combining characters in typed order.
 </para></listitem>
 <listitem><para>
 Full Unicode Normalization is not performed.
-In particular, if the typist enters a precomposed character after the
-"dead" keys, it is not decomposed before the composition rules are applied.
+In particular, if the typist enters a precomposed character after the "dead" keys, it is not decomposed before the composition rules are applied.
 This is done in order not to surprise the typist.
-Full Unicode NFD decomposition followed by Unicode NFC composition could
-result in different leftover combining characters in some cases.
+Full Unicode NFD decomposition followed by Unicode NFC composition could result in different leftover combining characters in some cases.
 It also would perform various one-way transformations.
 </para></listitem>
 </itemizedlist>
@@ -589,18 +506,13 @@ It also would perform various one-way transformations.
 <refsection><title>Security</title>
 
 <para>
-<command>console-fb-realizer</command> 
-only requires sufficient privileges to access the framebuffer, the input
-device, the display buffer file, and the FIFO.
+<command>console-fb-realizer</command> only requires sufficient privileges to access the framebuffer, the input device(s), the display buffer file, and the FIFO.
 Superuser privileges are not necessary.
-The recommended configuration is that the file and the FIFO are (respectively)
-readable and writable by a dedicated unprivileged user or group.
+The recommended configuration is that the file and the FIFO are (respectively) readable and writable by a dedicated unprivileged user or group.
 </para>
 
 <para>
-It does not attempt to create the file or FIFO if they do not exist,
-because this would create them with the wrong owner and group;
-and it thus requires no write access to their containing directory.
+It does not attempt to create the file or FIFO if they do not exist, because this would create them with the wrong owner and group; and it thus requires no write access to their containing directory.
 </para>
 
 </refsection>

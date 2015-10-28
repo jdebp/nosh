@@ -17,6 +17,7 @@ public:
 		const unsigned short yres, xres, stride, depth;
 		ScreenBitmap(void * b, unsigned short y, unsigned short x, unsigned short s, unsigned short d) : base(b), yres(y), xres(x), stride(s), depth(d) {}
 		void Plot (unsigned short y, unsigned short x, uint16_t bits, const CharacterCell::colour_type & foreground, const CharacterCell::colour_type & background);
+		void AlphaBlend (unsigned short y, unsigned short x, uint16_t bits, const CharacterCell::colour_type & colour);
 	};
 	typedef ScreenBitmap * ScreenBitmapHandle;
 	struct GlyphBitmap {
@@ -34,6 +35,7 @@ public:
 	ScreenBitmapHandle GetScreenBitmap() { return &screen; }
 
 	void BitBLT(ScreenBitmapHandle, GlyphBitmapHandle, unsigned short y, unsigned short x, const CharacterCell::colour_type & foreground, const CharacterCell::colour_type & background);
+	void BitBLTAlpha(ScreenBitmapHandle, GlyphBitmapHandle, unsigned short y, unsigned short x, const CharacterCell::colour_type & colour);
 
 	void DeleteGlyphBitmap(GlyphBitmap * handle) { delete handle; }
 	GlyphBitmap * MakeGlyphBitmap();

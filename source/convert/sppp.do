@@ -19,8 +19,8 @@ do
 	fi
 done
 
-r="/etc/service-bundles/services"
-e="--etc-bundle --no-systemd-quirks --escape-instance --bundle-root"
+r="/var/local/sv"
+e="--no-systemd-quirks --escape-instance --bundle-root"
 
 redo-ifchange "spppcontrol@.service"
 
@@ -34,5 +34,5 @@ do
 	system-control set-service-env "${sppp_service}" args "`get_args \"$i\"`"
 	system-control print-service-env "${sppp_service}" >> "$3"
 	rm -f -- "$r/${sppp_service}/log"
-	ln -s -- "../sppp-log" "$r/${sppp_service}/log"
+	ln -s -- "../../sppp-log" "$r/${sppp_service}/log"
 done

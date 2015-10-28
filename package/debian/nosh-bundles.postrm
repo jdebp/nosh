@@ -52,6 +52,7 @@ case "$1" in
 			nginx \
 			nisdomain \
 			nmbd \
+			nscd \
 			ntpd \
 			ntpdate \
 			openvpn@client \
@@ -82,7 +83,10 @@ case "$1" in
 			rabbitmq-server \
 			rpcbind \
 			samba \
+			saslauthd \
 			sickbeard \
+			slapd \
+			slurpd \
 			slim \
 			smartd \
 			smbd \
@@ -118,6 +122,17 @@ case "$1" in
 			if system-control is-loaded cyclog@$I.service
 			then
 				system-control try-restart cyclog@$I.service
+			fi
+		done
+		# common fan-in log services
+		for I in \
+			natd \
+			sppp \
+			;
+		do
+			if system-control is-loaded "$I"-log.service
+			then
+				system-control try-restart "$I"-log.service
 			fi
 		done
 		# common sockets

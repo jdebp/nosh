@@ -10,9 +10,10 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cerrno>
 #include <stdint.h>
 #include <sys/types.h>
-#include <sys/event.h>
 #if defined(__LINUX__) || defined(__linux__)
-#include <sys/inotify.h>
+#include "kqueue_linux.h"
+#else
+#include <sys/event.h>
 #endif
 #include <dirent.h>
 #include <unistd.h>
@@ -176,21 +177,12 @@ service_dt_scanner (
 	}
 	const char * const scan_directory(args[0]);
 
-#if !defined(__LINUX__) && !defined(__linux__)
 	const int queue(kqueue());
 	if (0 > queue) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kqueue", std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-#else
-	const int notify(inotify_init1(IN_CLOEXEC));
-	if (0 > notify) {
-		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "inotify_init", std::strerror(error));
-		throw EXIT_FAILURE;
-	}
-#endif
 
 	const int scan_dir_fd(open_dir_at(AT_FDCWD, scan_directory));
 	if (0 > scan_dir_fd) {
@@ -199,7 +191,6 @@ service_dt_scanner (
 		throw EXIT_FAILURE;
 	}
 
-#if !defined(__LINUX__) && !defined(__linux__)
 	{
 		struct kevent e[1];
 		EV_SET(&e[0], scan_dir_fd, EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE|NOTE_EXTEND, 0, 0);
@@ -209,19 +200,6 @@ service_dt_scanner (
 			throw EXIT_FAILURE;
 		}
 	}
-#else
-	char * cwd(get_current_dir_name());
-	if (!cwd) {
-		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "get_current_dir_name", std::strerror(error));
-		throw EXIT_FAILURE;
-	}
-	char * path(0);
-	asprintf(&path, "%s%s", '/' == scan_directory[0] ? "" : cwd, scan_directory);
-	const int watch(inotify_add_watch(notify, path, IN_CREATE|IN_DELETE));
-	free(cwd), cwd = 0;
-	free(path), path = 0;
-#endif
 
 	umask(0);
 
@@ -229,13 +207,8 @@ service_dt_scanner (
 	if (0 > socket_fd) throw EXIT_FAILURE;
 	rescan(prog, scan_directory, socket_fd, scan_dir_fd, input_activation);
 
-#if defined(__LINUX__) || defined(__linux__)
-	char buf[sizeof (inotify_event) + NAME_MAX + 1];
-	std::size_t off(0);
-#endif
 	for (;;) {
 		try {
-#if !defined(__LINUX__) && !defined(__linux__)
 			struct kevent p[2];
 			const int rc(kevent(queue, 0, 0, p, sizeof p/sizeof *p, 0));
 			if (0 > rc) {
@@ -258,22 +231,6 @@ service_dt_scanner (
 						break;
 				}
 			}
-#else
-			const int rc(read(notify, buf + off, sizeof buf - off));
-			if (0 > rc) {
-				const int error(errno);
-				if (EINTR == error) continue;
-				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "read", std::strerror(error));
-				throw EXIT_FAILURE;
-			}
-			off += rc;
-			const struct inotify_event & e(*reinterpret_cast<const struct inotify_event *>(buf));
-			if (off < sizeof e || off < sizeof e + e.len) continue;
-			if ((watch != e.wd) && (0 == ((IN_CREATE|IN_DELETE) & e.mask)))
-				std::fprintf(stderr, "%s: DEBUG: %s: %s\n", prog, "inotify", e.name);
-			else
-				rescan(prog, scan_directory, socket_fd, scan_dir_fd, input_activation);
-#endif
 		} catch (const std::exception & e) {
 			std::fprintf(stderr, "%s: ERROR: exception: %s\n", prog, e.what());
 		}

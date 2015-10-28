@@ -50,7 +50,7 @@ void
 emergency (
 	const char * prog
 ) {
-	send_signal_to_process_1 (
+	send_signal_to_process_1(
 		prog,
 		// This signal tells process #1 to enter what systemd terms "emergency mode".
 		// We go with systemd since BSD init, upstart, and SystemV init do not have it.
@@ -65,7 +65,7 @@ rescue (
 ) {
 	// This signal tells process #1 to spawn "system-control start sysinit".
 	send_signal_to_process_1(prog, SIGRTMIN + 10);
-	send_signal_to_process_1 (
+	send_signal_to_process_1(
 		prog,
 		// This signal tells process #1 to enter what BSD terms "single user mode" and what systemd terms "rescue mode".
 #if !defined(__LINUX__) && !defined(__linux__)
@@ -85,7 +85,7 @@ normal (
 ) {
 	// This signal tells process #1 to spawn "system-control start sysinit".
 	send_signal_to_process_1(prog, SIGRTMIN + 10);
-	send_signal_to_process_1 (
+	send_signal_to_process_1(
 		prog,
 		// This signal tells process #1 to enter what BSD terms "multi user mode" and what systemd terms "default mode".
 		// On Linux and BSD, we go with systemd since upstart, BSD init, and SystemV init do not have it.
@@ -99,7 +99,7 @@ reboot (
 	const char * prog,
 	bool force
 ) {
-	send_signal_to_process_1 (
+	send_signal_to_process_1(
 		prog,
 		// This signal tells process #1 to shut down and reboot.
 		force ? SIGRTMIN + 15 :
@@ -120,7 +120,7 @@ halt (
 	const char * prog,
 	bool force
 ) {
-	send_signal_to_process_1 (
+	send_signal_to_process_1(
 		prog,
 		// This signal tells process #1 to shut down and halt.
 		force ? SIGRTMIN + 13 :
@@ -141,7 +141,7 @@ poweroff (
 	const char * prog,
 	bool force
 ) {
-	send_signal_to_process_1 (
+	send_signal_to_process_1(
 		prog,
 		// This signal tells process #1 to shut down and power off.
 		force ? SIGRTMIN + 14 :

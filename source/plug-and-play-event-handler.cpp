@@ -10,16 +10,17 @@ For copyright and licensing terms, see the file named COPYING.
 #include <csignal>
 #include <cerrno>
 #include <sys/types.h>
-#if !defined(__LINUX__) && !defined(__linux__)
-#include <sys/event.h>
+#if defined(__LINUX__) || defined(__linux__)
+#include "kqueue_linux.h"
 #else
-#include <sys/poll.h>
+#include <sys/event.h>
 #endif
 #include <sys/wait.h>
 #include <unistd.h>
 #include "popt.h"
 #include "utils.h"
 #include "listen.h"
+#include "SignalManagement.h"
 
 /* Helper functions *********************************************************
 // **************************************************************************
@@ -39,10 +40,6 @@ handle_signal (
 		case SIGHUP:		halt_signalled = true; break;
 	}
 }
-
-#if !defined(__LINUX__) && !defined(__linux__)
-static void sig_ignore (int) {}
-#endif
 
 static inline
 void
@@ -105,13 +102,15 @@ plug_and_play_event_handler (
 		throw EXIT_FAILURE;
 	}
 
-#if !defined(__LINUX__) && !defined(__linux__)
 	const int queue(kqueue());
 	if (0 > queue) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kqueue", std::strerror(error));
 		throw EXIT_FAILURE;
 	}
+
+	ReserveSignalsForKQueue kqueue_reservation(SIGCHLD, SIGINT, SIGTERM, SIGHUP, 0);
+	PreventDefaultForFatalSignals ignored_signals(SIGINT, SIGTERM, SIGHUP, 0);
 
 	std::vector<struct kevent> p(listen_fds + 4);
 	for (unsigned i(0U); i < listen_fds; ++i)
@@ -124,42 +123,6 @@ plug_and_play_event_handler (
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
 		throw EXIT_FAILURE;
-	}
-#else
-	std::vector<pollfd> p(listen_fds);
-	for (unsigned i(0U); i < listen_fds; ++i) {
-		p[i].fd = LISTEN_SOCKET_FILENO + i;
-		p[i].events = 0;
-	}
-
-	sigset_t original_signals;
-	sigprocmask(SIG_SETMASK, 0, &original_signals);
-	sigset_t masked_signals(original_signals);
-	sigaddset(&masked_signals, SIGCHLD);
-	sigaddset(&masked_signals, SIGINT);
-	sigaddset(&masked_signals, SIGTERM);
-	sigaddset(&masked_signals, SIGHUP);
-	sigprocmask(SIG_SETMASK, &masked_signals, 0);
-	sigset_t masked_signals_during_poll(masked_signals);
-	sigdelset(&masked_signals_during_poll, SIGCHLD);
-	sigdelset(&masked_signals_during_poll, SIGINT);
-	sigdelset(&masked_signals_during_poll, SIGTERM);
-	sigdelset(&masked_signals_during_poll, SIGHUP);
-#endif
-
-	{
-		struct sigaction sa;
-		sa.sa_flags=0;
-		sigemptyset(&sa.sa_mask);
-#if !defined(__LINUX__) && !defined(__linux__)
-		sa.sa_handler=sig_ignore;
-#else
-		sa.sa_handler=handle_signal;
-#endif
-		sigaction(SIGCHLD,&sa,NULL);
-		sigaction(SIGINT,&sa,NULL);
-		sigaction(SIGTERM,&sa,NULL);
-		sigaction(SIGHUP,&sa,NULL);
 	}
 
 	const unsigned long max_children(1);
@@ -177,18 +140,9 @@ plug_and_play_event_handler (
 				std::fprintf(stderr, "%s: shutdown\n", prog);
 			throw EXIT_SUCCESS;
 		}
-#if !defined(__LINUX__) && !defined(__linux__)
 		for (unsigned i(0U); i < listen_fds; ++i)
 			EV_SET(&p[i], LISTEN_SOCKET_FILENO + i, EVFILT_READ, children < max_children ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
 		const int rc(kevent(queue, p.data(), listen_fds, p.data(), listen_fds + 4, 0));
-#else
-		for (unsigned i(0U); i < listen_fds; ++i)
-			if (children < max_children)
-				p[i].events |= POLLIN;
-			else
-				p[i].events &= ~POLLIN;
-		const int rc(ppoll(p.data(), listen_fds, 0, &masked_signals_during_poll));
-#endif
 		if (0 > rc) {
 			if (EINTR == errno) continue;
 exit_error:
@@ -196,13 +150,7 @@ exit_error:
 			std::fprintf(stderr, "%s: FATAL: %s\n", prog, std::strerror(error));
 			throw EXIT_FAILURE;
 		}
-#if !defined(__LINUX__) && !defined(__linux__)
-		for (size_t i(0); i < static_cast<std::size_t>(rc); ++i) 
-#else
-		for (size_t i(0); i < listen_fds; ++i) 
-#endif
-		{
-#if !defined(__LINUX__) && !defined(__linux__)
+		for (size_t i(0); i < static_cast<std::size_t>(rc); ++i) {
 			if (EVFILT_SIGNAL == p[i].filter) {
 				handle_signal (p[i].ident);
 				continue;
@@ -210,10 +158,6 @@ exit_error:
 			if (EVFILT_READ != p[i].filter) 
 				continue;
 			const int l(static_cast<int>(p[i].ident));
-#else
-			if (!(p[i].revents & POLLIN)) continue;
-			const int l(p[i].fd);
-#endif
 
 			char buf[8U * 1024U];
 			const int r(read(l, buf, sizeof buf));
@@ -247,19 +191,6 @@ exit_error:
 					++e;
 			}
 
-			{
-				struct sigaction sa;
-				sa.sa_flags=0;
-				sigemptyset(&sa.sa_mask);
-				sa.sa_handler=SIG_DFL;
-				sigaction(SIGCHLD,&sa,NULL);
-				sigaction(SIGINT,&sa,NULL);
-				sigaction(SIGTERM,&sa,NULL);
-				sigaction(SIGHUP,&sa,NULL);
-			}
-#if defined(__LINUX__) || defined(__linux__)
-			sigprocmask(SIG_SETMASK, &original_signals, 0);
-#endif
 			return;
 		}
 	}

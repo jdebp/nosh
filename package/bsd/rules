@@ -10,7 +10,7 @@ build:
 
 # Target this in order to clean the build areas.
 clean:
-	for i in guide exec terminal-management service-management systemv-shims systemd-shims upstart-shims guide bundles run-system-manager run-via-netbsd-rc run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk run-local-syslog ; \
+	for i in guide exec terminal-management service-management systemv-shims systemd-shims upstart-shims debian-shims guide bundles run-system-manager run-via-netbsd-rc run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk run-local-syslog ; \
 	do \
 		rm -r -f bsd/nosh-"$$i"/ || exit 1 ; \
 	done
@@ -18,7 +18,7 @@ clean:
 
 # Target this in order to make the package files.
 binary: stage
-	for i in exec terminal-management service-management systemv-shims systemd-shims upstart-shims guide bundles run-system-manager run-via-netbsd-rc run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk run-local-syslog ; \
+	for i in exec terminal-management service-management systemv-shims systemd-shims upstart-shims debian-shims guide bundles run-system-manager run-via-netbsd-rc run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk run-local-syslog ; \
 	do \
 		echo 1>&2 "Building control file for nosh-$$i." ; \
 		bsd/gencontrol nosh-"$$i" bsd/nosh-"$$i" || exit 1 ; \
@@ -30,7 +30,7 @@ stage:
 	echo 1>&2 "Building exported image."
 	install -d -m 0755 bsd/tmp/
 	package/export bsd/tmp/ bsd/tmp/ bsd/tmp/
-	for i in exec terminal-management service-management systemv-shims systemd-shims upstart-shims guide bundles run-system-manager run-via-netbsd-rc run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk run-local-syslog ; \
+	for i in exec terminal-management service-management systemv-shims systemd-shims upstart-shims debian-shims guide bundles run-system-manager run-via-netbsd-rc run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk run-local-syslog ; \
 	do \
 		install -d -m 0755 bsd/nosh-"$$i" || exit 1 ; \
 	done

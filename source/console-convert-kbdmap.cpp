@@ -470,6 +470,15 @@ bsd_actions[]= {
 	{	MMNT(KBDMAP_MODIFIER_1ST_META),		"meta"		},
 	{	MMNT(KBDMAP_MODIFIER_1ST_META),		"lmeta"		},
 	{	MMNT(KBDMAP_MODIFIER_2ND_META),		"rmeta"		},
+	{	LOCK(KBDMAP_MODIFIER_LEVEL3),		"lshifta"	},
+	{	LOCK(KBDMAP_MODIFIER_LEVEL3),		"rshifta"	},
+	{	LOCK(KBDMAP_MODIFIER_LEVEL3),		"shifta"	},
+	{	LOCK(KBDMAP_MODIFIER_LEVEL3),		"lctrla"	},
+	{	LOCK(KBDMAP_MODIFIER_LEVEL3),		"rctrla"	},
+	{	LOCK(KBDMAP_MODIFIER_LEVEL3),		"ctrla"		},
+	{	LOCK(KBDMAP_MODIFIER_LEVEL3),		"lalta"		},
+	{	LOCK(KBDMAP_MODIFIER_LEVEL3),		"ralta"		},
+	{	LOCK(KBDMAP_MODIFIER_LEVEL3),		"alta"		},
 	{	LOCK(KBDMAP_MODIFIER_LEVEL3),		"alock"		},
 	{	LOCK(KBDMAP_MODIFIER_CAPS),		"clock"		},
 	{	LOCK(KBDMAP_MODIFIER_NUM),		"nlock"		},
@@ -747,7 +756,7 @@ process (
 		keycode &= 0x7f;
 		// Silently ignore attempts to map a keycode that does not occur so that our own NOP mapping for the first entry remains untouched.
 		if (0x00 == keycode) continue;	
-		const uint16_t index(keycode_to_keymap_index(keycode));
+		const uint16_t index(bsd_keycode_to_keymap_index(keycode));
 		if (0xFFFF == index) {
 			if (!is_all_nop)
 				std::fprintf(stderr, "%s: WARNING: %s(%lu): %u: %s\n", prog, name, ln, keycode, "Un-convertable undefined keycode.");

@@ -1,5 +1,6 @@
 #!/bin/sh -e
-cppflags="-I . -I /usr/include/kqueue"
+#[ "`uname`" = "FreeBSD" ] || kqueue=="-I /usr/include/kqueue"
+cppflags="-I . ${kqueue}"
 ldflags="-g -pthread"
 if type >/dev/null clang++
 then

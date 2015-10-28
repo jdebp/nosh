@@ -1,0 +1,26 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Per-user %I service manager
+After=user@%I
+Wants=user@%I
+
+[Service]
+PermissionsStartOnly=yes
+User=%I
+ExecStartPre=mkdir -m 0750 /run/user/%I/service-manager
+ExecStartPre=chown %I /run/user/%I/service-manager
+ExecStartPre=mkdir -m 0750 /run/user/%I/system-manager
+ExecStartPre=chown %I /run/user/%I/system-manager
+ExecStartPre=mkdir -m 0750 /run/user/%I/system-manager/log
+ExecStartPre=chown %I /run/user/%I/system-manager/log
+ExecStart=session-manager
+ExecStopPost=rmdir /run/user/%I/service-manager
+ExecStopPost=rmdir /run/user/%I/system-manager/log
+ExecStopPost=rmdir /run/user/%I/system-manager
+Restart=always
+
+[Install]
+WantedBy=user@%I.target

@@ -34,4 +34,3 @@ FileDescriptorOwner::release()
 	std::swap(fd, f);
 	return f;
 }
-

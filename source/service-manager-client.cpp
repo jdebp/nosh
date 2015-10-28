@@ -196,6 +196,7 @@ is_ok (
 	return r;
 }
 
+// A way to set SIG_IGN that is reset by execve().
 static void sig_ignore ( int ) {}
 
 bool

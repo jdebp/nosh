@@ -16,12 +16,12 @@ For copyright and licensing terms, see the file named COPYING.
 #include <inttypes.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#if !defined(__LINUX__) && !defined(__linux__)
+#if defined(__LINUX__) || defined(__linux__)
+#include "kqueue_linux.h"
+#include <ncursesw/curses.h>
+#else
 #include <sys/event.h>
 #include <curses.h>
-#else
-#include <sys/poll.h>
-#include <ncursesw/curses.h>
 #endif
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -31,6 +31,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "ttyutils.h"
 #include "listen.h"
 #include "FileDescriptorOwner.h"
+#include "SignalManagement.h"
 
 /* Helper functions *********************************************************
 // **************************************************************************
@@ -50,10 +51,6 @@ handle_signal (
 		case SIGHUP:	halt_signalled = true; break;
 	}
 }
-
-#if !defined(__LINUX__) && !defined(__linux__)
-static void sig_ignore (int) {}
-#endif
 
 enum {
 	DEFAULT_COLOURS = 0,
@@ -227,7 +224,6 @@ monitor_fsck_progress (
 		throw EXIT_FAILURE;
 	}
 
-#if !defined(__LINUX__) && !defined(__linux__)
 	const FileDescriptorOwner queue(kqueue());
 	if (0 > queue.get()) {
 		const int error(errno);
@@ -235,51 +231,22 @@ monitor_fsck_progress (
 		throw EXIT_FAILURE;
 	}
 
-	std::vector<struct kevent> p(listen_fds + 4);
-	EV_SET(&p[0], SIGINT, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
-	EV_SET(&p[1], SIGTERM, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
-	EV_SET(&p[2], SIGHUP, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
-	EV_SET(&p[3], SIGWINCH, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
-	for (unsigned i(0U); i < listen_fds; ++i)
-		EV_SET(&p[4 + i], LISTEN_SOCKET_FILENO + i, EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
-	if (0 > kevent(queue.get(), p.data(), p.size(), 0, 0, 0)) {
-		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
-		throw EXIT_FAILURE;
-	}
-#else
-	std::vector<pollfd> p(listen_fds);
-	for (unsigned i(0U); i < listen_fds; ++i) {
-		p[i].fd = LISTEN_SOCKET_FILENO + i;
-		p[i].events = POLLIN;
-	}
-
-	sigset_t original_signals;
-	sigprocmask(SIG_SETMASK, 0, &original_signals);
-	sigset_t masked_signals(original_signals);
-	sigaddset(&masked_signals, SIGINT);
-	sigaddset(&masked_signals, SIGTERM);
-	sigaddset(&masked_signals, SIGHUP);
-	sigprocmask(SIG_SETMASK, &masked_signals, 0);
-	sigset_t masked_signals_during_poll(masked_signals);
-	sigdelset(&masked_signals_during_poll, SIGINT);
-	sigdelset(&masked_signals_during_poll, SIGTERM);
-	sigdelset(&masked_signals_during_poll, SIGHUP);
-#endif
+	ReserveSignalsForKQueue kqueue_reservation(SIGINT, SIGTERM, SIGHUP, SIGWINCH, 0);
+	PreventDefaultForFatalSignals ignored_signals(SIGINT, SIGTERM, SIGHUP, 0);
 
 	{
-		struct sigaction sa;
-		sa.sa_flags=0;
-		sigemptyset(&sa.sa_mask);
-#if !defined(__LINUX__) && !defined(__linux__)
-		sa.sa_handler=sig_ignore;
-#else
-		sa.sa_handler=handle_signal;
-#endif
-		sigaction(SIGINT,&sa,NULL);
-		sigaction(SIGTERM,&sa,NULL);
-		sigaction(SIGHUP,&sa,NULL);
-		sigaction(SIGWINCH,&sa,NULL);
+		std::vector<struct kevent> p(listen_fds + 4);
+		EV_SET(&p[0], SIGINT, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
+		EV_SET(&p[1], SIGTERM, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
+		EV_SET(&p[2], SIGHUP, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
+		EV_SET(&p[3], SIGWINCH, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
+		for (unsigned i(0U); i < listen_fds; ++i)
+			EV_SET(&p[4 + i], LISTEN_SOCKET_FILENO + i, EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
+		if (0 > kevent(queue.get(), p.data(), p.size(), 0, 0, 0)) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
+			throw EXIT_FAILURE;
+		}
 	}
 
 	ClientTable clients;
@@ -288,6 +255,7 @@ monitor_fsck_progress (
 	initialize_colours();
 
 	try {
+		std::vector<struct kevent> p(listen_fds + 4 + 1024);
 		for (;;) {
 			if (halt_signalled) {
 				throw EXIT_SUCCESS;
@@ -302,11 +270,7 @@ monitor_fsck_progress (
 					repaint(window, clients);
 				}
 			}
-#if !defined(__LINUX__) && !defined(__linux__)
 			const int rc(kevent(queue.get(), 0, 0, p.data(), p.size(), 0));
-#else
-			const int rc(ppoll(p.data(), p.size(), 0, &masked_signals_during_poll));
-#endif
 			if (0 > rc) {
 				if (EINTR == errno) continue;
 exit_error:
@@ -314,34 +278,18 @@ exit_error:
 				std::fprintf(stderr, "%s: FATAL: %s\n", prog, std::strerror(error));
 				throw EXIT_FAILURE;
 			}
-#if !defined(__LINUX__) && !defined(__linux__)
-			for (size_t i(0); i < static_cast<std::size_t>(rc); ) 
-#else
-			for (size_t i(0); i < p.size(); ) 
-#endif
+			for (size_t i(0); i < static_cast<std::size_t>(rc); ++i) 
 			{
-#if !defined(__LINUX__) && !defined(__linux__)
 				const struct kevent & e(p[i]);
 				if (EVFILT_SIGNAL == e.filter) {
 					handle_signal (e.ident);
-					++i;
 					continue;
 				} else
 				if (EVFILT_READ != e.filter) {
-					++i;
 					continue;
 				}
 				const int fd(static_cast<int>(e.ident));
 				const bool hangup(EV_EOF & e.flags);
-#else
-				const pollfd & e(p[i]);
-				if (!(e.revents & (POLLIN|POLLHUP))) {
-					++i;
-					continue;
-				}
-				const int fd(e.fd);
-				const bool hangup(e.revents & POLLHUP);
-#endif
 				if (static_cast<unsigned>(fd) < LISTEN_SOCKET_FILENO + listen_fds && static_cast<unsigned>(fd) >= LISTEN_SOCKET_FILENO) {
 					sockaddr_storage remoteaddr;
 					socklen_t remoteaddrsz = sizeof remoteaddr;
@@ -351,7 +299,6 @@ exit_error:
 					if (clients.empty())
 						wrefresh(window);
 
-#if !defined(__LINUX__) && !defined(__linux__)
 					struct kevent o;
 					EV_SET(&o, s, EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
 					if (0 > kevent(queue.get(), &o, 1, 0, 0, 0)) {
@@ -359,17 +306,8 @@ exit_error:
 						std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
 						throw EXIT_FAILURE;
 					}
-#else
-					pollfd o;
-					o.fd = s;
-					o.events = POLLIN|POLLHUP;
-					o.revents = 0;
-#endif
-					p.push_back(o);
 
 					clients[s];
-
-					++i;
 				} else {
 					ConnectedClient & client(clients[fd]);
 					char buf[8U * 1024U];
@@ -389,7 +327,6 @@ exit_error:
 					if (!line.empty())
 						client.parse(line);
 					if (hangup && !c) {
-#if !defined(__LINUX__) && !defined(__linux__)
 						struct kevent o;
 						EV_SET(&o, fd, EVFILT_READ, EV_DELETE|EV_DISABLE, 0, 0, 0);
 						if (0 > kevent(queue.get(), &o, 1, 0, 0, 0)) {
@@ -397,7 +334,6 @@ exit_error:
 							std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
 							throw EXIT_FAILURE;
 						}
-#endif
 						close(fd);
 						clients.erase(fd);
 
@@ -405,10 +341,7 @@ exit_error:
 							repaint(window, clients);
 							endwin();
 						}
-
-						p.erase(p.begin() + i);
-					} else
-						++i;
+					}
 					if (!clients.empty())
 						repaint(window, clients);
 				}

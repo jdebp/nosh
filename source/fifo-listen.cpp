@@ -80,8 +80,11 @@ exit_error:
 		if (0 > fchown(s, uid, gid)) goto exit_error;
 	}
 
-	if (0 > dup2(s, LISTEN_SOCKET_FILENO)) goto exit_error;
-	if (LISTEN_SOCKET_FILENO != s) close(s);
+	if (LISTEN_SOCKET_FILENO != s) {
+		if (0 > dup2(s, LISTEN_SOCKET_FILENO)) goto exit_error;
+		close(s);
+	}
+	set_close_on_exec(LISTEN_SOCKET_FILENO, false);
 
 	if (systemd_compatibility) {
 		setenv("LISTEN_FDS", "1", 1);

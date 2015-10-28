@@ -1,0 +1,22 @@
+# This is an overlay keymap that just contains 
+# the conventional differences between U.S. and U.K. keyboards.
+#
+#                                                        option
+# scan                       cntrl         option option cntrl lock
+# code  base   shift  cntrl  shift  option shift  cntrl  shift state
+# ------------------------------------------------------------------
+  002   '1'    '!'    nop    nop    '`'    '`'    nop    nop     O
+  003   '2'    '"'    nul    nul    '@'    '@'    nul    nul     O
+  004   '3'    0xa3   nop    nop    '#'    '#'    nop    nop     O
+  005   '4'    '$'    0xa4   0xa4   '4'    '$'    nop    nop     O
+  007   '6'    '^'    rs     rs     '^'    '^'    rs     rs      O
+  008   '7'    '&'    nop    nop    '['    '['    esc    esc     O
+  010   '9'    '('    nop    nop    ']'    ']'    gs     gs      O
+  011   '0'    ')'    nop    nop    '{'    '{'    nop    nop     O
+  012   '-'    '_'    us     us     '|'    '|'    us     us      O
+  013   '='    '+'    nop    nop    '}'    '}'    nop    nop     O
+  018   'e'    'E'    enq    enq    0x20ac 'E'    enq    enq     C
+  040   '''    '@'    nul    nul    '''    '@'    nul    nul     O
+  041   '`'    0xac   nop    nop    '|'    '|'    nop    nop     O
+  043   '#'    '~'    nop    nop    '#'    '~'    nop    nop     O
+  086   '\'    '|'    fs     fs     '\'    '|'    fs     fs      O

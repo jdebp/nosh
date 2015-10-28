@@ -12,10 +12,15 @@ For copyright and licensing terms, see the file named COPYING.
 #include <iostream>
 #include <ostream>
 #include <sys/types.h>
+#if defined(__LINUX__) || defined(__linux__)
+#include "kqueue_linux.h"
+#else
 #include <sys/event.h>
+#endif
 #include <unistd.h>
 #include "utils.h"
 #include "listen.h"
+#include "SignalManagement.h"
 
 /* Support functions ********************************************************
 // **************************************************************************
@@ -58,19 +63,8 @@ initctl_read (
 		throw EXIT_FAILURE;
 	}
 
-#if !defined(__LINUX__) && !defined(__linux__)
-	struct sigaction sa;
-	sa.sa_flags=0;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_handler=SIG_IGN;
-	sigaction(SIGHUP,&sa,NULL);
-	sigaction(SIGTERM,&sa,NULL);
-	sigaction(SIGINT,&sa,NULL);
-	sigaction(SIGTSTP,&sa,NULL);
-	sigaction(SIGALRM,&sa,NULL);
-	sigaction(SIGPIPE,&sa,NULL);
-	sigaction(SIGQUIT,&sa,NULL);
-#endif
+	ReserveSignalsForKQueue kqueue_reservation(SIGTERM, SIGINT, SIGHUP, SIGTSTP, SIGALRM, SIGPIPE, SIGQUIT, 0);
+	PreventDefaultForFatalSignals ignored_signals(SIGTERM, SIGINT, SIGHUP, SIGTSTP, SIGALRM, SIGPIPE, SIGQUIT, 0);
 
 	const int queue(kqueue());
 	if (0 > queue) {

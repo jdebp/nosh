@@ -19,11 +19,7 @@
 <refsection><title>Description</title>
 
 <para>
-<command>login-prompt</command> is a chain-loading utility that prompts to standard 
-output, waits for standard input to have data ready, flushes standard
-input,
-and then (if successful) chain load to <replaceable>next-prog</replaceable> with the
-<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+<command>login-prompt</command> is a chain-loading utility that prompts to standard output, waits for standard input to have data ready, flushes standard input with the <citerefentry><refentrytitle>tcflush</refentrytitle><manvolnum>3</manvolnum></citerefentry> function, and then (if successful) chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
 </para>
 
 <para>
@@ -31,17 +27,18 @@ and then (if successful) chain load to <replaceable>next-prog</replaceable> with
 </para>
 
 <para>
-This program is only necessary if <replaceable>next-prog</replaceable> has timeout functionality that
-cannot be switched off, as is the case for Linux <filename>/bin/login</filename>.
-<command>login-prompt</command> effectively delays running that program, and commencing the
-timeout, until the user has responded to a prompt.
-This prevents login processes from continually respawning on unused terminals.
+This program is primarily used in TTY login services, but is only necessary therein if <replaceable>next-prog</replaceable> has timeout functionality that cannot be switched off, as is the case for Linux <filename>/bin/login</filename>.
+<command>login-prompt</command> effectively delays running that program, and commencing the timeout, until the user has responded to a prompt.
+This prevents login processes that timeout from continually respawning on unused terminals.
+</para>
+
+<para>
+Although this can be used as a means to defer running a login program until a user has actually presssed Enter on a terminal, the better way to defer running extraneous TTY login services (on kernel virtual terminals at least) is to employ <citerefentry><refentrytitle>ttylogin-starter</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
 </para>
 
 <para>
 <command>login-prompt</command> expects the terminal and the line discipline to be in relatively sane states.
-To reset to these states, run <citerefentry><refentrytitle>vc-reset-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> or <citerefentry><refentrytitle>reset</refentrytitle><manvolnum>1</manvolnum></citerefentry> before
-<command>login-prompt</command>.
+To reset to these states, run <citerefentry><refentrytitle>vc-reset-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> or <citerefentry><refentrytitle>reset</refentrytitle><manvolnum>1</manvolnum></citerefentry> before <command>login-prompt</command>.
 </para>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

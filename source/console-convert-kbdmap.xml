@@ -23,22 +23,13 @@
 <refsection><title>Description</title>
 
 <para>
-<command>console-convert-kbdmap</command> parses one or more BSD keyboard
-map files in the human-readable
-<citerefentry><refentrytitle>kbdmap</refentrytitle><manvolnum>5</manvolnum></citerefentry>
-format and emits, to its standard output, a machine-readable map file
-that is suitable for use with
-<citerefentry><refentrytitle>console-fb-realizer</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+<command>console-convert-kbdmap</command> parses one or more BSD keyboard map files in the human-readable <citerefentry><refentrytitle>kbdmap</refentrytitle><manvolnum>5</manvolnum></citerefentry> format and emits, to its standard output, a machine-readable map file that is suitable for use with <citerefentry><refentrytitle>console-fb-realizer</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 <para>
 The BSD kbdmaps are overlaid on top of a larger, pre-defined, keyboard map.
-The underlay map has a U.S. International IBM PC/AT QWERTY layout as group 1,
-and the ISO 9995-3 "common secondary group" as group 2.
-The expectation is that the BSD keymaps become the "national variant" portion
-in group 1, overwriting the group 1 entries for the alphanumeric rows A, B, C,
-D, and E, the function key block, and the PC/AT subset of the calculator
-keypad; but leaving group 2 as the ISO 9995-3 trans-national "common" group.
+The underlay map has a U.S. International IBM PC/AT QWERTY layout as group 1, and the ISO 9995-3 "common secondary group" as group 2.
+The expectation is that the BSD keymaps become the "national variant" portion in group 1; overwriting the group 1 entries for the alphanumeric rows A, B, C, D, and E, the function key block, and the PC/AT subset of the calculator keypad; but leaving group 2 as the ISO 9995-3 trans-national "common" group.
 </para>
 
 <para>
@@ -46,30 +37,28 @@ To this end, several rules apply:
 </para>
 <itemizedlist>
 <listitem><para>
-BSD keymaps that have 128 or fewer entries are taken to define level1, level2,
-level3, and level4, with and without the control modifier, in the eight action
-columns of those entries.
+BSD keymaps that have 128 or fewer entries are taken to define level1, level2, level3, and level4, with and without the control modifier, in the eight action columns of those entries.
 Such keymaps are effectively group 1 only.
-BSD keymaps can also have anywhere from 128 to 256 entries.
-Such keymaps are the BSD way of defining what is in effect a group 2, with the
-keycodes above 128 being the "group2" equivalents to keycodes 128 lower.
-</para><para>
-However, in actual "group 2" keymaps invariably the second four columns
-duplicate the first four.
-So, in order to fit the BSD keymap into group 1, leaving the ISO 9995-3
-common group 2 in group 2, the redundancy in the BSD keymap is eliminated:
-level1 and level2 of group 1 in the converted keymap are taken from the first
-four columns of group 1 in the BSD keymap, and level3 and level4 of group 1 in
-the converted keymap are taken from the first four columns of group 2 in the
-BSD keymap.
 </para></listitem>
 <listitem><para>
-Keycode 0x5D (decimal 93, the "AltGr" or "Option" key) with level2 modifier in
-effect is always a group2 modifier latch.
-The BSD keymap is itself overlaid with this, because otherwise there would
-be no group2 modifier (since BSD keymaps have no notion of the ISO 9995-3
-common group 2 or a modifier to switch to it, and do not set the appropriate
-action).
+BSD keymaps can also have anywhere from 128 to 256 entries.
+Such keymaps are the BSD way of defining what is in effect a group 2, with the keycodes above 128 being the "group2" equivalents to keycodes 128 lower.
+</para><para>
+However, in actual "group 2" keymaps invariably the second four columns duplicate the first four.
+So, in order to fit the BSD keymap into group 1, leaving the ISO 9995-3 common group 2 in group 2, the redundancy in the BSD keymap is eliminated:
+</para>
+<itemizedlist>
+<listitem><para>
+level1 and level2 of group 1 in the converted keymap are taken from the first four columns of the first 128 entries in the BSD keymap.
+</para></listitem>
+<listitem><para>
+level3 and level4 of group 1 in the converted keymap are taken from the first four columns of the second 128 entries in the BSD keymap.
+</para></listitem>
+</itemizedlist>
+</listitem>
+<listitem><para>
+Keycode 0x5D (decimal 93, the "AltGr" or "Option" key) with level2 modifier in effect is always a group2 modifier latch.
+The BSD keymap is itself overlaid with this, because otherwise there would be no group2 modifier (since BSD keymaps have no notion of the ISO 9995-3 common group 2 or a modifier to switch to it, and do not set the appropriate action).
 </para></listitem>
 <listitem><para>
 "accent" definitions in a keymap are ignored.
@@ -82,22 +71,14 @@ rules.
 </itemizedlist>
 
 <para>
-Because multiple BSD keymaps can be processed, and because the keymaps are
-overlaid over an existing map, a complete map can be built up in layers should
-one want to, by having individual maps for the main alphanumeric layout,
-control and caps-lock, and so forth.  
-Similarly, minor variants on a given map can be built up as a common base map
-with short difference maps for each variant.
+Because multiple BSD keymaps can be processed, and because the keymaps are overlaid over an existing map, a complete map can be built up in layers should one want to, by having individual maps for the main alphanumeric layout, control and caps-lock, and so forth.  
+Similarly, minor variants on a given map can be built up as a common base map with short difference maps for each variant.
 </para>
 
 <para>
 <citerefentry><refentrytitle>console-fb-realizer</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-keyboard maps contain a lot of entries for things that are simply inexpressible
-in BSD keyboard maps, such as consumer media device control keys, a distinct
-cursor/editing keypad, and calculator keypad keys such as change sign, comma,
-and equals.
-These are largely invariant, fortunately, and are supplied by the fixed
-underlay map.
+keyboard maps contain a lot of entries for things that are simply inexpressible in BSD keyboard maps, such as consumer media device control keys, a distinct cursor/editing keypad, and calculator keypad keys such as change sign, comma, and equals.
+These are largely invariant, fortunately, and are supplied by the fixed underlay map.
 </para>
 
 <para>
@@ -108,32 +89,23 @@ Some additional notes:
 There is no ASCII control character named "ns".
 </para></listitem>
 <listitem><para>
-PC98 FreeBSD/PC-BSD keymaps do not use harmonized keycodes and thus do not
-convert correctly.
+PC98 FreeBSD/PC-BSD keymaps do not use harmonized keycodes and thus do not convert correctly.
 </para></listitem>
 <listitem><para>
-<citerefentry><refentrytitle>atkbd</refentrytitle><manvolnum>5</manvolnum></citerefentry>
-does not define meanings for "<code>fkey65</code>" and higher.
+<citerefentry><refentrytitle>atkbd</refentrytitle><manvolnum>5</manvolnum></citerefentry> does not define meanings for "<code>fkey65</code>" and higher.
 </para></listitem>
 <listitem><para>
-The "<code>ashift</code>" and "<code>alock</code>" actions are converted to a shift
-and a lock of level3, respectively.
+The "<code>ashift</code>" and "<code>alock</code>" actions are converted to a shift and a lock of level3, respectively.
 </para></listitem>
 <listitem><para>
-The "<code>dsla</code>" action has no direct Unicode combining character equivalent,
-as there is no "combining slash" Unicode code point.
-But because it operates like the combining stroke character does in ISO 9995-3
-appendix F, that is what it is converted into.
+The "<code>dsla</code>" action has no direct Unicode combining character equivalent, as there is no "combining slash" Unicode code point.
+But because it operates like the combining stroke character does in ISO 9995-3 appendix F, that is what it is converted into.
 </para></listitem>
 <listitem><para>
-The "<code>dapo</code>" action has no direct Unicode combining character equivalent,
-as there is no "combining apostrophe" Unicode code point.
-This is a BSDism that isn't used in BSD-supplied keymaps, but that is used in
-third-party keymaps for currency characters.
+The "<code>dapo</code>" action has no direct Unicode combining character equivalent, as there is no "combining apostrophe" Unicode code point.
+This is a BSDism that isn't used in BSD-supplied keymaps, but that is used in third-party keymaps for currency characters.
 However, it is redundant.
-The ISO 9995-3 common group 2 that is underlaid beneath all BSD keymaps
-actually has keys for all of the currency characters that "<code>dapo</code>"
-is often used for:
+The ISO 9995-3 common group 2 that is underlaid beneath all BSD keymaps actually has keys for all of the currency characters that "<code>dapo</code>" is often used for:
 </para>
 <variablelist>
 <varlistentry>
@@ -175,12 +147,8 @@ is often used for:
 </listitem>
 <listitem><para>
 BSD keymaps hardwire the BS and DEL control characters for the backspace key.
-However,
-<citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-supplies a soft-settable backspace action that can be programmed using the
-DECBKM control sequence (DEC private mode 67).
-To allow specifying this from BSD keymaps, the convertor adds a "bspace"
-extension to the BSD keymap keyword set.
+However, <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> supplies a soft-settable backspace action that can be programmed using the DECBKM control sequence (DEC private mode 67).
+To allow specifying this from BSD keymaps, the convertor adds a "bspace" extension to the BSD keymap keyword set.
 </para></listitem>
 </itemizedlist>
 

@@ -2,7 +2,7 @@
 main="`basename "$1"`"
 objects="main-exec.o builtins-${main}.o"
 libraries="builtins.a manager.a utils.a"
-[ "`uname`" = "FreeBSD" ] || kqueue=-lkqueue
+#[ "`uname`" = "FreeBSD" ] || kqueue=-lkqueue
 [ "`uname`" = "FreeBSD" ] && static="-static"
 [ "`uname`" = "FreeBSD" ] || rt=-lrt
 redo-ifchange link ${objects} ${libraries}

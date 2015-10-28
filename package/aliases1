@@ -5,6 +5,7 @@ exec	clearenv
 exec	cyclog
 exec	envdir
 exec	envuidgid
+exec	export-to-rsyslog
 exec	false
 exec	fdmove
 exec	fdredir
@@ -40,9 +41,11 @@ exec	tai64n
 exec	tai64nlocal
 exec	tcp-socket-accept
 exec	tcp-socket-listen
+exec	tcp-socket-connect
 exec	true
 exec	ucspi-socket-rules-check
 exec	udp-socket-listen
+exec	udp-socket-connect
 exec	ulimit
 exec	umask
 exec	unsetenv

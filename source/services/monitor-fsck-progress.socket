@@ -9,6 +9,7 @@ Before=local-fs-pre.target
 
 [Socket]
 Backlog=2
+SocketMode=0644
 ListenStream=/run/fsck.progress
 Accept=false
 

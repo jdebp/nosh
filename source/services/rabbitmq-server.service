@@ -12,6 +12,8 @@ WorkingDirectory=/var/lib/rabbitmq
 # FIXME: Is this really needed?
 systemdUserEnvironment=yes
 User=rabbitmq
+# The dunderheaded design of RabbitMQ-server means that we must pretend that it is interactive just to get it not to attempt its own Poor Man's Daemon Supervisor in shell script.
+Environment=RABBITMQ_ALLOW_INPUT=false
 ExecStart=/usr/lib/rabbitmq/bin/%p
 Restart=always
 

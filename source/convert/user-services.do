@@ -33,6 +33,8 @@ do
 	setfacl -m "u:$i:rwx" "/var/log/user/$i/dbus"
 	test -d "$r/user-dbus@$i/log/" || ln -f -s "../user-dbus-log@$i" "$r/user-dbus@$i/log"
 
+	system-control convert-systemd-units $e "$r/" "./user-services@$i.service"
+	echo "user-services@$i" >> "$3"
 	system-control convert-systemd-units $e "$r/" "./user@$i.service"
 	echo "user@$i" >> "$3"
 done

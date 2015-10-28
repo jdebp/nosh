@@ -4,7 +4,7 @@ target_lists="../package/standard-targets"
 mount_lists="../package/common-mounts"
 command1_lists="../package/commands1 ../package/extra-manpages1"
 command8_lists="../package/commands8 ../package/extra-manpages8"
-redo-ifchange version.h services/ttylogin@.service services/klogd.socket services/polkitd.service services/local-syslog.socket services/sysctl.service services/dbus.service
+redo-ifchange version.h services/ttylogin@.service services/klogd.socket services/polkitd.service services/local-syslog.socket services/sysctl.service services/dbus.service services/console-fb-realizer@.service services/nscd.service convert/user-dbus.service
 redo-ifchange ${service_lists} ${target_lists} ${mount_lists} ${command1_lists} ${command8_lists}
 cat ../package/commands1 ../package/commands8 | xargs redo-ifchange
 sort ${service_lists} |

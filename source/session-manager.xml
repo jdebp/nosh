@@ -73,25 +73,17 @@ If you wish it to run in a particular directory, chain to it from <citerefentry>
 </listitem>
 <listitem>
 <para>
-If you wish it to run with a modified environment, chain to it from
-<citerefentry><refentrytitle>clearenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>unsetenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-or
-<citerefentry><refentrytitle>read-conf</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+If you wish it to run with a modified environment, chain to it from <citerefentry><refentrytitle>clearenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>unsetenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>, or <citerefentry><refentrytitle>read-conf</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 </listitem>
 <listitem>
 <para>
-If you wish it to run with a different umask setting, chain to it from
-<citerefentry><refentrytitle>umask</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+If you wish it to run with a different umask setting, chain to it from <citerefentry><refentrytitle>umask</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 </listitem>
 <listitem>
 <para>
-If you wish it to run as a session leader, chain to it from
-<citerefentry><refentrytitle>setsid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+If you wish it to run as a session leader, chain to it from <citerefentry><refentrytitle>setsid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 </listitem>
 </itemizedlist>
@@ -138,17 +130,13 @@ If it terminates otherwise, <command>session-manager</command> simply re-spawns 
 </itemizedlist>
 
 <para>
-The write end of the aforementioned pipe is connected to the the standard
-outputs and standard errors of the service manager, the (ephemeral) service
-controllers, and of <command>session-manager</command> itself.
+The write end of the aforementioned pipe is connected to the the standard outputs and standard errors of the service manager, the (ephemeral) service controllers, and of <command>session-manager</command> itself.
 (Their standard input is connected to <filename>/dev/null</filename>.)
-<command>session-manager</command> retains open file descriptors to this pipe, so
-that no unsaved log data are lost should the logger unexpectedly exit.
+<command>session-manager</command> retains open file descriptors to this pipe, so that no unsaved log data are lost should the logger unexpectedly exit.
 </para>
 
 <para>
-The logger is intended to be just for the session manager, the service manager,
-and the service controllers.
+The logger is intended to be just for the session manager, the service manager, and the service controllers.
 Actual services should be plumbed to their own logging services.
 The logger is told to write its logfiles to <filename>/run/user/<replaceable>$USER</replaceable>/session-manager/log.<replaceable>$MANAGER_PID</replaceable></filename>, and to cap their maximum total size at 1MiB.
 </para>

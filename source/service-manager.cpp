@@ -541,8 +541,6 @@ service::enter_state (
 	if (out != STDOUT_FILENO) close(out);
 	if (err != STDERR_FILENO) close(err);
 
-	set_close_on_exec(fd, false);	// because otherwise executable scripts won't see a valid /dev/fd/N .
-
 	fexecve(fd, const_cast<char **>(a), environ);
 	const int error(errno);
 	std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, name, *a, std::strerror(error));
@@ -706,6 +704,7 @@ static void sig_tstp ( int ) {}
 
 #else
 
+// A way to set SIG_IGN that is reset by execve().
 static void sig_ignore ( int ) {}
 
 #endif

@@ -14,9 +14,10 @@ For copyright and licensing terms, see the file named COPYING.
 #include <inttypes.h>
 #include <stdint.h>
 #include <sys/types.h>
-#include <sys/event.h>
 #if defined(__LINUX__) || defined(__linux__)
-#include <sys/poll.h>
+#include "kqueue_linux.h"
+#else
+#include <sys/event.h>
 #endif
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -27,6 +28,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "SoftTerm.h"
 #include "InputMessage.h"
 #include "FileDescriptorOwner.h"
+#include "SignalManagement.h"
 
 enum { PTY_MASTER_FILENO = 4 };
 
@@ -169,6 +171,7 @@ public:
 	virtual void ScrollDown(coordinate s, coordinate e, coordinate n, const CharacterCell & c);
 	virtual void SetCursorPos(coordinate x, coordinate y);
 	virtual void SetCursorType(CursorSprite::glyph_type, CursorSprite::attribute_type);
+	virtual void SetPointerType(PointerSprite::attribute_type);
 	virtual void SetSize(coordinate w, coordinate h);
 protected:
 	void MakeCA(char ca[2], const CharacterCell & c);
@@ -313,6 +316,11 @@ VCSA::SetCursorType(CursorSprite::glyph_type, CursorSprite::attribute_type)
 }
 
 void 
+VCSA::SetPointerType(PointerSprite::attribute_type)
+{
+}
+
+void 
 VCSA::SetSize(coordinate w, coordinate h)
 {
 	const unsigned char b[2] = { static_cast<unsigned char>(h), static_cast<unsigned char>(w) };
@@ -338,6 +346,7 @@ public:
 	virtual void ScrollDown(coordinate s, coordinate e, coordinate n, const CharacterCell & c);
 	virtual void SetCursorPos(coordinate x, coordinate y);
 	virtual void SetCursorType(CursorSprite::glyph_type, CursorSprite::attribute_type);
+	virtual void SetPointerType(PointerSprite::attribute_type);
 	virtual void SetSize(coordinate w, coordinate h);
 protected:
 	enum { CELL_LENGTH = 16U, HEADER_LENGTH = 16U };
@@ -451,6 +460,13 @@ UnicodeBuffer::SetCursorType(CursorSprite::glyph_type g, CursorSprite::attribute
 {
 	const char b[2] = { static_cast<char>(g), static_cast<char>(a) };
 	pwrite(fd, b, sizeof b, 12U);
+}
+
+void 
+UnicodeBuffer::SetPointerType(PointerSprite::attribute_type a)
+{
+	const char b[1] = { static_cast<char>(a) };
+	pwrite(fd, b, sizeof b, 14U);
 }
 
 void 
@@ -1170,7 +1186,9 @@ InputFIFO::WriteWheelMotion(uint8_t w, int8_t o, uint8_t m)
 			WriteXTermMouse(button);
 			WriteDECLocatorReport(button);
 			mouse_buttons[button] = false;
+#if 0	// vim cannot cope with button up wheel events.
 			WriteXTermMouse(button);
+#endif
 			WriteDECLocatorReport(button);
 		}
 		if (0 < o) {
@@ -1180,7 +1198,9 @@ InputFIFO::WriteWheelMotion(uint8_t w, int8_t o, uint8_t m)
 			WriteXTermMouse(button);
 			WriteDECLocatorReport(button);
 			mouse_buttons[button] = false;
+#if 0	// vim cannot cope with button up wheel events.
 			WriteXTermMouse(button);
+#endif
 			WriteDECLocatorReport(button);
 		}
 	}
@@ -1190,13 +1210,18 @@ void
 InputFIFO::WriteXTermMouse(int button) 
 {
 	if (!send_xterm_mouse) return;
+
+	bool pressed(false);
 	if (button < 0) {
 		for (std::size_t j(0U); j < sizeof mouse_buttons/sizeof *mouse_buttons; ++j)
-			if (mouse_buttons[j])
-				button = j;
-		if (button < 0 ? !send_xterm_mouse_nobutton_motions : !send_xterm_mouse_button_motions) return;
+			if (mouse_buttons[j]) {
+				pressed = true;
+				break;
+			}
+		if (pressed ? !send_xterm_mouse_button_motions : !send_xterm_mouse_nobutton_motions) return;
 	} else {
 		if (!send_xterm_mouse_clicks) return;
+		pressed = mouse_buttons[button];
 	}
 
 	unsigned flags(0);
@@ -1211,8 +1236,8 @@ InputFIFO::WriteXTermMouse(int button)
 
 	WriteCSI();
 	char b[32];
-	const char c(button < 0 || !mouse_buttons[button] ? 'm' : 'M');
-	snprintf(b, sizeof b, "<%u;%u;%u%c", flags, mouse_column, mouse_row, c);
+	const char c(pressed ? 'M' : 'm');
+	snprintf(b, sizeof b, "<%u;%u;%u%c", flags, mouse_column + 1U, mouse_row + 1U, c);
 	WriteRawCharacters(b);
 }
 
@@ -1241,7 +1266,7 @@ InputFIFO::WriteDECLocatorReport(int button)
 	WriteCSI();
 	char b[32];
 	const unsigned int mouse_page(0U);
-	snprintf(b, sizeof b, "%u;%u;%u;%u;%u&w", event, buttons, mouse_row, mouse_column, mouse_page);
+	snprintf(b, sizeof b, "%u;%u;%u;%u;%u&w", event, buttons, mouse_row + 1U, mouse_column + 1U, mouse_page);
 	WriteRawCharacters(b);
 
 	// Turn oneshot mode off.
@@ -1347,6 +1372,7 @@ public:
 	virtual void ScrollDown(coordinate s, coordinate e, coordinate n, const CharacterCell & c);
 	virtual void SetCursorPos(coordinate x, coordinate y);
 	virtual void SetCursorType(CursorSprite::glyph_type, CursorSprite::attribute_type);
+	virtual void SetPointerType(PointerSprite::attribute_type);
 	virtual void SetSize(coordinate w, coordinate h);
 protected:
 	typedef std::list<SoftTerm::ScreenBuffer *> Buffers;
@@ -1395,6 +1421,13 @@ MultipleBuffer::SetCursorType(CursorSprite::glyph_type g, CursorSprite::attribut
 {
 	for (Buffers::iterator i(buffers.begin()); buffers.end() != i; ++i)
 		(*i)->SetCursorType(g, a);
+}
+
+void 
+MultipleBuffer::SetPointerType(PointerSprite::attribute_type a)
+{
+	for (Buffers::iterator i(buffers.begin()); buffers.end() != i; ++i)
+		(*i)->SetPointerType(a);
 }
 
 void 
@@ -1587,24 +1620,9 @@ console_terminal_emulator (
 		}
 	}
 
-	// It would be alright to use kqueue here, because we don't fork child processes from this point onwards.
-	// However, the Linux kevent() implementation has a bug somewhere that causes it to always return an EVFILT_READ event for TTYs, even if a read would in fact block.
+	ReserveSignalsForKQueue kqueue_reservation(SIGTERM, SIGINT, SIGHUP, 0);
+	PreventDefaultForFatalSignals ignored_signals(SIGTERM, SIGINT, SIGHUP, 0);
 
-#if defined(__LINUX__) || defined(__linux__)
-	struct sigaction sa;
-	sa.sa_flags=0;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_handler=handle_signal;
-	sigaction(SIGTERM,&sa,NULL);
-	sigaction(SIGINT,&sa,NULL);
-	sigaction(SIGHUP,&sa,NULL);
-
-	pollfd p[2];
-	p[0].fd = PTY_MASTER_FILENO;
-	p[0].events = POLLIN|POLLOUT|POLLHUP;
-	p[1].fd = input.get();
-	p[1].events = POLLIN;
-#else
 	const int queue(kqueue());
 	if (0 > queue) {
 		const int error(errno);
@@ -1613,17 +1631,7 @@ console_terminal_emulator (
 	}
 
 	struct kevent p[16];
-
 	{
-		struct sigaction sa;
-		sa.sa_flags=0;
-		sigemptyset(&sa.sa_mask);
-		// We only need to set handlers for those signals that would otherwise directly terminate the process.
-		sa.sa_handler=SIG_IGN;
-		sigaction(SIGTERM,&sa,NULL);
-		sigaction(SIGINT,&sa,NULL);
-		sigaction(SIGHUP,&sa,NULL);
-
 		size_t index(0);
 		EV_SET(&p[index++], PTY_MASTER_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
 		EV_SET(&p[index++], PTY_MASTER_FILENO, EVFILT_WRITE, EV_ADD, 0, 0, 0);
@@ -1637,7 +1645,6 @@ console_terminal_emulator (
 			throw EXIT_FAILURE;
 		}
 	}
-#endif
 
 	ubuffer.WriteBOM();
 	MultipleBuffer mbuffer;
@@ -1649,15 +1656,9 @@ console_terminal_emulator (
 
 	bool hangup(false);
 	while (!shutdown_signalled && !hangup) {
-#if defined(__LINUX__) || defined(__linux__)
-		if (input.OutputAvailable()) p[0].events |= POLLOUT; else p[0].events &= ~POLLOUT;
-		if (input.HasInputSpace()) p[1].events |= POLLIN; else p[1].events &= ~POLLIN;
-		const int rc(poll(p, sizeof p/sizeof *p, -1));
-#else
 		EV_SET(&p[0], PTY_MASTER_FILENO, EVFILT_WRITE, input.OutputAvailable() ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
 		EV_SET(&p[1], input.get(), EVFILT_READ, input.HasInputSpace() ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
 		const int rc(kevent(queue, p, 1, p, sizeof p/sizeof *p, 0));
-#endif
 
 		if (0 > rc) {
 			if (EINTR == errno) continue;
@@ -1666,12 +1667,6 @@ console_terminal_emulator (
 			throw EXIT_FAILURE;
 		}
 
-#if defined(__LINUX__) || defined(__linux__)
-		const bool masterin_ready(p[0].revents & POLLIN);
-		const bool masterout_ready(p[0].revents & POLLOUT);
-		bool master_hangup(p[0].revents & POLLHUP);
-		const bool fifo_ready(p[1].revents & POLLIN);
-#else
 		bool masterin_ready(false), masterout_ready(false), master_hangup(false), fifo_ready(false), fifo_hangup(false);
 
 		for (size_t i(0); i < static_cast<size_t>(rc); ++i) {
@@ -1689,7 +1684,6 @@ console_terminal_emulator (
 			if (EVFILT_WRITE == e.filter && PTY_MASTER_FILENO == e.ident)
 				masterout_ready = true;
 		}
-#endif
 
 		if (masterin_ready) {
 			char b[4096];

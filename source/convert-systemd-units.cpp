@@ -757,6 +757,7 @@ convert_systemd_units (
 	value * utmpidentifier(service_profile.use("service", "utmpidentifier"));
 #endif
 	value * ttypath(service_profile.use("service", "ttypath"));
+	value * ttyfromenv(service_profile.use("service", "ttyfromenv"));	// This is an extension to systemd.
 	value * ttyreset(service_profile.use("service", "ttyreset"));
 	value * ttyprompt(service_profile.use("service", "ttyprompt"));	// This is an extension to systemd.
 	value * ttybannerfile(service_profile.use("service", "ttybannerfile"));	// This is an extension to systemd.
@@ -1000,14 +1001,16 @@ convert_systemd_units (
 	const bool stdin_tty(standardinput && ("tty" == tolower(standardinput->last_setting()) || "tty-force" == tolower(standardinput->last_setting())));
 	const bool stdout_inherit(standardoutput && "inherit" == tolower(standardoutput->last_setting()));
 	const bool stderr_inherit(standarderror && "inherit" == tolower(standarderror->last_setting()));
+	const bool stderr_log(standarderror && "log" == tolower(standarderror->last_setting()));
 	// We "un-use" anything that isn't "inherit"/"socket".
 	if (standardinput && !stdin_socket && !stdin_tty) standardinput->used = false;
 	if (standardoutput && !stdout_inherit) standardoutput->used = false;
-	if (standarderror && !stderr_inherit) standarderror->used = false;
+	if (standarderror && !stderr_inherit && !stderr_log) standarderror->used = false;
 	std::string tty(ttypath ? names.substitute(ttypath->last_setting()) : "/dev/console");
 	std::string redirect, login_prompt;
-	if (ttypath || stdin_tty) redirect += "vc-get-tty " + quote(tty) + "\n";
 	if (stdin_tty) {
+		if (!is_bool_true(ttyfromenv, false)) redirect += "vc-get-tty " + quote(tty) + "\n";
+		if (stderr_log) redirect += "fdmove -c 4 2\n";
 		redirect += "open-controlling-tty";
 		if (is_bool_true(ttyvhangup, false)) 
 #if defined(__LINUX__) || defined(__linux__)
@@ -1016,10 +1019,7 @@ convert_systemd_units (
 			redirect += " --revoke";
 #endif
 		redirect += "\n";
-	}
-	if (stdout_inherit && !stdin_tty) redirect += "fdmove -c 1 0\n";
-	if (stderr_inherit && !stdin_tty) redirect += "fdmove -c 2 1\n";
-	if (stdin_tty) {
+		if (stderr_log) redirect += "fdmove 2 4\n";
 		if (is_bool_true(ttyreset, false)) login_prompt += "vc-reset-tty\n";
 		if (is_bool_true(ttyprompt, false)) login_prompt += "login-prompt\n";
 #if defined(__LINUX__) || defined(__linux__)
@@ -1033,6 +1033,10 @@ convert_systemd_units (
 				const std::string & val(*i);
 				login_prompt += "line-banner " + quote(names.substitute(val)) + "\n";
 			}
+	} else {
+		if (ttypath && !is_bool_true(ttyfromenv, false)) redirect += "vc-get-tty " + quote(tty) + "\n";
+		if (stdout_inherit) redirect += "fdmove -c 1 0\n";
+		if (stderr_inherit) redirect += "fdmove -c 2 1\n";
 	}
 
 	// Open the service script files.
@@ -1056,14 +1060,14 @@ convert_systemd_units (
 		if (execstartpre || runtimedirectory) {
 			start << jail;
 			if (setuidgidall) start << envuidgid;
-			start << redirect;
 			start << softlimit;
 			start << um;
 			if (chrootall) start << chroot;
 			start << chdir;
+			start << env;
+			start << redirect;
 			start << createrundir;
 			if (setuidgidall) start << setuidgid;
-			start << env;
 			if (execstartpre) {
 				for (std::list<std::string>::const_iterator i(execstartpre->all_settings().begin()); execstartpre->all_settings().end() != i; ) {
 					std::list<std::string>::const_iterator j(i++);
@@ -1097,13 +1101,13 @@ convert_systemd_units (
 		s << jail;
 		s << envuidgid;
 		s << setsid;
-		s << redirect;
 		s << softlimit;
 		s << um;
 		s << chroot;
 		s << chdir;
-		s << setuidgid;
 		s << env;
+		s << redirect;
+		s << setuidgid;
 		if (listenstream) {
 			if (is_local_socket_name(listenstream->last_setting())) {
 				run << "local-stream-socket-listen --systemd-compatibility ";
@@ -1217,13 +1221,13 @@ convert_systemd_units (
 		service << jail;
 		service << envuidgid;
 		service << setsid;
-		service << redirect;
 		service << softlimit;
 		service << um;
 		service << chroot;
 		service << chdir;
-		service << setuidgid;
 		service << env;
+		service << redirect;
+		service << setuidgid;
 		service << login_prompt;
 	}
 	if (is_oneshot) {
@@ -1258,16 +1262,16 @@ convert_systemd_units (
 		std::stringstream s;
 		s << jail;
 		if (setuidgidall) s << envuidgid;
-		s << redirect;
 		s << softlimit;
 		s << um;
 		if (chrootall) s << chroot;
 		s << chdir;
-		if (setuidgidall) s << setuidgid;
 		s << env;
+		s << redirect;
+		if (setuidgidall) s << setuidgid;
 		for (std::list<std::string>::const_iterator i(execstartpre->all_settings().begin()); execstartpre->all_settings().end() != i; ) {
 			std::list<std::string>::const_iterator j(i++);
-			if (execstartpre->all_settings().begin() != j) s << " ;\n"; 
+			if (execstartpre->all_settings().begin() != j) s << " \\;\n"; 
 			if (execstartpre->all_settings().end() != i) s << "foreground "; 
 			const std::string & val(*j);
 			s << names.substitute(shell_expand(strip_leading_minus(val)));
@@ -1277,7 +1281,7 @@ convert_systemd_units (
 	if (restart && "always" == tolower(restart->last_setting())) {
 		restart_script << "exec true\t# ignore script arguments\n";
 	} else
-	if ((!restart || "no" == tolower(restart->last_setting()))) {
+	if (!restart || "no" == tolower(restart->last_setting()) || "never" == tolower(restart->last_setting()) ) {
 		restart_script << "exec false\t# ignore script arguments\n";
 	} else 
 	{
@@ -1318,14 +1322,14 @@ convert_systemd_units (
 	if (execstoppost || runtimedirectory) {
 		stop << jail;
 		if (setuidgidall) stop << envuidgid;
-		stop << redirect;
 		stop << softlimit;
 		stop << um;
 		if (chrootall) stop << chroot;
 		stop << removerundir;
 		stop << chdir;
-		if (setuidgidall) stop << setuidgid;
 		stop << env;
+		stop << redirect;
+		if (setuidgidall) stop << setuidgid;
 		if (execstoppost) {
 			for (std::list<std::string>::const_iterator i(execstoppost->all_settings().begin()); execstoppost->all_settings().end() != i; ) {
 				std::list<std::string>::const_iterator j(i++);

@@ -6,10 +6,17 @@
 Description=Per-user %I service manager
 
 [Service]
+RemainAfterExit=true
 PermissionsStartOnly=yes
 User=%I
-ExecStartPre=sh -c "ln -s '%I' \"`id -u '%I'`\""
-ExecStart=session-manager
+ExecStartPre=mkdir -m 0750 /run/user
+ExecStartPre=mkdir -m 0750 /run/user/%I
+ExecStartPre=sh -c "ln -s '%I' /run/user/\"`id -u '%I'`\""
+ExecStartPre=chown %I /run/user/%I
+ExecStart=true
+ExecStopPost=rmdir /run/user/%I
+ExecStopPost=rmdir /run/user
 Restart=always
 
 [Install]
+WantedBy=multi-user.target

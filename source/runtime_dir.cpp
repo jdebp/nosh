@@ -27,7 +27,7 @@ effective_user_runtime_dir()
 #endif
 	{
 		if (struct passwd * p = getpwuid(geteuid()))
-			r += p->pw_passwd;
+			r += p->pw_name;
 		endpwent();
 	}
 	return r + slash;
@@ -50,7 +50,7 @@ login_user_runtime_dir()
 	} else
 	{
 		if (struct passwd * p = getpwuid(getuid()))
-			r += p->pw_passwd;
+			r += p->pw_name;
 		endpwent();
 	}
 	return r + slash;

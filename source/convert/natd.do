@@ -20,8 +20,8 @@ do
 	fi
 done
 
-r="/etc/service-bundles/services"
-e="--etc-bundle --no-systemd-quirks --escape-instance --bundle-root"
+r="/var/local/sv"
+e="--no-systemd-quirks --escape-instance --bundle-root"
 
 redo-ifchange "natd@.service"
 
@@ -47,7 +47,7 @@ do
 	fi
 	system-control print-service-env "${natd_service}" >> "$3"
 	rm -f -- "$r/${natd_service}/log"
-	ln -s -- "../natd-log" "$r/${natd_service}/log"
+	ln -s -- "../../natd-log" "$r/${natd_service}/log"
 done
 
 list_natd_interfaces |

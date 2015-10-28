@@ -56,10 +56,12 @@ mountd
 moused
 mysql
 nagios
+natd-log
 nfsd
 nginx
 nisdomain
 nmbd
+nscd
 ntpd
 ntpdate
 openntpd
@@ -95,10 +97,14 @@ salt-master
 salt-minion
 salt-syndic
 samba
+saslauthd
 sickbeard
+slapd
+slurpd
 slim
 smartd
 smbd
+sppp-log
 sshdgenkeys
 swift@account
 swift@account-auditor

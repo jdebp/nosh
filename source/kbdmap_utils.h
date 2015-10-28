@@ -11,6 +11,6 @@ For copyright and licensing terms, see the file named COPYING.
 
 extern
 uint16_t
-keycode_to_keymap_index (uint16_t k);
+bsd_keycode_to_keymap_index (uint16_t k);
 
 #endif

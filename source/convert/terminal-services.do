@@ -31,10 +31,44 @@ Linux)
 *BSD)
 	set_if_unset console-fb-realizer@head0 TTY "/dev/ttyv0"
 	set_if_unset console-fb-realizer@head0 FRAMEBUFFER /dev/ttyv0
-	set_if_unset console-fb-realizer@head0 KBDMAP kbdmaps/uk.kbdmap
-	set_if_unset console-fb-realizer@head0 KEYBOARD /dev/ttyv0
+	set_if_unset console-fb-realizer@head0 KBDMAP kbdmaps/us.kbdmap
+	set_if_unset console-fb-realizer@head0 ATKEYBOARD /dev/ttyv0
+	set_if_unset console-fb-realizer@head0 MOUSE /dev/uhid0
 	;;
 esac
+
+keymaps="/usr/share/vt/keymaps/"
+svcdir="`system-control find console-fb-realizer@head0`"
+if test -d "${keymaps}"
+then
+	redo-ifchange "${keymaps}"
+	find "${keymaps}" -name '*.kbd' |
+	while read k
+	do
+		b="`basename \"$k\" .kbd`"
+		case "$b" in
+		*.pc98.*)	continue;;	# blacklisted
+		*.pc98)		continue;;	# blacklisted
+		*.caps)		continue;;	# unnecessary
+		*.ctrl)		continue;;	# unnecessary
+		*.capsctrl)	continue;;	# unnecessary
+		esac
+		redo-ifchange "$b".kbdmap
+		ln -f -s "`pwd`/$b".kbdmap "${svcdir}/service/kbdmaps/"
+		redo-ifchange "$b".capsctrl.kbdmap
+		ln -f -s "`pwd`/$b".capsctrl.kbdmap "${svcdir}/service/kbdmaps/"
+	done
+else
+	redo-ifcreate "${keymaps}"
+	redo-ifchange soft_backspace.kbd us_to_uk.kbd
+	console-convert-kbdmap /dev/null soft_backspace.kbd > us.kbdmap
+	console-convert-kbdmap /dev/null soft_backspace.kbd us_to_uk.kbd > uk.kbdmap
+	for i in us.kbdmap uk.kbdmap
+	do
+		chmod 0644 -- "$i"
+		ln -f -s "`pwd`/$i" "${svcdir}/service/kbdmaps/"
+	done
+fi
 
 list_user_virtual_terminals() {
 	seq 1 3 | sed -e 's:^:/run/dev/vc:'

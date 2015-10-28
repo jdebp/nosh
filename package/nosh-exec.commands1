@@ -6,6 +6,7 @@ clearenv
 envdir
 envuidgid
 exec
+export-to-rsyslog
 false
 fdmove
 fdredir
@@ -38,9 +39,11 @@ softlimit
 syslog-read
 tcp-socket-accept
 tcp-socket-listen
+tcp-socket-connect
 true
 ucspi-socket-rules-check
 udp-socket-listen
+udp-socket-connect
 ulimit
 umask
 unsetenv

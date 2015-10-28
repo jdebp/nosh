@@ -156,4 +156,4 @@ case "`uname`" in
 	;;
 esac
 
-redo-ifchange dnscache tinydns axfrdns savecore sppp natd
+redo-ifchange dnscache tinydns axfrdns savecore sppp natd openldap

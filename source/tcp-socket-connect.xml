@@ -1,0 +1,151 @@
+<refentry id="tcp-socket-connect">
+
+<refmeta>
+<refentrytitle>tcp-socket-connect</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.21</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>tcp-socket-connect</refname>
+<refpurpose>connect a socket to a TCP server and chain</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>tcp-socket-connect</command> 
+<arg>--verbose</arg> 
+<arg>--local-name <replaceable>name</replaceable></arg> 
+<arg>--local-address <replaceable>address</replaceable></arg> 
+<arg>--local-port <replaceable>port</replaceable></arg> 
+<arg>--numeric-host</arg> 
+<arg>--numeric-service</arg> 
+<arg>--check-interfaces</arg> 
+<arg>--no-keepalives</arg> 
+<arg>--no-kill-IP-options</arg> 
+<arg>--no-delay</arg> 
+<arg choice='req'><replaceable>host</replaceable></arg> 
+<arg choice='req'><replaceable>service</replaceable></arg> 
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>tcp-socket-connect</command> is a chain-loading utility that opens a TCP socket, connects it to <replaceable>host</replaceable> and <replaceable>service</replaceable> with <citerefentry><refentrytitle>connect</refentrytitle><manvolnum>1</manvolnum></citerefentry>, sets the socket to file descriptors 6 and 7 (closing whatever those descriptors were), and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
+It sets up various conventional UCSPI environment variables that describe the local and remote ends of the connection.
+By UCSPI convention the chained-to program is expected to use file descriptor 6 for reading from the server and file descriptor 7 for writing to the server.
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>tcp-socket-connect</command> will ignore.
+</para>
+
+<para>
+If the <arg>--numeric-host</arg> command line option is used, then no name lookup is done on <replaceable>host</replaceable> and it must be (a human readable form of) an IP address.
+If the <arg>--numeric-service</arg> command line option is used, then no name lookup is done on <replaceable>service</replaceable> and it must be a port number.
+Otherwise, <replaceable>host</replaceable> is looked up using the system name resolution facility and <replaceable>port</replaceable> can be an alphanumeric service name.
+</para>
+
+<para>
+The <arg>--check-interfaces</arg> option prevents the use of any IPv4 addresses if there are no IPv4 addresses on any network interface, and the use of any IPv6 addresses if there are no IPv6 addresses.
+This isn't particularly useful on a dynamically configured system where network interface IP addresses can come and go.
+</para>
+
+<para>
+Following the UCSPI conventions, <command>tcp-socket-connect</command> sets up several environment variables containing information about the TCP connection.
+</para>
+
+<variablelist>
+
+<varlistentry><term> 
+<envar>PROTO</envar>
+</term><listitem>
+<para>
+This always has the value <code>TCP</code>.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term> 
+<envar>TCPLOCALIP</envar>
+</term><listitem>
+<para>
+The local (client) IP address of the connecting socket, in human-readable form.
+Normally, the operating system assigns this; but an explicit assignment can be requested with the <arg>--local-address</arg> command-line option, where <replaceable>address</replaceable> is a numeric IP address that is available and matches the protocol of the remote end.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term> 
+<envar>TCPLOCALPORT</envar>
+</term><listitem>
+<para>
+The local (client) port number of the connecting socket.
+Normally, the operating system assigns this; but an explicit assignment can be requested with the <arg>--local-port</arg> command-line option, where <replaceable>port</replaceable> is a numeric port number.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term> 
+<envar>TCPLOCALHOST</envar>
+</term><listitem>
+<para>
+The value of <replaceable>name</replaceable> set by the <arg>--local-name</arg> option; guaranteed unset if that option is not used.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term> 
+<envar>TCPREMOTEIP</envar>
+</term><listitem>
+<para>
+The remote (server) IP address of the connected socket, in human-readable form.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term> 
+<envar>TCPREMOTEPORT</envar>
+</term><listitem>
+<para>
+The remote (server) port number of the connected socket.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term> 
+<envar>TCPREMOTEINFO</envar>
+</term><listitem>
+<para>
+Guaranteed unset.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term> 
+<envar>TCPREMOTEHOST</envar>
+</term><listitem>
+<para>
+Guaranteed unset.
+</para>
+</listitem>
+</varlistentry>
+
+</variablelist>
+
+<para>
+If the <arg>--verbose</arg> option is used, <command>tcp-socket-connect</command> logs information about connections made.
+</para>
+
+<para>
+The <arg>--no-keepalives</arg>, <arg>--no-kill-IP-options</arg>, and <arg>--no-delay</arg> command line options set options on the connected socket.
+The first disables the use of TCP keepalive probes (which are used by default to ensure that dead connections are noticed and eliminated); the second permits IP options (which are removed by default) so that clients can set source routes; and the third disables the "Nagle" delay algorithm used for slow clients.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

@@ -89,7 +89,6 @@ newsyslog
 nfscbd
 nfsclient
 nfsuserd
-nscd
 papd
 pbid
 pf
@@ -117,6 +116,8 @@ timed
 timelord
 ubthidhci
 ugidfw
+uhidd@ugen0.1
+uhidd@ugen0.2
 unbound
 utx
 vixiecron

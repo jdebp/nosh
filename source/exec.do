@@ -2,7 +2,7 @@
 main="`basename "$1"`"
 objects="main-exec.o builtins-${main}.o"
 libraries="builtins.a utils.a"
-[ "`uname`" = "FreeBSD" ] || kqueue=-lkqueue
+#[ "`uname`" = "FreeBSD" ] || kqueue=-lkqueue
 [ "`uname`" = "FreeBSD" ] || uuid=-luuid
 [ "`uname`" = "FreeBSD" ] || rt=-lrt
 [ "`uname`" = "FreeBSD" ] && static="-static"

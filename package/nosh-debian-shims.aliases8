@@ -1,0 +1,2 @@
+telinit	invoke-rc.d
+telinit	update-rc.d

@@ -31,6 +31,7 @@ Description: Minimal non-shell script processor and various chain-load utilities
  * local-stream-socket-accept, local-stream-socket-listen,
  * udp-socket-listen,
  * tcp-socket-accept, tcp-socket-listen, 
+ * tcp-socket-connect, tcp-socket-connect, 
 
 Package: nosh-service-management
 Architecture: amd64
@@ -101,9 +102,21 @@ Description: upstart shim service and system management utilities
  .
  The shims simply invoke native service management commands.
 
+Package: nosh-debian-shims
+Architecture: amd64
+Depends: nosh-service-management
+Suggests: 
+Recommends: 
+Conflicts: nosh-run-via-systemd, upstart, sysvinit-core, systemd-sysv
+Description: Debian shim service and system management utilities
+ This package provides shims for Debian service and system management commands.
+ * invoke-rc.d, update-rc.d
+ .
+ The shims simply invoke native service management commands.
+
 Package: nosh-bundles
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.16), nosh-terminal-management (>= 1.21)
+Depends: nosh-exec, nosh-service-management (>=1.16), nosh-terminal-management (>= 1.22)
 Suggests: 
 Recommends: 
 Conflicts: nosh-standard-targets, nosh-sysinit-services, nosh-bsd-services, nosh-bsd-sockets, nosh-regular-sockets, nosh-regular-services
@@ -117,7 +130,7 @@ Package: nosh-run-system-manager
 Architecture: amd64
 Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles, redo
 Suggests: 
-Recommends: nosh-run-kernel-vt | nosh-run-user-vt, nosh-systemv-shims, nosh-run-local-syslog
+Recommends: nosh-run-kernel-vt | nosh-run-user-vt, nosh-systemv-shims, nosh-run-local-syslog, nosh-debian-shims
 Conflicts: nosh-run-via-systemd, upstart, sysvinit-core, systemd-sysv
 Provides: init
 Description: Run the various AppleTalk services

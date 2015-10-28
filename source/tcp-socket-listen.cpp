@@ -18,6 +18,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include <grp.h>
 #include "utils.h"
+#include "fdutils.h"
 #include "popt.h"
 #include "listen.h"
 
@@ -35,7 +36,8 @@ tcp_socket_listen (
 	bool no_reuse_address(false);
 	bool reuse_port(false);
 	bool bind_to_any(false);
-	bool numeric(false);
+	bool numeric_host(false);
+	bool numeric_service(false);
 	bool check_interfaces(false);
 #if defined(IPV6_V6ONLY)
 	bool combine4and6(false);
@@ -45,7 +47,8 @@ tcp_socket_listen (
 		popt::bool_definition no_reuse_address_option('\0', "no-reuse-address", "Disallow rapid re-use of a local IP address and port.", no_reuse_address);
 		popt::bool_definition reuse_port_option('\0', "reuse-port", "Allow multiple listening sockets to share a single local IP address and port.", reuse_port);
 		popt::bool_definition bind_to_any_option('\0', "bind-to-any", "Allow binding to any IP address even if it is not on any network interface.", bind_to_any);
-		popt::bool_definition numeric_option('n', "numeric", "Save on name resolution and assume host and port are numeric.", numeric);
+		popt::bool_definition numeric_host_option('H', "numeric-host", "Assume that the host is an IP address.", numeric_host);
+		popt::bool_definition numeric_service_option('\0', "numeric-service", "Assume that the service is a port number.", numeric_service);
 		popt::bool_definition check_interfaces_option('\0', "check-interfaces", "Disallow IPv4 or IPv6 if no interface supports them.", check_interfaces);
 #if defined(IPV6_V6ONLY)
 		popt::bool_definition combine4and6_option('\0', "combine4and6", "Allow IPv6 sockets to talk IPv4 to mapped addresses.", combine4and6);
@@ -56,7 +59,8 @@ tcp_socket_listen (
 			&no_reuse_address_option,
 			&reuse_port_option,
 			&bind_to_any_option,
-			&numeric_option,
+			&numeric_host_option,
+			&numeric_service_option,
 			&check_interfaces_option,
 #if defined(IPV6_V6ONLY)
 			&combine4and6_option,
@@ -89,6 +93,10 @@ tcp_socket_listen (
 	}
 	const char * listenport(args.front());
 	args.erase(args.begin());
+	if (args.empty()) {
+		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing next program.");
+		throw EXIT_FAILURE;
+	}
 	next_prog = arg0_of(args);
 
 	// FIXME: Can we even get a SIGPIPE from listen()?
@@ -103,7 +111,8 @@ tcp_socket_listen (
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = 0;
 	hints.ai_flags = AI_PASSIVE;
-	if (numeric) hints.ai_flags |= AI_NUMERICHOST|AI_NUMERICSERV;
+	if (numeric_host) hints.ai_flags |= AI_NUMERICHOST;
+	if (numeric_service) hints.ai_flags |= AI_NUMERICSERV;
 	if (check_interfaces) hints.ai_flags |= AI_ADDRCONFIG;
 	const int rc(getaddrinfo(listenhost, listenport, &hints, &info));
 	if (0 != rc) {
@@ -148,8 +157,11 @@ exit_error:
 	if (0 > bind(s, info->ai_addr, info->ai_addrlen)) goto exit_error;
 	if (0 > listen(s, backlog)) goto exit_error;
 
-	if (0 > dup2(s, LISTEN_SOCKET_FILENO)) goto exit_error;
-	if (LISTEN_SOCKET_FILENO != s) close(s);
+	if (LISTEN_SOCKET_FILENO != s) {
+		if (0 > dup2(s, LISTEN_SOCKET_FILENO)) goto exit_error;
+		close(s);
+	}
+	set_close_on_exec(LISTEN_SOCKET_FILENO, false);
 
 	if (systemd_compatibility) {
 		setenv("LISTEN_FDS", "1", 1);

@@ -19,7 +19,8 @@
 <arg>--no-reuse-address</arg> 
 <arg>--reuse-port</arg> 
 <arg>--bind-to-any</arg> 
-<arg>--numeric</arg> 
+<arg>--numeric-host</arg> 
+<arg>--numeric-service</arg> 
 <arg>--check-interfaces</arg> 
 <arg>--combine4and6</arg> 
 <arg>--systemd-compatibility</arg> 
@@ -46,12 +47,9 @@ function.
 </para>
 
 <para>
-If the <arg>--numeric</arg> command line option is used, then no name lookup is done on
-<replaceable>host</replaceable> and <replaceable>port</replaceable>, and they must be (human readable forms of) IP addresses and
-port numbers.
-Otherwise, <replaceable>host</replaceable> is looked up using the system name resolution facility, with
-the first IP address found being used, and <replaceable>port</replaceable> can be an alphanumeric
-service name.
+If the <arg>--numeric-host</arg> command line option is used, then no name lookup is done on <replaceable>host</replaceable> and it must be (a human readable form of) an IP address.
+If the <arg>--numeric-service</arg> command line option is used, then no name lookup is done on <replaceable>service</replaceable> and it must be a port number.
+Otherwise, <replaceable>host</replaceable> is looked up using the system name resolution facility, with the first IP address found being used, and <replaceable>port</replaceable> can be an alphanumeric service name.
 </para>
 
 <para>

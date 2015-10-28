@@ -1,0 +1,31 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Virtual console realizer for %I
+After=console-multiplexor@%i.service
+Wants=console-multiplexor@%i.service frame-buffer.target
+
+[Service]
+PermissionsStartOnly=yes
+EnvironmentDirectory=env/
+SessionLeader=yes
+User=daemon
+ExecStartPre=sh -c 'test -c "${TTY}" && chown daemon:tty "${TTY}"'
+ExecRestartPre=sh -c 'test -c "${TTY}" && chown daemon:tty "${TTY}"'
+ExecStartPre=sh -c 'test -n "${FRAMEBUFFER}" && test -c "${FRAMEBUFFER}" && chown daemon:tty "${FRAMEBUFFER}"'
+ExecRestartPre=sh -c 'test -n "${FRAMEBUFFER}" && test -c "${FRAMEBUFFER}" && chown daemon:tty "${FRAMEBUFFER}"'
+ExecStartPre=sh -c 'test -n "${KEYBOARD}" && test -c "${KEYBOARD}" && chown daemon:tty "${KEYBOARD}"'
+ExecRestartPre=sh -c 'test -n "${KEYBOARD}" && test -c "${KEYBOARD}" && chown daemon:tty "${KEYBOARD}"'
+ExecStartPre=sh -c 'test -n "${MOUSE}" && test -c "${MOUSE}" && chown daemon:tty "${MOUSE}"'
+ExecRestartPre=sh -c 'test -n "${MOUSE}" && test -c "${MOUSE}" && chown daemon:tty "${MOUSE}"'
+ExecStartPre=sh -c 'test -n "${ATKEYBOARD}" && test -c "${ATKEYBOARD}" && chown daemon:tty "${ATKEYBOARD}"'
+ExecRestartPre=sh -c 'test -n "${ATKEYBOARD}" && test -c "${ATKEYBOARD}" && chown daemon:tty "${ATKEYBOARD}"'
+ExecStartPre=sh -c 'test -n "${SYSMOUSE}" && test -c "${SYSMOUSE}" && chown daemon:tty "${SYSMOUSE}"'
+ExecRestartPre=sh -c 'test -n "${SYSMOUSE}" && test -c "${SYSMOUSE}" && chown daemon:tty "${SYSMOUSE}"'
+ExecStart=%p ${FONTS} ${FLAGS} ${KERNEL_VT:+--kernel-vt "${KERNEL_VT}"} ${KEYBOARD:+--input "${KEYBOARD}"} ${MOUSE:+--input "${MOUSE}"} ${ATKEYBOARD:+--atkeyboard "${ATKEYBOARD}"} ${SYSMOUSE:+--sysmouse "${SYSMOUSE}"} ${KBDMAP:+--keyboard-map "${KBDMAP}"} /run/dev/%I/ "${FRAMEBUFFER}"
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

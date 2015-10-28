@@ -1,0 +1,33 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Virtual console realizer for %I
+After=console-multiplexor@%i.service
+Wants=console-multiplexor@%i.service frame-buffer.target
+
+[Service]
+PermissionsStartOnly=yes
+EnvironmentDirectory=env/
+SessionLeader=yes
+TTYFromEnv=yes
+StandardInput=tty
+User=daemon
+ExecStartPre=sh -c 'test -c "${TTY}" && chown daemon:tty "${TTY}"'
+ExecRestartPre=sh -c 'test -c "${TTY}" && chown daemon:tty "${TTY}"'
+ExecStartPre=sh -c 'test -n "${FRAMEBUFFER}" && test -c "${FRAMEBUFFER}" && setfacl -m u:daemon:rw "${FRAMEBUFFER}"'
+ExecRestartPre=sh -c 'test -n "${FRAMEBUFFER}" && test -c "${FRAMEBUFFER}" && setfacl -m u:daemon:rw "${FRAMEBUFFER}"'
+ExecStartPre=sh -c 'test -n "${KEYBOARD}" && test -c "${KEYBOARD}" && setfacl -m u:daemon:rw "${KEYBOARD}"'
+ExecRestartPre=sh -c 'test -n "${KEYBOARD}" && test -c "${KEYBOARD}" && setfacl -m u:daemon:rw "${KEYBOARD}"'
+ExecStartPre=sh -c 'test -n "${MOUSE}" && test -c "${MOUSE}" && setfacl -m u:daemon:rw "${MOUSE}"'
+ExecRestartPre=sh -c 'test -n "${MOUSE}" && test -c "${MOUSE}" && setfacl -m u:daemon:rw "${MOUSE}"'
+ExecStartPre=sh -c 'test -n "${ATKEYBOARD}" && test -c "${ATKEYBOARD}" && setfacl -m u:daemon:rw "${ATKEYBOARD}"'
+ExecRestartPre=sh -c 'test -n "${ATKEYBOARD}" && test -c "${ATKEYBOARD}" && setfacl -m u:daemon:rw "${ATKEYBOARD}"'
+ExecStartPre=sh -c 'test -n "${SYSMOUSE}" && test -c "${SYSMOUSE}" && setfacl -m u:daemon:rw "${SYSMOUSE}"'
+ExecRestartPre=sh -c 'test -n "${SYSMOUSE}" && test -c "${SYSMOUSE}" && setfacl -m u:daemon:rw "${SYSMOUSE}"'
+ExecStart=%p ${FONTS} ${FLAGS} ${KERNEL_VT:+--kernel-vt "${KERNEL_VT}"} ${KEYBOARD:+--input "${KEYBOARD}"} ${MOUSE:+--input "${MOUSE}"} ${ATKEYBOARD:+--atkeyboard "${ATKEYBOARD}"} ${SYSMOUSE:+--sysmouse "${SYSMOUSE}"} ${KBDMAP:+--keyboard-map "${KBDMAP}"} /run/dev/%I/ "${FRAMEBUFFER}"
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

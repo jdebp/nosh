@@ -29,123 +29,68 @@
 <refsection><title>Description</title>
 
 <para>
-<command>service-dt-scanner</command> repeatedly scans
-<replaceable>directory</replaceable> for service directories following the
-daemontools name and layout conventions.
-For each pair of service and supervise directories found, it instructs a
-<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> 
-through its control socket to load the service, plumb it together with other
-related services, and either start it or arrange for it to be input-activated.
+<command>service-dt-scanner</command> repeatedly scans <replaceable>directory</replaceable> for service directories following the daemontools name and layout conventions.
+For each pair of service and supervise directories found, it instructs a <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> through its control socket to load the service, plumb it together with other related services, and either start it or arrange for it to be input-activated.
 </para>
 
 <para>
-Unlike daemontools' and daemontools-encore's <command>svscan</command>,
-<command>service-dt-scanner</command> does not manage services.
+Unlike daemontools' and daemontools-encore's <command>svscan</command>, <command>service-dt-scanner</command> does not manage services.
 Indeed, it can be run as a service itself.
-(One can even run multiple instances of it feeding from multiple scan
-directories to a single service manager.)
+(One can even run multiple instances of it feeding from multiple scan directories to a single service manager.)
 It does not handle any signals specially.
-It should not be used for process #1 (see
-<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-instead).
+It should not be used for process #1 (see <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> instead).
 It is not expected to be up continually for the lifetime of the system.
 </para>
 
 <para>
-It re-scans <replaceable>directory</replaceable> whenever
-<citerefentry><refentrytitle>kevent</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-raises a
-<citerefentry><refentrytitle>NOTE_WRITE</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-or a
-<citerefentry><refentrytitle>NOTE_EXTEND</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-event for that directory.
+It re-scans <replaceable>directory</replaceable> whenever <citerefentry><refentrytitle>kevent</refentrytitle><manvolnum>2</manvolnum></citerefentry> raises a <citerefentry><refentrytitle>NOTE_WRITE</refentrytitle><manvolnum>2</manvolnum></citerefentry> or a <citerefentry><refentrytitle>NOTE_EXTEND</refentrytitle><manvolnum>2</manvolnum></citerefentry> event for that directory.
 </para>
 
 <refsection><title>SCAN DIRECTORY</title>
 
 <para>
-Conventionally, <replaceable>directory</replaceable> is <filename>/service</filename>.
-Every subdirectory, or symbolic link to a directory, therein whose
-name does not start with a dot is a bundle directory.
-A subdirectory, or symbolic link to a directory, beneath each of those bundle
-directories that is named <filename>log</filename> is also a bundle directory.
-The parent bundle directory denotes the "main" service, whose output is fed
-through a pipe to the input of the "log" service.
-(See
-<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-for bundle directories.)
+Conventionally, <replaceable>directory</replaceable> is <filename>/service</filename>.  Every subdirectory, or symbolic link to a directory, therein whose name does not start with a dot is a bundle directory.
+A subdirectory, or symbolic link to a directory, beneath each of those bundle directories that is named <filename>log</filename> is also a bundle directory.
+The parent bundle directory denotes the "main" service, whose output is fed through a pipe to the input of the "log" service.
+(See <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> for bundle directories.)
 </para>
 
 <para>
-<command>service-dt-scanner</command> tells the service manager to both load
-and start the "main" and "log" services; unless the
-<arg choice='plain'>--input-activation</arg>
-command-line option is used, in which case the "log" service is only loaded
-and marked to be input-activated.
-It tells the service manager to plumb the standard input of the "log" service
-to the standard output and standard error of the "main" service.
+<command>service-dt-scanner</command> tells the service manager to both load and start the "main" and "log" services; unless the <arg choice='plain'>--input-activation</arg> command-line option is used, in which case the "log" service is only loaded and marked to be input-activated.
+It tells the service manager to plumb the standard input of the "log" service to the standard output and standard error of the "main" service.
 </para>
 
 <para>
-<command>service-dt-scanner</command> looks for a <filename>down</filename>
-file for each service in its service directory.
-If it finds one, it does not instruct
-<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-to start the service as soon as it has loaded it, as it would otherwise
-normally do.
-(Such services can be brought up later by using the
-<citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-command.)
+<command>service-dt-scanner</command> looks for a <filename>down</filename> file for each service in its service directory.
+If it finds one, it does not instruct <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> to start the service as soon as it has loaded it, as it would otherwise normally do.
+(Such services can be brought up later by using the <citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> command.)
 </para>
 
 <para>
-Like daemontools and daemontools-encore, <command>service-dt-scanner</command>
-looks for the <filename>down</filename> file in the service directory, because
-it is persistent configuration information that remains across reboot 
-rather than a transient part of the control/status API.
-This means that the service directory needs to be read-write when services
-are enabled and disabled.
+Like daemontools and daemontools-encore, <command>service-dt-scanner</command> looks for the <filename>down</filename> file in the service directory, because it is persistent configuration information that remains across reboot rather than a transient part of the control/status API.
+This means that the service directory needs to be read-write when services are enabled and disabled.
 </para>
 
 </refsection></refsection><refsection><title>COMPATIBILITY</title>
 
 <para>
-For daemontools and daemontools-encore compatibility, this command is also
-available as <command>svscan</command>.
+For daemontools and daemontools-encore compatibility, this command is also available as <command>svscan</command>.
 </para>
 
 <para>
-<command>service-dt-scanner</command> implements a slight variation on bundle
-directories for compatibility.
-If the <filename>service</filename> subdirectory does not exist in a bundle
-directory, then the bundle directory itself is taken to be the service
-directory, instead.
+<command>service-dt-scanner</command> implements a slight variation on bundle directories for compatibility.
+If the <filename>service</filename> subdirectory does not exist in a bundle directory, then the bundle directory itself is taken to be the service directory, instead.
 </para>
 
 <para>
-daemontools' 
-<citerefentry><refentrytitle>svscan</refentrytitle><manvolnum>1</manvolnum></citerefentry>, 
-daemontools-encore's 
-<citerefentry><refentrytitle>svscan</refentrytitle><manvolnum>1</manvolnum></citerefentry>, 
-runit's 
-<citerefentry><refentrytitle>runsvdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-and s6's 
-<citerefentry><refentrytitle>s6-svscan</refentrytitle><manvolnum>1</manvolnum></citerefentry> 
-all wake up every 5 seconds to poll the contents of the
-scan directory.  
-The first three also have a hardwired limit of 1000 subdirectories, with
-<citerefentry><refentrytitle>s6-svscan</refentrytitle><manvolnum>1</manvolnum></citerefentry> 
-having a lower limit of 500 subdirectories.
+daemontools' <citerefentry><refentrytitle>svscan</refentrytitle><manvolnum>1</manvolnum></citerefentry>, daemontools-encore's <citerefentry><refentrytitle>svscan</refentrytitle><manvolnum>1</manvolnum></citerefentry>, runit's <citerefentry><refentrytitle>runsvdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and s6's <citerefentry><refentrytitle>s6-svscan</refentrytitle><manvolnum>1</manvolnum></citerefentry> all wake up every 5 seconds to poll the contents of the scan directory.  
+The first three also have a hardwired limit of 1000 subdirectories, with <citerefentry><refentrytitle>s6-svscan</refentrytitle><manvolnum>1</manvolnum></citerefentry> having a lower limit of 500 subdirectories.
 </para>
 
 <para>
-<command>service-dt-scanner</command> relies upon the operating system to inform it of
-events, and does no periodic polling at all.
-It also doesn't do service management and so has no fixed-size arrays of
-services to be limited in the first place.
-Service management is the remit of 
-<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-<command>service-dt-scanner</command> simply sends control messages.
+<command>service-dt-scanner</command> relies upon the operating system to inform it of events, and does no periodic polling at all.
+It also doesn't do service management and so has no fixed-size arrays of services to be limited in the first place.
+Service management is the remit of <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.  <command>service-dt-scanner</command> simply sends control messages.
 </para>
 
 </refsection>
@@ -153,21 +98,12 @@ Service management is the remit of
 <refsection><title>BUGS</title>
 
 <para>
-The Linux
-<citerefentry><refentrytitle>kevent</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-mechanism does not correctly report last modification timestamp changes that
-result from entries being created or deleted in a directory.  
-However, it will report timestamp changes caused by the
-<citerefentry><refentrytitle>touch</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-command.
+The Linux <citerefentry><refentrytitle>kevent</refentrytitle><manvolnum>3</manvolnum></citerefentry> mechanism does not correctly report last modification timestamp changes that result from entries being created or deleted in a directory.  
+However, it will report timestamp changes caused by the <citerefentry><refentrytitle>touch</refentrytitle><manvolnum>1</manvolnum></citerefentry> command.
 </para>
 
 <para>
-The Linux
-<citerefentry><refentrytitle>kevent</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-mechanism uses shedloads of internal open file descriptors, which it doesn't
-mark as close-on-exec and doesn't clean up on
-<citerefentry><refentrytitle>fork</refentrytitle><manvolnum>2</manvolnum></citerefentry>.
+The Linux <citerefentry><refentrytitle>kevent</refentrytitle><manvolnum>3</manvolnum></citerefentry> mechanism uses shedloads of internal open file descriptors, which it doesn't mark as close-on-exec and doesn't clean up on <citerefentry><refentrytitle>fork</refentrytitle><manvolnum>2</manvolnum></citerefentry>.
 Fortunately, <command>service-dt-scanner</command> neither forks nor execs.
 </para>
 

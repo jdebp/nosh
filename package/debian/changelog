@@ -1,8 +1,25 @@
+nosh (1.22) unstable; urgency=low
+
+  * console-fb-realizer now displays a mouse sprite when mouse reports are turned on with the appropriate terminal control sequences and a mouse input event device is supplied.
+  * console keyboard maps are no longer pre-packaged, but are converted on the fly from whatever is pre-installed.
+  * There is now a debian-shims package containing invoke-rc.d and update-rc.d .
+  * fastboot, fasthalt, fastpoweroff, and haltsys are now included in the systemv-shims package.
+  * More common services: saslauthd
+  * The --numeric option to tcp-socket-listen and udp-socket-listen has been replaced by --numeric-host and --numeric-port options.
+  * There are now tcp-socket-connect and udp-socket-connect commands.
+  * There is now an export-to-rsyslog command.
+  * The libkqueue library on Linux is no longer necessary.
+  * The user-dbus service now works on FreeBSD.
+  * convert-fstab-services can now deal with records that are missing the rw/ro/sw setting.
+  * The configuration system now encompasses OpenLDAP services.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Wed, 28 Oct 2015 21:34:13 +0000
+
 nosh (1.21) unstable; urgency=low
 
   * The geli and gdbe fstab conversion is now completely implemented.
   * The terminal emulator and the fb realizer now support mouse input.
-  * More BSD services: kmod@ipdivert, kmod"nfscl, nfsclient
+  * More BSD services: kmod@ipdivert, kmod@nfscl, nfsclient
   * More Linux services: mdadm
   * FreeBSD 9 and PC-BSD Warden jails are now imported.
 

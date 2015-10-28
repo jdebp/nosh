@@ -21,6 +21,12 @@ struct CursorSprite {
 		BLOCK = 3U
 	};
 };
+struct PointerSprite {
+	typedef uint8_t attribute_type;
+	enum {
+		VISIBLE = 1U << 0U,
+	};
+};
 struct CharacterCell {
 	struct colour_type {
 		colour_type(uint8_t a, uint8_t r, uint8_t g, uint8_t b) : alpha(a), red(r), green(g), blue(b) {}

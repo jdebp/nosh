@@ -98,6 +98,57 @@ GraphicsInterface::ScreenBitmap::Plot (unsigned short y, unsigned short x, uint1
 	}
 }
 
+void 
+GraphicsInterface::ScreenBitmap::AlphaBlend (unsigned short y, unsigned short x, uint16_t bits, const CharacterCell::colour_type & colour)
+{
+	// The stride is in bytes, so this calculation is always in bytes and is common.
+	void * const start(static_cast<uint8_t *>(base) + std::size_t(stride) * y);
+	switch (depth) {
+		case 15U:
+		{
+			uint16_t * const p(static_cast<uint16_t *>(start) + x);
+			const uint16_t c(colour15(colour));
+			for (unsigned off(16U); off-- > 0U; bits >>= 1U) {
+				const bool bit(bits & 1U);
+				if (bit) p[off] = c;
+			}
+			break;
+		}
+		case 16U:
+		{
+			uint16_t * const p(static_cast<uint16_t *>(start) + x);
+			const uint16_t c(colour16(colour));
+			for (unsigned off(16U); off-- > 0U; bits >>= 1U) {
+				const bool bit(bits & 1U);
+				if (bit) p[off] = c;
+			}
+			break;
+		}
+		case 24U:
+		{
+			uint8_t * const p(static_cast<uint8_t *>(start) + 3U * x);
+			uint8_t c[3];
+			colour24(c, colour);
+			for (unsigned off(16U); off-- > 0U; bits >>= 1U) {
+				const bool bit(bits & 1U);
+				if (bit)
+					std::memcpy(p + 3U * off, c, 3U);
+			}
+			break;
+		}
+		case 32U:
+		{
+			uint32_t * const p(static_cast<uint32_t *>(start) + x);
+			const uint32_t c(colour32(colour));
+			for (unsigned off(16U); off-- > 0U; bits >>= 1U) {
+				const bool bit(bits & 1U);
+				if (bit) p[off] = c;
+			}
+			break;
+		}
+	}
+}
+
 GraphicsInterface::GraphicsInterface(
 	void * b, 
 	std::size_t z, 
@@ -130,5 +181,14 @@ GraphicsInterface::BitBLT(ScreenBitmapHandle s, GlyphBitmapHandle g, unsigned sh
 	for (unsigned row(0U); row < 16U; ++row) {
 		const uint16_t bits(g->Row(row));
 		s->Plot(y + row, x, bits, foreground, background);
+	}
+}
+
+void 
+GraphicsInterface::BitBLTAlpha(ScreenBitmapHandle s, GlyphBitmapHandle g, unsigned short y, unsigned short x, const CharacterCell::colour_type & colour)
+{
+	for (unsigned row(0U); row < 16U; ++row) {
+		const uint16_t bits(g->Row(row));
+		s->AlphaBlend(y + row, x, bits, colour);
 	}
 }

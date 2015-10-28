@@ -18,6 +18,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include <grp.h>
 #include "utils.h"
+#include "fdutils.h"
 #include "popt.h"
 #include "listen.h"
 
@@ -120,8 +121,11 @@ exit_error:
 	}
 #endif
 
-	if (0 > dup2(s, LISTEN_SOCKET_FILENO)) goto exit_error;
-	if (LISTEN_SOCKET_FILENO != s) close(s);
+	if (LISTEN_SOCKET_FILENO != s) {
+		if (0 > dup2(s, LISTEN_SOCKET_FILENO)) goto exit_error;
+		close(s);
+	}
+	set_close_on_exec(LISTEN_SOCKET_FILENO, false);
 
 	if (systemd_compatibility) {
 		setenv("LISTEN_FDS", "1", 1);

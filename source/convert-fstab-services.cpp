@@ -682,9 +682,15 @@ convert_fstab_services (
 
 		const std::list<std::string> options_list(split_fstab_options(entry->fs_mntops));
 
+		if (0 == std::strcmp(type, "xx")) {
+			continue;
+		} else
 		if ((0 == std::strcmp(type, "rw"))
 		||  (0 == std::strcmp(type, "rq"))
 		||  (0 == std::strcmp(type, "ro"))
+#if defined(__LINUX__) || defined(__linux__)
+		||  (0 == std::strcmp(type, "??"))
+#endif
 		) {
 			const std::string gbde_bundle_dirname("gbde@" + escape(what));
 			const std::string geli_bundle_dirname("geli@" + escape(what));
@@ -708,7 +714,8 @@ convert_fstab_services (
 		if (0 == std::strcmp(type, "sw")) {
 			create_swap_bundle(prog, what, overwrite, etc_bundle, bundle_root_fd.get(), bundle_root, options_list);
 			create_dump_bundle(prog, what, overwrite, etc_bundle, bundle_root_fd.get(), bundle_root);
-		}
+		} else
+			std::fprintf(stderr, "%s: WARNING: %s: %s: %s\n", prog, where, type, "Unrecognized type.");
 	}
 	endfsent();
 

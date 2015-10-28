@@ -175,7 +175,8 @@ begins with a 16-byte header:
 <listitem><para>2-byte cursor Y position in host byte order.</para></listitem>
 <listitem><para>cursor glyph type byte.</para></listitem>
 <listitem><para>cursor attributes byte.</para></listitem>
-<listitem><para>Reserved bytes.</para></listitem>
+<listitem><para>pointer attributes byte.</para></listitem>
+<listitem><para>Reserved byte.</para></listitem>
 </orderedlist>
 <para>
 That is followed by a series of 16-byte records, one per character cell, containing:

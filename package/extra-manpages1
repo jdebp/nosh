@@ -13,6 +13,7 @@ detach-controlling-tty
 emergency-login
 envdir
 envuidgid
+export-to-rsyslog
 false
 fdmove
 fdredir
@@ -64,10 +65,12 @@ tai64n
 tai64nlocal
 tcp-socket-accept
 tcp-socket-listen
+tcp-socket-connect
 true
 ttylogin-starter
 ucspi-socket-rules-check
 udp-socket-listen
+udp-socket-connect
 ulimit
 umask
 unsetenv

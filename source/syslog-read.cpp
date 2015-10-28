@@ -12,20 +12,22 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstring>
 #include <cerrno>
 #include <iostream>
-#include <ostream>
 #include <sys/types.h>
+#if defined(__LINUX__) || defined(__linux__)
+#include "kqueue_linux.h"
+#else
 #include <sys/event.h>
+#endif
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <sys/un.h>
-#include <netinet/udp.h>
 #include <netinet/ip.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include "utils.h"
 #include "listen.h"
-
-static const char * prog(0);
+#include "popt.h"
+#include "SignalManagement.h"
 
 /* Support functions ********************************************************
 // **************************************************************************
@@ -34,6 +36,7 @@ static const char * prog(0);
 static inline
 void
 process_message (
+	const char * prog,
 	int socket_fd
 ) {
 	char msg[65536];	// RFC 5426 maximum legal size
@@ -83,10 +86,27 @@ process_message (
 
 void
 syslog_read (
-	const char * & /*next_prog*/,
+	const char * & next_prog,
 	std::vector<const char *> & args
 ) {
-	prog = basename_of(args[0]);
+	const char * prog(basename_of(args[0]));
+	try {
+		popt::top_table_definition main_option(0, 0, "Main options", "");
+
+		std::vector<const char *> new_args;
+		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
+		p.process(true /* strictly options before arguments */);
+		args = new_args;
+		next_prog = arg0_of(args);
+		if (p.stopped()) throw EXIT_SUCCESS;
+	} catch (const popt::error & e) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
+		throw EXIT_FAILURE;
+	}
+	if (!args.empty()) {
+		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Unexpected argument.");
+		throw EXIT_FAILURE;
+	}
 
 	const unsigned listen_fds(query_listen_fds());
 	if (1U > listen_fds) {
@@ -95,19 +115,8 @@ syslog_read (
 		throw EXIT_FAILURE;
 	}
 
-#if !defined(__LINUX__) && !defined(__linux__)
-	struct sigaction sa;
-	sa.sa_flags=0;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_handler=SIG_IGN;
-	sigaction(SIGHUP,&sa,NULL);
-	sigaction(SIGTERM,&sa,NULL);
-	sigaction(SIGINT,&sa,NULL);
-	sigaction(SIGTSTP,&sa,NULL);
-	sigaction(SIGALRM,&sa,NULL);
-	sigaction(SIGPIPE,&sa,NULL);
-	sigaction(SIGQUIT,&sa,NULL);
-#endif
+	ReserveSignalsForKQueue kqueue_reservation(SIGTERM, SIGINT, SIGHUP, SIGTSTP, SIGALRM, SIGPIPE, SIGQUIT, 0);
+	PreventDefaultForFatalSignals ignored_signals(SIGTERM, SIGINT, SIGHUP, SIGTSTP, SIGALRM, SIGPIPE, SIGQUIT, 0);
 
 	const int queue(kqueue());
 	if (0 > queue) {
@@ -148,7 +157,7 @@ syslog_read (
 			switch (e.filter) {
 				case EVFILT_READ:
 					if (LISTEN_SOCKET_FILENO <= static_cast<int>(e.ident) && LISTEN_SOCKET_FILENO + static_cast<int>(listen_fds) > static_cast<int>(e.ident))
-						process_message(e.ident);
+						process_message(prog, e.ident);
 					else
 						std::fprintf(stderr, "%s: DEBUG: read event ident %lu\n", prog, e.ident);
 					break;

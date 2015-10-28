@@ -1,14 +1,14 @@
 #!/bin/sh -
 escape() { echo "$1"|sed -e 's/@/\\x40/g' ; }
-addloguser() { getent passwd "$1" > /dev/null || useradd --shell /bin/false "$1" ; }
-addlog() { mkdir -m 0750 -p /var/log/sv/"$2" ; setfacl -m u:"$1"-log:rwx -m g:adm:rx /var/log/sv/"$2" ; }
+add_user() { getent passwd "$1" > /dev/null || useradd --shell /bin/false "$1" ; }
+add_log() { mkdir -m 0750 -p /var/log/sv/"$2" ; setfacl -m u:"$1"-log:rwx -m g:adm:rx /var/log/sv/"$2" ; }
 # non-log users
 for I in \
 	klogd \
 	;
 do
 	i="`escape "$I"`"
-	addloguser "$i"
+	add_user "$i"
 done
 case "$1" in
 	configure)
@@ -66,6 +66,7 @@ case "$1" in
 			nginx \
 			nisdomain \
 			nmbd \
+			nscd \
 			ntpd \
 			ntpdate \
 			openvpn@client \
@@ -96,7 +97,10 @@ case "$1" in
 			rabbitmq-server \
 			rpcbind \
 			samba \
+			saslauthd \
 			sickbeard \
+			slapd \
+			slurpd \
 			slim \
 			smartd \
 			smbd \
@@ -126,8 +130,8 @@ case "$1" in
 			;
 		do
 			i="`escape "$I"`"
-			addloguser "$i"-log
-			addlog "$i" "$I"
+			add_user "$i"-log
+			add_log "$i" "$I"
 			system-control preset $I.service
 			system-control preset --prefix cyclog@ $I.service
 		done
@@ -168,18 +172,27 @@ case "$1" in
 			;
 		do
 			i="`escape "$I"`"
-			addloguser "$i"-log
-			addlog "$i" "$I"
+			add_user "$i"-log
+			add_log "$i" "$I"
 			system-control preset $I.socket
 			system-control preset --prefix cyclog@ $I.service
+		done
+		# common fan-in logging services
+		for I in \
+			natd \
+			sppp \
+			;
+		do
+			i="`escape "$I"`"
+			add_user "$i"-log
+			add_log "$i" "$I"
+			system-control preset "$I"-log.service
 		done
 		# common services that fan in to a single logger
 		for I in \
 			dmesg \
 			hostname \
 			machine-id \
-			natd-log \
-			sppp-log \
 			sysinit-log \
 			emergency-login@console \
 			;
@@ -206,8 +219,8 @@ case "$1" in
 			;
 		do
 			i="`escape "$I"`"
-			addloguser "$i"-log
-			addlog "$i" "$I"
+			add_user "$i"-log
+			add_log "$i" "$I"
 			system-control preset $I.service
 			system-control preset --prefix cyclog@ $I.service
 		done
@@ -220,8 +233,8 @@ case "$1" in
 			;
 		do
 			i="`escape "$I"`"
-			addloguser "$i"-log
-			addlog "$i" "$I"
+			add_user "$i"-log
+			add_log "$i" "$I"
 			system-control preset $I.socket
 			system-control preset --prefix cyclog@ $I.service
 		done
@@ -235,8 +248,8 @@ case "$1" in
 			;
 		do
 			i="`escape "$I"`"
-			addloguser "$i"-log
-			addlog "$i" "$I"
+			add_user "$i"-log
+			add_log "$i" "$I"
 			system-control preset $I.service
 		done
 		for I in \

@@ -1,5 +1,6 @@
 all.do
 axfrdns.do
+default.kbdmap.do
 dnscache.do
 general-services.do
 geom.do
@@ -8,10 +9,13 @@ jails.do
 kernel-modules.do
 natd.do
 natd@.service
+openldap.do
 savecore.do
+soft_backspace.kbd
 sppp.do
 spppcontrol@.service
 sysctl.conf.do
+swap_capsctrl.kbd
 terminal-services.do
 tinydns.do
 user-dbus-log@.service
@@ -19,6 +23,7 @@ user-dbus.service
 user-dbus@.socket
 user-services.do
 user@.service
+user-services@.service
 v9-jail@.service
 v9-jailed@.service
 v9-jails.do
@@ -26,3 +31,4 @@ volumes.do
 warden-jail@.service
 warden-jailed@.service
 warden.do
+us_to_uk.kbd

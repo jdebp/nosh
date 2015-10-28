@@ -1,0 +1,9 @@
+# This is an overlay keymap that swaps the normal placement of
+# Caps Lock and Control.
+#
+#                                                        option
+# scan                       cntrl         option option cntrl lock
+# code  base   shift  cntrl  shift  option shift  cntrl  shift state
+# ------------------------------------------------------------------
+  029   clock  clock  clock  clock  clock  clock  clock  clock   O
+  058   lctrl  lctrl  lctrl  lctrl  lctrl  lctrl  lctrl  lctrl   O

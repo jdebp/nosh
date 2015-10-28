@@ -70,7 +70,7 @@ Linux)	etc_services="../package/common-etc-services ../package/linux-etc-service
 esac
 
 case "${base}" in
-cyclog@*) 
+sppp-log|natd-log|cyclog@*) 
 	log=
 	etc=
 	;;
@@ -78,7 +78,7 @@ emergency-login@console)
 	log=
 	etc=--etc-bundle
 	;;
-sppp-log|natd-log|sysinit-log) 
+sysinit-log) 
 	log=
 	etc=--etc-bundle
 	;;
@@ -169,6 +169,7 @@ console-multiplexor@head0)
 ttylogin@tty[0-9]*)
 	case "`uname`" in
 	Linux)
+		# These services are started on demand by ttylogin-starter.
 		rm -f -- services.new/"${base}"/wanted-by/multi-user
 		;;
 	*BSD)
@@ -176,25 +177,8 @@ ttylogin@tty[0-9]*)
 	esac
 	;;
 console-fb-realizer@head0)
-	redo-ifchange console-terminal-emulator
-	ln -s -f console-terminal-emulator console-convert-kbdmap
-
 	mkdir -m 0755 services.new/"${base}"/service/kbdmaps
 	mkdir -m 0755 services.new/"${base}"/service/fonts
-
-	case "`uname`" in
-	Linux)
-		./console-convert-kbdmap /dev/null > services.new/"${base}"/service/kbdmaps/us.kbdmap
-		chmod 0644 services.new/"${base}"/service/kbdmaps/us.kbdmap
-		;;
-	*BSD)
-		for k in uk us ru de fr 
-		do
-			./console-convert-kbdmap /usr/share/vt/keymaps/"$k".kbd > services.new/"${base}"/service/kbdmaps/"$k".kbdmap
-			chmod 0644 services.new/"${base}"/service/kbdmaps/"$k".kbdmap
-		done
-		;;
-	esac
 	;;
 dnscache)
 	mkdir -m 0755 services.new/"${base}"/service/root

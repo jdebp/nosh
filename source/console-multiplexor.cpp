@@ -16,7 +16,11 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cerrno>
 #include <stdint.h>
 #include <sys/stat.h>
+#if defined(__LINUX__) || defined(__linux__)
+#include "kqueue_linux.h"
+#else
 #include <sys/event.h>
+#endif
 #include <sys/param.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -25,6 +29,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include "popt.h"
 #include "InputMessage.h"
 #include "FileDescriptorOwner.h"
+#include "FileStar.h"
+#include "SignalManagement.h"
 
 /* Signal handling **********************************************************
 // **************************************************************************
@@ -63,6 +69,8 @@ public:
 	void WriteInputMessage(uint32_t);
 	bool MessageAvailable() const { return message_pending > 0U; }
 	void FlushMessages();
+	bool query_polling_for_write() const { return polling_for_write; }
+	void set_polling_for_write(bool v) { polling_for_write = v; }
 
 protected:
 	VirtualTerminal(const VirtualTerminal & c);
@@ -74,6 +82,7 @@ protected:
 	FILE * const buffer_file;
 	char message_buffer[4096];
 	std::size_t message_pending;
+	bool polling_for_write;
 };
 }
 
@@ -88,7 +97,8 @@ VirtualTerminal::VirtualTerminal(
 	input_fd(display_only ? -1 : open_writeexisting_at(dir_fd.get(), "input")),
 	buffer_fd(open_read_at(dir_fd.get(), "display")),
 	buffer_file(buffer_fd < 0 ? 0 : fdopen(buffer_fd, "r")),
-	message_pending(0U)
+	message_pending(0U),
+	polling_for_write(false)
 {
 	if (buffer_fd < 0) {
 		const int error(errno);
@@ -329,6 +339,14 @@ console_multiplexor (
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, dirname, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
+
+	// We need an explicit lock file, because we cannot lock FIFOs.
+	FileDescriptorOwner lock_fd(open_lockfile_at(dir_fd.get(), "lock"));
+	if (0 > lock_fd.get()) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dirname, "lock", std::strerror(error));
+		throw EXIT_FAILURE;
+	}
 	// We are allowed to open the read end of a FIFO in non-blocking mode without having to wait for a writer.
 	mkfifoat(dir_fd.get(), "input", 0620);
 	InputFIFO input(open_read_at(dir_fd.get(), "input"));
@@ -352,7 +370,7 @@ console_multiplexor (
 		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dirname, "display", std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	FILE * const buffer_file(fdopen(buffer_fd.get(), "w"));
+	FileStar const buffer_file(fdopen(buffer_fd.get(), "w"));
 	if (!buffer_file) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dirname, "display", std::strerror(error));
@@ -380,17 +398,8 @@ console_multiplexor (
 
 	VirtualTerminalList::iterator current_vt(vts.begin());
 
-#if !defined(__LINUX__) && !defined(__linux__)
-	struct sigaction sa;
-	sa.sa_flags=0;
-	sigemptyset(&sa.sa_mask);
-	// We only need to set handlers for those signals that would otherwise directly terminate the process.
-	sa.sa_handler=SIG_IGN;
-	sigaction(SIGTERM,&sa,NULL);
-	sigaction(SIGINT,&sa,NULL);
-	sigaction(SIGHUP,&sa,NULL);
-	sigaction(SIGPIPE,&sa,NULL);
-#endif
+	ReserveSignalsForKQueue kqueue_reservation(SIGTERM, SIGINT, SIGHUP, SIGPIPE, 0);
+	PreventDefaultForFatalSignals ignored_signals(SIGTERM, SIGINT, SIGHUP, SIGPIPE, 0);
 
 	const int queue(kqueue());
 	if (0 > queue) {
@@ -399,28 +408,20 @@ console_multiplexor (
 		throw EXIT_FAILURE;
 	}
 
-	struct kevent p[16];
 	{
+		std::vector<struct kevent> p(vts.size() * 2 + 16);
 		std::size_t index(0U);
 		EV_SET(&p[index++], input.get(), EVFILT_READ, EV_ADD, 0, 0, 0);
 		EV_SET(&p[index++], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 		EV_SET(&p[index++], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 		EV_SET(&p[index++], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 		EV_SET(&p[index++], SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-		if (0 > kevent(queue, p, index, 0, 0, 0)) {
-			const int error(errno);
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
-			throw EXIT_FAILURE;
+		for (VirtualTerminalList::const_iterator t(vts.begin()); t != vts.end(); ++t) {
+			const VirtualTerminal & vt(**t);
+			EV_SET(&p[index++], vt.query_buffer_fd(), EVFILT_VNODE, EV_ADD|EV_DISABLE|EV_CLEAR, NOTE_WRITE, 0, 0);
+			EV_SET(&p[index++], vt.query_input_fd(), EVFILT_WRITE, EV_ADD|EV_DISABLE, 0, 0, 0);
 		}
-	}
-	for (VirtualTerminalList::const_iterator t(vts.begin()); t != vts.end(); ++t) {
-		const VirtualTerminal & vt(**t);
-		std::size_t index(0U);
-#if !defined(__LINUX__) && !defined(__linux__)
-		EV_SET(&p[index++], vt.query_buffer_fd(), EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE, 0, 0);
-#endif
-		EV_SET(&p[index++], vt.query_input_fd(), EVFILT_WRITE, EV_ADD, 0, 0, 0);
-		if (0 > kevent(queue, p, index, 0, 0, 0)) {
+		if (0 > kevent(queue, p.data(), index, 0, 0, 0)) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
 			throw EXIT_FAILURE;
@@ -431,6 +432,10 @@ console_multiplexor (
 
 	VirtualTerminalList::iterator old_vt(vts.end());
 
+	// Each vt could generate a FIFO enable/disable, plus 2 potential session switch enables/disabvles.
+	std::vector<struct kevent> p(vts.size() * 2 + 4);
+	std::size_t index(0U);
+
 	while (true) {
 		if (terminate_signalled||interrupt_signalled||hangup_signalled) 
 			break;
@@ -440,55 +445,31 @@ console_multiplexor (
 			copy(vt, buffer_file);
 		}
 		if (old_vt != current_vt) {
-			const VirtualTerminal & vt(**current_vt);
-			symlinkat(vt.query_dir_name(), dir_fd.get(), "active.new");
+			const VirtualTerminal & cvt(**current_vt);
+			symlinkat(cvt.query_dir_name(), dir_fd.get(), "active.new");
 			renameat(dir_fd.get(), "active.new", dir_fd.get(), "active");
-#if defined(__LINUX__) || defined(__linux__)
-			// A Linux bug prevents EV_DISABLE working on EVFILT_VNODE filters, so we have to EV_ADD and EV_DELETE.
-			std::size_t index(0U);
-			EV_SET(&p[index++], (*current_vt)->query_buffer_fd(), EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE, 0, 0);
-			if (old_vt != vts.end())
-				EV_SET(&p[index++], (*old_vt)->query_buffer_fd(), EVFILT_VNODE, EV_DELETE, NOTE_WRITE, 0, 0);
-			if (0 > kevent(queue, p, index, 0, 0, 0)) {
-				const int error(errno);
-				if (ENOENT != error) {		// This works around a Linux bug when disabling a disabled event.
-					std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
-					throw EXIT_FAILURE;
-				}
+
+			for (VirtualTerminalList::iterator t(vts.begin()); t != vts.end(); ++t) {
+				const VirtualTerminal & vt(**t);
+				if (t == current_vt)
+					EV_SET(&p[index++], vt.query_buffer_fd(), EVFILT_VNODE, EV_ENABLE, NOTE_WRITE, 0, 0);
+				if (t == old_vt)
+					EV_SET(&p[index++], vt.query_buffer_fd(), EVFILT_VNODE, EV_DISABLE, NOTE_WRITE, 0, 0);
 			}
-#endif
+
 			old_vt = current_vt;
 		}
 
-		for (VirtualTerminalList::iterator t(vts.begin()); t != vts.end(); ++t) {
-			const VirtualTerminal & vt(**t);
-			std::size_t index(0U);
-			EV_SET(&p[index++], vt.query_input_fd(), EVFILT_WRITE, vt.MessageAvailable() ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
-#if !defined(__LINUX__) && !defined(__linux__)
-			// A Linux bug prevents EV_DISABLE working on EVFILT_VNODE filters.
-			EV_SET(&p[index++], vt.query_buffer_fd(), EVFILT_VNODE, t == current_vt ? EV_ENABLE : EV_DISABLE, NOTE_WRITE, 0, 0);
-#endif
-			if (0 > kevent(queue, p, index, 0, 0, 0)) {
-				const int error(errno);
-#if defined(__LINUX__) || defined(__linux__)
-				if (ENOENT == error && !vt.MessageAvailable()) continue;	// This works around a Linux bug when disabling a disabled event.
-#endif
-				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
-				throw EXIT_FAILURE;
-			}
-		}
-
-		const int rc(kevent(queue, p, 0, p, sizeof p/sizeof *p, 0));
+		const int rc(kevent(queue, p.data(), index, p.data(), p.size(), 0));
 
 		if (0 > rc) {
 			const int error(errno);
 			if (EINTR == error) continue;
-#if defined(__LINUX__) || defined(__linux__)
-			if (ENOENT == error) continue;	// This works around a Linux bug.
-#endif
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "poll", std::strerror(error));
 			throw EXIT_FAILURE;
 		}
+
+		index = 0;
 
 		for (size_t i(0); i < static_cast<size_t>(rc); ++i) {
 			const struct kevent & e(p[i]);
@@ -499,7 +480,7 @@ console_multiplexor (
 			if (EVFILT_SIGNAL == e.filter)
 				handle_signal(e.ident);
 			if (EVFILT_READ == e.filter) {
-				if (input.get() == static_cast<int>(e.ident)) 
+				if (input.get() == static_cast<int>(e.ident))
 					handle_input_event(input, vts, current_vt);
 			}
 			if (EVFILT_WRITE == e.filter) {
@@ -507,6 +488,21 @@ console_multiplexor (
 					VirtualTerminal & vt(**t);
 					if (vt.query_input_fd() == static_cast<int>(e.ident))
 						vt.FlushMessages();
+				}
+			}
+		}
+
+		for (VirtualTerminalList::iterator t(vts.begin()); t != vts.end(); ++t) {
+			VirtualTerminal & vt(**t);
+			if (vt.MessageAvailable()) {
+				if (!vt.query_polling_for_write()) {
+					EV_SET(&p[index++], vt.query_input_fd(), EVFILT_WRITE, EV_ENABLE, 0, 0, 0);
+					vt.set_polling_for_write(true);
+				}
+			} else {
+				if (vt.query_polling_for_write()) {
+					EV_SET(&p[index++], vt.query_input_fd(), EVFILT_WRITE, EV_DISABLE, 0, 0, 0);
+					vt.set_polling_for_write(false);
 				}
 			}
 		}

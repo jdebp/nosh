@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=SASL Authentication Daemon
+
+[Service]
+Type=forking
+EnvironmentDirectory=env
+ExecStart=%p ${mechanism:+-a "${mechanism}"} ${options}
+
+[Install]
+WantedBy=workstation.target

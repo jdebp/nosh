@@ -134,9 +134,13 @@ record_signal_user (
 		case SIGPIPE:		halt_signalled = true; break;
 		default:
 			if (SIGRTMIN <= signo) switch (signo - SIGRTMIN) {
+				case 0:		normal_signalled = true; break;
+				case 1:		normal_signalled = true; break;
+				case 2:		normal_signalled = true; break;
 				case 3:		halt_signalled = true; break;
 				case 4:		halt_signalled = true; break;
 				case 5:		halt_signalled = true; break;
+				case 10:	sysinit_signalled = true; break;
 				case 13:	fasthalt_signalled = true; break;
 				case 14:	fasthalt_signalled = true; break;
 				case 15:	fasthalt_signalled = true; break;
@@ -149,6 +153,7 @@ record_signal_user (
 
 static void (*record_signal) ( int signo ) = 0;
 
+// A way to set SIG_IGN that is reset by execve().
 static void sig_ignore ( int ) {}
 
 static inline
@@ -163,10 +168,13 @@ ignore_all_signals()
 	sa.sa_handler=sig_ignore;
 #if !defined(__LINUX__) && !defined(__linux__)
 	for (int signo(1); signo < NSIG; ++signo)
+		sigaction(signo,&sa,NULL);
+	for (int signo(0); signo < 16; ++signo)
+		sigaction(SIGRTMIN + signo,&sa,NULL);
 #else
 	for (int signo(1); signo < _NSIG; ++signo)
-#endif
 		sigaction(signo,&sa,NULL);
+#endif
 
 	// TODO: SIGPIPE, SIGTTIN, SIGTTOU, and SIGTSTP should be an inheritable SIG_IGN.
 }
@@ -632,7 +640,7 @@ change_to_system_manager_log_root (
 			if (0 <= chdir(*r))
 				return;
 	} else
-		chdir((login_user_runtime_dir() + "system-manager").c_str());
+		chdir((login_user_runtime_dir() + "system-manager/log").c_str());
 }
 
 static inline
@@ -641,6 +649,7 @@ construct_system_manager_log_name (
 	const bool is_system,
 	std::string & name_buf
 ) {
+#if 0
 	if (is_system) return ".";
 	name_buf = login_user_runtime_dir() + "log.";
 	const int id(query_manager_pid(is_system));
@@ -648,6 +657,9 @@ construct_system_manager_log_name (
 	snprintf(idbuf, sizeof idbuf, "%d", id);
 	name_buf += idbuf;
 	return name_buf.c_str();
+#else
+	return ".";
+#endif
 }
 
 /* Main program *************************************************************

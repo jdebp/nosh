@@ -13,13 +13,18 @@ For copyright and licensing terms, see the file named COPYING.
 #include <ctime>
 #include <inttypes.h>
 #include <sys/stat.h>
+#if defined(__LINUX__) || defined(__linux__)
+#include "kqueue_linux.h"
+#else
 #include <sys/event.h>
+#endif
 #include <dirent.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include "utils.h"
 #include "fdutils.h"
 #include "popt.h"
+#include "SignalManagement.h"
 
 static uint64_t margin(512);
 static uint64_t max_file_size (0x00ffffffULL);	// 16MiB.  Any larger and we start giving tools like "tail" fits.
@@ -371,19 +376,8 @@ cyclog (
 		l->start();
 	}
 
-#if !defined(__LINUX__) && !defined(__linux__)
-	struct sigaction sa;
-	sa.sa_flags=0;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_handler=SIG_IGN;
-	sigaction(SIGHUP,&sa,NULL);
-	sigaction(SIGTERM,&sa,NULL);
-	sigaction(SIGINT,&sa,NULL);
-	sigaction(SIGTSTP,&sa,NULL);
-	sigaction(SIGALRM,&sa,NULL);
-	sigaction(SIGPIPE,&sa,NULL);
-	sigaction(SIGQUIT,&sa,NULL);
-#endif
+	ReserveSignalsForKQueue kqueue_reservation(SIGTERM, SIGINT, SIGHUP, SIGTSTP, SIGALRM, SIGPIPE, SIGQUIT, 0);
+	PreventDefaultForFatalSignals ignored_signals(SIGTERM, SIGINT, SIGHUP, SIGTSTP, SIGALRM, SIGPIPE, SIGQUIT, 0);
 
 	const int queue(kqueue());
 	if (0 > queue) {
@@ -393,18 +387,21 @@ cyclog (
 	}
 
 	struct kevent p[8];
-	EV_SET(&p[0], STDIN_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
-	EV_SET(&p[1], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[2], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[3], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[4], SIGTSTP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[5], SIGALRM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[6], SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[7], SIGQUIT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	if (0 > kevent(queue, p, sizeof p/sizeof *p, 0, 0, 0)) {
-		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
-		throw EXIT_FAILURE;
+	{
+		size_t index(0);
+		EV_SET(&p[index++], STDIN_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
+		EV_SET(&p[index++], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		EV_SET(&p[index++], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		EV_SET(&p[index++], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		EV_SET(&p[index++], SIGTSTP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		EV_SET(&p[index++], SIGALRM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		EV_SET(&p[index++], SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		EV_SET(&p[index++], SIGQUIT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		if (0 > kevent(queue, p, index, 0, 0, 0)) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
+			throw EXIT_FAILURE;
+		}
 	}
 
 	char buf[4096];

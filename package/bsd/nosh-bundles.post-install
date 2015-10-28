@@ -64,6 +64,7 @@ for I in \
 	nginx \
 	nisdomain \
 	nmbd \
+	nscd \
 	ntpd \
 	ntpdate \
 	openvpn@client \
@@ -94,7 +95,10 @@ for I in \
 	rabbitmq-server \
 	rpcbind \
 	samba \
+	saslauthd \
 	sickbeard \
+	slapd \
+	slurpd \
 	slim \
 	smartd \
 	smbd \
@@ -167,13 +171,22 @@ do
 	system-control preset $I.socket
 	system-control preset --prefix cyclog@ $I.service
 done
+# common fan-in logging services
+for I in \
+	natd \
+	sppp \
+	;
+do
+	i="`escape "$I"`"
+	add_user "$i"-log
+	add_log "$i" "$I"
+	system-control preset "$I"-log.service
+done
 # common services that fan in to a single logger
 for I in \
 	dmesg \
 	hostname \
 	machine-id \
-	natd-log \
-	sppp-log \
 	sysinit-log \
 	emergency-login@console \
 	;
@@ -268,7 +281,6 @@ for I in \
 	nfscbd \
 	nfsclient \
 	nfsuserd \
-	nscd \
 	pbid \
 	pf \
 	pflog \
@@ -293,6 +305,8 @@ for I in \
 	timed \
 	ubthidhci \
 	ugidfw \
+	uhidd@ugen0.1 \
+	uhidd@ugen0.2 \
 	unbound \
 	utx \
 	vixiecron \

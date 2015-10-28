@@ -12,10 +12,16 @@ For copyright and licensing terms, see the file named COPYING.
 #include <iostream>
 #include <ostream>
 #include <sys/types.h>
+#if defined(__LINUX__) || defined(__linux__)
+#include "kqueue_linux.h"
+#else
 #include <sys/event.h>
+#endif
 #include <unistd.h>
 #include "utils.h"
 #include "listen.h"
+#include "popt.h"
+#include "SignalManagement.h"
 
 /* Support functions ********************************************************
 // **************************************************************************
@@ -43,10 +49,27 @@ process_message (
 
 void
 klog_read (
-	const char * & /*next_prog*/,
+	const char * & next_prog,
 	std::vector<const char *> & args
 ) {
 	const char * prog(basename_of(args[0]));
+	try {
+		popt::top_table_definition main_option(0, 0, "Main options", "");
+
+		std::vector<const char *> new_args;
+		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
+		p.process(true /* strictly options before arguments */);
+		args = new_args;
+		next_prog = arg0_of(args);
+		if (p.stopped()) throw EXIT_SUCCESS;
+	} catch (const popt::error & e) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
+		throw EXIT_FAILURE;
+	}
+	if (!args.empty()) {
+		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Unexpected argument.");
+		throw EXIT_FAILURE;
+	}
 
 	const unsigned listen_fds(query_listen_fds());
 	if (1U > listen_fds) {
@@ -55,19 +78,8 @@ klog_read (
 		throw EXIT_FAILURE;
 	}
 
-#if !defined(__LINUX__) && !defined(__linux__)
-	struct sigaction sa;
-	sa.sa_flags=0;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_handler=SIG_IGN;
-	sigaction(SIGHUP,&sa,NULL);
-	sigaction(SIGTERM,&sa,NULL);
-	sigaction(SIGINT,&sa,NULL);
-	sigaction(SIGTSTP,&sa,NULL);
-	sigaction(SIGALRM,&sa,NULL);
-	sigaction(SIGPIPE,&sa,NULL);
-	sigaction(SIGQUIT,&sa,NULL);
-#endif
+	ReserveSignalsForKQueue kqueue_reservation(SIGTERM, SIGINT, SIGHUP, SIGTSTP, SIGALRM, SIGPIPE, SIGQUIT, 0);
+	PreventDefaultForFatalSignals ignored_signals(SIGTERM, SIGINT, SIGHUP, SIGTSTP, SIGALRM, SIGPIPE, SIGQUIT, 0);
 
 	const int queue(kqueue());
 	if (0 > queue) {

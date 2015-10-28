@@ -8,7 +8,8 @@ Wants=kmod@vkbd
 After=kmod@vkbd
 
 [Service]
-ExecStart=%p -d %I
+EnvironmentDirectory=env
+ExecStart=%p -d -v /dev/%I ${flags}
 Restart=always
 
 [Install]

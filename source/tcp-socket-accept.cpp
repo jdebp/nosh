@@ -10,10 +10,10 @@ For copyright and licensing terms, see the file named COPYING.
 #include <csignal>
 #include <cerrno>
 #include <sys/types.h>
-#if !defined(__LINUX__) && !defined(__linux__)
-#include <sys/event.h>
+#if defined(__LINUX__) || defined(__linux__)
+#include "kqueue_linux.h"
 #else
-#include <sys/poll.h>
+#include <sys/event.h>
 #endif
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -26,6 +26,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "popt.h"
 #include "utils.h"
 #include "listen.h"
+#include "SignalManagement.h"
 
 /* Helper functions *********************************************************
 // **************************************************************************
@@ -41,8 +42,6 @@ handle_signal (
 	if (SIGCHLD != signo) return;
 	child_signalled = true;
 }
-
-static void sig_ignore (int) {}
 
 static
 void
@@ -147,7 +146,9 @@ tcp_socket_accept (
 		throw EXIT_FAILURE;
 	}
 
-#if !defined(__LINUX__) && !defined(__linux__)
+	ReserveSignalsForKQueue kqueue_reservation(SIGPIPE, SIGCHLD, 0);
+	PreventDefaultForFatalSignals ignored_signals(SIGPIPE, 0);
+
 	const int queue(kqueue());
 	if (0 > queue) {
 		const int error(errno);
@@ -165,37 +166,6 @@ tcp_socket_accept (
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-#else
-	std::vector<pollfd> p(listen_fds);
-	for (unsigned i(0U); i < listen_fds; ++i) {
-		p[i].fd = LISTEN_SOCKET_FILENO + i;
-		p[i].events = 0;
-	}
-
-	sigset_t original_signals;
-	sigprocmask(SIG_SETMASK, 0, &original_signals);
-	sigset_t masked_signals(original_signals);
-	sigaddset(&masked_signals, SIGCHLD);
-	sigaddset(&masked_signals, SIGPIPE);
-	sigprocmask(SIG_SETMASK, &masked_signals, 0);
-	sigset_t masked_signals_during_poll(masked_signals);
-	sigdelset(&masked_signals_during_poll, SIGCHLD);
-	sigdelset(&masked_signals_during_poll, SIGPIPE);
-#endif
-
-	{
-		struct sigaction sa;
-		sa.sa_flags=0;
-		sigemptyset(&sa.sa_mask);
-#if !defined(__LINUX__) && !defined(__linux__)
-		sa.sa_handler=sig_ignore;
-#else
-		sa.sa_handler=handle_signal;
-#endif
-		sigaction(SIGCHLD,&sa,NULL);
-		sa.sa_handler=sig_ignore;
-		sigaction(SIGPIPE,&sa,NULL);
-	}
 
 	unsigned long connections(0);
 
@@ -204,18 +174,9 @@ tcp_socket_accept (
 			reap(prog, verbose, connections, connection_limit);
 			child_signalled = false;
 		}
-#if !defined(__LINUX__) && !defined(__linux__)
 		for (unsigned i(0U); i < listen_fds; ++i)
 			EV_SET(&p[i], LISTEN_SOCKET_FILENO + i, EVFILT_READ, connections < connection_limit ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
 		const int rc(kevent(queue, p.data(), listen_fds, p.data(), listen_fds + 2, 0));
-#else
-		for (unsigned i(0U); i < listen_fds; ++i)
-			if (connections < connection_limit)
-				p[i].events |= POLLIN;
-			else
-				p[i].events &= ~POLLIN;
-		const int rc(ppoll(p.data(), listen_fds, 0, &masked_signals_during_poll));
-#endif
 		if (0 > rc) {
 			if (EINTR == errno) continue;
 exit_error:
@@ -223,13 +184,7 @@ exit_error:
 			std::fprintf(stderr, "%s: FATAL: %s\n", prog, std::strerror(error));
 			throw EXIT_FAILURE;
 		}
-#if !defined(__LINUX__) && !defined(__linux__)
-		for (size_t i(0); i < static_cast<std::size_t>(rc); ++i) 
-#else
-		for (size_t i(0); i < listen_fds; ++i) 
-#endif
-		{
-#if !defined(__LINUX__) && !defined(__linux__)
+		for (size_t i(0); i < static_cast<std::size_t>(rc); ++i) {
 			const struct kevent & e(p[i]);
 			if (EVFILT_SIGNAL == e.filter) {
 				handle_signal (e.ident);
@@ -238,11 +193,6 @@ exit_error:
 			if (EVFILT_READ != e.filter) 
 				continue;
 			const int l(static_cast<int>(e.ident));
-#else
-			const pollfd & e(p[i]);
-			if (!(e.revents & POLLIN)) continue;
-			const int l(e.fd);
-#endif
 
 			sockaddr_storage remoteaddr;
 			socklen_t remoteaddrsz = sizeof remoteaddr;
@@ -351,17 +301,6 @@ exit_error:
 			if (verbose)
 				std::fprintf(stderr, "%s: %u %s %s %s %s\n", prog, getpid(), q("TCPLOCALIP"), q("TCPLOCALPORT"), q("TCPREMOTEIP"), q("TCPREMOTEPORT"));
 
-			{
-				struct sigaction sa;
-				sa.sa_flags=0;
-				sigemptyset(&sa.sa_mask);
-				sa.sa_handler=SIG_DFL;
-				sigaction(SIGCHLD,&sa,NULL);
-				sigaction(SIGPIPE,&sa,NULL);
-			}
-#if defined(__LINUX__) || defined(__linux__)
-			sigprocmask(SIG_SETMASK, &original_signals, 0);
-#endif
 			return;
 		}
 	}

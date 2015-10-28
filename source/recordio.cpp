@@ -9,11 +9,16 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstring>
 #include <csignal>
 #include <cerrno>
-#include <sys/poll.h>
+#if defined(__LINUX__) || defined(__linux__)
+#include "kqueue_linux.h"
+#else
+#include <sys/event.h>
+#endif
 #include <unistd.h>
 #include "popt.h"
 #include "utils.h"
 #include "fdutils.h"
+#include "SignalManagement.h"
 
 static const int pid(getpid());
 
@@ -103,6 +108,13 @@ recordio (
 		throw EXIT_FAILURE;
 	}
 
+	const int queue(kqueue());
+	if (0 > queue) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kqueue", std::strerror(error));
+		throw EXIT_FAILURE;
+	}
+
 	const int child(fork());
 
 	if (0 > child) {
@@ -136,57 +148,72 @@ recordio (
 	close(input_fds[0]); input_fds[0] = -1;
 	close(output_fds[1]); output_fds[1] = -1;
 
-	pollfd p[2];
-	p[0].fd = STDIN_FILENO;
-	p[0].events = POLLIN;
-	p[1].fd = output_fds[0];
-	p[1].events = POLLIN;
+	PreventDefaultForFatalSignals ignored_signals(SIGPIPE, 0);
 
-	sigset_t masked_signals;
-	sigprocmask(SIG_SETMASK, 0, &masked_signals);
-	sigaddset(&masked_signals, SIGPIPE);
-	sigprocmask(SIG_SETMASK, &masked_signals, 0);
+	struct kevent p[2];
+	EV_SET(&p[0], STDIN_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
+	EV_SET(&p[1], output_fds[0], EVFILT_READ, EV_ADD, 0, 0, 0);
+	if (0 > kevent(queue, p, sizeof p/sizeof *p, 0, 0, 0)) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
+		throw EXIT_FAILURE;
+	}
 
 	for (;;) {
-		const int rc(poll(p, sizeof p/sizeof *p, -1));
+		const int rc(kevent(queue, 0, 0, p, sizeof p/sizeof *p, 0));
 		if (0 > rc) {
+			if (EINTR == errno) continue;
 			const int error(errno);
-			if (EINTR == error) continue;
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "poll", std::strerror(error));
+			std::fprintf(stderr, "%s: FATAL: %s\n", prog, std::strerror(error));
 			throw EXIT_FAILURE;
 		}
-		char buf [4096];
-		if (p[1].revents & (POLLIN|POLLHUP)) {
-			const int n(read(p[1].fd, buf, sizeof buf));
-			if (0 > n) {
-				const int error(errno);
-				if (EINTR == error) continue;
-				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "read-pipe", std::strerror(error));
-				throw EXIT_FAILURE;
+		for (size_t i(0); i < static_cast<std::size_t>(rc); ++i) {
+			const struct kevent & e(p[i]);
+			if (EVFILT_READ != e.filter) 
+				continue;
+			const int fd(static_cast<int>(e.ident));
+			char buf [4096];
+			const int n(read(fd, buf, sizeof buf));
+			if (output_fds[0] == fd) {
+				if (0 > n) {
+					const int error(errno);
+					if (EINTR == error) continue;
+					std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "read-pipe", std::strerror(error));
+					throw EXIT_FAILURE;
+				}
+				log('>', buf, n);
+				if (0 != n)
+					writeall(STDOUT_FILENO, buf, n);
+				else {
+					close(STDOUT_FILENO);
+					EV_SET(&p[0], fd, EVFILT_READ, EV_DELETE, 0, 0, 0);
+					if (0 > kevent(queue, p, 1, 0, 0, 0)) {
+						const int error(errno);
+						std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
+						throw EXIT_FAILURE;
+					}
+					break;
+				}
 			}
-			log('>', buf, n);
-			if (0 != n)
-				writeall(STDOUT_FILENO, buf, n);
-			else {
-				close(STDOUT_FILENO);
-				p[1].fd = -1;
-				break;
-			}
-		}
-		if (p[0].revents & (POLLIN|POLLHUP)) {
-			const int n(read(p[0].fd, buf, sizeof buf));
-			if (0 > n) {
-				const int error(errno);
-				if (EINTR == error) continue;
-				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "read-stdin", std::strerror(error));
-				throw EXIT_FAILURE;
-			}
-			log('<', buf, n);
-			if (0 != n)
-				writeall(input_fds[1], buf, n);
-			else {
-				close(input_fds[1]); input_fds[1] = -1;
-				p[0].fd = -1;
+			if (STDIN_FILENO == fd) {
+				if (0 > n) {
+					const int error(errno);
+					if (EINTR == error) continue;
+					std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "read-stdin", std::strerror(error));
+					throw EXIT_FAILURE;
+				}
+				log('<', buf, n);
+				if (0 != n)
+					writeall(input_fds[1], buf, n);
+				else {
+					close(input_fds[1]); input_fds[1] = -1;
+					EV_SET(&p[0], fd, EVFILT_READ, EV_DELETE, 0, 0, 0);
+					if (0 > kevent(queue, p, 1, 0, 0, 0)) {
+						const int error(errno);
+						std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
+						throw EXIT_FAILURE;
+					}
+				}
 			}
 		}
 	}

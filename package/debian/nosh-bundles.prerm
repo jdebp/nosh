@@ -1,4 +1,5 @@
 #!/bin/sh -
+del_user() { getent passwd "$1" > /dev/null && userdel "$1" ; }
 case "$1" in
 	upgrade)
 		# This service has been discontinued.
@@ -8,7 +9,6 @@ case "$1" in
 		fi
 		;;
 	remove|purge)
-# Don't delete the cyclog@ users because the log files still exist.
 		# common services with dedicated log services
 		for I in \
 			anacron \
@@ -63,6 +63,7 @@ case "$1" in
 			nginx \
 			nisdomain \
 			nmbd \
+			nscd \
 			ntpd \
 			ntpdate \
 			openvpn@client \
@@ -93,7 +94,10 @@ case "$1" in
 			rabbitmq-server \
 			rpcbind \
 			samba \
+			saslauthd \
 			sickbeard \
+			slapd \
+			slurpd \
 			slim \
 			smartd \
 			smbd \
@@ -182,13 +186,20 @@ case "$1" in
 				system-control stop cyclog@$i.service
 			fi
 		done
+		# common fan-in logging services
+		for i in \
+			natd \
+			sppp \
+			;
+		do
+			system-control unload-when-stopped "$i"-log.service
+			system-control stop "$i"-log.service
+		done
 		# common services that fan in to a single logger
 		for i in \
 			dmesg \
 			hostname \
 			machine-id \
-			natd-log \
-			sppp-log \
 			sysinit-log \
 			emergency-login@console \
 			;
@@ -304,6 +315,15 @@ case "$1" in
 				system-control unload-when-stopped $i.target
 				system-control stop $i.target
 			fi
+		done
+# Don't delete the log service users because the log files still exist.
+		# non-log users
+		for I in \
+			klogd \
+			;
+		do
+			i="`escape "$I"`"
+			del_user "$i"
 		done
 		;;
 esac

@@ -25,8 +25,10 @@ extern void unsetenv ( const char * &, std::vector<const char *> & );
 extern void envdir ( const char * &, std::vector<const char *> & );
 extern void clearenv ( const char * &, std::vector<const char *> & );
 extern void udp_socket_listen ( const char * &, std::vector<const char *> & );
+extern void udp_socket_connect ( const char * &, std::vector<const char *> & );
 extern void tcp_socket_listen ( const char * &, std::vector<const char *> & );
 extern void tcp_socket_accept ( const char * &, std::vector<const char *> & );
+extern void tcp_socket_connect ( const char * &, std::vector<const char *> & );
 extern void ulimit ( const char * &, std::vector<const char *> & );
 extern void softlimit ( const char * &, std::vector<const char *> & );
 extern void envuidgid ( const char * &, std::vector<const char *> & );
@@ -60,6 +62,7 @@ extern void unshare ( const char * &, std::vector<const char *> & );
 extern void make_private_fs ( const char * &, std::vector<const char *> & );
 extern void set_mount_object ( const char * &, std::vector<const char *> & );
 extern void fifo_listen ( const char * &, std::vector<const char *> & );
+extern void export_to_rsyslog ( const char * &, std::vector<const char *> & );
 extern void syslog_read ( const char * &, std::vector<const char *> & );
 extern void klog_read ( const char * &, std::vector<const char *> & );
 extern void cyclog ( const char * &, std::vector<const char *> & );
@@ -116,6 +119,8 @@ commands[] = {
 	{	"netlink-datagram-socket-listen",	netlink_datagram_socket_listen	},
 #endif
 	{	"ucspi-socket-rules-check",		ucspi_socket_rules_check	},
+	{	"tcp-socket-connect",			tcp_socket_connect		},
+	{	"udp-socket-connect",			udp_socket_connect		},
 	{	"monitored-fsck",			monitored_fsck			},
 	{	"plug-and-play-event-handler",		plug_and_play_event_handler	},
 
@@ -134,6 +139,7 @@ personalities[] = {
 	// These are not internal commands so that the output of ps looks prettier for long-running service processes that employ them.
 	{	"tcp-socket-accept",			tcp_socket_accept		},
 	{	"local-stream-socket-accept",		local_stream_socket_accept	},
+	{	"export-to-rsyslog",			export_to_rsyslog		},
 	{	"syslog-read",				syslog_read			},
 	{	"klog-read",				klog_read			},
 	{	"cyclog",				cyclog				},
