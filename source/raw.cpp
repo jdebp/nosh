@@ -21,5 +21,7 @@ make_raw (
 	t.c_cflag &= ~(CSIZE|PARENB);
 	t.c_cflag |= CS8;
 	t.c_lflag &= ~(ISIG|ICANON|IEXTEN|ECHO|ECHOE|ECHOK|ECHOCTL|ECHOKE|ECHONL);
+	t.c_cc[VMIN] = 1;
+	t.c_cc[VTIME] = 0;
 	return t;
 }

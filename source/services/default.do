@@ -191,9 +191,13 @@ tinydns)
 	for i in alias childns ns mx host
 	do
 		echo '#!/command/execlineb -S0' > services.new/"${base}"/service/root/add-"$i"
-		echo "tinydns-edit data data.new add $i \$@" >> services.new/"${base}"/service/root/add-"$i"
+		echo "tinydns-edit data data.new" >> services.new/"${base}"/service/root/add-"$i"
+		echo "add $i \$@" >> services.new/"${base}"/service/root/add-"$i"
 		chmod 0755 services.new/"${base}"/service/root/add-"$i"
 	done
+
+	echo 'data.cdb: data; tinydns-data' > services.new/"${base}"/service/root/Makefile
+	chmod 0644 services.new/"${base}"/service/root/Makefile
 	;;
 axfrdns)
 	ln -s ../../tinydns/service/root services.new/"${base}"/service/

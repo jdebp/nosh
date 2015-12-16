@@ -1,0 +1,103 @@
+#compdef init telinit svcadm systemctl initctl rcctl system-control system-manager session-manager service-manager svstat service-status svc service-control console-terminal-emulator console-convert-kbdmap console-clear console-resize console-multiplexor console-fb-realizer console-ncurses-realizer svscan service-dt-scanner svok service-is-ok svup service-is-up svshow service-show emergency rescue normal reboot halt haltsys poweroff shutdown
+
+function _system_control_subcommands()
+{
+	local -a commands
+	commands=(
+	'init:run initial action'
+	'emergency:start emergency mode'
+	'rescue:start rescue mode'
+	'normal:start normal mode'
+	'halt:halt the system'
+	'poweroff:power off the system'
+	'reboot:reboot the system'
+	'start:start a service'
+	'activate:start a service'
+	'isolate:start a service'
+	'stop:stop a service'
+	'deactivate:stop a service'
+	'reset:reset a service to its preset state'
+	'enable:configure a service to auto-start'
+	'disable:configure a service to not auto-start'
+	'preset:configure a service auto-start according to config files'
+	'status:display service status'
+	'show:print machine-readable service status'
+	'show-json:print machine-readable service status'
+	"find:locate a service's service directory"
+	'is-active:query whether a service is started'
+	'is-loaded:query whether a service is loaded'
+	'is-enabled:query whether a service is enabled'
+	'condrestart:send a TERM signal to a running service'
+	'try-restart:send a TERM signal to a running service'
+	'force-reload:send a TERM signal to a running service'
+	'convert-systemd-units:convert systemd unit files to a service bunbdle'
+	'convert-fstab-services:convert fstab to service bundles'
+	'nagios-check-service:nagios plug-in for checking services'
+	'load-kernel-module:load a kernel module'
+	'unload-kernel-module:unload a kernel module'
+	"cat:print a service bundle's control scripts"
+	'set-service-env:change a standard-format env/ directory for a service'
+	'print-service-env:display a standard-format env/ directory for a service'
+	)
+	_describe -t command 'sub-commands' commands
+}
+
+function _system_control_subarguments()
+{
+	local lstate state tmpargv tmp cache cur next
+	local -a common 
+	local w1="$words[1]"
+
+	common=('--help[Display option help]' '--usage[Display option usage]' --)
+	words[1]="$words[1] $words[2]"
+
+	local curcontext="${curcontext%:*:*}:system-control-$words[2]:" 
+
+	case "$words[2]" in
+	init|emergency|rescue|normal|halt|poweroff|reboot)
+		_message -r "${service} has no options or parameters." ;;
+	load-kernel-module|unload-kernel-module)
+		_arguments '2:module name:_files' ${common} ;;
+	set-service-env)
+		_arguments '2:service name:_directories' '3:name:' '4::value:' ${common} ;;
+	print-service-env)
+		_arguments '2:service name:_directories' '3::value:' ${common} ;;
+	convert-systemd-units)
+		_arguments '2:unit name:_files' ${common} ;;
+	*)
+		_arguments '*:service name:_directories' ${common} ;;
+	esac
+
+	words[1]="${w1}"
+}
+
+local lstate state
+local -a common
+common=('--help[Display option help]' '--usage[Display option usage]' --)
+
+case "${service}" in
+service-manager|session-manager|system-manager)
+	_message -r "${service} has no options or parameters." ;;
+systemctl|initctl|rcctl|svcadm|system-control) 
+	_arguments '1:subcommand:_system_control_subcommands' '*:subargs:_system_control_subarguments' $common ;;
+init|telinit)
+	_arguments '1:runlevel:(0 1 2 3 4 5 6 m auto H h S s single emergency)' $common ;;
+svshow|service-show|svstat|service-status|svok|service-is-ok|svup|service-is-up|svc|service-control)
+	_arguments '*:service directory:_directories' $common ;;
+svscan|service-st-scanner)
+	_arguments '1:scan directory:_directories' $common ;;
+console-multiplexor)
+	_arguments '1:composite virtual console directory:_directories' '*:source virtual console directory:_directories' $common ;;
+console-terminal-emulator)
+	_arguments '1:virtual console directory:_directories' $common ;;
+console-fb-realizer)
+	_arguments '1:virtual console directory:_directories' '2:framebuffer device:_files' $common ;;
+console-ncurses-realizer)
+	_arguments '1:virtual console directory:_directories' $common ;;
+console-convert-kbdmap)
+	_arguments '*:BSD kbd map files:_directories' $common ;;
+shutdown)
+	_arguments '1:time:' '2:message:' $common ;;
+*)
+	_arguments $common ;;
+esac

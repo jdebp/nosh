@@ -15,6 +15,7 @@ cleanX
 console-fb-realizer@head0
 console-kit-daemon
 console-multiplexor@head0
+darkice
 ddclient
 deluged
 deluge-web

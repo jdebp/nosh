@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.21</refmiscinfo>
+<refmiscinfo class="version">1.23</refmiscinfo>
 </refmeta>
 
 <refnamediv><refname>prependpath</refname><refpurpose>add a dir to a path environment variable then chain</refpurpose></refnamediv>

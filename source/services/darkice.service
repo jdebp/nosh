@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+# See http://darkics.org/
+
+[Unit]
+Description=%p audio streaming  daemon
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=%p
+Restart=always
+
+[Install]
+WantedBy=server.target

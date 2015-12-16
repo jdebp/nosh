@@ -6,7 +6,7 @@
 Description=util-linux UUID server socket
 
 [Socket]
-ListenStream=/run/uuidd/request
+ListenStream=/run/%p/request
 Accept=no
 
 [Install]

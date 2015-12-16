@@ -240,10 +240,12 @@ shell_expand (
 }
 
 struct names {
-	names(const char * a) : arg_name(a) { split_name(a, unit_dirname, unit_basename); escaped_unit_basename = escape(false, unit_basename); }
+	names(const char * a) : arg_name(a), user("root"), runtime_dir("/run/") { split_name(a, unit_dirname, unit_basename); escaped_unit_basename = escape(false, unit_basename); }
 	void set_prefix(const std::string & v, bool esc, bool alt) { set(esc, alt, escaped_prefix, prefix, v); }
 	void set_instance(const std::string & v, bool esc, bool alt) { set(esc, alt, escaped_instance, instance, v); }
 	void set_bundle(const std::string & r, const std::string & b) { bundle_basename = b; bundle_dirname = r + b; }
+	void set_machine_id(const std::string & v) { machine_id = v; }
+	void set_user(const std::string & u) { user = u; runtime_dir = "/run/user/" + u + "/"; }
 	const std::string & query_arg_name () const { return arg_name; }
 	const std::string & query_unit_dirname () const { return unit_dirname; }
 	const std::string & query_unit_basename () const { return unit_basename; }
@@ -254,10 +256,13 @@ struct names {
 	const std::string & query_escaped_instance () const { return escaped_instance; }
 	const std::string & query_bundle_basename () const { return bundle_basename; }
 	const std::string & query_bundle_dirname () const { return bundle_dirname; }
+	const std::string & query_machine_id () const { return machine_id; }
+	const std::string & query_user () const { return user; }
+	const std::string & query_runtime_dir () const { return runtime_dir; }
 	std::string substitute ( const std::string & );
 	std::list<std::string> substitute ( const std::list<std::string> & );
 protected:
-	std::string arg_name, unit_dirname, unit_basename, escaped_unit_basename, prefix, escaped_prefix, instance, escaped_instance, bundle_basename, bundle_dirname;
+	std::string arg_name, unit_dirname, unit_basename, escaped_unit_basename, prefix, escaped_prefix, instance, escaped_instance, bundle_basename, bundle_dirname, machine_id, user, runtime_dir;
 	static std::string unescape ( bool, const std::string & );
 	static std::string escape ( bool, const std::string & );
 	void set ( bool esc, bool alt, std::string & escaped, std::string & normal, const std::string & value ) {
@@ -372,6 +377,8 @@ names::substitute (
 			case 'f': r += leading_slashify(query_instance()); break;
 			case 'n': r += query_escaped_unit_basename(); break;
 			case 'N': r += query_unit_basename(); break;
+			case 'm': r += query_machine_id(); break;
+			case 't': r += query_runtime_dir(); break;
 			case '%': default:	r += '%'; r += c; break;
 		}
 	}
@@ -587,7 +594,7 @@ convert_systemd_units (
 			&etc_bundle_option,
 			&no_systemd_quirks_option
 		};
-		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "");
+		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "unit");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -775,6 +782,11 @@ convert_systemd_units (
 	value * privatedevices(service_profile.use("service", "privatedevices"));
 	value * privatenetwork(service_profile.use("service", "privatenetwork"));
 	value * mountflags(service_profile.use("service", "mountflags"));
+	value * ioschedulingclass(service_profile.use("service", "ioschedulingclass"));
+	value * ioschedulingpriority(service_profile.use("service", "ioschedulingpriority"));
+	value * cpuschedulingpolicy(service_profile.use("service", "cpuschedulingpolicy"));
+	value * cpuschedulingpriority(service_profile.use("service", "cpuschedulingpriority"));
+	value * cpuschedulingresetonfork(service_profile.use("service", "cpuschedulingresetonfork"));
 #endif
 	value * service_defaultdependencies(service_profile.use("unit", "defaultdependencies"));
 	value * service_earlysupervise(service_profile.use("unit", "earlysupervise"));	// This is an extension to systemd.
@@ -788,6 +800,9 @@ convert_systemd_units (
 	value * service_wantedby(service_profile.use("install", "wantedby"));
 	value * service_requiredby(service_profile.use("install", "requiredby"));
 	value * service_stoppedby(service_profile.use("install", "stoppedby"));	// This is an extension to systemd.
+
+	if (user)
+		names.set_user(names.substitute(user->last_setting()));
 
 	// Actively prevent certain unsupported combinations.
 
@@ -873,6 +888,29 @@ convert_systemd_units (
 #if !defined(__LINUX__) && !defined(__linux__)
 	if (jailid) jail += "jexec " + quote(names.substitute(jailid->last_setting())) + "\n";
 #endif
+	std::string priority;
+#if defined(__LINUX__) || defined(__linux__)
+	if (ioschedulingclass || ioschedulingpriority) {
+		priority += "ionice";
+		if (ioschedulingclass)
+			priority += " --class " + quote(names.substitute(ioschedulingclass->last_setting()));
+		if (ioschedulingpriority)
+			priority += " --classdata " + quote(names.substitute(ioschedulingpriority->last_setting()));
+		priority += "\n";
+	}
+	if (cpuschedulingpolicy || cpuschedulingpriority || cpuschedulingresetonfork) {
+		priority += "chrt";
+		if (is_bool_true(cpuschedulingresetonfork, false))
+			priority += " --reset-on-fork";
+		if (cpuschedulingpolicy)
+			priority += " --" + quote(names.substitute(cpuschedulingpolicy->last_setting()));
+		if (cpuschedulingpriority)
+			priority += " " + quote(names.substitute(cpuschedulingpriority->last_setting()));
+		else
+			priority += " 0";
+		priority += "\n";
+	}
+#endif
 	std::string chroot;
 	if (rootdirectory) chroot += "chroot " + quote(names.substitute(rootdirectory->last_setting())) + "\n";
 #if defined(__LINUX__) || defined(__linux__)
@@ -880,15 +918,15 @@ convert_systemd_units (
 	const bool is_private_network(is_bool_true(privatenetwork, false));
 	const bool is_private_devices(is_bool_true(privatedevices, false));
 	if (is_private_tmp||is_private_network||is_private_devices) {
-		chroot += "unshare ";
-		if (is_private_tmp||is_private_devices) chroot += "--mount ";
-		if (is_private_network) chroot += "--network ";
+		chroot += "unshare";
+		if (is_private_tmp||is_private_devices) chroot += " --mount";
+		if (is_private_network) chroot += " --network";
 		chroot += "\n";
 		if (is_private_tmp||is_private_devices) {
 			chroot += "set-mount-object --recursive slave /\n";
-			chroot += "make-private-fs ";
-			if (is_private_tmp) chroot += "--temp ";
-			if (is_private_devices) chroot += "--devices ";
+			chroot += "make-private-fs";
+			if (is_private_tmp) chroot += " --temp";
+			if (is_private_devices) chroot += " --devices";
 			chroot += "\n";
 		}
 	}
@@ -903,12 +941,11 @@ convert_systemd_units (
 	if (is_bool_true(processgroupleader, false)) setsid += "setpgrp\n";
 	std::string envuidgid, setuidgid;
 	if (user) {
-		const std::string u(names.substitute(user->last_setting()));
 		if (rootdirectory) {
-			envuidgid += "envuidgid " + quote(u) + "\n";
+			envuidgid += "envuidgid " + quote(names.query_user()) + "\n";
 			setuidgid += "setuidgid-fromenv\n";
 		} else
-			setuidgid += "setuidgid " + quote(u) + "\n";
+			setuidgid += "setuidgid " + quote(names.query_user()) + "\n";
 		if (is_bool_true(systemduserenvironment, systemd_quirks))
 			// This replicates systemd useless features.
 			setuidgid += "userenv\n";
@@ -1059,6 +1096,7 @@ convert_systemd_units (
 		start << "#!/bin/nosh\n" << multi_line_comment("Start file generated from " + service_filename);
 		if (execstartpre || runtimedirectory) {
 			start << jail;
+			start << priority;
 			if (setuidgidall) start << envuidgid;
 			start << softlimit;
 			start << um;
@@ -1099,6 +1137,7 @@ convert_systemd_units (
 		}
 		std::stringstream s;
 		s << jail;
+		s << priority;
 		s << envuidgid;
 		s << setsid;
 		s << softlimit;
@@ -1219,6 +1258,7 @@ convert_systemd_units (
 		}
 	} else {
 		service << jail;
+		service << priority;
 		service << envuidgid;
 		service << setsid;
 		service << softlimit;
@@ -1261,6 +1301,7 @@ convert_systemd_units (
 	if (execrestartpre) {
 		std::stringstream s;
 		s << jail;
+		s << priority;
 		if (setuidgidall) s << envuidgid;
 		s << softlimit;
 		s << um;
@@ -1321,6 +1362,7 @@ convert_systemd_units (
 	stop << "#!/bin/nosh\n" << multi_line_comment("Stop file generated from " + service_filename);
 	if (execstoppost || runtimedirectory) {
 		stop << jail;
+		stop << priority;
 		if (setuidgidall) stop << envuidgid;
 		stop << softlimit;
 		stop << um;

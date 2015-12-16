@@ -1,3 +1,17 @@
+nosh (1.23) unstable; urgency=low
+
+  * More Linux services: gpsd
+  * More cross-platform services: darkice
+  * More use of %p in socket service source files.
+  * SoftTerm now recognizes the DA2 control sequence variant used by vim.
+  * The Linux fallback U.K. kbdmap now places the Euro symbol where it is engraved in most keyboards.
+  * Linux systemd unit conversion now makes use of the ionice and chrt chain loading commands from the util-linux package.
+  * console-fb-realizer now processes HID reports (keyboard, tablet, and mouse) from USB HID devices.
+  * Linux binary build has switched to clang++ version 3.8.0 .
+  * Keyboard maps have changed key numberings for a slightly saner arrangement and to include more extended keys.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Wed, 16 Dec 2015 18:35:04 +0000
+
 nosh (1.22) unstable; urgency=low
 
   * console-fb-realizer now displays a mouse sprite when mouse reports are turned on with the appropriate terminal control sequences and a mouse input event device is supplied.

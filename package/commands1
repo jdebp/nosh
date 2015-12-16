@@ -1,3 +1,6 @@
 exec
 system-control
 console-terminal-emulator
+getty
+ptybandage
+ptyrun

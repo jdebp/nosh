@@ -1,0 +1,46 @@
+<refentry id="getty">
+
+<refmeta>
+<refentrytitle>getty</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.23</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>getty</refname>
+<refpurpose>run interactive login on a virtual terminal</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>getty</command> <arg choice='req'><replaceable>terminal-device</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>getty</command> combines
+<citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>vc-reset-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>login-banner</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>login-process</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+and finally
+<citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+to provide a simple equivalent to the likes of
+<citerefentry><refentrytitle>agetty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>mingetty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+for use with virtual terminal devices.
+</para>
+
+<para>
+It is a script that needs <citerefentry><refentrytitle>execlineb</refentrytitle><manvolnum>1</manvolnum></citerefentry> as its script interpreter.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

@@ -9,7 +9,7 @@ build:
 # The Debian package builder targets this in order to clean the build areas.
 clean:
 	${RM} debian/files debian/substvars
-	for i in guide exec terminal-management service-management systemv-shims systemd-shims upstart-shims debian-shims bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog ; \
+	for i in guide exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog ; \
 	do \
 		${RM} -r debian/nosh-"$$i"/ || exit 1 ; \
 	done
@@ -38,12 +38,12 @@ binary: stage
 		dpkg-shlibdeps debian/nosh-"$$i"/usr/local/sbin/* || exit 1 ; \
 		dpkg-gencontrol -pnosh-"$$i" -Pdebian/nosh-"$$i" || exit 1 ; \
 	done
-	for i in guide systemd-shims upstart-shims debian-shims bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog ; \
+	for i in guide systemd-shims upstart-shims debian-shims bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog terminal-extras ; \
 	do \
 		${RM} debian/substvars ; \
 		dpkg-gencontrol -pnosh-"$$i" -Pdebian/nosh-"$$i" || exit 1 ; \
 	done
-	for i in exec terminal-management service-management systemv-shims systemd-shims upstart-shims debian-shims guide bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog ; \
+	for i in exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims guide bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog ; \
 	do \
 		dpkg -b debian/nosh-"$$i" ../ || exit 1 ; \
 	done
@@ -52,7 +52,7 @@ stage:
 	install -d -m 0755 debian/tmp/DEBIAN
 	echo Exporting to debian/tmp/
 	package/export debian/tmp/ debian/tmp/ debian/tmp/
-	for i in exec terminal-management service-management systemv-shims systemd-shims upstart-shims debian-shims guide bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog ; \
+	for i in exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims guide bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-kits run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog ; \
 	do \
 		install -d -m 0755 debian/nosh-"$$i"/DEBIAN || exit 1 ; \
 	done

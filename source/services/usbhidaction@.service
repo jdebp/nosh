@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=USB HID button action for %I
+
+[Service]
+ExecStart=%p -v -f %I
+
+[Install]
+WantedBy=workstation.target

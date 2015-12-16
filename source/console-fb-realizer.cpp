@@ -5,6 +5,10 @@ For copyright and licensing terms, see the file named COPYING.
 
 #define __STDC_FORMAT_MACROS
 #define _XOPEN_SOURCE_EXTENDED
+#include <map>
+#include <set>
+#include <stack>
+#include <deque>
 #include <vector>
 #include <algorithm>
 #include <memory>
@@ -37,6 +41,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sys/endian.h>
 #include <termios.h>
 #include <dev/usb/usbhid.h>
+#include <dev/usb/usb_ioctl.h>
 #include "ttyutils.h"
 #include "kbdmap_utils.h"
 #endif
@@ -354,6 +359,9 @@ public:
 	bool num_LED() const { return num_lock(); }
 	bool caps_LED() const { return caps_lock()||level2_lock(); }
 	bool scroll_LED() const { return group2(); }
+	bool shift_LED() const { return level2_lock()||level2(); }
+	bool kana_LED() const { return false; }
+	bool compose_LED() const { return false; }
 	bool query_dirty_LEDs() const { return dirty_LEDs; }
 	void clean_LEDs() { dirty_LEDs = false; }
 
@@ -2623,6 +2631,191 @@ Realizer::handle_mouse_button(
 // **************************************************************************
 */
 
+/// The Linux evdev keycode maps to a row+column in the current keyboard map, which contains an action for that row+column.
+static inline
+uint16_t
+linux_evdev_keycode_to_keymap_index (
+	uint16_t k
+) {
+	switch (k) {
+		default:	break;
+		case KEY_ESC:		return KBDMAP_INDEX_ESC;
+		case KEY_1:		return KBDMAP_INDEX_1;
+		case KEY_2:		return KBDMAP_INDEX_2;
+		case KEY_3:		return KBDMAP_INDEX_3;
+		case KEY_4:		return KBDMAP_INDEX_4;
+		case KEY_5:		return KBDMAP_INDEX_5;
+		case KEY_6:		return KBDMAP_INDEX_6;
+		case KEY_7:		return KBDMAP_INDEX_7;
+		case KEY_8:		return KBDMAP_INDEX_8;
+		case KEY_9:		return KBDMAP_INDEX_9;
+		case KEY_0:		return KBDMAP_INDEX_0;
+		case KEY_MINUS:		return KBDMAP_INDEX_MINUS;
+		case KEY_EQUAL:		return KBDMAP_INDEX_EQUALS;
+		case KEY_BACKSPACE:	return KBDMAP_INDEX_BACKSPACE;
+		case KEY_TAB:		return KBDMAP_INDEX_TAB;
+		case KEY_Q:		return KBDMAP_INDEX_Q;
+		case KEY_W:		return KBDMAP_INDEX_W;
+		case KEY_E:		return KBDMAP_INDEX_E;
+		case KEY_R:		return KBDMAP_INDEX_R;
+		case KEY_T:		return KBDMAP_INDEX_T;
+		case KEY_Y:		return KBDMAP_INDEX_Y;
+		case KEY_U:		return KBDMAP_INDEX_U;
+		case KEY_I:		return KBDMAP_INDEX_I;
+		case KEY_O:		return KBDMAP_INDEX_O;
+		case KEY_P:		return KBDMAP_INDEX_P;
+		case KEY_LEFTBRACE:	return KBDMAP_INDEX_LEFTBRACE;
+		case KEY_RIGHTBRACE:	return KBDMAP_INDEX_RIGHTBRACE;
+		case KEY_ENTER:		return KBDMAP_INDEX_RETURN;
+		case KEY_A:		return KBDMAP_INDEX_A;
+		case KEY_S:		return KBDMAP_INDEX_S;
+		case KEY_D:		return KBDMAP_INDEX_D;
+		case KEY_F:		return KBDMAP_INDEX_F;
+		case KEY_G:		return KBDMAP_INDEX_G;
+		case KEY_H:		return KBDMAP_INDEX_H;
+		case KEY_J:		return KBDMAP_INDEX_J;
+		case KEY_K:		return KBDMAP_INDEX_K;
+		case KEY_L:		return KBDMAP_INDEX_L;
+		case KEY_SEMICOLON:	return KBDMAP_INDEX_SEMICOLON;
+		case KEY_APOSTROPHE:	return KBDMAP_INDEX_APOSTROPHE;
+		case KEY_GRAVE:		return KBDMAP_INDEX_GRAVE;
+		case KEY_LINEFEED:	break;	/// FIXME: \todo What does this map to?  Is this even a key in any real system?
+		case KEY_BACKSLASH:	return KBDMAP_INDEX_EUROPE1;
+		case KEY_Z:		return KBDMAP_INDEX_Z;
+		case KEY_X:		return KBDMAP_INDEX_X;
+		case KEY_C:		return KBDMAP_INDEX_C;
+		case KEY_V:		return KBDMAP_INDEX_V;
+		case KEY_B:		return KBDMAP_INDEX_B;
+		case KEY_N:		return KBDMAP_INDEX_N;
+		case KEY_M:		return KBDMAP_INDEX_M;
+		case KEY_COMMA:		return KBDMAP_INDEX_COMMA;
+		case KEY_DOT:		return KBDMAP_INDEX_DOT;
+		case KEY_SLASH:		return KBDMAP_INDEX_SLASH;
+		case KEY_102ND:		return KBDMAP_INDEX_EUROPE2;
+		case KEY_YEN:		return KBDMAP_INDEX_YEN;
+		case KEY_LEFTSHIFT:	return KBDMAP_INDEX_SHIFT1;
+		case KEY_RIGHTSHIFT:	return KBDMAP_INDEX_SHIFT2;
+		case KEY_RIGHTALT:	return KBDMAP_INDEX_ALT;
+		case KEY_LEFTCTRL:	return KBDMAP_INDEX_CONTROL1;
+		case KEY_RIGHTCTRL:	return KBDMAP_INDEX_CONTROL2;
+		case KEY_LEFTMETA:	return KBDMAP_INDEX_SUPER1;
+		case KEY_RIGHTMETA:	return KBDMAP_INDEX_SUPER2;
+		case KEY_LEFTALT:	return KBDMAP_INDEX_ALT;
+		case KEY_CAPSLOCK:	return KBDMAP_INDEX_CAPSLOCK;
+		case KEY_SCROLLLOCK:	return KBDMAP_INDEX_SCROLLLOCK;
+		case KEY_NUMLOCK:	return KBDMAP_INDEX_NUMLOCK;
+		case KEY_RO:		return KBDMAP_INDEX_ROMAJI;
+		case KEY_KATAKANAHIRAGANA:	return KBDMAP_INDEX_KATAHIRA;
+		case KEY_ZENKAKUHANKAKU:return KBDMAP_INDEX_HALF_FULL_WIDTH;
+		case KEY_HIRAGANA:	return KBDMAP_INDEX_HIRAGANA;
+		case KEY_KATAKANA:	return KBDMAP_INDEX_KATAKANA;
+		case KEY_HENKAN:	return KBDMAP_INDEX_HENKAN;
+		case KEY_MUHENKAN:	return KBDMAP_INDEX_MUHENKAN;
+		case KEY_HANGEUL:	return KBDMAP_INDEX_HANGUL_ENGLISH;
+		case KEY_HANJA:		return KBDMAP_INDEX_HANJA;
+		case KEY_COMPOSE:	return KBDMAP_INDEX_COMPOSE;
+		case KEY_SPACE:		return KBDMAP_INDEX_SPACE;
+		case KEY_F1:		return KBDMAP_INDEX_F1;
+		case KEY_F2:		return KBDMAP_INDEX_F2;
+		case KEY_F3:		return KBDMAP_INDEX_F3;
+		case KEY_F4:		return KBDMAP_INDEX_F4;
+		case KEY_F5:		return KBDMAP_INDEX_F5;
+		case KEY_F6:		return KBDMAP_INDEX_F6;
+		case KEY_F7:		return KBDMAP_INDEX_F7;
+		case KEY_F8:		return KBDMAP_INDEX_F8;
+		case KEY_F9:		return KBDMAP_INDEX_F9;
+		case KEY_F10:		return KBDMAP_INDEX_F10;
+		case KEY_F11:		return KBDMAP_INDEX_F11;
+		case KEY_F12:		return KBDMAP_INDEX_F12;
+		case KEY_F13:		return KBDMAP_INDEX_F13;
+		case KEY_F14:		return KBDMAP_INDEX_F14;
+		case KEY_F15:		return KBDMAP_INDEX_F15;
+		case KEY_F16:		return KBDMAP_INDEX_F16;
+		case KEY_F17:		return KBDMAP_INDEX_F17;
+		case KEY_F18:		return KBDMAP_INDEX_F18;
+		case KEY_F19:		return KBDMAP_INDEX_F19;
+		case KEY_F20:		return KBDMAP_INDEX_F20;
+		case KEY_F21:		return KBDMAP_INDEX_F21;
+		case KEY_F22:		return KBDMAP_INDEX_F22;
+		case KEY_F23:		return KBDMAP_INDEX_F23;
+		case KEY_F24:		return KBDMAP_INDEX_F24;
+		case KEY_HOME:		return KBDMAP_INDEX_HOME;
+		case KEY_UP:		return KBDMAP_INDEX_UP_ARROW;
+		case KEY_PAGEUP:	return KBDMAP_INDEX_PAGE_UP;
+		case KEY_LEFT:		return KBDMAP_INDEX_LEFT_ARROW;
+		case KEY_RIGHT:		return KBDMAP_INDEX_RIGHT_ARROW;
+		case KEY_END:		return KBDMAP_INDEX_END;
+		case KEY_DOWN:		return KBDMAP_INDEX_DOWN_ARROW;
+		case KEY_PAGEDOWN:	return KBDMAP_INDEX_PAGE_DOWN;
+		case KEY_INSERT:	return KBDMAP_INDEX_INSERT;
+		case KEY_DELETE:	return KBDMAP_INDEX_DELETE;
+		case KEY_KPASTERISK:	return KBDMAP_INDEX_KP_ASTERISK;
+		case KEY_KP7:		return KBDMAP_INDEX_KP_7;
+		case KEY_KP8:		return KBDMAP_INDEX_KP_8;
+		case KEY_KP9:		return KBDMAP_INDEX_KP_9;
+		case KEY_KPMINUS:	return KBDMAP_INDEX_KP_MINUS;
+		case KEY_KP4:		return KBDMAP_INDEX_KP_4;
+		case KEY_KP5:		return KBDMAP_INDEX_KP_5;
+		case KEY_KP6:		return KBDMAP_INDEX_KP_6;
+		case KEY_KPPLUS:	return KBDMAP_INDEX_KP_PLUS;
+		case KEY_KP1:		return KBDMAP_INDEX_KP_1;
+		case KEY_KP2:		return KBDMAP_INDEX_KP_2;
+		case KEY_KP3:		return KBDMAP_INDEX_KP_3;
+		case KEY_KP0:		return KBDMAP_INDEX_KP_0;
+		case KEY_KPDOT:		return KBDMAP_INDEX_KP_DECIMAL;
+		case KEY_KPENTER:	return KBDMAP_INDEX_KP_ENTER;
+		case KEY_KPSLASH:	return KBDMAP_INDEX_KP_SLASH;
+		case KEY_KPJPCOMMA:	return KBDMAP_INDEX_KP_JPCOMMA;
+		case KEY_KPCOMMA:	return KBDMAP_INDEX_KP_THOUSANDS;
+		case KEY_KPEQUAL:	return KBDMAP_INDEX_KP_EQUALS;
+		case KEY_KPPLUSMINUS:	return KBDMAP_INDEX_KP_SIGN;
+		case KEY_KPLEFTPAREN:	return KBDMAP_INDEX_KP_LBRACKET;
+		case KEY_KPRIGHTPAREN:	return KBDMAP_INDEX_KP_RBRACKET;
+		case KEY_PAUSE:		return KBDMAP_INDEX_PAUSE;
+		case KEY_SYSRQ:		return KBDMAP_INDEX_ATTENTION;
+		case KEY_STOP:		return KBDMAP_INDEX_STOP;
+		case KEY_AGAIN:		return KBDMAP_INDEX_AGAIN;
+		case KEY_PROPS:		return KBDMAP_INDEX_PROPERTIES;
+		case KEY_UNDO:		return KBDMAP_INDEX_UNDO;
+		case KEY_REDO:		return KBDMAP_INDEX_REDO;
+		case KEY_COPY:		return KBDMAP_INDEX_COPY;
+		case KEY_OPEN:		return KBDMAP_INDEX_OPEN;
+		case KEY_PASTE:		return KBDMAP_INDEX_PASTE;
+		case KEY_FIND:		return KBDMAP_INDEX_FIND;
+		case KEY_CUT:		return KBDMAP_INDEX_CUT;
+		case KEY_HELP:		return KBDMAP_INDEX_HELP;
+		case KEY_MUTE:		return KBDMAP_INDEX_MUTE;
+		case KEY_VOLUMEDOWN:	return KBDMAP_INDEX_VOLUME_DOWN;
+		case KEY_VOLUMEUP:	return KBDMAP_INDEX_VOLUME_UP;
+		case KEY_CALC:		return KBDMAP_INDEX_CALCULATOR;
+		case KEY_FILE:		return KBDMAP_INDEX_FILE_MANAGER;
+		case KEY_WWW:		return KBDMAP_INDEX_WWW;
+		case KEY_HOMEPAGE:	return KBDMAP_INDEX_HOME_PAGE;
+		case KEY_REFRESH:	return KBDMAP_INDEX_REFRESH;
+		case KEY_MAIL:		return KBDMAP_INDEX_MAIL;
+		case KEY_BOOKMARKS:	return KBDMAP_INDEX_BOOKMARKS;
+		case KEY_COMPUTER:	return KBDMAP_INDEX_COMPUTER;
+		case KEY_BACK:		return KBDMAP_INDEX_BACK;
+		case KEY_FORWARD:	return KBDMAP_INDEX_FORWARD;
+		case KEY_SCREENLOCK:	return KBDMAP_INDEX_LOCK;
+		case KEY_MSDOS:		return KBDMAP_INDEX_CLI;
+		case KEY_NEXTSONG:	return KBDMAP_INDEX_NEXT_TRACK;
+		case KEY_PREVIOUSSONG:	return KBDMAP_INDEX_PREV_TRACK;
+		case KEY_PLAYPAUSE:	return KBDMAP_INDEX_PLAY_PAUSE;
+		case KEY_STOPCD:	return KBDMAP_INDEX_STOP_PLAYING;
+		case KEY_RECORD:	return KBDMAP_INDEX_RECORD;
+		case KEY_REWIND:	return KBDMAP_INDEX_REWIND;
+		case KEY_FASTFORWARD:	return KBDMAP_INDEX_FAST_FORWARD;
+		case KEY_EJECTCD:	return KBDMAP_INDEX_EJECT;
+		case KEY_NEW:		return KBDMAP_INDEX_NEW;
+		case KEY_EXIT:		return KBDMAP_INDEX_EXIT;
+		case KEY_POWER:		return KBDMAP_INDEX_POWER;
+		case KEY_SLEEP:		return KBDMAP_INDEX_SLEEP;
+		case KEY_WAKEUP:	return KBDMAP_INDEX_WAKE;
+	}
+	return 0xFFFF;
+}
+
 namespace {
 class HID
 {
@@ -2632,6 +2825,7 @@ public:
 
 	void open(int d, const char * n) { device.reset(open_readwriteexisting_at(d, n)); }
 	int query_device() const { return device.get(); }
+	bool read_description() const { return true; }
 	void set_LEDs(Realizer & r);
 	void handle_input_events(Realizer & r);
 protected:
@@ -2719,8 +2913,17 @@ HID::handle_input_events(
 				r.handle_mouse_relpos(TranslateRelAxis(e.code), e.value);
 				break;
 			case EV_KEY:
+			{
 				switch (e.code) {
-					default:		break;
+					default:		
+					{
+						const uint16_t index(linux_evdev_keycode_to_keymap_index(e.code));
+						if (0xFFFF == index) break;
+						const uint8_t row(index >> 8U);
+						const uint8_t col(index & 0xFF);
+						r.handle_keyboard(row, col, e.value);
+						break;
+					}
 					case BTN_LEFT:		r.handle_mouse_button(0x00, e.value); break;
 					case BTN_MIDDLE:	r.handle_mouse_button(0x01, e.value); break;
 					case BTN_RIGHT:		r.handle_mouse_button(0x02, e.value); break;
@@ -2729,181 +2932,9 @@ HID::handle_input_events(
 					case BTN_FORWARD:	r.handle_mouse_button(0x05, e.value); break;
 					case BTN_BACK:		r.handle_mouse_button(0x06, e.value); break;
 					case BTN_TASK:		r.handle_mouse_button(0x07, e.value); break;
-					case KEY_ESC:		r.handle_keyboard(0x00, 0x01, e.value); break;
-					case KEY_1:		r.handle_keyboard(0x00, 0x02, e.value); break;
-					case KEY_2:		r.handle_keyboard(0x00, 0x03, e.value); break;
-					case KEY_3:		r.handle_keyboard(0x00, 0x04, e.value); break;
-					case KEY_4:		r.handle_keyboard(0x00, 0x05, e.value); break;
-					case KEY_5:		r.handle_keyboard(0x00, 0x06, e.value); break;
-					case KEY_6:		r.handle_keyboard(0x00, 0x07, e.value); break;
-					case KEY_7:		r.handle_keyboard(0x00, 0x08, e.value); break;
-					case KEY_8:		r.handle_keyboard(0x00, 0x09, e.value); break;
-					case KEY_9:		r.handle_keyboard(0x00, 0x0A, e.value); break;
-					case KEY_0:		r.handle_keyboard(0x00, 0x0B, e.value); break;
-					case KEY_MINUS:		r.handle_keyboard(0x00, 0x0C, e.value); break;
-					case KEY_EQUAL:		r.handle_keyboard(0x00, 0x0D, e.value); break;
-					case KEY_BACKSPACE:	r.handle_keyboard(0x00, 0x0E, e.value); break;
-					case KEY_TAB:		r.handle_keyboard(0x01, 0x00, e.value); break;
-					case KEY_Q:		r.handle_keyboard(0x01, 0x01, e.value); break;
-					case KEY_W:		r.handle_keyboard(0x01, 0x02, e.value); break;
-					case KEY_E:		r.handle_keyboard(0x01, 0x03, e.value); break;
-					case KEY_R:		r.handle_keyboard(0x01, 0x04, e.value); break;
-					case KEY_T:		r.handle_keyboard(0x01, 0x05, e.value); break;
-					case KEY_Y:		r.handle_keyboard(0x01, 0x06, e.value); break;
-					case KEY_U:		r.handle_keyboard(0x01, 0x07, e.value); break;
-					case KEY_I:		r.handle_keyboard(0x01, 0x08, e.value); break;
-					case KEY_O:		r.handle_keyboard(0x01, 0x09, e.value); break;
-					case KEY_P:		r.handle_keyboard(0x01, 0x0A, e.value); break;
-					case KEY_LEFTBRACE:	r.handle_keyboard(0x01, 0x0B, e.value); break;
-					case KEY_RIGHTBRACE:	r.handle_keyboard(0x01, 0x0C, e.value); break;
-					case KEY_ENTER:		r.handle_keyboard(0x01, 0x0D, e.value); break;
-					case KEY_A:		r.handle_keyboard(0x02, 0x01, e.value); break;
-					case KEY_S:		r.handle_keyboard(0x02, 0x02, e.value); break;
-					case KEY_D:		r.handle_keyboard(0x02, 0x03, e.value); break;
-					case KEY_F:		r.handle_keyboard(0x02, 0x04, e.value); break;
-					case KEY_G:		r.handle_keyboard(0x02, 0x05, e.value); break;
-					case KEY_H:		r.handle_keyboard(0x02, 0x06, e.value); break;
-					case KEY_J:		r.handle_keyboard(0x02, 0x07, e.value); break;
-					case KEY_K:		r.handle_keyboard(0x02, 0x08, e.value); break;
-					case KEY_L:		r.handle_keyboard(0x02, 0x09, e.value); break;
-					case KEY_SEMICOLON:	r.handle_keyboard(0x02, 0x0A, e.value); break;
-					case KEY_APOSTROPHE:	r.handle_keyboard(0x02, 0x0B, e.value); break;
-					case KEY_GRAVE:		r.handle_keyboard(0x02, 0x0C, e.value); break;
-					case KEY_LINEFEED:	r.handle_keyboard(0x02, 0x0F, e.value); break;
-					case KEY_BACKSLASH:	r.handle_keyboard(0x03, 0x01, e.value); break;
-					case KEY_Z:		r.handle_keyboard(0x03, 0x02, e.value); break;
-					case KEY_X:		r.handle_keyboard(0x03, 0x03, e.value); break;
-					case KEY_C:		r.handle_keyboard(0x03, 0x04, e.value); break;
-					case KEY_V:		r.handle_keyboard(0x03, 0x05, e.value); break;
-					case KEY_B:		r.handle_keyboard(0x03, 0x06, e.value); break;
-					case KEY_N:		r.handle_keyboard(0x03, 0x07, e.value); break;
-					case KEY_M:		r.handle_keyboard(0x03, 0x08, e.value); break;
-					case KEY_COMMA:		r.handle_keyboard(0x03, 0x09, e.value); break;
-					case KEY_DOT:		r.handle_keyboard(0x03, 0x0A, e.value); break;
-					case KEY_SLASH:		r.handle_keyboard(0x03, 0x0B, e.value); break;
-					case KEY_102ND:		r.handle_keyboard(0x03, 0x0E, e.value); break;
-					case KEY_YEN:		r.handle_keyboard(0x03, 0x0F, e.value); break;
-					case KEY_LEFTSHIFT:	r.handle_keyboard(0x04, 0x00, e.value); break;
-					case KEY_RIGHTSHIFT:	r.handle_keyboard(0x04, 0x01, e.value); break;
-					case KEY_RIGHTALT:	r.handle_keyboard(0x04, 0x02, e.value); break;
-					case KEY_LEFTCTRL:	r.handle_keyboard(0x04, 0x04, e.value); break;
-					case KEY_RIGHTCTRL:	r.handle_keyboard(0x04, 0x05, e.value); break;
-					case KEY_LEFTMETA:	r.handle_keyboard(0x04, 0x06, e.value); break;
-					case KEY_RIGHTMETA:	r.handle_keyboard(0x04, 0x07, e.value); break;
-					case KEY_LEFTALT:	r.handle_keyboard(0x04, 0x08, e.value); break;
-					case KEY_CAPSLOCK:	r.handle_keyboard(0x04, 0x0C, e.value); break;
-					case KEY_SCROLLLOCK:	r.handle_keyboard(0x04, 0x0D, e.value); break;
-					case KEY_NUMLOCK:	r.handle_keyboard(0x04, 0x0E, e.value); break;
-					case KEY_RO:		r.handle_keyboard(0x05, 0x00, e.value); break;
-					case KEY_KATAKANAHIRAGANA:	r.handle_keyboard(0x05, 0x02, e.value); break;
-					case KEY_ZENKAKUHANKAKU:r.handle_keyboard(0x05, 0x02, e.value); break;
-					case KEY_HIRAGANA:	r.handle_keyboard(0x05, 0x03, e.value); break;
-					case KEY_KATAKANA:	r.handle_keyboard(0x05, 0x04, e.value); break;
-					case KEY_HENKAN:	r.handle_keyboard(0x05, 0x05, e.value); break;
-					case KEY_MUHENKAN:	r.handle_keyboard(0x05, 0x06, e.value); break;
-					case KEY_HANGEUL:	r.handle_keyboard(0x05, 0x08, e.value); break;
-					case KEY_HANJA:		r.handle_keyboard(0x05, 0x09, e.value); break;
-					case KEY_COMPOSE:	r.handle_keyboard(0x05, 0x0E, e.value); break;
-					case KEY_SPACE:		r.handle_keyboard(0x05, 0x0F, e.value); break;
-					case KEY_F1:		r.handle_keyboard(0x09, 0x00, e.value); break;
-					case KEY_F2:		r.handle_keyboard(0x09, 0x01, e.value); break;
-					case KEY_F3:		r.handle_keyboard(0x09, 0x02, e.value); break;
-					case KEY_F4:		r.handle_keyboard(0x09, 0x03, e.value); break;
-					case KEY_F5:		r.handle_keyboard(0x09, 0x04, e.value); break;
-					case KEY_F6:		r.handle_keyboard(0x09, 0x05, e.value); break;
-					case KEY_F7:		r.handle_keyboard(0x09, 0x06, e.value); break;
-					case KEY_F8:		r.handle_keyboard(0x09, 0x07, e.value); break;
-					case KEY_F9:		r.handle_keyboard(0x09, 0x08, e.value); break;
-					case KEY_F10:		r.handle_keyboard(0x09, 0x09, e.value); break;
-					case KEY_F11:		r.handle_keyboard(0x09, 0x0A, e.value); break;
-					case KEY_F12:		r.handle_keyboard(0x09, 0x0B, e.value); break;
-					case KEY_F13:		r.handle_keyboard(0x09, 0x0C, e.value); break;
-					case KEY_F14:		r.handle_keyboard(0x09, 0x0D, e.value); break;
-					case KEY_F15:		r.handle_keyboard(0x09, 0x0E, e.value); break;
-					case KEY_F16:		r.handle_keyboard(0x09, 0x0F, e.value); break;
-					case KEY_F17:		r.handle_keyboard(0x0A, 0x00, e.value); break;
-					case KEY_F18:		r.handle_keyboard(0x0A, 0x01, e.value); break;
-					case KEY_F19:		r.handle_keyboard(0x0A, 0x02, e.value); break;
-					case KEY_F20:		r.handle_keyboard(0x0A, 0x03, e.value); break;
-					case KEY_F21:		r.handle_keyboard(0x0A, 0x04, e.value); break;
-					case KEY_F22:		r.handle_keyboard(0x0A, 0x05, e.value); break;
-					case KEY_F23:		r.handle_keyboard(0x0A, 0x06, e.value); break;
-					case KEY_F24:		r.handle_keyboard(0x0A, 0x07, e.value); break;
-					case KEY_HOME:		r.handle_keyboard(0x06, 0x00, e.value); break;
-					case KEY_UP:		r.handle_keyboard(0x06, 0x01, e.value); break;
-					case KEY_PAGEUP:	r.handle_keyboard(0x06, 0x02, e.value); break;
-					case KEY_LEFT:		r.handle_keyboard(0x06, 0x03, e.value); break;
-					case KEY_RIGHT:		r.handle_keyboard(0x06, 0x04, e.value); break;
-					case KEY_END:		r.handle_keyboard(0x06, 0x05, e.value); break;
-					case KEY_DOWN:		r.handle_keyboard(0x06, 0x06, e.value); break;
-					case KEY_PAGEDOWN:	r.handle_keyboard(0x06, 0x07, e.value); break;
-					case KEY_INSERT:	r.handle_keyboard(0x06, 0x08, e.value); break;
-					case KEY_DELETE:	r.handle_keyboard(0x06, 0x09, e.value); break;
-					case KEY_KPASTERISK:	r.handle_keyboard(0x07, 0x00, e.value); break;
-					case KEY_KP7:		r.handle_keyboard(0x07, 0x01, e.value); break;
-					case KEY_KP8:		r.handle_keyboard(0x07, 0x02, e.value); break;
-					case KEY_KP9:		r.handle_keyboard(0x07, 0x03, e.value); break;
-					case KEY_KPMINUS:	r.handle_keyboard(0x07, 0x04, e.value); break;
-					case KEY_KP4:		r.handle_keyboard(0x07, 0x05, e.value); break;
-					case KEY_KP5:		r.handle_keyboard(0x07, 0x06, e.value); break;
-					case KEY_KP6:		r.handle_keyboard(0x07, 0x07, e.value); break;
-					case KEY_KPPLUS:	r.handle_keyboard(0x07, 0x08, e.value); break;
-					case KEY_KP1:		r.handle_keyboard(0x07, 0x09, e.value); break;
-					case KEY_KP2:		r.handle_keyboard(0x07, 0x0A, e.value); break;
-					case KEY_KP3:		r.handle_keyboard(0x07, 0x0B, e.value); break;
-					case KEY_KP0:		r.handle_keyboard(0x07, 0x0C, e.value); break;
-					case KEY_KPDOT:		r.handle_keyboard(0x07, 0x0D, e.value); break;
-					case KEY_KPENTER:	r.handle_keyboard(0x07, 0x0E, e.value); break;
-					case KEY_KPSLASH:	r.handle_keyboard(0x07, 0x0F, e.value); break;
-					case KEY_KPJPCOMMA:	r.handle_keyboard(0x08, 0x00, e.value); break;
-					case KEY_KPCOMMA:	r.handle_keyboard(0x08, 0x01, e.value); break;
-					case KEY_KPEQUAL:	r.handle_keyboard(0x08, 0x02, e.value); break;
-					case KEY_KPPLUSMINUS:	r.handle_keyboard(0x08, 0x03, e.value); break;
-					case KEY_KPLEFTPAREN:	r.handle_keyboard(0x08, 0x04, e.value); break;
-					case KEY_KPRIGHTPAREN:	r.handle_keyboard(0x08, 0x05, e.value); break;
-					case KEY_PAUSE:		r.handle_keyboard(0x0D, 0x00, e.value); break;
-					case KEY_SYSRQ:		r.handle_keyboard(0x0D, 0x02, e.value); break;
-					case KEY_STOP:		r.handle_keyboard(0x0E, 0x01, e.value); break;
-					case KEY_AGAIN:		r.handle_keyboard(0x0E, 0x02, e.value); break;
-					case KEY_PROPS:		r.handle_keyboard(0x0E, 0x03, e.value); break;
-					case KEY_UNDO:		r.handle_keyboard(0x0E, 0x04, e.value); break;
-					case KEY_REDO:		r.handle_keyboard(0x0E, 0x05, e.value); break;
-					case KEY_COPY:		r.handle_keyboard(0x0E, 0x06, e.value); break;
-					case KEY_OPEN:		r.handle_keyboard(0x0E, 0x07, e.value); break;
-					case KEY_PASTE:		r.handle_keyboard(0x0E, 0x08, e.value); break;
-					case KEY_FIND:		r.handle_keyboard(0x0E, 0x09, e.value); break;
-					case KEY_CUT:		r.handle_keyboard(0x0E, 0x0A, e.value); break;
-					case KEY_HELP:		r.handle_keyboard(0x0E, 0x0B, e.value); break;
-					case KEY_MUTE:		r.handle_keyboard(0x0E, 0x0C, e.value); break;
-					case KEY_VOLUMEDOWN:	r.handle_keyboard(0x0E, 0x0D, e.value); break;
-					case KEY_VOLUMEUP:	r.handle_keyboard(0x0E, 0x0E, e.value); break;
-					case KEY_CALC:		r.handle_keyboard(0x0F, 0x00, e.value); break;
-					case KEY_FILE:		r.handle_keyboard(0x0F, 0x01, e.value); break;
-					case KEY_WWW:		r.handle_keyboard(0x0F, 0x02, e.value); break;
-					case KEY_HOMEPAGE:	r.handle_keyboard(0x0F, 0x03, e.value); break;
-					case KEY_REFRESH:	r.handle_keyboard(0x0F, 0x04, e.value); break;
-					case KEY_MAIL:		r.handle_keyboard(0x0F, 0x05, e.value); break;
-					case KEY_BOOKMARKS:	r.handle_keyboard(0x0F, 0x06, e.value); break;
-					case KEY_COMPUTER:	r.handle_keyboard(0x0F, 0x07, e.value); break;
-					case KEY_BACK:		r.handle_keyboard(0x0F, 0x08, e.value); break;
-					case KEY_FORWARD:	r.handle_keyboard(0x0F, 0x09, e.value); break;
-					case KEY_SCREENLOCK:	r.handle_keyboard(0x0F, 0x0A, e.value); break;
-					case KEY_MSDOS:		r.handle_keyboard(0x0F, 0x0B, e.value); break;
-					case KEY_NEXTSONG:	r.handle_keyboard(0x0F, 0x0C, e.value); break;
-					case KEY_PREVIOUSSONG:	r.handle_keyboard(0x0F, 0x0D, e.value); break;
-					case KEY_PLAYPAUSE:	r.handle_keyboard(0x0F, 0x0E, e.value); break;
-					case KEY_STOPCD:	r.handle_keyboard(0x0F, 0x0F, e.value); break;
-					case KEY_RECORD:	r.handle_keyboard(0x10, 0x00, e.value); break;
-					case KEY_REWIND:	r.handle_keyboard(0x10, 0x01, e.value); break;
-					case KEY_FASTFORWARD:	r.handle_keyboard(0x10, 0x02, e.value); break;
-					case KEY_EJECTCD:	r.handle_keyboard(0x10, 0x03, e.value); break;
-					case KEY_NEW:		r.handle_keyboard(0x10, 0x04, e.value); break;
-					case KEY_EXIT:		r.handle_keyboard(0x10, 0x05, e.value); break;
-					case KEY_POWER:		break;
-					case KEY_SLEEP:		break;
-					case KEY_WAKEUP:	break;
 				}
 				break;
+			}
 		}
 	}
 }
@@ -2914,6 +2945,295 @@ HID::handle_input_events(
 // **************************************************************************
 */
 
+/// The USB HID keycode maps to a row+column in the current keyboard map, which contains an action for that row+column.
+static inline
+uint16_t
+usb_ident_to_keymap_index (
+	const uint32_t ident
+) {
+	if ((HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_SYSTEM_CONTROL) <= ident && HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_APPLE_EJECT) >= ident)) 
+		switch (ident - HID_USAGE2(HUP_GENERIC_DESKTOP, 0)) { 
+			default:	break;
+			case 0x81:	return KBDMAP_INDEX_POWER;
+			case 0x82:	return KBDMAP_INDEX_SLEEP;
+			case 0x83:	return KBDMAP_INDEX_WAKE;
+			case 0xA4:	return KBDMAP_INDEX_DEBUG;
+			case 0xA8:	break;				// return KBDMAP_INDEX_HIBERNATE;
+		} 
+	else
+	if ((HID_USAGE2(HUP_KEYBOARD, 0) <= ident && HID_USAGE2(HUP_KEYBOARD, 0xFFFF) >= ident))
+		switch (ident - HID_USAGE2(HUP_KEYBOARD, 0)) {
+			default:	break;
+			case 0x04:	return KBDMAP_INDEX_A;		// C01
+			case 0x05:	return KBDMAP_INDEX_B;		// B05
+			case 0x06:	return KBDMAP_INDEX_C;		// B03
+			case 0x07:	return KBDMAP_INDEX_D;		// C03
+			case 0x08:	return KBDMAP_INDEX_E;		// D03
+			case 0x09:	return KBDMAP_INDEX_F;		// C04
+			case 0x0A:	return KBDMAP_INDEX_G;		// C05
+			case 0x0B:	return KBDMAP_INDEX_H;		// C06
+			case 0x0C:	return KBDMAP_INDEX_I;		// D08
+			case 0x0D:	return KBDMAP_INDEX_J;		// C07
+			case 0x0E:	return KBDMAP_INDEX_K;		// C08
+			case 0x0F:	return KBDMAP_INDEX_L;		// C09
+			case 0x10:	return KBDMAP_INDEX_M;		// B07
+			case 0x11:	return KBDMAP_INDEX_N;		// B06
+			case 0x12:	return KBDMAP_INDEX_O;		// D09
+			case 0x13:	return KBDMAP_INDEX_P;		// D10
+			case 0x14:	return KBDMAP_INDEX_Q;		// D01
+			case 0x15:	return KBDMAP_INDEX_R;		// D04
+			case 0x16:	return KBDMAP_INDEX_S;		// C02
+			case 0x17:	return KBDMAP_INDEX_T;		// D05
+			case 0x18:	return KBDMAP_INDEX_U;		// D07
+			case 0x19:	return KBDMAP_INDEX_V;		// B04
+			case 0x1A:	return KBDMAP_INDEX_W;		// D02
+			case 0x1B:	return KBDMAP_INDEX_X;		// B02
+			case 0x1C:	return KBDMAP_INDEX_Y;		// D06
+			case 0x1D:	return KBDMAP_INDEX_Z;		// B01
+			case 0x1E:	return KBDMAP_INDEX_1;		// E01
+			case 0x1F:	return KBDMAP_INDEX_2;		// E02
+			case 0x20:	return KBDMAP_INDEX_3;		// E03
+			case 0x21:	return KBDMAP_INDEX_4;		// E04
+			case 0x22:	return KBDMAP_INDEX_5;		// E05
+			case 0x23:	return KBDMAP_INDEX_6;		// E06
+			case 0x24:	return KBDMAP_INDEX_7;		// E07
+			case 0x25:	return KBDMAP_INDEX_8;		// E08
+			case 0x26:	return KBDMAP_INDEX_9;		// E09
+			case 0x27:	return KBDMAP_INDEX_0;		// E10
+			case 0x28:	return KBDMAP_INDEX_RETURN;	// C13
+			case 0x29:	return KBDMAP_INDEX_ESC;
+			case 0x2A:	return KBDMAP_INDEX_BACKSPACE;	// E13
+			case 0x2B:	return KBDMAP_INDEX_TAB;	// D00
+			case 0x2C:	return KBDMAP_INDEX_SPACE;	// A03
+			case 0x2D:	return KBDMAP_INDEX_MINUS;	// E11
+			case 0x2E:	return KBDMAP_INDEX_EQUALS;	// E12
+			case 0x2F:	return KBDMAP_INDEX_LEFTBRACE;	// D11
+			case 0x30:	return KBDMAP_INDEX_RIGHTBRACE;	// D12
+			case 0x31:	return KBDMAP_INDEX_EUROPE1;	// The idea that this is a distinct key is a USB HID specification bug; on real keyboards E13 is EUROPE1.
+			case 0x32:	return KBDMAP_INDEX_EUROPE1;	// C12 or E13
+			case 0x33:	return KBDMAP_INDEX_SEMICOLON;	// C10
+			case 0x34:	return KBDMAP_INDEX_APOSTROPHE;	// C11
+			case 0x35:	return KBDMAP_INDEX_GRAVE;	// E00
+			case 0x36:	return KBDMAP_INDEX_COMMA;	// B08
+			case 0x37:	return KBDMAP_INDEX_DOT;	// B09
+			case 0x38:	return KBDMAP_INDEX_SLASH;	// B10
+			case 0x39:	return KBDMAP_INDEX_CAPSLOCK;	// C00
+			case 0x3A:	return KBDMAP_INDEX_F1;
+			case 0x3B:	return KBDMAP_INDEX_F2;
+			case 0x3C:	return KBDMAP_INDEX_F3;
+			case 0x3D:	return KBDMAP_INDEX_F4;
+			case 0x3E:	return KBDMAP_INDEX_F5;
+			case 0x3F:	return KBDMAP_INDEX_F6;
+			case 0x40:	return KBDMAP_INDEX_F7;
+			case 0x41:	return KBDMAP_INDEX_F8;
+			case 0x42:	return KBDMAP_INDEX_F9;
+			case 0x43:	return KBDMAP_INDEX_F10;
+			case 0x44:	return KBDMAP_INDEX_F11;
+			case 0x45:	return KBDMAP_INDEX_F12;
+			case 0x46:	return KBDMAP_INDEX_PRINT_SCREEN;
+			case 0x47:	return KBDMAP_INDEX_SCROLLLOCK;
+			case 0x48:	return KBDMAP_INDEX_PAUSE;
+			case 0x49:	return KBDMAP_INDEX_INSERT;	// E30
+			case 0x4A:	return KBDMAP_INDEX_HOME;	// E31
+			case 0x4B:	return KBDMAP_INDEX_PAGE_UP;	// E32
+			case 0x4C:	return KBDMAP_INDEX_DELETE;	// D30
+			case 0x4D:	return KBDMAP_INDEX_END;	// D31
+			case 0x4E:	return KBDMAP_INDEX_PAGE_DOWN;	// D32
+			case 0x4F:	return KBDMAP_INDEX_RIGHT_ARROW;// A30
+			case 0x50:	return KBDMAP_INDEX_LEFT_ARROW;	// A32
+			case 0x51:	return KBDMAP_INDEX_DOWN_ARROW;	// A31
+			case 0x52:	return KBDMAP_INDEX_UP_ARROW;	// B31
+			case 0x53:	return KBDMAP_INDEX_NUMLOCK;	// E51
+			case 0x54:	return KBDMAP_INDEX_KP_SLASH;	// E52
+			case 0x55:	return KBDMAP_INDEX_KP_ASTERISK;// E53
+			case 0x56:	return KBDMAP_INDEX_KP_MINUS;	// E54
+			case 0x57:	return KBDMAP_INDEX_KP_PLUS;	// D54
+			case 0x58:	return KBDMAP_INDEX_KP_ENTER;	// A54
+			case 0x59:	return KBDMAP_INDEX_KP_1;	// B51
+			case 0x5A:	return KBDMAP_INDEX_KP_2;	// B52
+			case 0x5B:	return KBDMAP_INDEX_KP_3;	// B53
+			case 0x5C:	return KBDMAP_INDEX_KP_4;	// C51
+			case 0x5D:	return KBDMAP_INDEX_KP_5;	// C52
+			case 0x5E:	return KBDMAP_INDEX_KP_6;	// C53
+			case 0x5F:	return KBDMAP_INDEX_KP_7;	// D51
+			case 0x60:	return KBDMAP_INDEX_KP_8;	// D52
+			case 0x61:	return KBDMAP_INDEX_KP_9;	// D53
+			case 0x62:	return KBDMAP_INDEX_KP_0;	// A51
+			case 0x63:	return KBDMAP_INDEX_KP_DECIMAL;	// A53
+			case 0x64:	return KBDMAP_INDEX_EUROPE2;	// B00
+			case 0x65:	return KBDMAP_INDEX_APPLICATION;// A11
+			case 0x66:	return KBDMAP_INDEX_POWER;
+			case 0x67:	return KBDMAP_INDEX_KP_EQUALS;	// A52
+			case 0x68:	return KBDMAP_INDEX_F13;
+			case 0x69:	return KBDMAP_INDEX_F14;
+			case 0x6A:	return KBDMAP_INDEX_F15;
+			case 0x6B:	return KBDMAP_INDEX_F16;
+			case 0x6C:	return KBDMAP_INDEX_F17;
+			case 0x6D:	return KBDMAP_INDEX_F18;
+			case 0x6E:	return KBDMAP_INDEX_F19;
+			case 0x6F:	return KBDMAP_INDEX_F20;
+			case 0x70:	return KBDMAP_INDEX_F21;
+			case 0x71:	return KBDMAP_INDEX_F22;
+			case 0x72:	return KBDMAP_INDEX_F23;
+			case 0x73:	return KBDMAP_INDEX_F24;
+			case 0x74:	return KBDMAP_INDEX_EXECUTE;
+			case 0x75:	return KBDMAP_INDEX_HELP;
+			case 0x76:	return KBDMAP_INDEX_MENU;
+			case 0x77:	return KBDMAP_INDEX_SELECT;
+			case 0x78:	return KBDMAP_INDEX_STOP;
+			case 0x79:	return KBDMAP_INDEX_AGAIN;
+			case 0x7A:	return KBDMAP_INDEX_UNDO;
+			case 0x7B:	return KBDMAP_INDEX_CUT;
+			case 0x7C:	return KBDMAP_INDEX_COPY;
+			case 0x7D:	return KBDMAP_INDEX_PASTE;
+			case 0x7E:	return KBDMAP_INDEX_FIND;
+			case 0x7F:	return KBDMAP_INDEX_MUTE;
+			case 0x80:	return KBDMAP_INDEX_VOLUME_UP;
+			case 0x81:	return KBDMAP_INDEX_VOLUME_DOWN;
+			case 0x85:	return KBDMAP_INDEX_KP_THOUSANDS;// C54
+			case 0x86:	return KBDMAP_INDEX_KP_AS400_EQUALS;	// Keypad Equal Sign for AS/400
+			case 0x87:	return KBDMAP_INDEX_ROMAJI;	// International1
+			case 0x88:	return KBDMAP_INDEX_KATAHIRA;	// International2
+			case 0x89:	return KBDMAP_INDEX_YEN;	// International3
+			case 0x8A:	return KBDMAP_INDEX_HENKAN;	// International4
+			case 0x8B:	return KBDMAP_INDEX_MUHENKAN;	// International5
+			case 0x8C:	break;				// return KBDMAP_INDEX_INTERNATIONAL6;
+			case 0x8D:	break;				// return KBDMAP_INDEX_INTERNATIONAL7;
+			case 0x8E:	break;				// return KBDMAP_INDEX_INTERNATIONAL8;
+			case 0x8F:	break;				// return KBDMAP_INDEX_INTERNATIONAL9;
+			case 0x90:	break;				// return KBDMAP_INDEX_LANG1;
+			case 0x91:	break;				// return KBDMAP_INDEX_LANG2;
+			case 0x92:	return KBDMAP_INDEX_KATAKANA;	// LANG3
+			case 0x93:	return KBDMAP_INDEX_HIRAGANA;	// LANG4
+			case 0x94:	return KBDMAP_INDEX_HALF_FULL_WIDTH;	// LANG5
+			case 0x95:	break;				// return KBDMAP_INDEX_LANG6;
+			case 0x96:	break;				// return KBDMAP_INDEX_LANG7;
+			case 0x97:	break;				// return KBDMAP_INDEX_LANG8;
+			case 0x98:	break;				// return KBDMAP_INDEX_LANG9;
+			case 0x99:	return KBDMAP_INDEX_ALTERNATE_ERASE;
+			case 0x9A:	return KBDMAP_INDEX_ATTENTION;
+			case 0x9B:	return KBDMAP_INDEX_CANCEL;
+			case 0x9C:	return KBDMAP_INDEX_CLEAR;
+			case 0x9D:	return KBDMAP_INDEX_PRIOR;
+			case 0x9E:	return KBDMAP_INDEX_APP_RETURN;
+			case 0x9F:	return KBDMAP_INDEX_SEPARATOR;
+			case 0xA0:	return KBDMAP_INDEX_OUT;
+			case 0xA1:	return KBDMAP_INDEX_OPER;
+			case 0xA2:	return KBDMAP_INDEX_CLEAR_OR_AGAIN;	// Clear/Again
+			case 0xA3:	return KBDMAP_INDEX_PROPERTIES;	// CrSel/Props
+			case 0xA4:	return KBDMAP_INDEX_EXSEL;
+			case 0xE0:	return KBDMAP_INDEX_CONTROL1;	// A99
+			case 0xE1:	return KBDMAP_INDEX_SHIFT1;	// B99
+			case 0xE2:	return KBDMAP_INDEX_ALT;	// A02
+			case 0xE3:	return KBDMAP_INDEX_SUPER1;	// A01
+			case 0xE4:	return KBDMAP_INDEX_CONTROL2;	// A12
+			case 0xE5:	return KBDMAP_INDEX_SHIFT2;	// B12
+			case 0xE6:	return KBDMAP_INDEX_OPTION;	// A08
+			case 0xE7:	return KBDMAP_INDEX_SUPER2;	// A10
+		} 
+	else
+	if ((HID_USAGE2(HUP_CONSUMER, 0) <= ident && HID_USAGE2(HUP_CONSUMER, 0xFFFF) >= ident))
+		switch (ident - HID_USAGE2(HUP_CONSUMER, 0)) {
+			default:	break;
+			case 0x00B0:	break;	// return KBDMAP_INDEX_PLAY;
+			case 0x00B1:	return KBDMAP_INDEX_PAUSE;
+			case 0x00B2:	return KBDMAP_INDEX_RECORD;
+			case 0x00B3:	return KBDMAP_INDEX_FAST_FORWARD;
+			case 0x00B4:	return KBDMAP_INDEX_REWIND;
+			case 0x00B5:	return KBDMAP_INDEX_NEXT_TRACK;
+			case 0x00B6:	return KBDMAP_INDEX_PREV_TRACK;
+			case 0x00B7:	return KBDMAP_INDEX_STOP_PLAYING;
+			case 0x00B8:	return KBDMAP_INDEX_EJECT;
+			case 0x00B9:	break;	// return KBDMAP_INDEX_RANDOM_PLAY;
+			case 0x00BC:	break;	// return KBDMAP_INDEX_REPEAT;
+			case 0x00BE:	break;	// return KBDMAP_INDEX_TRACK_NORMAL;
+			case 0x00C0:	break;	// return KBDMAP_INDEX_FRAME_FORWARD;
+			case 0x00C1:	break;	// return KBDMAP_INDEX_FRAME_BACK;
+			case 0x00CC:	break;	// return KBDMAP_INDEX_STOP_EJECT;
+			case 0x00CD:	return KBDMAP_INDEX_PLAY_PAUSE;
+			case 0x00CE:	break;	// return KBDMAP_INDEX_PLAY_SKIP;
+			case 0x00E2:	break;	// return KBDMAP_INDEX_MUTE_PLAYER;
+			case 0x00E5:	break;	// return KBDMAP_INDEX_BASS_BOOST;
+			case 0x00E7:	break;	// return KBDMAP_INDEX_LOUDNESS;
+			case 0x00E9:	return KBDMAP_INDEX_VOLUME_UP;
+			case 0x00EA:	return KBDMAP_INDEX_VOLUME_DOWN;
+			case 0x0150:	break;	// return KBDMAP_INDEX_BALANCE_RIGHT;
+			case 0x0151:	break;	// return KBDMAP_INDEX_BALANCE_LEFT;
+			case 0x0152:	break;	// return KBDMAP_INDEX_BASS_UP;
+			case 0x0153:	break;	// return KBDMAP_INDEX_BASS_DOWN;
+			case 0x0154:	break;	// return KBDMAP_INDEX_TREBLE_UP;
+			case 0x0155:	break;	// return KBDMAP_INDEX_TREBLE_DOWN;
+			case 0x0184:	break;	// return KBDMAP_INDEX_WORDPROCESSOR;
+			case 0x0185:	break;	// return KBDMAP_INDEX_TEXT_EDITOR;
+			case 0x0186:	break;	// return KBDMAP_INDEX_SPREADSHEET;
+			case 0x0187:	break;	// return KBDMAP_INDEX_GRAPHICS_EDITOR;
+			case 0x0188:	break;	// return KBDMAP_INDEX_PRESENTATION_APP;
+			case 0x0189:	break;	// return KBDMAP_INDEX_DATABASE;
+			case 0x018A:	return KBDMAP_INDEX_MAIL;
+			case 0x018B:	break;	// return KBDMAP_INDEX_NEWS;
+			case 0x018C:	break;	// return KBDMAP_INDEX_VOICEMAIL;
+			case 0x018D:	break;	// return KBDMAP_INDEX_ADDRESS_BOOK;
+			case 0x018E:	break;	// return KBDMAP_INDEX_CALENDAR;
+			case 0x018F:	break;	// return KBDMAP_INDEX_PROJECT_MANAGER;
+			case 0x0190:	break;	// return KBDMAP_INDEX_TIMECARD;
+			case 0x0191:	break;	// return KBDMAP_INDEX_CHECKBOOK;
+			case 0x0192:	return KBDMAP_INDEX_CALCULATOR;
+			case 0x0194:	return KBDMAP_INDEX_COMPUTER;
+			case 0x0195:	break;	// return KBDMAP_INDEX_NETWORK;
+			case 0x0196:	return KBDMAP_INDEX_WWW;
+			case 0x0198:	break;	// return KBDMAP_INDEX_CONFERENCE;
+			case 0x0199:	break;	// return KBDMAP_INDEX_CHAT;
+			case 0x019A:	break;	// return KBDMAP_INDEX_DIALLER;
+			case 0x019B:	break;	// return KBDMAP_INDEX_LOGON;
+			case 0x019C:	break;	// return KBDMAP_INDEX_LOGOFF;
+			case 0x019E:	return KBDMAP_INDEX_LOCK;
+			case 0x019F:	break;	// return KBDMAP_INDEX_CONTROL_PANEL;
+			case 0x01A0:	return KBDMAP_INDEX_CLI;
+			case 0x01A1:	break;	// return KBDMAP_INDEX_TASK_MANAGER;
+			case 0x01A2:	break;	// return KBDMAP_INDEX_SELECT_TASK;
+			case 0x01A3:	break;	// return KBDMAP_INDEX_NEXT_TASK;
+			case 0x01A4:	break;	// return KBDMAP_INDEX_PREVIOUS_TASK;
+			case 0x01A5:	break;	// return KBDMAP_INDEX_HALT_TASK;
+			case 0x01A6:	break;	// return KBDMAP_INDEX_HELP_CENTRE;
+			case 0x01A7:	break;	// return KBDMAP_INDEX_DOCUMENTS;
+			case 0x01AA:	break;	// return KBDMAP_INDEX_DESKTOP;
+			case 0x01B3:	break;	// return KBDMAP_INDEX_CLOCK;
+			case 0x01B4:	return KBDMAP_INDEX_FILE_MANAGER;
+			case 0x01BC:	break;	// return KBDMAP_INDEX_INSTANT_MESSAGING;
+			case 0x01C1:	break;	// return KBDMAP_INDEX_WWW_SHOPPING;
+			case 0x0201:	return KBDMAP_INDEX_NEW;
+			case 0x0202:	return KBDMAP_INDEX_OPEN;
+			case 0x0203:	break;	// return KBDMAP_INDEX_CLOSE;
+			case 0x0204:	return KBDMAP_INDEX_EXIT;
+			case 0x0205:	break;	// return KBDMAP_INDEX_MAXIMIZE;
+			case 0x0206:	break;	// return KBDMAP_INDEX_MINIMIZE;
+			case 0x0207:	break;	// return KBDMAP_INDEX_SAVE;
+			case 0x0208:	break;	// return KBDMAP_INDEX_PRINT;
+			case 0x0209:	return KBDMAP_INDEX_PROPERTIES;
+			case 0x021A:	return KBDMAP_INDEX_UNDO;
+			case 0x021B:	return KBDMAP_INDEX_COPY;
+			case 0x021C:	return KBDMAP_INDEX_CUT;
+			case 0x021D:	return KBDMAP_INDEX_PASTE;
+			case 0x021E:	break;	// return KBDMAP_INDEX_SELECT_ALL;
+			case 0x021F:	return KBDMAP_INDEX_FIND;
+			case 0x0220:	break;	// return KBDMAP_INDEX_FIND_AND_REPLACE;
+			case 0x0221:	break;	// return KBDMAP_INDEX_SEARCH;
+			case 0x0223:	return KBDMAP_INDEX_HOME;
+			case 0x0224:	return KBDMAP_INDEX_BACK;
+			case 0x0225:	return KBDMAP_INDEX_FORWARD;
+			case 0x0226:	break;	// return KBDMAP_INDEX_STOP_LOADING;
+			case 0x0227:	return KBDMAP_INDEX_REFRESH;
+			case 0x0228:	break;	// return KBDMAP_INDEX_PREVIOUS_LINK;
+			case 0x0229:	break;	// return KBDMAP_INDEX_NEXT_LINK;
+			case 0x022A:	return KBDMAP_INDEX_BOOKMARKS;
+			case 0x022B:	break;	// return KBDMAP_INDEX_HISTORY;
+		} 
+	else
+		;
+
+	return 0xFFFF;
+}
+
 namespace {
 
 class HID
@@ -2923,39 +3243,134 @@ public:
 
 	void open(int d, const char * n);
 	int query_device() const { return device.get(); }
+	bool read_description();
 	void set_LEDs(Realizer & r);
 	void handle_input_events(Realizer & r);
 protected:
+	typedef uint32_t UsageID;
+	enum {
+		USAGE_CONSUMER_AC_PAN	= 0x000C0238,
+	};
+
+	struct ParserContext {
+		struct Item { 
+			Item(uint32_t pd, std::size_t ps): d(pd), s(ps) {}
+			Item() : d(), s() {}
+			uint32_t d; 
+			std::size_t s; 
+		};
+		Item globals[16], locals[16];
+		bool has_min, has_max;
+		ParserContext() : has_min(false), has_max(false) { wipe_globals(); wipe_locals(); }
+		void clear_locals() { wipe_locals(); idents.clear(); has_min = has_max = false; }
+		const Item & logical_minimum() const { return globals[1]; }
+		const Item & logical_maximum() const { return globals[2]; }
+		const Item & report_size() const { return globals[7]; }
+		const Item & report_id() const { return globals[8]; }
+		const Item & report_count() const { return globals[9]; }
+		const Item & usage_minimum() const { return locals[1]; }
+		const Item & usage_maximum() const { return locals[2]; }
+		UsageID ident() const { return ident(usage(), page()); }
+		void add_ident() { idents.push_back(ident()); }
+		UsageID take_variable_ident() { 
+			if (!idents.empty()) {
+				const UsageID v(idents.front());
+				if (idents.size() > 1) idents.pop_front();
+				return v;
+			} else
+			if (has_min) {
+				const UsageID v(ident_minimum());
+				if (has_max && v < ident_maximum()) {
+					// Reset to full size because pages are not min/max boundaries and we don't want page wraparound.
+					locals[1].d = v + 1;
+					locals[1].s = 4;
+				}
+				return v;
+			} else
+				return ident();
+		}
+	protected:
+		std::deque<UsageID> idents;
+		static UsageID ident(const Item & u, const Item & p) { return u.s < 3 ? HID_USAGE2(p.d, u.d) : u.d; }
+		const Item & page() const { return globals[0]; }
+		const Item & usage() const { return locals[0]; }
+		UsageID ident_minimum() const { return ident(usage_minimum(), page()); }
+		UsageID ident_maximum() const { return ident(usage_maximum(), page()); }
+		void wipe_locals() { for (std::size_t i(0); i < sizeof locals/sizeof *locals; ++i) locals[i].d = locals[i].s = 0U; }
+		void wipe_globals() { for (std::size_t i(0); i < sizeof globals/sizeof *globals; ++i) globals[i].d = globals[i].s = 0U; }
+	};
+	struct ReportField {
+		static int64_t mm(const ParserContext::Item & control, const ParserContext::Item & value) 
+		{ 
+			const uint32_t control_signbit(1U << (control.s * 8U - 1U));
+			const uint32_t value_signbit(1U << (value.s * 8U - 1U));
+			if ((control.d & control_signbit) && (value.d & value_signbit)) {
+				const uint32_t v(value.d | ~(value_signbit - 1U));
+				return static_cast<int32_t>(v);
+			} else
+				return static_cast<int64_t>(value.d); 
+		}
+		ReportField(std::size_t p, std::size_t l): pos(p), len(l) {}
+		std::size_t pos, len;
+	};
+	struct InputVariable : public ReportField {
+		InputVariable(UsageID i, std::size_t p, std::size_t l, bool r, const ParserContext::Item & mi, const ParserContext::Item & ma): ReportField(p, l), relative(r), ident(i), min(mm(mi, mi)), max(mm(mi, ma)) {}
+		bool relative;
+		UsageID ident;
+		int64_t min, max;
+	};
+	struct InputIndex : public ReportField {
+		InputIndex(std::size_t p, std::size_t l, UsageID umi, UsageID uma, const ParserContext::Item & imi, const ParserContext::Item & ima): ReportField(p, l), min_ident(umi), max_ident(uma), min_index(mm(imi, imi)), max_index(mm(imi, ima)) {}
+		UsageID min_ident, max_ident;
+		int64_t min_index, max_index;
+	};
+	struct InputReportDescription {
+		InputReportDescription() : bits(0U), bytes(0U) {}
+		std::size_t bits, bytes;
+		typedef std::list<InputVariable> Variables;
+		Variables variables;
+		typedef std::list<InputIndex> Indices;
+		Indices array_indices;
+	};
+	struct OutputVariable : public ReportField {
+		OutputVariable(UsageID i, std::size_t p, std::size_t l): ReportField(p, l), ident(i) {}
+		UsageID ident;
+	};
+	struct OutputIndex : public ReportField {
+		OutputIndex(std::size_t p, std::size_t l, UsageID umi, UsageID uma): ReportField(p, l), min_ident(umi), max_ident(uma) {}
+		UsageID min_ident, max_ident;
+	};
+	struct OutputReportDescription {
+		OutputReportDescription() : bits(0U), bytes(0U) {}
+		std::size_t bits, bytes;
+		typedef std::list<OutputVariable> Variables;
+		Variables variables;
+		typedef std::list<OutputIndex> Indices;
+		Indices array_indices;
+	};
+	typedef std::map<uint8_t, InputReportDescription> InputReports;
+	typedef std::map<uint8_t, OutputReportDescription> OutputReports;
+	typedef std::set<uint32_t> KeysPressed;
+
 	FileDescriptorOwner device;
 	char buffer[4096];
 	std::size_t offset;
-	std::size_t report_size;
+	bool has_report_ids;
+	InputReports input_reports;
+	OutputReports output_reports;
 
-	enum {
-		USAGE_DESKTOP_X		= 0x00010030,
-		USAGE_DESKTOP_Y		= 0x00010031,
-		USAGE_DESKTOP_WHEEL	= 0x00010038,
-		USAGE_CONSUMER_AC_PAN	= 0x000C0238,
-		USAGE_BUTTON_ZERO	= 0x00090000,
-	};
-
-	struct InputField {
-		InputField(uint32_t i, std::size_t p, std::size_t l, uint32_t ma): relative(false), ident(i), pos(p), len(l), min(0), max(ma) {}
-		InputField(uint32_t i, std::size_t p, std::size_t l, int32_t mi, int32_t ma): relative(true), ident(i), pos(p), len(l), min(mi), max(ma) {}
-		bool relative;
-		uint32_t ident;
-		std::size_t pos, len;
-		int64_t min, max;
-	};
-	typedef std::list<InputField> InputFields;
-	InputFields input_fields;
-	uint32_t GetUnsignedField(const InputField & f);
-	uint32_t GetUnsignedField(std::size_t, std::size_t);
-	int32_t GetSignedField(const InputField & f);
-	int32_t GetSignedField(std::size_t, std::size_t);
+	bool IsInRange(const InputVariable & f, uint32_t);
+	uint32_t GetUnsignedField(const ReportField & f, std::size_t);
+	bool IsInRange(const InputVariable & f, int32_t);
+	int32_t GetSignedField(const ReportField & f, std::size_t);
 
 	uint16_t stdbuttons;
 	static unsigned short TranslateStdButton(const unsigned short button);
+	void handle_mouse_movement(Realizer & r, const InputReportDescription & report, const InputVariable & f, const uint16_t axis);
+	void handle_mouse_button(Realizer & r, uint32_t ident, bool down);
+
+	KeysPressed keys;
+	void handle_key(bool & seen_keyboard, KeysPressed & keys, uint32_t ident, bool down);
 };
 
 /// On the BSDs, atkbd devices are character devices with a terminal line discipline that speak the kbio protocol.
@@ -3014,15 +3429,9 @@ inline
 HID::HID() : 
 	device(-1), 
 	offset(0U),
-	report_size(8U),	/// \bug FIXME This is hardwired for now.
+	has_report_ids(false),
 	stdbuttons(0U)
 {
-	/// \bug FIXME This is hardwired for now.
-	input_fields.push_back(InputField(USAGE_DESKTOP_X, 4U * 8U, 16U, 32767U));
-	input_fields.push_back(InputField(USAGE_DESKTOP_Y, 6U * 8U, 16U, 32767U));
-	input_fields.push_back(InputField(USAGE_DESKTOP_WHEEL, 1U * 8U, 8U, -128, 127));
-	for (unsigned b(0U); b < 5U; ++b)
-		input_fields.push_back(InputField(USAGE_BUTTON_ZERO + b, b, 1U, 1U));
 }
 
 inline
@@ -3032,6 +3441,160 @@ HID::open(
 	const char * n
 ) { 
 	device.reset(open_readwriteexisting_at(d, n)); 
+}
+
+bool 
+HID::read_description()
+{
+	input_reports.clear();
+	has_report_ids = false;
+
+	enum { MAIN = 0, GLOBAL, LOCAL, LONG };
+	enum /*local tags*/ { USAGE = 0, MIN, MAX };
+	enum /*global tags*/ { PAGE = 0, REPORT_ID = 8, PUSH = 10, POP = 11 };
+	enum /*main tags*/ { INPUT = 8, OUTPUT = 9, COLLECT = 10, END = 12};
+	enum /*collection types*/ { APPLICATION = 1 };
+
+	std::stack<ParserContext> context_stack;
+	context_stack.push(ParserContext());
+	unsigned collection_level(0U);
+	bool enable_fields(false);
+
+	usb_gen_descriptor d = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, { 0, 0, 0, 0 } };
+
+	d.ugd_maxlen = 65535U;
+	if (0 > ioctl(device.get(), USB_GET_REPORT_DESC, &d)) return false;
+	std::vector<unsigned char> b(d.ugd_actlen);
+	d.ugd_data = b.data();
+	d.ugd_maxlen = d.ugd_actlen;
+	if (0 > ioctl(device.get(), USB_GET_REPORT_DESC, &d)) return false;
+
+	for ( std::size_t i(0U); i < d.ugd_actlen; ) {
+		if (i >= d.ugd_actlen) break;
+		unsigned size((b[i] & 3U) + ((b[i] & 3U) > 2U));
+		unsigned type((b[i] >> 2) & 3U);
+		unsigned tag((b[i] >> 4) & 15U);
+		++i;
+		uint32_t datum(0U);
+		switch (size) {
+			case 4: 
+				if (i + 4 > d.ugd_actlen) break;
+				datum = b[i+0] | (uint32_t(b[i+1]) << 8) | (uint32_t(b[i+2]) << 16) | (uint32_t(b[i+3]) << 24);
+				i += 4;
+				break;
+			case 2:
+				if (i + 2 > d.ugd_actlen) break;
+				datum = b[i+0] | (uint32_t(b[i+1]) << 8);
+				i += 2;
+				break;
+			case 1:
+				if (i + 1 > d.ugd_actlen) break;
+				datum = b[i++];
+				break;
+			case 0:	
+				break;
+		}
+		ParserContext & context(context_stack.top());
+		switch (type) {
+		case LONG:
+			size = datum & 0xFF;
+			tag = (datum >> 8) & 0xFF;
+			if (i + size > d.ugd_actlen) break;
+			i += size;
+			break;
+		case LOCAL:
+			context.locals[tag] = ParserContext::Item(datum, size);
+			if (USAGE == tag) context.add_ident();
+			if (MIN == tag) context.has_min = true;
+			if (MAX == tag) context.has_max = true;
+			break;
+		case GLOBAL:
+			if (PUSH == tag)
+				context_stack.push(context);
+			else
+			if (POP == tag) {
+				if (context_stack.size() > 1)
+					context_stack.pop();
+			} else
+			if (PUSH > tag) {
+				context.globals[tag] = ParserContext::Item(datum, size);
+				if (REPORT_ID == tag) has_report_ids = true;
+			}
+			break;
+		case MAIN:
+			{
+			switch (tag) {
+			case INPUT:
+			{
+				if (!enable_fields) break;
+				InputReportDescription & r(input_reports[context.report_id().d]);
+				if (datum & HIO_CONST) {
+					r.bits += context.report_size().d * context.report_count().d;
+				} else
+				if (datum & HIO_VARIABLE) {
+					for ( std::size_t count(0U); count < context.report_count().d; ++count ) {
+						const UsageID ident(context.take_variable_ident());
+						const bool relative(HIO_RELATIVE & datum);
+						r.variables.push_back(InputVariable(ident, r.bits, context.report_size().d, relative, context.logical_minimum(), context.logical_maximum()));
+						r.bits += context.report_size().d;
+					}
+				} else
+				{
+					for ( std::size_t count(0U); count < context.report_count().d; ++count ) {
+						r.array_indices.push_back(InputIndex(r.bits, context.report_size().d, context.usage_minimum().d, context.usage_maximum().d, context.logical_minimum(), context.logical_maximum()));
+						r.bits += context.report_size().d;
+					}
+				}
+				r.bytes = (r.bits + 7U) >> 3U;
+				break;
+			}
+			case OUTPUT:
+			{
+				if (!enable_fields) break;
+				OutputReportDescription & r(output_reports[context.report_id().d]);
+				if (datum & HIO_CONST) {
+					r.bits += context.report_size().d * context.report_count().d;
+				} else
+				if (datum & HIO_VARIABLE) {
+					for ( std::size_t count(0U); count < context.report_count().d; ++count ) {
+						const UsageID ident(context.take_variable_ident());
+						r.variables.push_back(OutputVariable(ident, r.bits, context.report_size().d));
+						r.bits += context.report_size().d;
+					}
+				} else
+				{
+					for ( std::size_t count(0U); count < context.report_count().d; ++count ) {
+						r.array_indices.push_back(OutputIndex(r.bits, context.report_size().d, context.usage_minimum().d, context.usage_maximum().d));
+						r.bits += context.report_size().d;
+					}
+				}
+				r.bytes = (r.bits + 7U) >> 3U;
+				break;
+			}
+			case COLLECT:
+				if (0 == collection_level && APPLICATION == datum) {
+					enable_fields = 
+						HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_MOUSE) == context.ident() || 
+						HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_KEYBOARD) == context.ident() ||
+						HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_KEYPAD) == context.ident();
+				}
+				++collection_level;
+				break;
+			case END:
+				if (collection_level > 0) {
+					--collection_level;
+					if (0 == collection_level)
+						enable_fields = false;
+				}
+				break;
+			}
+			context.clear_locals();
+			break;
+			}
+		}
+	}
+
+	return true;
 }
 
 inline
@@ -3057,99 +3620,163 @@ HID::TranslateStdButton(
 inline
 uint32_t 
 HID::GetUnsignedField(
-	std::size_t pos, 
-	std::size_t len
+	const ReportField & f,
+	std::size_t report_size
 ) {
-	if (0U == len) return 0U;
-	if (0U == (pos & 7U)) {
-		const std::size_t bytepos(pos >> 3U);
+	if (0U == f.len) return 0U;
+	// Byte-aligned fields can be optimized.
+	if (0U == (f.pos & 7U)) {
+		const std::size_t bytepos(f.pos >> 3U);
 		if (bytepos >= report_size) return 0U;
-		if (len <= 8U) {
+		if (f.len <= 8U) {
 			uint8_t v(*reinterpret_cast<const uint8_t *>(buffer + bytepos));
-			if (len < 8U) v &= 0xFF >> (8U - len);
+			if (f.len < 8U) v &= 0xFF >> (8U - f.len);
 			return v;
 		}
-		if (len <= 16U) {
-			uint16_t v(*reinterpret_cast<const uint16_t *>(buffer + bytepos));
-			if (len < 16U) v &= 0xFFFF >> (16U - len);
+		if (f.len <= 16U) {
+			uint16_t v(le16toh(*reinterpret_cast<const uint16_t *>(buffer + bytepos)));
+			if (f.len < 16U) v &= 0xFFFF >> (16U - f.len);
 			return v;
 		}
-		if (len <= 32U) {
-			uint32_t v(*reinterpret_cast<const uint32_t *>(buffer + bytepos));
-			if (len < 32U) v &= 0xFFFFFFFF >> (32U - len);
+		if (f.len <= 32U) {
+			uint32_t v(le32toh(*reinterpret_cast<const uint32_t *>(buffer + bytepos)));
+			if (f.len < 32U) v &= 0xFFFFFFFF >> (32U - f.len);
 			return v;
 		}
 	}
-	if (1U == len) {
-		const std::size_t bytepos(pos >> 3U);
+	// 1-bit fields can be optimized.
+	if (1U == f.len) {
+		const std::size_t bytepos(f.pos >> 3U);
 		if (bytepos >= report_size) return 0U;
 		const uint8_t v(*reinterpret_cast<const uint8_t *>(buffer + bytepos));
-		return (v >> (pos & 7U)) & 1U;
+		return (v >> (f.pos & 7U)) & 1U;
 	}
+	/// \bug FIXME: This doesn't handle unaligned >1-bit fields.
 	return 0U;
 }
 
 inline
-uint32_t 
-HID::GetUnsignedField(
-	const InputField & f
+bool 
+HID::IsInRange(
+	const InputVariable & f,
+	uint32_t v
 ) {
-	uint32_t v(GetUnsignedField(f.pos, f.len));
-	if (v < f.min) v = f.min;
-	if (v > f.max) v = f.max;
-	return v;
+	return v <= f.max && v >= f.min;
 }
 
 inline
 int32_t 
 HID::GetSignedField(
-	std::size_t pos, 
-	std::size_t len
+	const ReportField & f,
+	std::size_t report_size
 ) {
-	if (0U == len) return 0U;
-	if (0U == (pos & 7U)) {
-		const std::size_t bytepos(pos >> 3U);
+	if (0U == f.len) return 0U;
+	// Byte-aligned fields can be optimized.
+	if (0U == (f.pos & 7U)) {
+		const std::size_t bytepos(f.pos >> 3U);
 		if (bytepos >= report_size) return 0U;
-		if (len <= 8U) {
+		if (f.len <= 8U) {
 			uint8_t v(*reinterpret_cast<const uint8_t *>(buffer + bytepos));
-			if (len < 8U) v &= 0xFF >> (8U - len);
-			const uint8_t signbit(1U << (len - 1U));
+			if (f.len < 8U) v &= 0xFF >> (8U - f.len);
+			const uint8_t signbit(1U << (f.len - 1U));
 			if (v & signbit) v |= ~(signbit - 1U);
 			return static_cast<int8_t>(v);
 		}
-		if (len <= 16U) {
-			uint16_t v(*reinterpret_cast<const uint16_t *>(buffer + bytepos));
-			if (len < 16U) v &= 0xFFFF >> (16U - len);
-			const uint16_t signbit(1U << (len - 1U));
+		if (f.len <= 16U) {
+			uint16_t v(le16toh(*reinterpret_cast<const uint16_t *>(buffer + bytepos)));
+			if (f.len < 16U) v &= 0xFFFF >> (16U - f.len);
+			const uint16_t signbit(1U << (f.len - 1U));
 			if (v & signbit) v |= ~(signbit - 1U);
 			return static_cast<int16_t>(v);
 		}
-		if (len <= 32U) {
-			uint32_t v(*reinterpret_cast<const uint32_t *>(buffer + bytepos));
-			if (len < 32U) v &= 0xFFFFFFFF >> (32U - len);
-			const uint32_t signbit(1U << (len - 1U));
+		if (f.len <= 32U) {
+			uint32_t v(le32toh(*reinterpret_cast<const uint32_t *>(buffer + bytepos)));
+			if (f.len < 32U) v &= 0xFFFFFFFF >> (32U - f.len);
+			const uint32_t signbit(1U << (f.len - 1U));
 			if (v & signbit) v |= ~(signbit - 1U);
 			return static_cast<int32_t>(v);
 		}
 	}
-	if (1U == len) {
-		const std::size_t bytepos(pos >> 3U);
+	// 1-bit fields can be optimized.
+	if (1U == f.len) {
+		const std::size_t bytepos(f.pos >> 3U);
 		if (bytepos >= report_size) return 0U;
 		const uint8_t v(*reinterpret_cast<const uint8_t *>(buffer + bytepos));
-		return (v >> (pos & 7U)) & 1U ? -1 : 0;
+		// The 1 bit is the sign bit, so sign extension gets us this.
+		return (v >> (f.pos & 7U)) & 1U ? -1 : 0;
 	}
+	/// \bug FIXME: This doesn't handle unaligned >1-bit fields.
 	return 0U;
 }
 
 inline
-int32_t 
-HID::GetSignedField(
-	const InputField & f
+bool
+HID::IsInRange(
+	const InputVariable & f,
+	int32_t v
 ) {
-	int32_t v(GetSignedField(f.pos, f.len));
-	if (v < f.min) v = f.min;
-	if (v > f.max) v = f.max;
-	return v;
+	return v <= f.max && v >= f.min;
+}
+
+inline
+void
+HID::handle_mouse_movement(
+	Realizer & r,
+	const InputReportDescription & report,
+	const InputVariable & f,
+	const uint16_t axis
+) {
+	if (f.relative) {
+		const int32_t off(GetSignedField(f, report.bytes));
+		if (IsInRange(f, off))
+			r.handle_mouse_relpos(axis, off);
+	} else {
+		const uint32_t pos(GetUnsignedField(f, report.bytes));
+		if (IsInRange(f, pos))
+			r.handle_mouse_abspos(axis, pos, f.max - f.min + 1U);
+	}
+}
+
+inline
+void 
+HID::handle_mouse_button(
+	Realizer & r,
+	uint32_t ident, 
+	bool down
+) {
+	if (HID_USAGE2(HUP_BUTTON, 0) < ident && HID_USAGE2(HUP_BUTTON, 32U) >= ident) {
+		const unsigned short button(ident - HID_USAGE2(HUP_BUTTON, 1));
+		const unsigned long mask(1UL << button);
+		if (!!(stdbuttons & mask) != down) {
+			if (down)
+				stdbuttons |= mask;
+			else
+				stdbuttons &= ~mask;
+			r.handle_mouse_button(TranslateStdButton(button), down);
+		}
+	} else
+		;
+}
+
+inline
+void 
+HID::handle_key(
+	bool & seen_keyboard, 
+	KeysPressed & newkeys, 
+	uint32_t ident, 
+	bool down
+) {
+	if ((HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_SYSTEM_CONTROL) <= ident && HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_APPLE_EJECT) >= ident)
+	||  (HID_USAGE2(HUP_KEYBOARD, 0) <= ident && HID_USAGE2(HUP_KEYBOARD, 0xFFFF) >= ident)
+	||  (HID_USAGE2(HUP_CONSUMER, 0) <= ident && HID_USAGE2(HUP_CONSUMER, 0xFFFF) >= ident)
+	) {
+		seen_keyboard = true;
+		if (down)
+			newkeys.insert(ident);
+		else
+			newkeys.erase(ident);
+	} else
+		;
 }
 
 inline
@@ -3159,53 +3786,106 @@ HID::handle_input_events(
 ) {
 	const int n(read(device.get(), reinterpret_cast<char *>(buffer) + offset, sizeof buffer - offset));
 	if (0 > n) return;
+
+	KeysPressed newkeys;
+	bool seen_keyboard(false);
+
 	for (
 		offset += n;
-		offset >= report_size;
-		memmove(buffer, buffer + report_size, sizeof buffer - report_size),
-		offset -= report_size
+		offset > 0;
 	    ) {
-		for (InputFields::iterator i(input_fields.begin()); i != input_fields.end(); ++i) {
-			const InputField & f(*i);
-			if (USAGE_BUTTON_ZERO <= f.ident && USAGE_BUTTON_ZERO + 0xFFFF >= f.ident) {
-				const unsigned short button(f.ident - USAGE_BUTTON_ZERO);
-				if (button < 32U) {
-					const unsigned long mask(1UL << button);
-					const bool down(GetUnsignedField(f));
-					if (!!(stdbuttons & mask) != down) {
-						r.handle_mouse_button(TranslateStdButton(button), down);
-						if (down)
-							stdbuttons |= mask;
-						else
-							stdbuttons &= ~mask;
-					}
-				}
+		uint8_t report_id(0);
+		if (has_report_ids) {
+			report_id = buffer[0];
+			std::memmove(buffer, buffer + 1, sizeof buffer - 1),
+			--offset;
+		}
+		InputReports::const_iterator rp(input_reports.find(report_id));
+		if (input_reports.end() == rp) break;
+		const InputReportDescription & report(rp->second);
+		if (offset < report.bytes) break;
+
+		for (InputReportDescription::Variables::const_iterator i(report.variables.begin()); i != report.variables.end(); ++i) {
+			const InputVariable & f(*i);
+			if (HID_USAGE2(HUP_BUTTON, 0) <= f.ident && HID_USAGE2(HUP_BUTTON, 0xFFFF) >= f.ident) {
+				const uint32_t down(GetUnsignedField(f, report.bytes));
+				if (IsInRange(f, down))
+					handle_mouse_button(r, f.ident, down);
+			} else
+			if ((HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_SYSTEM_CONTROL) <= f.ident && HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_APPLE_EJECT) >= f.ident)
+			||  (HID_USAGE2(HUP_KEYBOARD, 0) <= f.ident && HID_USAGE2(HUP_KEYBOARD, 0xFFFF) >= f.ident)
+			||  (HID_USAGE2(HUP_CONSUMER, 0) <= f.ident && HID_USAGE2(HUP_CONSUMER, 0xFFFF) >= f.ident)
+			) {
+				const uint32_t down(GetUnsignedField(f, report.bytes));
+				if (IsInRange(f, down))
+					handle_key(seen_keyboard, newkeys, f.ident, down);
 			} else
 			switch (f.ident) {
-				case USAGE_DESKTOP_X:
-					if (f.relative)
-						r.handle_mouse_relpos(r.AXIS_X, GetSignedField(f));
-					else
-						r.handle_mouse_abspos(r.AXIS_X, GetUnsignedField(f), f.max - f.min + 1U);
+				case HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X):
+					handle_mouse_movement(r, report, f, r.AXIS_X);
 					break;
-				case USAGE_DESKTOP_Y:
-					if (f.relative)
-						r.handle_mouse_relpos(r.AXIS_Y, GetSignedField(f));
-					else
-						r.handle_mouse_abspos(r.AXIS_Y, GetUnsignedField(f), f.max - f.min + 1U);
+				case HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Y):
+					handle_mouse_movement(r, report, f, r.AXIS_Y);
 					break;
-				case USAGE_DESKTOP_WHEEL:
-					if (f.relative)
-						r.handle_mouse_relpos(r.V_SCROLL, GetSignedField(f));
-					else
-						r.handle_mouse_abspos(r.V_SCROLL, GetUnsignedField(f), f.max - f.min + 1U);
+				case HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_WHEEL):
+					handle_mouse_movement(r, report, f, r.V_SCROLL);
 					break;
-				case USAGE_CONSUMER_AC_PAN:
-					if (f.relative)
-						r.handle_mouse_relpos(r.H_SCROLL, GetSignedField(f));
-					else
-						r.handle_mouse_abspos(r.H_SCROLL, GetUnsignedField(f), f.max - f.min + 1U);
+				case HID_USAGE2(HUP_CONSUMER, HUC_AC_PAN):
+					handle_mouse_movement(r, report, f, r.H_SCROLL);
 					break;
+			}
+		}
+		for (InputReportDescription::Indices::const_iterator i(report.array_indices.begin()); i != report.array_indices.end(); ++i) {
+			const InputIndex & f(*i);
+			const uint32_t v(GetUnsignedField(f, report.bytes));
+			if (v < f.min_index || v > f.max_index) continue;
+			uint32_t ident(v + f.min_ident - f.min_index);
+			if (ident > f.max_ident) ident = f.max_ident;
+
+			const bool down(true);	// Implied by the existence of the index value.
+			if (HID_USAGE2(HUP_BUTTON, 0) < ident && HID_USAGE2(HUP_BUTTON, 0xFFFF) >= ident) {
+				handle_mouse_button(r, ident, down);
+			} else
+			if ((HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_SYSTEM_CONTROL) <= ident && HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_APPLE_EJECT) >= ident)
+			||  (HID_USAGE2(HUP_KEYBOARD, 0) <= ident && HID_USAGE2(HUP_KEYBOARD, 0xFFFF) >= ident)
+			||  (HID_USAGE2(HUP_CONSUMER, 0) <= ident && HID_USAGE2(HUP_CONSUMER, 0xFFFF) >= ident)
+			) {
+				handle_key(seen_keyboard, newkeys, ident, down);
+			} else
+				;
+		}
+
+		std::memmove(buffer, buffer + report.bytes, sizeof buffer - report.bytes),
+		offset -= report.bytes;
+	}
+
+	if (seen_keyboard) {
+		for (KeysPressed::iterator was(keys.begin()); was != keys.end(); ) {
+			KeysPressed::iterator now(newkeys.find(*was));
+			const uint16_t index(usb_ident_to_keymap_index(*was));
+			if (newkeys.end() == now) {
+				if (0xFFFF != index) {
+					const uint8_t row(index >> 8U);
+					const uint8_t col(index & 0xFF);
+					r.handle_keyboard(row, col, 0);
+				}
+				was = keys.erase(was);
+			} else {
+				if (0xFFFF != index) {
+					const uint8_t row(index >> 8U);
+					const uint8_t col(index & 0xFF);
+					r.handle_keyboard(row, col, 2);
+				}
+				newkeys.erase(now);
+				++was;
+			}
+		}
+		for (KeysPressed::iterator now(newkeys.begin()); now != newkeys.end(); now = newkeys.erase(now)) {
+			const uint16_t index(usb_ident_to_keymap_index(*now));
+			if (0xFFFF != index) {
+				const uint8_t row(index >> 8U);
+				const uint8_t col(index & 0xFF);
+				r.handle_keyboard(row, col, 1);
 			}
 		}
 	}
@@ -3256,8 +3936,8 @@ ATKeyboard::handle_input_events(
 	if (0 > n) return;
 	for (
 		offset += n;
-		offset >= sizeof *buffer;
-		memmove(buffer, buffer + 1U, sizeof buffer - sizeof *buffer),
+		offset > 0 && offset >= sizeof *buffer;
+		std::memmove(buffer, buffer + 1U, sizeof buffer - sizeof *buffer),
 		offset -= sizeof *buffer
 	) {
 		uint16_t code(buffer[0]);
@@ -3378,7 +4058,7 @@ SysMouse::handle_input_events(
 	offset += n;
 	for (;;) {
 		while (offset > 0U && !IsSync(buffer[0])) {
-			memmove(buffer, buffer + 1, sizeof buffer - sizeof *buffer),
+			std::memmove(buffer, buffer + 1, sizeof buffer - sizeof *buffer),
 			--offset;
 		}
 		if (offset < MOUSE_MSC_PACKETSIZE) break;
@@ -3411,10 +4091,10 @@ SysMouse::handle_input_events(
 				}
 			}
 			extbuttons = newextbuttons;
-			memmove(buffer, buffer + MOUSE_SYS_PACKETSIZE, sizeof buffer - MOUSE_SYS_PACKETSIZE * sizeof *buffer),
+			std::memmove(buffer, buffer + MOUSE_SYS_PACKETSIZE, sizeof buffer - MOUSE_SYS_PACKETSIZE * sizeof *buffer),
 			offset -= MOUSE_SYS_PACKETSIZE * sizeof *buffer;
 		} else {
-			memmove(buffer, buffer + MOUSE_MSC_PACKETSIZE, sizeof buffer - MOUSE_MSC_PACKETSIZE * sizeof *buffer),
+			std::memmove(buffer, buffer + MOUSE_MSC_PACKETSIZE, sizeof buffer - MOUSE_MSC_PACKETSIZE * sizeof *buffer),
 			offset -= MOUSE_MSC_PACKETSIZE * sizeof *buffer;
 		}
 	}
@@ -3705,7 +4385,7 @@ console_fb_realizer (
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kqueue", std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	struct kevent p[32];
+	struct kevent p[512];
 	std::size_t index(0U);
 
 	FileDescriptorOwner vt_dir_fd(open_dir_at(AT_FDCWD, vt_dirname));
@@ -3803,6 +4483,11 @@ console_fb_realizer (
 		HID & input(inputs.add());
 		input.open(AT_FDCWD, input_filename.c_str());
 		if (input.query_device() < 0) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, input_filename.c_str(), std::strerror(error));
+			throw EXIT_FAILURE;
+		}
+		if (!input.read_description()) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, input_filename.c_str(), std::strerror(error));
 			throw EXIT_FAILURE;

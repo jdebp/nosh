@@ -1724,10 +1724,10 @@ SoftTerm::ControlSequence(uint32_t character)
 			FinishArg(1U); 
 		} else
 		if ('>' == first_private_parameter) {
-			FinishArg(1U); 
+			FinishArg(0U); 
 		} else
 		if ('=' == first_private_parameter) {
-			FinishArg(1U); 
+			FinishArg(0U); 
 		} else
 			FinishArg(1U); 
 	} else

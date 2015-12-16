@@ -4,7 +4,7 @@
 # This is invoked by all.do .
 #
 
-redo-ifchange /etc/passwd user-dbus@.socket user-dbus.service
+redo-ifchange /etc/passwd user-dbus@.socket user-dbus.service user-dbus-log@.service user-services@.service user@.service
 
 r="/etc/service-bundles/services/"
 e="--etc-bundle --no-systemd-quirks --escape-instance --bundle-root"

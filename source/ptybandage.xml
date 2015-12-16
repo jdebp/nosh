@@ -1,0 +1,49 @@
+<refentry id="ptybandage">
+
+<refmeta>
+<refentrytitle>ptyrun</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.23</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>ptybandage</refname>
+<refpurpose>make a program think that it is running interactively</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>ptybandage</command> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>ptybandage</command> enables running programs that would change their functionality if their standard file descriptors are not terminal devices, in shell command pipelines.
+Such programs often alter their standard output buffering behaviour (switching from line buffered to fully buffered) or their use of terminal control sequences.
+When run via <command>ptybandage</command>, they will believe that they are running interactively on a terminal and behave accordingly, even if the input/output of <command>ptybandage</command> itself is redirected to a socket, pipe, or file.
+</para>
+
+<para>
+If <command>ptybandage</command> is itself taking input directly from a terminal, it will operate in "terminal pass-through" mode.
+It will set that terminal to non-canonical (i.e. "raw") mode for the duration, copying the prior mode to the pseudo-terminal that <replaceable>next-prog</replaceable> is using.
+If <replaceable>next-prog</replaceable> stops with a signal, <command>ptybandage</command> will restore the prior terminal mode before stopping itself.
+Upon continuing, it will put the terminal back into non-canonical mode and copy the prior mode across again.
+It reflects all "window size" changes from its input terminal to the pseudo-terminal, too.
+</para>
+
+<para>
+<command>ptybandage</command> combines <citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pty-run</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and <citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> to run <replaceable>next-prog</replaceable> with its standard input, output, and error routed through a pseudo-terminal.
+It is a script that needs <citerefentry><refentrytitle>execlineb</refentrytitle><manvolnum>1</manvolnum></citerefentry> as its script interpreter.
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>pty-run</command> will ignore.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

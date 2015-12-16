@@ -15,7 +15,7 @@ src="${1}"
 dest="${2}"
 
 # binaries and doco
-for i in exec terminal-management service-management systemv-shims systemd-shims upstart-shims debian-shims ;
+for i in exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims ;
 do
 	if test -s package/nosh-"$i".commands1 || test -s package/nosh-"$i".aliases1 ;
 	then

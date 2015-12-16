@@ -9,6 +9,7 @@ Wants=user@%I
 
 [Service]
 PermissionsStartOnly=yes
+SessionLeader=yes
 User=%I
 ExecStartPre=mkdir -m 0750 /run/user/%I/service-manager
 ExecStartPre=chown %I /run/user/%I/service-manager

@@ -540,7 +540,7 @@ protected:
 	void SetMouseY(uint16_t p, uint8_t m);
 	void SetMouseButton(uint8_t b, bool v, uint8_t m);
 	void WriteWheelMotion(uint8_t b, int8_t o, uint8_t m);
-	void WriteXTermMouse(int button);
+	void WriteXTermMouse(int button, uint8_t modifiers);
 	void WriteDECLocatorReport(int button);
 	const Emulation emulation;
 	bool send_8bit_controls, backspace_is_bs;
@@ -551,7 +551,6 @@ protected:
 	char output_buffer[4096];
 	std::size_t output_pending;
 	uint16_t mouse_column, mouse_row;
-	uint8_t mouse_modifiers;
 	bool mouse_buttons[8];
 };
 }
@@ -572,8 +571,7 @@ InputFIFO::InputFIFO(int i, int m, Emulation e) :
 	input_read(0U),
 	output_pending(0U),
 	mouse_column(0U),
-	mouse_row(0U),
-	mouse_modifiers(0U)
+	mouse_row(0U)
 {
 	for (std::size_t j(0U); j < sizeof mouse_buttons/sizeof *mouse_buttons; ++j)
 		mouse_buttons[j] = false;
@@ -1177,29 +1175,28 @@ void
 InputFIFO::WriteWheelMotion(uint8_t w, int8_t o, uint8_t m) 
 {
 	// The horizontal wheel (#1) is an extension to the xterm protocol.
-	mouse_modifiers = m; 
 	while (0 != o) {
 		if (0 > o) {
 			++o;
-			const int button(3 + 2 * w);
+			const int button(4 + 2 * w);
 			mouse_buttons[button] = true;
-			WriteXTermMouse(button);
+			WriteXTermMouse(button, m);
 			WriteDECLocatorReport(button);
 			mouse_buttons[button] = false;
 #if 0	// vim cannot cope with button up wheel events.
-			WriteXTermMouse(button);
+			WriteXTermMouse(button, m);
 #endif
 			WriteDECLocatorReport(button);
 		}
 		if (0 < o) {
 			--o;
-			const int button(4 + 2 * w);
+			const int button(3 + 2 * w);
 			mouse_buttons[button] = true;
-			WriteXTermMouse(button);
+			WriteXTermMouse(button, m);
 			WriteDECLocatorReport(button);
 			mouse_buttons[button] = false;
 #if 0	// vim cannot cope with button up wheel events.
-			WriteXTermMouse(button);
+			WriteXTermMouse(button, m);
 #endif
 			WriteDECLocatorReport(button);
 		}
@@ -1207,8 +1204,10 @@ InputFIFO::WriteWheelMotion(uint8_t w, int8_t o, uint8_t m)
 }
 
 void 
-InputFIFO::WriteXTermMouse(int button) 
-{
+InputFIFO::WriteXTermMouse(
+	int button, 
+	uint8_t modifiers
+) {
 	if (!send_xterm_mouse) return;
 
 	bool pressed(false);
@@ -1225,6 +1224,7 @@ InputFIFO::WriteXTermMouse(int button)
 	}
 
 	unsigned flags(0);
+
 	if (button < 0)
 		flags |= 32U;
 	else
@@ -1233,6 +1233,13 @@ InputFIFO::WriteXTermMouse(int button)
 	else
 	if (button < 6)
 		flags |= (button - 3) | 64U;
+
+	if (INPUT_MODIFIER_LEVEL2 & modifiers)
+		flags |= 4U;
+	if (INPUT_MODIFIER_CONTROL & modifiers)
+		flags |= 16U;
+	if (INPUT_MODIFIER_SUPER & modifiers)
+		flags |= 8U;
 
 	WriteCSI();
 	char b[32];
@@ -1277,10 +1284,9 @@ InputFIFO::WriteDECLocatorReport(int button)
 void 
 InputFIFO::SetMouseX(uint16_t p, uint8_t m) 
 {
-	mouse_modifiers = m; 
 	if (mouse_column != p) {
 		mouse_column = p; 
-		WriteXTermMouse(-1);
+		WriteXTermMouse(-1, m);
 		// DEC Locator reports only report button events.
 	}
 }
@@ -1288,10 +1294,9 @@ InputFIFO::SetMouseX(uint16_t p, uint8_t m)
 void 
 InputFIFO::SetMouseY(uint16_t p, uint8_t m) 
 { 
-	mouse_modifiers = m; 
 	if (mouse_row != p) {
 		mouse_row = p; 
-		WriteXTermMouse(-1);
+		WriteXTermMouse(-1, m);
 		// DEC Locator reports only report button events.
 	}
 }
@@ -1299,10 +1304,9 @@ InputFIFO::SetMouseY(uint16_t p, uint8_t m)
 void 
 InputFIFO::SetMouseButton(uint8_t b, bool v, uint8_t m) 
 { 
-	mouse_modifiers = m; 
 	if (mouse_buttons[b] != v) {
 		mouse_buttons[b] = v; 
-		WriteXTermMouse(b);
+		WriteXTermMouse(b, m);
 		WriteDECLocatorReport(b);
 	}
 }

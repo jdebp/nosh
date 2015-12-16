@@ -65,6 +65,15 @@ Description: Virtual terminal, pseudo-terminal, and TUI login tools
  Also present are commands for pseudo-terminals and virtual consoles:
  * console-terminal-emulator, console-ncurses-realizer, console-fb-realizer, pty-get-tty, pty-run, vc-get-tty, vc-reset-tty
 
+Package: nosh-terminal-extras
+Architecture: amd64
+Depends: ${shlibs:Depends}, nosh-terminal-management
+Suggests: 
+Recommends: execline
+Description: Extra terminal utilities
+ This package provides extra tools for use with terminals, including:
+ * getty, ptybandage, ptyrun
+
 Package: nosh-systemv-shims
 Architecture: amd64
 Depends: ${shlibs:Depends}, nosh-service-management

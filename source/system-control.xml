@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">administrator commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.21</refmiscinfo>
+<refmiscinfo class="version">1.23</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -473,7 +473,7 @@ To control services directly and individually without regard for dependencies, u
 
 <para>
 The <command>reset</command> command is intended to be used by package installer programs.
-It is translated into either <command>start</command> or <command>stop</command> according to whether the service is enabled or disabled.
+It is translated into either <command>start</command> or <command>stop</command> according to whether the service is enabled or disabled; and can be thought of, if one likes, as "reset to however the service is configured to be at bootstrap".
 This allows package installers to remain in blissful ignorance of whether a service should be started or stopped after installing the package for it.
 Instead, the package installer simply executes the <command>preset</command> command and then the <command>reset</command> command and the service is started or stopped according to whatever the administrator has chosen.
 </para>
@@ -551,7 +551,7 @@ systemd and system-manager preset information given in <filename>*.preset</filen
 <para>
 systemd has four places for preset files.
 Although its doco lists one more (<filename>/run/systemd/system-preset</filename>) this is not actually the case and it would be ephemeral anyway; so <command>preset</command> does not look at it either.
-In addition to those <command>preset</command> looks in extra directories where systemd presets can be overridden by system-manager-specific information; allowing a system administrator or package writer to preset things one way for systemd and another way for the <command>preset</command> command.
+In addition to those <command>preset</command> looks in extra directories where systemd presets can be overridden by system-contrl-specific information; allowing a system administrator or package writer to preset things one way for systemd and another way for the <command>preset</command> command.
 </para>
 <para>
 As with systemd earlier preset directories override later ones;
@@ -562,24 +562,13 @@ Directives are matched against
 <replaceable>prefix</replaceable><replaceable>name</replaceable>.
 </para></listitem>
 <listitem><para>
-(unless the <arg choice="plain">--no-rcconf</arg> command line option is set)
-<filename>/etc/rc.conf</filename> and <filename>/etc/rc.conf.local</filename>
-preset information, specifically the 
-<envar><replaceable>name</replaceable>_enable</envar> 
-variable,
-interpreting the values <code>true</code>, <code>1</code>, <code>yes</code>,
-and <code>on</code> as enable, and any other values (including specifically
-<code>false</code>, <code>0</code>, <code>no</code>, and <code>off</code>) as
-disable.
+(unless the <arg choice="plain">--no-rcconf</arg> command line option is set) <filename>/etc/rc.conf</filename> and <filename>/etc/rc.conf.local</filename> preset information, specifically the <envar><replaceable>name</replaceable>_enable</envar> variable, interpreting the values <code>true</code>, <code>1</code>, <code>yes</code>, and <code>on</code> as enable, and any other values (including specifically <code>false</code>, <code>0</code>, <code>no</code>, and <code>off</code>) as disable.
 </para>
 <para>
 The variable names are matched against just <replaceable>name</replaceable> to allow one to use a main service name as <replaceable>name</replaceable> and combine it with a log service template <replaceable>prefix</replaceable> such as <code>cyclog@</code> or <code>s6-multilog@</code>, on the grounds that traditional <filename>/etc/rc.conf</filename> and <filename>/etc/rc.conf.local</filename> contents do not make explicit provision for separate logging services.
 </para></listitem>
 <listitem><para>
-(if the <arg choice="plain">--ttys</arg> command line option is set)
-<filename>/etc/ttys</filename>
-preset information, specifically the <code>on</code> and <code>off</code> flags
-as enable and disable, respectively.
+(if the <arg choice="plain">--ttys</arg> command line option is set) <filename>/etc/ttys</filename> preset information, specifically the <code>on</code> and <code>off</code> flags as enable and disable, respectively.
 The <code>onifconsole</code> flag is also recognized and processed with reference to the currently active console device (on BSD systems only).
 If <filename>/etc/ttys</filename> does not exist, as is usually the case on Linux operating systems, all TTYs default to preset enabled.
 </para>

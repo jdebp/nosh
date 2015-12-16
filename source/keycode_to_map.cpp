@@ -3,134 +3,138 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
+#if !defined(__LINUX__) && !defined(__linux__)
+#include <dev/usb/usbhid.h>
+#endif
+#include "kbdmap.h"
 #include "kbdmap_utils.h"
 
-/// The operating system keycode maps to a row+column in the current keyboard map, which contains an action for that row+column.
+/// The atkbd device keycode maps to a row+column in the current keyboard map, which contains an action for that row+column.
 uint16_t
 bsd_keycode_to_keymap_index (
 	uint16_t k
 ) {
 	switch (k) {
 		default:	break;
-		case 0x01:	return 0x0001;
-		case 0x02:	return 0x0002;
-		case 0x03:	return 0x0003;
-		case 0x04:	return 0x0004;
-		case 0x05:	return 0x0005;
-		case 0x06:	return 0x0006;
-		case 0x07:	return 0x0007;
-		case 0x08:	return 0x0008;
-		case 0x09:	return 0x0009;
-		case 0x0A:	return 0x000A;
-		case 0x0B:	return 0x000B;
-		case 0x0C:	return 0x000C;
-		case 0x0D:	return 0x000D;
-		case 0x0E:	return 0x000E;
-		case 0x0F:	return 0x0100;
-		case 0x10:	return 0x0101;
-		case 0x11:	return 0x0102;
-		case 0x12:	return 0x0103;
-		case 0x13:	return 0x0104;
-		case 0x14:	return 0x0105;
-		case 0x15:	return 0x0106;
-		case 0x16:	return 0x0107;
-		case 0x17:	return 0x0108;
-		case 0x18:	return 0x0109;
-		case 0x19:	return 0x010A;
-		case 0x1a:	return 0x010B;
-		case 0x1b:	return 0x010C;
-		case 0x1c:	return 0x010D;
-		case 0x1d:	return 0x0404;
-		case 0x1e:	return 0x0201;
-		case 0x1f:	return 0x0202;
-		case 0x20:	return 0x0203;
-		case 0x21:	return 0x0204;
-		case 0x22:	return 0x0205;
-		case 0x23:	return 0x0206;
-		case 0x24:	return 0x0207;
-		case 0x25:	return 0x0208;
-		case 0x26:	return 0x0209;
-		case 0x27:	return 0x020A;
-		case 0x28:	return 0x020B;
-		case 0x29:	return 0x020C;
-		case 0x2a:	return 0x0400;
-		case 0x2b:	return 0x0301;
-		case 0x2c:	return 0x0302;
-		case 0x2d:	return 0x0303;
-		case 0x2e:	return 0x0304;
-		case 0x2f:	return 0x0305;
-		case 0x30:	return 0x0306;
-		case 0x31:	return 0x0307;
-		case 0x32:	return 0x0308;
-		case 0x33:	return 0x0309;
-		case 0x34:	return 0x030A;
-		case 0x35:	return 0x030B;
-		case 0x36:	return 0x0401;
-		case 0x37:	return 0x0700;
-		case 0x38:	return 0x0408;
-		case 0x39:	return 0x050F;
-		case 0x3a:	return 0x040C;
-		case 0x3b:	return 0x0900;
-		case 0x3c:	return 0x0901;
-		case 0x3d:	return 0x0902;
-		case 0x3e:	return 0x0903;
-		case 0x3f:	return 0x0904;
-		case 0x40:	return 0x0905;
-		case 0x41:	return 0x0906;
-		case 0x42:	return 0x0907;
-		case 0x43:	return 0x0908;
-		case 0x44:	return 0x0909;
-		case 0x45:	return 0x040E;
-		case 0x46:	return 0x040D;
-		case 0x47:	return 0x0701;
-		case 0x48:	return 0x0702;
-		case 0x49:	return 0x0703;
-		case 0x4a:	return 0x0704;
-		case 0x4b:	return 0x0705;
-		case 0x4c:	return 0x0706;
-		case 0x4d:	return 0x0707;
-		case 0x4e:	return 0x0708;
-		case 0x4f:	return 0x0709;
-		case 0x50:	return 0x070A;
-		case 0x51:	return 0x070B;
-		case 0x52:	return 0x070C;
-		case 0x53:	return 0x070D;
-		case 0x54:	return 0x0D02;
-		case 0x56:	return 0x030E;
-		case 0x57:	return 0x090A;
-		case 0x58:	return 0x090B;
-		case 0x59:	return 0x070E;
-		case 0x5A:	return 0x0405;
-		case 0x5B:	return 0x070F;
-		case 0x5C:	return 0x0D01;
-		case 0x5D:	return 0x0402;
-		case 0x5E:	return 0x0600;
-		case 0x5F:	return 0x0601;
-		case 0x60:	return 0x0602;
-		case 0x61:	return 0x0603;
-		case 0x62:	return 0x0604;
-		case 0x63:	return 0x0605;
-		case 0x64:	return 0x0606;
-		case 0x65:	return 0x0607;
-		case 0x66:	return 0x0608;
-		case 0x67:	return 0x0609;
-		case 0x68:	return 0x0D00;
-		case 0x69:	return 0x0406;
-		case 0x6A:	return 0x0407;
-		case 0x6B:	return 0x0E00;
-		case 0x6C:	return 0x0D04;
-		case 0x6D:	/*power*/ break;
-		case 0x6E:	/*sleep*/ break;
-		case 0x6F:	/*wake*/ break;
-		case 0x70:	return 0x0501;
-		case 0x73:	return 0x0500;
-		case 0x76:	return 0x0502;
-		case 0x77:	return 0x0503;
-		case 0x78:	return 0x0504;
-		case 0x79:	return 0x0505;
-		case 0x7B:	return 0x0506;
-		case 0x7D:	return 0x030F;
-		case 0x7E:	return 0x0800;
+		case 0x01:	return KBDMAP_INDEX_ESC;
+		case 0x02:	return KBDMAP_INDEX_1;
+		case 0x03:	return KBDMAP_INDEX_2;
+		case 0x04:	return KBDMAP_INDEX_3;
+		case 0x05:	return KBDMAP_INDEX_4;
+		case 0x06:	return KBDMAP_INDEX_5;
+		case 0x07:	return KBDMAP_INDEX_6;
+		case 0x08:	return KBDMAP_INDEX_7;
+		case 0x09:	return KBDMAP_INDEX_8;
+		case 0x0A:	return KBDMAP_INDEX_9;
+		case 0x0B:	return KBDMAP_INDEX_0;
+		case 0x0C:	return KBDMAP_INDEX_MINUS;
+		case 0x0D:	return KBDMAP_INDEX_EQUALS;
+		case 0x0E:	return KBDMAP_INDEX_BACKSPACE;
+		case 0x0F:	return KBDMAP_INDEX_TAB;
+		case 0x10:	return KBDMAP_INDEX_Q;
+		case 0x11:	return KBDMAP_INDEX_W;
+		case 0x12:	return KBDMAP_INDEX_E;
+		case 0x13:	return KBDMAP_INDEX_R;
+		case 0x14:	return KBDMAP_INDEX_T;
+		case 0x15:	return KBDMAP_INDEX_Y;
+		case 0x16:	return KBDMAP_INDEX_U;
+		case 0x17:	return KBDMAP_INDEX_I;
+		case 0x18:	return KBDMAP_INDEX_O;
+		case 0x19:	return KBDMAP_INDEX_P;
+		case 0x1a:	return KBDMAP_INDEX_LEFTBRACE;
+		case 0x1b:	return KBDMAP_INDEX_RIGHTBRACE;
+		case 0x1c:	return KBDMAP_INDEX_RETURN;
+		case 0x1d:	return KBDMAP_INDEX_CONTROL1;
+		case 0x1e:	return KBDMAP_INDEX_A;
+		case 0x1f:	return KBDMAP_INDEX_S;
+		case 0x20:	return KBDMAP_INDEX_D;
+		case 0x21:	return KBDMAP_INDEX_F;
+		case 0x22:	return KBDMAP_INDEX_G;
+		case 0x23:	return KBDMAP_INDEX_H;
+		case 0x24:	return KBDMAP_INDEX_J;
+		case 0x25:	return KBDMAP_INDEX_K;
+		case 0x26:	return KBDMAP_INDEX_L;
+		case 0x27:	return KBDMAP_INDEX_SEMICOLON;
+		case 0x28:	return KBDMAP_INDEX_APOSTROPHE;
+		case 0x29:	return KBDMAP_INDEX_GRAVE;
+		case 0x2a:	return KBDMAP_INDEX_SHIFT1;
+		case 0x2b:	return KBDMAP_INDEX_EUROPE1;
+		case 0x2c:	return KBDMAP_INDEX_Z;
+		case 0x2d:	return KBDMAP_INDEX_X;
+		case 0x2e:	return KBDMAP_INDEX_C;
+		case 0x2f:	return KBDMAP_INDEX_V;
+		case 0x30:	return KBDMAP_INDEX_B;
+		case 0x31:	return KBDMAP_INDEX_N;
+		case 0x32:	return KBDMAP_INDEX_M;
+		case 0x33:	return KBDMAP_INDEX_COMMA;
+		case 0x34:	return KBDMAP_INDEX_DOT;
+		case 0x35:	return KBDMAP_INDEX_SLASH;
+		case 0x36:	return KBDMAP_INDEX_SHIFT2;
+		case 0x37:	return KBDMAP_INDEX_KP_ASTERISK;
+		case 0x38:	return KBDMAP_INDEX_ALT;
+		case 0x39:	return KBDMAP_INDEX_SPACE;
+		case 0x3a:	return KBDMAP_INDEX_CAPSLOCK;
+		case 0x3b:	return KBDMAP_INDEX_F1;
+		case 0x3c:	return KBDMAP_INDEX_F2;
+		case 0x3d:	return KBDMAP_INDEX_F3;
+		case 0x3e:	return KBDMAP_INDEX_F4;
+		case 0x3f:	return KBDMAP_INDEX_F5;
+		case 0x40:	return KBDMAP_INDEX_F6;
+		case 0x41:	return KBDMAP_INDEX_F7;
+		case 0x42:	return KBDMAP_INDEX_F8;
+		case 0x43:	return KBDMAP_INDEX_F9;
+		case 0x44:	return KBDMAP_INDEX_F10;
+		case 0x45:	return KBDMAP_INDEX_NUMLOCK;
+		case 0x46:	return KBDMAP_INDEX_SCROLLLOCK;
+		case 0x47:	return KBDMAP_INDEX_KP_7;
+		case 0x48:	return KBDMAP_INDEX_KP_8;
+		case 0x49:	return KBDMAP_INDEX_KP_9;
+		case 0x4a:	return KBDMAP_INDEX_KP_MINUS;
+		case 0x4b:	return KBDMAP_INDEX_KP_4;
+		case 0x4c:	return KBDMAP_INDEX_KP_5;
+		case 0x4d:	return KBDMAP_INDEX_KP_6;
+		case 0x4e:	return KBDMAP_INDEX_KP_PLUS;
+		case 0x4f:	return KBDMAP_INDEX_KP_1;
+		case 0x50:	return KBDMAP_INDEX_KP_2;
+		case 0x51:	return KBDMAP_INDEX_KP_3;
+		case 0x52:	return KBDMAP_INDEX_KP_0;
+		case 0x53:	return KBDMAP_INDEX_KP_DECIMAL;
+		case 0x54:	return KBDMAP_INDEX_ATTENTION;		// Alt-PrtScn
+		case 0x56:	return KBDMAP_INDEX_EUROPE2;
+		case 0x57:	return KBDMAP_INDEX_F11;
+		case 0x58:	return KBDMAP_INDEX_F12;
+		case 0x59:	return KBDMAP_INDEX_KP_ENTER;
+		case 0x5A:	return KBDMAP_INDEX_CONTROL2;
+		case 0x5B:	return KBDMAP_INDEX_KP_SLASH;
+		case 0x5C:	return KBDMAP_INDEX_NEXTPREV_TASK;	// Print Screen/Shift-Numpad-Asterisk
+		case 0x5D:	return KBDMAP_INDEX_OPTION;
+		case 0x5E:	return KBDMAP_INDEX_HOME;
+		case 0x5F:	return KBDMAP_INDEX_UP_ARROW;
+		case 0x60:	return KBDMAP_INDEX_PAGE_UP;
+		case 0x61:	return KBDMAP_INDEX_LEFT_ARROW;
+		case 0x62:	return KBDMAP_INDEX_RIGHT_ARROW;
+		case 0x63:	return KBDMAP_INDEX_END;
+		case 0x64:	return KBDMAP_INDEX_DOWN_ARROW;
+		case 0x65:	return KBDMAP_INDEX_PAGE_DOWN;
+		case 0x66:	return KBDMAP_INDEX_INSERT;
+		case 0x67:	return KBDMAP_INDEX_DELETE;
+		case 0x68:	return KBDMAP_INDEX_PAUSE;		// Pause/Ctrl-NumLock
+		case 0x69:	return KBDMAP_INDEX_SUPER1;
+		case 0x6A:	return KBDMAP_INDEX_SUPER2;
+		case 0x6B:	return KBDMAP_INDEX_APPLICATION;
+		case 0x6C:	return KBDMAP_INDEX_BREAK;		// Ctrl-Pause/Ctrl-ScrollLock
+		case 0x6D:	return KBDMAP_INDEX_POWER;		// Ctrl-Pause/Ctrl-ScrollLock
+		case 0x6E:	return KBDMAP_INDEX_SLEEP;		// Ctrl-Pause/Ctrl-ScrollLock
+		case 0x6F:	return KBDMAP_INDEX_WAKE;		// Ctrl-Pause/Ctrl-ScrollLock
+		case 0x70:	return KBDMAP_INDEX_KATAHIRA;		// Intl2
+		case 0x73:	return KBDMAP_INDEX_ROMAJI;		// Intl1
+		case 0x76:	return KBDMAP_INDEX_HALF_FULL_WIDTH;	// Lang5
+		case 0x77:	return KBDMAP_INDEX_HIRAGANA;		// Lang4
+		case 0x78:	return KBDMAP_INDEX_KATAKANA;		// Lang3
+		case 0x79:	return KBDMAP_INDEX_HENKAN;		// Intl4,
+		case 0x7B:	return KBDMAP_INDEX_MUHENKAN;		// Intl5
+		case 0x7D:	return KBDMAP_INDEX_YEN;		// Intl3
+		case 0x7E:	return KBDMAP_INDEX_KP_THOUSANDS;	// Brazilian KP .
 	}
 	return 0xFFFF;
 }

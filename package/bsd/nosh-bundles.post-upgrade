@@ -12,6 +12,7 @@ for I in \
 	cleantmp \
 	cleanX \
 	console-kit-daemon \
+	darkice \
 	ddclient \
 	deluged \
 	deluge-web \
@@ -288,6 +289,7 @@ for i in \
 	uhidd@ugen0.1 \
 	uhidd@ugen0.2 \
 	unbound \
+	usbhidaction@-dev-uhid0 \
 	utx \
 	vixiecron \
 	vixiedhcp4d@eth0 \

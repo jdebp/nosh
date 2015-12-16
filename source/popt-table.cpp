@@ -39,7 +39,7 @@ void table_definition::help()
 {
 	for (unsigned i(0); i < count; ++i)
 		if (dynamic_cast<named_definition *>(array[i])) {
-			std::clog << description << ":\n";
+			std::cout << description << ":\n";
 			break;
 		}
 	std::size_t w = 0;
@@ -48,7 +48,7 @@ void table_definition::help()
 			std::size_t l = 0;
 			if (n->query_short_name()) l += 2;
 			if (const char * long_name = n->query_long_name()) {
-				if (n->query_short_name()) l += 1;
+				if (n->query_short_name()) l += 2;
 				l += 2 + std::strlen(long_name);
 			}
 			if (const char * args_description = n->query_args_description())
@@ -61,12 +61,12 @@ void table_definition::help()
 			if (char short_name = n->query_short_name())
 				t += "-" + std::string(1, short_name);
 			if (const char * long_name = n->query_long_name()) {
-				if (n->query_short_name()) t += "|";
+				if (n->query_short_name()) t += ", ";
 				t += "--" + std::string(long_name);
 			}
 			if (const char * args_description = n->query_args_description())
 				t += " " + std::string(args_description);
-			std::clog.put('\t') << std::setiosflags(std::iostream::left) << std::setw(static_cast<int>(w))
+			std::cout.put('\t') << std::setiosflags(std::iostream::left) << std::setw(static_cast<int>(w))
 #if defined(__WATCOMC__) // Watcom C++ library bug: std::strings are not output as one lump
 			<< t.c_str()
 #else
@@ -74,8 +74,8 @@ void table_definition::help()
 #endif
 			;
 			if (const char * entry_description = n->query_description())
-				std::clog.put(' ') << entry_description;
-			std::clog.put('\n');
+				std::cout.put(' ') << entry_description;
+			std::cout.put('\n');
 		}
 	for (unsigned i(0); i < count; ++i)
 		if (table_definition * n = dynamic_cast<table_definition *>(array[i]))
@@ -89,17 +89,17 @@ void table_definition::long_usage()
 			const char * args_description = n->query_args_description();
 			if (long_name || args_description) {
 				char short_name = n->query_short_name();
-				std::clog << "[";
+				std::cout << "[";
 				if (args_description && short_name) 
-					std::clog.put('-').put(short_name);
+					std::cout.put('-').put(short_name);
 				if (long_name) {
 					if (args_description && short_name) 
-						std::clog.put('|');
-					std::clog << "--" << long_name;
+						std::cout.put('|');
+					std::cout << "--" << long_name;
 				}
 				if (args_description)
-					std::clog << " " << args_description;
-				std::clog << "] ";
+					std::cout << " " << args_description;
+				std::cout << "] ";
 			}
 		}
 	for (unsigned i(0); i < count; ++i)

@@ -51,9 +51,9 @@ enum {
 	// Main keypad keys that emulations might make switchable.
  	EXTENDED_KEY_RETURN_OR_ENTER	= 0x0028,
  	EXTENDED_KEY_BACKSPACE		= 0x002A,
+ 	EXTENDED_KEY_ALTERNATE_ERASE	= 0x0099,
 
 	// CJK keypad
- 	EXTENDED_KEY_ROMAJI		= 0x0087,
  	EXTENDED_KEY_KATAHIRA		= 0x0088,
  	EXTENDED_KEY_HALF_FULL_WIDTH	= 0x0094,
  	EXTENDED_KEY_HIRAGANA		= 0x0093,
@@ -211,13 +211,12 @@ enum {
  	EXTENDED_KEY_ATTENTION		= 0x009A,	// a.k.a. "system request"
  	EXTENDED_KEY_PRINT_SCREEN	= 0x0046,
  	EXTENDED_KEY_PAUSE		= 0x0048,
+ 	EXTENDED_KEY_BREAK		= 0x0F48,	// non-USB
 
 	// Multimedia keypad
  	EXTENDED_KEY_MUTE		= 0x007F,
  	EXTENDED_KEY_VOLUME_UP		= 0x0080,
  	EXTENDED_KEY_VOLUME_DOWN	= 0x0081,
-
- 	EXTENDED_KEY_ALTERNATE_ERASE	= 0x0099,
 };
 
 // These values are intentionally the same as USB keyboard HID codes, Consumer page.

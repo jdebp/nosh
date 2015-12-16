@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.21</refmiscinfo>
+<refmiscinfo class="version">1.23</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -21,15 +21,17 @@
 <arg choice='req'>--atkeyboard <replaceable>filename</replaceable></arg>
 <arg choice='req'>--sysmouse <replaceable>filename</replaceable></arg>
 <arg choice='req'>--vtfont <replaceable>filename</replaceable></arg>
+<arg choice='req'>--keyboard-map <replaceable>filename</replaceable></arg>
 <arg choice='req'>--font-medium-r <replaceable>filename</replaceable></arg>
 <arg choice='req'>--font-medium-o <replaceable>filename</replaceable></arg>
 <arg choice='req'>--font-medium-i <replaceable>filename</replaceable></arg>
 <arg choice='req'>--font-bold-r <replaceable>filename</replaceable></arg>
 <arg choice='req'>--font-bold-o <replaceable>filename</replaceable></arg>
 <arg choice='req'>--font-bold-i <replaceable>filename</replaceable></arg>
+<arg choice='req'>--quadrant <replaceable>number</replaceable></arg>
+<arg choice='req'>--bold-as-colour</arg>
 <arg choice='req'><replaceable>vcname</replaceable></arg>
 <arg choice='req'><replaceable>fbname</replaceable></arg>
-<arg choice='req'><replaceable>kbdmapname</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -70,6 +72,8 @@ renders the contents of the character/attribute buffer file for the virtual term
 
 </itemizedlist>
 
+<refsection><title>Specifying input devices</title>
+
 <para>
 The <arg choice='plain'>--input</arg> command line option designates the superior choices of input device for each platform.
 On Linux, they must designate event devices, using the evdev subsystem.
@@ -101,6 +105,8 @@ The USB HID protocol and (to a lesser extent) the Linux input event protocol sup
 </para></listitem>
 
 </itemizedlist>
+
+</refsection>
 
 </refsection>
 
@@ -136,7 +142,7 @@ This device is used to negotiate, with the kernel VT subsystem and other coopera
 <refsection><title>FreeBSD and PC-BSD</title>
 
 <para>
-Neither FreeBSD nor PC-BSD provide direct access to raw framebuffer and input event devices; they are mediated through the kernel virtual terminal subsystem and one must use a kernel virtual terminal device as both <replaceable>fbname</replaceable> and the keyboard event device name.
+Neither FreeBSD nor PC-BSD provide direct access to raw framebuffer and input event devices; they are mediated through the kernel virtual terminal subsystem and one must use a kernel virtual terminal device as both <replaceable>fbname</replaceable> and an AT keyboard device name.
 <command>console-fb-realizer</command> switches the framebuffer device into graphics mode, the line discipline to raw mode, and the keyboard driver to deliver raw keycodes, for the duration; switching them back to their saved prior settings upon its termination.
 </para>
 

@@ -59,14 +59,12 @@ then
 		ln -f -s "`pwd`/$b".capsctrl.kbdmap "${svcdir}/service/kbdmaps/"
 	done
 else
-	redo-ifcreate "${keymaps}"
-	redo-ifchange soft_backspace.kbd us_to_uk.kbd
-	console-convert-kbdmap /dev/null soft_backspace.kbd > us.kbdmap
-	console-convert-kbdmap /dev/null soft_backspace.kbd us_to_uk.kbd > uk.kbdmap
-	for i in us.kbdmap uk.kbdmap
+	for b in us uk
 	do
-		chmod 0644 -- "$i"
-		ln -f -s "`pwd`/$i" "${svcdir}/service/kbdmaps/"
+		redo-ifchange "$b".kbdmap
+		ln -f -s "`pwd`/$b".kbdmap "${svcdir}/service/kbdmaps/"
+		redo-ifchange "$b".capsctrl.kbdmap
+		ln -f -s "`pwd`/$b".capsctrl.kbdmap "${svcdir}/service/kbdmaps/"
 	done
 fi
 

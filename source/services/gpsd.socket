@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=GPS daemon socket
+
+[Socket]
+Backlog=2
+BindIPv6Only=both
+ListenStream=2947
+
+[Install]
+WantedBy=sockets.target

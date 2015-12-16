@@ -29,15 +29,15 @@ void top_table_definition::do_usage(processor & proc)
 {
 	std::string shorts("?");
 	gather_combining_shorts(shorts);
-	std::clog << "Usage: " << proc.name << " [-" << shorts << "] [--help] [--usage] ";
+	std::cout << "Usage: " << proc.name << " [-" << shorts << "] [--help] [--usage] ";
 	long_usage();
-	std::clog << arguments_description << '\n';
+	std::cout << arguments_description << '\n';
 	proc.stop();
 }
 void top_table_definition::do_help(processor & proc)
 {
 	do_usage(proc);
-	std::clog.put('\n');
+	std::cout.put('\n');
 	help();
 	proc.stop();
 }

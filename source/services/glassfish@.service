@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%p server for domain %i
+Documentation=https://docs.oracle.com/cd/E18930_01/html/821-2416/gitwj.html
+
+[Service]
+ExecStart=asaadmin start-domain %i
+ExecStopPost=asaadmin stop-domain %i
+
+[Install]
+WantedBy=server.target

@@ -15,6 +15,7 @@ case "$1" in
 			cleantmp \
 			cleanX \
 			console-kit-daemon \
+			darkice \
 			ddclient \
 			deluged \
 			deluge-web \
@@ -205,6 +206,7 @@ case "$1" in
 		# Linux sockets
 		for i in \
 			acpid \
+			gpsd \
 			systemd-syslog-read \
 			systemd-rsyslogd \
 			systemd-syslogd \

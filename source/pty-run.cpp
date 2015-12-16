@@ -167,8 +167,10 @@ pty_run (
 		if (pass_through && program_continued) {
 			program_continued = false;
 			static winsize size;
-			if (0 <= tcgetattr_nointr(STDIN_FILENO, original_attr))
+			if (0 <= tcgetattr_nointr(STDIN_FILENO, original_attr)) {
 				tcsetattr_nointr(STDIN_FILENO, TCSADRAIN, make_raw(original_attr));
+				tcsetattr_nointr(PTY_MASTER_FILENO, TCSADRAIN, original_attr);
+			}
 			if (0 <= tcgetwinsz_nointr(STDIN_FILENO, size))
 				tcsetwinsz_nointr(PTY_MASTER_FILENO, size);
 		}

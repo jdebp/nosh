@@ -23,7 +23,12 @@ cat package/commands1 package/commands8 | while read i
 do
 	rm -f -- command/"$i"{new}
 	cp -p -f -- build/"$i" command/"$i"{new}
-	strip -p -- command/"$i"{new}
+	if objdump -f command/"$i"{new} >/dev/null 2>&1
+	then
+		strip -p -- command/"$i"{new}
+	else
+		true
+	fi
 done
 cat package/aliases1 package/aliases8 | while read command alias
 do

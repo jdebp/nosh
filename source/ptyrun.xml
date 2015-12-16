@@ -1,0 +1,41 @@
+<refentry id="ptyrun">
+
+<refmeta>
+<refentrytitle>ptyrun</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.23</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>ptyrun</refname>
+<refpurpose>run a program under a pseudo-terminal</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>ptyrun</command> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>ptyrun</command> enables running programs that expect terminals on their standard file descriptors, in situations where there are no controlling terminals and the standard file descriptors are things such as pipes or sockets.
+It does not itself expect to be running connected to a terminal, and it takes no steps to adjust terminal modes if it is.
+If <replaceable>next-prog</replaceable> stops with a signal, it is simply continued.
+</para>
+
+<para>
+<command>ptyrun</command> combines <citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pty-run</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and <citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> to run <replaceable>next-prog</replaceable> with its standard input, output, and error routed through a pseudo-terminal.
+It is a script that needs <citerefentry><refentrytitle>execlineb</refentrytitle><manvolnum>1</manvolnum></citerefentry> as its script interpreter.
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>pty-run</command> will ignore.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>
