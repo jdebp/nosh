@@ -8,6 +8,7 @@ Wants=kmod@geom_gate
 After=kmod@geom_gate
 
 [Service]
+EnvironmentDirectory=env
 # The daemon should properly clean itself up at SIGTERM; if it does not, that is a bug.
 ExecStart=%p -F
 Restart=always

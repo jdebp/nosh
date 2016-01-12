@@ -1,0 +1,20 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Mount the %I filesystem with pefs
+DefaultDependencies=false
+Before=local-fs.target
+After=local-fs-pre.target
+
+[Service]
+# Marking this as oneshot means that it doesn't enter the "running" state until the mount command has exited.
+Type=oneshot
+ExecStartPre=pefs mount %I "${target:-%I}"
+ExecStart=true
+ExecStopPost=pefs unmount %I
+RemainAfterExit=yes
+
+[Install]
+WantedBy=pefs.service

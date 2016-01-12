@@ -20,10 +20,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include "jail.h"
 #include "popt.h"
 
-/* Main function ************************************************************
-// **************************************************************************
-*/
-
 static
 const char * 
 env_files[] = {
@@ -86,6 +82,10 @@ read_first_line (
 	}
 	return a;
 }
+
+/* Main function ************************************************************
+// **************************************************************************
+*/
 
 void
 set_dynamic_hostname ( 

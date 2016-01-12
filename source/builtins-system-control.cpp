@@ -35,6 +35,7 @@ extern void is_active ( const char * & , std::vector<const char *> & ) ;
 extern void is_loaded ( const char * & , std::vector<const char *> & ) ;
 extern void is_enabled ( const char * & , std::vector<const char *> & ) ;
 extern void convert_fstab_services ( const char * & , std::vector<const char *> & ) ;
+extern void write_volume_service_bundles ( const char * & , std::vector<const char *> & ) ;
 extern void convert_systemd_units ( const char * & , std::vector<const char *> & ) ;
 extern void nagios_check ( const char * & , std::vector<const char *> & ) ;
 extern void load_kernel_module ( const char * & , std::vector<const char *> & ) ;
@@ -109,6 +110,7 @@ commands[] = {
 	{	"is-enabled",			is_enabled		},
 	{	"unload-when-stopped",		unload_when_stopped	},
 	{	"convert-fstab-services",	convert_fstab_services	},
+	{	"write-volume-service-bundles",	write_volume_service_bundles	},
 	{	"convert-systemd-units",	convert_systemd_units	},
 	{	"nagios-check-service",		nagios_check		},
 	{	"load-kernel-module",		load_kernel_module	},

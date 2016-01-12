@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD %p for %i
+
+[Service]
+Type=oneshot
+EnvironmentDirectory=env
+ExecStart=%p "-${mode}" ${nat:+-nat} ${unit:+-unit"${unit}"} ${flags} "%I"
+# \bug FIXME: Fix this.
+ExecStopPost=/etc/rc.d/ipfilter quietresync
+ExecStopPost=service pf condrestart
+
+[Install]
+WantedBy=workstation.target

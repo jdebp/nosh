@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+# This is needed on Linux systems where NetworkManager has been configured not to manage the [ifupdown] interfaces.
+
+[Unit]
+Description=Linux statically-configured network interface settings
+
+[Service]
+ExecStartPre=mkdir -m 0755 /run/network
+ExecStart=ifup --verbose --all
+ExecStopPost=ifdown --verbose --all
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

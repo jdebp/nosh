@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Save/restore randomness
+Before=netif sshd sshdgenkeys
+
+[Service]
+Type=oneshot
+ExecStart=./helper load
+ExecStopPost=./helper save
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

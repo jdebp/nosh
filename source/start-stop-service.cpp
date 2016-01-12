@@ -22,6 +22,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include "service-manager.h"
 #include "common-manager.h"
 #include "popt.h"
+#include "FileDescriptorOwner.h"
+#include "DirStar.h"
 
 enum {
 	DEFAULT = -1,
@@ -77,9 +79,8 @@ unsigned
 want_for (
 	int bundle_dir_fd
 ) {
-	const int service_dir_fd(open_service_dir(bundle_dir_fd));
-	const bool want(is_initially_up(service_dir_fd));
-	close(service_dir_fd);
+	const FileDescriptorOwner service_dir_fd(open_service_dir(bundle_dir_fd));
+	const bool want(is_initially_up(service_dir_fd.get()));
 	return want ? bundle::WANT_START : bundle::WANT_STOP;
 }
 
@@ -159,9 +160,9 @@ add_related_bundles (
 	const char * subdir_name,
 	int want
 ) {
-	const int subdir_fd(open_dir_at(b.bundle_dir_fd, subdir_name));
-	if (0 > subdir_fd) return;
-	DIR * subdir_dir(fdopendir(subdir_fd));
+	FileDescriptorOwner subdir_fd(open_dir_at(b.bundle_dir_fd, subdir_name));
+	if (0 > subdir_fd.get()) return;
+	const DirStar subdir_dir(subdir_fd);
 	if (!subdir_dir) return;
 	for (;;) {
 		const dirent * entry(readdir(subdir_dir));
@@ -170,11 +171,10 @@ add_related_bundles (
 		if (DT_DIR != entry->d_type && DT_LNK != entry->d_type) continue;
 #endif
 		if ('.' == entry->d_name[0]) continue;
-		const int dir_fd(open_dir_at(subdir_fd, entry->d_name));
+		const int dir_fd(open_dir_at(subdir_dir.fd(), entry->d_name));
 		if (0 > dir_fd) continue;
 		add_bundle(bundles, dir_fd, (b.path + b.name + "/") + subdir_name, entry->d_name, want);
 	}
-	closedir(subdir_dir);
 }
 
 static inline
@@ -200,9 +200,9 @@ lookup_without_adding (
 	const char * subdir_name
 ) {
 	bundle_pointer_set r;
-	const int subdir_fd(open_dir_at(b.bundle_dir_fd, subdir_name));
-	if (0 > subdir_fd) return r;
-	DIR * subdir_dir(fdopendir(subdir_fd));
+	FileDescriptorOwner subdir_fd(open_dir_at(b.bundle_dir_fd, subdir_name));
+	if (0 > subdir_fd.get()) return r;
+	const DirStar subdir_dir(subdir_fd);
 	if (!subdir_dir) return r;
 	for (;;) {
 		const dirent * entry(readdir(subdir_dir));
@@ -210,14 +210,12 @@ lookup_without_adding (
 #if defined(_DIRENT_HAVE_D_TYPE)
 		if (DT_DIR != entry->d_type && DT_LNK != entry->d_type) continue;
 #endif
-	if ('.' == entry->d_name[0]) continue;
-		const int dir_fd(open_dir_at(subdir_fd, entry->d_name));
-		if (0 > dir_fd) continue;
-		if (bundle * p = lookup_without_adding(bundles, dir_fd))
+		if ('.' == entry->d_name[0]) continue;
+		const FileDescriptorOwner dir_fd(open_dir_at(subdir_dir.fd(), entry->d_name));
+		if (0 > dir_fd.get()) continue;
+		if (bundle * p = lookup_without_adding(bundles, dir_fd.get()))
 			r.insert(p);
-		close(dir_fd);
 	}
-	closedir(subdir_dir);
 	return r;
 }
 
@@ -453,29 +451,25 @@ start_stop_common (
 		}
 		close(service_dir_fd);
 
-		const int log_supervise_dir_fd(open_dir_at(b.bundle_dir_fd, "log/supervise/"));
-		const int log_service_dir_fd(open_dir_at(b.bundle_dir_fd, "log/service/"));
-		if (0 <= log_supervise_dir_fd && 0 <= log_service_dir_fd) {
-			const bool log_was_already_loaded(is_ok(log_supervise_dir_fd));
+		const FileDescriptorOwner log_supervise_dir_fd(open_dir_at(b.bundle_dir_fd, "log/supervise/"));
+		const FileDescriptorOwner log_service_dir_fd(open_dir_at(b.bundle_dir_fd, "log/service/"));
+		if (0 <= log_supervise_dir_fd.get() && 0 <= log_service_dir_fd.get()) {
+			const bool log_was_already_loaded(is_ok(log_supervise_dir_fd.get()));
 			if (!log_was_already_loaded) {
-				const bool run_on_empty(!is_done_after_exit(log_service_dir_fd));
+				const bool run_on_empty(!is_done_after_exit(log_service_dir_fd.get()));
 				if (verbose)
 					std::fprintf(stderr, "%s: LOAD: %s%s\n", prog, (b.name + "/log").c_str(), run_on_empty ? " (remain)" : "");
 				if (!pretending) {
-					make_supervise_fifos (log_supervise_dir_fd);
-					load(prog, socket_fd, (b.name + "/log").c_str(), log_supervise_dir_fd, log_service_dir_fd);
+					make_supervise_fifos (log_supervise_dir_fd.get());
+					load(prog, socket_fd, (b.name + "/log").c_str(), log_supervise_dir_fd.get(), log_service_dir_fd.get());
 					if (run_on_empty)
-						make_run_on_empty(prog, socket_fd, log_supervise_dir_fd);
-					make_pipe_connectable(prog, socket_fd, log_supervise_dir_fd);
+						make_run_on_empty(prog, socket_fd, log_supervise_dir_fd.get());
+					make_pipe_connectable(prog, socket_fd, log_supervise_dir_fd.get());
 				}
 			}
 			if (!pretending)
-				plumb(prog, socket_fd, b.supervise_dir_fd, log_supervise_dir_fd);
+				plumb(prog, socket_fd, b.supervise_dir_fd, log_supervise_dir_fd.get());
 		}
-		if (0 <= log_supervise_dir_fd)
-			close(log_supervise_dir_fd);
-		if (0 <= log_service_dir_fd)
-			close(log_service_dir_fd);
 	}
 
 	// The main enacting loop; where we keep trying to start/stop any remaining services with pending actions until no more are left.

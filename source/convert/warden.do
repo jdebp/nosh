@@ -1,4 +1,7 @@
 #!/bin/sh -e
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
 #
 # Convert the PC-BSD Warden external configuration formats.
 # This is invoked by general-services.do .
@@ -31,7 +34,7 @@ convert_setting() {
 }
 
 ls -d -1 "${JDIR}/".*.meta 2>/dev/null |
-while read JMETADIR
+while read -r JMETADIR
 do
 	redo-ifchange "${JMETADIR}"
 	JAILNAME="`basename \"${JMETADIR}\" .meta`"

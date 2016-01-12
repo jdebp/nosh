@@ -76,6 +76,9 @@ write_escape (
 	const char * line,
 	const std::time_t & now,
 	const unsigned long users,
+#if !defined(_GNU_SOURCE)
+	const char domainname[],
+#endif
 	int c
 ) {
 	switch (c) {
@@ -89,6 +92,8 @@ write_escape (
 		case 'm':	std::fputs(uts.machine, stdout); break;
 #if defined(_GNU_SOURCE)
 		case 'o':	std::fputs(uts.domainname, stdout); break;
+#else
+		case 'o':	std::fputs(domainname, stdout); break;
 #endif
 		case 'l':	if (line) std::fputs(line, stdout); break;
 		case 'u':
@@ -157,12 +162,20 @@ login_banner (
 	uname(&uts);
 	const unsigned long users(count_users(utmp_filename));
 	const std::time_t now(std::time(0));
+#if !defined(_GNU_SOURCE)
+	char domainname[MAXHOSTNAMELEN];
+	getdomainname(domainname, sizeof domainname);
+#endif
 
 	if (FILE * const file = std::fopen(issue_filename, "r")) {
 		for (int c(std::fgetc(file)); EOF != c; c = std::fgetc(file)) {
 			if ('\\' == c) {
 				c = std::fgetc(file);
-				write_escape(uts, line, now, users, c);
+				write_escape(uts, line, now, users, 
+#if !defined(_GNU_SOURCE)
+						domainname, 
+#endif
+						c);
 			} else
 				std::fputc(c, stdout);
 		}

@@ -20,18 +20,18 @@ Description: Minimal non-shell script processor and various chain-load utilities
  nosh is a minimal script processor for use in the #! lines of scripts.
  .
  Included here are various commands for altering process state:
- * appendpath, chdir, chroot, clearenv, envdir, envuidgid, fdmove, fdredir
- * prependpath, read-conf, setenv, setsid, setuidgid, setuidgid-fromenv,
- * softlimit, ulimit, umask, unsetenv
+  * appendpath, chdir, chroot, clearenv, envdir, envuidgid, fdmove, fdredir
+  * prependpath, read-conf, setenv, setsid, setuidgid, setuidgid-fromenv,
+  * softlimit, ulimit, umask, unsetenv
  .
  Also present are commands useful for daemon implementations:
- * false, line-banner, true, recordio, setlock,
- * fifo--listen,
- * local-datagram-socket-listen,
- * local-stream-socket-accept, local-stream-socket-listen,
- * udp-socket-listen,
- * tcp-socket-accept, tcp-socket-listen, 
- * tcp-socket-connect, tcp-socket-connect, 
+  * false, line-banner, true, recordio, setlock,
+  * fifo--listen,
+  * local-datagram-socket-listen,
+  * local-stream-socket-accept, local-stream-socket-listen,
+  * udp-socket-listen,
+  * tcp-socket-accept, tcp-socket-listen, 
+  * tcp-socket-connect, tcp-socket-connect, 
 
 Package: nosh-service-management
 Architecture: amd64
@@ -47,7 +47,7 @@ Description: Service and system management utilities
  Or one can instead run this its system manager as process #1.
  .
  It also provides compatibility commands for those familiar with daemontools and daemontools-encore.
- * svc, svok, svscan, svshow, svstat, svup
+  * svc, svok, svscan, svshow, svstat, svup
  The shims simply invoke native service management commands.
 
 Package: nosh-terminal-management
@@ -63,7 +63,7 @@ Description: Virtual terminal, pseudo-terminal, and TUI login tools
  * login-banner,login-process, login-prompt, open-controlling-tty, ttylogin-starter
  .
  Also present are commands for pseudo-terminals and virtual consoles:
- * console-terminal-emulator, console-ncurses-realizer, console-fb-realizer, pty-get-tty, pty-run, vc-get-tty, vc-reset-tty
+  * console-terminal-emulator, console-ncurses-realizer, console-fb-realizer, pty-get-tty, pty-run, vc-get-tty, vc-reset-tty
 
 Package: nosh-terminal-extras
 Architecture: amd64
@@ -72,7 +72,7 @@ Suggests:
 Recommends: execline
 Description: Extra terminal utilities
  This package provides extra tools for use with terminals, including:
- * getty, ptybandage, ptyrun
+  * getty, ptybandage, ptyrun
 
 Package: nosh-systemv-shims
 Architecture: amd64
@@ -81,11 +81,11 @@ Suggests:
 Recommends: 
 Description: BSD and System 5 shim service and system management utilities
  This package provides shims for old-style BSD and System 5 system management commands.
- * service, chkconfig
- * init, shutdown, telinit, halt, poweroff, reboot
- * emergency, normal, rescue
- * fasthalt, fastpoweroff, fastboot
- * rcctl
+  * service, chkconfig
+  * init, shutdown, telinit, halt, poweroff, reboot
+  * emergency, normal, rescue
+  * fasthalt, fastpoweroff, fastboot
+  * rcctl
  .
  The shims simply invoke native service management commands.
 
@@ -96,7 +96,7 @@ Suggests:
 Recommends: 
 Description: systemd shim service and system management utilities
  This package provides shims for systemd service and system management commands.
- * systemctl, systemd
+  * systemctl, systemd
  .
  The shims simply invoke native service management commands.
 
@@ -107,7 +107,7 @@ Suggests:
 Recommends: 
 Description: upstart shim service and system management utilities
  This package provides shims for upstart service and system management commands.
- * initctl, start, stop, enable, disable
+  * initctl, start, stop, enable, disable
  .
  The shims simply invoke native service management commands.
 
@@ -119,7 +119,7 @@ Recommends:
 Conflicts: nosh-run-via-systemd, upstart, sysvinit-core, systemd-sysv
 Description: Debian shim service and system management utilities
  This package provides shims for Debian service and system management commands.
- * invoke-rc.d, update-rc.d
+  * invoke-rc.d, update-rc.d
  .
  The shims simply invoke native service management commands.
 

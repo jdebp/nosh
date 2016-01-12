@@ -6,6 +6,7 @@
 Description=Kerberos v5 password daemon
 
 [Service]
+EnvironmentDirectory=env
 ExecStart=/usr/libexec/%p
 Restart=always
 

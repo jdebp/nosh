@@ -13,6 +13,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #if defined(__LINUX__) || defined(__linux__)
 #include <linux/vt.h>
+#else
+#include <sys/wait.h>
 #endif
 #include "popt.h"
 #include "fdutils.h"
@@ -169,6 +171,7 @@ ttylogin_starter (
 			}
 		}
 	}
+	throw EXIT_SUCCESS;
 #else
 	for (unsigned int i(0); i < 16; ++i) {
 		const int system_control_pid(fork());
@@ -192,6 +195,14 @@ ttylogin_starter (
 			return;
 		}
 	}
+
+	// Reap all of the children just created.
+	int status;
+	waitpid(-1, &status, 0);
+
+	args.clear();
+	args.insert(args.end(), "pause");
+	args.insert(args.end(), 0);
+	next_prog = arg0_of(args);
 #endif
-	throw EXIT_SUCCESS;
 }

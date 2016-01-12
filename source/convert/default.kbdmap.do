@@ -1,5 +1,10 @@
 #!/bin/sh -e
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+#
 # 2015-12-03: This line forces a rebuild for the new map file layout.
+# 2015-12-21: This line forces a rebuild for the new map file layout.
 n="`basename "$1"`"
 case "$n" in
 *.capsctrl)	capsctrl=swap_capsctrl.kbd;n="${n%.capsctrl}";;

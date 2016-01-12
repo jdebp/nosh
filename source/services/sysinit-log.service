@@ -11,7 +11,7 @@ Before=shutdown.target
 
 [Service]
 PermissionsStartOnly=true
-User=log
+User=sysinit-log
 WorkingDirectory=/var/log/sv
 ExecStart=cyclog sysinit/
 Restart=always

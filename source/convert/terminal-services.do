@@ -1,4 +1,7 @@
 #!/bin/sh -e
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
 #
 # Convert the /etc/ttys external configuration format.
 # This is invoked by all.do .
@@ -43,7 +46,7 @@ if test -d "${keymaps}"
 then
 	redo-ifchange "${keymaps}"
 	find "${keymaps}" -name '*.kbd' |
-	while read k
+	while read -r k
 	do
 		b="`basename \"$k\" .kbd`"
 		case "$b" in
@@ -98,7 +101,7 @@ do
 	fi
 done
 
-list_kernel_virtual_terminals | while read i
+list_kernel_virtual_terminals | while read -r i
 do
 	n="`basename \"$i\"`"
 	if ! test -e "$i"
@@ -118,7 +121,7 @@ do
 	fi
 done
 
-list_user_virtual_terminals | while read i
+list_user_virtual_terminals | while read -r i
 do
 	n="`basename \"$i\"`"
 	system-control preset --ttys --prefix "cyclog@ttylogin@" -- "$n-tty"
@@ -131,7 +134,7 @@ do
 	fi
 done
 
-list_real_terminals | while read i
+list_real_terminals | while read -r i
 do
 	n="`basename \"$i\"`"
 	if test -e "$i"

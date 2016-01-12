@@ -44,27 +44,47 @@ FramebufferIO::save_and_set_graphics_mode(
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, fb_filename, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	video_mode = M_VESA_FULL_1280;
+    	int max_depth(0);
+	for (int mode(0); mode <= M_VESA_MODE_MAX; ++mode) {
+		mode_info.vi_mode = mode;
+		if (0 > ioctl(fd, FBIO_MODEINFO, &mode_info)) continue;
+		if (!(mode_info.vi_flags & V_INFO_GRAPHICS)) continue;
+		if (mode_info.vi_mem_model != V_INFO_MM_PACKED && mode_info.vi_mem_model != V_INFO_MM_DIRECT) continue;
+		if (max_depth < mode_info.vi_depth)
+			max_depth = mode_info.vi_depth;
+	}
+	video_mode = -1;
+    	int max_width(0), max_height(0);
+	for (int mode(0); mode <= M_VESA_MODE_MAX; ++mode) {
+		mode_info.vi_mode = mode;
+		if (0 > ioctl(fd, FBIO_MODEINFO, &mode_info)) continue;
+		if (!(mode_info.vi_flags & V_INFO_GRAPHICS)) continue;
+		if (mode_info.vi_mem_model != V_INFO_MM_PACKED && mode_info.vi_mem_model != V_INFO_MM_DIRECT) continue;
+		if (max_depth > mode_info.vi_depth) continue;
+		if ((max_width * max_height) > (mode_info.vi_width * mode_info.vi_height)) continue;
+		video_mode = mode;
+		max_width = mode_info.vi_width;
+		max_height = mode_info.vi_height;
+	}
+	if (0 > video_mode) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, fb_filename, "No good graphics video mode found.");
+		throw EXIT_FAILURE;
+	}
+	mode_info.vi_mode = video_mode;
 	if ((0 > ioctl(fd, FBIO_SETMODE, &video_mode))
-	|| (0 > ioctl(fd, FBIO_GETMODE, &video_mode))
+	||  (0 > ioctl(fd, FBIO_GETMODE, &video_mode))
+	||  (0 > ioctl(fd, FBIO_ADPINFO, &adapter_info)) 
+	||  (0 > ioctl(fd, FBIO_MODEINFO, &mode_info))
 	) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, fb_filename, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	variable_info.vi_mode = video_mode;
-	if ((0 > ioctl(fd, FBIO_ADPINFO, &adapter_info)) 
-	|| (0 > ioctl(fd, FBIO_MODEINFO, &variable_info))
-	) {
-		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, fb_filename, std::strerror(error));
-		throw EXIT_FAILURE;
-	}
-	if (!(variable_info.vi_flags & V_INFO_GRAPHICS)) {
+	if (!(mode_info.vi_flags & V_INFO_GRAPHICS)) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, fb_filename, "Did not change to graphics mode.");
 		throw EXIT_FAILURE;
 	}
-	if (variable_info.vi_mem_model != V_INFO_MM_PACKED && variable_info.vi_mem_model != V_INFO_MM_DIRECT) {
+	if (mode_info.vi_mem_model != V_INFO_MM_PACKED && mode_info.vi_mem_model != V_INFO_MM_DIRECT) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, fb_filename, "Not a packed/direct colour device.");
 		throw EXIT_FAILURE;
 	}

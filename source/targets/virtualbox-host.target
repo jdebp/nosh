@@ -5,10 +5,6 @@
 [Unit]
 Description=VirtualBox host machine target
 EarlySupervise=true
-Wants=kmod@vboxdrv
-Wants=kmod@vboxnetadp
-Wants=kmod@vboxnetflt
-Wants=kmod@vboxpci
 
 [Service]
 User=nobody

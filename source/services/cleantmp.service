@@ -7,7 +7,7 @@ Description=Clean-up /tmp contents
 
 [Service]
 Type=oneshot
-WorkingDirectory=/tmp/
+EnvironmentDirectory=env
 ExecStart=./helper
 RemainAfterExit=yes
 

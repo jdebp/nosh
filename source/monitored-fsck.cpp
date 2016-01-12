@@ -13,6 +13,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include "utils.h"
 #include "popt.h"
+#include "FileDescriptorOwner.h"
 
 /* Main function ************************************************************
 // **************************************************************************
@@ -37,23 +38,20 @@ monitored_fsck (
 	addr.sun_len = SUN_LEN(&addr);
 #endif
 
-	const int socket_fd(socket(AF_UNIX, SOCK_STREAM, 0));
-	if (0 > socket_fd) {
+	FileDescriptorOwner socket_fd(socket(AF_UNIX, SOCK_STREAM, 0));
+	if (0 > socket_fd.get()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: ERROR: %s\n", prog, std::strerror(error));
 	} else {
-		if (0 <= connect(socket_fd, reinterpret_cast<const sockaddr *>(&addr), sizeof addr)) {
+		if (0 <= connect(socket_fd.get(), reinterpret_cast<const sockaddr *>(&addr), sizeof addr)) {
 #if defined(__LINUX__) || defined(__linux__)
 			char buf[64];
-			snprintf(buf, sizeof buf, "-C%d", socket_fd);
+			snprintf(buf, sizeof buf, "-C%d", socket_fd.get());
 			progress_option = buf;
 			std::vector<const char *>::iterator p(args.begin());
 			args.insert(++p, progress_option.c_str());
-#else
-			close(socket_fd);
+			socket_fd.release();
 #endif
-		} else {
-			close(socket_fd);
 		}
 	}
 

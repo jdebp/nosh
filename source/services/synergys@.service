@@ -6,7 +6,8 @@
 Description=Synergy Server Daemon for user %i
 
 [Service]
-EnvironmentFile=/etc/default/%p
+EnvironmentDirectory=env
+#EnvironmentFile=/etc/default/%p
 ExecStart=%p --no-daemon --enable-crypto
 User=%i
 Restart=always

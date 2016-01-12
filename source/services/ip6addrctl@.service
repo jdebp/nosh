@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Set up Internet Protocol address selection to prefer %i, with %p
+
+[Service]
+Type=oneshot
+ExecStart=./helper %p
+ExecStopPost=%p flush
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

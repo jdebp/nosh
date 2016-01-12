@@ -63,7 +63,7 @@ dir="$2"
 	echo "}"
 	cd "${dir}"
 	echo "directories: {"
-	for j in *bin usr var etc
+	for j in *bin usr var etc run
 	do
 		test -d "$j" && find "$j" -type d
 	done | while read k
@@ -72,14 +72,14 @@ dir="$2"
 	done
 	echo "}"
 	echo "files: {"
-	for j in *bin usr var etc
+	for j in *bin usr var etc run
 	do
 		test -d "$j" && find "$j" -type l
 	done | while read k
 	do
 		echo "  " "\"/$k\":" "'-'"
 	done
-	for j in *bin usr var etc
+	for j in *bin usr var etc run
 	do
 		test -d "$j" && find "$j" -type f
 	done | while read k

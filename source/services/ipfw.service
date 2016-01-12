@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD IP firewall service
+After=kmod@dummynet kmod@ipfw_nat kmod@ipdivert
+
+[Service]
+Type=oneshot
+EnvironmentDirectory=env
+ExecStart=if sh "${script:-/etc/rc.firewall}" ; then sysctl net.inet.ip.fw.enable=1 ; sysctl net.inet6.ip6.fw.enable=1 ; fi
+ExecStopPost=sysctl net.inet.ip.fw.enable=0
+ExecStopPost=sysctl net.inet6.ip6.fw.enable=1
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

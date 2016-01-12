@@ -7,7 +7,7 @@ Description=Combined logger for spppcontrol@ services
 
 [Service]
 PermissionsStartOnly=true
-User=log
+User=sppp-log
 WorkingDirectory=/var/log/sv
 ExecStart=cyclog sppp/
 Restart=always

@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=Background filesystem check
+Description=Background filesystem check (deprecated in favour of fsck@device service bundles)
 DefaultDependencies=false
 
 [Service]

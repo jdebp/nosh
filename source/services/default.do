@@ -70,7 +70,7 @@ Linux)	etc_services="../package/common-etc-services ../package/linux-etc-service
 esac
 
 case "${base}" in
-sppp-log|natd-log|cyclog@*) 
+ppp-log|sppp-log|rfcomm_pppd-log|natd-log|cyclog@*) 
 	log=
 	etc=
 	;;

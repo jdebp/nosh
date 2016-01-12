@@ -19,6 +19,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "common-manager.h"
 #include "fdutils.h"
 #include "popt.h"
+#include "FileDescriptorOwner.h"
 
 /* Main function ************************************************************
 // **************************************************************************
@@ -164,8 +165,8 @@ make_private_fs (
 			"tty",
 		};
 
-		const int old_dev_fd(open_dir_at(AT_FDCWD, "/dev"));
-		if (0 > old_dev_fd) {
+		const FileDescriptorOwner old_dev_fd(open_dir_at(AT_FDCWD, "/dev"));
+		if (0 > old_dev_fd.get()) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "/dev", std::strerror(error));
 			throw EXIT_FAILURE;
@@ -192,23 +193,21 @@ make_private_fs (
 				throw EXIT_FAILURE;
 			}
 		}
-		const int new_dev_fd(open_dir_at(AT_FDCWD, "/dev"));
-		if (0 > new_dev_fd) {
+		const FileDescriptorOwner new_dev_fd(open_dir_at(AT_FDCWD, "/dev"));
+		if (0 > new_dev_fd.get()) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "/dev", std::strerror(error));
 			throw EXIT_FAILURE;
 		}
 		for (const char ** i(device_files); (device_files + sizeof device_files/sizeof *device_files) != i; ++i) {
 			struct stat s;
-			if (0 > fstatat(old_dev_fd, *i, &s, 0)) continue;
+			if (0 > fstatat(old_dev_fd.get(), *i, &s, 0)) continue;
 			if (!S_ISBLK(s.st_mode) && !S_ISCHR(s.st_mode)) continue;
-			if (0 > mknodat(new_dev_fd, *i, s.st_mode, s.st_rdev)) {
+			if (0 > mknodat(new_dev_fd.get(), *i, s.st_mode, s.st_rdev)) {
 				const int error(errno);
 				std::fprintf(stderr, "%s: ERROR: %s: %s: %s\n", prog, "mknod", *i, std::strerror(error));
 				throw EXIT_FAILURE;
 			}
 		}
-		close(new_dev_fd);
-		close(old_dev_fd);
 	}
 }

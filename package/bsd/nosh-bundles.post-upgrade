@@ -1,4 +1,19 @@
 #!/bin/sh -
+# adjust to new log users
+for i in
+	devd \
+	natd \
+	sppp \
+	sysinit \
+do
+	if test -d /var/log/sv/$i/
+	then
+		chown "$i"-log /var/log/sv/$i/
+		test -e /var/log/sv/$i/lock && chown "$i"-log /var/log/sv/$i/lock
+		test -e /var/log/sv/$i/current && chown "$i"-log /var/log/sv/$i/current
+		test -e /var/log/sv/$i/@* && chown "$i"-log /var/log/sv/$i/@*
+	fi
+done
 # common services
 for I in \
 	anacron \
@@ -12,6 +27,7 @@ for I in \
 	cleantmp \
 	cleanX \
 	console-kit-daemon \
+	convert_varrun \
 	darkice \
 	ddclient \
 	deluged \
@@ -125,6 +141,7 @@ done
 for I in \
 	natd \
 	sppp \
+	sysinit \
 	;
 do
 	if system-control is-loaded "$I"-log.service
@@ -183,6 +200,7 @@ for i in \
 	auditd \
 	auditdistd \
 	bsdstats \
+	bsd-serial-init \
 	bsnmpd \
 	bthidd \
 	ccd \
@@ -202,29 +220,26 @@ for i in \
 	ipxrouted \
 	iscsictl \
 	iscsid \
+	ipfw \
+	ipfw0 \
 	keyserv \
-	kmod@mac_bsdextended \
-	kmod@ctl \
-	kmod@geom_gate \
-	kmod@ipdivert \
-	kmod@ibcs2 \
-	kmod@ipl \
-	kmod@iscsi \
-	kmod@kbdmux \
-	kmod@ng_btsocket \
-	kmod@vkbd \
-	kmod@pf \
-	kmod@pflog \
-	kmod@pfsync \
 	kmod@acpi_video \
 	kmod@bwi_v3_ucode \
 	kmod@bwn_v4_ucode \
+	kmod@ctl \
 	kmod@cuse4bsd \
+	kmod@dummynet \
 	kmod@ext2fs \
 	kmod@fdescfs \
+	kmod@geom_gate \
 	kmod@geom_uzip \
+	kmod@ibcs2 \
 	kmod@if_bwi \
 	kmod@if_bwn \
+	kmod@ipdivert \
+	kmod@ipfw_nat \
+	kmod@ipl \
+	kmod@iscsi \
 	kmod@iwn1000fw \
 	kmod@iwn4965fw \
 	kmod@iwn5000fw \
@@ -233,17 +248,23 @@ for i in \
 	kmod@iwn6000g2afw \
 	kmod@iwn6000g2bfw \
 	kmod@iwn6050fw \
+	kmod@kbdmux \
 	kmod@libiconv \
 	kmod@libmchain \
 	kmod@linsysfs \
+	kmod@mac_bsdextended \
 	kmod@mmc \
 	kmod@mmcsd \
 	kmod@msdosfs_iconv \
 	kmod@nfscl \
+	kmod@ng_btsocket \
 	kmod@ng_ubt \
 	kmod@ntfs \
 	kmod@ntfs_iconv \
 	kmod@pefs \
+	kmod@pf \
+	kmod@pflog \
+	kmod@pfsync \
 	kmod@reiserfs \
 	kmod@runfw \
 	kmod@scd \
@@ -251,6 +272,7 @@ for i in \
 	kmod@smbfs \
 	kmod@udf \
 	kmod@udf_iconv \
+	kmod@vkbd \
 	kmod@xfs \
 	ldconfig \
 	lpd \
@@ -263,6 +285,7 @@ for i in \
 	nfsclient \
 	nfsuserd \
 	pbid \
+	pefs \
 	pf \
 	pflog \
 	pfsync \

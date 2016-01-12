@@ -22,6 +22,7 @@ case "$1" in
 			cleantmp \
 			cleanX \
 			console-kit-daemon \
+			convert_varrun \
 			darkice \
 			ddclient \
 			deluged \
@@ -191,6 +192,7 @@ case "$1" in
 		for i in \
 			natd \
 			sppp \
+			sysinit \
 			;
 		do
 			system-control unload-when-stopped "$i"-log.service
@@ -201,7 +203,6 @@ case "$1" in
 			dmesg \
 			hostname \
 			machine-id \
-			sysinit-log \
 			emergency-login@console \
 			;
 		do
@@ -322,6 +323,7 @@ case "$1" in
 		# non-log users
 		for I in \
 			klogd \
+			syslogd \
 			;
 		do
 			i="`escape "$I"`"

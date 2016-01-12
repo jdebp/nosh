@@ -1,16 +1,19 @@
 #!/bin/sh -e
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
 #
 # Special setup for natd.
 # This is invoked by general-services.do .
 #
 
 # These get us *only* the configuration variables, safely.
-read_rc() { if type sysrc >/dev/null 2>&1 ; then sysrc -i -n "$1" ; else clearenv read-conf -oknofile /etc/rc.conf read-conf -oknofile /etc/rc.conf.local `which printenv` "$1" ; fi }
+read_rc() { if type sysrc >/dev/null 2>&1 ; then sysrc -i -n "$1" ; else clearenv read-conf -oknofile /etc/defaults/rc.conf read-conf -oknofile /etc/rc.conf read-conf -oknofile /etc/rc.conf.local `which printenv` "$1" ; fi }
 list_natd_interfaces() { read_rc natd_interface || true ; }
-list_network_interfaces() { read_rc network_interfaces || ifconfig -l | while read i ; do echo "$i" ; done ; }
+list_network_interfaces() { read_rc network_interfaces || ifconfig -l | while read -r i ; do echo "$i" ; done ; }
 get_ifconfig() { read_rc ifconfig_"$1" || read_rc ifconfig_DEFAULT || true ; }
 
-for i in /etc/rc.conf.local /etc/rc.conf
+for i in /etc/defaults/rc.conf /etc/rc.conf.local /etc/rc.conf
 do
 	if test -e "$i"
 	then
@@ -26,7 +29,7 @@ e="--no-systemd-quirks --escape-instance --bundle-root"
 redo-ifchange "natd@.service"
 
 list_network_interfaces |
-while read i
+while read -r i
 do
 	test -z "$i" && continue
 	natd_service="natd@$i"
@@ -51,7 +54,7 @@ do
 done
 
 list_natd_interfaces |
-while read i
+while read -r i
 do
 	test -z "$i" && continue
 	system-control preset "natd@$i"

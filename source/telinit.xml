@@ -5,7 +5,7 @@
 <manvolnum>8</manvolnum>
 <refmiscinfo class="manual">administrator commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.23</refmiscinfo>
+<refmiscinfo class="version">1.24</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -175,6 +175,10 @@ For individual control of services without orderings or dependencies, use <citer
 <cmdsynopsis>
 <command>update-rc.d</command>
 <arg choice="req"><replaceable>name</replaceable></arg>
+<group choice="opt">
+<arg choice="plain">-f</arg>
+<arg choice="plain">--force</arg>
+</group>
 <group choice="req">
 <arg choice="plain">enable</arg>
 <arg choice="plain">disable</arg>
@@ -198,7 +202,11 @@ Hence the replacement of <arg choice="plain">start</arg> by <arg choice="plain">
 <para>
 Invoked as <command>update-rc.d</command> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice="plain"><replaceable>command1</replaceable></arg>, the program chains to <command>system-control</command> <arg choice="plain"><replaceable>command2</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>.
 <replaceable>command1</replaceable> may only be one of <arg choice="plain">defaults</arg>, <arg choice="plain">enable</arg>, <arg choice="plain">disable</arg>, or <arg choice="plain">remove</arg>, which are translated to <arg choice="plain">preset</arg>, <arg choice="plain">preset</arg>, <arg choice="plain">disable</arg>, and <arg choice="plain">disable</arg> (respectively) for <replaceable>command2</replaceable>.
-Note that the <arg choice="plain">start</arg> and <arg choice="plain">stop</arg> subcommands of the original tool have been deprecated.
+</para>
+
+<para>
+The <arg choice='plain'>--force</arg> option has no translatable meaning, does nothing, and is present for compatibility only.
+Note also that the <arg choice="plain">start</arg> and <arg choice="plain">stop</arg> subcommands of the original tool were eliminated, as part of <ulink url="http://anonscm.debian.org/cgit/collab-maint/sysvinit.git/commit/?id=6323a1e4eb39ed1c050b1e74b6baef92dcfde4b1">eliminating all support for non-LSB-header-based System 5 <command>rc</command></ulink>, in July 2013.
 This command makes no attempt to support any such mechanism.
 </para>
 
@@ -207,12 +215,13 @@ This command makes no attempt to support any such mechanism.
 
 <cmdsynopsis>
 <command>service</command>
+<arg choice="opt">--verbose</arg>
 <arg choice="req"><replaceable>name</replaceable></arg>
 <arg choice="req"><replaceable>command</replaceable></arg>
 </cmdsynopsis>
 
 <para>
-Invoked as <command>service</command> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice="plain"><replaceable>command</replaceable></arg>, the program chains to <command>system-control</command> <arg choice="plain"><replaceable>command</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>.
+Invoked as <command>service</command> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice="plain"><replaceable>command</replaceable></arg>, the program chains to <command>system-control</command> <arg choice="plain"><replaceable>command</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>, passing along any <arg choice='plain'>--verbose</arg> option.
 It makes no attempt itself to validate <replaceable>command</replaceable>, which can be any of the subcommands supported by <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 However, for best results restrict <replaceable>command</replaceable> to one of <arg choice="plain">start</arg>, <arg choice="plain">stop</arg>, or <arg choice="plain">status</arg>.
 </para>

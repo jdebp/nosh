@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.23</refmiscinfo>
+<refmiscinfo class="version">1.24</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -37,7 +37,7 @@ To control what virtual terminals have auto-started <code>ttylogin@.service</cod
 <refsection><title>BSD BEHAVIOUR</title>
 
 <para>
-On BSD operating systems it simply and unconditionally starts services for all 16 virtual terminals from <code>ttyv0</code> to <code>ttyvf</code>.
+On BSD operating systems it simply and unconditionally starts services for all 16 virtual terminals from <code>ttyv0</code> to <code>ttyvf</code>, and then pauses forever.
 </para>
 
 </refsection>

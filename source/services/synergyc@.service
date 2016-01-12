@@ -6,7 +6,8 @@
 Description=Synergy Client Daemon for user %i
 
 [Service]
-EnvironmentFile=/etc/default/%p
+EnvironmentDirectory=env
+#EnvironmentFile=/etc/default/%p
 ExecStart=%p --no-daemon --debug ${DEBUGLEVEL:-INFO} ${SERVERALIAS}
 User=%i
 Restart=always

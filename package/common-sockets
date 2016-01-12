@@ -2,6 +2,8 @@ avahi-daemon
 axfrdns
 bcron-spool
 dbus
+dbmail-imapd
+dbmail-pop3d
 exim4-smtp-relay
 exim4-smtp-submission
 fcgiwrap

@@ -1,3 +1,18 @@
+nosh (1.24) unstable; urgency=low
+
+  * Made BSD keymap conversion more compatible, at the expense of true combining umlaut support.  This fixes a problem with the Brazilian keyboard layout.
+  * BSD systemd unit conversion now makes use of the rtprio and idprio chain loading commands.
+  * More BSD services: bsd-serial-init, static_arp@, static_ndp@, static-networking, ipfw, ipfw0, pefs, entropy, ip6addrctl@ipv4, ip6addrctl@ip6, hald, mdmfs@-tmp, mdmfs@-var
+  * BSD configuration import now creates mount service bundles for ZFS volumes.
+  * console-fb-realizer now attempts to pick the "best" video mode on BSD.
+  * The nosh-bundles package now creates the missing /var/local/sv/ and /run/ on BSD.
+  * There is now a ppp configuration import.
+  * There is now an rfcomm_pppd configuration import.
+  * More cross-platform services: dbmail-imapd, dbmail-pop3d
+  * More Linux services: sudo
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Tue, 12 Jan 2016 08:25:37 +0000
+
 nosh (1.23) unstable; urgency=low
 
   * More Linux services: gpsd

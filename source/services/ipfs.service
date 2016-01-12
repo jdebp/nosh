@@ -8,6 +8,7 @@ After=ipnat.service ipf.service
 Wants=ipnat.service
 
 [Service]
+EnvironmentDirectory=env
 ExecStart=%p -R -v
 ExecStopPost=mkdir -m 0700 /var/db/ipf
 ExecStopPost=chown root:wheel /var/db/ipf

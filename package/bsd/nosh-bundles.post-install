@@ -1,10 +1,13 @@
 #!/bin/sh -
 escape() { echo "$1"|sed -e 's/_/_x5f/g' -e 's/@/_x40/g' -e 's/:/_x3a/g' ; }
-add_log() { mkdir -m 0755 -p /var/log/sv/"$2" ; chown "$1"-log /var/log/sv/"$2" ; }
+add_log() { mkdir -m 0755 -p /var/log/sv/"$2" ; chown "$1" /var/log/sv/"$2" ; }
 add_user() { getent passwd "$1" > /dev/null || pw useradd "$1" -s /bin/false ; }
+# /run is now in the root.
+test -e /var/run || ln -s -f -- /run /var/
 # non-log users
 for I in \
 	klogd \
+	syslogd \
 	;
 do
 	i="`escape "$I"`"
@@ -23,6 +26,7 @@ for I in \
 	cleantmp \
 	cleanX \
 	console-kit-daemon \
+	convert_varrun \
 	darkice \
 	ddclient \
 	deluged \
@@ -129,7 +133,7 @@ for I in \
 do
 	i="`escape "$I"`"
 	add_user "$i"-log
-	add_log "$i" "$I"
+	add_log "$i"-log "$I"
 	system-control preset $I.service
 	system-control preset --prefix cyclog@ $I.service
 done
@@ -168,7 +172,7 @@ for I in \
 do
 	i="`escape "$I"`"
 	add_user "$i"-log
-	add_log "$i" "$I"
+	add_log "$i"-log "$I"
 	system-control preset $I.socket
 	system-control preset --prefix cyclog@ $I.service
 done
@@ -176,11 +180,12 @@ done
 for I in \
 	natd \
 	sppp \
+	sysinit \
 	;
 do
 	i="`escape "$I"`"
 	add_user "$i"-log
-	add_log "$i" "$I"
+	add_log "$i"-log "$I"
 	system-control preset "$I"-log.service
 done
 # common services that fan in to a single logger
@@ -188,7 +193,6 @@ for I in \
 	dmesg \
 	hostname \
 	machine-id \
-	sysinit-log \
 	emergency-login@console \
 	;
 do
@@ -203,6 +207,7 @@ for I in \
 	auditd \
 	auditdistd \
 	bsdstats \
+	bsd-serial-init \
 	bsnmpd \
 	bthidd \
 	ccd \
@@ -222,29 +227,26 @@ for I in \
 	ipxrouted \
 	iscsictl \
 	iscsid \
+	ipfw \
+	ipfw0 \
 	keyserv \
-	kmod@mac_bsdextended \
-	kmod@ctl \
-	kmod@geom_gate \
-	kmod@ipdivert \
-	kmod@ibcs2 \
-	kmod@ipl \
-	kmod@iscsi \
-	kmod@kbdmux \
-	kmod@ng_btsocket \
-	kmod@vkbd \
-	kmod@pf \
-	kmod@pflog \
-	kmod@pfsync \
 	kmod@acpi_video \
 	kmod@bwi_v3_ucode \
 	kmod@bwn_v4_ucode \
+	kmod@ctl \
 	kmod@cuse4bsd \
+	kmod@dummynet \
 	kmod@ext2fs \
 	kmod@fdescfs \
+	kmod@geom_gate \
 	kmod@geom_uzip \
+	kmod@ibcs2 \
 	kmod@if_bwi \
 	kmod@if_bwn \
+	kmod@ipdivert \
+	kmod@ipfw_nat \
+	kmod@ipl \
+	kmod@iscsi \
 	kmod@iwn1000fw \
 	kmod@iwn4965fw \
 	kmod@iwn5000fw \
@@ -253,17 +255,23 @@ for I in \
 	kmod@iwn6000g2afw \
 	kmod@iwn6000g2bfw \
 	kmod@iwn6050fw \
+	kmod@kbdmux \
 	kmod@libiconv \
 	kmod@libmchain \
 	kmod@linsysfs \
+	kmod@mac_bsdextended \
 	kmod@mmc \
 	kmod@mmcsd \
 	kmod@msdosfs_iconv \
 	kmod@nfscl \
+	kmod@ng_btsocket \
 	kmod@ng_ubt \
 	kmod@ntfs \
 	kmod@ntfs_iconv \
 	kmod@pefs \
+	kmod@pf \
+	kmod@pflog \
+	kmod@pfsync \
 	kmod@reiserfs \
 	kmod@runfw \
 	kmod@scd \
@@ -271,6 +279,7 @@ for I in \
 	kmod@smbfs \
 	kmod@udf \
 	kmod@udf_iconv \
+	kmod@vkbd \
 	kmod@xfs \
 	ldconfig \
 	lpd \
@@ -283,6 +292,7 @@ for I in \
 	nfsclient \
 	nfsuserd \
 	pbid \
+	pefs \
 	pf \
 	pflog \
 	pfsync \
@@ -326,7 +336,7 @@ for I in \
 do
 	i="`escape "$I"`"
 	add_user "$i"-log
-	add_log "$i" "$I"
+	add_log "$i"-log "$I"
 	system-control preset $I.service
 	system-control preset --prefix cyclog@ $I.service
 done
@@ -337,7 +347,7 @@ for I in \
 do
 	i="`escape "$I"`"
 	add_user "$i"-log
-	add_log "$i" "$I"
+	add_log "$i"-log "$I"
 	system-control preset $I.socket
 	system-control preset --prefix cyclog@ $I.service
 done
@@ -345,7 +355,6 @@ done
 for I in \
 	background-fsck \
 	devd \
-	devd-log \
 	kmod@fuse \
 	kmod@linux \
 	kmod@sysvmsg \
@@ -357,6 +366,15 @@ for I in \
 	;
 do
 	system-control preset $I.service
+done
+for I in \
+	devd \
+	;
+do
+	i="`escape "$I"`"
+	add_user "$i"-log
+	add_log "$i"-log "$I"
+	system-control preset "$I"-log.service
 done
 # targets
 for I in \

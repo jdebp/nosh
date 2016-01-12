@@ -8,6 +8,7 @@ After=kmod@%p
 Wants=kmod@%p
 
 [Service]
+EnvironmentDirectory=env
 ExecStart=ifconfig %p0 up
 ExecStart=%pd -D
 ExecStopPost=ifconfig %p0 down

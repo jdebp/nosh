@@ -7,6 +7,8 @@ geom.do
 host.conf.do
 jails.do
 kernel-modules.do
+kernel-vt.do
+mdmfs.do
 natd.do
 natd@.service
 openldap.do
@@ -14,8 +16,15 @@ savecore.do
 soft_backspace.kbd
 sppp.do
 spppcontrol@.service
+ppp.do
+ppp@.service
+rfcomm_pppd.do
+rfcomm_pppd@.service
 sysctl.conf.do
 swap_capsctrl.kbd
+static_arp@.service
+static_ndp@.service
+static-networking.do
 terminal-services.do
 tinydns.do
 user-dbus-log@.service
@@ -32,3 +41,5 @@ warden-jail@.service
 warden-jailed@.service
 warden.do
 us_to_uk.kbd
+pefs.do
+pefs-mount@.service

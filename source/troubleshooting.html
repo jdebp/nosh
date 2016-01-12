@@ -5,7 +5,7 @@
 Troubleshooting
 </h1>
 
-<h2>
+<h2 style="border-bottom: 1px solid grey">
 A service is continually switching between the "running" and "failed" states, and shows an uptime of 0 seconds (or 1 second).
 </h2>
 
@@ -14,7 +14,7 @@ A service is continually switching between the "running" and "failed" states, an
 This service is failing to start properly; investigate its log and check its run script.</a>
 </p>
 
-<h2>
+<h2 style="border-bottom: 1px solid grey">
 A service is stuck in the "starting", "failed", or "stopping" states.
 </h2>
 
@@ -30,7 +30,7 @@ The "fsck@" service <code>fsck</code>s a volume in its "starting" state, for exa
 These long-running initialization actions are <em>not</em> necessarily stuck just because they take a long time.
 </p>
 
-<h2>
+<h2 style="border-bottom: 1px solid grey">
 The system bootstrap never fully completes
 </h2>
 
@@ -108,7 +108,7 @@ Notice that "sysinit" services <a href="startup-and-shutdown.html#sysinit">locat
 The point where they are loaded by the service manager is well before the point that the <code>/var</code> or <code>/</code> volumes are mounted read-write.
 </p>
 
-<h2>
+<h2 style="border-bottom: 1px solid grey">
 An <code>/etc/fstab</code> entry is ignored.
 </h2>
 

@@ -1,0 +1,17 @@
+#
+# Enable VirtualBox Host Services
+#
+# This is not a systemd preset.
+# It goes in a special nosh system-manager preset directory.
+#
+
+enable	virtualbox-host.target
+
+enable	kmod@vboxpci.service
+enable	kmod@vboxdrv.service
+enable	kmod@vboxnetadp.service
+enable	kmod@vboxnetflt.service
+enable	cyclog@kmod@vboxpci.service
+enable	cyclog@kmod@vboxdrv.service
+enable	cyclog@kmod@vboxnetadp.service
+enable	cyclog@kmod@vboxnetflt.service

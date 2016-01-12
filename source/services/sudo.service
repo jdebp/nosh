@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Clean erroneously persistent sudo timestamp database
+Before=sshd.service ttylogin-starter.service
+
+[Service]
+Type=oneshot
+ExecStart=find /var/lib/sudo/ -exec touch --date @0 {} ;
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

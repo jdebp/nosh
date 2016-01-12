@@ -784,10 +784,10 @@ convert_systemd_units (
 	value * mountflags(service_profile.use("service", "mountflags"));
 	value * ioschedulingclass(service_profile.use("service", "ioschedulingclass"));
 	value * ioschedulingpriority(service_profile.use("service", "ioschedulingpriority"));
-	value * cpuschedulingpolicy(service_profile.use("service", "cpuschedulingpolicy"));
-	value * cpuschedulingpriority(service_profile.use("service", "cpuschedulingpriority"));
 	value * cpuschedulingresetonfork(service_profile.use("service", "cpuschedulingresetonfork"));
 #endif
+	value * cpuschedulingpolicy(service_profile.use("service", "cpuschedulingpolicy"));
+	value * cpuschedulingpriority(service_profile.use("service", "cpuschedulingpriority"));
 	value * service_defaultdependencies(service_profile.use("unit", "defaultdependencies"));
 	value * service_earlysupervise(service_profile.use("unit", "earlysupervise"));	// This is an extension to systemd.
 	value * service_after(service_profile.use("unit", "after"));
@@ -909,6 +909,35 @@ convert_systemd_units (
 		else
 			priority += " 0";
 		priority += "\n";
+	}
+#else
+	if (cpuschedulingpolicy) {
+		const std::string policy(tolower(names.substitute(cpuschedulingpolicy->last_setting())));
+		if ("batch" == policy || "other" == policy) {
+			if (cpuschedulingpriority)
+				cpuschedulingpriority->used = false;
+		} else
+		if ("fifo" == policy || "rr" == policy) {
+			priority += "rtprio";
+			if (cpuschedulingpriority)
+				priority += " " + quote(names.substitute(cpuschedulingpriority->last_setting()));
+			else
+				priority += " 0";
+			priority += "\n";
+		} else
+		if ("idle" == policy) {
+			priority += "idprio";
+			if (cpuschedulingpriority)
+				priority += " " + quote(names.substitute(cpuschedulingpriority->last_setting()));
+			else
+				priority += " 0";
+			priority += "\n";
+		} else
+		{
+			if (cpuschedulingpriority)
+				cpuschedulingpriority->used = false;
+			cpuschedulingpolicy->used = false;
+		}
 	}
 #endif
 	std::string chroot;
@@ -1388,7 +1417,7 @@ convert_systemd_units (
 
 	// Set the dependency and installation information.
 
-#define CREATE_LINKS(l,s) (l ? create_links (prog,names.query_bundle_dirname().c_str(),is_target,etc_bundle,bundle_dir_fd.get(),names.substitute((l)->last_setting()),(s)) : static_cast<void>(0))
+#define CREATE_LINKS(l,s) (l ? create_links (prog,names.query_bundle_dirname(),is_target,etc_bundle,bundle_dir_fd,names.substitute((l)->last_setting()),(s)) : static_cast<void>(0))
 
 	CREATE_LINKS(socket_after, "after/");
 	CREATE_LINKS(service_after, "after/");
@@ -1418,21 +1447,21 @@ convert_systemd_units (
 	);
 	if (defaultdependencies) {
 		if (is_socket_activated)
-			create_links(prog, names.query_bundle_dirname().c_str(), is_target, etc_bundle, bundle_dir_fd.get(), "sockets.target", "wanted-by/");
+			create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "sockets.target", "wanted-by/");
 		if (is_dbus) {
-			create_links(prog, names.query_bundle_dirname().c_str(), is_target, etc_bundle, bundle_dir_fd.get(), "dbus.service", "after/");
+			create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "dbus.service", "after/");
 #if !defined(__LINUX__) && !defined(__linux__)
 			// Don't want D-Bus on Linux in case the D-Bus daemon is not managed by service-manager.
-			create_links(prog, names.query_bundle_dirname().c_str(), is_target, etc_bundle, bundle_dir_fd.get(), "dbus.service", "wants/");
+			create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "dbus.service", "wants/");
 #endif
 		}
-		create_links(prog, names.query_bundle_dirname().c_str(), is_target, etc_bundle, bundle_dir_fd.get(), "basic.target", "after/");
-		create_links(prog, names.query_bundle_dirname().c_str(), is_target, etc_bundle, bundle_dir_fd.get(), "basic.target", "wants/");
-		create_links(prog, names.query_bundle_dirname().c_str(), is_target, etc_bundle, bundle_dir_fd.get(), "shutdown.target", "before/");
-		create_links(prog, names.query_bundle_dirname().c_str(), is_target, etc_bundle, bundle_dir_fd.get(), "shutdown.target", "stopped-by/");
+		create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "basic.target", "after/");
+		create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "basic.target", "wants/");
+		create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "shutdown.target", "before/");
+		create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "shutdown.target", "stopped-by/");
 	}
 	if (earlysupervise) {
-		create_link(prog, names.query_bundle_dirname().c_str(), bundle_dir_fd.get(), "/run/service-bundles/early-supervise/" + names.query_bundle_basename(), "supervise");
+		create_link(prog, names.query_bundle_dirname(), bundle_dir_fd, "/run/service-bundles/early-supervise/" + names.query_bundle_basename(), "supervise");
 	}
 
 	// Issue the final reports.

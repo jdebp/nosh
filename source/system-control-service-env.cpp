@@ -23,6 +23,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include "common-manager.h"
 #include "popt.h"
 #include "FileStar.h"
+#include "FileDescriptorOwner.h"
+#include "DirStar.h"
 
 /* Helper routines **********************************************************
 // **************************************************************************
@@ -117,11 +119,11 @@ print_service_env (
 	args.erase(args.begin());
 
 	std::string path, name;
-	const int env_dir_fd(open_env_dir(prog, service, path, name));
+	FileDescriptorOwner env_dir_fd(open_env_dir(prog, service, path, name));
 
 	if (args.empty()) {
 		// No second argument; print all variables and their values (c.f. "printenv").
-		DIR * env_dir(fdopendir(env_dir_fd));
+		const DirStar env_dir(env_dir_fd);
 		if (!env_dir) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s%s/%s%s: %s\n", prog, path.c_str(), name.c_str(), "service/", "env/", std::strerror(error));
@@ -133,7 +135,6 @@ print_service_env (
 			if (!entry) {
 				const int error(errno);
 				if (error) {
-					closedir(env_dir);
 					std::fprintf(stderr, "%s: ERROR: %s%s/%s%s: %s\n", prog, path.c_str(), name.c_str(), "service/", "env/", std::strerror(error));
 					throw EXIT_FAILURE;
 				}
@@ -143,7 +144,7 @@ print_service_env (
 			if (DT_REG != entry->d_type && DT_LNK != entry->d_type) continue;
 #endif
 			if ('.' == entry->d_name[0]) continue;
-			const int var_file_fd(open_read_at(env_dir_fd, entry->d_name));
+			const int var_file_fd(open_read_at(env_dir.fd(), entry->d_name));
 			if (0 > var_file_fd) {
 bad_file:
 				const int error(errno);
@@ -175,12 +176,10 @@ bad_file:
 		args.erase(args.begin());
 		if (!args.empty()) {
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, args.front(), "Unexpected argument.");
-			close(env_dir_fd);
 			throw static_cast<int>(EXIT_USAGE);
 		}
 
-		const int var_fd(open_read_at(env_dir_fd, var));
-		close(env_dir_fd);
+		const int var_fd(open_read_at(env_dir_fd.get(), var));
 		if (0 > var_fd) throw EXIT_FAILURE;
 
 		FileStar f(fdopen(var_fd, "r"));
@@ -232,16 +231,14 @@ set_service_env (
 	args.erase(args.begin());
 
 	std::string path, name;
-	const int env_dir_fd(open_env_dir(prog, service, path, name));
+	FileDescriptorOwner env_dir_fd(open_env_dir(prog, service, path, name));
 
-	const int var_fd(open_writetrunc_at(env_dir_fd, var, 0644));
-	if (0 > var_fd) {
+	FileDescriptorOwner var_fd(open_writetrunc_at(env_dir_fd.get(), var, 0644));
+	if (0 > var_fd.get()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: ERROR: %s%s/%s%s%s: %s\n", prog, path.c_str(), name.c_str(), "service/", "env/", var, std::strerror(error));
-		close(env_dir_fd);
 		throw EXIT_FAILURE;
 	}
-	close(env_dir_fd);
 
 	if (args.empty()) {
 		// No third argument; configure the envdir to explicitly unset the variable.
@@ -252,12 +249,12 @@ set_service_env (
 		args.erase(args.begin());
 		if (!args.empty()) {
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, args.front(), "Unexpected argument.");
-			close(env_dir_fd);
 			throw static_cast<int>(EXIT_USAGE);
 		}
 
-		FileStar f(fdopen(var_fd, "w"));
+		FileStar f(fdopen(var_fd.get(), "w"));
 		if (!f) throw EXIT_FAILURE;
+		var_fd.release();
 		std::fputs(val, f);
 		std::fputc('\n', f);
 	}

@@ -86,7 +86,9 @@ done
 # bundles
 for i in bundles ;
 do
+	install -d -m 0755 "${dest}"/nosh-"$i"/run
 	install -d -m 0755 "${dest}"/nosh-"$i"/var/sv 
+	install -d -m 0755 "${dest}"/nosh-"$i"/var/local/sv 
 	install -d -m 0755 "${dest}"/nosh-"$i"/etc/service-bundles/services 
 	install -d -m 0755 "${dest}"/nosh-"$i"/etc/service-bundles/targets 
 	install -d -m 0755 "${dest}"/nosh-"$i"/etc/system-control/convert 
@@ -99,8 +101,8 @@ Linux)	cat package/linux-services package/linux-sockets package/linux-ttys ;;
 esac
 ) | while read j ;
 do
-	cp -a -- "${src}"/var/sv/"$j" "${dest}"/nosh-bundles/var/sv/
-	cp -a -- "${src}"/var/sv/cyclog@"$j" "${dest}"/nosh-bundles/var/sv/
+	cp -a -- "${src}"/sv/"$j" "${dest}"/nosh-bundles/var/sv/
+	cp -a -- "${src}"/sv/cyclog@"$j" "${dest}"/nosh-bundles/var/sv/
 done
 while read j ;
 do
@@ -111,6 +113,10 @@ do
 	cp -a -- "${src}"/etc/service-bundles/services/mount@"$j" "${dest}"/nosh-bundles/etc/service-bundles/services/
 	cp -a -- "${src}"/etc/service-bundles/services/fsck@"$j" "${dest}"/nosh-bundles/etc/service-bundles/services/
 done < package/common-mounts
+for j in issue.vc
+do
+	cp -a -- "${src}"/etc/"$j" "${dest}"/nosh-bundles/etc/
+done < package/standard-targets
 (
 cat package/common-etc-services 
 case "`uname`" in

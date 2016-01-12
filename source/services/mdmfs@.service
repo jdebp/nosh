@@ -1,0 +1,22 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Mount the %I filesystem as an mfs
+DefaultDependencies=false
+Before=local-fs.target
+After=local-fs-pre.target
+Conflicts=mount@$i
+
+[Service]
+# Marking this as oneshot means that it doesn't enter the "running" state until the mount command has exited.
+Type=oneshot
+EnvironmentDirectory=env
+ExecStartPre=%p ${flags} -s "${size}" md %I
+ExecStart=true
+ExecStopPost=umount %I
+RemainAfterExit=yes
+
+[Install]
+WantedBy=local-fs.target

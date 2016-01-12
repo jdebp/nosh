@@ -7,4 +7,7 @@ kmod@svr4
 kmod@sysvmsg
 kmod@sysvsem
 kmod@sysvshm
+mdmfs@-tmp
+mdmfs@-var
+ldconfig
 nextboot

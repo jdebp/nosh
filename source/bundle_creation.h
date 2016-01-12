@@ -8,21 +8,23 @@ For copyright and licensing terms, see the file named COPYING.
 
 #include <string>
 
+class FileDescriptorOwner;
+
 void
 create_link (
 	const char * prog,
-	const char * name,
-	int bundle_dir_fd,
+	const std::string & name,
+	const FileDescriptorOwner & bundle_dir_fd,
 	const std::string & target,
 	const std::string & link
 ) ;
 void
 create_links (
 	const char * prog,
-	const char * bund,
+	const std::string & bund,
 	const bool is_target,
 	const bool etc_bundle,
-	int bundle_dir_fd,
+	const FileDescriptorOwner & bundle_dir_fd,
 	const std::string & names,
 	const std::string & subdir
 ) ;

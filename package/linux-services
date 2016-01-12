@@ -12,5 +12,6 @@ kmod@uvesafb
 linux-utmp
 mdadm
 static-networking
+sudo
 update-binfmts
 wettsteinsyslogd

@@ -14,6 +14,7 @@ for I in \
 	cleantmp \
 	cleanX \
 	console-kit-daemon \
+	convert_varrun \
 	darkice \
 	ddclient \
 	deluged \
@@ -179,6 +180,7 @@ done
 for i in \
 	natd \
 	sppp \
+	sysinit \
 	;
 do
 	system-control unload-when-stopped "$i"-log.service
@@ -189,7 +191,6 @@ for i in \
 	dmesg \
 	hostname \
 	machine-id \
-	sysinit-log \
 	emergency-login@console \
 	;
 do
@@ -205,6 +206,7 @@ for i in \
 	auditd \
 	auditdistd \
 	bsdstats \
+	bsd-serial-init \
 	bsnmpd \
 	bthidd \
 	ccd \
@@ -224,28 +226,26 @@ for i in \
 	ipxrouted \
 	iscsictl \
 	iscsid \
+	ipfw \
+	ipfw0 \
 	keyserv \
-	kmod@mac_bsdextended \
-	kmod@geom_gate \
-	kmod@ipdivert \
-	kmod@ibcs2 \
-	kmod@ipl \
-	kmod@iscsi \
-	kmod@kbdmux \
-	kmod@ng_btsocket \
-	kmod@vkbd \
-	kmod@pf \
-	kmod@pflog \
-	kmod@pfsync \
 	kmod@acpi_video \
 	kmod@bwi_v3_ucode \
 	kmod@bwn_v4_ucode \
+	kmod@ctl \
 	kmod@cuse4bsd \
+	kmod@dummynet \
 	kmod@ext2fs \
 	kmod@fdescfs \
+	kmod@geom_gate \
 	kmod@geom_uzip \
+	kmod@ibcs2 \
 	kmod@if_bwi \
 	kmod@if_bwn \
+	kmod@ipdivert \
+	kmod@ipfw_nat \
+	kmod@ipl \
+	kmod@iscsi \
 	kmod@iwn1000fw \
 	kmod@iwn4965fw \
 	kmod@iwn5000fw \
@@ -254,17 +254,23 @@ for i in \
 	kmod@iwn6000g2afw \
 	kmod@iwn6000g2bfw \
 	kmod@iwn6050fw \
+	kmod@kbdmux \
 	kmod@libiconv \
 	kmod@libmchain \
 	kmod@linsysfs \
+	kmod@mac_bsdextended \
 	kmod@mmc \
 	kmod@mmcsd \
 	kmod@msdosfs_iconv \
 	kmod@nfscl \
+	kmod@ng_btsocket \
 	kmod@ng_ubt \
 	kmod@ntfs \
 	kmod@ntfs_iconv \
 	kmod@pefs \
+	kmod@pf \
+	kmod@pflog \
+	kmod@pfsync \
 	kmod@reiserfs \
 	kmod@runfw \
 	kmod@scd \
@@ -272,6 +278,7 @@ for i in \
 	kmod@smbfs \
 	kmod@udf \
 	kmod@udf_iconv \
+	kmod@vkbd \
 	kmod@xfs \
 	ldconfig \
 	lpd \
@@ -284,6 +291,7 @@ for i in \
 	nfsclient \
 	nfsuserd \
 	pbid \
+	pefs \
 	pf \
 	pflog \
 	pfsync \
@@ -400,6 +408,7 @@ done
 # non-log users
 for I in \
 	klogd \
+	syslogd \
 	;
 do
 	i="`escape "$I"`"

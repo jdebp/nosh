@@ -168,7 +168,7 @@ done
 
 # ##############################################################################
 # Build all of the {new} files in ./config.
-mkdir -p -m 0755 config/presets config/systemd config/convert config/rc.d
+mkdir -p -m 0755 config/presets config/systemd config/convert config/rc.d config/vt
 cat package/systemd-services package/tmpfiles-snippets |
 while read i
 do
@@ -186,17 +186,21 @@ do
 	rm -f -- config/presets/"$i"{new}
 	cp -p -f -- build/presets/"$i" config/presets/"$i"{new}
 done
-cat package/netbsd-rc-scripts |
 while read i
 do
 	rm -f -- config/rc.d/"$i"{new}
 	cp -p -f -- build/rc.d/"$i" config/rc.d/"$i"{new}
-done
+done < package/netbsd-rc-scripts
 while read i
 do
 	rm -f -- config/convert/"$i"{new}
 	cp -p -f -- build/convert/"$i" config/convert/"$i"{new}
 done < package/conversion-tools
+for i in issue.vc
+do
+	rm -f -- config/vt/"$i"{new}
+	cp -p -f -- build/"$i" config/vt/"$i"{new}
+done 
 
 # ##############################################################################
 # Rename the ...{new} directories and files in ./config.
@@ -230,3 +234,7 @@ do
 	mv -f -- config/"$i"{new} config/"$i"
 	rm -rf -- config/"$i"{old}
 done
+for i in issue.vc
+do
+	mv -f -- config/vt/"$i"{new} config/vt/"$i"
+done 

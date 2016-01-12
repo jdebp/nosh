@@ -23,6 +23,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include "service-manager.h"
 #include "service-manager-client.h"
 #include "common-manager.h"
+#include "FileDescriptorOwner.h"
+#include "DirStar.h"
 
 /* Scanning *****************************************************************
 // **************************************************************************
@@ -37,14 +39,14 @@ rescan (
 	const int retained_scan_dir_fd,
 	const bool input_activation
 ) {
-	const int scan_dir_fd(dup(retained_scan_dir_fd));
-	if (0 > scan_dir_fd) {
+	FileDescriptorOwner scan_dir_fd(dup(retained_scan_dir_fd));
+	if (0 > scan_dir_fd.get()) {
 exit_scan:
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, std::strerror(error));
 		return;
 	}
-	DIR * scan_dir(fdopendir(scan_dir_fd));
+	const DirStar scan_dir(scan_dir_fd);
 	if (!scan_dir) goto exit_scan;
 	rewinddir(scan_dir);	// because the last pass left it at EOF.
 	for (;;) {
@@ -63,7 +65,7 @@ exit_scan:
 #endif
 		if ('.' == entry->d_name[0]) continue;
 
-		const int bundle_dir_fd(open_dir_at(scan_dir_fd, entry->d_name));
+		const int bundle_dir_fd(open_dir_at(scan_dir.fd(), entry->d_name));
 		if (0 <= bundle_dir_fd) {
 			int service_dir_fd(open_service_dir(bundle_dir_fd));
 			if (0 <= service_dir_fd) {
@@ -137,7 +139,6 @@ exit_scan:
 		} else
 			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, entry->d_name, std::strerror(errno));
 	}
-	closedir(scan_dir);
 }
 
 /* Main function ************************************************************
@@ -184,8 +185,8 @@ service_dt_scanner (
 		throw EXIT_FAILURE;
 	}
 
-	const int scan_dir_fd(open_dir_at(AT_FDCWD, scan_directory));
-	if (0 > scan_dir_fd) {
+	const FileDescriptorOwner scan_dir_fd(open_dir_at(AT_FDCWD, scan_directory));
+	if (0 > scan_dir_fd.get()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, scan_directory, std::strerror(error));
 		throw EXIT_FAILURE;
@@ -193,7 +194,7 @@ service_dt_scanner (
 
 	{
 		struct kevent e[1];
-		EV_SET(&e[0], scan_dir_fd, EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE|NOTE_EXTEND, 0, 0);
+		EV_SET(&e[0], scan_dir_fd.get(), EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE|NOTE_EXTEND, 0, 0);
 		if (0 > kevent(queue, e, sizeof e/sizeof *e, 0, 0, 0)) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
@@ -205,7 +206,7 @@ service_dt_scanner (
 
 	const int socket_fd(connect_service_manager_socket(is_system, prog));
 	if (0 > socket_fd) throw EXIT_FAILURE;
-	rescan(prog, scan_directory, socket_fd, scan_dir_fd, input_activation);
+	rescan(prog, scan_directory, socket_fd, scan_dir_fd.get(), input_activation);
 
 	for (;;) {
 		try {
@@ -221,8 +222,8 @@ service_dt_scanner (
 				const struct kevent & e(p[i]);
 				switch (e.filter) {
 					case EVFILT_VNODE:
-						if (e.ident == static_cast<uintptr_t>(scan_dir_fd))
-							rescan(prog, scan_directory, socket_fd, scan_dir_fd, input_activation);
+						if (e.ident == static_cast<uintptr_t>(scan_dir_fd.get()))
+							rescan(prog, scan_directory, socket_fd, scan_dir_fd.get(), input_activation);
 						else
 							std::fprintf(stderr, "%s: DEBUG: vnode event ident %lu fflags %x\n", prog, e.ident, e.fflags);
 						break;

@@ -6,7 +6,7 @@
 Description=packet filter service
 
 [Service]
-# The import procedure is expected to have popluated this directory with rules and flags.
+# The import procedure is expected to have populated this directory with rules and flags.
 EnvironmentDirectory=env
 ExecStartPre=pfctl -Fall
 ExecStartPre=pfctl -e -q

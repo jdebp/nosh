@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.23</refmiscinfo>
+<refmiscinfo class="version">1.24</refmiscinfo>
 </refmeta>
 
 <refnamediv><refname>read-conf</refname><refpurpose>read a Debian-style configuration file and chain</refpurpose></refnamediv>

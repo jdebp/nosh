@@ -15,6 +15,7 @@ cleanX
 console-fb-realizer@head0
 console-kit-daemon
 console-multiplexor@head0
+convert_varrun
 darkice
 ddclient
 deluged
@@ -33,6 +34,7 @@ gdm
 gitlab-sidekiq
 gitlab-unicorn
 gnucron
+hald
 hostnamed
 kdm@tty7
 kdm@ttyv6
@@ -106,6 +108,8 @@ slim
 smartd
 smbd
 sppp-log
+ppp-log
+rfcomm_pppd-log
 sshdgenkeys
 swift@account
 swift@account-auditor

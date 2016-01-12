@@ -1,0 +1,10 @@
+#!/bin/sh -
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+test -L /var/run && exit 0
+if test -d /var/run/
+then
+	mv /var/run /var/run.old
+fi
+ln -s -f /run /var/

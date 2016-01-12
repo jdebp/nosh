@@ -23,8 +23,13 @@ service (
 	std::vector<const char *> & args
 ) {
 	const char * prog(basename_of(args[0]));
+	bool verbose(false);
 	try {
-		popt::top_table_definition main_option(0, 0, "Main options", "service-name command");
+		popt::bool_definition verbose_option('v', "verbose", "Request verbose operation.", verbose);
+		popt::definition * top_table[] = {
+			&verbose_option
+		};
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "service-name command");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -57,6 +62,8 @@ service (
 	args.clear();
 	args.insert(args.end(), "system-control");
 	args.insert(args.end(), command);
+	if (verbose)
+		args.insert(args.end(), "--verbose");
 	args.insert(args.end(), service);
 	next_prog = arg0_of(args);
 }
@@ -122,8 +129,13 @@ update_rcd (
 	std::vector<const char *> & args
 ) {
 	const char * prog(basename_of(args[0]));
+	bool force(false);
 	try {
-		popt::top_table_definition main_option(0, 0, "Main options", "service-name command");
+		popt::bool_definition force_option('f', "force", "Compatibility option; ignored.", force);
+		popt::definition * top_table[] = {
+			&force_option
+		};
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "service-name command");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);

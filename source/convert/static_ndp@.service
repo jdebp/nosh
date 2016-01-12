@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD %p for %i
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+EnvironmentDirectory=env
+ExecStart=arp -S %I
+ExecStopPost=set -- %i && arp -d $1
+
+[Install]
+WantedBy=server.target

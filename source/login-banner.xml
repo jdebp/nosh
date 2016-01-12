@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.23</refmiscinfo>
+<refmiscinfo class="version">1.24</refmiscinfo>
 </refmeta>
 
 <refnamediv><refname>login-banner</refname><refpurpose>chain-load utility for printing login banners</refpurpose></refnamediv>
@@ -58,10 +58,8 @@ library function is called.
 </para>
 
 <para>
-With those, and various other, pieces of system information to hand it
-then displays the contents of <replaceable>template-filename</replaceable> to its standard output.
-The file is displayed as-is, with the exception that a backslash 
-character begins a two-character escape sequence.
+With those, and various other, pieces of system information to hand it then displays the contents of <replaceable>template-filename</replaceable> to its standard output.
+The file is displayed as-is, with the exception that a backslash character begins a two-character escape sequence.
 </para>
 
 <para>
@@ -70,41 +68,93 @@ The following escape sequences are defined:
 
 <variablelist>
 
-<varlistentry><term><code>\\</code></term><listitem><para>A single backslash.</para></listitem></varlistentry>
+<varlistentry>
+<term><code>\\</code></term>
+<listitem><para>
+A single backslash.
+</para></listitem>
+</varlistentry>
 
-<varlistentry><term><code>\s</code></term><listitem><para>The "system" name, from the 
-<citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-function.</para></listitem></varlistentry>
+<varlistentry>
+<term><code>\s</code></term>
+<listitem><para>
+The "system" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> function.
+On FreeBSD/PC-BSD, the C library allows this to be overridden by a <code>UNAME_s</code> environment variable.
+</para></listitem>
+</varlistentry>
 
-<varlistentry><term><code>\n</code></term><listitem><para>The "node" name, from the 
-<citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-function.</para></listitem></varlistentry>
+<varlistentry>
+<term><code>\n</code></term>
+<listitem><para>
+The "node" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> function.
+</para></listitem>
+</varlistentry>
 
-<varlistentry><term><code>\r</code></term><listitem><para>The "release" name, from the 
-<citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-function.</para></listitem></varlistentry>
+<varlistentry>
+<term><code>\r</code></term>
+<listitem><para>
+The "release" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> function.
+On FreeBSD/PC-BSD, the C library allows this to be overridden by a <code>UNAME_r</code> environment variable.
+</para></listitem>
+</varlistentry>
 
-<varlistentry><term><code>\v</code></term><listitem><para>The "version" name, from the 
-<citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-function.</para></listitem></varlistentry>
+<varlistentry>
+<term><code>\v</code></term>
+<listitem><para>
+The "version" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> function.
+On FreeBSD/PC-BSD, the C library allows this to be overridden by a <code>UNAME_v</code> environment variable.
+</para></listitem>
+</varlistentry>
 
-<varlistentry><term><code>\m</code></term><listitem><para>The "machine" name, from the 
-<citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-function.</para></listitem></varlistentry>
+<varlistentry>
+<term><code>\m</code></term>
+<listitem><para>
+The "machine" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> function.
+On FreeBSD/PC-BSD, the C library allows this to be overridden by a <code>UNAME_m</code> environment variable.
+</para></listitem>
+</varlistentry>
 
-<varlistentry><term><code>\o</code></term><listitem><para>The "domain" name, from the 
-<citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-function.</para></listitem></varlistentry>
+<varlistentry>
+<term><code>\o</code></term>
+<listitem><para>
+The "domain" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> or the <citerefentry><refentrytitle>getdomainname</refentrytitle><manvolnum>2</manvolnum></citerefentry> function.
+</para></listitem>
+</varlistentry>
 
-<varlistentry><term><code>\l</code></term><listitem><para>The "line", i.e. the basename of the controlling TTY name, derived as aforementioned.</para></listitem></varlistentry>
+<varlistentry>
+<term><code>\l</code></term>
+<listitem><para>
+The "line", i.e. the basename of the controlling TTY name, derived as aforementioned.
+</para></listitem>
+</varlistentry>
 
-<varlistentry><term><code>\u</code></term><listitem><para>The number of users logged on.</para></listitem></varlistentry>
+<varlistentry>
+<term><code>\u</code></term>
+<listitem><para>
+The number of users logged on.
+</para></listitem>
+</varlistentry>
 
-<varlistentry><term><code>\U</code></term><listitem><para>The number of users logged on, followed by a space and the string "users" (or "user" if the number is exactly one).</para></listitem></varlistentry>
+<varlistentry>
+<term><code>\U</code></term>
+<listitem><para>
+The number of users logged on, followed by a space and the string "users" (or "user" if the number is exactly one).
+</para></listitem>
+</varlistentry>
 
-<varlistentry><term><code>\d</code></term><listitem><para>The current date.</para></listitem></varlistentry>
+<varlistentry>
+<term><code>\d</code></term>
+<listitem><para>
+The current date.
+</para></listitem>
+</varlistentry>
 
-<varlistentry><term><code>\t</code></term><listitem><para>The current time.</para></listitem></varlistentry>
+<varlistentry>
+<term><code>\t</code></term>
+<listitem><para>
+The current time.
+</para></listitem>
+</varlistentry>
 
 </variablelist>
 
@@ -117,20 +167,13 @@ The program requires permission to read <filename>utmp</filename> and the templa
 </refsection><refsection><title>EXAMPLE</title>
 
 <para>
-<command>login-banner</command> doesn't really care if its standard output is not a virtual console,
-or even a terminal or a character device at all.
-It can be used to display login banners to arbitrary destinations, even to
-sockets and to files.
-(Although one must ensure that it always inherits a <envar>TTY</envar> environment
-variable in such cases, so that the <code>\l</code> escape sequence expands to the
-appropriate thing, and not to the name of some irrelevant controlling 
-terminal.)
+<command>login-banner</command> doesn't really care if its standard output is not a virtual console, or even a terminal or a character device at all.
+It can be used to display login banners to arbitrary destinations, even to sockets and to files.
+(Although one must ensure that it always inherits a <envar>TTY</envar> environment variable in such cases, so that the <code>\l</code> escape sequence expands to the appropriate thing, and not to the name of some irrelevant controlling terminal.)
 </para>
 
 <para>
-The following <citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry> script is (roughly) equivalent to what <citerefentry><refentrytitle>in.telnetd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-does, except that it doesn't handle the TELNET protocol negotiation or the
-various debugging options.
+The following <citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry> script is (roughly) equivalent to what <citerefentry><refentrytitle>in.telnetd</refentrytitle><manvolnum>1</manvolnum></citerefentry> does, except that it doesn't handle the TELNET protocol negotiation or the various debugging options.
 </para>
 
 <programlisting>

@@ -78,6 +78,7 @@ protected:
 	FileDescriptorOwner dir_fd;
 	const char * dir_name;
 	FileDescriptorOwner input_fd;
+	char display_stdio_buffer[128U * 1024U];
 	const int buffer_fd;
 	FILE * const buffer_file;
 	char message_buffer[4096];
@@ -117,6 +118,7 @@ VirtualTerminal::VirtualTerminal(
 		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dirname, "display", std::strerror(error));
 		throw EXIT_FAILURE;
 	}
+	std::setvbuf(buffer_file, display_stdio_buffer, _IOFBF, sizeof display_stdio_buffer);
 }
 
 VirtualTerminal::~VirtualTerminal()
@@ -270,10 +272,12 @@ copy (
 	const VirtualTerminal & vt,
 	FILE * const buffer_file
 ) {
+	// The stdio buffers may well be out of synch, so we need to reset them.
 	std::rewind(buffer_file);
 	std::rewind(vt.query_buffer_file());
 	std::fflush(buffer_file);
 	std::fflush(vt.query_buffer_file());
+
 	uint8_t header0[4] = { 0, 0, 0, 0 };
 	std::fread(header0, sizeof header0, 1U, vt.query_buffer_file());
 	std::fwrite(header0, sizeof header0, 1U, buffer_file);
@@ -283,8 +287,12 @@ copy (
 	uint8_t header2[4] = { 0, 0, 0, 0 };
 	std::fread(header2, sizeof header2, 1U, vt.query_buffer_file());
 	std::fwrite(header2, sizeof header2, 1U, buffer_file);
-	std::fseek(vt.query_buffer_file(), HEADER_LENGTH, SEEK_SET);
+
+	// Don't fseek() if we can avoid it; it causes duplicate VERY LARGE reads to re-fill the stdio buffer.
+	if (HEADER_LENGTH != ftello(vt.query_buffer_file()))
+		std::fseek(vt.query_buffer_file(), HEADER_LENGTH, SEEK_SET);
 	std::fseek(buffer_file, HEADER_LENGTH, SEEK_SET);
+
 	const unsigned cols(header1[0]), rows(header1[1]);
 	for (unsigned row(0); row < rows; ++row) {
 		for (unsigned col(0); col < cols; ++col) {
@@ -377,6 +385,9 @@ console_multiplexor (
 		throw EXIT_FAILURE;
 	}
 	buffer_fd.release();
+
+	char display_stdio_buffer[128U * 1024U];
+	std::setvbuf(buffer_file, display_stdio_buffer, _IOFBF, sizeof display_stdio_buffer);
 
 	VirtualTerminalList vts;
 	

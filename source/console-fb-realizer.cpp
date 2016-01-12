@@ -805,6 +805,7 @@ protected:
 	void keep_visible_area_in_buffer();
 	void keep_visible_area_around_cursor();
 
+	char display_stdio_buffer[128U * 1024U];
 	FileStar buffer_file;
 	FileDescriptorOwner input_fd;
 	unsigned short cursor_y, cursor_x, visible_y, visible_x, visible_h, visible_w, h, w, screen_y, screen_x;
@@ -834,6 +835,7 @@ VirtualTerminal::VirtualTerminal(
 	cursor_state(-1),
 	cells()
 {
+	std::setvbuf(buffer_file, display_stdio_buffer, _IOFBF, sizeof display_stdio_buffer);
 }
 
 VirtualTerminal::~VirtualTerminal()
@@ -912,13 +914,20 @@ inline
 void
 VirtualTerminal::reload () 
 {
+#if defined(__LINUX__) || defined(__linux__)
+	std::fflush(buffer_file);
+#endif
 	std::clearerr(buffer_file);
 	std::fseek(buffer_file, 4, SEEK_SET);
 	uint16_t header1[4] = { 0, 0, 0, 0 };
 	std::fread(header1, sizeof header1, 1U, buffer_file);
 	uint8_t header2[4] = { 0, 0, 0, 0 };
 	std::fread(header2, sizeof header2, 1U, buffer_file);
-	std::fseek(buffer_file, HEADER_LENGTH, SEEK_SET);
+
+	// Don't fseek() if we can avoid it; it causes duplicate VERY LARGE reads to re-fill the stdio buffer.
+	if (HEADER_LENGTH != ftello(buffer_file))
+		std::fseek(buffer_file, HEADER_LENGTH, SEEK_SET);
+
 	resize(header1[1], header1[0]);
 	move_cursor(header1[3], header1[2]);
 	const unsigned ctype(header2[0]), cattr(header2[1]), pattr(header2[2]);

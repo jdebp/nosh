@@ -15,6 +15,7 @@ case "$1" in
 			cleantmp \
 			cleanX \
 			console-kit-daemon \
+			convert_varrun \
 			darkice \
 			ddclient \
 			deluged \
@@ -129,6 +130,7 @@ case "$1" in
 		for I in \
 			natd \
 			sppp \
+			sysinit \
 			;
 		do
 			if system-control is-loaded "$I"-log.service

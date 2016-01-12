@@ -27,3 +27,12 @@ if system-control is-enabled stty-sane@console 2>/dev/null
 then
 	system-control disable stty-sane@console
 fi
+
+# This service has been relocated
+if system-control is-enabled ldconfig 2>/dev/null
+then
+	system-control disable ldconfig
+fi
+
+# /run is now in the root.
+test -e /var/run || ln -s -f -- /run /var/

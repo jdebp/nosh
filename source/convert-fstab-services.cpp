@@ -142,19 +142,56 @@ is_api_mountpoint(
 	return false;
 }
 
+static inline
+bool
+remove_last_component (
+	std::string & dirname
+) {
+	const std::string::size_type slash(dirname.rfind('/'));
+	if (std::string::npos != slash) {
+		dirname = std::string(dirname, 0, 0 == slash ? 1 : slash);
+		return true;
+	} else {
+		dirname = std::string();
+		return false;
+	}
+}
+
 static 
 void
 make_default_dependencies (
 	const char * prog,
-	const char * name,
+	const std::string & name,
 	const bool is_target,
 	const bool etc_bundle,
 	const bool root,
-	const int bundle_dir_fd
+	const FileDescriptorOwner & bundle_dir_fd
 ) {
 	create_links(prog, name, is_target, etc_bundle, bundle_dir_fd, "shutdown.target", "before/");
 	if (!root)
 		create_links(prog, name, is_target, etc_bundle, bundle_dir_fd, "unmount.target", "stopped-by/");
+}
+
+static 
+void
+make_mount_interdependencies (
+	const char * prog,
+	const std::string & name,
+	const bool etc_bundle,
+	const bool root,
+	const FileDescriptorOwner & bundle_dir_fd,
+	std::string where
+) {
+	const char * const etc_root(etc_bundle ? "../../mount@" : "/etc/service-bundles/services/mount@");
+	while (remove_last_component(where)) {
+		const bool to_root(is_root(where.c_str()));
+		if (root && to_root) break;
+		const std::string param(escape(where));
+		const std::string link("after/mount@" + param);
+		const std::string target(etc_root + param);
+		create_link(prog, name, bundle_dir_fd, target, link);
+		if (to_root) break;
+	}
 }
 
 static
@@ -196,7 +233,7 @@ create_gbde_bundle (
 	const bool local,
 	const bool overwrite,
 	const bool etc_bundle,
-	int bundle_root_fd,
+	const FileDescriptorOwner & bundle_root_fd,
 	const char * bundle_root,
 	const std::string & gbde_bundle_dirname,
 	const std::string & fsck_bundle_dirname,
@@ -205,7 +242,7 @@ create_gbde_bundle (
 	const bool is_target(false);
 	const bool root(false);
 
-	if (0 > mkdirat(bundle_root_fd, gbde_bundle_dirname.c_str(), 0755)) {
+	if (0 > mkdirat(bundle_root_fd.get(), gbde_bundle_dirname.c_str(), 0755)) {
 		const int error(errno);
 		if (EEXIST != error || !overwrite) {
 			std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, bundle_root, gbde_bundle_dirname.c_str(), std::strerror(error));
@@ -213,7 +250,7 @@ create_gbde_bundle (
 		}
 	}
 
-	const FileDescriptorOwner gbde_bundle_dir_fd(open_dir_at(bundle_root_fd, gbde_bundle_dirname.c_str()));
+	const FileDescriptorOwner gbde_bundle_dir_fd(open_dir_at(bundle_root_fd.get(), gbde_bundle_dirname.c_str()));
 	if (0 > gbde_bundle_dir_fd.get()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, bundle_root, gbde_bundle_dirname.c_str(), std::strerror(error));
@@ -224,17 +261,17 @@ create_gbde_bundle (
 
 	make_service(gbde_bundle_dir_fd.get());
 	make_orderings_and_relations(gbde_bundle_dir_fd.get());
-	make_default_dependencies(prog, gbde_bundle_dirname.c_str(), is_target, etc_bundle, root, gbde_bundle_dir_fd.get());
+	make_default_dependencies(prog, gbde_bundle_dirname, is_target, etc_bundle, root, gbde_bundle_dir_fd);
 	make_run_and_restart(prog, bundle_fullname + "/service", "false");
 
 	const char * const pre_target(local ? "local-fs-pre.target" : "remote-fs-pre.target");
-	create_links(prog, gbde_bundle_dirname.c_str(), is_target, etc_bundle, gbde_bundle_dir_fd.get(), pre_target, "after/");
-	create_link(prog, gbde_bundle_dirname.c_str(), gbde_bundle_dir_fd.get(), "../../" + mount_bundle_dirname, "before/" + fsck_bundle_dirname);
-	create_link(prog, gbde_bundle_dirname.c_str(), gbde_bundle_dir_fd.get(), "../../" + mount_bundle_dirname, "before/" + mount_bundle_dirname);
-	create_link(prog, gbde_bundle_dirname.c_str(), gbde_bundle_dir_fd.get(), "../../" + mount_bundle_dirname, "wanted-by/" + fsck_bundle_dirname);
-	create_link(prog, gbde_bundle_dirname.c_str(), gbde_bundle_dir_fd.get(), "../../" + mount_bundle_dirname, "wanted-by/" + mount_bundle_dirname);
+	create_links(prog, gbde_bundle_dirname, is_target, etc_bundle, gbde_bundle_dir_fd, pre_target, "after/");
+	create_link(prog, gbde_bundle_dirname, gbde_bundle_dir_fd, "../../" + mount_bundle_dirname, "before/" + fsck_bundle_dirname);
+	create_link(prog, gbde_bundle_dirname, gbde_bundle_dir_fd, "../../" + mount_bundle_dirname, "before/" + mount_bundle_dirname);
+	create_link(prog, gbde_bundle_dirname, gbde_bundle_dir_fd, "../../" + mount_bundle_dirname, "wanted-by/" + fsck_bundle_dirname);
+	create_link(prog, gbde_bundle_dirname, gbde_bundle_dir_fd, "../../" + mount_bundle_dirname, "wanted-by/" + mount_bundle_dirname);
 
-	create_link(prog, gbde_bundle_dirname.c_str(), gbde_bundle_dir_fd.get(), "/run/service-bundles/early-supervise/" + gbde_bundle_dirname, "supervise");
+	create_link(prog, gbde_bundle_dirname, gbde_bundle_dir_fd, "/run/service-bundles/early-supervise/" + gbde_bundle_dirname, "supervise");
 
 	std::ofstream gbde_start, gbde_stop;
 	open(prog, gbde_start, bundle_fullname + "/service/start");
@@ -259,7 +296,7 @@ create_geli_bundle (
 	const bool local,
 	const bool overwrite,
 	const bool etc_bundle,
-	int bundle_root_fd,
+	const FileDescriptorOwner & bundle_root_fd,
 	const char * bundle_root,
 	const std::string & geli_bundle_dirname,
 	const std::string & fsck_bundle_dirname,
@@ -268,7 +305,7 @@ create_geli_bundle (
 	const bool is_target(false);
 	const bool root(false);
 
-	if (0 > mkdirat(bundle_root_fd, geli_bundle_dirname.c_str(), 0755)) {
+	if (0 > mkdirat(bundle_root_fd.get(), geli_bundle_dirname.c_str(), 0755)) {
 		const int error(errno);
 		if (EEXIST != error || !overwrite) {
 			std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, bundle_root, geli_bundle_dirname.c_str(), std::strerror(error));
@@ -276,7 +313,7 @@ create_geli_bundle (
 		}
 	}
 
-	const FileDescriptorOwner geli_bundle_dir_fd(open_dir_at(bundle_root_fd, geli_bundle_dirname.c_str()));
+	const FileDescriptorOwner geli_bundle_dir_fd(open_dir_at(bundle_root_fd.get(), geli_bundle_dirname.c_str()));
 	if (0 > geli_bundle_dir_fd.get()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, bundle_root, geli_bundle_dirname.c_str(), std::strerror(error));
@@ -287,17 +324,17 @@ create_geli_bundle (
 
 	make_service(geli_bundle_dir_fd.get());
 	make_orderings_and_relations(geli_bundle_dir_fd.get());
-	make_default_dependencies(prog, geli_bundle_dirname.c_str(), is_target, etc_bundle, root, geli_bundle_dir_fd.get());
+	make_default_dependencies(prog, geli_bundle_dirname, is_target, etc_bundle, root, geli_bundle_dir_fd);
 	make_run_and_restart(prog, bundle_fullname + "/service", "false");
 
 	const char * const pre_target(local ? "local-fs-pre.target" : "remote-fs-pre.target");
-	create_links(prog, geli_bundle_dirname.c_str(), is_target, etc_bundle, geli_bundle_dir_fd.get(), pre_target, "after/");
-	create_link(prog, geli_bundle_dirname.c_str(), geli_bundle_dir_fd.get(), "../../" + mount_bundle_dirname, "before/" + fsck_bundle_dirname);
-	create_link(prog, geli_bundle_dirname.c_str(), geli_bundle_dir_fd.get(), "../../" + mount_bundle_dirname, "before/" + mount_bundle_dirname);
-	create_link(prog, geli_bundle_dirname.c_str(), geli_bundle_dir_fd.get(), "../../" + mount_bundle_dirname, "wanted-by/" + fsck_bundle_dirname);
-	create_link(prog, geli_bundle_dirname.c_str(), geli_bundle_dir_fd.get(), "../../" + mount_bundle_dirname, "wanted-by/" + mount_bundle_dirname);
+	create_links(prog, geli_bundle_dirname, is_target, etc_bundle, geli_bundle_dir_fd, pre_target, "after/");
+	create_link(prog, geli_bundle_dirname, geli_bundle_dir_fd, "../../" + mount_bundle_dirname, "before/" + fsck_bundle_dirname);
+	create_link(prog, geli_bundle_dirname, geli_bundle_dir_fd, "../../" + mount_bundle_dirname, "before/" + mount_bundle_dirname);
+	create_link(prog, geli_bundle_dirname, geli_bundle_dir_fd, "../../" + mount_bundle_dirname, "wanted-by/" + fsck_bundle_dirname);
+	create_link(prog, geli_bundle_dirname, geli_bundle_dir_fd, "../../" + mount_bundle_dirname, "wanted-by/" + mount_bundle_dirname);
 
-	create_link(prog, geli_bundle_dirname.c_str(), geli_bundle_dir_fd.get(), "/run/service-bundles/early-supervise/" + geli_bundle_dirname, "supervise");
+	create_link(prog, geli_bundle_dirname, geli_bundle_dir_fd, "/run/service-bundles/early-supervise/" + geli_bundle_dirname, "supervise");
 
 	std::ofstream geli_start, geli_stop;
 	open(prog, geli_start, bundle_fullname + "/service/start");
@@ -327,7 +364,7 @@ create_fsck_bundle (
 	const std::string * gbde,
 	const std::string * geli,
 	const bool etc_bundle,
-	int bundle_root_fd,
+	const FileDescriptorOwner & bundle_root_fd,
 	const char * bundle_root,
 	const std::string & fsck_bundle_dirname,
 	const std::string & mount_bundle_dirname
@@ -335,7 +372,7 @@ create_fsck_bundle (
 	const bool is_target(false);
 	const bool root(false);
 
-	if (0 > mkdirat(bundle_root_fd, fsck_bundle_dirname.c_str(), 0755)) {
+	if (0 > mkdirat(bundle_root_fd.get(), fsck_bundle_dirname.c_str(), 0755)) {
 		const int error(errno);
 		if (EEXIST != error || !overwrite) {
 			std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, bundle_root, fsck_bundle_dirname.c_str(), std::strerror(error));
@@ -343,7 +380,7 @@ create_fsck_bundle (
 		}
 	}
 
-	const FileDescriptorOwner fsck_bundle_dir_fd(open_dir_at(bundle_root_fd, fsck_bundle_dirname.c_str()));
+	const FileDescriptorOwner fsck_bundle_dir_fd(open_dir_at(bundle_root_fd.get(), fsck_bundle_dirname.c_str()));
 	if (0 > fsck_bundle_dir_fd.get()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, bundle_root, fsck_bundle_dirname.c_str(), std::strerror(error));
@@ -354,30 +391,30 @@ create_fsck_bundle (
 
 	make_service(fsck_bundle_dir_fd.get());
 	make_orderings_and_relations(fsck_bundle_dir_fd.get());
-	make_default_dependencies(prog, fsck_bundle_dirname.c_str(), is_target, etc_bundle, root, fsck_bundle_dir_fd.get());
+	make_default_dependencies(prog, fsck_bundle_dirname, is_target, etc_bundle, root, fsck_bundle_dir_fd);
 	make_run_and_restart(prog, bundle_fullname + "/service", "false");
 
 	const char * const pre_target(local ? "local-fs-pre.target" : "remote-fs-pre.target");
-	create_links(prog, fsck_bundle_dirname.c_str(), is_target, etc_bundle, fsck_bundle_dir_fd.get(), pre_target, "after/");
-	create_link(prog, fsck_bundle_dirname.c_str(), fsck_bundle_dir_fd.get(), "../../" + mount_bundle_dirname, "before/" + mount_bundle_dirname);
-	create_link(prog, fsck_bundle_dirname.c_str(), fsck_bundle_dir_fd.get(), "../../" + mount_bundle_dirname, "wanted-by/" + mount_bundle_dirname);
+	create_links(prog, fsck_bundle_dirname, is_target, etc_bundle, fsck_bundle_dir_fd, pre_target, "after/");
+	create_link(prog, fsck_bundle_dirname, fsck_bundle_dir_fd, "../../" + mount_bundle_dirname, "before/" + mount_bundle_dirname);
+	create_link(prog, fsck_bundle_dirname, fsck_bundle_dir_fd, "../../" + mount_bundle_dirname, "wanted-by/" + mount_bundle_dirname);
 
 	if (fuse) {
-		create_link(prog, fsck_bundle_dirname.c_str(), fsck_bundle_dir_fd.get(), "../../kmod@fuse", "after/kmod@fuse");
-		create_link(prog, fsck_bundle_dirname.c_str(), fsck_bundle_dir_fd.get(), "../../kmod@fuse", "wants/kmod@fuse");
+		create_link(prog, fsck_bundle_dirname, fsck_bundle_dir_fd, "../../kmod@fuse", "after/kmod@fuse");
+		create_link(prog, fsck_bundle_dirname, fsck_bundle_dir_fd, "../../kmod@fuse", "wants/kmod@fuse");
 	}
 	if (gbde) {
 		const std::string geom_service("gbde@" + escape(*gbde));
-		create_link(prog, fsck_bundle_dirname.c_str(), fsck_bundle_dir_fd.get(), "../../" + geom_service, "after/" + geom_service);
-		create_link(prog, fsck_bundle_dirname.c_str(), fsck_bundle_dir_fd.get(), "../../" + geom_service, "wants/" + geom_service);
+		create_link(prog, fsck_bundle_dirname, fsck_bundle_dir_fd, "../../" + geom_service, "after/" + geom_service);
+		create_link(prog, fsck_bundle_dirname, fsck_bundle_dir_fd, "../../" + geom_service, "wants/" + geom_service);
 	}
 	if (geli) {
 		const std::string geom_service("geli@" + escape(*geli));
-		create_link(prog, fsck_bundle_dirname.c_str(), fsck_bundle_dir_fd.get(), "../../" + geom_service, "after/" + geom_service);
-		create_link(prog, fsck_bundle_dirname.c_str(), fsck_bundle_dir_fd.get(), "../../" + geom_service, "wants/" + geom_service);
+		create_link(prog, fsck_bundle_dirname, fsck_bundle_dir_fd, "../../" + geom_service, "after/" + geom_service);
+		create_link(prog, fsck_bundle_dirname, fsck_bundle_dir_fd, "../../" + geom_service, "wants/" + geom_service);
 	}
 
-	create_link(prog, fsck_bundle_dirname.c_str(), fsck_bundle_dir_fd.get(), "/run/service-bundles/early-supervise/" + fsck_bundle_dirname, "supervise");
+	create_link(prog, fsck_bundle_dirname, fsck_bundle_dir_fd, "/run/service-bundles/early-supervise/" + fsck_bundle_dirname, "supervise");
 
 	std::ofstream fsck_start, fsck_stop;
 	open(prog, fsck_start, bundle_fullname + "/service/start");
@@ -414,7 +451,7 @@ create_mount_bundle (
 	const std::string * gbde,
 	const std::string * geli,
 	const bool etc_bundle,
-	int bundle_root_fd,
+	const FileDescriptorOwner & bundle_root_fd,
 	const char * bundle_root,
 	const std::string & mount_bundle_dirname
 ) {
@@ -422,7 +459,7 @@ create_mount_bundle (
 	const bool root(is_root(where));
 	const bool api(is_api_mountpoint(where));
 
-	if (0 > mkdirat(bundle_root_fd, mount_bundle_dirname.c_str(), 0755)) {
+	if (0 > mkdirat(bundle_root_fd.get(), mount_bundle_dirname.c_str(), 0755)) {
 		const int error(errno);
 		if (EEXIST != error || !overwrite) {
 			std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, bundle_root, mount_bundle_dirname.c_str(), std::strerror(error));
@@ -430,7 +467,7 @@ create_mount_bundle (
 		}
 	}
 
-	const FileDescriptorOwner mount_bundle_dir_fd(open_dir_at(bundle_root_fd, mount_bundle_dirname.c_str()));
+	const FileDescriptorOwner mount_bundle_dir_fd(open_dir_at(bundle_root_fd.get(), mount_bundle_dirname.c_str()));
 	if (0 > mount_bundle_dir_fd.get()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, bundle_root, mount_bundle_dirname.c_str(), std::strerror(error));
@@ -441,30 +478,33 @@ create_mount_bundle (
 
 	make_service(mount_bundle_dir_fd.get());
 	make_orderings_and_relations(mount_bundle_dir_fd.get());
-	make_default_dependencies(prog, mount_bundle_dirname.c_str(), is_target, etc_bundle, root, mount_bundle_dir_fd.get());
+	make_default_dependencies(prog, mount_bundle_dirname, is_target, etc_bundle, root, mount_bundle_dir_fd);
 	make_run_and_restart(prog, bundle_fullname + "/service", "true");
 
 	const char * const target(local ? "local-fs.target" : "remote-fs.target");
 	const char * const pre_target(local ? "local-fs-pre.target" : "remote-fs-pre.target");
-	create_links(prog, mount_bundle_dirname.c_str(), is_target, etc_bundle, mount_bundle_dir_fd.get(), target, "wanted-by/");
-	create_links(prog, mount_bundle_dirname.c_str(), is_target, etc_bundle, mount_bundle_dir_fd.get(), pre_target, "after/");
+	create_links(prog, mount_bundle_dirname, is_target, etc_bundle, mount_bundle_dir_fd, target, "wanted-by/");
+	create_links(prog, mount_bundle_dirname, is_target, etc_bundle, mount_bundle_dir_fd, target, "before/");
+	create_links(prog, mount_bundle_dirname, is_target, etc_bundle, mount_bundle_dir_fd, pre_target, "after/");
 
 	if (fuse) {
-		create_link(prog, mount_bundle_dirname.c_str(), mount_bundle_dir_fd.get(), "../../kmod@fuse", "after/kmod@fuse");
-		create_link(prog, mount_bundle_dirname.c_str(), mount_bundle_dir_fd.get(), "../../kmod@fuse", "wants/kmod@fuse");
+		create_link(prog, mount_bundle_dirname, mount_bundle_dir_fd, "../../kmod@fuse", "after/kmod@fuse");
+		create_link(prog, mount_bundle_dirname, mount_bundle_dir_fd, "../../kmod@fuse", "wants/kmod@fuse");
 	}
 	if (gbde) {
 		const std::string geom_service("gbde@" + escape(*gbde));
-		create_link(prog, mount_bundle_dirname.c_str(), mount_bundle_dir_fd.get(), "../../" + geom_service, "after/" + geom_service);
-		create_link(prog, mount_bundle_dirname.c_str(), mount_bundle_dir_fd.get(), "../../" + geom_service, "wants/" + geom_service);
+		create_link(prog, mount_bundle_dirname, mount_bundle_dir_fd, "../../" + geom_service, "after/" + geom_service);
+		create_link(prog, mount_bundle_dirname, mount_bundle_dir_fd, "../../" + geom_service, "wants/" + geom_service);
 	}
 	if (geli) {
 		const std::string geom_service("geli@" + escape(*geli));
-		create_link(prog, mount_bundle_dirname.c_str(), mount_bundle_dir_fd.get(), "../../" + geom_service, "after/" + geom_service);
-		create_link(prog, mount_bundle_dirname.c_str(), mount_bundle_dir_fd.get(), "../../" + geom_service, "wants/" + geom_service);
+		create_link(prog, mount_bundle_dirname, mount_bundle_dir_fd, "../../" + geom_service, "after/" + geom_service);
+		create_link(prog, mount_bundle_dirname, mount_bundle_dir_fd, "../../" + geom_service, "wants/" + geom_service);
 	}
 
-	create_link(prog, mount_bundle_dirname.c_str(), mount_bundle_dir_fd.get(), "/run/service-bundles/early-supervise/" + mount_bundle_dirname, "supervise");
+	make_mount_interdependencies(prog, mount_bundle_dirname, etc_bundle, root, mount_bundle_dir_fd, where);
+
+	create_link(prog, mount_bundle_dirname, mount_bundle_dir_fd, "/run/service-bundles/early-supervise/" + mount_bundle_dirname, "supervise");
 
 	std::ofstream mount_start, mount_stop;
 	open(prog, mount_start, bundle_fullname + "/service/start");
@@ -481,6 +521,8 @@ create_mount_bundle (
 	if (api || root) mount_start << "-o remount\n";
 #else
 	if (api || root) mount_start << "-o update\n";
+	if (root)
+		mount_start << "-o rw\n";
 #endif
 	mount_start << quote(what) << "\n" << quote(where) << "\n";
 
@@ -508,7 +550,7 @@ create_swap_bundle (
 	const char * what,
 	const bool overwrite,
 	const bool etc_bundle,
-	int bundle_root_fd,
+	const FileDescriptorOwner & bundle_root_fd,
 	const char * bundle_root,
 	const std::list<std::string> & options_list
 ) {
@@ -516,7 +558,7 @@ create_swap_bundle (
 	const bool root(false);
 	const std::string swap_bundle_dirname("swap@" + escape(what));
 
-	if (0 > mkdirat(bundle_root_fd, swap_bundle_dirname.c_str(), 0755)) {
+	if (0 > mkdirat(bundle_root_fd.get(), swap_bundle_dirname.c_str(), 0755)) {
 		const int error(errno);
 		if (EEXIST != error || !overwrite) {
 			std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, bundle_root, swap_bundle_dirname.c_str(), std::strerror(error));
@@ -524,7 +566,7 @@ create_swap_bundle (
 		}
 	}
 
-	const FileDescriptorOwner swap_bundle_dir_fd(open_dir_at(bundle_root_fd, swap_bundle_dirname.c_str()));
+	const FileDescriptorOwner swap_bundle_dir_fd(open_dir_at(bundle_root_fd.get(), swap_bundle_dirname.c_str()));
 	if (0 > swap_bundle_dir_fd.get()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, bundle_root, swap_bundle_dirname.c_str(), std::strerror(error));
@@ -535,15 +577,15 @@ create_swap_bundle (
 
 	make_service(swap_bundle_dir_fd.get());
 	make_orderings_and_relations(swap_bundle_dir_fd.get());
-	make_default_dependencies(prog, swap_bundle_dirname.c_str(), is_target, etc_bundle, root, swap_bundle_dir_fd.get());
+	make_default_dependencies(prog, swap_bundle_dirname, is_target, etc_bundle, root, swap_bundle_dir_fd);
 	make_run_and_restart(prog, bundle_fullname + "/service", "true");
 
 	if (!has_option(options_list, "late"))
-		create_links(prog, swap_bundle_dirname.c_str(), is_target, etc_bundle, swap_bundle_dir_fd.get(), "swapauto.target", "wanted-by/");
+		create_links(prog, swap_bundle_dirname, is_target, etc_bundle, swap_bundle_dir_fd, "swapauto.target", "wanted-by/");
 	else
-		create_links(prog, swap_bundle_dirname.c_str(), is_target, etc_bundle, swap_bundle_dir_fd.get(), "swaplate.target", "wanted-by/");
+		create_links(prog, swap_bundle_dirname, is_target, etc_bundle, swap_bundle_dir_fd, "swaplate.target", "wanted-by/");
 
-	create_link(prog, swap_bundle_dirname.c_str(), swap_bundle_dir_fd.get(), "/run/service-bundles/early-supervise/" + swap_bundle_dirname, "supervise");
+	create_link(prog, swap_bundle_dirname, swap_bundle_dir_fd, "/run/service-bundles/early-supervise/" + swap_bundle_dirname, "supervise");
 
 	std::ofstream swap_start, swap_stop;
 	open(prog, swap_start, bundle_fullname + "/service/start");
@@ -572,14 +614,14 @@ create_dump_bundle (
 	const char * what,
 	const bool overwrite,
 	const bool etc_bundle,
-	int bundle_root_fd,
+	const FileDescriptorOwner & bundle_root_fd,
 	const char * bundle_root
 ) {
 	const bool is_target(false);
 	const bool root(false);
 	const std::string dump_bundle_dirname("dump@" + escape(what));
 
-	if (0 > mkdirat(bundle_root_fd, dump_bundle_dirname.c_str(), 0755)) {
+	if (0 > mkdirat(bundle_root_fd.get(), dump_bundle_dirname.c_str(), 0755)) {
 		const int error(errno);
 		if (EEXIST != error || !overwrite) {
 			std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, bundle_root, dump_bundle_dirname.c_str(), std::strerror(error));
@@ -587,7 +629,7 @@ create_dump_bundle (
 		}
 	}
 
-	const FileDescriptorOwner dump_bundle_dir_fd(open_dir_at(bundle_root_fd, dump_bundle_dirname.c_str()));
+	const FileDescriptorOwner dump_bundle_dir_fd(open_dir_at(bundle_root_fd.get(), dump_bundle_dirname.c_str()));
 	if (0 > dump_bundle_dir_fd.get()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, bundle_root, dump_bundle_dirname.c_str(), std::strerror(error));
@@ -598,12 +640,12 @@ create_dump_bundle (
 
 	make_service(dump_bundle_dir_fd.get());
 	make_orderings_and_relations(dump_bundle_dir_fd.get());
-	make_default_dependencies(prog, dump_bundle_dirname.c_str(), is_target, etc_bundle, root, dump_bundle_dir_fd.get());
+	make_default_dependencies(prog, dump_bundle_dirname, is_target, etc_bundle, root, dump_bundle_dir_fd);
 	make_run_and_restart(prog, bundle_fullname + "/service", "true");
 
-	create_links(prog, dump_bundle_dirname.c_str(), is_target, etc_bundle, dump_bundle_dir_fd.get(), "dumpauto.target", "wanted-by/");
+	create_links(prog, dump_bundle_dirname, is_target, etc_bundle, dump_bundle_dir_fd, "dumpauto.target", "wanted-by/");
 
-	create_link(prog, dump_bundle_dirname.c_str(), dump_bundle_dir_fd.get(), "/run/service-bundles/early-supervise/" + dump_bundle_dirname, "supervise");
+	create_link(prog, dump_bundle_dirname, dump_bundle_dir_fd, "/run/service-bundles/early-supervise/" + dump_bundle_dirname, "supervise");
 
 	std::ofstream dump_start, dump_stop;
 	open(prog, dump_start, bundle_fullname + "/service/start");
@@ -704,20 +746,111 @@ convert_fstab_services (
 			const bool is_geli(ends_in(what, ".eli", geli));
 
 			if (is_gbde)
-				create_gbde_bundle(prog, what, local, overwrite, etc_bundle, bundle_root_fd.get(), bundle_root, gbde_bundle_dirname, fsck_bundle_dirname, mount_bundle_dirname);
+				create_gbde_bundle(prog, what, local, overwrite, etc_bundle, bundle_root_fd, bundle_root, gbde_bundle_dirname, fsck_bundle_dirname, mount_bundle_dirname);
 			if (is_geli)
-				create_geli_bundle(prog, what, local, overwrite, etc_bundle, bundle_root_fd.get(), bundle_root, geli_bundle_dirname, fsck_bundle_dirname, mount_bundle_dirname);
+				create_geli_bundle(prog, what, local, overwrite, etc_bundle, bundle_root_fd, bundle_root, geli_bundle_dirname, fsck_bundle_dirname, mount_bundle_dirname);
 			if (entry->fs_passno > 0)
-				create_fsck_bundle(prog, what, preenable, local, overwrite, is_fuse, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd.get(), bundle_root, fsck_bundle_dirname, mount_bundle_dirname);
-			create_mount_bundle(prog, what, where, entry->fs_vfstype, entry->fs_mntops, local, overwrite, is_fuse, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd.get(), bundle_root, mount_bundle_dirname);
+				create_fsck_bundle(prog, what, preenable, local, overwrite, is_fuse, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd, bundle_root, fsck_bundle_dirname, mount_bundle_dirname);
+			create_mount_bundle(prog, what, where, entry->fs_vfstype, entry->fs_mntops, local, overwrite, is_fuse, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd, bundle_root, mount_bundle_dirname);
 		} else
 		if (0 == std::strcmp(type, "sw")) {
-			create_swap_bundle(prog, what, overwrite, etc_bundle, bundle_root_fd.get(), bundle_root, options_list);
-			create_dump_bundle(prog, what, overwrite, etc_bundle, bundle_root_fd.get(), bundle_root);
+			create_swap_bundle(prog, what, overwrite, etc_bundle, bundle_root_fd, bundle_root, options_list);
+			create_dump_bundle(prog, what, overwrite, etc_bundle, bundle_root_fd, bundle_root);
 		} else
 			std::fprintf(stderr, "%s: WARNING: %s: %s: %s\n", prog, where, type, "Unrecognized type.");
 	}
 	endfsent();
+
+	throw EXIT_SUCCESS;
+}
+
+void
+write_volume_service_bundles ( 
+	const char * & next_prog,
+	std::vector<const char *> & args
+) {
+	const char * prog(basename_of(args[0]));
+	const char * bundle_root(0);
+	const char * mntops(0);
+	bool overwrite(false), etc_bundle(false), want_fsck(false);
+	try {
+		popt::bool_definition overwrite_option('o', "overwrite", "Update/overwrite an existing service bundle.", overwrite);
+		popt::string_definition bundle_option('\0', "bundle-root", "directory", "Root directory for bundles.", bundle_root);
+		popt::string_definition mntops_option('\0', "mount-options", "list", "Mount options.", mntops);
+		popt::bool_definition etc_bundle_option('\0', "etc-bundle", "Consider this service to live away from the normal service bundle group.", etc_bundle);
+		popt::definition * main_table[] = {
+			&overwrite_option,
+			&bundle_option,
+			&mntops_option,
+			&etc_bundle_option
+		};
+		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "fstype source directory");
+
+		std::vector<const char *> new_args;
+		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
+		p.process(true /* strictly options before arguments */);
+		args = new_args;
+		next_prog = arg0_of(args);
+		if (p.stopped()) throw EXIT_SUCCESS;
+	} catch (const popt::error & e) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
+		throw EXIT_FAILURE;
+	}
+
+	if (args.empty()) {
+		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing vfs name.");
+		throw static_cast<int>(EXIT_USAGE);
+	}
+	const char * vfstype(args.front());
+	args.erase(args.begin());
+	if (args.empty()) {
+		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing device name.");
+		throw static_cast<int>(EXIT_USAGE);
+	}
+	const char * what(args.front());
+	args.erase(args.begin());
+	if (args.empty()) {
+		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing directory name.");
+		throw static_cast<int>(EXIT_USAGE);
+	}
+	const char * where(args.front());
+	args.erase(args.begin());
+	if (!args.empty()) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, args.front(), "Unexpected argument.");
+		throw static_cast<int>(EXIT_USAGE);
+	}
+
+	if (bundle_root)
+		mkdirat(AT_FDCWD, bundle_root, 0755);
+	else
+		bundle_root = ".";
+	const FileDescriptorOwner bundle_root_fd(open_dir_at(AT_FDCWD, bundle_root));
+	if (0 > bundle_root_fd.get()) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, bundle_root, std::strerror(error));
+		throw EXIT_FAILURE;
+	}
+
+	const std::list<std::string> options_list(split_fstab_options(mntops));
+
+	const std::string gbde_bundle_dirname("gbde@" + escape(what));
+	const std::string geli_bundle_dirname("geli@" + escape(what));
+	const std::string fsck_bundle_dirname("fsck@" + escape(where));
+	const std::string mount_bundle_dirname("mount@" + escape(where));
+	const bool local(!has_option(options_list, "_nodev") && is_local_type(vfstype));
+	const bool preenable(is_preenable_type(vfstype));
+	std::string gbde, geli, fuse;
+	const bool is_fuse(begins_with(basename_of(what), "fuse", fuse) && fuse.length() > 1 && std::isdigit(fuse[0]));
+	const bool is_gbde(ends_in(what, ".bde", gbde));
+	const bool is_geli(ends_in(what, ".eli", geli));
+
+	if (is_gbde)
+		create_gbde_bundle(prog, what, local, overwrite, etc_bundle, bundle_root_fd, bundle_root, gbde_bundle_dirname, fsck_bundle_dirname, mount_bundle_dirname);
+	if (is_geli)
+		create_geli_bundle(prog, what, local, overwrite, etc_bundle, bundle_root_fd, bundle_root, geli_bundle_dirname, fsck_bundle_dirname, mount_bundle_dirname);
+	if (want_fsck)
+		create_fsck_bundle(prog, what, preenable, local, overwrite, is_fuse, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd, bundle_root, fsck_bundle_dirname, mount_bundle_dirname);
+	create_mount_bundle(prog, what, where, vfstype, mntops, local, overwrite, is_fuse, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd, bundle_root, mount_bundle_dirname);
 
 	throw EXIT_SUCCESS;
 }

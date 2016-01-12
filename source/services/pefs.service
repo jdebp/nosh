@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD pefs mounts
+
+[Service]
+ExecStart=true
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

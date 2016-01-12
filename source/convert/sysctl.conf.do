@@ -1,13 +1,16 @@
 #!/bin/sh -e
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
 #
 # Special setup for sysctl.conf.
 # This is invoked by all.do .
 #
 
 # This gets us *only* the configuration variables, safely.
-dump() { clearenv read-conf -oknofile /etc/rc.conf read-conf -oknofile /etc/rc.conf.local `which printenv` ; }
+dump() { clearenv read-conf -oknofile /etc/defaults/rc.conf read-conf -oknofile /etc/rc.conf read-conf -oknofile /etc/rc.conf.local `which printenv` ; }
 
-for i in /etc/rc.conf.local /etc/rc.conf
+for i in /etc/defaults/rc.conf /etc/rc.conf.local /etc/rc.conf
 do
 	if test -e "$i"
 	then

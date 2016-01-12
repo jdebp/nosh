@@ -1,11 +1,14 @@
 #!/bin/sh -e
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
 #
 # Convert the loaded kernel modules list external configuration formats.
 # This is invoked by all.do .
 #
 
 # This is the systemd system, with several .d files full of module list files.
-read_dir() { for d ; do test \! -d "$d" || ( cd "$d" && find -maxdepth 1 -name '*.conf' -a \( -type l -o -type f \) ) | while read i ; do echo "$d" "$i" ; done ; done }
+read_dir() { for d ; do test \! -d "$d" || ( cd "$d" && find -maxdepth 1 -name '*.conf' -a \( -type l -o -type f \) ) | while read -r i ; do echo "$d" "$i" ; done ; done }
 list_modules_linux() { read_dir /etc/modules-load.d/ /lib/modules-load.d/ /usr/lib/modules-load.d/ /usr/local/lib/modules-load.d/ | awk '{ if (!x[$2]++) print $1$2"\n"; }' | xargs grep -- '^[^;#]' ; true ; echo autofs ; echo ipv6 ; echo unix ; }
 
 # This is the BSD system, with settings in /etc/rc.conf{,.local}
@@ -25,6 +28,12 @@ case "`uname`" in
 *BSD)
 	# This is the list of "known" BSD kernel modules for which service bundles are pre-supplied.
 	# Note that we cannot just disable kmod@* and cyclog@kmod@* because of VirtualBox and others.
+	for n in \
+		fuse \
+		;
+	do
+		system-control disable "kmod@$n"
+	done
 	for n in \
 		acpi_video \
 		bwi_v3_ucode \
@@ -70,10 +79,15 @@ case "`uname`" in
 esac
 
 list_modules |
-while read n
+while read -r n
 do
 	# Note that the way that we are setting up prefixes allows variables such as ntfs_enable in /etc/rc.conf{,.local} .
-	system-control preset --prefix "cyclog@kmod@" -- "$n"
+	case "$n" in
+	fuse)	;;
+	*)
+		system-control preset --prefix "cyclog@kmod@" -- "$n"
+		;;
+	esac
 	system-control preset --prefix "kmod@" -- "$n"
 	if system-control is-enabled "kmod@$n"
 	then

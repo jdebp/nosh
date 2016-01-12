@@ -14,6 +14,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include "utils.h"
 #include "fdutils.h"
+#include "FileDescriptorOwner.h"
+#include "DirStar.h"
 
 bool
 process_env_dir (
@@ -24,12 +26,12 @@ process_env_dir (
 	bool full,
 	bool chomp
 ) {
-	DIR * scan_dir(fdopendir(scan_dir_fd));
+	const DirStar scan_dir(fdopendir(scan_dir_fd));
 	if (!scan_dir) {
 exit_scan:
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, dir, std::strerror(error));
-		if (!scan_dir) close(scan_dir_fd); else closedir(scan_dir);
+		if (!scan_dir) close(scan_dir_fd);
 		return false;
 	}
 	for (;;) {
@@ -51,22 +53,18 @@ exit_scan:
 #endif
 		if ('.' == entry->d_name[0]) continue;
 
-		const int var_file_fd(open_read_at(scan_dir_fd, entry->d_name));
-		if (0 > var_file_fd) {
+		const FileDescriptorOwner var_file_fd(open_read_at(scan_dir_fd, entry->d_name));
+		if (0 > var_file_fd.get()) {
 bad_file:
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, dir, entry->d_name, std::strerror(error));
-			if (0 <= var_file_fd) close(var_file_fd);
-			if (!ignore_errors) {
-				closedir(scan_dir);
+			if (!ignore_errors)
 				return false;
-			}
 			continue;
 		}
 		struct stat s;
-		if (0 > fstat(var_file_fd, &s)) goto bad_file;
+		if (0 > fstat(var_file_fd.get(), &s)) goto bad_file;
 		if (!S_ISREG(s.st_mode)) {
-			close(var_file_fd);
 			if (!S_ISDIR(s.st_mode))
 				std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, dir, entry->d_name, "Not a regular file.");
 			continue;
@@ -75,26 +73,18 @@ bad_file:
 			if (0 > unsetenv(entry->d_name)) {
 				const int error(errno);
 				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, entry->d_name, std::strerror(error));
-				if (!ignore_errors) {
-					close(var_file_fd);
-					closedir(scan_dir);
+				if (!ignore_errors)
 					return false;
-				}
 			}
 		} else {
-			const std::string val(read_env_file(prog, dir, entry->d_name, var_file_fd, full, chomp));
+			const std::string val(read_env_file(prog, dir, entry->d_name, var_file_fd.get(), full, chomp));
 			if (0 > setenv(entry->d_name, val.c_str(), 1)) {
 				const int error(errno);
 				std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dir, entry->d_name, std::strerror(error));
-				if (!ignore_errors) {
-					close(var_file_fd);
-					closedir(scan_dir);
+				if (!ignore_errors)
 					return false;
-				}
 			}
 		}
-		close(var_file_fd);
 	}
-	closedir(scan_dir);
 	return true;
 }

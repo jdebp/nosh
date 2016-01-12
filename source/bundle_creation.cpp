@@ -13,33 +13,34 @@ For copyright and licensing terms, see the file named COPYING.
 #include "utils.h"
 #include "fdutils.h"
 #include "bundle_creation.h"
+#include "FileDescriptorOwner.h"
 
 void
 create_link (
 	const char * prog,
-	const char * name,
-	int bundle_dir_fd,
+	const std::string & name,
+	const FileDescriptorOwner & bundle_dir_fd,
 	const std::string & target,
 	const std::string & link
 ) {
-	if (0 > unlinkat(bundle_dir_fd, link.c_str(), 0)) {
+	if (0 > unlinkat(bundle_dir_fd.get(), link.c_str(), 0)) {
 		const int error(errno);
 		if (ENOENT != error)
-			std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, name, link.c_str(), std::strerror(error));
+			std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, name.c_str(), link.c_str(), std::strerror(error));
 	}
-	if (0 > symlinkat(target.c_str(), bundle_dir_fd, link.c_str())) {
+	if (0 > symlinkat(target.c_str(), bundle_dir_fd.get(), link.c_str())) {
 		const int error(errno);
-		std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, name, link.c_str(), std::strerror(error));
+		std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, name.c_str(), link.c_str(), std::strerror(error));
 	}
 }
 
 void
 create_links (
 	const char * prog,
-	const char * bund,
+	const std::string & bund,
 	const bool is_target,
 	const bool etc_bundle,
-	int bundle_dir_fd,
+	const FileDescriptorOwner & bundle_dir_fd,
 	const std::string & names,
 	const std::string & subdir
 ) {

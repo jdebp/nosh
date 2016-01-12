@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Convert /var/run into a symbolic link to /run .
+After=mount@-var
+Before=devd ldconfig
+
+[Service]
+Type=oneshot
+ExecStart=./helper
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

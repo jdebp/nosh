@@ -1,4 +1,10 @@
+#compdef init telinit svcadm systemctl initctl rcctl system-control service-status service-control console-convert-kbdmap console-clear console-resize service-is-ok service-is-up service-show reboot halt haltsys poweroff shutdown
 #compdef init telinit svcadm systemctl initctl rcctl system-control system-manager session-manager service-manager svstat service-status svc service-control console-terminal-emulator console-convert-kbdmap console-clear console-resize console-multiplexor console-fb-realizer console-ncurses-realizer svscan service-dt-scanner svok service-is-ok svup service-is-up svshow service-show emergency rescue normal reboot halt haltsys poweroff shutdown
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+#
+# Z Shell command-line completion
 
 function _system_control_subcommands()
 {

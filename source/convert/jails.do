@@ -1,10 +1,13 @@
 #!/bin/sh -e
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
 #
 # Convert the FreeBSD jails list external configuration formats.
 # This is invoked by general-services.do .
 #
 
-for i in /etc/rc.conf.local /etc/rc.conf
+for i in /etc/defaults/rc.conf /etc/rc.conf.local /etc/rc.conf
 do
 	if test -e "$i"
 	then

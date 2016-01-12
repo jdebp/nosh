@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD serial device initialization service
+
+[Service]
+Type=oneshot
+ExecStart=/etc/rc.d/serial
+Restart=never
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

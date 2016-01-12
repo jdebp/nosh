@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Generic POP3 socket
+
+[Socket]
+Backlog=2
+BindIPv6Only=both
+ListenStream=pop3s
+Accept=true
+MaxConnections=16
+UCSPIRules=true
+NoDelay=false
+
+[Install]
+WantedBy=server.target

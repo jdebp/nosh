@@ -21,6 +21,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include "popt.h"
 #include "service-manager-client.h"
 #include "service-manager.h"
+#include "FileDescriptorOwner.h"
+#include "DirStar.h"
 
 /* JSON and INI output ******************************************************
 // **************************************************************************
@@ -191,9 +193,9 @@ get_relations (
 	const char * relation
 ) {
 	Relations r;
-	const int relation_dir_fd(open_dir_at(bundle_dir_fd, relation));
-	if (0 <= relation_dir_fd) {
-		DIR * relation_dir(fdopendir(relation_dir_fd));
+	FileDescriptorOwner relation_dir_fd(open_dir_at(bundle_dir_fd, relation));
+	if (0 <= relation_dir_fd.get()) {
+		const DirStar relation_dir(relation_dir_fd);
 		if (relation_dir) for (;;) {
 			const dirent * entry(readdir(relation_dir));
 			if (!entry) break;
@@ -207,18 +209,17 @@ get_relations (
 			if ('.' == entry->d_name[0]) continue;
 
 			struct stat s;
-			if (0 > fstatat(relation_dir_fd, entry->d_name, &s, AT_SYMLINK_NOFOLLOW)) continue;
+			if (0 > fstatat(relation_dir.fd(), entry->d_name, &s, AT_SYMLINK_NOFOLLOW)) continue;
 			if (!S_ISLNK(s.st_mode)) continue;
 			std::auto_ptr<char> buf(new(std::nothrow) char [s.st_size]);
 			if (!buf.get()) continue;
-			const int l(readlinkat(relation_dir_fd, entry->d_name, buf.get(), s.st_size));
+			const int l(readlinkat(relation_dir.fd(), entry->d_name, buf.get(), s.st_size));
 			if (0 > l) continue;
 			std::string d(buf.get(), l);
 			if ("../" == d.substr(0, 3))
 				d = d.substr(3, d.npos);
 			r.push_back(d);
 		}
-		closedir(relation_dir);
 	}
 	return r;
 }

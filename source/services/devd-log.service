@@ -10,7 +10,7 @@ Before=shutdown.target
 
 [Service]
 PermissionsStartOnly=true
-User=log
+User=devd-log
 WorkingDirectory=/var/log/sv
 ExecStart=cyclog devd/
 Restart=always

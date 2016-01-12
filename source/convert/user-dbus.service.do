@@ -1,4 +1,7 @@
 #!/bin/sh -e
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
 case "`uname`" in
 Linux)	ext=linux ;;
 *BSD)	ext=bsd ;;

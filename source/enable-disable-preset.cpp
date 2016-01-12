@@ -26,6 +26,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include "common-manager.h"
 #include "popt.h"
 #include "FileStar.h"
+#include "FileDescriptorOwner.h"
+#include "DirStar.h"
 
 /* Common Internals *********************************************************
 // **************************************************************************
@@ -43,14 +45,14 @@ enable_disable (
 ) {
 	const std::string source_dir_name(path + "/" + source);
 	const std::string base(basename_of(path.c_str()));
-	const int source_dir_fd(open_dir_at(bundle_dir_fd, (source + "/").c_str()));
-	if (source_dir_fd < 0) {
+	FileDescriptorOwner source_dir_fd(open_dir_at(bundle_dir_fd, (source + "/").c_str()));
+	if (source_dir_fd.get() < 0) {
 		const int error(errno);
 		if (ENOENT != error)
 			std::fprintf(stderr, "%s: WARNING: %s: %s\n", prog, source_dir_name.c_str(), std::strerror(error));
 		return false;
 	}
-	DIR * source_dir(fdopendir(source_dir_fd));
+	const DirStar source_dir(source_dir_fd);
 	if (!source_dir) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, source_dir_name.c_str(), std::strerror(error));
@@ -76,16 +78,16 @@ enable_disable (
 #endif
 		if ('.' == entry->d_name[0]) continue;
 
-		const int target_dir_fd(open_dir_at(source_dir_fd, entry->d_name));
-		if (0 > target_dir_fd) {
+		const FileDescriptorOwner target_dir_fd(open_dir_at(source_dir.fd(), entry->d_name));
+		if (0 > target_dir_fd.get()) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, source_dir_name.c_str(), entry->d_name, std::strerror(error));
 			failed = true;
 			continue;
 		}
 		if (make)
-			mkdirat(target_dir_fd, target.c_str(), 0755);
-		if (0 > unlinkat(target_dir_fd, (target + "/" + base).c_str(), 0)) {
+			mkdirat(target_dir_fd.get(), target.c_str(), 0755);
+		if (0 > unlinkat(target_dir_fd.get(), (target + "/" + base).c_str(), 0)) {
 			const int error(errno);
 			if (ENOENT != error) {
 				std::fprintf(stderr, "%s: ERROR: %s/%s/%s/%s: %s\n", prog, source_dir_name.c_str(), entry->d_name, target.c_str(), base.c_str(), std::strerror(error));
@@ -93,15 +95,13 @@ enable_disable (
 			}
 		}
 		if (make) {
-			if (0 > symlinkat(path.c_str(), target_dir_fd, (target + "/" + base).c_str())) {
+			if (0 > symlinkat(path.c_str(), target_dir_fd.get(), (target + "/" + base).c_str())) {
 				const int error(errno);
 				std::fprintf(stderr, "%s: ERROR: %s/%s/%s/%s: %s\n", prog, source_dir_name.c_str(), entry->d_name, target.c_str(), base.c_str(), std::strerror(error));
 				failed = true;
 			}
 		}
-		close(target_dir_fd);
 	}
-	closedir(source_dir);
 	return !failed;
 }
 
@@ -121,24 +121,22 @@ enable_disable (
 		failed = true;
 	if (!enable_disable(prog, make, path, bundle_dir_fd, "stopped-by", "after"))
 		failed = true;
-	const int service_dir_fd(open_service_dir(bundle_dir_fd));
+	const FileDescriptorOwner service_dir_fd(open_service_dir(bundle_dir_fd));
 	if (make) {
-		const int rc(unlinkat(service_dir_fd, "down", 0));
+		const int rc(unlinkat(service_dir_fd.get(), "down", 0));
 		if (0 > rc && ENOENT != errno) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s: %s/%s: %s\n", prog, arg.c_str(), path.c_str(), "down", std::strerror(error));
 			failed = true;
 		}
 	} else {
-		const int fd(open_writecreate_at(service_dir_fd, "down", 0600));
-		if (0 > fd) {
+		const FileDescriptorOwner fd(open_writecreate_at(service_dir_fd.get(), "down", 0600));
+		if (0 > fd.get()) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s: %s/%s: %s\n", prog, arg.c_str(), path.c_str(), "down", std::strerror(error));
 			failed = true;
-		} else
-			close(fd);
+		}
 	}
-	close(service_dir_fd);
 	return !failed;
 }
 
@@ -315,9 +313,9 @@ query_systemd_preset (
 	std::string earliest;
 	for (size_t i(0); i < sizeof preset_directories/sizeof *preset_directories; ++i) {
 		const std::string preset_dir_name(preset_directories[i]);
-		const int preset_dir_fd(open_dir_at(AT_FDCWD, preset_dir_name.c_str()));
-		if (preset_dir_fd < 0) continue;
-		DIR * preset_dir(fdopendir(preset_dir_fd));
+		FileDescriptorOwner preset_dir_fd(open_dir_at(AT_FDCWD, preset_dir_name.c_str()));
+		if (preset_dir_fd.get() < 0) continue;
+		const DirStar preset_dir(preset_dir_fd);
 		if (!preset_dir) continue;
 		for (;;) {
 			errno = 0;
@@ -333,14 +331,13 @@ query_systemd_preset (
 			const std::string d_name(entry->d_name);
 			if (!earliest.empty() && earliest <= d_name) continue;
 			const std::string p(preset_dir_name + d_name);
-			const int f(open_read_at(preset_dir_fd, entry->d_name));
+			const int f(open_read_at(preset_dir.fd(), entry->d_name));
 			if (0 > f) continue;
 			FileStar preset_file(fdopen(f, "rt"));
 			if (!preset_file) continue;
 			if (scan(name, suffix, preset_file, wants))
 				earliest = d_name;
 		}
-		closedir(preset_dir);
 	}
 	return !earliest.empty();
 }
@@ -525,16 +522,15 @@ enable (
 	bool failed(false);
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
 		std::string path, name, suffix;
-		const int bundle_dir_fd(open_bundle_directory("", *i, path, name, suffix));
-		if (0 > bundle_dir_fd) {
+		const FileDescriptorOwner bundle_dir_fd(open_bundle_directory("", *i, path, name, suffix));
+		if (0 > bundle_dir_fd.get()) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, *i, std::strerror(error));
 			continue;
 		}
 		const std::string p(path + name);
-		if (!enable_disable(prog, true, *i, p, bundle_dir_fd))
+		if (!enable_disable(prog, true, *i, p, bundle_dir_fd.get()))
 			failed = true;
-		close(bundle_dir_fd);
 	}
 
 	throw failed ? EXIT_FAILURE : EXIT_SUCCESS;
@@ -567,16 +563,15 @@ disable (
 	bool failed(false);
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
 		std::string path, name, suffix;
-		const int bundle_dir_fd(open_bundle_directory("", *i, path, name, suffix));
-		if (0 > bundle_dir_fd) {
+		const FileDescriptorOwner bundle_dir_fd(open_bundle_directory("", *i, path, name, suffix));
+		if (0 > bundle_dir_fd.get()) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, *i, std::strerror(error));
 			continue;
 		}
 		const std::string p(path + name);
-		if (!enable_disable(prog, false, *i, p, bundle_dir_fd))
+		if (!enable_disable(prog, false, *i, p, bundle_dir_fd.get()))
 			failed = true;
-		close(bundle_dir_fd);
 	}
 
 	throw failed ? EXIT_FAILURE : EXIT_SUCCESS;
@@ -624,8 +619,8 @@ preset (
 	const std::string p(prefix);
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
 		std::string path, name, suffix;
-		const int bundle_dir_fd(open_bundle_directory(prefix, *i, path, name, suffix));
-		if (0 > bundle_dir_fd) {
+		const FileDescriptorOwner bundle_dir_fd(open_bundle_directory(prefix, *i, path, name, suffix));
+		if (0 > bundle_dir_fd.get()) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s%s: %s\n", prog, prefix, name.c_str(), std::strerror(error));
 			failed = true;
@@ -635,9 +630,8 @@ preset (
 		if (dry_run)
 			std::fprintf(stdout, "%s %s\n", make ? "enable" : "disable", (path + p + name).c_str());
 		else
-		if (!enable_disable(prog, make, p + *i, path + p + name, bundle_dir_fd))
+		if (!enable_disable(prog, make, p + *i, path + p + name, bundle_dir_fd.get()))
 			failed = true;
-		close(bundle_dir_fd);
 	}
 
 	throw failed ? EXIT_FAILURE : EXIT_SUCCESS;

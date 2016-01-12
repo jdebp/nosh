@@ -32,20 +32,20 @@ public:
 	unsigned short query_xres() const { return variable_info.xres; }
 	unsigned short query_depth() const { return variable_info.bits_per_pixel; }
 #else
-	std::size_t query_size() const { return variable_info.vi_buffer_size; }
+	std::size_t query_size() const { return mode_info.vi_buffer_size; }
 	unsigned short query_stride() const { return adapter_info.va_line_width; }
-	unsigned short query_xres() const { return variable_info.vi_width; }
-	unsigned short query_yres() const { return variable_info.vi_height; }
-	unsigned short query_depth() const { return variable_info.vi_depth; }
+	unsigned short query_xres() const { return mode_info.vi_width; }
+	unsigned short query_yres() const { return mode_info.vi_height; }
+	unsigned short query_depth() const { return mode_info.vi_depth; }
 #endif
 protected:
 #if defined(__LINUX__) || defined(__linux__)
 	struct fb_fix_screeninfo fixed_info;
 	struct fb_var_screeninfo old_variable_info, variable_info;
 #else
-	video_adapter_info_t adapter_info;
 	int old_video_mode, video_mode;
-	video_info_t variable_info;
+	video_adapter_info_t adapter_info;
+	video_info_t mode_info;
 #endif
 };
 

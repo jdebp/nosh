@@ -27,6 +27,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "utils.h"
 #include "fdutils.h"
 #include "FileDescriptorOwner.h"
+#include "DirStar.h"
 #include "popt.h"
 
 static const int socket_fd(7);
@@ -97,19 +98,6 @@ is_old (
 }
 
 namespace {
-
-/// \brief A wrapper for DIR * that automatically closes the directory in its destructor.
-struct DirStar {
-	operator DIR * () const { return d ; }
-	DirStar(DIR * dp = 0) : d(dp) {}
-//	DirStar(int fd) : d(fdopendir(fd)) {}
-	DirStar(FileDescriptorOwner & fd) : d(fdopendir(fd.get())) { if (d) fd.release(); }
-	DirStar & operator= ( DIR * n ) { assign(n); return *this; }
-	~DirStar() { assign(0); }
-protected:
-	DIR * d;
-	void assign(DIR * n) { if (d) closedir(d); d = n; }
-};
 
 struct index : public std::pair<dev_t, ino_t> {
 	index(const struct stat & s) : pair(s.st_dev, s.st_ino) {}
@@ -322,7 +310,7 @@ exit_scan:
 		throw EXIT_FAILURE;
 	}
 
-	DirStar scan_dir(duplicated_scan_dir_fd);
+	const DirStar scan_dir(duplicated_scan_dir_fd);
 	if (!scan_dir) goto exit_scan;
 
 	rewinddir(scan_dir);	// because the last pass left it at EOF.

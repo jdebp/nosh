@@ -13,11 +13,18 @@ fi
 
 root1="${1-/usr/local/}"
 root2="${2-/}"
+root3="${3-/var/}"
 user="`id -un`"
 group="`id -gn`"
 
-mkdir -p "${root1}"bin/ "${root1}"sbin/ "${root1}"etc/rc.d/ "${root1}"man/man1 "${root1}"man/man8 "${root1}"lib/systemd/system "${root1}"lib/tmpfiles.d "${root1}"lib/systemd/system-preset "${root1}"share/doc/nosh
-mkdir -p "${root2}"bin/ "${root2}"sbin/ "${root2}"var/sv "${root2}"etc/service-bundles/services "${root2}"etc/service-bundles/targets "${root2}"etc/system-control/presets "${root2}"etc/system-control/convert
+mkdir -m 0755 -p "${root1}" "${root2}" "${root3}"
+absroot1="`readlink -f "${root1}"`/"
+absroot2="`readlink -f "${root2}"`/"
+absroot3="`readlink -f "${root3}"`/"
+
+mkdir -m 0755 -p "${root1}"bin "${root1}"sbin "${root1}"etc "${root1}"etc/rc.d "${root1}"man "${root1}"man/man1 "${root1}"man/man8 "${root1}"lib "${root1}"lib/systemd/system "${root1}"lib/tmpfiles.d "${root1}"lib/systemd/system-preset "${root1}"share "${root1}"share/doc/nosh
+mkdir -m 0755 -p "${root2}"bin "${root2}"sbin "${root2}"etc "${root2}"etc/service-bundles/services "${root2}"etc/service-bundles/targets "${root2}"etc/system-control/presets "${root2}"etc/system-control/convert "${root2}"run
+mkdir -m 0755 -p "${root3}"sv "${root3}"local/sv
 
 (
 	awk '{ if ($1 != "exec" && $1 != "session-manager" && $1 != "console-terminal-emulator" && $1 != "service-control" && $1 != "system-control") print $0 ; }' package/aliases1 
@@ -135,13 +142,18 @@ do
 	cp -p -f -- config/rc.d/"$i" "${root1}"etc/rc.d/"$i"{new}
 	mv -f -- "${root1}"etc/rc.d/"$i"{new} "${root1}"etc/rc.d/"$i"
 done < package/netbsd-rc-scripts
-cat package/systemd-presets |
+for i in issue.vc
+do
+	# vt config files
+	cp -p -f -- config/vt/"$i" "${root1}"etc/"$i"{new}
+	mv -f -- "${root1}"etc/"$i"{new} "${root1}"etc/"$i"
+done
 while read i
 do
 	# systemd presets
 	cp -p -f -- config/presets/"$i" "${root1}"lib/systemd/system-preset/"$i"{new}
 	mv -f -- "${root1}"lib/systemd/system-preset/"$i"{new} "${root1}"lib/systemd/system-preset/"$i"
-done
+done < package/systemd-presets
 (
 	for i in bundles run-via-systemd run-via-netbsd-rc run-virtualbox-guest run-freedesktop-kits run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog
 	do
@@ -167,7 +179,7 @@ while read i
 do
 	# standard target bundles
 	rm -f -- "${root2}"etc/service-bundles/targets/"$i"/service/remain
-	(cd config/targets/ && tar -c -f - "$i")|(cd "${root2}"etc/service-bundles/targets/ && tar -x -f -)
+	(cd config/targets/ && pax -r -w -l -- "$i" "${absroot2}"etc/service-bundles/targets/)
 done < package/standard-targets
 (
 	cat package/common-etc-services 
@@ -179,15 +191,15 @@ done < package/standard-targets
 do
 	# etc service bundles
 	rm -f -- "${root2}"etc/service-bundles/services/"$i"/service/remain
-	(cd config/services/ && tar -c -f - "$i")|(cd "${root2}"etc/service-bundles/services/ && tar -x -f -)
+	(cd config/services/ && pax -r -w -l -- "$i" "${absroot2}"etc/service-bundles/services/)
 done
 while read i
 do
 	# mount service bundles
 	rm -f -- "${root2}"etc/service-bundles/services/mount@"$i"/service/remain
 	rm -f -- "${root2}"etc/service-bundles/services/fsck@"$i"/service/remain
-	(cd config/services/ && tar -c -f - mount@"$i")|(cd "${root2}"etc/service-bundles/services/ && tar -x -f -)
-	(cd config/services/ && tar -c -f - fsck@"$i")|(cd "${root2}"etc/service-bundles/services/ && tar -x -f -)
+	(cd config/services/ && pax -r -w -l -- mount@"$i" "${absroot2}"etc/service-bundles/services/)
+	(cd config/services/ && pax -r -w -l -- fsck@"$i" "${absroot2}"etc/service-bundles/services/)
 done < package/common-mounts
 (
 	cat package/common-services package/common-sockets package/common-ttys
@@ -198,8 +210,8 @@ done < package/common-mounts
 ) | while read i
 do
 	# service bundles
-	rm -f -- "${root2}"var/sv/"$i"/service/remain
-	rm -f -- "${root2}"var/sv/cyclog@"$i"/service/remain
-	(cd config/services/ && tar -c -f - "$i")|(cd "${root2}"var/sv/ && tar -x -f -)
-	(cd config/services/ && tar -c -f - cyclog@"$i")|(cd "${root2}"var/sv/ && tar -x -f -)
+	rm -f -- "${root3}"sv/"$i"/service/remain
+	rm -f -- "${root3}"sv/cyclog@"$i"/service/remain
+	(cd config/services/ && pax -r -w -l -- "$i" "${absroot3}"sv/)
+	(cd config/services/ && pax -r -w -l -- cyclog@"$i" "${absroot3}"sv/)
 done

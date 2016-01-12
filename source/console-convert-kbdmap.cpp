@@ -563,7 +563,7 @@ bsd_actions[]= {
 	/// There isn't a Unicode combining character that does this; nor does ISO 9995-3 define any such combining character.
 //	{	UCSA(0x),				"dapo"		},
 	{	UCSA(0x0338),				"dsla"		},	// See ISO 9995-3 appendix F for why this particular combining character is the "slash" that combines with "o" and "O".
-	{	UCSA(0x0364),				"duml"		},
+	{	UCSA(0x0308),				"duml"		},	// This really should be CGJ + 0x0308, but a lot of BSD keymaps rely upon "ddia" and "duml" being interchangeable.
 	{	SYST(SYSTEM_KEY_POWER),			"pdwn"		},
 	{	SYST(SYSTEM_KEY_DEBUG),			"debug"		},
 	{	SYST(SYSTEM_KEY_SLEEP),			"susp"		},

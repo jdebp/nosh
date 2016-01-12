@@ -5,8 +5,6 @@ add_user() { getent passwd "$1" > /dev/null || useradd --shell /bin/false "$1" ;
 add_group() { getent group "$1" > /dev/null || groupadd "$1" ; }
 case "$1" in
 	configure)
-		add_user vboxadd
-		add_group vboxsf
 		for I in \
 			udev \
 			;

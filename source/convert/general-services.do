@@ -1,13 +1,16 @@
 #!/bin/sh -e
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
 #
 # Convert the /etc/rc.conf{,.local} external configuration formats.
 # This is invoked by all.do .
 #
 
 # This gets us *only* the configuration variables, safely.
-dump() { clearenv read-conf -oknofile /etc/rc.conf read-conf -oknofile /etc/rc.conf.local `which printenv` ; }
+dump() { clearenv read-conf -oknofile /etc/defaults/rc.conf read-conf -oknofile /etc/rc.conf read-conf -oknofile /etc/rc.conf.local `which printenv` ; }
 
-for i in /etc/rc.conf.local /etc/rc.conf
+for i in /etc/defaults/rc.conf /etc/rc.conf.local /etc/rc.conf
 do
 	if test -e "$i"
 	then
@@ -19,7 +22,7 @@ done
 
 dump |
 awk -F = '/_enable/{print substr($1,1,length($1)-7);}' |
-while read n
+while read -r n
 do
 	case "$n" in
 
@@ -39,6 +42,11 @@ do
 	nfs_server)		service=nfsd ;;
 	pc-sounddetect)		service=snddetect ;;
 	syslogs)		service=wettsteinsyslogd ;;
+	natd)			service=kmod@ipdivert ;;
+	dummynet)		service=kmod@dummynet ;;
+	firewall_nat)		service=kmod@ipfw_nat ;;
+	fusefs)			service=kmod@fuse ;;
+	random)			service=entropy ;;
 
 	# Some rc.conf variables we just ignore here.
 	service_manager_svscan)	continue ;;
@@ -49,7 +57,6 @@ do
 	fastboot)		continue ;;
 	fsck_y)			continue ;;
 	linux)			continue ;;
-	natd)			continue ;;
 	pcbsdinit)		continue ;;
 	sendmail*)		continue ;; # In the process of being dropped by the BSDs.
 	syslog)			continue ;;
@@ -74,12 +81,9 @@ do
 	autofs)			continue ;;
 	bootparamd)		continue ;;
 	chkprintcap)		continue ;;
-	dummynet)		continue ;;
 	firewall)		continue ;;
-	firewall_nat)		continue ;;
 	ftpd)			continue ;;
 	ftpproxy)		continue ;;
-	fusefs)			continue ;;
 	gateway)		continue ;;
 	gdm)			continue ;;
 	gptboot)		continue ;;
@@ -110,7 +114,7 @@ do
 	nis_ypxfrd)		continue ;;
 	oldnfs_server)		continue ;;
 	opensm)			continue ;;
-	pefs)			continue ;;
+	pcsysconfig)		continue ;;
 	ppp)			continue ;;
 	pppoed)			continue ;;
 	rctl)			continue ;;
@@ -143,7 +147,7 @@ do
 	# Now convert any variables.
 	dump |
 	awk -F = "/^${n}_/{print substr(\$1,length(\"${n}\")+2),\$2;}" |
-	while read var val
+	while read -r var val
 	do	
 		test "$var" = "enable" && continue
 		system-control set-service-env "$service" "$var" "$val"
@@ -156,4 +160,4 @@ case "`uname`" in
 	;;
 esac
 
-redo-ifchange dnscache tinydns axfrdns savecore sppp natd openldap
+redo-ifchange dnscache tinydns axfrdns savecore sppp ppp rfcomm_pppd natd openldap static-networking pefs kernel-vt
