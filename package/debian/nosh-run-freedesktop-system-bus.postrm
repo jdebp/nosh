@@ -1,0 +1,18 @@
+#!/bin/sh -
+case "$1" in
+	upgrade)
+		for i in \
+			dbus \
+			;
+		do
+			if system-control is-loaded $i.service
+			then
+				system-control try-restart $i.service
+			fi
+			if system-control is-loaded cyclog@$i.service
+			then
+				system-control try-restart cyclog@$i.service
+			fi
+		done
+		;;
+esac

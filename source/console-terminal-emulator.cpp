@@ -383,10 +383,13 @@ UnicodeBuffer::MakeCA(char c[CELL_LENGTH], const CharacterCell & cell)
 void 
 UnicodeBuffer::WriteNCells(coordinate s, coordinate n, const CharacterCell & c)
 {
-	char ca[CELL_LENGTH];
-	MakeCA(ca, c);
-	for (coordinate i(0U); i < n; ++i)
-		pwrite(fd, ca, sizeof ca, MakeOffset(s + i));
+	char ca[CELL_LENGTH * 256U];
+	for (coordinate i(0U); i < (sizeof ca / CELL_LENGTH); ++i)
+		MakeCA(ca + CELL_LENGTH * i, c);
+	for (coordinate i(0U), w(sizeof ca / CELL_LENGTH); i < n; i += w) {
+		if (w > n) w = n;
+		pwrite(fd, ca, CELL_LENGTH * w, MakeOffset(s + i));
+	}
 }
 
 void 
@@ -422,36 +425,40 @@ UnicodeBuffer::CopyNCells(coordinate d, coordinate s, coordinate n)
 void 
 UnicodeBuffer::ScrollUp(coordinate s, coordinate e, coordinate n, const CharacterCell & c)
 {
-	char ca[CELL_LENGTH];
-	while (s + n < e) {
+	char ca[CELL_LENGTH * 256U];
+	for (coordinate w(sizeof ca / CELL_LENGTH); s + n < e; s += w) {
+		if (s + n + w > e) w = e - (s + n);
 		const off_t target(MakeOffset(s));
 		const off_t source(MakeOffset(s + n));
-		pread(fd, ca, sizeof ca, source);
-		pwrite(fd, ca, sizeof ca, target);
-		++s;
+		pread(fd, ca, CELL_LENGTH * w, source);
+		pwrite(fd, ca, CELL_LENGTH * w, target);
 	}
-	MakeCA(ca, c);
-	while (s < e) {
-		pwrite(fd, ca, sizeof ca, MakeOffset(s));
-		++s;
+	for (coordinate i(0U); i < (sizeof ca / CELL_LENGTH); ++i)
+		MakeCA(ca + CELL_LENGTH * i, c);
+	for (coordinate w(sizeof ca / CELL_LENGTH); s < e; s += w) {
+		if (s + w > e) w = e - s;
+		pwrite(fd, ca, CELL_LENGTH * w, MakeOffset(s));
 	}
 }
 
 void 
 UnicodeBuffer::ScrollDown(coordinate s, coordinate e, coordinate n, const CharacterCell & c)
 {
-	char ca[CELL_LENGTH];
-	while (e - n > s) {
-		--e;
+	char ca[CELL_LENGTH * 256U];
+	for (coordinate w(sizeof ca / CELL_LENGTH); e - n > s; ) {
+		if (s > (e - n) - w) w = (e - n) - s;
+		e -= w;
 		const off_t target(MakeOffset(e));
 		const off_t source(MakeOffset(e - n));
-		pread(fd, ca, sizeof ca, source);
-		pwrite(fd, ca, sizeof ca, target);
+		pread(fd, ca, CELL_LENGTH * w, source);
+		pwrite(fd, ca, CELL_LENGTH * w, target);
 	}
-	MakeCA(ca, c);
-	while (e > s) {
-		--e;
-		pwrite(fd, ca, sizeof ca, MakeOffset(e));
+	for (coordinate i(0U); i < (sizeof ca / CELL_LENGTH); ++i)
+		MakeCA(ca + CELL_LENGTH * i, c);
+	for (coordinate w(sizeof ca / CELL_LENGTH); e > s; ) {
+		if (s > e - w) w = e - s;
+		e -= w;
+		pwrite(fd, ca, CELL_LENGTH * w, MakeOffset(e));
 	}
 }
 

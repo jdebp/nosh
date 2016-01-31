@@ -14,6 +14,7 @@ initctld
 kadmind
 klogd
 kpasswdd
+lircd
 local-rsyslogd
 local-syslogd
 local-syslog-read

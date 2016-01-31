@@ -40,6 +40,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "jail.h"
 #include "common-manager.h"
 #include "service-manager.h"
+#include "FileStar.h"
 
 static int service_manager_pid(-1);
 static int cyclog_pid(-1);
@@ -326,7 +327,7 @@ setup_process_state(
 
 		for (std::size_t fi(0); fi < sizeof env_files/sizeof *env_files; ++fi) {
 			const char * filename(env_files[fi]);
-			FILE * f(std::fopen(filename, "r"));
+			FileStar f(std::fopen(filename, "r"));
 			if (!f) {
 				const int error(errno);
 				if (ENOENT != error)
@@ -335,7 +336,6 @@ setup_process_state(
 			}
 			try {
 				std::vector<std::string> env_strings(read_file(f));
-				std::fclose(f);
 				f = 0;
 				for (std::vector<std::string>::const_iterator i(env_strings.begin()); i != env_strings.end(); ++i) {
 					const std::string & s(*i);
@@ -348,8 +348,6 @@ setup_process_state(
 			} catch (const char * r) {
 				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, filename, r);
 			}
-			if (f)
-				std::fclose(f);
 		}
 	} else {
 		subreaper(true);

@@ -7,8 +7,10 @@ Description=Vanilla BSD system log daemon
 
 [Service]
 EnvironmentDirectory=env
+# https://reviews.freebsd.org/D4973
+OOMScoreAdjust=fromenv
 # Don't use %p; this unit is accessed via a symbolic link.
-ExecStart=syslogd -c -ss
+ExecStart=syslogd ${flags}
 Restart=always
 
 [Install]

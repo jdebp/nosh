@@ -1,0 +1,9 @@
+#!/bin/sh -
+for I in \
+	sshd \
+	;
+do
+	system-control preset $I.service
+	system-control preset --prefix cyclog@ $I.service
+	system-control reset $I.service cyclog@$I.service
+done

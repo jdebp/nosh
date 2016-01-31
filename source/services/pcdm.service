@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=PC-BSD display manager
+After=ttylogin@ttyv8 ttylogin@tty9
+
+[Service]
+ExecStart=PDCMd
+Restart=always
+
+[Install]
+WantedBy=workstation.target

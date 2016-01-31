@@ -1,0 +1,21 @@
+#!/bin/sh -
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+gpart show |
+awk '{
+	if ("=>" == $1) {
+		if ("GPT" == $5)
+			disc = $4; 
+		else
+			disc = "";
+	} else 
+	if (length(disc) && "freebsd-ufs" == $4 && $5 ~ "\\[.*\\]") {
+		if ($5 ~ "[[,]bootfailed[\\],]")
+			print "echo 1>&2 Booting from \""disc"\"",$3,"failed.;gpart unset -a bootfailed -i",$3,"\""disc"\"";
+		else
+		if ($5 ~ "[[,]bootonce[\\],]")
+			print "echo 1>&2 Booting from \""disc"\"",$3,"succeeded.;gpart unset -a bootonce -i",$3,"\""disc"\"";
+	}
+}'

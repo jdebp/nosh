@@ -8,19 +8,11 @@
 #
 
 # This gets us *only* the configuration variables, safely.
-dump() { clearenv read-conf -oknofile /etc/defaults/rc.conf read-conf -oknofile /etc/rc.conf read-conf -oknofile /etc/rc.conf.local `which printenv` ; }
+dump_rc() { clearenv read-conf rc.conf "`which printenv`" ; }
 
-for i in /etc/defaults/rc.conf /etc/rc.conf.local /etc/rc.conf
-do
-	if test -e "$i"
-	then
-		redo-ifchange "$i"
-	else
-		redo-ifcreate "$i"
-	fi
-done
+redo-ifchange rc.conf
 
-dump |
+dump_rc |
 awk -F = '/_enable/{print substr($1,1,length($1)-7);}' |
 while read -r n
 do
@@ -40,6 +32,7 @@ do
 	local_unbound)		service=unbound ;;
 	lpd)			service=org.cups.cups-lpd ;;
 	nfs_server)		service=nfsd ;;
+	oldnfs_server)		service=nfsserver ;;
 	pc-sounddetect)		service=snddetect ;;
 	syslogs)		service=wettsteinsyslogd ;;
 	natd)			service=kmod@ipdivert ;;
@@ -47,6 +40,7 @@ do
 	firewall_nat)		service=kmod@ipfw_nat ;;
 	fusefs)			service=kmod@fuse ;;
 	random)			service=entropy ;;
+	serial)			service=bsd-serial-init ;;
 
 	# Some rc.conf variables we just ignore here.
 	service_manager_svscan)	continue ;;
@@ -56,6 +50,9 @@ do
 	compat5x)		continue ;;
 	fastboot)		continue ;;
 	fsck_y)			continue ;;
+	ip6addrctl)		continue ;; # This is handled by a more specific converter.
+	tmpmfs)			continue ;; # This is handled by a more specific converter.
+	varmfs)			continue ;; # This is handled by a more specific converter.
 	linux)			continue ;;
 	pcbsdinit)		continue ;;
 	sendmail*)		continue ;; # In the process of being dropped by the BSDs.
@@ -77,6 +74,7 @@ do
 	jail_*_linprocfs)	continue ;; # This is a jail configuration item, not a service.
 
 	# Other variables we haven't got around to having bundles for, yet.
+	appcafe)		continue ;;
 	atm)			continue ;;
 	autofs)			continue ;;
 	bootparamd)		continue ;;
@@ -87,13 +85,11 @@ do
 	gateway)		continue ;;
 	gdm)			continue ;;
 	gptboot)		continue ;;
-	hald)			continue ;;
 	hostapd)		continue ;;
-	hpiod)			continue ;;
+	iod)			continue ;;
 	hpssd)			continue ;;
 	ike)			continue ;;
 	inetd)			continue ;;
-	ip6addrctl)		continue ;;
 	ipropd_master)		continue ;;
 	ipropd_slave)		continue ;;
 	ipsec)			continue ;;
@@ -104,7 +100,6 @@ do
 	kldxref)		continue ;;
 	mixer)			continue ;;
 	moused_nondefault)	continue ;;
-	netwait)		continue ;;
 	nfs_client)		continue ;;
 	nfsv4_server)		continue ;;
 	nis_client)		continue ;;
@@ -112,8 +107,8 @@ do
 	nis_yppasswdd)		continue ;;
 	nis_ypset)		continue ;;
 	nis_ypxfrd)		continue ;;
-	oldnfs_server)		continue ;;
 	opensm)			continue ;;
+	pcdm)			continue ;;
 	pcsysconfig)		continue ;;
 	ppp)			continue ;;
 	pppoed)			continue ;;
@@ -123,6 +118,7 @@ do
 	rpc_statd)		continue ;;
 	rpc_ypupdated)		continue ;;
 	rtadvd)			continue ;;
+	syscache)		continue ;;
 	ubthidhci)		continue ;;
 	uhidd)			continue ;;
 	virecover)		continue ;;
@@ -145,7 +141,7 @@ do
 	fi
 
 	# Now convert any variables.
-	dump |
+	dump_rc |
 	awk -F = "/^${n}_/{print substr(\$1,length(\"${n}\")+2),\$2;}" |
 	while read -r var val
 	do	
@@ -153,11 +149,3 @@ do
 		system-control set-service-env "$service" "$var" "$val"
 	done
 done
-
-case "`uname`" in
-*BSD)
-	redo-ifchange jails v9-jails warden
-	;;
-esac
-
-redo-ifchange dnscache tinydns axfrdns savecore sppp ppp rfcomm_pppd natd openldap static-networking pefs kernel-vt

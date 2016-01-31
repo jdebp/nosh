@@ -12,6 +12,8 @@ s="`system-control find dnscache`"
 set_if_unset() { if test -z "`system-control print-service-env \"$1\" \"$2\"`" ; then system-control set-service-env "$1" "$2" "$3" ; echo "$s: Defaulted $2 to $3." ; fi ; }
 dir_not_empty() { test -n "`/bin/ls -A \"$1\"`" ; }
 
+redo-ifchange general-services
+
 set_if_unset dnscache IPSEND 0.0.0.0
 set_if_unset dnscache IP 127.0.0.1
 set_if_unset dnscache DATALIMIT 3000000

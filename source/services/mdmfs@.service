@@ -7,7 +7,7 @@ Description=Mount the %I filesystem as an mfs
 DefaultDependencies=false
 Before=local-fs.target
 After=local-fs-pre.target
-Conflicts=mount@$i
+Conflicts=mount@%i
 
 [Service]
 # Marking this as oneshot means that it doesn't enter the "running" state until the mount command has exited.

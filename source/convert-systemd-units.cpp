@@ -395,6 +395,23 @@ names::substitute (
 	return r;
 }
 
+#if 0 // This code is unused, for now.
+static
+bool
+is_numeric ( 
+	const std::string & v
+) {
+	for (std::list<std::string>::const_iterator i(v.begin()); v.end() != i; ++i) {
+		if (v.begin() == i) {
+			if (!std::isdigit(*i) && '-' != *i && '+' != *i) return false;
+		} else {
+			if (!std::isdigit(*i)) return false;
+		}
+	}
+	return true;
+}
+#endif
+
 static
 bool
 is_bool_true (
@@ -410,8 +427,8 @@ is_bool_true (
 	const value * v,
 	bool def
 ) {
-	if (!v) return def;
-	return is_bool_true(*v);
+	if (v) return is_bool_true(*v);
+	return def;
 }
 
 static
@@ -421,8 +438,9 @@ is_bool_true (
 	const value * w,
 	bool def
 ) {
-	if (!v) return is_bool_true(w, def);
-	return is_bool_true(*v);
+	if (v) return is_bool_true(*v);
+	if (w) return is_bool_true(*w);
+	return def;
 }
 
 static
@@ -680,7 +698,7 @@ convert_systemd_units (
 				names.set_prefix(names.query_bundle_basename().substr(0, atc), escape_prefix, alt_escape);
 				++atc;
 				names.set_instance(names.query_bundle_basename().substr(atc, names.query_bundle_basename().npos), escape_instance, alt_escape);
-				service_unit_name = names.query_unit_dirname() + names.query_escaped_prefix() + "@.service";
+				service_unit_name = (names.query_unit_dirname() + names.query_escaped_prefix() + "@.") + (is_target ? "target" : "service");
 				service_file = find(service_unit_name, service_filename);
 			}
 		}
@@ -707,7 +725,6 @@ convert_systemd_units (
 	value * passcredentials(socket_profile.use("socket", "passcredentials"));
 	value * passsecurity(socket_profile.use("socket", "passsecurity"));
 	value * nodelay(socket_profile.use("socket", "nodelay"));
-	value * ucspirules(socket_profile.use("socket", "ucspirules"));
 	value * freebind(socket_profile.use("socket", "freebind"));
 	value * receivebuffer(socket_profile.use("socket", "receivebuffer"));
 	value * netlinkraw(socket_profile.use("socket", "netlinkraw"));	// This is an extension to systemd.
@@ -723,6 +740,7 @@ convert_systemd_units (
 	value * socket_wantedby(socket_profile.use("install", "wantedby"));
 	value * socket_requiredby(socket_profile.use("install", "requiredby"));
 	value * socket_stoppedby(socket_profile.use("install", "stoppedby"));	// This is an extension to systemd.
+	value * socket_ucspirules(socket_profile.use("socket", "ucspirules"));	// This is an extension to systemd.
 
 	value * type(service_profile.use("service", "type"));
 	value * workingdirectory(service_profile.use("service", "workingdirectory"));
@@ -786,6 +804,7 @@ convert_systemd_units (
 	value * ioschedulingpriority(service_profile.use("service", "ioschedulingpriority"));
 	value * cpuschedulingresetonfork(service_profile.use("service", "cpuschedulingresetonfork"));
 #endif
+	value * oomscoreadjust(service_profile.use("service", "oomscoreadjust"));
 	value * cpuschedulingpolicy(service_profile.use("service", "cpuschedulingpolicy"));
 	value * cpuschedulingpriority(service_profile.use("service", "cpuschedulingpriority"));
 	value * service_defaultdependencies(service_profile.use("unit", "defaultdependencies"));
@@ -800,6 +819,7 @@ convert_systemd_units (
 	value * service_wantedby(service_profile.use("install", "wantedby"));
 	value * service_requiredby(service_profile.use("install", "requiredby"));
 	value * service_stoppedby(service_profile.use("install", "stoppedby"));	// This is an extension to systemd.
+	value * service_ucspirules(service_profile.use("service", "ucspirules"));	// This is an extension to systemd.
 
 	if (user)
 		names.set_user(names.substitute(user->last_setting()));
@@ -940,6 +960,9 @@ convert_systemd_units (
 		}
 	}
 #endif
+	if (oomscoreadjust)
+		// The -- is necessary because the adjustment could be a negative number, starting with a dash,
+		priority += "oom-kill-protect -- " + quote(names.substitute(oomscoreadjust->last_setting())) + "\n";
 	std::string chroot;
 	if (rootdirectory) chroot += "chroot " + quote(names.substitute(rootdirectory->last_setting())) + "\n";
 #if defined(__LINUX__) || defined(__linux__)
@@ -987,7 +1010,7 @@ convert_systemd_units (
 	std::string chdir;
 	if (workingdirectory)
 		chdir += "chdir " + quote(names.substitute(workingdirectory->last_setting())) + "\n";
-	else if (rootdirectory || is_bool_true(systemdworkingdirectory, systemd_quirks))
+	else if (rootdirectory || is_bool_true(systemdworkingdirectory, systemd_quirks && !is_socket_activated))
 		chdir += "chdir /\n";
 	std::string createrundir, removerundir;
 	if (runtimedirectory) {
@@ -1270,7 +1293,7 @@ convert_systemd_units (
 			run << quote(protocol) << " " << quote(multicast_group) << "\n";
 			run << s.str();
 		}
-		if (is_bool_true(ucspirules, false)) run << "ucspi-socket-rules-check\n";
+		if (is_bool_true(socket_ucspirules, service_ucspirules, false)) run << "ucspi-socket-rules-check\n";
 		run << "./service\n";
 		service << "#!/bin/nosh\n" << multi_line_comment("Service file generated from " + service_filename);
 	} else

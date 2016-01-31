@@ -21,7 +21,7 @@ class FramebufferIO :
 	public FileDescriptorOwner
 {
 public:
-	FramebufferIO(int pfd) : FileDescriptorOwner(pfd) {}
+	FramebufferIO(int pfd, bool l80);
 	~FramebufferIO();
 	void save_and_set_graphics_mode(const char *, const char *);
 	void restore();
@@ -47,6 +47,7 @@ protected:
 	video_adapter_info_t adapter_info;
 	video_info_t mode_info;
 #endif
+	bool limit_80_columns;
 };
 
 #endif

@@ -1,17 +1,49 @@
 #!/bin/sh -
 # adjust to new log users
-for i in
+for i in \
 	devd \
 	natd \
 	sppp \
 	sysinit \
+	;
 do
 	if test -d /var/log/sv/$i/
 	then
 		chown "$i"-log /var/log/sv/$i/
 		test -e /var/log/sv/$i/lock && chown "$i"-log /var/log/sv/$i/lock
 		test -e /var/log/sv/$i/current && chown "$i"-log /var/log/sv/$i/current
-		test -e /var/log/sv/$i/@* && chown "$i"-log /var/log/sv/$i/@*
+		find /var/log/sv/$i/ -name '@*' -print0|xargs -0 chown "$i"-log
+	fi
+done
+# Adjust to new relationships.
+for I in \
+	kmod@vboxguest \
+	kmod@vboxsf \
+	kmod@vboxvideo \
+	kmod@vboxadd \
+	kmod@vboxdrv \
+	kmod@vboxnetadp \
+	kmod@vboxnetflt \
+	kmod@vboxpci \
+	;
+do
+	if system-control find cyclog@"$I".service >/dev/null 2>&1
+	then
+		system-control disable cyclog@"$I".service
+		rm -f -- /var/sv/cyclog@"$I"/wanted-by/workstation
+		system-control preset --prefix cyclog@ "$I".service
+	fi
+done
+for I in \
+	kernel-vt-kbdcontrol \
+	kernel-vt-vidcontrol \
+	;
+do
+	if system-control find "$I".service >/dev/null 2>&1
+	then
+		system-control disable "$I".service
+		rm -f -- /var/sv/"$I"/wanted-by/sysinit
+		system-control preset "$I".service
 	fi
 done
 # common services
@@ -63,6 +95,7 @@ for I in \
 	nagios \
 	NetworkManager \
 	nfsd \
+	nfsserver \
 	nginx \
 	nisdomain \
 	nmbd \
@@ -85,6 +118,7 @@ for I in \
 	ossec@remoted \
 	ossec@syscheckd \
 	packagekit \
+	pcdm \
 	pdnsd \
 	plexmediaserver \
 	polipo \
@@ -142,6 +176,7 @@ for I in \
 	natd \
 	sppp \
 	sysinit \
+	webcamd \
 	;
 do
 	if system-control is-loaded "$I"-log.service

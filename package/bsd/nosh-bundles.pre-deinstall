@@ -54,6 +54,7 @@ for I in \
 	nagios \
 	NetworkManager \
 	nfsd \
+	nfsserver \
 	nginx \
 	nisdomain \
 	nmbd \
@@ -76,6 +77,7 @@ for I in \
 	ossec@remoted \
 	ossec@syscheckd \
 	packagekit \
+	pcdm \
 	pdnsd \
 	plexmediaserver \
 	polipo \

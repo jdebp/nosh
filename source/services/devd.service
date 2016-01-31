@@ -5,7 +5,7 @@
 [Unit]
 Description=devd daemon
 DefaultDependencies=false
-Before=shutdown.target
+Before=shutdown.target remote-fs-pre.target
 After=local-fs.target
 
 [Service]

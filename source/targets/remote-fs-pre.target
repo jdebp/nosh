@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Target for things to complete before mount of remote filesystems
+DefaultDependencies=false
+EarlySupervise=true
+Before=shutdown.target
+
+[Service]
+User=nobody
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
+
+[Install]
+StoppedBy=shutdown.target
+WantedBy=sysinit.target

@@ -4,8 +4,8 @@
 
 [Unit]
 Description=Per-user "Desktop" bus service
-After=user@%I.service
-Wants=user@%I.service
+After=user-runtime@%I
+Wants=user-runtime@%I
 
 [Service]
 PermissionsStartOnly=true

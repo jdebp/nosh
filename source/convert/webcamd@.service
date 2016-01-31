@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD %p for %i
+Wants=kmod@cuse4bsd.service
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=%p ${%i_flags} ${flags} ${hald_flags} ${user:+-U "${user}"} ${group:+-G "${group}"}
+
+[Install]
+WantedBy=workstation.target

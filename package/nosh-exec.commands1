@@ -20,6 +20,7 @@ local-stream-socket-accept
 make-private-fs
 monitored-fsck
 nosh
+oom-kill-protect
 pause
 plug-and-play-event-handler
 pipe

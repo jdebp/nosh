@@ -3,11 +3,11 @@
 ## **************************************************************************
 
 [Unit]
-Description=BSD NTP daemon
+Description=NTP daemon
 
 [Service]
 EnvironmentDirectory=env
-ExecStart=%p -n -g -f /var/db/%p.drift
+ExecStart=%p --nofork --panicgate ${user:+-u "${user}${group:+:${group}}"} ${logfile:+--logfile "${logfile}"} ${flags}
 Restart=always
 
 [Install]

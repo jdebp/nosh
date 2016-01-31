@@ -8,8 +8,15 @@
 #
 
 # These get us *only* the configuration variables, safely.
-read_rc() { if type sysrc >/dev/null 2>&1 ; then sysrc -i -n "$1" ; else clearenv read-conf -oknofile /etc/defaults/rc.conf read-conf -oknofile /etc/rc.conf read-conf -oknofile /etc/rc.conf.local `which printenv` "$1" ; fi }
+read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
 get_var() { read_rc "$1" || true ; }
+
+redo-ifchange rc.conf general-services
+
+case "`uname`" in
+*BSD)	;;
+*)	echo > "$3" 'No kernel-vt';exit 0;;
+esac
 
 for i in keyboard keybell keyrate
 do
@@ -38,6 +45,7 @@ do
 done
 
 keymap="`get_var \"keymap\"`"
+original="${keymap}"
 # There are a whole bunch of old names for keyboard mappings that systems could be using.
 # Note that this is NOT the same as the modernizations done by the /etc/rc.d system in the syscons to vt conversion.
 # There are some subtle differences, in part because the conversion process builds capsctrl versions of everything.
@@ -111,6 +119,10 @@ us.iso.acc)			keymap="us.acc";;
 us.pc-ctrl)			keymap="us.capsctrl";;
 us.iso)				keymap="us";;
 esac
+if ! test "${original}" = "${keymap}"
+then
+	echo 1>&2 $0: Please adjust /etc/rc.conf to read keymap="${keymap}".
+fi
 case "${keymap}" in
 [Nn][Oo])
 	system-control set-service-env console-fb-realizer@head0 "KBDMAP" "kbdmaps/us.kbdmap"
@@ -121,3 +133,6 @@ case "${keymap}" in
 	system-control set-service-env kernel-vt-kbdcontrol "keymap" "${keymap}"
 	;;
 esac
+system-control print-service-env kernel-vt-kbdcontrol >> "$3"
+system-control print-service-env kernel-vt-vidcontrol >> "$3"
+system-control print-service-env console-fb-realizer@head0 "KBDMAP" >> "$3"

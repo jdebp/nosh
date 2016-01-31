@@ -70,6 +70,7 @@ extern void tai64n ( const char * &, std::vector<const char *> & );
 extern void tai64nlocal ( const char * &, std::vector<const char *> & );
 extern void monitored_fsck ( const char * &, std::vector<const char *> & );
 extern void plug_and_play_event_handler ( const char * &, std::vector<const char *> & );
+extern void oom_kill_protect ( const char * &, std::vector<const char *> & );
 
 extern const
 struct command 
@@ -123,6 +124,7 @@ commands[] = {
 	{	"udp-socket-connect",			udp_socket_connect		},
 	{	"monitored-fsck",			monitored_fsck			},
 	{	"plug-and-play-event-handler",		plug_and_play_event_handler	},
+	{	"oom-kill-protect",			oom_kill_protect		},
 
 	// Terminals
 	{	"pause",				pause				},

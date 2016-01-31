@@ -84,6 +84,7 @@ ossec@monitord
 ossec@remoted
 ossec@syscheckd
 packagekit
+pcdm
 pdnsd
 plexmediaserver
 polipo
@@ -95,6 +96,7 @@ pulseaudio
 qmail-send
 rabbitmq-server
 rpcbind
+rtadvd
 salt-api
 salt-master
 salt-minion
@@ -110,6 +112,7 @@ smbd
 sppp-log
 ppp-log
 rfcomm_pppd-log
+webcamd-log
 sshdgenkeys
 swift@account
 swift@account-auditor
@@ -132,6 +135,7 @@ tinydns
 ttylogin-starter
 udisks
 upower
+virecover
 vnstat
 volmand
 wicd

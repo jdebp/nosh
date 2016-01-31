@@ -8,22 +8,14 @@
 #
 
 # These get us *only* the configuration variables, safely.
-read_rc() { if type sysrc >/dev/null 2>&1 ; then sysrc -i -n "$1" ; else clearenv read-conf -oknofile /etc/defaults/rc.conf read-conf -oknofile /etc/rc.conf read-conf -oknofile /etc/rc.conf.local `which printenv` "$1" ; fi }
-dump() { clearenv read-conf -oknofile /etc/defaults/rc.conf read-conf -oknofile /etc/rc.conf read-conf -oknofile /etc/rc.conf.local `which printenv` ; }
+read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
+dump_rc() { clearenv read-conf rc.conf "`which printenv`" ; }
 list_jails() { read_rc jail_list || true ; }
 get_config() { read_rc jail_"$1"_"$2" || read_rc jail_"$2" || true ; }
 
 if_yes() { case "$1" in [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]) echo "$2" ;; esac ; }
 
-for i in /etc/defaults/rc.conf /etc/rc.conf.local /etc/rc.conf
-do
-	if test -e "$i"
-	then
-		redo-ifchange "$i"
-	else
-		redo-ifcreate "$i"
-	fi
-done
+redo-ifchange rc.conf general-services
 
 redo-ifchange "v9-jail@.service" "v9-jailed@.service"
 
@@ -46,7 +38,7 @@ do
 	system-control preset -- "${jail_service}"
 	system-control preset -- "${jailed_service}"
 
-	dump |
+	dump_rc |
 	awk -F = "/jail_${i}_/{l=length(\"jail_${i}_\"); print substr(\$1,l+1,length(\$1)-l);}" |
 	while read -r n
 	do
@@ -67,7 +59,7 @@ do
 		system-control set-service-env -- "${jail_service}" "$m" "$v"
 	done
 
-	dump |
+	dump_rc |
 	awk -F = "/jail_${i}_exec_/{l=length(\"jail_${i}_exec_\"); print substr(\$1,l+1,length(\$1)-l);}" |
 	while read -r n
 	do

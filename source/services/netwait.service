@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD wait for arbitrary network connectivity.
+Before=networking.target
+
+[Service]
+Type=oneshot
+EnvironmentDirectory=env
+ExecStart=./helper
+RemainAfterExit=yes
+
+[Install]
+WantedBy=server.target

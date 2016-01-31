@@ -1,0 +1,14 @@
+#!/bin/sh -
+for i in \
+	klogd \
+	;
+do
+	if system-control is-loaded $i.service 2>/dev/null 
+	then
+		system-control try-restart $i.service
+	fi
+	if system-control is-loaded cyclog@$i.service 2>/dev/null 
+	then
+		system-control try-restart cyclog@$i.service
+	fi
+done

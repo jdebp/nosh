@@ -4,22 +4,15 @@
 ## **************************************************************************
 #
 # Special setup for geli and gbde.
-# This is invoked by volumes.do .
+# This is invoked by all.do .
+# 2016-01-24: This line forces a rebuild because of the new dependency tree.
 #
 
 # This gets us *only* the configuration variables, safely.
-read_rc() { if type sysrc >/dev/null 2>&1 ; then sysrc -i -n "$1" ; else clearenv read-conf -oknofile /etc/defaults/rc.conf read-conf -oknofile /etc/rc.conf read-conf -oknofile /etc/rc.conf.local `which printenv` "$1" ; fi }
+read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
 get_conf() { read_rc $1 || true ; }
 
-for i in /etc/defaults/rc.conf /etc/rc.conf.local /etc/rc.conf
-do
-	if test -e "$i"
-	then
-		redo-ifchange "$i"
-	else
-		redo-ifcreate "$i"
-	fi
-done
+redo-ifchange rc.conf volumes
 
 r="/etc/service-bundles/services"
 

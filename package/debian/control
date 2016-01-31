@@ -125,7 +125,7 @@ Description: Debian shim service and system management utilities
 
 Package: nosh-bundles
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.16), nosh-terminal-management (>= 1.22)
+Depends: nosh-exec, nosh-service-management (>=1.25), nosh-terminal-management (>= 1.22)
 Suggests: 
 Recommends: 
 Conflicts: nosh-standard-targets, nosh-sysinit-services, nosh-bsd-services, nosh-bsd-sockets, nosh-regular-sockets, nosh-regular-services
@@ -139,7 +139,7 @@ Package: nosh-run-system-manager
 Architecture: amd64
 Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles, redo
 Suggests: 
-Recommends: nosh-run-kernel-vt | nosh-run-user-vt, nosh-systemv-shims, nosh-run-local-syslog, nosh-debian-shims
+Recommends: nosh-run-kernel-vt | nosh-run-user-vt, nosh-systemv-shims, nosh-run-local-syslog, nosh-run-klog, nosh-debian-shims
 Conflicts: nosh-run-via-systemd, upstart, sysvinit-core, systemd-sysv
 Provides: init
 Description: Run the various AppleTalk services
@@ -190,6 +190,14 @@ Recommends:
 Description: Run VirtualBox guest additions
  This package runs VirtualBox guest additions.
 
+Package: nosh-run-freedesktop-system-bus
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles
+Suggests: 
+Recommends: dbus
+Description: Run the system-wide message bus from freedesktop.org
+ This package runs the system-wide message bus from freedesktop.org.
+
 Package: nosh-run-freedesktop-kits
 Architecture: amd64
 Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles
@@ -205,6 +213,14 @@ Description: Run the various "kit" programs from freedesktop.org
   * ConsoleKit
   * UDisks
   * UPower
+
+Package: nosh-run-openssh-server
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles
+Suggests: 
+Recommends: openssh-server
+Description: Run the OpenSSH server
+ This package runs the OpenSSH server.
 
 Package: nosh-run-appletalk
 Architecture: amd64
@@ -257,9 +273,20 @@ Description: Run vdev as the device manager.
 Package: nosh-run-local-syslog
 Architecture: amd64
 Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles
+Provides: system-log-daemon
 Suggests: 
 Recommends: 
 Conflicts: systemd-sysv
 Description: Run the local syslog service.
  This package causes the local-syslog-read service to run.
+
+Package: nosh-run-klog
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles
+Provides: linux-kernel-log-daemon
+Suggests: 
+Recommends: 
+Conflicts: systemd-sysv
+Description: Run the klog service.
+ This package causes the klogd service to run.
 

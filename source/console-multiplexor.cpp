@@ -443,8 +443,11 @@ console_multiplexor (
 
 	VirtualTerminalList::iterator old_vt(vts.end());
 
-	// Each vt could generate a FIFO enable/disable, plus 2 potential session switch enables/disabvles.
-	std::vector<struct kevent> p(vts.size() * 2 + 4);
+	// Each vt could need a FIFO enable/disable, plus 2 potential session switch enables/disables.
+	std::size_t max_events(vts.size() * 2 + 4);
+	// We also want to grab a bunch of input events in a single gulp.
+	if (max_events < 2096) max_events = 4096;
+	std::vector<struct kevent> p(max_events);
 	std::size_t index(0U);
 
 	while (true) {

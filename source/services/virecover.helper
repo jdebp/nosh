@@ -1,0 +1,32 @@
+#!/bin/sh -
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+r="/var/tmp/vi.recover/"
+
+test -d "$r" || exit 0
+
+find "$r" ! -type f -a ! -type d -delete
+
+find "$r" -maxdepth 0 -name 'vi.*' |
+while read i
+do
+	test -r "$i" || continue
+	test -x "$i" && ! test -s "$i" && rm -f -- "$i"
+done
+
+find "$r" -maxdepth 0 -name 'recover.*' |
+while read i
+do
+	test -r "$i" || continue
+	recpath="`awk '/^X-vi-recover-path:/ {print $2}' \"$i\"`"
+	if test -n "${recpath}" && test -s "${recpath}"
+	then
+		sendmail -t < "$i"
+	else
+		rm -f -- "$i"
+	fi
+done
+
+exit 0

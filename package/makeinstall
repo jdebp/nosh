@@ -177,7 +177,7 @@ do
 done
 (
 cat package/systemd-presets
-for i in bundles run-via-systemd run-via-netbsd-rc run-virtualbox-guest run-freedesktop-kits run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog
+for i in bundles run-via-systemd run-via-netbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog
 do
 	cat package/common-nosh-"$i"-presets package/linux-nosh-"$i"-presets package/bsd-nosh-"$i"-presets 
 done
@@ -212,7 +212,7 @@ do
 done 
 (
 cat package/systemd-presets 
-for i in bundles run-via-systemd run-via-netbsd-rc run-virtualbox-guest run-freedesktop-kits run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog
+for i in bundles run-via-systemd run-via-netbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog
 do
 	cat package/common-nosh-"$i"-presets package/linux-nosh-"$i"-presets package/bsd-nosh-"$i"-presets 
 done

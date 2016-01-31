@@ -73,6 +73,7 @@ case "$1" in
 			ossec@remoted \
 			ossec@syscheckd \
 			packagekit \
+			pcdm \
 			pdnsd \
 			plexmediaserver \
 			polipo \
@@ -131,6 +132,7 @@ case "$1" in
 			natd \
 			sppp \
 			sysinit \
+			webcamd \
 			;
 		do
 			if system-control is-loaded "$I"-log.service

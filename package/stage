@@ -93,6 +93,7 @@ do
 	install -d -m 0755 "${dest}"/nosh-"$i"/etc/service-bundles/targets 
 	install -d -m 0755 "${dest}"/nosh-"$i"/etc/system-control/convert 
 done
+install -d -m 0755 "${dest}"/nosh-run-openssh-server/var/sv/
 (
 cat package/common-services package/common-sockets package/common-ttys 
 case "`uname`" in
@@ -127,6 +128,8 @@ esac
 do
 	cp -a -- "${src}"/etc/service-bundles/services/"$j" "${dest}"/nosh-bundles/etc/service-bundles/services/
 done
+rm -f -- "${dest}"/nosh-run-openssh-server/var/sv/ssh
+ln -s sshd "${dest}"/nosh-run-openssh-server/var/sv/ssh
 
 # units
 install -d -m 0755 "${dest}"/nosh-run-via-netbsd-rc/usr/local/etc/rc.d 
@@ -145,7 +148,7 @@ while read j ;
 do
 	ln -f -- "${src}"/etc/rc.d/"$j" "${dest}"/nosh-run-via-netbsd-rc/usr/local/etc/rc.d/
 done < package/netbsd-rc-scripts ;
-for i in bundles run-via-systemd run-via-netbsd-rc run-virtualbox-guest run-freedesktop-kits run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog
+for i in bundles run-via-systemd run-via-netbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog
 do
 	install -d -m 0755 "${dest}"/nosh-"$i"/usr/local/etc/system-control/presets 
 	(

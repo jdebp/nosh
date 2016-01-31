@@ -8,7 +8,7 @@ Description=exim4 queue runner daemon
 [Service]
 EnvironmentDirectory=env
 LimitMEMORY=70000000
-ExecStart=exim4 -q30m
+ExecStart=exim4 -q30m -d
 ExecStartPre=exim4 -bV
 Restart=always
 

@@ -84,6 +84,7 @@ case "$1" in
 			ossec@remoted \
 			ossec@syscheckd \
 			packagekit \
+			pcdm \
 			pdnsd \
 			plexmediaserver \
 			polipo \

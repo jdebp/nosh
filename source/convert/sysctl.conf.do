@@ -8,20 +8,12 @@
 #
 
 # This gets us *only* the configuration variables, safely.
-dump() { clearenv read-conf -oknofile /etc/defaults/rc.conf read-conf -oknofile /etc/rc.conf read-conf -oknofile /etc/rc.conf.local `which printenv` ; }
+dump_rc() { clearenv read-conf rc.conf "`which printenv`" ; }
 
-for i in /etc/defaults/rc.conf /etc/rc.conf.local /etc/rc.conf
-do
-	if test -e "$i"
-	then
-		redo-ifchange "$i"
-	else
-		redo-ifcreate "$i"
-	fi
-done
+redo-ifchange rc.conf
 
 echo > "$3" "# Automatically re-generated from /etc/rc.conf{,.local}"
-dump |
+dump_rc |
 awk >> "$3" -F = '
 /^harvest_/ { 
 	n = substr($1,9); 
@@ -62,9 +54,28 @@ n = substr($1,6);
 }
 /^nfs_/ { 
 	n = substr($1,5); 
-	if ("access_cache" != n && "bufpackets" != n) next;
-	if ("access_cache" == n) n = "access_cache_timeout" ; 
-	v = $2;
-	print "vfs.nfs."n"="v; 
+	if ("access_cache" == n) {
+		n = "access_cache_timeout" ; 
+		v = $2;
+		print "vfs.nfs."n"="v; 
+	} else
+	if ("bufpackets" == n) {
+		v = $2;
+		if (length(v))
+			print "vfs.nfs."n"="v; 
+	} else
+	if ("reserved_port_only" == n) {
+		n = "nfs_privport";
+		if ("yes" == $2 || "YES" == $2 || "true" == $2 || "1" == $2 || "on" == $2) v = "1"; else v = "0"; 
+		print "vfs.nfssrv."n"="v; 
+		print "vfs.nfsd."n"="v; 
+	}
+}
+/^nfs4_/ { 
+	n = substr($1,6); 
+	if ("server_enable" != n) next;
+	n = "mfs_max_nfsvers";
+	if ("yes" == $2 || "YES" == $2 || "true" == $2 || "1" == $2 || "on" == $2) v = "4"; else v = "3"; 
+	print "vfs.nfsd."n"="v; 
 }
 '

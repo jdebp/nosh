@@ -20,6 +20,7 @@ exec	make-private-fs
 exec	netlink-datagram-socket-listen
 exec	nosh
 exec	monitored-fsck
+exec	oom-kill-protect
 exec	plug-and-play-event-handler
 exec	pause
 exec	pipe

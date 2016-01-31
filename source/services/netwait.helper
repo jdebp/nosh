@@ -1,0 +1,39 @@
+#!/bin/sh -
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+## We ignore ${timeout} because this isn't interactive and can just run and run.
+
+all_carrier() {
+	local output status
+	for i
+	do
+		output="`ifconfig \"$i\"`"
+		status="`expr \"${output}\" : '.*[[:blank:]]status: \(no carrier\)'`"
+		test -n "${status}" && return 1
+	done
+	return 0
+}
+
+all_response() {
+	for i
+	do
+		ping -t 1 -c 1 -o "$i" || return 1
+	done
+	return 0
+}
+
+while true
+do
+	if ! all_carrier "${if}"
+	then
+		echo 1>&2 "Waiting for carrier on ${if} ..."
+	elif ! all_response "${ip}"
+	then
+		echo 1>&2 "Waiting for ICMP response from ${ip} ..."
+	else
+		break
+	fi
+	sleep 1
+done

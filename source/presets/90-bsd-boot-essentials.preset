@@ -11,12 +11,15 @@ enable	cyclog@newsyslog.service
 enable	newsyslog.service
 enable	cyclog@ldconfig.service
 enable	ldconfig.service
+enable	cyclog@sysctl.service
+enable	sysctl.service
 
 # Sysinit services
 enable	background-fsck.service
 enable	devd-log.service
 enable	devd.service
 enable	nextboot.service
+enable	gptboot.service
 
 # Targets
 enable	dumpauto.target

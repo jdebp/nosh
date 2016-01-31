@@ -200,14 +200,29 @@ Hence the replacement of <arg choice="plain">start</arg> by <arg choice="plain">
 </para>
 
 <para>
-Invoked as <command>update-rc.d</command> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice="plain"><replaceable>command1</replaceable></arg>, the program chains to <command>system-control</command> <arg choice="plain"><replaceable>command2</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>.
-<replaceable>command1</replaceable> may only be one of <arg choice="plain">defaults</arg>, <arg choice="plain">enable</arg>, <arg choice="plain">disable</arg>, or <arg choice="plain">remove</arg>, which are translated to <arg choice="plain">preset</arg>, <arg choice="plain">preset</arg>, <arg choice="plain">disable</arg>, and <arg choice="plain">disable</arg> (respectively) for <replaceable>command2</replaceable>.
+Invoked as <command>update-rc.d</command> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice="plain"><replaceable>command1</replaceable></arg>, the program chains to <command>system-control</command> <arg choice="plain"><replaceable>command2</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>, translating as in the following table.
+Again, the behaviour that it is designed to be backwards compatible with only enables a service in response to the <arg choice="plain">enable</arg> subcommand if the administrator has configured the service to auto-start.
+Hence the use of <arg choice="plain">preset</arg>.
 </para>
+<table>
+<title>Sub-command translation:</title>
+<thead>
+<tr><td><replaceable>command1</replaceable></td><td><replaceable>command2</replaceable></td></tr>
+</thead>
+<tbody>
+<tr><td><arg choice='plain'>defaults</arg></td><td rowspan='3'><arg choice='plain'>preset</arg></td></tr>
+<tr><td><arg choice='plain'>start</arg></td></tr>
+<tr><td><arg choice='plain'>stop</arg></td></tr>
+<tr><td><arg choice='plain'>enable</arg></td><td><arg choice='plain'>preset</arg></td></tr>
+<tr><td><arg choice='plain'>disable</arg></td><td><arg choice='plain'>disable</arg></td></tr>
+<tr><td><arg choice='plain'>remove</arg></td><td><arg choice='plain'>disable</arg></td></tr>
+</tbody>
+</table>
 
 <para>
 The <arg choice='plain'>--force</arg> option has no translatable meaning, does nothing, and is present for compatibility only.
-Note also that the <arg choice="plain">start</arg> and <arg choice="plain">stop</arg> subcommands of the original tool were eliminated, as part of <ulink url="http://anonscm.debian.org/cgit/collab-maint/sysvinit.git/commit/?id=6323a1e4eb39ed1c050b1e74b6baef92dcfde4b1">eliminating all support for non-LSB-header-based System 5 <command>rc</command></ulink>, in July 2013.
-This command makes no attempt to support any such mechanism.
+Note also that <ulink url="http://anonscm.debian.org/cgit/collab-maint/sysvinit.git/commit/?id=6323a1e4eb39ed1c050b1e74b6baef92dcfde4b1">the original <command>update-rc.d</command> tool eliminated all support for non-LSB-header-based System 5 <command>rc</command>, in July 2013.</ulink>
+The <arg choice="plain">defaults</arg>, <arg choice="plain">start</arg>, and <arg choice="plain">stop</arg> subcommands do not take arguments even in the original tool; and uses of the latter two subcommands should be replaced by the former.
 </para>
 
 </refsection>

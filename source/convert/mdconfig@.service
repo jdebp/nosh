@@ -1,0 +1,19 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%p a memory disc for device %I
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+EnvironmentDirectory=env
+RemainAfterExit=true
+ExecStart=%p -a -u "%I" ${flags}
+ExecStart=sh -c 'test -n "${perms}" && chmod "${perms}" "%I"'
+ExecStart=sh -c 'test -n "${owner}" && chown "${owner}" "%I"'
+ExecStopPost=%p -d -u "%I"
+
+[Install]
+WantedBy=sysinit.target

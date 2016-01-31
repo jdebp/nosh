@@ -7,15 +7,7 @@
 # This is invoked by general-services.do .
 #
 
-for i in /etc/defaults/rc.conf /etc/rc.conf.local /etc/rc.conf
-do
-	if test -e "$i"
-	then
-		redo-ifchange "$i"
-	else
-		redo-ifcreate "$i"
-	fi
-done
+redo-ifchange rc.conf general-services
 
 conf=/etc/jail.conf
 if ! test -e "${conf}"

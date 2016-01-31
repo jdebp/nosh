@@ -4,6 +4,7 @@
 
 [Unit]
 Description=NFS user daemon
+Before=nfscbd.service
 
 [Service]
 EnvironmentDirectory=env

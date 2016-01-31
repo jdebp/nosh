@@ -8,19 +8,11 @@
 #
 
 # These get us *only* the configuration variables, safely.
-read_rc() { if type sysrc >/dev/null 2>&1 ; then sysrc -i -n "$1" ; else clearenv read-conf -oknofile /etc/defaults/rc.conf read-conf -oknofile /etc/rc.conf read-conf -oknofile /etc/rc.conf.local `which printenv` "$1" ; fi }
+read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
 list_interfaces() { read_rc rfcomm_pppd_server_profile || true ; }
 get_var() { read_rc rfcomm_pppd_server_"$1"_"$2" || read_rc rfcomm_pppd_server_"$2" || true ; }
 
-for i in /etc/defaults/rc.conf /etc/rc.conf.local /etc/rc.conf
-do
-	if test -e "$i"
-	then
-		redo-ifchange "$i"
-	else
-		redo-ifcreate "$i"
-	fi
-done
+redo-ifchange rc.conf general-services
 
 r="/var/local/sv"
 e="--no-systemd-quirks --escape-instance --bundle-root"

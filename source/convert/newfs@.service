@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%p a filesystem on memory disc device %I
+DefaultDependencies=no
+After=mdconfig@%i
+Before=fsck@%i
+
+[Service]
+Type=oneshot
+EnvironmentDirectory=env
+RemainAfterExit=true
+ExecStart=newfs ${flags} "%I"
+
+[Install]
+WantedBy=sysinit.target

@@ -11,6 +11,12 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include "FramebufferIO.h"
 
+FramebufferIO::FramebufferIO(int pfd, bool l80) : 
+	FileDescriptorOwner(pfd),
+	limit_80_columns(l80)
+{
+}
+
 FramebufferIO::~FramebufferIO()
 {
 	restore();
@@ -49,7 +55,7 @@ FramebufferIO::save_and_set_graphics_mode(
 		mode_info.vi_mode = mode;
 		if (0 > ioctl(fd, FBIO_MODEINFO, &mode_info)) continue;
 		if (!(mode_info.vi_flags & V_INFO_GRAPHICS)) continue;
-		if (mode_info.vi_mem_model != V_INFO_MM_PACKED && mode_info.vi_mem_model != V_INFO_MM_DIRECT) continue;
+		if (mode_info.vi_mem_model != V_INFO_MM_DIRECT) continue;
 		if (max_depth < mode_info.vi_depth)
 			max_depth = mode_info.vi_depth;
 	}
@@ -59,8 +65,9 @@ FramebufferIO::save_and_set_graphics_mode(
 		mode_info.vi_mode = mode;
 		if (0 > ioctl(fd, FBIO_MODEINFO, &mode_info)) continue;
 		if (!(mode_info.vi_flags & V_INFO_GRAPHICS)) continue;
-		if (mode_info.vi_mem_model != V_INFO_MM_PACKED && mode_info.vi_mem_model != V_INFO_MM_DIRECT) continue;
+		if (mode_info.vi_mem_model != V_INFO_MM_DIRECT) continue;
 		if (max_depth > mode_info.vi_depth) continue;
+		if (limit_80_columns && mode_info.vi_width > 1280) continue;
 		if ((max_width * max_height) > (mode_info.vi_width * mode_info.vi_height)) continue;
 		video_mode = mode;
 		max_width = mode_info.vi_width;

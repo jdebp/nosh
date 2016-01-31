@@ -4302,6 +4302,7 @@ console_fb_realizer (
 #endif
 	std::list<std::string> input_filenames;
 	bool bold_as_colour(false);
+	bool limit_80_columns(false);
 	FontSpecList fonts;
 	unsigned long quadrant(3U);
 
@@ -4310,6 +4311,7 @@ console_fb_realizer (
 		popt::string_definition kernel_vt_option('\0', "kernel-vt", "device", "Use the kernel FB sharing protocol via this device.", kernel_vt);
 		popt::string_list_definition input_option('\0', "input", "device", "Use the this input device.", input_filenames);
 #if !defined(__LINUX__) && !defined(__linux__)
+		popt::bool_definition limit_80_columns_option('\0', "80-columns", "Limit to no wider than 80 columns.", limit_80_columns);
 		popt::string_definition atkeyboard_option('\0', "atkeyboard", "device", "Use this atkbd input device.", atkeyboard_filename);
 		popt::string_definition sysmouse_option('\0', "sysmouse", "device", "Use this sysmouse input device.", sysmouse_filename);
 #endif
@@ -4324,6 +4326,9 @@ console_fb_realizer (
 		fontspec_definition font_bold_i_option('\0', "font-bold-i", "filename", "Use this font as a bold-italic font.", fonts, CombinedFont::Font::BOLD, CombinedFont::Font::ITALIC);
 		popt::definition * top_table[] = {
 			&bold_as_colour_option,
+#if !defined(__LINUX__) && !defined(__linux__)
+			&limit_80_columns_option,
+#endif
 			&kernel_vt_option,
 			&input_option,
 #if !defined(__LINUX__) && !defined(__linux__)
@@ -4439,7 +4444,7 @@ console_fb_realizer (
 
 	// Now open devices.
 
-	FramebufferIO fb(open_readwriteexisting_at(AT_FDCWD, fb_filename));
+	FramebufferIO fb(open_readwriteexisting_at(AT_FDCWD, fb_filename), limit_80_columns);
 	if (fb.get() < 0) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, fb_filename, std::strerror(error));

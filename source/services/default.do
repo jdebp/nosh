@@ -156,9 +156,13 @@ cyclog@ttylogin@*)
 	rm -f -- services.new/"${base}"/wanted-by/workstation
 	ln -s -f -- ../../"${base#cyclog@}" services.new/"${base}"/wanted-by/
 	;;
-cyclog@VBoxService)
+cyclog@VBoxService|cyclog@kmod@vboxadd|cyclog@kmod@vboxsf|cyclog@kmod@vboxguest|cyclog@kmod@vboxvideo)
 	rm -f -- services.new/"${base}"/wanted-by/workstation
 	ln -f -s -- /etc/service-bundles/targets/virtualbox-guest services.new/"${base}"/wanted-by/
+	;;
+cyclog@kmod@vboxdrv|cyclog@kmod@vboxnetadp|cyclog@kmod@vboxnetflt|cyclog@kmod@vboxpci)
+	rm -f -- services.new/"${base}"/wanted-by/workstation
+	ln -f -s -- /etc/service-bundles/targets/virtualbox-host services.new/"${base}"/wanted-by/
 	;;
 console-multiplexor@head0)
 	for i in 1 2 3

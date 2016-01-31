@@ -15,6 +15,7 @@ normal
 poweroff
 reboot
 remote-fs
+remote-fs-pre
 rescue
 server
 shutdown

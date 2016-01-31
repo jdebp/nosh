@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=GPT non-ZFS post-boot cleanup
+DefaultDependencies=no
+After=local-fs.target
+After=local-fs.target
+
+[Service]
+Type=oneshot
+EnvironmentDirectory=env
+ExecStart=pipe ./helper | sh
+Restart=never
+
+[Install]
+WantedBy=sysinit.target

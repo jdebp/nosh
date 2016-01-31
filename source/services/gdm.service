@@ -5,6 +5,7 @@
 [Unit]
 Description=GNOME display manager
 Wants=polkitd.service
+After=ttylogin@ttyv8 ttylogin@tty9
 
 [Service]
 ExecStart=%p -nodaemon

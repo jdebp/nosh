@@ -1,0 +1,62 @@
+<refentry id="oom-kill-protect">
+
+<refmeta>
+<refentrytitle>oom-kill-protect</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.24</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>oom-kill-protect</refname>
+<refpurpose>set the protection level against the kernel's Out Of Memory Killer</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>oom-kill-protect</command> 
+<arg choice='req'><replaceable>level</replaceable></arg> 
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>oom-kill-protect</command> is a chain-loading utility that sets the OOK kill protection according to <replaceable>level</replaceable> and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>oom-kill-protect</command> will ignore.
+</para>
+
+<para>
+If <replaceable>level</replaceable> is the literal value <code>fromenv</code> (in lowercase) then <command>oom-kill-protect</command> locates the <envar>oomprotect</envar> environment variable and replaces <replaceable>level</replaceable> with its value.
+This is a special mechanism for enabling <citerefentry><refentrytitle>rcctl</refentrytitle><manvolnum>1</manvolnum></citerefentry> (a.k.a. <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> <command>set-service-env</command>) to control the OOM Kill protection settings of services by setting an <envar>oomprotect</envar> variable for each service.
+</para>
+
+<para>
+Otherwise, <replaceable>level</replaceable> can be the literal values <code>true</code>, <code>false</code>, <code>on</code>, <code>off</code>, <code>yes</code>, <code>no</code>, or a signed decimal integer.
+The literal integer is a Linux-style OOOM Score adjustment.
+The others are boolean flag states.
+</para>
+
+<para>
+On BSDs, OOM Killer protection is a binary value; it is either on or off for a process.
+The boolean settings map directly.
+The OOM Score adjustment is mapped such that a value equal to or less than -1000 implies that protection is on; and higher values imply that protection is off.
+This is on the grounds that any value greater than -1000 does not protect against the OOM Killer, but merely adjusts how likely an unprotected process is to be selected for termination.
+</para>
+
+<para>
+On Linux, the decimal integer is simply an OOM Score.
+The binary values map to -1000 for false, and 0 for true.
+This is on the grounds that -1000 completely protects against the OOM Killer.
+</para>
+
+</refsection>
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

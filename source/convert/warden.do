@@ -14,7 +14,8 @@ then
 	exit $?
 fi
 
-redo-ifchange "${conf}"
+redo-ifchange "${conf}" rc.conf general-services
+
 eval `sed -n -e '/^[[:space:]]*#.*$/d;s/: /=/p' "${conf}"`
 
 if ! test -d "${JDIR}" 

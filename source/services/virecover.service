@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=nvi recovery
+
+[Service]
+Type=oneshot
+EnvironmentDirectory=env
+ExecStart=./helper
+Restart=never
+
+[Install]
+WantedBy=workstation.target

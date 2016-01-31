@@ -4,6 +4,7 @@
 
 [Unit]
 Description=NFS client side callback daemon
+After=nfsuserd.service
 
 [Service]
 EnvironmentDirectory=env

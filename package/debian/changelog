@@ -1,3 +1,19 @@
+nosh (1.25) unstable; urgency=low
+
+  * More BSD services: netwait, nfsserver, populate@var, pcdm, gptboot
+  * More cross-platform services: rtadvd, virecover
+  * There is now an ip6addrctl configuration import.
+  * There is now a webcamd configuration import.
+  * There is now a nosh-run-openssh-server package.
+  * NFS settings are now fully imported.
+  * Added get-mount-what and get-mount-where commands.
+  * Added an oom-kill-protect command.
+  * Fixed problems where BSD conversion code was being erroneously invoked on Linux.
+  * There are new nosh-run- packages for klog and freedesktop-system-bus.
+  * The nosh-run- packages for klog and local-syslog now provide the Debian virtual package names system-log-daemon and linux-kernel-log-daemon.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Sun, 31 Jan 2016 20:03:31 +0000
+
 nosh (1.24) unstable; urgency=low
 
   * Made BSD keymap conversion more compatible, at the expense of true combining umlaut support.  This fixes a problem with the Brazilian keyboard layout.

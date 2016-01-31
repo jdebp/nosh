@@ -111,6 +111,20 @@ invoke_rcd (
 	if (0 == std::strcmp("stop", command))
 		;	// Don't touch it.
 	else 
+	if (0 == std::strcmp("restart", command)) {
+		args.clear();
+		args.insert(args.end(), "foreground");
+		args.insert(args.end(), "system-control");
+		args.insert(args.end(), "stop");
+		args.insert(args.end(), service);
+		args.insert(args.end(), ";");
+		args.insert(args.end(), "system-control");
+		args.insert(args.end(), "reset");
+		args.insert(args.end(), service);
+		next_prog = arg0_of(args);
+		return;
+	}
+	else
 	{
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, command, "Unsupported subcommand.");
 		throw EXIT_FAILURE;
@@ -154,16 +168,13 @@ update_rcd (
 	}
 	const char * service(args.front());
 	args.erase(args.begin());
+
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing command name.");
 		throw EXIT_FAILURE;
 	}
 	const char * command(args.front());
 	args.erase(args.begin());
-	if (!args.empty()) {
-		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Unrecognized extra arguments.");
-		throw EXIT_FAILURE;
-	}
 
 	if (0 == std::strcmp("enable", command))
 		command = "preset";
@@ -174,11 +185,28 @@ update_rcd (
 	if (0 == std::strcmp("remove", command))
 		command = "disable";
 	else
-	if (0 == std::strcmp("defaults", command))
+	if (0 == std::strcmp("defaults", command)) {
+defaults:
+		if (!args.empty()) {
+			std::fprintf(stderr, "%s: WARNING: %s %s\n", prog, command, "has not supported arguments since 2013.");
+			args.clear();
+		}
 		command = "preset";
+	} else
+	if (0 == std::strcmp("start", command)
+	||  0 == std::strcmp("stop", command)
+	) {
+		std::fprintf(stderr, "%s: WARNING: %s %s\n", prog, command, "has been superseded by defaults since 2013.");
+		goto defaults;
+	}
 	else
 	{
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, command, "Unsupported subcommand.");
+		throw EXIT_FAILURE;
+	}
+
+	if (!args.empty()) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, command, "Unrecognized extra arguments.");
 		throw EXIT_FAILURE;
 	}
 

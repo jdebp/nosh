@@ -4,8 +4,8 @@
 
 [Unit]
 Description=Per-user "Desktop" bus socket
-After=user@%I
-Wants=user@%I
+After=user-runtime@%I
+Wants=user-runtime@%I
 
 [Socket]
 Backlog=2

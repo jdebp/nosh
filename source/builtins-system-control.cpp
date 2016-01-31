@@ -35,6 +35,8 @@ extern void is_active ( const char * & , std::vector<const char *> & ) ;
 extern void is_loaded ( const char * & , std::vector<const char *> & ) ;
 extern void is_enabled ( const char * & , std::vector<const char *> & ) ;
 extern void convert_fstab_services ( const char * & , std::vector<const char *> & ) ;
+extern void get_mount_where ( const char * & , std::vector<const char *> & ) ;
+extern void get_mount_what ( const char * & , std::vector<const char *> & ) ;
 extern void write_volume_service_bundles ( const char * & , std::vector<const char *> & ) ;
 extern void convert_systemd_units ( const char * & , std::vector<const char *> & ) ;
 extern void nagios_check ( const char * & , std::vector<const char *> & ) ;
@@ -110,6 +112,8 @@ commands[] = {
 	{	"is-enabled",			is_enabled		},
 	{	"unload-when-stopped",		unload_when_stopped	},
 	{	"convert-fstab-services",	convert_fstab_services	},
+	{	"get-mount-where",		get_mount_where		},
+	{	"get-mount-what",		get_mount_what		},
 	{	"write-volume-service-bundles",	write_volume_service_bundles	},
 	{	"convert-systemd-units",	convert_systemd_units	},
 	{	"nagios-check-service",		nagios_check		},

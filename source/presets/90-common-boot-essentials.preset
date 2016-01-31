@@ -7,11 +7,7 @@
 #
 
 # Ordinary services
-enable	cyclog@dbus.service
-enable	cyclog@klogd.service
 enable	cyclog@motd-dynamic.service
-enable	dbus.service
-enable	klogd.service
 enable	motd-dynamic.service
 
 # Sysinit services

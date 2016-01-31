@@ -6,7 +6,8 @@
 Description=sysctl settings
 
 [Service]
-ExecStart=sh -c 'for f in /etc/sysctl.conf /etc/sysctl.conf.local /etc/service-bundles/convert/sysctl.conf ; do [ -r $f ] && sysctl -i -f $f ; done'
+Type=oneshot
+ExecStart=sh -c 'for f in /etc/sysctl.conf /etc/sysctl.conf.local /etc/system-control/convert/sysctl.conf ; do [ -r $f ] && sysctl -i -f $f ; done'
 RemainAfterExit=yes
 
 [Install]

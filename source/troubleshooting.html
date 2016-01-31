@@ -54,7 +54,7 @@ Start the system in rescue mode, then bring up the "normal" target interactively
 Watch for things that are "BLOCKED" and note how far through the boot process <code>system-control</code> gets.
 </p>
 
-<h3>
+<h3 style="border-bottom: 1px dotted grey">
 <code>system-control</code> experiences a conflict
 </h3>
 
@@ -64,7 +64,7 @@ This is hard, but not impossible, to cause.
 Simply disable the one or the other service.
 </p>
 
-<h3>
+<h3 style="border-bottom: 1px dotted grey">
 Volumes are not mounted, and services needing those volumes to be mounted cannot start
 </h3>
 
@@ -81,7 +81,7 @@ You must enable these services.
 This can be done explicitly, or by <a href="external-formats.html">the autoconfiguration system of <code>redo</code> scripts</a>, which will create and enable mount services based upon the contents of <code>/etc/fstab</code>.
 </p>
 
-<h3>
+<h3 style="border-bottom: 1px dotted grey">
 Services remain blocked
 </h3>
 
@@ -94,7 +94,7 @@ Look at service B's own logs, and the output of
 </p>
 <blockquote><pre>system-control status B</pre></blockquote>
 
-<h3>
+<h3 style="border-bottom: 1px dotted grey">
 The service manager reports errors when attempting to load a service
 </h3>
 
@@ -106,6 +106,23 @@ The service manager is thus unable to create/update the control/status API files
 <p>
 Notice that "sysinit" services <a href="startup-and-shutdown.html#sysinit">locate their <code>supervise</code> directories under <code>/run/service-bundles/early-supervise/</code> for this very reason</a>.
 The point where they are loaded by the service manager is well before the point that the <code>/var</code> or <code>/</code> volumes are mounted read-write.
+</p>
+
+<h3 style="border-bottom: 1px dotted grey">
+<code>fsck</code> ran and then nothing else started
+</h3>
+
+<p>
+The initial non-interactive <code>fsck</code> of mounted filesystems usually runs in "preen mode", which proceeds relatively quickly.
+If, however filesystem tunable options cause a full <code>fsck</code> to run, <code>system-control</code> can sometimes time out waiting for the filesystem check services to finish.
+This is because there's a time limit to how long <code>system-control</code> will attempt to bring the system up.
+</p>
+
+<p>
+The limit is there so that a system that fails to fully come up <em>can be brought down</em>.
+Without the time limit, the on-going attempts to bring the system up would defeat the process of trying to bring the system down, if an administrator chose to reboot.
+And this is the remedial action to take here, in fact.
+Simply reboot the system after all <code>fsck</code>s have successfully run, and the <code>monitor-fsck-progress</code> service has removed its user interface.
 </p>
 
 <h2 style="border-bottom: 1px solid grey">

@@ -5,6 +5,7 @@
 #
 # Convert the /etc/fstab external configuration format.
 # This is invoked by all.do .
+# 2016-01-24: This line forces a rebuild because of the new dependency tree.
 #
 
 redo-ifchange /etc/fstab
@@ -76,5 +77,3 @@ case "`uname`" in
 	done
 	;;
 esac
-
-redo-ifchange geom mdmfs

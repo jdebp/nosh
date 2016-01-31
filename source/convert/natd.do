@@ -8,20 +8,12 @@
 #
 
 # These get us *only* the configuration variables, safely.
-read_rc() { if type sysrc >/dev/null 2>&1 ; then sysrc -i -n "$1" ; else clearenv read-conf -oknofile /etc/defaults/rc.conf read-conf -oknofile /etc/rc.conf read-conf -oknofile /etc/rc.conf.local `which printenv` "$1" ; fi }
+read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
 list_natd_interfaces() { read_rc natd_interface || true ; }
 list_network_interfaces() { read_rc network_interfaces || ifconfig -l | while read -r i ; do echo "$i" ; done ; }
 get_ifconfig() { read_rc ifconfig_"$1" || read_rc ifconfig_DEFAULT || true ; }
 
-for i in /etc/defaults/rc.conf /etc/rc.conf.local /etc/rc.conf
-do
-	if test -e "$i"
-	then
-		redo-ifchange "$i"
-	else
-		redo-ifcreate "$i"
-	fi
-done
+redo-ifchange rc.conf general-services
 
 r="/var/local/sv"
 e="--no-systemd-quirks --escape-instance --bundle-root"

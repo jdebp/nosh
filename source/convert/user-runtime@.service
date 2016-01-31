@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=Per-user %I service manager
+Description=Per-user %I runtime directory
 
 [Service]
 RemainAfterExit=true
@@ -19,4 +19,4 @@ ExecStopPost=rmdir /run/user
 Restart=always
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=user@%I.target

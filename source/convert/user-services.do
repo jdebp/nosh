@@ -7,9 +7,10 @@
 # This is invoked by all.do .
 #
 
-redo-ifchange /etc/passwd user-dbus@.socket user-dbus.service user-dbus-log@.service user-services@.service user@.service
+redo-ifchange /etc/passwd user-dbus@.socket user-dbus.service user-dbus-log@.service user-services@.service user-runtime@.service user@.target
 
-r="/etc/service-bundles/services/"
+sr="/etc/service-bundles/services/"
+tr="/etc/service-bundles/services/"
 e="--etc-bundle --no-systemd-quirks --escape-instance --bundle-root"
 
 getent passwd |
@@ -24,9 +25,9 @@ do
 	toor) continue ;;
 	esac
 
-	system-control convert-systemd-units $e "$r/" "./user-dbus-log@$i.service"
+	system-control convert-systemd-units $e "$sr/" "./user-dbus-log@$i.service"
 	echo "user-dbus-log@$i" >> "$3"
-	system-control convert-systemd-units $e "$r/" "./user-dbus@$i.socket"
+	system-control convert-systemd-units $e "$sr/" "./user-dbus@$i.socket"
 	echo "user-dbus@$i" >> "$3"
 
 	mkdir -p -m 1755 "/var/log/user"
@@ -34,10 +35,13 @@ do
 	mkdir -p -m 0750 "/var/log/user/$i/dbus"
 	setfacl -m "u:$i:rwx" "/var/log/user/$i" || :
 	setfacl -m "u:$i:rwx" "/var/log/user/$i/dbus" || :
-	test -d "$r/user-dbus@$i/log/" || ln -f -s "../user-dbus-log@$i" "$r/user-dbus@$i/log"
+	test -d "$sr/user-dbus@$i/log/" || ln -f -s "../user-dbus-log@$i" "$sr/user-dbus@$i/log"
 
-	system-control convert-systemd-units $e "$r/" "./user-services@$i.service"
+	system-control convert-systemd-units $e "$sr/" "./user-services@$i.service"
 	echo "user-services@$i" >> "$3"
-	system-control convert-systemd-units $e "$r/" "./user@$i.service"
+	system-control convert-systemd-units $e "$sr/" "./user-runtime@$i.service"
+	echo "user-runtime@$i" >> "$3"
+
+	system-control convert-systemd-units $e "$tr/" "./user@$i.target"
 	echo "user@$i" >> "$3"
 done

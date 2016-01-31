@@ -32,6 +32,7 @@ make-private-fs
 monitor-fsck-progress
 monitored-fsck
 nosh
+oom-kill-protect
 open-controlling-tty
 pause
 pipe

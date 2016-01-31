@@ -1016,7 +1016,7 @@ The bundle is created as <filename>wanted-by/</filename> the system <code>dumpau
 </itemizedlist>
 
 <para>
-The <command>write-volume-service-bundles</command> subcommand writes service bundles that contains scripts, dependencies, and autoboot dependency configuration information appropriate for mounting, unmounting, and checking a volume.
+The <command>write-volume-service-bundles</command> subcommand writes service bundles that contain scripts, dependencies, and autoboot dependency configuration information appropriate for mounting, unmounting, and checking a volume.
 </para>
 
 <itemizedlist>

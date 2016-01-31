@@ -45,7 +45,6 @@ kmod@dummynet
 kmod@ext2fs
 kmod@fdescfs
 kmod@geom_gate
-kmod@geom_uzip
 kmod@ibcs2
 kmod@if_bwi
 kmod@if_bwn
@@ -85,6 +84,7 @@ kmod@sem
 kmod@smbfs
 kmod@udf
 kmod@udf_iconv
+kmod@uhid
 kmod@vkbd
 kmod@xfs
 lpd
@@ -92,10 +92,12 @@ mroute4d
 mroute6d
 mrouted
 msgs
+netwait
 newsyslog
 nfscbd
 nfsclient
 nfsuserd
+nfsserver
 papd
 pbid
 pefs
