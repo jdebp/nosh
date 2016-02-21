@@ -12,4 +12,5 @@ ExecStart=fdredir --write 1 /run/dmesg.boot %p
 RemainAfterExit=yes
 
 [Install]
+# This never shuts down.
 WantedBy=sysinit.target

@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=appcafe subsystem: dispatcher
+# This isn't documented, but it secretly does rely upon syscache.service .
+Wants=syscache.service
+After=appcafe-nginx.service
+
+[Service]
+EnvironmentDirectory=env
+ExecStart="${root:-/usr/local/share/appcafe}/dispatcher" daemon
+Restart=always
+
+[Install]
+WantedBy=appcafe.target

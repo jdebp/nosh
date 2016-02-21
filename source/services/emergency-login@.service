@@ -19,4 +19,5 @@ TTYReset=yes
 TTYBannerLine=Emergency mode log-in.
 
 [Install]
+# This never shuts down.
 WantedBy=emergency.target

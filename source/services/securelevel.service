@@ -7,9 +7,9 @@ Description=security level raiser
 After=adjkerntz.service ifpw.service ipfilter.service pf.service sysctl.service
 
 [Service]
-EnvironmentFile=-/etc/rc.conf
-EnvironmentFile=-/etc/rc.conf.local
-ExecStart=sh -c 'test ${kern_securelevel} -ge 0 && sysctl kern.securelevel=${kern_securelevel}'
+Type=oneshot
+EnvironmentDirectory=env
+ExecStart=sh -c 'test ${level} -ge 0 && sysctl kern.securelevel=${level}'
 RemainAfterExit=yes
 
 [Install]

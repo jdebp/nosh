@@ -4,7 +4,6 @@
 
 [Unit]
 Description=Basic system group target
-DefaultDependencies=false
 EarlySupervise=true
 Wants=sysinit.target
 Before=shutdown.target
@@ -16,4 +15,4 @@ RemainAfterExit=yes
 
 [Install]
 StoppedBy=shutdown.target
-WantedBy=multi-user.target server.target workstation.target
+WantedBy=normal.target

@@ -18,4 +18,5 @@ RemainAfterExit=yes
 Restart=never
 
 [Install]
+StoppedBy=shutdown.target
 WantedBy=workstation.target

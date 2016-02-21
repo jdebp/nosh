@@ -2,17 +2,18 @@
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
 
-# There's no need for a BSD service that runs ifconfig -a up/down.
-# devd does all of the autoconfiguration on FreeBSD/PC-BSD.
+# This is needed on BSD systems for statically configured network interfaces.
 # The log service is used by auto-converted static_arp/static_ndp services.
 
 [Unit]
 Description=BSD statically-configured network interface settings
+After=network-runtime.service
+Wants=network-runtime.service
 
 [Service]
-ExecStartPre=mkdir -m 0755 /run/network
+Type=oneshot
 ExecStart=true
 RemainAfterExit=yes
 
 [Install]
-WantedBy=workstation.target
+WantedBy=static-networking.target

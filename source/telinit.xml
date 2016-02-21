@@ -26,6 +26,7 @@
 <refname>chkconfig</refname>
 <refname>update-rc.d</refname>
 <refname>invoke-rc.d</refname>
+<refname>runlevel</refname>
 <refpurpose>BSD/System V compatibility utilities for system and service control</refpurpose>
 </refnamediv>
 
@@ -60,6 +61,9 @@ These commands are all shims around <citerefentry><refentrytitle>system-control<
 <command>init</command>
 <arg choice="opt" rep="repeat"><replaceable>args</replaceable></arg>
 </cmdsynopsis>
+<cmdsynopsis>
+<command>runlevel</command>
+</cmdsynopsis>
 
 <para>
 Invoked as <command>telinit</command> <arg choice="plain" rep='repeat'><replaceable>args</replaceable></arg> or as <command>init</command> <arg choice="plain" rep='repeat'><replaceable>args</replaceable></arg> the program chains to <command>system-control</command> <arg choice="plain">init</arg> <arg choice="plain" rep='repeat'><replaceable>args</replaceable></arg>.
@@ -79,6 +83,13 @@ Configure the system to invoke <citerefentry><refentrytitle>system-manager</refe
 <para>
 It is likewise a mistake to run this thinking that it is an alias for <citerefentry><refentrytitle>session-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
 Again, invoke that directly, optionally under the name <command>init</command>.
+</para>
+
+<para>
+Invoked as <command>runlevel</command>, this simply prints "N" twice, to indicate that runlevels do not exist.
+This command exists for compatibility with some badly-written package installation/uninstallation scripts.
+It doesn't print "unknown", because those scripts are so badly written that they cannot even cope with <command>runlevel</command> not emitting two words.
+Do not use this obsolete command.
 </para>
 
 </refsection>
@@ -210,12 +221,12 @@ Hence the use of <arg choice="plain">preset</arg>.
 <tr><td><replaceable>command1</replaceable></td><td><replaceable>command2</replaceable></td></tr>
 </thead>
 <tbody>
-<tr><td><arg choice='plain'>defaults</arg></td><td rowspan='3'><arg choice='plain'>preset</arg></td></tr>
+<tr><td><arg choice='plain'>defaults</arg></td><td rowspan='4'><arg choice='plain'>preset</arg></td></tr>
 <tr><td><arg choice='plain'>start</arg></td></tr>
 <tr><td><arg choice='plain'>stop</arg></td></tr>
-<tr><td><arg choice='plain'>enable</arg></td><td><arg choice='plain'>preset</arg></td></tr>
-<tr><td><arg choice='plain'>disable</arg></td><td><arg choice='plain'>disable</arg></td></tr>
-<tr><td><arg choice='plain'>remove</arg></td><td><arg choice='plain'>disable</arg></td></tr>
+<tr><td><arg choice='plain'>enable</arg></td></tr>
+<tr><td><arg choice='plain'>disable</arg></td><td rowspan='2'><arg choice='plain'>disable</arg></td></tr>
+<tr><td><arg choice='plain'>remove</arg></td></tr>
 </tbody>
 </table>
 

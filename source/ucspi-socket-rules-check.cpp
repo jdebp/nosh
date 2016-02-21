@@ -27,6 +27,7 @@ static
 bool
 allowed (
 	const char * prog,
+	const char * name,
 	const std::string & subdir
 ) {
 	const int dir_fd(open_dir_at(AT_FDCWD, subdir.c_str()));
@@ -37,7 +38,7 @@ allowed (
 	if (0 <= allowed) return true;
 	if (0 <= denied) {
 		if (verbose)
-			std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Access denied.");
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, "Access denied.");
 		throw EXIT_FAILURE;
 	}
 	return false;
@@ -159,11 +160,11 @@ ucspi_socket_rules_check (
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "UNIXREMOTEGID", "Missing environment variable.");
 			throw EXIT_FAILURE;
 		}
-		if (allowed(prog, "uid/" + std::string(uid) + "/")) return;
-		if (allowed(prog, "gid/" + std::string(gid) + "/")) return;
-		if (allowed(prog, "uid/default/")) return;
+		if (allowed(prog, uid, "uid/" + std::string(uid) + "/")) return;
+		if (allowed(prog, gid, "gid/" + std::string(gid) + "/")) return;
+		if (allowed(prog, "default", "uid/default/")) return;
 		if (verbose)
-			std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Access denied.");
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, proto, "Access denied.");
 		throw EXIT_FAILURE;
 	} else
 	if (0 == std::strcmp(proto, "TCP")) {
@@ -182,7 +183,7 @@ ucspi_socket_rules_check (
 				char buf[INET_ADDRSTRLEN], suffix[32];
 				inet_ntop(AF_INET, &net4, buf, sizeof buf);
 				snprintf(suffix, sizeof suffix, "_%u", prefix_length);
-				if (allowed(prog, (dir + buf) + suffix)) return;
+				if (allowed(prog, ip, (dir + buf) + suffix)) return;
 			}
 		} else 
 		if (0 < inet_pton(AF_INET6, ip, &addr6)) {
@@ -193,7 +194,7 @@ ucspi_socket_rules_check (
 				char buf[INET6_ADDRSTRLEN], suffix[32];
 				inet_ntop(AF_INET6, &net6, buf, sizeof buf);
 				snprintf(suffix, sizeof suffix, "_%u", prefix_length);
-				if (allowed(prog, (dir + buf) + suffix)) return;
+				if (allowed(prog, ip, (dir + buf) + suffix)) return;
 			}
 		} else 
 		{
@@ -201,7 +202,7 @@ ucspi_socket_rules_check (
 			throw EXIT_FAILURE;
 		}
 		if (verbose)
-			std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Access denied.");
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, ip, "Access denied.");
 		throw EXIT_FAILURE;
 	} else
 	if (0 == std::strcmp(proto, "TCP6")) {
@@ -220,7 +221,7 @@ ucspi_socket_rules_check (
 				char buf[INET_ADDRSTRLEN], suffix[32];
 				inet_ntop(AF_INET, &net4, buf, sizeof buf);
 				snprintf(suffix, sizeof suffix, "_%u", prefix_length);
-				if (allowed(prog, (dir + buf) + suffix)) return;
+				if (allowed(prog, ip, (dir + buf) + suffix)) return;
 			}
 		} else 
 		if (0 < inet_pton(AF_INET6, ip, &addr6)) {
@@ -231,7 +232,7 @@ ucspi_socket_rules_check (
 				char buf[INET6_ADDRSTRLEN], suffix[32];
 				inet_ntop(AF_INET6, &net6, buf, sizeof buf);
 				snprintf(suffix, sizeof suffix, "_%u", prefix_length);
-				if (allowed(prog, (dir + buf) + suffix)) return;
+				if (allowed(prog, ip, (dir + buf) + suffix)) return;
 			}
 		} else 
 		{
@@ -239,7 +240,7 @@ ucspi_socket_rules_check (
 			throw EXIT_FAILURE;
 		}
 		if (verbose)
-			std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Access denied.");
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, ip, "Access denied.");
 		throw EXIT_FAILURE;
 	} else
 	{

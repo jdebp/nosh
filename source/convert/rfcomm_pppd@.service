@@ -4,6 +4,7 @@
 
 [Unit]
 Description=BSD %p for %i
+Wants=%p-log
 
 [Service]
 EnvironmentDirectory=env

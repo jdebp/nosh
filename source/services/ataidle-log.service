@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Combined logger for ataidle@ services
+
+[Service]
+PermissionsStartOnly=true
+User=ataidle-log
+WorkingDirectory=/var/log/sv
+ExecStart=cyclog ataidle/
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=workstation.target

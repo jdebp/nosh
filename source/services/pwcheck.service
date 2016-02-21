@@ -11,4 +11,5 @@ ExecStart=sh -c '[ -f /etc/ptmp ] && echo 1>&2 "ERROR: password file may be inco
 RemainAfterExit=yes
 
 [Install]
+StoppedBy=shutdown.target
 WantedBy=sysinit.target

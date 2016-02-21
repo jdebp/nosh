@@ -6,4 +6,9 @@ then
 fi
 cwd="`/bin/pwd`"
 base_plus_version="`basename "${cwd}"`"
-tar --create --bzip2 --file "${base_plus_version}.tar.bz2" source package
+case "`uname`" in
+Linux)	ext=bz2 ; opt=-j ;;
+*BSD)	ext=gz  ; opt=-z ;;
+esac
+pax -w ${opt} > "${base_plus_version}.tar.${ext}.new" source package
+mv "${base_plus_version}.tar.${ext}.new" "${base_plus_version}.tar.${ext}"

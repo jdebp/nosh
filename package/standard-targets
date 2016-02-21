@@ -1,3 +1,4 @@
+appcafe
 basic
 dumpauto
 emergency
@@ -20,6 +21,7 @@ rescue
 server
 shutdown
 sockets
+static-networking
 swapauto
 swaplate
 sysinit

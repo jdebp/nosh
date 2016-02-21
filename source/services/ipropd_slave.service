@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Propagate Heimdal Kerberos KDC master to KDC slaves, slave side
+After=kdc.service
+Wants=kdc.service
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=%p --keytab "${keytab}" "${master}"
+Restart=always
+
+[Install]
+WantedBy=server.target

@@ -11,9 +11,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <new>
 #include <memory>
 #include <unistd.h>
-#if defined(__LINUX__) || defined(__linux__)
-#include <sys/prctl.h>
-#endif
 #include "utils.h"
 #include "fdutils.h"
 #include "environ.h"
@@ -114,11 +111,8 @@ exec_terminal (
 			return;
 		} else if (const command * c = find(next_program, false)) {
 			prog = basename_of(next_program);
-#if defined(__LINUX__) || defined(__linux__)
-#	if defined(PR_SET_NAME)
-			prctl(PR_SET_NAME, prog);
-#	endif
-#endif
+			setprocname(prog);
+			setprocargv(args.size(), args.data());
 			c->func(next_program, args);
 		} else {
 			args.push_back(0);

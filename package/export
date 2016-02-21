@@ -155,7 +155,7 @@ do
 	mv -f -- "${root1}"lib/systemd/system-preset/"$i"{new} "${root1}"lib/systemd/system-preset/"$i"
 done < package/systemd-presets
 (
-	for i in bundles run-via-systemd run-via-netbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog
+	for i in bundles run-via-systemd run-via-netbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-pcbsd-base run-trueos-base
 	do
 		cat package/common-nosh-$i-presets 
 		case "`uname`" in
@@ -184,8 +184,8 @@ done < package/standard-targets
 (
 	cat package/common-etc-services 
 	case "`uname`" in
-	Linux) cat package/linux-etc-services ;;
-	*BSD) cat package/bsd-etc-services ;;
+	Linux)	cat package/linux-etc-services ;;
+	*BSD)	cat package/bsd-etc-services ;;
 	esac
 ) | while read i
 do
@@ -214,4 +214,30 @@ do
 	rm -f -- "${root3}"sv/cyclog@"$i"/service/remain
 	(cd config/services/ && pax -r -w -l -- "$i" "${absroot3}"sv/)
 	(cd config/services/ && pax -r -w -l -- cyclog@"$i" "${absroot3}"sv/)
+done
+(
+	cat package/common-service-aliases 
+	case "`uname`" in
+	Linux)	cat package/linux-service-aliases ;;
+	*BSD)	cat package/bsd-service-aliases ;;
+	esac
+) | while read service i
+do
+	# service bundle aliases
+	rm -f -- "${root3}"sv/"$i"
+	rm -f -- "${root3}"sv/cyclog@"$i"
+	(cd config/services/ && pax -r -w -l -- "$i" "${absroot3}"sv/)
+	(cd config/services/ && pax -r -w -l -- cyclog@"$i" "${absroot3}"sv/)
+done
+(
+	cat package/common-etc-service-aliases 
+	case "`uname`" in
+	Linux)	cat package/linux-etc-service-aliases ;;
+	*BSD)	cat package/bsd-etc-service-aliases ;;
+	esac
+) | while read service i
+do
+	# etc service bundle aliases
+	rm -f -- "${root2}"etc/service-bundles/services/"$i"
+	(cd config/services/ && pax -r -w -l -- "$i" "${absroot2}"etc/service-bundles/services/)
 done

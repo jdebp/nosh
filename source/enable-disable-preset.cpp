@@ -166,6 +166,7 @@ const char *
 rcconf_files[] = {
 	"/etc/rc.conf.local",
 	"/etc/rc.conf",
+	"/etc/defaults/rc.conf",
 };
 
 static inline

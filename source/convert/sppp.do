@@ -12,12 +12,10 @@ read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
 list_interfaces() { read_rc sppp_interfaces || true ; }
 get_args() { read_rc spppconfig_$1 || true ; }
 
-redo-ifchange rc.conf general-services
+redo-ifchange rc.conf general-services "spppcontrol@.service"
 
 r="/var/local/sv"
 e="--no-systemd-quirks --escape-instance --bundle-root"
-
-redo-ifchange "spppcontrol@.service"
 
 list_interfaces |
 while read -r i

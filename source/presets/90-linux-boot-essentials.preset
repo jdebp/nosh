@@ -11,8 +11,6 @@ enable	acpid.service
 enable	cyclog@acpid.service
 enable	update-binfmts.service
 enable	cyclog@update-binfmts.service
-enable	static-networking.service
-enable	cyclog@static-networking.service
 enable	linux-utmp.service
 enable	cyclog@linux-utmp.service
 

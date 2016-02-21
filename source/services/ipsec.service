@@ -16,4 +16,5 @@ ExecStopPost=${program:-setkey} -F -P
 RemainAfterExit=true
 
 [Install]
+StoppedBy=shutdown.target
 WantedBy=workstation.target

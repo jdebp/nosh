@@ -1,0 +1,70 @@
+#!/bin/sh -
+for i in \
+	anacron \
+	avahi-daemon \
+	org.cups.cups-cancel \
+	org.cups.cups-lpd \
+	org.cups.cupsd \
+	dbus \
+	hald \
+	moused \
+	pcdm \
+	powerd \
+	swapexd \
+	volmand \
+	appcafe-dispatcher \
+	appcafe-php-fpm \
+	appcafe-nginx \
+	appcafe-ssl-keygen \
+	cleanX \
+	cleantmp \
+	ipfw0 \
+	ipfw \
+	iscsid \
+	kmod@acpi_video \
+	kmod@cuse4bsd \
+	kmod@if_bwi \
+	kmod@if_bwn \
+	kmod@iwn1000fw \
+	kmod@iwn4965fw \
+	kmod@iwn5000fw \
+	kmod@iwn5150fw \
+	kmod@iwn6000fw \
+	kmod@iwn6000g2afw \
+	kmod@iwn6000g2bfw \
+	kmod@iwn6050fw \
+	kmod@runfw \
+	kmod@fdescfs \
+	kmod@ipfw_nat \
+	kmod@libiconv \
+	kmod@libmchain \
+	kmod@linsysfs \
+	kmod@msdosfs_iconv \
+	kmod@sem \
+	openntpd \
+	syscache \
+	zfs \
+	;
+do
+	if system-control is-loaded $i.service 2>/dev/null 
+	then
+		system-control try-restart $i.service
+	fi
+	if system-control is-loaded cyclog@$i.service 2>/dev/null 
+	then
+		system-control try-restart cyclog@$i.service
+	fi
+done
+for i in \
+	devd \
+	devd-log \
+	ldconfig \
+	kmod@fuse \
+	kmod@geom_uzip \
+	;
+do
+	if system-control is-loaded $i.service 2>/dev/null 
+	then
+		system-control try-restart $i.service
+	fi
+done

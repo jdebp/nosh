@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=iocage start-up and shut-down "boot" jails
+Before=securelevel.service
+
+[Service]
+ExecStart=%p rcboot
+ExecStopPost=%p rcshutdown
+Restart=always
+
+[Install]
+WantedBy=workstation.target

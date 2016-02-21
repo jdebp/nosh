@@ -1,0 +1,8 @@
+#!/bin/sh -
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+test -n "${sentinel}" || sentinel="/var/.pcbsd-firstboot"
+test -r "${sentinel}" || exit $?
+/usr/local/share/pcbsd/scripts/first-boot.sh
+rm -- "${sentinel}"

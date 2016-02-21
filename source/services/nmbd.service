@@ -8,8 +8,8 @@ Description=SAMBA naming services daemon
 [Service]
 RuntimeDirectory=samba
 RuntimeDirectoryMode=0755
-ExecStartPre=sh -c 'l="`testparm -s -v --parameter-name "lock directory" /usr/local/etc/smb.conf`" ; if [ -n "$l" ] && [ -d "$l" ] ; then for f in brlock.tdb browse.dat connections.tdb gencache.tdb locking.tdb messages.tdb namelist.debug sessionid.tdb unexpected.tdb ; do rm -f -- "$l"/"$f" ; done ; fi'
-ExecStart=%p -F -s /usr/local/etc/smb.conf
+ExecStartPre=sh -c 'l="`testparm -s -v --parameter-name \"lock directory\" \"${conf:-/usr/local/etc/smb4.conf}\"`" ; if test -n "$l" && test -d "$l" ; then for f in brlock.tdb browse.dat connections.tdb gencache.tdb locking.tdb messages.tdb namelist.debug sessionid.tdb unexpected.tdb ; do rm -f -- "$l"/"$f" ; done ; fi'
+ExecStart=%p -F -s "${conf:-/usr/local/etc/smb4.conf}"
 Restart=always
 
 [Install]

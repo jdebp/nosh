@@ -30,11 +30,12 @@ awk >> "$3" -F = '
 	print "net.inet.tcp."n"="v; 
 }
 /^ipv6_/ { 
-n = substr($1,6); 
-	if ("ipv4mapping" != n && "privacy" != n && "cpe_wanif" != n) next;
+	n = substr($1,6); 
+	if ("ipv4mapping" != n && "privacy" != n && "cpe_wanif" != n && "gateway_enable" != n) next;
 	if ("ipv4mapping" == n) n = "v6only" ; 
 	if ("privacy" == n) n = "use_tempaddr" ; 
 	if ("cpe_wanif" == n) n = "no_radr" ; 
+	if ("gateway_enable" == n) n = "forwarding" ; 
 	if ("yes" == $2 || "YES" == $2 || "true" == $2 || "1" == $2 || "on" == $2) v = "1"; else v = "0"; 
 	if ("v6only" == n) v = !v;
 	print "net.inet6.ip6."n"="v; 
@@ -77,5 +78,11 @@ n = substr($1,6);
 	n = "mfs_max_nfsvers";
 	if ("yes" == $2 || "YES" == $2 || "true" == $2 || "1" == $2 || "on" == $2) v = "4"; else v = "3"; 
 	print "vfs.nfsd."n"="v; 
+}
+/^icmp_/ { 
+	n = substr($1,6); 
+	if ("bmcastecho" != n && "drop_redirect" != n && "log_redirect" != n) next;
+	if ("yes" == $2 || "YES" == $2 || "true" == $2 || "1" == $2 || "on" == $2) v = "1"; else v = "0"; 
+	print "net.inet.icmp."n"="v; 
 }
 '

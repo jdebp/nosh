@@ -11,7 +11,9 @@ After=local-fs.target
 [Service]
 Type=oneshot
 ExecStart=nextboot -D
+RemainAfterExit=true
 Restart=never
 
 [Install]
+StoppedBy=shutdown.target
 WantedBy=sysinit.target

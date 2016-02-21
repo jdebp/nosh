@@ -4,7 +4,6 @@
 
 [Unit]
 Description=Collection for all "auto" dump services
-DefaultDependencies=false
 
 [Service]
 User=nobody

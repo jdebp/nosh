@@ -8,6 +8,7 @@ Description=BSD resource limits service
 [Service]
 # Marking this as oneshot means that it doesn't enter the "running" state until the rctl command has exited.
 Type=oneshot
+EnvironmentDirectory=env
 ExecStart=pipe sed -e -n "s/^[[:space:]]*\//g" ${rules} | xargs -n 1 rctl -a --
 ExecStopPost=rctl -r :
 RemainAfterExit=yes

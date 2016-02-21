@@ -4,7 +4,6 @@
 
 [Unit]
 Description=local syslog service milestone
-DefaultDependencies=false
 
 [Service]
 User=nobody

@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD Kerberos version 5 Authentication Service and Key Distribution Center
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=%p ${flags}
+Restart=always
+
+[Install]
+WantedBy=server.target

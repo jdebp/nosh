@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=ffmpeg streaming server
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=%p -d -n -f "${config:-/usr/local/etc/%p.conf}"
+Restart=always
+
+[Install]
+WantedBy=workstation.target

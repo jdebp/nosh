@@ -9,6 +9,9 @@ Description=PostgreSQL database server
 User=postgres
 ExecStart=/usr/lib/postgresql/bin/postmaster -D /var/lib/postgres/data
 Restart=no
+# The Linux OOK Killer tends to pick on PostgreSQL because the main process has so much shared memory shared with its worker children.
+# This is not desirable in PostgreSQL shops; so we tell Linux not to account for 5/8 of its memory score.
+OOMScoreAdjust=-625
 
 [Install]
 WantedBy=server.target

@@ -18,111 +18,54 @@ while read -r n
 do
 	case "$n" in
 
-	# Some rc.conf variables apply to differently named service bundles.
-	avahi_daemon)		service=avahi-daemon ;;
-	background_fsck)	service=background-fsck ;;
-	bsdextended)		service=ugidfw ;;
-	cleanvar)		service=cleanuucp ;;
-	clear_tmp)		service=cleantmp ;;
-	cron)			service=vixiecron ;;
-	cupsd)			service=org.cups.cupsd ;;
-	hostid)			service=machine-id ;;
-	ipfilter)		service=ipf ;;
-	local-unbound)		service=unbound ;;
-	local_unbound)		service=unbound ;;
-	lpd)			service=org.cups.cups-lpd ;;
-	nfs_server)		service=nfsd ;;
-	oldnfs_server)		service=nfsserver ;;
-	pc-sounddetect)		service=snddetect ;;
-	syslogs)		service=wettsteinsyslogd ;;
-	natd)			service=kmod@ipdivert ;;
-	dummynet)		service=kmod@dummynet ;;
-	firewall_nat)		service=kmod@ipfw_nat ;;
-	fusefs)			service=kmod@fuse ;;
-	random)			service=entropy ;;
-	serial)			service=bsd-serial-init ;;
-
 	# Some rc.conf variables we just ignore here.
-	service_manager_svscan)	continue ;;
-	service_manager)	continue ;;
-	system_control_normal)	continue ;;
-	adjkerntz)		continue ;;
-	compat5x)		continue ;;
-	fastboot)		continue ;;
+	appcafe)		continue ;; # This is handled by a special conversion.
+	atm)			continue ;; # This was obsolete in FreeBSD 6.
+	compat5x)		continue ;; # This has disappeared as of FreeBSD 10.
 	fsck_y)			continue ;;
-	ip6addrctl)		continue ;; # This is handled by a more specific converter.
-	tmpmfs)			continue ;; # This is handled by a more specific converter.
-	varmfs)			continue ;; # This is handled by a more specific converter.
-	linux)			continue ;;
-	pcbsdinit)		continue ;;
-	sendmail*)		continue ;; # In the process of being dropped by the BSDs.
-	syslog)			continue ;;
-	vboxguest)		continue ;; # There's a nosh-run-virtualbox-guest package for this.
-	vboxservice)		continue ;;
-	svr4)			continue ;;
-	sysvipc)		continue ;;
-	ibcs2)			continue ;;
-	warden)			continue ;; # This is a target, not a service.
+	ftpproxy)		continue ;; # This is handled by a special conversion.
+	ibcs2)			continue ;; # This has disappeared as of FreeBSD 10.
+	ike)			continue ;; # isakmpd seems to have disappeared as of FreeBSD 10.
+	inetd)			continue ;; # Service management of individual UCSPI services supersedes this.
+	ip6addrctl)		continue ;; # This is handled by a special conversion.
+	ipxgateway)		continue ;; # This has disappeared as of FreeBSD 10.
 	jail)			continue ;; # This is a target, not a service.
-	jail_mount)		continue ;; # This is a jail configuration item, not a service.
-	jail_devfs)		continue ;; # This is a jail configuration item, not a service.
-	jail_*_mount)		continue ;; # This is a jail configuration item, not a service.
 	jail_*_devfs)		continue ;; # This is a jail configuration item, not a service.
 	jail_*_fdescfs)		continue ;; # This is a jail configuration item, not a service.
-	jail_*_procfs)		continue ;; # This is a jail configuration item, not a service.
-	jail_*_linsysfs)	continue ;; # This is a jail configuration item, not a service.
 	jail_*_linprocfs)	continue ;; # This is a jail configuration item, not a service.
+	jail_*_linsysfs)	continue ;; # This is a jail configuration item, not a service.
+	jail_*_mount)		continue ;; # This is a jail configuration item, not a service.
+	jail_*_procfs)		continue ;; # This is a jail configuration item, not a service.
+	jail_devfs)		continue ;; # This is a jail configuration item, not a service.
+	jail_mount)		continue ;; # This is a jail configuration item, not a service.
+	kldxref)		continue ;; # This is not a service.
+	linux)			continue ;;
+	moused_nondefault)	continue ;; # This is not used for services.
+	opensm)			continue ;; # This seems to have disappeared as of FreeBSD 10.
+	pcbsdinit)		continue ;;
+	ppp)			continue ;; # This is handled by a special conversion.
+	rfcomm_pppd_server)	continue ;; # This is handled by a special conversion.
+	sendmail*)		continue ;; # In the process of being dropped by the BSDs.
+	service_manager)	continue ;; # There should not be any variables for this.
+	service_manager_svscan)	continue ;; # There should not be any variables for this.
+	syslog)			continue ;; # This is handled by a special conversion.
+	system_control_normal)	continue ;; # There should not be any variables for this.
+	sysvipc)		continue ;; # This is handled by a special conversion.
+	tmpmfs)			continue ;; # This is handled by a special conversion.
+	uhidd)			continue ;; # This is replaced by templatized services.
+	varmfs)			continue ;; # This is handled by a special conversion.
+	vboxguest)		continue ;; # There's a nosh-run-virtualbox-guest package for this.
+	vboxservice)		continue ;;
+	warden)			continue ;; # This is a target, not a service.
+	webcamd)		continue ;; # This is handled by a special conversion.
 
 	# Other variables we haven't got around to having bundles for, yet.
-	appcafe)		continue ;;
-	atm)			continue ;;
-	autofs)			continue ;;
-	bootparamd)		continue ;;
-	chkprintcap)		continue ;;
-	firewall)		continue ;;
-	ftpd)			continue ;;
-	ftpproxy)		continue ;;
+	adjkerntz)		continue ;;
+	firewall)		continue ;; # TODO: Needs to distribute to ipfs and ipfw0.
 	gateway)		continue ;;
-	gdm)			continue ;;
-	gptboot)		continue ;;
-	hostapd)		continue ;;
-	iod)			continue ;;
-	hpssd)			continue ;;
-	ike)			continue ;;
-	inetd)			continue ;;
-	ipropd_master)		continue ;;
-	ipropd_slave)		continue ;;
-	ipsec)			continue ;;
 	ipv6_gateway)		continue ;;
-	ipxgateway)		continue ;;
-	kdc)			continue ;;
-	kern_securelevel)	continue ;;
-	kldxref)		continue ;;
-	mixer)			continue ;;
-	moused_nondefault)	continue ;;
-	nfs_client)		continue ;;
+	mixer)			continue ;; # Needs to be handled by a converter.
 	nfsv4_server)		continue ;;
-	nis_client)		continue ;;
-	nis_server)		continue ;;
-	nis_yppasswdd)		continue ;;
-	nis_ypset)		continue ;;
-	nis_ypxfrd)		continue ;;
-	opensm)			continue ;;
-	pcdm)			continue ;;
-	pcsysconfig)		continue ;;
-	ppp)			continue ;;
-	pppoed)			continue ;;
-	rctl)			continue ;;
-	rfcomm_pppd_server)	continue ;;
-	rpc_lockd)		continue ;;
-	rpc_statd)		continue ;;
-	rpc_ypupdated)		continue ;;
-	rtadvd)			continue ;;
-	syscache)		continue ;;
-	ubthidhci)		continue ;;
-	uhidd)			continue ;;
-	virecover)		continue ;;
-	webcamd)		continue ;;
 
 	*)			service="$n" ;;
 	esac

@@ -13,4 +13,5 @@ ExecStart=set-dynamic-hostname
 RemainAfterExit=yes
 
 [Install]
+StoppedBy=shutdown.target
 WantedBy=sysinit.target

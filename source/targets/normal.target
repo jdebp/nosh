@@ -5,7 +5,6 @@
 [Unit]
 Description=Normal group target
 EarlySupervise=true
-Wants=multi-user.target server.target workstation.target
 
 [Service]
 User=nobody

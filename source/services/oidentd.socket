@@ -10,4 +10,4 @@ ListenStream=113
 Accept=yes
 
 [Install]
-WantedBy=sockets.target
+WantedBy=server.target

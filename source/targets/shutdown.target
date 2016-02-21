@@ -4,7 +4,6 @@
 
 [Unit]
 Description=Shutdown action group target
-DefaultDependencies=false
 EarlySupervise=true
 
 [Service]

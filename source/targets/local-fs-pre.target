@@ -4,7 +4,6 @@
 
 [Unit]
 Description=Target for things to complete before mount/fsck of local filesystems
-DefaultDependencies=false
 EarlySupervise=true
 Before=shutdown.target
 

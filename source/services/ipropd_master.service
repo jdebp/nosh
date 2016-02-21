@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Propagate Heimdal Kerberos KDC master to KDC slaves, master side
+After=kdc.service
+Wants=kdc.service
+
+[Service]
+EnvironmentDirectory=env
+ExecStartPre=fdredir --write 1 /var/heimdal/services sh -c 'for s in ${slaves} ; do echo "$s" ; done'
+ExecStart=%p --keytab "${keytab}"
+Restart=always
+
+[Install]
+WantedBy=server.target

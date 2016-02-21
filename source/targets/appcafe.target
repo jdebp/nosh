@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=PC-BSD appcafe
+
+[Service]
+# The configuration import system might need to place imported rc.conf variables here.
+EnvironmentDirectory=env
+User=nobody
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
+
+[Install]
+StoppedBy=shutdown.target
+WantedBy=workstation.target

@@ -12,12 +12,10 @@ read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
 list_interfaces() { read_rc rfcomm_pppd_server_profile || true ; }
 get_var() { read_rc rfcomm_pppd_server_"$1"_"$2" || read_rc rfcomm_pppd_server_"$2" || true ; }
 
-redo-ifchange rc.conf general-services
+redo-ifchange rc.conf general-services "rfcomm_pppd@.service"
 
 r="/var/local/sv"
 e="--no-systemd-quirks --escape-instance --bundle-root"
-
-redo-ifchange "rfcomm_pppd@.service"
 
 list_interfaces |
 while read -r i

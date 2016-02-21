@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=appcafe subsystem: PHP FastCGI Process Manager
+Before=appcafe-nginx.service
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=php-fpm --nodaemonize --force-stderr --fpm-config "${root:-/usr/local/share/appcafe}/php-fpm.conf" --php-ini "${root:-/usr/local/share/appcafe}/php.ini" ${flags}
+Restart=always
+PrivateTmp=true
+#LimitMEMLOCK=infinity
+#LimitNOFILE=65535
+
+[Install]
+WantedBy=appcafe.target

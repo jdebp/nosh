@@ -60,6 +60,48 @@ do
 		system-control preset "$I".service
 	fi
 done
+for I in \
+	static-networking \
+	;
+do
+	if system-control find "$I".service >/dev/null 2>&1
+	then
+		system-control disable "$I".service
+	fi
+done
+for I in \
+	normal \
+	graphics \
+	workstation \
+	server \
+	;
+do
+	if system-control find "$I".target >/dev/null 2>&1
+	then
+		system-control disable "$I".target
+		rm -f -- /etc/service-bundles/targets/"$I"/wants/basic
+		rm -f -- /etc/service-bundles/targets/"$I"/after/basic
+		system-control preset "$I".target
+	fi
+done
+for I in \
+	appcafe \
+	extra-shared-libraries \
+	name-services \
+	jails \
+	warden \
+	sockets \
+	remote-fs \
+	remote-fs-pre \
+	;
+do
+	if system-control find "$I".target >/dev/null 2>&1
+	then
+		system-control disable "$I".target
+		rm -f -- /etc/service-bundles/targets/"$I"/wanted-by/sysinit
+		system-control preset "$I".target
+	fi
+done
 # common services with dedicated log services
 for I in \
 	anacron \
@@ -74,6 +116,7 @@ for I in \
 	cleanX \
 	console-kit-daemon \
 	convert_varrun \
+	cups-browsed \
 	darkice \
 	ddclient \
 	deluged \
@@ -86,12 +129,16 @@ for I in \
 	fancontrol \
 	fcron \
 	ferm \
+	ffserver \
 	flow-capture \
 	fscd \
 	gdm \
+	genkdmconf \
 	gitlab-sidekiq \
 	gitlab-unicorn \
 	gnucron \
+	gogs \
+	hostapd \
 	hostnamed \
 	kdm@tty7 \
 	kdm@ttyv6 \
@@ -148,6 +195,7 @@ for I in \
 	qmail-send \
 	rabbitmq-server \
 	rpcbind \
+	rtadvd \
 	samba \
 	saslauthd \
 	sickbeard \
@@ -156,6 +204,9 @@ for I in \
 	slim \
 	smartd \
 	smbd \
+	network-runtime \
+	network-interfaces \
+	stunnel \
 	sshdgenkeys \
 	swift@account \
 	swift@account-auditor \
@@ -172,6 +223,7 @@ for I in \
 	sysctl \
 	timedated \
 	tinydns \
+	virecover \
 	vnstat \
 	volmand \
 	wicd \
@@ -196,6 +248,7 @@ for I in \
 	fcgiwrap \
 	ftp4d \
 	ftp6d \
+	git-daemon \
 	http6d \
 	initctld \
 	kadmind \
@@ -227,6 +280,8 @@ do
 done
 # common fan-in logging services
 for I in \
+	ataidle \
+	autobridge \
 	natd \
 	sppp \
 	sysinit \
@@ -251,6 +306,13 @@ done
 # BSD services with dedicated log services
 for I in \
 	accounting \
+	appcafe-dispatcher \
+	appcafe-php-fpm \
+	appcafe-nginx \
+	appcafe-ssl-keygen \
+	automount \
+	automountd \
+	autounmountd \
 	amd \
 	apm \
 	apmd \
@@ -261,26 +323,34 @@ for I in \
 	bsnmpd \
 	bthidd \
 	ccd \
+	chkprintcap \
 	ctld \
 	crashinfo \
 	ddb \
+	defaultroute \
 	dhclient@em0 \
+	ftpd \
 	ftp-proxy \
 	gssd \
 	hastd \
 	hcsecd \
+	iocage \
 	ipf \
 	ipfs \
 	ipmon \
 	ipnat \
+	ipropd_master \
+	ipropd_slave \
 	ipsec \
 	ipxrouted \
 	iscsictl \
 	iscsid \
 	ipfw \
 	ipfw0 \
+	kdc \
 	keyserv \
 	kmod@acpi_video \
+	kmod@autofs \
 	kmod@bwi_v3_ucode \
 	kmod@bwn_v4_ucode \
 	kmod@ctl \
@@ -289,7 +359,6 @@ for I in \
 	kmod@ext2fs \
 	kmod@fdescfs \
 	kmod@geom_gate \
-	kmod@geom_uzip \
 	kmod@ibcs2 \
 	kmod@if_bwi \
 	kmod@if_bwn \
@@ -333,19 +402,25 @@ for I in \
 	kmod@xfs \
 	ldconfig \
 	lpd \
+	mdnsd \
+	mdnsresponderposix \
 	mroute4d \
 	mroute6d \
 	mrouted \
 	msgs \
+	netwait \
 	newsyslog \
 	nfscbd \
 	nfsclient \
 	nfsuserd \
 	pbid \
+	pc-sysconfig \
 	pefs \
 	pf \
 	pflog \
 	pfsync \
+	php-fpm \
+	pppoed \
 	pwcheck \
 	pxeboot-resolvconf \
 	quota \
@@ -357,12 +432,15 @@ for I in \
 	rtsold \
 	rwhod \
 	savecore \
+	slpd \
 	sdpd \
 	securelevel \
 	snddetect \
 	swapexd \
 	swaplate \
+	syscache \
 	syslogd \
+	tcsd \
 	timed \
 	ubthidhci \
 	ugidfw \
@@ -406,12 +484,14 @@ for I in \
 	background-fsck \
 	devd \
 	kmod@fuse \
+	kmod@geom_uzip \
 	kmod@linux \
+	kmod@svr4 \
 	kmod@sysvmsg \
 	kmod@sysvsem \
 	kmod@sysvshm \
-	kmod@svr4 \
 	nextboot \
+	gptboot \
 	swaplate \
 	;
 do
@@ -428,20 +508,30 @@ do
 done
 # targets
 for I in \
-	sysinit \
+	appcafe \
 	basic \
 	dumpauto \
+	extra-shared-libraries \
 	frame-buffer \
+	jails \
 	local-fs \
 	local-fs-pre \
 	local-syslog \
+	multi-user \
+	name-services \
 	remote-fs \
+	remote-fs-pre \
 	server \
+	static-networking \
 	swapauto \
 	swaplate \
+	sysinit \
+	virtualbox-guest \
+	virtualbox-host \
+	warden \
 	workstation \
-	multi-user \
 	;
 do
+	system-control disable $I.target
 	system-control preset $I.target
 done

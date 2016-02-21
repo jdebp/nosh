@@ -46,6 +46,48 @@ do
 		system-control preset "$I".service
 	fi
 done
+for I in \
+	static-networking \
+	;
+do
+	if system-control find "$I".service >/dev/null 2>&1
+	then
+		system-control disable "$I".service
+	fi
+done
+for I in \
+	normal \
+	graphics \
+	workstation \
+	server \
+	;
+do
+	if system-control find "$I".target >/dev/null 2>&1
+	then
+		system-control disable "$I".target
+		rm -f -- /etc/service-bundles/targets/"$I"/wants/basic
+		rm -f -- /etc/service-bundles/targets/"$I"/after/basic
+		system-control preset "$I".target
+	fi
+done
+for I in \
+	appcafe \
+	extra-shared-libraries \
+	name-services \
+	jails \
+	warden \
+	sockets \
+	remote-fs \
+	remote-fs-pre \
+	;
+do
+	if system-control find "$I".target >/dev/null 2>&1
+	then
+		system-control disable "$I".target
+		rm -f -- /etc/service-bundles/targets/"$I"/wanted-by/sysinit
+		system-control preset "$I".target
+	fi
+done
 # common services
 for I in \
 	anacron \
@@ -60,6 +102,7 @@ for I in \
 	cleanX \
 	console-kit-daemon \
 	convert_varrun \
+	cups-browsed \
 	darkice \
 	ddclient \
 	deluged \
@@ -72,12 +115,16 @@ for I in \
 	fancontrol \
 	fcron \
 	ferm \
+	ffserver \
 	flow-capture \
 	fscd \
 	gdm \
+	genkdmconf \
 	gitlab-sidekiq \
 	gitlab-unicorn \
 	gnucron \
+	gogs \
+	hostapd \
 	hostnamed \
 	kdm@tty7 \
 	kdm@ttyv6 \
@@ -130,6 +177,7 @@ for I in \
 	qmail-send \
 	rabbitmq-server \
 	rpcbind \
+	rtadvd \
 	samba \
 	saslauthd \
 	sickbeard \
@@ -138,6 +186,9 @@ for I in \
 	slim \
 	smartd \
 	smbd \
+	network-runtime \
+	network-interfaces \
+	stunnel \
 	sshdgenkeys \
 	swift@account \
 	swift@account-auditor \
@@ -154,6 +205,7 @@ for I in \
 	sysctl \
 	timedated \
 	tinydns \
+	virecover \
 	vnstat \
 	volmand \
 	wicd \
@@ -173,6 +225,8 @@ do
 done
 # common fan-in log services
 for I in \
+	ataidle \
+	autobridge \
 	natd \
 	sppp \
 	sysinit \
@@ -194,6 +248,7 @@ for i in \
 	fcgiwrap \
 	ftp4d \
 	ftp6d \
+	git-daemon \
 	http6d \
 	initctld \
 	kadmind \
@@ -229,6 +284,13 @@ done
 # BSD services
 for i in \
 	accounting \
+	appcafe-dispatcher \
+	appcafe-php-fpm \
+	appcafe-nginx \
+	appcafe-ssl-keygen \
+	automount \
+	automountd \
+	autounmountd \
 	amd \
 	apm \
 	apmd \
@@ -239,26 +301,34 @@ for i in \
 	bsnmpd \
 	bthidd \
 	ccd \
+	chkprintcap \
 	ctld \
 	crashinfo \
 	ddb \
+	defaultroute \
 	dhclient@em0 \
+	ftpd \
 	ftp-proxy \
 	gssd \
 	hastd \
 	hcsecd \
+	iocage \
 	ipf \
 	ipfs \
 	ipmon \
 	ipnat \
+	ipropd_master \
+	ipropd_slave \
 	ipsec \
 	ipxrouted \
 	iscsictl \
 	iscsid \
 	ipfw \
 	ipfw0 \
+	kdc \
 	keyserv \
 	kmod@acpi_video \
+	kmod@autofs \
 	kmod@bwi_v3_ucode \
 	kmod@bwn_v4_ucode \
 	kmod@ctl \
@@ -267,7 +337,6 @@ for i in \
 	kmod@ext2fs \
 	kmod@fdescfs \
 	kmod@geom_gate \
-	kmod@geom_uzip \
 	kmod@ibcs2 \
 	kmod@if_bwi \
 	kmod@if_bwn \
@@ -311,19 +380,25 @@ for i in \
 	kmod@xfs \
 	ldconfig \
 	lpd \
+	mdnsd \
+	mdnsresponderposix \
 	mroute4d \
 	mroute6d \
 	mrouted \
 	msgs \
+	netwait \
 	newsyslog \
 	nfscbd \
 	nfsclient \
 	nfsuserd \
 	pbid \
+	pc-sysconfig \
 	pefs \
 	pf \
 	pflog \
 	pfsync \
+	php-fpm \
+	pppoed \
 	pwcheck \
 	pxeboot-resolvconf \
 	quota \
@@ -335,12 +410,15 @@ for i in \
 	rtsold \
 	rwhod \
 	savecore \
+	slpd \
 	sdpd \
 	securelevel \
 	snddetect \
 	swapexd \
 	swaplate \
+	syscache \
 	syslogd \
+	tcsd \
 	timed \
 	ubthidhci \
 	ugidfw \

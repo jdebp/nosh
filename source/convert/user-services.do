@@ -7,11 +7,12 @@
 # This is invoked by all.do .
 #
 
-redo-ifchange /etc/passwd user-dbus@.socket user-dbus.service user-dbus-log@.service user-services@.service user-runtime@.service user@.target
+redo-ifchange /etc/passwd "user-dbus@.socket" "user-dbus.service" "user-dbus-log@.service" "user-services@.service" "user-runtime@.service" "user@.target"
 
+lr="/var/local/sv/"
 sr="/etc/service-bundles/services/"
-tr="/etc/service-bundles/services/"
-e="--etc-bundle --no-systemd-quirks --escape-instance --bundle-root"
+tr="/etc/service-bundles/targets/"
+e="--no-systemd-quirks --escape-instance --bundle-root"
 
 getent passwd |
 awk -F : '{ if (!match($7,"/nologin$") && !match($7,"/false$")) print $1; }' |
@@ -25,23 +26,55 @@ do
 	toor) continue ;;
 	esac
 
-	system-control convert-systemd-units $e "$sr/" "./user-dbus-log@$i.service"
+	if test -d "$sr/user@$i" 
+	then
+		system-control disable "$sr/user@$i" || :		## Disable old user service
+	fi
+	if test -d "$sr/user-dbus@$i" 
+	then
+		system-control disable "$sr/user-dbus@$i" || :		## Disable old user service
+	fi
+	if test -d "$sr/user-dbus-log@$i" 
+	then
+		system-control disable "$sr/user-dbus-log@$i" || :	## Disable old user service
+	fi
+	if test -d "$sr/user-services@$i" 
+	then
+		system-control disable "$sr/user-services@$i" || :	## Disable old user service
+	fi
+	if test -d "$sr/user-runtime@$i" 
+	then
+		system-control disable "$sr/user-runtime@$i" || :	## Disable old user service
+	fi
+
+	system-control convert-systemd-units --etc-bundle $e "$tr/" "./user@$i.target"
+	echo "user@$i" >> "$3"
+
+	system-control convert-systemd-units $e "$lr/" "./user-dbus-log@$i.service"
+	system-control enable "$lr/user-dbus-log@$i"
 	echo "user-dbus-log@$i" >> "$3"
-	system-control convert-systemd-units $e "$sr/" "./user-dbus@$i.socket"
-	echo "user-dbus@$i" >> "$3"
 
 	mkdir -p -m 1755 "/var/log/user"
 	mkdir -p -m 0750 "/var/log/user/$i"
 	mkdir -p -m 0750 "/var/log/user/$i/dbus"
-	setfacl -m "u:$i:rwx" "/var/log/user/$i" || :
-	setfacl -m "u:$i:rwx" "/var/log/user/$i/dbus" || :
-	test -d "$sr/user-dbus@$i/log/" || ln -f -s "../user-dbus-log@$i" "$sr/user-dbus@$i/log"
+	setfacl -m "u:$i:rwx" "/var/log/user/$i" || setfacl -m "user:$i:rwxpD::allow" "/var/log/user/$i" || :
+	setfacl -m "u:$i:rwx" "/var/log/user/$i/dbus" || setfacl -m "user:$i:rwxpD::allow" "/var/log/user/$i/dbus" || :
 
-	system-control convert-systemd-units $e "$sr/" "./user-services@$i.service"
+	system-control convert-systemd-units $e "$lr/" "./user-dbus@$i.socket"
+	system-control enable "$lr/user-dbus@$i"
+	echo "user-dbus@$i" >> "$3"
+	rm -f -- "$lr/user-dbus@$i/log"
+	ln -s -- "../../user-dbus-log@$i" "$lr/user-dbus@$i/log"
+
+	system-control convert-systemd-units $e "$lr/" "./user-services@$i.service"
+	system-control enable "$lr/user-services@$i"
 	echo "user-services@$i" >> "$3"
-	system-control convert-systemd-units $e "$sr/" "./user-runtime@$i.service"
-	echo "user-runtime@$i" >> "$3"
+#	rm -f -- "$lr/user-services@$i/log"
+#	ln -s -- "../../user-log@$i" "$lr/user-services@$i/log"
 
-	system-control convert-systemd-units $e "$tr/" "./user@$i.target"
-	echo "user@$i" >> "$3"
+	system-control convert-systemd-units $e "$lr/" "./user-runtime@$i.service"
+	system-control enable "$lr/user-runtime@$i"
+	echo "user-runtime@$i" >> "$3"
+#	rm -f -- "$lr/user-runtime@$i/log"
+#	ln -s -- "../../user-log@$i" "$lr/user-runtime@$i/log"
 done

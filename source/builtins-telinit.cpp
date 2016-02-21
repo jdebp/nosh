@@ -18,6 +18,7 @@ void rcctl ( const char * & , std::vector<const char *> & ) ;
 void wrap_system_control_subcommand ( const char * & , std::vector<const char *> & ) ;
 void shutdown ( const char * & , std::vector<const char *> & ) ;
 void telinit ( const char * & , std::vector<const char *> & ) ;
+void runlevel ( const char * & , std::vector<const char *> & ) ;
 void service ( const char * & , std::vector<const char *> & ) ;
 void chkconfig ( const char * & , std::vector<const char *> & ) ;
 void invoke_rcd ( const char * & , std::vector<const char *> & ) ;
@@ -40,6 +41,7 @@ commands[] = {
 	{	"rescue",		wrap_system_control_subcommand		},
 	{	"normal",		wrap_system_control_subcommand		},
 	{	"telinit",		telinit					},
+	{	"runlevel",		runlevel					},
 	{	"init",			telinit					},
 	{	"service",		service					},
 	{	"chkconfig",		chkconfig				},

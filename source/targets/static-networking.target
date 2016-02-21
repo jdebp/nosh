@@ -3,11 +3,13 @@
 ## **************************************************************************
 
 [Unit]
-Description=KDE display manager using virtual terminal %i
+Description=the collection of static network configuration services
 
 [Service]
-ExecStart=%p -nodaemon %i
-Restart=always
+User=nobody
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
 
 [Install]
-WantedBy=workstation.target
+StoppedBy=shutdown.target
+WantedBy=normal.target

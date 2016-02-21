@@ -202,7 +202,7 @@ service_dt_scanner (
 		}
 	}
 
-	umask(0);
+	umask(0022);
 
 	const int socket_fd(connect_service_manager_socket(is_system, prog));
 	if (0 > socket_fd) throw EXIT_FAILURE;

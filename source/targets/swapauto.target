@@ -4,7 +4,6 @@
 
 [Unit]
 Description=Collection for all (non-"late") "auto" swap services
-DefaultDependencies=false
 
 [Service]
 User=nobody

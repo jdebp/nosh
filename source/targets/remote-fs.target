@@ -4,7 +4,6 @@
 
 [Unit]
 Description=Remote filesystems group target
-DefaultDependencies=false
 EarlySupervise=true
 Before=shutdown.target
 
@@ -15,4 +14,4 @@ RemainAfterExit=yes
 
 [Install]
 StoppedBy=shutdown.target
-WantedBy=sysinit.target
+WantedBy=workstation.target

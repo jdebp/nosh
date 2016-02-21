@@ -15,4 +15,5 @@ ExecStopPost=swapoff -a
 RemainAfterExit=yes
 
 [Install]
+StoppedBy=shutdown.target
 WantedBy=sysinit.target

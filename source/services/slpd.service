@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Caldera Service Location Protocol daemon
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=%p -d ${flags}
+Restart=always
+
+[Install]
+WantedBy=workstation.target

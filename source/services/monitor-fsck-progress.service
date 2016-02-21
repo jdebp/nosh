@@ -5,6 +5,7 @@
 [Unit]
 Description=fsck combined progress information displayed on /dev/console
 DefaultDependencies=off
+Before=local-fs-pre.target
 
 [Service]
 StandardInput=tty
@@ -14,3 +15,5 @@ ExecStart=monitor-fsck-progress
 TTYPath=console
 
 [Install]
+StoppedBy=shutdown.target
+WantedBy=sysinit.target

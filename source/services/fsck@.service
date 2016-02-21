@@ -15,5 +15,6 @@ ExecStart=%p -C -p %I
 RemainAfterExit=yes
 
 [Install]
+StoppedBy=shutdown.target
 # Use the non-suffixed form to ensure that we get a relative symbolic link.
 WantedBy=mount@%i

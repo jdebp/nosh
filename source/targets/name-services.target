@@ -4,7 +4,6 @@
 
 [Unit]
 Description=DNS milestone
-DefaultDependencies=false
 
 [Service]
 User=nobody
@@ -12,3 +11,4 @@ User=nobody
 RemainAfterExit=yes
 
 [Install]
+StoppedBy=shutdown.target

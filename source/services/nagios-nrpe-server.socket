@@ -11,6 +11,7 @@ ListenStream=5666
 Accept=true
 MaxConnections=4
 UCSPIRules=yes
+LogUCSPIRules=yes
 NoDelay=false
 
 [Install]

@@ -1,0 +1,74 @@
+#!/bin/sh -
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+## We ignore ${delay} and ${carrier_delay} because this isn't interactive and can just run and run.
+
+any_carrier() {
+	local output status
+	for i
+	do
+		output="`ifconfig \"$i\"`"
+		status="`expr \"${output}\" : '.*[[:blank:]]status: \(no carrier\)'`"
+		test -n "${status}" || return 0
+	done
+	return 1
+}
+
+get_default_route() {
+	route -n get -inet default | 
+	awk '{if ($1 == "interface:") print;}' | 
+	fmt -w 1 | 
+	sed -e '1d'
+}
+
+get_rc2() {
+	sysrc 2>/dev/null -n "$1" || sysrc 2>/dev/null -n "$2" || :
+}
+
+list_dhcp_interfaces() {
+	local i j v
+	for i in `ifconfig -l`
+	do
+		case "$i" in
+		# Loopbacks of various flavours don't count.
+		lo[0-9]*|stf[0-9]*|faith[0-9]*|lp[0-9]*|sl[0-9]*)
+			continue
+			;;
+		# Nor do firewalls and others of their ilk that have no af configuration.
+		pflog[0-9]*|pfsync[0-9]*|usbus[0-9]*|an[0-9]*|ath[0-9]*|ipw[0-9]*|ipfw[0-9]*|iwi[0-9]*|iwn[0-9]*|ral[0-9]*|wi[0-9]*|wl[0-9]*|wpi[0-9]*)
+			continue
+			;;
+		esac
+
+		j="`echo \"$i\" | tr './-+' '_'`"
+
+		get_rc2 ifconfig_${j} ifconfig_DEFAULT | 
+		fmt -w 1 |
+		while read -r v
+		do
+			case "$v" in
+			[Dd][Hh][Cc][Pp]|[Nn][Oo][Ss][Yy][Nn][Cc][Dd][Hh][Cc][Pp]|[Ss][Yy][Nn][Cc][Dd][Hh][Cc][Pp])
+				echo "$i"
+				;;
+			esac
+		done
+	done
+}
+
+interfaces="`list_dhcp_interfaces`"
+
+test -z "${interfaces}" || while true
+do
+	if ! any_carrier "${interfaces}"
+	then
+		echo 1>&2 "Waiting for any carrier on ${interfaces} ..."
+	elif test -z "`get_default_route`"
+	then
+		echo 1>&2 "Waiting for default route ..."
+	else
+		break
+	fi
+	sleep 1
+done

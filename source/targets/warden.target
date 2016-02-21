@@ -4,7 +4,6 @@
 
 [Unit]
 Description=PC-BSD Warden jails and jailed daemons collection
-DefaultDependencies=false
 
 [Service]
 User=nobody
@@ -12,4 +11,5 @@ User=nobody
 RemainAfterExit=yes
 
 [Install]
+StoppedBy=shutdown.target
 WantedBy=workstation.target

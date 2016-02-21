@@ -4,6 +4,10 @@
 
 [Unit]
 Description=Common Unix Printing Service
+# This is because CUPS needs to have a device re-scan done after it has started up.
+Before=udev-trigger-add@devices.service udev-trigger-add@subsystems.service
+Before=busybox-mdev-rescan.service
+Before=suckless-mdev-rescan.service
 
 [Service]
 ExecStart=cupsd -f

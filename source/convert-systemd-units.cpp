@@ -26,6 +26,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "FileStar.h"
 #include "FileDescriptorOwner.h"
 #include "bundle_creation.h"
+#include "machine_id.h"
 
 static 
 const char * systemd_prefixes[] = {
@@ -240,7 +241,7 @@ shell_expand (
 }
 
 struct names {
-	names(const char * a) : arg_name(a), user("root"), runtime_dir("/run/") { split_name(a, unit_dirname, unit_basename); escaped_unit_basename = escape(false, unit_basename); }
+	names(const char * a) : arg_name(a), user("root"), runtime_dir("/run/") { split_name(a, unit_dirname, unit_basename); escaped_unit_basename = systemd_name_escape(false, unit_basename); }
 	void set_prefix(const std::string & v, bool esc, bool alt) { set(esc, alt, escaped_prefix, prefix, v); }
 	void set_instance(const std::string & v, bool esc, bool alt) { set(esc, alt, escaped_instance, instance, v); }
 	void set_bundle(const std::string & r, const std::string & b) { bundle_basename = b; bundle_dirname = r + b; }
@@ -263,94 +264,13 @@ struct names {
 	std::list<std::string> substitute ( const std::list<std::string> & );
 protected:
 	std::string arg_name, unit_dirname, unit_basename, escaped_unit_basename, prefix, escaped_prefix, instance, escaped_instance, bundle_basename, bundle_dirname, machine_id, user, runtime_dir;
-	static std::string unescape ( bool, const std::string & );
-	static std::string escape ( bool, const std::string & );
 	void set ( bool esc, bool alt, std::string & escaped, std::string & normal, const std::string & value ) {
 		if (esc)
-			escaped = escape(alt, normal = value);
+			escaped = systemd_name_escape(alt, normal = value);
 		else
-			normal = unescape(alt, escaped = value);
+			normal = systemd_name_unescape(alt, escaped = value);
 	}
 };
-
-#if defined(__LINUX__) || defined(__linux__)
-// Linux useradd allows backslash in user/group names.
-static const char ESCAPE_CHAR('\\');
-#else
-// BSD pw useradd is stricter.
-static const char ESCAPE_CHAR('_');
-#endif
-
-std::string 
-names::unescape ( 
-	bool alt,
-	const std::string & s
-) {
-	std::string r;
-	for (std::string::const_iterator e(s.end()), q(s.begin()); e != q; ) {
-		char c(*q++);
-		if (!alt && '-' == c) {
-			r += '/';
-		} else
-		if (ESCAPE_CHAR != c) {
-			r += c;
-		} else
-		if (e == q) {
-			r += c;
-		} else
-		{
-			c = *q++;
-			if ('X' != c && 'x' != c)
-				r += c;
-			else {
-				unsigned v(0U);
-				for (unsigned n(0U);n < 2U; ++n) {
-					if (e == q) break;
-					c = *q;
-					if (!std::isxdigit(c)) break;
-					++q;
-					c = std::isdigit(c) ? (c - '0') : (std::tolower(c) - 'a' + 10);
-					v = (v << 4) | c;
-				}
-				r += char(v);
-			}
-		}
-	}
-	return r;
-}
-
-std::string 
-names::escape ( 
-	bool alt,
-	const std::string & s
-) {
-	std::string r;
-	if (alt) {
-		for (std::string::const_iterator e(s.end()), q(s.begin()); e != q; ) {
-			const char c(*q++);
-			if (ESCAPE_CHAR == c || '\\' == c || '@' == c || '/' == c || ':' == c || ',' == c) {
-				char buf[6];
-				snprintf(buf, sizeof buf, "%cx%02x", ESCAPE_CHAR, c);
-				r += std::string(buf);
-			} else
-				r += c;
-		}
-	} else {
-		for (std::string::const_iterator e(s.end()), q(s.begin()); e != q; ) {
-			const char c(*q++);
-			if ('/' == c) {
-				r += '-';
-			} else
-			if (ESCAPE_CHAR == c || '-' == c) {
-				char buf[6];
-				snprintf(buf, sizeof buf, "%cx%02x", ESCAPE_CHAR, c);
-				r += std::string(buf);
-			} else
-				r += c;
-		}
-	}
-	return r;
-}
 
 std::string
 names::substitute (
@@ -664,6 +584,11 @@ convert_systemd_units (
 
 	names.set_prefix(names.query_bundle_basename(), escape_prefix, alt_escape);
 
+	machine_id::erase();
+	if (!machine_id::read_non_volatile() && !machine_id::read_fallbacks())
+	       machine_id::create();
+	names.set_machine_id(machine_id::human_readable_form_compact());
+
 	if (is_socket_activated) {
 		std::string socket_unit_name(names.query_arg_name());
 		FileStar socket_file(find(socket_unit_name, socket_filename));
@@ -741,6 +666,7 @@ convert_systemd_units (
 	value * socket_requiredby(socket_profile.use("install", "requiredby"));
 	value * socket_stoppedby(socket_profile.use("install", "stoppedby"));	// This is an extension to systemd.
 	value * socket_ucspirules(socket_profile.use("socket", "ucspirules"));	// This is an extension to systemd.
+	value * socket_logucspirules(socket_profile.use("socket", "logucspirules"));	// This is an extension to systemd.
 
 	value * type(service_profile.use("service", "type"));
 	value * workingdirectory(service_profile.use("service", "workingdirectory"));
@@ -803,6 +729,12 @@ convert_systemd_units (
 	value * ioschedulingclass(service_profile.use("service", "ioschedulingclass"));
 	value * ioschedulingpriority(service_profile.use("service", "ioschedulingpriority"));
 	value * cpuschedulingresetonfork(service_profile.use("service", "cpuschedulingresetonfork"));
+	value * numainterleave(service_profile.use("service", "numainterleave"));
+	value * numamembind(service_profile.use("service", "numamembind"));
+	value * numacpunodebind(service_profile.use("service", "numacpunodebind"));
+	value * numaphyscpubind(service_profile.use("service", "numaphyscpubind"));
+	value * numalocalalloc(service_profile.use("service", "numalocalalloc"));
+	value * numapreferred(service_profile.use("service", "numapreferred"));
 #endif
 	value * oomscoreadjust(service_profile.use("service", "oomscoreadjust"));
 	value * cpuschedulingpolicy(service_profile.use("service", "cpuschedulingpolicy"));
@@ -820,6 +752,7 @@ convert_systemd_units (
 	value * service_requiredby(service_profile.use("install", "requiredby"));
 	value * service_stoppedby(service_profile.use("install", "stoppedby"));	// This is an extension to systemd.
 	value * service_ucspirules(service_profile.use("service", "ucspirules"));	// This is an extension to systemd.
+	value * service_logucspirules(service_profile.use("service", "logucspirules"));	// This is an extension to systemd.
 
 	if (user)
 		names.set_user(names.substitute(user->last_setting()));
@@ -879,6 +812,12 @@ convert_systemd_units (
 				std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, service_filename.c_str(), dir.c_str(), "Slash is not permitted in runtime directory names.");
 				throw EXIT_FAILURE;
 			}
+			// This is something that we are going to pass to the "foreground" command, too.
+			const std::string::size_type semi(dir.find(';'));
+			if (std::string::npos != semi) {
+				std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, service_filename.c_str(), dir.c_str(), "Semicolon is not permitted in runtime directory names.");
+				throw EXIT_FAILURE;
+			}
 		}
 	}
 
@@ -928,6 +867,22 @@ convert_systemd_units (
 			priority += " " + quote(names.substitute(cpuschedulingpriority->last_setting()));
 		else
 			priority += " 0";
+		priority += "\n";
+	}
+	if (numalocalalloc || numainterleave || numamembind || numacpunodebind || numaphyscpubind || numapreferred) {
+		priority += "numactl";
+		if (is_bool_true(numalocalalloc, false))
+			priority += " --localalloc";
+		if (numainterleave)
+			priority += " --interleave " + quote(names.substitute(numainterleave->last_setting()));
+		if (numamembind)
+			priority += " --membind " + quote(names.substitute(numamembind->last_setting()));
+		if (numacpunodebind)
+			priority += " --cpunodebind " + quote(names.substitute(numacpunodebind->last_setting()));
+		if (numaphyscpubind)
+			priority += " --physcpubind " + quote(names.substitute(numaphyscpubind->last_setting()));
+		if (numapreferred)
+			priority += " --preferred " + quote(names.substitute(numapreferred->last_setting()));
 		priority += "\n";
 	}
 #else
@@ -1014,20 +969,23 @@ convert_systemd_units (
 		chdir += "chdir /\n";
 	std::string createrundir, removerundir;
 	if (runtimedirectory) {
+		std::string dirs, dirs_slash;
 		for (std::list<std::string>::const_iterator i(runtimedirectory->all_settings().begin()); runtimedirectory->all_settings().end() != i; ++i) {
 			const std::string dir("/run/" + names.substitute(*i));
-			createrundir += "foreground mkdir";
-			if (runtimedirectorymode) createrundir += " -m " + quote(runtimedirectorymode->last_setting());
-			createrundir += " -- " + quote(dir) + " ;\n";
-			if (user) {
-				createrundir += "foreground chown " + quote(names.substitute(user->last_setting()));
-				if (group)
-					createrundir += ":" + quote(names.substitute(group->last_setting()));
-				createrundir += " -- " + quote(dir) + " ;\n";
-			}
-			// The trailing slash is a(nother) safety measure, to help ensure that this is a directory that we are removing, uncondintally, as the superuser.
-			removerundir += "foreground rm -r -f -- " + quote(dir) + "/ ;\n";
+			dirs += quote(dir);
+			dirs_slash += quote(dir) + "/";
 		}
+		createrundir += "foreground mkdir";
+		if (runtimedirectorymode) createrundir += " -m " + quote(names.substitute(runtimedirectorymode->last_setting()));
+		createrundir += " -- " + dirs + " ;\n";
+		if (user) {
+			createrundir += "foreground chown " + quote(names.substitute(user->last_setting()));
+			if (group)
+				createrundir += ":" + quote(names.substitute(group->last_setting()));
+			createrundir += " -- " + dirs + " ;\n";
+		}
+		// The trailing slash is a(nother) safety measure, to help ensure that this is a directory that we are removing, uncondintally, as the superuser.
+		removerundir += "foreground rm -r -f -- " + dirs_slash + " ;\n";
 	}
 	std::string softlimit;
 	if (limitnofile||limitcpu||limitcore||limitnproc||limitfsize||limitas||limitdata||limitmemory) {
@@ -1204,11 +1162,11 @@ convert_systemd_units (
 				run << "local-stream-socket-listen --systemd-compatibility ";
 				if (backlog) run << "--backlog " << quote(backlog->last_setting()) << " ";
 				if (socketmode) run << "--mode " << quote(socketmode->last_setting()) << " ";
-				if (socketuser) run << "--uid " << quote(socketuser->last_setting()) << " ";
-				if (socketgroup) run << "--gid " << quote(socketgroup->last_setting()) << " ";
+				if (socketuser) run << "--user " << quote(socketuser->last_setting()) << " ";
+				if (socketgroup) run << "--group " << quote(socketgroup->last_setting()) << " ";
 				if (passcredentials) run << "--pass-credentials ";
 				if (passsecurity) run << "--pass-security ";
-				run << names.substitute(quote(listenstream->last_setting())) << "\n";
+				run << quote(names.substitute(listenstream->last_setting())) << "\n";
 				run << s.str();
 				if (is_socket_accept) {
 					run << "local-stream-socket-accept ";
@@ -1243,11 +1201,11 @@ convert_systemd_units (
 				run << "local-datagram-socket-listen --systemd-compatibility ";
 				if (backlog) run << "--backlog " << quote(backlog->last_setting()) << " ";
 				if (socketmode) run << "--mode " << quote(socketmode->last_setting()) << " ";
-				if (socketuser) run << "--uid " << quote(socketuser->last_setting()) << " ";
-				if (socketgroup) run << "--gid " << quote(socketgroup->last_setting()) << " ";
+				if (socketuser) run << "--user " << quote(socketuser->last_setting()) << " ";
+				if (socketgroup) run << "--group " << quote(socketgroup->last_setting()) << " ";
 				if (passcredentials) run << "--pass-credentials ";
 				if (passsecurity) run << "--pass-security ";
-				run << names.substitute(quote(listendatagram->last_setting())) << "\n";
+				run << quote(names.substitute(listendatagram->last_setting())) << "\n";
 				run << s.str();
 			} else {
 				std::string listenaddress, listenport;
@@ -1271,8 +1229,8 @@ convert_systemd_units (
 			if (backlog) backlog->used = false;
 #endif
 			if (socketmode) run << "--mode " << quote(socketmode->last_setting()) << " ";
-			if (socketuser) run << "--uid " << quote(socketuser->last_setting()) << " ";
-			if (socketgroup) run << "--gid " << quote(socketgroup->last_setting()) << " ";
+			if (socketuser) run << "--user " << quote(socketuser->last_setting()) << " ";
+			if (socketgroup) run << "--group " << quote(socketgroup->last_setting()) << " ";
 #if 0 // This does not apply to FIFOs and we want it to generate a diagnostic when present and unused.
 			if (passcredentials) run << "--pass-credentials ";
 			if (passsecurity) run << "--pass-security ";
@@ -1280,7 +1238,7 @@ convert_systemd_units (
 			if (passcredentials) passcredentials->used = false;
 			if (passsecurity) passsecurity->used = false;
 #endif
-			run << quote(listenfifo->last_setting()) << "\n";
+			run << quote(names.substitute(listenfifo->last_setting())) << "\n";
 			run << s.str();
 		}
 		if (listennetlink) {
@@ -1293,7 +1251,12 @@ convert_systemd_units (
 			run << quote(protocol) << " " << quote(multicast_group) << "\n";
 			run << s.str();
 		}
-		if (is_bool_true(socket_ucspirules, service_ucspirules, false)) run << "ucspi-socket-rules-check\n";
+		if (is_bool_true(socket_ucspirules, service_ucspirules, false)) {
+			run << "ucspi-socket-rules-check";
+			if (is_bool_true(socket_logucspirules, service_logucspirules, false))
+				run << " --verbose";
+			run << "\n";
+		}
 		run << "./service\n";
 		service << "#!/bin/nosh\n" << multi_line_comment("Service file generated from " + service_filename);
 	} else
@@ -1472,19 +1435,32 @@ convert_systemd_units (
 		if (is_socket_activated)
 			create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "sockets.target", "wanted-by/");
 		if (is_dbus) {
-			create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "dbus.service", "after/");
+			create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "dbus.socket", "after/");
 #if !defined(__LINUX__) && !defined(__linux__)
 			// Don't want D-Bus on Linux in case the D-Bus daemon is not managed by service-manager.
-			create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "dbus.service", "wants/");
+			create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "dbus.socket", "wants/");
 #endif
 		}
-		create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "basic.target", "after/");
-		create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "basic.target", "wants/");
-		create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "shutdown.target", "before/");
-		create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "shutdown.target", "stopped-by/");
+		if (!is_target) {
+			create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "basic.target", "after/");
+			create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "basic.target", "wants/");
+			create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "shutdown.target", "before/");
+			create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "shutdown.target", "stopped-by/");
+		}
 	}
 	if (earlysupervise) {
 		create_link(prog, names.query_bundle_dirname(), bundle_dir_fd, "/run/service-bundles/early-supervise/" + names.query_bundle_basename(), "supervise");
+	}
+	if (listenstream) {
+		if (is_local_socket_name(listenstream->last_setting()))
+			make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, names.substitute(listenstream->last_setting()));
+	}
+	if (listendatagram) {
+		if (is_local_socket_name(listendatagram->last_setting()))
+			make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, names.substitute(listendatagram->last_setting()));
+	}
+	if (listenfifo) {
+		make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, names.substitute(listenfifo->last_setting()));
 	}
 
 	// Issue the final reports.

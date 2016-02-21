@@ -9,6 +9,7 @@ exim4-smtp-submission
 fcgiwrap
 ftp4d
 ftp6d
+git-daemon
 http6d
 initctld
 kadmind

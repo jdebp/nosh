@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=mDNS Responder daemon
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=%p ${flags}
+Restart=always
+
+[Install]
+WantedBy=workstation.target

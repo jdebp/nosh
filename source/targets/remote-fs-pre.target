@@ -4,7 +4,6 @@
 
 [Unit]
 Description=Target for things to complete before mount of remote filesystems
-DefaultDependencies=false
 EarlySupervise=true
 Before=shutdown.target
 
@@ -15,4 +14,4 @@ RemainAfterExit=yes
 
 [Install]
 StoppedBy=shutdown.target
-WantedBy=sysinit.target
+WantedBy=workstation.target

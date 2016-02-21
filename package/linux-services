@@ -4,14 +4,12 @@ irqbalance
 kerneloops
 kernel-vt-loadkeys
 kernel-vt-setfont
-kmod@autofs
 kmod@ipv6
 kmod@loop
 kmod@unix
 kmod@uvesafb
 linux-utmp
 mdadm
-static-networking
 sudo
 update-binfmts
 wettsteinsyslogd

@@ -12,7 +12,9 @@ After=local-fs.target
 Type=oneshot
 EnvironmentDirectory=env
 ExecStart=pipe ./helper | sh
+RemainAfterExit=true
 Restart=never
 
 [Install]
+StoppedBy=shutdown.target
 WantedBy=sysinit.target

@@ -156,6 +156,18 @@ tolower (
 	const std::string & s
 );
 extern
+std::string 
+systemd_name_unescape ( 
+	bool, 
+	const std::string & 
+) ;
+extern
+std::string 
+systemd_name_escape ( 
+	bool, 
+	const std::string & 
+) ;
+extern
 unsigned 
 val ( 
 	const std::string & s 
@@ -184,6 +196,17 @@ extern
 void
 subreaper (
 	bool on
+) ;
+extern
+void
+setprocname (
+	const char *
+) ;
+extern
+void
+setprocargv (
+	size_t argc,
+	const char * argv[]
 ) ;
 
 #endif

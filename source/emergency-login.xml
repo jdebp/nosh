@@ -31,14 +31,10 @@ Its function is restricted compared to the usual <citerefentry><refentrytitle>lo
 
 <itemizedlist>
 <listitem><para>
-It does not use PAM.
-Access to the account database is through the
-<citerefentry><refentrytitle>endpwent</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>endspent</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>getpwuid</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-and
-<citerefentry><refentrytitle>getspnam</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-library functions.
+It does not use PAM or the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> subsystem.
+</para></listitem>
+<listitem><para>
+It only uses the system account database and access to that is directly through the <citerefentry><refentrytitle>endpwent</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>endspent</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>getpwuid</refentrytitle><manvolnum>3</manvolnum></citerefentry> and <citerefentry><refentrytitle>getspnam</refentrytitle><manvolnum>3</manvolnum></citerefentry> library functions.
 </para></listitem>
 <listitem><para>
 It only allows login as the superuser.
@@ -47,11 +43,7 @@ If more than one record in the database has this ID, which one's password is use
 </para></listitem>
 <listitem><para>
 It fails open in the event of a missing password (or shadow) file.
-If
-<citerefentry><refentrytitle>getpwuid</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-(or
-<citerefentry><refentrytitle>getspnam</refentrytitle><manvolnum>3</manvolnum></citerefentry>)
-fails for some reason, it issues no prompt and acts as if the correct password had been entered.
+If <citerefentry><refentrytitle>getpwuid</refentrytitle><manvolnum>3</manvolnum></citerefentry> (or <citerefentry><refentrytitle>getspnam</refentrytitle><manvolnum>3</manvolnum></citerefentry>) fails for some reason, it issues no prompt and acts as if the correct password had been entered.
 </para></listitem>
 <listitem><para>
 It does not record anything in the accounting logs.
@@ -77,12 +69,7 @@ It alters no environment variables at all, and does not attempt to change into a
 </itemizedlist>
 
 <para>
-Like
-<citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-it should be chained to by
-<citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-and
-<citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Like <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>, it should be chained to by <citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 <para>

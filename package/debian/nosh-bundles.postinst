@@ -13,6 +13,34 @@ do
 done
 case "$1" in
 	configure)
+		# Adjust to new relationships.
+		for I in \
+			static-networking \
+			;
+		do
+			if system-control find "$I".service >/dev/null 2>&1
+			then
+				system-control disable "$I".service
+			fi
+		done
+		for I in \
+			appcafe \
+			extra-shared-libraries \
+			name-services \
+			jails \
+			warden \
+			sockets \
+			remote-fs \
+			remote-fs-pre \
+			;
+		do
+			if system-control find "$I".target >/dev/null 2>&1
+			then
+				system-control disable "$I".target
+				rm -f -- /etc/service-bundles/targets/"$I"/wanted-by/sysinit
+				system-control preset "$I".target
+			fi
+		done
 		# common services with dedicated log services
 		for I in \
 			anacron \
@@ -27,6 +55,7 @@ case "$1" in
 			cleanX \
 			console-kit-daemon \
 			convert_varrun \
+			cups-browsed \
 			darkice \
 			ddclient \
 			deluged \
@@ -39,12 +68,16 @@ case "$1" in
 			fancontrol \
 			fcron \
 			ferm \
+			ffserver \
 			flow-capture \
 			fscd \
 			gdm \
+			genkdmconf \
 			gitlab-sidekiq \
 			gitlab-unicorn \
 			gnucron \
+			gogs \
+			hostapd \
 			hostnamed \
 			kdm@tty7 \
 			kdm@ttyv6 \
@@ -100,6 +133,7 @@ case "$1" in
 			qmail-send \
 			rabbitmq-server \
 			rpcbind \
+			rtadvd \
 			samba \
 			saslauthd \
 			sickbeard \
@@ -108,6 +142,9 @@ case "$1" in
 			slim \
 			smartd \
 			smbd \
+			network-runtime \
+			network-interfaces \
+			stunnel \
 			sshdgenkeys \
 			swift@account \
 			swift@account-auditor \
@@ -124,6 +161,8 @@ case "$1" in
 			sysctl \
 			timedated \
 			tinydns \
+			tor \
+			virecover \
 			vnstat \
 			volmand \
 			wettsteinsyslogd \
@@ -149,6 +188,7 @@ case "$1" in
 			fcgiwrap \
 			ftp4d \
 			ftp6d \
+			git-daemon \
 			http6d \
 			initctld \
 			kadmind \
@@ -183,6 +223,8 @@ case "$1" in
 		done
 		# common fan-in logging services
 		for I in \
+			ataidle \
+			autobridge \
 			natd \
 			sppp \
 			sysinit \
@@ -210,13 +252,11 @@ case "$1" in
 			colord-sane \
 			irqbalance \
 			kerneloops \
-			kmod@autofs \
 			kmod@ipv6 \
 			kmod@unix \
 			kmod@uvesafb \
 			linux-utmp \
 			mdadm \
-			static-networking \
 			udisks \
 			upower \
 			update-binfmts \
@@ -247,6 +287,7 @@ case "$1" in
 		# Linux services that fan in to a single logger
 		for I in \
 			busybox-mdev \
+			kmod@autofs \
 			linux-lockfiles \
 			suckless-mdev \
 			udev \
@@ -273,21 +314,31 @@ case "$1" in
 		done
 		# targets
 		for I in \
-			sysinit \
+			appcafe \
 			basic \
 			dumpauto \
+			extra-shared-libraries \
 			frame-buffer \
+			jails \
 			local-fs \
 			local-fs-pre \
 			local-syslog \
+			multi-user \
+			name-services \
 			remote-fs \
+			remote-fs-pre \
 			server \
+			static-networking \
 			swapauto \
 			swaplate \
+			sysinit \
+			virtualbox-guest \
+			virtualbox-host \
+			warden \
 			workstation \
-			multi-user \
 			;
 		do
+			system-control disable $I.target
 			system-control preset $I.target
 		done
 		# adjust to new log users

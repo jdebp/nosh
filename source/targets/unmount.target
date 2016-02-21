@@ -4,7 +4,6 @@
 
 [Unit]
 Description=Unmount all mount points action target
-DefaultDependencies=false
 EarlySupervise=true
 After=shutdown.target
 

@@ -12,12 +12,10 @@ read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
 list_interfaces() { read_rc ppp_profile || true ; }
 get_var() { read_rc ppp_"$1"_"$2" || read_rc ppp_"$2" || true ; }
 
-redo-ifchange rc.conf general-services
+redo-ifchange rc.conf general-services "ppp@.service"
 
 r="/var/local/sv"
 e="--no-systemd-quirks --escape-instance --bundle-root"
-
-redo-ifchange "ppp@.service"
 
 list_interfaces |
 while read -r i

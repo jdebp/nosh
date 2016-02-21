@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD static IP4 binding for %i
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+EnvironmentDirectory=env
+ExecStart=route -4 add ${route}
+ExecStopPost=route -4 del ${route}
+
+[Install]
+WantedBy=server.target

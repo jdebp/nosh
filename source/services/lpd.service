@@ -4,9 +4,10 @@
 
 [Unit]
 Description=line printer service
+After=chkprintcap
 
 [Service]
-ExecStartPre=chkprintcap
+EnvironmentDirectory=env
 ExecStart=%p
 Restart=always
 

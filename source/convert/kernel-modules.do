@@ -32,18 +32,29 @@ case "`uname`" in
 	# Note that we cannot just disable kmod@* and cyclog@kmod@* because of VirtualBox and others.
 	for n in \
 		fuse \
+		geom_uzip \
+		linux \
+		svr4 \
+		sysvmsg \
+		sysvsem \
+		sysvshm \
 		;
 	do
 		system-control disable "kmod@$n"
 	done
 	for n in \
+		ipfw_nat \
+		libiconv \
+		libmchain \
+		linsysfs \
+		msdosfs_iconv \
+		sem \
 		acpi_video \
 		bwi_v3_ucode \
 		bwn_v4_ucode \
 		cuse4bsd \
 		ext2fs \
 		fdescfs \
-		geom_uzip \
 		if_bwi \
 		if_bwn \
 		iwn1000fw \
@@ -54,12 +65,8 @@ case "`uname`" in
 		iwn6000g2afw \
 		iwn6000g2bfw \
 		iwn6050fw \
-		libiconv \
-		libmchain \
-		linsysfs \
 		mmc \
 		mmcsd \
-		msdosfs_iconv \
 		ng_ubt \
 		ntfs \
 		ntfs_iconv \
@@ -67,7 +74,6 @@ case "`uname`" in
 		reiserfs \
 		runfw \
 		scd \
-		sem \
 		smbfs \
 		udf \
 		udf_iconv \
@@ -85,7 +91,13 @@ while read -r n
 do
 	# Note that the way that we are setting up prefixes allows variables such as ntfs_enable in /etc/rc.conf{,.local} .
 	case "$n" in
-	fuse)	;;
+	fuse)		;;
+	geom_uzip)	;;
+	linux)		;;
+	svr4)		;;
+	sysvmsg)	;;
+	sysvsem)	;;
+	sysvshm)	;;
 	*)
 		system-control preset --prefix "cyclog@kmod@" -- "$n"
 		;;

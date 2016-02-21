@@ -1,2 +1,3 @@
 #!/bin/sh -
 system-control preset sysinit.target local-syslog.target
+system-control preset static-networking.target

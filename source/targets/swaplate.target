@@ -4,7 +4,6 @@
 
 [Unit]
 Description=Collection for all "late" "auto" swap services
-DefaultDependencies=false
 After=swapauto.target
 
 [Service]

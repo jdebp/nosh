@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=validate printcap database
+
+[Service]
+Type=oneshot
+EnvironmentDirectory=env
+ExecStart=%p -d
+RemainAfterExit=true
+Restart=always
+
+[Install]
+WantedBy=server.target

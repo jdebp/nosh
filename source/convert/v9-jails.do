@@ -4,7 +4,7 @@
 ## **************************************************************************
 #
 # Convert the FreeBSD 9 jails list external configuration formats.
-# This is invoked by general-services.do .
+# This is invoked by all.do .
 #
 
 # These get us *only* the configuration variables, safely.
@@ -15,12 +15,16 @@ get_config() { read_rc jail_"$1"_"$2" || read_rc jail_"$2" || true ; }
 
 if_yes() { case "$1" in [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]) echo "$2" ;; esac ; }
 
-redo-ifchange rc.conf general-services
-
-redo-ifchange "v9-jail@.service" "v9-jailed@.service"
+redo-ifchange rc.conf general-services "v9-jail@.service" "v9-jailed@.service"
 
 r="/var/local/sv"
 e="--no-systemd-quirks --escape-instance --bundle-root"
+
+find "$r/" -maxdepth 1 -type d \( -name 'v9-jail@*' -o -name 'v9-jailed@*' \) |
+while read -r n
+do
+	system-control disable "$n"
+done
 
 for i in `list_jails`
 do

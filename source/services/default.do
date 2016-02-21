@@ -7,7 +7,7 @@ ifchange_follow() {
 	for i
 	do	
 		l="`readlink \"$i\"`" || true
-		[ -n "$l" ] && redo-ifchange "`dirname \"$i\"`/$l"
+		test -n "$l" && redo-ifchange "`dirname \"$i\"`/$l"
 		redo-ifchange "$i"
 	done
 }
@@ -67,10 +67,11 @@ esac
 case "`uname`" in
 Linux)	etc_services="../package/common-etc-services ../package/linux-etc-services" ;;
 *BSD)	etc_services="../package/common-etc-services ../package/bsd-etc-services" ;;
+*)	etc_services="../package/common-etc-services" ;;
 esac
 
 case "${base}" in
-ppp-log|sppp-log|rfcomm_pppd-log|natd-log|cyclog@*) 
+ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|cyclog@*) 
 	log=
 	etc=
 	;;
@@ -124,6 +125,12 @@ then
 	mkdir -m 0755 services.new/"${base}"/service/env
 fi
 
+if grep -q "ucspi-socket-rules-check" services.new/"${base}"/service/start services.new/"${base}"/service/run services.new/"${base}"/service/stop
+then
+	mkdir -m 0755 services.new/"${base}"/service/ip4 services.new/"${base}"/service/ip4/127.0.0.0_8
+	mkdir -m 0755 services.new/"${base}"/service/ip6 services.new/"${base}"/service/ip6/::1_128 services.new/"${base}"/service/ip6/::ffff:127.0.0.0_104
+fi
+
 case "${base}" in
 cyclog@*) 
 	ln -f -s -- /var/log/sv/"${base#cyclog@}" services.new/"${base}"/main
@@ -139,6 +146,9 @@ natd-log)
 	;;
 sysinit-log) 
 	ln -f -s -- /var/log/sv/sysinit services.new/"${base}"/main
+	;;
+ataidle-log) 
+	ln -f -s -- /var/log/sv/ataidle services.new/"${base}"/main
 	;;
 esac
 
@@ -177,6 +187,8 @@ ttylogin@tty[0-9]*)
 		rm -f -- services.new/"${base}"/wanted-by/multi-user
 		;;
 	*BSD)
+		# These services are started on demand by ttylogin-starter.
+		rm -f -- services.new/"${base}"/wanted-by/multi-user
 		;;
 	esac
 	;;

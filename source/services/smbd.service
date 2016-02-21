@@ -7,7 +7,7 @@ Description=SAMBA file and print services daemon
 After=nmbd.service
 
 [Service]
-ExecStart=%p -F -s /usr/local/etc/smb.conf
+ExecStart=%p -F -s "${conf:-/usr/local/etc/smb4.conf}"
 LimitNOFILE=16384
 Restart=always
 

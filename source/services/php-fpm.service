@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=PHP FastCGI Process Manager
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=%p --nodaemonize --force-stderr --fpm-config "${config:-/usr/local/etc/%p.conf}" ${flags}
+Restart=always
+PrivateTmp=true
+#LimitMEMLOCK=infinity
+#LimitNOFILE=65535
+
+[Install]
+WantedBy=server.target

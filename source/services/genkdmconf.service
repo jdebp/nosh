@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Generate KDE display manager configuration
+
+[Service]
+Type=oneshot
+EnvironmentDirectory=env
+ExecStart=sh -c 'if test -r "/usr/local/share/config/kdm/kdmrc" ; then %p --in "/usr/local/share/config/kdm/kdmrc" ; else %p --no-old --in "/usr/local/share/config/kdm/kdmrc" ; fi'
+RemainAfterExit=true
+Restart=always
+
+[Install]
+WantedBy=workstation.target

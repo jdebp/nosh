@@ -2,7 +2,7 @@
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
 
-# This has been superceded by the swaplate target, and a raft of individually-generated swap@ services.
+# This has been superseded by the swaplate target, and a raft of individually-generated swap@ services.
 
 [Unit]
 Description=%p service

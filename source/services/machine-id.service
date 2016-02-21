@@ -13,4 +13,5 @@ ExecStart=setup-machine-id
 RemainAfterExit=yes
 
 [Install]
+StoppedBy=shutdown.target
 WantedBy=sysinit.target

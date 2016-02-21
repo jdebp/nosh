@@ -30,7 +30,7 @@ parse_config() {
 }
 
 r="/etc/service-bundles/services"
-e="--no-systemd-quirks --bundle-root"
+e="--no-systemd-quirks --etc-bundle --bundle-root"
 
 redo-ifchange rc.conf /etc/fstab mdconfig@.service newfs@.service populate_md@.service
 
@@ -72,6 +72,17 @@ do
 	then
 		rm -f -- "$r/${mdconfig_service}/wants/kmod@geom_uzip"
 		ln -s -- "../../kmod@geom_uzip" "$r/${mdconfig_service}/wants/"
+	fi
+	if test -n "${file}"
+	then
+		directory="${file}"
+		while test "${directory}" != '/'
+		do
+			directory="`dirname \"${directory}\"`"
+			dir="`echo \"${directory}\" | tr '/' '-'`"
+			rm -f -- "$r/${mdconfig_service}/after/mount@${dir}"
+			ln -s -- "../../mount@${dir}" "$r/${mdconfig_service}/after/"
+		done
 	fi
 
 	system-control set-service-env "${mdconfig_service}" flags "${config}"
@@ -134,7 +145,7 @@ do
 	# One minor difference with deferring to /etc/fstab is that it, not rc.conf, controls whether an fsck@ service bundle is enabled.
 	# So remember not to set an fsck pass number on non-vnode and uzip-compressed vnode memory disc devices.
 
-	if mnt="`system-control get-mount-where -- \"${dev}\"`"
+	if mnt="`system-control get-mount-where -- \"/dev/${md}\"`"
 	then
 		populate_service="populate_md@`echo ${mnt}|sed -e 's:/:-:g'`"
 

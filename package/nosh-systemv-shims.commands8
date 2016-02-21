@@ -12,6 +12,7 @@ poweroff
 rcctl
 reboot
 rescue
+runlevel
 service
 shutdown
 telinit

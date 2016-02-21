@@ -24,7 +24,7 @@
 <refsection><title>Description</title>
 
 <para>
-<command>oom-kill-protect</command> is a chain-loading utility that sets the OOK kill protection according to <replaceable>level</replaceable> and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+<command>oom-kill-protect</command> is a chain-loading utility that sets the OOM Kill protection according to <replaceable>level</replaceable> and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
 </para>
 
 <para>

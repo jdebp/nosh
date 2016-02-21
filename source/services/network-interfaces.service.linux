@@ -6,12 +6,14 @@
 
 [Unit]
 Description=Linux statically-configured network interface settings
+After=network-runtime.service
+Wants=network-runtime.service
 
 [Service]
-ExecStartPre=mkdir -m 0755 /run/network
+Type=oneshot
 ExecStart=ifup --verbose --all
 ExecStopPost=ifdown --verbose --all
 RemainAfterExit=yes
 
 [Install]
-WantedBy=workstation.target
+WantedBy=static-networking.target

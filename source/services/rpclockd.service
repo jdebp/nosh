@@ -8,6 +8,7 @@ Wants=nfsclient.service nfsd.service rpcbind.service rpcstatd.service
 After=rpcbind.service rpcstatd.service
 
 [Service]
+EnvironmentDirectory=env
 ExecStart=rpc.lockd -d
 Restart=always
 

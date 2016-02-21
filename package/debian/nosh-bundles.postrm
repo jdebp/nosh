@@ -2,6 +2,34 @@
 escape() { echo "$1"|sed -e 's/@/\\x40/g' ; }
 case "$1" in
 	upgrade)
+		# Adjust to new relationships.
+		for I in \
+			static-networking \
+			;
+		do
+			if system-control find "$I".service >/dev/null 2>&1
+			then
+				system-control disable "$I".service
+			fi
+		done
+		for I in \
+			appcafe \
+			extra-shared-libraries \
+			name-services \
+			jails \
+			warden \
+			sockets \
+			remote-fs \
+			remote-fs-pre \
+			;
+		do
+			if system-control find "$I".target >/dev/null 2>&1
+			then
+				system-control disable "$I".target
+				rm -f -- /etc/service-bundles/targets/"$I"/wanted-by/sysinit
+				system-control preset "$I".target
+			fi
+		done
 		# common services
 		for I in \
 			anacron \
@@ -16,6 +44,7 @@ case "$1" in
 			cleanX \
 			console-kit-daemon \
 			convert_varrun \
+			cups-browsed \
 			darkice \
 			ddclient \
 			deluged \
@@ -28,12 +57,16 @@ case "$1" in
 			fancontrol \
 			fcron \
 			ferm \
+			ffserver \
 			flow-capture \
 			fscd \
 			gdm \
+			genkdmconf \
 			gitlab-sidekiq \
 			gitlab-unicorn \
 			gnucron \
+			gogs \
+			hostapd \
 			hostnamed \
 			kdm@tty7 \
 			kdm@ttyv6 \
@@ -85,6 +118,7 @@ case "$1" in
 			qmail-send \
 			rabbitmq-server \
 			rpcbind \
+			rtadvd \
 			samba \
 			saslauthd \
 			sickbeard \
@@ -93,6 +127,9 @@ case "$1" in
 			slim \
 			smartd \
 			smbd \
+			network-runtime \
+			network-interfaces \
+			stunnel \
 			sshdgenkeys \
 			swift@account \
 			swift@account-auditor \
@@ -109,6 +146,8 @@ case "$1" in
 			sysctl \
 			timedated \
 			tinydns \
+			tor \
+			virecover \
 			vnstat \
 			volmand \
 			wettsteinsyslogd \
@@ -129,6 +168,8 @@ case "$1" in
 		done
 		# common fan-in log services
 		for I in \
+			ataidle \
+			autobridge \
 			natd \
 			sppp \
 			sysinit \
@@ -150,6 +191,7 @@ case "$1" in
 			fcgiwrap \
 			ftp4d \
 			ftp6d \
+			git-daemon \
 			http6d \
 			initctld \
 			kadmind \

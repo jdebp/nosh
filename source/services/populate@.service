@@ -3,18 +3,19 @@
 ## **************************************************************************
 
 [Unit]
-Description=Populate the %I filesystem from standard mtree info.
+Description=Populate the /%I filesystem from standard mtree info.
 DefaultDependencies=false
 Before=local-fs.target
-# We need the mount for /usr/sbin/mtree in particular.
-After=local-fs-pre.target mdmfs@-%i mount@-%I mount@-usr mount@-usr-sbin mount@-etc mount@-etc-mtree
+# We need the mount(s) for /usr/sbin/mtree in particular.
+After=local-fs-pre.target mdmfs@-%i mount@-%i mount@-usr mount@-usr-sbin mount@-etc mount@-etc-mtree
 
 [Service]
 Type=oneshot
 EnvironmentDirectory=env
-ExecStartPre=mtree -d -e -U -f /etc/mtree/BSD.%i.disc -p /%I
+ExecStartPre=mtree -d -e -U -f /etc/mtree/BSD.%i.dist -p /%I
 ExecStart=true
 RemainAfterExit=yes
 
 [Install]
+StoppedBy=shutdown.target
 WantedBy=local-fs.target

@@ -13,12 +13,10 @@ list_natd_interfaces() { read_rc natd_interface || true ; }
 list_network_interfaces() { read_rc network_interfaces || ifconfig -l | while read -r i ; do echo "$i" ; done ; }
 get_ifconfig() { read_rc ifconfig_"$1" || read_rc ifconfig_DEFAULT || true ; }
 
-redo-ifchange rc.conf general-services
+redo-ifchange rc.conf general-services "natd@.service"
 
 r="/var/local/sv"
 e="--no-systemd-quirks --escape-instance --bundle-root"
-
-redo-ifchange "natd@.service"
 
 list_network_interfaces |
 while read -r i

@@ -1,3 +1,21 @@
+nosh (1.26) unstable; urgency=low
+
+  * The postgresql service now incorporates Linux OOM Killer avoidance measures.
+  * More BSD services: defaultroute, chkprintcap, tcsd, syscache, slpd, iocage, mdns, mdnsresponderposix, automount, automountd, autounmountd, pc-sysconfig, php-fpm
+  * More Linux services: kmod@efivarfs
+  * More cross-platform services: dcron, tor, git-daemon, ffserver, cups-browsed, genkdmconf, gogs
+  * efivarfs mounts now introduce dependencies from kmod@efivarfs
+  * There is now a mdconfig configuration import.
+  * There is now an ataidle configuration import.
+  * systemd unit conversion now has LogUCSPIRules, NUMAInterleave, NUMAMemBind, NUMACPUNodeBind, NUMAPhysCPUBind, NUMALocalAlloc, and NUMAPreferred setting.
+  * The static-networking service has been superseded by a cross-platform system that encompasses static setup/teardown for both Linux and the BSDs.
+  * Some bugs in static_ndp and static_arp configuration import have been fixed.
+  * Some special-case bodges in the build and import subsystems have been replaced by a general-use service bundle aliasing mechanism.
+  * convert-systemd-units now creates orderings relevant to enclosing mount service bundles for ListenFIFO and AF_LOCAL ListenStream/ListenDatagram sockets.
+  * convert-systemd-units now substitutes the machine ID for %m.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Sun, 21 Feb 2016 21:17:32 +0000
+
 nosh (1.25) unstable; urgency=low
 
   * More BSD services: netwait, nfsserver, populate@var, pcdm, gptboot

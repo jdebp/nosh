@@ -19,48 +19,33 @@
 <refsection><title>Description</title>
 
 <para>
-<command>setup-machine-id</command> creates a machine ID, if one has not
-already been created, and stores it in various areas of non-volatile
-storage.
-It also stores the machine ID, newly created or read from storage, in various
-areas of volatile storage.
+<command>setup-machine-id</command> creates a machine ID, if one has not already been created, and stores it in various areas of non-volatile storage.
+It also stores the machine ID, newly created or read from storage, in various areas of volatile storage.
 </para>
 
 <refsection><title>Machine IDs</title>
 
 <para>
-A machine ID is a 128-bit number that is intended to be a globally unique
-ID for identifying the machine, and that is intended to be constant across
-system restarts (once it has been set up), or (failing that) from restart
-to shutdown.
+A machine ID is a 128-bit number that is intended to be a globally unique ID for identifying the machine, and that is intended to be constant across system restarts (once it has been set up), or (failing that) from restart to shutdown.
 </para>
 
 <para>
 It is not dependent from the presence of any particular piece of hardware.
-Replacing hardware is not intended to affect a machine ID; although replacing
-the particular non-volatile storage that is used to store the machine ID when
-the system is powered off will result in a change to the machine ID, obviously.
+Replacing hardware is not intended to affect a machine ID; although replacing the particular non-volatile storage that is used to store the machine ID when the system is powered off will result in a change to the machine ID, obviously.
 </para>
 
 <para>
 It identifies the whole machine, not individual pieces.  
-It is not suitable for use (in whole or in part) in IPv6 addresses (which
-identify individual interfaces), but it is suitable for identifying entire
-hosts on a network at the application protocol layer.
+It is not suitable for use (in whole or in part) in IPv6 addresses (which identify individual interfaces), but it is suitable for identifying entire hosts on a network at the application protocol layer.
 </para>
 
 <para>
 Machine IDs are intended to be UUIDs.
 Some older softwares do not create valid UUIDs as machine IDs.
-In particular, they create entirely random UUIDs where even the UUID variant and
-type are random.
-<command>setup-machine-id</command> will attempt to correct for this, by
-converting any UUID that is not a type 1 to type 5 DCE-variant UUID 
-into a type 4 DCE-variant UUID by simply overwriting the type and variant
-parts of the UUID.
-As a special case, it will treat a nil UUID (NCS-variant with all zeroes)
-as invalid rather than correct it.  (A nil UUID isn't globally unique by its
-very nature and is unsuitable as a machine ID.)
+In particular, they create entirely random UUIDs where even the UUID variant and type are random.
+<command>setup-machine-id</command> will attempt to correct for this, by converting any UUID that is not a type 1 to type 5 DCE-variant UUID into a type 4 DCE-variant UUID by simply overwriting the type and variant parts of the UUID.
+As a special case, it will treat a nil UUID (NCS-variant with all zeroes) as invalid rather than correct it.  
+(A nil UUID isn't globally unique by its very nature and is unsuitable as a machine ID.)
 </para>
 
 </refsection>
@@ -69,35 +54,19 @@ very nature and is unsuitable as a machine ID.)
 
 <para>
 The machine ID, once set up, is stored in the file <filename>/etc/machine-id</filename>.
-If <command>setup-machine-id</command> can read and parse a machine ID from
-that file, then (subject to the aforementioned corrections of variant and type)
-it will consider the machine ID to be already set up.
-Machine IDs are stored in the file as 32 lowercase hexadecimal characters
-(the machine ID as a 128-bit bigendian integer)
-followed by a linefeed.
-Not all other softwares support it, but <command>setup-machine-id</command>
-allows the file to contain further lines beyond that first one, which it will
-ignore when reading the file.
+If <command>setup-machine-id</command> can read and parse a machine ID from that file, then (subject to the aforementioned corrections of variant and type) it will consider the machine ID to be already set up.
+Machine IDs are stored in the file as 32 lowercase hexadecimal characters (the machine ID as a 128-bit bigendian integer) followed by a linefeed.
+Not all other softwares support it, but <command>setup-machine-id</command> allows the file to contain further lines beyond that first one, which it will ignore when reading the file.
 </para>
 
 <para>
-If that file does not exist or there is no correctly formatted machine ID
-stored in its first line, <command>setup-machine-id</command> will attempt to find
-or to create a machine ID.
+If that file does not exist or there is no correctly formatted machine ID stored in its first line, <command>setup-machine-id</command> will attempt to find or to create a machine ID.
 </para>
 
 <para>
-Once it has found or created a machine ID
-(or if it has needed to correct it)
-<command>setup-machine-id</command> will write it to
-<filename>/etc/machine-id</filename>, creating or truncating the file.
-This will fail if the file is on a read-only
-volume, as will be the case for bootable CD-ROMs and so forth.
-In that case, and on systems that support doing so, it will then attempt to use
-a bind mount (see
-<citerefentry><refentrytitle>mount</refentrytitle><manvolnum>2</manvolnum></citerefentry>)
-to place one of the volatile storage locations of the machine ID over the top
-of <filename>/etc/machine-id</filename>.
+Once it has found or created a machine ID (or if it has needed to correct it) <command>setup-machine-id</command> will write it to <filename>/etc/machine-id</filename>, creating or truncating the file.
+This will fail if the file is on a read-only volume, as will be the case for bootable CD-ROMs and so forth.
+In that case, and on systems that support doing so, it will then attempt to use a bind mount (see <citerefentry><refentrytitle>mount</refentrytitle><manvolnum>2</manvolnum></citerefentry>) to place one of the volatile storage locations of the machine ID over the top of <filename>/etc/machine-id</filename>.
 </para>
 
 </refsection>
@@ -111,45 +80,26 @@ of <filename>/etc/machine-id</filename>.
 <orderedlist>
 <listitem><para>
 It will attempt to read the UUID from volatile storage and use that.
-Thus, if the file <filename>/etc/machine-id</filename> is deleted but the
-system is not restarted,
-<command>setup-machine-id</command> can restore the existing machine ID
-from volatile storage.
+Thus, if the file <filename>/etc/machine-id</filename> is deleted but the system is not restarted,
+<command>setup-machine-id</command> can restore the existing machine ID from volatile storage.
 </para></listitem>
 <listitem><para>
-It will attempt to read the UUID from various older locations, such as the
-D-Bus machine ID files and (on BSD systems) the
-<filename>/etc/hostid</filename> file.
-Thus, if the file <filename>/etc/machine-id</filename> has not yet been created
-but the system has machine IDs from older mechanisms,
-<command>setup-machine-id</command> will attempt to retain the machine IDs from
-those mechanisms.
+It will attempt to read the UUID from various older locations, such as the D-Bus machine ID files and (on BSD systems) the <filename>/etc/hostid</filename> file.
+Thus, if the file <filename>/etc/machine-id</filename> has not yet been created but the system has machine IDs from older mechanisms, <command>setup-machine-id</command> will attempt to retain the machine IDs from those mechanisms.
 </para></listitem>
 <listitem><para>
-If it detects that it is running in a container/jail, it will use the value of the
-<code>container_uuid</code> environment variable, if it is correctly formatted.
-This environment variable is a convention and is set by various jailer and
-container management utilities.
+If it detects that it is running in a container/jail, it will use the value of the <code>container_uuid</code> environment variable, if it is correctly formatted.
+This environment variable is a convention and is set by various jailer and container management utilities.
 </para></listitem>
 <listitem><para>
-If it detects that it is not running in a container/jail, it will attempt to
-read the SMBIOS-generated system GUID and use that.
-This GUID is taken from either the <code>smbios.system.uuid</code> variable
-(see
-<citerefentry><refentrytitle>sysctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>)
-or the <code>/sys/class/dmi/id/product_uuid</code> file. 
+If it detects that it is not running in a container/jail, it will attempt to read the SMBIOS-generated system GUID and use that.
+This GUID is taken from either the <code>smbios.system.uuid</code> variable (see <citerefentry><refentrytitle>sysctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>) or the <code>/sys/class/dmi/id/product_uuid</code> file. 
 </para><para>
-Thus, if available, the SMBIOS unique identifier for the first bootstrap also
-becomes the machine identifier.
-The SMBIOS system GUID is not used in containers/jails because it will be the
-same as in the containing system itself, which may have used it as a machine ID.
+Thus, if available, the SMBIOS unique identifier for the first bootstrap also becomes the machine identifier.
+The SMBIOS system GUID is not used in containers/jails because it will be the same as in the containing system itself, which may have used it as a machine ID.
 </para></listitem>
 <listitem><para>
-As a final fallback, it will create a UUID using the
-<citerefentry><refentrytitle>uuid_create</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-or the
-<citerefentry><refentrytitle>uuid_generate</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-library function.
+As a final fallback, it will create a UUID using the <citerefentry><refentrytitle>uuid_create</refentrytitle><manvolnum>3</manvolnum></citerefentry> or the <citerefentry><refentrytitle>uuid_generate</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function.
 </para></listitem>
 </orderedlist>
 
@@ -164,21 +114,15 @@ Various softwares expect to find the machine ID in various areas of volatile sto
 <itemizedlist>
 <listitem><para>
 <command>setup-machine-id</command> itself uses <filename>/run/machine-id</filename>.
-It always creates it, and it will also use it as the source of a bind mount
-should it need to (and be able to) bind mount over the top of
-<filename>/etc/machine-id</filename>.
+It always creates it, and it will also use it as the source of a bind mount should it need to (and be able to) bind mount over the top of <filename>/etc/machine-id</filename>.
 </para></listitem>
 <listitem><para>
-BSD systems expect the machine ID to be stored in the
-<code>kern.hostuuid</code> variable (see
-<citerefentry><refentrytitle>sysctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>),
-so it is written there.
+BSD systems expect the machine ID to be stored in the <code>kern.hostuuid</code> variable (see <citerefentry><refentrytitle>sysctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>), so it is written there.
 </para></listitem>
 </itemizedlist>
 
 <para>
-<command>setup-machine-id</command> will attempt to read from these
-locations when attempting to "rescue" a lost machine ID from volatile storage.
+<command>setup-machine-id</command> will attempt to read from these locations when attempting to "rescue" a lost machine ID from volatile storage.
 </para>
 
 </refsection>
@@ -188,55 +132,32 @@ locations when attempting to "rescue" a lost machine ID from volatile storage.
 <para>
 The <filename>/etc/machine-id</filename> file is compatible with systemd.
 It is also compatible with D-Bus.
-D-Bus looks for files named
-<filename>/var/lib/dbus/machine-id</filename> or
-<filename>/var/db/dbus/machine-id</filename>, which can just be
-symbolic links to <filename>/etc/machine-id</filename>.
-(Symbolic links the other way around would break if <filename>/var</filename>
-or one of its subdirectories is not mounted, as can be the case at the point
-that <command>setup-machine-id</command> is run during system bootstrap.)
+D-Bus looks for files named <filename>/var/lib/dbus/machine-id</filename> or <filename>/var/db/dbus/machine-id</filename>, which can just be symbolic links to <filename>/etc/machine-id</filename>.
+(Symbolic links the other way around would break if <filename>/var</filename> or one of its subdirectories is not mounted, as can be the case at the point that <command>setup-machine-id</command> is run during system bootstrap.)
 </para>
 
 <para>
-An older unique ID for machines is the host ID, as queried and set by the
-<citerefentry><refentrytitle>gethostid</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-and
-<citerefentry><refentrytitle>sethostid</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-library functions.
-As those functions' manual pages state, this is a mechanism that was dropped by its
-originating system in 1994, but that has continued since largely due to the
-inertia of standardization.
+An older unique ID for machines is the host ID, as queried and set by the <citerefentry><refentrytitle>gethostid</refentrytitle><manvolnum>3</manvolnum></citerefentry> and <citerefentry><refentrytitle>sethostid</refentrytitle><manvolnum>3</manvolnum></citerefentry> library functions.
+As those functions' manual pages state, this is a mechanism that was dropped by its originating system in 1994, but that has continued since largely due to the inertia of standardization.
 It really shouldn't be used at all on systems with machine UUIDs available.
 </para>
 
 <para>
 <command>setup-machine-id</command> creates a host ID by hashing the machine ID.
-The hashing function used is to take the lower 32-bits of the CubeHash (see
-<citerefentry><refentrytitle>cubehash</refentrytitle><manvolnum>1</manvolnum></citerefentry>)
-of the machine ID, although this choice of hash function should not be relied
-upon by anything.
-Ironically, this provides a more stable host ID than some of the original schemes for
-determining a host ID did.  
-As long as the machine ID does not change, the host ID will not change;
-and the host ID can be set up before network interfaces, and domain name to
-address mapping facilities, are even available.
+The hashing function used is to take the lower 32-bits of the CubeHash (see <citerefentry><refentrytitle>cubehash</refentrytitle><manvolnum>1</manvolnum></citerefentry>) of the machine ID, although this choice of hash function should not be relied upon by anything.
+Ironically, this provides a more stable host ID than some of the original schemes for determining a host ID did.  
+As long as the machine ID does not change, the host ID will not change; and the host ID can be set up before network interfaces, and domain name to address mapping facilities, are even available.
 </para>
 
 <itemizedlist>
 <listitem><para>
 The GNU C library expects the <filename>/etc/hostid</filename> file to contain the host ID.
 (On BSD systems, this file contains the machine ID as a human-readable-form UUID.)
-<command>setup-machine-id</command> writes the host ID to that file if it can, and to
-<filename>/run/hostid</filename> as well.
-If <filename>/etc/hostid</filename> is unwritable, and if bind mounting is
-available, it will attempt to bind mount <filename>/run/hostid</filename> in place
-of it.
+<command>setup-machine-id</command> writes the host ID to that file if it can, and to <filename>/run/hostid</filename> as well.
+If <filename>/etc/hostid</filename> is unwritable, and if bind mounting is available, it will attempt to bind mount <filename>/run/hostid</filename> in place of it.
 </para></listitem>
 <listitem><para>
-The BSD C library expects the host ID to be stored in the
-<code>kern.hostid</code> variable (see
-<citerefentry><refentrytitle>sysctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>),
-so it is written there.
+The BSD C library expects the host ID to be stored in the <code>kern.hostid</code> variable (see <citerefentry><refentrytitle>sysctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>), so it is written there.
 </para></listitem>
 </itemizedlist>
 

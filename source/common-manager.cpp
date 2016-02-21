@@ -308,7 +308,7 @@ setup_process_state(
 		setlogin("root");
 #endif
 		chdir("/");
-		umask(0);
+		umask(0022);
 
 		// We cannot omit /sbin and /bin from the path because we cannot reliably detect that they duplicate /usr/bin and /usr/sbin at this point.
 		// On some systems, /usr/sbin and /usr/bin are the symbolic links, and don't exist until we have mounted /usr .

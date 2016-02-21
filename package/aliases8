@@ -13,6 +13,7 @@ telinit	poweroff
 telinit	rcctl
 telinit	reboot
 telinit	rescue
+telinit	runlevel
 telinit	service
 telinit	shutdown
 telinit	update-rc.d

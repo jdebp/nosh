@@ -4,7 +4,7 @@
 
 [Unit]
 Description=BSD %p for %i
-Wants=kmod@ipdivert
+Wants=kmod@ipdivert, %p-log
 After=kmod@ipdivert
 
 [Service]

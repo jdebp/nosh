@@ -17,4 +17,5 @@ RemainAfterExit=yes
 ExecStart=true
 
 [Install]
+StoppedBy=shutdown.target
 WantedBy=sysinit.target

@@ -17,4 +17,5 @@ ExecStopPost=u%p %I
 RemainAfterExit=yes
 
 [Install]
+StoppedBy=shutdown.target
 WantedBy=local-fs.target

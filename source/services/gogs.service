@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Go Git Service
+After=syslog.target
+After=network.target
+
+[Service]
+LimitNOFILE=65535
+User=git
+Group=git
+ExecStart=%p web
+Restart=always
+
+[Install]
+WantedBy=server.target

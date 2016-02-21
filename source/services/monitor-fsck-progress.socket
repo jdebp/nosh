@@ -4,14 +4,9 @@
 
 [Unit]
 Description=local socket used for %p
-DefaultDependencies=off
-Before=local-fs-pre.target
 
 [Socket]
 Backlog=2
 SocketMode=0644
 ListenStream=/run/fsck.progress
 Accept=false
-
-[Install]
-WantedBy=sysinit.target

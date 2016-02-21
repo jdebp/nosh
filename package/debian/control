@@ -2,7 +2,7 @@ Source: nosh
 Section: admin
 Priority: optional
 Maintainer: Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@ntlworld.com>
-Build-Depends: redo, libkqueue-dev, xmlto
+Build-Depends: redo, libkqueue-dev, xmlto, pax
 
 Package: nosh-guide
 Architecture: amd64
@@ -82,7 +82,7 @@ Recommends:
 Description: BSD and System 5 shim service and system management utilities
  This package provides shims for old-style BSD and System 5 system management commands.
   * service, chkconfig
-  * init, shutdown, telinit, halt, poweroff, reboot
+  * init, shutdown, telinit, halt, poweroff, reboot, runlevel
   * emergency, normal, rescue
   * fasthalt, fastpoweroff, fastboot
   * rcctl
@@ -125,7 +125,7 @@ Description: Debian shim service and system management utilities
 
 Package: nosh-bundles
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.25), nosh-terminal-management (>= 1.22)
+Depends: nosh-exec, nosh-service-management (>=1.25), nosh-terminal-management (>= 1.22), adduser
 Suggests: 
 Recommends: 
 Conflicts: nosh-standard-targets, nosh-sysinit-services, nosh-bsd-services, nosh-bsd-sockets, nosh-regular-sockets, nosh-regular-services
@@ -200,7 +200,7 @@ Description: Run the system-wide message bus from freedesktop.org
 
 Package: nosh-run-freedesktop-kits
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles
+Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles, nosh-run-freedesktop-system-bus
 Suggests: 
 Recommends: network-manager, modemmanager, packagekit, policykit-1, consolekit
 Description: Run the various "kit" programs from freedesktop.org

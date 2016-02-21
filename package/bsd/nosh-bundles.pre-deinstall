@@ -15,6 +15,7 @@ for I in \
 	cleanX \
 	console-kit-daemon \
 	convert_varrun \
+	cups-browsed \
 	darkice \
 	ddclient \
 	deluged \
@@ -27,12 +28,16 @@ for I in \
 	fancontrol \
 	fcron \
 	ferm \
+	ffserver \
 	flow-capture \
 	fscd \
 	gdm \
+	genkdmconf \
 	gitlab-sidekiq \
 	gitlab-unicorn \
 	gnucron \
+	gogs \
+	hostapd \
 	hostnamed \
 	kdm@tty7 \
 	kdm@ttyv6 \
@@ -89,6 +94,7 @@ for I in \
 	qmail-send \
 	rabbitmq-server \
 	rpcbind \
+	rtadvd \
 	samba \
 	saslauthd \
 	sickbeard \
@@ -97,6 +103,9 @@ for I in \
 	slim \
 	smartd \
 	smbd \
+	network-runtime \
+	network-interfaces \
+	stunnel \
 	sshdgenkeys \
 	swift@account \
 	swift@account-auditor \
@@ -113,6 +122,7 @@ for I in \
 	sysctl \
 	timedated \
 	tinydns \
+	virecover \
 	vnstat \
 	volmand \
 	wicd \
@@ -143,6 +153,7 @@ for i in \
 	fcgiwrap \
 	ftp4d \
 	ftp6d \
+	git-daemon \
 	http6d \
 	initctld \
 	kadmind \
@@ -180,9 +191,12 @@ do
 done
 # common fan-in logging services
 for i in \
+	ataidle \
+	autobridge \
 	natd \
 	sppp \
 	sysinit \
+	webcamd \
 	;
 do
 	system-control unload-when-stopped "$i"-log.service
@@ -202,6 +216,13 @@ done
 # BSD services with dedicated log services
 for i in \
 	accounting \
+	appcafe-dispatcher \
+	appcafe-php-fpm \
+	appcafe-nginx \
+	appcafe-ssl-keygen \
+	automount \
+	automountd \
+	autounmountd \
 	amd \
 	apm \
 	apmd \
@@ -212,26 +233,34 @@ for i in \
 	bsnmpd \
 	bthidd \
 	ccd \
+	chkprintcap \
 	ctld \
 	crashinfo \
 	ddb \
+	defaultroute \
 	dhclient@em0 \
+	ftpd \
 	ftp-proxy \
 	gssd \
 	hastd \
 	hcsecd \
+	iocage \
 	ipf \
 	ipfs \
 	ipmon \
 	ipnat \
+	ipropd_master \
+	ipropd_slave \
 	ipsec \
 	ipxrouted \
 	iscsictl \
 	iscsid \
 	ipfw \
 	ipfw0 \
+	kdc \
 	keyserv \
 	kmod@acpi_video \
+	kmod@autofs \
 	kmod@bwi_v3_ucode \
 	kmod@bwn_v4_ucode \
 	kmod@ctl \
@@ -240,7 +269,6 @@ for i in \
 	kmod@ext2fs \
 	kmod@fdescfs \
 	kmod@geom_gate \
-	kmod@geom_uzip \
 	kmod@ibcs2 \
 	kmod@if_bwi \
 	kmod@if_bwn \
@@ -284,19 +312,25 @@ for i in \
 	kmod@xfs \
 	ldconfig \
 	lpd \
+	mdnsd \
+	mdnsresponderposix \
 	mroute4d \
 	mroute6d \
 	mrouted \
 	msgs \
+	netwait \
 	newsyslog \
 	nfscbd \
 	nfsclient \
 	nfsuserd \
 	pbid \
+	pc-sysconfig \
 	pefs \
 	pf \
 	pflog \
 	pfsync \
+	php-fpm \
+	pppoed \
 	pwcheck \
 	pxeboot-resolvconf \
 	quota \
@@ -308,12 +342,15 @@ for i in \
 	rtsold \
 	rwhod \
 	savecore \
+	slpd \
 	sdpd \
 	securelevel \
 	snddetect \
 	swapexd \
 	swaplate \
+	syscache \
 	syslogd \
+	tcsd \
 	timed \
 	ubthidhci \
 	ugidfw \
@@ -370,12 +407,14 @@ for i in \
 	devd \
 	devd-log \
 	kmod@fuse \
+	kmod@geom_uzip \
 	kmod@linux \
+	kmod@svr4 \
 	kmod@sysvmsg \
 	kmod@sysvsem \
 	kmod@sysvshm \
-	kmod@svr4 \
 	nextboot \
+	gptboot \
 	swaplate \
 	;
 do
@@ -384,19 +423,28 @@ do
 done
 # targets
 for i in \
-	sysinit \
+	appcafe \
 	basic \
 	dumpauto \
+	extra-shared-libraries \
 	frame-buffer \
+	jails \
 	local-fs \
 	local-fs-pre \
 	local-syslog \
+	multi-user \
+	name-services \
 	remote-fs \
+	remote-fs-pre \
 	server \
+	static-networking \
 	swapauto \
 	swaplate \
+	sysinit \
+	virtualbox-guest \
+	virtualbox-host \
+	warden \
 	workstation \
-	multi-user \
 	;
 do
 	system-control disable $i.target

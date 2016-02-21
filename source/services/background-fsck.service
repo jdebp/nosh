@@ -13,4 +13,5 @@ ExecStart=fsck -B -p
 RemainAfterExit=yes
 
 [Install]
+StoppedBy=shutdown.target
 WantedBy=sysinit.target

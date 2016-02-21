@@ -1,0 +1,19 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=git socket
+
+[Socket]
+Backlog=2
+BindIPv6Only=both
+ListenStream=9418
+MaxConnections=16
+UCSPIRules=true
+NoDelay=false
+# Change this to false if git-daemon ever gains the ability to be passed the listening socket.
+Accept=true
+
+[Install]
+WantedBy=server.target

@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Runtime directory for (static) networking
+
+[Service]
+Type=oneshot
+RuntimeDirectory=network
+RUntimeDirectoryMode=0755
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
+ExecStart=true
+
+[Install]

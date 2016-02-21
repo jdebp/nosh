@@ -3,14 +3,11 @@
 ## **************************************************************************
 
 [Unit]
-Description=BSD %p for %i
+Description=BSD static NDP binding for %i
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
 EnvironmentDirectory=env
-ExecStart=arp -S %I
-ExecStopPost=set -- %i && arp -d $1
-
-[Install]
-WantedBy=server.target
+ExecStart=route -6 add ${route}
+ExecStopPost=route -6 del ${route}

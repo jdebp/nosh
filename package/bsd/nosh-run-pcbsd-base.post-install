@@ -1,0 +1,79 @@
+#!/bin/sh -
+escape() { echo "$1"|sed -e 's/_/_x5f/g' -e 's/@/_x40/g' -e 's/:/_x3a/g' ; }
+add_user() { getent passwd "$1" > /dev/null || pw useradd "$1" -s /bin/false ; }
+add_log() { mkdir -m 0755 -p /var/log/sv/"$2" ; chown "$1"-log /var/log/sv/"$2" ; }
+for I in \
+	anacron \
+	avahi-daemon \
+	org.cups.cups-cancel \
+	org.cups.cups-lpd \
+	org.cups.cupsd \
+	dbus \
+	hald \
+	moused \
+	pcdm \
+	powerd \
+	swapexd \
+	volmand \
+	appcafe-dispatcher \
+	appcafe-php-fpm \
+	appcafe-nginx \
+	appcafe-ssl-keygen \
+	cleanX \
+	cleantmp \
+	ipfw0 \
+	ipfw \
+	iscsid \
+	kmod@acpi_video \
+	kmod@cuse4bsd \
+	kmod@if_bwi \
+	kmod@if_bwn \
+	kmod@iwn1000fw \
+	kmod@iwn4965fw \
+	kmod@iwn5000fw \
+	kmod@iwn5150fw \
+	kmod@iwn6000fw \
+	kmod@iwn6000g2afw \
+	kmod@iwn6000g2bfw \
+	kmod@iwn6050fw \
+	kmod@runfw \
+	kmod@fdescfs \
+	kmod@ipfw_nat \
+	kmod@libiconv \
+	kmod@libmchain \
+	kmod@linsysfs \
+	kmod@msdosfs_iconv \
+	kmod@sem \
+	openntpd \
+	syscache \
+	zfs \
+	;
+do
+	i="`escape "$I"`"
+	add_user "$i"-log
+	add_log "$i" "$I"
+	system-control preset $I.service
+	system-control preset --prefix cyclog@ $I.service
+	system-control reset $I.service cyclog@$I.service
+done
+for I in \
+	devd \
+	devd-log \
+	ldconfig \
+	kmod@geom_uzip \
+	kmod@fuse \
+	;
+do
+	i="`escape "$I"`"
+	system-control preset $I.service
+	system-control reset $I.service
+done
+for I in \
+	warden \
+	appcafe \
+	;
+do
+	i="`escape "$I"`"
+	system-control preset $I.target
+	system-control reset $I.target
+done

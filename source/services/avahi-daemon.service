@@ -9,6 +9,7 @@ Description=Bonjour service
 Type=dbus
 RuntimeDirectory=%p
 RuntimeDirectoryMode=02755
+#RuntimeDirectoryOwner=avahi
 ExecStartPre=chown avahi /run/%p
 ExecStart=%p
 Restart=always

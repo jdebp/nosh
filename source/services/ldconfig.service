@@ -19,4 +19,5 @@ ExecStart=%p -aout -v /lib/aout /usr/lib/aout /usr/local/lib/aout ${paths_aout=$
 RemainAfterExit=yes
 
 [Install]
+StoppedBy=shutdown.target
 WantedBy=sysinit.target

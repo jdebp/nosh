@@ -1,5 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Linux IRC socket
+
 [Socket]
-ListenStream=/run/lirc/lircd
+Backlog=2
+MaxConnections=2
+ListenStream=/run/lirc/%p
 
 [Install]
-WantedBy=sockets.target
+WantedBy=server.target

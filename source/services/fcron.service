@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=Regular background program processing daemon
+Description=Regular background program processing daemon by Thibault Godouet
 
 [Service]
 ExecStart=%p --foreground --nosyslog

@@ -13,6 +13,7 @@ fi
 
 src="${1}"
 dest="${2}"
+absdest="`readlink -f "${dest}"`/"
 
 # binaries and doco
 for i in exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims ;
@@ -52,23 +53,23 @@ do
 	done < package/nosh-"$i".aliases8 ;
 done
 install -d -m 0755 "${dest}"/nosh-exec/bin 
-for j in exec
+for j in exec nosh
 do
-	cp -a -- "${dest}"/nosh-exec/usr/local/bin/"$j" "${dest}"/nosh-exec/bin/
+	(cd "${dest}"/nosh-exec/usr/local/ && pax -r -w -l -- bin/"$j" "${absdest}"/nosh-exec/)
 done
-for j in nosh cyclog
+for j in cyclog
 do
-	cp -a -l -f -- "${dest}"/nosh-exec/bin/exec "${dest}"/nosh-exec/bin/"$j"
+	(cd "${dest}"/nosh-service-management/usr/local/ && pax -r -w -l -- bin/"$j" "${absdest}"/nosh-exec/)
 done
 install -d -m 0755 "${dest}"/nosh-service-management/sbin 
 install -d -m 0755 "${dest}"/nosh-service-management/bin 
-for j in system-control
+for j in system-control service-manager service-dt-scanner
 do
-	cp -a -- "${dest}"/nosh-service-management/usr/local/bin/"$j" "${dest}"/nosh-service-management/bin/
+	(cd "${dest}"/nosh-service-management/usr/local/ && pax -r -w -l -- bin/"$j" "${absdest}"/nosh-service-management/)
 done
 for j in system-manager
 do
-	cp -a -- "${dest}"/nosh-service-management/usr/local/sbin/"$j" "${dest}"/nosh-service-management/sbin/
+	(cd "${dest}"/nosh-service-management/usr/local/ && pax -r -w -l -- sbin/"$j" "${absdest}"/nosh-service-management/)
 done
 install -d -m 0755 "${dest}"/nosh-run-system-manager/sbin 
 case "`uname`" in
@@ -102,22 +103,48 @@ Linux)	cat package/linux-services package/linux-sockets package/linux-ttys ;;
 esac
 ) | while read j ;
 do
-	cp -a -- "${src}"/sv/"$j" "${dest}"/nosh-bundles/var/sv/
-	cp -a -- "${src}"/sv/cyclog@"$j" "${dest}"/nosh-bundles/var/sv/
+#	cp -a -- "${src}"/sv/"$j" "${dest}"/nosh-bundles/var/sv/
+#	cp -a -- "${src}"/sv/cyclog@"$j" "${dest}"/nosh-bundles/var/sv/
+	(cd "${src}"/ && pax -r -w -l -- sv/"$j" sv/cyclog@"$j" "${absdest}"/nosh-bundles/var/)
 done
 while read j ;
 do
-	cp -a -- "${src}"/etc/service-bundles/targets/"$j" "${dest}"/nosh-bundles/etc/service-bundles/targets/
+#	cp -a -- "${src}"/etc/service-bundles/targets/"$j" "${dest}"/nosh-bundles/etc/service-bundles/targets/
+	(cd "${src}"/ && pax -r -w -l -- etc/service-bundles/targets/"$j" "${absdest}"/nosh-bundles/)
 done < package/standard-targets
 while read j ;
 do
-	cp -a -- "${src}"/etc/service-bundles/services/mount@"$j" "${dest}"/nosh-bundles/etc/service-bundles/services/
-	cp -a -- "${src}"/etc/service-bundles/services/fsck@"$j" "${dest}"/nosh-bundles/etc/service-bundles/services/
+#	cp -a -- "${src}"/etc/service-bundles/services/mount@"$j" "${dest}"/nosh-bundles/etc/service-bundles/services/
+#	cp -a -- "${src}"/etc/service-bundles/services/fsck@"$j" "${dest}"/nosh-bundles/etc/service-bundles/services/
+	(cd "${src}"/ && pax -r -w -l -- etc/service-bundles/services/mount@"$j" "${absdest}"/nosh-bundles/)
+	(cd "${src}"/ && pax -r -w -l -- etc/service-bundles/services/fsck@"$j" "${absdest}"/nosh-bundles/)
 done < package/common-mounts
+(
+cat package/common-service-aliases 
+case "`uname`" in
+Linux)	cat package/linux-service-aliases ;;
+*BSD)	cat package/bsd-service-aliases ;;
+esac
+) | while read service j ;
+do
+	(cd "${src}"/ && pax -r -w -l -- sv/"$j" "${absdest}"/nosh-bundles/var/)
+	(cd "${src}"/ && pax -r -w -l -- sv/cyclog@"$j" "${absdest}"/nosh-bundles/var/)
+done
+(
+cat package/common-etc-service-aliases 
+case "`uname`" in
+Linux)	cat package/linux-etc-service-aliases ;;
+*BSD)	cat package/bsd-etc-service-aliases ;;
+esac
+) | while read service j ;
+do
+	(cd "${src}"/ && pax -r -w -l -- etc/service-bundles/services/"$j" "${absdest}"/nosh-bundles/)
+done
 for j in issue.vc
 do
-	cp -a -- "${src}"/etc/"$j" "${dest}"/nosh-bundles/etc/
-done < package/standard-targets
+#	cp -a -- "${src}"/etc/"$j" "${dest}"/nosh-bundles/etc/
+	(cd "${src}"/ && pax -r -w -l -- etc/"$j" "${absdest}"/nosh-bundles/)
+done
 (
 cat package/common-etc-services 
 case "`uname`" in
@@ -126,10 +153,9 @@ Linux)	cat package/linux-etc-services ;;
 esac
 ) | while read j ;
 do
-	cp -a -- "${src}"/etc/service-bundles/services/"$j" "${dest}"/nosh-bundles/etc/service-bundles/services/
+#	cp -a -- "${src}"/etc/service-bundles/services/"$j" "${dest}"/nosh-bundles/etc/service-bundles/services/
+	(cd "${src}"/ && pax -r -w -l -- etc/service-bundles/services/"$j" "${absdest}"/nosh-bundles/)
 done
-rm -f -- "${dest}"/nosh-run-openssh-server/var/sv/ssh
-ln -s sshd "${dest}"/nosh-run-openssh-server/var/sv/ssh
 
 # units
 install -d -m 0755 "${dest}"/nosh-run-via-netbsd-rc/usr/local/etc/rc.d 
@@ -148,7 +174,7 @@ while read j ;
 do
 	ln -f -- "${src}"/etc/rc.d/"$j" "${dest}"/nosh-run-via-netbsd-rc/usr/local/etc/rc.d/
 done < package/netbsd-rc-scripts ;
-for i in bundles run-via-systemd run-via-netbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog
+for i in bundles run-via-systemd run-via-netbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-pcbsd-base run-trueos-base
 do
 	install -d -m 0755 "${dest}"/nosh-"$i"/usr/local/etc/system-control/presets 
 	(

@@ -154,16 +154,47 @@ do
 	cp -a build/services/mount@$i config/services{new}/
 	cp -a build/services/fsck@$i config/services{new}/
 done < package/common-mounts
-cat package/common-etc-services package/bsd-etc-services package/linux-etc-services |
-while read i
+(
+	cat package/common-etc-services 
+	case "`uname`" in
+	Linux)	cat package/linux-etc-services ;;
+	*BSD)	cat package/bsd-etc-services ;;
+	esac
+) | while read i
 do
 	cp -a build/services/$i config/services{new}/
 done
-cat package/common-services package/bsd-services package/linux-services package/common-sockets package/bsd-sockets package/linux-sockets package/common-ttys package/bsd-ttys package/linux-ttys |
-while read i
+(
+	cat package/common-services package/common-sockets package/common-ttys 
+	case "`uname`" in
+	Linux)	cat package/linux-services package/linux-sockets package/linux-ttys ;;
+	*BSD)	cat package/bsd-services package/bsd-sockets package/bsd-ttys ;;
+	esac
+) | while read i
 do
 	cp -a build/services/$i config/services{new}/
 	cp -a build/services/cyclog@$i config/services{new}/
+done
+(
+	cat package/common-service-aliases 
+	case "`uname`" in
+	Linux)	cat package/linux-service-aliases ;;
+	*BSD)	cat package/bsd-service-aliases ;;
+	esac
+) | while read service alias
+do
+	ln -s "${service}" config/services{new}/"${alias}"
+	ln -s cyclog@"${service}" config/services{new}/cyclog@"${alias}"
+done
+(
+	cat package/common-etc-service-aliases 
+	case "`uname`" in
+	Linux)	cat package/linux-etc-service-aliases ;;
+	*BSD)	cat package/bsd-etc-service-aliases ;;
+	esac
+) | while read service alias
+do
+	ln -s "${service}" config/services{new}/"${alias}"
 done
 
 # ##############################################################################
@@ -176,11 +207,11 @@ do
 	cp -p -f -- build/systemd/"$i" config/systemd/"$i"{new}
 done
 (
-cat package/systemd-presets
-for i in bundles run-via-systemd run-via-netbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog
-do
-	cat package/common-nosh-"$i"-presets package/linux-nosh-"$i"-presets package/bsd-nosh-"$i"-presets 
-done
+	cat package/systemd-presets
+	for i in bundles run-via-systemd run-via-netbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-pcbsd-base run-trueos-base
+	do
+		cat package/common-nosh-"$i"-presets package/linux-nosh-"$i"-presets package/bsd-nosh-"$i"-presets 
+	done
 ) | awk '!x[$0]++' | while read i
 do
 	rm -f -- config/presets/"$i"{new}
@@ -212,7 +243,7 @@ do
 done 
 (
 cat package/systemd-presets 
-for i in bundles run-via-systemd run-via-netbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog
+for i in bundles run-via-systemd run-via-netbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-pcbsd-base run-trueos-base
 do
 	cat package/common-nosh-"$i"-presets package/linux-nosh-"$i"-presets package/bsd-nosh-"$i"-presets 
 done

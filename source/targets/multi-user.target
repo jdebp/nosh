@@ -12,4 +12,5 @@ User=nobody
 RemainAfterExit=yes
 
 [Install]
+StoppedBy=shutdown.target
 WantedBy=normal.target

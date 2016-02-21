@@ -404,7 +404,7 @@ start_stop_common (
 		insertion_sort(sorted, *i);
 
 	// Make the various "supervise" directories, if they are in a RAM volume, and open file descriptors for them.
-	umask(0);
+	umask(0022);
 	for (bundle_pointer_list::const_iterator i(sorted.begin()); sorted.end() != i; ++i) {
 		bundle & b(**i);
 		if (bundle::WANT_NONE == b.wants) continue;

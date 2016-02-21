@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Run PC-BSD first-boot task
+
+[Service]
+Type=oneshot
+ExecStart=./helper
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

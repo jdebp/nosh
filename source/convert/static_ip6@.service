@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD static IP6 binding for %i
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+EnvironmentDirectory=env
+ExecStart=ndp -s "${addr}" ${dest}
+ExecStopPost=ndp -d "${addr}"
+
+[Install]
+WantedBy=server.target

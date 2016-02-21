@@ -4,7 +4,6 @@
 
 [Unit]
 Description=Local filesystems group target
-DefaultDependencies=false
 EarlySupervise=true
 Before=shutdown.target
 

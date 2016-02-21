@@ -13,12 +13,10 @@ get_var() { read_rc "$1" || true ; }
 get_var1() { read_rc webcamd_"$1" || true ; }
 get_var2() { read_rc webcamd_"$1"_"$2" || read_rc webcamd_"$2" || true ; }
 
-redo-ifchange rc.conf general-services
+redo-ifchange rc.conf general-services "webcamd@.service"
 
 r="/var/local/sv"
 e="--no-systemd-quirks --escape-instance --bundle-root"
-
-redo-ifchange "webcamd@.service"
 
 n=0
 while true

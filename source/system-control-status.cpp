@@ -49,7 +49,7 @@ convert (
 	std::vector<const char *> r;
 	for (std::vector<std::string>::const_iterator i(args.begin()); args.end() != i; ++i)
 		r.insert(r.end(), i->c_str());
-	r.insert(r.end(), 0);
+//	r.insert(r.end(), 0);
 	return r;
 }
 

@@ -575,10 +575,10 @@ Directives are matched against
 <replaceable>prefix</replaceable><replaceable>name</replaceable>.
 </para></listitem>
 <listitem><para>
-(unless the <arg choice="plain">--no-rcconf</arg> command line option is set) <filename>/etc/rc.conf</filename> and <filename>/etc/rc.conf.local</filename> preset information, specifically the <envar><replaceable>name</replaceable>_enable</envar> variable, interpreting the values <code>true</code>, <code>1</code>, <code>yes</code>, and <code>on</code> as enable, and any other values (including specifically <code>false</code>, <code>0</code>, <code>no</code>, and <code>off</code>) as disable.
+(unless the <arg choice="plain">--no-rcconf</arg> command line option is set) <filename>/etc/defaults/rc.conf</filename>, <filename>/etc/rc.conf</filename>, and <filename>/etc/rc.conf.local</filename> preset information, specifically the <envar><replaceable>name</replaceable>_enable</envar> variable, interpreting the values <code>true</code>, <code>1</code>, <code>yes</code>, and <code>on</code> as enable, and any other values (including specifically <code>false</code>, <code>0</code>, <code>no</code>, and <code>off</code>) as disable.
 </para>
 <para>
-The variable names are matched against just <replaceable>name</replaceable> to allow one to use a main service name as <replaceable>name</replaceable> and combine it with a log service template <replaceable>prefix</replaceable> such as <code>cyclog@</code> or <code>s6-multilog@</code>, on the grounds that traditional <filename>/etc/rc.conf</filename> and <filename>/etc/rc.conf.local</filename> contents do not make explicit provision for separate logging services.
+The variable names are matched against just <replaceable>name</replaceable> to allow one to use a main service name as <replaceable>name</replaceable> and combine it with a log service template <replaceable>prefix</replaceable> such as <code>cyclog@</code> or <code>s6-multilog@</code>, on the grounds that traditional <filename>/etc/defaults/rc.conf</filename>, <filename>/etc/rc.conf</filename>, and <filename>/etc/rc.conf.local</filename> contents do not make explicit provision for separate logging services.
 </para></listitem>
 <listitem><para>
 (if the <arg choice="plain">--ttys</arg> command line option is set) <filename>/etc/ttys</filename> preset information, specifically the <code>on</code> and <code>off</code> flags as enable and disable, respectively.
@@ -911,6 +911,9 @@ This makes it possible, for example, for a single service unit file to just say 
 The <code>LimitMemory=</code> setting translates to the <arg choice='plain'>-m</arg> option of <citerefentry><refentrytitle>softlimit</refentrytitle><manvolnum>1</manvolnum></citerefentry>, for setting multiple "memory" resource limits in one go.
 </para></listitem>
 <listitem><para>
+The <code>EnvironmentAppendPath=</code> setting acts like <code>Environment</code> except that the specified environment variables are augmented with <citerefentry><refentrytitle>appendpath</refentrytitle><manvolnum>1</manvolnum></citerefentry> rather than replaced.
+</para></listitem>
+<listitem><para>
 The <code>EnvironmentDirectory=</code> setting specifies a directory to be read by <citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 Set this on a service that is configured via an <filename>envdir</filename> environment directory.
 </para></listitem>
@@ -928,6 +931,9 @@ This is the inverse of the <filename>conflicts</filename> relationship.
 By default, unless the <code>DefaultDependencies=false</code> setting is used, services are stopped by the "shutdown" target in addition to anything specified in this setting.
 </para></listitem>
 <listitem><para>
+The <code>JailID=</code> setting specifies the ID of a jail in which to run the service, as if by <citerefentry><refentrytitle>jexec</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para></listitem>
+<listitem><para>
 The <code>ProcessGroupLeader=</code> setting (defaulting to <code>false</code>) if <code>true</code> causes the generated bundle to run the daemon as a process group leader with <citerefentry><refentrytitle>setpgrp</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para></listitem>
 <listitem><para>
@@ -938,6 +944,13 @@ The <code>TTYPrompt=</code> setting (defaulting to <code>false</code>) if <code>
 </para></listitem>
 <listitem><para>
 The <code>ExecRestartPre=</code> setting allows one to specify extra commands to be run in the (automatically generated) <filename>restart</filename> script.
+</para></listitem>
+<listitem><para>
+The <code>UCSPIRules=</code> setting (defaulting to <code>false</code>) applies <citerefentry><refentrytitle>ucspi-socket-rules-check</refentrytitle><manvolnum>1</manvolnum></citerefentry> to all accepted connections.
+The <code>LogUCSPIRules=</code> setting (defaulting to <code>false</code>) causes <citerefentry><refentrytitle>ucspi-socket-rules-check</refentrytitle><manvolnum>1</manvolnum></citerefentry> to print information about access failures.
+</para></listitem>
+<listitem><para>
+The <code>NUMAInterleave</code>, <code>NUMAMemBind</code>, <code>NUMACPUNodeBind</code>, <code>NUMAPhysCPUBind</code>, <code>NUMALocalAlloc</code>, and <code>NUMAPreferred</code> settings cause the generated bundle to invoke <citerefentry><refentrytitle>numactl</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para></listitem>
 </itemizedlist>
 
@@ -1374,6 +1387,14 @@ Core services and targets are incorporated into a set of further subordinate tar
 <listitem><para>
 This target implies the "basic" system, excluding all workstation, server, and multi-user services.
 It "wants" the <filename>sysinit</filename> target.
+It is a collection that is used to group services, but is not an ordering milestone and has no <filename>before/</filename> or <filename>after/</filename> relationships.
+</para></listitem>
+</varlistentry>
+
+<varlistentry><term><filename>static-networking</filename></term>
+<listitem><para>
+This target implies the static setup/teardown of network interfaces and routing.
+It "wants" all of the generated <filename>static_<replaceable>protocol</replaceable>@<replaceable>id</replaceable></filename> services.
 It is a collection that is used to group services, but is not an ordering milestone and has no <filename>before/</filename> or <filename>after/</filename> relationships.
 </para></listitem>
 </varlistentry>

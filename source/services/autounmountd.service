@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Repeatedly try to unmount automounted filesystems
+After=nfsclient.service
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=%p -d ${flags}
+Restart=always
+
+[Install]
+WantedBy=workstation.target

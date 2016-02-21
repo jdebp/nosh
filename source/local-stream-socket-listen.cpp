@@ -16,6 +16,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sys/un.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <pwd.h>
 #include <grp.h>
 #include "utils.h"
 #include "fdutils.h"
@@ -35,6 +36,7 @@ local_stream_socket_listen (
 	unsigned long backlog(5U);
 	signed long uid(-1), gid(-1), mode(0700);
 	bool has_uid(false), has_gid(false), has_mode(false);
+	const char * user(0), * group(0);
 	bool systemd_compatibility(false), pass_credentials(false), pass_security(false);
 	try {
 		popt::bool_definition systemd_compatibility_option('\0', "systemd-compatibility", "Set the $LISTEN_FDS and $LISTEN_PID environment variables for compatibility with systemd.", systemd_compatibility);
@@ -44,6 +46,8 @@ local_stream_socket_listen (
 		popt::signed_number_definition uid_option('u', "uid", "number", "Specify the UID for the bound socket filename.", uid, 0);
 		popt::signed_number_definition gid_option('g', "gid", "number", "Specify the GID for the bound socket filename.", gid, 0);
 		popt::signed_number_definition mode_option('m', "mode", "number", "Specify the permissions for the bound socket filename.", mode, 0);
+		popt::string_definition user_option('\0', "user", "number", "Specify the user for the FIFO filename.", user);
+		popt::string_definition group_option('\0', "group", "number", "Specify the group for the FIFO filename.", group);
 		popt::definition * top_table[] = {
 			&systemd_compatibility_option,
 			&pass_credentials_option,
@@ -51,7 +55,9 @@ local_stream_socket_listen (
 			&backlog_option,
 			&uid_option,
 			&gid_option,
-			&mode_option
+			&mode_option,
+			&user_option,
+			&group_option
 		};
 		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "path prog");
 
@@ -107,6 +113,21 @@ exit_error:
 	if (0 > bind(s, reinterpret_cast<sockaddr *>(&addr), sizeof addr)) goto exit_error;
 	if (has_uid || has_gid) {
 		if (0 > chown(listenpath, uid, gid)) goto exit_error;
+	} else
+	if (user || group) {
+		struct passwd * u(user ? getpwnam(user) : 0);
+		struct group * g(group ? getgrnam(group) : 0);
+		endgrent();
+		endpwent();
+		if (user && !u) {
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, user, "No such user");
+			throw EXIT_FAILURE;
+		}
+		if (group && !g) {
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, group, "No such group");
+			throw EXIT_FAILURE;
+		}
+		if (0 > chown(listenpath, u ? u->pw_uid : -1, g ? g->gr_gid : -1)) goto exit_error;
 	}
 	if (has_mode) {
 		if (0 > chmod(listenpath, mode)) goto exit_error;

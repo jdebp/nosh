@@ -4,7 +4,6 @@
 
 [Unit]
 Description=Emergency log-in target
-DefaultDependencies=false
 EarlySupervise=true
 Before=shutdown.target
 

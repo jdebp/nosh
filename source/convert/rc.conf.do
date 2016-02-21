@@ -34,7 +34,7 @@ convert_freenas() {
 
 convert_with_sysrc() {
 	redo-ifchange "${default_rc}"
-	sysrc -n rc_conf_files | while read i
+	for i in `sysrc -n rc_conf_files`
 	do
 		if test -e "$i"
 		then

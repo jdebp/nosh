@@ -4,7 +4,6 @@
 
 [Unit]
 Description=Linux kernel Netlink socket for receiving plug and play events
-DefaultDependencies=false
 
 [Socket]
 Accept=false

@@ -4,6 +4,7 @@
 
 [Unit]
 Description=BSD %p for %i
+Wants=%pcontrol-log
 
 [Service]
 Type=oneshot

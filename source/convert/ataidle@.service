@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Apply %p settings to disc %I
+Wants=%p-log
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+EnvironmentDirectory=env
+RemainAfterExit=true
+ExecStart=%p ${args} /dev/"%I"
+
+[Install]
+WantedBy=workstation.target

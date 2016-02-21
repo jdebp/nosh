@@ -4,7 +4,7 @@
 ## **************************************************************************
 #
 # Convert the PC-BSD Warden external configuration formats.
-# This is invoked by general-services.do .
+# This is invoked by all.do .
 #
 
 conf=/usr/local/etc/warden.conf

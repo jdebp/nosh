@@ -3,14 +3,14 @@
 ## **************************************************************************
 
 [Unit]
-Description=BSD %p for %i
+Description=BSD static ARP binding for %i
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
 EnvironmentDirectory=env
-ExecStart=ndp -s %I
-ExecStopPost=set -- %i && ndp -d $1
+ExecStart=ndp -s "${addr}" ${dest}
+ExecStopPost=ndp -d "${addr}"
 
 [Install]
 WantedBy=server.target

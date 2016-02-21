@@ -10,6 +10,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cerrno>
 #include <cstring>
 #include <unistd.h>
+#include <paths.h>
 #include <pwd.h>
 #include "utils.h"
 #include "popt.h"
@@ -60,7 +61,7 @@ userenv (
 	set("GID", gs.str().c_str());
 	if (const passwd * pw = getpwuid(uid)) {
 		set("HOME", pw->pw_dir);
-		set("SHELL", pw->pw_shell);
+		set("SHELL", *pw->pw_shell ? pw->pw_shell : _PATH_BSHELL);
 		set("USER", pw->pw_name);
 		set("LOGNAME", pw->pw_name);
 	} else {
@@ -69,4 +70,5 @@ userenv (
 		unsetenv("USER");
 		unsetenv("LOGNAME");
 	}
+	endpwent();
 }

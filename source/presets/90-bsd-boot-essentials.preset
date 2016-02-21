@@ -7,19 +7,26 @@
 #
 
 # Ordinary services
-enable	cyclog@newsyslog.service
-enable	newsyslog.service
 enable	cyclog@ldconfig.service
 enable	ldconfig.service
 enable	cyclog@sysctl.service
 enable	sysctl.service
+enable	cyclog@savecore.service
+enable	savecore.service
+enable	cyclog@crashinfo.service
+enable	crashinfo.service
+enable	static_arp@*.service
+enable	static_ndp@*.service
+enable	static_ip4@*.service
+enable	static_ip6@*.service
 
 # Sysinit services
-enable	background-fsck.service
 enable	devd-log.service
 enable	devd.service
 enable	nextboot.service
 enable	gptboot.service
+# This has been superseded by individual fsck@ services for every entry in the fstab database and zfs list.
+#enable	background-fsck.service
 
 # Targets
 enable	dumpauto.target

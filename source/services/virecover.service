@@ -9,6 +9,7 @@ Description=nvi recovery
 Type=oneshot
 EnvironmentDirectory=env
 ExecStart=./helper
+RemainAfterExit=true
 Restart=never
 
 [Install]

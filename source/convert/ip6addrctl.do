@@ -9,7 +9,7 @@
 
 # This gets us *only* the configuration variables, safely.
 read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
-get_conf() { read_rc $1 || true ; }
+get_var() { read_rc $1 || true ; }
 
 redo-ifchange rc.conf general-services
 
@@ -23,7 +23,7 @@ prefer() {
 	system-control preset ip6addrctl@"$1"
 }
 
-case "`get_conf ip6addrctl_policy`" in
+case "`get_var ip6addrctl_policy`" in
 ipv4_prefer)
 	prefer ipv4
 	;;
@@ -48,7 +48,7 @@ ipv6_prefer)
 	;;
 *)
 	echo 1>&2 "$0: \$ip6addrctl_policy is invalid: ${ip6addrctl_policy}. Obsolete \$ipv6_prefer is used instead."
-	case "`get_conf ipv6_prefer`" in
+	case "`get_var ipv6_prefer`" in
 	[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
 		prefer ipv6
 		;;
