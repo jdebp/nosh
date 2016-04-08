@@ -4,7 +4,7 @@
 
 [Unit]
 Description=Service manager local domain socket activation
-After=local-fs.target sysinit.target systemd-tmpfiles-setup.service
+After=systemd-tmpfiles-setup.service
 
 [Socket]
 ListenDatagram=/run/service-manager/control

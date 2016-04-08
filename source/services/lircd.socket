@@ -11,4 +11,4 @@ MaxConnections=2
 ListenStream=/run/lirc/%p
 
 [Install]
-WantedBy=server.target
+WantedBy=workstation.target

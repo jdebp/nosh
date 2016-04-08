@@ -18,34 +18,27 @@ getent passwd |
 awk -F : '{ if (!match($7,"/nologin$") && !match($7,"/false$")) print $1; }' |
 while read -r i
 do
-	# On systems that dont set nologin/false as the shell, there is nothing distinguishing "system" accounts from accounts that temporarily have their password disabled.
+	# On systems that don't set nologin/false as the shell, there is nothing distinguishing "system" accounts from accounts that temporarily have their password disabled.
 	# As the manual page says, an account with a temporarily disabled password could still be used via SSH, and obviously one might want user Desktop Bus service for such a login.
 	case "$i" in
-	bin|daemon|games|irc|mail|news|nobody|root|sync|sys|uucp|www-data|libuuid|backup|lp|saned) continue ;;
+	bin|daemon|games|irc|mail|news|nobody|root|sync|sys|uucp|www-data|libuuid|backup|lp|saned|man|proxy|backup|list|gnats) continue ;;
 	alias|qmail[dlpqrs]) continue ;;
 	toor) continue ;;
 	esac
 
-	if test -d "$sr/user@$i" 
-	then
-		system-control disable "$sr/user@$i" || :		## Disable old user service
-	fi
-	if test -d "$sr/user-dbus@$i" 
-	then
-		system-control disable "$sr/user-dbus@$i" || :		## Disable old user service
-	fi
-	if test -d "$sr/user-dbus-log@$i" 
-	then
-		system-control disable "$sr/user-dbus-log@$i" || :	## Disable old user service
-	fi
-	if test -d "$sr/user-services@$i" 
-	then
-		system-control disable "$sr/user-services@$i" || :	## Disable old user service
-	fi
-	if test -d "$sr/user-runtime@$i" 
-	then
-		system-control disable "$sr/user-runtime@$i" || :	## Disable old user service
-	fi
+	for j in '' -dbus -dbus-log -services -runtime
+	do
+		if test -d "$sr/user$j@$i/" 
+		then
+			## Disable old user service
+			system-control disable "$sr/user$j@$i" || :
+			if ! system-control is-loaded "$sr/user$j@$i" 2>/dev/null
+			then
+				rm -r -- "$sr/user$j@$i/"
+				redo-ifcreate "$sr/user$j@$i/"
+			fi
+		fi
+	done
 
 	system-control convert-systemd-units --etc-bundle $e "$tr/" "./user@$i.target"
 	echo "user@$i" >> "$3"

@@ -4,3 +4,4 @@ cleantmp	clear_tmp
 cleanuucp	cleanvar
 git-daemon	git_daemon
 org.cups.cupsd	cupsd
+ntpd		ntp

@@ -140,6 +140,7 @@ sdpd
 securelevel
 slpd
 snddetect
+stf
 swapexd
 swaplate
 syscache

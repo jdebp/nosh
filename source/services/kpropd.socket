@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Kerberos prop socket
+
+[Socket]
+Backlog=2
+BindIPv6Only=both
+MaxConnections=30
+NoDelay=false
+ListenStream=kprop
+UCSPIRules=true
+Accept=true
+
+[Install]
+WantedBy=server.target

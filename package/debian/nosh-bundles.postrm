@@ -27,7 +27,22 @@ case "$1" in
 			then
 				system-control disable "$I".target
 				rm -f -- /etc/service-bundles/targets/"$I"/wanted-by/sysinit
+				rm -f -- /etc/service-bundles/targets/sysinit/wants/"$I"
 				system-control preset "$I".target
+			fi
+		done
+		for I in \
+			avahi-daemon \
+			gpsd \
+			initctld \
+			lircd \
+			;
+		do
+			if system-control find "$I".service >/dev/null 2>&1
+			then
+				system-control disable "$I".service
+				rm -f -- /var/sv/"$I"/wanted-by/server
+				system-control preset "$I".service
 			fi
 		done
 		# common services
@@ -39,6 +54,9 @@ case "$1" in
 			bcron-update \
 			bootparams \
 			ccpd \
+			celery@example \
+			celery-beat \
+			chrony \
 			cleanuucp \
 			cleantmp \
 			cleanX \
@@ -54,12 +72,14 @@ case "$1" in
 			epmd \
 			exim4-queue \
 			fail2ban \
+			fam \
 			fancontrol \
 			fcron \
 			ferm \
 			ffserver \
 			flow-capture \
 			fscd \
+			freshclam \
 			gdm \
 			genkdmconf \
 			gitlab-sidekiq \
@@ -77,6 +97,8 @@ case "$1" in
 			lxdm \
 			mailcatcher \
 			ModemManager \
+			miredo \
+			miredo-server \
 			mongodb \
 			motd-dynamic \
 			moused \
@@ -105,6 +127,10 @@ case "$1" in
 			ossec@monitord \
 			ossec@remoted \
 			ossec@syscheckd \
+			owfs \
+			owftpd \
+			owhttpd \
+			owserver \
 			packagekit \
 			pcdm \
 			pdnsd \
@@ -119,6 +145,10 @@ case "$1" in
 			rabbitmq-server \
 			rpcbind \
 			rtadvd \
+			salt-api \
+			salt-master \
+			salt-minion \
+			salt-syndic \
 			samba \
 			saslauthd \
 			sickbeard \
@@ -198,6 +228,7 @@ case "$1" in
 			klogd \
 			kpasswdd \
 			nagios-nrpe-server \
+			opal-prd \
 			org.cups.cups-lpd \
 			qmail-smtp-relay \
 			qmail-smtp-submission \
@@ -234,6 +265,7 @@ case "$1" in
 			irqbalance \
 			kerneloops \
 			mdadm \
+			pommed \
 			udisks \
 			upower \
 			update-binfmts \
@@ -253,6 +285,7 @@ case "$1" in
 		for i in \
 			acpid \
 			gpsd \
+			kpropd \
 			systemd-syslog-read \
 			systemd-rsyslogd \
 			systemd-syslogd \

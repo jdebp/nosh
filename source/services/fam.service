@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+# The ability to run fam as an on-demand RPC service was removed from Debian Linux in 2003.
+# Like Debian Linux, we don't attempt to run fam in its "inetd" mode.
+# See Debian bugs 220471 and 216833.
+
+[Unit]
+Description=SGI File Alteration Monitor daemon
+
+[Service]
+Type=dbus
+ExecStart=%pd
+Restart=always
+
+[Install]
+WantedBy=workstation.target

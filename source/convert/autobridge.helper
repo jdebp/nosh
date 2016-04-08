@@ -1,0 +1,49 @@
+#!/bin/sh -
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+list_current() {
+	if test -z "${network_interfaces}"
+	then
+		ifconfig -l
+	else
+		for i in ${network_interfaces} ${cloned_interfaces}
+		do
+			case "$i" in
+			epair[0-9]*)	echo "$i"a ; echo "$i"b ;;
+			*)		echo "$i" ;;
+			esac
+		done
+	fi
+}
+
+wildmatch() {
+	case "$1" in
+		$2) true ;;
+		*) false ;;
+	esac
+}
+
+wildmatch_current() {
+	list_current |
+	while read -r i
+	do
+		for j
+		do
+			match "$i" "$j" && return 0
+		done
+	done
+	return 1
+}
+
+iface="$1" ; shift
+command="$1" ; shift
+
+for i
+do
+	if wildmatch_current "$i"
+	then
+		ifconfig "${iface}" "${command}" "$i"
+	fi
+done

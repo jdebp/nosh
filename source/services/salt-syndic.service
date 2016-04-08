@@ -8,6 +8,7 @@ Description=Saltstack syndic
 [Service]
 LimitNOFILE=8192
 ExecStart=%p
+Restart=always
 
 [Install]
 WantedBy=workstation.target

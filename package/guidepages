@@ -2,6 +2,8 @@ anatomy-of-regular-service
 anatomy-of-regular-socket
 anatomy-of-sysinit-service
 anatomy-of-system-target
+beyond-cyclog
+chain-loading-cheatsheet
 converting-systemd-units
 creating-bundles
 external-formats
@@ -10,13 +12,14 @@ fstab
 index
 introduction
 kernel-virtual-terminals
-logging
 log-service-plumbing
-beyond-cyclog
-old-log-services
+logging
+logging-cheatsheet
 mounting
 new-interfaces
+old-log-services
 rcconf
+service-management-cheatsheet
 startup-and-shutdown
 svscan-startup
 terminals

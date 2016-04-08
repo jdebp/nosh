@@ -24,6 +24,9 @@ case "$1" in
 			bcron-update \
 			bootparams \
 			ccpd \
+			celery@example \
+			celery-beat \
+			chrony \
 			cleanuucp \
 			cleantmp \
 			cleanX \
@@ -39,12 +42,14 @@ case "$1" in
 			epmd \
 			exim4-queue \
 			fail2ban \
+			fam \
 			fancontrol \
 			fcron \
 			ferm \
 			ffserver \
 			flow-capture \
 			fscd \
+			freshclam \
 			gdm \
 			genkdmconf \
 			gitlab-sidekiq \
@@ -66,6 +71,8 @@ case "$1" in
 			lxdm \
 			mailcatcher \
 			ModemManager \
+			miredo \
+			miredo-server \
 			mongodb \
 			motd-dynamic \
 			moused \
@@ -94,6 +101,10 @@ case "$1" in
 			ossec@monitord \
 			ossec@remoted \
 			ossec@syscheckd \
+			owfs \
+			owftpd \
+			owhttpd \
+			owserver \
 			packagekit \
 			pcdm \
 			pdnsd \
@@ -108,6 +119,10 @@ case "$1" in
 			rabbitmq-server \
 			rpcbind \
 			rtadvd \
+			salt-api \
+			salt-master \
+			salt-minion \
+			salt-syndic \
 			samba \
 			saslauthd \
 			sickbeard \
@@ -175,6 +190,7 @@ case "$1" in
 			klogd \
 			kpasswdd \
 			nagios-nrpe-server \
+			opal-prd \
 			org.cups.cups-lpd \
 			qmail-smtp-relay \
 			qmail-smtp-submission \
@@ -242,6 +258,7 @@ case "$1" in
 			kmod@uvesafb \
 			linux-utmp \
 			mdadm \
+			pommed \
 			udisks \
 			upower \
 			update-binfmts \
@@ -264,6 +281,7 @@ case "$1" in
 		for i in \
 			acpid \
 			gpsd \
+			kpropd \
 			systemd-syslog-read \
 			systemd-rsyslogd \
 			systemd-syslogd \
@@ -284,8 +302,10 @@ case "$1" in
 		# Linux services that fan in to a single logger
 		for I in \
 			busybox-mdev \
+			dmraid \
 			kmod@autofs \
 			linux-lockfiles \
+			lvm \
 			suckless-mdev \
 			udev \
 			vdev \
@@ -358,6 +378,14 @@ case "$1" in
 		do
 			i="`escape "$I"`"
 			del_user "$i"
+		done
+		for I in \
+			dnscache \
+			tinydns \
+			;
+		do
+			i="`escape "$I"`"
+			del_user "$i"-d
 		done
 		;;
 esac

@@ -3,6 +3,7 @@
 ## **************************************************************************
 
 [Unit]
+Description=Generic FTP socket for IP6
 
 [Socket]
 Backlog=2

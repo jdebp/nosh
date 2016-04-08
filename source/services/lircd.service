@@ -12,4 +12,3 @@ ExecStart=lircd --nodaemon ${device:+-d "${device}"} ${config}
 ; Group=lirc
 
 [Install]
-WantedBy=multi-user.target

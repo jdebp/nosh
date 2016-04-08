@@ -1,0 +1,21 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+# OPAL PRD has a bug such that it doesn't actually process the listening socket open file descriptor that is passed to it.
+# So this socket definition ends up making a socket that the daemon promptly destroys.
+# This is definitely an OPAL PRD bug; yielding faulty behaviour under any service management system that passes in the listening socket.
+
+[Unit]
+Description=OpenPower Abstraction Layer processor recovery diagnostics control socket
+
+[Socket]
+Backlog=2
+ListenStream=/run/%p-control
+Accept=true
+MaxConnections=16
+UCSPIRules=true
+Accept=no
+
+[Install]
+WantedBy=server.target

@@ -943,6 +943,12 @@ The <code>SessionLeader=</code> setting (defaulting to <code>false</code>) if <c
 The <code>TTYPrompt=</code> setting (defaulting to <code>false</code>) if <code>true</code> causes the generated bundle to invoke <citerefentry><refentrytitle>login-prompt</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para></listitem>
 <listitem><para>
+The <code>BannerLine=</code> setting causes the generated bundle to invoke <citerefentry><refentrytitle>line-banner</refentrytitle><manvolnum>1</manvolnum></citerefentry> to write the specified banner line before daemon invocation.
+</para></listitem>
+<listitem><para>
+The <code>BannerFile=</code> setting causes the generated bundle to invoke <citerefentry><refentrytitle>login-banner</refentrytitle><manvolnum>1</manvolnum></citerefentry> to process the specified banner file(s) before daemon invocation.
+</para></listitem>
+<listitem><para>
 The <code>ExecRestartPre=</code> setting allows one to specify extra commands to be run in the (automatically generated) <filename>restart</filename> script.
 </para></listitem>
 <listitem><para>

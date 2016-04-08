@@ -13,6 +13,14 @@ do
 	i="`escape "$I"`"
 	add_user "$i"
 done
+for I in \
+	dnscache \
+	tinydns \
+	;
+do
+	i="`escape "$I"`"
+	add_user "$i"-d
+done
 # adjust to new log users
 for i in \
 	devd \
@@ -67,6 +75,11 @@ do
 	if system-control find "$I".service >/dev/null 2>&1
 	then
 		system-control disable "$I".service
+		system-control disable cyclog@"$I".service
+		rm -f -- /etc/service-bundles/targets/workstation/wants/"$I"
+		rm -f -- /etc/service-bundles/targets/workstation/wants/cyclog@"$I"
+		rm -f -- /etc/service-bundles/targets/shutdown/conflicts/"$I"
+		rm -f -- /etc/service-bundles/targets/shutdown/conflicts/cyclog@"$I"
 	fi
 done
 for I in \
@@ -99,7 +112,22 @@ do
 	then
 		system-control disable "$I".target
 		rm -f -- /etc/service-bundles/targets/"$I"/wanted-by/sysinit
+		rm -f -- /etc/service-bundles/targets/sysinit/wants/"$I"
 		system-control preset "$I".target
+	fi
+done
+for I in \
+	avahi-daemon \
+	gpsd \
+	initctld \
+	lircd \
+	;
+do
+	if system-control find "$I".service >/dev/null 2>&1
+	then
+		system-control disable "$I".service
+		rm -f -- /var/sv/"$I"/wanted-by/server
+		system-control preset "$I".service
 	fi
 done
 # common services with dedicated log services
@@ -111,6 +139,9 @@ for I in \
 	bcron-update \
 	bootparams \
 	ccpd \
+	celery@example \
+	celery-beat \
+	chrony \
 	cleanuucp \
 	cleantmp \
 	cleanX \
@@ -126,12 +157,14 @@ for I in \
 	epmd \
 	exim4-queue \
 	fail2ban \
+	fam \
 	fancontrol \
 	fcron \
 	ferm \
 	ffserver \
 	flow-capture \
 	fscd \
+	freshclam \
 	gdm \
 	genkdmconf \
 	gitlab-sidekiq \
@@ -153,6 +186,8 @@ for I in \
 	lxdm \
 	mailcatcher \
 	ModemManager \
+	miredo \
+	miredo-server \
 	mongodb \
 	motd-dynamic \
 	moused \
@@ -182,6 +217,10 @@ for I in \
 	ossec@monitord \
 	ossec@remoted \
 	ossec@syscheckd \
+	owfs \
+	owftpd \
+	owhttpd \
+	owserver \
 	packagekit \
 	pcdm \
 	pdnsd \
@@ -196,6 +235,10 @@ for I in \
 	rabbitmq-server \
 	rpcbind \
 	rtadvd \
+	salt-api \
+	salt-master \
+	salt-minion \
+	salt-syndic \
 	samba \
 	saslauthd \
 	sickbeard \
@@ -255,6 +298,7 @@ for I in \
 	klogd \
 	kpasswdd \
 	nagios-nrpe-server \
+	opal-prd \
 	org.cups.cups-lpd \
 	qmail-smtp-relay \
 	qmail-smtp-submission \

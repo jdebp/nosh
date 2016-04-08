@@ -21,6 +21,7 @@ local-syslogd
 local-syslog-read
 nagios-nrpe-server
 oidentd
+opal-prd
 org.cups.cups-lpd
 qmail-smtp-relay
 qmail-smtp-submission

@@ -36,8 +36,8 @@ Description: Minimal non-shell script processor and various chain-load utilities
 Package: nosh-service-management
 Architecture: amd64
 Depends: ${shlibs:Depends}
-Suggests: 
-Recommends: 
+Suggests:
+Recommends: kmod
 Description: Service and system management utilities
  This package provides a complete daemon supervisor and system management toolset.
  .

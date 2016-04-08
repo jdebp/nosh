@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Linux LVM activation
+DefaultDependencies=false
+
+[Service]
+Type=oneshot
+ExecStart=vgchange --sysinit --available y
+
+[Install]
+StoppedBy=shutdown.target
+WantedBy=sysinit.target

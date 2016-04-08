@@ -11,4 +11,4 @@ BindIPv6Only=both
 ListenStream=2947
 
 [Install]
-WantedBy=server.target
+WantedBy=workstation.target

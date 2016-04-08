@@ -84,6 +84,12 @@ do
 	grep -q -- "^${alias}\$" package/commands8 package/extra-manpages8 && continue
 	ln -f -s -- "${command}".html guide/"${alias}".html{new}
 done
+# Other guide pages
+for i in COPYING
+do
+	rm -f -- guide/"$i"{new}
+	cp -p -f -- build/"$i" guide/"$i"{new}
+done
 
 # ##############################################################################
 # Rename the ...{new} files in ./command and ./manual.
@@ -139,6 +145,11 @@ while read command alias
 do
 	grep -q -- "^${alias}\$" package/commands8 package/extra-manpages8 && continue
 	mv -f -- guide/"${alias}".html{new} guide/"${alias}".html
+done
+# Other guide pages
+for i in COPYING
+do
+	mv -f -- guide/"$i"{new} guide/"$i"
 done
 
 # ##############################################################################

@@ -6,8 +6,10 @@
 Description=NIS domain name
 
 [Service]
+Type=oneshot
 # The import procedure is expected to have populated this directory with name.
 EnvironmentDirectory=env
+# The name for this command that is common to both Linux and the BSDs is "domainname".
 ExecStart=domainname ${name}
 RemainAfterExit=true
 

@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Generic FTPS socket for both IP4 and IP6
+
+[Socket]
+Backlog=2
+BindIPv6Only=both
+MaxConnections=30
+NoDelay=false
+ListenStream=ftps
+UCSPIRules=true
+Accept=true
+
+[Install]
+WantedBy=server.target

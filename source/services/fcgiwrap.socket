@@ -12,4 +12,3 @@ ListenStream=/run/%p.socket
 
 [Install]
 WantedBy=server.target
-

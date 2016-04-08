@@ -10,4 +10,3 @@ ExecStart=%p -N
 Restart=always
 
 [Install]
-WantedBy=workstation.target

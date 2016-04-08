@@ -4,8 +4,8 @@
 
 [Unit]
 Description=Daemontools compatible service scanner
-After=local-fs.target
+After=service-manager.socket
+After=service-manager.service
 
 [Service]
-#systemdWorkingDirectory=false
 ExecStart=/bin/service-dt-scanner /service/

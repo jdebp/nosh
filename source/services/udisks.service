@@ -12,4 +12,5 @@ ExecStart=/usr/lib/%p/%p-daemon
 Restart=always
 
 [Install]
+# TODO: This might be better as graphical.
 WantedBy=workstation.target

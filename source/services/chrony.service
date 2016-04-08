@@ -3,12 +3,10 @@
 ## **************************************************************************
 
 [Unit]
-Description=nsswitch caching service
+Description=Chrony NTP daemon
 
 [Service]
-# The import procedure is expected to have populated this directory with flags.
-EnvironmentDirectory=env
-ExecStart=%p -n $(flags}
+ExecStart=%pd -d
 Restart=always
 
 [Install]

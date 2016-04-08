@@ -85,4 +85,19 @@ awk >> "$3" -F = '
 	if ("yes" == $2 || "YES" == $2 || "true" == $2 || "1" == $2 || "on" == $2) v = "1"; else v = "0"; 
 	print "net.inet.icmp."n"="v; 
 }
+/^arp/ { 
+	n = substr($1,4); 
+	if ("proxy_all" != n) next;
+	if ("proxy_all" == n) n = "proxyall" ; 
+	if ("yes" == $2 || "YES" == $2 || "true" == $2 || "1" == $2 || "on" == $2) v = "1"; else v = "0"; 
+	print "net.link.ether.inet."n"="v; 
+}
+/^/ { 
+	n = $1; 
+	if ("gateway_enable" != n && "forward_sourceroute" != n && "accept_sourceroute" != n) next;
+	if ("gateway_enable" == n) n = "forwarding" ; 
+	if ("forward_sourceroute" == n) n = "sourceroute" ; 
+	if ("yes" == $2 || "YES" == $2 || "true" == $2 || "1" == $2 || "on" == $2) v = "1"; else v = "0"; 
+	print "net.inet.ip."n"="v; 
+}
 '

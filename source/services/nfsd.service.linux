@@ -4,7 +4,7 @@
 
 [Unit]
 Description=NFS daemon (NFSv4 enabled)
-Requires=kmod@nfsd
+#Requires=kmod@nfsd
 Wants=rpcbind.service mountd.service nfsuserd.service
 
 [Service]

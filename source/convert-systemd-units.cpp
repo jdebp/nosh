@@ -711,8 +711,8 @@ convert_systemd_units (
 	value * ttyfromenv(service_profile.use("service", "ttyfromenv"));	// This is an extension to systemd.
 	value * ttyreset(service_profile.use("service", "ttyreset"));
 	value * ttyprompt(service_profile.use("service", "ttyprompt"));	// This is an extension to systemd.
-	value * ttybannerfile(service_profile.use("service", "ttybannerfile"));	// This is an extension to systemd.
-	value * ttybannerline(service_profile.use("service", "ttybannerline"));	// This is an extension to systemd.
+	value * bannerfile(service_profile.use("service", "bannerfile"));	// This is an extension to systemd.
+	value * bannerline(service_profile.use("service", "bannerline"));	// This is an extension to systemd.
 	value * ttyvhangup(service_profile.use("service", "ttyvhangup"));
 //	value * ttyvtdisallocate(service_profile.use("service", "ttyvtdisallocate"));
 	value * remainafterexit(service_profile.use("service", "remainafterexit"));
@@ -1073,18 +1073,24 @@ convert_systemd_units (
 		if (utmpidentifier)
 			login_prompt += "login-process --id " + quote(names.substitute(utmpidentifier->last_setting())) + "\n";
 #endif
-		if (ttybannerfile)
-			login_prompt += "login-banner " + quote(names.substitute(ttybannerfile->last_setting())) + "\n";
-		if (ttybannerline)
-			for (std::list<std::string>::const_iterator i(ttybannerline->all_settings().begin()); ttybannerline->all_settings().end() != i; ++i) {
-				const std::string & val(*i);
-				login_prompt += "line-banner " + quote(names.substitute(val)) + "\n";
-			}
 	} else {
 		if (ttypath && !is_bool_true(ttyfromenv, false)) redirect += "vc-get-tty " + quote(tty) + "\n";
 		if (stdout_inherit) redirect += "fdmove -c 1 0\n";
 		if (stderr_inherit) redirect += "fdmove -c 2 1\n";
+		if (ttyvhangup) ttyvhangup->used = false;
+		if (ttyreset) ttyreset->used = false;
+		if (ttyprompt) ttyprompt->used = false;
+#if defined(__LINUX__) || defined(__linux__)
+		if (utmpidentifier) utmpidentifier->used = false;
+#endif
 	}
+	if (bannerfile)
+		login_prompt += "login-banner " + quote(names.substitute(bannerfile->last_setting())) + "\n";
+	if (bannerline)
+		for (std::list<std::string>::const_iterator i(bannerline->all_settings().begin()); bannerline->all_settings().end() != i; ++i) {
+			const std::string & val(*i);
+			login_prompt += "line-banner " + quote(names.substitute(val)) + "\n";
+		}
 
 	// Open the service script files.
 
@@ -1161,9 +1167,9 @@ convert_systemd_units (
 			if (is_local_socket_name(listenstream->last_setting())) {
 				run << "local-stream-socket-listen --systemd-compatibility ";
 				if (backlog) run << "--backlog " << quote(backlog->last_setting()) << " ";
-				if (socketmode) run << "--mode " << quote(socketmode->last_setting()) << " ";
-				if (socketuser) run << "--user " << quote(socketuser->last_setting()) << " ";
-				if (socketgroup) run << "--group " << quote(socketgroup->last_setting()) << " ";
+				if (socketmode) run << "--mode " << quote(names.substitute(socketmode->last_setting())) << " ";
+				if (socketuser) run << "--user " << quote(names.substitute(socketuser->last_setting())) << " ";
+				if (socketgroup) run << "--group " << quote(names.substitute(socketgroup->last_setting())) << " ";
 				if (passcredentials) run << "--pass-credentials ";
 				if (passsecurity) run << "--pass-security ";
 				run << quote(names.substitute(listenstream->last_setting())) << "\n";
@@ -1191,7 +1197,7 @@ convert_systemd_units (
 					run << "tcp-socket-accept ";
 					if (maxconnections) run << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
 					if (is_bool_true(keepalive, false)) run << "--keepalives ";
-					if (!is_bool_true(nodelay, true)) run << "--no-delay ";
+					if (is_bool_true(nodelay, false)) run << "--no-delay ";
 					run << "\n";
 				}
 			}
@@ -1200,9 +1206,9 @@ convert_systemd_units (
 			if (is_local_socket_name(listendatagram->last_setting())) {
 				run << "local-datagram-socket-listen --systemd-compatibility ";
 				if (backlog) run << "--backlog " << quote(backlog->last_setting()) << " ";
-				if (socketmode) run << "--mode " << quote(socketmode->last_setting()) << " ";
-				if (socketuser) run << "--user " << quote(socketuser->last_setting()) << " ";
-				if (socketgroup) run << "--group " << quote(socketgroup->last_setting()) << " ";
+				if (socketmode) run << "--mode " << quote(names.substitute(socketmode->last_setting())) << " ";
+				if (socketuser) run << "--user " << quote(names.substitute(socketuser->last_setting())) << " ";
+				if (socketgroup) run << "--group " << quote(names.substitute(socketgroup->last_setting())) << " ";
 				if (passcredentials) run << "--pass-credentials ";
 				if (passsecurity) run << "--pass-security ";
 				run << quote(names.substitute(listendatagram->last_setting())) << "\n";
@@ -1228,9 +1234,9 @@ convert_systemd_units (
 #else
 			if (backlog) backlog->used = false;
 #endif
-			if (socketmode) run << "--mode " << quote(socketmode->last_setting()) << " ";
-			if (socketuser) run << "--user " << quote(socketuser->last_setting()) << " ";
-			if (socketgroup) run << "--group " << quote(socketgroup->last_setting()) << " ";
+			if (socketmode) run << "--mode " << quote(names.substitute(socketmode->last_setting())) << " ";
+			if (socketuser) run << "--user " << quote(names.substitute(socketuser->last_setting())) << " ";
+			if (socketgroup) run << "--group " << quote(names.substitute(socketgroup->last_setting())) << " ";
 #if 0 // This does not apply to FIFOs and we want it to generate a diagnostic when present and unused.
 			if (passcredentials) run << "--pass-credentials ";
 			if (passsecurity) run << "--pass-security ";

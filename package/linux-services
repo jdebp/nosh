@@ -10,6 +10,7 @@ kmod@unix
 kmod@uvesafb
 linux-utmp
 mdadm
+pommed
 sudo
 update-binfmts
 wettsteinsyslogd

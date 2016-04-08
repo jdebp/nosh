@@ -4,7 +4,6 @@
 
 [Unit]
 Description=Daemontools compatible /service/ directory
-After=local-fs.target sysinit.target
 
 [Path]
 DirectoryNotEmpty=/service/

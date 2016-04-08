@@ -24,10 +24,12 @@ do
 	compat5x)		continue ;; # This has disappeared as of FreeBSD 10.
 	fsck_y)			continue ;;
 	ftpproxy)		continue ;; # This is handled by a special conversion.
+	gateway)		continue ;; # This is handled by a special conversion.
 	ibcs2)			continue ;; # This has disappeared as of FreeBSD 10.
 	ike)			continue ;; # isakmpd seems to have disappeared as of FreeBSD 10.
 	inetd)			continue ;; # Service management of individual UCSPI services supersedes this.
 	ip6addrctl)		continue ;; # This is handled by a special conversion.
+	ipv6_gateway)		continue ;; # This is handled by a special conversion.
 	ipxgateway)		continue ;; # This has disappeared as of FreeBSD 10.
 	jail)			continue ;; # This is a target, not a service.
 	jail_*_devfs)		continue ;; # This is a jail configuration item, not a service.
@@ -62,8 +64,6 @@ do
 	# Other variables we haven't got around to having bundles for, yet.
 	adjkerntz)		continue ;;
 	firewall)		continue ;; # TODO: Needs to distribute to ipfs and ipfw0.
-	gateway)		continue ;;
-	ipv6_gateway)		continue ;;
 	mixer)			continue ;; # Needs to be handled by a converter.
 	nfsv4_server)		continue ;;
 

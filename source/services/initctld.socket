@@ -10,4 +10,4 @@ ListenFIFO=/run/initctl
 SocketMode=0600
 
 [Install]
-WantedBy=server.target
+WantedBy=workstation.target

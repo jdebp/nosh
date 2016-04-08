@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=OpenPower Abstraction Layer processor recovery diagnostics daemon
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=%p --stdio ${device:+--pnor "${device}"}
+Restart=always
+
+[Install]
+WantedBy=server.target

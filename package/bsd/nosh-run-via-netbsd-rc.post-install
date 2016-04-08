@@ -1,6 +1,7 @@
 #!/bin/sh -
 system-control preset sysinit.target local-syslog.target
 system-control preset static-networking.target
+system-control preset remote-fs.target remote-fs-pre.target
 sysrc service_manager_enable=YES
 sysrc service_manager_svscan_enable=YES
 sysrc system_control_normal_enable=YES

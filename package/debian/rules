@@ -1,6 +1,6 @@
 #!/usr/bin/make -sf
 
-.PHONY: build binary install clean
+.PHONY: build binary install clean stage control
 
 # The Debian package builder targets this in order to make the package contents.
 build:
@@ -16,9 +16,26 @@ clean:
 	${RM} -r debian/tmp/
 
 # The Debian package builder targets this in order to make the .deb files.
-binary: stage
+binary: stage control
+	for i in exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims guide bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog ; \
+	do \
+		dpkg -b debian/nosh-"$$i" ../ || exit 1 ; \
+	done
+
+stage:
+	install -d -m 0755 debian/tmp/DEBIAN
+	echo Exporting to debian/tmp/
+	package/export debian/tmp/ debian/tmp/ debian/tmp/
+	echo Staging from debian/tmp/
+	package/stage debian/tmp debian
+
+control:
 	${RM} debian/files
 	echo Generating control files
+	for i in exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims guide bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog ; \
+	do \
+		install -d -m 0755 debian/nosh-"$$i"/DEBIAN || exit 1 ; \
+	done
 	for i in exec terminal-management ; \
 	do \
 		${RM} debian/substvars ; \
@@ -43,21 +60,6 @@ binary: stage
 		${RM} debian/substvars ; \
 		dpkg-gencontrol -pnosh-"$$i" -Pdebian/nosh-"$$i" || exit 1 ; \
 	done
-	for i in exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims guide bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog ; \
-	do \
-		dpkg -b debian/nosh-"$$i" ../ || exit 1 ; \
-	done
-
-stage:
-	install -d -m 0755 debian/tmp/DEBIAN
-	echo Exporting to debian/tmp/
-	package/export debian/tmp/ debian/tmp/ debian/tmp/
-	for i in exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims guide bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog ; \
-	do \
-		install -d -m 0755 debian/nosh-"$$i"/DEBIAN || exit 1 ; \
-	done
-	echo Staging from debian/tmp/
-	package/stage debian/tmp debian
 	for i in exec bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog ; \
 	do \
 		for j in preinst postinst prerm postrm ; \

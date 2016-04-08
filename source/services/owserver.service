@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+# 1-wire is not UCSPI-TCP nor systemd "socket-activated"
+
+[Unit]
+Description=1-wire back-end server
+
+[Service]
+EnvironmentDirectory=env
+User=%p
+ExecStart=%p --foreground --w1 ${flags}
+Restart=always
+
+[Install]
+WantedBy=server.target

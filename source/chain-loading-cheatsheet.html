@@ -1,0 +1,132 @@
+<title>Chain loading cheatsheet</title>
+<link rel="Up" href="index.html" title="nosh Guide" />
+<link rel="Prev" href="service-management-cheatsheet.html" title="Service management cheatsheet" />
+<link rel="Next" href="logging-cheatsheet.html" title="Logging cheatsheet" />
+<h1>
+Chain loading cheatsheet
+</h1>
+
+<p>
+<code>run</code> scripts conventionally use simple tools, that chain load from one tool to the next, to set up a d&aelig;mon's process state.
+There is quite a large toolset available for this.
+These are just some of most widely used chain loading commands.
+</p>
+
+<p>
+For exposition, each command here omits the trailing argument vector, which is the rest of the commands to chain to.
+That is determined by the script as a whole.
+In a script interpreted by <a href="nosh.html"><code>nosh</code></a> or <a href="http://skarnet.org/software/execline/">Laurent Bercot's <code>execlineb</code></a>, one could (for readability) place these commands on individual lines.
+In a POSIX-conformant shell script, these would have to be all on a single logical line (possibly comprising multiple physical lines joined by backslashed newlines).
+</p>
+
+<ul>
+
+<li>
+<pre>setuidgid myservice-d</pre>
+<p>
+Drop privileges and operate henceforth under the aegis of user account <code>myservice-d</code>, the (dedicated) user account for this service.
+</p></li>
+
+<li>
+<pre>envuidgid myservice-d</pre>
+<p>
+Set up the environment with the ID information of user account <code>myservice-d</code>, the (dedicated) user account for this service.
+</p></li>
+
+<li>
+<pre>setuidgid-fromenv</pre>
+<p>
+Drop privileges and operate henceforth under the aegis of the user account whose ID information is given in the environment.
+</p></li>
+
+<li>
+<pre>chdir dir</pre>
+<p>
+Change process working directory to <code>dir</code>.
+</p></li>
+
+<li>
+<pre>envdir env/</pre>
+<p>
+Process the environment directory <code>env/</code>.
+An environment directory with this this name, specifically, is compatible with the <code>get</code> and <code>set</code> commands to <a href="rcctl.html"><code>rcctl</code></a>.
+</p></li>
+
+<li>
+<pre>softlimit -o 2048</pre>
+<p>
+Adjust the soft limit on the number of open file descriptors (in each d&aelig;mon process of the service) to 2048.
+</p>
+</li>
+
+<li>
+<pre>fdredir -r 0 seed</pre>
+<p>
+Redirect standard input to read from an existing file named <code>seed</code>.
+</p>
+</li>
+
+<li>
+<pre>jexec wibble</pre>
+<p>
+Switch to running in (BSD) jail <code>wibble</code>.
+</p>
+</li>
+
+<li>
+<pre>rtprio 1</pre>
+<p>
+Run with (BSD) realtime scheduling policy at priority 1.
+</p>
+</li>
+
+<li>
+<pre>chrt --batch 1</pre>
+<p>
+Run with (Linux) <code>SCHED_BATCH</code> scheduling policy at priority 1.
+</p>
+</li>
+
+<li>
+<pre>tcp-socket-listen --backlog 2 --combine4and6 "::0" smtp</pre>
+<p>
+Listen, with a backlog of two pending connections, to the SMTP Relay port on all IPv6 and (if the system supports it) IPv4 addresses.
+The chained-to program receives the listening socket file descriptor at a well-known, fixed, position.
+If it needs the systemd convention for this, use the <code>--systemd-compatibility</code> option.
+</p>
+</li>
+
+<li>
+<pre>tcp-socket-accept --connection-limit 16</pre>
+<p>
+Accept connections on a pre-supplied listening socket, limiting the number of concurrent active accepted connection service processes to 16.
+Multiple chained-to programs are forked, here.
+The convention is to use another script, such as <code>./service</code>, for the chained-to program.
+This permits adjustment of the service command on the fly, without need for stopping and restarting the service itself.
+</p>
+</li>
+
+<li>
+<pre>ucspi-socket-rules-check</pre>
+<p>
+Apply a UCSPI-TCP/UCSPI-UNIX access control ruleset.
+</p>
+</li>
+
+<li>
+<pre>line-banner 'Hello there!'</pre>
+<p>
+Print <code>Hello there!</code> to standard output.
+Some server programs, such as Bernstein's publicfile FTP server, expect their initial greetings message to be written out for them.
+</p></li>
+
+<li>
+<pre>read-conf --oknofile /etc/defaults/wibble</pre>
+<p>
+Read the environment configuration file <code>/etc/defaults/wibble</code>, without aborting if it does not exist.
+Such files are a compatibility measure for setups that used to use such configuration files with System 5 <code>rc</code>.
+They are less preferable to daemontools-like environment directories; and such configuration mechanisms are gradually falling into desuetude anyway.
+However, this tool is also useful outwith d&aelig;mon <code>run</code> scripts.
+</p></li>
+
+</ul>

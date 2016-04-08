@@ -1,5 +1,6 @@
 acpid
 gpsd
+kpropd
 systemd-syslog-read
 systemd-rsyslogd
 systemd-syslogd

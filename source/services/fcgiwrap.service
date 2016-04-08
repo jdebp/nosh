@@ -15,4 +15,3 @@ Restart=always
 
 [Install]
 WantedBy=server.target
-

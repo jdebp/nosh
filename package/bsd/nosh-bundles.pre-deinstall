@@ -10,6 +10,9 @@ for I in \
 	bcron-update \
 	bootparams \
 	ccpd \
+	celery@example \
+	celery-beat \
+	chrony \
 	cleanuucp \
 	cleantmp \
 	cleanX \
@@ -25,12 +28,14 @@ for I in \
 	epmd \
 	exim4-queue \
 	fail2ban \
+	fam \
 	fancontrol \
 	fcron \
 	ferm \
 	ffserver \
 	flow-capture \
 	fscd \
+	freshclam \
 	gdm \
 	genkdmconf \
 	gitlab-sidekiq \
@@ -52,6 +57,8 @@ for I in \
 	lxdm \
 	mailcatcher \
 	ModemManager \
+	miredo \
+	miredo-server \
 	mongodb \
 	motd-dynamic \
 	moused \
@@ -81,6 +88,10 @@ for I in \
 	ossec@monitord \
 	ossec@remoted \
 	ossec@syscheckd \
+	owfs \
+	owftpd \
+	owhttpd \
+	owserver \
 	packagekit \
 	pcdm \
 	pdnsd \
@@ -95,6 +106,10 @@ for I in \
 	rabbitmq-server \
 	rpcbind \
 	rtadvd \
+	salt-api \
+	salt-master \
+	salt-minion \
+	salt-syndic \
 	samba \
 	saslauthd \
 	sickbeard \
@@ -160,6 +175,7 @@ for i in \
 	klogd \
 	kpasswdd \
 	nagios-nrpe-server \
+	opal-prd \
 	org.cups.cups-lpd \
 	qmail-smtp-relay \
 	qmail-smtp-submission \
@@ -463,4 +479,12 @@ for I in \
 do
 	i="`escape "$I"`"
 	del_user "$i"
+done
+for I in \
+	dnscache \
+	tinydns \
+	;
+do
+	i="`escape "$I"`"
+	del_user "$i"-d
 done

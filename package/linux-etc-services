@@ -1,9 +1,11 @@
 busybox-mdev
 busybox-mdev-log
 busybox-mdev-rescan
+dmraid
 kmod@autofs
 kmod@efivarfs
 linux-lockfiles
+lvm
 suckless-mdev
 suckless-mdev-log
 suckless-mdev-rescan

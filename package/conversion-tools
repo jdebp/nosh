@@ -1,6 +1,9 @@
 all.do
 ataidle.do
 ataidle@.service
+autobridge.do
+autobridge@.service
+autobridge.helper
 appcafe.do
 axfrdns.do
 default.kbdmap.do
@@ -40,8 +43,10 @@ static_arp@.service
 static_ndp@.service
 static_ip4@.service
 static_ip6@.service
+stf.do
 swap_capsctrl.kbd
 sysctl.conf.do
+syslogd.do
 terminal-services.do
 tinydns.do
 us_to_uk.kbd

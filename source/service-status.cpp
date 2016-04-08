@@ -89,6 +89,17 @@ set_colour_of_state (
 
 static inline
 void
+set_config_colour (
+	bool no_colours
+) {
+	if (no_colours) return;
+	const char * s(tigetstr("setaf"));
+	if (!s || reinterpret_cast<const char *>(-1) == s) return;
+	tputs(tparm(s, COLOR_CYAN), 1, putchar);
+}
+
+static inline
+void
 reset_colour (
 	bool no_colours
 ) {
@@ -195,16 +206,23 @@ display (
 				std::fprintf(stdout, "\n\tMain PID: %u", p);
 			std::fprintf(stdout, "\n\tAction  : %s%s%s", paused, *want && *paused ? ", " : "", want);
 		} else {
-			std::fputs(". ", stdout);
 			const bool is_up(b < 20 ? p : encore_status_stopped != status[18]);
-			std::fprintf(stdout, "%s%s%s", paused, *want && *paused ? ", " : "", want);
+			if (*want || *paused || is_up != initially_up)
+				std::fputs("; ", stdout);
+			if (*want || *paused)
+				std::fprintf(stdout, "%s%s%s", paused, *want && *paused ? ", " : "", want);
 			if (is_up != initially_up) {
-				std::fputs(", initially ", stdout);
+				if (*want || *paused)
+					std::fputs(", ", stdout);
+				set_config_colour(!colours);
+				std::fputs("initially ", stdout);
 				if (initially_up)
 					std::fputs(b < 20 ? "up" : "started", stdout);
 				else
 					std::fputs(b < 20 ? "down" : "stopped", stdout);
+				reset_colour(!colours);
 			}
+			std::fputc('.', stdout);
 		}
 		std::fputc('\n', stdout);
 	}

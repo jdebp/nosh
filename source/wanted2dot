@@ -1,0 +1,18 @@
+#!/bin/sh
+echo "digraph services {"
+for i in /etc/service-bundles/targets/*
+do
+	echo "\"$i\"" "[shape=octagon,style=\"rounded,filled\",fillcolor=yellow]" ";"
+done
+for i in /var/sv/* /var/local/sv/* /etc/service-bundles/services/* /etc/service-bundles/targets/*
+do
+	find "$i/wanted-by/" -type l 2>/dev/null |
+	while read -r j
+	do
+		test "`basename \"$j\"`" = sockets && continue
+		k="`readlink -f \"$j\"`"
+		test -z "$k" && continue
+		echo "\"$i\"" "->" "\"$k\"" ";"
+	done
+done
+echo "}"

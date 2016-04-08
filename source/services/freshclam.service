@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Update ClamAV database daemon
+
+[Service]
+ExecStart=%p --daemon --stdout
+Restart=always
+
+[Install]
+WantedBy=workstation.target

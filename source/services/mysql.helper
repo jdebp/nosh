@@ -1,0 +1,16 @@
+#!/bin/sh -
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+install_db() {
+	datadir="`my_print_defaults server mysqld|awk -F '=' '{if (\"--datadir" == $1) print $2}'`"
+
+	test -d "${datadir}" || install -d -m 0755 -omysql -gmysql "${datadir}"
+
+	which restorecon > /dev/null && restorecon "${datadir}"
+
+	test -d "${datadir}/mysql" || mysql_install_db --rpm --user=mysql --datadir="${datadir}"
+}
+
+eval "$@"

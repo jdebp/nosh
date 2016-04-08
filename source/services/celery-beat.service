@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+# As of version 3.1, by default Celery does not "backgroundize" and logs to standard error, and one stops it with SIGKILL.
+
+[Unit]
+Description=Celery task scheduler
+
+[Service]
+User=celery
+Group=celery
+ExecStart=celery beat ${app:+-A "${app}"} ${schedule:+--schedule "${schedule}"} ${interval:+--max-interval "${interval}"} ${options}
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -10,4 +10,3 @@ ExecStart=initctl-read
 Restart=always
 
 [Install]
-WantedBy=workstation.target

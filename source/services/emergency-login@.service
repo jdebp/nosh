@@ -16,7 +16,7 @@ Restart=always
 RestartSec=0
 TTYPath=%I
 TTYReset=yes
-TTYBannerLine=Emergency mode log-in.
+BannerLine=Emergency mode log-in.
 
 [Install]
 # This never shuts down.

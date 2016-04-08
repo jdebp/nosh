@@ -11,6 +11,8 @@ bcron-update
 bluetooth
 bootparams
 ccpd
+celery@example
+celery-beat
 cleanX
 cleantmp
 cleanuucp
@@ -18,6 +20,7 @@ console-fb-realizer@head0
 console-kit-daemon
 console-multiplexor@head0
 convert_varrun
+chrony
 cups-browsed
 darkice
 dcron
@@ -29,11 +32,13 @@ dovecot
 epmd
 exim4-queue
 fail2ban
+fam
 fancontrol
 fcron
 ferm
 ffserver
 flow-capture
+freshclam
 fscd
 gdm
 genkdmconf
@@ -60,6 +65,8 @@ lm-sensors
 localed
 lxdm
 mailcatcher
+miredo
+miredo-server
 mongodb
 monit
 motd-dynamic
@@ -93,6 +100,10 @@ ossec@maild
 ossec@monitord
 ossec@remoted
 ossec@syscheckd
+owfs
+owftpd
+owhttpd
+owserver
 packagekit
 pcdm
 pdnsd

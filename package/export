@@ -38,7 +38,7 @@ done
 	cat package/commands1 package/extra-manpages1
 	awk '{ if ($1 == "exec" || $1 == "session-manager" || $1 == "console-terminal-emulator" || $1 == "service-control" || $1 == "system-control") print $2 ; }' package/aliases1
 	awk '{ if ($1 == "service-control" && $2 != "svc") print $2 ; }' package/aliases1
-) | while read i
+) | while read -r i
 do
 	# Manual page
 	rm -f -- "${root1}"man/man1/"$i.1"{new}
@@ -55,7 +55,7 @@ do
 done
 (
 	cat package/commands8 package/extra-manpages8
-) | while read i
+) | while read -r i
 do
 	# Manual page
 	rm -f -- "${root1}"man/man8/"$i.8"{new}
@@ -75,21 +75,28 @@ done
 	cat package/guidepages package/commands1 package/commands8 package/extra-manpages1 package/extra-manpages8
 	awk '{ if ($1 == "exec" || $1 == "session-manager" || $1 == "console-terminal-emulator" || $1 == "service-control" || $1 == "system-control") print $2 ; }' package/aliases1
 	awk '{ if ($1 == "service-control" && $2 != "svc") print $2 ; }' package/aliases1
-) | while read i
+) | while read -r i
 do
 	# Documentation
 	rm -f -- "${root1}"share/doc/nosh/"$i.html"{new}
 	install -m 0644 -o "${user}" -g "${group}" -p -- guide/"$i.html" "${root1}"share/doc/nosh/"$i.html"{new}
 	mv -f -- "${root1}"share/doc/nosh/"$i.html"{new} "${root1}"share/doc/nosh/"$i.html"
 done
-while read i
+for i in COPYING
+do
+	# Documentation
+	rm -f -- "${root1}"share/doc/nosh/"$i"{new}
+	install -m 0644 -o "${user}" -g "${group}" -p -- guide/"$i" "${root1}"share/doc/nosh/"$i"{new}
+	mv -f -- "${root1}"share/doc/nosh/"$i"{new} "${root1}"share/doc/nosh/"$i"
+done
+while read -r i
 do
 	# Executable
 	rm -f -- "${root1}"bin/"$i"{new}
 	install -m 0755 -o "${user}" -g "${group}" -p -- command/"$i" "${root1}"bin/"$i"{new}
 	mv -f -- "${root1}"bin/"$i"{new} "${root1}"bin/"$i"
 done < package/commands1
-while read i
+while read -r i
 do
 	# Executable
 	rm -f -- "${root1}"sbin/"$i"{new}
@@ -124,19 +131,19 @@ do
 	install -m 0755 -o "${user}" -g "${group}" -p -- "${root1}"sbin/"$j" "${root2}"sbin/"$j"{new}
 	mv -f -- "${root2}"sbin/"$j"{new} "${root2}"sbin/"$j"
 done
-while read i
+while read -r i
 do
 	# systemd service units
 	cp -p -f -l -- config/systemd/"$i" "${root1}"lib/systemd/system/"$i"{new}
 	mv -f -- "${root1}"lib/systemd/system/"$i"{new} "${root1}"lib/systemd/system/"$i"
 done < package/systemd-services
-while read i
+while read -r i
 do
 	# systemd temp files
 	cp -p -f -- config/systemd/"$i" "${root1}"lib/tmpfiles.d/"$i"{new}
 	mv -f -- "${root1}"lib/tmpfiles.d/"$i"{new} "${root1}"lib/tmpfiles.d/"$i"
 done < package/tmpfiles-snippets
-while read i
+while read -r i
 do
 	# NetBSD rc script files
 	cp -p -f -- config/rc.d/"$i" "${root1}"etc/rc.d/"$i"{new}
@@ -148,7 +155,7 @@ do
 	cp -p -f -- config/vt/"$i" "${root1}"etc/"$i"{new}
 	mv -f -- "${root1}"etc/"$i"{new} "${root1}"etc/"$i"
 done
-while read i
+while read -r i
 do
 	# systemd presets
 	cp -p -f -- config/presets/"$i" "${root1}"lib/systemd/system-preset/"$i"{new}
@@ -163,19 +170,19 @@ done < package/systemd-presets
 		*BSD) cat package/bsd-nosh-$i-presets ;;
 		esac
 	done
-) | while read i
+) | while read -r i
 do
 	# override systemd presets when importing to nosh
 	cp -p -f -- config/presets/"$i" "${root2}"etc/system-control/presets/"$i"{new}
 	mv -f -- "${root2}"etc/system-control/presets/"$i"{new} "${root2}"etc/system-control/presets/"$i"
 done
-while read i
+while read -r i
 do
 	# conversion scripts for external formats, and service templates that they use
 	cp -p -f -- config/convert/"$i" "${root2}"etc/system-control/convert/"$i"{new}
 	mv -f -- "${root2}"etc/system-control/convert/"$i"{new} "${root2}"etc/system-control/convert/"$i"
 done < package/conversion-tools
-while read i
+while read -r i
 do
 	# standard target bundles
 	rm -f -- "${root2}"etc/service-bundles/targets/"$i"/service/remain
@@ -187,13 +194,13 @@ done < package/standard-targets
 	Linux)	cat package/linux-etc-services ;;
 	*BSD)	cat package/bsd-etc-services ;;
 	esac
-) | while read i
+) | while read -r i
 do
 	# etc service bundles
 	rm -f -- "${root2}"etc/service-bundles/services/"$i"/service/remain
 	(cd config/services/ && pax -r -w -l -- "$i" "${absroot2}"etc/service-bundles/services/)
 done
-while read i
+while read -r i
 do
 	# mount service bundles
 	rm -f -- "${root2}"etc/service-bundles/services/mount@"$i"/service/remain
@@ -207,7 +214,7 @@ done < package/common-mounts
 	Linux) cat package/linux-services package/linux-sockets package/linux-ttys ;;
 	*BSD) cat package/bsd-services package/bsd-sockets package/bsd-ttys ;;
 	esac
-) | while read i
+) | while read -r i
 do
 	# service bundles
 	rm -f -- "${root3}"sv/"$i"/service/remain
