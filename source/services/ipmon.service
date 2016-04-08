@@ -6,7 +6,6 @@
 Description=Log packets filtered by ipfilter or ipnat
 
 [Service]
-Type=simple
 EnvironmentDirectory=env
 ExecStart=%p ${flags}
 

@@ -30,21 +30,8 @@
 <refsection><title>Description</title>
 
 <para>
-<command>service-control</command> sends a series of control commands to
-services that are being managed by
-<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-runit's
-<citerefentry><refentrytitle>runsv</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-s6's
-<citerefentry><refentrytitle>s6-supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-daemontools'
-<citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-or daemontools-encore's
-<citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-Each of the <replaceable>directories</replaceable> is either a supervise
-directory (see
-<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>)
-itself or a directory with a supervise directory named <filename>supervise</filename> within it.
+<command>service-control</command> sends a series of control commands to services that are being managed by <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>, runit's <citerefentry><refentrytitle>runsv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, s6's <citerefentry><refentrytitle>s6-supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>, daemontools' <citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>, or daemontools-encore's <citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Each of the <replaceable>directories</replaceable> is either a supervise directory (see <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>) itself or a directory with a supervise directory named <filename>supervise</filename> within it.
 </para>
 
 <para>
@@ -82,6 +69,14 @@ Send a 'o' command to bring the service up, in one-shot mode.
 
 <para>
 Send a 'O' command to turn on one-shot mode if the service is running.
+(This command will not be recognized by daemontools' <citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry> or by runit's <citerefentry><refentrytitle>runsv</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
+</para>
+
+</listitem></varlistentry>
+<varlistentry><term><arg>--exit</arg></term><listitem>
+
+<para>
+Send a 'x' command to cause the service to be unloaded when it reaches the stopped state.
 </para>
 
 </listitem></varlistentry>
@@ -110,6 +105,7 @@ Send a 'h' command to send a SIGHUP signal to the service.
 
 <para>
 Send a 'H' command to send a SIGHUP signal to only the main process of the service.
+(This command will not be recognized by daemontools' <citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>, by runit's <citerefentry><refentrytitle>runsv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, or by s6's <citerefentry><refentrytitle>s6-supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
 </para>
 
 </listitem></varlistentry>
@@ -138,6 +134,7 @@ Send a 't' command to send a SIGTERM signal to the service.
 
 <para>
 Send a 'T' command to send a SIGTERM signal to only the main process of the service.
+(This command will not be recognized by daemontools' <citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>, by runit's <citerefentry><refentrytitle>runsv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, or by s6's <citerefentry><refentrytitle>s6-supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
 </para>
 
 </listitem></varlistentry>
@@ -152,6 +149,7 @@ Send a 'k' command to send a SIGKILL signal to the service.
 
 <para>
 Send a 'K' command to send a SIGKILL signal to only the main process of the service.
+(This command will not be recognized by daemontools' <citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>, by runit's <citerefentry><refentrytitle>runsv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, or by s6's <citerefentry><refentrytitle>s6-supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
 </para>
 
 </listitem></varlistentry>
@@ -159,8 +157,7 @@ Send a 'K' command to send a SIGKILL signal to only the main process of the serv
 
 <para>
 Send a 'q' command to send a SIGQUIT signal to the service.
-(This command will not be recognized by daemontools' <citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-or by s6's <citerefentry><refentrytitle>s6-supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
+(This command will not be recognized by daemontools' <citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry> or by s6's <citerefentry><refentrytitle>s6-supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
 </para>
 
 </listitem></varlistentry>
@@ -184,8 +181,7 @@ Send a '2' command to send a SIGUSR2 signal to the service.
 
 <para>
 Send a 'w' command to send a SIGWINCH signal to the service.
-(This command will not be recognized by daemontools' <citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-by runit's <citerefentry><refentrytitle>runsv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, or by s6's <citerefentry><refentrytitle>s6-supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
+(This command will not be recognized by daemontools' <citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>, by runit's <citerefentry><refentrytitle>runsv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, or by s6's <citerefentry><refentrytitle>s6-supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
 </para>
 
 </listitem></varlistentry>
@@ -193,9 +189,7 @@ by runit's <citerefentry><refentrytitle>runsv</refentrytitle><manvolnum>1</manvo
 
 <para>
 Send a 'z' command to send a SIGTSTP signal to the service.
-(This command will not be recognized by daemontools' <citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-by runit's <citerefentry><refentrytitle>runsv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, by s6's <citerefentry><refentrytitle>s6-supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>, 
-or by daemontools-encore's <citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
+(This command will not be recognized by daemontools' <citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>, by runit's <citerefentry><refentrytitle>runsv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, by s6's <citerefentry><refentrytitle>s6-supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>, or by daemontools-encore's <citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
 </para>
 
 </listitem></varlistentry>
@@ -204,21 +198,30 @@ or by daemontools-encore's <citerefentry><refentrytitle>supervise</refentrytitle
 </refsection></refsection><refsection><title>COMPATIBILITY</title>
 
 <para>
-For daemontools and daemontools-encore compatibility, this command is also
-available as <command>svc</command>; and the options are also available
-in the abbreviated forms <arg>-u</arg>, <arg>-d</arg>, and so forth.
+For daemontools and daemontools-encore compatibility, this command is also available as <command>svc</command>; and the options are also available in the abbreviated forms <arg>-u</arg>, <arg>-d</arg>, and so forth.
 </para>
 
 <para>
-There is no <command>--exit</command> option.
-It is meaningless to <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>, since it is not the way
-that <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> operates.
-(Compare runit's <citerefentry><refentrytitle>runsv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, whose <command>exit</command> option is curtailed
-relative to the original daemontools because of differences in
-the structure of runit.
-Of course, even daemontools' and daemontools-encore's <citerefentry><refentrytitle>svc</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-note that using their <command>-x</command> is almost always wrong.)
+There is a subtle difference in the <command>--exit</command> option, resulting from the differences in service architecture.
 </para>
+
+<itemizedlist>
+<listitem><para>
+daemontools' and daemontools-encore's <citerefentry><refentrytitle>svc</refentrytitle><manvolnum>1</manvolnum></citerefentry> manuals note that using their <command>-x</command> is almost always wrong.
+It causes the supervising process(es) to themselves exit; however the supervisor that supervises them will usually then restart them, resulting in the service being automatically restarted.
+</para></listitem>
+<listitem><para>
+The <command>exit</command> option in runit's <citerefentry><refentrytitle>runsv</refentrytitle><manvolnum>1</manvolnum></citerefentry> is curtailed relative to the original daemontools because of differences in the structure of runit.
+It does not respect requests for log services to exit.
+</para><para>
+It also explicitly takes the services down if they are up, which is not the case with daemontools and daemontools-encore.
+</para></listitem>
+<listitem><para>
+<command>service-control</command>'s <command>--exit</command> option does not cause <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> to exit, since it is not the way that <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> operates.
+It only applies to the services actually specified; log services must be treated as first class services in their own rights and explicitly specified.
+Since the supervising process isn't restarted (it not exiting in the first place), services are not auto-reloaded as a by-product of that; exiting does not cause an auto-restart.
+</para></listitem>
+</itemizedlist>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
 

@@ -64,14 +64,17 @@ write_volatile_hostid (
 	const char * prog,
 	uint32_t hostid
 ) {
-#if !defined(__LINUX__) && !defined(__linux__)
+#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
 	int oid[2] = {CTL_KERN, KERN_HOSTID};
-	const unsigned long h(hostid);
+#if !defined(__OpenBSD__)
+	const 
+#endif
+		unsigned long h(hostid);
 	if (0 > sysctl(oid, sizeof oid/sizeof *oid, 0, 0, &h, sizeof h)) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kern.hostid", std::strerror(error));
 	}
-#else
+#elif defined(__LINUX__) || defined(__linux__)
 	std::ofstream s(volatile_hostid_filename);
 	if (!s.fail()) {
 		s.write(reinterpret_cast<const char *>(&hostid), sizeof hostid);
@@ -80,5 +83,7 @@ write_volatile_hostid (
 	const int error(errno);
 	std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, non_volatile_hostid_filename, std::strerror(error));
 	throw EXIT_FAILURE;
+#else
+#error "Don't know how to manipulate host ID on your platform."
 #endif
 }

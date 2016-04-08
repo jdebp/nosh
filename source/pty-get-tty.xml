@@ -34,14 +34,8 @@ and then chain loads to <replaceable>next-prog</replaceable> with the
 </para>
 
 <para>
-<command>pty-get-tty</command> sets the <envar>TTY</envar> environment variable to the full device filename 
-of the pseudo-terminal.
-Programs such as
-<citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>login-banner</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-and
-<citerefentry><refentrytitle>login-process</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-will make use of this environment variable.
+<command>pty-get-tty</command> sets the <envar>TTY</envar> environment variable to the full device filename of the pseudo-terminal.
+Programs such as <citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>login-banner</refentrytitle><manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>login-process</refentrytitle><manvolnum>1</manvolnum></citerefentry> will make use of this environment variable.
 </para>
 
 <para>

@@ -7,6 +7,6 @@ Description=GPS daemon
 
 [Service]
 ExecStart=%p -N
-Restart=always
+StandardInput=socket
 
 [Install]

@@ -8,7 +8,6 @@ Description=time daemon
 [Service]
 EnvironmentDirectory=env
 ExecStart=%p
-Restart=always
 
 [Install]
 WantedBy=workstation.target

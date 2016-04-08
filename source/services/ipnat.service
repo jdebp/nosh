@@ -10,10 +10,13 @@ Requires=kmod@ipl
 # Marking this as oneshot means that it doesn't enter the "running" state until the accton command has exited.
 Type=oneshot
 EnvironmentDirectory=env
-ExecStart=${program} -F -C ${flags} -f ${rules}
-ExecStart=${program} -F -C ${flags}
+# In theory we could take a lessw draconian approach and use -r instead of -C -F .
+# In practice, changing the rules file between start and stop would break that approach.
+ExecStart=${program} -v -F -C ${flags} -f ${rules}
+ExecStopPost=${program} -v -F -C ${flags}
+# This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
-Restart=on-abort
+Restart=no
 
 [Install]
 WantedBy=workstation.target

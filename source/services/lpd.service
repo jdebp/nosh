@@ -9,7 +9,6 @@ After=chkprintcap
 [Service]
 EnvironmentDirectory=env
 ExecStart=%p
-Restart=always
 
 [Install]
 WantedBy=server.target

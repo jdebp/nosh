@@ -55,7 +55,7 @@ service (
 	const char * command(args.front());
 	args.erase(args.begin());
 	if (!args.empty()) {
-		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Unrecognized extra arguments.");
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, args.front(), "Unrecognized extra arguments.");
 		throw EXIT_FAILURE;
 	}
 
@@ -74,8 +74,13 @@ invoke_rcd (
 	std::vector<const char *> & args
 ) {
 	const char * prog(basename_of(args[0]));
+	bool quiet(false);
 	try {
-		popt::top_table_definition main_option(0, 0, "Main options", "service-name command");
+		popt::bool_definition quiet_option('q', "quiet", "Compatibility option; ignored.", quiet);
+		popt::definition * top_table[] = {
+			&quiet_option
+		};
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "service-name command");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -101,7 +106,7 @@ invoke_rcd (
 	const char * command(args.front());
 	args.erase(args.begin());
 	if (!args.empty()) {
-		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Unrecognized extra arguments.");
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, args.front(), "Unrecognized extra arguments.");
 		throw EXIT_FAILURE;
 	}
 
@@ -110,6 +115,12 @@ invoke_rcd (
 	else
 	if (0 == std::strcmp("stop", command))
 		;	// Don't touch it.
+	else 
+	if (0 == std::strcmp("force-stop", command))
+		command = "stop";
+	else 
+	if (0 == std::strcmp("force-reload", command))
+		command = "condrestart";
 	else 
 	if (0 == std::strcmp("restart", command)) {
 		args.clear();
@@ -126,7 +137,7 @@ invoke_rcd (
 	}
 	else
 	{
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, command, "Unsupported subcommand.");
+		std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, service, command, "Unsupported subcommand.");
 		throw EXIT_FAILURE;
 	}
 
@@ -188,7 +199,7 @@ update_rcd (
 	if (0 == std::strcmp("defaults", command)) {
 defaults:
 		if (!args.empty()) {
-			std::fprintf(stderr, "%s: WARNING: %s %s\n", prog, command, "has not supported arguments since 2013.");
+			std::fprintf(stderr, "%s: WARNING: %s: %s %s\n", prog, service, command, "has not supported arguments since 2013.");
 			args.clear();
 		}
 		command = "preset";
@@ -196,7 +207,7 @@ defaults:
 	if (0 == std::strcmp("start", command)
 	||  0 == std::strcmp("stop", command)
 	) {
-		std::fprintf(stderr, "%s: WARNING: %s %s\n", prog, command, "has been superseded by defaults since 2013.");
+		std::fprintf(stderr, "%s: WARNING: %s: %s %s\n", prog, service, command, "has been superseded by defaults since 2013.");
 		goto defaults;
 	}
 	else
@@ -265,7 +276,7 @@ chkconfig (
 			command = "disable";
 		else 
 		{
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, command, "Unsupported subcommand.");
+			std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, service, command, "Unsupported subcommand.");
 			throw EXIT_FAILURE;
 		}
 

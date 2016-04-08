@@ -1,7 +1,6 @@
 background-fsck
 devd
 devd-log
-kmod@fuse
 kmod@geom_uzip
 kmod@linux
 kmod@svr4

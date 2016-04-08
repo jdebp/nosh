@@ -7,7 +7,6 @@ Description=Tool to automatically collect and submit crash signatures
 
 [Service]
 ExecStart=%p --nodaemon
-Restart=always
 
 [Install]
 WantedBy=workstation.target

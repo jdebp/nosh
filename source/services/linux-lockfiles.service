@@ -14,6 +14,7 @@ RuntimeDirectory=lock
 RuntimeDirectoryMode=01777
 # This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
+Restart=always
 ExecStart=true
 
 [Install]

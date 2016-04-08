@@ -6,8 +6,16 @@
 Terminals
 </h1>
 
+<h2>
+Virtual terminals
+</h2>
+
 <p>
-Using the tools in the toolset one can set up services that handle TUI login on virtual (i.e. not physical hardware) terminals, and that provide virtual terminals entirely within application mode code, supplementing or even replacing the virtual terminals provided by a Linux or BSD operating system kernel.
+The most commonly employed terminal nowadays is a virtual (as opposed to real) terminal.
+</p>
+
+<p>
+Using the tools in the toolset one can set up services that handle TUI login on virtual terminals, and that provide virtual terminals entirely within application mode code, supplementing or even replacing the virtual terminals provided by a Linux or BSD operating system kernel.
 </p>
 
 <p>
@@ -23,9 +31,58 @@ To log on over virtual terminals, kernel or user-space,
 <a href="user-virtual-terminals.html">Setting up user-space virtual terminals involves similar services, additional <code>console-terminal-emulator</code> services, and realizers.</a>
 </p>
 
+<h2>
+Real terminals
+</h2>
+
 <p>
-A TUI login service over a physical serial line to a real terminal (or something pretending to be a real terminal) is of course a simple service, started and stopped and enabled and disabled in the usual way.
-A <code>run</code> script for such a service, in this case to invoke <code>mgetty</code> on <code>/dev/ttyS1</code>, looks like this:
+A TUI login service over a physical serial line to a real terminal (or something pretending to be a real terminal) is a very simple service, started and stopped and enabled and disabled in the usual way.
+This package contains service bundles for such TUI login services.
+</p>
+
+<ul>
+
+<li><p>
+For FreeBSD, PC-BSD, DragonFly BSD, and similar: the services are <code>ttylogin@ttyu0</code> through to <code>ttylogin@ttyuf</code>.
+These are aliases for <code>getty@ttyu0</code> through to <code>getty@ttyuf</code>.
+</p><p>
+These services invoke the FreeBSD <code>/usr/libexec/getty</code> program, with the <i>getty class</i> of <code>std.9600</code>.
+The <code>run</code> script for such services is basically this (using <code>getty@ttyu1</code> as an example):
 </p>
 <blockquote><pre>#!/bin/nosh
-mgetty ttyS1</pre></blockquote>
+setsid
+/usr/libexec/getty std.9600 ttyu1</pre></blockquote>
+</li>
+
+<li><p>
+For OpenBSD: the services are <code>ttylogin@tty00</code> through to <code>ttylogin@tty07</code>.
+These are aliases for <code>getty@tty00</code> through to <code>getty@tty07</code>.
+</p><p>
+These services invoke the OpenBSD <code>/usr/libexec/getty</code> program, with the <i>getty class</i> of <code>std.9600</code>.
+The <code>run</code> script for such services is basically this (using <code>getty@tty03</code> as an example):
+</p>
+<blockquote><pre>#!/bin/nosh
+setsid
+/usr/libexec/getty std.9600 tty03</pre></blockquote>
+</li>
+
+<li><p>
+For Linux: the services are <code>ttylogin@ttyS0</code> through to <code>ttylogin@ttyS3</code>.
+By default, these are aliases for <code>agetty@ttyS0</code> through to <code>agetty@ttyS3</code>.
+But they can if one wishes instead be aliased to <code>mgetty@ttyS0</code> through to <code>mgetty@ttyS3</code>.
+</p><p>
+The first set of services invokes Wietse Venema's <code>agetty</code> program.
+The <code>run</code> script for such services is basically this (using <code>agetty@ttyS2</code> as an example):
+</p>
+<blockquote><pre>#!/bin/nosh
+setsid
+agetty ttyS2</pre></blockquote>
+</p><p>
+The second set of services invokes Gert Doering's <code>mgetty</code> program.
+The <code>run</code> script for such services is basically this (using <code>mgetty@ttyS0</code> as an example):
+</p>
+<blockquote><pre>#!/bin/nosh
+mgetty ttyS0</pre></blockquote>
+</li>
+
+</ul>

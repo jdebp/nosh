@@ -1,0 +1,51 @@
+<refentry id="move-to-control-group">
+
+<refmeta>
+<refentrytitle>move-to-control-group</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.24</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>move-to-control-group</refname>
+<refpurpose>move process to another control group then chain</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>move-to-control-group</command>
+<arg choice='req'><replaceable>group</replaceable></arg>
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>move-to-control-group</command> is a chain-loading utility that sets the single (relevant) process control group to <replaceable>group</replaceable> and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+On platforms where <filename>/proc/self/cgroup</filename> does not exist, this command is a no-op and just chain loads, for script compatibility.
+Otherwise, that file is searched for a control group record with a blank controller field or (failing that) with a <code>name=systemd</code> controller field.
+</para>
+
+<para>
+If a record of the former type is found, version 2 control groups are assumed with the single control group hierarchy rooted at <filename>/sys/fs/cgroup</filename>.
+If a record of the latter type is found, version 1 control groups are assumed with the relevant control group hierarchy (the only one that is affected by the command) rooted at <filename>/sys/fs/cgroup/systemd</filename>.
+</para>
+
+<para>
+If <replaceable>group</replaceable> does not exist, <command>move-to-control-group</command> attempts to create it with <citerefentry><refentrytitle>mkdir</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
+The command will fail if the process is not allowed to move to the given control group, or cannot create it.
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>move-to-control-group</command> will ignore.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

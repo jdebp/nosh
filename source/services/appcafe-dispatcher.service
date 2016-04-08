@@ -11,7 +11,6 @@ After=appcafe-nginx.service
 [Service]
 EnvironmentDirectory=env
 ExecStart="${root:-/usr/local/share/appcafe}/dispatcher" daemon
-Restart=always
 
 [Install]
 WantedBy=appcafe.target

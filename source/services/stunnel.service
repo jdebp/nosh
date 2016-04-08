@@ -8,7 +8,6 @@ Description=SSL Tunnel TCP multi-server
 [Service]
 EnvironmentDirectory=env
 ExecStart=%p "${config:-/usr/local/etc/%p/%p.conf}"
-Restart=always
 
 [Install]
 WantedBy=workstation.target

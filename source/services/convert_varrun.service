@@ -10,7 +10,9 @@ Before=devd ldconfig
 [Service]
 Type=oneshot
 ExecStart=./helper
-RemainAfterExit=yes
+# This is a one-shot service that can be re-triggered by starting it again.
+RemainAfterExit=1
+Restart=no
 
 [Install]
 WantedBy=workstation.target

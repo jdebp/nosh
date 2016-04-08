@@ -7,7 +7,6 @@ Description=%p service for device %i
 
 [Service]
 ExecStart=%p -d %i
-Restart=always
 
 [Install]
 WantedBy=workstation.target

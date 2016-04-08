@@ -8,6 +8,7 @@ Description=SickBeard daemon
 [Service]
 # FIXME: Is this really needed?
 systemdUserEnvironment=true
+EnvironmentDirectory=env
 User=sickbeard
 WorkingDirectory=/opt/sickbeard
 ExecStart=python SickBeard.py --nolaunch ${SB_OPTS}

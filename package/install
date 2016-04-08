@@ -6,4 +6,4 @@ then
 	exit 100
 fi
 ./package/compile
-./package/upgrade
+exec ./package/upgrade

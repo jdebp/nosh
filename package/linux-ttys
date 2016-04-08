@@ -10,3 +10,11 @@ ttylogin@tty6
 ttylogin@tty7
 ttylogin@tty8
 ttylogin@tty9
+mgetty@ttyS0
+mgetty@ttyS1
+mgetty@ttyS2
+mgetty@ttyS3
+agetty@ttyS0
+agetty@ttyS1
+agetty@ttyS2
+agetty@ttyS3

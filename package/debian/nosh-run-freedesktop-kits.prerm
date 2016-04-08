@@ -7,6 +7,7 @@ case "$1" in
 			console-kit-daemon \
 			ModemManager \
 			NetworkManager \
+			NetworkManager-dispatcher \
 			packagekit \
 			polkitd \
 			udisks \

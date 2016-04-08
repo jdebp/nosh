@@ -18,7 +18,6 @@ ExecStartPre=mkdir -m 02755 -p /run/dev /run/dev/%I
 #ExecStartPre=setfacl -m u:daemon:rwx /run/dev/%I
 ExecStartPre=chown daemon:tty /run/dev/%I
 ExecStart=pty-get-tty console-terminal-emulator /run/dev/%I
-Restart=always
 RestartSec=0
 
 [Install]

@@ -4,6 +4,7 @@ irqbalance
 kerneloops
 kernel-vt-loadkeys
 kernel-vt-setfont
+kmod
 kmod@ipv6
 kmod@loop
 kmod@unix
@@ -12,5 +13,6 @@ linux-utmp
 mdadm
 pommed
 sudo
+ttylogin-starter
 update-binfmts
 wettsteinsyslogd

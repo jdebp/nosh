@@ -37,6 +37,7 @@ extern void vc_reset_tty ( const char * &, std::vector<const char *> & );
 extern const
 struct command 
 commands[] = {
+	// Terminals
 	{	"console-convert-kbdmap",	console_convert_kbdmap		},
 	{	"console-fb-realizer",		console_fb_realizer		},
 	{	"console-multiplexor",		console_multiplexor		},
@@ -44,21 +45,23 @@ commands[] = {
 	{	"console-resize",		console_resize			},
 	{	"console-clear",		console_clear			},
 	{	"console-terminal-emulator",	console_terminal_emulator	},
-	{	"detach-controlling-tty",	detach_controlling_tty		},
 	{	"emergency-login",		emergency_login			},
-	{	"line-banner",			line_banner			},
-	{	"login-banner",			login_banner			},
-	{	"login-process",		login_process			},
-	{	"login-prompt",			login_prompt			},
 	{	"monitor-fsck-progress",	monitor_fsck_progress		},
-	{	"open-controlling-tty",		open_controlling_tty		},
-	{	"pty-get-tty",			pty_get_tty			},
 	{	"pty-run",			pty_run				},
 	{	"resizecons",			console_resize			},
 	{	"clear_console",		console_clear			},
 	{	"ttylogin-starter",		ttylogin_starter		},
+
+	// Chain-loading non-terminals
+	{	"detach-controlling-tty",	detach_controlling_tty		},
+	{	"line-banner",			line_banner			},
+	{	"login-banner",			login_banner			},
+	{	"login-process",		login_process			},
+	{	"login-prompt",			login_prompt			},
 	{	"vc-get-tty",			vc_get_tty			},
 	{	"vc-reset-tty",			vc_reset_tty			},
+	{	"open-controlling-tty",		open_controlling_tty		},
+	{	"pty-get-tty",			pty_get_tty			},
 };
 const std::size_t num_commands = sizeof commands/sizeof *commands;
 

@@ -387,7 +387,7 @@ service_show (
 			write_string_value("Want", want);
 			write_boolean_value("Paused", status[16]);
 		}
-		write_boolean_value("Preset", initially_up);
+		write_boolean_value("Enabled", initially_up);
 		write_boolean_value("RemainAfterExit", run_on_empty);
 		write_string_array("Wants", wants);
 		write_string_array("Before", before);

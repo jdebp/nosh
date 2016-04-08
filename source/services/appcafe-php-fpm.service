@@ -9,7 +9,6 @@ Before=appcafe-nginx.service
 [Service]
 EnvironmentDirectory=env
 ExecStart=php-fpm --nodaemonize --force-stderr --fpm-config "${root:-/usr/local/share/appcafe}/php-fpm.conf" --php-ini "${root:-/usr/local/share/appcafe}/php.ini" ${flags}
-Restart=always
 PrivateTmp=true
 #LimitMEMLOCK=infinity
 #LimitNOFILE=65535

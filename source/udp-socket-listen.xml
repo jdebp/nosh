@@ -23,6 +23,7 @@
 <arg>--numeric-service</arg> 
 <arg>--check-interfaces</arg> 
 <arg>--combine4and6</arg> 
+<arg>--upstart-compatibility</arg>
 <arg>--systemd-compatibility</arg> 
 <arg choice='req'><replaceable>host</replaceable></arg> 
 <arg choice='req'><replaceable>port</replaceable></arg> 
@@ -67,11 +68,13 @@ any network interface.
 </para>
 
 <para>
-The <arg>--systemd-compatibility</arg> option causes <command>udp-socket-listen</command> to set the
-<envar>LISTEN_FDS</envar> environment variable to 1, and the <envar>LISTEN_PID</envar> environment
-variable to its own process ID.
-This is for compatibility with daemons that expect to be run under 
-<citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+The <arg>--upstart-compatibility</arg> option causes <command>udp-socket-listen</command> to set the <envar>UPSTART_FDS</envar> environment variable to 3, and the <envar>UPSTART_EVENTS</envar> environment variable to <literal>socket</literal>.
+This is for compatibility with daemons that expect to be run under <citerefentry><refentrytitle>upstart</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+<para>
+The <arg>--systemd-compatibility</arg> option causes <command>udp-socket-listen</command> to set the <envar>LISTEN_FDS</envar> environment variable to 1, and the <envar>LISTEN_PID</envar> environment variable to its own process ID.
+This is for compatibility with daemons that expect to be run under <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 <para>

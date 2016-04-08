@@ -7,7 +7,6 @@ Description=Dovecot service
 
 [Service]
 ExecStart=%p -F
-Restart=always
 
 [Install]
 WantedBy=server.target

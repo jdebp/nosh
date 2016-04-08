@@ -8,11 +8,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/time.h>
-#if !defined(__LINUX__) && !defined(__linux__)
-#include <sys/event.h>
-#include <sys/mount.h>
-#include <sys/sysctl.h>
-#else
+#include "kqueue_common.h"
+#if defined(__LINUX__) || defined(__linux__)
 #define _BSD_SOURCE 1
 #include <sys/ioctl.h>
 #include <sys/prctl.h>
@@ -20,7 +17,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include <linux/kd.h>
 #include <fcntl.h>
 #include <mntent.h>
-#include "FileStar.h"
+#else
+#include <sys/sysctl.h>
 #endif
 #include <sys/mount.h>
 #include <dirent.h>
@@ -38,9 +36,12 @@ For copyright and licensing terms, see the file named COPYING.
 #include "listen.h"
 #include "popt.h"
 #include "jail.h"
+#include "runtime-dir.h"
 #include "common-manager.h"
-#include "service-manager.h"
+#include "service-manager-client.h"
 #include "FileStar.h"
+#include "FileDescriptorOwner.h"
+#include "SignalManagement.h"
 
 static int service_manager_pid(-1);
 static int cyclog_pid(-1);
@@ -91,19 +92,29 @@ record_signal_system (
 ) {
 	switch (signo) {
 		case SIGCHLD:		child_signalled = true; break;
-#if !defined(__LINUX__) && !defined(__linux__)
-		case SIGINT:		reboot_signalled = true; break;
-		case SIGTERM:		rescue_signalled = true; break;
-		case SIGUSR1:		halt_signalled = true; break;
-		case SIGUSR2:		poweroff_signalled = true; break;
+		case SIGWINCH:		kbrequest_signalled = true; break;
+#if defined(SAK_SIGNAL)
+		case SAK_SIGNAL:	sak_signalled = true; break;
+#endif
+#if defined(__LINUX__) || defined(__linux__)
+		case SIGTERM:		break;
 #else
-		case SIGINT:		sak_signalled = true; break;
+		case RESCUE_SIGNAL:	rescue_signalled = true; break;
+		case HALT_SIGNAL:	halt_signalled = true; break;
+		case POWEROFF_SIGNAL:	poweroff_signalled = true; break;
+		case REBOOT_SIGNAL:	reboot_signalled = true; break;
 #endif
 #if defined(SIGPWR)
 		case SIGPWR:		power_signalled = true; break;
 #endif
-		case SIGWINCH:		kbrequest_signalled = true; break;
+#if !defined(SIGRTMIN)
+		case EMERGENCY_SIGNAL:	emergency_signalled = true; break;
+		case NORMAL_SIGNAL:	normal_signalled = true; break;
+		case SYSINIT_SIGNAL:	sysinit_signalled = true; break;
+		case FORCE_REBOOT_SIGNAL:	fastreboot_signalled = true; break;
+#endif
 		default:
+#if defined(SIGRTMIN)
 			if (SIGRTMIN <= signo) switch (signo - SIGRTMIN) {
 				case 0:		normal_signalled = true; break;
 				case 1:		rescue_signalled = true; break;
@@ -117,6 +128,7 @@ record_signal_system (
 				case 15:	fastreboot_signalled = true; break;
 				default:	unknown_signalled = true; break;
 			} else
+#endif
 				unknown_signalled = true; 
 			break;
 	}
@@ -129,11 +141,22 @@ record_signal_user (
 ) {
 	switch (signo) {
 		case SIGCHLD:		child_signalled = true; break;
+#if defined(SIGRTMIN)
 		case SIGINT:		halt_signalled = true; break;
+#endif
 		case SIGTERM:		halt_signalled = true; break;
 		case SIGHUP:		halt_signalled = true; break;
 		case SIGPIPE:		halt_signalled = true; break;
+#if !defined(SIGRTMIN)
+		case NORMAL_SIGNAL:	normal_signalled = true; break;
+		case SYSINIT_SIGNAL:	sysinit_signalled = true; break;
+		case HALT_SIGNAL:	halt_signalled = true; break;
+		case POWEROFF_SIGNAL:	halt_signalled = true; break;
+		case REBOOT_SIGNAL:	halt_signalled = true; break;
+		case FORCE_REBOOT_SIGNAL:	fasthalt_signalled = true; break;
+#endif
 		default:
+#if defined(SIGRTMIN)
 			if (SIGRTMIN <= signo) switch (signo - SIGRTMIN) {
 				case 0:		normal_signalled = true; break;
 				case 1:		normal_signalled = true; break;
@@ -147,79 +170,13 @@ record_signal_user (
 				case 15:	fasthalt_signalled = true; break;
 				default:	unknown_signalled = true; break;
 			} else
+#endif
 				unknown_signalled = true; 
 			break;
 	}
 }
 
 static void (*record_signal) ( int signo ) = 0;
-
-// A way to set SIG_IGN that is reset by execve().
-static void sig_ignore ( int ) {}
-
-static inline
-void
-ignore_all_signals()
-{
-	// We use a sig_ignore function rather than SIG_IGN so that all signals are automatically reset to their default actions on execve().
-	// GNU libc doesn't like us setting SIGRTMIN+0 and SIGRTMIN+1, but we don't care enough about error returns to notice.
-	struct sigaction sa;
-	sa.sa_flags=0;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_handler=sig_ignore;
-#if !defined(__LINUX__) && !defined(__linux__)
-	for (int signo(1); signo < NSIG; ++signo)
-		sigaction(signo,&sa,NULL);
-	for (int signo(0); signo < 16; ++signo)
-		sigaction(SIGRTMIN + signo,&sa,NULL);
-#else
-	for (int signo(1); signo < _NSIG; ++signo)
-		sigaction(signo,&sa,NULL);
-#endif
-
-	// TODO: SIGPIPE, SIGTTIN, SIGTTOU, and SIGTSTP should be an inheritable SIG_IGN.
-}
-
-#if defined(__LINUX__) || defined(__linux__)
-static
-void
-sig_handle (
-	int  signo
-) {
-	record_signal(signo);
-}
-#endif
-
-static inline
-void
-attach_signals_to_state_machine()
-{
-#if !defined(__LINUX__) && !defined(__linux__)
-	// kevent() handles the signals.
-#else
-	struct sigaction sa;
-	sa.sa_flags=0;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_handler=sig_handle;
-	sigaction(SIGCHLD,&sa,NULL);
-	sigaction(SIGRTMIN + 0,&sa,NULL);
-	sigaction(SIGRTMIN + 1,&sa,NULL);
-	sigaction(SIGRTMIN + 2,&sa,NULL);
-	sigaction(SIGRTMIN + 3,&sa,NULL);
-	sigaction(SIGRTMIN + 4,&sa,NULL);
-	sigaction(SIGRTMIN + 5,&sa,NULL);
-#if defined(SIGPWR)
-	sigaction(SIGPWR,&sa,NULL);
-#endif
-	sigaction(SIGWINCH,&sa,NULL);
-	sigaction(SIGINT,&sa,NULL);
-	sigaction(SIGRTMIN + 10,&sa,NULL);
-	sigaction(SIGRTMIN + 11,&sa,NULL);
-	sigaction(SIGRTMIN + 13,&sa,NULL);
-	sigaction(SIGRTMIN + 14,&sa,NULL);
-	sigaction(SIGRTMIN + 15,&sa,NULL);
-#endif
-}
 
 static inline
 void
@@ -274,26 +231,21 @@ const struct api_symlink manager_symlinks[] =
 // **************************************************************************
 */
 
+/// \brief Open the primary logging pipe and attach it to our standard output and standard error.
 static inline
 void
 open_logging_pipe (
 	const char * prog,
-	int pipe_fds[2]
+	FileDescriptorOwner & read_log_pipe,
+	FileDescriptorOwner & write_log_pipe
 ) {
+	int pipe_fds[2] = { -1, -1 };
 	if (0 > pipe_close_on_exec (pipe_fds)) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "pipe", std::strerror(error));
-	} else {
-		// We must ensure that the pipe file descriptors are not in the standard+systemd file descriptors range, otherwise dup2() in child processes goes wrong later.
-		for (unsigned i(0); i < 2; ++i) {
-			while (pipe_fds[i] != -1 && LISTEN_SOCKET_FILENO >= pipe_fds[i]) {
-				pipe_fds[i] = dup(pipe_fds[i]);
-				set_close_on_exec(pipe_fds[i], true);
-			}
-		}
-		dup2(pipe_fds[1], STDOUT_FILENO);
-		dup2(pipe_fds[1], STDERR_FILENO);
 	}
+	read_log_pipe.reset(pipe_fds[0]);
+	write_log_pipe.reset(pipe_fds[1]);
 }
 
 static inline
@@ -304,7 +256,7 @@ setup_process_state(
 ) {
 	if (is_system) {
 		setsid();
-#if !defined(__LINUX__) && !defined(__linux__)
+#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__) || defined(__NetBSD__)
 		setlogin("root");
 #endif
 		chdir("/");
@@ -354,11 +306,12 @@ setup_process_state(
 	}
 }
 
+#if defined(__LINUX__) || defined(__linux__)
+
 static inline
 bool
 hwclock_runs_in_UTC()
 {
-#if defined(__LINUX__) || defined(__linux__)
 	std::ifstream i("/etc/adjtime");
 	if (i.fail()) return true;
 	char buf[100];
@@ -367,7 +320,32 @@ hwclock_runs_in_UTC()
 	i.getline(buf, sizeof buf, '\n');
 	if (i.fail()) return true;
 	return 0 != std::strcmp("LOCAL", buf);
-#else
+}
+
+static inline
+void
+initialize_system_clock_timezone() 
+{
+	struct timezone tz = { 0, 0 };
+	const struct timeval * ztv(0);		// This works around a compiler warning.
+	const bool utc(hwclock_runs_in_UTC());
+	const std::time_t now(std::time(0));
+	const struct tm *l(localtime(&now));
+	const int seconds_west(-l->tm_gmtoff);	// It is important that this is an int.
+
+	if (utc)
+		settimeofday(ztv, &tz);	// Prevent the next call from adjusting the system clock.
+	// Set the RTC/FAT local time offset, and (if not UTC) adjust the system clock from local-time-as-if-UTC to UTC.
+	tz.tz_minuteswest = seconds_west / 60;
+	settimeofday(ztv, &tz);		
+}
+
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
+
+static inline
+bool
+hwclock_runs_in_UTC()
+{
 	int oid[CTL_MAXNAME];
 	std::size_t len = sizeof oid/sizeof *oid;
 	int local(0);			// It is important that this is an int.
@@ -378,7 +356,6 @@ hwclock_runs_in_UTC()
 	if (local) return true;
 
 	return 0 > access("/etc/wall_cmos_clock", F_OK);
-#endif
 }
 
 static inline
@@ -393,14 +370,6 @@ initialize_system_clock_timezone(
 	const struct tm *l(localtime(&now));
 	const int seconds_west(-l->tm_gmtoff);	// It is important that this is an int.
 
-#if defined(__LINUX__) || defined(__linux__)
-	(void)prog;	// Silences a compiler warning about an unused parameter in this branch of the conditional compilation.
-	if (utc)
-		settimeofday(ztv, &tz);	// Prevent the next call from adjusting the system clock.
-	// Set the RTC/FAT local time offset, and (if not UTC) adjust the system clock from local-time-as-if-UTC to UTC.
-	tz.tz_minuteswest = seconds_west / 60;
-	settimeofday(ztv, &tz);		
-#else
 	if (!utc) {
 		std::size_t siz;
 
@@ -433,8 +402,13 @@ initialize_system_clock_timezone(
 	} else
 		// Zero out the tz_minuteswest if it is non-zero.
 		settimeofday(ztv, &tz);
-#endif
 }
+
+#elif defined(__NetBSD__)
+
+#error "Don't know what needs to be done about the system clock."
+
+#endif
 
 static inline
 int
@@ -536,59 +510,74 @@ make_needed_run_directories(
 
 static inline
 int
-open_null_as_stdin(
+open_null(
 	const char * prog
 ) {
 	const int dev_null_fd(open_read_at(AT_FDCWD, "/dev/null"));
 	if (0 > dev_null_fd) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "/dev/null", std::strerror(error));
-	} else {
+	} else
 		set_non_blocking(dev_null_fd, false);
-		dup2(dev_null_fd, STDIN_FILENO);
-	}
 	return dev_null_fd;
 }
 
 static inline
 int
-open_console(
-	const char * prog
+dup(
+	const char * prog,
+	const FileDescriptorOwner & fd
 ) {
-	const int dev_console_fd(open_readwriteexisting_at(AT_FDCWD, "/dev/console"));
-	if (0 > dev_console_fd) {
+	const int d(dup(fd.get()));
+	if (0 > d) {
 		const int error(errno);
-		std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "/dev/console", std::strerror(error));
+		std::fprintf(stderr, "%s: ERROR: dup(%i): %s\n", prog, fd.get(), std::strerror(error));
 	} else
-		set_non_blocking(dev_console_fd, false);
-	return dev_console_fd;
-}
-
-static inline
-int
-open_tty(
-	const char * prog
-) {
-	const int dev_tty_fd(open_readwriteexisting_at(AT_FDCWD, "/dev/tty"));
-	if (0 > dev_tty_fd) {
-		const int error(errno);
-		std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "/dev/tty", std::strerror(error));
-	} else
-		set_non_blocking(dev_tty_fd, false);
-	return dev_tty_fd;
+		set_non_blocking(d, false);
+	return d;
 }
 
 static inline
 void
-request_system_events(
-	const int dev_console_fd
+last_resort_io_defaults(
+	const bool is_system,
+	const char * prog,
+	const FileDescriptorOwner & dev_null,
+	FileDescriptorOwner saved_stdio[LISTEN_SOCKET_FILENO + 1]
 ) {
+	if (0 > saved_stdio[STDIN_FILENO].get())
+		saved_stdio[STDIN_FILENO].reset(dup(prog, dev_null));
+	if (is_system) {
+		// Always open the console in order to turn on console events.
+		FileDescriptorOwner dev_console(open_readwriteexisting_at(AT_FDCWD, "/dev/console"));
+		if (0 > dev_console.get()) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "/dev/console", std::strerror(error));
+			dev_console.reset(dup(prog, saved_stdio[STDIN_FILENO]));
+		} else {
+			set_non_blocking(dev_console.get(), false);
 #if defined(__LINUX__) || defined(__linux__)
-	if (0 <= dev_console_fd)
-		ioctl(dev_console_fd, KDSIGACCEPT, SIGWINCH);
+			ioctl(dev_console.get(), KDSIGACCEPT, SIGWINCH);
+#endif
+		}
+		// Populate saved standard output/error if they were initially closed, making the console the logger of last resort.
+		if (0 > saved_stdio[STDOUT_FILENO].get())
+			saved_stdio[STDOUT_FILENO].reset(dup(prog, dev_console));
+	} else {
+		// The logger of last resort is whatever we inherited, or /dev/null if the descriptors were closed.
+		if (0 > saved_stdio[STDOUT_FILENO].get())
+			saved_stdio[STDOUT_FILENO].reset(dup(prog, saved_stdio[STDIN_FILENO]));
+	}
+	if (0 > saved_stdio[STDERR_FILENO].get())
+		saved_stdio[STDERR_FILENO].reset(dup(prog, saved_stdio[STDOUT_FILENO]));
+}
+
+static inline
+void
+start_system()
+{
+#if defined(__LINUX__) || defined(__linux__)
 	reboot(RB_DISABLE_CAD);
-#else
-	static_cast<void>(dev_console_fd);	// Silences a compiler warning.
 #endif
 }
 
@@ -600,17 +589,19 @@ end_system()
 	sync();		// The BSD reboot system call already implies a sync() unless RB_NOSYNC is used.
 #endif
 	if (fastpoweroff_signalled) {
-#if !defined(__LINUX__) && !defined(__linux__)
-		reboot(RB_POWEROFF);
-#else
+#if defined(__LINUX__) || defined(__linux__)
 		reboot(RB_POWER_OFF);
+#elif defined(__OpenBSD__)
+		reboot(RB_POWERDOWN);
+#else
+		reboot(RB_POWEROFF);
 #endif
 	}
 	if (fasthalt_signalled) {
-#if !defined(__LINUX__) && !defined(__linux__)
-		reboot(RB_HALT);
-#else
+#if defined(__LINUX__) || defined(__linux__)
 		reboot(RB_HALT_SYSTEM);
+#else
+		reboot(RB_HALT);
 #endif
 	}
 	if (fastreboot_signalled) {
@@ -621,7 +612,7 @@ end_system()
 
 static
 const char *
-system_manager_roots[] = {
+system_manager_logdirs[] = {
 	"/var/log/system-manager",
 	"/var/system-manager/log",
 	"/var/tmp/system-manager/log",
@@ -634,30 +625,11 @@ change_to_system_manager_log_root (
 	const bool is_system
 ) {
 	if (is_system) {
-		for (const char ** r(system_manager_roots); r < system_manager_roots + sizeof system_manager_roots/sizeof *system_manager_roots; ++r)
+		for (const char ** r(system_manager_logdirs); r < system_manager_logdirs + sizeof system_manager_logdirs/sizeof *system_manager_logdirs; ++r)
 			if (0 <= chdir(*r))
 				return;
 	} else
-		chdir((login_user_runtime_dir() + "system-manager/log").c_str());
-}
-
-static inline
-const char *
-construct_system_manager_log_name (
-	const bool is_system,
-	std::string & name_buf
-) {
-#if 0
-	if (is_system) return ".";
-	name_buf = login_user_runtime_dir() + "log.";
-	const int id(query_manager_pid(is_system));
-	char idbuf[64];
-	snprintf(idbuf, sizeof idbuf, "%d", id);
-	name_buf += idbuf;
-	return name_buf.c_str();
-#else
-	return ".";
-#endif
+		chdir((effective_user_runtime_dir() + "per-user-manager/log").c_str());
 }
 
 /* Main program *************************************************************
@@ -676,29 +648,119 @@ common_manager (
 	const char * prog(basename_of(args[0]));
 	args.erase(args.begin());
 
-	// We cannot open /dev/console until we've mounted /dev; but we need somewhere to record errors mounting things.
-	// Linux runs process #1 with standard input, output, and error already attached to a TTY; but BSD does not.
-	// On the gripping hand, we don't want our output cluttering a TTY; so we use a pipe.
-	// We must be careful about not writing too much to this pipe without a running cyclog process.
-	int pipe_fds[2] = { -1, -1 };
-	open_logging_pipe(prog, pipe_fds);
-
-	setup_process_state(is_system, prog);
-	ignore_all_signals();
-	if (is_system) {
-		initialize_system_clock_timezone(prog);
-		setup_kernel_api_volumes_and_devices(prog);
-		make_needed_run_directories(prog);
+	// We must ensure that no new file descriptors are allocated in the standard+systemd file descriptors range, otherwise dup2() and automatic-close() in child processes go wrong later.
+	FileDescriptorOwner faked_stdio[LISTEN_SOCKET_FILENO + 1] = { -1, -1, -1, -1 };
+	for (
+		FileDescriptorOwner root(open_dir_at(AT_FDCWD, "/")); 
+		0 <= root.get() && root.get() <= LISTEN_SOCKET_FILENO; 
+		root.reset(dup(root.release()))
+	) {
+		faked_stdio[root.get()].reset(root.get());
 	}
 
-	const int dev_null_fd(open_null_as_stdin(prog));
-	const int dev_console_fd((is_system ? open_console : open_tty)(prog));
-	if (is_system)
-		request_system_events(dev_console_fd);
+	// The system manager runs with standard I/O connected to a (console) TTY.
+	// A per-user manager runs with standard I/O connected to logger services and suchlike.
+	// We want to save these, if they are open, for use as log destinations of last resort during shutdown.
+	FileDescriptorOwner saved_stdio[LISTEN_SOCKET_FILENO + 1] = { -1, -1, -1, -1 };
+	for (std::size_t i(0U); i < sizeof saved_stdio/sizeof *saved_stdio; ++i) {
+#if !defined(__LINUX__) && !defined(__linux__)
+		// The exception is anything open from the system manager to a TTY on BSD.
+		// FreeBSD initializes process #1 with a controlling terminal!
+		// The only way to get rid of it is to close all open file descriptors to it.
+		if (is_system && 0 < isatty(i)) {
+			FileDescriptorOwner root(open_dir_at(AT_FDCWD, "/")); 
+			dup2(root.get(), i);
+			faked_stdio[i].reset(i);
+		} else
+#endif
+			saved_stdio[i].reset(dup(i));
+	}
 
-	const int service_manager_socket_fd(listen_service_manager_socket(is_system, prog));
+	// In the normal course of events, standard output and error will be connected to some form of logger process, via a pipe.
+	// We don't want our output cluttering a TTY and device files such as /dev/null and /dev/console do not exist yet.
+	FileDescriptorOwner read_log_pipe(-1), write_log_pipe(-1);
+	open_logging_pipe(prog, read_log_pipe, write_log_pipe);
+	if (0 <= faked_stdio[STDOUT_FILENO].release())
+		saved_stdio[STDOUT_FILENO].reset(-1);
+	dup2(write_log_pipe.get(), STDOUT_FILENO);
+	if (0 <= faked_stdio[STDERR_FILENO].release())
+		saved_stdio[STDERR_FILENO].reset(-1);
+	dup2(write_log_pipe.get(), STDERR_FILENO);
 
-#if defined(DEBUG)
+	// Now we perform the process initialization that does thing like mounting /dev.
+	// Errors mounting things go down the pipe, from which nothing is reading as yet.
+	// We must be careful about not writing too much to this pipe without a running cyclog process.
+	setup_process_state(is_system, prog);
+	PreventDefaultForFatalSignals ignored_signals(
+		SIGTERM, 
+		SIGINT, 
+		SIGQUIT,
+		SIGHUP, 
+		SIGUSR1, 
+		SIGUSR2, 
+		SIGPIPE, 
+		SIGABRT,
+		SIGALRM,
+		SIGIO,
+#if defined(SIGPWR)
+		SIGPWR,
+#endif
+		0
+	);
+	ReserveSignalsForKQueue kqueue_reservation(
+		SIGCHLD,
+		SIGWINCH, 
+		SYSINIT_SIGNAL,
+		NORMAL_SIGNAL,
+		EMERGENCY_SIGNAL,
+		RESCUE_SIGNAL,
+		HALT_SIGNAL,
+		POWEROFF_SIGNAL,
+		REBOOT_SIGNAL,
+#if defined(FORCE_HALT_SIGNAL)
+		FORCE_HALT_SIGNAL,
+#endif
+#if defined(FORCE_POWEROFF_SIGNAL)
+		FORCE_POWEROFF_SIGNAL,
+#endif
+		FORCE_REBOOT_SIGNAL,
+		SIGTERM, 
+		SIGHUP, 
+		SIGPIPE, 
+#if defined(SAK_SIGNAL)
+		SAK_SIGNAL,
+#endif
+#if defined(SIGPWR)
+		SIGPWR,
+#endif
+		0
+	);
+	if (is_system) {
+#if defined(__LINUX__) || defined(__linux__)
+		initialize_system_clock_timezone();
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
+		initialize_system_clock_timezone(prog);
+#elif defined(__NetBSD__)
+#error "Don't know what needs to be done about the system clock."
+#endif
+		setup_kernel_api_volumes_and_devices(prog);
+		make_needed_run_directories(prog);
+		if (!am_in_jail()) 
+			start_system();
+	}
+
+	// Now we can use /dev/console, /dev/null, and the rest.
+	const FileDescriptorOwner dev_null_fd(open_null(prog));
+	if (0 <= faked_stdio[STDIN_FILENO].release())
+		saved_stdio[STDIN_FILENO].reset(-1);
+	dup2(dev_null_fd.get(), STDIN_FILENO);
+	last_resort_io_defaults(is_system, prog, dev_null_fd, saved_stdio);
+
+	const FileDescriptorOwner service_manager_socket_fd(listen_service_manager_socket(is_system, prog));
+	if (0 <= faked_stdio[LISTEN_SOCKET_FILENO].get())
+		saved_stdio[LISTEN_SOCKET_FILENO].reset(-1);
+
+#if defined(DEBUG)	// This is not an emergency mode.  Do not abuse as such.
 	if (is_system) {
 		const int shell(fork());
 		if (-1 == shell) {
@@ -710,23 +772,17 @@ common_manager (
 			args.insert(args.end(), "/bin/sh");
 			args.insert(args.end(), 0);
 			next_prog = arg0_of(args);
-			dup2(dev_console_fd, STDIN_FILENO);
-			dup2(dev_console_fd, STDOUT_FILENO);
-			dup2(dev_console_fd, STDERR_FILENO);
+			dup2(saved_stdin.get(), STDIN_FILENO);
+			dup2(saved_stdout.get(), STDOUT_FILENO);
+			dup2(saved_stderr.get(), STDERR_FILENO);
 			close(LISTEN_SOCKET_FILENO);
-			close(pipe_fds[0]);
-			close(pipe_fds[1]);
-			close(dev_null_fd);
-			close(dev_console_fd);
-			close(service_manager_socket_fd);
 			return;
 		}
 	}
 #endif
 
-#if !defined(__LINUX__) && !defined(__linux__)
-	const int queue(kqueue());
-	if (0 > queue) {
+	const FileDescriptorOwner queue(kqueue());
+	if (0 > queue.get()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kqueue", std::strerror(error));
 		return;
@@ -734,73 +790,46 @@ common_manager (
 
 	std::vector<struct kevent> p(24);
 	unsigned n(0);
-	EV_SET(&p[n++], SIGCHLD, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[n++], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[n++], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 	if (is_system) {
-	EV_SET(&p[n++], SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[n++], SIGUSR2, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-#if defined(SIGPWR)
-	EV_SET(&p[n++], SIGPWR, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[n++], SIGWINCH, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[n++], RESCUE_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[n++], EMERGENCY_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+#if defined(SAK_SIGNAL)
+		set_event(&p[n++], SAK_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 #endif
-	EV_SET(&p[n++], SIGWINCH, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+#if defined(SIGPWR)
+		set_event(&p[n++], SIGPWR, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+#endif
 	} else {
-	EV_SET(&p[n++], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[n++], SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		if (SIGINT != REBOOT_SIGNAL) {
+			set_event(&p[n++], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		}
+		set_event(&p[n++], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[n++], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[n++], SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 	}
-	EV_SET(&p[n++], SIGRTMIN +  0, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	if (is_system) {
-	EV_SET(&p[n++], SIGRTMIN +  1, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[n++], SIGRTMIN +  2, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	}
-	EV_SET(&p[n++], SIGRTMIN +  3, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[n++], SIGRTMIN +  4, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[n++], SIGRTMIN +  5, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[n++], SIGRTMIN + 10, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[n++], SIGRTMIN + 11, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[n++], SIGRTMIN + 13, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[n++], SIGRTMIN + 14, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[n++], SIGRTMIN + 15, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	if (0 > kevent(queue, p.data(), n, 0, 0, 0)) {
+	set_event(&p[n++], SIGCHLD, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	set_event(&p[n++], NORMAL_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	set_event(&p[n++], SYSINIT_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	set_event(&p[n++], HALT_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	set_event(&p[n++], POWEROFF_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	set_event(&p[n++], REBOOT_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	set_event(&p[n++], FORCE_REBOOT_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+#if defined(FORCE_HALT_SIGNAL)
+	set_event(&p[n++], FORCE_HALT_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+#endif
+#if defined(FORCE_POWEROFF_SIGNAL)
+	set_event(&p[n++], FORCE_POWEROFF_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+#endif
+	if (0 > kevent(queue.get(), p.data(), n, 0, 0, 0)) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
 	}
-#else
-	sigset_t original_signals, masked_signals;
-	sigfillset(&masked_signals);
-	sigprocmask(SIG_SETMASK, &masked_signals, &original_signals);
-	sigset_t masked_signals_during_poll(masked_signals);
-	sigdelset(&masked_signals_during_poll, SIGCHLD);
-	sigdelset(&masked_signals_during_poll, SIGINT);
-	if (is_system) {
-#if defined(SIGPWR)
-	sigdelset(&masked_signals_during_poll, SIGPWR);
-#endif
-	} else {
-	sigdelset(&masked_signals_during_poll, SIGHUP);
-	sigdelset(&masked_signals_during_poll, SIGPIPE);
-	}
-	sigdelset(&masked_signals_during_poll, SIGWINCH);
-	sigdelset(&masked_signals_during_poll, SIGRTMIN + 0);
-	if (is_system) {
-	sigdelset(&masked_signals_during_poll, SIGRTMIN + 1);
-	sigdelset(&masked_signals_during_poll, SIGRTMIN + 2);
-	}
-	sigdelset(&masked_signals_during_poll, SIGRTMIN + 3);
-	sigdelset(&masked_signals_during_poll, SIGRTMIN + 4);
-	sigdelset(&masked_signals_during_poll, SIGRTMIN + 5);
-	if (is_system) {
-	sigdelset(&masked_signals_during_poll, SIGRTMIN + 10);
-	sigdelset(&masked_signals_during_poll, SIGRTMIN + 11);
-	}
-	sigdelset(&masked_signals_during_poll, SIGRTMIN + 13);
-	sigdelset(&masked_signals_during_poll, SIGRTMIN + 14);
-	sigdelset(&masked_signals_during_poll, SIGRTMIN + 15);
-#endif
 
-	attach_signals_to_state_machine();
+	faked_stdio[LISTEN_SOCKET_FILENO].reset(-1);
 
-	{
+	/// FIXME \bug This mechanism cannot work.
+	if (!is_system) {
 		char pid[64];
 		snprintf(pid, sizeof pid, "%u", getpid());
 		setenv("MANAGER_PID", pid, 1);
@@ -895,13 +924,12 @@ common_manager (
 					const int error(errno);
 					std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
 				} else if (0 == system_control_pid) {
-#if defined(__LINUX__) || defined(__linux__)
-					sigprocmask(SIG_SETMASK, &original_signals, &masked_signals);
-#endif
 					default_all_signals();
 					alarm(180);
 					// Replace the original arguments with this.
 					args.clear();
+					args.insert(args.end(), "move-to-control-group");
+					args.insert(args.end(), "system-control.slice");
 					args.insert(args.end(), "system-control");
 					args.insert(args.end(), subcommand);
 					if (verbose)
@@ -925,9 +953,6 @@ common_manager (
 					const int error(errno);
 					std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
 				} else if (0 == system_control_pid) {
-#if defined(__LINUX__) || defined(__linux__)
-					sigprocmask(SIG_SETMASK, &original_signals, &masked_signals);
-#endif
 					default_all_signals();
 					alarm(420);
 					// Retain the original arguments and insert the following in front of them.
@@ -935,6 +960,8 @@ common_manager (
 						args.insert(args.begin(), "--user");
 					args.insert(args.begin(), "init");
 					args.insert(args.begin(), "system-control");
+					args.insert(args.begin(), "system-control.slice");
+					args.insert(args.begin(), "move-to-control-group");
 					next_prog = arg0_of(args);
 					return;
 				} else
@@ -957,46 +984,39 @@ common_manager (
 				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
 			} else if (0 == cyclog_pid) {
 				change_to_system_manager_log_root(is_system);
-				std::string name_buf;
-				const char * log_name(construct_system_manager_log_name(is_system, name_buf));
-#if defined(__LINUX__) || defined(__linux__)
-				sigprocmask(SIG_SETMASK, &original_signals, &masked_signals);
-#endif
 				if (is_system)
 					setsid();
 				default_all_signals();
 				args.clear();
+				args.insert(args.end(), "move-to-control-group");
+				if (is_system)
+					args.insert(args.end(), "system-manager-log.slice");
+				else
+					args.insert(args.end(), "per-user-manager-log.slice");
 				args.insert(args.end(), "cyclog");
 				args.insert(args.end(), "--max-file-size");
 				args.insert(args.end(), "32768");
 				args.insert(args.end(), "--max-total-size");
 				args.insert(args.end(), "1048576");
-				args.insert(args.end(), log_name);
+				args.insert(args.end(), ".");
 				args.insert(args.end(), 0);
 				next_prog = arg0_of(args);
-				if (-1 != pipe_fds[0]) dup2(pipe_fds[0], STDIN_FILENO);
-				dup2(dev_console_fd, STDOUT_FILENO);
-				dup2(dev_console_fd, STDERR_FILENO);
+				if (-1 != read_log_pipe.get())
+					dup2(read_log_pipe.get(), STDIN_FILENO);
+				dup2(saved_stdio[STDOUT_FILENO].get(), STDOUT_FILENO);
+				dup2(saved_stdio[STDERR_FILENO].get(), STDERR_FILENO);
 				close(LISTEN_SOCKET_FILENO);
-				close(pipe_fds[0]);
-				close(pipe_fds[1]);
-				close(dev_null_fd);
-				close(dev_console_fd);
-				close(service_manager_socket_fd);
 				return;
 			} else
 				std::fprintf(stderr, "%s: INFO: %s (pid %i) started\n", prog, "cyclog", cyclog_pid);
 		}
 		// If the service manager has exited and stop has been signalled, close the logging pipe so that the logger finally exits.
-		if (!has_service_manager && stop_signalled && -1 != pipe_fds[0]) {
+		if (!has_service_manager && stop_signalled && -1 != read_log_pipe.get()) {
 			std::fprintf(stderr, "%s: DEBUG: %s\n", prog, "closing logger");
-			dup2(dev_console_fd, STDIN_FILENO);
-			dup2(dev_console_fd, STDOUT_FILENO);
-			dup2(dev_console_fd, STDERR_FILENO);
-			close(LISTEN_SOCKET_FILENO);
-			close(pipe_fds[0]);
-			close(pipe_fds[1]);
-			pipe_fds[0] = pipe_fds[1] = -1;
+			for (std::size_t i(0U); i < sizeof saved_stdio/sizeof *saved_stdio; ++i)
+				dup2(saved_stdio[i].get(), i);
+			read_log_pipe.reset(-1);
+			write_log_pipe.reset(-1);
 		}
 		// Restart the service manager unless stop has been signalled.
 		if (!has_service_manager && !stop_signalled) {
@@ -1006,8 +1026,6 @@ common_manager (
 				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
 			} else if (0 == service_manager_pid) {
 #if defined(__LINUX__) || defined(__linux__)
-				sigprocmask(SIG_SETMASK, &original_signals, &masked_signals);
-
 				// Linux's default file handle limit of 1024 is far too low for normal usage patterns.
 				const rlimit file_limit = { 16384U, 16384U };
 				setrlimit(RLIMIT_NOFILE, &file_limit);
@@ -1016,18 +1034,17 @@ common_manager (
 					setsid();
 				default_all_signals();
 				args.clear();
+				args.insert(args.end(), "move-to-control-group");
+				args.insert(args.end(), "service-manager.slice");
 				args.insert(args.end(), "service-manager");
 				args.insert(args.end(), 0);
 				next_prog = arg0_of(args);
-				dup2(dev_null_fd, STDIN_FILENO);
-				if (-1 != pipe_fds[1]) dup2(pipe_fds[1], STDOUT_FILENO);
-				if (-1 != pipe_fds[1]) dup2(pipe_fds[1], STDERR_FILENO);
-				dup2(service_manager_socket_fd, LISTEN_SOCKET_FILENO);
-				close(pipe_fds[0]);
-				close(pipe_fds[1]);
-				close(dev_null_fd);
-				close(dev_console_fd);
-				close(service_manager_socket_fd);
+				dup2(dev_null_fd.get(), STDIN_FILENO);
+				if (-1 != write_log_pipe.get()) {
+					dup2(write_log_pipe.get(), STDOUT_FILENO);
+					dup2(write_log_pipe.get(), STDERR_FILENO);
+				}
+				dup2(service_manager_socket_fd.get(), LISTEN_SOCKET_FILENO);
 				return;
 			} else
 				std::fprintf(stderr, "%s: INFO: %s (pid %i) started\n", prog, "service-manager", service_manager_pid);
@@ -1036,23 +1053,17 @@ common_manager (
 			std::fprintf(stderr, "%s: WARNING: %s\n", prog, "Unknown signal ignored.");
 			unknown_signalled = false;
 		}
-#if !defined(__LINUX__) && !defined(__linux__)
-		const int rc(kevent(queue, p.data(), 0, p.data(), p.size(), 0));
-#else
-		const int rc(sigsuspend(&masked_signals_during_poll));
-#endif
+		const int rc(kevent(queue.get(), p.data(), 0, p.data(), p.size(), 0));
 		if (0 > rc) {
 			if (EINTR == errno) continue;
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s\n", prog, std::strerror(error));
 			return;
 		}
-#if !defined(__LINUX__) && !defined(__linux__)
 		for (size_t i(0); i < static_cast<std::size_t>(rc); ++i) {
 			if (EVFILT_SIGNAL == p[i].filter)
 				record_signal(p[i].ident);
 		}
-#endif
 	}
 
 	if (is_system) {
@@ -1064,7 +1075,7 @@ common_manager (
 }
 
 void
-session_manager ( 
+per_user_manager ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {

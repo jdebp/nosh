@@ -10,7 +10,6 @@ DefaultDependencies=false
 EnvironmentDirectory=env
 ExecStartPre=sleep ${delay:-0}
 ExecStart=fsck -B -p
-RemainAfterExit=yes
 
 [Install]
 StoppedBy=shutdown.target

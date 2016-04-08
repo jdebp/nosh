@@ -208,5 +208,15 @@ setprocargv (
 	size_t argc,
 	const char * argv[]
 ) ;
+extern
+const char *
+classify_signal (
+	int signo
+) ;
+extern
+const char *
+signame (
+	int signo
+) ;
 
 #endif

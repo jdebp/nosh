@@ -9,7 +9,9 @@ Description=Create the "dynamic" part of the Message Of The Day
 Type=oneshot
 Umask=0033
 ExecStart=fdredir --write 1 /run/motd.dynamic uname -srm
-RemainAfterExit=yes
+# This is a one-shot service that can be re-triggered by starting it again.
+RemainAfterExit=1
+Restart=no
 
 [Install]
 WantedBy=multi-user.target

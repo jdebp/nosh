@@ -28,13 +28,15 @@ case "${base}" in
 	;;
 esac
 
-test -n "${unitfile}" && redo-ifchange "${unitfile}"
+redo-ifchange "${unitfile}"
 
 mkdir -p targets.new
 
-if test -n "${unitfile}"
+./system-control convert-systemd-units --no-systemd-quirks --etc-bundle --bundle-root targets.new/ "${unit}"
+
+if grep -q "envdir env" targets.new/"${base}"/service/start targets.new/"${base}"/service/run targets.new/"${base}"/service/stop
 then
-	./system-control convert-systemd-units --no-systemd-quirks --etc-bundle --bundle-root targets.new/ "${unit}"
+	install -d -m 0755 targets.new/"${base}"/service/env
 fi
 
 rm -r -f -- "$3"

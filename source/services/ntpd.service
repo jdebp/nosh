@@ -8,7 +8,6 @@ Description=NTP daemon
 [Service]
 EnvironmentDirectory=env
 ExecStart=%p --nofork --panicgate ${user:+-u "${user}${group:+:${group}}"} ${logfile:+--logfile "${logfile}"} ${flags}
-Restart=always
 
 [Install]
 WantedBy=workstation.target

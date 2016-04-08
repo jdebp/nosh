@@ -10,7 +10,6 @@ RuntimeDirectory=%p
 RuntimeDirectoryMode=1777
 EnvironmentDirectory=env
 ExecStart=%p -d 0 ${SERVICES:+-h "${SERVICES}"} ${USER:+-u "${USER}"} ${GROUP:+-g "${GROUP}"} ${OPTIONS}
-Restart=always
 
 [Install]
 WantedBy=server.target

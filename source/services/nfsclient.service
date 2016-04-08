@@ -10,7 +10,6 @@ Wants=kmod@nfscl
 EnvironmentDirectory=env
 ExecStart=rpc.umntall -k
 ExecStopPost=rpc.umntall -k
-Restart=always
 
 [Install]
 WantedBy=workstation.target

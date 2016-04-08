@@ -11,6 +11,7 @@ RuntimeDirectory=network
 RUntimeDirectoryMode=0755
 # This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
+Restart=no
 ExecStart=true
 
 [Install]

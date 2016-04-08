@@ -14,12 +14,15 @@ For copyright and licensing terms, see the file named COPYING.
 #include <linux/vt.h>
 #include <sys/poll.h>
 #else
+#if 0 // This is no gain over the normal enable/disable mechanisms for services.
 #include <sys/wait.h>
 #include <ttyent.h>
+#endif
 #endif
 #include "popt.h"
 #include "fdutils.h"
 #include "utils.h"
+#include "terminal_database.h"
 
 /* Main function ************************************************************
 // **************************************************************************
@@ -27,49 +30,6 @@ For copyright and licensing terms, see the file named COPYING.
 
 #if defined(__LINUX__) || defined(__linux__)
 static const char active[] = "active";
-#endif
-
-#if !defined(__LINUX__) && !defined(__linux__)
-
-#if defined(TTY_ONIFCONSOLE)
-static inline
-bool
-is_current_console (
-	const struct ttyent & entry
-) {
-	int oid[CTL_MAXNAME];
-	std::size_t len(sizeof oid/sizeof *oid);
-	const int r(sysctlnametomib("kern.console", oid, &len));
-	if (0 > r) return false;
-	std::size_t siz;
-	const int s(sysctl(oid, len, 0, &siz, 0, 0));
-	if (0 > s) return false;
-	std::auto_ptr<char> buf(new(std::nothrow) char[siz]);
-	const int t(sysctl(oid, len, buf, &siz, 0, 0));
-	if (0 > t) return false;
-	const char * avail(std::strchr(buf, '/'));
-	if (!avail) return false;
-	*avail++ = '\0';
-	for (const char * p(buf), * e(0); *p; p = e) {
-		e = std::strchr(p, ',');
-		if (e) *e++ = '\0'; else e = std::strchr(p, '\0');
-		if (0 == std::strcmp(p, entry.ty_name)) return true;
-	}
-	return false;
-}
-#endif
-
-static inline
-bool
-is_on (
-	const struct ttyent & entry
-) {
-	return (entry.ty_status & TTY_ON) 
-#if defined(TTY_ONIFCONSOLE)
-		|| ((entry.ty_status & TTY_ONIFCONSOLE) && is_current_console(entry))
-#endif
-	;
-}
 #endif
 
 // This must have static storage duration as we are using it in args.
@@ -204,7 +164,7 @@ ttylogin_starter (
 				log_service_name = log_prefix + service_name;
 				args.clear();
 				args.insert(args.end(), "system-control");
-				args.insert(args.end(), "reset");
+				args.insert(args.end(), "start");
 				if (verbose)
 					args.insert(args.end(), "--verbose");
 				args.insert(args.end(), service_name.c_str());
@@ -217,30 +177,7 @@ ttylogin_starter (
 	}
 	throw EXIT_SUCCESS;
 #else
-#if 0
-	for (unsigned int i(0); i < 16; ++i) {
-		const int system_control_pid(fork());
-		if (-1 == system_control_pid) {
-			const int error(errno);
-			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
-		} else if (0 == system_control_pid) {
-			char ttyname[64];
-			snprintf(ttyname, sizeof ttyname, "ttyv%x", i);
-			service_name = (std::string(prefix) + ttyname) + ".service";
-			log_service_name = log_prefix + service_name;
-			args.clear();
-			args.insert(args.end(), "system-control");
-			args.insert(args.end(), "reset");
-			if (verbose)
-				args.insert(args.end(), "--verbose");
-			args.insert(args.end(), service_name.c_str());
-			args.insert(args.end(), log_service_name.c_str());
-			args.insert(args.end(), 0);
-			next_prog = arg0_of(args);
-			return;
-		}
-	}
-#else
+#if 0 // This is no gain over the normal enable/disable mechanisms for services.
 	errno = 0;
 	if (!setttyent()) {
 		const int error(errno);
@@ -260,7 +197,7 @@ ttylogin_starter (
 			log_service_name = log_prefix + service_name;
 			args.clear();
 			args.insert(args.end(), "system-control");
-			args.insert(args.end(), "reset");
+			args.insert(args.end(), "start");
 			if (verbose)
 				args.insert(args.end(), "--verbose");
 			args.insert(args.end(), service_name.c_str());
@@ -271,11 +208,11 @@ ttylogin_starter (
 		}
 	}
 	endttyent();
-#endif
 
 	// Reap all of the children just created.
 	int status;
 	waitpid(-1, &status, 0);
+#endif
 
 	args.clear();
 	args.insert(args.end(), "pause");

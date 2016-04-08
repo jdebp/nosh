@@ -4,13 +4,13 @@
 
 [Unit]
 Description=Bernstein's content DNS server daemon
+After=network-interfaces.service
 
 [Service]
 EnvironmentUser=tinydns-d
 EnvironmentDirectory=env
 LimitDATA=300000
 ExecStart=%p
-Restart=always
 
 [Install]
 WantedBy=server.target

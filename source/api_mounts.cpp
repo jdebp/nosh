@@ -11,6 +11,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include "common-manager.h"
 
 #if defined(__LINUX__) || defined(__linux__)
+// Defining a FROM for tmpfs and cgroup mounts is important, even though it is meaningless.
+// Otherwise the empty string between whitespace that results in /proc/self/mountinfo confuses the parser in libmount.
 static const struct iovec proc[] = {
 	FSTYPE,				MAKE_IOVEC("proc"),
 	FSPATH,				MAKE_IOVEC("/proc"),
@@ -18,6 +20,20 @@ static const struct iovec proc[] = {
 static const struct iovec sys[] = {
 	FSTYPE,				MAKE_IOVEC("sysfs"),
 	FSPATH,				MAKE_IOVEC("/sys"),
+};
+static const struct iovec cg1[] = {
+	FROM,				MAKE_IOVEC("tmpfs"),
+	FSTYPE,				MAKE_IOVEC("tmpfs"),
+	FSPATH,				MAKE_IOVEC("/sys/fs/cgroup"),
+	MAKE_IOVEC("mode"),		MAKE_IOVEC("0755"),
+	MAKE_IOVEC("size"),		MAKE_IOVEC("1M"),
+};
+static const struct iovec scg[] = {
+	FROM,				MAKE_IOVEC("cgroup"),
+	FSTYPE,				MAKE_IOVEC("cgroup"),
+	FSPATH,				MAKE_IOVEC("/sys/fs/cgroup/systemd"),
+	MAKE_IOVEC("name"),		MAKE_IOVEC("systemd"),
+	MAKE_IOVEC("none"),		ZERO_IOVEC(),
 };
 static const struct iovec dev[] = {
 	FSTYPE,				MAKE_IOVEC("devtmpfs"),
@@ -83,6 +99,8 @@ static const struct api_mount data[] =
 #if defined(__LINUX__) || defined(__linux__)
 	{	MAKE_DATA(proc),	MS_NOSUID|MS_NODEV				},
 	{	MAKE_DATA(sys),		MS_NOSUID|MS_NOEXEC|MS_NODEV			},
+	{	MAKE_DATA(cg1),		MS_NOSUID|MS_NOEXEC|MS_NODEV			},
+	{	MAKE_DATA(scg),		MS_NOSUID|MS_NOEXEC|MS_NODEV			},
 	{	MAKE_DATA(dev),		MS_NOSUID|MS_STRICTATIME			},
 	{	MAKE_DATA(pts),		MS_NOSUID|MS_STRICTATIME|MS_NOEXEC		},
 	{	MAKE_DATA(run),		MS_NOSUID|MS_STRICTATIME|MS_NODEV		},

@@ -1,38 +1,25 @@
 #!/bin/sh -
-# Stop the auto-starter first!
-for i in \
-	ttylogin-starter \
-	;
-do
-	system-control disable $i.service cyclog@$i.service
-	if system-control is-loaded $i.service
-	then
-		system-control unload-when-stopped $i.service
-		system-control stop $i.service
-	fi
-	if system-control is-loaded cyclog@$i.service
-	then
-		system-control unload-when-stopped cyclog@$i.service
-		system-control stop cyclog@$i.service
-	fi
-done
+case "`uname`" in
+OpenBSD)	ktty=ttyC; break ;;
+*)		ktty=ttyv; break ;;
+esac
 for I in \
-	ttyv0 \
-	ttyv1 \
-	ttyv2 \
-	ttyv3 \
-	ttyv4 \
-	ttyv5 \
-	ttyv6 \
-	ttyv7 \
-	ttyv8 \
-	ttyv9 \
-	ttyva \
-	ttyvb \
-	ttyvc \
-	ttyvd \
-	ttyve \
-	ttyvf \
+	"${ktty}"0 \
+	"${ktty}"1 \
+	"${ktty}"2 \
+	"${ktty}"3 \
+	"${ktty}"4 \
+	"${ktty}"5 \
+	"${ktty}"6 \
+	"${ktty}"7 \
+	"${ktty}"8 \
+	"${ktty}"9 \
+	"${ktty}"a \
+	"${ktty}"b \
+	"${ktty}"c \
+	"${ktty}"d \
+	"${ktty}"e \
+	"${ktty}"f \
 	;
 do
 	system-control disable ttylogin@$I.service cyclog@ttylogin@$I.service

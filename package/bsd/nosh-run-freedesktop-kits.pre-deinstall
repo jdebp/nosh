@@ -3,6 +3,7 @@ for i in \
 	console-kit-daemon \
 	ModemManager \
 	NetworkManager \
+	NetworkManager-dispatcher \
 	packagekit \
 	polkitd \
 	;

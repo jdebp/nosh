@@ -66,12 +66,12 @@ These commands are all shims around <citerefentry><refentrytitle>system-control<
 </cmdsynopsis>
 
 <para>
-Invoked as <command>telinit</command> <arg choice="plain" rep='repeat'><replaceable>args</replaceable></arg> or as <command>init</command> <arg choice="plain" rep='repeat'><replaceable>args</replaceable></arg> the program chains to <command>system-control</command> <arg choice="plain">init</arg> <arg choice="plain" rep='repeat'><replaceable>args</replaceable></arg>.
+Invoked as <command>telinit</command> <arg choice="plain" rep='repeat'><replaceable>args</replaceable></arg> or as <command>init</command> <arg choice="plain" rep='repeat'><replaceable>args</replaceable></arg> the program chains to <command>system-control</command> <arg choice="plain">init</arg> <arg choice="plain" rep='repeat'><replaceable>args</replaceable></arg>, the behaviour of which is documented in <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 <para>
 No attempt is made to validate <arg choice="plain"><replaceable>args</replaceable></arg>; however it must have the same form as is used by the loader and kernel to pass arguments to process #1 at bootstrap.
-See the <command>init</command> subcommand of <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry> for details.
+See the <command>init</command> subcommand of <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> for details.
 </para>
 
 <para>
@@ -81,7 +81,7 @@ Configure the system to invoke <citerefentry><refentrytitle>system-manager</refe
 </para>
 
 <para>
-It is likewise a mistake to run this thinking that it is an alias for <citerefentry><refentrytitle>session-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+It is likewise a mistake to run this thinking that it is an alias for <citerefentry><refentrytitle>per-user-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
 Again, invoke that directly, optionally under the name <command>init</command>.
 </para>
 
@@ -178,6 +178,10 @@ For individual control of services without orderings or dependencies, use <citer
 <cmdsynopsis>
 <command>invoke-rc.d</command>
 <arg choice="req"><replaceable>name</replaceable></arg>
+<group choice="opt">
+<arg choice="plain">-q</arg>
+<arg choice="plain">--quiet</arg>
+</group>
 <group choice="req">
 <arg choice="plain">start</arg>
 <arg choice="plain">stop</arg>
@@ -208,6 +212,10 @@ Invoked as <command>invoke-rc.d</command> <arg choice="plain"><replaceable>name<
 <replaceable>command1</replaceable> may only be one of <arg choice="plain">start</arg> or <arg choice="plain">stop</arg>, which are translated to <arg choice="plain">reset</arg> and <arg choice="plain">stop</arg> (respectively) for <replaceable>command2</replaceable>.
 The behaviour that it is designed to be backwards compatible with only starts a service in response to the <arg choice="plain">start</arg> subcommand if the administrator has configured the service to auto-start.
 Hence the replacement of <arg choice="plain">start</arg> by <arg choice="plain">reset</arg>.
+</para>
+
+<para>
+The <arg choice='plain'>--quiet</arg> option has no translatable meaning, does nothing, and is present for compatibility only.
 </para>
 
 <para>

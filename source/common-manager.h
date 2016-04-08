@@ -8,6 +8,7 @@ For copyright and licensing terms, see the file named COPYING.
 
 #include <vector>
 #include <string>
+#include <csignal>
 
 struct api_symlink {
 	const char * name, * target;
@@ -26,13 +27,102 @@ struct api_mount {
 
 extern const std::vector<api_mount> api_mounts;
 
-extern int query_manager_pid(const bool is_system);
-extern int listen_service_manager_socket(const bool is_system, const char * prog);
-extern int connect_service_manager_socket(const bool is_system, const char * prog);
-extern std::string login_user_runtime_dir();
-extern std::string effective_user_runtime_dir();
+extern bool per_user_mode;	// Shared with the service manager client API.
 
-extern bool local_session_mode;
-extern int open_bundle_directory ( const char * prefix, const char * arg, std::string & path, std::string & basename, std::string & suffix ) ;
+// This signal tells process #1 to enter what systemd terms "emergency mode".
+#if defined(SIGRTMIN)
+// We go with systemd since BSD init, upstart, and System 5 init do not have a defined convention.
+#define	EMERGENCY_SIGNAL	(SIGRTMIN + 2)
+#else
+// On OpenBSD we do the best of a bad job.
+#define	EMERGENCY_SIGNAL	SIGINFO
+#endif
+
+// This signal tells process #1 to spawn "system-control start sysinit".
+#if defined(SIGRTMIN)
+// BSD init, upstart, systemd, and System 5 init do not have a defined convention.
+#define SYSINIT_SIGNAL	(SIGRTMIN + 10)
+#else
+// On OpenBSD we do the best of a bad job.
+#define	SYSINIT_SIGNAL	SIGTTOU
+#endif
+
+// This signal tells process #1 to enter what BSD terms "single user mode" and what systemd terms "rescue mode".
+#if defined(__LINUX__) || defined(__linux__)
+// On Linux, we go with systemd since upstart and System 5 init do not have a defined convention.
+#define RESCUE_SIGNAL	(SIGRTMIN + 1)
+#else
+// On the BSDs, it is SIGTERM.
+#define RESCUE_SIGNAL	SIGTERM
+#endif
+
+// This signal tells process #1 to enter what BSD terms "multi user mode" and what systemd terms "default mode".
+#if defined(SIGRTMIN)
+// On Linux and BSD, we go with systemd since upstart, BSD init, and System 5 init do not have a defined convention.
+#define NORMAL_SIGNAL	(SIGRTMIN + 0)
+#else
+// On OpenBSD we do the best of a bad job.
+#define NORMAL_SIGNAL	SIGTTIN
+#endif
+
+// This signal tells process #1 that the Secure Attention Key sequence has been pressed.
+#if defined(__LINUX__) || defined(__linux__)
+// On Linux, we go with systemd since upstart and System 5 init do not have a defined convention.
+#define SAK_SIGNAL	SIGINT
+#else
+// On the BSDs, this is overlapped by reboot request.
+#endif
+
+// This signal tells process #1 to activate the reboot target.
+#if defined(__LINUX__) || defined(__linux__)
+// On Linux, we go with systemd since upstart and System 5 init do not have a defined convention.
+#define REBOOT_SIGNAL	(SIGRTMIN + 5)
+#else
+// On the BSDs, it is SIGINT and overlaps secure-attention-key.
+#define REBOOT_SIGNAL	SIGINT
+#endif
+
+// This signal tells process #1 to shut down and reboot.
+#if defined(SIGRTMIN)
+// BSD init, upstart, systemd, and System 5 init do not have a defined convention.
+#define FORCE_REBOOT_SIGNAL	(SIGRTMIN + 15)
+#else
+// On OpenBSD we do the best of a bad job.
+#define FORCE_REBOOT_SIGNAL	SIGTSTP
+#endif
+
+// This signal tells process #1 to activate the halt target.
+#if defined(__LINUX__) || defined(__linux__)
+// On Linux, we go with systemd since upstart and System 5 init do not have a defined convention.
+#define HALT_SIGNAL	(SIGRTMIN + 3)
+#else
+// On the BSDs, it is SIGUSR1.
+#define HALT_SIGNAL	SIGUSR1
+#endif
+
+// This signal tells process #1 to shut down and halt.
+#if defined(SIGRTMIN)
+// BSD init, upstart, systemd, and System 5 init do not have a defined convention.
+#define FORCE_HALT_SIGNAL	(SIGRTMIN + 13)
+#else
+// And we cannot define this at all on OpenBSD!
+#endif
+
+// This signal tells process #1 to activate the poweroff target.
+#if defined(__LINUX__) || defined(__linux__)
+// On Linux, we go with systemd since upstart and System 5 init do not have a defined convention.
+#define POWEROFF_SIGNAL	(SIGRTMIN + 4)
+#else
+// On the BSDs, it is SIGUSR2.
+#define POWEROFF_SIGNAL	SIGUSR2
+#endif
+
+// This signal tells process #1 to shut down and power down.
+#if defined(SIGRTMIN)
+// BSD init, upstart, systemd, and System 5 init do not have a defined convention.
+#define FORCE_POWEROFF_SIGNAL	(SIGRTMIN + 14)
+#else
+// And we cannot define this at all on OpenBSD!
+#endif
 
 #endif

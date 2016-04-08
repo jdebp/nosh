@@ -6,13 +6,10 @@
 Description=Erlang Port Mapper service
 
 [Service]
-# FIXME: Is this really needed?
-systemdUserEnvironment=true
 # TODO: Newer versions of erlang packaging apparently provide a separate epmd user.
 User=rabbitmq
 # TODO: Newer versions of erlang can accept an already-opened listening socket with the unfortunately named -systemd option.
 ExecStart=%p
-Restart=always
 
 [Install]
 WantedBy=workstation.target

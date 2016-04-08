@@ -13,7 +13,6 @@ PrivateTmp=false
 NUMAInterleave=all
 User=mongodb
 ExecStart=mongod
-Restart=always
 # http://docs.mongodb.org/manual/reference/ulimit/#recommended-settings
 LimitNOFILE=64000
 LimitNPROC=64000

@@ -3,7 +3,7 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-#if !defined(__LINUX__) && !defined(__linux__)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #include <unistd.h>
@@ -12,7 +12,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstddef>
 #include "jail.h"
 
-#if !defined(__LINUX__) && !defined(__linux__)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 int			/// \returns standard syscall style return value \retval negative error \retval 0 false \retval positive true
 bsd_set_dynamic_hostname_is_allowed ()
 {
@@ -32,7 +32,7 @@ extern
 bool 
 set_dynamic_hostname_is_allowed() 
 {
-#if !defined(__LINUX__) && !defined(__linux__)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 	const int r(bsd_set_dynamic_hostname_is_allowed());
 	if (r >= 0) return r > 0;
 #endif

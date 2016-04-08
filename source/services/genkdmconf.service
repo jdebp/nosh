@@ -9,8 +9,9 @@ Description=Generate KDE display manager configuration
 Type=oneshot
 EnvironmentDirectory=env
 ExecStart=sh -c 'if test -r "/usr/local/share/config/kdm/kdmrc" ; then %p --in "/usr/local/share/config/kdm/kdmrc" ; else %p --no-old --in "/usr/local/share/config/kdm/kdmrc" ; fi'
-RemainAfterExit=true
-Restart=always
+# This is a one-shot service that can be re-triggered by starting it again.
+RemainAfterExit=1
+Restart=no
 
 [Install]
 WantedBy=workstation.target

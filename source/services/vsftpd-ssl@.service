@@ -6,12 +6,8 @@
 Description=FTP service over IP4 using vsftp
 
 [Service]
-# FIXME: Is this really needed?
-systemdUserEnvironment=true
 LimitData=300000
-User=vsftpd
 ExecStart=%p -oimplicit_ssl=yes
-Restart=always
 
 [Install]
 WantedBy=server.target

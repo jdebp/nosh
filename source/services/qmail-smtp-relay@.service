@@ -10,7 +10,6 @@ EnvironmentDirectory=env
 LimitMEMORY=70000000
 User=qmaild
 ExecStart=qmail-smtpd
-Restart=always
 
 [Install]
 WantedBy=server.target

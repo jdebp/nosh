@@ -6,8 +6,12 @@
 Description=kmod loader for unix
 
 [Service]
-ExecStart=sh -c '[ -d /proc/net/unix/ ] || system-control load-kernel-module unix'
+Type=oneshot
+ExecStart=sh -c 'test -d /proc/net/unix/ || system-control load-kernel-module unix'
+ExecStopPost=system-control unload-kernel-module unix
+# This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
+Restart=no
 
 [Install]
 WantedBy=workstation.target

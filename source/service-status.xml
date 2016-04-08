@@ -8,11 +8,19 @@
 <refmiscinfo class="version">1.24</refmiscinfo>
 </refmeta>
 
-<refnamediv><refname>service-status</refname><refname>svstat</refname><refpurpose>daemontools compatibility service status display</refpurpose></refnamediv>
+<refnamediv>
+<refname>service-status</refname>
+<refname>svstat</refname>
+<refpurpose>daemontools compatibility service status display</refpurpose>
+</refnamediv>
 
 <refsynopsisdiv>
 <cmdsynopsis>
-<command>service-status</command> <arg choice='req' rep='repeat'><replaceable>directory</replaceable></arg>
+<command>service-status</command> 
+<arg choice='opt'>--long</arg>
+<arg choice='opt'>--colour</arg>
+<arg choice='opt'>--log-lines <replaceable>lines</replaceable></arg>
+<arg choice='req' rep='repeat'><replaceable>directory</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
 <command>svstat</command> <arg choice='req' rep='repeat'><replaceable>directory</replaceable></arg>
@@ -22,23 +30,29 @@
 <refsection><title>Description</title>
 
 <para>
-<command>service-status</command> displays human-readable (but not necessarily machine
-parseable) information about a service that may be currently managed by
-<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> (or runit's <citerefentry><refentrytitle>runsv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, s6's <citerefentry><refentrytitle>s6-supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>, daemontools'
-<citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>, or daemontools-encore's <citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
-Each <replaceable>directory</replaceable> is either a supervise directory or a daemontools-style
-service directory with a supervise directory named <filename>supervise</filename> within it.
+<command>service-status</command> displays human-readable (but not necessarily machine parseable) information about a service that may be currently managed by <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> (or runit's <citerefentry><refentrytitle>runsv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, s6's <citerefentry><refentrytitle>s6-supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>, daemontools' <citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>, or daemontools-encore's <citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+Each <replaceable>directory</replaceable> is either a supervise directory or a daemontools-style service directory with a supervise directory named <filename>supervise</filename> within it.
 </para>
 
 <para>
 For more on service and supervise directories, see <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
+<para>
+If the standard output is a terminal, <command>service-status</command> uses whatever it can find via the terminfo library to display various parts of the output in different colours, highlighting different service states in different colours for example.
+The <arg choice='plain'>--colour</arg> command line option tells it to do this unconditionally, even if its standard output is not a terminal.
+</para>
+
+<para>
+The <arg choice='plain'>--long</arg> command line option switches from the default 1-line output form to a multiple-line form.
+This form includes the service's configured enable/disable state, information about its "main" process, and (if it has an associated service accessible via the conventional <filename>log/</filename> name that in turn has its log directory accessible via the conventional <filename>main/</filename> name) the tail end of the service's log, post-processed by the <citerefentry><refentrytitle>tai64nlocal</refentrytitle><manvolnum>1</manvolnum></citerefentry> command.
+The <arg choice='plain'>--log-lines</arg> command passes <replaceable>lines</replaceable> to the <citerefentry><refentrytitle>tail</refentrytitle><manvolnum>1</manvolnum></citerefentry> command with its <arg choice='plain'>-n</arg> option.
+</para>
+
 </refsection><refsection><title>COMPATIBILITY</title>
 
 <para>
-For daemontools and daemontools-encore compatibility, this command is also
-available as <command>svstat</command>.
+For daemontools and daemontools-encore compatibility, this command is also available as <command>svstat</command>.
 </para>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

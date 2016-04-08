@@ -46,6 +46,15 @@ open_appendcreate_at (
 
 extern inline
 int 
+open_appendexisting_at (
+	int fd, 
+	const char * name
+) {
+	return openat(fd, name, O_NOCTTY|O_CLOEXEC|O_WRONLY|O_APPEND|O_NONBLOCK);
+}
+
+extern inline
+int 
 open_read_at (
 	int fd, 
 	const char * name
@@ -204,5 +213,20 @@ socket_close_on_exec (
 	int type,
 	int protocol
 );
+extern
+int
+socket_set_boolean_option (
+	int socket,
+	int level,
+	int name,
+	bool value
+) ;
+extern
+int
+socket_set_bind_to_any (
+	int s,
+	const struct addrinfo & info,
+	bool v
+) ;
 
 #endif

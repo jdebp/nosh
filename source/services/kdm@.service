@@ -9,7 +9,6 @@ After=hald.service, genkdmconf.service
 [Service]
 EnvironmentDirectory=env
 ExecStart=%p -nodaemon %i
-Restart=always
 
 [Install]
 # TODO: This might be better as graphical.

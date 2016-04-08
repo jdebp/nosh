@@ -42,7 +42,7 @@ tcp_socket_listen (
 #if defined(IPV6_V6ONLY)
 	bool combine4and6(false);
 #endif
-	bool systemd_compatibility(false);
+	bool systemd_compatibility(false), upstart_compatibility(false);
 	try {
 		popt::bool_definition no_reuse_address_option('\0', "no-reuse-address", "Disallow rapid re-use of a local IP address and port.", no_reuse_address);
 		popt::bool_definition reuse_port_option('\0', "reuse-port", "Allow multiple listening sockets to share a single local IP address and port.", reuse_port);
@@ -53,6 +53,7 @@ tcp_socket_listen (
 #if defined(IPV6_V6ONLY)
 		popt::bool_definition combine4and6_option('\0', "combine4and6", "Allow IPv6 sockets to talk IPv4 to mapped addresses.", combine4and6);
 #endif
+		popt::bool_definition upstart_compatibility_option('\0', "upstart-compatibility", "Set the $UPSTART_FDS and $UPSTART_EVENT environment variables for compatibility with upstart.", upstart_compatibility);
 		popt::bool_definition systemd_compatibility_option('\0', "systemd-compatibility", "Set the $LISTEN_FDS and $LISTEN_PID environment variables for compatibility with systemd.", systemd_compatibility);
 		popt::unsigned_number_definition backlog_option('b', "backlog", "number", "Specify the listening backlog.", backlog, 0);
 		popt::definition * top_table[] = {
@@ -65,6 +66,7 @@ tcp_socket_listen (
 #if defined(IPV6_V6ONLY)
 			&combine4and6_option,
 #endif
+			&upstart_compatibility_option,
 			&systemd_compatibility_option,
 			&backlog_option
 		};
@@ -129,45 +131,38 @@ exit_error:
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	const int reuse_addr_i(!no_reuse_address);
-	if (0 > setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &reuse_addr_i, sizeof reuse_addr_i)) goto exit_error;
+	if (0 > socket_set_boolean_option(s, SOL_SOCKET, SO_REUSEADDR, !no_reuse_address)) goto exit_error;
 #if defined(SO_REUSEPORT)
-	const int reuse_port_i(reuse_port);
-	if (0 > setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &reuse_port_i, sizeof reuse_port_i)) goto exit_error;
+	if (0 > socket_set_boolean_option(s, SOL_SOCKET, SO_REUSEPORT, reuse_port)) goto exit_error;
 #endif
-	const int bind_to_any_i(bind_to_any);
-#if defined(__LINUX__) || defined(__linux__)
-	if (0 > setsockopt(s, SOL_IP, IP_FREEBIND, &bind_to_any_i, sizeof bind_to_any_i)) goto exit_error;
-#else
-	switch (info->ai_family) {
-		case AF_INET:
-			if (0 > setsockopt(s, IPPROTO_IPV4, IP_BINDANY, &bind_to_any_i, sizeof bind_to_any_i)) goto exit_error;
-			break;
-		case AF_INET6:
-			if (0 > setsockopt(s, IPPROTO_IPV6, IP_BINDANY, &bind_to_any_i, sizeof bind_to_any_i)) goto exit_error;
-			break;
-	}
-#endif
+	if (0 > socket_set_bind_to_any(s, *info, bind_to_any)) goto exit_error;
 	if (AF_INET6 == info->ai_family) {
 #if defined(IPV6_V6ONLY)
-		const int v6only(!combine4and6);
-		if (0 > setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &v6only, sizeof v6only)) goto exit_error;
+		if (0 > socket_set_boolean_option(s, IPPROTO_IPV6, IPV6_V6ONLY, !combine4and6)) goto exit_error;
 #endif
 	}
 	if (0 > bind(s, info->ai_addr, info->ai_addrlen)) goto exit_error;
 	if (0 > listen(s, backlog)) goto exit_error;
 
-	if (LISTEN_SOCKET_FILENO != s) {
-		if (0 > dup2(s, LISTEN_SOCKET_FILENO)) goto exit_error;
+	const int fd_index(systemd_compatibility ? query_listen_fds_passthrough() : 0);
+	if (LISTEN_SOCKET_FILENO + fd_index != s) {
+		if (0 > dup2(s, LISTEN_SOCKET_FILENO + fd_index)) goto exit_error;
 		close(s);
 	}
-	set_close_on_exec(LISTEN_SOCKET_FILENO, false);
+	set_close_on_exec(LISTEN_SOCKET_FILENO + fd_index, false);
 
+	if (upstart_compatibility) {
+		setenv("UPSTART_EVENTS", "socket", 1);
+		char fd[64];
+		snprintf(fd, sizeof fd, "%u", LISTEN_SOCKET_FILENO + fd_index);
+		setenv("UPSTART_FDS", fd, 1);
+	}
 	if (systemd_compatibility) {
-		setenv("LISTEN_FDS", "1", 1);
-		char pid[64];
-		snprintf(pid, sizeof pid, "%u", getpid());
-		setenv("LISTEN_PID", pid, 1);
+		char buf[64];
+		snprintf(buf, sizeof buf, "%d", fd_index + 1);
+		setenv("LISTEN_FDS", buf, 1);
+		snprintf(buf, sizeof buf, "%u", getpid());
+		setenv("LISTEN_PID", buf, 1);
 	}
 
 	sigprocmask(SIG_SETMASK, &original_signals, 0);

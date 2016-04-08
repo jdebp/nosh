@@ -158,12 +158,11 @@ rm -rf -- config/targets{new} config/services{new}
 mkdir -p -m 0755 config/targets{new} config/services{new}
 while read i
 do
-	cp -a build/targets/$i config/targets{new}/
+	( cd build/targets/ && pax -r -w $i ../../config/targets{new}/ )
 done < package/standard-targets
 while read i
 do
-	cp -a build/services/mount@$i config/services{new}/
-	cp -a build/services/fsck@$i config/services{new}/
+	( cd build/services/ && pax -r -w mount@$i fsck@$i ../../config/services{new}/ )
 done < package/common-mounts
 (
 	cat package/common-etc-services 
@@ -173,24 +172,26 @@ done < package/common-mounts
 	esac
 ) | while read i
 do
-	cp -a build/services/$i config/services{new}/
+	( cd build/services/ && pax -r -w $i ../../config/services{new}/ )
 done
 (
 	cat package/common-services package/common-sockets package/common-ttys 
 	case "`uname`" in
 	Linux)	cat package/linux-services package/linux-sockets package/linux-ttys ;;
+	OpenBSD)	cat package/bsd-services package/bsd-sockets package/openbsd-ttys ;;
+	NetBSD)	cat package/bsd-services package/bsd-sockets package/netbsd-ttys ;;
 	*BSD)	cat package/bsd-services package/bsd-sockets package/bsd-ttys ;;
 	esac
 ) | while read i
 do
-	cp -a build/services/$i config/services{new}/
-	cp -a build/services/cyclog@$i config/services{new}/
+	( cd build/services/ && pax -r -w $i cyclog@$i ../../config/services{new}/ )
 done
 (
 	cat package/common-service-aliases 
 	case "`uname`" in
-	Linux)	cat package/linux-service-aliases ;;
-	*BSD)	cat package/bsd-service-aliases ;;
+	Linux) cat package/linux-service-aliases ;;
+	OpenBSD) cat package/openbsd-service-aliases ;;
+	*BSD) cat package/bsd-service-aliases ;;
 	esac
 ) | while read service alias
 do
@@ -210,7 +211,7 @@ done
 
 # ##############################################################################
 # Build all of the {new} files in ./config.
-mkdir -p -m 0755 config/presets config/systemd config/convert config/rc.d config/vt
+mkdir -p -m 0755 config/presets config/systemd config/convert config/mewburn-rc.d config/openbsd-rc.d config/vt
 cat package/systemd-services package/tmpfiles-snippets |
 while read i
 do
@@ -219,7 +220,7 @@ do
 done
 (
 	cat package/systemd-presets
-	for i in bundles run-via-systemd run-via-netbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-pcbsd-base run-trueos-base
+	for i in bundles run-via-systemd run-via-mewburn-rc run-via-openbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-pcbsd-base run-trueos-base
 	do
 		cat package/common-nosh-"$i"-presets package/linux-nosh-"$i"-presets package/bsd-nosh-"$i"-presets 
 	done
@@ -230,9 +231,14 @@ do
 done
 while read i
 do
-	rm -f -- config/rc.d/"$i"{new}
-	cp -p -f -- build/rc.d/"$i" config/rc.d/"$i"{new}
-done < package/netbsd-rc-scripts
+	rm -f -- config/mewburn-rc.d/"$i"{new}
+	cp -p -f -- build/mewburn-rc.d/"$i" config/mewburn-rc.d/"$i"{new}
+done < package/mewburn-rc-scripts
+while read i
+do
+	rm -f -- config/openbsd-rc.d/"$i"{new}
+	cp -p -f -- build/openbsd-rc.d/"$i" config/openbsd-rc.d/"$i"{new}
+done < package/openbsd-rc-scripts
 while read i
 do
 	rm -f -- config/convert/"$i"{new}
@@ -254,7 +260,7 @@ do
 done 
 (
 cat package/systemd-presets 
-for i in bundles run-via-systemd run-via-netbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-pcbsd-base run-trueos-base
+for i in bundles run-via-systemd run-via-mewburn-rc run-via-openbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-pcbsd-base run-trueos-base
 do
 	cat package/common-nosh-"$i"-presets package/linux-nosh-"$i"-presets package/bsd-nosh-"$i"-presets 
 done
@@ -264,8 +270,12 @@ do
 done 
 while read i
 do
-	mv -f -- config/rc.d/"$i"{new} config/rc.d/"$i"
-done < package/netbsd-rc-scripts
+	mv -f -- config/mewburn-rc.d/"$i"{new} config/mewburn-rc.d/"$i"
+done < package/mewburn-rc-scripts
+while read i
+do
+	mv -f -- config/openbsd-rc.d/"$i"{new} config/openbsd-rc.d/"$i"
+done < package/openbsd-rc-scripts
 while read i
 do
 	mv -f -- config/convert/"$i"{new} config/convert/"$i"

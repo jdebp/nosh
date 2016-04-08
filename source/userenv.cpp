@@ -15,10 +15,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include "utils.h"
 #include "popt.h"
 
-/* Main function ************************************************************
-// **************************************************************************
-*/
-
 static inline
 void
 set (
@@ -30,6 +26,10 @@ set (
 	else
 		unsetenv(var);
 }
+
+/* Main function ************************************************************
+// **************************************************************************
+*/
 
 void
 userenv ( 

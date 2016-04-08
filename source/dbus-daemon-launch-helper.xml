@@ -1,0 +1,116 @@
+<refentry id="set-dynamic-hostname">
+
+<refmeta>
+<refentrytitle>dbus-daemon-lanch-helper</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.24</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>dbus-daemon-launch-helper</refname>
+<refpurpose>launch system services on demand from the Desktop Bus broker</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>dbus-daemon-launch-helper</command>
+<arg choice="req"><replaceable>service-name</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>dbus-daemon-launch-helper</command> is called by the Desktop Bus broker daemon whenever it wants to launch a D-BUS service that isn't yet running "on demand" in response to clients attempting to communicate with that service over the Desktop Bus.
+</para>
+
+<para>
+It supersedes an old command of the same name that is supplied with the D-BUS broker.
+The D-BUS broker daemon has to be instructed to invoke it via a configuration change in <filename>/etc/dbus-1/system.conf</filename> and <filename>/etc/dbus-1/session.conf</filename>.
+(Drop-in configuration snippets do not work for this, alas.)
+It isn't really useful to run it directly.
+</para>
+
+<para>
+The <arg choice="req"><replaceable>service-name</replaceable></arg> argument is the name of a service as it is known to the D-BUS broker, i.e. the name of its service file under <filename>/usr/share/dbus-1/system-services/</filename> or <filename>/usr/share/dbus-1/services/</filename>.
+<command>dbus-daemon-launch-helper</command> simply attempts to start a service by that name, stripping any trailing <filename>.service</filename> or any leading <filename>dbus-</filename>.
+</para>
+
+<para>
+It attempts to auto-detect which command of <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> <command>reset</command>, <citerefentry><refentrytitle>initctl</refentrytitle><manvolnum>1</manvolnum></citerefentry> <command>start</command>, or <citerefentry><refentrytitle>systemctl</refentrytitle><manvolnum>1</manvolnum></citerefentry> <command>start</command> to use to start the service.
+Unlike the command that it supersedes, it attempts to respect the enable/disable configuration of the service, and to <emphasis>not</emphasis> demand-start disabled services.
+</para>
+
+<para>
+If a D-BUS service daemon is running but currently <emphasis>disabled</emphasis>, it will respect the enable/disable state to the extent of stopping that service.
+However, this scenario does not occur in practice.
+If a D-BUS service daemon is running, the D-BUS broker daemon does not need to, and thus attempt to, start it on demand in the first place.
+</para>
+
+</refsection>
+
+<refsection><title>Security</title>
+
+<para>
+This program has, unlike its predecessors, no reason to be set-UID or set-GID.
+It does not attempt to run daemons directly itself.
+</para>
+
+<para>
+It runs under the aegis of the same unprivileged user account that the D-BUS broker daemon itself runs under.
+Whatever service management system is in place must therefore be configured so that (only) the requisite services can be started by that account invoking the relevant service management command.
+With the nosh toolset's <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>, for example, this means granting the necessary privileges to the control FIFOs in the various service bundles' <filename>supervise/</filename> directories.
+</para>
+	
+</refsection>
+
+<refsection><title>Avoiding Desktop Bus activation</title>
+	
+<para>
+Properly, this command should go through an extensive dance:
+</para>
+
+<orderedlist>
+<listitem><para>
+Search <filename>/usr/share/dbus-1/system-services/</filename> or <filename>/usr/share/dbus-1/services/</filename> for a (D-BUS) service definition file named <arg choice="req"><replaceable>service-name</replaceable></arg>.
+</para></listitem>
+<listitem><para>
+Parse that file as a Microsoft INI file looking for the <code>[D-BUS Service]</code> section.
+</para></listitem>
+<listitem><para>
+If it has an <code>SystemdService=</code> setting, attempt to start the service named there.
+</para></listitem>
+<listitem><para>
+Otherwise, if it has an <code>Exec=</code> setting, run the command named there as the superuser.
+</para></listitem>
+</orderedlist>
+
+<para>
+However:
+</para>
+
+<itemizedlist>
+<listitem><para>
+Executing <emphasis>any</emphasis> D-BUS server daemon directly from the D-BUS broker daemon is a bad idea.
+All D-BUS server programs should <emphasis>only</emphasis> be executed via, and under the control of, service management.
+Respecting <code>Exec=</code> is wholly the wrong thing to do.
+</para></listitem>
+<listitem><para>
+The <code>SystemdService=</code> setting is just the inverse of a mechanism that provides alias names for service managed services.
+If every service managed service has an alias that is its D-BUS service (file) name, then one can completely ignore <code>SystemdService=</code> and just use the D-BUS <arg choice="req"><replaceable>service-name</replaceable></arg> as it stands.
+</para></listitem>
+</itemizedlist>
+
+<para>
+By adopting the principles that all D-BUS server daemons <emphasis>must</emphasis> be managed by service management and that all such services <emphasis>must</emphasis> have an alias that matches their D-BUS service (file) names, <command>dbus-daemon-launch-helper</command> can thus ignore the contents of the D-BUS service file entirely.
+Indeed, it does not even need to locate and open the D-BUS service file.
+It solely relies upon the D-BUS service (file) name mapping to the service management service name, either directly or via an alias that has been set up in service management configuration.
+</para>
+
+</refsection>
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

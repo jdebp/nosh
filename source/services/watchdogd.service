@@ -8,7 +8,6 @@ Description=BSD kernel watchdog daemon
 [Service]
 EnvironmentDirectory=env
 ExecStart=%p -d
-Restart=always
 
 [Install]
 WantedBy=workstation.target

@@ -58,7 +58,7 @@ On Debian-family Linux operating systems, the (not universally implemented acros
 <para>
 Several toolsets <emphasis>do not</emphasis> provide System 5 compatibility when <command>/sbin/init</command> is run other than as process #1.
 Upstart, for example, starts up a "session init" in this situation.
-Similarly, in the nosh toolset case, <filename>/sbin/init</filename> becomes <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> as process #1 and <citerefentry><refentrytitle>session-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> otherwise.
+Similarly, in the nosh toolset case, <filename>/sbin/init</filename> becomes <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> as process #1 and <citerefentry><refentrytitle>per-user-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> otherwise.
 Neither is designed to provide System 5 compatibility <command>init</command> functionality.
 </para>
 

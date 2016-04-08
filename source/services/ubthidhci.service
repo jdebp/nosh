@@ -7,9 +7,12 @@ Description=BSD Bluetooth HID HCI initialization/shutdown
 Before=bluetooth.service
 
 [Service]
+Type=oneshot
 EnvironmentDirectory=env
 ExecStart=usbconfig ${busnum:+-u "${busnum}"} ${addr:+-a "${addr}"} do_request 0x40 0 0 0 0
-RemainAfterExit=true
+# This is a one-shot service that can be re-triggered by starting it again.
+RemainAfterExit=1
+Restart=no
 
 [Install]
 WantedBy=workstation.target

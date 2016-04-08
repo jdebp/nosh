@@ -12,7 +12,6 @@ After=owserver.socket
 EnvironmentDirectory=env
 User=%p
 ExecStart=%p --foreground ${flags}
-Restart=always
 
 [Install]
 WantedBy=server.target

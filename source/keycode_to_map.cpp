@@ -4,6 +4,9 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 #if !defined(__LINUX__) && !defined(__linux__)
+#if defined(__OpenBSD__)
+#include <dev/usb/usb.h>
+#endif
 #include <dev/usb/usbhid.h>
 #endif
 #include "kbdmap.h"
@@ -12,7 +15,7 @@ For copyright and licensing terms, see the file named COPYING.
 /// The atkbd device keycode maps to a row+column in the current keyboard map, which contains an action for that row+column.
 uint16_t
 bsd_keycode_to_keymap_index (
-	uint16_t k
+	const uint16_t k
 ) {
 	switch (k) {
 		default:	break;

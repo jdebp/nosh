@@ -8,7 +8,6 @@ Description=PHP FastCGI Process Manager
 [Service]
 EnvironmentDirectory=env
 ExecStart=%p --nodaemonize --force-stderr --fpm-config "${config:-/usr/local/etc/%p.conf}" ${flags}
-Restart=always
 RuntimeDirectory=%p
 RuntimeDirectoryMode=0750
 PrivateTmp=true

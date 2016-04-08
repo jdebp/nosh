@@ -3,6 +3,7 @@ exec	chdir
 exec	chroot
 exec	clearenv
 exec	cyclog
+exec	delegate-control-group-to
 exec	envdir
 exec	envuidgid
 exec	export-to-rsyslog
@@ -16,7 +17,9 @@ exec	line-banner
 exec	local-datagram-socket-listen
 exec	local-stream-socket-accept
 exec	local-stream-socket-listen
+exec	machineenv
 exec	make-private-fs
+exec	move-to-control-group
 exec	netlink-datagram-socket-listen
 exec	nosh
 exec	monitored-fsck
@@ -40,6 +43,7 @@ exec	softlimit
 exec	syslog-read
 exec	tai64n
 exec	tai64nlocal
+exec	tcpserver
 exec	tcp-socket-accept
 exec	tcp-socket-listen
 exec	tcp-socket-connect
@@ -55,7 +59,7 @@ exec	userenv
 foreground	background
 system-control	systemctl
 system-control	service-manager
-system-control	session-manager
+system-control	per-user-manager
 system-control	service-control
 system-control	convert-fstab-services
 system-control	convert-systemd-units

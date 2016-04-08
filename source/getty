@@ -4,5 +4,4 @@ open-controlling-tty
 vc-reset-tty --hard-reset
 login-prompt
 login-banner /etc/issue
-login-process
 login

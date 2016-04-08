@@ -8,7 +8,7 @@ Description=APM daemon
 [Service]
 EnvironmentDirectory=env
 # Strictly speaking, this check is specific to when hw.machine_arch is i386.
-ExecStartPre=sh -c '[ -e /dev/apmctl ] || echo "WARNING: /dev/apmctl not found; kernel is missing apm(4)"'
+ExecStartPre=sh -c 'test -e /dev/apmctl || echo "WARNING: /dev/apmctl not found; kernel is missing apm(4)"'
 ExecStart=%p
 
 [Install]

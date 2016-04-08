@@ -19,11 +19,8 @@
 <refsection><title>Description</title>
 
 <para>
-<command>login-banner</command> is a chain-loading utility that prints a system banner to its
-standard output, and then (if successful) chain loads to <replaceable>next-prog</replaceable> with the
-<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
-Normally, the <replaceable>next-prog</replaceable> will be (or will eventually chain-load) <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-which prints the login prompt(s) after the banner.
+<command>login-banner</command> is a chain-loading utility that prints a system banner to its standard output, and then (if successful) chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+Normally, the <replaceable>next-prog</replaceable> will be (or will eventually chain-load) <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>, which prints the login prompt(s) after the banner.
 </para>
 
 <para>
@@ -35,26 +32,15 @@ which prints the login prompt(s) after the banner.
 </para>
 
 <para>
-The location of the <filename>utmp</filename> file is derived at compile time
-from a system header when the utility is built from source.
+The location of the <filename>utmp</filename> file is derived at compile time from a system header when the utility is built from source.
 To override it at runtime, use the <code>--utmp-filename</code> option.
 </para>
 
 <para>
-<command>login-banner</command> derives information about the number of users logged on
-from the <filename>utmp</filename> file.
-It determins the name of the controlling TTY from the value of the <code>TTY</code>
-environment variable, if present.
-This will be the case if <command>login-banner</command> has been invoked within a chain
-that has run 
-<citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-or an equivalent 
-<citerefentry><refentrytitle>getty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-program.
-If absent, the 
-<citerefentry><refentrytitle>ttyname</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-library function is called.
+<command>login-banner</command> derives information about the number of users logged on from the <filename>utmp</filename> file.
+It determins the name of the controlling TTY from the value of the <code>TTY</code> environment variable, if present.
+This will be the case if <command>login-banner</command> has been invoked within a chain that has run <citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, or an equivalent <citerefentry><refentrytitle>getty</refentrytitle><manvolnum>1</manvolnum></citerefentry> program.
+If absent, the <citerefentry><refentrytitle>ttyname</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function is called.
 </para>
 
 <para>
@@ -80,6 +66,14 @@ A single backslash.
 <listitem><para>
 The "system" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> function.
 On FreeBSD/PC-BSD, the C library allows this to be overridden by a <code>UNAME_s</code> environment variable.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><code>\S</code></term>
+<listitem><para>
+The "pretty system" name, from the <filename>/etc/os-release</filename> file, if available.
+This defaults to the same as <code>\s</code>.
 </para></listitem>
 </varlistentry>
 
@@ -118,6 +112,7 @@ On FreeBSD/PC-BSD, the C library allows this to be overridden by a <code>UNAME_m
 <term><code>\o</code></term>
 <listitem><para>
 The "domain" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> or the <citerefentry><refentrytitle>getdomainname</refentrytitle><manvolnum>2</manvolnum></citerefentry> function.
+<command>login-banner</command> implements a common (DNS client library) convention of allowing this to be overridden by a <code>LOCALDOMAIN</code> environment variable.
 </para></listitem>
 </varlistentry>
 
@@ -183,7 +178,6 @@ pty-run
 setsid
 open-controlling-tty
 login-banner /etc/issue.net
-login-process
 login
 </programlisting>
 
@@ -198,7 +192,6 @@ pty-get-tty \
 pty-run \
 open-controlling-tty \
 login-banner /etc/issue.net \
-login-process \
 login
 </programlisting>
 

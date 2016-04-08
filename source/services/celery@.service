@@ -11,7 +11,6 @@ Description=Celery distributed task queue for node %I
 User=celery
 Group=celery
 ExecStart=celery worker ${app:+-A "${app}"} -n %I ${concurrency:+-c "${concurrency}"} ${options}
-Restart=always
 
 [Install]
 WantedBy=multi-user.target

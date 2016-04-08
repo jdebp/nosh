@@ -4,12 +4,15 @@
 
 [Unit]
 Description=iSCSI initiator control
+Wants=kmod@iscsi
 
 [Service]
 # The import procedure is expected to have populated this directory with flags.
 EnvironmentDirectory=env
 ExecStart=%p ${flags}
-RemainAfterExit=true
+# This is a one-shot service that can be re-triggered by starting it again.
+RemainAfterExit=1
+Restart=no
 
 [Install]
 WantedBy=server.target

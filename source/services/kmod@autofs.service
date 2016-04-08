@@ -6,8 +6,12 @@
 Description=kmod loader for autofs4
 
 [Service]
-ExecStart=sh -c '[ -d /sys/class/misc/autofs4/ ] || system-control load-kernel-module autofs4'
+Type=oneshot
+ExecStart=sh -c 'test -d /sys/class/misc/autofs4/ || system-control load-kernel-module autofs4'
+ExecStopPost=system-control unload-kernel-module autofs4
+# This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
+Restart=no
 
 [Install]
 WantedBy=workstation.target

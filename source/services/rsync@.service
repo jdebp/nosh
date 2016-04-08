@@ -6,8 +6,9 @@
 Description=rsync per-connection service
 
 [Service]
-ExecStart=%p --daemon
-Restart=always
+EnvironmentDirectory=env
+# --no-detach is unnecessary for a per-connection server.
+ExecStart=%p --daemon ${config:+--config "${config}"}
 
 [Install]
 WantedBy=server.target

@@ -10,7 +10,9 @@ Before=networking.target
 Type=oneshot
 EnvironmentDirectory=env
 ExecStart=./helper
+# This is a pseudo-daemon that does not have a running process once ready.
 RemainAfterExit=yes
+Restart=no
 
 [Install]
 WantedBy=server.target

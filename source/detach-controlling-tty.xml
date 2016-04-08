@@ -23,10 +23,7 @@
 <refsection><title>Description</title>
 
 <para>
-<command>detach-controlling-tty</command> is a chain-loading utility that
-attempts to detach itself from its controlling terminal, and then chain loads
-to <replaceable>next-prog</replaceable> with the 
-<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+<command>detach-controlling-tty</command> is a chain-loading utility that attempts to detach itself from its controlling terminal, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
 </para>
 
 <para>
@@ -37,12 +34,8 @@ to <replaceable>next-prog</replaceable> with the
 
 <para>
 This must not be used for attempting to "daemonize" programs run from within a login session.
-A large amount of <emphasis>other</emphasis> state from the login session is still retained,
-including login session state that cannot be dropped once set and state that renders daemons
-vulnerable to control from the login session.
-The use case for this tool is where one is allowing
-<replaceable>next-prog</replaceable> to open a <emphasis>different</emphasis>
-controlling terminal.
+A large amount of <emphasis>other</emphasis> state from the login session is still retained, including login session state that cannot be dropped once set and state that renders daemons vulnerable to control from the login session.
+The use case for this tool is where one is allowing <replaceable>next-prog</replaceable> to open a <emphasis>different</emphasis> controlling terminal.
 </para>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

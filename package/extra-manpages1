@@ -9,6 +9,7 @@ console-multiplexor
 console-ncurses-realizer
 console-resize
 cyclog
+delegate-control-group-to
 detach-controlling-tty
 emergency-login
 envdir
@@ -28,9 +29,11 @@ netlink-datagram-socket-listen
 login-banner
 login-process
 login-prompt
+machineenv
 make-private-fs
 monitor-fsck-progress
 monitored-fsck
+move-to-control-group
 nosh
 oom-kill-protect
 open-controlling-tty
@@ -50,7 +53,7 @@ service-is-up
 service-manager
 service-show
 service-status
-session-manager
+per-user-manager
 set-dynamic-hostname
 setenv
 setlock
@@ -64,6 +67,7 @@ softlimit
 syslog-read
 tai64n
 tai64nlocal
+tcpserver
 tcp-socket-accept
 tcp-socket-listen
 tcp-socket-connect

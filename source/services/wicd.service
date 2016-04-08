@@ -7,7 +7,6 @@ Description=wicd service
 
 [Service]
 ExecStart=%p -f
-Restart=always
 
 [Install]
 WantedBy=server.target

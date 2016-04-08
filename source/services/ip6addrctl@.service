@@ -9,7 +9,9 @@ Description=Set up Internet Protocol address selection to prefer %i, with %p
 Type=oneshot
 ExecStart=./helper %p
 ExecStopPost=%p flush
+# This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
+Restart=no
 
 [Install]
 WantedBy=workstation.target

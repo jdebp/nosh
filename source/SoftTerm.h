@@ -32,6 +32,8 @@ public:
 		virtual void WriteControl1Character(uint8_t) = 0;
 		virtual void Set8BitControl1(bool) = 0;
 		virtual void SetBackspaceIsBS(bool) = 0;
+		virtual void SetDeleteIsDEL(bool) = 0;
+		virtual void SetSendPasteEvent(bool) = 0;
 		virtual void ReportSize(coordinate w, coordinate h) = 0;
 	};
 	class MouseBuffer {
@@ -154,6 +156,8 @@ protected:
 	void SetAttributes();
 	void SGR0();
 	void SCOSCorDESCSLRM();
+	void SetSCOAttributes();
+	void SetSCOCursorType();
 	void SendPrimaryDeviceAttributes();
 	void SendSecondaryDeviceAttributes();
 	void SendTertiaryDeviceAttributes();

@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=MogileFS tracker daemon
+
+[Service]
+User=%p
+ExecStart=%p
+Restart=no
+
+[Install]
+WantedBy=server.target

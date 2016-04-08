@@ -5,15 +5,16 @@
 [Unit]
 Description=Set up kernel virtual terminals font
 # The point of this service is to set up the kernel VTs really early, so that one can interact with fsck.
-# Unfortunately, the keys and font utilities on Linux require that /usr/share be checked and mounted.
+# Unfortunately, the keys and font utilities on Linux require that /usr/share already be checked and mounted.
 # And on the gripping hand, fsck is run non-interactively anyway.
 Wants=local-fs.target
 
 [Service]
 EnvironmentFile=-/etc/vconsole.conf
 ExecStart=setfont -C /dev/tty0 ${FONT} ${FONT_MAP:+-m "${FONT_MAP}"} ${FONT_UNIMAP:+-u "${FONT_UNIMAP}"}
-RemainAfterExit=yes
-Restart=never
+# This is a one-shot service that can be re-triggered by starting it again.
+RemainAfterExit=1
+Restart=no
 
 [Install]
 WantedBy=multi-user.target

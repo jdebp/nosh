@@ -7,7 +7,6 @@ Description=%p service for %i
 
 [Service]
 ExecStart=%p %i
-Restart=always
 
 [Install]
 WantedBy=server.target

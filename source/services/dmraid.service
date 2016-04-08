@@ -9,6 +9,9 @@ DefaultDependencies=false
 [Service]
 Type=oneshot
 ExecStart=%p --ignorelocking --activate y
+# This only has meaningful behaviour at bootstrap, not later.
+RemainAfterExit=yes
+Restart=never
 
 [Install]
 StoppedBy=shutdown.target

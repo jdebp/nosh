@@ -13,7 +13,9 @@ EnvironmentDirectory=env
 ExecStart=${program:-setkey} -f "${file:-/etc/%p.conf}"
 ExecStopPost=${program:-setkey} -F
 ExecStopPost=${program:-setkey} -F -P
-RemainAfterExit=true
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
+Restart=no
 
 [Install]
 StoppedBy=shutdown.target

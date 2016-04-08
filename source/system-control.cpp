@@ -13,25 +13,45 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cerrno>
 #include <new>
 #include <memory>
+#include <sys/types.h>
+#include <pwd.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include "utils.h"
 #include "fdutils.h"
 #include "service-manager-client.h"
-#include "service-manager.h"
-#include "common-manager.h"
+#include "runtime-dir.h"
 #include "popt.h"
 
 /* Global data **************************************************************
 // **************************************************************************
 */
 
-bool local_session_mode(false);
+bool per_user_mode(false);
 
 /* Utilities ****************************************************************
 // **************************************************************************
 */
+
+static inline
+std::string
+effective_user_home ()
+{
+	if (const char * h = std::getenv("HOME")) {
+		return h;
+	} else
+	{
+		if (struct passwd * p = getpwuid(geteuid()))
+			if (p->pw_dir) {
+				const std::string d(p->pw_dir);
+				endpwent();
+				return d;
+			}
+		endpwent();
+	}
+	return "/dev/null/";	// Yes, the final slash is intentional.
+}
 
 static 
 const char * const 
@@ -67,21 +87,51 @@ open_bundle_directory (
 	}
 
 	const std::string p(prefix), a(arg);
-	if (!local_session_mode) {
-		bool scan_for_target(false), scan_for_service(false);
-		if (ends_in(a, ".target", name)) {
-			scan_for_target = true;
-		} else
-		if (ends_in(a, ".service", name)) {
-			scan_for_service = true;
-		} else
-		if (ends_in(a, ".socket", name)) {
-			scan_for_service = true;
-		} else
-		{
-			name = a;
-			scan_for_target = scan_for_service = true;
+	bool scan_for_target(false), scan_for_service(false);
+	if (ends_in(a, ".target", name)) {
+		scan_for_target = true;
+	} else
+	if (ends_in(a, ".service", name)) {
+		scan_for_service = true;
+	} else
+	if (ends_in(a, ".socket", name)) {
+		scan_for_service = true;
+	} else
+	{
+		name = a;
+		scan_for_target = scan_for_service = true;
+	}
+
+	if (per_user_mode) {
+		const std::string h(effective_user_home());
+		const std::string r(effective_user_runtime_dir());
+		if (scan_for_target) {
+			suffix = ".target";
+			const std::string
+			user_target_bundle_prefixes[2] = {
+				h + "/.config/service-bundles/targets/",
+				r + "/service-bundles/targets/"
+			};
+			for ( const std::string * q(user_target_bundle_prefixes); q < user_target_bundle_prefixes + sizeof user_target_bundle_prefixes/sizeof *user_target_bundle_prefixes; ++q) {
+				path = *q;
+				const int bundle_dir_fd(open_dir_at(AT_FDCWD, (path + p + name + "/").c_str()));
+				if (0 <= bundle_dir_fd) return bundle_dir_fd;
+			}
 		}
+		if (scan_for_service) {
+			suffix = ".service";
+			const std::string
+			user_service_bundle_prefixes[2] = {
+				h + "/.config/service-bundles/services/", 
+				r + "/service-bundles/services/", 
+			};
+			for ( const std::string * q(user_service_bundle_prefixes); q < user_service_bundle_prefixes + sizeof user_service_bundle_prefixes/sizeof *user_service_bundle_prefixes; ++q) {
+				path = *q;
+				const int bundle_dir_fd(open_dir_at(AT_FDCWD, (path + p + name + "/").c_str()));
+				if (0 <= bundle_dir_fd) return bundle_dir_fd;
+			}
+		}
+	} else {
 		if (scan_for_target) {
 			suffix = ".target";
 			for ( const char * const * q(target_bundle_prefixes); q < target_bundle_prefixes + sizeof target_bundle_prefixes/sizeof *target_bundle_prefixes; ++q) {
@@ -125,7 +175,7 @@ system_control (
 		popt::bool_definition no_pager_option('\0', "no-pager", "Compatibility option.  Ignored.", no_pager);
 		popt::bool_definition no_reload_option('\0', "no-reload", "Compatibility option.  Ignored.", no_reload);
 		popt::bool_definition quiet_option('\0', "quite", "Compatibility option.  Ignored.", quiet);
-		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
+		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
 		popt::definition * top_table[] = {
 			&user_option,
 			&full_option,

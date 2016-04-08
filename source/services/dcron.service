@@ -8,7 +8,6 @@ Description=Regular background program processing daemon by Matt Dillon and Jim 
 
 [Service]
 ExecStart=crond -f
-Restart=always
 
 [Install]
 WantedBy=workstation.target

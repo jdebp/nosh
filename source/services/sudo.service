@@ -9,7 +9,9 @@ Before=sshd.service ttylogin-starter.service
 [Service]
 Type=oneshot
 ExecStart=find /var/lib/sudo/ -exec touch --date @0 {} ;
-RemainAfterExit=yes
+# This is a one-shot service that can be re-triggered by starting it again.
+RemainAfterExit=1
+Restart=no
 
 [Install]
 WantedBy=multi-user.target

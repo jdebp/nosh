@@ -10,7 +10,9 @@ Requires=dumpauto.target
 Type=oneshot
 EnvironmentDirectory=env
 ExecStart=test -r ${config} && test -n "`sysctl -Nq debug.ddb.scripting.scripts`" && %p ${config}
-RemainAfterExit=yes
+# This is a one-shot service that can be re-triggered by starting it again.
+RemainAfterExit=1
+Restart=no
 
 [Install]
 WantedBy=workstation.target

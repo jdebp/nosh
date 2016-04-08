@@ -9,18 +9,19 @@ After=motd-dynamic.service hostname.service
 [Service]
 SessionLeader=true
 StandardInput=tty
-StandardOutput=inherit
-ExecStart=login-banner /etc/issue.vc login
-Restart=always
+ExecStart=login
 RestartSec=0
 # This isn't appropriate for modern service management systems, and doesn't even do anything on BSDs.
 #UtmpIdentifier=%I
+BannerFile=/etc/issue.vc
 TTYPath=%I
 TTYReset=yes
 # Use "yes" for more security on kernel virtual terminals.
 TTYVHangup=no
 # Use "no" if login has no timeout or it is disabled.
 TTYPrompt=yes
+# Some job control shells ignore SIGTERM and need an explicit SIGHUP.
+SendSIGHUP=on
 
 [Install]
 WantedBy=multi-user.target

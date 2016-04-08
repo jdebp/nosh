@@ -10,7 +10,9 @@ After=mount@-run.service mount@-.service
 [Service]
 Type=oneshot
 ExecStart=touch /run/utmp
-RemainAfterExit=yes
+# This is a one-shot service that can be re-triggered by starting it again.
+RemainAfterExit=1
+Restart=no
 
 [Install]
 WantedBy=multi-user.target

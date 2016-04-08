@@ -7,7 +7,6 @@ Description=Deferred execution scheduler
 
 [Service]
 ExecStart=%p -f
-Restart=always
 
 [Install]
 WantedBy=workstation.target

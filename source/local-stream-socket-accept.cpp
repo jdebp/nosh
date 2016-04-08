@@ -229,7 +229,13 @@ exit_error:
 					else
 						env("UNIXREMOTEPATH", 0);
 #if defined(SO_PEERCRED)
+#if defined(__LINUX__) || defined(__linux__)
 					struct ucred u;
+#elif defined(__OpenBSD__)
+					struct sockpeercred u;
+#else
+#error "Don't know how to do SO_PEERCRED on your platform."
+#endif
 					socklen_t ul = sizeof u;
 					if (0 == getsockopt(s, SOL_SOCKET, SO_PEERCRED, &u, &ul)) goto exit_error;
 					char buf[64];

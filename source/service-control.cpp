@@ -50,8 +50,9 @@ service_control (
 	try {
 		control_character_definition up_option('u', "up", "Bring the service up, if it is not up already.", 'u', controls);
 		control_character_definition down_option('d', "down", "Bring the service down, if it is not down already, unpausing it if necessary.", 'd', controls);
-		control_character_definition once_option('o', "once", "Run the once, bringing it up if it is down.", 'o', controls);
+		control_character_definition once_option('o', "once", "Run the service once, bringing it up if it is down.", 'o', controls);
 		control_character_definition at_most_once_option('O', "at-most-once", "Run the service at most once, leaving it down if it is down.", 'O', controls);
+		control_character_definition unload_option('x', "exit", "Unload the service when it reaches the stopped state.", 'x', controls);
 		control_character_definition pause_option('p', "pause", "Send a SIGSTOP signal to the service, pausing it.", 'p', controls);
 		control_character_definition continue_option('c', "continue", "Send a SIGCONT signal to the service, continuing it.", 'c', controls);
 		control_character_definition hangup_option('h', "hangup", "Send a SIGHUP signal to the service.", 'h', controls);
@@ -72,6 +73,7 @@ service_control (
 			&down_option,
 			&once_option,
 			&at_most_once_option,
+			&unload_option,
 			&pause_option,
 			&continue_option,
 			&hangup_option,

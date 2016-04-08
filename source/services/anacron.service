@@ -8,8 +8,7 @@ Description=anacron scheduling service
 [Service]
 ExecStartPre=on_ac_power
 ExecStart=%p -d -s
-RemainAfterExit=yes
-Restart=always
+Restart=never
 
 [Install]
 WantedBy=workstation.target

@@ -102,16 +102,18 @@ exit_error:
 		if (0 > chown(listenpath, u ? u->pw_uid : -1, g ? g->gr_gid : -1)) goto exit_error;
 	}
 
-	if (LISTEN_SOCKET_FILENO != s) {
-		if (0 > dup2(s, LISTEN_SOCKET_FILENO)) goto exit_error;
+	const int fd_index(systemd_compatibility ? query_listen_fds_passthrough() : 0);
+	if (LISTEN_SOCKET_FILENO + fd_index != s) {
+		if (0 > dup2(s, LISTEN_SOCKET_FILENO + fd_index)) goto exit_error;
 		close(s);
 	}
-	set_close_on_exec(LISTEN_SOCKET_FILENO, false);
+	set_close_on_exec(LISTEN_SOCKET_FILENO + fd_index, false);
 
 	if (systemd_compatibility) {
-		setenv("LISTEN_FDS", "1", 1);
-		char pid[64];
-		snprintf(pid, sizeof pid, "%u", getpid());
-		setenv("LISTEN_PID", pid, 1);
+		char buf[64];
+		snprintf(buf, sizeof buf, "%d", fd_index + 1);
+		setenv("LISTEN_FDS", buf, 1);
+		snprintf(buf, sizeof buf, "%u", getpid());
+		setenv("LISTEN_PID", buf, 1);
 	}
 }

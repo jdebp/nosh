@@ -7,7 +7,6 @@ Description=PC-BSD Swap Extender daemon
 
 [Service]
 ExecStart=swapexd
-#Restart=always
 
 [Install]
 WantedBy=workstation.target

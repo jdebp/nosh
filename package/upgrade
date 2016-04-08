@@ -5,13 +5,18 @@ then
 	echo "You are not in the right directory." 1>&2 
 	exit 100
 fi
+case "`uname`" in
+Linux)	extended_regexp=-r -e ; no_target_dir=-T ;;
+*BSD)	extended_regexp=-E ; no_target_dir=-h ;;
+esac
 cwd="`/bin/pwd`"
-base_plus_version="`basename "${cwd}"`"
-base="`echo "${base_plus_version}" | sed -e 's/-[[:digit:]][[:alnum:].]*$//'`"
+base_plus_version="`basename \"${cwd}\"`"
+base="`echo "${base_plus_version}" | sed ${extended_regexp} 's/-[[:digit:]][[:alnum:].]*$//'`"
 if [ "${base}" != "${base_plus_version}" ]
 then
-	ln -s -f -- "${base_plus_version}" "${base}"
-	mv -f -- "${base}" ../
+	echo "Creating symlink ${base} -> ${base_plus_version}."
+	ln -s -f -- "${base_plus_version}" ../"${base}"{new}
+	mv -f ${no_target_dir} -- ../"${base}"{new} ../"${base}"
 else
 	echo 1>&2 "This is not a versioned package."
 fi

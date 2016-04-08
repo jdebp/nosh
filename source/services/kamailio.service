@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Kamailio (formerly known as OpenSER) SIP server
+
+[Service]
+EnvironmentDirectory=env
+User=%p
+RuntimeDirectory=%p
+ExecStart=%p -E -D -f "${CFGFILE:-/etc/%p/%p.cfg}" -m "${SHM_MEMORY:-64}" -M "${PKG_MEMORY:-8}"
+Restart=on-abort
+
+[Install]
+WantedBy=server.target

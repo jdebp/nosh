@@ -8,7 +8,6 @@ Description=Guenter's bcron scheduling daemon
 [Service]
 EnvironmentDirectory=env
 ExecStart=bcron
-Restart=always
 
 [Install]
 WantedBy=server.target

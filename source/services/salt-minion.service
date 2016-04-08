@@ -8,7 +8,6 @@ Description=Saltstack minion
 [Service]
 LimitNOFILE=8192
 ExecStart=%p
-Restart=always
 
 [Install]
 WantedBy=workstation.target

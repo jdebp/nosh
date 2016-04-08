@@ -13,7 +13,6 @@ ExecStartPre=mkdir -p /var/db/%p
 ExecStartPre=sh -c '[ -r /var/db/%p/machine-id ] || ln -s /etc/machine-id /var/db/%p/'
 # The --address=systemd: option is the closest to our UCSPI-LOCAL.
 ExecStart=dbus-daemon --system --nofork --nopidfile --address=systemd:
-Restart=always
 
 [Install]
 WantedBy=workstation.target

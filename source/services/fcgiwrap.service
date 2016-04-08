@@ -11,7 +11,7 @@ systemdUserEnvironment=true
 User=http
 ExecStart=%p
 PrivateTmp=true
-Restart=always
+StandardInput=socket
 
 [Install]
 WantedBy=server.target

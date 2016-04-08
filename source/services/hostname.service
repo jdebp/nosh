@@ -9,8 +9,11 @@ Wants=local-fs.target
 After=local-fs.target
 
 [Service]
+Type=oneshot
 ExecStart=set-dynamic-hostname
-RemainAfterExit=yes
+# This is a one-shot service that can be re-triggered by starting it again.
+RemainAfterExit=1
+Restart=no
 
 [Install]
 StoppedBy=shutdown.target

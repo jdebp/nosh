@@ -10,7 +10,6 @@ After=rpcbind.service nfsclient.service
 [Service]
 EnvironmentDirectory=env
 ExecStart=%p
-Restart=always
 
 [Install]
 WantedBy=workstation.target

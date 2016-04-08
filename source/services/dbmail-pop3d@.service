@@ -8,7 +8,6 @@ Description=DBmail POP3 daemon
 [Service]
 EnvironmentDirectory=env
 ExecStart=%p -n
-Restart=always
 
 [Install]
 WantedBy=server.target

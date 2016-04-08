@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=serial-line terminal login on %I
+After=motd-dynamic.service hostname.service
+
+[Service]
+SessionLeader=true
+ExecStart=/usr/libexec/getty std.9600 %I
+RestartSec=0
+# Some job control shells ignore SIGTERM and need an explicit SIGHUP.
+SendSIGHUP=on
+
+[Install]
+WantedBy=multi-user.target

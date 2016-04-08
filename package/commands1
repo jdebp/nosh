@@ -4,3 +4,4 @@ console-terminal-emulator
 getty
 ptybandage
 ptyrun
+dbus-daemon-launch-helper

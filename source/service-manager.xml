@@ -35,7 +35,7 @@ It creates individual control FIFOs for each service, through which it receives 
 
 <para>
 <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry> invokes <command>service-manager</command> with the appropriate socket (which it sets up itself) and output directed to a logging daemon.
-So also does <citerefentry><refentrytitle>session-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+So also does <citerefentry><refentrytitle>per-user-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 Alternatively, <command>service-manager</command> can be started by <citerefentry><refentrytitle>local-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>, which will set up the appropriate socket.
 (<command>service-manager</command> can even be started as a "socket-activated" daemon by <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry> with the systemd-recommended <code>Accept=false</code>.)
 </para>
@@ -93,13 +93,7 @@ files are usually scripts interpreted by
 <citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>execlineb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 or a shell.
-They set up various parts of the process state (using commands such as
-<citerefentry><refentrytitle>softlimit</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-and
-<citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>)
-and then chain to the service program proper.
+They set up various parts of the process state (using commands such as <citerefentry><refentrytitle>softlimit</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and <citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>) and then chain to the service program proper.
 </para>
 
 <para>
@@ -127,13 +121,30 @@ Many services have <filename>env</filename> subdirectories read by <citerefentry
 <listitem>
 <para>
 further files used by other tools.
-<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-creates/deletes and
-<citerefentry><refentrytitle>service-is-enabled</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-and
-<citerefentry><refentrytitle>service-dt-scanner</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-look for a <filename>down</filename> file, for example.
+For examples:
 </para>
+<itemizedlist>
+<listitem>
+<para>
+A <filename>down</filename> file indicates to <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>service-is-enabled</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and <citerefentry><refentrytitle>service-dt-scanner</refentrytitle><manvolnum>1</manvolnum></citerefentry> that a service should not be auto-started at bootstrap.
+</para>
+</listitem>
+<listitem>
+<para>
+A <filename>remain</filename> file indicates to <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> that a service should be marked as "run on empty", so that it is considered still running even if it has no processes.
+</para>
+</listitem>
+<listitem>
+<para>
+A <filename>use_hangup</filename> file indicates to <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> that a service should (additionally) be sent the <code>SIGHUP</code> signal when shutting it down.
+</para>
+</listitem>
+<listitem>
+<para>
+A <filename>no_kill_signal</filename> file indicates to <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> that a service should not be sent the <code>SIGKILL</code> signal when shutting it down.
+</para>
+</listitem>
+</itemizedlist>
 </listitem>
 </itemizedlist>
 <para>
@@ -141,77 +152,59 @@ These files are ignored by <command>service-manager</command>.
 </para>
 
 <para>
-The service manager does not need write access to the service directory or 
-to any of the executables within it.
-This permits service directories (as long as the services themselves do not
-require write access to their service directories) to reside on read-only
-volumes.
+The service manager does not need write access to the service directory or to any of the executables within it.
+This permits service directories (as long as the services themselves do not require write access to their service directories) to reside on read-only volumes.
 </para>
 
 </refsection><refsection><title>Supervise directories</title>
 
 <para>
-A <replaceable>supervise directory</replaceable> provides the control/status API for the service
-supervisor.  It contains:
+A <replaceable>supervise directory</replaceable> provides the control/status API for the service supervisor.  
+It contains:
 </para>
 
 <itemizedlist>
 
 <listitem>
 <para>
-an <filename>ok</filename> FIFO that does nothing more than signify that the service manager
-has loaded the service;
+an <filename>ok</filename> FIFO that does nothing more than signify that the service manager has loaded the service;
 </para>
 </listitem>
 
 <listitem>
 <para>
-a <filename>control</filename> FIFO through which commands to control the individual service
-process are sent;
+a <filename>control</filename> FIFO through which commands to control the individual service process are sent;
 </para>
 </listitem>
 
 <listitem>
 <para>
-a <filename>status</filename> file that contains a record of the service process ID, start time,
-and control state; and
+a <filename>status</filename> file that contains a record of the service process ID, start time, and control state; and
 </para>
 </listitem>
 
 <listitem>
 <para>
-a <filename>lock</filename> file (compatible with 
-<citerefentry><refentrytitle>setlock</refentrytitle><manvolnum>1</manvolnum></citerefentry>) 
-that prevents the service manager from re-using an active supervise directory.
+a <filename>lock</filename> file (compatible with <citerefentry><refentrytitle>setlock</refentrytitle><manvolnum>1</manvolnum></citerefentry>) that prevents the service manager from re-using an active supervise directory.
 </para>
 </listitem>
 
 </itemizedlist>
 
 <para>
-The service manager requires read-write access to these files, and write
-access to the supervise directory itself, as it creates the files if they
-do not exist to start with.
-However, it does not require write access to the supervise directory
-once the files have been created.
-(The
-<citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-program in daemontools repeatedly re-creates the <filename>status</filename>
-file, in contrast.)
+The service manager requires read-write access to these files, and write access to the supervise directory itself, as it creates the files if they do not exist to start with.
+However, it does not require write access to the supervise directory once the files have been created.
+(The <citerefentry><refentrytitle>supervise</refentrytitle><manvolnum>1</manvolnum></citerefentry> program in daemontools repeatedly re-creates the <filename>status</filename> file, in contrast.)
 </para>
 
 <para>
-Control of services and access to service status is thus subject to ordinary
-permissions and ACLs on these files.
+Control of services and access to service status is thus subject to ordinary permissions and ACLs on these files.
 </para>
 
 <para>
 Bernstein's daemontools employs an 18-byte <filename>state</filename> file.
-daemontools has no notion of "starting", "failing", or "stopping" states for
-services, and its state file provides only simple binary "up" or "down" state
-information.
-Guenter's daemontools-encore employs a 20-byte <filename>state</filename> that
-includes extra state information for the aforementioned states.  
+daemontools has no notion of "starting", "failing", or "stopping" states for services, and its state file provides only simple binary "up" or "down" state information.
+Guenter's daemontools-encore employs a 20-byte <filename>state</filename> that includes extra state information for the aforementioned states.  
 <command>service-manager</command> uses the same file format.
 </para>
 
@@ -223,27 +216,20 @@ Again, these files are ignored by <command>service-manager</command>.
 </refsection><refsection><title>Directory locations</title>
 
 <para>
-The service manager neither knows nor cares where in the filesystem
-these directories are.
+The service manager neither knows nor cares where in the filesystem these directories are.
 That is the province of the utilities that feed control requests to it.
-It is not necessary for supervise directories to be subdirectories of
-service directories.
+It is not necessary for supervise directories to be subdirectories of service directories.
 </para>
 
 <para>
-It is not necessary for the relationship between service directories
-and supervise directories to be one-to-one.  
-One service directory can be shared amongst multiple services, as long as they
-each have an individual supervise directory.
+It is not necessary for the relationship between service directories and supervise directories to be one-to-one.  
+One service directory can be shared amongst multiple services, as long as they each have an individual supervise directory.
 </para>
 
 <para>
-Moreover, it is not necessary for the relationship between services themselves
-to be exactly one "main" service feeding its output into one subordinate "log"
-service.
-The service manager permits arbitrary-length pipelines of services, as well
-as fan-in.  (However, fan-in should be used sparingly as it generally causes
-more administrative headaches than it solves.)
+Moreover, it is not necessary for the relationship between services themselves to be exactly one "main" service feeding its output into one subordinate "log" service.
+The service manager permits arbitrary-length pipelines of services, as well as fan-in.  
+(However, fan-in should be used sparingly as it generally causes more administrative headaches than it solves.)
 </para>
 
 </refsection>
@@ -252,52 +238,37 @@ more administrative headaches than it solves.)
 
 <para>
 Automatic restart is tailorable to individual services.
-If the <filename>restart</filename> program does not exist, or does not exit with a success
-(i.e. zero) status when run, the service <filename>run</filename> program is not restarted.
+If the <filename>restart</filename> program does not exist, or does not exit with a success (i.e. zero) status when run, the service <filename>run</filename> program is not restarted.
 </para>
 
 <para>
-For the simplest cases <filename>restart</filename> can just be a (symbolic) link to <filename>/bin/true</filename>
-or <filename>/bin/false</filename>, to provide always-restart and never-restart services, 
-respectively.
-(If using the nosh flavours of
-<citerefentry><refentrytitle>true</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-and
-<citerefentry><refentrytitle>false</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-do not use links to them.
-They will see themselves invoked under the unknown (to them) name
-<filename>restart</filename> and complain.
-Instead, write a short
-<citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-script.)
+For the simplest cases <filename>restart</filename> can just be a (symbolic) link to <filename>/bin/true</filename> or <filename>/bin/false</filename>, to provide always-restart and never-restart services, respectively.
+(If using the nosh flavours of <citerefentry><refentrytitle>true</refentrytitle><manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>false</refentrytitle><manvolnum>1</manvolnum></citerefentry> do not use links to them.
+They will see themselves invoked under the unknown (to them) name <filename>restart</filename> and complain.
+Instead, write a short <citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry> script.)
 </para>
 
 <para>
-However, <filename>restart</filename> is invoked with two pieces of information, which together
-represent the most recent exit status of the <filename>run</filename> program, that allow
-finer control over the restart decision, if desired.
+However, <filename>restart</filename> is invoked with two pieces of information, which together represent the most recent exit status of the <filename>run</filename> program, that allow finer control over the restart decision, if desired.
 The two pieces of information are its three command line arguments.
 </para>
 
 <para>
-The first is a code, one of <code>exit</code>, <code>term</code>, <code>kill</code>, <code>abort</code>, or
-<code>crash</code>.  This categorizes how <filename>run</filename> exited.  Everything apart from
-<code>exit</code> denotes being terminated by an uncaught signal. <code>term</code> denotes
-the "good" termination signals <code>SIGTERM</code>, <code>SIGPIPE</code>, <code>SIGHUP</code>, and
-<code>SIGINT</code>.  <code>kill</code> denotes <code>SIGKILL</code>.  <code>abort</code> denotes <code>SIGABRT</code>,
-<code>SIGALRM</code>, or <code>SIGQUIT</code>.  And <code>crash</code> is everything else.
+The first is a code, one of <code>exit</code>, <code>term</code>, <code>kill</code>, <code>abort</code>, or <code>crash</code>.  
+This categorizes how <filename>run</filename> exited.  
+Everything apart from <code>exit</code> denotes being terminated by an uncaught signal. 
+<code>term</code> denotes the "good" termination signals <code>SIGTERM</code>, <code>SIGPIPE</code>, <code>SIGHUP</code>, and <code>SIGINT</code>.  
+<code>kill</code> denotes <code>SIGKILL</code>.  
+<code>abort</code> denotes <code>SIGABRT</code>, <code>SIGALRM</code>, or <code>SIGQUIT</code>.  
+And <code>crash</code> is everything else.
 </para>
 
 <para>
-The second is either (for <code>exit</code>) the decimal exit status of the
-process or (for everything else) a symbolic designation (falling back to a
-decimal code) of the specific signal, if the first argument is not specific
-enough to make a decision.
+The second is either (for <code>exit</code>) the decimal exit status of the process or (for everything else) a symbolic designation (falling back to a decimal code) of the specific signal, if the first argument is not specific enough to make a decision.
 </para>
 
 <para>
-For convenience, the third is (for other than <code>exit</code>) always the
-decimal code of the specific signal.
+For convenience, the third is (for other than <code>exit</code>) always the decimal code of the specific signal.
 </para>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

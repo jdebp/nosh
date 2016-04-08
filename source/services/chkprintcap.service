@@ -9,8 +9,9 @@ Description=validate printcap database
 Type=oneshot
 EnvironmentDirectory=env
 ExecStart=%p -d
-RemainAfterExit=true
-Restart=always
+# This is a one-shot service that can be re-triggered by starting it again.
+RemainAfterExit=1
+Restart=no
 
 [Install]
 WantedBy=server.target

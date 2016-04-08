@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Clam anti-virus
+
+[Service]
+EnvironmentDirectory=env
+User=%p
+ExecStart=%p ${config:+--config-file "${config}"} ${flags}
+
+[Install]
+WantedBy=server.target

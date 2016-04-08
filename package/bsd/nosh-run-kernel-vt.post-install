@@ -2,24 +2,28 @@
 escape() { echo "$1"|sed -e 's/_/_x5f/g' -e 's/@/_x40/g' -e 's/:/_x3a/g' ; }
 addloguser() { getent passwd "$1" > /dev/null || pw useradd "$1" -s /bin/false ; }
 addlog() { mkdir -m 0755 -p /var/log/sv/"$2" ; chown "$1"-log /var/log/sv/"$2" ; }
+case "`uname`" in
+OpenBSD)	ktty=ttyC; break ;;
+*)		ktty=ttyv; break ;;
+esac
 # kernel TTYs
 for I in \
-	ttyv0 \
-	ttyv1 \
-	ttyv2 \
-	ttyv3 \
-	ttyv4 \
-	ttyv5 \
-	ttyv6 \
-	ttyv7 \
-	ttyv8 \
-	ttyv9 \
-	ttyva \
-	ttyvb \
-	ttyvc \
-	ttyvd \
-	ttyve \
-	ttyvf \
+	"${ktty}"0 \
+	"${ktty}"1 \
+	"${ktty}"2 \
+	"${ktty}"3 \
+	"${ktty}"4 \
+	"${ktty}"5 \
+	"${ktty}"6 \
+	"${ktty}"7 \
+	"${ktty}"8 \
+	"${ktty}"9 \
+	"${ktty}"a \
+	"${ktty}"b \
+	"${ktty}"c \
+	"${ktty}"d \
+	"${ktty}"e \
+	"${ktty}"f \
 	;
 do
 	i="`escape ttylogin@"$I"`"
@@ -30,7 +34,6 @@ do
 done
 # TTY ancillaries
 for i in \
-	ttylogin-starter \
 	kernel-vt-kbdcontrol \
 	kernel-vt-vidcontrol \
 	;

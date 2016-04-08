@@ -10,11 +10,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <csignal>
 #include <cerrno>
 #include <sys/types.h>
-#if defined(__LINUX__) || defined(__linux__)
-#include "kqueue_linux.h"
-#else
-#include <sys/event.h>
-#endif
+#include "kqueue_common.h"
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <termios.h>
@@ -108,19 +104,19 @@ pty_run (
 	struct kevent p[16];
 	{
 		size_t index(0);
-		EV_SET(&p[index++], STDIN_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], STDOUT_FILENO, EVFILT_WRITE, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], PTY_MASTER_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], PTY_MASTER_FILENO, EVFILT_WRITE, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], SIGCHLD, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], STDIN_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], STDOUT_FILENO, EVFILT_WRITE, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], PTY_MASTER_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], PTY_MASTER_FILENO, EVFILT_WRITE, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGCHLD, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 		if (pass_through) {
-		EV_SET(&p[index++], SIGCONT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], SIGWINCH, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGCONT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGWINCH, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 		}
-		EV_SET(&p[index++], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 		if (0 > kevent(queue, p, index, 0, 0, 0)) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
@@ -176,13 +172,13 @@ pty_run (
 		}
 
 		// Read from stdin if we have emptied the in buffer and haven't hit EOF.
-		EV_SET(&p[0], STDIN_FILENO, EVFILT_READ, !ine && !inl ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
+		set_event(&p[0], STDIN_FILENO, EVFILT_READ, !ine && !inl ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
 		// Read from master if we have emptied the out buffer and haven't hit EOF.
-		EV_SET(&p[2], PTY_MASTER_FILENO, EVFILT_READ, !oute && !outl ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
+		set_event(&p[2], PTY_MASTER_FILENO, EVFILT_READ, !oute && !outl ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
 		// Write to stdout if we have things in the out buffer.
-		EV_SET(&p[1], STDOUT_FILENO, EVFILT_WRITE, outl ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
+		set_event(&p[1], STDOUT_FILENO, EVFILT_WRITE, outl ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
 		// Write to master if we have things in the in buffer.
-		EV_SET(&p[3], PTY_MASTER_FILENO, EVFILT_WRITE, inl ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
+		set_event(&p[3], PTY_MASTER_FILENO, EVFILT_WRITE, inl ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
 
 		const int rc(kevent(queue, p, 4, p, sizeof p/sizeof *p, 0));
 

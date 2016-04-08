@@ -8,7 +8,6 @@ After=ttylogin@ttyv8 ttylogin@tty9
 
 [Service]
 ExecStart=PDCMd
-Restart=always
 
 [Install]
 WantedBy=workstation.target

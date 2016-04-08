@@ -2,17 +2,19 @@
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
 
-# This has been superceded by the swapauto target, and a raft of individually-generated swap@ services.
+# This has been superseded by the swapauto target, and a raft of individually-generated swap@ services.
 
 [Unit]
 Description=%p service
 DefaultDependencies=false
 
 [Service]
-ExecStartPre=swapon -a
-ExecStart=true
+Type=oneshot
+ExecStart=swapon -a
 ExecStopPost=swapoff -a
+# This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
+Restart=no
 
 [Install]
 StoppedBy=shutdown.target

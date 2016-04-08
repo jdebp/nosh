@@ -48,6 +48,14 @@ convert(
 
 enum { COLOR_DEFAULT = 9 };
 
+static
+#if !defined(__OpenBSD__)
+const
+#endif
+char 
+	setaf[] = "setaf",
+	op[] = "op";
+
 static inline
 int
 colour_of_state (
@@ -66,13 +74,27 @@ colour_of_state (
 
 static inline
 void
+put (
+	const char * s,
+	const int colour
+) {
+#if defined(__OpenBSD__)
+	// Fix an OpenBSD const incorrectness bug.
+	tputs(tparm(const_cast<char *>(s), colour), 1, putchar);
+#else
+	tputs(tparm(s, colour), 1, putchar);
+#endif
+}
+
+static inline
+void
 set_exception_colour (
 	bool no_colours
 ) {
 	if (no_colours) return;
-	const char * s(tigetstr("setaf"));
+	const char * s(tigetstr(setaf));
 	if (!s || reinterpret_cast<const char *>(-1) == s) return;
-	tputs(tparm(s, COLOR_BLUE), 1, putchar);
+	put(s, COLOR_BLUE);
 }
 
 static inline
@@ -82,9 +104,9 @@ set_colour_of_state (
 	char c
 ) {
 	if (no_colours) return;
-	const char * s(tigetstr("setaf"));
+	const char * s(tigetstr(setaf));
 	if (!s || reinterpret_cast<const char *>(-1) == s) return;
-	tputs(tparm(s, colour_of_state(c)), 1, putchar);
+	put(s, colour_of_state(c));
 }
 
 static inline
@@ -93,9 +115,9 @@ set_config_colour (
 	bool no_colours
 ) {
 	if (no_colours) return;
-	const char * s(tigetstr("setaf"));
+	const char * s(tigetstr(setaf));
 	if (!s || reinterpret_cast<const char *>(-1) == s) return;
-	tputs(tparm(s, COLOR_CYAN), 1, putchar);
+	put(s, COLOR_CYAN);
 }
 
 static inline
@@ -104,11 +126,11 @@ reset_colour (
 	bool no_colours
 ) {
 	if (no_colours) return;
-	const char * s(tigetstr("op"));
+	const char * s(tigetstr(op));
 	if (!s || reinterpret_cast<const char *>(-1) == s) {
 		s = tigetstr("setaf");
 		if (!s) return;
-		tputs(tparm(s, COLOR_DEFAULT), 1, putchar);
+		put(s, COLOR_DEFAULT);
 	} else
 		tputs(s, 1, putchar);
 }
@@ -129,6 +151,15 @@ state_of (
 	}
 }
 
+static
+const char * const
+status_event[4] = {
+	"Started",
+	"Ran",
+	"Restartd",
+	"Stopped",
+};
+
 static inline
 void
 display (
@@ -137,9 +168,12 @@ display (
 	const bool colours,
 	const bool is_ok,
 	const bool initially_up,
+	const bool run_on_empty,
+	const bool use_hangup,
+	const bool use_kill,
 	const uint64_t z,
-	const int b,
-	char status[20]
+	const unsigned int b,
+	char status[STATUS_BLOCK_SIZE]
 ) {
 	const uint64_t s(unpack_bigendian(status, 8));
 //	const uint32_t n(unpack_bigendian(status + 8, 4));
@@ -159,22 +193,22 @@ display (
 		reset_colour(!colours);
 		std::fputc('\n', stdout);
 	} else {
-		if (b < 20) {
-			set_colour_of_state(!colours, p ? encore_status_running : encore_status_stopped);
-			std::fprintf(stdout, "%s", p ? "up" : "down");
-			reset_colour(!colours);
+		if (b < 19) {
 			// supervise doesn't turn off the want flag.
 			if (p) {
 				if ('u' == status[17]) status[17] = '\0';
 			} else {
 				if ('d' == status[17]) status[17] = '\0';
 			}
-		} else {
-			const char state(status[18]);
-			set_colour_of_state(!colours, state);
-			std::fprintf(stdout, "%s", state_of(state));
-			reset_colour(!colours);
 		}
+		const char state(b >= 19 ? status[18] : p ? encore_status_running : encore_status_stopped);
+		set_colour_of_state(!colours, state);
+		if (b < 19) {
+			std::fprintf(stdout, "%s", p ? "up" : "down");
+		} else {
+			std::fprintf(stdout, "%s", state_of(state));
+		}
+		reset_colour(!colours);
 		if (p && !long_form)
 			std::fprintf(stdout, " (pid %u)", p);
 		if (z >= s) {
@@ -204,9 +238,27 @@ display (
 		if (long_form) {
 			if (p)
 				std::fprintf(stdout, "\n\tMain PID: %u", p);
-			std::fprintf(stdout, "\n\tAction  : %s%s%s", paused, *want && *paused ? ", " : "", want);
+			if (*want || *paused)
+				std::fprintf(stdout, "\n\tAction  : %s%s%s", paused, *want && *paused ? ", " : "", want);
+			for (unsigned int i(0U); i < 4U; ++i) {
+				if (b > (23U + i * 5U)) {
+					const uint8_t code(status[19U + i * 5U]);
+					if (0 == code) continue;
+
+					const uint32_t number(unpack_bigendian(status + (20U + i * 5U), 4));
+					const char * reason(1 == code ? "exit" : classify_signal(number));
+					std::fprintf(stdout, "\n\t%8.8s: %s %u", status_event[i], reason, number);
+					if (1 != code) {
+						const char * sname(signame(number));
+						if (sname)
+							std::fprintf(stdout, " %s", sname);
+					}
+					if (3 == code)
+						std::fputs(" (core dumped)", stdout);
+				}
+			}
 		} else {
-			const bool is_up(b < 20 ? p : encore_status_stopped != status[18]);
+			const bool is_up(b < 19 ? p : encore_status_stopped != status[18]);
 			if (*want || *paused || is_up != initially_up)
 				std::fputs("; ", stdout);
 			if (*want || *paused)
@@ -226,8 +278,13 @@ display (
 		}
 		std::fputc('\n', stdout);
 	}
-	if (long_form)
-		std::fprintf(stdout, "\tConfig  : %s\n", initially_up ? "enabled" : "disabled");
+	if (long_form) {
+		std::fprintf(stdout, "\tConfig  : %s", initially_up ? "enabled" : "disabled");
+		if (run_on_empty) std::fputs(", run on empty", stdout);
+		if (use_hangup) std::fputs(", use SIGHUP", stdout);
+		if (!use_kill) std::fputs(", no SIGKILL", stdout);
+		std::fputc('\n', stdout);
+	}
 }
 
 // Used to preserve this argument when we return with new arguments.
@@ -249,7 +306,7 @@ service_status (
 	const char * log_lines = "5";
 	try {
 		popt::bool_definition long_form_option('\0', "long", "Output in a longer form.", long_form);
-		popt::bool_definition colours_option('\0', "colour", "Output in colour if the terminal is capable of it.", colours);
+		popt::bool_definition colours_option('\0', "colour", "Force output in colour even if standard output is not a terminal.", colours);
 		popt::string_definition log_lines_option('\0', "log-lines", "number", "Control the number of log lines printed.", log_lines);
 		popt::definition * top_table[] = {
 			&long_form_option,
@@ -304,7 +361,10 @@ service_status (
 		const FileDescriptorOwner service_dir_fd(open_service_dir(bundle_dir_fd.get()));
 
 		const bool initially_up(is_initially_up(service_dir_fd.get()));
-		char status[20];
+		const bool run_on_empty(!is_done_after_exit(service_dir_fd.get()));
+		const bool use_hangup(is_use_hangup_signal(service_dir_fd.get()));
+		const bool use_kill(is_use_kill_signal(service_dir_fd.get()));
+		char status[STATUS_BLOCK_SIZE];
 
 		const FileDescriptorOwner ok_fd(open_writeexisting_at(supervise_dir_fd.get(), "ok"));
 		if (0 > ok_fd.get()) {
@@ -313,16 +373,16 @@ service_status (
 				std::fprintf(stdout, "%s: %s: %s\n", name, "supervise/ok", std::strerror(error));
 				continue;
 			}
-			display(name, long_form, colours, false, initially_up, z, 0, status);
+			display(name, long_form, colours, false, initially_up, run_on_empty, use_hangup, use_kill, z, 0U, status);
 		} else {
 			const FileDescriptorOwner status_fd(open_read_at(supervise_dir_fd.get(), "status"));
 			if (0 > status_fd.get()) {
 				const int error(errno);
 				std::fprintf(stdout, "%s: %s: %s\n", name, "status", std::strerror(error));
-				display(name, long_form, colours, true, initially_up, z, 0, status);
+				display(name, long_form, colours, true, initially_up, run_on_empty, use_hangup, use_kill, z, 0U, status);
 			} else {
 				const int b(read(status_fd.get(), status, sizeof status));
-				display(name, long_form, colours, true, initially_up, z, b, status);
+				display(name, long_form, colours, true, initially_up, run_on_empty, use_hangup, use_kill, z, static_cast<unsigned int>(b), status);
 			}
 		}
 
@@ -330,6 +390,7 @@ service_status (
 			const FileDescriptorOwner log_main_dir_fd(open_dir_at(bundle_dir_fd.get(), "log/main/"));
 
 			if (0 <= log_main_dir_fd.get()) {
+				std::fflush(stdout);
 				const int child(fork());
 				if (0 > child) {
 					const int error(errno);

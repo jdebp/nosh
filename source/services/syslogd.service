@@ -11,7 +11,7 @@ EnvironmentDirectory=env
 OOMScoreAdjust=fromenv
 # Don't use %p; this unit is accessed via a symbolic link.
 ExecStart=syslogd ${flags}
-Restart=always
+StandardInput=socket
 
 [Install]
 # This is enabled via the setting in the associated socket unit.

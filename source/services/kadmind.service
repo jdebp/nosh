@@ -9,6 +9,7 @@ Wants=kerberos.service
 [Service]
 EnvironmentDirectory=env
 ExecStart=%p
+StandardInput=socket
 
 [Install]
 WantedBy=workstation.target

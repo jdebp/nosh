@@ -16,6 +16,7 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>userenv</command> 
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -64,6 +65,9 @@ You can work around these bugs by ensuring that <replaceable>next-prog</replacea
 </refsection><refsection><title>See also</title>
 
 <itemizedlist>
+<listitem><para>
+<citerefentry><refentrytitle>machineenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
 <listitem><para>
 <citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 </para></listitem>

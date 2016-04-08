@@ -1,21 +1,25 @@
 #!/bin/sh -
+case "`uname`" in
+OpenBSD)	ktty=ttyC; break ;;
+*)		ktty=ttyv; break ;;
+esac
 for I in \
-	ttyv0 \
-	ttyv1 \
-	ttyv2 \
-	ttyv3 \
-	ttyv4 \
-	ttyv5 \
-	ttyv6 \
-	ttyv7 \
-	ttyv8 \
-	ttyv9 \
-	ttyva \
-	ttyvb \
-	ttyvc \
-	ttyvd \
-	ttyve \
-	ttyvf \
+	"${ktty}"0 \
+	"${ktty}"1 \
+	"${ktty}"2 \
+	"${ktty}"3 \
+	"${ktty}"4 \
+	"${ktty}"5 \
+	"${ktty}"6 \
+	"${ktty}"7 \
+	"${ktty}"8 \
+	"${ktty}"9 \
+	"${ktty}"a \
+	"${ktty}"b \
+	"${ktty}"c \
+	"${ktty}"d \
+	"${ktty}"e \
+	"${ktty}"f \
 	;
 do
 	i="ttylogin@$I"
@@ -29,7 +33,6 @@ do
 	fi
 done
 for i in \
-	ttylogin-starter \
 	kernel-vt-kbdcontrol \
 	kernel-vt-vidcontrol \
 	;

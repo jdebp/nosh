@@ -12,7 +12,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include <sys/wait.h>
 #include "utils.h"
-#include "common-manager.h"
 #include "service-manager-client.h"
 #include "popt.h"
 
@@ -27,7 +26,7 @@ cat (
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
-		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
+		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
 		popt::definition * main_table[] = {
 			&user_option
 		};

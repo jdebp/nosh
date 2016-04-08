@@ -13,8 +13,10 @@ For copyright and licensing terms, see the file named COPYING.
 struct DirStar {
 	operator DIR * () const { return d ; }
 	DirStar(DIR * dp = 0) : d(dp) {}
-	DirStar(FileDescriptorOwner & fd) : d(fdopendir(fd.get())) { if (d) fd.release(); }
-//	DirStar(int fd) : d(fdopendir(fd)) {}
+	DirStar(FileDescriptorOwner & fdo) : d(fdopendir(fdo.get())) { if (d) fdo.release(); }
+#if 0
+	DirStar(int fd) : d(fdopendir(fd)) {}
+#endif
 	DIR * release() { DIR *dp(d); d = 0; return dp; }
 	int fd() const { return dirfd(d); }
 	DirStar & operator= ( DIR * n ) { assign(n); return *this; }

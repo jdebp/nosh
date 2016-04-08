@@ -7,8 +7,11 @@ Description=BSD password file lock check
 DefaultDependencies=false
 
 [Service]
-ExecStart=sh -c '[ -f /etc/ptmp ] && echo 1>&2 "ERROR: password file may be incorrect -- /etc/ptmp exists"'
+Type=oneshot
+ExecStart=sh -c 'test -f /etc/ptmp && echo 1>&2 "ERROR: password file may be incorrect -- /etc/ptmp exists"'
+# This only has meaningful behaviour at bootstrap, not later.
 RemainAfterExit=yes
+Restart=never
 
 [Install]
 StoppedBy=shutdown.target

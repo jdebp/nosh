@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=TAICLOCK socket
+
+[Socket]
+Backlog=2
+BindIPv6Only=both
+ListenDatagram=4014
+Accept=false
+MaxConnections=16
+NoDelay=false
+
+[Install]
+WantedBy=server.target

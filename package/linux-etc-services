@@ -2,6 +2,7 @@ busybox-mdev
 busybox-mdev-log
 busybox-mdev-rescan
 dmraid
+kmod@fuse
 kmod@autofs
 kmod@efivarfs
 linux-lockfiles

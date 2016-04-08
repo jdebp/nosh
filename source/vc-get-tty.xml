@@ -26,60 +26,34 @@
 <refsection><title>Description</title>
 
 <para>
-<command>vc-get-tty</command> is a chain-loading utility that sets up
-environment variables appropriate to a specified virtual console, secures the
-device against access by other users, and then chain loads to
-<replaceable>next-prog</replaceable> with the
-<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-function.  
+<command>vc-get-tty</command> is a chain-loading utility that sets up environment variables appropriate to a specified virtual console, secures the device against access by other users, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options,
-which <command>vc-get-tty</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>vc-get-tty</command> will ignore.
 </para>
 
 <para>
-<command>vc-get-tty</command> sets the <envar>TTY</envar> environment variable to
-the full device filename of the controlling terminal.
-Programs such as 
-<citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, 
-<citerefentry><refentrytitle>login-banner</refentrytitle><manvolnum>1</manvolnum></citerefentry> and 
-<citerefentry><refentrytitle>login-process</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-will make use of this environment variable as the name of the controlling terminal.
+<command>vc-get-tty</command> sets the <envar>TTY</envar> environment variable to the full device filename of the controlling terminal.
+Programs such as <citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and <citerefentry><refentrytitle>login-banner</refentrytitle><manvolnum>1</manvolnum></citerefentry> will make use of this environment variable as the name of the controlling terminal.
 </para>
 
 <para>
 It determines the terminal character device filename from the passed name.
-This can be just the absolute pathname of the device file itself or a relative
-pathname (such as <code>tty1</code>).
-If it is a relative pathname, <command>vc-get-tty</command> tries first
-prefixing <code>/dev/</code> and looking for a file, 
-then prefixing <code>/var/dev/</code>,
-and 
-then prefixing <code>/run/dev/</code>.
+This can be just the absolute pathname of the device file itself or a relative pathname (such as <code>tty1</code>).
+If it is a relative pathname, <command>vc-get-tty</command> tries first prefixing <code>/dev/</code> and looking for a file, then prefixing <code>/var/dev/</code>, and then prefixing <code>/run/dev/</code>.
 </para>
 
 <para>
-<command>vc-get-tty</command> sets the <envar>HOST</envar> environment variable to the machine
-hostname, as obtained from the 
-<citerefentry><refentrytitle>gethostname</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-library function.
-If the <code>--long-hostname</code> command line option is present, the machine
-hostname is assigned to the variable as-is.
+<command>vc-get-tty</command> sets the <envar>HOST</envar> environment variable to the machine hostname, as obtained from the <citerefentry><refentrytitle>gethostname</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function.
+If the <code>--long-hostname</code> command line option is present, the machine hostname is assigned to the variable as-is.
 Otherwise, it is truncated at the first dot.
-Programs such as
-<citerefentry><refentrytitle>login-process</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-will make use of this environment variable.
 </para>
 
 <para>
-<command>vc-get-tty</command> sets the <envar>TERM</envar> environment variable to a system-dependent
-default for virtual consoles.
-It <replaceable>does not</replaceable> make any attempt to deduce terminal types, as the gettys that
-talk to serial terminals do, or read the BSD <filename>/etc/ttys</filename> database.
-The terminal types for virtual consoles are effectively fixed by what the
-console driver emulates on each operating system, and can be hardwired.
+<command>vc-get-tty</command> sets the <envar>TERM</envar> environment variable to a system-dependent default for virtual consoles.
+It <replaceable>does not</replaceable> make any attempt to deduce terminal types, as the gettys that talk to serial terminals do, or read the BSD <filename>/etc/ttys</filename> database.
+The terminal types for virtual consoles are effectively fixed by what the console driver emulates on each operating system, and can be hardwired.
 </para>
 
 <itemizedlist>
@@ -93,48 +67,40 @@ The terminal types for virtual consoles on Linux are fixed as <code>linux</code>
 <listitem>
 <para>
 The terminal types for virtual consoles on FreeBSD are fixed as <code>xterm</code>.
-In theory, the console driver on FreeBSD could emulate either
-<code>xterm</code> or <code>cons25</code>.
-But in practice <code>cons25</code> has been obsolete ever since the move (in FreeBSD
-9.0) to enable UTF-8 on the console, which completely replaced the driver's
-escape sequence handler.
+In theory, the console driver on FreeBSD could emulate either <code>xterm</code> or <code>cons25</code>.
+But in practice <code>cons25</code> has been obsolete ever since the move (in FreeBSD 9.0) to enable UTF-8 on the console, which completely replaced the driver's escape sequence handler.
 </para>
 </listitem>
 
 <listitem>
 <para>
-The terminal types for virtual consoles on NetBSD are fixed as <code>wsvt25</code>.
+The terminal types for virtual consoles on NetBSD are fixed as <code>pcvtXX</code>.
 In theory, NetBSD also supports <code>sun</code> and <code>dumb</code> terminals.
+</para>
+</listitem>
+
+<listitem>
+<para>
+The terminal types for virtual consoles on OpenBSD are fixed as <code>pccon</code>.
+In theory, OpenBSD also supports <code>sun</code> and <code>dumb</code> terminals.
 </para>
 </listitem>
 
 </itemizedlist>
 
 <para>
-The <code>--term</code> command line option is available for overriding these hardwired
-values, but there is little reason for using it as the terminal types for
-virtual consoles have not changed for several years on FreeBSD and for a
-decade and a half (as of 2013) on Linux.
+The <code>--term</code> command line option is available for overriding these hardwired values, but there is little reason for using it as the terminal types for virtual consoles have not changed for several years on FreeBSD and for a decade and a half (as of 2013) on Linux.
 </para>
 
 </refsection><refsection><title>SECURITY</title>
 
 <para>
-<command>vc-get-tty</command> expects to be run either directly from 
-<citerefentry><refentrytitle>init</refentrytitle><manvolnum>1</manvolnum></citerefentry> 
-or under a daemon supervisor of some sort.
-As such, it expects to start up with an <replaceable>already</replaceable> safe
-environment, open file descriptors, and resource limits for a process that is
-running under the aegis of the superuser.
+<command>vc-get-tty</command> expects to be run either directly from <citerefentry><refentrytitle>init</refentrytitle><manvolnum>1</manvolnum></citerefentry> or under a daemon supervisor of some sort.
+As such, it expects to start up with an <replaceable>already</replaceable> safe environment, open file descriptors, and resource limits for a process that is running under the aegis of the superuser.
 </para>
 
 <para>
-To prevent a race condition in 
-<citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> 
-(q.v.), 
-<command>vc-get-tty</command> ensures that the virtual console is owned
-by the effective UID of the process, and has <code>rw-------</code>
-permissions.
+To prevent a race condition in <citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> (q.v.), <command>vc-get-tty</command> ensures that the virtual console is owned by the effective UID of the process, and has <code>rw-------</code> permissions.
 </para>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

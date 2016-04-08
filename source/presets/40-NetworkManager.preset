@@ -8,3 +8,5 @@
 
 enable	cyclog@NetworkManager.service
 enable	NetworkManager.service
+enable	cyclog@NetworkManager-dispatcher.service
+enable	NetworkManager-dispatcher.service

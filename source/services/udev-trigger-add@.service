@@ -11,11 +11,11 @@ After=local-fs.target udev.service
 [Service]
 Type=oneshot
 ExecStart=udevadm trigger --action=add --type=%i
-RemainAfterExit=true
+# This only has meaningful behaviour at bootstrap, not later.
+RemainAfterExit=yes
 Restart=never
 # This is an outrageous bodge.
 ExecStartPre=sleep 5
-Restart=never
 
 [Install]
 WantedBy=sysinit.target

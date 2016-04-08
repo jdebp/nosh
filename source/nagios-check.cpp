@@ -25,7 +25,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include "unpack.h"
 #include "service-manager-client.h"
 #include "service-manager.h"
-#include "common-manager.h"
 #include "popt.h"
 
 /* Nagios check subcommands *************************************************

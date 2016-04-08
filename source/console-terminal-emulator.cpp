@@ -14,11 +14,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <inttypes.h>
 #include <stdint.h>
 #include <sys/types.h>
-#if defined(__LINUX__) || defined(__linux__)
-#include "kqueue_linux.h"
-#else
-#include <sys/event.h>
-#endif
+#include "kqueue_common.h"
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include "popt.h"
@@ -491,7 +487,7 @@ UnicodeBuffer::SetSize(coordinate w, coordinate h)
 	ftruncate(fd, MakeOffset(w * h));
 }
 
-/* input FIFO ***************************************************************
+/* input side ***************************************************************
 // **************************************************************************
 */
 
@@ -514,6 +510,8 @@ protected:
 	virtual void WriteControl1Character(uint8_t);
 	virtual void Set8BitControl1(bool);
 	virtual void SetBackspaceIsBS(bool);
+	virtual void SetDeleteIsDEL(bool);
+	virtual void SetSendPasteEvent(bool);
 	virtual void ReportSize(coordinate w, coordinate h);
 	virtual void SetSendXTermMouse(bool);
 	virtual void SetSendXTermMouseClicks(bool);
@@ -524,13 +522,15 @@ protected:
 	virtual void SetSendDECLocatorReleaseEvent(bool);
 	virtual void RequestDECLocatorReport();
 	void WriteRawCharacters(std::size_t, const char *);
-	void WriteRawCharacters(const char * s) { WriteRawCharacters(std::strlen(s), s); }
-	void WriteCSI() { WriteControl1Character('\x9b'); }
-	void WriteSS3() { WriteControl1Character('\x8f'); }
+	void WriteRawCharacters(const char * s);
+	void WriteCSI();
+	void WriteSS3();
 	void WriteUnicodeCharacter(uint32_t c);
 	void WriteBackspaceOrDEL();
 	void WriteCSISequence(unsigned m, char c);
 	void WriteSS3Sequence(unsigned m, char c);
+	void SetPasting(bool p);
+	void WriteUCS3Character(uint32_t c, bool p);
 	void WriteFunctionKeyDECVT1(unsigned n, unsigned m);
 	void WriteFunctionKeyLinuxConsole2(unsigned m, char c);
 	void WriteFunctionKeySCOConsole1(char c);
@@ -550,8 +550,8 @@ protected:
 	void WriteXTermMouse(int button, uint8_t modifiers);
 	void WriteDECLocatorReport(int button);
 	const Emulation emulation;
-	bool send_8bit_controls, backspace_is_bs;
-	bool send_xterm_mouse, send_xterm_mouse_clicks, send_xterm_mouse_button_motions, send_xterm_mouse_nobutton_motions, send_locator_press_events, send_locator_release_events;
+	bool send_8bit_controls, backspace_is_bs, delete_is_del;
+	bool send_xterm_mouse, send_xterm_mouse_clicks, send_xterm_mouse_button_motions, send_xterm_mouse_nobutton_motions, send_locator_press_events, send_locator_release_events, send_paste;
 	unsigned int send_locator_mode;
 	char input_buffer[256];
 	std::size_t input_read;
@@ -559,6 +559,7 @@ protected:
 	std::size_t output_pending;
 	uint16_t mouse_column, mouse_row;
 	bool mouse_buttons[8];
+	bool pasting;
 };
 }
 
@@ -568,17 +569,20 @@ InputFIFO::InputFIFO(int i, int m, Emulation e) :
 	emulation(e),
 	send_8bit_controls(false),
 	backspace_is_bs(false),
+	delete_is_del(false),
 	send_xterm_mouse(false), 
 	send_xterm_mouse_clicks(false), 
 	send_xterm_mouse_button_motions(false), 
 	send_xterm_mouse_nobutton_motions(false),
 	send_locator_press_events(false),
 	send_locator_release_events(false),
+	send_paste(false),
 	send_locator_mode(0U),
 	input_read(0U),
 	output_pending(0U),
 	mouse_column(0U),
-	mouse_row(0U)
+	mouse_row(0U),
+	pasting(false)
 {
 	for (std::size_t j(0U); j < sizeof mouse_buttons/sizeof *mouse_buttons; ++j)
 		mouse_buttons[j] = false;
@@ -591,6 +595,13 @@ InputFIFO::WriteRawCharacters(std::size_t l, const char * p)
 		l = sizeof output_buffer - output_pending;
 	std::memmove(output_buffer + output_pending, p, l);
 	output_pending += l;
+}
+
+inline 
+void 
+InputFIFO::WriteRawCharacters(const char * s) 
+{ 
+	WriteRawCharacters(std::strlen(s), s); 
 }
 
 void 
@@ -705,6 +716,18 @@ InputFIFO::SetBackspaceIsBS(bool b)
 }
 
 void 
+InputFIFO::SetDeleteIsDEL(bool b)
+{
+	delete_is_del = b;
+}
+
+void 
+InputFIFO::SetSendPasteEvent(bool b)
+{
+	send_paste = b;
+}
+
+void 
 InputFIFO::SetSendXTermMouse(bool b)
 {
 	send_xterm_mouse = b;
@@ -749,31 +772,45 @@ InputFIFO::SetSendDECLocatorReleaseEvent(bool b)
 void
 InputFIFO::WriteBackspaceOrDEL()
 {
-	WriteRawCharacters(backspace_is_bs ? "\x08" : "\x7F"); 
+	WriteRawCharacters(backspace_is_bs ? "\x08" : "\x7F"); 	// We can bypass UTF-8 encoding as we guarantee ASCII.
+}
+
+inline 
+void 
+InputFIFO::WriteCSI() 
+{ 
+	WriteControl1Character('\x9b'); 
+}
+
+inline 
+void 
+InputFIFO::WriteSS3() 
+{ 
+	WriteControl1Character('\x8f'); 
 }
 
 void 
 InputFIFO::WriteCSISequence(unsigned m, char c)
 {
 	WriteCSI();
-	char b[16];
-	if (0 != m)
-		snprintf(b, sizeof b, "1;%u%c", m + 1U, c);
-	else
-		snprintf(b, sizeof b, "%c", c);
-	WriteRawCharacters(b);
+	if (0 != m) {
+		char b[16];
+		const int n(snprintf(b, sizeof b, "1;%u%c", m + 1U, c));
+		WriteRawCharacters(n, b);	// We can bypass UTF-8 encoding as we guarantee ASCII.
+	} else
+		WriteUnicodeCharacter(c);
 }
 
 void 
 InputFIFO::WriteSS3Sequence(unsigned m, char c)
 {
 	WriteSS3();
-	char b[16];
-	if (0 != m)
-		snprintf(b, sizeof b, "1;%u%c", m + 1U, c);
-	else
-		snprintf(b, sizeof b, "%c", c);
-	WriteRawCharacters(b);
+	if (0 != m) {
+		char b[16];
+		const int n(snprintf(b, sizeof b, "1;%u%c", m + 1U, c));
+		WriteRawCharacters(n, b);	// We can bypass UTF-8 encoding as we guarantee ASCII.
+	} else
+		WriteUnicodeCharacter(c);
 }
 
 /// \brief DECFNK
@@ -786,7 +823,7 @@ InputFIFO::WriteFunctionKeyDECVT1(unsigned n, unsigned m)
 		snprintf(b, sizeof b, "%u;%u~", n, m + 1U);
 	else
 		snprintf(b, sizeof b, "%u~", n);
-	WriteRawCharacters(b);
+	WriteRawCharacters(b);	// We can bypass UTF-8 encoding as we guarantee ASCII.
 }
 
 void 
@@ -798,16 +835,23 @@ InputFIFO::WriteFunctionKeyLinuxConsole2(unsigned m, char c)
 		snprintf(b, sizeof b, "[1;%u%c", m + 1U, c);
 	else
 		snprintf(b, sizeof b, "[%c", c);
-	WriteRawCharacters(b);
+	WriteRawCharacters(b);	// We can bypass UTF-8 encoding as we guarantee ASCII.
 }
 
 void 
 InputFIFO::WriteFunctionKeySCOConsole1(char c)
 {
 	WriteCSI();
-	char b[16];
-	snprintf(b, sizeof b, "%c", c);
-	WriteRawCharacters(b);
+	WriteUnicodeCharacter(c);
+}
+
+void 
+InputFIFO::SetPasting(const bool p)
+{
+	if (p == pasting) return;
+	pasting = p;
+	if (send_paste)
+		WriteFunctionKeyDECVT1(pasting ? 200 : 201, 0);
 }
 
 void 
@@ -849,11 +893,11 @@ InputFIFO::WriteFunctionKeySCOConsole(uint16_t k, uint8_t /*m*/)
 	if (15U > k)
 		WriteFunctionKeySCOConsole1(k - 1U + 'M');
 	else
-	if (40U > k)
-		WriteFunctionKeySCOConsole1(k - 40U + 'a');
+	if (41U > k)
+		WriteFunctionKeySCOConsole1(k - 15U + 'a');
 	else
-	if (48U > k)
-		WriteFunctionKeySCOConsole1(other[k - 40U]);
+	if (49U > k)
+		WriteFunctionKeySCOConsole1(other[k - 41U]);
 }
 
 void 
@@ -1025,11 +1069,11 @@ InputFIFO::WriteExtendedKeySCOConsole(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_INS_CHAR:		// This is not a SCO console key, but we make it equivalent to:
 		case EXTENDED_KEY_PAD_INSERT:		// this, which the SCO console does not distinguish from:
 		case EXTENDED_KEY_INSERT:		WriteCSISequence(m,'L'); break;
-		case EXTENDED_KEY_PAD_F1:		WriteCSISequence(m,'P'); break;
-		case EXTENDED_KEY_PAD_F2:		WriteCSISequence(m,'Q'); break;
-		case EXTENDED_KEY_PAD_F3:		WriteCSISequence(m,'R'); break;
-		case EXTENDED_KEY_PAD_F4:		WriteCSISequence(m,'S'); break;
-		case EXTENDED_KEY_PAD_F5:		WriteCSISequence(m,'T'); break;
+		case EXTENDED_KEY_PAD_F1:		WriteCSISequence(m,'M'); break;
+		case EXTENDED_KEY_PAD_F2:		WriteCSISequence(m,'N'); break;
+		case EXTENDED_KEY_PAD_F3:		WriteCSISequence(m,'O'); break;
+		case EXTENDED_KEY_PAD_F4:		WriteCSISequence(m,'P'); break;
+		case EXTENDED_KEY_PAD_F5:		WriteCSISequence(m,'Q'); break;
 		case EXTENDED_KEY_BACKTAB:		WriteCSISequence(m,'Z'); break;
 		case EXTENDED_KEY_BACKSPACE:		WriteBackspaceOrDEL(); break;
 		case EXTENDED_KEY_RETURN_OR_ENTER:	WriteRawCharacters("\x0D"); break;
@@ -1169,6 +1213,7 @@ InputFIFO::WriteExtendedKeyNetBSDConsole(uint16_t k, uint8_t m)
 void 
 InputFIFO::WriteExtendedKey(uint16_t k, uint8_t m)
 {
+	SetPasting(false);
 	switch (emulation) {
 		case SCO_CONSOLE:	return WriteExtendedKeySCOConsole(k, m);
 		case LINUX_CONSOLE:	return WriteExtendedKeyLinuxConsole(k, m);
@@ -1181,6 +1226,7 @@ InputFIFO::WriteExtendedKey(uint16_t k, uint8_t m)
 void 
 InputFIFO::WriteWheelMotion(uint8_t w, int8_t o, uint8_t m) 
 {
+	SetPasting(false);
 	// The horizontal wheel (#1) is an extension to the xterm protocol.
 	while (0 != o) {
 		if (0 > o) {
@@ -1291,6 +1337,7 @@ InputFIFO::WriteDECLocatorReport(int button)
 void 
 InputFIFO::SetMouseX(uint16_t p, uint8_t m) 
 {
+	SetPasting(false);
 	if (mouse_column != p) {
 		mouse_column = p; 
 		WriteXTermMouse(-1, m);
@@ -1301,6 +1348,7 @@ InputFIFO::SetMouseX(uint16_t p, uint8_t m)
 void 
 InputFIFO::SetMouseY(uint16_t p, uint8_t m) 
 { 
+	SetPasting(false);
 	if (mouse_row != p) {
 		mouse_row = p; 
 		WriteXTermMouse(-1, m);
@@ -1311,6 +1359,7 @@ InputFIFO::SetMouseY(uint16_t p, uint8_t m)
 void 
 InputFIFO::SetMouseButton(uint8_t b, bool v, uint8_t m) 
 { 
+	SetPasting(false);
 	if (mouse_buttons[b] != v) {
 		mouse_buttons[b] = v; 
 		WriteXTermMouse(b, m);
@@ -1321,12 +1370,23 @@ InputFIFO::SetMouseButton(uint8_t b, bool v, uint8_t m)
 void 
 InputFIFO::RequestDECLocatorReport()
 {
+	SetPasting(false);
 	if (0U == send_locator_mode) {
 		WriteCSI();
 		WriteRawCharacters("0&w");
 		return;
 	}
 	WriteDECLocatorReport(-1);
+}
+
+void 
+InputFIFO::WriteUCS3Character(uint32_t c, bool pasted)
+{
+	SetPasting(pasted);
+	WriteUnicodeCharacter(c);
+	// Interrupt after any pasted character that could otherwise begin a DECFNK sequence.
+	if (0x1B == c || 0x9B == c)
+		SetPasting(false);
 }
 
 void
@@ -1341,7 +1401,8 @@ InputFIFO::ReadInput()
 		input_read -= 4U;
 		std::memmove(input_buffer, input_buffer + 4U, input_read);
 		switch (b & INPUT_MSG_MASK) {
-			case INPUT_MSG_UCS24:	WriteUnicodeCharacter(b & 0x00FFFFFF); break;
+			case INPUT_MSG_UCS3:	WriteUCS3Character(b & ~INPUT_MSG_MASK, false); break;
+			case INPUT_MSG_PUCS3:	WriteUCS3Character(b & ~INPUT_MSG_MASK, true); break;
 			case INPUT_MSG_EKEY:	WriteExtendedKey((b >> 8U) & 0xFFFF, b & 0xFF); break;
 			case INPUT_MSG_FKEY:	WriteFunctionKey((b >> 8U) & 0xFF, b & 0xFF); break;
 			case INPUT_MSG_XPOS:	SetMouseX((b >> 8U) & 0xFFFF, b & 0xFF); break;
@@ -1527,7 +1588,7 @@ console_terminal_emulator (
 	InputFIFO::Emulation emulation(InputFIFO::LINUX_CONSOLE);
 #elif defined(__FreeBSD__) || defined(__DragonFly__)
 	InputFIFO::Emulation emulation(InputFIFO::XTERM_PC);
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	InputFIFO::Emulation emulation(InputFIFO::NETBSD_CONSOLE);
 #else
 	InputFIFO::Emulation emulation(InputFIFO::DECVT);
@@ -1644,12 +1705,12 @@ console_terminal_emulator (
 	struct kevent p[16];
 	{
 		size_t index(0);
-		EV_SET(&p[index++], PTY_MASTER_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], PTY_MASTER_FILENO, EVFILT_WRITE, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], input.get(), EVFILT_READ, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], PTY_MASTER_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], PTY_MASTER_FILENO, EVFILT_WRITE, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], input.get(), EVFILT_READ, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 		if (0 > kevent(queue, p, index, 0, 0, 0)) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));

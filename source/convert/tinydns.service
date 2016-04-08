@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Bernstein's content DNS server daemon, modified to use systemd LISTEN_FDS protocol
+After=network-interfaces.service
+
+[Service]
+EnvironmentDirectory=env
+EnvironmentUser=tinydns-d
+LimitDATA=3000000
+ExecStart=%p
+
+[Install]
+WantedBy=server.target

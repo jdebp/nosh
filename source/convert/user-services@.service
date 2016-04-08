@@ -8,19 +8,21 @@ After=user-runtime@%I
 Wants=user-runtime@%I
 
 [Service]
+systemdUserEnvironment=true
 PermissionsStartOnly=yes
 SessionLeader=yes
 User=%I
+Delegate=yes
 ExecStartPre=mkdir -m 0750 /run/user/%I/service-manager
 ExecStartPre=chown %I /run/user/%I/service-manager
-ExecStartPre=mkdir -m 0750 /run/user/%I/system-manager
-ExecStartPre=chown %I /run/user/%I/system-manager
-ExecStartPre=mkdir -m 0750 /run/user/%I/system-manager/log
-ExecStartPre=chown %I /run/user/%I/system-manager/log
-ExecStart=session-manager
+ExecStartPre=mkdir -m 0750 /run/user/%I/per-user-manager
+ExecStartPre=chown %I /run/user/%I/per-user-manager
+ExecStartPre=mkdir -m 0750 /run/user/%I/per-user-manager/log
+ExecStartPre=chown %I /run/user/%I/per-user-manager/log
+ExecStart=per-user-manager
 ExecStopPost=rmdir /run/user/%I/service-manager
-ExecStopPost=rmdir /run/user/%I/system-manager/log
-ExecStopPost=rmdir /run/user/%I/system-manager
+ExecStopPost=rmdir /run/user/%I/per-user-manager/log
+ExecStopPost=rmdir /run/user/%I/per-user-manager
 Restart=always
 
 [Install]

@@ -3,14 +3,16 @@
 ## **************************************************************************
 
 [Unit]
-Description=utmpx boot/shutdown record generator
+Description=%p boot/shutdown record generator
 After=local-fs.target
 
 [Service]
 Type=oneshot
 ExecStart=%p boot
 ExecStopPost=%p shutdown
+# This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
+Restart=no
 
 [Install]
 WantedBy=multi-user.target

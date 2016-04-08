@@ -7,8 +7,12 @@ Description=kernel module loader for %i
 
 [Service]
 # Strictly speaking, this shouldn't be needed.
-# But some BSD configuration options map to service settiongs for kmod@ instances.
+# But some BSD configuration options map to service settings for kmod@ instances.
 EnvironmentDirectory=env
 ExecStart=system-control load-kernel-module %i
 ExecStopPost=system-control unload-kernel-module %i
+# This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
+Restart=no
+
+[Install]

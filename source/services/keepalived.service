@@ -7,7 +7,6 @@ Description=LVS and VRRP High Availability monitor
 
 [Service]
 ExecStart=%p -n
-Restart=always
 
 [Install]
 WantedBy=basic.target

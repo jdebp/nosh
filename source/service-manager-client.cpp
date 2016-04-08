@@ -117,6 +117,7 @@ make_run_on_empty (
 	do_rpc_call(prog, socket_fd, &m, sizeof m, fds, sizeof fds/sizeof *fds);
 }
 
+#if 1	/// \todo TODO: Eventually we can switch off this mechanism.
 void
 unload (
 	const char * prog,
@@ -128,6 +129,7 @@ unload (
 	int fds[1] = { supervise_dir_fd };
 	do_rpc_call(prog, socket_fd, &m, sizeof m, fds, sizeof fds/sizeof *fds);
 }
+#endif
 
 static
 int
@@ -166,10 +168,38 @@ stop (
 }
 
 int
+do_not_restart (
+	int supervise_dir_fd
+) {
+	return send_control_command(supervise_dir_fd, '_');
+}
+
+int
+unload_when_stopped (
+	int supervise_dir_fd
+) {
+	return send_control_command(supervise_dir_fd, 'x');
+}
+
+int
+continue_daemon (
+	int supervise_dir_fd
+) {
+	return send_control_command(supervise_dir_fd, 'c');
+}
+
+int
 terminate_daemon (
 	int supervise_dir_fd
 ) {
 	return send_control_command(supervise_dir_fd, 't');
+}
+
+int
+terminate_daemon_main_process (
+	int supervise_dir_fd
+) {
+	return send_control_command(supervise_dir_fd, 'T');
 }
 
 int
@@ -180,10 +210,24 @@ kill_daemon (
 }
 
 int
+kill_daemon_main_process (
+	int supervise_dir_fd
+) {
+	return send_control_command(supervise_dir_fd, 'K');
+}
+
+int
 hangup_daemon (
 	int supervise_dir_fd
 ) {
 	return send_control_command(supervise_dir_fd, 'h');
+}
+
+int
+hangup_daemon_main_process (
+	int supervise_dir_fd
+) {
+	return send_control_command(supervise_dir_fd, 'H');
 }
 
 bool
@@ -327,18 +371,40 @@ open_supervise_dir (
 	return supervise_dir_fd;
 }
 
+static inline
+bool
+no_flag_file (
+	const int service_dir_fd,
+	const char * name
+) {
+	struct stat s;
+	return 0 > fstatat(service_dir_fd, name, &s, 0) && ENOENT == errno;
+}
+
 bool
 is_initially_up (
 	const int service_dir_fd
 ) {
-	struct stat down_file_s;
-	return 0 > fstatat(service_dir_fd, "down", &down_file_s, 0) && ENOENT == errno;
+	return no_flag_file(service_dir_fd, "down");
 }
 
 bool
 is_done_after_exit (
 	const int service_dir_fd
 ) {
-	struct stat remain_file_s;
-	return 0 > fstatat(service_dir_fd, "remain", &remain_file_s, 0) && ENOENT == errno;
+	return no_flag_file(service_dir_fd, "remain");
+}
+
+bool
+is_use_hangup_signal (
+	const int service_dir_fd
+) {
+	return !no_flag_file(service_dir_fd, "use_hangup");
+}
+
+bool
+is_use_kill_signal (
+	const int service_dir_fd
+) {
+	return no_flag_file(service_dir_fd, "no_kill_signal");
 }

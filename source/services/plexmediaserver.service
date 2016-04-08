@@ -18,7 +18,6 @@ Environment=LD_LIBRARY_PATH=/usr/lib/plexmediaserver
 ExecStartPre=mkdir -p "${PLEX_MEDIA_SERVER_APPLICATION_SUPPORT_DIR}"
 ExecStart='/usr/lib/plexmediaserver/Plex Media Server'
 User=plex
-Restart=on-failure
 RestartSec=5
 
 [Install]

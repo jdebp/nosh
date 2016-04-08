@@ -1,0 +1,25 @@
+#!/bin/sh
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+# PROVIDE: system-control-normal
+# REQUIRE: FILESYSTEMS service-manager
+# BEFORE: DAEMON
+# KEYWORD: nojail shutdown
+
+. /etc/rc.subr
+
+name="system_control_normal"
+rcvar="system_control_normal_enable"
+command="/usr/local/bin/system-control"
+start_precmd="system_control_normal_precmd"
+command_args="start --verbose normal &"
+
+system_control_normal_precmd()
+{
+	mkdir -p /run/system-manager/log /run/service-bundles/early-supervise
+}
+
+load_rc_config $name
+run_rc_command "$1"

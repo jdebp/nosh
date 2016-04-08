@@ -75,8 +75,9 @@ do
 	fi
 done
 for i in \
-	warden \
 	appcafe \
+	uhidd \
+	warden \
 	;
 do
 	system-control disable $i.target

@@ -7,7 +7,6 @@ Description=Software RAID monitor daemon
 
 [Service]
 ExecStart=%p --monitor --scan
-Restart=always
 
 [Install]
 WantedBy=workstation.target

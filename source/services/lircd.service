@@ -4,11 +4,11 @@ Wants=lircd-setup.service
 After=network.target lircd-setup.service
 
 [Service]
-Type=simple
 RuntimeDirectory=lirc
 EnvironmentDirectory=env
-ExecStart=lircd --nodaemon ${device:+-d "${device}"} ${config}
+ExecStart=%p --nodaemon ${device:+-d "${device}"} ${config}
 ; User=lirc
 ; Group=lirc
+StandardInput=socket
 
 [Install]

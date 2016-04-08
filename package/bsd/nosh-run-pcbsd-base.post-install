@@ -69,8 +69,9 @@ do
 	system-control reset $I.service
 done
 for I in \
-	warden \
 	appcafe \
+	uhidd \
+	warden \
 	;
 do
 	i="`escape "$I"`"

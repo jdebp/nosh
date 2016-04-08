@@ -7,10 +7,8 @@ Description=Synergy Server Daemon for user %i
 
 [Service]
 EnvironmentDirectory=env
-#EnvironmentFile=/etc/default/%p
 ExecStart=%p --no-daemon --enable-crypto
 User=%i
-Restart=always
 
 [Install]
 WantedBy=workstation.target

@@ -19,8 +19,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include "utils.h"
 #include "fdutils.h"
 #include "service-manager-client.h"
-#include "service-manager.h"
-#include "common-manager.h"
 #include "popt.h"
 #include "FileStar.h"
 #include "FileDescriptorOwner.h"
@@ -92,7 +90,7 @@ print_service_env (
 	const char * prog(basename_of(args[0]));
 	bool full(false);
 	try {
-		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
+		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
 		popt::bool_definition full_option('f', "full", "Read the full contents of each file.", full);
 		popt::definition * main_table[] = {
 			&full_option,
@@ -198,7 +196,7 @@ set_service_env (
 	const char * prog(basename_of(args[0]));
 	bool full(false);
 	try {
-		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
+		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
 		popt::bool_definition full_option('f', "full", "Read the full contents of each file.", full);
 		popt::definition * main_table[] = {
 			&full_option,

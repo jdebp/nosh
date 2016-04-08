@@ -265,8 +265,7 @@ Escape sequences are multiple-character sequences comprising:
 </para>
 <itemizedlist>
 <listitem><para>
-the ESC character, an optional intermediate character in the range U+0020 to
-U+002F, and a single final character in the range U+0040 to U+007E.
+the ESC character, an optional intermediate character in the range U+0020 to U+002F, and a single final character in the range U+0040 to U+007E.
 </para><para>
 Most such escape sequences for real terminals are ISO 2022 character set switching sequences, which the terminal emulator has no need of since it uses UTF-8 natively, and so does not support.
 The only supported escape sequences are:
@@ -275,22 +274,19 @@ The only supported escape sequences are:
 <varlistentry>
 <term><para>DECALN</para></term>
 <listitem><para>
-the DEC VT extension that fills the display with the letter "E" as a screen
-alignment test
+the DEC VT extension that fills the display with the letter "E" as a screen alignment test
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term><para>S7C1T</para></term>
 <listitem><para>
-set the terminal emulator to send C1 characters in control sequences 
-encoded with the ECMA-48 7-bit extensions (as below)
+set the terminal emulator to send C1 characters in control sequences encoded with the ECMA-48 7-bit extensions (as below)
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term><para>S8C1T</para></term>
 <listitem><para>
-set the terminal emulator to send C1 characters in control sequences as 
-plain single C1 code points (but UTF-8 encoded)
+set the terminal emulator to send C1 characters in control sequences as plain single C1 code points (but UTF-8 encoded)
 </para></listitem>
 </varlistentry>
 </variablelist>
@@ -299,15 +295,11 @@ plain single C1 code points (but UTF-8 encoded)
 the ESC character and a single final character in the range U+0040 to U+005F.
 </para><para>
 This is the two-character 7-bit mechanism of ECMA-48 section 5.
-It is strictly speaking unneeded given that the terminal emulator is 8-bit
-clean and employs UTF-8 as standard.
-The entire U+0080 to U+009F control character range is accessible via
-this mechanism.
-So <code>NEL</code> can be emitted as either the single character U+0085 or as
-the two-character sequence U+001B U+0045.
+It is strictly speaking unneeded given that the terminal emulator is 8-bit clean and employs UTF-8 as standard.
+The entire U+0080 to U+009F control character range is accessible via this mechanism.
+So <code>NEL</code> can be emitted as either the single character U+0085 or as the two-character sequence U+001B U+0045.
 (Of course, U+0085 encodes to two characters in UTF-8.)
-Similarly, <code>CSI</code> can be emitted as either the single character 
-U+009B or as the two-character sequence U+001B U+005B.
+Similarly, <code>CSI</code> can be emitted as either the single character U+009B or as the two-character sequence U+001B U+005B.
 </para></listitem>
 </itemizedlist>
 
@@ -337,8 +329,7 @@ In most cases, a control sequence with N parameters is equivalent to N such cont
 <refsection><title>Colours and attributes</title>
 
 <para>
-The terminal emulator maintains a current set of character attributes,
-a 24-bit RGB foregrond colour, and a 24-bit RGB background colour.
+The terminal emulator maintains a current set of character attributes, a 24-bit RGB foregrond colour, and a 24-bit RGB background colour.
 These are combined with character code points when writing to the character cells of each screen buffer.
 Each character cell thus has its own, independent, attributes and 24-bit foreground and background colours.
 </para>
@@ -350,28 +341,20 @@ The terminal emulator also supports the ISO 8613-6 SGR colour extensions, that a
 <itemizedlist>
 <listitem>
 <para>
-The indexed colour extension (SGR 38:5 and SGR 48:5) has the conventional
-mapping of 16 "standard" colours, a 24 value grayscale, and a 6 by 6 by 6
-colour cube.
+The indexed colour extension (SGR 38:5 and SGR 48:5) has the conventional mapping of 16 "standard" colours, a 24 value grayscale, and a 6 by 6 by 6 colour cube.
 </para>
 </listitem>
 <listitem>
 <para>
-The RGB direct colour extension (SGR 38:2 and SGR 48:2) simply sets the 24-bit
-RGB values directly.
+The RGB direct colour extension (SGR 38:2 and SGR 48:2) simply sets the 24-bit RGB values directly.
 </para>
 </listitem>
 </itemizedlist>
 
 <para>
-When characters or lines are deleted, or characters or lines or the screen
-are erased, the background colour used for the "filler" that is placed in
-the newly blanked cells is the current background colour.
-This is "background colour erase" and is the default for DEC VT520 terminals
-as well as the only option on Linux and BSD kernel virtual terminals.
-By changing the "DECECM" private mode setting, it can be switched to
-"screen colour erase", which uses the default terminal background colour,
-(as set by SGR 0 and SGR 49).
+When characters or lines are deleted, or characters or lines or the screen are erased, the background colour used for the "filler" that is placed in the newly blanked cells is the current background colour.
+This is "background colour erase" and is the default for DEC VT520 terminals as well as the only option on Linux and BSD kernel virtual terminals.
+By changing the "DECECM" private mode setting, it can be switched to "screen colour erase", which uses the default terminal background colour (as set by SGR 0 and SGR 49).
 </para>
 
 </refsection>
@@ -383,51 +366,35 @@ All other characters are "printing" characters.
 </para>
 
 <para>
-Characters in the "Cf" ("Other, Format") and "Mn" ("Mark, Non-spacing") Unicode
-code point categories are simply discarded.
+Characters in the "Cf" ("Other, Format") and "Mn" ("Mark, Non-spacing") Unicode code point categories are simply discarded.
 Note that this includes U+00AD (soft hyphen).
-The terminal emulator does not have enough information about word breaks or
-context to handle soft hyphenation.
-This behaviour differs from some other terminal emulation programs, which are
-based upon code written by Markus Kuhn that treats U+00AD unconditionally as an
-spacing character and explicitly overrides its "Mn" categorization.
+The terminal emulator does not have enough information about word breaks or context to handle soft hyphenation.
+This behaviour differs from some other terminal emulation programs, which are based upon code written by Markus Kuhn that treats U+00AD unconditionally as an spacing character and explicitly overrides its "Mn" categorization.
 </para>
 
 <para>
-Characters in the "Me" ("Mark, Enclosing") Unicode code point category
-overstrike the character at the current cursor position without advancing.
+Characters in the "Me" ("Mark, Enclosing") Unicode code point category overstrike the character at the current cursor position without advancing.
 </para>
 
 <para>
-All other printing characters are printed as-is, using the currently set
-attributes, foreground colour, and background colour.
+All other printing characters are printed as-is, using the currently set attributes, foreground colour, and background colour.
 After each character is printed, the cursor position is advanced.
 </para>
 
 <para>
 By default, the emulator has automatic right margins turned on.
-Conceptually, automatic right margins means that writing a character in the
-last column automatically returns to the first column and moves down a row, a
-line wrap.
-If automatic right margins are turned off, writing a character in the last
-column does not move down a row or return to the first column.
-In practice, things are slightly more complex if
-automatic margins are turned on.
-Rather than a wrap happening there and then when the character is written
-to the last column, instead a pending wrap is flagged.
+Conceptually, automatic right margins means that writing a character in the last column automatically returns to the first column and moves down a row, a line wrap.
+If automatic right margins are turned off, writing a character in the last column does not move down a row or return to the first column.
+In practice, things are slightly more complex if automatic margins are turned on.
+Rather than a wrap happening there and then when the character is written to the last column, instead a pending wrap is flagged.
 If the cursor is then explicitly moved, the pending wrap is cancelled.
-Otherwise, when the next graphic is to be printed the pending wrap is enacted
-immediately beforehand.
+Otherwise, when the next graphic is to be printed the pending wrap is enacted immediately beforehand.
 </para>
 
 <para>
-By default, the emulator also has scrolling turned on, so that moving down
-from the last row scrolls the buffer up and moving up from the first row
-scrolls the buffer down.
-If scrolling is turned off, moving down from the last row or moving up from the
-first row have no effect.
-Scrolling only applies to cursor advancement by printing characters or the
-Newline, Index, or Reverse Index control characters.
+By default, the emulator also has scrolling turned on, so that moving down from the last row scrolls the buffer up and moving up from the first row scrolls the buffer down.
+If scrolling is turned off, moving down from the last row or moving up from the first row have no effect.
+Scrolling only applies to cursor advancement by printing characters or the Newline, Index, or Reverse Index control characters.
 It does not apply to cursor motion control sequences.
 </para>
 
@@ -438,20 +405,16 @@ It does not apply to cursor motion control sequences.
 <refsection><title>Terminal input</title>
 
 <para>
-Terminal input operates in terms of a stream of input events, comprising
-Unicode characters or special keys.
+Terminal input operates in terms of a stream of input events, comprising Unicode characters or special keys.
 </para>
 
 <refsection><title>Input protocol</title>
 
 <para>
-The <replaceable>directory</replaceable><filename>/input</filename> FIFO
-receives a sequence of 4-byte messages.
-To avoid message tearing, realizers must ensure that they do not write
-messages using multiple system calls.
+The <replaceable>directory</replaceable><filename>/input</filename> FIFO receives a sequence of 4-byte messages.
+To avoid message tearing, realizers must ensure that they do not write messages using multiple system calls.
 A message is a 32-bit word in host byte order.
-The most significant byte denotes the message type and the interpretation
-of the remainder of the message.
+The most significant byte denotes the message type and the interpretation of the remainder of the message.
 </para>
 <variablelist>
 <varlistentry>
@@ -464,14 +427,14 @@ of the remainder of the message.
 Unicode character.  
 The UCS-4 code point is <code>cccccc</code>,
 This is UTF-8 encoded and sent through to the terminal line discipline as terminal input.
+If bracketed paste has been switched on, the control sequence denoting end of paste is sent beforehand.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term><code>0x02kkkkmm</code></term>
 <listitem><para>
 A system keypad key.  
-The key number is <code>kkkk</code> and <code>mm</code> is a set of bitflags
-indicating the current state of modifier keys.
+The key number is <code>kkkk</code> and <code>mm</code> is a set of bitflags indicating the current state of modifier keys.
 System keys are ignored by the terminal emulator.
 </para></listitem>
 </varlistentry>
@@ -480,6 +443,7 @@ System keys are ignored by the terminal emulator.
 <listitem><para>
 The absolute horizontal position of the mouse.
 The column number is <code>kkkk</code> and <code>mm</code> is a set of bitflags indicating the current state of modifier keys.
+If bracketed paste has been switched on, the control sequence denoting end of paste is sent before any generated mouse report.
 </para></listitem>
 </varlistentry>
 <varlistentry>
@@ -487,6 +451,7 @@ The column number is <code>kkkk</code> and <code>mm</code> is a set of bitflags 
 <listitem><para>
 The absolute vertical position of the mouse.
 The row number is <code>kkkk</code> and <code>mm</code> is a set of bitflags indicating the current state of modifier keys.
+If bracketed paste has been switched on, the control sequence denoting end of paste is sent before any generated mouse report.
 </para></listitem>
 </varlistentry>
 <varlistentry>
@@ -494,6 +459,7 @@ The row number is <code>kkkk</code> and <code>mm</code> is a set of bitflags ind
 <listitem><para>
 A mouse wheel motion.
 The wheel number is <code>kk</code>, the (signed) amount by which the wheel is scrolled is <code>nn</code>, and <code>mm</code> is a set of bitflags indicating the current state of modifier keys.
+If bracketed paste has been switched on, the control sequence denoting end of paste is sent before any generated mouse report.
 </para></listitem>
 </varlistentry>
 <varlistentry>
@@ -502,6 +468,17 @@ The wheel number is <code>kk</code>, the (signed) amount by which the wheel is s
 A mouse button.
 The button number is <code>kk</code>, its state is <code>bb</code>, and <code>mm</code> is a set of bitflags indicating the current state of modifier keys.
 The well-known buttons are numbered in DEC VT order: left, middle, right, side.
+If bracketed paste has been switched on, the control sequence denoting end of paste is sent before any generated mouse report.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>0x09cccccc</code></term>
+<listitem> <para>
+Pasted Unicode character.  
+The UCS-4 code point is <code>cccccc</code>,
+This is UTF-8 encoded and sent through to the terminal line discipline as terminal input.
+If bracketed paste has been switched on, the control sequence denoting start of paste is sent beforehand.
+If the character is ESC or CSI, the control sequence denoting end of paste is sent afterward.
 </para></listitem>
 </varlistentry>
 <varlistentry>
@@ -518,6 +495,7 @@ Consumer device keys are ignored by the terminal emulator, because of a lack of 
 An extended key.  
 The key number is <code>kkkk</code> and <code>mm</code> is a set of bitflags indicating the current state of modifier keys.
 The terminal emulator sends the equivalent control sequence through to the line discipline as terminal input.
+If bracketed paste has been switched on, the control sequence denoting end of paste is sent beforehand.
 </para></listitem>
 </varlistentry>
 <varlistentry>
@@ -526,6 +504,7 @@ The terminal emulator sends the equivalent control sequence through to the line 
 A function key.  
 The function key number is <code>kkkk</code> and <code>mm</code> is a set of bitflags indicating the current state of modifier keys.
 The terminal emulator sends the equivalent control sequence through to the line discipline as terminal input.
+If bracketed paste has been switched on, the control sequence denoting end of paste is sent beforehand.
 </para></listitem>
 </varlistentry>
 </variablelist>
@@ -625,7 +604,10 @@ Such mode switching is an internal matter for realizers.
 The terminal emulator does not replicate all features of a real hardware terminal.
 Its goal is to provide a workalike for (the TUI parts of the) the virtual consoles that are/were built in to the Linux and BSD operating system kernels.
 There is no support for the historical features of real terminal hardwares such as attached printers, page switching, status lines, XON/XOFF modem flow control, programmable function keys, alternative (WYSE/TVI) control/escape sequences, direct auxiliary serial device I/O, and graphics modes.
-Rather, the terminal emulator is aimed at handling the outputs of TUI programs that use the "<code>linux</code>" terminal type (for the Linux kernel virtual terminals) the "<code>wsvt25</code>" terminal type (for NetBSD kernel virtual terminals) or the "<code>xterm</code>" terminal types (for FreeBSD kernel virtual terminals).
+</para>
+
+<para>
+Rather, the terminal emulator is aimed at handling the outputs of TUI programs that use the "<code>linux</code>" terminal type (for the Linux kernel virtual terminals), the "<code>pcvtXX</code>" terminal type (for NetBSD kernel virtual terminals), the "<code>pccon</code>" terminal type (for OpenBSD kernel virtual terminals), or the "<code>xterm</code>" terminal types (for FreeBSD kernel virtual terminals).
 (These are the terminal types set by <citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
 </para>
 

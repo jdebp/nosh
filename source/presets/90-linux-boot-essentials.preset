@@ -14,6 +14,16 @@ enable	cyclog@update-binfmts.service
 enable	linux-utmp.service
 enable	cyclog@linux-utmp.service
 
+# kernel module services
+enable	kmod@autofs.service
+enable	kmod@fuse.service
+enable	cyclog@kmod@ipv6.service
+enable	kmod@ipv6.service
+enable	cyclog@kmod@unix.service
+enable	kmod@unix.service
+enable	cyclog@kmod@loop.service
+enable	kmod@loop.service
+
 # sysinit services
 enable	linux-lockfiles.service
 

@@ -9,7 +9,6 @@ Description=GSS-API service
 # The import procedure is expected to have populated this directory with flags.
 EnvironmentDirectory=env
 ExecStart=%p -d ${flags}
-Restart=always
 
 [Install]
 WantedBy=server.target

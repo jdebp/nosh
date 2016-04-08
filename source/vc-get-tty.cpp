@@ -37,9 +37,11 @@ default_term()
 	return "xterm";
 #elif defined(__NetBSD__)
 	// This is the case for consoles configured as "vt100".
-	return "wsvt25";
+	return "pcvtXX";
+#elif defined(__OpenBSD__)
+	// This is the case for consoles configured as "vt220".
+	return "pccon";
 #else
-	// OpenBSD can change the emulator at kernel configuration time and at runtime.
 	// MacOS X doesn't even have virtual consoles.
 #	error "Don't know what the terminal type for your console driver is."
 #endif
@@ -168,7 +170,6 @@ vc_get_tty (
 	setenv("TTY", tty, 1);
 
 	// Export the hostname, similarly.
-	// One program that can use this is login-process, which registers the hostname in utmp/wtmp.
 	setenv("HOST", hostname.data(), 1);
 
 	setenv("TERM", term, 1);

@@ -9,7 +9,9 @@ Description=Save any core dumps found in any dump volumes
 Type=oneshot
 EnvironmentDirectory=env
 ExecStart=%p ${flags} ${dumpdir:-/var/crash}
+# This only has meaningful behaviour at bootstrap, not later.
 RemainAfterExit=yes
+Restart=never
 
 [Install]
 WantedBy=workstation.target

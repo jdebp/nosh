@@ -41,7 +41,7 @@ For copyright and licensing terms, see the file named COPYING.
 #define FUNKABLE2(m,e) { 'f', { EXTE(e),FUNK((m)+12U),FUNK((m)+24U),FUNK((m)+36U),SCRN((m)-1U),SCRN((m)+12U-1U),SCRN((m)+24U-1U),SCRN((m)+36U-1U),EXTE(e),FUNK((m)+12U),FUNK((m)+24U),FUNK((m)+36U),SCRN((m)-1U),SCRN((m)+12U-1U),SCRN((m)+24U-1U),SCRN((m)+36U-1U) } }
 
 #define	NOOP(x)	 (((x) & 0x00FFFFFF) << 0U)
-#define UCSA(x) ((((x) & 0x00FFFFFF) << 0U) | KBDMAP_ACTION_UCS24)
+#define UCSA(x) ((((x) & 0x00FFFFFF) << 0U) | KBDMAP_ACTION_UCS3)
 #define MMNT(x) ((((x) & 0x0000FFFF) << 8U) | KBDMAP_ACTION_MODIFIER | KBDMAP_MODIFIER_CMD_MOMENTARY)
 #define LTCH(x) ((((x) & 0x0000FFFF) << 8U) | KBDMAP_ACTION_MODIFIER | KBDMAP_MODIFIER_CMD_LATCH)
 #define LOCK(x) ((((x) & 0x0000FFFF) << 8U) | KBDMAP_ACTION_MODIFIER | KBDMAP_MODIFIER_CMD_LOCK)
@@ -570,7 +570,7 @@ bsd_actions[]= {
 	{	SYST(SYSTEM_KEY_WARM_RESTART),		"boot"		},
 	{	SYST(SYSTEM_KEY_HALT),			"halt"		},
 	{	SYST(SYSTEM_KEY_ABEND),			"panic"		},
-	{	NOOP(0xFB5D01),				"paste"		},	// FIXME \todo This needs improvement.
+	{	NOOP(0xFB5D01),				"paste"		},	/// FIXME \todo This needs improvement.
 	{	MMNT(KBDMAP_MODIFIER_1ST_LEVEL2),	"shift"		},
 	{	MMNT(KBDMAP_MODIFIER_1ST_LEVEL2),	"lshift"	},
 	{	MMNT(KBDMAP_MODIFIER_2ND_LEVEL2),	"rshift"	},

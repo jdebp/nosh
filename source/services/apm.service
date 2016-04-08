@@ -9,7 +9,9 @@ Description=APM state
 Type=oneshot
 ExecStart=%p -e enable
 ExecStopPost=%p -e disable
+# This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
+Restart=no
 
 [Install]
 WantedBy=workstation.target

@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD route monitoring service
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=route monitor
+
+[Install]
+WantedBy=workstation.target

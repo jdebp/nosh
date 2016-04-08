@@ -6,12 +6,8 @@
 Description=Nagios NRPE server
 
 [Service]
-# FIXME: Is this really needed?
-systemdUserEnvironment=true
 User=nagios
 ExecStart=nrpe -c /etc/nagios/nrpe.cfg --inetd
-Restart=no
-StandardInput=socket
 
 [Install]
 WantedBy=server.target

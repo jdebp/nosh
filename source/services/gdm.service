@@ -9,7 +9,6 @@ After=ttylogin@ttyv8 ttylogin@tty9
 
 [Service]
 ExecStart=%p -nodaemon
-Restart=always
 
 [Install]
 # TODO: This might be better as graphical.

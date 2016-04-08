@@ -10,7 +10,6 @@ After=kmod@autofs, nfsclient.service
 [Service]
 EnvironmentDirectory=env
 ExecStart=%p -d ${flags}
-Restart=always
 
 [Install]
 WantedBy=workstation.target

@@ -12,7 +12,9 @@ ExecStartPre=pfctl -Fall
 ExecStartPre=pfctl -e -q
 ExecStart=pfctl -f "$rules" $flags
 ExecStopPost=pfctl -d -q
+# This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
+Restart=no
 
 [Install]
 WantedBy=workstation.target server.target

@@ -7,15 +7,16 @@ Description=Set up kernel virtual terminals keyboard map
 DefaultDependencies=false
 EarlySupervise=true
 # The point of this service was to set up the kernel VTs really early, so that one can interact with fsck.
-# Unfortunately, the kbd and vid utilities on BSD require that /usr/share be checked and mounted.
+# Unfortunately, the kbd and vid utilities on BSD require that /usr/share already be checked and mounted.
 # And in any case we try to run fsck in non-interactive "preen" mode at bootstrap.
 Wants=local-fs.target
 
 [Service]
 EnvironmentDirectory=env
 ExecStart=fdredir --read 0 /dev/ttyv0 kbdcontrol ${keyboard:+-k "${keyboard}"} ${keymap:+-l "${keymap}"} ${keyrate:+-r "${keyrate}"} ${keybell:+-b "${keybell}"} ${allscreens_kbdflags}
-RemainAfterExit=yes
-Restart=never
+# This is a one-shot service that can be re-triggered by starting it again.
+RemainAfterExit=1
+Restart=no
 
 [Install]
 StoppedBy=shutdown.target

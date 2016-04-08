@@ -10,7 +10,6 @@ Type=forking
 # The import procedure is expected to have populated this directory with flags.
 EnvironmentDirectory=env
 ExecStart=%p ${flags}
-Restart=always
 
 [Install]
 WantedBy=server.target

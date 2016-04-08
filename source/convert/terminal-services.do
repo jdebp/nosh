@@ -9,14 +9,13 @@
 # Note that we do not look at "console".
 # emergency-login@console intentionally cannot be disabled via this mechanism.
 # And there is no ttylogin@console service to adjust, for various reasons.
-# One reason is that there will be a service for the underlying device, be it a virtual or a real terminal.
+# One reason is that there will be a TUI login service for the underlying device, be it a virtual or a real terminal.
 #
 # Design:
 #   * The run-kernel-vt and run-user-vt packages use preset/disable in their post-install and post-deinstall scripts to enable/disable their particular login services.
-#   * On the BSDs, there will always be an /etc/ttys file, defining presets for tty login services.
-#   * On Linux, there will usually not be an /etc/ttys file, and everything will be considered preset on.
-#     All user VT login services are thus always enabled.
-#     Because kernel VT login services have no wanted-by, login services are started by the ttylogin-starter service, which uses reset.
+#   * Normal preset mechanisms apply, and take precedence over /etc/ttys.
+#   * On the BSDs, there will always be an /etc/ttys file, defining fall-back presets.
+#   * On Linux, there will usually not be an /etc/ttys file, and the default is preset enabled.
 # See the Nosh Guide for more information.
 #
 
@@ -78,14 +77,15 @@ list_user_virtual_terminals() {
 list_kernel_virtual_terminals() {
 	case "`uname`" in
 	Linux) seq 1 12 | sed -e 's:^:/dev/tty:' ;;
+	OpenBSD) for i in 0 1 2 3 4 5 6 7 8 9 a b ; do echo /dev/ttyC$i ; done ;;
 	*BSD) for i in 0 1 2 3 4 5 6 7 8 9 a b c d e f ; do echo /dev/ttyv$i ; done ;;
 	esac
 }
 
 list_real_terminals() {
-	return 0
 	case "`uname`" in
-	Linux) seq 0 9 | sed -e 's:^:/dev/ttyS:' ;;
+	Linux) seq 0 3 | sed -e 's:^:/dev/ttyS:' ;;
+	OpenBSD) for i in 0 1 2 3 4 5 6 7 ; do echo /dev/tty0$i ; done ;;
 	*BSD) for i in 0 1 2 3 4 5 6 7 8 9 a b c d e f ; do echo /dev/ttyu$i ; done ;;
 	esac
 }
@@ -104,14 +104,14 @@ done
 list_kernel_virtual_terminals | while read -r i
 do
 	n="`basename \"$i\"`"
-	if ! test -e "$i"
+	if test -c "$i"
 	then
+		system-control preset --ttys --prefix "cyclog@ttylogin@" -- "$n"
+		system-control preset --ttys --prefix "ttylogin@" -- "$n"
+	else
 		system-control disable "cyclog@ttylogin@$n"
 		system-control disable "ttylogin@$n"
 		redo-ifcreate "$i"
-	else
-		system-control preset --ttys --prefix "cyclog@ttylogin@" -- "$n"
-		system-control preset --ttys --prefix "ttylogin@" -- "$n"
 	fi
 	if system-control is-enabled "ttylogin@$n"
 	then
@@ -137,16 +137,16 @@ done
 list_real_terminals | while read -r i
 do
 	n="`basename \"$i\"`"
-	if test -e "$i"
+	if test -c "$i"
 	then
-		system-control preset --ttys --prefix "cyclog@serial-getty@" -- "$n"
-		system-control preset --ttys --prefix "serial-getty@" -- "$n"
+		system-control preset --ttys --prefix "cyclog@ttylogin@" -- "$n"
+		system-control preset --ttys --prefix "ttylogin@" -- "$n"
 	else
-		system-control disable "cyclog@serial-getty@$n"
-		system-control disable "serial-getty@$n"
+		system-control disable "cyclog@ttylogin@$n"
+		system-control disable "ttylogin@$n"
 		redo-ifcreate "$i"
 	fi
-	if system-control is-enabled "serial-getty@$n"
+	if system-control is-enabled "ttylogin@$n"
 	then
 		echo >> "$3" on "$n"
 	else

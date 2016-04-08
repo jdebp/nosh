@@ -8,7 +8,9 @@ Description=Run PC-BSD first-boot task
 [Service]
 Type=oneshot
 ExecStart=./helper
+# This only has meaningful behaviour at bootstrap, not later.
 RemainAfterExit=yes
+Restart=never
 
 [Install]
 WantedBy=workstation.target

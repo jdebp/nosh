@@ -10,7 +10,6 @@ After=rpcbind.service rpcstatd.service
 [Service]
 EnvironmentDirectory=env
 ExecStart=rpc.lockd -d
-Restart=always
 
 [Install]
 WantedBy=server.target

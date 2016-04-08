@@ -8,8 +8,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstdlib>
 #include <cerrno>
 #include <cstring>
-#if defined(__LINUX__) || defined(__linux__)
-#else
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 #include <sys/procctl.h>
 #endif
 #include <unistd.h>
@@ -122,7 +121,7 @@ oom_kill_protect (
 			throw EXIT_FAILURE;
 		}
 	}
-#else
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
 	bool protect(false);
 	if (end != arg && !*end)
 		protect = l < -999;
@@ -144,6 +143,14 @@ oom_kill_protect (
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "procctl", std::strerror(error));
 		throw EXIT_FAILURE;
+	}
+#else
+	if (end == arg || *end) {
+		const std::string r(tolower(arg));
+		if (!is_bool_true(r) && !is_bool_false(r)) {
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, arg, "Bad protection level");
+			throw EXIT_FAILURE;
+		}
 	}
 #endif
 

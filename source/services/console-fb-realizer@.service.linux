@@ -13,6 +13,7 @@ EnvironmentDirectory=env/
 SessionLeader=yes
 TTYFromEnv=yes
 StandardInput=tty
+StandardError=log
 User=daemon
 ExecStartPre=sh -c 'test -c "${TTY}" && chown daemon:tty "${TTY}"'
 ExecRestartPre=sh -c 'test -c "${TTY}" && chown daemon:tty "${TTY}"'
@@ -27,7 +28,6 @@ ExecRestartPre=sh -c 'test -n "${ATKEYBOARD}" && test -c "${ATKEYBOARD}" && setf
 ExecStartPre=sh -c 'test -n "${SYSMOUSE}" && test -c "${SYSMOUSE}" && setfacl -m u:daemon:rw "${SYSMOUSE}"'
 ExecRestartPre=sh -c 'test -n "${SYSMOUSE}" && test -c "${SYSMOUSE}" && setfacl -m u:daemon:rw "${SYSMOUSE}"'
 ExecStart=%p ${FONTS} ${FLAGS} ${KERNEL_VT:+--kernel-vt "${KERNEL_VT}"} ${KEYBOARD:+--input "${KEYBOARD}"} ${MOUSE:+--input "${MOUSE}"} ${ATKEYBOARD:+--atkeyboard "${ATKEYBOARD}"} ${SYSMOUSE:+--sysmouse "${SYSMOUSE}"} ${KBDMAP:+--keyboard-map "${KBDMAP}"} /run/dev/%I/ "${FRAMEBUFFER}"
-Restart=always
 
 [Install]
 WantedBy=multi-user.target

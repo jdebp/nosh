@@ -13,7 +13,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <fcntl.h>
 #include "utils.h"
 #include "fdutils.h"
-#include "common-manager.h"
+#include "service-manager-client.h"
 #include "popt.h"
 
 /* Utilities ****************************************************************
@@ -70,7 +70,7 @@ common_subcommand (
 	const char * prog(basename_of(args[0]));
 	const char * log_lines(0);
 	try {
-		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
+		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
 		popt::string_definition log_lines_option('\0', "log-lines", "number", "Control the number of log lines printed.", log_lines);
 		popt::definition * main_table[] = {
 			&user_option,

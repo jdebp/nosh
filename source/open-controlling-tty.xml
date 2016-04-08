@@ -34,9 +34,7 @@
 <refsection><title>Description</title>
 
 <para>
-<command>open-controlling-tty</command> is a chain-loading utility that opens a terminal as a
-controlling terminal, sets its own standard I/O file descriptors to it, and then
-chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+<command>open-controlling-tty</command> is a chain-loading utility that opens a terminal as a controlling terminal, sets its own standard I/O file descriptors to it, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
 </para>
 
 <para>
@@ -44,47 +42,25 @@ chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refe
 </para>
 
 <para>
-<command>open-controlling-tty</command> expects to inherit the terminal
-character device filename to open as the value of the <envar>TTY</envar>
-environment variable, which it expects to have been set up by a program such as
-<citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-or
-<citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>.  
+<command>open-controlling-tty</command> expects to inherit the terminal character device filename to open as the value of the <envar>TTY</envar> environment variable, which it expects to have been set up by a program such as <citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> or <citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>.  
 This can be either a virtual or a real terminal.
-It opens this terminal, hangs up (or otherwise disassociates) any existing
-processes for which it was still a controlling terminal or which had open file
-handles to it; assigns it as its own controlling terminal; sets its own
-standard input, standard output, and standard error file descriptors to it
-(closing whatever they were previously open to); and then (if everything
-succeeds) chain loads <replaceable>next-prog</replaceable>.
+It opens this terminal, hangs up (or otherwise disassociates) any existing processes for which it was still a controlling terminal or which had open file handles to it; assigns it as its own controlling terminal; sets its own standard input, standard output, and standard error file descriptors to it (closing whatever they were previously open to); and then (if everything succeeds) chain loads <replaceable>next-prog</replaceable>.
 </para>
 
 <para>
-<command>open-controlling-tty</command> does not call
-<citerefentry><refentrytitle>setsid</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-to become a session leader.
-On some operating systems it it necessary to already be a session leader in 
-order to set a controlling terminal.
-On those operating systems, it is thus necessary to chain to
-<command>open-controlling-tty</command> from
-<citerefentry><refentrytitle>setsid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+<command>open-controlling-tty</command> does not call <citerefentry><refentrytitle>setsid</refentrytitle><manvolnum>2</manvolnum></citerefentry> to become a session leader.
+On some operating systems it it necessary to already be a session leader in order to set a controlling terminal.
+On those operating systems, it is thus necessary to chain to <command>open-controlling-tty</command> from <citerefentry><refentrytitle>setsid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 <para>
-<command>open-controlling-tty</command> does not make any attempt to adjust its
-process group or the foreground process group of the controlling terminal.
-Dealing with these is the province of a job-control shell, which may not even
-run as this process.
-(Linux
-<citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-with PAM runs the job-controlling shell as a child process, for example.)
+<command>open-controlling-tty</command> does not make any attempt to adjust its process group or the foreground process group of the controlling terminal.
+Dealing with these is the province of a job-control shell, which may not even run as this process.
+(Linux <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry> with PAM runs the job-controlling shell as a child process, for example.)
 </para>
 
 <para>
-If the <arg>--exclusive</arg> command line option is used, it will
-attempt to use the <code>TIOCEXCL</code>
-<citerefentry><refentrytitle>ioctl</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-function to put the terminal device into "exclusive" mode.
+If the <arg>--exclusive</arg> command line option is used, it will attempt to use the <code>TIOCEXCL</code> <citerefentry><refentrytitle>ioctl</refentrytitle><manvolnum>2</manvolnum></citerefentry> function to put the terminal device into "exclusive" mode.
 </para>
 
 </refsection><refsection><title>SECURITY</title>
@@ -92,86 +68,43 @@ function to put the terminal device into "exclusive" mode.
 <refsection><title>Linux</title>
 
 <para>
-If <arg>--vhangup</arg> command line option is used,
-which tells it to call the
-<citerefentry><refentrytitle>vhangup</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-system call, 
-<command>open-controlling-tty</command> has to open the terminal
-device file twice, once so that it can disconnect/hangup existing processes,
-which of course disconnects itself at the same time, and once again to gain the
-controlling TTY afterwards.
-There is a race condition here, where the character device file could be
-unlinked or otherwise altered in between the two opens.
+If <arg>--vhangup</arg> command line option is used, which tells it to call the <citerefentry><refentrytitle>vhangup</refentrytitle><manvolnum>2</manvolnum></citerefentry> system call, <command>open-controlling-tty</command> has to open the terminal device file twice, once so that it can disconnect/hangup existing processes, which of course disconnects itself at the same time, and once again to gain the controlling TTY afterwards.
+There is a race condition here, where the character device file could be unlinked or otherwise altered in between the two opens.
 </para>
 
 </refsection><refsection><title>BSD</title>
 
 <para>
-<command>open-controlling-tty</command> opens the terminal device file once,
-because BSD has no
-<citerefentry><refentrytitle>vhangup</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-system call.
-Instead, on BSD
-<command>open-controlling-tty</command> calls
-<citerefentry><refentrytitle>revoke</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-before opening the terminal device file, if the <arg>--revoke</arg>
-command line option is used.
-A similar race condition exists, except that it is between the call to
-<citerefentry><refentrytitle>revoke</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-and the call to then
-<citerefentry><refentrytitle>open</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-the terminal device file.
+<command>open-controlling-tty</command> opens the terminal device file once, because BSD has no <citerefentry><refentrytitle>vhangup</refentrytitle><manvolnum>2</manvolnum></citerefentry> system call.
+Instead, on BSD <command>open-controlling-tty</command> calls <citerefentry><refentrytitle>revoke</refentrytitle><manvolnum>2</manvolnum></citerefentry> before opening the terminal device file, if the <arg>--revoke</arg> command line option is used.
+A similar race condition exists, except that it is between the call to <citerefentry><refentrytitle>revoke</refentrytitle><manvolnum>2</manvolnum></citerefentry> and the call to then <citerefentry><refentrytitle>open</refentrytitle><manvolnum>2</manvolnum></citerefentry> the terminal device file.
 Again, the character device file could be unlinked or otherwise altered in between the two.
 </para>
 
 </refsection>
 
 <para>
-To restrict the processes able to take advantage of these races to just those
-programs running as the current user or the superuser:
+To restrict the processes able to take advantage of these races to just those programs running as the current user or the superuser:
 </para>
 <itemizedlist>
 <listitem><para>
-System administrators should ensure that the directory containing the character
-device file is not writable by untrusted accounts.
+System administrators should ensure that the directory containing the character device file is not writable by untrusted accounts.
 </para></listitem>
 <listitem><para>
-Programs that invoke
-<command>open-controlling-tty</command> should ensure that the character device
-file is owned by the effective UID of the process, and has <code>rw-</code>
-permissions for that owner alone, no other user or group having any
-permissions.
+Programs that invoke <command>open-controlling-tty</command> should ensure that the character device file is owned by the effective UID of the process, and has <code>rw-</code> permissions for that owner alone, no other user or group having any permissions.
 </para><para>
-The
-<citerefentry><refentrytitle>grantpt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-library function does this for pseudo-terminals.
-<citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-calls this function; and
-<citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-performs the moral equivalent for virtual consoles.
-(On the BSDs, pseudo-terminal slave devices are created with these UID and permissions in
-the first place, and the library function is in fact a no-op.)
+The <citerefentry><refentrytitle>grantpt</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function does this for pseudo-terminals.
+<citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> calls this function; and <citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> performs the moral equivalent for virtual consoles.
+(On the BSDs, pseudo-terminal slave devices are created with these UID and permissions in the first place, and the library function is in fact a no-op.)
 </para></listitem>
 <listitem><para>
-Programs that invoke
-<command>open-controlling-tty</command> should ensure that neither it nor any other program
-can open the character device file until the ownership has been properly set.
+Programs that invoke <command>open-controlling-tty</command> should ensure that neither it nor any other program can open the character device file until the ownership has been properly set.
 </para><para>
-The
-<citerefentry><refentrytitle>unlockpt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-library function does this for pseudo-terminals.
-<citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-calls this function.
-(On the BSDs, because
-<citerefentry><refentrytitle>grantpt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-is a no-op, this is a no-op as well.)
-Unfortunately, there is no moral equivalent for kernel-supplied virtual consoles, and nothing
-that
-<citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-can do.
-However, userspace virtual consoles use pseudo-terminals and
-<citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-</para></listitem>
+The <citerefentry><refentrytitle>unlockpt</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function does this for pseudo-terminals.
+<citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> calls this function.
+(On the BSDs, because <citerefentry><refentrytitle>grantpt</refentrytitle><manvolnum>3</manvolnum></citerefentry> is a no-op, this is a no-op as well.)
+Unfortunately, there is no moral equivalent for kernel-supplied virtual consoles, and nothing that <citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> can do.
+However, userspace virtual consoles use pseudo-terminals and <citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>.  </para></listitem>
 </itemizedlist>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

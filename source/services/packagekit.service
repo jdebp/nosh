@@ -10,7 +10,6 @@ Wants=polkitd.service
 [Service]
 Type=dbus
 ExecStart=/usr/lib/%p/%pd
-Restart=always
 
 [Install]
 WantedBy=workstation.target

@@ -12,7 +12,6 @@ User=deluge
 Group=deluge
 Umask=037
 ExecStart=%p --do-not-daemonize
-Restart=on-failure
 
 [Install]
 WantedBy=server.target

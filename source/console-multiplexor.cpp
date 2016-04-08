@@ -16,11 +16,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cerrno>
 #include <stdint.h>
 #include <sys/stat.h>
-#if defined(__LINUX__) || defined(__linux__)
-#include "kqueue_linux.h"
-#else
-#include <sys/event.h>
-#endif
+#include "kqueue_common.h"
 #include <sys/param.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -422,15 +418,15 @@ console_multiplexor (
 	{
 		std::vector<struct kevent> p(vts.size() * 2 + 16);
 		std::size_t index(0U);
-		EV_SET(&p[index++], input.get(), EVFILT_READ, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], input.get(), EVFILT_READ, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 		for (VirtualTerminalList::const_iterator t(vts.begin()); t != vts.end(); ++t) {
 			const VirtualTerminal & vt(**t);
-			EV_SET(&p[index++], vt.query_buffer_fd(), EVFILT_VNODE, EV_ADD|EV_DISABLE|EV_CLEAR, NOTE_WRITE, 0, 0);
-			EV_SET(&p[index++], vt.query_input_fd(), EVFILT_WRITE, EV_ADD|EV_DISABLE, 0, 0, 0);
+			set_event(&p[index++], vt.query_buffer_fd(), EVFILT_VNODE, EV_ADD|EV_DISABLE|EV_CLEAR, NOTE_WRITE, 0, 0);
+			set_event(&p[index++], vt.query_input_fd(), EVFILT_WRITE, EV_ADD|EV_DISABLE, 0, 0, 0);
 		}
 		if (0 > kevent(queue, p.data(), index, 0, 0, 0)) {
 			const int error(errno);
@@ -466,9 +462,9 @@ console_multiplexor (
 			for (VirtualTerminalList::iterator t(vts.begin()); t != vts.end(); ++t) {
 				const VirtualTerminal & vt(**t);
 				if (t == current_vt)
-					EV_SET(&p[index++], vt.query_buffer_fd(), EVFILT_VNODE, EV_ENABLE, NOTE_WRITE, 0, 0);
+					set_event(&p[index++], vt.query_buffer_fd(), EVFILT_VNODE, EV_ENABLE, NOTE_WRITE, 0, 0);
 				if (t == old_vt)
-					EV_SET(&p[index++], vt.query_buffer_fd(), EVFILT_VNODE, EV_DISABLE, NOTE_WRITE, 0, 0);
+					set_event(&p[index++], vt.query_buffer_fd(), EVFILT_VNODE, EV_DISABLE, NOTE_WRITE, 0, 0);
 			}
 
 			old_vt = current_vt;
@@ -510,12 +506,12 @@ console_multiplexor (
 			VirtualTerminal & vt(**t);
 			if (vt.MessageAvailable()) {
 				if (!vt.query_polling_for_write()) {
-					EV_SET(&p[index++], vt.query_input_fd(), EVFILT_WRITE, EV_ENABLE, 0, 0, 0);
+					set_event(&p[index++], vt.query_input_fd(), EVFILT_WRITE, EV_ENABLE, 0, 0, 0);
 					vt.set_polling_for_write(true);
 				}
 			} else {
 				if (vt.query_polling_for_write()) {
-					EV_SET(&p[index++], vt.query_input_fd(), EVFILT_WRITE, EV_DISABLE, 0, 0, 0);
+					set_event(&p[index++], vt.query_input_fd(), EVFILT_WRITE, EV_DISABLE, 0, 0, 0);
 					vt.set_polling_for_write(false);
 				}
 			}

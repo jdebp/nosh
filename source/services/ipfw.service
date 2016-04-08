@@ -12,7 +12,9 @@ EnvironmentDirectory=env
 ExecStart=if sh "${script:-/etc/rc.firewall}" "${type}" ; then sysctl net.inet.ip.fw.enable=1 ; sysctl net.inet6.ip6.fw.enable=1 ; fi
 ExecStopPost=sysctl net.inet.ip.fw.enable=0
 ExecStopPost=sysctl net.inet6.ip6.fw.enable=1
+# This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
+Restart=no
 
 [Install]
 WantedBy=workstation.target

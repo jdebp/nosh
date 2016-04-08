@@ -4,19 +4,20 @@
 
 [Unit]
 Description=Emergency super-user login on %I
-Conflicts=ttylogin@%i.service getty@%i.service autovt@%i.service serial-getty@%i.service
+Conflicts=ttylogin@%i.service getty@%i.service autovt@%i.service mgetty@%i.service agetty@%i.service
 DefaultDependencies=false
 
 [Service]
 SessionLeader=true
 StandardInput=tty
-StandardOutput=inherit
 ExecStart=emergency-login
 Restart=always
 RestartSec=0
 TTYPath=%I
 TTYReset=yes
 BannerLine=Emergency mode log-in.
+# Some job control shells ignore SIGTERM and need an explicit SIGHUP.
+SendSIGHUP=on
 
 [Install]
 # This never shuts down.

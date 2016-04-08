@@ -11,7 +11,6 @@ Description=nginx HTTP content server
 Type=forking
 ExecStart=%p -g "error_log stderr error;"
 PrivateTmp=true
-Restart=always
 
 [Install]
 WantedBy=server.target

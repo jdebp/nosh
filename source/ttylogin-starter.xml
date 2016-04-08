@@ -10,7 +10,7 @@
 
 <refnamediv>
 <refname>ttylogin-starter</refname>
-<refpurpose>start ttylogin@.service services on (active) kernel virtual terminals</refpurpose>
+<refpurpose>demand-start ttylogin@.service services on active kernel virtual terminals</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>
@@ -25,28 +25,39 @@
 <refsection><title>Description</title>
 
 <para>
-<command>ttylogin-starter</command> automatically runs <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> to <command>start</command> a <code>ttylogin@.service</code> service on each kernel virtual terminal.
-It is not applicable to user-space virtual terminals.
+<command>ttylogin-starter</command> automatically runs <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> to start a <code>ttylogin@.service</code> service on kernel virtual terminals as they are switched-to.
+It does not apply to user-space virtual terminals or to real terminals.
+</para>
+
+<para>
+Conventionally, TUI login services for all terminals are enabled and disabled in the usual way.
+The external configuration file import subsystem will <command>preset</command> all relevant <code>ttylogin@.service</code> services, using the <citerefentry><refentrytitle>ttys</refentrytitle><manvolnum>5</manvolnum></citerefentry> database (and any presets) to determine whether a TUI login service is enabled or disabled, as explained in <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+<refsection><title>BSDs</title>
+
+<para>
+On the BSDs, the conventional mechanism applies to all terminals, virtual and real.
+<command>ttylogin-starter</command> does nothing on the BSDs, except pause forever.
+It exists for script compatibility only.
+</para>
+
+</refsection>
+<refsection><title>Linux</title>
+
+<para>
+On Linux, one can alternatively arrange, for just <emphasis>kernel virtual</emphasis> terminals specifically, for TUI login services to be started on-demand, as the terminals are switched to and become the "active" kernel virtual terminal, rather than have them always running.
+This is done by disabling all kernel virtual terminals and letting <command>ttylogin-starter</command> start them on-demand, which it does with the <command>system-control</command> <arg choice="plain">start</arg> command, ignoring the disabled state of the service.
+</para>
+
+<para>
+It does this by looping forever, monitoring the state of the <code>/sys/class/tty/tty0/active</code> file with <citerefentry><refentrytitle>poll</refentrytitle><manvolnum>2</manvolnum></citerefentry>.
+This file reports the currently active kernel virtual terminal name.
+Each time that <citerefentry><refentrytitle>poll</refentrytitle><manvolnum>2</manvolnum></citerefentry> reports a change in the currently active virtual terminal, <command>ttylogin-starter</command> starts the TUI login service for that terminal.
 </para>
 
 <para>
 If the services do not exist, it makes no attempt to create them.
-To control what virtual terminals have auto-started <code>ttylogin@.service</code> services, simply create such services only as appropriate.
-</para>
-
-<refsection><title>BSD BEHAVIOUR</title>
-
-<para>
-On BSD operating systems it simply and unconditionally starts services for all 16 virtual terminals from <code>ttyv0</code> to <code>ttyvf</code>, and then pauses forever.
-</para>
-
-</refsection>
-<refsection><title>LINUX BEHAVIOUR</title>
-
-<para>
-On Linux, it monitors the state of the <code>/sys/class/tty/tty0/active</code> file with <citerefentry><refentrytitle>poll</refentrytitle><manvolnum>2</manvolnum></citerefentry>.
-This file reports the currently active kernel virtual terminal name.
-Each time that <citerefentry><refentrytitle>poll</refentrytitle><manvolnum>2</manvolnum></citerefentry> reports a change in the currently active virtual terminal, <command>ttylogin-starter</command> issues a <command>system-control</command> <arg choice="plain">reset</arg> command.
 </para>
 
 <para>
@@ -56,6 +67,16 @@ Alternative sysfs class names and "0th" TTY names, which combine to produce the 
 </refsection>
 
 </refsection>
+
+<refsection><title>Compatibility</title>
+
+<para>
+Currently, no provision is made for excluding kernel virtual terminals that are used by X servers or by <citerefentry><refentrytitle>console-fb-realizer</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+<command>ttylogin-starter</command> should not be used in conjunction with either of those, and instead the normal service enable/disable mechanism should be employed.
+</para>
+
+</refsection>
+
 <refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
 
 </refentry>

@@ -9,8 +9,9 @@ service-is-up
 service-manager
 service-show
 service-status
-session-manager
+per-user-manager
 system-control
 tai64n
 tai64nlocal
 unload-kernel-module
+dbus-daemon-launch-helper

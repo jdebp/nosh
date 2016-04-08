@@ -1,13 +1,10 @@
 #
-# Enable kernel virtual terminal services
+# Enable kernel virtual terminal services other than login services
 #
 # This is not a systemd preset.
 # It goes in a special nosh system-manager preset directory.
 # It is used by the nosh-bundles package in order to enable certain mandatory basics without which a system simply won't work.
 #
-
-enable	ttylogin-starter.service
-enable	cyclog@ttylogin-starter.service
 
 enable	cyclog@kernel-vt-*.service
 enable	kernel-vt-*.service

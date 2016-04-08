@@ -9,7 +9,6 @@ Before=securelevel.service
 [Service]
 ExecStart=%p rcboot
 ExecStopPost=%p rcshutdown
-Restart=always
 
 [Install]
 WantedBy=workstation.target

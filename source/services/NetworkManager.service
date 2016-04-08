@@ -4,13 +4,14 @@
 
 [Unit]
 Description=NetworkManager daemon
-After=local-syslog.target
+After=local-syslog.target network-runtime.service
+Wants=network-runtime.service
 
 [Service]
 Type=dbus
-ExecStartPre=mkdir -m 0755 /run/network
+# Since we want network-runtime, this is no longer necessary.
+#ExecStartPre=mkdir -m 0755 /run/network
 ExecStart=%p --no-daemon
-Restart=always
 
 [Install]
 WantedBy=workstation.target

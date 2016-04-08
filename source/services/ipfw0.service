@@ -12,7 +12,9 @@ EnvironmentDirectory=env
 ExecStart=sysctl net.inet.ip.fw.verbose=1
 ExecStart=ifconfig %p create
 ExecStopPost=sysctl net.inet.ip.fw.verbose=0
+# This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
+Restart=no
 
 [Install]
 WantedBy=workstation.target

@@ -8,7 +8,6 @@ After=org.cups.cupsd.service avahi-daemon.service
 
 [Service]
 ExecStart=%p
-Restart=always
 
 [Install]
 WantedBy=server.target

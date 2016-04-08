@@ -13,11 +13,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cerrno>
 #include <iostream>
 #include <sys/types.h>
-#if defined(__LINUX__) || defined(__linux__)
-#include "kqueue_linux.h"
-#else
-#include <sys/event.h>
-#endif
+#include "kqueue_common.h"
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <sys/un.h>

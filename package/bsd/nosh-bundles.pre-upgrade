@@ -34,5 +34,19 @@ then
 	system-control disable ldconfig
 fi
 
+# This service has been relocated
+if test \! -d /var/sv/debian-cron && test -d /var/sv/gnucron
+then
+	system-control disable gnucron
+	mv -i -- /var/sv/gnucron /var/sv/debian-cron
+fi
+
+# This service has been relocated
+if test \! -d /var/sv/cyclog@debian-cron && test -d /var/sv/cyclog@gnucron
+then
+	system-control disable cyclog@gnucron
+	mv -i -- /var/sv/cyclog@gnucron /var/sv/cyclog@debian-cron
+fi
+
 # /run is now in the root.
 test -e /var/run || ln -s -f -- /run /var/

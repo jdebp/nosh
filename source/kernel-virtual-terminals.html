@@ -7,13 +7,43 @@ kernel virtual terminals
 </h1>
 
 <p>
-BSD systems provide virtual terminals on devices <code>/dev/ttyv0</code> to <code>/dev/ttyv8</code>.
-Linux systems provide virtual terminals on <code>/dev/tty1</code> to <code>/dev/tty12</code>.
+Operating systems provide a range of devices that are kernel virtual terminals.
+Unlike a user-space virtual terminal, where the terminal emulator program is running as a service, with kernel virtual terminals the terminal emulator program is running inside the kernel.
+</p>
+<ul>
+<li><p>
+Linux systems provide kernel virtual terminals on <code>/dev/tty1</code> to <code>/dev/tty12</code>.
+</p></li>
+<li><p>
+FreeBSD systems provide kernel virtual terminals on devices <code>/dev/ttyv0</code> to <code>/dev/ttyv8</code>.
+</p></li>
+<li><p>
+OpenBSD systems provide kernel virtual terminals on devices <code>/dev/ttyC0</code> to <code>/dev/ttyCb</code>.
+</p></li>
+<li><p>
+NetBSD systems provide kernel virtual terminals on devices <code>/dev/ttyE0</code> to <code>/dev/ttyEb</code>.
+</p></li>
+</ul>
+
+<p>
+Login on such terminals is done with <a href="virtual-terminal-login.html"><code>ttylogin</code> services</a> configured to use those devices of course, which can be managed just like other ordinary services.
+There is one augmentation to ordinary service management: the <a href="preset.html"><code>preset</code></a> command uses the ordinary preset file mechanism, but can also <a href="ttys.html">read the <code>/etc/ttys</code> file</a>.
+</p>
+
+<h2>
+Containers should use user-space virtual terminals
+</h2>
+
+<p>
+In containers, access to the real kernel virtual terminal devices is often prevented by the containerization system, which restricts access to the system's character devices from within the container.
+One container convention is to symbolically link the kernel virtual terminal device names to the slave sides of pseudo-terminals which the containerization system sets up; <code>/dev/tty1</code> being a symbolic link to (say) <code>/dev/pts/2</code> which is the slave side of a pseudo-terminal allocated by the containerization system.
+Another is to still have the containerization system set up pseudo-terminals, and tell the contained system about them through a <code>container_ttys</code> environment variable.
+Both of these are clumsy and quite unnecessary with the nosh toolset.
 </p>
 
 <p>
-Their <a href="virtual-terminal-login.html"><code>ttylogin</code> services</a> can of course be managed just like ordinary services.
-The <a href="preset.html"><code>preset</code></a> command uses the ordinary preset file mechanism, but can also <a href="ttys.html">read the <code>/etc/ttys</code> file</a>.
+With the nosh toolset, do not have the containerization system involved at all.
+Simply <a href="user-virtual-terminals.html">use user-space virtual terminals</a>.
 </p>
 
 <h2>
@@ -21,17 +51,16 @@ Linux tools for <code>ttylogin</code> service management on demand
 </h2>
 
 <p>
-On the BSDs, enabled <code>ttylogin@</code> services are started at bootstrap in the ordinary way, as they are <code>wanted-by/</code> the <code>multi-user</code> target.
+Enabled <code>ttylogin@</code> services are started at bootstrap in the ordinary way, as they are <code>wanted-by/</code> the <code>multi-user</code> target.
 </p>
 
 <p>
-However, on Linux these services are not <code>wanted-by/</code> any bootstrap-activated target.
-Instead, they are activated on demand by the <a href="ttylogin-starter.html"><code>ttylogin-starter</code></a> tool.
-This utility, for which there is a service bundle allowing one to run it itself as a service, starts <code>ttylogin</code> services, as long as they are marked enabled, as and when the user switches between kernel virtual terminals.
+However, on Linux such services can be left <em>disabled</em> and instead can be activated on demand by the <a href="ttylogin-starter.html"><code>ttylogin-starter</code></a> tool.
+This utility, for which there is a service bundle allowing one to run it itself as a service, starts <code>ttylogin</code> services, directly, as and when the user switches between kernel virtual terminals.
 </p>
 
 <h2>
-Leaving room for X
+Leaving room for X or console-fb-realizer
 </h2>
 
 <p>
@@ -41,6 +70,7 @@ So if using kernel virtual terminals alongside an X server, either one starts th
 
 <p>
 To do this, one simply disables the service.
+(Note that <a href="ttylogin-starter.html"><code>ttylogin-starter</code></a>, which manually starts services irrespective of their enable/disable state, is incompatible with X servers and <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a> and should not be used when they are.)
 There are three ways to do this:
 </p>
 

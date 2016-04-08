@@ -13,7 +13,6 @@ User=exim4
 # It also automatically figures out the difference between Relay and Submission.
 ExecStart=exim4 -bw
 ExecStartPre=exim4 -bV
-Restart=always
 
 [Install]
 WantedBy=server.target

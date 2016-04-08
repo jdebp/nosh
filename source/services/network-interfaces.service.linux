@@ -13,7 +13,9 @@ Wants=network-runtime.service
 Type=oneshot
 ExecStart=ifup --verbose --all
 ExecStopPost=ifdown --verbose --all
+# This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
+Restart=no
 
 [Install]
 WantedBy=static-networking.target

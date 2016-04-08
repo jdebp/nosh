@@ -26,6 +26,8 @@ For copyright and licensing terms, see the file named COPYING.
 
 #define ESC "\033"
 #define CSI ESC "["
+#define ST  ESC "/"
+#define OSC ESC "]"
 
 // The string that hard resets the terminal from a jammed state, ready for initialization.
 static inline
@@ -35,7 +37,7 @@ reset_string()
 	return
 #if defined(__LINUX__) || defined(__linux__)
 		ESC "c"		// reset
-		ESC "]R"	// (OSC) reset palette
+		OSC "R" ST	// reset palette (modified to be ECMA-48 conformant)
 #elif defined(__FreeBSD__) || defined(__DragonFly__)
 		// This isn't quite correct, but it isn't worth fixing.
 		// cons25 has fallen into desuetude and the new (2010) emulator is xterm.
@@ -43,8 +45,9 @@ reset_string()
 		CSI "x"		// reset palette
 #elif defined(__NetBSD__)
 		CSI "?3l"	// set 80 columns (DECCOLM)
+#elif defined(__OpenBSD__)
+		ESC "c"		// reset
 #else
-		// OpenBSD can change the emulator at kernel configuration time and at runtime.
 		// MacOS X doesn't have virtual consoles.
 #		error "Don't know what the terminal type for your console driver is."
 #endif
@@ -62,7 +65,7 @@ initialization_string()
 #elif defined(__FreeBSD__) || defined(__DragonFly__)
 		// This isn't quite correct, but it isn't worth fixing.
 		// cons25 has fallen into desuetude and the new (2010) emulator is xterm.
-		CSI "!p"	//
+		CSI "!p"	// soft reset (DECSTR)
 		CSI "?3;4l"	// set 80 columns (DECCOLM) and jump scrolling (DECSCLM)
 		CSI "4l"	// reset insert mode (i.e. set overstrike)
 		ESC ">"		// set numeric keypad mode
@@ -71,10 +74,10 @@ initialization_string()
 		// This isn't quite correct, but it isn't worth fixing.
 		// We could attempt to auto-detect the use of cons25, but it has fallen into desuetude.
 		CSI "r"		// reset window to whole screen (DECSTBM)
-		CSI "25;1H"	// move to line 25 column 1
+		CSI "3g"	// clear all tab stops
+#elif defined(__OpenBSD__)
 		CSI "3g"	// clear all tab stops
 #else
-		// OpenBSD can change the emulator at kernel configuration time and at runtime.
 		// MacOS X doesn't have virtual consoles.
 #		error "Don't know what the terminal type for your console driver is."
 #endif

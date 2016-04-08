@@ -9,7 +9,6 @@ Before=%I.service
 [Service]
 User=%i-log
 ExecStart=%p %I
-Restart=always
 
 [Install]
 WantedBy=workstation.target

@@ -10,7 +10,9 @@ After=adjkerntz.service ifpw.service ipfilter.service pf.service sysctl.service
 Type=oneshot
 EnvironmentDirectory=env
 ExecStart=sh -c 'test ${level} -ge 0 && sysctl kern.securelevel=${level}'
+# There's no meaningful going back after this; this service is effefctively on until shutdown.
 RemainAfterExit=yes
+Restart=never
 
 [Install]
 WantedBy=workstation.target

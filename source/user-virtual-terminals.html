@@ -16,6 +16,23 @@ A user-space virtual terminal comprises four things:
 <li><p>one or more realizer processes, that connect the display buffer and input FIFO to real I/O devices of some kind</p></li>
 </ul>
 
+<p>
+In a plain system, the TUI login service, the terminal emulator process, and the realizer process all run as ordinary services.
+This package comes with service bundles for running three user-space virtual terminal emulators (<code>vc1</code>, <code>vc2</code>, and <code>vc3</code>), multiplexed onto a single realizer (<code>head0</code>) through a multiplexor.
+</p>
+
+<p>
+In a containerized system, the TUI login services and the terminal emulation services run in the container.
+The realizer and console multiplexor services, conversely, run outwith the container.
+One simply directs the (external) console multiplexor service to include the contained user-space virtual terminal devices, alongside any that it already has.
+With the <code>console-multiplexor@head0</code> service bundle that comes in this package, simply symbolically link the contained user-space virtual terminal directories into the multiplexor's service directory before starting it.
+This is nothing more than an instance of the general-case procedure for adding another user-space virtual terminal to a multiplexor service.
+</p>
+<blockquote><pre>ln -s /var/container/run/dev/vc1 /var/sv/console-multiplexor@head0/service/vc9
+ln -s /var/container/run/dev/vc2 /var/sv/console-multiplexor@head0/service/vc10
+ln -s /var/container/run/dev/vc3 /var/sv/console-multiplexor@head0/service/vc11</pre></blockquote>
+</li>
+
 <h2>
 terminal emulator services
 </h2>

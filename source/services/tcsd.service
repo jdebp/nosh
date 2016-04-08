@@ -11,12 +11,11 @@ Before=named.service hastd.service kerberos.service
 RuntimeDirectory=tpm
 RuntimeDirectory=ima
 RuntimeDirectoryMode=0700
-#RuntimeDirectoryOwner=_tss
+RuntimeDirectoryOwner=_tss
 ExecStartPre=install -d -m 0700 -o _tss -g _tss /usr/local/var/lib/tpm
 ExecStartPre=chmod 0600 /usr/local/etc/%p.conf
 ExecStartPre=chown _tss:_tss /usr/local/etc/%p.conf
 ExecStart=%p -f -c /usr/local/etc/%p.conf
-Restart=always
 
 [Install]
 WantedBy=workstation.target

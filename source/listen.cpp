@@ -39,3 +39,30 @@ daemontools_semantics:
 	unsetenv("LISTEN_FDS");
 	return lf;
 }
+
+int 
+query_listen_fds_passthrough()
+{
+	int n(0U);
+	const int pid(getpid());
+	if (0 <= pid) {
+		const char * old;
+		const char * listen_pid(std::getenv("LISTEN_PID"));
+		if (!listen_pid) goto fail;
+		old = listen_pid;
+		unsigned long lp(std::strtoul(listen_pid, const_cast<char **>(&listen_pid), 0));
+		if (*listen_pid || old == listen_pid) goto fail;
+		if (static_cast<unsigned long>(pid) != lp) goto fail;
+		const char * listen_fds(std::getenv("LISTEN_FDS"));
+		if (!listen_fds) goto fail;
+		old = listen_fds;
+		unsigned long lf(std::strtoul(listen_fds, const_cast<char **>(&listen_fds), 0));
+		if (*listen_fds || old == listen_fds) goto fail;
+		if (INT_MAX < lf) goto fail;
+		n = lf;
+	}
+fail:
+	unsetenv("LISTEN_PID");
+	unsetenv("LISTEN_FDS");
+	return n;
+}

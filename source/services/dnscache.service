@@ -4,13 +4,13 @@
 
 [Unit]
 Description=Bernstein's proxy DNS server daemon
+After=network-interfaces.service
 
 [Service]
 EnvironmentDirectory=env
 EnvironmentUser=dnscache-d
 LimitNOFILE=250
 ExecStart=fdredir -r 0 seed %p
-Restart=always
 
 [Install]
 WantedBy=workstation.target

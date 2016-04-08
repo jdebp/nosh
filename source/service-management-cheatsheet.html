@@ -11,13 +11,23 @@ For more, see the manual pages of the <a href="service-control.html"><code>servi
 For exposition, we here assume that the cron service has its service bundle directory at, or accessible via a symbolic link at, <code>/service/cron</code>.
 </p>
 
-<h2>
-Daemontools-style
-</h2>
-
 <p>
 Daemontools-style service management employs direct access to the service bundle directories.
 </p>
+
+<p>
+OpenBSD-style, systemd-style, and SMF-style service management searches for service bundle directories in several well-known locations.
+The cron service (located in such a location) is simply denominated either <code>cron.service</code> or simply <code>cron</code>.
+</p>
+
+<p>
+Associated log services are conventionally denominated <code>cyclog@</code><i>service-name</i>, and pointed to from the logged service's service bundle by a <code>log</code> symbolic link.
+A service and its associated log service may, where such convention is adhered to, be named together using shell brace expansion: <code>{cyclog@,}</code><i>service-name</i>.
+</p>
+
+<h2>
+Daemontools-style
+</h2>
 
 <ul>
 
@@ -110,18 +120,59 @@ Use the <code>--json</code> option for an alternative machine-parseable form.
 </ul>
 
 <h2>
-systemd-style
+OpenBSD-style
 </h2>
 
-<p>
-systemd-style service management searches for service bundle directories in several well-known locations.
-The cron service (located in such a location) is simply denominated either <code>cron.service</code> or simply <code>cron</code>.
-</p>
+<ul>
 
+<li>
+<pre>rcctl get cron</pre>
 <p>
-Associated log services are conventionally denominated <code>cyclog@</code><i>service-name</i>, and pointed to from the logged service's service bundle by a <code>log</code> symbolic link.
-A service and its associated log service may, where such convention is adhered to, be named together using shell brace expansion: <code>{cyclog@,}</code><i>service-name</i>.
-</p>
+Print the variables set by the conventional <code>env/</code> environment directory for the cron service.
+</p></li>
+
+<li>
+<pre>rcctl set cron flags --wibble</pre>
+<p>
+Set the <code>flags</code> variable, set by the conventional <tt>env/</tt> environment directory for the cron service, to <code>--wibble</code>.
+</p></li>
+
+<li>
+<pre>rcctl status cron</pre>
+<p>
+Print long form human-readable status of the cron service.
+This also prints the tail of any associated log, if it is in the conventional place.
+</p></li>
+
+<li>
+<pre>rcctl start cron</pre>
+<p>
+Start the cron service, following any dependencies.
+</p></li>
+
+<li>
+<pre>rcctl stop cron</pre>
+<p>
+Stop the cron service.
+</p></li>
+
+<li>
+<pre>rcctl enable cron</pre>
+<p>
+Set the cron service to auto-start at bootstrap.
+</p></li>
+
+<li>
+<pre>rcctl disable cron</pre>
+<p>
+Set the cron service to not auto-start at bootstrap.
+</p></li>
+
+</ul>
+
+<h2>
+systemd-style
+</h2>
 
 <ul>
 
@@ -187,17 +238,35 @@ Immediately run the system power-off procedure, shutting down any services confi
 </p></li>
 
 <li>
-<pre>rcctl get cron</pre>
+<pre>system-control print-service-env cron</pre>
 <p>
 Print the variables set by the conventional <code>env/</code> environment directory for the cron service.
-This is also accessible as the <code>system-control print-service-env</code> command.
 </p></li>
 
 <li>
-<pre>rcctl set cron flags --wibble</pre>
+<pre>system-control set-service-env cron flags --wibble</pre>
 <p>
 Set the <code>flags</code> variable, set by the conventional <tt>env/</tt> environment directory for the cron service, to <code>--wibble</code>.
-This is also accessible as the <code>system-control set-service-env</code> command.
+</p></li>
+
+</ul>
+
+<h2>
+Solaris SMF-style
+</h2>
+
+<ul>
+
+<li>
+<pre>svcadm enable cron</pre>
+<p>
+Set the cron service to auto-start at bootstrap.
+</p></li>
+
+<li>
+<pre>svcadm disable cron</pre>
+<p>
+Set the cron service to not auto-start at bootstrap.
 </p></li>
 
 </ul>

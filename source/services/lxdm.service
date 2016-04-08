@@ -8,7 +8,6 @@ After=ttylogin@ttyv8 ttylogin@tty9
 
 [Service]
 ExecStart=%p
-Restart=always
 
 [Install]
 # TODO: This might be better as graphical.

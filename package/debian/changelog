@@ -1,3 +1,35 @@
+nosh (1.28) unstable; urgency=low
+
+  * Added a machineenv command.
+  * More BSD services: make-utx-log, openbsd-cron
+  * More cross-platform services: kmod@fuse, mogstored, mogilefsd, kamailio, NetworkManager-dispatcher, clamd, pcscd
+  * In ideal mode, convert-systemd-services defaults to always restarting as per daemontools family norms.
+  * In quirks mode, convert-systemd-services implements more of systemd's standard I/O redirection semantics.
+  * convert-systemd-services now translates some Linux-idiosyncratic limits.
+  * SoftTerm no longer sideways-scrolls in response to CUF and CUB.
+  * MySQL and MariaDB services are now instantiated by importing from the my.cnf configuration information.
+  * Fixed a bug where /usr on a separate volume to / would prevent package installation on BSD.
+  * All of the FreeDesktop Kit service bundles now have aliases for use with Desktop Bus activation.
+  * There is now a very simple dbus-daemon-launch-helper shim that devolves to invoking service management.
+  * The supervise/ directory control API now supports '_', which is like 'd' but does not generate TERM or CONT signals.
+  * svc -x is now implemented.
+  * gnucron is now debian-cron, as GNU is a slight misnomer; it being a GPL Debian project not an FSF GNU project.
+  * ulimit and softlimit now support SI and IEC suffixes for explicit scale factors (when the implicit scale factor is 1).
+  * An experimental extension has been added to the supervise/status file that records the exit status of the last starting/running main process to terminate.
+  * There are now a move-to-control-group and a delegate-control-group-to command.
+  * There is now a tcpserver shim, for use with FreeBSD/PC-BSD ports of publicfile et al..
+  * Each user now has an exit target for the per-user-manager and thus the latter shuts down cleanly.
+  * The OBOEs in console-terminal-emulator's SCO function key handling have been fixed.
+  * SoftTerm now supports some of the more esoteric old FreeBSD kernel terminal emulator's control sequences, for increased cons25 compatibility.
+  * The -s boot option in BSD now enters emergency mode not rescue mode.
+  * console-terminal-emulator now has a mechanism for "bracketed paste" input.
+  * system-control preset --ttys now defaults to disable if /etc/ttys is absent.
+  * rcctl is now in an openbsd-shims package, which is not installed on OpenBSD.
+  * The service manager can now be run under OpenBSD rc.
+  * The various -listen tools can now merge into an existing set of systemd LISTEN_FDS file descriptors; and convert-systemd-units makes use of this for multi-listener sockets.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Fri, 08 Apr 2016 16:08:32 +0100
+
 nosh (1.27) unstable; urgency=low
 
   * The user-services conversion tool now deletes old per-user service directories in /etc/service-bundles/services.

@@ -16,7 +16,6 @@ ExecStartPre=mkdir -m 02755 -p /run/dev /run/dev/%I
 #ExecStartPre=setfacl -m u:daemon:rwx /run/dev/%I
 ExecStartPre=chown daemon:tty /run/dev/%I
 ExecStart=sh -c 'exec %p /run/dev/%I vc[0-9]*'
-Restart=always
 
 [Install]
 WantedBy=multi-user.target

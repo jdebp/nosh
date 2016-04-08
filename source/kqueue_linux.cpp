@@ -523,7 +523,19 @@ Queue::wait(
 		pollfd p[1];
 		p[0].fd = epoll.get();
 		p[1].events = POLLIN;
-		const int rc(ppoll(p, sizeof p/sizeof *p, timeout, NULL));
+#if 0 // This code seems unnecessary for a signalfd.
+		sigset_t masked_signals_during_poll;
+		sigprocmask(SIG_SETMASK, 0, &masked_signals_during_poll);
+		sigset_t signals_for_signalfd;
+		sigandset(&signals_for_signalfd, &enabled_signals, &added_signals);
+		for (int signo(1); signo < _NSIG; ++signo) {
+			if (sigismember(&signals_for_signalfd, signo))
+				sigdelset(&masked_signals_during_poll,signo);
+		}
+		const int rc(ppoll(p, sizeof p/sizeof *p, timeout, &masked_signals_during_poll));
+#else
+		const int rc(ppoll(p, sizeof p/sizeof *p, timeout, 0));
+#endif
 		if (0 >= rc) return rc;
 	}
 

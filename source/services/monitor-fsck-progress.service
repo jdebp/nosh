@@ -8,11 +8,14 @@ DefaultDependencies=off
 Before=local-fs-pre.target
 
 [Service]
-StandardInput=tty
-StandardOutput=inherit
 User=daemon
 ExecStart=monitor-fsck-progress
+# monitor-fsck-progress understands the LISTEN protocol, so does not need StandardInput=socket.
+# This is fortunate, because it needs to allocate a (controlling) terminal device.
+StandardInput=tty
+StandardError=log
 TTYPath=console
+Restart=no
 
 [Install]
 StoppedBy=shutdown.target

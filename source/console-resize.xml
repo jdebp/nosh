@@ -59,7 +59,7 @@ To do this, it emits the DECSLPP control sequence, unless the <arg choice="plain
 It then resets the top, and bottom margins to the screen borders using the DECSTBM control sequence.
 </para></listitem>
 <listitem><para>
-If the <arg choice="plain">--lines</arg> command-line option is used, it then resets the left and right margins to the screen borders using the DECSLRM control sequence.
+If the <arg choice="plain">--lines</arg> command-line option is not used, it then resets the left and right margins to the screen borders using the DECSLRM control sequence.
 </para></listitem>
 </orderedlist>
 

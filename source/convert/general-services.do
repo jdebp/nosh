@@ -43,6 +43,8 @@ do
 	kldxref)		continue ;; # This is not a service.
 	linux)			continue ;;
 	moused_nondefault)	continue ;; # This is not used for services.
+	mariadb)		continue ;; # This is handled by a special conversion.
+	mysql)			continue ;; # This is handled by a special conversion.
 	opensm)			continue ;; # This seems to have disappeared as of FreeBSD 10.
 	pcbsdinit)		continue ;;
 	ppp)			continue ;; # This is handled by a special conversion.

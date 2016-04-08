@@ -7,7 +7,6 @@ Description=Ruby MailCatcher (http://mailcatcher.me/)
 
 [Service]
 ExecStart=%p --foreground --http-ip 127.0.25.1
-Restart=always
 
 [Install]
 WantedBy=server.target

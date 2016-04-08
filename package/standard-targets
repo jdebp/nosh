@@ -25,6 +25,7 @@ static-networking
 swapauto
 swaplate
 sysinit
+uhidd
 unmount
 update
 virtualbox-guest

@@ -11,7 +11,6 @@ EnvironmentDirectory=env
 # It's erroneously conflated with a "no signals" mode.
 Type=forking
 ExecStart=nginx -g "error_log stderr error;" -c "${conf:-/usr/local/etc/appcafe.conf}"
-Restart=always
 PrivateTmp=true
 #LimitMEMLOCK=infinity
 #LimitNOFILE=65535

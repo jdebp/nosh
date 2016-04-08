@@ -11,7 +11,6 @@ Wants=kdc.service
 EnvironmentDirectory=env
 ExecStartPre=fdredir --write 1 /var/heimdal/services sh -c 'for s in ${slaves} ; do echo "$s" ; done'
 ExecStart=%p --keytab "${keytab}"
-Restart=always
 
 [Install]
 WantedBy=server.target

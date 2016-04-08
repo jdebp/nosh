@@ -11,7 +11,6 @@ After=kmod@geom_gate
 EnvironmentDirectory=env
 # The daemon should properly clean itself up at SIGTERM; if it does not, that is a bug.
 ExecStart=%p -F
-Restart=always
 
 [Install]
 WantedBy=server.target

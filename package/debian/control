@@ -36,12 +36,13 @@ Description: Minimal non-shell script processor and various chain-load utilities
 Package: nosh-service-management
 Architecture: amd64
 Depends: ${shlibs:Depends}
+Breaks: nosh-bundles (<= 1.27)
 Suggests:
 Recommends: kmod
 Description: Service and system management utilities
  This package provides a complete daemon supervisor and system management toolset.
  .
- It includes a system-wide system manager, a per-user-login session manager, a service manager, along with various control and status utilities.
+ It includes a system-wide system manager, a per-user user manager, a service manager, along with various control and status utilities.
  .
  It supplies systemd unit files for setting up a daemontools-like daemon management system under systemd.
  Or one can instead run this its system manager as process #1.
@@ -67,7 +68,7 @@ Description: Virtual terminal, pseudo-terminal, and TUI login tools
 
 Package: nosh-terminal-extras
 Architecture: amd64
-Depends: ${shlibs:Depends}, nosh-terminal-management
+Depends: nosh-terminal-management
 Suggests: 
 Recommends: execline
 Description: Extra terminal utilities
@@ -85,9 +86,10 @@ Description: BSD and System 5 shim service and system management utilities
   * init, shutdown, telinit, halt, poweroff, reboot, runlevel
   * emergency, normal, rescue
   * fasthalt, fastpoweroff, fastboot
-  * rcctl
  .
  The shims simply invoke native service management commands.
+ .
+ For rcctl, use the nosh-openbsd-shims package.
 
 Package: nosh-systemd-shims
 Architecture: amd64
@@ -123,9 +125,33 @@ Description: Debian shim service and system management utilities
  .
  The shims simply invoke native service management commands.
 
+Package: nosh-openbsd-shims
+Architecture: amd64
+Depends: nosh-service-management
+Suggests: 
+Recommends: 
+Conflicts: nosh-run-via-systemd, upstart, sysvinit-core, systemd-sysv
+Description: OpenBSD shim service and system management utilities
+ This package provides shims for OpenBSD service and system management commands.
+  * rcctl
+ .
+ The shims simply invoke native service management commands.
+
+Package: nosh-ucspi-tcp-shims
+Architecture: amd64
+Depends: nosh-exec
+Suggests: 
+Recommends: 
+Conflicts: ucspi-tcp
+Description: Bernstein UCSPI-TCP shim service utilities
+ This package provides shims for UCSPI-TCP service commands.
+  * tcpserver
+ .
+ The shims simply invoke native service management commands.
+
 Package: nosh-bundles
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.25), nosh-terminal-management (>= 1.22), adduser
+Depends: nosh-exec (>=1.28), nosh-service-management (>=1.28), nosh-terminal-management (>= 1.22), adduser
 Suggests: 
 Recommends: 
 Conflicts: nosh-standard-targets, nosh-sysinit-services, nosh-bsd-services, nosh-bsd-sockets, nosh-regular-sockets, nosh-regular-services
@@ -139,9 +165,9 @@ Package: nosh-run-system-manager
 Architecture: amd64
 Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles, redo
 Suggests: 
-Recommends: nosh-run-kernel-vt | nosh-run-user-vt, nosh-systemv-shims, nosh-run-local-syslog, nosh-run-klog, nosh-debian-shims
+Recommends: nosh-run-kernel-vt | nosh-run-user-vt, nosh-systemv-shims, nosh-openbsd-shims, nosh-run-local-syslog, nosh-run-klog, nosh-debian-shims
 Conflicts: nosh-run-via-systemd, upstart, sysvinit-core, systemd-sysv
-Provides: init
+Provides: init, systemd-shim
 Description: Run the various AppleTalk services
  This package runs the nosh system manager as process #1.
  . 
@@ -149,8 +175,13 @@ Description: Run the various AppleTalk services
  . 
  It does this on Linux by installing a symbolic link as /sbin/init .
  . 
- Note: This does not install any System 5 compatibility shim commands (halt, reboot, poweroff, &c.).
- For those, install the (recommended) nosh-systemv-shims package.
+ Notes: 
+ * This does not install any System 5 compatibility shim commands (halt, reboot, poweroff, &c.).
+   For those, install the (recommended) nosh-systemv-shims package.
+ * This does not install any OpenBSD compatibility shim commands (rcctl &c.).
+   For those, install the (recommended) nosh-openbsd-shims package.
+ * This does not install any systemd compatibility shims (systemctl &c.).
+   For those, install the nosh-systemd-shims package.
 
 Package: nosh-run-kernel-vt
 Architecture: amd64

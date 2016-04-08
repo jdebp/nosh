@@ -8,7 +8,6 @@ Description=FTP proxy daemon
 [Service]
 EnvironmentDirectory=env
 ExecStart=%p -d ${flags}
-Restart=always
 
 [Install]
 WantedBy=workstation.target

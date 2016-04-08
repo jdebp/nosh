@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Bernstein's TAICLOCK daemon
+
+[Service]
+User=%p-d
+EnvironmentDirectory=env
+LimitDATA=3000000
+ExecStart=%pd
+
+[Install]
+WantedBy=server.target

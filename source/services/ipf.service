@@ -10,7 +10,9 @@ Before=server.target networking.target
 EnvironmentDirectory=env
 ExecStart=foreground ${program:-%p} -E ; foreground ${program:-%p} -Fa -f "${rules}" "${flags}" ; ${program:-%p} -6 -f "${rules}" "${flags}"
 ExecStopPost=${program:-%p} -D
-RemainAfterExit=true
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
+Restart=no
 
 [Install]
 WantedBy=workstation.target

@@ -8,7 +8,6 @@ Description=Guenter's bcron update daemon
 [Service]
 EnvironmentDirectory=env
 ExecStart=%p /etc/crontab /etc/cron.d
-Restart=always
 
 [Install]
 WantedBy=server.target

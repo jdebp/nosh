@@ -4,7 +4,7 @@
 ## **************************************************************************
 #
 # Special setup for ppp.
-# This is invoked by general-services.do .
+# This is invoked by all.do .
 #
 
 # These get us *only* the configuration variables, safely.

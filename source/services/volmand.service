@@ -8,7 +8,6 @@ Description=BSD volume manager daemon
 [Service]
 ProcessGroupLeader=true
 ExecStart=%p daemon
-Restart=always
 
 [Install]
 WantedBy=workstation.target

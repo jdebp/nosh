@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=DNS/UDP socket on %i
+
+[Socket]
+Backlog=2
+BindIPv6Only=both
+ListenDatagram=%i:domain
+Accept=false
+MaxConnections=16
+NoDelay=false
+ReceiveBuffer=65536
+
+[Install]
+WantedBy=server.target

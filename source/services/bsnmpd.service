@@ -8,7 +8,6 @@ Description=basic SNMP service
 [Service]
 EnvironmentDirectory=env
 ExecStart=%p -d
-Restart=always
 
 [Install]
 WantedBy=server.target

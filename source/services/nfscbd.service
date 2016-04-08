@@ -9,7 +9,6 @@ After=nfsuserd.service
 [Service]
 EnvironmentDirectory=env
 ExecStart=%p
-Restart=always
 
 [Install]
 WantedBy=server.target

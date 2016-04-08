@@ -3,13 +3,12 @@
 ## **************************************************************************
 
 [Unit]
-Description=Regular background program processing daemon
+Description=Regular background program processing daemon by Paul Vixie
 
 [Service]
 Type=forking
 EnvironmentDirectory=env
 ExecStart=cron -s -x bit
-Restart=always
 
 [Install]
 WantedBy=workstation.target

@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%p umbrella
+
+[Service]
+User=nobody
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
+
+[Install]
+WantedBy=workstation.target

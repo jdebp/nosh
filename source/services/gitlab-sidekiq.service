@@ -9,14 +9,12 @@ Wants=mysqld.service postgresql.service
 After=redis.service mysqld.service postgresql.service
 
 [Service]
-Type=simple
 # FIXME: Is this really needed?
 systemdUserEnvironment=true
 User=git
 WorkingDirectory=/home/git/gitlab
 Environment=RAILS_ENV=production
 ExecStart=bindle exec "sidekiq -d -q post_receive -q mailer -q system_hook -q project_web_hook -q gitlab_shell -q common -q default -e production"
-Restart=always
 
 [Install]
 WantedBy=server.target

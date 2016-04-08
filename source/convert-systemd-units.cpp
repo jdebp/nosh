@@ -8,6 +8,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <climits>
 #include <cerrno>
 #include <iostream>
 #include <fstream>
@@ -20,7 +21,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <pwd.h>
 #include "utils.h"
 #include "fdutils.h"
-#include "common-manager.h"
 #include "service-manager-client.h"
 #include "popt.h"
 #include "FileStar.h"
@@ -70,7 +70,7 @@ find (
 	} else {
 		int error(ENOENT);	// the most interesting error encountered
 		for ( const char ** p(systemd_prefixes); p < systemd_prefixes + sizeof systemd_prefixes/sizeof *systemd_prefixes; ++p) {
-			path = ((std::string(*p) + "systemd/") + (local_session_mode ? "user/" : "system/")) + name;
+			path = ((std::string(*p) + "systemd/") + (per_user_mode ? "user/" : "system/")) + name;
 			FILE * f = std::fopen(path.c_str(), "r");
 			if (f) return f;
 			if (ENOENT == errno) 
@@ -338,7 +338,7 @@ is_bool_true (
 	const value & v
 ) {
 	const std::string r(tolower(v.last_setting()));
-	return "yes" == r || "on" == r || "true" == r;
+	return "yes" == r || "on" == r || "true" == r || "1" == r;
 }
 
 static
@@ -518,7 +518,7 @@ convert_systemd_units (
 	try {
 		const char * bundle_root_str(0);
 		bool no_systemd_quirks(false);
-		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
+		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
 		popt::string_definition bundle_option('\0', "bundle-root", "directory", "Root directory for bundles.", bundle_root_str);
 		popt::bool_definition escape_instance_option('\0', "escape-instance", "Escape the instance part of a template instantiation.", escape_instance);
 		popt::bool_definition alt_escape_option('\0', "alt-escape", "Use an alternative escape algorithm.", alt_escape);
@@ -559,7 +559,7 @@ convert_systemd_units (
 		throw EXIT_FAILURE;
 	}
 
-	bool is_socket_activated(false), is_target(false), is_socket_accept(false);
+	bool is_socket_activated(false), is_target(false);
 
 	std::string socket_filename;
 	profile socket_profile;
@@ -589,6 +589,7 @@ convert_systemd_units (
 	       machine_id::create();
 	names.set_machine_id(machine_id::human_readable_form_compact());
 
+	bool is_instance(false), is_socket_accept(false);
 	if (is_socket_activated) {
 		std::string socket_unit_name(names.query_arg_name());
 		FileStar socket_file(find(socket_unit_name, socket_filename));
@@ -599,6 +600,7 @@ convert_systemd_units (
 				names.set_prefix(names.query_bundle_basename().substr(0, atc), escape_prefix, alt_escape);
 				++atc;
 				names.set_instance(names.query_bundle_basename().substr(atc, names.query_bundle_basename().npos), escape_instance, alt_escape);
+				is_instance = true;
 				socket_unit_name = names.query_unit_dirname() + names.query_escaped_prefix() + "@.socket";
 				socket_file = find(socket_unit_name, socket_filename);
 			}
@@ -623,6 +625,7 @@ convert_systemd_units (
 				names.set_prefix(names.query_bundle_basename().substr(0, atc), escape_prefix, alt_escape);
 				++atc;
 				names.set_instance(names.query_bundle_basename().substr(atc, names.query_bundle_basename().npos), escape_instance, alt_escape);
+				is_instance = true;
 				service_unit_name = (names.query_unit_dirname() + names.query_escaped_prefix() + "@.") + (is_target ? "target" : "service");
 				service_file = find(service_unit_name, service_filename);
 			}
@@ -671,10 +674,14 @@ convert_systemd_units (
 	value * type(service_profile.use("service", "type"));
 	value * workingdirectory(service_profile.use("service", "workingdirectory"));
 	value * rootdirectory(service_profile.use("service", "rootdirectory"));
-#if !defined(__LINUX__) && !defined(__linux__)
+#if defined(__LINUX__) || defined(__linux__)
+	value * slice(service_profile.use("service", "slice"));
+	value * delegate(service_profile.use("service", "delegate"));
+#else
 	value * jailid(service_profile.use("service", "jailid"));	// This is an extension to systemd.
 #endif
 	value * runtimedirectory(service_profile.use("service", "runtimedirectory"));
+	value * runtimedirectoryowner(service_profile.use("service", "runtimedirectoryowner"));
 	value * runtimedirectorymode(service_profile.use("service", "runtimedirectorymode"));
 	value * systemdworkingdirectory(service_profile.use("service", "systemdworkingdirectory"));	// This is an extension to systemd.
 	value * systemduserenvironment(service_profile.use("service", "systemduserenvironment"));	// This is an extension to systemd.
@@ -688,9 +695,30 @@ convert_systemd_units (
 	value * limitnproc(service_profile.use("service", "limitnproc"));
 	value * limitfsize(service_profile.use("service", "limitfsize"));
 	value * limitas(service_profile.use("service", "limitas"));
+	value * limitrss(service_profile.use("service", "limitrss"));
 	value * limitdata(service_profile.use("service", "limitdata"));
+	value * limitstack(service_profile.use("service", "limitstack"));
 	value * limitmemory(service_profile.use("service", "limitmemory"));	// This is an extension to systemd.
+	value * limitmemlock(service_profile.use("service", "limitmemlock"));
+#if defined(RLIMIT_NICE)
+	value * limitnice(service_profile.use("service", "limitnice"));
+#endif
+#if defined(RLIMIT_SIGPENDING)
+	value * limitsigpending(service_profile.use("service", "limitsigpending"));
+#endif
+#if defined(RLIMIT_PIPE)
+	value * limitpipe(service_profile.use("service", "limitpipe"));
+#endif
+#if defined(RLIMIT_MSGQUEUE)
+	value * limitmsgqueue(service_profile.use("service", "limitmsgqueue"));
+#endif
+#if defined(RLIMIT_LOCKS)
+	value * limitlocks(service_profile.use("service", "limitlocks"));
+#endif
 	value * killmode(service_profile.use("service", "killmode"));
+	value * killsignal(service_profile.use("service", "killsignal"));
+	value * sendsigkill(service_profile.use("service", "sendsigkill"));
+	value * sendsighup(service_profile.use("service", "sendsighup"));
 	value * rootdirectorystartonly(service_profile.use("service", "rootdirectorystartonly"));
 	value * permissionsstartonly(service_profile.use("service", "permissionsstartonly"));
 	value * standardinput(service_profile.use("service", "standardinput"));
@@ -735,6 +763,10 @@ convert_systemd_units (
 	value * numaphyscpubind(service_profile.use("service", "numaphyscpubind"));
 	value * numalocalalloc(service_profile.use("service", "numalocalalloc"));
 	value * numapreferred(service_profile.use("service", "numapreferred"));
+	value * tasksmax(service_profile.use("service", "tasksmax"));
+	value * memorylimit(service_profile.use("service", "memorylimit"));
+	value * ioweight(service_profile.use("service", "ioweight"));
+	value * iodeviceweight(service_profile.use("service", "iodeviceweight"));
 #endif
 	value * oomscoreadjust(service_profile.use("service", "oomscoreadjust"));
 	value * cpuschedulingpolicy(service_profile.use("service", "cpuschedulingpolicy"));
@@ -793,11 +825,19 @@ convert_systemd_units (
 			}
 		}
 	}
-	// We silently set "process" as the default killmode, not "control-group".
-	if (killmode && "process" != tolower(killmode->last_setting())) {
+	const bool is_ucspirules(is_bool_true(socket_ucspirules, service_ucspirules, false));
+	if (is_ucspirules && (!is_socket_activated || !is_socket_accept)) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, socket_filename.c_str(), "UCSPI rules only apply to accepting sockets.");
+		throw EXIT_FAILURE;
+	}
+	// We silently set "control-group" as the default killmode, not "process", "mixed", or "none".
+	if (killmode && "control-group" != tolower(killmode->last_setting())) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, service_filename.c_str(), killmode->last_setting().c_str(), "Unsupported service stop mechanism.");
 		throw EXIT_FAILURE;
 	}
+	const bool killsignal_is_term(killsignal && "sigterm" == tolower(killsignal->last_setting()));
+	if (killsignal && !killsignal_is_term)
+		killsignal->used = false;
 	if (runtimedirectory) {
 		for (std::list<std::string>::const_iterator i(runtimedirectory->all_settings().begin()); runtimedirectory->all_settings().end() != i; ++i) {
 			const std::string dir(names.substitute(*i));
@@ -843,8 +883,21 @@ convert_systemd_units (
 
 	// Construct various common command strings.
 
-	std::string jail;
-#if !defined(__LINUX__) && !defined(__linux__)
+	std::string jail, control_group, delegate_control_group;
+#if defined(__LINUX__) || defined(__linux__)
+	control_group += "move-to-control-group ";
+	if (slice) 
+		control_group += "../" + quote(names.substitute(slice->last_setting())) + "/";
+	if (is_instance) {
+		control_group += ((quote(names.query_escaped_prefix() + "@") + ".") + (is_target ? "target" : "service")) + "\n";
+		control_group += "move-to-control-group ";
+		control_group += ((quote(names.query_bundle_basename()) + ".") + (is_target ? "target" : "service")) + "\n";
+	} else {
+		control_group += ((quote(names.query_bundle_basename()) + ".") + (is_target ? "target" : "service")) + "\n";
+	}
+	if (is_bool_true(delegate, false))
+		delegate_control_group += "foreground delegate-control-group-to " + quote(names.query_user()) + " ;\n";
+#else
 	if (jailid) jail += "jexec " + quote(names.substitute(jailid->last_setting())) + "\n";
 #endif
 	std::string priority;
@@ -884,6 +937,18 @@ convert_systemd_units (
 		if (numapreferred)
 			priority += " --preferred " + quote(names.substitute(numapreferred->last_setting()));
 		priority += "\n";
+	}
+	if (tasksmax) {
+		priority += "#set-control-group-option pids.max " + quote(names.substitute(tasksmax->last_setting())) + "\n";
+	}
+	if (memorylimit) {
+		priority += "#set-control-group-option memory.max " + quote(names.substitute(memorylimit->last_setting())) + "\n";
+	}
+	if (ioweight) {
+		priority += "#set-control-group-option io.weight " + quote(names.substitute(ioweight->last_setting())) + "\n";
+	}
+	if (iodeviceweight) {
+		priority += "#set-control-group-option io.weight " + quote(names.substitute(iodeviceweight->last_setting())) + "\n";
 	}
 #else
 	if (cpuschedulingpolicy) {
@@ -978,8 +1043,12 @@ convert_systemd_units (
 		createrundir += "foreground mkdir";
 		if (runtimedirectorymode) createrundir += " -m " + quote(names.substitute(runtimedirectorymode->last_setting()));
 		createrundir += " -- " + dirs + " ;\n";
-		if (user) {
-			createrundir += "foreground chown " + quote(names.substitute(user->last_setting()));
+		if (user || runtimedirectoryowner) {
+			createrundir += "foreground chown ";
+			if (runtimedirectoryowner)
+				createrundir += quote(names.substitute(runtimedirectoryowner->last_setting()));
+			else
+				createrundir += quote(names.substitute(user->last_setting()));
 			if (group)
 				createrundir += ":" + quote(names.substitute(group->last_setting()));
 			createrundir += " -- " + dirs + " ;\n";
@@ -988,7 +1057,7 @@ convert_systemd_units (
 		removerundir += "foreground rm -r -f -- " + dirs_slash + " ;\n";
 	}
 	std::string softlimit;
-	if (limitnofile||limitcpu||limitcore||limitnproc||limitfsize||limitas||limitdata||limitmemory) {
+	if (limitnofile||limitcpu||limitcore||limitnproc||limitfsize||limitas||limitrss||limitdata||limitstack||limitmemory||limitmemlock) {
 		softlimit += "softlimit";
 		if (limitnofile) softlimit += " -o " + quote(limitnofile->last_setting());
 		if (limitcpu) softlimit += " -t " + quote(limitcpu->last_setting());
@@ -996,8 +1065,46 @@ convert_systemd_units (
 		if (limitnproc) softlimit += " -p " + quote(limitnproc->last_setting());
 		if (limitfsize) softlimit += " -f " + quote(limitfsize->last_setting());
 		if (limitas) softlimit += " -a " + quote(limitas->last_setting());
+		if (limitrss) softlimit += " -r " + quote(limitrss->last_setting());
 		if (limitdata) softlimit += " -d " + quote(limitdata->last_setting());
+		if (limitstack) softlimit += " -s " + quote(limitstack->last_setting());
 		if (limitmemory) softlimit += " -m " + quote(limitmemory->last_setting());
+		if (limitmemlock) softlimit += " -l " + quote(limitmemlock->last_setting());
+		softlimit += "\n";
+	}
+	if (0
+#if defined(RLIMIT_NICE)
+	||  limitnice
+#endif
+#if defined(RLIMIT_SIGPENDING)
+	||  limitsigpending
+#endif
+#if defined(RLIMIT_PIPE)
+	||  limitpipe
+#endif
+#if defined(RLIMIT_MSGQUEUE)
+	||  limitmsgqueue
+#endif
+#if defined(RLIMIT_LOCKS)
+	||  limitlocks
+#endif
+	) {
+		softlimit += "ulimit";
+#if defined(RLIMIT_NICE)
+		if (limitnice) softlimit += " -e " + quote(limitnice->last_setting());
+#endif
+#if defined(RLIMIT_SIGPENDING)
+		if (limitsigpending) softlimit += " -i " + quote(limitsigpending->last_setting());
+#endif
+#if defined(RLIMIT_PIPE)
+		if (limitpipe) softlimit += " -p " + quote(limitpipe->last_setting());
+#endif
+#if defined(RLIMIT_MSGQUEUE)
+		if (limitmsgqueue) softlimit += " -q " + quote(limitmsgqueue->last_setting());
+#endif
+#if defined(RLIMIT_LOCKS)
+		if (limitlocks) softlimit += " -x " + quote(limitlocks->last_setting());
+#endif
 		softlimit += "\n";
 	}
 	std::string env;
@@ -1044,19 +1151,116 @@ convert_systemd_units (
 	std::string um;
 	if (umask) um += "umask " + quote(umask->last_setting()) + "\n";
 	const bool is_remain(is_bool_true(remainafterexit, false));
+	const bool is_use_hangup(is_bool_true(sendsighup, false));
+	const bool is_use_kill(is_bool_true(sendsigkill, true));
+	std::string redirect, login_prompt, greeting_message, socket_redirect;
 	const bool stdin_socket(standardinput && "socket" == tolower(standardinput->last_setting()));
 	const bool stdin_tty(standardinput && ("tty" == tolower(standardinput->last_setting()) || "tty-force" == tolower(standardinput->last_setting())));
+	const bool stdout_socket(standardoutput && "socket" == tolower(standardoutput->last_setting()));
+	const bool stdout_tty(standardoutput && ("tty" == tolower(standardoutput->last_setting()) || "tty-force" == tolower(standardoutput->last_setting())));
 	const bool stdout_inherit(standardoutput && "inherit" == tolower(standardoutput->last_setting()));
+	const bool stderr_socket(standarderror && "socket" == tolower(standarderror->last_setting()));
+	const bool stderr_tty(standarderror && ("tty" == tolower(standarderror->last_setting()) || "tty-force" == tolower(standarderror->last_setting())));
 	const bool stderr_inherit(standarderror && "inherit" == tolower(standarderror->last_setting()));
 	const bool stderr_log(standarderror && "log" == tolower(standarderror->last_setting()));
-	// We "un-use" anything that isn't "inherit"/"socket".
-	if (standardinput && !stdin_socket && !stdin_tty) standardinput->used = false;
-	if (standardoutput && !stdout_inherit) standardoutput->used = false;
-	if (standarderror && !stderr_inherit && !stderr_log) standarderror->used = false;
-	std::string tty(ttypath ? names.substitute(ttypath->last_setting()) : "/dev/console");
-	std::string redirect, login_prompt;
+	// We "un-use" anything that isn't "inherit"/"tty"/"socket".
+	if (standardinput && (!stdin_socket && !stdin_tty)) standardinput->used = false;
+	if (standardoutput && (!stdout_inherit && !stdout_socket && !stdout_tty)) standardoutput->used = false;
+	if (standarderror && (!stderr_inherit && !stderr_socket && !stderr_tty && !stderr_log)) standarderror->used = false;
+	if (is_socket_activated) {
+		if (is_socket_accept) {
+			// There is no non-UCSPI mode for per-connection services.
+			// In ideal mode, input/output are the socket and error is the log.
+			// In quirks mode, we just force the same behaviour as ideal mode.
+			if ((standardinput || systemd_quirks) && !stdin_socket) 
+				std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardInput", "socket");
+			if ((standardoutput || systemd_quirks) && !stdout_inherit && !stdout_socket) 
+				std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardOutput", "socket");
+			if (standarderror && !stderr_log)
+				std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardError", "log");
+			if (!systemd_quirks) {
+				if (stdin_socket) 
+					std::fprintf(stderr, "%s: INFO: %s: Superfluous setting: [%s] %s\n", prog, service_filename.c_str(), "Service", "StandardInput");
+				if (stdout_inherit || stdout_socket)
+					std::fprintf(stderr, "%s: INFO: %s: Superfluous setting: [%s] %s\n", prog, service_filename.c_str(), "Service", "StandardOutput");
+				if (stderr_log)
+					std::fprintf(stderr, "%s: INFO: %s: Superfluous setting: [%s] %s\n", prog, service_filename.c_str(), "Service", "StandardError");
+			}
+		} else {
+			// Listening-socket services are complicated.
+			// Standard I/O descriptors redirected to the socket are done with redirections after the listen.
+			if (stdin_socket) socket_redirect += "fdmove -c 0 3\n";
+			if (stdout_socket) socket_redirect += "fdmove -c 1 3\n";
+			if (stderr_socket) socket_redirect += "fdmove -c 2 3\n";
+			if (stdin_tty) {
+				// Listening-socket services can be attached to terminal devices as well.
+				// In ideal mode, input/output/error are the terminal device.
+				// In quirks mode, we just force the same behaviour as ideal mode.
+				if ((standardoutput || systemd_quirks) && !stdout_inherit && !stdout_tty) 
+					std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardOutput", "tty");
+				if (standarderror && !stderr_inherit && !stderr_tty && !stderr_log)
+					std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardError", "tty");
+				if (!systemd_quirks) {
+				   	if (stdout_inherit || stdout_tty)
+						std::fprintf(stderr, "%s: INFO: %s: Superfluous setting: [%s] %s\n", prog, service_filename.c_str(), "Service", "StandardOutput");
+					if (stderr_inherit || stderr_tty)
+						std::fprintf(stderr, "%s: INFO: %s: Superfluous setting: [%s] %s\n", prog, service_filename.c_str(), "Service", "StandardError");
+				}
+			} else {
+				// There are no half measures ("Don't adopt a controlling terminal and only redirect standard output.") available.
+				// In ideal mode, input comes from another service, output goes to a logging service, and error always defaults to the log even if output is redirected.
+				// In quirks mode, error always defaults to output and inherits its redirection.
+				// Redirection is done after the listen, because inherit means possibly inherit standard input that has been redirected to the socket.
+				if (stdout_tty || stderr_tty)
+					std::fprintf(stderr, "%s: WARNING: %s: Redirection ignored for non-controlling-terminal service.\n", prog, service_filename.c_str());
+				if (stdout_inherit) {
+					socket_redirect += "fdmove -c 1 0\n";
+					if ((!standarderror && systemd_quirks) || stderr_inherit) socket_redirect += "fdmove -c 2 1\n";
+				}
+				if (!systemd_quirks) {
+					if (stderr_log)
+						std::fprintf(stderr, "%s: INFO: %s: Superfluous setting: [%s] %s\n", prog, service_filename.c_str(), "Service", "StandardError");
+				}
+			}
+		}
+	} else {
+		if (stdin_socket || stdout_socket || stderr_socket)
+			std::fprintf(stderr, "%s: WARNING: %s: Redirection ignored for non-socket service.\n", prog, service_filename.c_str());
+		if (stdin_tty) {
+			// Non-socket services can take controlling terminals.
+			// In ideal mode, input/output/error default to the terminal device.
+			// In quirks mode, we just force the same behaviour as ideal mode.
+			if ((standardoutput || systemd_quirks) && !stdout_inherit && !stdout_tty) 
+				std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardOutput", "tty");
+			if (standarderror && !stderr_inherit && !stderr_tty && !stderr_log)
+				std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardError", "tty");
+			if (!systemd_quirks) {
+				if (stdout_inherit || stdout_tty)
+					std::fprintf(stderr, "%s: INFO: %s: Superfluous setting: [%s] %s\n", prog, service_filename.c_str(), "Service", "StandardOutput");
+				if (stderr_inherit || stderr_tty)
+					std::fprintf(stderr, "%s: INFO: %s: Superfluous setting: [%s] %s\n", prog, service_filename.c_str(), "Service", "StandardError");
+			}
+		} else {
+			// There are no half measures ("Don't adopt a controlling terminal and only redirect standard output.") available.
+			// In ideal mode, input comes from another service, output goes to a logging service, and error always defaults to the log even if output is redirected.
+			// In quirks mode, error always defaults to output and inherits its redirection.
+			if (stdout_tty || stderr_tty)
+				std::fprintf(stderr, "%s: WARNING: %s: Redirection ignored for non-controlling-terminal service.\n", prog, service_filename.c_str());
+			if (stdout_inherit) {
+				redirect += "fdmove -c 1 0\n";
+				if ((!standarderror && systemd_quirks) || stderr_inherit) redirect += "fdmove -c 2 1\n";
+			}
+			if (!systemd_quirks) {
+				if (stderr_log)
+					std::fprintf(stderr, "%s: INFO: %s: Superfluous setting: [%s] %s\n", prog, service_filename.c_str(), "Service", "StandardError");
+			}
+		}
+	}
+	if ((ttypath || stdin_tty) && !is_bool_true(ttyfromenv, false)) {
+		const std::string tty(ttypath ? names.substitute(ttypath->last_setting()) : "/dev/console");
+		redirect += "vc-get-tty " + quote(tty) + "\n";
+	}
 	if (stdin_tty) {
-		if (!is_bool_true(ttyfromenv, false)) redirect += "vc-get-tty " + quote(tty) + "\n";
 		if (stderr_log) redirect += "fdmove -c 4 2\n";
 		redirect += "open-controlling-tty";
 		if (is_bool_true(ttyvhangup, false)) 
@@ -1074,9 +1278,6 @@ convert_systemd_units (
 			login_prompt += "login-process --id " + quote(names.substitute(utmpidentifier->last_setting())) + "\n";
 #endif
 	} else {
-		if (ttypath && !is_bool_true(ttyfromenv, false)) redirect += "vc-get-tty " + quote(tty) + "\n";
-		if (stdout_inherit) redirect += "fdmove -c 1 0\n";
-		if (stderr_inherit) redirect += "fdmove -c 2 1\n";
 		if (ttyvhangup) ttyvhangup->used = false;
 		if (ttyreset) ttyreset->used = false;
 		if (ttyprompt) ttyprompt->used = false;
@@ -1085,43 +1286,225 @@ convert_systemd_units (
 #endif
 	}
 	if (bannerfile)
-		login_prompt += "login-banner " + quote(names.substitute(bannerfile->last_setting())) + "\n";
+		greeting_message += "login-banner " + quote(names.substitute(bannerfile->last_setting())) + "\n";
 	if (bannerline)
 		for (std::list<std::string>::const_iterator i(bannerline->all_settings().begin()); bannerline->all_settings().end() != i; ++i) {
 			const std::string & val(*i);
-			login_prompt += "line-banner " + quote(names.substitute(val)) + "\n";
+			greeting_message += "line-banner " + quote(names.substitute(val)) + "\n";
 		}
 
 	// Open the service script files.
 
-	std::ofstream start, stop, restart_script, real_run, real_service, remain;
+	std::ofstream start, stop, restart_script, run, remain;
 	open(prog, start, service_dirname + "/start");
 	open(prog, stop, service_dirname + "/stop");
 	open(prog, restart_script, service_dirname + "/restart");
-	open(prog, real_run, service_dirname + "/run");
-	if (is_socket_activated)
-		open(prog, real_service, service_dirname + "/service");
-	std::ostream & run(is_oneshot ? start : real_run);
-	std::ostream & service(is_socket_activated ? real_service : run);
-	if (is_remain)
-		open(prog, remain, service_dirname + "/remain");
+	open(prog, run, service_dirname + "/run");
 
 	// Write the script files.
 
-	if (!is_oneshot) {
+	std::stringstream perilogue_setup_environment;
+	perilogue_setup_environment << jail;
+	perilogue_setup_environment << control_group;
+	perilogue_setup_environment << priority;
+	if (setuidgidall) perilogue_setup_environment << envuidgid;
+	perilogue_setup_environment << env;
+	perilogue_setup_environment << softlimit;
+	perilogue_setup_environment << um;
+	if (chrootall) perilogue_setup_environment << chroot;
+	perilogue_setup_environment << chdir;
+	perilogue_setup_environment << redirect;
+
+	std::stringstream perilogue_drop_privileges;
+	if (setuidgidall) perilogue_drop_privileges << setuidgid;
+
+	std::stringstream setup_environment;
+	setup_environment << jail;
+	setup_environment << control_group;
+	setup_environment << priority;
+	setup_environment << envuidgid;
+	setup_environment << env;
+	setup_environment << setsid;
+	setup_environment << softlimit;
+	setup_environment << um;
+	setup_environment << chroot;
+	setup_environment << chdir;
+	setup_environment << redirect;
+	if (is_oneshot && runtimedirectory)
+		setup_environment << createrundir;
+
+	std::stringstream drop_privileges;
+	drop_privileges << setuidgid;
+
+	std::stringstream execute_command;
+	execute_command << login_prompt;
+	execute_command << greeting_message;
+	if (is_oneshot) {
+		if (execstartpre) {
+			for (std::list<std::string>::const_iterator i(execstartpre->all_settings().begin()); execstartpre->all_settings().end() != i; ++i ) {
+				execute_command << "foreground "; 
+				execute_command << names.substitute(shell_expand(strip_leading_minus(*i)));
+				execute_command << " ;\n"; 
+			}
+		}
+	}
+	if (execstart) {
+		for (std::list<std::string>::const_iterator i(execstart->all_settings().begin()); execstart->all_settings().end() != i; ) {
+			std::list<std::string>::const_iterator j(i++);
+			if (execstart->all_settings().begin() != j) execute_command << " ;\n"; 
+			if (execstart->all_settings().end() != i) execute_command << "foreground "; 
+			const std::string & val(*j);
+			execute_command << names.substitute(shell_expand(strip_leading_minus(val)));
+		}
+	} else
+		execute_command << (is_remain ? "true" : "pause") << "\n";
+
+	std::ostream & run_or_start(is_oneshot ? start : run);
+	if (is_socket_activated) {
+		start << "#!/bin/nosh\n" << multi_line_comment("Start file generated from " + socket_filename);
+		run << "#!/bin/nosh\n" << multi_line_comment("Run file generated from " + socket_filename);
+		if (socket_description) {
+			for (std::list<std::string>::const_iterator i(socket_description->all_settings().begin()); socket_description->all_settings().end() != i; ++i) {
+				const std::string & val(*i);
+				run_or_start << multi_line_comment(names.substitute(val));
+			}
+		}
+		if (listenstream) {
+			if (is_local_socket_name(listenstream->last_setting())) {
+				run_or_start << "local-stream-socket-listen ";
+				if (!is_socket_accept) run_or_start << "--systemd-compatibility ";
+				if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
+				if (socketmode) run_or_start << "--mode " << quote(names.substitute(socketmode->last_setting())) << " ";
+				if (socketuser) run_or_start << "--user " << quote(names.substitute(socketuser->last_setting())) << " ";
+				if (socketgroup) run_or_start << "--group " << quote(names.substitute(socketgroup->last_setting())) << " ";
+				if (passcredentials) run_or_start << "--pass-credentials ";
+				if (passsecurity) run_or_start << "--pass-security ";
+				run_or_start << quote(names.substitute(listenstream->last_setting())) << "\n";
+			} else {
+				std::string listenaddress, listenport;
+				split_ip_socket_name(names.substitute(listenstream->last_setting()), listenaddress, listenport);
+				run_or_start << "tcp-socket-listen ";
+				if (!is_socket_accept) run_or_start << "--systemd-compatibility ";
+				if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
+#if defined(IPV6_V6ONLY)
+				if (bindipv6only && "both" == tolower(bindipv6only->last_setting())) run_or_start << "--combine4and6 ";
+#endif
+#if defined(SO_REUSEPORT)
+				if (is_bool_true(reuseport, false)) run_or_start << "--reuse-port ";
+#endif
+				if (is_bool_true(freebind, false)) run_or_start << "--bind-to-any ";
+				run_or_start << quote(listenaddress) << " " << quote(listenport) << "\n";
+			}
+		}
+		if (listendatagram) {
+			if (is_local_socket_name(listendatagram->last_setting())) {
+				run_or_start << "local-datagram-socket-listen --systemd-compatibility ";
+				if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
+				if (socketmode) run_or_start << "--mode " << quote(names.substitute(socketmode->last_setting())) << " ";
+				if (socketuser) run_or_start << "--user " << quote(names.substitute(socketuser->last_setting())) << " ";
+				if (socketgroup) run_or_start << "--group " << quote(names.substitute(socketgroup->last_setting())) << " ";
+				if (passcredentials) run_or_start << "--pass-credentials ";
+				if (passsecurity) run_or_start << "--pass-security ";
+				run_or_start << quote(names.substitute(listendatagram->last_setting())) << "\n";
+			} else {
+				std::string listenaddress, listenport;
+				split_ip_socket_name(names.substitute(listendatagram->last_setting()), listenaddress, listenport);
+				run_or_start << "udp-socket-listen --systemd-compatibility ";
+#if defined(IPV6_V6ONLY)
+				if (bindipv6only && "both" == tolower(bindipv6only->last_setting())) run_or_start << "--combine4and6 ";
+#endif
+#if defined(SO_REUSEPORT)
+				if (is_bool_true(reuseport, false)) run_or_start << "--reuse-port ";
+#endif
+				run_or_start << quote(listenaddress) << " " << quote(listenport) << "\n";
+			}
+		}
+		if (listenfifo) {
+			run_or_start << "fifo-listen --systemd-compatibility ";
+#if 0 // This does not apply to FIFOs and we want it to generate a diagnostic when present and unused.
+			if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
+#else
+			if (backlog) backlog->used = false;
+#endif
+			if (socketmode) run_or_start << "--mode " << quote(names.substitute(socketmode->last_setting())) << " ";
+			if (socketuser) run_or_start << "--user " << quote(names.substitute(socketuser->last_setting())) << " ";
+			if (socketgroup) run_or_start << "--group " << quote(names.substitute(socketgroup->last_setting())) << " ";
+#if 0 // This does not apply to FIFOs and we want it to generate a diagnostic when present and unused.
+			if (passcredentials) run_or_start << "--pass-credentials ";
+			if (passsecurity) run_or_start << "--pass-security ";
+#else
+			if (passcredentials) passcredentials->used = false;
+			if (passsecurity) passsecurity->used = false;
+#endif
+			run_or_start << quote(names.substitute(listenfifo->last_setting())) << "\n";
+		}
+		if (listennetlink) {
+			std::string protocol, multicast_group;
+			split_netlink_socket_name(names.substitute(listennetlink->last_setting()), protocol, multicast_group);
+			run_or_start << "netlink-datagram-socket-listen --systemd-compatibility ";
+			if (is_bool_true(netlinkraw, false)) run_or_start << "--raw ";
+			if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
+			if (receivebuffer) run_or_start << "--receive-buffer-size " << quote(receivebuffer->last_setting()) << " ";
+			run_or_start << quote(protocol) << " " << quote(multicast_group) << "\n";
+		}
+		run_or_start << setup_environment.str();
+		run_or_start << drop_privileges.str();
+		if (is_socket_accept) {
+			if (listenstream) {
+				if (is_local_socket_name(listenstream->last_setting())) {
+					run_or_start << "local-stream-socket-accept ";
+					if (maxconnections) run_or_start << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
+					run_or_start << "\n";
+				} else {
+					run_or_start << "tcp-socket-accept ";
+					if (maxconnections) run_or_start << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
+					if (is_bool_true(keepalive, false)) run_or_start << "--keepalives ";
+					if (is_bool_true(nodelay, false)) run_or_start << "--no-delay ";
+					run_or_start << "\n";
+				}
+			}
+		}
+		if (is_ucspirules) {
+			run_or_start << "ucspi-socket-rules-check";
+			if (is_bool_true(socket_logucspirules, service_logucspirules, false))
+				run_or_start << " --verbose";
+			run_or_start << "\n";
+		}
+		run_or_start << "./service\n";
+
+		std::ofstream service;
+		open(prog, service, service_dirname + "/service");
+
+		service << "#!/bin/nosh\n" << multi_line_comment("Service file generated from " + service_filename);
+		if (service_description) {
+			for (std::list<std::string>::const_iterator i(service_description->all_settings().begin()); service_description->all_settings().end() != i; ++i) {
+				const std::string & val(*i);
+				service << multi_line_comment(names.substitute(val));
+			}
+		}
+		service << socket_redirect;
+		service << execute_command.str();
+	} else {
 		start << "#!/bin/nosh\n" << multi_line_comment("Start file generated from " + service_filename);
+		run << "#!/bin/nosh\n" << multi_line_comment("Run file generated from " + service_filename);
+		if (service_description) {
+			for (std::list<std::string>::const_iterator i(service_description->all_settings().begin()); service_description->all_settings().end() != i; ++i) {
+				const std::string & val(*i);
+				run_or_start << multi_line_comment(names.substitute(val));
+			}
+		}
+		run_or_start << setup_environment.str();
+		run_or_start << drop_privileges.str();
+		run_or_start << execute_command.str();
+	}
+	if (is_oneshot) {
+		run << (is_remain ? "true" : "pause") << "\n";
+	} else {
 		if (execstartpre || runtimedirectory) {
-			start << jail;
-			start << priority;
-			if (setuidgidall) start << envuidgid;
-			start << softlimit;
-			start << um;
-			if (chrootall) start << chroot;
-			start << chdir;
-			start << env;
-			start << redirect;
+			start << perilogue_setup_environment.str();
+			start << delegate_control_group;
 			start << createrundir;
-			if (setuidgidall) start << setuidgid;
+			start << perilogue_drop_privileges.str();
 			if (execstartpre) {
 				for (std::list<std::string>::const_iterator i(execstartpre->all_settings().begin()); execstartpre->all_settings().end() != i; ) {
 					std::list<std::string>::const_iterator j(i++);
@@ -1135,181 +1518,7 @@ convert_systemd_units (
 				start << "true\n";
 		} else 
 			start << "true\n";
-	} else {
-		real_run << "#!/bin/nosh\n" << multi_line_comment("Run file generated from " + service_filename);
-		if (!is_remain)
-			real_run << "pause\n";
-		else
-			real_run << "true\n";
 	}
-
-	if (is_socket_activated) {
-		run << "#!/bin/nosh\n" << multi_line_comment("Run file generated from " + socket_filename);
-		if (socket_description) {
-			for (std::list<std::string>::const_iterator i(socket_description->all_settings().begin()); socket_description->all_settings().end() != i; ++i) {
-				const std::string & val(*i);
-				run << multi_line_comment(names.substitute(val));
-			}
-		}
-		std::stringstream s;
-		s << jail;
-		s << priority;
-		s << envuidgid;
-		s << setsid;
-		s << softlimit;
-		s << um;
-		s << chroot;
-		s << chdir;
-		s << env;
-		s << redirect;
-		s << setuidgid;
-		if (listenstream) {
-			if (is_local_socket_name(listenstream->last_setting())) {
-				run << "local-stream-socket-listen --systemd-compatibility ";
-				if (backlog) run << "--backlog " << quote(backlog->last_setting()) << " ";
-				if (socketmode) run << "--mode " << quote(names.substitute(socketmode->last_setting())) << " ";
-				if (socketuser) run << "--user " << quote(names.substitute(socketuser->last_setting())) << " ";
-				if (socketgroup) run << "--group " << quote(names.substitute(socketgroup->last_setting())) << " ";
-				if (passcredentials) run << "--pass-credentials ";
-				if (passsecurity) run << "--pass-security ";
-				run << quote(names.substitute(listenstream->last_setting())) << "\n";
-				run << s.str();
-				if (is_socket_accept) {
-					run << "local-stream-socket-accept ";
-					if (maxconnections) run << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
-					run << "\n";
-				}
-			} else {
-				std::string listenaddress, listenport;
-				split_ip_socket_name(listenstream->last_setting(), listenaddress, listenport);
-				run << "tcp-socket-listen --systemd-compatibility ";
-				if (backlog) run << "--backlog " << quote(backlog->last_setting()) << " ";
-#if defined(IPV6_V6ONLY)
-				if (bindipv6only && "both" == tolower(bindipv6only->last_setting())) run << "--combine4and6 ";
-#endif
-#if defined(SO_REUSEPORT)
-				if (is_bool_true(reuseport, false)) run << "--reuse-port ";
-#endif
-				if (is_bool_true(freebind, false)) run << "--bind-to-any ";
-				run << quote(listenaddress) << " " << quote(listenport) << "\n";
-				run << s.str();
-				if (is_socket_accept) {
-					run << "tcp-socket-accept ";
-					if (maxconnections) run << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
-					if (is_bool_true(keepalive, false)) run << "--keepalives ";
-					if (is_bool_true(nodelay, false)) run << "--no-delay ";
-					run << "\n";
-				}
-			}
-		}
-		if (listendatagram) {
-			if (is_local_socket_name(listendatagram->last_setting())) {
-				run << "local-datagram-socket-listen --systemd-compatibility ";
-				if (backlog) run << "--backlog " << quote(backlog->last_setting()) << " ";
-				if (socketmode) run << "--mode " << quote(names.substitute(socketmode->last_setting())) << " ";
-				if (socketuser) run << "--user " << quote(names.substitute(socketuser->last_setting())) << " ";
-				if (socketgroup) run << "--group " << quote(names.substitute(socketgroup->last_setting())) << " ";
-				if (passcredentials) run << "--pass-credentials ";
-				if (passsecurity) run << "--pass-security ";
-				run << quote(names.substitute(listendatagram->last_setting())) << "\n";
-				run << s.str();
-			} else {
-				std::string listenaddress, listenport;
-				split_ip_socket_name(listendatagram->last_setting(), listenaddress, listenport);
-				run << "udp-socket-listen --systemd-compatibility ";
-#if defined(IPV6_V6ONLY)
-				if (bindipv6only && "both" == tolower(bindipv6only->last_setting())) run << "--combine4and6 ";
-#endif
-#if defined(SO_REUSEPORT)
-				if (is_bool_true(reuseport, false)) run << "--reuse-port ";
-#endif
-				run << quote(listenaddress) << " " << quote(listenport) << "\n";
-				run << s.str();
-			}
-		}
-		if (listenfifo) {
-			run << "fifo-listen --systemd-compatibility ";
-#if 0 // This does not apply to FIFOs and we want it to generate a diagnostic when present and unused.
-			if (backlog) run << "--backlog " << quote(backlog->last_setting()) << " ";
-#else
-			if (backlog) backlog->used = false;
-#endif
-			if (socketmode) run << "--mode " << quote(names.substitute(socketmode->last_setting())) << " ";
-			if (socketuser) run << "--user " << quote(names.substitute(socketuser->last_setting())) << " ";
-			if (socketgroup) run << "--group " << quote(names.substitute(socketgroup->last_setting())) << " ";
-#if 0 // This does not apply to FIFOs and we want it to generate a diagnostic when present and unused.
-			if (passcredentials) run << "--pass-credentials ";
-			if (passsecurity) run << "--pass-security ";
-#else
-			if (passcredentials) passcredentials->used = false;
-			if (passsecurity) passsecurity->used = false;
-#endif
-			run << quote(names.substitute(listenfifo->last_setting())) << "\n";
-			run << s.str();
-		}
-		if (listennetlink) {
-			std::string protocol, multicast_group;
-			split_netlink_socket_name(listennetlink->last_setting(), protocol, multicast_group);
-			run << "netlink-datagram-socket-listen --systemd-compatibility ";
-			if (is_bool_true(netlinkraw, false)) run << "--raw ";
-			if (backlog) run << "--backlog " << quote(backlog->last_setting()) << " ";
-			if (receivebuffer) run << "--receive-buffer-size " << quote(receivebuffer->last_setting()) << " ";
-			run << quote(protocol) << " " << quote(multicast_group) << "\n";
-			run << s.str();
-		}
-		if (is_bool_true(socket_ucspirules, service_ucspirules, false)) {
-			run << "ucspi-socket-rules-check";
-			if (is_bool_true(socket_logucspirules, service_logucspirules, false))
-				run << " --verbose";
-			run << "\n";
-		}
-		run << "./service\n";
-		service << "#!/bin/nosh\n" << multi_line_comment("Service file generated from " + service_filename);
-	} else
-		run << "#!/bin/nosh\n" << multi_line_comment("Run file generated from " + service_filename);
-	if (service_description) {
-		for (std::list<std::string>::const_iterator i(service_description->all_settings().begin()); service_description->all_settings().end() != i; ++i) {
-			const std::string & val(*i);
-			service << multi_line_comment(names.substitute(val));
-		}
-	}
-	if (is_socket_activated) {
-		if (!is_socket_accept) {
-			if (stdin_socket) service << "fdmove -c 0 3\n";
-		}
-	} else {
-		service << jail;
-		service << priority;
-		service << envuidgid;
-		service << setsid;
-		service << softlimit;
-		service << um;
-		service << chroot;
-		service << chdir;
-		service << env;
-		service << redirect;
-		service << setuidgid;
-		service << login_prompt;
-	}
-	if (is_oneshot) {
-		if (execstartpre) {
-			for (std::list<std::string>::const_iterator i(execstartpre->all_settings().begin()); execstartpre->all_settings().end() != i; ++i ) {
-				service << "foreground "; 
-				service << names.substitute(shell_expand(strip_leading_minus(*i)));
-				service << " ;\n"; 
-			}
-		}
-	}
-	if (execstart) {
-		for (std::list<std::string>::const_iterator i(execstart->all_settings().begin()); execstart->all_settings().end() != i; ) {
-			std::list<std::string>::const_iterator j(i++);
-			if (execstart->all_settings().begin() != j) service << " ;\n"; 
-			if (execstart->all_settings().end() != i) service << "foreground "; 
-			const std::string & val(*j);
-			service << names.substitute(shell_expand(strip_leading_minus(val)));
-		}
-	} else
-		service << (is_remain ? "true" : "pause") << "\n";
 
 	// nosh is not suitable here, since the restart script is passed arguments.
 	restart_script << "#!/bin/sh\n" << multi_line_comment("Restart file generated from " + service_filename);
@@ -1321,16 +1530,8 @@ convert_systemd_units (
 	}
 	if (execrestartpre) {
 		std::stringstream s;
-		s << jail;
-		s << priority;
-		if (setuidgidall) s << envuidgid;
-		s << softlimit;
-		s << um;
-		if (chrootall) s << chroot;
-		s << chdir;
-		s << env;
-		s << redirect;
-		if (setuidgidall) s << setuidgid;
+		s << perilogue_setup_environment.str();
+		s << perilogue_drop_privileges.str();
 		for (std::list<std::string>::const_iterator i(execstartpre->all_settings().begin()); execstartpre->all_settings().end() != i; ) {
 			std::list<std::string>::const_iterator j(i++);
 			if (execstartpre->all_settings().begin() != j) s << " \\;\n"; 
@@ -1340,7 +1541,7 @@ convert_systemd_units (
 		}
 		restart_script << escape_newlines(s.str()) << "\n";
 	}
-	if (restart && "always" == tolower(restart->last_setting())) {
+	if (restart ? "always" == tolower(restart->last_setting()) : !systemd_quirks) {
 		restart_script << "exec true\t# ignore script arguments\n";
 	} else
 	if (!restart || "no" == tolower(restart->last_setting()) || "never" == tolower(restart->last_setting()) ) {
@@ -1382,17 +1583,9 @@ convert_systemd_units (
 
 	stop << "#!/bin/nosh\n" << multi_line_comment("Stop file generated from " + service_filename);
 	if (execstoppost || runtimedirectory) {
-		stop << jail;
-		stop << priority;
-		if (setuidgidall) stop << envuidgid;
-		stop << softlimit;
-		stop << um;
-		if (chrootall) stop << chroot;
+		stop << perilogue_setup_environment.str();
 		stop << removerundir;
-		stop << chdir;
-		stop << env;
-		stop << redirect;
-		if (setuidgidall) stop << setuidgid;
+		stop << perilogue_drop_privileges.str();
 		if (execstoppost) {
 			for (std::list<std::string>::const_iterator i(execstoppost->all_settings().begin()); execstoppost->all_settings().end() != i; ) {
 				std::list<std::string>::const_iterator j(i++);
@@ -1468,6 +1661,9 @@ convert_systemd_units (
 	if (listenfifo) {
 		make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, names.substitute(listenfifo->last_setting()));
 	}
+	flag_file(prog, service_dirname, service_dir_fd, "remain", is_remain);
+	flag_file(prog, service_dirname, service_dir_fd, "use_hangup", is_use_hangup);
+	flag_file(prog, service_dirname, service_dir_fd, "no_kill_signal", !is_use_kill);
 
 	// Issue the final reports.
 

@@ -14,11 +14,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cerrno>
 #include <stdint.h>
 #include <sys/stat.h>
-#if defined(__LINUX__) || defined(__linux__)
-#include "kqueue_linux.h"
-#else
-#include <sys/event.h>
-#endif
+#include "kqueue_common.h"
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -486,13 +482,13 @@ console_ncurses_realizer (
 		throw EXIT_FAILURE;
 	}
 
-	struct kevent p[2];
+	struct kevent p[3];
 	{
 		std::size_t index(0U);
-		EV_SET(&p[index++], fileno(buffer_file), EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE, 0, 0);
-		EV_SET(&p[index++], SIGWINCH, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], fileno(buffer_file), EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE, 0, 0);
+		set_event(&p[index++], SIGWINCH, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 		if (!display_only)
-			EV_SET(&p[index++], STDIN_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
+			set_event(&p[index++], STDIN_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
 		if (0 > kevent(queue, p, index, 0, 0, 0)) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
@@ -543,7 +539,7 @@ console_ncurses_realizer (
 					case ERR:	break;
 					case OK:
 						if (c < 0x01000000) {
-							const uint32_t b(MessageForUCS24(c));
+							const uint32_t b(MessageForUCS3(c));
 							write(input_fd.get(), &b, sizeof b);
 						}
 						break;

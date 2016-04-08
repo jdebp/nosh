@@ -7,7 +7,7 @@ Description=ACPI daemon
 
 [Service]
 ExecStart=%p -f -d
-Restart=always
+StandardInput=socket
 
 [Install]
 WantedBy=workstation.target

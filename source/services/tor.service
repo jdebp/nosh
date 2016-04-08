@@ -9,7 +9,6 @@ Description=TOR daemon
 EnvironmentDirectory=env
 User=_tor
 ExecStart=%p -f "${conf:-/usr/local/etc/%p/%prc}" --RunAsDaemon 0 ${datadir:+--DataDirectory "${datadir}"} ${loglevel:+--+Log "${loglevel}" file "${logfile}"}
-Restart=always
 
 [Install]
 WantedBy=workstation.target

@@ -6,10 +6,8 @@
 Description=OpenStack %p %i server
 
 [Service]
-#EnvironmentFile=-/etc/sysconfig/%p-%i
 EnvironmentDirectory=env
 ExecStart=%p-%i /etc/%p/%i-server.conf
-Restart=always
 
 [Install]
 WantedBy=server.target

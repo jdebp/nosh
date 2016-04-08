@@ -7,7 +7,6 @@ Description=IPv4 mroute daemon
 
 [Service]
 ExecStart=mrouted
-Restart=always
 
 [Install]
 WantedBy=server.target

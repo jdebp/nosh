@@ -7,7 +7,6 @@ Description=monitoring service
 
 [Service]
 ExecStart=%p -I
-Restart=always
 
 [Install]
 WantedBy=workstation.target

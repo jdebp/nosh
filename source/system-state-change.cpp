@@ -32,16 +32,38 @@ stripfast (
 // **************************************************************************
 */
 
+/// FIXME \bug This mechanism cannot work.
+static inline
+int
+query_user_manager_pid()
+{
+	const char * manager_pid(std::getenv("MANAGER_PID"));
+	if (!manager_pid) return getsid(0);
+	const char * old = manager_pid;
+	const long l(std::strtol(manager_pid, const_cast<char **>(&manager_pid), 0));
+	if (*manager_pid || old == manager_pid) return getsid(0);
+	return static_cast<int>(l);
+}
+
 static
 void
-send_signal_to_process_1 ( 
+send_signal_to_manager_process ( 
 	const char * prog,
 	int signo
 ) {
-	if (0 > kill(query_manager_pid(!local_session_mode), signo)) {
-		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kill", std::strerror(error));
-		throw EXIT_FAILURE;
+	if (per_user_mode) {
+		/// FIXME \bug This mechanism is broken.
+		if (0 > kill(query_user_manager_pid(), signo)) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kill", std::strerror(error));
+			throw EXIT_FAILURE;
+		}
+	} else {
+		if (0 > kill(1, signo)) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kill", std::strerror(error));
+			throw EXIT_FAILURE;
+		}
 	}
 }
 
@@ -50,12 +72,7 @@ void
 emergency (
 	const char * prog
 ) {
-	send_signal_to_process_1(
-		prog,
-		// This signal tells process #1 to enter what systemd terms "emergency mode".
-		// We go with systemd since BSD init, upstart, and SystemV init do not have it.
-		SIGRTMIN + 2
-	) ;
+	send_signal_to_manager_process(prog, EMERGENCY_SIGNAL) ;
 }
 
 static inline
@@ -63,19 +80,8 @@ void
 rescue (
 	const char * prog
 ) {
-	// This signal tells process #1 to spawn "system-control start sysinit".
-	send_signal_to_process_1(prog, SIGRTMIN + 10);
-	send_signal_to_process_1(
-		prog,
-		// This signal tells process #1 to enter what BSD terms "single user mode" and what systemd terms "rescue mode".
-#if !defined(__LINUX__) && !defined(__linux__)
-		// On the BSDs, it is SIGTERM.
-		SIGTERM
-#else
-		// On Linux, we go with systemd since upstart and SystemV init do not have it.
-		SIGRTMIN + 1
-#endif
-	) ;
+	send_signal_to_manager_process(prog, SYSINIT_SIGNAL);
+	send_signal_to_manager_process(prog, RESCUE_SIGNAL) ;
 }
 
 static inline
@@ -83,14 +89,8 @@ void
 normal (
 	const char * prog
 ) {
-	// This signal tells process #1 to spawn "system-control start sysinit".
-	send_signal_to_process_1(prog, SIGRTMIN + 10);
-	send_signal_to_process_1(
-		prog,
-		// This signal tells process #1 to enter what BSD terms "multi user mode" and what systemd terms "default mode".
-		// On Linux and BSD, we go with systemd since upstart, BSD init, and SystemV init do not have it.
-		SIGRTMIN + 0
-	) ;
+	send_signal_to_manager_process(prog, SYSINIT_SIGNAL);
+	send_signal_to_manager_process(prog, NORMAL_SIGNAL) ;
 }
 
 static inline
@@ -99,62 +99,30 @@ reboot (
 	const char * prog,
 	bool force
 ) {
-	send_signal_to_process_1(
-		prog,
-		// This signal tells process #1 to shut down and reboot.
-		force ? SIGRTMIN + 15 :
-		// These signals tell process #1 to activate the reboot target.
-#if !defined(__LINUX__) && !defined(__linux__)
-		// On the BSDs, it is SIGINT and overlaps secure-attention-key.
-		SIGINT
-#else
-		// On Linux, we go with systemd since upstart and SystemV init do not have it.
-		SIGRTMIN + 5
-#endif
-	) ;
-}
+	send_signal_to_manager_process(prog, force ? FORCE_REBOOT_SIGNAL : REBOOT_SIGNAL) ;
+} 
 
+#if defined(FORCE_HALT_SIGNAL)
 static inline
 void
 halt (
 	const char * prog,
 	bool force
 ) {
-	send_signal_to_process_1(
-		prog,
-		// This signal tells process #1 to shut down and halt.
-		force ? SIGRTMIN + 13 :
-		// These signals tell process #1 to activate the halt target.
-#if !defined(__LINUX__) && !defined(__linux__)
-		// On the BSDs, it is SIGUSR1.
-		SIGUSR1
-#else
-		// On Linux, we go with systemd since upstart and SystemV init do not have it.
-		SIGRTMIN + 3
-#endif
-	) ;
+	send_signal_to_manager_process(prog, force ? FORCE_HALT_SIGNAL : HALT_SIGNAL) ;
 }
+#endif
 
+#if defined(FORCE_POWEROFF_SIGNAL)
 static inline
 void
 poweroff (
 	const char * prog,
 	bool force
 ) {
-	send_signal_to_process_1(
-		prog,
-		// This signal tells process #1 to shut down and power off.
-		force ? SIGRTMIN + 14 :
-		// These signals tell process #1 to activate the poweroff target.
-#if !defined(__LINUX__) && !defined(__linux__)
-		// On the BSDs, it is SIGUSR2.
-		SIGUSR2
-#else
-		// On Linux, we go with systemd since upstart and SystemV init do not have it.
-		SIGRTMIN + 4
-#endif
-	) ;
+	send_signal_to_manager_process(prog, force ? FORCE_POWEROFF_SIGNAL : POWEROFF_SIGNAL) ;
 }
+#endif
 
 /* System control commands **************************************************
 // **************************************************************************
@@ -170,7 +138,7 @@ reboot_poweroff_halt_command (
 	bool force(stripfast(prog));
 	if (0 == std::strcmp(prog, "boot")) prog = "reboot";
 	try {
-		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
+		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
 		popt::bool_definition force_option('f', "force", "Bypass service shutdown.", force);
 		popt::definition * main_table[] = {
 			&user_option,
@@ -191,8 +159,12 @@ reboot_poweroff_halt_command (
 
 	switch (prog[0]) {
 		case 'r':	reboot(prog, force); break;
+#if defined(FORCE_HALT_SIGNAL)
 		case 'h':	halt(prog, force); break;
+#endif
+#if defined(FORCE_POWEROFF_SIGNAL)
 		case 'p':	poweroff(prog, force); break;
+#endif
 		default:
 			std::fprintf(stderr, "%s: FATAL: %c: %s\n", prog, prog[0], "Unknown action");
 			throw EXIT_FAILURE;
@@ -208,7 +180,7 @@ emergency_rescue_normal_command (
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
-		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
+		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
 		popt::definition * main_table[] = {
 			&user_option
 		};
@@ -247,9 +219,13 @@ init (
 	const char * prog(basename_of(args[0]));
 	enum Action { ///< in order of lowest to highest precedence
 		NORMAL = 0,
+#if defined(FORCE_HALT_SIGNAL)
 		HALT,
+#endif
 		REBOOT,
+#if defined(FORCE_POWEROFF_SIGNAL)
 		POWEROFF,
+#endif
 		UPDATE,
 		RESCUE,
 		EMERGENCY
@@ -258,17 +234,25 @@ init (
 		const char * z(0);
 		bool rescue_mode(false), emergency_mode(false), update_mode(false);
 		bool ignore;
-		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
+		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
+#if defined(__LINUX__) || defined(__linux__)
 		popt::bool_definition rescue_option('s', "single", "Start in rescue mode.", rescue_mode);
 		popt::bool_definition emergency_option('b', "emergency", "Start in emergency mode.", emergency_mode);
+#else
+		popt::bool_definition emergency_option('s', "single", "Start in emergency mode.", emergency_mode);
+#endif
 		popt::bool_definition update_option('o', "update", "Start in update mode.", update_mode);
 		popt::bool_definition autoboot_option('a', 0, "Compatibility option, ignored.", ignore);
 		popt::bool_definition fastboot_option('f', 0, "Compatibility option, ignored.", ignore);
 		popt::string_definition z_option('z', 0, "string", "Compatibility option, ignored.", z);
 		popt::definition * top_table[] = {
 			&user_option,
+#if defined(__LINUX__) || defined(__linux__)
 			&rescue_option,
 			&emergency_option,
+#else
+			&emergency_option,
+#endif
 			&update_option,
 			&autoboot_option,
 			&fastboot_option,
@@ -298,13 +282,17 @@ init (
 			case 's':
 				if (action < RESCUE) action = RESCUE;
 				break;
+#if defined(FORCE_HALT_SIGNAL)
 			case 'H':
 			case 'h':
 				if (action < HALT) action = HALT;
 				break;
+#endif
+#if defined(FORCE_POWEROFF_SIGNAL)
 			case '0':
 				if (action < POWEROFF) action = POWEROFF;
 				break;
+#endif
 			case '6':
 				if (action < REBOOT) action = REBOOT;
 				break;
@@ -351,15 +339,19 @@ init (
 			args.insert(args.end(), 0);
 			next_prog = arg0_of(args);
 			return;
+#if defined(FORCE_POWEROFF_SIGNAL)
 		case POWEROFF:
 			poweroff(prog, false);
 			break;
+#endif
 		case REBOOT:
 			reboot(prog, false);
 			break;
+#if defined(FORCE_HALT_SIGNAL)
 		case HALT:
 			halt(prog, false);
 			break;
+#endif
 		case NORMAL:
 		default:
 			normal(prog);

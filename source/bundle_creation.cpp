@@ -110,3 +110,28 @@ make_mount_interdependencies (
 		if (to_root) break;
 	}
 }
+
+void
+flag_file (
+	const char * prog,
+	const std::string & service_dirname,
+	const FileDescriptorOwner & service_dir_fd,
+	const char * name,
+	bool make
+) {
+	if (make) {
+		const FileDescriptorOwner fd(open_writecreate_at(service_dir_fd.get(), name, 0400));
+		if (0 > fd.get()) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, service_dirname.c_str(), name, std::strerror(error));
+			throw EXIT_FAILURE;
+		}
+	} else {
+		const int rc(unlinkat(service_dir_fd.get(), name, 0));
+		if (0 > rc && ENOENT != errno) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, service_dirname.c_str(), name, std::strerror(error));
+			throw EXIT_FAILURE;
+		}
+	}
+}

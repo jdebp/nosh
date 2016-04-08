@@ -13,7 +13,6 @@ Type=forking
 EnvironmentDirectory=env
 ExecStartPre=sh -c '[ -z "`domainname`" ] && echo "WARNING: NIS domainname(1) is not set."'
 ExecStart=%p ${flags}
-Restart=always
 
 [Install]
 WantedBy=server.target

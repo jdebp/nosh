@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=syslog socket used by local privileged clients to talk to syslog daemons on Linux
+Before=local-syslog.target
+
+[Socket]
+ListenDatagram=/dev/logpriv
+SocketMode=0660
+PassCredentials=yes
+PassSecurity=yes
+
+[Install]
+# We use an indirect dependency from workstation.target.
+# This is so that the run-via-systemd package can disable it at the knee.
+WantedBy=local-syslog.target

@@ -10,7 +10,6 @@ Description=BSD audit daemon
 EnvironmentDirectory=env
 # The daemon should properly clean itself up at SIGTERM; if it does not, that is a bug.
 ExecStart=%p -d ${flags}
-Restart=always
 
 [Install]
 WantedBy=workstation.target

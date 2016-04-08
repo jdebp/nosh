@@ -20,14 +20,26 @@
 <arg choice='req'>--input <replaceable>filename</replaceable></arg>
 <arg choice='req'>--atkeyboard <replaceable>filename</replaceable></arg>
 <arg choice='req'>--sysmouse <replaceable>filename</replaceable></arg>
-<arg choice='req'>--vtfont <replaceable>filename</replaceable></arg>
 <arg choice='req'>--keyboard-map <replaceable>filename</replaceable></arg>
+<arg choice='req'>--font-light-r <replaceable>filename</replaceable></arg>
+<arg choice='req'>--font-light-o <replaceable>filename</replaceable></arg>
+<arg choice='req'>--font-light-i <replaceable>filename</replaceable></arg>
 <arg choice='req'>--font-medium-r <replaceable>filename</replaceable></arg>
 <arg choice='req'>--font-medium-o <replaceable>filename</replaceable></arg>
 <arg choice='req'>--font-medium-i <replaceable>filename</replaceable></arg>
+<arg choice='req'>--font-demibold-r <replaceable>filename</replaceable></arg>
+<arg choice='req'>--font-demibold-o <replaceable>filename</replaceable></arg>
+<arg choice='req'>--font-demibold-i <replaceable>filename</replaceable></arg>
 <arg choice='req'>--font-bold-r <replaceable>filename</replaceable></arg>
 <arg choice='req'>--font-bold-o <replaceable>filename</replaceable></arg>
 <arg choice='req'>--font-bold-i <replaceable>filename</replaceable></arg>
+<arg choice='req'>--vtfont-faint-r <replaceable>filename</replaceable></arg>
+<arg choice='req'>--vtfont-faint-o <replaceable>filename</replaceable></arg>
+<arg choice='req'>--vtfont-faint-i <replaceable>filename</replaceable></arg>
+<arg choice='req'>--vtfont-normal-r <replaceable>filename</replaceable></arg>
+<arg choice='req'>--vtfont-normal-o <replaceable>filename</replaceable></arg>
+<arg choice='req'>--vtfont-normal-i <replaceable>filename</replaceable></arg>
+<arg choice='req'>--vtfont <replaceable>filename</replaceable></arg>
 <arg choice='req'>--quadrant <replaceable>number</replaceable></arg>
 <arg choice='req'>--bold-as-colour</arg>
 <arg choice='req'><replaceable>vcname</replaceable></arg>
@@ -165,25 +177,43 @@ If italic stroke is unavailable, the italic attribute is rendered as <emphasis>o
 <para>
 Fonts are loaded from font files, which may be either in the FreeBSD/PC-BSD "vtfont" format or in the straight 8 by 16 unadorned bitmap format used by FreeBSD's "syscons".
 (To convert an Adobe BDF format font file to "vtfont" format, use the FreeBSD <citerefentry><refentrytitle>vtfontcvt</refentrytitle><manvolnum>1</manvolnum></citerefentry> utility.)
-Font files are specified by the <replaceable>filename</replaceable> in the <arg choice='plain'>--vtfont</arg>, <arg choice='plain'>--font-medium-r</arg>, <arg choice='plain'>--font-medium-o</arg>, <arg choice='plain'>--font-medium-i</arg>, <arg choice='plain'>--font-bold-r</arg>, <arg choice='plain'>--font-bold-o</arg>, and <arg choice='plain'>--font-bold-i</arg> command-line options.
+Font files are specified by the <replaceable>filename</replaceable> in the various font command-line options:
+<arg choice='plain'>--vtfont-faint-r</arg>, 
+<arg choice='plain'>--vtfont-faint-o</arg>, 
+<arg choice='plain'>--vtfont-faint-i</arg>, 
+<arg choice='plain'>--vtfont-normal-r</arg>, 
+<arg choice='plain'>--vtfont-normal-o</arg>, 
+<arg choice='plain'>--vtfont-normal-i</arg>, 
+<arg choice='plain'>--vtfont</arg>, 
+<arg choice='plain'>--font-light-r</arg>, 
+<arg choice='plain'>--font-light-o</arg>, 
+<arg choice='plain'>--font-light-i</arg>, 
+<arg choice='plain'>--font-medium-r</arg>, 
+<arg choice='plain'>--font-medium-o</arg>, 
+<arg choice='plain'>--font-medium-i</arg>, 
+<arg choice='plain'>--font-demibold-r</arg>, 
+<arg choice='plain'>--font-demibold-o</arg>, 
+<arg choice='plain'>--font-demibold-i</arg>,
+<arg choice='plain'>--font-bold-r</arg>, 
+<arg choice='plain'>--font-bold-o</arg>, and
+<arg choice='plain'>--font-bold-i</arg>.
 Fonts must be monospace fonts with a height of 8, 14, 15, or 16 and a width of 8, 9, 12, or 16.
 All glyphs are rendered in a 16 by 16 bounding square, with 8 by 8 pixel fonts doubled to 16 by 16 pixels.
 </para>
 
 <para>
-The weight and slant are encoded via these command-line options, because not all supported font formats include meta-information about weight and slant in the file itself (usually it is encoded in the filename).
-The "vtfont" format does, however.
-It has glyph sets for two different combinations of weight and slant (upright and upright bold)
-To load both sets of glyphs, one can load the font with the <arg choice='plain'>--font-medium-r</arg> and the <arg choice='plain'>--font-bold-r</arg> command-line options.
-Each option individually loads only those glyphs that match the weight and slant that the option specifies, providing fine-grained control of what glyphs are used from what "vtfont" font.
-To load all glyphs from the font with the appropriate weights and slants, without the repetition, use the <arg choice='plain'>--vtfont</arg> command-line option.
+The weight and slant are encoded via these command-line options, because meta-information about weight and slant is not in a font file itself (it usually being encoded in the filename).
+The "vtfont" format has glyph sets for a pair of unspecified weights that are mapped by the command-line option: medium and bold (in the case of "normal") or light and demibold (in the case of "faint").
+The "vtfont" command-line options load both sets of glyphs from the font, with the slant specified by the option.
+The "font" command-line options are the only way to load bitmap fonts.
+When used with "vtfont" fonts, they only load one set of glyphs from the font, with weight and slant as specified by the option, providing fine-grained control of what glyphs are used from what "vtfont" font.
 </para>
 
 <para>
 With no fonts loaded, and for any characters which cannot be found in the loaded fonts, <command>console-fb-realizer</command> "greeks" its output,
 falling back to displaying a blank for any whitespace characters, a box for any C0 or C1 control characters, and a block for all other characters.
 Such "greeking" is of course illegible; and it is recommended that sufficient fonts be loaded in order to render at least the whole of Microsoft's Windows Glyph List 4.
-(One might be tempted to simply cover the OpenType W1G character set instead.
+(One might be tempted to simply cover the OpenType World Glyph Set 1 character set instead.
 Bear in mind that the W1G character set does not include line drawing, block, arrow, and other characters that are commonly employed by TUI systems to draw UI widgets; whereas WGL4 does.)
 </para>
 

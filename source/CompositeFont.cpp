@@ -318,7 +318,6 @@ CombinedFont::ReadGlyph (
 	return 0;
 }
 
-inline
 const uint16_t *
 CombinedFont::ReadGlyph (uint32_t character, bool bold, bool faint, bool italic)
 {

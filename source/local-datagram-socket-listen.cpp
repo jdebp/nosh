@@ -36,8 +36,9 @@ local_datagram_socket_listen (
 	signed long uid(-1), gid(-1), mode(0700);
 	bool has_uid(false), has_gid(false), has_mode(false);
 	const char * user(0), * group(0);
-	bool systemd_compatibility(false), pass_credentials(false), pass_security(false);
+	bool systemd_compatibility(false), upstart_compatibility(false), pass_credentials(false), pass_security(false);
 	try {
+		popt::bool_definition upstart_compatibility_option('\0', "upstart-compatibility", "Set the $UPSTART_FDS and $UPSTART_EVENT environment variables for compatibility with upstart.", upstart_compatibility);
 		popt::bool_definition systemd_compatibility_option('\0', "systemd-compatibility", "Set the $LISTEN_FDS and $LISTEN_PID environment variables for compatibility with systemd.", systemd_compatibility);
 		popt::bool_definition pass_credentials_option('\0', "pass-credentials", "Specify that credentials can be passed over the socket.", pass_credentials);
 		popt::bool_definition pass_security_option('\0', "pass-security", "Specify that security can be passed over the socket.", pass_security);
@@ -47,6 +48,7 @@ local_datagram_socket_listen (
 		popt::string_definition user_option('\0', "user", "number", "Specify the user for the FIFO filename.", user);
 		popt::string_definition group_option('\0', "group", "number", "Specify the group for the FIFO filename.", group);
 		popt::definition * top_table[] = {
+			&upstart_compatibility_option,
 			&systemd_compatibility_option,
 			&pass_credentials_option,
 			&pass_security_option,
@@ -142,17 +144,25 @@ exit_error:
 	}
 #endif
 
-	if (LISTEN_SOCKET_FILENO != s) {
-		if (0 > dup2(s, LISTEN_SOCKET_FILENO)) goto exit_error;
+	const int fd_index(systemd_compatibility ? query_listen_fds_passthrough() : 0);
+	if (LISTEN_SOCKET_FILENO + fd_index != s) {
+		if (0 > dup2(s, LISTEN_SOCKET_FILENO + fd_index)) goto exit_error;
 		close(s);
 	}
-	set_close_on_exec(LISTEN_SOCKET_FILENO, false);
+	set_close_on_exec(LISTEN_SOCKET_FILENO + fd_index, false);
 
+	if (upstart_compatibility) {
+		setenv("UPSTART_EVENTS", "socket", 1);
+		char fd[64];
+		snprintf(fd, sizeof fd, "%u", LISTEN_SOCKET_FILENO + fd_index);
+		setenv("UPSTART_FDS", fd, 1);
+	}
 	if (systemd_compatibility) {
-		setenv("LISTEN_FDS", "1", 1);
-		char pid[64];
-		snprintf(pid, sizeof pid, "%u", getpid());
-		setenv("LISTEN_PID", pid, 1);
+		char buf[64];
+		snprintf(buf, sizeof buf, "%d", fd_index + 1);
+		setenv("LISTEN_FDS", buf, 1);
+		snprintf(buf, sizeof buf, "%u", getpid());
+		setenv("LISTEN_PID", buf, 1);
 	}
 
 	sigprocmask(SIG_SETMASK, &original_signals, 0);

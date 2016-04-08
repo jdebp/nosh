@@ -10,7 +10,6 @@ After=rpcbind.service
 [Service]
 EnvironmentDirectory=env
 ExecStart=mountd
-Restart=always
 
 [Install]
 WantedBy=server.target

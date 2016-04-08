@@ -3,6 +3,7 @@ background
 chdir
 chroot
 clearenv
+delegate-control-group-to
 envdir
 envuidgid
 exec
@@ -17,8 +18,10 @@ line-banner
 local-datagram-socket-listen
 local-stream-socket-listen
 local-stream-socket-accept
+machineenv
 make-private-fs
 monitored-fsck
+move-to-control-group
 nosh
 oom-kill-protect
 pause

@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=NetworkManager dispatcher daemon
+After=local-syslog.target
+
+[Service]
+Type=dbus
+ExecStart=/usr/lib/NetworkManager/nm-dispatcher --debug --persist
+
+[Install]
+WantedBy=workstation.target

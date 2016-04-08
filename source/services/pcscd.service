@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=PC Smart Card daemon
+
+[Service]
+EnvironmentDirectory=env
+User=%p
+RuntimeDirectory=%p
+RuntimeDirectoryMode=0755
+ExecStart=%p --foreground ${config:+--config "${config}"} ${flags}
+
+[Install]
+WantedBy=server.target

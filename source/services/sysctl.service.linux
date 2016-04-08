@@ -8,7 +8,9 @@ Description=sysctl initialization
 [Service]
 Type=oneshot
 ExecStart=sysctl --system
-RemainAfterExit=yes
+# This is a one-shot service that can be re-triggered by starting it again.
+RemainAfterExit=1
+Restart=no
 
 [Install]
 WantedBy=workstation.target

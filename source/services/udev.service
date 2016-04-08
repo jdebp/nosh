@@ -12,6 +12,7 @@ Conflicts=busybox-mdev vdev suckless-mdev
 [Service]
 ExecStart=%pd --debug
 Restart=on-abort
+StandardInput=socket
 
 [Install]
 WantedBy=sysinit.target

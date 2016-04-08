@@ -8,7 +8,6 @@ After=avahi-daemon.service
 
 [Service]
 ExecStart=%p
-Restart=always
 
 [Install]
 WantedBy=workstation.target

@@ -8,7 +8,6 @@ Before=server.target networking.target
 
 [Service]
 Type=oneshot
-RemainAfterExit=true
 EnvironmentDirectory=env
 ExecStart=route add -inet6 2002:e000:: -prefixlen 20 ::1 -reject
 ExecStart=route add -inet6 2002:7f00:: -prefixlen 24 ::1 -reject
@@ -21,6 +20,8 @@ ExecStopPost=route delete -inet6 2002:e000:: -prefixlen 20 ::1
 ExecStopPost=route delete -inet6 2002:7f00:: -prefixlen 24 ::1
 ExecStopPost=route delete -inet6 2002:0000:: -prefixlen 24 ::1
 ExecStopPost=route delete -inet6 2002:ff00:: -prefixlen 24 ::1
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
 Restart=no
 
 [Install]

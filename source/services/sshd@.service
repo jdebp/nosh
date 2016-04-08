@@ -8,7 +8,6 @@ Requires=sshdgenkeys.service
 After=sshdgenkeys.service
 
 [Service]
-Restart=always
 EnvironmentDirectory=env
 RuntimeDirectory=%p
 RuntimeDirectoryMode=0755

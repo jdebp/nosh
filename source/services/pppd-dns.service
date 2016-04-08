@@ -8,8 +8,9 @@ Description=Restore /etc/resolv.conf if the system crashed before the PPP daemon
 [Service]
 Type=oneshot
 ExecStart=-/etc/ppp/ip-down.d/0000userpeerdns
-Restart=never
+# This only has meaningful behaviour at bootstrap, not later.
 RemainAfterExit=yes
+Restart=never
 
 [Install]
 WantedBy=workstation.target

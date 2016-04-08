@@ -1,0 +1,4 @@
+#!/bin/sh -
+system-control preset sysinit.target local-syslog.target
+system-control preset static-networking.target
+system-control preset remote-fs.target remote-fs-pre.target

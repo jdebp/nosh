@@ -8,7 +8,6 @@ Description=boot parameters daemon
 [Service]
 EnvironmentDirectory=env
 ExecStart=bootparamd
-Restart=always
 
 [Install]
 WantedBy=server.target

@@ -10,9 +10,8 @@ Description=HTTP service over IP4/IP6 using Bernstein's publicfile
 [Service]
 EnvironmentUser=publicfile
 LimitNOFILE=20
-LimitData=50000
+LimitDATA=500000
 ExecStart=httpd /home/publicfile/public
-Restart=always
 
 [Install]
 WantedBy=server.target

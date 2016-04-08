@@ -37,6 +37,14 @@ make_mount_interdependencies (
 	const FileDescriptorOwner & bundle_dir_fd,
 	std::string where
 ) ;
+void
+flag_file (
+	const char * prog,
+	const std::string & service_dirname,
+	const FileDescriptorOwner & service_dir_fd,
+	const char * name,
+	bool make
+) ;
 static inline
 bool
 is_root(

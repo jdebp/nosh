@@ -10,7 +10,6 @@ After=syslog.target
 PrivateTmp=true
 WorkingDirectory=/etc/%p/
 ExecStart=%p --config %i.conf
-Restart=always
 LimitNPROC=10
 
 [Install]

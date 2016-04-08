@@ -8,7 +8,6 @@ Description=Apple laptop hot-key daemon
 [Service]
 Type=dbus
 ExecStart=%p -d
-Restart=always
 
 [Install]
 WantedBy=workstation.target

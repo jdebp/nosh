@@ -27,6 +27,7 @@ extern void clearenv ( const char * &, std::vector<const char *> & );
 extern void udp_socket_listen ( const char * &, std::vector<const char *> & );
 extern void udp_socket_connect ( const char * &, std::vector<const char *> & );
 extern void tcp_socket_listen ( const char * &, std::vector<const char *> & );
+extern void tcpserver ( const char * &, std::vector<const char *> & );
 extern void tcp_socket_accept ( const char * &, std::vector<const char *> & );
 extern void tcp_socket_connect ( const char * &, std::vector<const char *> & );
 extern void ulimit ( const char * &, std::vector<const char *> & );
@@ -35,6 +36,7 @@ extern void envuidgid ( const char * &, std::vector<const char *> & );
 extern void setuidgid ( const char * &, std::vector<const char *> & );
 extern void setuidgid_fromenv ( const char * &, std::vector<const char *> & );
 extern void userenv ( const char * &, std::vector<const char *> & );
+extern void machineenv ( const char * &, std::vector<const char *> & );
 extern void line_banner ( const char * &, std::vector<const char *> & );
 extern void fdmove ( const char * &, std::vector<const char *> & );
 extern void fdredir ( const char * &, std::vector<const char *> & );
@@ -71,6 +73,8 @@ extern void tai64nlocal ( const char * &, std::vector<const char *> & );
 extern void monitored_fsck ( const char * &, std::vector<const char *> & );
 extern void plug_and_play_event_handler ( const char * &, std::vector<const char *> & );
 extern void oom_kill_protect ( const char * &, std::vector<const char *> & );
+extern void move_to_control_group ( const char * &, std::vector<const char *> & );
+extern void delegate_control_group_to ( const char * &, std::vector<const char *> & );
 
 extern const
 struct command 
@@ -90,6 +94,7 @@ commands[] = {
 	{	"envdir",				envdir				},
 	{	"clearenv",				clearenv			},
 	{	"userenv",				userenv				},
+	{	"machineenv",				machineenv			},
 	{	"ulimit",				ulimit				},
 	{	"softlimit",				softlimit			},
 	{	"envuidgid",				envuidgid			},
@@ -112,6 +117,7 @@ commands[] = {
 	{	"set-mount-object",			set_mount_object		},
 	{	"make-private-fs",			make_private_fs			},
 	{	"fifo-listen",				fifo_listen			},
+	{	"tcpserver",				tcpserver			},
 	{	"tcp-socket-listen",			tcp_socket_listen		},
 	{	"udp-socket-listen",			udp_socket_listen		},
 	{	"local-datagram-socket-listen",		local_datagram_socket_listen	},
@@ -125,6 +131,8 @@ commands[] = {
 	{	"monitored-fsck",			monitored_fsck			},
 	{	"plug-and-play-event-handler",		plug_and_play_event_handler	},
 	{	"oom-kill-protect",			oom_kill_protect		},
+	{	"move-to-control-group",		move_to_control_group		},
+	{	"delegate-control-group-to",		delegate_control_group_to	},
 
 	// Terminals
 	{	"pause",				pause				},

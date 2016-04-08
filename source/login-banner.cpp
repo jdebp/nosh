@@ -13,10 +13,17 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sys/types.h>
 #include <sys/param.h>
 #include <unistd.h>
+#if defined(__LINUX__) || defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
 #include <utmpx.h>
+#elif defined(__OpenBSD__)
+#include <utmp.h>
+#else
+#error "Don't know how to count logged in users on your platform."
+#endif
 #include <paths.h>
 #include "popt.h"
 #include "ttyname.h"
+#include "FileStar.h"
 #include "utils.h"
 
 /* Filename manipulation ****************************************************
@@ -43,28 +50,28 @@ strip_dev (
 
 static inline
 unsigned long
-count_users(
-	const char * utmp_filename
-) {
+count_users() 
+{
 	unsigned long count(0);
-#if defined(_PATH_UTMP)
-	if (FILE * const file = std::fopen(utmp_filename, "r")) {
-		for (;;) {
-			struct utmpx u;
-			const size_t n(std::fread(&u, sizeof u, 1, file));
-			if (n < 1) break;
-			if (USER_PROCESS == u.ut_type) ++count;
-		}
-		std::fclose(file);
-	}
-#else
-	if (utmp_filename)
-		setutxdb(UTXDB_ACTIVE, utmp_filename);
+#if defined(__LINUX__) || defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
+	setutxent();
 	while (struct utmpx * u = getutxent()) {
 		if (USER_PROCESS == u->ut_type) 
 			++count;
 	}
 	endutxent();
+#elif defined(__OpenBSD__)
+	if (FILE * const file = std::fopen(_PATH_UTMP, "r")) {
+		for (;;) {
+			struct utmp u;
+			const size_t n(std::fread(&u, sizeof u, 1, file));
+			if (n < 1) break;
+			if (u.ut_name[0]) ++count;
+		}
+		std::fclose(file);
+	}
+#else
+#error "Don't know how to count logged in users on your platform."
 #endif
 	return count;
 }
@@ -76,25 +83,21 @@ write_escape (
 	const char * line,
 	const std::time_t & now,
 	const unsigned long users,
-#if !defined(_GNU_SOURCE)
-	const char domainname[],
-#endif
+	const std::string & pretty_name,
+	const char * domainname,
 	int c
 ) {
 	switch (c) {
 		case '\\':
 		default:	std::fputc('\\', stdout); std::fputc(c, stdout); break;
 		case EOF:	std::fputc('\\', stdout); break;
+		case 'S':	std::fputs(pretty_name.c_str(), stdout); break;
 		case 's':	std::fputs(uts.sysname, stdout); break;
 		case 'n':	std::fputs(uts.nodename, stdout); break;
 		case 'r':	std::fputs(uts.release, stdout); break;
 		case 'v':	std::fputs(uts.version, stdout); break;
 		case 'm':	std::fputs(uts.machine, stdout); break;
-#if defined(_GNU_SOURCE)
-		case 'o':	std::fputs(uts.domainname, stdout); break;
-#else
-		case 'o':	std::fputs(domainname, stdout); break;
-#endif
+		case 'o':	if (domainname) std::fputs(domainname, stdout); break;
 		case 'l':	if (line) std::fputs(line, stdout); break;
 		case 'u':
 		case 'U':
@@ -118,23 +121,16 @@ write_escape (
 // **************************************************************************
 */
 
+static const char release_filename[] = "/etc/os-release";
+
 void
 login_banner ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {
-#if defined(_PATH_UTMP)
-	const char * utmp_filename = _PATH_UTMP;
-#else
-	const char * utmp_filename = 0;
-#endif
-
 	const char * prog(basename_of(args[0]));
 	try {
-		popt::string_definition utmp_filename_option('\0', "utmp-filename", "filename", "Specify an alternative utmp filename.", utmp_filename);
-		popt::definition * top_table[] = {
-			&utmp_filename_option
-		};
+		popt::definition * top_table[] = { };
 		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "template-file prog");
 
 		std::vector<const char *> new_args;
@@ -160,30 +156,56 @@ login_banner (
 	const char * line(tty ? strip_dev(tty) : 0);
 	struct utsname uts;
 	uname(&uts);
-	const unsigned long users(count_users(utmp_filename));
+	const unsigned long users(count_users());
 	const std::time_t now(std::time(0));
+	const char * domainname(std::getenv("LOCALDOMAIN"));	// Convention in both the BIND and djbdns DNS clients.
 #if !defined(_GNU_SOURCE)
-	char domainname[MAXHOSTNAMELEN];
-	getdomainname(domainname, sizeof domainname);
+	char domainname_buf[MAXHOSTNAMELEN];
 #endif
+	if (!domainname) {
+#if defined(_GNU_SOURCE)
+		domainname = uts.domainname;
+#else
+		if (0 <= getdomainname(domainname_buf, sizeof domainname_buf))
+			domainname = domainname_buf;
+#endif
+	}
+	std::string pretty_name(uts.sysname);
 
-	if (FILE * const file = std::fopen(issue_filename, "r")) {
-		for (int c(std::fgetc(file)); EOF != c; c = std::fgetc(file)) {
-			if ('\\' == c) {
-				c = std::fgetc(file);
-				write_escape(uts, line, now, users, 
-#if !defined(_GNU_SOURCE)
-						domainname, 
-#endif
-						c);
-			} else
-				std::fputc(c, stdout);
-		}
-		std::fclose(file);
-		std::fflush(stdout);
+	FileStar os_release(std::fopen(release_filename, "r"));
+	if (!os_release) {
+		const int error(errno);
+		if (ENOENT != error)
+			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, release_filename, std::strerror(error));
 	} else {
+		try {
+			std::vector<std::string> env_strings(read_file(os_release));
+			for (std::vector<std::string>::const_iterator i(env_strings.begin()); i != env_strings.end(); ++i) {
+				const std::string & s(*i);
+				const std::string::size_type p(s.find('='));
+				const std::string var(s.substr(0, p));
+				const std::string val(p == std::string::npos ? std::string() : s.substr(p + 1, std::string::npos));
+				if ("PRETTY_NAME" == var)
+					pretty_name = val;
+			}
+		} catch (const char * r) {
+			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, release_filename, r);
+		}
+		os_release = 0;
+	}
+
+	FileStar file(std::fopen(issue_filename, "r"));
+	if (!file) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, issue_filename, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
+	for (int c(std::fgetc(file)); EOF != c; c = std::fgetc(file)) {
+		if ('\\' == c) {
+			c = std::fgetc(file);
+			write_escape(uts, line, now, users, pretty_name, domainname, c);
+		} else
+			std::fputc(c, stdout);
+	}
+	std::fflush(stdout);
 }

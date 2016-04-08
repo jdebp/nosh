@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Dummy kernel module auto-loader for Debian compatibility
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=true
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
+Restart=no
+
+[Install]

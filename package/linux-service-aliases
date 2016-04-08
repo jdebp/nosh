@@ -1,3 +1,9 @@
-gnucron	cron
+NetworkManager	network-manager
+debian-cron	cron
+org.cups.cupsd	cups
 org.cups.cups-lpd	lpd
 sshd	ssh
+agetty@ttyS0	ttylogin@ttyS0
+agetty@ttyS1	ttylogin@ttyS1
+agetty@ttyS2	ttylogin@ttyS2
+agetty@ttyS3	ttylogin@ttyS3

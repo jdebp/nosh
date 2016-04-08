@@ -9,7 +9,7 @@ build:
 # The Debian package builder targets this in order to clean the build areas.
 clean:
 	${RM} debian/files debian/substvars
-	for i in guide exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog ; \
+	for i in guide exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims openbsd-shims ucspi-tcp-shims bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog ; \
 	do \
 		${RM} -r debian/nosh-"$$i"/ || exit 1 ; \
 	done
@@ -17,13 +17,12 @@ clean:
 
 # The Debian package builder targets this in order to make the .deb files.
 binary: stage control
-	for i in exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims guide bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog ; \
+	for i in exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims openbsd-shims ucspi-tcp-shims guide bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog ; \
 	do \
 		dpkg -b debian/nosh-"$$i" ../ || exit 1 ; \
 	done
 
 stage:
-	install -d -m 0755 debian/tmp/DEBIAN
 	echo Exporting to debian/tmp/
 	package/export debian/tmp/ debian/tmp/ debian/tmp/
 	echo Staging from debian/tmp/
@@ -32,7 +31,7 @@ stage:
 control:
 	${RM} debian/files
 	echo Generating control files
-	for i in exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims guide bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog ; \
+	for i in exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims openbsd-shims ucspi-tcp-shims guide bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog ; \
 	do \
 		install -d -m 0755 debian/nosh-"$$i"/DEBIAN || exit 1 ; \
 	done
@@ -55,7 +54,7 @@ control:
 		dpkg-shlibdeps debian/nosh-"$$i"/usr/local/sbin/* || exit 1 ; \
 		dpkg-gencontrol -pnosh-"$$i" -Pdebian/nosh-"$$i" || exit 1 ; \
 	done
-	for i in guide systemd-shims upstart-shims debian-shims bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog terminal-extras ; \
+	for i in systemd-shims upstart-shims debian-shims openbsd-shims ucspi-tcp-shims guide bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog terminal-extras ; \
 	do \
 		${RM} debian/substvars ; \
 		dpkg-gencontrol -pnosh-"$$i" -Pdebian/nosh-"$$i" || exit 1 ; \
@@ -66,7 +65,7 @@ control:
 		do \
 			if [ -e debian/nosh-"$$i"."$$j" ] ; \
 			then \
-				cp -a debian/nosh-"$$i"."$$j" debian/nosh-"$$i"/DEBIAN/"$$j" || exit 1 ; \
+				cp -p debian/nosh-"$$i"."$$j" debian/nosh-"$$i"/DEBIAN/"$$j" || exit 1 ; \
 			fi ; \
 		done ; \
 	done

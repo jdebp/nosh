@@ -16,6 +16,9 @@ enum {		///< statuses from daemontools-encore
 	encore_status_stopping,
 	encore_status_failed,
 };
+enum {
+	STATUS_BLOCK_SIZE = 39U
+};
 struct service_manager_rpc_message {
 	enum { NOOP = 0, PLUMB, LOAD, MAKE_INPUT_ACTIVATED, UNLOAD, MAKE_PIPE_CONNECTABLE, MAKE_RUN_ON_EMPTY };
 	uint8_t command;

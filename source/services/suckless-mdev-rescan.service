@@ -11,10 +11,11 @@ After=local-fs.target suckless-mdev.service
 [Service]
 Type=oneshot
 ExecStart=smdev -s
+# This only has meaningful behaviour at bootstrap, not later.
+RemainAfterExit=yes
+Restart=never
 # This is an outrageous bodge.
 ExecStartPre=sleep 5
-Restart=never
-RemainAfterExit=true
 
 [Install]
 WantedBy=sysinit.target

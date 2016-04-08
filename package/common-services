@@ -1,5 +1,6 @@
 ModemManager
 NetworkManager
+NetworkManager-dispatcher
 VBoxService
 anacron
 ataidle-log
@@ -21,6 +22,7 @@ console-kit-daemon
 console-multiplexor@head0
 convert_varrun
 chrony
+clamd
 cups-browsed
 darkice
 dcron
@@ -44,11 +46,12 @@ gdm
 genkdmconf
 gitlab-sidekiq
 gitlab-unicorn
-gnucron
+debian-cron
 gogs
 hald
 hostapd
 hostnamed
+kamailio
 kdm@tty7
 kdm@ttyv6
 keepalived
@@ -67,12 +70,13 @@ lxdm
 mailcatcher
 miredo
 miredo-server
+mogilefsd
+mogstored
 mongodb
 monit
 motd-dynamic
 mountd
 moused
-mysql
 nagios
 natd-log
 network-runtime
@@ -106,6 +110,7 @@ owhttpd
 owserver
 packagekit
 pcdm
+pcscd
 pdnsd
 plexmediaserver
 polipo
@@ -148,13 +153,13 @@ swift@object-auditor
 swift@object-replicator
 swift@object-updater
 sysctl
+taiclock
 terminal-emulator@vc1
 terminal-emulator@vc2
 terminal-emulator@vc3
 timedated
 tinydns
 tor
-ttylogin-starter
 udisks
 upower
 virecover

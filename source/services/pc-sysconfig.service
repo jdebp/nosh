@@ -8,7 +8,6 @@ Description=Undocumented PC-BSD service
 [Service]
 ExecStartPre=rm -f -- /run/%p.pipe
 ExecStart=%p-daemon
-Restart=always
 
 [Install]
 WantedBy=workstation.target

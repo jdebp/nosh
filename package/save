@@ -1,5 +1,5 @@
 #!/bin/sh -e
-if [ \! -d package ] || [ \! -d source ]
+if test \! -d package || test \! -d source
 then
 	echo "You are not in the right directory." 1>&2
 	exit 100

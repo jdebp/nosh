@@ -10,7 +10,6 @@ Type=forking
 RuntimeDirectory=%p
 ExecStart=fail2ban-client -f -v start
 ExecStopPost=fail2ban-client -x stop
-Restart=on-abort
 
 [Install]
 WantedBy=server.target

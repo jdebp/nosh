@@ -1,5 +1,5 @@
 #
-# Enable	basic services for the out-of-the-box TrueOS
+# Enable basic services for the out-of-the-box TrueOS
 #
 # This is not a systemd preset.
 # It goes in a special nosh system-manager preset directory.

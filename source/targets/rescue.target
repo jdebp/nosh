@@ -17,6 +17,8 @@ BannerLine=Rescue mode log-in.
 StandardInput=tty
 ExecStart=login
 Restart=always
+# Some job control shells ignore SIGTERM and need an explicit SIGHUP.
+SendSIGHUP=on
 
 [Install]
 StoppedBy=shutdown.target

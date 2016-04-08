@@ -2,6 +2,8 @@
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
 
+# This has been superseded by direct conversion of /etc/fstab to service bundles.
+
 [Unit]
 Description=Filesystem check the %I volume
 DefaultDependencies=false
@@ -12,7 +14,9 @@ After=local-fs-pre.target
 [Service]
 Type=oneshot
 ExecStart=%p -C -p %I
-RemainAfterExit=yes
+# This is a one-shot service that can be re-triggered by starting it again.
+RemainAfterExit=1
+Restart=no
 
 [Install]
 StoppedBy=shutdown.target

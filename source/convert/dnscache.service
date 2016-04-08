@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Bernstein's proxy DNS server daemon, modified to use systemd LISTEN_FDS protocol
+After=network-interfaces.service
+
+[Service]
+EnvironmentDirectory=env
+EnvironmentUser=dnscache-d
+LimitDATA=3000000
+LimitNOFILE=250
+ExecStart=fdredir -r 0 seed %p
+
+[Install]
+WantedBy=workstation.target

@@ -11,7 +11,6 @@ Description=Celery task scheduler
 User=celery
 Group=celery
 ExecStart=celery beat ${app:+-A "${app}"} ${schedule:+--schedule "${schedule}"} ${interval:+--max-interval "${interval}"} ${options}
-Restart=always
 
 [Install]
 WantedBy=multi-user.target

@@ -12,7 +12,6 @@ User=%p
 ExecStartPre=local-%p-setup -u %p -w ${workdir:-/var/%p} -c ${config:-${workdir:-/var/%p}/%p.conf} -f ${forwardconf:-${workdir:-/var/%p}/forward.conf} -a ${anchor:-${workdir:-/var/%p}/root.key} ${forwarders}
 ExecStartPre=%p-anchor -a ${anchor:-${workdir:-/var/%p}/root.key}
 ExecStart=%p -c ${config:-${workdir:-/var/%p}/%p.conf} -d
-Restart=always
 
 [Install]
 WantedBy=workstation.target

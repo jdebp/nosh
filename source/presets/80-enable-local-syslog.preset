@@ -6,5 +6,7 @@
 # It is used by the nosh-run-local-syslog package in order to enable the services themselves.
 #
 
+enable	local-priv-syslog-read.service
+enable	cyclog@local-priv-syslog-read.service
 enable	local-syslog-read.service
 enable	cyclog@local-syslog-read.service

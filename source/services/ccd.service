@@ -6,8 +6,12 @@
 Description=configure the Concatenated Disc Driver
 
 [Service]
+Type=oneshot
 ExecStart=ccdconfig -C -v
+ExecStart=ccdconfig -U -v
+# This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
+Restart=no
 
 [Install]
 WantedBy=sysinit.target

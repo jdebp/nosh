@@ -9,7 +9,6 @@ Description=per-connection git service
 EnvironmentDirectory=env
 User=git-daemon
 ExecStart=/usr/local/libexec/git-core/%p --inetd --base-path "${directory:-/usr/local/git}"
-Restart=always
 
 [Install]
 WantedBy=server.target

@@ -6,9 +6,12 @@ ifchange_follow() {
 	local i l
 	for i
 	do	
-		l="`readlink \"$i\"`" || true
-		test -n "$l" && redo-ifchange "`dirname \"$i\"`/$l"
-		redo-ifchange "$i"
+		while test -n "$i"
+		do
+			redo-ifchange "$i"
+			l="`readlink \"$i\"`" || break
+			i="`dirname \"$i\"`/$l" || break
+		done
 	done
 }
 
@@ -51,7 +54,7 @@ esac
 
 ifchange_follow "${unitfile}"
 
-mkdir -p services.new
+install -d services.new
 
 rm -r -f services.new/"${base}"
 
@@ -74,34 +77,42 @@ case "${base}" in
 ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|cyclog@*) 
 	log=
 	etc=
+	after=
 	;;
 emergency-login@console) 
 	log=
 	etc=--etc-bundle
+	after=
 	;;
 sysinit-log) 
 	log=
 	etc=--etc-bundle
+	after=
 	;;
 mount@*|fsck@*|monitor-fsck-progress)
 	log="../sysinit-log"
 	etc=--etc-bundle
+	after=
 	;;
 devd)
 	log="../${base}-log"
 	etc=--etc-bundle
+	after="log"
 	;;
 udev|udev-trigger-add@*)
 	log="../udev-log"
 	etc=--etc-bundle
+	after="log"
 	;;
 busybox-mdev|busybox-mdev-rescan)
 	log="../busybox-mdev-log"
 	etc=--etc-bundle
+	after="log"
 	;;
 suckless-mdev|suckless-mdev-rescan)
 	log="../suckless-mdev-log"
 	etc=--etc-bundle
+	after="log"
 	;;
 *) 
 	redo-ifchange -- ${etc_services}
@@ -109,9 +120,11 @@ suckless-mdev|suckless-mdev-rescan)
 	then
 		log="../sysinit-log"
 		etc=--etc-bundle
+		after=
 	else
 		log="../cyclog@${base}"
 		etc=
+		after="log"
 	fi
 	;;
 esac
@@ -119,16 +132,17 @@ esac
 ./system-control convert-systemd-units --no-systemd-quirks ${escape} ${etc} --bundle-root services.new/ "${unit}"
 
 test -n "${log}" && ln -s -f "${log}" services.new/"${base}"/log
+test -n "${after}" && ln -s -f "../${after}" services.new/"${base}"/after/
 
 if grep -q "envdir env" services.new/"${base}"/service/start services.new/"${base}"/service/run services.new/"${base}"/service/stop
 then
-	mkdir -m 0755 services.new/"${base}"/service/env
+	install -d -m 0755 services.new/"${base}"/service/env
 fi
 
 if grep -q "ucspi-socket-rules-check" services.new/"${base}"/service/start services.new/"${base}"/service/run services.new/"${base}"/service/stop
 then
-	mkdir -m 0755 services.new/"${base}"/service/ip4 services.new/"${base}"/service/ip4/127.0.0.0_8
-	mkdir -m 0755 services.new/"${base}"/service/ip6 services.new/"${base}"/service/ip6/::1_128 services.new/"${base}"/service/ip6/::ffff:127.0.0.0_104
+	install -d -m 0755 services.new/"${base}"/service/ip4 services.new/"${base}"/service/ip4/10.0.0.0_8 services.new/"${base}"/service/ip4/127.0.0.0_8 services.new/"${base}"/service/ip4/192.168.0.0_16
+	install -d -m 0755 services.new/"${base}"/service/ip6 services.new/"${base}"/service/ip6/::1_128 services.new/"${base}"/service/ip6/::ffff:10.0.0.0_104 services.new/"${base}"/service/ip6/::ffff:127.0.0.0_104 services.new/"${base}"/service/ip6/::ffff:192.168.0.0_112
 fi
 
 case "${base}" in
@@ -180,29 +194,26 @@ console-multiplexor@head0)
 		ln -s -f /run/dev/vc"$i" services.new/"${base}"/service/
 	done
 	;;
-ttylogin@tty[0-9]*)
-	case "`uname`" in
-	Linux)
-		# These services are started on demand by ttylogin-starter.
-		rm -f -- services.new/"${base}"/wanted-by/multi-user
-		;;
-	*BSD)
-		# These services are started on demand by ttylogin-starter.
-		rm -f -- services.new/"${base}"/wanted-by/multi-user
-		;;
-	esac
+http[46]d|ftp[46]d)
+	install -m 0644 /dev/null services.new/"${base}"/service/ip4/10.0.0.0_8/allow
+	install -m 0644 /dev/null services.new/"${base}"/service/ip4/127.0.0.0_8/allow
+	install -m 0644 /dev/null services.new/"${base}"/service/ip4/192.168.0.0_16/allow
+	install -m 0644 /dev/null services.new/"${base}"/service/ip6/::1_128/allow
+	install -m 0644 /dev/null services.new/"${base}"/service/ip6/::ffff:10.0.0.0_104/allow
+	install -m 0644 /dev/null services.new/"${base}"/service/ip6/::ffff:127.0.0.0_104/allow
+	install -m 0644 /dev/null services.new/"${base}"/service/ip6/::ffff:192.168.0.0_112/allow
 	;;
 console-fb-realizer@head0)
-	mkdir -m 0755 services.new/"${base}"/service/kbdmaps
-	mkdir -m 0755 services.new/"${base}"/service/fonts
+	install -d -m 0755 services.new/"${base}"/service/kbdmaps
+	install -d -m 0755 services.new/"${base}"/service/fonts
 	;;
 dnscache)
-	mkdir -m 0755 services.new/"${base}"/service/root
-	mkdir -m 0755 services.new/"${base}"/service/root/ip
-	mkdir -m 0755 services.new/"${base}"/service/root/servers
+	install -d -m 0755 services.new/"${base}"/service/root
+	install -d -m 0755 services.new/"${base}"/service/root/ip
+	install -d -m 0755 services.new/"${base}"/service/root/servers
 	;;
 tinydns)
-	mkdir -m 0755 services.new/"${base}"/service/root
+	install -d -m 0755 services.new/"${base}"/service/root
 
 	for i in alias childns ns mx host
 	do
@@ -223,12 +234,12 @@ esac
 if test -e "${name}".tmpfiles 
 then
 	redo-ifchange "${name}".tmpfiles 
-	cp -a "${name}".tmpfiles services.new/"${base}"/service/tmpfiles
+	cp -p "${name}".tmpfiles services.new/"${base}"/service/tmpfiles
 fi
 if test -e "${name}".helper
 then
 	redo-ifchange "${name}".helper
-	cp -a "${name}".helper services.new/"${base}"/service/helper
+	cp -p "${name}".helper services.new/"${base}"/service/helper
 fi
 
 rm -r -f -- "$3"

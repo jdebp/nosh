@@ -7,7 +7,6 @@ Description=Regular background program processing daemon by Thibault Godouet
 
 [Service]
 ExecStart=%p --foreground --nosyslog
-Restart=always
 
 [Install]
 WantedBy=workstation.target

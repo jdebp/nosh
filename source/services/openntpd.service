@@ -8,7 +8,6 @@ Description=OpenBSD NTP daemon
 [Service]
 EnvironmentDirectory=env
 ExecStart=ntpd -d
-Restart=always
 
 [Install]
 WantedBy=workstation.target

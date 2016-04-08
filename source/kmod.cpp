@@ -42,11 +42,13 @@ load_kernel_module (
 		throw EXIT_FAILURE;
 	}
 
-#if !defined(__LINUX__) && !defined(__linux__)
+#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__) || defined(__NetBSD__)
 	args.insert(args.begin(), "-n");
 	args.insert(args.begin(), "kldload");
-#else
+#elif defined(__LINUX__) || defined(__linux__)
 	args.insert(args.begin(), "modprobe");
+#else
+#error "Don't know how to load kernel modules on your platform."
 #endif
 	next_prog = arg0_of(args);
 }
@@ -76,11 +78,13 @@ unload_kernel_module (
 		throw EXIT_FAILURE;
 	}
 
-#if !defined(__LINUX__) && !defined(__linux__)
+#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__) || defined(__NetBSD__)
 	args.insert(args.begin(), "kldunload");
-#else
+#elif defined(__LINUX__) || defined(__linux__)
 	args.insert(args.begin(), "--remove");
 	args.insert(args.begin(), "modprobe");
+#else
+#error "Don't know how to unload kernel modules on your platform."
 #endif
 	next_prog = arg0_of(args);
 }

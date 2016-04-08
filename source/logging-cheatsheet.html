@@ -18,19 +18,19 @@ So if one has obtained the location of the dbus service bundle with <code>system
 <ul>
 
 <li>
-<pre>readlink `system-control find dbus`/log/main</pre>
+<pre>readlink "`system-control find dbus`"/log/main</pre>
 <p>
 Where the log for the dbus service is.
 </p></li>
 
 <li>
-<pre>readlink `system-control find cron`/log/main</pre>
+<pre>readlink "`system-control find cron`"/log/main</pre>
 <p>
 Where the log for the cron service is.
 </p></li>
 
 <li>
-<pre>readlink `system-control find local-syslog-read`/log/main</pre>
+<pre>readlink "`system-control find local-syslog-read`"/log/main</pre>
 <p>
 Where the output of C programs using the old <code>syslog()</code> mechanism is.
 </p>
@@ -59,15 +59,15 @@ Because the devd service has a <code class='filename'>log/main/</code> symbolic 
 </li>
 
 <li>
-<pre>svc -a `system-control find devd`/log/</pre>
+<pre>svc -a "`system-control find devd`"/log/</pre>
 <p>
-Log services can be told to explicitly rotate their output files.
+Log services (running <code class='command'>cyclog</code> or <code class='command'>multilog</code>) can be told to explicitly rotate their output files.
 The major use case for this is to start a fresh <code>current</code> file for following as it is written.
 </p>
 </li>
 
 <li>
-<pre>find `system-control find devd`/log/main/ -type f -mtime -1 -print0 | \
+<pre>find "`system-control find devd`"/log/main/ -type f -mtime -1 -print0 | \
 xargs -0 sort -m -- | \
 tai64nlocal | \
 ${PAGER:-more}</pre>
@@ -78,7 +78,7 @@ The TAI64N timestamp in log files is sortable, and lines are already sorted with
 </li>
 
 <li>
-<pre>tail -F `system-control find dbus`/log/main/current | tai64nlocal</pre>
+<pre>tail -F "`system-control find dbus`"/log/main/current | tai64nlocal</pre>
 <p>
 This command displays the output of a log as it is written.
 The <code>-F</code> option to <code class='command'>tail</code> is the correct one to use, not the <code>-f</code> option.
@@ -86,7 +86,7 @@ The <code>-F</code> option to <code class='command'>tail</code> is the correct o
 </li>
 
 <li>
-<pre>tail -F `system-control find dbus`/log/main/current | \
+<pre>tail -F "`system-control find dbus`"/log/main/current | \
 fgrep --line-buffered 'PackageKit' | \
 tai64nlocal</pre>
 <p>

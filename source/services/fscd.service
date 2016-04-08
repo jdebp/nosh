@@ -9,7 +9,6 @@ Description=FreeBSD service control daemon
 
 [Service]
 ExecStart=%p -v
-Restart=always
 
 [Install]
 WantedBy=workstation.target

@@ -22,53 +22,35 @@
 <refsection><title>Description</title>
 
 <para>
-<command>read-conf</command> reads the file <replaceable>filename</replaceable>,
-constructing a sequence of environment variable assignments, and then attempts
-to chain load <replaceable>next-prog</replaceable> with the
-<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-function.  
-Unless the 
-<arg choice='opt'>--oknofile</arg> 
-command line option is given, then a failure to open the file for reading
-is a fatal error.
-With that option, the failure will be ignored and
-<replaceable>next-prog</replaceable> chain loaded.
+<command>read-conf</command> reads the file <replaceable>filename</replaceable>, constructing a sequence of environment variable assignments, and then attempts to chain load <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+Unless the <arg choice='opt'>--oknofile</arg> command line option is given, then a failure to open the file for reading is a fatal error.
+With that option, the failure will be ignored and <replaceable>next-prog</replaceable> chain loaded.
 </para>
 
 <para>
-<command>read-conf</command> implements a very limited subset of the
-<citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-lexical syntax for shell script files.
-Debian-style configuration files are usually shell script files that consist
-solely of simple variable assignments.
-Variable, command, brace, and parameter substitution are generally not used
-and are not supported by <command>read-conf</command>.
+<command>read-conf</command> implements a very limited subset of the <citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry> lexical syntax for shell script files.
+Debian-style configuration files are usually shell script files that consist solely of simple variable assignments.
+Variable, command, brace, and parameter substitution are generally not used and are not supported by <command>read-conf</command>.
 </para>
 
 <para>
-Each assignment, once read, is split at the first equals character into a
-variable name and its value.  
+Each assignment, once read, is split at the first equals character into a variable name and its value.  
 <command>read-conf</command> sets the environment variable named to the value given.
 </para>
 
 <para>
-Note that assigning an empty value to a variable is not the same as unsetting
-the variable.
+Note that assigning an empty value to a variable is not the same as unsetting the variable.
 </para>
 
 <para>
-If either the variable name or its value contain an equals
-character, counter-intuitive things will happen to the environment.
+If either the variable name or its value contain an equals character, counter-intuitive things will happen to the environment.
 </para>
 
-</refsection><refsection><title>FILE LEXING</title>
+</refsection><refsection><title>File lexing</title>
 
 <para>
 Assignments are normally separated by one or more whitespace characters.  
-Pairs of quotation mark characters will prevent whitespace from being treated
-specially, and the quoted sequence of characters, which can include newlines,
-will form part of one assignment, concatenated with whatever quoted or unquoted
-sequences precede or follow it.
+Pairs of quotation mark characters will prevent whitespace from being treated specially, and the quoted sequence of characters, which can include newlines, will form part of one assignment, concatenated with whatever quoted or unquoted sequences precede or follow it.
 </para>
 
 <para>
@@ -83,17 +65,14 @@ In a non-quotation mark delimited sequence of characters:
 A slash followed by a newline is discarded entirely.
 A slash followed by any other character is that character.  
 This allows one to provide literal slashes, hashes, and quotation marks.
-A hash at the start of a sequence is a line comment, that is discarded along
-with everything that follows it up to and including the end of the line.
+A hash at the start of a sequence is a line comment, that is discarded along with everything that follows it up to and including the end of the line.
 </para>
 
 <para>
-Inside a single-quotation mark delimited sequence of characters
-no characters are discarded or treated specially, except of course
-the single quotation mark that terminates the sequence.
+Inside a single-quotation mark delimited sequence of characters no characters are discarded or treated specially, except of course the single quotation mark that terminates the sequence.
 </para>
 
-<refsection><title>EXAMPLE FILE</title>
+<refsection><title>Example file</title>
 
 <programlisting>
 LANG="C"	# Set the LANG variable.
@@ -105,14 +84,11 @@ SHELL=/"bin"/'sh'	# All one value.
 greeting="Hello there!"
 </programlisting>
 
-</refsection></refsection><refsection><title>BUGS</title>
+</refsection></refsection><refsection><title>Bugs</title>
 
 <para>
-Although not strictly a bug in this program, it is worth noting that the
-GNU C library and the BSD C library both have memory leaks in their <citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>3</manvolnum></citerefentry> functions,
-used by this program.
-You can work around these bugs by ensuring that <replaceable>next-prog</replaceable> is
-not a built-in command (see <citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+Although not strictly a bug in this program, it is worth noting that the GNU C library and the BSD C library both have memory leaks in their <citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>3</manvolnum></citerefentry> functions, used by this program.
+You can work around these bugs by ensuring that <replaceable>next-prog</replaceable> is not a built-in command (see <citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
 </para>
 
 </refsection><refsection><title>See also</title>

@@ -13,8 +13,9 @@ ExecStartPre=touch /var/account/acct
 ExecStartPre=chmod 0644 /var/account/acct
 ExecStart=accton /var/account/acct
 ExecStopPost=accton
+# This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
-Restart=always
+Restart=no
 
 [Install]
 WantedBy=workstation.target

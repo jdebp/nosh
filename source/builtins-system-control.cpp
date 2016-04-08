@@ -11,7 +11,7 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-// These are the built-in commands visible in the session-manager and system-control utililties.
+// These are the built-in commands visible in the per-user-manager and system-control utililties.
 
 extern void init ( const char * & , std::vector<const char *> & ) ;
 extern void reboot_poweroff_halt_command ( const char * & , std::vector<const char *> & ) ;
@@ -43,7 +43,7 @@ extern void nagios_check ( const char * & , std::vector<const char *> & ) ;
 extern void load_kernel_module ( const char * & , std::vector<const char *> & ) ;
 extern void unload_kernel_module ( const char * & , std::vector<const char *> & ) ;
 extern void system_control ( const char * & , std::vector<const char *> & ) ;
-extern void system_manager ( const char * & , std::vector<const char *> & ) ;
+extern void per_user_manager ( const char * & , std::vector<const char *> & ) ;
 extern void service_manager ( const char * & , std::vector<const char *> & ) ;
 extern void setsid ( const char * & , std::vector<const char *> & ) ;
 extern void system_version ( const char * & , std::vector<const char *> & ) ;
@@ -55,24 +55,30 @@ extern void service_is_ok ( const char * &, std::vector<const char *> & );
 extern void service_is_up ( const char * &, std::vector<const char *> & );
 extern void service_status ( const char * &, std::vector<const char *> & );
 extern void service_show ( const char * &, std::vector<const char *> & );
+extern void pipe ( const char * &, std::vector<const char *> & );
+extern void tai64nlocal ( const char * &, std::vector<const char *> & );
+extern void move_to_control_group ( const char * &, std::vector<const char *> & );
 
 extern const
 struct command 
 commands[] = {
 	// These are personalities that are also available as built-in commands in order to prevent surprises.
-	// session-manager forks off instances of this:
-	{	"system-control",	system_control		},
+	// per-user-manager forks off instances of these:
+	{	"system-control",		system_control		},
+	{	"move-to-control-group",	move_to_control_group	},
 	// These simply ameliorate fumble-fingeredness:
-	{	"systemctl",		system_control		},
-	{	"initctl",		system_control		},
-	{	"rcctl",		system_control		},
-	{	"svcadm",		system_control		},
+	{	"systemctl",			system_control		},
+	{	"initctl",			system_control		},
+	{	"rcctl",			system_control		},
+	{	"svcadm",			system_control		},
 	// system-control chains to these from its subcommands:
-	{	"service-is-enabled",	service_is_enabled	},
-	{	"service-is-ok",	service_is_ok		},
-	{	"service-is-up",	service_is_up		},
-	{	"service-show",		service_show		},
-	{	"service-status",	service_status		},
+	{	"service-is-enabled",		service_is_enabled	},
+	{	"service-is-ok",		service_is_ok		},
+	{	"service-is-up",		service_is_up		},
+	{	"service-show",			service_show		},
+	{	"service-status",		service_status		},
+	{	"pipe",				pipe			},
+	{	"tai64nlocal",			tai64nlocal		},
 
 	// These are the system-control subcommands.
 	{	"reboot",			reboot_poweroff_halt_command	},
@@ -126,7 +132,7 @@ const std::size_t num_commands = sizeof commands/sizeof *commands;
 extern const
 struct command 
 personalities[] = {
-	{	"session-manager",	system_manager		},
+	{	"per-user-manager",	per_user_manager	},
 	{	"service-manager",	service_manager		},
 	{	"service-dt-scanner",	service_dt_scanner	},
 	{	"svscan",		service_dt_scanner	},

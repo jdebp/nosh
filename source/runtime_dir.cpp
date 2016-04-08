@@ -11,7 +11,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sys/types.h>
 #include <pwd.h>
 #include <unistd.h>
-#include "common-manager.h"
+#include "runtime-dir.h"
 #include "fdutils.h"
 
 static const std::string slash("/");
@@ -37,11 +37,9 @@ std::string
 login_user_runtime_dir()
 {
 	std::string r("/run/user/");
-#if defined(__LINUX__) || defined(__linux__)
 	if (const char * l = getlogin()) {
 		r += l;
 	} else 
-#endif
 	if (const char * u = std::getenv("USER")) {
 		r += u;
 	} else

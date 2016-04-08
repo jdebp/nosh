@@ -1,0 +1,19 @@
+#!/bin/sh
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+# PROVIDE: service-scanner
+# REQUIRE: FILESYSTEMS service-manager
+# BEFORE: DAEMON
+# KEYWORD: nojail shutdown
+
+. /etc/rc.subr
+
+name="service_manager_svscan"
+rcvar="service_manager_svscan_enable"
+command="/usr/local/bin/service-dt-scanner"
+command_args="/service/ &"
+
+load_rc_config $name
+run_rc_command "$1"

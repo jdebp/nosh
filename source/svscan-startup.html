@@ -17,6 +17,62 @@ Exactly what one uses is beyond the scope of this guide, obviously.
 </p>
 
 <h2>
+Old-style startup under Mewburn <code>rc</code> and OpenBSD <code>rc</code>
+</h2>
+
+<p>
+The package comes supplied with some <code>rc.d</code> scripts that enable one to run the service manager and old-style scanner under Mewburn <code>rc</code> (on FreeBSD, NetBSD, PC-BSD, and others) or under OpenBSD <code>rc</code>.
+</p>
+
+<ul>
+<li><p>
+<code>service-manager</code> is a script that runs runs <code>service-manager</code> via <code>local-datagram-socket-listen</code>.
+</p></li>
+<li><p>
+<code>service-manager-svscan</code> is a script that runs <code>service-dt-scanner</code> against the <code>/service/</code> directory.
+</p></li>
+<li><p>
+<code>service-control-normal</code> is a script that runs <code>system-control</code> with the <code>start normal</code> subcommand.
+</p></li>
+</ul>
+
+<p>
+Under the Mewborn system, all are enabled with the usual <code>_enable</code> variables in <code>/etc/rc.conf</code>.
+What happens at system bootstrap, with these enabled, is:
+</p>
+
+<ol>
+<li><p>
+Mewburn/OpenBSD <code>rc</code> activates the <code>service-manager</code> script, spawning <code>service-manager</code> with an open file descriptor (set up by <code>local-datagram-socket-listen</code>) listening on <code>/run/service-manager/control</code>.
+</p></li>
+<li><p>
+Mewburn/OpenBSD <code>rc</code> activates the <code>service-manager-svscan</code> script, spawning <code>service-dt-scanner /service/</code>.
+</p>
+<ol>
+<li><p>
+<code>service-dt-scanner</code> scans <code>/service/</code> and for every service found it sends a LOAD command to the <code>/run/service-manager/control</code> socket.
+</p></li>
+<li><p>
+<code>service-manager</code> loads and manages the services that <code>service-dt-scanner</code> tells it to.
+</p></li>
+</ol>
+</li>
+<li><p>
+Mewburn/OpenBSD <code>rc</code> activates the <code>system-control-normal</code> script, spawning <code>system-control start normal</code>.
+</p>
+<ol>
+<li><p>
+<code>system-control start</code> finds all of the services wanted-by the <code>normal</code> target, sends a LOAD command for every such service to the <code>/run/service-manager/control</code> socket, and sends a START command.
+(A special cut-out, only in place when the system is configured to run under Mewburn/OpenBSD <code>rc</code>, prevents the <code>sysinit</code> target and its dependencies from being started, on the grounds that the Mewburn/OpenBSD <code>rc</code> takes care of its equivalent.)
+</p></li>
+<li><p>
+<code>service-manager</code> loads and manages the services that <code>system-control start</code> tells it to.
+</p></li>
+</ol>
+</li>
+</ol>
+
+<h2>
 Old-style startup under systemd
 </h2>
 

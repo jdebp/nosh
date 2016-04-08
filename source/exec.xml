@@ -79,6 +79,7 @@ The alternative names are:
 <command>local-datagram-socket-accept</command>,
 <command>local-stream-socket-accept</command>,
 <command>local-stream-socket-listen</command>, 
+<command>machineenv</command>, 
 <command>netlink-datagram-socket-accept</command>,
 <command>nosh</command>,
 <command>prependpath</command>, 

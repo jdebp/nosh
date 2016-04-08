@@ -1,0 +1,26 @@
+#!/bin/sh -e
+if test \! -d package || test \! -d bsd
+then
+	echo "You are not in the right directory." 1>&2
+	exit 100
+fi
+if [ $# -lt 3 ]
+then
+	echo "usage: $0 meta-dir root-dir basename" 1>&2
+	exit 100
+fi
+new_pkg() {
+	pkg create -m "$1" -r "$2" -o ./
+}
+old_pkg() {
+	local version comment maintainer
+	version="`/bin/pwd | sed -E 's/^.*-([[:digit:]][[:alnum:].]*)$/\1/'`"
+#	version="`bsd/tmp/bin/system-control version|awk '{print $3;}'`"
+	maintainer="`sed -n -e '/Maintainer:/s/^Maintainer://p' package/debian/control`"
+	comment="nosh toolset: $i"
+	pkg_create -f "$1/+MANIFEST" -d "$1/+DESC" -D COMMENT="${comment}" -D MAINTAINER="${maintainer}" -D FULLPKGPATH="sysutils/$3" -p / -B "$2" "./$3-${version}.tgz"
+}
+case "`uname`" in
+OpenBSD)	old_pkg "$@" ;;
+*)		new_pkg "$@" ;;
+esac

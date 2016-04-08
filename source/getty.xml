@@ -22,19 +22,7 @@
 <refsection><title>Description</title>
 
 <para>
-<command>getty</command> combines
-<citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>vc-reset-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>login-banner</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>login-process</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-and finally
-<citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-to provide a simple equivalent to the likes of
-<citerefentry><refentrytitle>agetty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-and
-<citerefentry><refentrytitle>mingetty</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-for use with virtual terminal devices.
+<command>getty</command> combines <citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>vc-reset-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>login-banner</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and finally <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>, to provide a simple equivalent to the likes of <citerefentry><refentrytitle>agetty</refentrytitle><manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>mingetty</refentrytitle><manvolnum>1</manvolnum></citerefentry> for use with virtual terminal devices.
 </para>
 
 <para>

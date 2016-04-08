@@ -7,7 +7,6 @@ Description=Kerberos propd slave
 
 [Service]
 ExecStart=%p
-Restart=always
 
 [Install]
 WantedBy=server.target

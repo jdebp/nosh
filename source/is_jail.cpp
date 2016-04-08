@@ -3,7 +3,7 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-#if !defined(__LINUX__) && !defined(__linux__)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #include <unistd.h>
@@ -12,7 +12,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstdlib>
 #include "jail.h"
 
-#if !defined(__LINUX__) && !defined(__linux__)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 static inline
 int			/// \returns standard syscall style return value \retval negative error \retval 0 false \retval positive true
 am_in_bsd_jail ()
@@ -33,7 +33,7 @@ extern
 bool 
 am_in_jail() 
 {
-#if !defined(__LINUX__) && !defined(__linux__)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 	const int r(am_in_bsd_jail());
 	if (r >= 0) return r > 0;
 #endif

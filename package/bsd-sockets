@@ -1,1 +1,4 @@
 kfd
+local-priv-rsyslogd
+local-priv-syslogd
+local-priv-syslog-read

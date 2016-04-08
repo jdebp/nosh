@@ -21,11 +21,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cerrno>
 #include <stdint.h>
 #include <sys/stat.h>
-#if defined(__LINUX__) || defined(__linux__)
-#include "kqueue_linux.h"
-#else
-#include <sys/event.h>
-#endif
+#include "kqueue_common.h"
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -34,6 +30,15 @@ For copyright and licensing terms, see the file named COPYING.
 #include <linux/kd.h>
 #include <linux/input.h>
 #include <endian.h>
+#elif defined(__OpenBSD__)
+#include <sys/endian.h>
+#include <termios.h>
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsdisplay_usl_io.h>
+#include <dev/usb/usb.h>
+#include <dev/usb/usbhid.h>
+#include "ttyutils.h"
+#include "kbdmap_utils.h"
 #else
 #include <sys/mouse.h>
 #include <sys/kbio.h>
@@ -162,17 +167,14 @@ LoadFont (
 ) {
 	FileDescriptorOwner font_fd(open_read_at(AT_FDCWD, name));
 	if (0 > font_fd.get()) {
-		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, std::strerror(error));
-		throw EXIT_FAILURE;
-	}
-	struct stat t;
-	if (0 > fstat(font_fd.get(), &t)) {
 bad_file:
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
+	struct stat t;
+	if (0 > fstat(font_fd.get(), &t)) 
+		goto bad_file;
 
 	bsd_vtfont_header header;
 	if (0 > pread(font_fd.get(), header, 0U)) goto bad_file;
@@ -188,15 +190,16 @@ bad_file:
 		throw EXIT_FAILURE;
 	}
 
-	if (CombinedFont::Font::UPRIGHT != slant) 
-		return;
 	unsigned vtfont_index; 
 	switch (weight) {
-		case CombinedFont::Font::MEDIUM:	vtfont_index = 0U; break;
-		case CombinedFont::Font::BOLD:		vtfont_index = 2U; break;
 		case CombinedFont::Font::LIGHT:
+		case CombinedFont::Font::MEDIUM:	
+			vtfont_index = 0U; 
+			break;
 		case CombinedFont::Font::DEMIBOLD:
-		case CombinedFont::Font::BLACK:
+		case CombinedFont::Font::BOLD:		
+			vtfont_index = 2U; 
+			break;
 		default:
 			return;
 	}
@@ -241,20 +244,21 @@ bad_file:
 namespace {
 struct FontSpec {
 	std::string name;
-	int weight, slant;
+	int weight;	///< -1 means match MEDIUM+BOLD, -2 means match LIGHT+DEMIBOLD
+	CombinedFont::Font::Slant slant;
 };
 
 typedef std::list<FontSpec> FontSpecList;
 
 struct fontspec_definition : public popt::compound_named_definition {
 public:
-	fontspec_definition(char s, const char * l, const char * a, const char * d, FontSpecList & f, int w, int i) : compound_named_definition(s, l, a, d), specs(f), weight(w), slant(i) {}
+	fontspec_definition(char s, const char * l, const char * a, const char * d, FontSpecList & f, int w, CombinedFont::Font::Slant i) : compound_named_definition(s, l, a, d), specs(f), weight(w), slant(i) {}
 	virtual void action(popt::processor &, const char *);
 	virtual ~fontspec_definition();
 protected:
 	FontSpecList & specs;
 	int weight;
-	int slant;
+	CombinedFont::Font::Slant slant;
 };
 }
 
@@ -350,10 +354,6 @@ public:
 
 	uint8_t modifiers() const;
 	uint8_t nolevel_nogroup_noctrl_modifiers() const;
-	std::size_t shiftable_index() const;
-	std::size_t capsable_index() const;
-	std::size_t numable_index() const;
-	std::size_t funcable_index() const;
 	void event(uint16_t, uint8_t, uint32_t);
 	void unlatch();
 	bool num_LED() const { return num_lock(); }
@@ -364,6 +364,7 @@ public:
 	bool compose_LED() const { return false; }
 	bool query_dirty_LEDs() const { return dirty_LEDs; }
 	void clean_LEDs() { dirty_LEDs = false; }
+	std::size_t query_kbdmap_parameter (const uint32_t cmd) const;
 
 protected:
 	static uint32_t bit(unsigned i) { return 1U << i; }
@@ -382,6 +383,10 @@ protected:
 	bool control() const;
 	bool alt() const;
 	bool super() const;
+	std::size_t shiftable_index() const;
+	std::size_t capsable_index() const;
+	std::size_t numable_index() const;
+	std::size_t funcable_index() const;
 };
 }
 
@@ -566,6 +571,21 @@ KeyboardModifierState::unlatch()
 	if (0U != latch_state)
 		dirty_LEDs = true;
 	latch_state = 0U; 
+}
+
+inline
+std::size_t 
+KeyboardModifierState::query_kbdmap_parameter (
+	const uint32_t cmd
+) const {
+	switch (cmd) {
+		default:	return -1U;
+		case 'p':	return 0U;
+		case 'n':	return numable_index();
+		case 'c':	return capsable_index();
+		case 's':	return shiftable_index();
+		case 'f':	return funcable_index();
+	}
 }
 
 /* Window compositing and change buffering **********************************
@@ -762,6 +782,24 @@ dim (
 	dim(c.blue);
 }
 
+static inline
+void
+bright (
+	uint8_t & c
+) {
+	c = c < 0xC0 ? c + 0x40 : 0xff;
+}
+
+static inline
+void
+bright (
+	CharacterCell::colour_type & c
+) {
+	bright(c.red);
+	bright(c.green);
+	bright(c.blue);
+}
+
 /* A virtual terminal back-end **********************************************
 // **************************************************************************
 */
@@ -774,7 +812,7 @@ public:
 	VirtualTerminal(FILE * buffer_file, int input_fd);
 	~VirtualTerminal();
 
-	int query_buffer_fd() const { return fileno(buffer_file); }
+	int query_buffer_fd() const { return fileno(buffer_file.operator FILE *()); }
 	coordinate query_h() const { return h; }
 	coordinate query_w() const { return w; }
 	coordinate query_screen_y() const { return screen_y; }
@@ -792,11 +830,8 @@ public:
 	void set_visible_area(coordinate h, coordinate w);
 	CharacterCell & at(coordinate y, coordinate x) { return cells[static_cast<std::size_t>(y) * w + x]; }
 	void WriteInputMessage(uint32_t);
-	void WriteInputUCS24(uint32_t);
-	void ClearDeadKeys() { dead_keys.clear(); }
 
 protected:
-	typedef std::vector<uint32_t> DeadKeysList;
 	VirtualTerminal(const VirtualTerminal & c);
 	enum { CELL_LENGTH = 16U, HEADER_LENGTH = 16U };
 
@@ -812,7 +847,6 @@ protected:
 	int cursor_state;
 	int pointer_state;
 	std::vector<CharacterCell> cells;
-	DeadKeysList dead_keys;
 };
 }
 
@@ -961,6 +995,410 @@ void
 VirtualTerminal::WriteInputMessage(uint32_t m)
 {
 	write(input_fd.get(), &m, sizeof m);
+}
+
+/* Realizing a virtual terminal onto a set of physical devices **************
+// **************************************************************************
+*/
+
+namespace {
+class Realizer :
+	public Compositor
+{
+public:
+	~Realizer();
+	Realizer(FramebufferIO & f, bool, bool, GraphicsInterface & g, Monospace16x16Font & mf, VirtualTerminal & vt);
+
+	enum { AXIS_W, AXIS_X, AXIS_Y, AXIS_Z, H_SCROLL, V_SCROLL };
+
+	bool display_update_needed() const { return update_needed; }
+	void display_updated() { update_needed = false; }
+	void set_display_update_needed() { update_needed = true; }
+
+	void paint_changed_cells_onto_framebuffer() { do_paint(false); }
+	void paint_all_cells_onto_framebuffer() { do_paint(true); }
+	static coordinate pixel_to_column(unsigned long x) { return x / CHARACTER_PIXEL_WIDTH; }
+	static coordinate pixel_to_row(unsigned long y) { return y / CHARACTER_PIXEL_HEIGHT; }
+
+	void handle_character_input(uint32_t);
+	void handle_mouse_abspos(uint8_t, const uint16_t axis, const unsigned long position, const unsigned long maximum);
+	void handle_mouse_relpos(uint8_t, const uint16_t axis, int32_t amount);
+	void handle_mouse_button(uint8_t, const uint16_t button, const bool value);
+	void handle_screen_key (const uint32_t s, const uint8_t modifiers) ;
+	void handle_system_key (const uint32_t k, const uint8_t modifiers) ;
+	void handle_consumer_key (const uint32_t k, const uint8_t modifiers) ;
+	void handle_extended_key (const uint32_t k, const uint8_t modifiers) ;
+	void handle_function_key (const uint32_t k, const uint8_t modifiers) ;
+
+	void transfer_cursor_pos ();
+	void transfer_cursor_state() { set_cursor_state(vt.query_cursor_state()); }
+	void transfer_pointer_state() { set_pointer_state(vt.query_pointer_state()); }
+	void paint_backdrop ();
+	void position (unsigned quadrant);
+	void compose ();
+
+protected:
+	typedef GraphicsInterface::GlyphBitmapHandle GlyphBitmapHandle;
+	struct GlyphCacheEntry {
+		GlyphCacheEntry(GlyphBitmapHandle ha, uint32_t c, CharacterCell::attribute_type a) : handle(ha), character(c), attributes(a) {}
+		GraphicsInterface::GlyphBitmapHandle handle;
+		uint32_t character;
+		CharacterCell::attribute_type attributes;
+	};
+
+	typedef std::list<GlyphCacheEntry> GlyphCache;
+	enum { MAX_CACHED_GLYPHS = 256U };
+	enum { CHARACTER_PIXEL_WIDTH = 16LU, CHARACTER_PIXEL_HEIGHT = 16LU };
+
+	typedef std::vector<uint32_t> DeadKeysList;
+	DeadKeysList dead_keys;
+
+	const bool faint_as_colour;
+	const bool bold_as_colour;
+	FramebufferIO & fb;
+	GraphicsInterface & gdi;
+	Monospace16x16Font & font;
+	GlyphCache glyph_cache;		///< a recently-used cache of handles to 2-colour bitmaps
+	const GlyphBitmapHandle mouse_glyph_handle;
+	const CharacterCell::colour_type mouse_fg;
+
+	bool update_needed;
+	void do_paint(bool changed);
+
+	GlyphBitmapHandle GetCachedGlyphBitmap(uint32_t character, CharacterCell::attribute_type attributes);
+	void ApplyAttributesToGlyphBitmap(GlyphBitmapHandle handle , CharacterCell::attribute_type attributes);
+	void PlotGreek(GlyphBitmapHandle handle, uint32_t character);
+
+	unsigned long pointer_xpixel, pointer_ypixel;
+	void set_pointer_x(uint8_t);
+	void set_pointer_y(uint8_t);
+	void adjust_mickeys(unsigned long & pos, int d, unsigned long max);
+
+	void ClearDeadKeys() { dead_keys.clear(); }
+
+	VirtualTerminal & vt;
+};
+
+static const CharacterCell::colour_type overscan_fg(0,255,255,255), overscan_bg(0,0,0,0);
+static const CharacterCell overscan_blank(' ', 0U, overscan_fg, overscan_bg);
+
+}
+
+Realizer::Realizer(
+	FramebufferIO & f,
+	bool fc,
+	bool bc,
+	GraphicsInterface & g,
+	Monospace16x16Font & mf,
+	VirtualTerminal & t
+) : 
+	Compositor(pixel_to_row(f.query_yres()), pixel_to_column(f.query_xres())),
+	faint_as_colour(fc),
+	bold_as_colour(bc),
+	fb(f),
+	gdi(g),
+	font(mf),
+	mouse_glyph_handle(gdi.MakeGlyphBitmap()),
+	mouse_fg(31,0xFF,0xFF,0xFF),
+	update_needed(true),
+	pointer_xpixel(0),
+	pointer_ypixel(0),
+	vt(t)
+{
+	mouse_glyph_handle->Plot( 0, 0xFFFF);
+	mouse_glyph_handle->Plot( 1, 0xC003);
+	mouse_glyph_handle->Plot( 2, 0xA005);
+	mouse_glyph_handle->Plot( 3, 0x9009);
+	mouse_glyph_handle->Plot( 4, 0x8811);
+	mouse_glyph_handle->Plot( 5, 0x8421);
+	mouse_glyph_handle->Plot( 6, 0x8241);
+	mouse_glyph_handle->Plot( 7, 0x8181);
+	mouse_glyph_handle->Plot( 8, 0x8181);
+	mouse_glyph_handle->Plot( 9, 0x8241);
+	mouse_glyph_handle->Plot(10, 0x8421);
+	mouse_glyph_handle->Plot(11, 0x8811);
+	mouse_glyph_handle->Plot(12, 0x9009);
+	mouse_glyph_handle->Plot(13, 0xA005);
+	mouse_glyph_handle->Plot(14, 0xC003);
+	mouse_glyph_handle->Plot(15, 0xFFFF);
+}
+
+Realizer::~Realizer()
+{
+	gdi.DeleteGlyphBitmap(mouse_glyph_handle);
+}
+
+inline
+void
+Realizer::ApplyAttributesToGlyphBitmap(GlyphBitmapHandle handle, CharacterCell::attribute_type attributes)
+{
+	if (attributes & CharacterCell::UNDERLINE) {
+		handle->Plot(15, 0xFFFF);
+	}
+	if (attributes & CharacterCell::STRIKETHROUGH) {
+		handle->Plot(7, 0xFFFF);
+		handle->Plot(8, 0xFFFF);
+	}
+	if (attributes & CharacterCell::INVERSE) {
+		for (unsigned row(0U); row < 16U; ++row) handle->Plot(row, ~handle->Row(row));
+	}
+}
+
+inline
+void
+Realizer::PlotGreek(GlyphBitmapHandle handle, uint32_t character)
+{
+	if (0x20 > character || (0xA0 > character && 0x80 <= character)) {
+		// C0 and C1 control characters are boxes.
+		handle->Plot(0, 0xFFFF);
+		handle->Plot(1, 0xFFFF);
+		for (unsigned row(2U); row < 14U; ++row) handle->Plot(row, 0xC003);
+		handle->Plot(14, 0xFFFF);
+		handle->Plot(15, 0xFFFF);
+	} else
+	if (0x20 == character || 0xA0 == character || 0x200B == character) {
+		// Whitespace is blank.
+		for (unsigned row(0U); row < 16U; ++row) handle->Plot(row, 0x0000);
+	} else
+	{
+		// Everything else is greeked.
+		handle->Plot(0, 0);
+		handle->Plot(1, 0);
+		for (unsigned row(2U); row < 14U; ++row) handle->Plot(row, 0x3FFC);
+		handle->Plot(14, 0);
+		handle->Plot(15, 0);
+	}
+}
+
+Realizer::GlyphBitmapHandle 
+Realizer::GetCachedGlyphBitmap(uint32_t character, CharacterCell::attribute_type attributes)
+{
+	// A linear search isn't particularly nice, but we maintain the cache in recently-used order.
+	for (GlyphCache::iterator i(glyph_cache.begin()); glyph_cache.end() != i; ++i) {
+		if (i->character != character || i->attributes != attributes) continue;
+		GlyphBitmapHandle handle(i->handle);
+		glyph_cache.erase(i);
+		glyph_cache.push_front(GlyphCacheEntry(handle, character, attributes));
+		return handle;
+	}
+	GlyphBitmapHandle handle(gdi.MakeGlyphBitmap());
+	if (const uint16_t * const s = font.ReadGlyph(character, CharacterCell::BOLD & attributes, CharacterCell::FAINT & attributes, CharacterCell::ITALIC & attributes))
+		for (unsigned row(0U); row < 16U; ++row) handle->Plot(row, s[row]);
+	else
+		PlotGreek(handle, character);
+	ApplyAttributesToGlyphBitmap(handle, attributes);
+	while (glyph_cache.size() > MAX_CACHED_GLYPHS) {
+		const GlyphCacheEntry e(glyph_cache.back());
+		glyph_cache.pop_back();
+		gdi.DeleteGlyphBitmap(e.handle);
+	}
+	glyph_cache.push_back(GlyphCacheEntry(handle, character, attributes));
+	return handle;
+}
+
+inline
+void
+Realizer::do_paint(bool force)
+{
+	const GraphicsInterface::ScreenBitmapHandle screen(gdi.GetScreenBitmap());
+
+	for (unsigned row(0); row < h; ++row) {
+		for (unsigned col(0); col < w; ++col) {
+			DirtiableCell & c(cur_at(row, col));
+			if (!force && !c.touched()) continue;
+			CharacterCell::attribute_type font_attributes(c.attributes);
+			CharacterCell::colour_type fg(c.foreground), bg(c.background);
+			if (faint_as_colour) {
+				if (CharacterCell::FAINT & font_attributes) {
+					dim(fg);
+//					dim(bg);
+					font_attributes &= ~CharacterCell::FAINT;
+				}
+			}
+			if (bold_as_colour) {
+				if (CharacterCell::BOLD & font_attributes) {
+					bright(fg);
+//					bright(bg);
+					font_attributes &= ~CharacterCell::BOLD;
+				}
+			}
+			if (is_marked(row, col) && cursor_state > 0) {
+				invert(fg);
+				invert(bg);
+			}
+			// Being invisible is always the same glyph, so we don't cache it.
+			if (CharacterCell::INVISIBLE & font_attributes) {
+				const GlyphBitmapHandle handle(gdi.MakeGlyphBitmap());
+				PlotGreek(handle, 0x20);
+				ApplyAttributesToGlyphBitmap(handle, font_attributes);
+				gdi.BitBLT(screen, handle, row * CHARACTER_PIXEL_HEIGHT, col * CHARACTER_PIXEL_WIDTH, fg, bg);
+				gdi.DeleteGlyphBitmap(handle);
+			} else {
+				const GlyphBitmapHandle handle(GetCachedGlyphBitmap(c.character, font_attributes));
+				gdi.BitBLT(screen, handle, row * CHARACTER_PIXEL_HEIGHT, col * CHARACTER_PIXEL_WIDTH, fg, bg);
+			}
+			if (is_pointer(row, col) && pointer_state > 0)
+				gdi.BitBLTAlpha(screen, mouse_glyph_handle, row * CHARACTER_PIXEL_HEIGHT, col * CHARACTER_PIXEL_WIDTH, mouse_fg);
+			c.untouch();
+		}
+	}
+}
+
+inline
+void
+Realizer::paint_backdrop () 
+{
+	for (unsigned short row(0U); row < query_h(); ++row)
+		for (unsigned short col(0U); col < query_w(); ++col)
+			poke(row, col, overscan_blank);
+}
+
+/// \brief Clip and position the visible portion of the terminal's display buffer.
+inline
+void
+Realizer::position (
+	unsigned quadrant	///< 0, 1, 2, or 3
+) {
+	// Glue the terminal window to the edges of the display screen buffer.
+	const unsigned short screen_y(!(quadrant & 0x02) && vt.query_h() < query_h() ? query_h() - vt.query_h() : 0);
+	const unsigned short screen_x((1U == quadrant || 2U == quadrant) && vt.query_visible_w() < query_w() ? query_w() - vt.query_visible_w() : 0);
+	vt.set_position(screen_y, screen_x);
+	vt.set_visible_area(query_h() - screen_y, query_w() - screen_x);
+}
+
+/// \brief Render the terminal's display buffer onto the display's screen buffer.
+inline
+void
+Realizer::compose () 
+{
+	for (unsigned short row(0U); row < vt.query_visible_h(); ++row)
+		for (unsigned short col(0U); col < vt.query_visible_w(); ++col)
+			poke(row + vt.query_screen_y(), col + vt.query_screen_x(), vt.at(vt.query_visible_y() + row, vt.query_visible_x() + col));
+}
+
+inline
+void
+Realizer::transfer_cursor_pos () 
+{
+	move_cursor(vt.query_cursor_y() - vt.query_visible_y() + vt.query_screen_y(), vt.query_cursor_x() - vt.query_visible_x() + vt.query_screen_x());
+}
+
+inline
+void 
+Realizer::set_pointer_x(
+	uint8_t modifiers
+) {
+	const coordinate col(pixel_to_column(pointer_xpixel));
+	if (change_pointer_col(col)) {
+		vt.WriteInputMessage(MessageForMouseColumn(col, modifiers));
+		update_needed = true;
+	}
+}
+
+inline
+void 
+Realizer::set_pointer_y(
+	uint8_t modifiers
+) {
+	const coordinate row(pixel_to_row(pointer_ypixel));
+	if (change_pointer_row(row)) {
+		vt.WriteInputMessage(MessageForMouseRow(row, modifiers));
+		update_needed = true;
+	}
+}
+
+inline
+void
+Realizer::handle_mouse_abspos(
+	uint8_t modifiers,
+	const uint16_t axis,
+	const unsigned long abspos,
+	const unsigned long maximum
+) {
+	switch (axis) {
+		case AXIS_W:
+			break;
+		case AXIS_X:
+			pointer_xpixel = (abspos * fb.query_xres()) / maximum;
+			set_pointer_x(modifiers);
+			break;
+		case AXIS_Y:
+			pointer_ypixel = (abspos * fb.query_yres()) / maximum;
+			set_pointer_y(modifiers);
+			break;
+		case AXIS_Z:
+			break;
+		default:
+			std::clog << "DEBUG: Unknown axis " << axis << " position " << abspos << "/" << maximum << " absolute\n";
+			break;
+	}
+}
+
+inline
+void
+Realizer::adjust_mickeys(
+	unsigned long & pos, 
+	int d, 
+	unsigned long max
+) {
+	if (d < 0) {
+		if (static_cast<unsigned int>(-d) > pos)
+			pos = 0;
+		else
+			pos += d;
+	} else
+	if (d > 0) {
+		if (max - d < pos)
+			pos = max;
+		else
+			pos += d;
+	}
+}
+
+inline
+void
+Realizer::handle_mouse_relpos(
+	uint8_t modifiers,
+	const uint16_t axis,
+	int32_t amount
+) {
+	switch (axis) {
+		case V_SCROLL:
+			if (amount < -128) amount = -128;
+			if (amount > 127) amount = 127;
+			vt.WriteInputMessage(MessageForMouseWheel(0U, amount, modifiers));
+			break;
+		case H_SCROLL:
+			if (amount < -128) amount = -128;
+			if (amount > 127) amount = 127;
+			vt.WriteInputMessage(MessageForMouseWheel(1U, amount, modifiers));
+			break;
+		case AXIS_W:
+			break;
+		case AXIS_X:
+			adjust_mickeys(pointer_xpixel, amount, fb.query_xres());
+			set_pointer_x(modifiers);
+			break;
+		case AXIS_Y:
+			adjust_mickeys(pointer_ypixel, amount, fb.query_yres());
+			set_pointer_y(modifiers);
+			break;
+		case AXIS_Z:
+			break;
+		default:
+			std::clog << "DEBUG: Unknown axis " << axis << " position " << amount << " relative\n";
+			break;
+	}
+}
+
+inline
+void
+Realizer::handle_mouse_button(
+	uint8_t modifiers,
+	const uint16_t button,
+	const bool value
+) {
+	vt.WriteInputMessage(MessageForMouseButton(button, value, modifiers));
 }
 
 static const
@@ -2089,7 +2527,7 @@ lower_combining_class (
 }
 
 void 
-VirtualTerminal::WriteInputUCS24(uint32_t c)
+Realizer::handle_character_input(uint32_t c)
 {
 	if (UnicodeCategorization::IsMarkEnclosing(c)
 	||  UnicodeCategorization::IsMarkNonSpacing(c)
@@ -2104,7 +2542,7 @@ VirtualTerminal::WriteInputUCS24(uint32_t c)
 		// We must not sort into Unicode combination class order.
 		// ZWNJ is essentially a pass-through mechanism for combiners.
 		for (DeadKeysList::iterator i(dead_keys.begin()); i != dead_keys.end(); i = dead_keys.erase(i))
-			WriteInputMessage(MessageForUCS24(*i));
+			vt.WriteInputMessage(MessageForUCS3(*i));
 	} else
 	if (!dead_keys.empty()) {
 		// Per ISO 9995-3 there are certain C+B=R combinations that apply in addition to the Unicode composition rules.
@@ -2128,310 +2566,236 @@ VirtualTerminal::WriteInputUCS24(uint32_t c)
 		for (DeadKeysList::iterator i(dead_keys.begin()); i != dead_keys.end(); i = dead_keys.erase(i)) {
 			uint32_t s(' ');
 			if (combine_peculiar_non_combiners(*i, s))
-				WriteInputMessage(MessageForUCS24(s));
+				vt.WriteInputMessage(MessageForUCS3(s));
 			else
-				WriteInputMessage(MessageForUCS24(*i));
+				vt.WriteInputMessage(MessageForUCS3(*i));
 		}
 		// This is the final composed key.
-		WriteInputMessage(MessageForUCS24(c));
+		vt.WriteInputMessage(MessageForUCS3(c));
 	} else
 	{
-		WriteInputMessage(MessageForUCS24(c));
+		vt.WriteInputMessage(MessageForUCS3(c));
 	}
 }
 
-/* Realizing a virtual terminal onto a set of physical devices **************
+inline
+void
+Realizer::handle_screen_key (
+	const uint32_t s,
+	const uint8_t modifiers
+) {
+	ClearDeadKeys();
+	vt.WriteInputMessage(MessageForSession(s, modifiers));
+}
+
+inline
+void
+Realizer::handle_system_key (
+	const uint32_t k,
+	const uint8_t modifiers
+) {
+	ClearDeadKeys();
+	vt.WriteInputMessage(MessageForSystemKey(k, modifiers));
+}
+
+inline
+void
+Realizer::handle_consumer_key (
+	const uint32_t k,
+	const uint8_t modifiers
+) {
+	ClearDeadKeys();
+	vt.WriteInputMessage(MessageForConsumerKey(k, modifiers));
+}
+
+inline
+void
+Realizer::handle_extended_key (
+	const uint32_t k,
+	const uint8_t modifiers
+) {
+	ClearDeadKeys();
+	vt.WriteInputMessage(MessageForExtendedKey(k, modifiers));
+}
+
+inline
+void
+Realizer::handle_function_key (
+	const uint32_t k,
+	const uint8_t modifiers
+) {
+	ClearDeadKeys();
+	vt.WriteInputMessage(MessageForFunctionKey(k, modifiers));
+}
+
+/* event HIDs ***************************************************************
 // **************************************************************************
 */
 
+#if defined(HUG_APPLE_EJECT)
+#define HUG_LAST_SYSTEM_KEY	HUG_APPLE_EJECT
+#else
+#define HUG_LAST_SYSTEM_KEY	HUG_SYSTEM_MENU_DOWN
+#endif
+
 namespace {
-class Realizer :
-	public Compositor,
+
+class HIDBase :
 	public KeyboardModifierState
 {
 public:
-	~Realizer();
-	Realizer(FramebufferIO & f, bool, GraphicsInterface & g, Monospace16x16Font & mf, const KeyboardMap & m, VirtualTerminal & vt);
+	HIDBase(const KeyboardMap & m) : map(m) {}
 
-	enum { AXIS_W, AXIS_X, AXIS_Y, AXIS_Z, H_SCROLL, V_SCROLL };
-
-	bool display_update_needed() const { return update_needed; }
-	void display_updated() { update_needed = false; }
-	void set_display_update_needed() { update_needed = true; }
-
-	void paint_changed_cells_onto_framebuffer() { do_paint(false); }
-	void paint_all_cells_onto_framebuffer() { do_paint(true); }
-	static coordinate pixel_to_column(unsigned long x) { return x / CHARACTER_PIXEL_WIDTH; }
-	static coordinate pixel_to_row(unsigned long y) { return y / CHARACTER_PIXEL_HEIGHT; }
-
-	void handle_mouse_abspos(const uint16_t axis, const unsigned long position, const unsigned long maximum);
-	void handle_mouse_relpos(const uint16_t axis, int32_t amount);
-	void handle_mouse_button(const uint16_t button, const bool value);
-	void handle_keyboard (const uint8_t row, const uint8_t col, uint32_t v);
-
-	void transfer_cursor_pos ();
-	void transfer_cursor_state() { set_cursor_state(vt.query_cursor_state()); }
-	void transfer_pointer_state() { set_pointer_state(vt.query_pointer_state()); }
-	void paint_backdrop ();
-	void position (unsigned quadrant);
-	void compose ();
+	void handle_keyboard (Realizer &, const uint8_t row, const uint8_t col, uint32_t v);
+	void handle_keyboard (Realizer &, const uint16_t index, uint32_t v);
 
 protected:
-	typedef GraphicsInterface::GlyphBitmapHandle GlyphBitmapHandle;
-	struct GlyphCacheEntry {
-		GlyphCacheEntry(GlyphBitmapHandle ha, uint32_t c, CharacterCell::attribute_type a) : handle(ha), character(c), attributes(a) {}
-		GraphicsInterface::GlyphBitmapHandle handle;
-		uint32_t character;
-		CharacterCell::attribute_type attributes;
-	};
-
-	typedef std::list<GlyphCacheEntry> GlyphCache;
-	enum { MAX_CACHED_GLYPHS = 256U };
-	enum { CHARACTER_PIXEL_WIDTH = 16LU, CHARACTER_PIXEL_HEIGHT = 16LU };
-
-	const bool faint_as_colour;
-	FramebufferIO & fb;
-	GraphicsInterface & gdi;
-	Monospace16x16Font & font;
-	GlyphCache glyph_cache;		///< a recently-used cache of handles to 2-colour bitmaps
-	const GlyphBitmapHandle mouse_glyph_handle;
-	const CharacterCell::colour_type mouse_fg;
-
-	bool update_needed;
-	void do_paint(bool changed);
-
-	GlyphBitmapHandle GetCachedGlyphBitmap(uint32_t character, CharacterCell::attribute_type attributes);
-	void ApplyAttributesToGlyphBitmap(GlyphBitmapHandle handle , CharacterCell::attribute_type attributes);
-	void PlotGreek(GlyphBitmapHandle handle, uint32_t character);
-
 	const KeyboardMap & map;
 
-	std::size_t query_parameter (const uint32_t cmd);
-
-	unsigned long pointer_xpixel, pointer_ypixel;
-	void set_pointer_x();
-	void set_pointer_y();
-	void adjust_mickeys(unsigned long & pos, int d, unsigned long max);
-
-	VirtualTerminal & vt;
 };
 
-static const CharacterCell::colour_type overscan_fg(0,255,255,255), overscan_bg(0,0,0,0);
-static const CharacterCell overscan_blank(' ', 0U, overscan_fg, overscan_bg);
-
-}
-
-Realizer::Realizer(
-	FramebufferIO & f,
-	bool fc,
-	GraphicsInterface & g,
-	Monospace16x16Font & mf,
-	const KeyboardMap & km,
-	VirtualTerminal & t
-) : 
-	Compositor(pixel_to_row(f.query_yres()), pixel_to_column(f.query_xres())),
-	faint_as_colour(fc),
-	fb(f),
-	gdi(g),
-	font(mf),
-	mouse_glyph_handle(gdi.MakeGlyphBitmap()),
-	mouse_fg(31,0xFF,0xFF,0xFF),
-	update_needed(true),
-	map(km),
-	pointer_xpixel(0),
-	pointer_ypixel(0),
-	vt(t)
+#if !defined(__LINUX__) && !defined(__linux__)
+class USBHIDBase :
+	public HIDBase
 {
-	mouse_glyph_handle->Plot( 0, 0xFFFF);
-	mouse_glyph_handle->Plot( 1, 0xC003);
-	mouse_glyph_handle->Plot( 2, 0xA005);
-	mouse_glyph_handle->Plot( 3, 0x9009);
-	mouse_glyph_handle->Plot( 4, 0x8811);
-	mouse_glyph_handle->Plot( 5, 0x8421);
-	mouse_glyph_handle->Plot( 6, 0x8241);
-	mouse_glyph_handle->Plot( 7, 0x8181);
-	mouse_glyph_handle->Plot( 8, 0x8181);
-	mouse_glyph_handle->Plot( 9, 0x8241);
-	mouse_glyph_handle->Plot(10, 0x8421);
-	mouse_glyph_handle->Plot(11, 0x8811);
-	mouse_glyph_handle->Plot(12, 0x9009);
-	mouse_glyph_handle->Plot(13, 0xA005);
-	mouse_glyph_handle->Plot(14, 0xC003);
-	mouse_glyph_handle->Plot(15, 0xFFFF);
-}
+public:
+	USBHIDBase(const KeyboardMap & km);
 
-Realizer::~Realizer()
-{
-	gdi.DeleteGlyphBitmap(mouse_glyph_handle);
-}
+protected:
+	typedef uint32_t UsageID;
+	enum {
+		USAGE_CONSUMER_AC_PAN	= 0x000C0238,
+	};
 
-inline
-void
-Realizer::ApplyAttributesToGlyphBitmap(GlyphBitmapHandle handle, CharacterCell::attribute_type attributes)
-{
-	if (attributes & CharacterCell::UNDERLINE) {
-		handle->Plot(15, 0xFFFF);
-	}
-	if (attributes & CharacterCell::STRIKETHROUGH) {
-		handle->Plot(7, 0xFFFF);
-		handle->Plot(8, 0xFFFF);
-	}
-	if (attributes & CharacterCell::INVERSE) {
-		for (unsigned row(0U); row < 16U; ++row) handle->Plot(row, ~handle->Row(row));
-	}
-}
-
-inline
-void
-Realizer::PlotGreek(GlyphBitmapHandle handle, uint32_t character)
-{
-	if (0x20 > character || (0xA0 > character && 0x80 <= character)) {
-		// C0 and C1 control characters are boxes.
-		handle->Plot(0, 0xFFFF);
-		handle->Plot(1, 0xFFFF);
-		for (unsigned row(2U); row < 14U; ++row) handle->Plot(row, 0xC003);
-		handle->Plot(14, 0xFFFF);
-		handle->Plot(15, 0xFFFF);
-	} else
-	if (0x20 == character || 0xA0 == character || 0x200B == character) {
-		// Whitespace is blank.
-		for (unsigned row(0U); row < 16U; ++row) handle->Plot(row, 0x0000);
-	} else
-	{
-		// Everything else is greeked.
-		handle->Plot(0, 0);
-		handle->Plot(1, 0);
-		for (unsigned row(2U); row < 14U; ++row) handle->Plot(row, 0x3FFC);
-		handle->Plot(14, 0);
-		handle->Plot(15, 0);
-	}
-}
-
-Realizer::GlyphBitmapHandle 
-Realizer::GetCachedGlyphBitmap(uint32_t character, CharacterCell::attribute_type attributes)
-{
-	// A linear search isn't particularly nice, but we maintain the cache in recently-used order.
-	for (GlyphCache::iterator i(glyph_cache.begin()); glyph_cache.end() != i; ++i) {
-		if (i->character != character || i->attributes != attributes) continue;
-		GlyphBitmapHandle handle(i->handle);
-		glyph_cache.erase(i);
-		glyph_cache.push_front(GlyphCacheEntry(handle, character, attributes));
-		return handle;
-	}
-	GlyphBitmapHandle handle(gdi.MakeGlyphBitmap());
-	if (const uint16_t * const s = font.ReadGlyph(character, CharacterCell::BOLD & attributes, CharacterCell::FAINT & attributes, CharacterCell::ITALIC & attributes))
-		for (unsigned row(0U); row < 16U; ++row) handle->Plot(row, s[row]);
-	else
-		PlotGreek(handle, character);
-	ApplyAttributesToGlyphBitmap(handle, attributes);
-	while (glyph_cache.size() > MAX_CACHED_GLYPHS) {
-		const GlyphCacheEntry e(glyph_cache.back());
-		glyph_cache.pop_back();
-		gdi.DeleteGlyphBitmap(e.handle);
-	}
-	glyph_cache.push_back(GlyphCacheEntry(handle, character, attributes));
-	return handle;
-}
-
-inline
-void
-Realizer::do_paint(bool force)
-{
-	const GraphicsInterface::ScreenBitmapHandle screen(gdi.GetScreenBitmap());
-
-	for (unsigned row(0); row < h; ++row) {
-		for (unsigned col(0); col < w; ++col) {
-			DirtiableCell & c(cur_at(row, col));
-			if (!force && !c.touched()) continue;
-			CharacterCell::attribute_type font_attributes(c.attributes);
-			CharacterCell::colour_type fg(c.foreground), bg(c.background);
-			if (faint_as_colour) {
-				if (CharacterCell::FAINT & font_attributes) {
-					dim(fg);
-					dim(bg);
-					font_attributes &= ~CharacterCell::FAINT;
+	struct ParserContext {
+		struct Item { 
+			Item(uint32_t pd, std::size_t ps): d(pd), s(ps) {}
+			Item() : d(), s() {}
+			uint32_t d; 
+			std::size_t s; 
+		};
+		Item globals[16], locals[16];
+		bool has_min, has_max;
+		ParserContext() : has_min(false), has_max(false) { wipe_globals(); wipe_locals(); }
+		void clear_locals() { wipe_locals(); idents.clear(); has_min = has_max = false; }
+		const Item & logical_minimum() const { return globals[1]; }
+		const Item & logical_maximum() const { return globals[2]; }
+		const Item & report_size() const { return globals[7]; }
+		const Item & report_id() const { return globals[8]; }
+		const Item & report_count() const { return globals[9]; }
+		const Item & usage_minimum() const { return locals[1]; }
+		const Item & usage_maximum() const { return locals[2]; }
+		UsageID ident() const { return ident(usage(), page()); }
+		void add_ident() { idents.push_back(ident()); }
+		UsageID take_variable_ident() { 
+			if (!idents.empty()) {
+				const UsageID v(idents.front());
+				if (idents.size() > 1) idents.pop_front();
+				return v;
+			} else
+			if (has_min) {
+				const UsageID v(ident_minimum());
+				if (has_max && v < ident_maximum()) {
+					// Reset to full size because pages are not min/max boundaries and we don't want page wraparound.
+					locals[1].d = v + 1;
+					locals[1].s = 4;
 				}
-			}
-			if (is_marked(row, col) && cursor_state > 0) {
-				invert(fg);
-				invert(bg);
-			}
-			// Being invisible is always the same glyph, so we don't cache it.
-			if (CharacterCell::INVISIBLE & font_attributes) {
-				const GlyphBitmapHandle handle(gdi.MakeGlyphBitmap());
-				PlotGreek(handle, 0x20);
-				ApplyAttributesToGlyphBitmap(handle, font_attributes);
-				gdi.BitBLT(screen, handle, row * CHARACTER_PIXEL_HEIGHT, col * CHARACTER_PIXEL_WIDTH, fg, bg);
-				gdi.DeleteGlyphBitmap(handle);
-			} else {
-				const GlyphBitmapHandle handle(GetCachedGlyphBitmap(c.character, font_attributes));
-				gdi.BitBLT(screen, handle, row * CHARACTER_PIXEL_HEIGHT, col * CHARACTER_PIXEL_WIDTH, fg, bg);
-			}
-			if (is_pointer(row, col) && pointer_state > 0)
-				gdi.BitBLTAlpha(screen, mouse_glyph_handle, row * CHARACTER_PIXEL_HEIGHT, col * CHARACTER_PIXEL_WIDTH, mouse_fg);
-			c.untouch();
+				return v;
+			} else
+				return ident();
 		}
-	}
-}
+	protected:
+		std::deque<UsageID> idents;
+		static UsageID ident(const Item & u, const Item & p) { return u.s < 3 ? HID_USAGE2(p.d, u.d) : u.d; }
+		const Item & page() const { return globals[0]; }
+		const Item & usage() const { return locals[0]; }
+		UsageID ident_minimum() const { return ident(usage_minimum(), page()); }
+		UsageID ident_maximum() const { return ident(usage_maximum(), page()); }
+		void wipe_locals() { for (std::size_t i(0); i < sizeof locals/sizeof *locals; ++i) locals[i].d = locals[i].s = 0U; }
+		void wipe_globals() { for (std::size_t i(0); i < sizeof globals/sizeof *globals; ++i) globals[i].d = globals[i].s = 0U; }
+	};
+	struct ReportField {
+		static int64_t mm(const ParserContext::Item & control, const ParserContext::Item & value) 
+		{ 
+			const uint32_t control_signbit(1U << (control.s * 8U - 1U));
+			const uint32_t value_signbit(1U << (value.s * 8U - 1U));
+			if ((control.d & control_signbit) && (value.d & value_signbit)) {
+				const uint32_t v(value.d | ~(value_signbit - 1U));
+				return static_cast<int32_t>(v);
+			} else
+				return static_cast<int64_t>(value.d); 
+		}
+		ReportField(std::size_t p, std::size_t l): pos(p), len(l) {}
+		std::size_t pos, len;
+	};
+	struct InputVariable : public ReportField {
+		InputVariable(UsageID i, std::size_t p, std::size_t l, bool r, const ParserContext::Item & mi, const ParserContext::Item & ma): ReportField(p, l), relative(r), ident(i), min(mm(mi, mi)), max(mm(mi, ma)) {}
+		bool relative;
+		UsageID ident;
+		int64_t min, max;
+	};
+	struct InputIndex : public ReportField {
+		InputIndex(std::size_t p, std::size_t l, UsageID umi, UsageID uma, const ParserContext::Item & imi, const ParserContext::Item & ima): ReportField(p, l), min_ident(umi), max_ident(uma), min_index(mm(imi, imi)), max_index(mm(imi, ima)) {}
+		UsageID min_ident, max_ident;
+		int64_t min_index, max_index;
+	};
+	struct InputReportDescription {
+		InputReportDescription() : bits(0U), bytes(0U) {}
+		std::size_t bits, bytes;
+		typedef std::list<InputVariable> Variables;
+		Variables variables;
+		typedef std::list<InputIndex> Indices;
+		Indices array_indices;
+	};
+	struct OutputVariable : public ReportField {
+		OutputVariable(UsageID i, std::size_t p, std::size_t l): ReportField(p, l), ident(i) {}
+		UsageID ident;
+	};
+	struct OutputIndex : public ReportField {
+		OutputIndex(std::size_t p, std::size_t l, UsageID umi, UsageID uma): ReportField(p, l), min_ident(umi), max_ident(uma) {}
+		UsageID min_ident, max_ident;
+	};
+	struct OutputReportDescription {
+		OutputReportDescription() : bits(0U), bytes(0U) {}
+		std::size_t bits, bytes;
+		typedef std::list<OutputVariable> Variables;
+		Variables variables;
+		typedef std::list<OutputIndex> Indices;
+		Indices array_indices;
+	};
+	typedef std::map<uint8_t, InputReportDescription> InputReports;
+	typedef std::map<uint8_t, OutputReportDescription> OutputReports;
+	typedef std::set<uint32_t> KeysPressed;
 
-inline
-void
-Realizer::paint_backdrop () 
-{
-	for (unsigned short row(0U); row < query_h(); ++row)
-		for (unsigned short col(0U); col < query_w(); ++col)
-			poke(row, col, overscan_blank);
-}
+	char buffer[4096];
+	std::size_t offset;
+	bool has_report_ids;
+	InputReports input_reports;
+	OutputReports output_reports;
 
-/// \brief Clip and position the visible portion of the terminal's display buffer.
-inline
-void
-Realizer::position (
-	unsigned quadrant	///< 0, 1, 2, or 3
-) {
-	// Glue the terminal window to the edges of the display screen buffer.
-	const unsigned short screen_y(!(quadrant & 0x02) && vt.query_h() < query_h() ? query_h() - vt.query_h() : 0);
-	const unsigned short screen_x((1U == quadrant || 2U == quadrant) && vt.query_visible_w() < query_w() ? query_w() - vt.query_visible_w() : 0);
-	vt.set_position(screen_y, screen_x);
-	vt.set_visible_area(query_h() - screen_y, query_w() - screen_x);
-}
+	bool read_description(unsigned char * const b, const std::size_t maxlen, const std::size_t actlen);
+	bool IsInRange(const InputVariable & f, uint32_t);
+	uint32_t GetUnsignedField(const ReportField & f, std::size_t);
+	bool IsInRange(const InputVariable & f, int32_t);
+	int32_t GetSignedField(const ReportField & f, std::size_t);
 
-/// \brief Render the terminal's display buffer onto the display's screen buffer.
-inline
-void
-Realizer::compose () 
-{
-	for (unsigned short row(0U); row < vt.query_visible_h(); ++row)
-		for (unsigned short col(0U); col < vt.query_visible_w(); ++col)
-			poke(row + vt.query_screen_y(), col + vt.query_screen_x(), vt.at(vt.query_visible_y() + row, vt.query_visible_x() + col));
-}
+	uint16_t stdbuttons;
+	static unsigned short TranslateStdButton(const unsigned short button);
+	void handle_mouse_movement(Realizer & r, const InputReportDescription & report, const InputVariable & f, const uint16_t axis);
+	void handle_mouse_button(Realizer & r, uint32_t ident, bool down);
 
-inline
-void
-Realizer::transfer_cursor_pos () 
-{
-	move_cursor(vt.query_cursor_y() - vt.query_visible_y() + vt.query_screen_y(), vt.query_cursor_x() - vt.query_visible_x() + vt.query_screen_x());
-}
+	KeysPressed keys;
+	static void handle_key(bool & seen_keyboard, KeysPressed & keys, uint32_t ident, bool down);
+};
+#endif
 
-inline
-std::size_t 
-Realizer::query_parameter (
-	const uint32_t cmd
-) {
-	switch (cmd) {
-		default:	return -1U;
-		case 'p':	return 0U;
-		case 'n':	return numable_index();
-		case 'c':	return capsable_index();
-		case 's':	return shiftable_index();
-		case 'f':	return funcable_index();
-	}
 }
 
 /// Actions can be simple transmissions of an input message, or complex procedures with the input method.
 inline
 void
-Realizer::handle_keyboard (
+HIDBase::handle_keyboard (
+	Realizer & r,
 	const uint8_t row,
 	const uint8_t col,
 	uint32_t v
@@ -2439,17 +2803,17 @@ Realizer::handle_keyboard (
 	if (row >= KBDMAP_ROWS) return;
 	if (col >= KBDMAP_COLS) return;
 	const kbdmap_entry & action(map[row][col]);
-	const std::size_t o(query_parameter(action.cmd));
+	const std::size_t o(query_kbdmap_parameter(action.cmd));
 	if (o >= sizeof action.p/sizeof *action.p) return;
-	const uint32_t cmd(action.p[o]);
+	const uint32_t act(action.p[o] & KBDMAP_ACTION_MASK);
+	const uint32_t cmd(action.p[o] & ~KBDMAP_ACTION_MASK);
 
-	switch (cmd & KBDMAP_ACTION_MASK) {
+	switch (act) {
 		default:	break;
-		case KBDMAP_ACTION_UCS24:
+		case KBDMAP_ACTION_UCS3:
 		{
 			if (v < 1U) break;
-			const uint32_t c(cmd & 0x00FFFFFF);
-			vt.WriteInputUCS24(c);
+			r.handle_character_input(cmd);
 			unlatch();
 			break;
 		}
@@ -2460,16 +2824,11 @@ Realizer::handle_keyboard (
 			event(k, c, v);
 			break;
 		}
-		case 0x06000000:
-		{
-			break;
-		}
 		case KBDMAP_ACTION_SCREEN:
 		{
 			if (v < 1U) break;
 			const uint32_t s((cmd & 0x00FFFF00) >> 8U);
-			vt.ClearDeadKeys();
-			vt.WriteInputMessage(MessageForSession(s, modifiers()));
+			r.handle_screen_key(s, modifiers());
 			unlatch();
 			break;
 		}
@@ -2477,8 +2836,7 @@ Realizer::handle_keyboard (
 		{
 			if (v < 1U) break;
 			const uint32_t k((cmd & 0x00FFFF00) >> 8U);
-			vt.ClearDeadKeys();
-			vt.WriteInputMessage(MessageForSystemKey(k, modifiers()));
+			r.handle_system_key(k, modifiers());
 			unlatch();
 			break;
 		}
@@ -2486,8 +2844,7 @@ Realizer::handle_keyboard (
 		{
 			if (v < 1U) break;
 			const uint32_t k((cmd & 0x00FFFF00) >> 8U);
-			vt.ClearDeadKeys();
-			vt.WriteInputMessage(MessageForConsumerKey(k, modifiers()));
+			r.handle_consumer_key(k, modifiers());
 			unlatch();
 			break;
 		}
@@ -2495,8 +2852,7 @@ Realizer::handle_keyboard (
 		{
 			if (v < 1U) break;
 			const uint32_t k((cmd & 0x00FFFF00) >> 8U);
-			vt.ClearDeadKeys();
-			vt.WriteInputMessage(MessageForExtendedKey(k, modifiers()));
+			r.handle_extended_key(k, modifiers());
 			unlatch();
 			break;
 		}
@@ -2504,8 +2860,7 @@ Realizer::handle_keyboard (
 		{
 			if (v < 1U) break;
 			const uint32_t k((cmd & 0x00FFFF00) >> 8U);
-			vt.ClearDeadKeys();
-			vt.WriteInputMessage(MessageForFunctionKey(k, modifiers()));
+			r.handle_function_key(k, modifiers());
 			unlatch();
 			break;
 		}
@@ -2513,8 +2868,7 @@ Realizer::handle_keyboard (
 		{
 			if (v < 1U) break;
 			const uint32_t k((cmd & 0x00FFFF00) >> 8U);
-			vt.ClearDeadKeys();
-			vt.WriteInputMessage(MessageForFunctionKey(k, nolevel_nogroup_noctrl_modifiers()));
+			r.handle_function_key(k, nolevel_nogroup_noctrl_modifiers());
 			unlatch();
 			break;
 		}
@@ -2522,117 +2876,351 @@ Realizer::handle_keyboard (
 }
 
 inline
-void 
-Realizer::set_pointer_x() 
+void
+HIDBase::handle_keyboard (
+	Realizer & r,
+	const uint16_t index,	///< by common convention, 0xFFFF is bypass
+	uint32_t v
+) {
+	if (0xFFFF == index) return;
+	const uint8_t row(index >> 8U);
+	const uint8_t col(index & 0xFF);
+	handle_keyboard(r, row, col, v);
+}
+
+#if !defined(__LINUX__) && !defined(__linux__)
+inline
+USBHIDBase::USBHIDBase(const KeyboardMap & km) : 
+	HIDBase(km),
+	offset(0U),
+	has_report_ids(false),
+	stdbuttons(0U)
 {
-	const coordinate col(pixel_to_column(pointer_xpixel));
-	if (change_pointer_col(col)) {
-		vt.WriteInputMessage(MessageForMouseColumn(col, modifiers()));
-		update_needed = true;
+}
+
+inline
+unsigned short
+USBHIDBase::TranslateStdButton(
+	const unsigned short button
+) {
+	switch (button) {
+		case 1U:	return 2;
+		case 2U:	return 1;
+		default:	return button;
 	}
 }
 
 inline
-void 
-Realizer::set_pointer_y() 
-{
-	const coordinate row(pixel_to_row(pointer_ypixel));
-	if (change_pointer_row(row)) {
-		vt.WriteInputMessage(MessageForMouseRow(row, modifiers()));
-		update_needed = true;
+uint32_t 
+USBHIDBase::GetUnsignedField(
+	const ReportField & f,
+	std::size_t report_size
+) {
+	if (0U == f.len) return 0U;
+	// Byte-aligned fields can be optimized.
+	if (0U == (f.pos & 7U)) {
+		const std::size_t bytepos(f.pos >> 3U);
+		if (bytepos >= report_size) return 0U;
+		if (f.len <= 8U) {
+			uint8_t v(*reinterpret_cast<const uint8_t *>(buffer + bytepos));
+			if (f.len < 8U) v &= 0xFF >> (8U - f.len);
+			return v;
+		}
+		if (f.len <= 16U) {
+			uint16_t v(le16toh(*reinterpret_cast<const uint16_t *>(buffer + bytepos)));
+			if (f.len < 16U) v &= 0xFFFF >> (16U - f.len);
+			return v;
+		}
+		if (f.len <= 32U) {
+			uint32_t v(le32toh(*reinterpret_cast<const uint32_t *>(buffer + bytepos)));
+			if (f.len < 32U) v &= 0xFFFFFFFF >> (32U - f.len);
+			return v;
+		}
 	}
+	// 1-bit fields can be optimized.
+	if (1U == f.len) {
+		const std::size_t bytepos(f.pos >> 3U);
+		if (bytepos >= report_size) return 0U;
+		const uint8_t v(*reinterpret_cast<const uint8_t *>(buffer + bytepos));
+		return (v >> (f.pos & 7U)) & 1U;
+	}
+	/// \bug FIXME: This doesn't handle unaligned >1-bit fields.
+	return 0U;
+}
+
+inline
+bool 
+USBHIDBase::IsInRange(
+	const InputVariable & f,
+	uint32_t v
+) {
+	return v <= f.max && v >= f.min;
+}
+
+inline
+int32_t 
+USBHIDBase::GetSignedField(
+	const ReportField & f,
+	std::size_t report_size
+) {
+	if (0U == f.len) return 0U;
+	// Byte-aligned fields can be optimized.
+	if (0U == (f.pos & 7U)) {
+		const std::size_t bytepos(f.pos >> 3U);
+		if (bytepos >= report_size) return 0U;
+		if (f.len <= 8U) {
+			uint8_t v(*reinterpret_cast<const uint8_t *>(buffer + bytepos));
+			if (f.len < 8U) v &= 0xFF >> (8U - f.len);
+			const uint8_t signbit(1U << (f.len - 1U));
+			if (v & signbit) v |= ~(signbit - 1U);
+			return static_cast<int8_t>(v);
+		}
+		if (f.len <= 16U) {
+			uint16_t v(le16toh(*reinterpret_cast<const uint16_t *>(buffer + bytepos)));
+			if (f.len < 16U) v &= 0xFFFF >> (16U - f.len);
+			const uint16_t signbit(1U << (f.len - 1U));
+			if (v & signbit) v |= ~(signbit - 1U);
+			return static_cast<int16_t>(v);
+		}
+		if (f.len <= 32U) {
+			uint32_t v(le32toh(*reinterpret_cast<const uint32_t *>(buffer + bytepos)));
+			if (f.len < 32U) v &= 0xFFFFFFFF >> (32U - f.len);
+			const uint32_t signbit(1U << (f.len - 1U));
+			if (v & signbit) v |= ~(signbit - 1U);
+			return static_cast<int32_t>(v);
+		}
+	}
+	// 1-bit fields can be optimized.
+	if (1U == f.len) {
+		const std::size_t bytepos(f.pos >> 3U);
+		if (bytepos >= report_size) return 0U;
+		const uint8_t v(*reinterpret_cast<const uint8_t *>(buffer + bytepos));
+		// The 1 bit is the sign bit, so sign extension gets us this.
+		return (v >> (f.pos & 7U)) & 1U ? -1 : 0;
+	}
+	/// \bug FIXME: This doesn't handle unaligned >1-bit fields.
+	return 0U;
+}
+
+inline
+bool
+USBHIDBase::IsInRange(
+	const InputVariable & f,
+	int32_t v
+) {
+	return v <= f.max && v >= f.min;
+}
+
+inline
+bool 
+USBHIDBase::read_description (
+	unsigned char * const b,
+	const std::size_t maxlen,
+	const std::size_t actlen
+) {
+	input_reports.clear();
+	has_report_ids = false;
+
+	enum { MAIN = 0, GLOBAL, LOCAL, LONG };
+	enum /*local tags*/ { USAGE = 0, MIN, MAX };
+	enum /*global tags*/ { PAGE = 0, REPORT_ID = 8, PUSH = 10, POP = 11 };
+	enum /*main tags*/ { INPUT = 8, OUTPUT = 9, COLLECT = 10, END = 12};
+	enum /*collection types*/ { APPLICATION = 1 };
+
+	std::stack<ParserContext> context_stack;
+	context_stack.push(ParserContext());
+	unsigned collection_level(0U);
+	bool enable_fields(false);
+
+	for ( std::size_t i(0U); i < actlen; ) {
+		if (i >= maxlen) break;
+		unsigned size((b[i] & 3U) + ((b[i] & 3U) > 2U));
+		unsigned type((b[i] >> 2) & 3U);
+		unsigned tag((b[i] >> 4) & 15U);
+		++i;
+		uint32_t datum(0U);
+		switch (size) {
+			case 4: 
+				if (i + 4 > actlen) break;
+				datum = b[i+0] | (uint32_t(b[i+1]) << 8) | (uint32_t(b[i+2]) << 16) | (uint32_t(b[i+3]) << 24);
+				i += 4;
+				break;
+			case 2:
+				if (i + 2 > actlen) break;
+				datum = b[i+0] | (uint32_t(b[i+1]) << 8);
+				i += 2;
+				break;
+			case 1:
+				if (i + 1 > actlen) break;
+				datum = b[i++];
+				break;
+			case 0:	
+				break;
+		}
+		ParserContext & context(context_stack.top());
+		switch (type) {
+		case LONG:
+			size = datum & 0xFF;
+			tag = (datum >> 8) & 0xFF;
+			if (i + size > actlen) break;
+			i += size;
+			break;
+		case LOCAL:
+			context.locals[tag] = ParserContext::Item(datum, size);
+			if (USAGE == tag) context.add_ident();
+			if (MIN == tag) context.has_min = true;
+			if (MAX == tag) context.has_max = true;
+			break;
+		case GLOBAL:
+			if (PUSH == tag)
+				context_stack.push(context);
+			else
+			if (POP == tag) {
+				if (context_stack.size() > 1)
+					context_stack.pop();
+			} else
+			if (PUSH > tag) {
+				context.globals[tag] = ParserContext::Item(datum, size);
+				if (REPORT_ID == tag) has_report_ids = true;
+			}
+			break;
+		case MAIN:
+			{
+			switch (tag) {
+			case INPUT:
+			{
+				if (!enable_fields) break;
+				InputReportDescription & r(input_reports[context.report_id().d]);
+				if (datum & HIO_CONST) {
+					r.bits += context.report_size().d * context.report_count().d;
+				} else
+				if (datum & HIO_VARIABLE) {
+					for ( std::size_t count(0U); count < context.report_count().d; ++count ) {
+						const UsageID ident(context.take_variable_ident());
+						const bool relative(HIO_RELATIVE & datum);
+						r.variables.push_back(InputVariable(ident, r.bits, context.report_size().d, relative, context.logical_minimum(), context.logical_maximum()));
+						r.bits += context.report_size().d;
+					}
+				} else
+				{
+					for ( std::size_t count(0U); count < context.report_count().d; ++count ) {
+						r.array_indices.push_back(InputIndex(r.bits, context.report_size().d, context.usage_minimum().d, context.usage_maximum().d, context.logical_minimum(), context.logical_maximum()));
+						r.bits += context.report_size().d;
+					}
+				}
+				r.bytes = (r.bits + 7U) >> 3U;
+				break;
+			}
+			case OUTPUT:
+			{
+				if (!enable_fields) break;
+				OutputReportDescription & r(output_reports[context.report_id().d]);
+				if (datum & HIO_CONST) {
+					r.bits += context.report_size().d * context.report_count().d;
+				} else
+				if (datum & HIO_VARIABLE) {
+				for ( std::size_t count(0U); count < context.report_count().d; ++count ) {
+					const UsageID ident(context.take_variable_ident());
+						r.variables.push_back(OutputVariable(ident, r.bits, context.report_size().d));
+						r.bits += context.report_size().d;
+					}
+				} else
+				{
+					for ( std::size_t count(0U); count < context.report_count().d; ++count ) {
+						r.array_indices.push_back(OutputIndex(r.bits, context.report_size().d, context.usage_minimum().d, context.usage_maximum().d));
+						r.bits += context.report_size().d;
+					}
+				}
+				r.bytes = (r.bits + 7U) >> 3U;
+				break;
+			}
+			case COLLECT:
+				if (0 == collection_level && APPLICATION == datum) {
+					enable_fields = 
+						HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_MOUSE) == context.ident() || 
+						HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_KEYBOARD) == context.ident() ||
+						HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_KEYPAD) == context.ident();
+				}
+				++collection_level;
+				break;
+			case END:
+				if (collection_level > 0) {
+					--collection_level;
+					if (0 == collection_level)
+						enable_fields = false;
+				}
+				break;
+			}
+			context.clear_locals();
+			break;
+			}
+		}
+	}
+
+	return true;
 }
 
 inline
 void
-Realizer::handle_mouse_abspos(
-	const uint16_t axis,
-	const unsigned long position,
-	const unsigned long maximum
+USBHIDBase::handle_mouse_movement(
+	Realizer & r,
+	const InputReportDescription & report,
+	const InputVariable & f,
+	const uint16_t axis
 ) {
-	switch (axis) {
-		case AXIS_W:
-			break;
-		case AXIS_X:
-			pointer_xpixel = (position * fb.query_xres()) / maximum;
-			set_pointer_x();
-			break;
-		case AXIS_Y:
-			pointer_ypixel = (position * fb.query_yres()) / maximum;
-			set_pointer_y();
-			break;
-		case AXIS_Z:
-			break;
-		default:
-			std::clog << "DEBUG: Unknown axis " << axis << " position " << position << "/" << maximum << " absolute\n";
-			break;
+	if (f.relative) {
+		const int32_t off(GetSignedField(f, report.bytes));
+		if (IsInRange(f, off))
+			r.handle_mouse_relpos(modifiers(), axis, off);
+	} else {
+		const uint32_t pos(GetUnsignedField(f, report.bytes));
+		if (IsInRange(f, pos))
+			r.handle_mouse_abspos(modifiers(), axis, pos, f.max - f.min + 1U);
 	}
 }
 
 inline
-void
-Realizer::adjust_mickeys(
-	unsigned long & pos, 
-	int d, 
-	unsigned long max
+void 
+USBHIDBase::handle_mouse_button(
+	Realizer & r,
+	uint32_t ident, 
+	bool down
 ) {
-	if (d < 0) {
-		if (static_cast<unsigned int>(-d) > pos)
-			pos = 0;
-		else
-			pos += d;
+	if (HID_USAGE2(HUP_BUTTON, 0) < ident && HID_USAGE2(HUP_BUTTON, 32U) >= ident) {
+		const unsigned short button(ident - HID_USAGE2(HUP_BUTTON, 1));
+		const unsigned long mask(1UL << button);
+		if (!!(stdbuttons & mask) != down) {
+			if (down)
+				stdbuttons |= mask;
+			else
+				stdbuttons &= ~mask;
+			r.handle_mouse_button(modifiers(), TranslateStdButton(button), down);
+		}
 	} else
-	if (d > 0) {
-		if (max - d < pos)
-			pos = max;
+		;
+}
+
+inline
+void 
+USBHIDBase::handle_key(
+	bool & seen_keyboard, 
+	KeysPressed & newkeys, 
+	uint32_t ident, 
+	bool down
+) {
+	if ((HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_SYSTEM_CONTROL) <= ident && HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_LAST_SYSTEM_KEY) >= ident)
+	||  (HID_USAGE2(HUP_KEYBOARD, 0) <= ident && HID_USAGE2(HUP_KEYBOARD, 0xFFFF) >= ident)
+	||  (HID_USAGE2(HUP_CONSUMER, 0) <= ident && HID_USAGE2(HUP_CONSUMER, 0xFFFF) >= ident)
+	) {
+		seen_keyboard = true;
+		if (down)
+			newkeys.insert(ident);
 		else
-			pos += d;
-	}
+			newkeys.erase(ident);
+	} else
+		;
 }
-
-inline
-void
-Realizer::handle_mouse_relpos(
-	const uint16_t axis,
-	int32_t amount
-) {
-	switch (axis) {
-		case V_SCROLL:
-			if (amount < -128) amount = -128;
-			if (amount > 127) amount = 127;
-			vt.WriteInputMessage(MessageForMouseWheel(0U, amount, modifiers()));
-			break;
-		case H_SCROLL:
-			if (amount < -128) amount = -128;
-			if (amount > 127) amount = 127;
-			vt.WriteInputMessage(MessageForMouseWheel(1U, amount, modifiers()));
-			break;
-		case AXIS_W:
-			break;
-		case AXIS_X:
-			adjust_mickeys(pointer_xpixel, amount, fb.query_xres());
-			set_pointer_x();
-			break;
-		case AXIS_Y:
-			adjust_mickeys(pointer_ypixel, amount, fb.query_yres());
-			set_pointer_y();
-			break;
-		case AXIS_Z:
-			break;
-		default:
-			std::clog << "DEBUG: Unknown axis " << axis << " position " << amount << " relative\n";
-			break;
-	}
-}
-
-inline
-void
-Realizer::handle_mouse_button(
-	const uint16_t button,
-	const bool value
-) {
-	vt.WriteInputMessage(MessageForMouseButton(button, value, modifiers()));
-}
+#endif
 
 #if defined(__LINUX__) || defined(__linux__)
 
@@ -2704,7 +3292,7 @@ linux_evdev_keycode_to_keymap_index (
 		case KEY_YEN:		return KBDMAP_INDEX_YEN;
 		case KEY_LEFTSHIFT:	return KBDMAP_INDEX_SHIFT1;
 		case KEY_RIGHTSHIFT:	return KBDMAP_INDEX_SHIFT2;
-		case KEY_RIGHTALT:	return KBDMAP_INDEX_ALT;
+		case KEY_RIGHTALT:	return KBDMAP_INDEX_OPTION;
 		case KEY_LEFTCTRL:	return KBDMAP_INDEX_CONTROL1;
 		case KEY_RIGHTCTRL:	return KBDMAP_INDEX_CONTROL2;
 		case KEY_LEFTMETA:	return KBDMAP_INDEX_SUPER1;
@@ -2826,19 +3414,20 @@ linux_evdev_keycode_to_keymap_index (
 }
 
 namespace {
-class HID
+class HID :
+	public HIDBase
 {
 public:
-	HID();
+	HID(const KeyboardMap & km);
 	~HID() {}
 
-	void open(int d, const char * n) { device.reset(open_readwriteexisting_at(d, n)); }
-	int query_device() const { return device.get(); }
+	bool open(int d, const char * n);
+	int query_input_fd() const { return input.get(); }
 	bool read_description() const { return true; }
-	void set_LEDs(Realizer & r);
-	void handle_input_events(Realizer & r);
+	void set_LEDs();
+	void handle_input_events(Realizer &);
 protected:
-	FileDescriptorOwner device;
+	FileDescriptorOwner input;
 	input_event buffer[16];
 	std::size_t offset;
 
@@ -2848,27 +3437,41 @@ protected:
 }
 
 inline
-HID::HID() : 
-	device(-1), 
+HID::HID(const KeyboardMap & km) : 
+	HIDBase(km),
+	input(-1),
 	offset(0U)
 {
 }
 
 inline
+bool
+HID::open(
+	int d, 
+	const char * n
+) { 
+	input.reset(open_readwriteexisting_at(d, n)); 
+	return input.get() >= 0;
+}
+
+inline
 void 
 HID::set_LEDs(
-	Realizer & r
 ) {
-	if (-1 != device.get()) {
-		input_event e[3];
-		e[0].type = e[1].type = e[2].type = EV_LED;
+	if (-1 != input.get()) {
+		input_event e[5];
+		e[0].type = e[1].type = e[2].type = e[3].type = e[4].type = EV_LED;
 		e[0].code = LED_CAPSL; 
-		e[0].value = r.caps_LED();
+		e[0].value = caps_LED();
 		e[1].code = LED_NUML; 
-		e[1].value = r.num_LED();
+		e[1].value = num_LED();
 		e[2].code = LED_SCROLLL; 
-		e[2].value = r.scroll_LED();
-		write(device.get(), e, sizeof e);
+		e[2].value = scroll_LED();
+		e[3].code = LED_KANA; 
+		e[3].value = kana_LED();
+		e[4].code = LED_COMPOSE; 
+		e[4].value = compose_LED();
+		write(input.get(), e, sizeof e);
 	}
 }
 
@@ -2905,7 +3508,7 @@ void
 HID::handle_input_events(
 	Realizer & r
 ) {
-	const int n(read(device.get(), reinterpret_cast<char *>(buffer) + offset, sizeof buffer - offset));
+	const int n(read(input.get(), reinterpret_cast<char *>(buffer) + offset, sizeof buffer - offset));
 	if (0 > n) return;
 	for (
 		offset += n;
@@ -2916,10 +3519,10 @@ HID::handle_input_events(
 		const input_event & e(buffer[0]);
 		switch (e.type) {
 			case EV_ABS:
-				r.handle_mouse_abspos(TranslateAbsAxis(e.code), e.value, 32767U);
+				r.handle_mouse_abspos(modifiers(), TranslateAbsAxis(e.code), e.value, 32767U);
 				break;
 			case EV_REL:
-				r.handle_mouse_relpos(TranslateRelAxis(e.code), e.value);
+				r.handle_mouse_relpos(modifiers(), TranslateRelAxis(e.code), e.value);
 				break;
 			case EV_KEY:
 			{
@@ -2927,20 +3530,17 @@ HID::handle_input_events(
 					default:		
 					{
 						const uint16_t index(linux_evdev_keycode_to_keymap_index(e.code));
-						if (0xFFFF == index) break;
-						const uint8_t row(index >> 8U);
-						const uint8_t col(index & 0xFF);
-						r.handle_keyboard(row, col, e.value);
+						handle_keyboard(r, index, e.value);
 						break;
 					}
-					case BTN_LEFT:		r.handle_mouse_button(0x00, e.value); break;
-					case BTN_MIDDLE:	r.handle_mouse_button(0x01, e.value); break;
-					case BTN_RIGHT:		r.handle_mouse_button(0x02, e.value); break;
-					case BTN_SIDE:		r.handle_mouse_button(0x03, e.value); break;
-					case BTN_EXTRA:		r.handle_mouse_button(0x04, e.value); break;
-					case BTN_FORWARD:	r.handle_mouse_button(0x05, e.value); break;
-					case BTN_BACK:		r.handle_mouse_button(0x06, e.value); break;
-					case BTN_TASK:		r.handle_mouse_button(0x07, e.value); break;
+					case BTN_LEFT:		r.handle_mouse_button(modifiers(), 0x00, e.value); break;
+					case BTN_MIDDLE:	r.handle_mouse_button(modifiers(), 0x01, e.value); break;
+					case BTN_RIGHT:		r.handle_mouse_button(modifiers(), 0x02, e.value); break;
+					case BTN_SIDE:		r.handle_mouse_button(modifiers(), 0x03, e.value); break;
+					case BTN_EXTRA:		r.handle_mouse_button(modifiers(), 0x04, e.value); break;
+					case BTN_FORWARD:	r.handle_mouse_button(modifiers(), 0x05, e.value); break;
+					case BTN_BACK:		r.handle_mouse_button(modifiers(), 0x06, e.value); break;
+					case BTN_TASK:		r.handle_mouse_button(modifiers(), 0x07, e.value); break;
 				}
 				break;
 			}
@@ -2948,844 +3548,68 @@ HID::handle_input_events(
 	}
 }
 
-#else
+#elif defined(__OpenBSD__)
 
-/* BSD HIDs *****************************************************************
+/* OpenBSD HIDs *************************************************************
 // **************************************************************************
 */
 
-/// The USB HID keycode maps to a row+column in the current keyboard map, which contains an action for that row+column.
-static inline
-uint16_t
-usb_ident_to_keymap_index (
-	const uint32_t ident
-) {
-	if ((HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_SYSTEM_CONTROL) <= ident && HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_APPLE_EJECT) >= ident)) 
-		switch (ident - HID_USAGE2(HUP_GENERIC_DESKTOP, 0)) { 
-			default:	break;
-			case 0x81:	return KBDMAP_INDEX_POWER;
-			case 0x82:	return KBDMAP_INDEX_SLEEP;
-			case 0x83:	return KBDMAP_INDEX_WAKE;
-			case 0xA4:	return KBDMAP_INDEX_DEBUG;
-			case 0xA8:	break;				// return KBDMAP_INDEX_HIBERNATE;
-		} 
-	else
-	if ((HID_USAGE2(HUP_KEYBOARD, 0) <= ident && HID_USAGE2(HUP_KEYBOARD, 0xFFFF) >= ident))
-		switch (ident - HID_USAGE2(HUP_KEYBOARD, 0)) {
-			default:	break;
-			case 0x04:	return KBDMAP_INDEX_A;		// C01
-			case 0x05:	return KBDMAP_INDEX_B;		// B05
-			case 0x06:	return KBDMAP_INDEX_C;		// B03
-			case 0x07:	return KBDMAP_INDEX_D;		// C03
-			case 0x08:	return KBDMAP_INDEX_E;		// D03
-			case 0x09:	return KBDMAP_INDEX_F;		// C04
-			case 0x0A:	return KBDMAP_INDEX_G;		// C05
-			case 0x0B:	return KBDMAP_INDEX_H;		// C06
-			case 0x0C:	return KBDMAP_INDEX_I;		// D08
-			case 0x0D:	return KBDMAP_INDEX_J;		// C07
-			case 0x0E:	return KBDMAP_INDEX_K;		// C08
-			case 0x0F:	return KBDMAP_INDEX_L;		// C09
-			case 0x10:	return KBDMAP_INDEX_M;		// B07
-			case 0x11:	return KBDMAP_INDEX_N;		// B06
-			case 0x12:	return KBDMAP_INDEX_O;		// D09
-			case 0x13:	return KBDMAP_INDEX_P;		// D10
-			case 0x14:	return KBDMAP_INDEX_Q;		// D01
-			case 0x15:	return KBDMAP_INDEX_R;		// D04
-			case 0x16:	return KBDMAP_INDEX_S;		// C02
-			case 0x17:	return KBDMAP_INDEX_T;		// D05
-			case 0x18:	return KBDMAP_INDEX_U;		// D07
-			case 0x19:	return KBDMAP_INDEX_V;		// B04
-			case 0x1A:	return KBDMAP_INDEX_W;		// D02
-			case 0x1B:	return KBDMAP_INDEX_X;		// B02
-			case 0x1C:	return KBDMAP_INDEX_Y;		// D06
-			case 0x1D:	return KBDMAP_INDEX_Z;		// B01
-			case 0x1E:	return KBDMAP_INDEX_1;		// E01
-			case 0x1F:	return KBDMAP_INDEX_2;		// E02
-			case 0x20:	return KBDMAP_INDEX_3;		// E03
-			case 0x21:	return KBDMAP_INDEX_4;		// E04
-			case 0x22:	return KBDMAP_INDEX_5;		// E05
-			case 0x23:	return KBDMAP_INDEX_6;		// E06
-			case 0x24:	return KBDMAP_INDEX_7;		// E07
-			case 0x25:	return KBDMAP_INDEX_8;		// E08
-			case 0x26:	return KBDMAP_INDEX_9;		// E09
-			case 0x27:	return KBDMAP_INDEX_0;		// E10
-			case 0x28:	return KBDMAP_INDEX_RETURN;	// C13
-			case 0x29:	return KBDMAP_INDEX_ESC;
-			case 0x2A:	return KBDMAP_INDEX_BACKSPACE;	// E13
-			case 0x2B:	return KBDMAP_INDEX_TAB;	// D00
-			case 0x2C:	return KBDMAP_INDEX_SPACE;	// A03
-			case 0x2D:	return KBDMAP_INDEX_MINUS;	// E11
-			case 0x2E:	return KBDMAP_INDEX_EQUALS;	// E12
-			case 0x2F:	return KBDMAP_INDEX_LEFTBRACE;	// D11
-			case 0x30:	return KBDMAP_INDEX_RIGHTBRACE;	// D12
-			case 0x31:	return KBDMAP_INDEX_EUROPE1;	// The idea that this is a distinct key is a USB HID specification bug; on real keyboards E13 is EUROPE1.
-			case 0x32:	return KBDMAP_INDEX_EUROPE1;	// C12 or E13
-			case 0x33:	return KBDMAP_INDEX_SEMICOLON;	// C10
-			case 0x34:	return KBDMAP_INDEX_APOSTROPHE;	// C11
-			case 0x35:	return KBDMAP_INDEX_GRAVE;	// E00
-			case 0x36:	return KBDMAP_INDEX_COMMA;	// B08
-			case 0x37:	return KBDMAP_INDEX_DOT;	// B09
-			case 0x38:	return KBDMAP_INDEX_SLASH;	// B10
-			case 0x39:	return KBDMAP_INDEX_CAPSLOCK;	// C00
-			case 0x3A:	return KBDMAP_INDEX_F1;
-			case 0x3B:	return KBDMAP_INDEX_F2;
-			case 0x3C:	return KBDMAP_INDEX_F3;
-			case 0x3D:	return KBDMAP_INDEX_F4;
-			case 0x3E:	return KBDMAP_INDEX_F5;
-			case 0x3F:	return KBDMAP_INDEX_F6;
-			case 0x40:	return KBDMAP_INDEX_F7;
-			case 0x41:	return KBDMAP_INDEX_F8;
-			case 0x42:	return KBDMAP_INDEX_F9;
-			case 0x43:	return KBDMAP_INDEX_F10;
-			case 0x44:	return KBDMAP_INDEX_F11;
-			case 0x45:	return KBDMAP_INDEX_F12;
-			case 0x46:	return KBDMAP_INDEX_PRINT_SCREEN;
-			case 0x47:	return KBDMAP_INDEX_SCROLLLOCK;
-			case 0x48:	return KBDMAP_INDEX_PAUSE;
-			case 0x49:	return KBDMAP_INDEX_INSERT;	// E30
-			case 0x4A:	return KBDMAP_INDEX_HOME;	// E31
-			case 0x4B:	return KBDMAP_INDEX_PAGE_UP;	// E32
-			case 0x4C:	return KBDMAP_INDEX_DELETE;	// D30
-			case 0x4D:	return KBDMAP_INDEX_END;	// D31
-			case 0x4E:	return KBDMAP_INDEX_PAGE_DOWN;	// D32
-			case 0x4F:	return KBDMAP_INDEX_RIGHT_ARROW;// A30
-			case 0x50:	return KBDMAP_INDEX_LEFT_ARROW;	// A32
-			case 0x51:	return KBDMAP_INDEX_DOWN_ARROW;	// A31
-			case 0x52:	return KBDMAP_INDEX_UP_ARROW;	// B31
-			case 0x53:	return KBDMAP_INDEX_NUMLOCK;	// E51
-			case 0x54:	return KBDMAP_INDEX_KP_SLASH;	// E52
-			case 0x55:	return KBDMAP_INDEX_KP_ASTERISK;// E53
-			case 0x56:	return KBDMAP_INDEX_KP_MINUS;	// E54
-			case 0x57:	return KBDMAP_INDEX_KP_PLUS;	// D54
-			case 0x58:	return KBDMAP_INDEX_KP_ENTER;	// A54
-			case 0x59:	return KBDMAP_INDEX_KP_1;	// B51
-			case 0x5A:	return KBDMAP_INDEX_KP_2;	// B52
-			case 0x5B:	return KBDMAP_INDEX_KP_3;	// B53
-			case 0x5C:	return KBDMAP_INDEX_KP_4;	// C51
-			case 0x5D:	return KBDMAP_INDEX_KP_5;	// C52
-			case 0x5E:	return KBDMAP_INDEX_KP_6;	// C53
-			case 0x5F:	return KBDMAP_INDEX_KP_7;	// D51
-			case 0x60:	return KBDMAP_INDEX_KP_8;	// D52
-			case 0x61:	return KBDMAP_INDEX_KP_9;	// D53
-			case 0x62:	return KBDMAP_INDEX_KP_0;	// A51
-			case 0x63:	return KBDMAP_INDEX_KP_DECIMAL;	// A53
-			case 0x64:	return KBDMAP_INDEX_EUROPE2;	// B00
-			case 0x65:	return KBDMAP_INDEX_APPLICATION;// A11
-			case 0x66:	return KBDMAP_INDEX_POWER;
-			case 0x67:	return KBDMAP_INDEX_KP_EQUALS;	// A52
-			case 0x68:	return KBDMAP_INDEX_F13;
-			case 0x69:	return KBDMAP_INDEX_F14;
-			case 0x6A:	return KBDMAP_INDEX_F15;
-			case 0x6B:	return KBDMAP_INDEX_F16;
-			case 0x6C:	return KBDMAP_INDEX_F17;
-			case 0x6D:	return KBDMAP_INDEX_F18;
-			case 0x6E:	return KBDMAP_INDEX_F19;
-			case 0x6F:	return KBDMAP_INDEX_F20;
-			case 0x70:	return KBDMAP_INDEX_F21;
-			case 0x71:	return KBDMAP_INDEX_F22;
-			case 0x72:	return KBDMAP_INDEX_F23;
-			case 0x73:	return KBDMAP_INDEX_F24;
-			case 0x74:	return KBDMAP_INDEX_EXECUTE;
-			case 0x75:	return KBDMAP_INDEX_HELP;
-			case 0x76:	return KBDMAP_INDEX_MENU;
-			case 0x77:	return KBDMAP_INDEX_SELECT;
-			case 0x78:	return KBDMAP_INDEX_STOP;
-			case 0x79:	return KBDMAP_INDEX_AGAIN;
-			case 0x7A:	return KBDMAP_INDEX_UNDO;
-			case 0x7B:	return KBDMAP_INDEX_CUT;
-			case 0x7C:	return KBDMAP_INDEX_COPY;
-			case 0x7D:	return KBDMAP_INDEX_PASTE;
-			case 0x7E:	return KBDMAP_INDEX_FIND;
-			case 0x7F:	return KBDMAP_INDEX_MUTE;
-			case 0x80:	return KBDMAP_INDEX_VOLUME_UP;
-			case 0x81:	return KBDMAP_INDEX_VOLUME_DOWN;
-			case 0x85:	return KBDMAP_INDEX_KP_THOUSANDS;// C54
-			case 0x86:	return KBDMAP_INDEX_KP_AS400_EQUALS;	// Keypad Equal Sign for AS/400
-			case 0x87:	return KBDMAP_INDEX_ROMAJI;	// International1
-			case 0x88:	return KBDMAP_INDEX_KATAHIRA;	// International2
-			case 0x89:	return KBDMAP_INDEX_YEN;	// International3
-			case 0x8A:	return KBDMAP_INDEX_HENKAN;	// International4
-			case 0x8B:	return KBDMAP_INDEX_MUHENKAN;	// International5
-			case 0x8C:	break;				// return KBDMAP_INDEX_INTERNATIONAL6;
-			case 0x8D:	break;				// return KBDMAP_INDEX_INTERNATIONAL7;
-			case 0x8E:	break;				// return KBDMAP_INDEX_INTERNATIONAL8;
-			case 0x8F:	break;				// return KBDMAP_INDEX_INTERNATIONAL9;
-			case 0x90:	break;				// return KBDMAP_INDEX_LANG1;
-			case 0x91:	break;				// return KBDMAP_INDEX_LANG2;
-			case 0x92:	return KBDMAP_INDEX_KATAKANA;	// LANG3
-			case 0x93:	return KBDMAP_INDEX_HIRAGANA;	// LANG4
-			case 0x94:	return KBDMAP_INDEX_HALF_FULL_WIDTH;	// LANG5
-			case 0x95:	break;				// return KBDMAP_INDEX_LANG6;
-			case 0x96:	break;				// return KBDMAP_INDEX_LANG7;
-			case 0x97:	break;				// return KBDMAP_INDEX_LANG8;
-			case 0x98:	break;				// return KBDMAP_INDEX_LANG9;
-			case 0x99:	return KBDMAP_INDEX_ALTERNATE_ERASE;
-			case 0x9A:	return KBDMAP_INDEX_ATTENTION;
-			case 0x9B:	return KBDMAP_INDEX_CANCEL;
-			case 0x9C:	return KBDMAP_INDEX_CLEAR;
-			case 0x9D:	return KBDMAP_INDEX_PRIOR;
-			case 0x9E:	return KBDMAP_INDEX_APP_RETURN;
-			case 0x9F:	return KBDMAP_INDEX_SEPARATOR;
-			case 0xA0:	return KBDMAP_INDEX_OUT;
-			case 0xA1:	return KBDMAP_INDEX_OPER;
-			case 0xA2:	return KBDMAP_INDEX_CLEAR_OR_AGAIN;	// Clear/Again
-			case 0xA3:	return KBDMAP_INDEX_PROPERTIES;	// CrSel/Props
-			case 0xA4:	return KBDMAP_INDEX_EXSEL;
-			case 0xE0:	return KBDMAP_INDEX_CONTROL1;	// A99
-			case 0xE1:	return KBDMAP_INDEX_SHIFT1;	// B99
-			case 0xE2:	return KBDMAP_INDEX_ALT;	// A02
-			case 0xE3:	return KBDMAP_INDEX_SUPER1;	// A01
-			case 0xE4:	return KBDMAP_INDEX_CONTROL2;	// A12
-			case 0xE5:	return KBDMAP_INDEX_SHIFT2;	// B12
-			case 0xE6:	return KBDMAP_INDEX_OPTION;	// A08
-			case 0xE7:	return KBDMAP_INDEX_SUPER2;	// A10
-		} 
-	else
-	if ((HID_USAGE2(HUP_CONSUMER, 0) <= ident && HID_USAGE2(HUP_CONSUMER, 0xFFFF) >= ident))
-		switch (ident - HID_USAGE2(HUP_CONSUMER, 0)) {
-			default:	break;
-			case 0x00B0:	break;	// return KBDMAP_INDEX_PLAY;
-			case 0x00B1:	return KBDMAP_INDEX_PAUSE;
-			case 0x00B2:	return KBDMAP_INDEX_RECORD;
-			case 0x00B3:	return KBDMAP_INDEX_FAST_FORWARD;
-			case 0x00B4:	return KBDMAP_INDEX_REWIND;
-			case 0x00B5:	return KBDMAP_INDEX_NEXT_TRACK;
-			case 0x00B6:	return KBDMAP_INDEX_PREV_TRACK;
-			case 0x00B7:	return KBDMAP_INDEX_STOP_PLAYING;
-			case 0x00B8:	return KBDMAP_INDEX_EJECT;
-			case 0x00B9:	break;	// return KBDMAP_INDEX_RANDOM_PLAY;
-			case 0x00BC:	break;	// return KBDMAP_INDEX_REPEAT;
-			case 0x00BE:	break;	// return KBDMAP_INDEX_TRACK_NORMAL;
-			case 0x00C0:	break;	// return KBDMAP_INDEX_FRAME_FORWARD;
-			case 0x00C1:	break;	// return KBDMAP_INDEX_FRAME_BACK;
-			case 0x00CC:	break;	// return KBDMAP_INDEX_STOP_EJECT;
-			case 0x00CD:	return KBDMAP_INDEX_PLAY_PAUSE;
-			case 0x00CE:	break;	// return KBDMAP_INDEX_PLAY_SKIP;
-			case 0x00E2:	break;	// return KBDMAP_INDEX_MUTE_PLAYER;
-			case 0x00E5:	break;	// return KBDMAP_INDEX_BASS_BOOST;
-			case 0x00E7:	break;	// return KBDMAP_INDEX_LOUDNESS;
-			case 0x00E9:	return KBDMAP_INDEX_VOLUME_UP;
-			case 0x00EA:	return KBDMAP_INDEX_VOLUME_DOWN;
-			case 0x0150:	break;	// return KBDMAP_INDEX_BALANCE_RIGHT;
-			case 0x0151:	break;	// return KBDMAP_INDEX_BALANCE_LEFT;
-			case 0x0152:	break;	// return KBDMAP_INDEX_BASS_UP;
-			case 0x0153:	break;	// return KBDMAP_INDEX_BASS_DOWN;
-			case 0x0154:	break;	// return KBDMAP_INDEX_TREBLE_UP;
-			case 0x0155:	break;	// return KBDMAP_INDEX_TREBLE_DOWN;
-			case 0x0184:	break;	// return KBDMAP_INDEX_WORDPROCESSOR;
-			case 0x0185:	break;	// return KBDMAP_INDEX_TEXT_EDITOR;
-			case 0x0186:	break;	// return KBDMAP_INDEX_SPREADSHEET;
-			case 0x0187:	break;	// return KBDMAP_INDEX_GRAPHICS_EDITOR;
-			case 0x0188:	break;	// return KBDMAP_INDEX_PRESENTATION_APP;
-			case 0x0189:	break;	// return KBDMAP_INDEX_DATABASE;
-			case 0x018A:	return KBDMAP_INDEX_MAIL;
-			case 0x018B:	break;	// return KBDMAP_INDEX_NEWS;
-			case 0x018C:	break;	// return KBDMAP_INDEX_VOICEMAIL;
-			case 0x018D:	break;	// return KBDMAP_INDEX_ADDRESS_BOOK;
-			case 0x018E:	break;	// return KBDMAP_INDEX_CALENDAR;
-			case 0x018F:	break;	// return KBDMAP_INDEX_PROJECT_MANAGER;
-			case 0x0190:	break;	// return KBDMAP_INDEX_TIMECARD;
-			case 0x0191:	break;	// return KBDMAP_INDEX_CHECKBOOK;
-			case 0x0192:	return KBDMAP_INDEX_CALCULATOR;
-			case 0x0194:	return KBDMAP_INDEX_COMPUTER;
-			case 0x0195:	break;	// return KBDMAP_INDEX_NETWORK;
-			case 0x0196:	return KBDMAP_INDEX_WWW;
-			case 0x0198:	break;	// return KBDMAP_INDEX_CONFERENCE;
-			case 0x0199:	break;	// return KBDMAP_INDEX_CHAT;
-			case 0x019A:	break;	// return KBDMAP_INDEX_DIALLER;
-			case 0x019B:	break;	// return KBDMAP_INDEX_LOGON;
-			case 0x019C:	break;	// return KBDMAP_INDEX_LOGOFF;
-			case 0x019E:	return KBDMAP_INDEX_LOCK;
-			case 0x019F:	break;	// return KBDMAP_INDEX_CONTROL_PANEL;
-			case 0x01A0:	return KBDMAP_INDEX_CLI;
-			case 0x01A1:	break;	// return KBDMAP_INDEX_TASK_MANAGER;
-			case 0x01A2:	break;	// return KBDMAP_INDEX_SELECT_TASK;
-			case 0x01A3:	break;	// return KBDMAP_INDEX_NEXT_TASK;
-			case 0x01A4:	break;	// return KBDMAP_INDEX_PREVIOUS_TASK;
-			case 0x01A5:	break;	// return KBDMAP_INDEX_HALT_TASK;
-			case 0x01A6:	break;	// return KBDMAP_INDEX_HELP_CENTRE;
-			case 0x01A7:	break;	// return KBDMAP_INDEX_DOCUMENTS;
-			case 0x01AA:	break;	// return KBDMAP_INDEX_DESKTOP;
-			case 0x01B3:	break;	// return KBDMAP_INDEX_CLOCK;
-			case 0x01B4:	return KBDMAP_INDEX_FILE_MANAGER;
-			case 0x01BC:	break;	// return KBDMAP_INDEX_INSTANT_MESSAGING;
-			case 0x01C1:	break;	// return KBDMAP_INDEX_WWW_SHOPPING;
-			case 0x0201:	return KBDMAP_INDEX_NEW;
-			case 0x0202:	return KBDMAP_INDEX_OPEN;
-			case 0x0203:	break;	// return KBDMAP_INDEX_CLOSE;
-			case 0x0204:	return KBDMAP_INDEX_EXIT;
-			case 0x0205:	break;	// return KBDMAP_INDEX_MAXIMIZE;
-			case 0x0206:	break;	// return KBDMAP_INDEX_MINIMIZE;
-			case 0x0207:	break;	// return KBDMAP_INDEX_SAVE;
-			case 0x0208:	break;	// return KBDMAP_INDEX_PRINT;
-			case 0x0209:	return KBDMAP_INDEX_PROPERTIES;
-			case 0x021A:	return KBDMAP_INDEX_UNDO;
-			case 0x021B:	return KBDMAP_INDEX_COPY;
-			case 0x021C:	return KBDMAP_INDEX_CUT;
-			case 0x021D:	return KBDMAP_INDEX_PASTE;
-			case 0x021E:	break;	// return KBDMAP_INDEX_SELECT_ALL;
-			case 0x021F:	return KBDMAP_INDEX_FIND;
-			case 0x0220:	break;	// return KBDMAP_INDEX_FIND_AND_REPLACE;
-			case 0x0221:	break;	// return KBDMAP_INDEX_SEARCH;
-			case 0x0223:	return KBDMAP_INDEX_HOME;
-			case 0x0224:	return KBDMAP_INDEX_BACK;
-			case 0x0225:	return KBDMAP_INDEX_FORWARD;
-			case 0x0226:	break;	// return KBDMAP_INDEX_STOP_LOADING;
-			case 0x0227:	return KBDMAP_INDEX_REFRESH;
-			case 0x0228:	break;	// return KBDMAP_INDEX_PREVIOUS_LINK;
-			case 0x0229:	break;	// return KBDMAP_INDEX_NEXT_LINK;
-			case 0x022A:	return KBDMAP_INDEX_BOOKMARKS;
-			case 0x022B:	break;	// return KBDMAP_INDEX_HISTORY;
-		} 
-	else
-		;
-
-	return 0xFFFF;
-}
-
 namespace {
 
-class HID
+class HID :
+	public USBHIDBase
 {
 public:
-	HID();
+	HID(const KeyboardMap & km);
 
-	void open(int d, const char * n);
-	int query_device() const { return device.get(); }
+	bool open(int d, const char * n);
+	int query_input_fd() const { return input.get(); }
 	bool read_description();
-	void set_LEDs(Realizer & r);
-	void handle_input_events(Realizer & r);
+	void set_LEDs();
+	void handle_input_events(Realizer &);
 protected:
-	typedef uint32_t UsageID;
-	enum {
-		USAGE_CONSUMER_AC_PAN	= 0x000C0238,
-	};
-
-	struct ParserContext {
-		struct Item { 
-			Item(uint32_t pd, std::size_t ps): d(pd), s(ps) {}
-			Item() : d(), s() {}
-			uint32_t d; 
-			std::size_t s; 
-		};
-		Item globals[16], locals[16];
-		bool has_min, has_max;
-		ParserContext() : has_min(false), has_max(false) { wipe_globals(); wipe_locals(); }
-		void clear_locals() { wipe_locals(); idents.clear(); has_min = has_max = false; }
-		const Item & logical_minimum() const { return globals[1]; }
-		const Item & logical_maximum() const { return globals[2]; }
-		const Item & report_size() const { return globals[7]; }
-		const Item & report_id() const { return globals[8]; }
-		const Item & report_count() const { return globals[9]; }
-		const Item & usage_minimum() const { return locals[1]; }
-		const Item & usage_maximum() const { return locals[2]; }
-		UsageID ident() const { return ident(usage(), page()); }
-		void add_ident() { idents.push_back(ident()); }
-		UsageID take_variable_ident() { 
-			if (!idents.empty()) {
-				const UsageID v(idents.front());
-				if (idents.size() > 1) idents.pop_front();
-				return v;
-			} else
-			if (has_min) {
-				const UsageID v(ident_minimum());
-				if (has_max && v < ident_maximum()) {
-					// Reset to full size because pages are not min/max boundaries and we don't want page wraparound.
-					locals[1].d = v + 1;
-					locals[1].s = 4;
-				}
-				return v;
-			} else
-				return ident();
-		}
-	protected:
-		std::deque<UsageID> idents;
-		static UsageID ident(const Item & u, const Item & p) { return u.s < 3 ? HID_USAGE2(p.d, u.d) : u.d; }
-		const Item & page() const { return globals[0]; }
-		const Item & usage() const { return locals[0]; }
-		UsageID ident_minimum() const { return ident(usage_minimum(), page()); }
-		UsageID ident_maximum() const { return ident(usage_maximum(), page()); }
-		void wipe_locals() { for (std::size_t i(0); i < sizeof locals/sizeof *locals; ++i) locals[i].d = locals[i].s = 0U; }
-		void wipe_globals() { for (std::size_t i(0); i < sizeof globals/sizeof *globals; ++i) globals[i].d = globals[i].s = 0U; }
-	};
-	struct ReportField {
-		static int64_t mm(const ParserContext::Item & control, const ParserContext::Item & value) 
-		{ 
-			const uint32_t control_signbit(1U << (control.s * 8U - 1U));
-			const uint32_t value_signbit(1U << (value.s * 8U - 1U));
-			if ((control.d & control_signbit) && (value.d & value_signbit)) {
-				const uint32_t v(value.d | ~(value_signbit - 1U));
-				return static_cast<int32_t>(v);
-			} else
-				return static_cast<int64_t>(value.d); 
-		}
-		ReportField(std::size_t p, std::size_t l): pos(p), len(l) {}
-		std::size_t pos, len;
-	};
-	struct InputVariable : public ReportField {
-		InputVariable(UsageID i, std::size_t p, std::size_t l, bool r, const ParserContext::Item & mi, const ParserContext::Item & ma): ReportField(p, l), relative(r), ident(i), min(mm(mi, mi)), max(mm(mi, ma)) {}
-		bool relative;
-		UsageID ident;
-		int64_t min, max;
-	};
-	struct InputIndex : public ReportField {
-		InputIndex(std::size_t p, std::size_t l, UsageID umi, UsageID uma, const ParserContext::Item & imi, const ParserContext::Item & ima): ReportField(p, l), min_ident(umi), max_ident(uma), min_index(mm(imi, imi)), max_index(mm(imi, ima)) {}
-		UsageID min_ident, max_ident;
-		int64_t min_index, max_index;
-	};
-	struct InputReportDescription {
-		InputReportDescription() : bits(0U), bytes(0U) {}
-		std::size_t bits, bytes;
-		typedef std::list<InputVariable> Variables;
-		Variables variables;
-		typedef std::list<InputIndex> Indices;
-		Indices array_indices;
-	};
-	struct OutputVariable : public ReportField {
-		OutputVariable(UsageID i, std::size_t p, std::size_t l): ReportField(p, l), ident(i) {}
-		UsageID ident;
-	};
-	struct OutputIndex : public ReportField {
-		OutputIndex(std::size_t p, std::size_t l, UsageID umi, UsageID uma): ReportField(p, l), min_ident(umi), max_ident(uma) {}
-		UsageID min_ident, max_ident;
-	};
-	struct OutputReportDescription {
-		OutputReportDescription() : bits(0U), bytes(0U) {}
-		std::size_t bits, bytes;
-		typedef std::list<OutputVariable> Variables;
-		Variables variables;
-		typedef std::list<OutputIndex> Indices;
-		Indices array_indices;
-	};
-	typedef std::map<uint8_t, InputReportDescription> InputReports;
-	typedef std::map<uint8_t, OutputReportDescription> OutputReports;
-	typedef std::set<uint32_t> KeysPressed;
-
-	FileDescriptorOwner device;
-	char buffer[4096];
-	std::size_t offset;
-	bool has_report_ids;
-	InputReports input_reports;
-	OutputReports output_reports;
-
-	bool IsInRange(const InputVariable & f, uint32_t);
-	uint32_t GetUnsignedField(const ReportField & f, std::size_t);
-	bool IsInRange(const InputVariable & f, int32_t);
-	int32_t GetSignedField(const ReportField & f, std::size_t);
-
-	uint16_t stdbuttons;
-	static unsigned short TranslateStdButton(const unsigned short button);
-	void handle_mouse_movement(Realizer & r, const InputReportDescription & report, const InputVariable & f, const uint16_t axis);
-	void handle_mouse_button(Realizer & r, uint32_t ident, bool down);
-
-	KeysPressed keys;
-	void handle_key(bool & seen_keyboard, KeysPressed & keys, uint32_t ident, bool down);
-};
-
-/// On the BSDs, atkbd devices are character devices with a terminal line discipline that speak the kbio protocol.
-class ATKeyboard
-{
-public:
-	ATKeyboard();
-	~ATKeyboard();
-
-	void open(int d, const char * n);
-	int query_device() const { return device.get(); }
-	void set_LEDs(Realizer & r);
-	void handle_input_events(Realizer & r);
-protected:
-	FileDescriptorOwner device;
-	char buffer[16];
-	std::size_t offset;
-
-	termios original_attr;
-	long kbmode;
-	void save_and_set_code_mode();
-	void restore();
-
-	bool pressed[256];	///< used for determining auto-repeat keypresses
-	bool is_pressed(uint8_t code) const { return pressed[code]; }
-	void set_pressed(uint8_t code, bool v) { pressed[code] = v; }
-};
-
-/// On the BSDs, sysmouse devices are character devices with a terminal line discipline that speak the sysmouse protocol.
-class SysMouse
-{
-public:
-	SysMouse();
-	~SysMouse();
-
-	void open(int d, const char * n);
-	int query_device() const { return device.get(); }
-	void handle_input_events(Realizer & r);
-protected:
-	FileDescriptorOwner device;
-	unsigned char buffer[MOUSE_SYS_PACKETSIZE * 16];
-	std::size_t offset;
-
-	termios original_attr;
-	int level;
-	void save_and_set_sysmouse_level();
-	void restore();
-
-	uint16_t stdbuttons, extbuttons;
-	static int TranslateStdButton(const unsigned short button);
+	FileDescriptorOwner input, control;
+	using USBHIDBase::read_description;
 };
 
 }
 
 inline
-HID::HID() : 
-	device(-1), 
-	offset(0U),
-	has_report_ids(false),
-	stdbuttons(0U)
+HID::HID(const KeyboardMap & km) : 
+	USBHIDBase(km),
+	input(-1), 
+	control(-1)
 {
 }
 
 inline
-void 
+bool 
 HID::open(
 	int d, 
 	const char * n
 ) { 
-	device.reset(open_readwriteexisting_at(d, n)); 
+	input.reset(open_readwriteexisting_at(d, n)); 
+	control.reset(dup(input.get())); 
+	return input.get() >= 0;
 }
 
 bool 
 HID::read_description()
 {
-	input_reports.clear();
-	has_report_ids = false;
+	usb_ctl_report_desc d = { 0, { 0 } };
+	const std::size_t maxlen(sizeof d.ucrd_data);
 
-	enum { MAIN = 0, GLOBAL, LOCAL, LONG };
-	enum /*local tags*/ { USAGE = 0, MIN, MAX };
-	enum /*global tags*/ { PAGE = 0, REPORT_ID = 8, PUSH = 10, POP = 11 };
-	enum /*main tags*/ { INPUT = 8, OUTPUT = 9, COLLECT = 10, END = 12};
-	enum /*collection types*/ { APPLICATION = 1 };
+	d.ucrd_size = maxlen;
+	if (0 > ioctl(control.get(), USB_GET_REPORT_DESC, &d)) return false;
 
-	std::stack<ParserContext> context_stack;
-	context_stack.push(ParserContext());
-	unsigned collection_level(0U);
-	bool enable_fields(false);
-
-	usb_gen_descriptor d = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, { 0, 0, 0, 0 } };
-
-	d.ugd_maxlen = 65535U;
-	if (0 > ioctl(device.get(), USB_GET_REPORT_DESC, &d)) return false;
-	std::vector<unsigned char> b(d.ugd_actlen);
-	d.ugd_data = b.data();
-	d.ugd_maxlen = d.ugd_actlen;
-	if (0 > ioctl(device.get(), USB_GET_REPORT_DESC, &d)) return false;
-
-	for ( std::size_t i(0U); i < d.ugd_actlen; ) {
-		if (i >= d.ugd_actlen) break;
-		unsigned size((b[i] & 3U) + ((b[i] & 3U) > 2U));
-		unsigned type((b[i] >> 2) & 3U);
-		unsigned tag((b[i] >> 4) & 15U);
-		++i;
-		uint32_t datum(0U);
-		switch (size) {
-			case 4: 
-				if (i + 4 > d.ugd_actlen) break;
-				datum = b[i+0] | (uint32_t(b[i+1]) << 8) | (uint32_t(b[i+2]) << 16) | (uint32_t(b[i+3]) << 24);
-				i += 4;
-				break;
-			case 2:
-				if (i + 2 > d.ugd_actlen) break;
-				datum = b[i+0] | (uint32_t(b[i+1]) << 8);
-				i += 2;
-				break;
-			case 1:
-				if (i + 1 > d.ugd_actlen) break;
-				datum = b[i++];
-				break;
-			case 0:	
-				break;
-		}
-		ParserContext & context(context_stack.top());
-		switch (type) {
-		case LONG:
-			size = datum & 0xFF;
-			tag = (datum >> 8) & 0xFF;
-			if (i + size > d.ugd_actlen) break;
-			i += size;
-			break;
-		case LOCAL:
-			context.locals[tag] = ParserContext::Item(datum, size);
-			if (USAGE == tag) context.add_ident();
-			if (MIN == tag) context.has_min = true;
-			if (MAX == tag) context.has_max = true;
-			break;
-		case GLOBAL:
-			if (PUSH == tag)
-				context_stack.push(context);
-			else
-			if (POP == tag) {
-				if (context_stack.size() > 1)
-					context_stack.pop();
-			} else
-			if (PUSH > tag) {
-				context.globals[tag] = ParserContext::Item(datum, size);
-				if (REPORT_ID == tag) has_report_ids = true;
-			}
-			break;
-		case MAIN:
-			{
-			switch (tag) {
-			case INPUT:
-			{
-				if (!enable_fields) break;
-				InputReportDescription & r(input_reports[context.report_id().d]);
-				if (datum & HIO_CONST) {
-					r.bits += context.report_size().d * context.report_count().d;
-				} else
-				if (datum & HIO_VARIABLE) {
-					for ( std::size_t count(0U); count < context.report_count().d; ++count ) {
-						const UsageID ident(context.take_variable_ident());
-						const bool relative(HIO_RELATIVE & datum);
-						r.variables.push_back(InputVariable(ident, r.bits, context.report_size().d, relative, context.logical_minimum(), context.logical_maximum()));
-						r.bits += context.report_size().d;
-					}
-				} else
-				{
-					for ( std::size_t count(0U); count < context.report_count().d; ++count ) {
-						r.array_indices.push_back(InputIndex(r.bits, context.report_size().d, context.usage_minimum().d, context.usage_maximum().d, context.logical_minimum(), context.logical_maximum()));
-						r.bits += context.report_size().d;
-					}
-				}
-				r.bytes = (r.bits + 7U) >> 3U;
-				break;
-			}
-			case OUTPUT:
-			{
-				if (!enable_fields) break;
-				OutputReportDescription & r(output_reports[context.report_id().d]);
-				if (datum & HIO_CONST) {
-					r.bits += context.report_size().d * context.report_count().d;
-				} else
-				if (datum & HIO_VARIABLE) {
-					for ( std::size_t count(0U); count < context.report_count().d; ++count ) {
-						const UsageID ident(context.take_variable_ident());
-						r.variables.push_back(OutputVariable(ident, r.bits, context.report_size().d));
-						r.bits += context.report_size().d;
-					}
-				} else
-				{
-					for ( std::size_t count(0U); count < context.report_count().d; ++count ) {
-						r.array_indices.push_back(OutputIndex(r.bits, context.report_size().d, context.usage_minimum().d, context.usage_maximum().d));
-						r.bits += context.report_size().d;
-					}
-				}
-				r.bytes = (r.bits + 7U) >> 3U;
-				break;
-			}
-			case COLLECT:
-				if (0 == collection_level && APPLICATION == datum) {
-					enable_fields = 
-						HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_MOUSE) == context.ident() || 
-						HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_KEYBOARD) == context.ident() ||
-						HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_KEYPAD) == context.ident();
-				}
-				++collection_level;
-				break;
-			case END:
-				if (collection_level > 0) {
-					--collection_level;
-					if (0 == collection_level)
-						enable_fields = false;
-				}
-				break;
-			}
-			context.clear_locals();
-			break;
-			}
-		}
-	}
-
-	return true;
+	return read_description(d.ucrd_data, maxlen, d.ucrd_size);
 }
 
 inline
 void 
 HID::set_LEDs(
-	Realizer & r
 ) {
 	/// \todo TODO
-}
-
-inline
-unsigned short
-HID::TranslateStdButton(
-	const unsigned short button
-) {
-	switch (button) {
-		case 1U:	return 2;
-		case 2U:	return 1;
-		default:	return button;
-	}
-}
-
-inline
-uint32_t 
-HID::GetUnsignedField(
-	const ReportField & f,
-	std::size_t report_size
-) {
-	if (0U == f.len) return 0U;
-	// Byte-aligned fields can be optimized.
-	if (0U == (f.pos & 7U)) {
-		const std::size_t bytepos(f.pos >> 3U);
-		if (bytepos >= report_size) return 0U;
-		if (f.len <= 8U) {
-			uint8_t v(*reinterpret_cast<const uint8_t *>(buffer + bytepos));
-			if (f.len < 8U) v &= 0xFF >> (8U - f.len);
-			return v;
-		}
-		if (f.len <= 16U) {
-			uint16_t v(le16toh(*reinterpret_cast<const uint16_t *>(buffer + bytepos)));
-			if (f.len < 16U) v &= 0xFFFF >> (16U - f.len);
-			return v;
-		}
-		if (f.len <= 32U) {
-			uint32_t v(le32toh(*reinterpret_cast<const uint32_t *>(buffer + bytepos)));
-			if (f.len < 32U) v &= 0xFFFFFFFF >> (32U - f.len);
-			return v;
-		}
-	}
-	// 1-bit fields can be optimized.
-	if (1U == f.len) {
-		const std::size_t bytepos(f.pos >> 3U);
-		if (bytepos >= report_size) return 0U;
-		const uint8_t v(*reinterpret_cast<const uint8_t *>(buffer + bytepos));
-		return (v >> (f.pos & 7U)) & 1U;
-	}
-	/// \bug FIXME: This doesn't handle unaligned >1-bit fields.
-	return 0U;
-}
-
-inline
-bool 
-HID::IsInRange(
-	const InputVariable & f,
-	uint32_t v
-) {
-	return v <= f.max && v >= f.min;
-}
-
-inline
-int32_t 
-HID::GetSignedField(
-	const ReportField & f,
-	std::size_t report_size
-) {
-	if (0U == f.len) return 0U;
-	// Byte-aligned fields can be optimized.
-	if (0U == (f.pos & 7U)) {
-		const std::size_t bytepos(f.pos >> 3U);
-		if (bytepos >= report_size) return 0U;
-		if (f.len <= 8U) {
-			uint8_t v(*reinterpret_cast<const uint8_t *>(buffer + bytepos));
-			if (f.len < 8U) v &= 0xFF >> (8U - f.len);
-			const uint8_t signbit(1U << (f.len - 1U));
-			if (v & signbit) v |= ~(signbit - 1U);
-			return static_cast<int8_t>(v);
-		}
-		if (f.len <= 16U) {
-			uint16_t v(le16toh(*reinterpret_cast<const uint16_t *>(buffer + bytepos)));
-			if (f.len < 16U) v &= 0xFFFF >> (16U - f.len);
-			const uint16_t signbit(1U << (f.len - 1U));
-			if (v & signbit) v |= ~(signbit - 1U);
-			return static_cast<int16_t>(v);
-		}
-		if (f.len <= 32U) {
-			uint32_t v(le32toh(*reinterpret_cast<const uint32_t *>(buffer + bytepos)));
-			if (f.len < 32U) v &= 0xFFFFFFFF >> (32U - f.len);
-			const uint32_t signbit(1U << (f.len - 1U));
-			if (v & signbit) v |= ~(signbit - 1U);
-			return static_cast<int32_t>(v);
-		}
-	}
-	// 1-bit fields can be optimized.
-	if (1U == f.len) {
-		const std::size_t bytepos(f.pos >> 3U);
-		if (bytepos >= report_size) return 0U;
-		const uint8_t v(*reinterpret_cast<const uint8_t *>(buffer + bytepos));
-		// The 1 bit is the sign bit, so sign extension gets us this.
-		return (v >> (f.pos & 7U)) & 1U ? -1 : 0;
-	}
-	/// \bug FIXME: This doesn't handle unaligned >1-bit fields.
-	return 0U;
-}
-
-inline
-bool
-HID::IsInRange(
-	const InputVariable & f,
-	int32_t v
-) {
-	return v <= f.max && v >= f.min;
-}
-
-inline
-void
-HID::handle_mouse_movement(
-	Realizer & r,
-	const InputReportDescription & report,
-	const InputVariable & f,
-	const uint16_t axis
-) {
-	if (f.relative) {
-		const int32_t off(GetSignedField(f, report.bytes));
-		if (IsInRange(f, off))
-			r.handle_mouse_relpos(axis, off);
-	} else {
-		const uint32_t pos(GetUnsignedField(f, report.bytes));
-		if (IsInRange(f, pos))
-			r.handle_mouse_abspos(axis, pos, f.max - f.min + 1U);
-	}
-}
-
-inline
-void 
-HID::handle_mouse_button(
-	Realizer & r,
-	uint32_t ident, 
-	bool down
-) {
-	if (HID_USAGE2(HUP_BUTTON, 0) < ident && HID_USAGE2(HUP_BUTTON, 32U) >= ident) {
-		const unsigned short button(ident - HID_USAGE2(HUP_BUTTON, 1));
-		const unsigned long mask(1UL << button);
-		if (!!(stdbuttons & mask) != down) {
-			if (down)
-				stdbuttons |= mask;
-			else
-				stdbuttons &= ~mask;
-			r.handle_mouse_button(TranslateStdButton(button), down);
-		}
-	} else
-		;
-}
-
-inline
-void 
-HID::handle_key(
-	bool & seen_keyboard, 
-	KeysPressed & newkeys, 
-	uint32_t ident, 
-	bool down
-) {
-	if ((HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_SYSTEM_CONTROL) <= ident && HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_APPLE_EJECT) >= ident)
-	||  (HID_USAGE2(HUP_KEYBOARD, 0) <= ident && HID_USAGE2(HUP_KEYBOARD, 0xFFFF) >= ident)
-	||  (HID_USAGE2(HUP_CONSUMER, 0) <= ident && HID_USAGE2(HUP_CONSUMER, 0xFFFF) >= ident)
-	) {
-		seen_keyboard = true;
-		if (down)
-			newkeys.insert(ident);
-		else
-			newkeys.erase(ident);
-	} else
-		;
 }
 
 inline
@@ -3793,7 +3617,7 @@ void
 HID::handle_input_events(
 	Realizer & r
 ) {
-	const int n(read(device.get(), reinterpret_cast<char *>(buffer) + offset, sizeof buffer - offset));
+	const int n(read(input.get(), reinterpret_cast<char *>(buffer) + offset, sizeof buffer - offset));
 	if (0 > n) return;
 
 	KeysPressed newkeys;
@@ -3821,7 +3645,7 @@ HID::handle_input_events(
 				if (IsInRange(f, down))
 					handle_mouse_button(r, f.ident, down);
 			} else
-			if ((HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_SYSTEM_CONTROL) <= f.ident && HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_APPLE_EJECT) >= f.ident)
+			if ((HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_SYSTEM_CONTROL) <= f.ident && HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_LAST_SYSTEM_KEY) >= f.ident)
 			||  (HID_USAGE2(HUP_KEYBOARD, 0) <= f.ident && HID_USAGE2(HUP_KEYBOARD, 0xFFFF) >= f.ident)
 			||  (HID_USAGE2(HUP_CONSUMER, 0) <= f.ident && HID_USAGE2(HUP_CONSUMER, 0xFFFF) >= f.ident)
 			) {
@@ -3855,7 +3679,7 @@ HID::handle_input_events(
 			if (HID_USAGE2(HUP_BUTTON, 0) < ident && HID_USAGE2(HUP_BUTTON, 0xFFFF) >= ident) {
 				handle_mouse_button(r, ident, down);
 			} else
-			if ((HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_SYSTEM_CONTROL) <= ident && HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_APPLE_EJECT) >= ident)
+			if ((HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_SYSTEM_CONTROL) <= ident && HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_LAST_SYSTEM_KEY) >= ident)
 			||  (HID_USAGE2(HUP_KEYBOARD, 0) <= ident && HID_USAGE2(HUP_KEYBOARD, 0xFFFF) >= ident)
 			||  (HID_USAGE2(HUP_CONSUMER, 0) <= ident && HID_USAGE2(HUP_CONSUMER, 0xFFFF) >= ident)
 			) {
@@ -3873,35 +3697,252 @@ HID::handle_input_events(
 			KeysPressed::iterator now(newkeys.find(*was));
 			const uint16_t index(usb_ident_to_keymap_index(*was));
 			if (newkeys.end() == now) {
-				if (0xFFFF != index) {
-					const uint8_t row(index >> 8U);
-					const uint8_t col(index & 0xFF);
-					r.handle_keyboard(row, col, 0);
-				}
+				handle_keyboard(r, index, 0);
 				was = keys.erase(was);
 			} else {
-				if (0xFFFF != index) {
-					const uint8_t row(index >> 8U);
-					const uint8_t col(index & 0xFF);
-					r.handle_keyboard(row, col, 2);
-				}
+				handle_keyboard(r, index, 2);
 				newkeys.erase(now);
 				++was;
 			}
 		}
 		for (KeysPressed::iterator now(newkeys.begin()); now != newkeys.end(); now = newkeys.erase(now)) {
 			const uint16_t index(usb_ident_to_keymap_index(*now));
-			if (0xFFFF != index) {
-				const uint8_t row(index >> 8U);
-				const uint8_t col(index & 0xFF);
-				r.handle_keyboard(row, col, 1);
+			handle_keyboard(r, index, 1);
+			keys.insert(*now);
+		}
+	}
+}
+
+#elif defined(__FreeBSD__) || defined (__DragonFly__)
+
+/* FreeBSD/PC-BSD/DragonFly BSD HIDs ****************************************
+// **************************************************************************
+*/
+
+namespace {
+
+class HID :
+	public USBHIDBase
+{
+public:
+	HID(const KeyboardMap & km);
+
+	bool open(int d, const char * n);
+	int query_input_fd() const { return input.get(); }
+	bool read_description();
+	void set_LEDs();
+	void handle_input_events(Realizer &);
+protected:
+	FileDescriptorOwner input, control;
+	using USBHIDBase::read_description;
+};
+
+/// On the BSDs, atkbd devices are character devices with a terminal line discipline that speak the kbio protocol.
+class ATKeyboard :
+	public HIDBase
+{
+public:
+	ATKeyboard(const KeyboardMap & km);
+	~ATKeyboard();
+
+	bool open(int d, const char * n);
+	int query_input_fd() const { return device.get(); }
+	void set_LEDs();
+	void handle_input_events(Realizer &);
+protected:
+	FileDescriptorOwner device;
+	char buffer[16];
+	std::size_t offset;
+
+	termios original_attr;
+	long kbmode;
+	void save_and_set_code_mode();
+	void restore();
+
+	bool pressed[256];	///< used for determining auto-repeat keypresses
+	bool is_pressed(uint8_t code) const { return pressed[code]; }
+	void set_pressed(uint8_t code, bool v) { pressed[code] = v; }
+};
+
+/// On the BSDs, sysmouse devices are character devices with a terminal line discipline that speak the sysmouse protocol.
+class SysMouse :
+	public HIDBase
+{
+public:
+	SysMouse(const KeyboardMap & km);
+	~SysMouse();
+
+	bool open(int d, const char * n);
+	int query_input_fd() const { return device.get(); }
+	void handle_input_events(Realizer & r);
+protected:
+	FileDescriptorOwner device;
+	unsigned char buffer[MOUSE_SYS_PACKETSIZE * 16];
+	std::size_t offset;
+
+	termios original_attr;
+	int level;
+	void save_and_set_sysmouse_level();
+	void restore();
+
+	uint16_t stdbuttons, extbuttons;
+	static int TranslateStdButton(const unsigned short button);
+
+private:
+	static bool IsSync (char b);
+	static uint8_t Extend7to8 (uint8_t v);
+	static int GetOffset8 (uint8_t one, uint8_t two);
+	static int GetOffset7 (uint8_t one, uint8_t two);
+}; 
+
+}
+
+inline
+HID::HID(const KeyboardMap & km) : 
+	USBHIDBase(km),
+	input(-1), 
+	control(-1)
+{
+}
+
+inline
+bool 
+HID::open(
+	int d, 
+	const char * n
+) { 
+	input.reset(open_readwriteexisting_at(d, n)); 
+	control.reset(dup(input.get())); 
+	return input.get() >= 0;
+}
+
+bool 
+HID::read_description()
+{
+	usb_gen_descriptor d = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, { 0, 0, 0, 0 } };
+
+	d.ugd_maxlen = 65535U;
+	if (0 > ioctl(control.get(), USB_GET_REPORT_DESC, &d)) return false;
+	std::vector<unsigned char> b(d.ugd_actlen);
+	const std::size_t maxlen(d.ugd_actlen);
+	d.ugd_data = b.data();
+	d.ugd_maxlen = maxlen;
+	if (0 > ioctl(control.get(), USB_GET_REPORT_DESC, &d)) return false;
+
+	return read_description(b.data(), maxlen, d.ugd_actlen);
+}
+
+inline
+void 
+HID::set_LEDs(
+) {
+	/// \todo TODO
+}
+
+inline
+void
+HID::handle_input_events(
+	Realizer & r
+) {
+	const int n(read(input.get(), reinterpret_cast<char *>(buffer) + offset, sizeof buffer - offset));
+	if (0 > n) return;
+
+	KeysPressed newkeys;
+	bool seen_keyboard(false);
+
+	for (
+		offset += n;
+		offset > 0;
+	    ) {
+		uint8_t report_id(0);
+		if (has_report_ids) {
+			report_id = buffer[0];
+			std::memmove(buffer, buffer + 1, sizeof buffer - 1),
+			--offset;
+		}
+		InputReports::const_iterator rp(input_reports.find(report_id));
+		if (input_reports.end() == rp) break;
+		const InputReportDescription & report(rp->second);
+		if (offset < report.bytes) break;
+
+		for (InputReportDescription::Variables::const_iterator i(report.variables.begin()); i != report.variables.end(); ++i) {
+			const InputVariable & f(*i);
+			if (HID_USAGE2(HUP_BUTTON, 0) <= f.ident && HID_USAGE2(HUP_BUTTON, 0xFFFF) >= f.ident) {
+				const uint32_t down(GetUnsignedField(f, report.bytes));
+				if (IsInRange(f, down))
+					handle_mouse_button(r, f.ident, down);
+			} else
+			if ((HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_SYSTEM_CONTROL) <= f.ident && HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_LAST_SYSTEM_KEY) >= f.ident)
+			||  (HID_USAGE2(HUP_KEYBOARD, 0) <= f.ident && HID_USAGE2(HUP_KEYBOARD, 0xFFFF) >= f.ident)
+			||  (HID_USAGE2(HUP_CONSUMER, 0) <= f.ident && HID_USAGE2(HUP_CONSUMER, 0xFFFF) >= f.ident)
+			) {
+				const uint32_t down(GetUnsignedField(f, report.bytes));
+				if (IsInRange(f, down))
+					handle_key(seen_keyboard, newkeys, f.ident, down);
+			} else
+			switch (f.ident) {
+				case HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X):
+					handle_mouse_movement(r, report, f, r.AXIS_X);
+					break;
+				case HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Y):
+					handle_mouse_movement(r, report, f, r.AXIS_Y);
+					break;
+				case HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_WHEEL):
+					handle_mouse_movement(r, report, f, r.V_SCROLL);
+					break;
+				case HID_USAGE2(HUP_CONSUMER, HUC_AC_PAN):
+					handle_mouse_movement(r, report, f, r.H_SCROLL);
+					break;
 			}
+		}
+		for (InputReportDescription::Indices::const_iterator i(report.array_indices.begin()); i != report.array_indices.end(); ++i) {
+			const InputIndex & f(*i);
+			const uint32_t v(GetUnsignedField(f, report.bytes));
+			if (v < f.min_index || v > f.max_index) continue;
+			uint32_t ident(v + f.min_ident - f.min_index);
+			if (ident > f.max_ident) ident = f.max_ident;
+
+			const bool down(true);	// Implied by the existence of the index value.
+			if (HID_USAGE2(HUP_BUTTON, 0) < ident && HID_USAGE2(HUP_BUTTON, 0xFFFF) >= ident) {
+				handle_mouse_button(r, ident, down);
+			} else
+			if ((HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_SYSTEM_CONTROL) <= ident && HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_LAST_SYSTEM_KEY) >= ident)
+			||  (HID_USAGE2(HUP_KEYBOARD, 0) <= ident && HID_USAGE2(HUP_KEYBOARD, 0xFFFF) >= ident)
+			||  (HID_USAGE2(HUP_CONSUMER, 0) <= ident && HID_USAGE2(HUP_CONSUMER, 0xFFFF) >= ident)
+			) {
+				handle_key(seen_keyboard, newkeys, ident, down);
+			} else
+				;
+		}
+
+		std::memmove(buffer, buffer + report.bytes, sizeof buffer - report.bytes),
+		offset -= report.bytes;
+	}
+
+	if (seen_keyboard) {
+		for (KeysPressed::iterator was(keys.begin()); was != keys.end(); ) {
+			KeysPressed::iterator now(newkeys.find(*was));
+			const uint16_t index(usb_ident_to_keymap_index(*was));
+			if (newkeys.end() == now) {
+				handle_keyboard(r, index, 0);
+				was = keys.erase(was);
+			} else {
+				handle_keyboard(r, index, 2);
+				newkeys.erase(now);
+				++was;
+			}
+		}
+		for (KeysPressed::iterator now(newkeys.begin()); now != newkeys.end(); now = newkeys.erase(now)) {
+			const uint16_t index(usb_ident_to_keymap_index(*now));
+			handle_keyboard(r, index, 1);
+			keys.insert(*now);
 		}
 	}
 }
 
 inline
-ATKeyboard::ATKeyboard() : 
+ATKeyboard::ATKeyboard(const KeyboardMap & km) : 
+	HIDBase(km),
 	device(-1), 
 	offset(0U) ,
 	original_attr(),
@@ -3917,22 +3958,22 @@ ATKeyboard::~ATKeyboard()
 }
 
 inline
-void 
+bool 
 ATKeyboard::open(
 	int d, 
 	const char * n
 ) { 
 	device.reset(open_read_at(d, n)); 
 	save_and_set_code_mode();
+	return device.get() >= 0;
 }
 
 inline
 void 
 ATKeyboard::set_LEDs(
-	Realizer & r
 ) {
 	if (-1 != device.get()) {
-		ioctl(device.get(), KDSETLED, (r.caps_LED() ? LED_CAP : 0)|(r.num_LED() ? LED_NUM : 0)|(r.scroll_LED() ? LED_SCR : 0));
+		ioctl(device.get(), KDSETLED, (caps_LED() ? LED_CAP : 0)|(num_LED() ? LED_NUM : 0)|(scroll_LED() ? LED_SCR : 0));
 	}
 }
 
@@ -3956,10 +3997,7 @@ ATKeyboard::handle_input_events(
 		set_pressed(code, !bit7);
 
 		const uint16_t index(bsd_keycode_to_keymap_index(code));
-		if (0xFFFF == index) continue;
-		const uint8_t row(index >> 8U);
-		const uint8_t col(index & 0xFF);
-		r.handle_keyboard(row, col, value);
+		handle_keyboard(r, index, value);
 	}
 }
 
@@ -3989,7 +4027,8 @@ ATKeyboard::restore()
 }
 
 inline
-SysMouse::SysMouse() : 
+SysMouse::SysMouse(const KeyboardMap & km) : 
+	HIDBase(km),
 	device(-1), 
 	offset(0U),
 	original_attr(),
@@ -4005,39 +4044,40 @@ SysMouse::~SysMouse()
 }
 
 inline
-void 
+bool 
 SysMouse::open(
 	int d, 
 	const char * n
 ) { 
 	device.reset(open_read_at(d, n)); 
 	save_and_set_sysmouse_level();
+	return device.get() >= 0;
 }
 
-static inline
+inline
 bool
-IsSync ( char b ) 
+SysMouse::IsSync ( char b ) 
 { 
 	return (b & MOUSE_SYS_SYNCMASK) == MOUSE_SYS_SYNC; 
 }
 
-static inline
+inline
 uint8_t
-Extend7to8 ( uint8_t v ) 
+SysMouse::Extend7to8 ( uint8_t v ) 
 {
 	return (v & 0x7F) | ((v & 0x40) << 1);
 }
 
-static inline
+inline
 int
-GetOffset8 ( uint8_t one, uint8_t two )
+SysMouse::GetOffset8 ( uint8_t one, uint8_t two )
 {
 	return static_cast<int8_t>(one) + static_cast<int8_t>(two);
 }
 
-static inline
+inline
 int
-GetOffset7 ( uint8_t one, uint8_t two )
+SysMouse::GetOffset7 ( uint8_t one, uint8_t two )
 {
 	return GetOffset8(Extend7to8(one), Extend7to8(two));
 }
@@ -4072,21 +4112,21 @@ SysMouse::handle_input_events(
 		}
 		if (offset < MOUSE_MSC_PACKETSIZE) break;
  		if (short int dx = GetOffset8(buffer[1], buffer[3]))
-			r.handle_mouse_relpos(r.AXIS_X, dx);
+			r.handle_mouse_relpos(modifiers(), r.AXIS_X, dx);
 		if (short int dy = GetOffset8(buffer[2], buffer[4]))
 			// Vertical movement is negated for some undocumented reason.
-			r.handle_mouse_relpos(r.AXIS_Y, -dy);
+			r.handle_mouse_relpos(modifiers(), r.AXIS_Y, -dy);
 		const bool ext(offset >= MOUSE_SYS_PACKETSIZE && !IsSync(buffer[5]) && !IsSync(buffer[6]) && !IsSync(buffer[7]));
 	       	if (ext) {
 			if (short int dz = GetOffset7(buffer[5], buffer[6]))
-				r.handle_mouse_relpos(r.V_SCROLL, dz);
+				r.handle_mouse_relpos(modifiers(), r.V_SCROLL, dz);
 		}
 		const unsigned newstdbuttons(buffer[0] & MOUSE_SYS_STDBUTTONS);
 		for (unsigned short button(0U); button < MOUSE_MSC_MAXBUTTON; ++button) {
 			const unsigned long mask(1UL << button);
 			if ((stdbuttons & mask) != (newstdbuttons & mask)) {
 				const bool up(newstdbuttons & mask);
-				r.handle_mouse_button(TranslateStdButton(button), !up);
+				r.handle_mouse_button(modifiers(), TranslateStdButton(button), !up);
 			}
 		}
 		stdbuttons = newstdbuttons;
@@ -4096,7 +4136,7 @@ SysMouse::handle_input_events(
 				const unsigned long mask(1UL << button);
 				if ((extbuttons & mask) != (newextbuttons & mask)) {
 					const bool up(newextbuttons & mask);
-					r.handle_mouse_button(button + MOUSE_MSC_MAXBUTTON, !up);
+					r.handle_mouse_button(modifiers(), button + MOUSE_MSC_MAXBUTTON, !up);
 				}
 			}
 			extbuttons = newextbuttons;
@@ -4148,6 +4188,10 @@ SysMouse::restore()
 	}
 }
 
+#else
+
+#error "Don't know how to handle HIDs for your operating system."
+
 #endif
 
 /* The HID list *************************************************************
@@ -4159,7 +4203,7 @@ namespace {
 class HIDList : public std::list<HID *> {
 public:
 	~HIDList();
-	HID & add() { HID * p(new HID()); push_back(p); return *p; }
+	HID & add(const KeyboardMap & km) { HID * p(new HID(km)); push_back(p); return *p; }
 };
 
 }
@@ -4175,102 +4219,130 @@ HIDList::~HIDList()
 */
 
 namespace {
-class KernelVTSubsystemLockout :
+/// \brief Lock out the terminal emulator that is built into the kernel.
+/// 
+/// The lockout has to do three things:
+/// 1. Set the VT switching to send the given release and acquire signals to this process.
+/// 2. Tell the terminal emulator not to draw its character buffer, with KD_GRAPHICS or euivalent.
+///	* OpenBSD bug: There's no API for finding out the prior drawing setting, so we always restore to KD_TEXT.
+/// 3. Tell the terminal emulator not to read keyboard/mouse input packets.
+///	* On Linux, the newest mechanism, that doesn't react badly with other things that independently change the KVT mode, is KBMUTE.
+///	* On Linux, an older mechanism, that is at least better than setting raw mode, is K_OFF.
+///	* Otherwise, fall back to just setting raw mode.
+class KernelTerminalEmulatorLockout :
 	public FileDescriptorOwner
 {
 public:
-	KernelVTSubsystemLockout(int nfd, int rs, int as);
-	~KernelVTSubsystemLockout();
+	KernelTerminalEmulatorLockout(int nfd, int rs, int as);
+	~KernelTerminalEmulatorLockout();
 	void reset(int nfd);
 	int release();
 protected:
 	struct vt_mode vtmode;
 	const int release_signal, acquire_signal;
-	long kdmode;
 #if defined(__LINUX__) || defined(__linux__)
-#if defined(KDGKBMUTE) && defined(KDSKBMUTE)
-	// This is the newest mechanism, that doesn't react badly with other things that independently change the KVT mode.
+#	if defined(KDGKBMUTE) && defined(KDSKBMUTE)
 	int kbmute;
-#elif defined(K_OFF)
-	// This is an older mechanism, that is at least better than setting raw mode.
+#	elif defined(K_OFF)
 	long kbmode;
-#else
-	// Fall back to just setting raw mode when turning the KVT's keyboard input queue off.
+#	else
 	long kbmode;
-#endif
+#	endif
+	long kdmode;
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
+	long kdmode;
+#elif defined(__OpenBSD__)
+	long kbmode;
+	long kdmode;
 #endif
 	void save_and_mute();
 	void restore();
 };
 }
 
-KernelVTSubsystemLockout::KernelVTSubsystemLockout(int nfd, int rs, int as) : 
+KernelTerminalEmulatorLockout::KernelTerminalEmulatorLockout(int nfd, int rs, int as) : 
 	FileDescriptorOwner(nfd),
 	vtmode(),
 	release_signal(rs),
 	acquire_signal(as),
-	kdmode()
 #if defined(__LINUX__) || defined(__linux__)
-	,
-#if defined(KDGKBMUTE) && defined(KDSKBMUTE)
-	kbmute()
-#else
-	kbmode()
-#endif
+#	if defined(KDGKBMUTE) && defined(KDSKBMUTE)
+	kbmute(),
+#	else
+	kbmode(),
+#	endif
+	kdmode()
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
+	kdmode()
+#elif defined(__OpenBSD__)
+	kbmode(),
+	kdmode()
 #endif
 {
 	save_and_mute();
 }
 
-KernelVTSubsystemLockout::~KernelVTSubsystemLockout()
+KernelTerminalEmulatorLockout::~KernelTerminalEmulatorLockout()
 {
 	restore();
 }
 
 void
-KernelVTSubsystemLockout::save_and_mute()
+KernelTerminalEmulatorLockout::save_and_mute()
 {
 	if (-1 != fd) {
 		ioctl(fd, VT_GETMODE, &vtmode);
 		struct vt_mode m = { VT_PROCESS, 0, static_cast<short>(release_signal), static_cast<char>(acquire_signal), 0 };
 		ioctl(fd, VT_SETMODE, &m);
+#if defined(__LINUX__) || defined(__linux__)
 		ioctl(fd, KDGETMODE, &kdmode);
 		ioctl(fd, KDSETMODE, KD_GRAPHICS);
-#if defined(__LINUX__) || defined(__linux__)
-#if defined(KDGKBMUTE) && defined(KDSKBMUTE)
+#	if defined(KDGKBMUTE) && defined(KDSKBMUTE)
 		ioctl(fd, KDGKBMUTE, &kbmute);
 		ioctl(fd, KDSKBMUTE, 0);
-#elif defined(K_OFF)
+#	elif defined(K_OFF)
 		ioctl(fd, KDGKBMODE, &kbmode);
 		ioctl(fd, KDSKBMODE, K_OFF);
-#else
+#	else
 		ioctl(fd, KDGKBMODE, &kbmode);
 		ioctl(fd, KDSKBMODE, K_RAW);
-#endif
+#	endif
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
+		ioctl(fd, KDGETMODE, &kdmode);
+		ioctl(fd, KDSETMODE, KD_GRAPHICS);
+#elif defined(__OpenBSD__)
+		ioctl(fd, KDSETMODE, KD_GRAPHICS);
+		ioctl(fd, KDGKBMODE, &kbmode);
+		ioctl(fd, KDSKBMODE, K_RAW);
 #endif
 	}
 }
 
 void
-KernelVTSubsystemLockout::restore()
+KernelTerminalEmulatorLockout::restore()
 {
 	if (-1 != fd) {
-		ioctl(fd, VT_SETMODE, &vtmode);
-		ioctl(fd, KDSETMODE, kdmode);
 #if defined(__LINUX__) || defined(__linux__)
-#if defined(KDGKBMUTE) && defined(KDSKBMUTE)
+#	if defined(KDGKBMUTE) && defined(KDSKBMUTE)
 		ioctl(fd, KDSKBMUTE, kbmute);
-#elif defined(K_OFF)
+#	elif defined(K_OFF)
 		ioctl(fd, KDSKBMODE, kbmode);
-#else
+#	else
 		ioctl(fd, KDSKBMODE, kbmode);
+#	endif
+		ioctl(fd, KDSETMODE, kdmode);
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
+		ioctl(fd, KDSETMODE, kdmode);
+#elif defined(__OpenBSD__)
+		ioctl(fd, KDSKBMODE, kbmode);
+		ioctl(fd, KDSETMODE, KD_GRAPHICS);
 #endif
-#endif
+		ioctl(fd, VT_SETMODE, &vtmode);
 	}
 }
 
 void 
-KernelVTSubsystemLockout::reset(int nfd) 
+KernelTerminalEmulatorLockout::reset(int nfd) 
 { 
 	if (nfd != fd) restore(); 
 	FileDescriptorOwner::reset(nfd); 
@@ -4278,7 +4350,7 @@ KernelVTSubsystemLockout::reset(int nfd)
 }
 
 int 
-KernelVTSubsystemLockout::release() 
+KernelTerminalEmulatorLockout::release() 
 { 
 	restore(); 
 	return FileDescriptorOwner::release(); 
@@ -4296,7 +4368,7 @@ console_fb_realizer (
 	const char * prog(basename_of(args[0]));
 	const char * kernel_vt(0);
 	const char * keyboard_map_filename(0);
-#if !defined(__LINUX__) && !defined(__linux__)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 	const char * atkeyboard_filename(0);
 	const char * sysmouse_filename(0);
 #endif
@@ -4310,37 +4382,59 @@ console_fb_realizer (
 		popt::bool_definition bold_as_colour_option('\0', "bold-as-colour", "Forcibly render boldface as a colour brightness change.", bold_as_colour);
 		popt::string_definition kernel_vt_option('\0', "kernel-vt", "device", "Use the kernel FB sharing protocol via this device.", kernel_vt);
 		popt::string_list_definition input_option('\0', "input", "device", "Use the this input device.", input_filenames);
-#if !defined(__LINUX__) && !defined(__linux__)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 		popt::bool_definition limit_80_columns_option('\0', "80-columns", "Limit to no wider than 80 columns.", limit_80_columns);
 		popt::string_definition atkeyboard_option('\0', "atkeyboard", "device", "Use this atkbd input device.", atkeyboard_filename);
 		popt::string_definition sysmouse_option('\0', "sysmouse", "device", "Use this sysmouse input device.", sysmouse_filename);
 #endif
 		popt::string_definition keyboard_map_option('\0', "keyboard-map", "filename", "Use this keyboard map.", keyboard_map_filename);
 		popt::unsigned_number_definition quadrant_option('\0', "quadrant", "number", "Position the terminal in quadrant 0, 1, 2, or 3.", quadrant, 0);
-		fontspec_definition vtfont_option('\0', "vtfont", "filename", "Use this font as a vt font.", fonts, -1, -1);
+		fontspec_definition vtfont_option('\0', "vtfont", "filename", "Use this font as a medium+bold upright vt font.", fonts, -1, CombinedFont::Font::UPRIGHT);
+		fontspec_definition vtfont_faint_r_option('\0', "vtfont-faint-r", "filename", "Use this font as a light+demibold upright vt font.", fonts, -2, CombinedFont::Font::UPRIGHT);
+		fontspec_definition vtfont_faint_o_option('\0', "vtfont-faint-o", "filename", "Use this font as a light+demibold oblique vt font.", fonts, -2, CombinedFont::Font::OBLIQUE);
+		fontspec_definition vtfont_faint_i_option('\0', "vtfont-faint-i", "filename", "Use this font as a light+demibold italic vt font.", fonts, -2, CombinedFont::Font::ITALIC);
+		fontspec_definition vtfont_normal_r_option('\0', "vtfont-normal-r", "filename", "Use this font as a medium+bold upright vt font.", fonts, -1, CombinedFont::Font::UPRIGHT);
+		fontspec_definition vtfont_normal_o_option('\0', "vtfont-normal-o", "filename", "Use this font as a medium+bold oblique vt font.", fonts, -1, CombinedFont::Font::OBLIQUE);
+		fontspec_definition vtfont_normal_i_option('\0', "vtfont-normal-i", "filename", "Use this font as a medium+bold italic vt font.", fonts, -1, CombinedFont::Font::ITALIC);
+		fontspec_definition font_light_r_option('\0', "font-light-r", "filename", "Use this font as a light-upright font.", fonts, CombinedFont::Font::LIGHT, CombinedFont::Font::UPRIGHT);
+		fontspec_definition font_light_o_option('\0', "font-light-o", "filename", "Use this font as a light-oblique font.", fonts, CombinedFont::Font::LIGHT, CombinedFont::Font::OBLIQUE);
+		fontspec_definition font_light_i_option('\0', "font-light-i", "filename", "Use this font as a light-italic font.", fonts, CombinedFont::Font::LIGHT, CombinedFont::Font::ITALIC);
 		fontspec_definition font_medium_r_option('\0', "font-medium-r", "filename", "Use this font as a medium-upright font.", fonts, CombinedFont::Font::MEDIUM, CombinedFont::Font::UPRIGHT);
 		fontspec_definition font_medium_o_option('\0', "font-medium-o", "filename", "Use this font as a medium-oblique font.", fonts, CombinedFont::Font::MEDIUM, CombinedFont::Font::OBLIQUE);
 		fontspec_definition font_medium_i_option('\0', "font-medium-i", "filename", "Use this font as a medium-italic font.", fonts, CombinedFont::Font::MEDIUM, CombinedFont::Font::ITALIC);
+		fontspec_definition font_demibold_r_option('\0', "font-demibold-r", "filename", "Use this font as a demibold-upright font.", fonts, CombinedFont::Font::DEMIBOLD, CombinedFont::Font::UPRIGHT);
+		fontspec_definition font_demibold_o_option('\0', "font-demibold-o", "filename", "Use this font as a demibold-oblique font.", fonts, CombinedFont::Font::DEMIBOLD, CombinedFont::Font::OBLIQUE);
+		fontspec_definition font_demibold_i_option('\0', "font-demibold-i", "filename", "Use this font as a demibold-italic font.", fonts, CombinedFont::Font::DEMIBOLD, CombinedFont::Font::ITALIC);
 		fontspec_definition font_bold_r_option('\0', "font-bold-r", "filename", "Use this font as a bold-upright font.", fonts, CombinedFont::Font::BOLD, CombinedFont::Font::UPRIGHT);
 		fontspec_definition font_bold_o_option('\0', "font-bold-o", "filename", "Use this font as a bold-oblique font.", fonts, CombinedFont::Font::BOLD, CombinedFont::Font::OBLIQUE);
 		fontspec_definition font_bold_i_option('\0', "font-bold-i", "filename", "Use this font as a bold-italic font.", fonts, CombinedFont::Font::BOLD, CombinedFont::Font::ITALIC);
 		popt::definition * top_table[] = {
 			&bold_as_colour_option,
-#if !defined(__LINUX__) && !defined(__linux__)
-			&limit_80_columns_option,
-#endif
 			&kernel_vt_option,
 			&input_option,
-#if !defined(__LINUX__) && !defined(__linux__)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+			&limit_80_columns_option,
 			&atkeyboard_option,
 			&sysmouse_option,
 #endif
 			&keyboard_map_option,
 			&quadrant_option,
 			&vtfont_option,
+			&vtfont_faint_r_option,
+			&vtfont_faint_o_option,
+			&vtfont_faint_i_option,
+			&vtfont_normal_r_option,
+			&vtfont_normal_o_option,
+			&vtfont_normal_i_option,
+			&font_light_r_option,
+			&font_light_o_option,
+			&font_light_i_option,
 			&font_medium_r_option,
 			&font_medium_o_option,
 			&font_medium_i_option,
+			&font_demibold_r_option,
+			&font_demibold_o_option,
+			&font_demibold_i_option,
 			&font_bold_r_option,
 			&font_bold_o_option,
 			&font_bold_i_option,
@@ -4376,9 +4470,10 @@ console_fb_realizer (
 
 	CombinedFont font;
 	HIDList inputs;
-#if !defined(__LINUX__) && !defined(__linux__)
-	ATKeyboard atkbd;
-	SysMouse sysmou;
+	KeyboardMap map;
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+	ATKeyboard atkbd(map);
+	SysMouse sysmou(map);
 #endif
 
 	// Open non-devices first, so that abends during setup don't leave hardware in strange states.
@@ -4386,8 +4481,15 @@ console_fb_realizer (
 	for (FontSpecList::const_iterator n(fonts.begin()); fonts.end() != n; ++n) {
 		for (CombinedFont::Font::Weight weight(static_cast<CombinedFont::Font::Weight>(0)); weight < CombinedFont::Font::NUM_WEIGHTS; weight = static_cast<CombinedFont::Font::Weight>(weight + 1)) {
 			for (CombinedFont::Font::Slant slant(static_cast<CombinedFont::Font::Slant>(0)); slant < CombinedFont::Font::NUM_SLANTS; slant = static_cast<CombinedFont::Font::Slant>(slant + 1)) {
-				if (n->weight != -1 && n->weight != weight) continue;
-				if (n->slant != -1 && n->slant != slant) continue;
+				if (n->slant != slant) continue;
+				if (n->weight == -1) {
+					if (CombinedFont::Font::MEDIUM != weight && CombinedFont::Font::BOLD != weight) continue;
+				} else 
+				if (n->weight == -2) {
+					if (CombinedFont::Font::LIGHT != weight && CombinedFont::Font::DEMIBOLD != weight) continue;
+				} else 
+				if (n->weight != weight) 
+					continue;
 				LoadFont(prog, font, weight, slant, n->name.c_str());
 			}
 		}
@@ -4423,7 +4525,7 @@ console_fb_realizer (
 	buffer_fd.release();
 	FileDescriptorOwner input_fd(-1);
 	if (!input_filenames.empty()
-#if !defined(__LINUX__) && !defined(__linux__)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 	|| atkeyboard_filename || sysmouse_filename 
 #endif
 	) {
@@ -4436,9 +4538,8 @@ console_fb_realizer (
 	}
 	vt_dir_fd.release();
 	VirtualTerminal vt(buffer_file.release(), input_fd.release());
-	EV_SET(&p[index++], vt.query_buffer_fd(), EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE, 0, 0);
+	set_event(&p[index++], vt.query_buffer_fd(), EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE, 0, 0);
 
-	KeyboardMap map;
 	if (keyboard_map_filename)
 		LoadKeyMap(prog, map, keyboard_map_filename);
 
@@ -4450,35 +4551,33 @@ console_fb_realizer (
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, fb_filename, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-#if !defined(__LINUX__) && !defined(__linux__)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 	if (atkeyboard_filename) {
-		atkbd.open(AT_FDCWD, atkeyboard_filename);
-		if (atkbd.query_device() < 0) {
+		if (!atkbd.open(AT_FDCWD, atkeyboard_filename)) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, atkeyboard_filename, std::strerror(error));
 			throw EXIT_FAILURE;
 		}
-		EV_SET(&p[index++], atkbd.query_device(), EVFILT_READ, EV_ADD|EV_DISABLE, 0, 0, 0);
+		set_event(&p[index++], atkbd.query_input_fd(), EVFILT_READ, EV_ADD|EV_DISABLE, 0, 0, 0);
 	}
 	if (sysmouse_filename) {
-		sysmou.open(AT_FDCWD, sysmouse_filename);
-		if (sysmou.query_device() < 0) {
+		if (!sysmou.open(AT_FDCWD, sysmouse_filename)) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, sysmouse_filename, std::strerror(error));
 			throw EXIT_FAILURE;
 		}
-		EV_SET(&p[index++], sysmou.query_device(), EVFILT_READ, EV_ADD|EV_DISABLE, 0, 0, 0);
+		set_event(&p[index++], sysmou.query_input_fd(), EVFILT_READ, EV_ADD|EV_DISABLE, 0, 0, 0);
 	}
 #endif
 	ReserveSignalsForKQueue kqueue_reservation(SIGTERM, SIGINT, SIGHUP, SIGPIPE, SIGWINCH, SIGUSR1, SIGUSR2, 0);
 	PreventDefaultForFatalSignals ignored_signals(SIGTERM, SIGINT, SIGHUP, SIGPIPE, SIGUSR1, SIGUSR2, 0);
-	EV_SET(&p[index++], SIGWINCH, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[index++], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[index++], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[index++], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&p[index++], SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	set_event(&p[index++], SIGWINCH, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	set_event(&p[index++], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	set_event(&p[index++], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	set_event(&p[index++], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	set_event(&p[index++], SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 
-	KernelVTSubsystemLockout kvt(-1, SIGUSR1, SIGUSR2);
+	KernelTerminalEmulatorLockout kvt(-1, SIGUSR1, SIGUSR2);
 	if (kernel_vt) {
 		kvt.reset(open_readwriteexisting_at(AT_FDCWD, kernel_vt));
 		if (0 > kvt.get()) {
@@ -4486,17 +4585,16 @@ console_fb_realizer (
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, kernel_vt, std::strerror(error));
 			throw EXIT_FAILURE;
 		}
-		EV_SET(&p[index++], SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], SIGUSR2, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGUSR2, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 	}
 
 	for (std::list<std::string>::const_iterator i(input_filenames.begin()); input_filenames.end() != i; ++i) {
 		if (index >= sizeof p/sizeof *p) continue;
 
 		const std::string & input_filename(*i);
-		HID & input(inputs.add());
-		input.open(AT_FDCWD, input_filename.c_str());
-		if (input.query_device() < 0) {
+		HID & input(inputs.add(map));
+		if (!input.open(AT_FDCWD, input_filename.c_str())) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, input_filename.c_str(), std::strerror(error));
 			throw EXIT_FAILURE;
@@ -4506,7 +4604,7 @@ console_fb_realizer (
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, input_filename.c_str(), std::strerror(error));
 			throw EXIT_FAILURE;
 		}
-		EV_SET(&p[index++], input.query_device(), EVFILT_READ, EV_ADD|EV_DISABLE, 0, 0, 0);
+		set_event(&p[index++], input.query_input_fd(), EVFILT_READ, EV_ADD|EV_DISABLE, 0, 0, 0);
 	}
 
 	fb.save_and_set_graphics_mode(prog, fb_filename);
@@ -4519,7 +4617,7 @@ console_fb_realizer (
 	}
 
 	GraphicsInterface gdi(base, fb.query_size(), fb.query_yres(), fb.query_xres(), fb.query_stride(), fb.query_depth());
-	Realizer realizer(fb, !font.has_faint(), gdi, font, map, vt);
+	Realizer realizer(fb, !font.has_faint(), bold_as_colour, gdi, font, vt);
 
 	usr2_signalled = true;
 
@@ -4531,15 +4629,15 @@ console_fb_realizer (
 			break;
 		if (usr1_signalled)  {
 			if (active) {
-#if !defined(__LINUX__) && !defined(__linux__)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 				if (atkeyboard_filename)
-					EV_SET(&p[index++], atkbd.query_device(), EVFILT_READ, EV_DISABLE, 0, 0, 0);
+					set_event(&p[index++], atkbd.query_input_fd(), EVFILT_READ, EV_DISABLE, 0, 0, 0);
 				if (sysmouse_filename)
-					EV_SET(&p[index++], sysmou.query_device(), EVFILT_READ, EV_DISABLE, 0, 0, 0);
+					set_event(&p[index++], sysmou.query_input_fd(), EVFILT_READ, EV_DISABLE, 0, 0, 0);
 #endif
 				for (HIDList::const_iterator i(inputs.begin()); inputs.end() != i; ++i) {
 					const HID & input(**i);
-					EV_SET(&p[index++], input.query_device(), EVFILT_READ, EV_DISABLE, 0, 0, 0);
+					set_event(&p[index++], input.query_input_fd(), EVFILT_READ, EV_DISABLE, 0, 0, 0);
 				}
 			}
 			active = false;
@@ -4547,25 +4645,28 @@ console_fb_realizer (
 		if (usr2_signalled) {
 			if (!active) {
 				realizer.paint_all_cells_onto_framebuffer();
-				if (realizer.query_dirty_LEDs()) {
-#if !defined(__LINUX__) && !defined(__linux__)
-					atkbd.set_LEDs(realizer);
-#endif
-					for (HIDList::iterator j(inputs.begin()); inputs.end() != j; ++j) {
-						HID & input(**j);
-						input.set_LEDs(realizer);
-					}
-					realizer.clean_LEDs();
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+				if (atkbd.query_dirty_LEDs()) {
+					atkbd.set_LEDs();
+					atkbd.clean_LEDs();
 				}
-#if !defined(__LINUX__) && !defined(__linux__)
+#endif
+				for (HIDList::iterator j(inputs.begin()); inputs.end() != j; ++j) {
+					HID & input(**j);
+					if (input.query_dirty_LEDs()) {
+						input.set_LEDs();
+						input.clean_LEDs();
+					}
+				}
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 				if (atkeyboard_filename)
-					EV_SET(&p[index++], atkbd.query_device(), EVFILT_READ, EV_ENABLE, 0, 0, 0);
+					set_event(&p[index++], atkbd.query_input_fd(), EVFILT_READ, EV_ENABLE, 0, 0, 0);
 				if (sysmouse_filename)
-					EV_SET(&p[index++], sysmou.query_device(), EVFILT_READ, EV_ENABLE, 0, 0, 0);
+					set_event(&p[index++], sysmou.query_input_fd(), EVFILT_READ, EV_ENABLE, 0, 0, 0);
 #endif
 				for (HIDList::const_iterator i(inputs.begin()); inputs.end() != i; ++i) {
 					const HID & input(**i);
-					EV_SET(&p[index++], input.query_device(), EVFILT_READ, EV_ENABLE, 0, 0, 0);
+					set_event(&p[index++], input.query_input_fd(), EVFILT_READ, EV_ENABLE, 0, 0, 0);
 				}
 			}
 			active = true;
@@ -4578,7 +4679,7 @@ console_fb_realizer (
 			realizer.transfer_cursor_pos();
 			realizer.transfer_cursor_state();
 			if (!inputs.empty()
-#if !defined(__LINUX__) && !defined(__linux__)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 			|| sysmouse_filename
 #endif
 			)
@@ -4614,28 +4715,32 @@ console_fb_realizer (
 					handle_signal(e.ident);
 					break;
 				case EVFILT_READ:
-#if !defined(__LINUX__) && !defined(__linux__)
-					if (atkbd.query_device() == static_cast<int>(e.ident)) 
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+					if (atkbd.query_input_fd() == static_cast<int>(e.ident)) 
 						atkbd.handle_input_events(realizer);
-					if (sysmou.query_device() == static_cast<int>(e.ident)) 
+					if (sysmou.query_input_fd() == static_cast<int>(e.ident)) 
 						sysmou.handle_input_events(realizer);
 #endif
 					for (HIDList::iterator j(inputs.begin()); inputs.end() != j; ++j) {
 						HID & input(**j);
-						if (input.query_device() == static_cast<int>(e.ident)) 
+						if (input.query_input_fd() == static_cast<int>(e.ident)) 
 							input.handle_input_events(realizer);
 					}
-					if (realizer.query_dirty_LEDs()) {
-#if !defined(__LINUX__) && !defined(__linux__)
-						atkbd.set_LEDs(realizer);
-#endif
-						for (HIDList::iterator j(inputs.begin()); inputs.end() != j; ++j) {
-							HID & input(**j);
-							input.set_LEDs(realizer);
-						}
-						realizer.clean_LEDs();
-					}
 					break;
+			}
+		}
+
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+		if (atkbd.query_dirty_LEDs()) {
+			atkbd.set_LEDs();
+			atkbd.clean_LEDs();
+		}
+#endif
+		for (HIDList::iterator j(inputs.begin()); inputs.end() != j; ++j) {
+			HID & input(**j);
+			if (input.query_dirty_LEDs()) {
+				input.set_LEDs();
+				input.clean_LEDs();
 			}
 		}
 

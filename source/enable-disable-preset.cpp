@@ -22,12 +22,11 @@ For copyright and licensing terms, see the file named COPYING.
 #include "utils.h"
 #include "fdutils.h"
 #include "service-manager-client.h"
-#include "service-manager.h"
-#include "common-manager.h"
 #include "popt.h"
 #include "FileStar.h"
 #include "FileDescriptorOwner.h"
 #include "DirStar.h"
+#include "terminal_database.h"
 
 /* Common Internals *********************************************************
 // **************************************************************************
@@ -319,7 +318,6 @@ query_systemd_preset (
 		const DirStar preset_dir(preset_dir_fd);
 		if (!preset_dir) continue;
 		for (;;) {
-			errno = 0;
 			const dirent * entry(readdir(preset_dir));
 			if (!entry) break;
 #if defined(_DIRENT_HAVE_D_TYPE)
@@ -343,48 +341,6 @@ query_systemd_preset (
 	return !earliest.empty();
 }
 
-#if defined(TTY_ONIFCONSOLE)
-static inline
-bool
-is_current_console (
-	const struct ttyent & entry
-) {
-#if !defined(__LINUX__) && !defined(__linux__)
-	int oid[CTL_MAXNAME];
-	std::size_t len(sizeof oid/sizeof *oid);
-	const int r(sysctlnametomib("kern.console", oid, &len));
-	if (0 > r) return false;
-	std::size_t siz;
-	const int s(sysctl(oid, len, 0, &siz, 0, 0));
-	if (0 > s) return false;
-	std::auto_ptr<char> buf(new(std::nothrow) char[siz]);
-	const int t(sysctl(oid, len, buf, &siz, 0, 0));
-	if (0 > t) return false;
-	const char * avail(std::strchr(buf, '/'));
-	if (!avail) return false;
-	*avail++ = '\0';
-	for (const char * p(buf), * e(0); *p; p = e) {
-		e = std::strchr(p, ',');
-		if (e) *e++ = '\0'; else e = std::strchr(p, '\0');
-		if (0 == std::strcmp(p, entry.ty_name)) return true;
-	}
-#endif
-	return false;
-}
-#endif
-
-static inline
-bool
-is_on (
-	const struct ttyent & entry
-) {
-	return (entry.ty_status & TTY_ON) 
-#if defined(TTY_ONIFCONSOLE)
-		|| ((entry.ty_status & TTY_ONIFCONSOLE) && is_current_console(entry))
-#endif
-	;
-}
-
 static inline
 bool	/// \returns setting \retval true explicit \retval false defaulted
 query_ttys_preset (
@@ -392,7 +348,7 @@ query_ttys_preset (
 	const std::string & name
 ) {
 	if (!setttyent()) {
-		wants = true;
+		wants = false;
 		return false;
 	}
 	const struct ttyent *entry(getttynam(name.c_str()));
@@ -503,7 +459,7 @@ enable (
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
-		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
+		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
 		popt::definition * main_table[] = {
 			&user_option
 		};
@@ -544,7 +500,7 @@ disable (
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
-		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
+		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
 		popt::definition * main_table[] = {
 			&user_option
 		};
@@ -587,7 +543,7 @@ preset (
 	const char * prefix("");
 	bool no_rcconf(false), no_system(false), ttys(false), fstab(false), dry_run(false);
 	try {
-		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
+		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
 		popt::bool_definition no_system_option('\0', "no-systemd", "Do not process system-manager/systemd preset files.", no_system);
 		popt::bool_definition no_rcconf_option('\0', "no-rcconf", "Do not process /etc/rc.conf presets.", no_rcconf);
 		popt::bool_definition ttys_option('\0', "ttys", "Process /etc/ttys presets.", ttys);

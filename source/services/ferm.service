@@ -10,7 +10,9 @@ Type=oneshot
 EnvironmentDirectory=env
 ExecStart=%p "${config:-/etc/%p.conf}"
 ExecStopPost=%p -f "${config:-/etc/%p.conf}"
+# This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
+Restart=no
 
 [Install]
 WantedBy=workstation.target

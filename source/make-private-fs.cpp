@@ -16,7 +16,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include "utils.h"
 #include "nmount.h"
-#include "common-manager.h"
+#include "common-manager.h"	// Because we make API mounts too.
 #include "fdutils.h"
 #include "popt.h"
 #include "FileDescriptorOwner.h"
@@ -64,22 +64,26 @@ make_private_fs (
 			std::strcat(name, "/private-fs.XXXXXX");
 
 			// The top-level directory grants no group or world access, so that no unprivileged users from the outside can go poking around in it.
-			const mode_t oldmode(umask(0077));
+			const mode_t oldmode1(umask(0077));
 			if (0 == mkdtemp(name)) {
 				const int error(errno);
-				umask(oldmode);
+				umask(oldmode1);
 				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, std::strerror(error));
 				throw EXIT_FAILURE;
 			}
-			umask(oldmode);
+			umask(oldmode1);
 
 			// An extra directory level is created underneath, which has trwxrwxrwx permissions just like a real /tmp .
+			const mode_t oldmode2(umask(0000));
 			std::strcat(name, "/tmp");
 			if (0 > mkdir(name, 0777 | S_ISVTX)) {
 				const int error(errno);
+				umask(oldmode2);
+				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, std::strerror(error));
 				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, std::strerror(error));
 				throw EXIT_FAILURE;
 			}
+			umask(oldmode2);
 
 			struct iovec iov[] = {
 				FSPATH,			{ const_cast<char *>(*i), std::strlen(*i) + 1 },

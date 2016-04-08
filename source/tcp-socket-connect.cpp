@@ -19,6 +19,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include "popt.h"
 #include "utils.h"
+#include "fdutils.h"
+#include "FileDescriptorOwner.h"
 
 /* Helper functions *********************************************************
 // **************************************************************************
@@ -148,11 +150,10 @@ tcp_socket_connect (
 			throw EXIT_FAILURE;
 		}
 
-		const int s(socket(remote_info->ai_family, remote_info->ai_socktype, remote_info->ai_protocol));
-		if (0 > s) {
+		FileDescriptorOwner s(socket(remote_info->ai_family, remote_info->ai_socktype, remote_info->ai_protocol));
+		if (0 > s.get()) {
 		exit_error:
 			const int error(errno);
-			if (s >= 0) close(s);
 			std::fprintf(stderr, "%s: FATAL: %s\n", prog, std::strerror(error));
 			goto free_fail;
 		}
@@ -170,23 +171,21 @@ tcp_socket_connect (
 				std::fprintf(stderr, "%s: FATAL: %s %s: %s\n", prog, localaddress, localport, EAI_SYSTEM == lrc ? std::strerror(error) : gai_strerror(lrc));
 				goto free_fail;
 			}
-			if (0 > bind(s, local_info->ai_addr, local_info->ai_addrlen)) goto exit_error;
+			if (0 > bind(s.get(), local_info->ai_addr, local_info->ai_addrlen)) goto exit_error;
 			freeaddrinfo(local_info);
 		}
 
 		if (keepalives) {
-			const int on = 1;
-			if (0 > setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof on)) goto exit_error ;
+			if (0 > socket_set_boolean_option(s.get(), SOL_SOCKET, SO_KEEPALIVE, true)) goto exit_error ;
 		}
 		if (no_delay) {
-			const int on = 1;
-			if (0 > setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &on, sizeof on)) goto exit_error ;
+			if (0 > socket_set_boolean_option(s.get(), IPPROTO_TCP, TCP_NODELAY, true)) goto exit_error ;
 		}
 #if defined(IP_OPTIONS)
 		if (!no_kill_IP_options) {
 			switch (remote_info->ai_family) {
 				case AF_INET:
-					if (0 > setsockopt(s, IPPROTO_IP, IP_OPTIONS, 0, 0)) goto exit_error ;
+					if (0 > setsockopt(s.get(), IPPROTO_IP, IP_OPTIONS, 0, 0)) goto exit_error ;
 					break;
 				default:
 					break;
@@ -194,16 +193,16 @@ tcp_socket_connect (
 		}
 #endif
 
-		if (0 > connect(s, remote_info->ai_addr, remote_info->ai_addrlen)) goto exit_error;
+		if (0 > connect(s.get(), remote_info->ai_addr, remote_info->ai_addrlen)) continue;
 
 		sockaddr_storage localaddr;
 		socklen_t localaddrsz = sizeof localaddr;
-		if (0 > getsockname(s, reinterpret_cast<sockaddr *>(&localaddr), &localaddrsz)) goto exit_error;
+		if (0 > getsockname(s.get(), reinterpret_cast<sockaddr *>(&localaddr), &localaddrsz)) goto exit_error;
 
-		if (0 > dup2(s, 6)) goto exit_error;
-		if (0 > dup2(s, 7)) goto exit_error;
-		if (s != 6 && s != 7)
-			close(s);
+		if (0 > dup2(s.get(), 6)) goto exit_error;
+		if (0 > dup2(s.get(), 7)) goto exit_error;
+		if (6 == s.get() || 7 == s.get())
+			s.release();
 
 		env("PROTO", "TCP");
 		switch (localaddr.ss_family) {

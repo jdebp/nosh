@@ -7,41 +7,5 @@ then
 fi
 
 # Create and populate the build directory.
-[ \! -d build ] && mkdir -p -m 0755 build
-(
-	cd source && find . -type d
-) | (
-	cd build
-	while read i
-	do
-		mkdir -p -m 0755 "$i"
-	done
-)
-(
-	cd source && find . -type f
-) | (
-	cd build	# The syntax of ln -s makes more sense if we are in the target directory.
-	while read i
-	do
-		dir="`dirname $i`"
-		# Try to create a hard link, and fall back to a symbolic link.
-		# The source and build directories aren't necessarily on the same disc volume.
-		ln -f ../source/"$i" "${dir}" 2>/dev/null || ln -s -f ../source/"$i" "${dir}"
-	done
-)
-(
-	cd source && find . -type l
-) | (
-	cd build	# The syntax of ln -s makes more sense if we are in the target directory.
-	while read i
-	do
-		dir="`dirname $i`"
-		# Try to create a hard link, and fall back to a copy.
-		# The source and build directories aren't necessarily on the same disc volume.
-		if ! ln -f ../source/"$i" "${dir}" 2>/dev/null
-		then
-			rm -f -- "$i"
-			cp -a -f -- ../source/"$i" "${dir}"
-		fi
-	done
-)
+install -d -m 0755 build
+( cd source && ( 2>/dev/null pax -w -r -l -u -- * ../build/ || true ) )

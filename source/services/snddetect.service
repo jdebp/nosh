@@ -9,7 +9,6 @@ Description=PC-BSD sound detection
 EnvironmentDirectory=env
 ExecStartPre=rm /tmp/unknownSound
 ExecStart=pc-sounddetect
-RemainAfterExit=true
 
 [Install]
 WantedBy=workstation.target

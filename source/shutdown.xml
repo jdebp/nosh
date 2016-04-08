@@ -36,7 +36,7 @@
 <arg choice="opt">-h</arg>
 <arg choice="opt">-p</arg>
 <arg choice="opt">--no-wall</arg>
-<group choice='plain'>
+<group choice='req'>
 <arg choice="plain">-g <replaceable>period</replaceable></arg>
 <arg choice="plain"><replaceable>time</replaceable></arg>
 </group>

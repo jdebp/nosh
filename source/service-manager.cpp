@@ -35,6 +35,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "listen.h"
 #include "service-manager.h"
 #include "environ.h"
+#include "FileDescriptorOwner.h"
 
 static const char * prog(0);
 #if !defined(__LINUX__) && !defined(__linux__)
@@ -59,6 +60,7 @@ struct service : public index {
 	void stamp_time();
 	void stamp_activity();
 	void stamp_pending_command();
+	void stamp_process_status();
 	void write_status();
 	void reap (const sigset_t &, int, int);
 	void enact_control_message(const sigset_t &);
@@ -84,17 +86,19 @@ protected:
 		STOP = 'o'	///< The service is running the "stop" program.
 	} activity;
 	int process_status;
-	unsigned char status[20];
+	int start_process_status, run_process_status, restart_process_status, stop_process_status;
+	unsigned char status[STATUS_BLOCK_SIZE];
 	std::set<int> processes;
 
 	void change_state_if_necessary (const sigset_t &);
 	void enter_state(const sigset_t &);
-	void del_process(int);
+	void del_process(int, int);
 	bool has_processes() const { return !processes.empty(); }
 	void killall(int);
 	void killtop(int);
 	void add_input_ready_event(int);
 	void delete_input_ready_event(int);
+	void stamp_process_status(std::size_t, int) ;
 };
 
 typedef std::map<int, service *> active_service_map;
@@ -142,49 +146,6 @@ pack_littleendian (
 }
 
 static inline
-const char *
-classify_signal (
-	int signo
-) {
-	switch (signo) {
-		case SIGKILL:
-			return "kill";
-		case SIGTERM:
-		case SIGINT:
-		case SIGHUP:
-		case SIGPIPE:
-			return "term";
-		case SIGABRT:
-		case SIGALRM:
-		case SIGQUIT:
-			return "abort";
-		default:
-			return "crash";
-	}
-}
-
-static inline
-const char *
-signame (
-	int signo,
-	char codebuf[16]
-) {
-	switch (signo) {
-		case SIGKILL:	return "KILL";
-		case SIGTERM:	return "TERM";
-		case SIGINT:	return "INT";
-		case SIGHUP:	return "HUP";
-		case SIGPIPE:	return "PIPE";
-		case SIGABRT:	return "ABRT";
-		case SIGALRM:	return "ALRM";
-		case SIGQUIT:	return "QUIT";
-		case SIGSEGV:	return "SEGV";
-		case SIGFPE:	return "FPE";
-	}
-	return codebuf;
-}
-
-static inline
 bool 
 is_failure (
 	int process_status	///< a wait status from which WIFCONTINED and WIFSTOPPED have already been excluded
@@ -212,12 +173,15 @@ service::service(const struct stat & s) :
 	paused(false), 
 	unload_after_stop(false),
 	activity(NONE), 
-	process_status(0),
+	process_status(-1),
+	start_process_status(-1), 
+	run_process_status(-1), 
+	restart_process_status(-1), 
+	stop_process_status(-1),
 	processes()
 {
 	pipe_fds[0] = pipe_fds[1] = -1;
 	name[0] = '\0';
-	status[19] = '\0';
 }
 
 service::~service() 
@@ -267,6 +231,37 @@ service::stamp_pending_command ()
 	status[17] = pending_command;
 }
 
+inline
+void 
+service::stamp_process_status (
+	std::size_t offset,
+	int s
+) {
+	if (-1 == s) {
+		status[offset] = 0;
+		pack_bigendian(status + offset + 1U, 0U, 4);
+	} else
+	if (WIFEXITED(s)) {
+		const int code(WEXITSTATUS(s));
+		status[offset] = 1;
+		pack_bigendian(status + offset + 1U, code, 4);
+	} else
+	{
+		const int signo(WTERMSIG(s));
+		status[offset] = WCOREDUMP(s) ? 3 : 2;
+		pack_bigendian(status + offset + 1U, signo, 4);
+	}
+}
+
+void 
+service::stamp_process_status()
+{
+	stamp_process_status(19U, start_process_status);
+	stamp_process_status(24U, run_process_status);
+	stamp_process_status(29U, restart_process_status);
+	stamp_process_status(34U, stop_process_status);
+}
+
 void 
 service::add_process (
 	int pid
@@ -285,7 +280,8 @@ service::add_process (
 
 void 
 service::del_process (
-	int pid
+	int pid,
+	int s	///< a wait status from which WIFCONTINED and WIFSTOPPED have already been excluded
 ) {
 	const bool affects_main_process(!processes.empty() && pid == *processes.begin());
 #if !defined(__LINUX__) && !defined(__linux__)
@@ -295,8 +291,18 @@ service::del_process (
 #endif
 	active_services.erase(pid);
 	processes.erase(pid);
-	if (affects_main_process)
+	if (affects_main_process) {
 		stamp_time();
+		switch (activity) {
+			case START:	start_process_status = s; break;
+			case RUN:	run_process_status = s; break;
+			case RESTART:	restart_process_status = s; break;
+			case STOP:	stop_process_status = s; break;
+			default:	break;
+		}
+		stamp_process_status();
+	}
+	process_status = s;
 }
 
 void
@@ -421,10 +427,13 @@ service::enact_control_message (
 			pending_command = command;
 			stamp_pending_command();
 			write_status();
-			killall(SIGCONT);
 			killall(SIGTERM);
+			killall(SIGCONT);
 			change_state_if_necessary(original_signals);
 			break;
+		case '_':
+			command = 'd';
+			// Fall through to:
 		case 'u':
 		case 'o':
 		case 'O':
@@ -448,9 +457,7 @@ service::enact_control_message (
 		case 't':	killall(SIGTERM); break;
 		case 'w':	killall(SIGWINCH); break;
 		case 'z':	killall(SIGTSTP); break;
-		case 'x':
-			std::fprintf(stderr, "%s: INFO: %s: %s\n", prog, name, "Ignored exit request.\n");
-			break;
+		case 'x':	set_unload(); break;
 	}
 }
 
@@ -479,31 +486,53 @@ service::enter_state (
 	const char * const * a(0);
 	const char * restart_args[] = { "restart", 0, 0, 0, 0 };
 	switch (activity) {
-		default:	sleep(1); write_status(); return;
-		case NONE:	write_status(); return;
-		case START:	a = start_args; break;
-		case RUN:	a = run_args; break;
-		case STOP:	a = stop_args; break;
-		case RESTART:	a = restart_args; break;
+		default:	
+			sleep(1); 
+			write_status(); 
+			return;
+		case NONE:	
+			write_status(); 
+			return;
+		case START:	
+			a = start_args; 
+			start_process_status = run_process_status = restart_process_status = stop_process_status = -1; 
+			stamp_process_status(); 
+			write_status(); 
+			break;
+		case RUN:	
+			a = run_args; 
+			run_process_status = -1; 
+			stamp_process_status(); 
+			write_status(); 
+			break;
+		case RESTART:	
+			a = restart_args; 
+			restart_process_status = -1; 
+			stamp_process_status(); 
+			write_status(); 
+			break;
+		case STOP:	
+			a = stop_args; 
+			break;
 	}
 
-	const int fd(open_exec_at(service_dir_fd, *a));
-	if (0 > fd) {
+#if !defined(__OpenBSD__)
+	const FileDescriptorOwner fd(open_exec_at(service_dir_fd, *a));
+	if (0 > fd.get()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, name, *a, std::strerror(error));
 		sleep(1);
 		return;
 	}
+#endif
 
 	std::fflush(stderr);
 	const int rc(fork());
 	if (0 > rc) {
-		close(fd);
 		sleep(1);
 		return;
 	}
 	if (0 < rc) {
-		close(fd);
 		std::fprintf(stderr, "%s: INFO: %s/%s: pid %d\n", prog, name, *a, rc);
 		add_process(rc);
 		write_status();
@@ -518,14 +547,16 @@ service::enter_state (
 		case RESTART:	
 			if (WIFSIGNALED(process_status)) {
 				const int signo(WTERMSIG(process_status));
-				restart_args[1] = classify_signal(signo);
 				snprintf(codebuf, sizeof codebuf, "%u", signo);
-				restart_args[2] = signame(signo, codebuf);
+				const char * sname(signame(signo));
+				if (!sname) sname = codebuf;
+				restart_args[1] = classify_signal(signo);
+				restart_args[2] = sname;
 				restart_args[3] = codebuf;
 			} else {
 				const int code(WEXITSTATUS(process_status));
-				restart_args[1] = "exit";
 				snprintf(codebuf, sizeof codebuf, "%u", code);
+				restart_args[1] = "exit";
 				restart_args[2] = codebuf;
 			}
 			break;
@@ -541,7 +572,11 @@ service::enter_state (
 	if (out != STDOUT_FILENO) close(out);
 	if (err != STDERR_FILENO) close(err);
 
-	fexecve(fd, const_cast<char **>(a), environ);
+#if defined(__OpenBSD__)
+	execve(*a, const_cast<char **>(a), environ);
+#else
+	fexecve(fd.get(), const_cast<char **>(a), environ);
+#endif
 	const int error(errno);
 	std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, name, *a, std::strerror(error));
 	std::fflush(stderr);
@@ -557,7 +592,7 @@ service::change_state_if_necessary (
 	switch (activity) {
 		case NONE:
 			switch (pending_command) {
-				case 'O': 	break;
+				case 'O': 	pending_command = '\0'; break;
 				case 'o':	activity = START; break;
 				case 'u':	activity = START; break;
 				case 'd':	pending_command = '\0'; break;
@@ -575,15 +610,29 @@ service::change_state_if_necessary (
 			}
 			break;
 		case RUN:	
-			if (has_processes()) {
-				if ('u' == pending_command) pending_command = '\0';
-			} else
+			if (has_processes())
+			switch (pending_command) {
+				case 'O': 	break;
+				case 'o':	break;
+				case 'u':	pending_command = '\0'; break;
+				case 'd':	break;
+				default:	break;
+			}
+			else if (run_on_empty)
+			switch (pending_command) {
+				case 'O': 	break;
+				case 'o':	break;
+				case 'u':	pending_command = '\0'; break;
+				case 'd':	activity = RESTART; break;
+				default:	break;
+			}
+			else 
 			switch (pending_command) {
 				case 'O': 	activity = RESTART; break;
 				case 'o':	activity = RESTART; break;
 				case 'u':	pending_command = '\0'; activity = RESTART; break;
 				case 'd':	activity = RESTART; break;
-				default:	if (!run_on_empty) activity = RESTART; break;
+				default:	activity = RESTART; break;
 			}
 			break;
 		case RESTART:
@@ -639,8 +688,7 @@ service::reap (
 	}
 
 	// We have at this point excluded everything apart from normal exit and termination by a signal.
-	del_process(pid);
-	process_status = s;
+	del_process(pid, s);
 	write_status();
 	change_state_if_necessary(original_signals);
 }
@@ -812,6 +860,7 @@ load (
 		s.stamp_time();
 		s.stamp_activity();
 		s.stamp_pending_command();
+		s.stamp_process_status();
 		s.write_status();
 		s.add_to_control_fifo_list();
 		std::fprintf(stderr, "%s: DEBUG: load %s\n", prog, s.name);

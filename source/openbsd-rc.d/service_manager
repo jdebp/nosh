@@ -1,0 +1,18 @@
+#!/bin/sh
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+name="service_manager"
+daemon="/usr/local/bin/prependpath"
+daemon_flags="PATH /usr/local/bin:/usr/local/sbin ulimit -HS -n 4096 local-datagram-socket-listen /run/service-manager/control service-manager"
+rc_bg=YES
+
+. /etc/rc.d/rc.subr
+
+rc_pre()
+{
+	install -d -m 0755 /run/service-manager
+}
+
+rc_cmd "$1"

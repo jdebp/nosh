@@ -8,7 +8,7 @@ Description=Collector for kernel log messages
 [Service]
 User=klogd
 ExecStart=klog-read
-Restart=always
+# klog-read understands the LISTEN protocol, so does not need StandardInput=socket.
 
 [Install]
 WantedBy=workstation.target

@@ -14,10 +14,19 @@ done
 for I in \
 	dnscache \
 	tinydns \
+	taiclock \
 	;
 do
 	i="`escape "$I"`"
 	add_user "$i"-d
+done
+# log users
+for I in \
+	mysql \
+	;
+do
+	i="`escape "$I"`"
+	add_user "$i"-log
 done
 case "$1" in
 	configure)
@@ -41,6 +50,7 @@ case "$1" in
 			extra-shared-libraries \
 			name-services \
 			jails \
+			uhidd \
 			warden \
 			sockets \
 			remote-fs \
@@ -81,6 +91,7 @@ case "$1" in
 			celery@example \
 			celery-beat \
 			chrony \
+			clamd \
 			cleanuucp \
 			cleantmp \
 			cleanX \
@@ -108,10 +119,11 @@ case "$1" in
 			genkdmconf \
 			gitlab-sidekiq \
 			gitlab-unicorn \
-			gnucron \
+			debian-cron \
 			gogs \
 			hostapd \
 			hostnamed \
+			kamailio \
 			kdm@tty7 \
 			kdm@ttyv6 \
 			keepalived \
@@ -124,15 +136,17 @@ case "$1" in
 			localed \
 			lxdm \
 			mailcatcher \
-			ModemManager \
 			miredo \
 			miredo-server \
+			ModemManager \
+			mogilefsd \
+			mogstored \
 			mongodb \
 			motd-dynamic \
 			moused \
-			mysql \
 			nagios \
 			NetworkManager \
+			NetworkManager-dispatcher \
 			nfsd \
 			nginx \
 			nisdomain \
@@ -161,6 +175,7 @@ case "$1" in
 			owserver \
 			packagekit \
 			pcdm \
+			pcscd \
 			pdnsd \
 			plexmediaserver \
 			polipo \
@@ -203,6 +218,7 @@ case "$1" in
 			swift@object-updater \
 			sysctl \
 			timedated \
+			taiclock \
 			tinydns \
 			tor \
 			virecover \
@@ -296,7 +312,9 @@ case "$1" in
 			colord-sane \
 			irqbalance \
 			kerneloops \
+			kmod \
 			kmod@ipv6 \
+			kmod@loop \
 			kmod@unix \
 			kmod@uvesafb \
 			linux-utmp \
@@ -335,6 +353,7 @@ case "$1" in
 			busybox-mdev \
 			dmraid \
 			kmod@autofs \
+			kmod@fuse \
 			linux-lockfiles \
 			lvm \
 			suckless-mdev \
@@ -380,6 +399,7 @@ case "$1" in
 			swapauto \
 			swaplate \
 			sysinit \
+			uhidd \
 			virtualbox-guest \
 			virtualbox-host \
 			warden \

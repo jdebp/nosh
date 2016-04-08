@@ -12,7 +12,9 @@ EnvironmentDirectory=env
 ExecStartPre=quotacheck "${check_flags}"
 ExecStart=quotaon "${on_flags}"
 ExecStopPost=quotaoff "${off_flags}"
+# This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
+Restart=no
 
 [Install]
 WantedBy=workstation.target

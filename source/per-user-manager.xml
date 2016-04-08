@@ -1,0 +1,211 @@
+<refentry id="per-user-manager">
+
+<refmeta>
+<refentrytitle>per-user-manager</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">administrator commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.24</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>per-user-manager</refname>
+<refpurpose>manage per-user stuff</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>per-user-manager</command>
+<arg rep='repeat'><replaceable>args</replaceable></arg> 
+</cmdsynopsis>
+<cmdsynopsis>
+<command>init</command>
+<arg rep='repeat'><replaceable>args</replaceable></arg> 
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>per-user-manager</command> can be used by individual users to manage non-system-wide, per-user, stuff.  
+It is not meant to be run as process #1, and the system will not operate correctly if it is mis-used as process #1.  
+To manage a system, use <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+The purpose of <command>per-user-manager</command> is to run per-user service management providing an overall control API for it that is similar to that of process #1.
+This permits per-user service manament to be addressed by <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> (when its <arg>--user</arg> command-line option is employed) control subcommands such as <command>halt</command>.
+</para>
+
+<para>
+The operation of <command>per-user-manager</command> falls into three parts: 
+process setup, reaping, and responding to per-user events.
+</para>
+
+<para>
+Unlike <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry> it does no system setup.
+Mounting "API" filesystems, creating device nodes, and requesting the kernel for special system events are not user-local actions.
+</para>
+
+<refsection><title>Process setup</title>
+
+<para>
+<command>per-user-manager</command> expects to be started in the state that the user intends services to run as.
+It does very little to its process state, which is inherited by the service manager and the logger:
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+(On operating systems that support this) it calls <citerefentry><refentrytitle>prctl</refentrytitle><manvolnum>2</manvolnum></citerefentry> to tell the kernel that it is a "local reaper".
+Any service processes started (directly or indirectly) by the <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> that lose their original parents will be re-parented to the <command>per-user-manager</command> process, which will "reap" them when they terminate.
+This yields a slightly more informative process tree.
+</para>
+</listitem>
+
+</itemizedlist>
+
+<para>
+<command>per-user-manager</command> does not duplicate functionality with peculiar special-purpose mechanisms of its own.
+So:
+</para>
+<itemizedlist>
+<listitem>
+<para>
+If you wish it to run in a particular directory, chain to it from <citerefentry><refentrytitle>chdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+</listitem>
+<listitem>
+<para>
+If you wish it to run with a modified environment, chain to it from <citerefentry><refentrytitle>clearenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>unsetenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>, or <citerefentry><refentrytitle>read-conf</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+</listitem>
+<listitem>
+<para>
+If you wish it to run with a different umask setting, chain to it from <citerefentry><refentrytitle>umask</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+</listitem>
+<listitem>
+<para>
+If you wish it to run as a session leader, chain to it from <citerefentry><refentrytitle>setsid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+</listitem>
+</itemizedlist>
+<para>And so forth.</para>
+
+</refsection><refsection><title>Reaping</title>
+
+<para>
+<command>per-user-manager</command> operates as a "grim reaper", cleaning up after any child processes that exit.
+The operating system (if this is supported) re-parents any orphaned descendent processes to it.
+<command>per-user-manager</command> spawns exactly three processes itself:
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+After creating a local domain socket named <filename>/run/user/<replaceable>$USER</replaceable>/service-manager/control</filename> it spawns an instance of <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+This is the local service manager for the user, controlled through the socket.
+</para>
+</listitem>
+
+<listitem>
+<para>
+As events occur, it spawns (ephemeral) instances of <citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+These calculate the details of service and target dependencices for user-wide state changes, and pass instructions to the local service manager for bringing services up and down.
+Only one instance is spawned at a time.
+</para>
+</listitem>
+
+<listitem>
+<para>
+It spawns an instance of <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> with its input connected to the read end of a pipe.
+This process is expected to only terminate when the pipe is closed.
+If it terminates otherwise, <command>per-user-manager</command> simply re-spawns it.
+</para>
+</listitem>
+
+</itemizedlist>
+
+<para>
+The write end of the aforementioned pipe is connected to the the standard outputs and standard errors of the service manager, the (ephemeral) service controllers, and of <command>per-user-manager</command> itself.
+(Their standard input is connected to <filename>/dev/null</filename>.)
+<command>per-user-manager</command> retains open file descriptors to this pipe, so that no unsaved log data are lost should the logger unexpectedly exit.
+</para>
+
+<para>
+The logger is intended to be just for the per-user manager, the service manager, and the service controllers.
+Actual services should be plumbed to their own logging services.
+The logger is told to write its logfiles to <filename>/run/user/<replaceable>$USER</replaceable>/per-user-manager/log</filename>, and to cap their maximum total size at 1MiB.
+</para>
+
+<para>
+<replaceable>$USER</replaceable> is the result of the <citerefentry><refentrytitle>getlogin</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function (on the BSDs), or (failing that) the value of the <envar>$LOGNAME</envar> or <envar>$USER</envar> variables.
+</para>
+
+</refsection><refsection><title>Control event response</title>
+
+<para>
+The only IPC mechanism provided by <command>per-user-manager</command> is signals.
+(Commands to manipulate services are sent to the spawned service manager, not to the per-user manager.)
+User-local events are flagged by sending various signals to the per-user manager process.
+<command>per-user-manager</command> responds to these signals as follows:
+</para>
+
+<variablelist>
+
+<varlistentry>
+<term>
+<code>SIGINT</code>,
+<code>SIGTERM</code>,
+<code>SIGHUP</code>,
+<code>SIGPIPE</code>,
+<code>SIGRTMIN + 3</code>,
+<code>SIGRTMIN + 4</code>, or
+<code>SIGRTMIN + 5</code>
+</term>
+<listitem><para>
+Spawn <command>system-control</command> <arg choice="plain">start</arg> <arg choice="plain">halt</arg>.
+This will activate the <code>halt</code> target.
+</para>
+<para>
+Implicit in activating the <code>halt</code> target is activating the <code>shutdown</code> target, which deactivates everything else.
+(This is written into the packaged target definitions, not hardwired into <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>.)
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>SIGRTMIN + 13</code>,
+<code>SIGRTMIN + 14</code>, and
+<code>SIGRTMIN + 15</code>
+</term>
+<listitem><para>
+Close the pipe, terminate the service manager, and wait a short while for it.
+Then exit.
+</para>
+<para>
+When the <code>halt</code> target is fully active, it is expected to send the <code>SIGRTMIN + 13</code> signal to the per-user manager process.
+In the packaged target definitions, they use the <arg>--force</arg> option to the <command>halt</command> subcommand of <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry> to do this.
+Do not send these signals directly, as this does not shut down services in order.
+</para>
+</listitem>
+</varlistentry>
+
+</variablelist>
+
+<para>
+It ignores the <code>SIGTTIN</code>, <code>SIGTTOU</code>, <code>SIGTSTP</code>, and <code>SIGALRM</code> signals.
+</para>
+
+<para>
+<command>per-user-manager</command> startup is also treated as a user-local event.
+In response this "event" <command>per-user-manager</command> spawns <command>system-control</command> <arg choice='plain'>--user</arg> <arg choice="plain">init</arg>.
+This calculates what to initialize and sends appropriate signals back to the per-user manager process.
+</para>
+
+</refsection>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

@@ -9,7 +9,6 @@ Wants=mysqld.service postgresql.service
 After=redis.service mysqld.service postgresql.service
 
 [Service]
-Type=simple
 # FIXME: Is this really needed?
 systemdUserEnvironment=true
 User=git

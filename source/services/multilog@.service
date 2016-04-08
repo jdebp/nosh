@@ -10,7 +10,6 @@ Before=%I.service
 WorkingDirectory=/var/log/sv/
 User=%i-log
 ExecStart=%p t ./%I/
-Restart=always
 
 [Install]
 WantedBy=workstation.target

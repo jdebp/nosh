@@ -11,7 +11,8 @@ After=local-fs.target
 [Service]
 Type=oneshot
 ExecStart=nextboot -D
-RemainAfterExit=true
+# This only has meaningful behaviour at bootstrap, not later.
+RemainAfterExit=yes
 Restart=never
 
 [Install]

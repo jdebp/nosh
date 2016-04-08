@@ -7,21 +7,60 @@
 # This is invoked by general-services.do .
 #
 
-s="`system-control find dnscache`"
-
 set_if_unset() { if test -z "`system-control print-service-env \"$1\" \"$2\"`" ; then system-control set-service-env "$1" "$2" "$3" ; echo "$s: Defaulted $2 to $3." ; fi ; }
 dir_not_empty() { test -n "`/bin/ls -A \"$1\"`" ; }
 
-redo-ifchange general-services
+# These get us *only* the configuration variables, safely.
+read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
+list_network_addresses() { read_rc network_addresses || echo 127.0.0.1 | while read -r i ; do echo "$i" ; done ; }
 
-set_if_unset dnscache IPSEND 0.0.0.0
-set_if_unset dnscache IP 127.0.0.1
-set_if_unset dnscache DATALIMIT 3000000
-set_if_unset dnscache CACHESIZE 1000000
-set_if_unset dnscache ROOT "$s/service/root"
+redo-ifchange rc.conf general-services "dnscache@.socket" "dnscache.service"
 
-system-control print-service-env dnscache >> "$3"
+if s="`system-control find dnscache`"
+then
+	set_if_unset dnscache IPSEND 0.0.0.0
+	set_if_unset dnscache IP 127.0.0.1
+#	set_if_unset dnscache DATALIMIT 3000000
+	set_if_unset dnscache CACHESIZE 1000000
+	set_if_unset dnscache ROOT "root"
 
-test -r "$s/service/seed" || dd if=/dev/urandom of="$s/service/seed" bs=128 count=1
-test -r "$s/service/root/servers/@" || echo '127.53.0.1' > "$s/service/root/servers/@"
-dir_not_empty "$s/service/root/ip" || touch "$s/service/root/ip/127.0.0.1"
+	system-control print-service-env dnscache >> "$3"
+
+	test -r "$s/service/seed" || dd if=/dev/urandom of="$s/service/seed" bs=128 count=1
+	test -r "$s/service/root/servers/@" || echo '127.53.0.1' > "$s/service/root/servers/@"
+	dir_not_empty "$s/service/root/ip" || touch "$s/service/root/ip/127.0.0.1"
+fi
+
+lr="/var/local/sv/"
+e="--no-systemd-quirks --escape-instance --bundle-root"
+
+list_network_addresses |
+while read -r i
+do
+	test -z "$i" && continue
+	service="dnscache@$i"
+	s="$lr/${service}"
+
+	system-control convert-systemd-units $e "$lr/" "./${service}.socket"
+	system-control preset "${service}"
+	rm -f -- "${s}/log"
+	ln -s -- "../../../sv/cyclog@dnscache" "${s}/log"
+
+	install -d -m 0755 "${s}/service/env"
+	install -d -m 0755 "${s}/service/root"
+	install -d -m 0755 "${s}/service/root/ip"
+	install -d -m 0755 "${s}/service/root/servers"
+	test -r "${s}/service/seed" || dd if=/dev/urandom of="${s}/service/seed" bs=128 count=1
+	test -r "${s}/service/root/servers/@" || echo '127.53.0.1' > "${s}/service/root/servers/@"
+	dir_not_empty "${s}/service/root/ip" || touch "${s}/service/root/ip/127.0.0.1"
+	set_if_unset "${s}/" IPSEND 0.0.0.0
+	set_if_unset "${s}/" CACHESIZE 1000000
+	set_if_unset "${s}/" ROOT "root"
+
+	if system-control is-enabled "${s}"
+	then
+		echo >> "$3" on "${service}"
+	else
+		echo >> "$3" off "${service}"
+	fi
+done

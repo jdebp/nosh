@@ -7,7 +7,6 @@ Description=Polipo proxy server
 
 [Service]
 ExecStart=%p
-Restart=always
 
 [Install]
 WantedBy=workstation.target

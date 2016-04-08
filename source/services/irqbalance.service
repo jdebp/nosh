@@ -7,7 +7,6 @@ Description=Linux IRQ balancing daemon
 
 [Service]
 ExecStart=%p --foreground
-Restart=always
 
 [Install]
 WantedBy=workstation.target

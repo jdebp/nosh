@@ -10,7 +10,8 @@ Wants=shutdown.target unmount.target
 
 [Service]
 # Do not make this a one-shot target, because that creates a problem: a race condition where this target can stop itself from the starting state whilst system-control is still waiting for it to enter the running state,
-ExecStart=system-control poweroff --force
+# In any case, executing the force poweroff is logically to be enacted after this service has become ready.
+ExecStart=system-control %p --force
 # This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
 

@@ -8,7 +8,6 @@ Description=BSD FTP daemon
 [Service]
 EnvironmentDirectory=env
 ExecStart="${program:-%p}" -d ${flags}
-Restart=always
 
 [Install]
 WantedBy=workstation.target

@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=syslog socket used by local privileged clients to talk to syslog daemons on FreeBSD/PC-BSD
+Before=local-syslog.target
+
+[Socket]
+ListenDatagram=/run/logpriv
+SocketMode=0660
+PassCredentials=yes
+PassSecurity=yes
+
+[Install]
+WantedBy=workstation.target

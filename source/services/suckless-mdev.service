@@ -12,6 +12,7 @@ Conflicts=udev vdev busybox-mdev
 [Service]
 ExecStart=clearenv --keep-path plug-and-play-event-handler --verbose smdev
 Restart=on-abort
+# plug-and-play-event-handler understands the LISTEN protocol, so does not need StandardInput=socket.
 
 [Install]
 WantedBy=sysinit.target

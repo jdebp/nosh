@@ -8,7 +8,6 @@ Description=BSD mouse daemon
 [Service]
 EnvironmentDirectory=env
 ExecStart=%p -f ${port:+-p "${port}"} ${type:+-t "${type}"} ${level:+-l "${level}"} ${flags}
-Restart=always
 
 [Install]
 WantedBy=workstation.target

@@ -26,7 +26,7 @@ public:
 			bool Contains (uint32_t) const;
 		};
 		typedef std::vector<UnicodeMapEntry> UnicodeMap;
-		enum Weight { LIGHT, MEDIUM, DEMIBOLD, BOLD, BLACK, NUM_WEIGHTS };
+		enum Weight { LIGHT, MEDIUM, DEMIBOLD, BOLD, NUM_WEIGHTS };
 		enum Slant { UPRIGHT, ITALIC, OBLIQUE, NUM_SLANTS };
 
 		Font ( Weight w, Slant s, unsigned short y, unsigned short x ) : weight(w), slant(s), height(y), width(x) {}

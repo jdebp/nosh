@@ -1004,6 +1004,24 @@ SoftTerm::SetMode(unsigned int a, bool f)
 {
 	switch (a) {
 		case 4U:	overstrike = !f; break;
+
+		// ############## Intentionally unimplemented standard modes
+		case 2U:	// KAM (keyboard action)
+			// The terminal emulator is entirely decoupled from the physical keyboard; making these meaningless.
+			break;
+		case 6U:	// ERM (erasure)
+		case 7U:	// VEM (line editing)
+		case 10U:	// HEM (character editing)
+		case 12U:	// SRM (local echoplex)
+		case 18U:	// TSM (tabulation)
+			// We don't provide this variability.
+			break;
+		case 19U:	// EBM (editing boundary)
+		case 20U:	// LNM (linefeed/newline)
+			// These were deprecated in ECMA-48:1991.
+			break;
+
+		// ############## As yet unimplemented or simply unknown standard modes
 		default:
 			std::clog << "Unknown mode : " << a << "\n";
 			break;
@@ -1054,6 +1072,8 @@ SoftTerm::SetPrivateMode(unsigned int a, bool f)
 			mouse.SetSendXTermMouse(f);
 			UpdatePointerType();
 			break;
+		case 1037U:	keyboard.SetDeleteIsDEL(f); break	;
+		case 2004U:	keyboard.SetSendPasteEvent(f); break	;
 
 		// ############## Intentionally unimplemented private modes
 		case 1U:	// DECCKM (application cursor keys)
@@ -1107,6 +1127,51 @@ SoftTerm::SCOSCorDESCSLRM()
 		SaveAttributes(); 
 		SaveModes(); 
 	}
+}
+
+void 
+SoftTerm::SetSCOAttributes()
+{
+	if (argc < 1U) return;	// SCO SGR must always have an initial subcommand parameter.
+	switch (args[0]) {
+		case 0U:
+			foreground = default_foreground;
+			background = default_background;
+			break;
+		case 1U:
+			if (argc > 1U)
+				background = Map256Colour(args[1] % 256U);
+			break;
+		case 2U:
+			if (argc > 1U)
+				foreground = Map256Colour(args[1] % 256U);
+			break;
+		default:
+			std::clog << "Unknown SCO attribute : " << args[0] << "\n";
+			break;
+	}
+}
+
+void 
+SoftTerm::SetSCOCursorType()
+{
+	if (argc != 1U) return;	// We don't do custom cursor shapes.
+	switch (args[0]) {
+		case 0U:
+			cursor_attributes |= CursorSprite::VISIBLE;
+			cursor_attributes &= ~CursorSprite::BLINK;
+			cursor_type = CursorSprite::BLOCK; 
+			break;
+		case 1U:
+			cursor_attributes |= CursorSprite::BLINK|CursorSprite::VISIBLE;
+			cursor_type = CursorSprite::BLOCK; 
+			break;
+		case 5U:
+			cursor_attributes &= ~(CursorSprite::VISIBLE|CursorSprite::BLINK);
+			cursor_type = CursorSprite::UNDERLINE; 
+			break;
+	}
+	UpdateCursorType();
 }
 
 // This control sequence is implemented by the Linux virtual terminal and used by programs such as vim.
@@ -1702,6 +1767,7 @@ SoftTerm::ControlSequence(uint32_t character)
 			case 'm':
 			case 'J':
 			case 'K':
+			case 'x':
 				FinishArg(0U); 
 				break;
 			case 'H':
@@ -1762,8 +1828,8 @@ SoftTerm::ControlSequence(uint32_t character)
 /* ICH */		case '@':	InsertCharacters(OneIfZero(SumArgs())); break;
 /* CUU */		case 'A':	CursorUp(OneIfZero(SumArgs()), false, false); break;
 /* CUD */		case 'B':	CursorDown(OneIfZero(SumArgs()), false, false); break;
-/* CUF */		case 'C':	CursorRight(OneIfZero(SumArgs()), false, true); break;
-/* CUB */		case 'D':	CursorLeft(OneIfZero(SumArgs()), false, true); break;
+/* CUF */		case 'C':	CursorRight(OneIfZero(SumArgs()), false, false); break;
+/* CUB */		case 'D':	CursorLeft(OneIfZero(SumArgs()), false, false); break;
 /* CNL */		case 'E':	CarriageReturnNoUpdate(); CursorDown(OneIfZero(SumArgs()), true, false); break;
 /* CPL */		case 'F':	CarriageReturnNoUpdate(); CursorUp(OneIfZero(SumArgs()), true, false); break;
 /* CHA */		case 'G':	GotoX(OneIfZero(SumArgs())); break;
@@ -1811,6 +1877,7 @@ SoftTerm::ControlSequence(uint32_t character)
 			case 's':	SCOSCorDESCSLRM(); break;
 /* DECSLPP */		case 't':	SetLinesPerPage(); break;
 /* SCORC */		case 'u':	RestoreCursor(); RestoreAttributes(); RestoreModes(); break;
+/* SCOSGR */		case 'x':	SetSCOAttributes(); break;
 			default:	
 				std::clog << "Unknown CSI terminator " << character << "\n";
 				break;
@@ -1831,6 +1898,8 @@ SoftTerm::ControlSequence(uint32_t character)
 				break;
 		} else
 		if ('=' == first_private_parameter) switch (character) {
+			case 'C':	SetSCOCursorType(); break;
+			case 'S':	SetSCOCursorType(); break;
 /* DECDA3 */		case 'c':	SendTertiaryDeviceAttributes(); break;
 			default:	
 				std::clog << "Unknown DEC Private CSI " << first_private_parameter << ' ' << character << "\n";

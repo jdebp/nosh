@@ -8,6 +8,7 @@ Description=rsyslog
 [Service]
 # Don't use %p; this unit is accessed via a symbolic link.
 ExecStart=rsyslogd -c5 -n -d
+StandardInput=socket
 
 [Install]
 # This is enabled via the setting in the associated socket unit.

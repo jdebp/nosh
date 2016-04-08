@@ -9,7 +9,8 @@ Description=nvi recovery
 Type=oneshot
 EnvironmentDirectory=env
 ExecStart=./helper
-RemainAfterExit=true
+# This only has meaningful behaviour at bootstrap, not later.
+RemainAfterExit=yes
 Restart=never
 
 [Install]

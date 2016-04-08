@@ -13,10 +13,11 @@ Conflicts=mount@%i
 # Marking this as oneshot means that it doesn't enter the "running" state until the mount command has exited.
 Type=oneshot
 EnvironmentDirectory=env
-ExecStartPre=%p ${flags} -s "${size}" md %I
-ExecStart=true
+ExecStart=%p ${flags} -s "${size}" md %I
 ExecStopPost=umount %I
+# This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
+Restart=no
 
 [Install]
 StoppedBy=shutdown.target

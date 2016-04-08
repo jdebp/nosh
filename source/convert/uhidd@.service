@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%p service for device %I
+Wants=kmod@vkbd.service cyclog@uhidd.service
+After=kmod@vkbd.service cyclog@uhidd.service
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=%p -d -v /dev/%I ${flags}
+
+[Install]
+# This is a sub-service that runs under an umbrella service.
+WantedBy=uhidd.target

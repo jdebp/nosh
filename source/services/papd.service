@@ -8,7 +8,6 @@ After=atalkd.service
 
 [Service]
 ExecStart=%p -d
-Restart=always
 
 [Install]
 WantedBy=server.target

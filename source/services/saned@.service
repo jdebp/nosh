@@ -8,8 +8,6 @@ Description=Scanner service
 [Service]
 User=saned
 ExecStart=%p
-StandardInput=socket
-Restart=always
 
 [Install]
 WantedBy=server.target

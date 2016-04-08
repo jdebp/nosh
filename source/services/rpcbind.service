@@ -9,7 +9,6 @@ Description=SunRPC port mapping daemon
 EnvironmentDirectory=env
 ExecStart=%p -d
 ExecStopPost=sh -c 'exec rm -f /run/%p.*'
-Restart=always
 RestartSec=1
 
 [Install]

@@ -6,9 +6,10 @@
 Description=bsdstats service
 
 [Service]
+Type=oneshot
 ExecStart=/usr/local/etc/periodic/monthly/300.statistics -nodelay
-Restart=on-failure
 RemainAfterExit=yes
+Restart=no
 
 [Install]
 WantedBy=workstation.target

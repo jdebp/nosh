@@ -13,7 +13,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <fcntl.h>
 #include "utils.h"
 #include "fdutils.h"
-#include "common-manager.h"
 #include "service-manager-client.h"
 #include "FileDescriptorOwner.h"
 #include "popt.h"
@@ -29,7 +28,7 @@ unload_when_stopped (
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
-		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", local_session_mode);
+		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
 		popt::definition * main_table[] = {
 			&user_option
 		};
@@ -51,8 +50,10 @@ unload_when_stopped (
 		throw static_cast<int>(EXIT_USAGE);
 	}
 
-	FileDescriptorOwner socket_fd(connect_service_manager_socket(!local_session_mode, prog));
+#if 1	/// \todo TODO: Eventually we can switch off this mechanism.
+	FileDescriptorOwner socket_fd(connect_service_manager_socket(!per_user_mode, prog));
 	if (0 > socket_fd.get()) throw EXIT_FAILURE;
+#endif
 
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
 		std::string path, name, suffix;
@@ -68,7 +69,10 @@ unload_when_stopped (
 			std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, *i, "supervise", std::strerror(error));
 			throw EXIT_FAILURE;
 		}
+		unload_when_stopped(supervise_dir_fd.get());
+#if 1	/// \todo TODO: Eventually we can switch off this mechanism.
 		unload (prog, socket_fd.get(), supervise_dir_fd.get());
+#endif
 	}
 
 	throw EXIT_SUCCESS;

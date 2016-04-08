@@ -11,7 +11,10 @@ For copyright and licensing terms, see the file named COPYING.
 #include <ctime>
 #include <cctype>
 #include <unistd.h>
+#if defined(__LINUX__) || defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
+#include <sys/time.h>
 #include <utmpx.h>
+#endif
 #include <paths.h>
 #include "popt.h"
 #include "ttyname.h"
@@ -33,12 +36,12 @@ strip_dev (
 	return s;
 }
 
+#if defined(__LINUX__) || defined(__linux__)
 static inline
 std::string
 id_from (
 	const char * s
 ) {
-#if defined(__LINUX__) || defined(__linux__)
 	if (0 == strncmp(s, "tty", 3)
 	||  0 == strncmp(s, "tts", 3) 
 	||  0 == strncmp(s, "pty", 3) 
@@ -49,6 +52,8 @@ id_from (
 			id = id.substr(0, l-4);
 		return id;
 	}
+	// This is a nosh convention for user-space virtual terminals.
+	// In theory, this is the one convention that would also be used on FreeBSD.
 	if (0 == strncmp(s, "vc", 2)) {
 		std::string id(s);
 		const std::string::size_type l(id.length());
@@ -56,10 +61,10 @@ id_from (
 			id = id.substr(0, l-4);
 		return id;
 	}
-#endif
 	while (*s && !std::isdigit(*s)) ++s;
 	return s;
 }
+#endif
 
 /* Main function ************************************************************
 // **************************************************************************
@@ -70,28 +75,12 @@ login_process (
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {
-#if defined(_PATH_UTMP) && defined(_PATH_WTMP)
-	const char * utmp_filename = _PATH_UTMP;	// guaranteed never NULL
-	const char * wtmp_filename = _PATH_WTMP;	// guaranteed never NULL
-#endif
-	bool is_getty(false);
-
 	const char * prog(basename_of(args[0]));
 	const char * override_id(0);
 	try {
-#if defined(_PATH_UTMP) && defined(_PATH_WTMP)
-		popt::string_definition utmp_filename_option('\0', "utmp-filename", "filename", "Specify an alternative utmp filename.", utmp_filename);
-		popt::string_definition wtmp_filename_option('\0', "wtmp-filename", "filename", "Specify an alternative wtmp filename.", wtmp_filename);
-#endif
 		popt::string_definition id_option('i', "id", "string", "Override the TTY name and use this ID.", override_id);
-		popt::bool_definition getty_option('\0', "getty", "Specify an INIT process rather than a LOGIN process.", is_getty);
 		popt::definition * top_table[] = {
-#if defined(_PATH_UTMP) && defined(_PATH_WTMP)
-			&utmp_filename_option,
-			&wtmp_filename_option,
-#endif
-			&id_option,
-			&getty_option
+			&id_option
 		};
 		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "prog");
 
@@ -112,64 +101,33 @@ login_process (
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "stdin", std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	const char * host(std::getenv("HOST"));
 	const char * line(strip_dev(tty));
+
+#if defined(__LINUX__) || defined(__linux__)
 	const std::string id(override_id ? override_id : id_from(line));
 
 	struct utmpx u;
-
-#if defined(_PATH_UTMP) && defined(_PATH_WTMP)
-	if (FILE * const file = std::fopen(utmp_filename, "r+")) {
-		std::fpos_t start;
-		const pid_t my_pid(getpid());
-		for (;;) {
-			std::fgetpos(file, &start);
-			const size_t n(std::fread(&u, sizeof u, 1, file));
-			if (n < 1) break;
-			if (my_pid == u.ut_pid || 0 == std::strncmp(u.ut_line, line, sizeof u.ut_line)) break;
-		}
-		if (my_pid != u.ut_pid) {
-			std::memset(&u, '\0', sizeof u);
-			u.ut_pid = my_pid;
-			std::strncpy(u.ut_id, id.c_str(), sizeof u.ut_id);
-		}
-		std::strncpy(u.ut_user, is_getty ? "GETTY" : "LOGIN", sizeof u.ut_user);
-		std::strncpy(u.ut_line, line, sizeof u.ut_line);
-		if (host)
-			std::strncpy(u.ut_host, host, sizeof u.ut_host);
-		u.ut_tv.tv_sec = std::time(0);
-		u.ut_tv.tv_usec = 0;
-		u.ut_type = is_getty ? INIT_PROCESS : LOGIN_PROCESS;
-		std::fsetpos(file, &start);
-		std::fwrite(&u, sizeof u, 1, file);
-		std::fclose(file);
-	} else {
-		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, utmp_filename, std::strerror(error));
-		throw EXIT_FAILURE;
-	}
-	if (FILE * const file = std::fopen(wtmp_filename, "a")) {
-		std::fwrite(&u, sizeof u, 1, file);
-		std::fclose(file);
-	} else {
-		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, wtmp_filename, std::strerror(error));
-		throw EXIT_FAILURE;
-	}
-#else
 	std::memset(&u, '\0', sizeof u);
-	u.ut_pid = getpid();
+	u.ut_type = LOGIN_PROCESS;
 	std::strncpy(u.ut_id, id.c_str(), sizeof u.ut_id);
-	std::strncpy(u.ut_user, is_getty ? "GETTY" : "LOGIN", sizeof u.ut_user);
+	u.ut_pid = getpid();
+	u.ut_session = getsid(0);
+	std::strncpy(u.ut_user, "LOGIN", sizeof u.ut_user);
 	std::strncpy(u.ut_line, line, sizeof u.ut_line);
-	if (host)
+	if (const char * host = std::getenv("HOST"))
 		std::strncpy(u.ut_host, host, sizeof u.ut_host);
-	u.ut_tv.tv_sec = std::time(0);
-	u.ut_tv.tv_usec = 0;
-	u.ut_type = is_getty ? INIT_PROCESS : LOGIN_PROCESS;
+	// gettimeofday() doesn't work directly because the member structure isn't actually a timeval.
+	struct timeval tv;
+	gettimeofday(&tv, 0);
+	u.ut_tv.tv_sec = tv.tv_sec;
+	u.ut_tv.tv_usec = tv.tv_usec;
 
 	setutxent();
 	pututxline(&u);
 	endutxent();
+#elif defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__DragonFly__) || defined(__NetBSD__)
+	static_cast<void>(line);	// Silence a compiler warning.
+#else
+#error "Don't know how to record a login process on your platform."
 #endif
 }

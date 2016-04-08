@@ -20,9 +20,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "popt.h"
 #include "utils.h"
 #include "fdutils.h"
-#include "service-manager.h"
 #include "service-manager-client.h"
-#include "common-manager.h"
 #include "FileDescriptorOwner.h"
 #include "DirStar.h"
 

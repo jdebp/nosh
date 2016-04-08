@@ -16,10 +16,19 @@ done
 for I in \
 	dnscache \
 	tinydns \
+	taiclock \
 	;
 do
 	i="`escape "$I"`"
 	add_user "$i"-d
+done
+# log users
+for I in \
+	mysql \
+	;
+do
+	i="`escape "$I"`"
+	add_user "$i"-log
 done
 # adjust to new log users
 for i in \
@@ -102,6 +111,7 @@ for I in \
 	extra-shared-libraries \
 	name-services \
 	jails \
+	uhidd \
 	warden \
 	sockets \
 	remote-fs \
@@ -142,6 +152,7 @@ for I in \
 	celery@example \
 	celery-beat \
 	chrony \
+	clamd \
 	cleanuucp \
 	cleantmp \
 	cleanX \
@@ -169,10 +180,11 @@ for I in \
 	genkdmconf \
 	gitlab-sidekiq \
 	gitlab-unicorn \
-	gnucron \
+	debian-cron \
 	gogs \
 	hostapd \
 	hostnamed \
+	kamailio \
 	kdm@tty7 \
 	kdm@ttyv6 \
 	keepalived \
@@ -185,15 +197,17 @@ for I in \
 	localed \
 	lxdm \
 	mailcatcher \
-	ModemManager \
 	miredo \
 	miredo-server \
+	ModemManager \
+	mogilefsd \
+	mogstored \
 	mongodb \
 	motd-dynamic \
 	moused \
-	mysql \
 	nagios \
 	NetworkManager \
+	NetworkManager-dispatcher \
 	nfsd \
 	nfsserver \
 	nginx \
@@ -223,6 +237,7 @@ for I in \
 	owserver \
 	packagekit \
 	pcdm \
+	pcscd \
 	pdnsd \
 	plexmediaserver \
 	polipo \
@@ -264,6 +279,7 @@ for I in \
 	swift@object-replicator \
 	swift@object-updater \
 	sysctl \
+	taiclock \
 	timedated \
 	tinydns \
 	virecover \
@@ -309,6 +325,9 @@ for I in \
 	local-syslog-read \
 	local-rsyslogd \
 	local-syslogd \
+	local-priv-syslog-read \
+	local-priv-rsyslogd \
+	local-priv-syslogd \
 	udp-syslog-read \
 	udp-rsyslogd \
 	udp-syslogd \
@@ -446,6 +465,7 @@ for I in \
 	kmod@xfs \
 	ldconfig \
 	lpd \
+	make-utx-log \
 	mdnsd \
 	mdnsresponderposix \
 	mroute4d \
@@ -457,6 +477,7 @@ for I in \
 	nfscbd \
 	nfsclient \
 	nfsuserd \
+	openbsd-cron \
 	pbid \
 	pc-sysconfig \
 	pefs \
@@ -471,6 +492,7 @@ for I in \
 	rarpd \
 	route6d \
 	routed \
+	route-monitor \
 	rpclockd \
 	rpcstatd \
 	rtsold \
@@ -488,8 +510,6 @@ for I in \
 	timed \
 	ubthidhci \
 	ugidfw \
-	uhidd@ugen0.1 \
-	uhidd@ugen0.2 \
 	unbound \
 	usbhidaction@-dev-uhid0 \
 	utx \
@@ -570,6 +590,7 @@ for I in \
 	swapauto \
 	swaplate \
 	sysinit \
+	uhidd \
 	virtualbox-guest \
 	virtualbox-host \
 	warden \

@@ -13,11 +13,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <ctime>
 #include <inttypes.h>
 #include <sys/stat.h>
-#if defined(__LINUX__) || defined(__linux__)
-#include "kqueue_linux.h"
-#else
-#include <sys/event.h>
-#endif
+#include "kqueue_common.h"
 #include <dirent.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -386,17 +382,17 @@ cyclog (
 		throw EXIT_FAILURE;
 	}
 
-	struct kevent p[8];
+	struct kevent p[16];
 	{
-		size_t index(0);
-		EV_SET(&p[index++], STDIN_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], SIGTSTP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], SIGALRM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-		EV_SET(&p[index++], SIGQUIT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		std::size_t index(0);
+		set_event(&p[index++], STDIN_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGTSTP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGALRM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		set_event(&p[index++], SIGQUIT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 		if (0 > kevent(queue, p, index, 0, 0, 0)) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
@@ -412,7 +408,7 @@ cyclog (
 		if (0 > rc) {
 			const int error(errno);
 			if (EINTR == error) continue;
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kqueue", std::strerror(error));
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
 			throw EXIT_FAILURE;
 		} else
 		if (0 == rc) {

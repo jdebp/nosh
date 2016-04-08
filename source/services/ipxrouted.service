@@ -8,7 +8,6 @@ Description=IPX route daemon
 [Service]
 EnvironmentDirectory=env
 ExecStart=IPXrouted
-Restart=always
 
 [Install]
 WantedBy=server.target

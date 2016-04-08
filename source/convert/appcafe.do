@@ -14,13 +14,14 @@ read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
 dump_rc() { clearenv read-conf rc.conf "`which printenv`" ; }
 
 read_conf() {
+	test -r /usr/local/etc/appcafe.conf || return 0;
 	sed -e '/[[:space:]]*;/d' /usr/local/etc/appcafe.conf |
 	awk "{ if (\"$1\" == \$1) print \$3; }"
 }
 
 redo-ifchange rc.conf general-services
 
-set_if_unset appcafe root /usr/local/share/appcafe
+set_if_unset appcafe.target root /usr/local/share/appcafe
 set_if_unset appcafe-dispatcher root /usr/local/share/appcafe
 set_if_unset appcafe-nginx root /usr/local/share/appcafe
 set_if_unset appcafe-php-fpm root /usr/local/share/appcafe
@@ -48,7 +49,7 @@ esac
 system-control preset --prefix "cyclog@" appcafe-ssl-keygen
 
 case "${port}" in
-8885)
+8885|'')
 	;;
 *)
 	sed -e "s/:8885/:${port}/g" "${conf}".temp.new
@@ -59,7 +60,17 @@ esac
 
 system-control set-service-env appcafe-nginx conf "${conf}"
 
-for service in appcafe appcafe-dispatcher appcafe-nginx appcafe-php-fpm appcafe-ssl-keygen
+for target in appcafe
+do
+	if system-control is-enabled "${target}.target"
+	then
+		echo >> "$3" on "${target}"
+	else
+		echo >> "$3" off "${target}"
+	fi
+	system-control print-service-env "${target}.target" >> "$3"
+done
+for service in appcafe-dispatcher appcafe-nginx appcafe-php-fpm appcafe-ssl-keygen
 do
 	if system-control is-enabled "${service}"
 	then

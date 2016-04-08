@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=Populate the /%I filesystem from standard mtree info.
+Description=Populate the /%I directory tree from standard mtree info.
 DefaultDependencies=false
 Before=local-fs.target
 # We need the mount(s) for /usr/sbin/mtree in particular.
@@ -12,9 +12,10 @@ After=local-fs-pre.target mdmfs@-%i mount@-%i mount@-usr mount@-usr-sbin mount@-
 [Service]
 Type=oneshot
 EnvironmentDirectory=env
-ExecStartPre=mtree -d -e -U -f /etc/mtree/BSD.%i.dist -p /%I
-ExecStart=true
-RemainAfterExit=yes
+ExecStart=mtree -d -e -U -f /etc/mtree/BSD.%i.dist -p /%I
+# This is a one-shot service that can be re-triggered by starting it again.
+RemainAfterExit=1
+Restart=no
 
 [Install]
 StoppedBy=shutdown.target

@@ -10,7 +10,6 @@ Wants=kdc.service
 [Service]
 EnvironmentDirectory=env
 ExecStart=%p --keytab "${keytab}" "${master}"
-Restart=always
 
 [Install]
 WantedBy=server.target

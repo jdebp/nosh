@@ -10,7 +10,6 @@ Before=%I.service
 WorkingDirectory=/var/log/sv/
 User=%i-log
 ExecStart=%p %I/
-Restart=always
 
 [Install]
 # Whatever the service being logged installs to, THIS service is a workstation service.

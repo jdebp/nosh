@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Standard format mysql logging service for %I
+
+[Service]
+WorkingDirectory=/var/log/mysql/sv/
+User=mysql-log
+ExecStart=cyclog mysql@%I/
+
+[Install]
+# Whatever the service being logged installs to, THIS service is a workstation service.
+# Logging to workstation log facilities is a workstation thing.
+WantedBy=workstation.target

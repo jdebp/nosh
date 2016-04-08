@@ -103,6 +103,7 @@ kmod@uhid
 kmod@vkbd
 kmod@xfs
 lpd
+make-utx-log
 mdnsd
 mdnsresponderposix
 mroute4d
@@ -115,6 +116,7 @@ nfscbd
 nfsclient
 nfsserver
 nfsuserd
+openbsd-cron
 papd
 pbid
 pc-sysconfig
@@ -131,6 +133,7 @@ rarpd
 rctl
 route6d
 routed
+route-monitor
 rpclockd
 rpcstatd
 rtsold
@@ -150,8 +153,6 @@ timed
 timelord
 ubthidhci
 ugidfw
-uhidd@ugen0.1
-uhidd@ugen0.2
 unbound
 usbhidaction@-dev-uhid0
 utx

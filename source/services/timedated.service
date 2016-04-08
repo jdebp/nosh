@@ -8,7 +8,6 @@ Description=systemd(-compatible) %p service
 [Service]
 Type=dbus
 ExecStart=%p
-Restart=always
 
 [Install]
 WantedBy=workstation.target

@@ -1,0 +1,55 @@
+#!/bin/sh -e
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+#
+# Note: This script does NOT need to be set-UID/set-GID to anything.
+
+if test 0 -ge $#
+then
+	echo 1>&2 "Usage: $0 desktop_bus_service_name(s)..."
+	exec false
+fi
+
+if >/dev/null 2>&1 which system-control
+then
+	for dbus_service
+	do
+		dbus_service="`basename \"${dbus_service}\" .service`"
+		echo "${dbus_service#dbus-}"
+	done | 
+	xargs -- system-control -- reset --
+elif >/dev/null 2>&1 which initctl
+then
+	for dbus_service
+	do
+		dbus_service="`basename \"${dbus_service}\" .service`"
+		echo "${dbus_service#dbus-}"
+	done | 
+	xargs -- initctl start ## FIXME: Does vanilla upstart initctl support "--" here?
+elif >/dev/null 2>&1 which systemctl
+then
+	for dbus_service
+	do
+		dbus_service="`basename \"${dbus_service}\" .service`"
+		## Vanilla systemd systemctl does not have "reset".
+		if systemctl is-enabled --quiet -- "${dbus_service#dbus-}"
+		then
+			systemctl start -- "${dbus_service#dbus-}"
+		fi
+	done
+#elif >/dev/null 2>&1 which service
+#then
+#	for dbus_service
+#	do
+#		dbus_service="`basename \"${dbus_service}\" .service`"
+#		## Vanilla systemd systemctl does not have "reset".
+#		if systemctl is-enabled --quiet -- "${dbus_service#dbus-}"
+#		then
+#			systemctl start -- "${dbus_service#dbus-}"
+#		fi
+#	done
+else
+	echo 1>&2 "$0: Cannot determine a command for starting services."
+	exec false
+fi

@@ -19,6 +19,7 @@
 <arg>--uid <replaceable>number</replaceable></arg>
 <arg>--gid <replaceable>number</replaceable></arg>
 <arg>--mode <replaceable>number</replaceable></arg>
+<arg>--upstart-compatibility</arg>
 <arg>--systemd-compatibility</arg>
 <arg choice='req'><replaceable>path</replaceable></arg>
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
@@ -39,6 +40,11 @@
 After binding the socket to <replaceable>path</replaceable>, <command>local-datagram-socket-listen</command> changes the owner UID of the socket to that specified with the <arg>--uid</arg> command line argument (if supplied), changes the GID of the socket to that specified with the <arg>--gid</arg> command line argument (if supplied), and changes the permissions of the socket to those specified with the <arg>--mode</arg> command line argument (if supplied).
 The normal conventions for numbers apply, so for octal permissions use a leading zero.
 Symbolic permissions and account names are not supported.
+</para>
+
+<para>
+The <arg>--upstart-compatibility</arg> option causes <command>local-datagram-socket-listen</command> to set the <envar>UPSTART_FDS</envar> environment variable to 3, and the <envar>UPSTART_EVENTS</envar> environment variable to <literal>socket</literal>.
+This is for compatibility with daemons that expect to be run under <citerefentry><refentrytitle>upstart</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 <para>

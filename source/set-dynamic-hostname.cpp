@@ -11,7 +11,7 @@ For copyright and licensing terms, see the file named COPYING.
 #if !defined(_GNU_SOURCE)
 #include <sys/syslimits.h>
 #endif
-#if !defined(__LINUX__) && !defined(__linux__)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 #include <kenv.h>
 #endif
 #include <unistd.h>
@@ -182,7 +182,7 @@ set_dynamic_hostname (
 			}
 		}
 	}
-#if !defined(__LINUX__) && !defined(__linux__)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 	if (!h) {
 		char val[129];
 		const int n(kenv(KENV_GET, "dhcp.host-name", val, sizeof val - 1));

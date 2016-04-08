@@ -29,7 +29,7 @@
 <para>
 <command>system-manager</command> is meant to be invoked as process #1, either as the first user process of an entire system, or as the first process of a "container" running within a Linux PID namespace or a BSD jail.
 It will not operate correctly if it is not process #1.
-To manage per-user, local, sessions use <citerefentry><refentrytitle>session-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+To manage per-user, non-system-wide, stuff use <citerefentry><refentrytitle>per-user-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
 It should also not be confused with <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
@@ -207,11 +207,9 @@ Only one instance is spawned at a time.
 
 <listitem>
 <para>
-It spawns an instance of
-<citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-with its input connected to the read end of a pipe.
+It spawns an instance of <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> with its input connected to the read end of a pipe.
 This process is expected to only terminate when the pipe is closed.
-If it terminates otherwise, <command>session-manager</command> simply re-spawns it.
+If it terminates otherwise, <command>system-manager</command> simply re-spawns it.
 </para>
 </listitem>
 

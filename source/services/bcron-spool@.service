@@ -6,13 +6,10 @@
 Description=Guenter's bcron submission server
 
 [Service]
-# FIXME: Is this really needed?
-systemdUserEnvironment=true
 EnvironmentDirectory=env
 LimitMEMORY=70000000
 User=cron
 ExecStart=%p
-Restart=always
 
 [Install]
 WantedBy=server.target

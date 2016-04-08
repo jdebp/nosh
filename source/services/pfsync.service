@@ -12,7 +12,9 @@ Type=oneshot
 EnvironmentDirectory=env
 ExecStart=ifconfig %p0 up ${syncdev:+syncdev ${syncdev}} ${syncpeer:+syncpeer ${syncpeer}} ${ifconfig}
 ExecStopPost=ifconfig %p0 down -syncdev -syncpeer
-RemainAfterExit=true
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
+Restart=no
 
 [Install]
 WantedBy=workstation.target

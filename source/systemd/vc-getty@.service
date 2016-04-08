@@ -14,7 +14,8 @@ Restart=always
 UtmpIdentifier=%I
 TTYPath=/dev/%I
 KillMode=process
-KillSignal=SIGHUP
+# Some job control shells ignore SIGTERM and need an explicit SIGHUP.
+SendSIGHUP=on
 
 [Install]
 Alias=getty.target.wants/getty@tty1.service

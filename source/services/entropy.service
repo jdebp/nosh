@@ -10,7 +10,9 @@ Before=netif sshd sshdgenkeys
 Type=oneshot
 ExecStart=./helper load
 ExecStopPost=./helper save
+# This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
+Restart=no
 
 [Install]
 WantedBy=workstation.target

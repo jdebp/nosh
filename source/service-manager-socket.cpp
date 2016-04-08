@@ -12,20 +12,9 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include "common-manager.h"
+#include "service-manager-client.h"
+#include "runtime-dir.h"
 #include "fdutils.h"
-
-int
-query_manager_pid(const bool is_system)
-{
-	if (is_system) return 1;
-	const char * manager_pid(std::getenv("MANAGER_PID"));
-	if (!manager_pid) return getsid(0);
-	const char * old = manager_pid;
-	const long l(std::strtol(manager_pid, const_cast<char **>(&manager_pid), 0));
-	if (*manager_pid || old == manager_pid) return getsid(0);
-	return static_cast<int>(l);
-}
 
 static inline
 const char *
@@ -34,11 +23,7 @@ construct_service_manager_socket_name (
 	std::string & name_buf
 ) {
 	if (is_system) return "/run/service-manager/control";
-	name_buf = effective_user_runtime_dir() + "service-manager/control.";
-	const int id(query_manager_pid(is_system));
-	char idbuf[64];
-	snprintf(idbuf, sizeof idbuf, "%d", id);
-	name_buf += idbuf;
+	name_buf = effective_user_runtime_dir() + "service-manager/control";
 	return name_buf.c_str();
 }
 

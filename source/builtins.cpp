@@ -77,6 +77,9 @@ safe_execvp (
 		buf.get()[l++] = '/';
 		memcpy(buf.get() + l, prog, plen + 1);
 
+#if defined(__OpenBSD__)
+		const int rc(execve(buf.get(), const_cast<char **>(args), environ));
+#else
 		const int fd(open_exec_at(AT_FDCWD, buf.get()));
 		if (0 <= fd) {
 			fexecve(fd, const_cast<char **>(args), environ);
@@ -84,6 +87,7 @@ safe_execvp (
 			close(fd);
 			errno = saved_error;
 		}
+#endif
 		if (ENOENT == errno) 
 			errno = error;	// Restore a more interesting error.
 		else if ((EACCES != errno) && (EPERM != errno) && (EISDIR != errno)) 

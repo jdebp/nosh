@@ -7,7 +7,6 @@ Description=fan control daemon
 
 [Service]
 ExecStart=%p
-Restart=always
 
 [Install]
 WantedBy=workstation.target

@@ -9,10 +9,12 @@ Description=%p service
 After=swapauto.service
 
 [Service]
-ExecStartPre=swapon -aL
-ExecStart=true
+Type=oneshot
+ExecStart=swapon -aL
 ExecStopPost=swapoff -aL
+# This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
+Restart=no
 
 [Install]
 WantedBy=workstation.target

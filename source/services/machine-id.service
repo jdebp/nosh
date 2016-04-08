@@ -10,7 +10,9 @@ After=local-fs.target
 [Service]
 EnvironmentDirectory=env
 ExecStart=setup-machine-id
-RemainAfterExit=yes
+# This is a one-shot service that can be re-triggered by starting it again.
+RemainAfterExit=1
+Restart=no
 
 [Install]
 StoppedBy=shutdown.target

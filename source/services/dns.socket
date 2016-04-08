@@ -8,12 +8,13 @@ Description=Generic DNS/TCP socket
 [Socket]
 Backlog=2
 BindIPv6Only=both
-ListenStream=dns
+ListenStream=domain
 Accept=true
 MaxConnections=16
 UCSPIRules=true
 LogUCSPIRules=yes
 NoDelay=false
+ReceiveBuffer=65536
 
 [Install]
 WantedBy=server.target

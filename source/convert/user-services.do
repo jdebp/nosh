@@ -7,7 +7,7 @@
 # This is invoked by all.do .
 #
 
-redo-ifchange /etc/passwd "user-dbus@.socket" "user-dbus.service" "user-dbus-log@.service" "user-services@.service" "user-runtime@.service" "user@.target"
+redo-ifchange /etc/passwd "user-dbus@.socket" "user-dbus.service" "user-dbus-log@.service" "user-services@.service" "user-runtime@.service" "user@.target" "exit.target"
 
 lr="/var/local/sv/"
 sr="/etc/service-bundles/services/"
@@ -25,6 +25,8 @@ do
 	alias|qmail[dlpqrs]) continue ;;
 	toor) continue ;;
 	esac
+
+	h="`getent passwd \"$i\" | awk -F : '{print $6;}'`"
 
 	for j in '' -dbus -dbus-log -services -runtime
 	do
@@ -46,6 +48,8 @@ do
 	system-control convert-systemd-units $e "$lr/" "./user-dbus-log@$i.service"
 	system-control enable "$lr/user-dbus-log@$i"
 	echo "user-dbus-log@$i" >> "$3"
+	rm -f -- "$lr/user-dbus-log@$i/main"
+	ln -s -- "/var/log/user/$i/dbus" "$lr/user-dbus-log@$i/main"
 
 	mkdir -p -m 1755 "/var/log/user"
 	mkdir -p -m 0750 "/var/log/user/$i"
@@ -57,17 +61,30 @@ do
 	system-control enable "$lr/user-dbus@$i"
 	echo "user-dbus@$i" >> "$3"
 	rm -f -- "$lr/user-dbus@$i/log"
-	ln -s -- "../../user-dbus-log@$i" "$lr/user-dbus@$i/log"
+	ln -s -- "../user-dbus-log@$i" "$lr/user-dbus@$i/log"
 
 	system-control convert-systemd-units $e "$lr/" "./user-services@$i.service"
 	system-control enable "$lr/user-services@$i"
 	echo "user-services@$i" >> "$3"
 #	rm -f -- "$lr/user-services@$i/log"
-#	ln -s -- "../../user-log@$i" "$lr/user-services@$i/log"
+#	ln -s -- "../user-log@$i" "$lr/user-services@$i/log"
 
 	system-control convert-systemd-units $e "$lr/" "./user-runtime@$i.service"
 	system-control enable "$lr/user-runtime@$i"
 	echo "user-runtime@$i" >> "$3"
 #	rm -f -- "$lr/user-runtime@$i/log"
-#	ln -s -- "../../user-log@$i" "$lr/user-runtime@$i/log"
+#	ln -s -- "../user-log@$i" "$lr/user-runtime@$i/log"
+
+	if test -n "$h" && test -d "$h/"
+	then
+		ht="$h/.config/service-bundles/targets"
+		install -d -o "$i" -m 0755 "$ht"
+		system-control convert-systemd-units $e "$ht/" "./exit.target"
+		install -d -o "$i" -m 0755 "$ht/exit/supervise"
+		for t in halt reboot poweroff
+		do
+			rm -f -- "$ht/$t"
+			ln -s -- "exit" "$ht/$t"
+		done
+	fi
 done

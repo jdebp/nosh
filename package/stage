@@ -16,7 +16,7 @@ dest="${2}"
 absdest="`readlink -f "${dest}"`/"
 
 # binaries and doco
-for i in exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims ;
+for i in exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims openbsd-shims ucspi-tcp-shims ;
 do
 	if test -s package/nosh-"$i".commands1 || test -s package/nosh-"$i".aliases1 ;
 	then
@@ -52,36 +52,37 @@ do
 		ln -f -s "$c".8 "${dest}"/nosh-"$i"/usr/local/man/man8/"$a".8 
 	done < package/nosh-"$i".aliases8 ;
 done
+case "`uname`" in
+Linux)	link_across_usr="-l" ;;
+*BSD)	link_across_usr="" ;;
+esac
 install -d -m 0755 "${dest}"/nosh-exec/bin 
-for j in exec nosh
+(cd "${dest}"/nosh-exec/usr/local/ && pax -r -w ${link_across_usr} -- bin/exec "${absdest}"/nosh-exec/)
+for j in nosh
 do
-	(cd "${dest}"/nosh-exec/usr/local/ && pax -r -w -l -- bin/"$j" "${absdest}"/nosh-exec/)
-done
-for j in cyclog
-do
-	(cd "${dest}"/nosh-service-management/usr/local/ && pax -r -w -l -- bin/"$j" "${absdest}"/nosh-exec/)
+	ln -f -- "${dest}"/nosh-exec/bin/exec "${dest}"/nosh-exec/bin/"$j"
 done
 install -d -m 0755 "${dest}"/nosh-service-management/sbin 
 install -d -m 0755 "${dest}"/nosh-service-management/bin 
-for j in system-control service-manager service-dt-scanner
+(cd "${dest}"/nosh-service-management/usr/local/ && pax -r -w ${link_across_usr} -- bin/cyclog bin/system-control sbin/system-manager "${absdest}"/nosh-service-management/)
+for j in service-manager service-dt-scanner
 do
-	(cd "${dest}"/nosh-service-management/usr/local/ && pax -r -w -l -- bin/"$j" "${absdest}"/nosh-service-management/)
+	ln -f -- "${dest}"/nosh-service-management/bin/system-control "${dest}"/nosh-service-management/bin/"$j"
 done
-for j in system-manager
-do
-	(cd "${dest}"/nosh-service-management/usr/local/ && pax -r -w -l -- sbin/"$j" "${absdest}"/nosh-service-management/)
-done
+install -d -m 0755 "${dest}"/nosh-terminal-management/bin 
+(cd "${dest}"/nosh-terminal-management/usr/local/ && pax -r -w ${link_across_usr} -- bin/vc-get-tty "${absdest}"/nosh-terminal-management/)
 install -d -m 0755 "${dest}"/nosh-run-system-manager/sbin 
 case "`uname`" in
 Linux)	ln -f -s system-manager "${dest}"/nosh-run-system-manager/sbin/init ;;
 *BSD)	;;
 esac
+ln -f -- "${src}"/man/man1/tcpserver.1 "${dest}"/nosh-ucspi-tcp-shims/usr/local/man/man1/ 
 
 # more doco
 for i in guide ;
 do
 	install -d -m 0755 "${dest}"/nosh-"$i"/usr/local/share/doc/nosh 
-	cp -a -- "${src}"/share/doc/nosh "${dest}"/nosh-"$i"/usr/local/share/doc/ 
+	( cd "${src}"/ && pax -r -w -- share/doc/nosh "${absdest}"/nosh-"$i"/usr/local/ )
 done
 
 # bundles
@@ -99,31 +100,29 @@ install -d -m 0755 "${dest}"/nosh-run-openssh-server/var/sv/
 cat package/common-services package/common-sockets package/common-ttys 
 case "`uname`" in
 Linux)	cat package/linux-services package/linux-sockets package/linux-ttys ;;
+OpenBSD)	cat package/bsd-services package/bsd-sockets package/openbsd-ttys ;;
+NetBSD)	cat package/bsd-services package/bsd-sockets package/netbsd-ttys ;;
 *BSD)	cat package/bsd-services package/bsd-sockets package/bsd-ttys ;;
 esac
 ) | while read j ;
 do
-#	cp -a -- "${src}"/sv/"$j" "${dest}"/nosh-bundles/var/sv/
-#	cp -a -- "${src}"/sv/cyclog@"$j" "${dest}"/nosh-bundles/var/sv/
 	(cd "${src}"/ && pax -r -w -l -- sv/"$j" sv/cyclog@"$j" "${absdest}"/nosh-bundles/var/)
 done
 while read j ;
 do
-#	cp -a -- "${src}"/etc/service-bundles/targets/"$j" "${dest}"/nosh-bundles/etc/service-bundles/targets/
 	(cd "${src}"/ && pax -r -w -l -- etc/service-bundles/targets/"$j" "${absdest}"/nosh-bundles/)
 done < package/standard-targets
 while read j ;
 do
-#	cp -a -- "${src}"/etc/service-bundles/services/mount@"$j" "${dest}"/nosh-bundles/etc/service-bundles/services/
-#	cp -a -- "${src}"/etc/service-bundles/services/fsck@"$j" "${dest}"/nosh-bundles/etc/service-bundles/services/
 	(cd "${src}"/ && pax -r -w -l -- etc/service-bundles/services/mount@"$j" "${absdest}"/nosh-bundles/)
 	(cd "${src}"/ && pax -r -w -l -- etc/service-bundles/services/fsck@"$j" "${absdest}"/nosh-bundles/)
 done < package/common-mounts
 (
 cat package/common-service-aliases 
 case "`uname`" in
-Linux)	cat package/linux-service-aliases ;;
-*BSD)	cat package/bsd-service-aliases ;;
+Linux) cat package/linux-service-aliases ;;
+OpenBSD) cat package/openbsd-service-aliases ;;
+*BSD) cat package/bsd-service-aliases ;;
 esac
 ) | while read service j ;
 do
@@ -142,7 +141,6 @@ do
 done
 for j in issue.vc
 do
-#	cp -a -- "${src}"/etc/"$j" "${dest}"/nosh-bundles/etc/
 	(cd "${src}"/ && pax -r -w -l -- etc/"$j" "${absdest}"/nosh-bundles/)
 done
 (
@@ -153,12 +151,12 @@ Linux)	cat package/linux-etc-services ;;
 esac
 ) | while read j ;
 do
-#	cp -a -- "${src}"/etc/service-bundles/services/"$j" "${dest}"/nosh-bundles/etc/service-bundles/services/
 	(cd "${src}"/ && pax -r -w -l -- etc/service-bundles/services/"$j" "${absdest}"/nosh-bundles/)
 done
 
 # units
-install -d -m 0755 "${dest}"/nosh-run-via-netbsd-rc/usr/local/etc/rc.d 
+install -d -m 0755 "${dest}"/nosh-run-via-openbsd-rc/usr/local/etc/rc.d 
+install -d -m 0755 "${dest}"/nosh-run-via-mewburn-rc/usr/local/etc/rc.d 
 install -d -m 0755 "${dest}"/nosh-run-via-systemd/usr/local/lib/systemd/system 
 install -d -m 0755 "${dest}"/nosh-run-via-systemd/usr/local/lib/tmpfiles.d 
 install -d -m 0755 "${dest}"/nosh-run-via-systemd/usr/local/lib/systemd/system-preset 
@@ -172,9 +170,13 @@ do
 done < package/tmpfiles-snippets ;
 while read j ;
 do
-	ln -f -- "${src}"/etc/rc.d/"$j" "${dest}"/nosh-run-via-netbsd-rc/usr/local/etc/rc.d/
-done < package/netbsd-rc-scripts ;
-for i in bundles run-via-systemd run-via-netbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-pcbsd-base run-trueos-base
+	ln -f -- "${src}"/etc/mewburn-rc.d/"$j" "${dest}"/nosh-run-via-mewburn-rc/usr/local/etc/rc.d/
+done < package/mewburn-rc-scripts ;
+while read j ;
+do
+	ln -f -- "${src}"/etc/openbsd-rc.d/"$j" "${dest}"/nosh-run-via-openbsd-rc/usr/local/etc/rc.d/
+done < package/openbsd-rc-scripts ;
+for i in bundles run-via-systemd run-via-mewburn-rc run-via-openbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-pcbsd-base run-trueos-base
 do
 	install -d -m 0755 "${dest}"/nosh-"$i"/usr/local/etc/system-control/presets 
 	(

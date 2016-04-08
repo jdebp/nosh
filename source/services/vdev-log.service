@@ -13,7 +13,6 @@ PermissionsStartOnly=true
 User=vdev-log
 WorkingDirectory=/var/log/sv
 ExecStart=cyclog vdev/
-Restart=always
 RestartSec=1
 
 [Install]

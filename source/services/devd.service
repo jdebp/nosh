@@ -13,7 +13,6 @@ EnvironmentDirectory=env
 ExecStartPre=sysctl hw.bus.devctl_disable=0
 ExecStart=%p -d
 ExecStopPost=sysctl hw.bus.devctl_disable=1
-Restart=always
 
 [Install]
 WantedBy=sysinit.target

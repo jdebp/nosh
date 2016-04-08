@@ -5,11 +5,11 @@
 [Unit]
 Description=PulseAudio Daemon
  
-[Install]
-WantedBy=multi-user.target
- 
 [Service]
 # FIXME: Is this really needed?
 systemdWorkingDirectory=on
 PrivateTmp=true
 ExecStart=pulseaudio --system --disallow-exit --disallow-module-loading
+ 
+[Install]
+WantedBy=multi-user.target

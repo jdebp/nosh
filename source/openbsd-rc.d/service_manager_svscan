@@ -1,0 +1,13 @@
+#!/bin/sh
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+name="service_manager_svscan"
+daemon="/usr/local/bin/service-dt-scanner"
+daemon_flags="/service/"
+rc_bg=YES
+
+. /etc/rc.d/rc.subr
+
+rc_cmd "$1"

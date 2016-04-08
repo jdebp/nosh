@@ -11,7 +11,7 @@ For copyright and licensing terms, see the file named COPYING.
 
 #if defined(__LINUX__) || defined(__linux__)
 #include <sys/prctl.h>
-#else
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
 #include <sys/procctl.h>
 #endif
 #include <unistd.h>
@@ -24,7 +24,7 @@ subreaper (
 #	if defined(PR_SET_CHILD_SUBREAPER)
 		prctl(PR_SET_CHILD_SUBREAPER, on ? 1 : 0);
 #	endif
-#else
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
 	if (on) {
 #	if defined(PROC_REAP_ACQUIRE)
 		procctl(P_PID, getpid(), PROC_REAP_ACQUIRE, 0);

@@ -14,18 +14,17 @@ script that (assuming that the BAUD rate argument is always the second argument)
 </p>
 <blockquote><pre>#!/command/execlineb
 elgetpositionals
-vc-get-tty $1
+vc-get-tty "$1"
 open-controlling-tty
 vc-reset-tty
 login-prompt
 login-banner /etc/issue
-login-process
 login</pre></blockquote>
 
 <p>
-In a System V <code>inittab</code> database one could have:
+In a System 5 <code>inittab</code> database one could have:
 </p>
-<blockquote><pre>1:2345:respawn:/bin/vc-get-vtty 1 open-controlling-tty vc-reset-tty login-prompt login-banner /etc/issue login-process login</pre></blockquote>
+<blockquote><pre>1:2345:respawn:/bin/vc-get-vtty 1 login-process open-controlling-tty vc-reset-tty login-prompt login-banner /etc/issue login</pre></blockquote>
 
 <p>
 This can be turned into a <code>run</code> script fairly easily, and in fact this package comes with a regular login service for logging in on <code>/dev/ttyv5</code> (BSD) or <code>/dev/tty6</code> (Linux) with such a <code>run</code> script.

@@ -21,18 +21,35 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
+namespace {
 struct resource_limit_definition : public popt::compound_named_definition {
 public:
-	resource_limit_definition(char s, const char * l, const char * a, const char * d, int r, int sc) : compound_named_definition(s, l, a, d), resource(r), scale(sc), set(false) {}
+	resource_limit_definition(char s, const char * l, const char * a, const char * d, int r, unsigned int sc) : compound_named_definition(s, l, a, d), resource(r), scale(sc), set(false) {}
 	virtual void action(popt::processor &, const char *);
 	virtual ~resource_limit_definition();
 	void enact(bool hard, bool soft);
 protected:
-	int resource, scale;
+	virtual void rescale(const char * & text);
+	int resource;
+	rlim_t scale;
 	bool set;
 	rlimit old;
 	rlim_t val;
 };
+struct si_resource_limit_definition : public resource_limit_definition {
+public:
+	si_resource_limit_definition(char s, const char * l, const char * a, const char * d, int r, unsigned int sc) : resource_limit_definition(s, l, a, d, r, sc) {}
+protected:
+	virtual void rescale(const char * & text);
+};
+struct time_resource_limit_definition : public si_resource_limit_definition {
+public:
+	time_resource_limit_definition(char s, const char * l, const char * a, const char * d, int r, unsigned int sc) : si_resource_limit_definition(s, l, a, d, r, sc) {}
+protected:
+	virtual void rescale(const char * & text);
+};
+}
+
 resource_limit_definition::~resource_limit_definition() {}
 void resource_limit_definition::action(popt::processor &, const char * text)
 {
@@ -54,13 +71,22 @@ void resource_limit_definition::action(popt::processor &, const char * text)
 	} else {
 		const char * o(text);
 		val = std::strtoul(text, const_cast<char **>(&text), 0);
-		if (text == o || *text)
+		if (text == o)
 			throw popt::error(o, "not a number");
+		if (1U == scale && *text) 
+			rescale(text);
+		if (*text)
+			throw popt::error(o, "trailing rubbish after number");
 		if (val > (std::numeric_limits<rlim_t>::max() / scale))
 			throw popt::error(o, "rescaled number is too big");
 		val *= scale;
 	}
 	set = true;
+}
+void
+resource_limit_definition::rescale (
+	const char * & /*text*/
+) {
 }
 void resource_limit_definition::enact(bool hard, bool soft)
 {
@@ -77,17 +103,109 @@ void resource_limit_definition::enact(bool hard, bool soft)
 	}
 }
 
+void
+si_resource_limit_definition::rescale (
+	const char * & text
+) {
+	if ('\0' == text[1]) switch (text[0]) {
+		case 'h':	++text; scale = static_cast<rlim_t>(100L); return;
+		case 'k':	++text; scale = static_cast<rlim_t>(1000L); return;
+		case 'M':	++text; scale = static_cast<rlim_t>(1000000L); return;
+		case 'G':	++text; scale = static_cast<rlim_t>(1000000000L); return;
+		case 'T':	++text; scale = static_cast<rlim_t>(1000000000000L); return;
+		case 'E':	++text; scale = static_cast<rlim_t>(1000000000000000L); return;
+	} else
+	if ('i' == text[1] && !text[2]) switch (text[0]) {
+		case 'K':	text += 2; scale = static_cast<rlim_t>(0x400UL); return;
+		case 'M':	text += 2; scale = static_cast<rlim_t>(0x100000UL); return;
+		case 'G':	text += 2; scale = static_cast<rlim_t>(0x40000000UL); return;
+		case 'T':	text += 2; scale = static_cast<rlim_t>(0x10000000000UL); return;
+		case 'E':	text += 2; scale = static_cast<rlim_t>(0x4000000000000UL); return;
+	}
+	resource_limit_definition::rescale(text);
+}
+void
+time_resource_limit_definition::rescale (
+	const char * & text
+) {
+	if (0 == std::strcmp(text, "minutes")) {
+		text += 7;
+		scale = static_cast<rlim_t>(60U);
+		return;
+	}
+	if (0 == std::strcmp(text, "minute")) {
+		text += 6;
+		scale = static_cast<rlim_t>(60U);
+		return;
+	}
+	if (0 == std::strcmp(text, "min")) {
+		text += 3;
+		scale = static_cast<rlim_t>(60U);
+		return;
+	}
+	if (0 == std::strcmp(text, "hours")) {
+		text += 5;
+		scale = static_cast<rlim_t>(3600U);
+		return;
+	}
+	if (0 == std::strcmp(text, "hour")) {
+		text += 4;
+		scale = static_cast<rlim_t>(3600U);
+		return;
+	}
+	if (0 == std::strcmp(text, "h")) {
+		text += 1;
+		scale = static_cast<rlim_t>(3600U);
+		return;
+	}
+	if (0 == std::strcmp(text, "days")) {
+		text += 4;
+		scale = static_cast<rlim_t>(86400U);
+		return;
+	}
+	if (0 == std::strcmp(text, "day")) {
+		text += 3;
+		scale = static_cast<rlim_t>(86400U);
+		return;
+	}
+	if (0 == std::strcmp(text, "d")) {
+		text += 1;
+		scale = static_cast<rlim_t>(86400U);
+		return;
+	}
+	if (0 == std::strcmp(text, "weeks")) {
+		text += 5;
+		scale = static_cast<rlim_t>(604800U);
+		return;
+	}
+	if (0 == std::strcmp(text, "week")) {
+		text += 4;
+		scale = static_cast<rlim_t>(604800U);
+		return;
+	}
+	if (0 == std::strcmp(text, "w")) {
+		text += 1;
+		scale = static_cast<rlim_t>(604800U);
+		return;
+	}
+	si_resource_limit_definition::rescale(text);
+}
+
+namespace {
 struct memory_resource_limit_definition : public popt::compound_named_definition {
 public:
-	memory_resource_limit_definition(char s, const char * l, const char * a, const char * d, int sc) : compound_named_definition(s, l, a, d), scale(sc), set(false) {}
+	memory_resource_limit_definition(char s, const char * l, const char * a, const char * d, unsigned int sc) : compound_named_definition(s, l, a, d), scale(sc), set(false) {}
 	virtual void action(popt::processor &, const char *);
 	virtual ~memory_resource_limit_definition();
 	void enact(bool hard, bool soft);
 protected:
-	int scale;
+	virtual void rescale(const char * & text);
+	rlim_t scale;
 	bool set;
 	rlim_t val;
 };
+}
+
 memory_resource_limit_definition::~memory_resource_limit_definition() {}
 void memory_resource_limit_definition::action(popt::processor &, const char * text)
 {
@@ -99,8 +217,12 @@ void memory_resource_limit_definition::action(popt::processor &, const char * te
 	{
 		const char * o(text);
 		val = std::strtoul(text, const_cast<char **>(&text), 0);
-		if (text == o || *text)
+		if (text == o)
 			throw popt::error(o, "not a number");
+		if (1U == scale && *text) 
+			rescale(text);
+		if (*text)
+			throw popt::error(o, "trailing rubbish after number");
 		if (val > (std::numeric_limits<rlim_t>::max() / scale))
 			throw popt::error(o, "rescaled number is too big");
 		val *= scale;
@@ -110,7 +232,12 @@ void memory_resource_limit_definition::action(popt::processor &, const char * te
 void memory_resource_limit_definition::enact(bool hard, bool soft)
 {
 	if (!set) return;
-	static const int resources[] = { RLIMIT_AS, RLIMIT_DATA, RLIMIT_MEMLOCK, RLIMIT_STACK };
+	static const int resources[] = { 
+#if defined(RLIMIT_AS)
+		RLIMIT_AS, 
+#endif
+		RLIMIT_DATA, RLIMIT_MEMLOCK, RLIMIT_STACK 
+	};
 	for (size_t i(0); i < sizeof resources/sizeof *resources; ++i) {
 		const int resource(resources[i]);
 		rlimit old;
@@ -124,6 +251,26 @@ void memory_resource_limit_definition::enact(bool hard, bool soft)
 			const int error(errno);
 			throw popt::error(long_name, std::strerror(error));
 		}
+	}
+}
+void
+memory_resource_limit_definition::rescale (
+	const char * & text
+) {
+	if ('\0' == text[1]) switch (text[0]) {
+		case 'h':	++text; scale = static_cast<rlim_t>(100L); break;
+		case 'k':	++text; scale = static_cast<rlim_t>(1000L); break;
+		case 'M':	++text; scale = static_cast<rlim_t>(1000000L); break;
+		case 'G':	++text; scale = static_cast<rlim_t>(1000000000L); break;
+		case 'T':	++text; scale = static_cast<rlim_t>(1000000000000L); break;
+		case 'E':	++text; scale = static_cast<rlim_t>(1000000000000000L); break;
+	} else
+	if ('i' == text[1] && !text[2]) switch (text[0]) {
+		case 'K':	text += 2; scale = static_cast<rlim_t>(0x400UL); break;
+		case 'M':	text += 2; scale = static_cast<rlim_t>(0x100000UL); break;
+		case 'G':	text += 2; scale = static_cast<rlim_t>(0x40000000UL); break;
+		case 'T':	text += 2; scale = static_cast<rlim_t>(0x10000000000UL); break;
+		case 'E':	text += 2; scale = static_cast<rlim_t>(0x4000000000000UL); break;
 	}
 }
 
@@ -142,34 +289,38 @@ ulimit (
 		popt::bool_definition hard_option('H', "hard", "Set hard limits.", hard);
 		popt::bool_definition soft_option('S', "soft", "Set soft limits.", soft);
 		memory_resource_limit_definition memory_option('a', "memory", "KiB", "Limit memory.", 1024);
-		resource_limit_definition coredump_option('c', "coresize", "blocks", "Limit the size of core dumps.", RLIMIT_CORE, 512);
-		resource_limit_definition datasize_option('d', "data-segment", "KiB", "Limit the size of the data segment.", RLIMIT_DATA, 1024);
+		si_resource_limit_definition coredump_option('c', "coresize", "blocks", "Limit the size of core dumps.", RLIMIT_CORE, 512U);
+		si_resource_limit_definition datasize_option('d', "data-segment", "KiB", "Limit the size of the data segment.", RLIMIT_DATA, 1024U);
 #if defined(RLIMIT_NICE)
-		resource_limit_definition nice_option('e', "nice", "blocks", "Limit the nice value.", RLIMIT_NICE, 1);
+		resource_limit_definition nice_option('e', "nice", "level", "Limit the nice value.", RLIMIT_NICE, 1U);
 #endif
-		resource_limit_definition filesize_option('f', "filesize", "blocks", "Limit the size of files.", RLIMIT_FSIZE, 512);
+		si_resource_limit_definition filesize_option('f', "filesize", "blocks", "Limit the size of files.", RLIMIT_FSIZE, 512U);
 #if defined(RLIMIT_SIGPENDING)
-		resource_limit_definition pending_option('i', "pending-signals", "count", "Limit the count of pending signals.", RLIMIT_SIGPENDING, 1);
+		si_resource_limit_definition pending_option('i', "pending-signals", "count", "Limit the count of pending signals.", RLIMIT_SIGPENDING, 1U);
 #endif
-		resource_limit_definition locked_memory_option('l', "locked-memory", "KiB", "Limit locked memory.", RLIMIT_MEMLOCK, 1024);
-		resource_limit_definition RSS_option('m', "RSS", "KiB", "Limit the resident set size.", RLIMIT_RSS, 1024);
-		resource_limit_definition open_files_option('n', "open-files", "count", "Limit the count of open files.", RLIMIT_NOFILE, 1);
+		si_resource_limit_definition locked_memory_option('l', "locked-memory", "KiB", "Limit locked memory.", RLIMIT_MEMLOCK, 1024U);
+		si_resource_limit_definition RSS_option('m', "RSS", "KiB", "Limit the resident set size.", RLIMIT_RSS, 1024U);
+		si_resource_limit_definition open_files_option('n', "open-files", "count", "Limit the count of open files.", RLIMIT_NOFILE, 1U);
 #if defined(RLIMIT_PIPE)
-		resource_limit_definition pipesize_option('p', "pipe-size", "count", "Limit pipe buffer size.", RLIMIT_PIPE, 1);
+		si_resource_limit_definition pipesize_option('p', "pipe-size", "count", "Limit pipe buffer size.", RLIMIT_PIPE, 1U);
 #endif
 #if defined(RLIMIT_MSGQUEUE)
-		resource_limit_definition queuesize_option('q', "queue-size", "count", "Limit POSIX message queue size.", RLIMIT_MSGQUEUE, 1);
+		si_resource_limit_definition queuesize_option('q', "queue-size", "count", "Limit POSIX message queue size.", RLIMIT_MSGQUEUE, 1U);
 #endif
-		resource_limit_definition stacksize_option('s', "stack-segment", "KiB", "Limit the size of the stack segment.", RLIMIT_STACK, 1024);
-		resource_limit_definition CPU_option('t', "CPU", "seconds", "Limit CPU time.", RLIMIT_CPU, 1);
-		resource_limit_definition processes_option('u', "processes", "count", "Limit the number of processes.", RLIMIT_NPROC, 1);
-		resource_limit_definition address_space_option('v', "virtual-memory", "KiB", "Limit virtual memory.", RLIMIT_AS, 1024);
+		si_resource_limit_definition stacksize_option('s', "stack-segment", "KiB", "Limit the size of the stack segment.", RLIMIT_STACK, 1024U);
+		time_resource_limit_definition CPU_option('t', "CPU", "seconds", "Limit CPU time.", RLIMIT_CPU, 1U);
+		si_resource_limit_definition processes_option('u', "processes", "count", "Limit the number of processes.", RLIMIT_NPROC, 1U);
+#if defined(RLIMIT_AS)
+		si_resource_limit_definition address_space_option('v', "virtual-memory", "KiB", "Limit virtual memory.", RLIMIT_AS, 1024U);
+#endif
 #if defined(RLIMIT_LOCKS)
-		resource_limit_definition locks_option('x', "locks", "count", "Limit the count of locks.", RLIMIT_LOCKS, 1);
+		si_resource_limit_definition locks_option('x', "locks", "count", "Limit the count of locks.", RLIMIT_LOCKS, 1U);
 #endif
 		popt::definition * memory_table[] = {
 			&memory_option,
+#if defined(RLIMIT_AS)
 			&address_space_option,
+#endif
 			&datasize_option,
 			&locked_memory_option,
 			&stacksize_option,
@@ -244,7 +395,9 @@ ulimit (
 		stacksize_option.enact(hard, soft);
 		CPU_option.enact(hard, soft);
 		processes_option.enact(hard, soft);
+#if defined(RLIMIT_AS)
 		address_space_option.enact(hard, soft);
+#endif
 #if defined(RLIMIT_LOCKS)
 		locks_option.enact(hard, soft);
 #endif
@@ -263,19 +416,23 @@ softlimit (
 	try {
 		bool hard(false), soft(true);
 		memory_resource_limit_definition memory_option('m', "memory", "bytes", "Limit memory.", 1);
-		resource_limit_definition address_space_option('a', "virtual-memory", "bytes", "Limit virtual memory.", RLIMIT_AS, 1);
-		resource_limit_definition coredump_option('c', "coresize", "bytes", "Limit the size of core dumps.", RLIMIT_CORE, 1);
-		resource_limit_definition datasize_option('d', "data-segment", "bytes", "Limit the size of the data segment.", RLIMIT_DATA, 1);
-		resource_limit_definition filesize_option('f', "filesize", "bytes", "Limit the size of files.", RLIMIT_FSIZE, 1);
-		resource_limit_definition locked_memory_option('l', "locked-memory", "bytes", "Limit locked memory.", RLIMIT_MEMLOCK, 1);
-		resource_limit_definition open_files_option('o', "open-files", "count", "Limit the count of open files.", RLIMIT_NOFILE, 1);
-		resource_limit_definition processes_option('p', "processes", "count", "Limit the number of processes.", RLIMIT_NPROC, 1);
-		resource_limit_definition RSS_option('r', "RSS", "bytes", "Limit the resident set size.", RLIMIT_RSS, 1);
-		resource_limit_definition stacksize_option('s', "stack-segment", "bytes", "Limit the size of the stack segment.", RLIMIT_STACK, 1);
-		resource_limit_definition CPU_option('t', "CPU", "seconds", "Limit CPU time.", RLIMIT_CPU, 1);
+#if defined(RLIMIT_AS)
+		si_resource_limit_definition address_space_option('a', "virtual-memory", "bytes", "Limit virtual memory.", RLIMIT_AS, 1U);
+#endif
+		si_resource_limit_definition coredump_option('c', "coresize", "bytes", "Limit the size of core dumps.", RLIMIT_CORE, 1U);
+		si_resource_limit_definition datasize_option('d', "data-segment", "bytes", "Limit the size of the data segment.", RLIMIT_DATA, 1U);
+		si_resource_limit_definition filesize_option('f', "filesize", "bytes", "Limit the size of files.", RLIMIT_FSIZE, 1U);
+		si_resource_limit_definition locked_memory_option('l', "locked-memory", "bytes", "Limit locked memory.", RLIMIT_MEMLOCK, 1U);
+		si_resource_limit_definition open_files_option('o', "open-files", "count", "Limit the count of open files.", RLIMIT_NOFILE, 1U);
+		si_resource_limit_definition processes_option('p', "processes", "count", "Limit the number of processes.", RLIMIT_NPROC, 1U);
+		si_resource_limit_definition RSS_option('r', "RSS", "bytes", "Limit the resident set size.", RLIMIT_RSS, 1U);
+		si_resource_limit_definition stacksize_option('s', "stack-segment", "bytes", "Limit the size of the stack segment.", RLIMIT_STACK, 1U);
+		time_resource_limit_definition CPU_option('t', "CPU", "seconds", "Limit CPU time.", RLIMIT_CPU, 1U);
 		popt::definition * memory_table[] = {
 			&memory_option,
+#if defined(RLIMIT_AS)
 			&address_space_option,
+#endif
 			&datasize_option,
 			&locked_memory_option,
 			&stacksize_option,
@@ -312,7 +469,9 @@ softlimit (
 		if (p.stopped()) throw EXIT_SUCCESS;
 		if (!hard) soft = true;
 		memory_option.enact(hard, soft);
+#if defined(RLIMIT_AS)
 		address_space_option.enact(hard, soft);
+#endif
 		coredump_option.enact(hard, soft);
 		datasize_option.enact(hard, soft);
 		filesize_option.enact(hard, soft);

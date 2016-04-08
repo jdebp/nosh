@@ -54,30 +54,22 @@ For similarly limited SunOS compatibility, it is also available as <command>svca
 </para>
 
 <para>
-It operates in one of two modes, controlled by the
-<arg choice="req">--user</arg> command line option:
+It operates in one of two modes, controlled by the <arg choice="req">--user</arg> command line option:
 </para>
 
 <itemizedlist>
 <listitem>
 <para>
-In "system" mode it operates on system-level state and services.  
-It potentially communicates with a System Manager process, which must be
-process #1 and which it expects to recognize the same signals as
-<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-does.
-It potentially communicates with a Service Manager process, such as
-<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-via a local domain socket at <filename>/run/service-manager/control</filename>
-and via the control/status API of the individual services.
+In "system" mode it operates on system-wide state and services.  
+It potentially communicates with a System Manager process, which must be process #1 and which it expects to recognize the same signals as <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> does.
+It potentially communicates with a Service Manager process, such as <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> via a local domain socket at <filename>/run/service-manager/control</filename> and via the control/status API of the individual services.
 </para>
 </listitem>
 <listitem>
 <para>
-In "session" mode it operates on session-level state and services.  
-It potentially communicates with a Session Manager process, which again it expects to recognize the same signals as <citerefentry><refentrytitle>session-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> does, and which is found either through the value of the <envar>$MANAGER_PID</envar> environment variable or through the <citerefentry><refentrytitle>getsid</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function.
-(The latter will generally not find the right process, and it is recommended that you ensure that the <envar>$MANAGER_PID</envar> environment variable is correctly set.)
-It potentially communicates with a Service Manager process, such as <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> via a local domain socket at <filename>/run/user/<replaceable>$USER</replaceable>/service-manager/control.<replaceable>$SID</replaceable></filename> and via the control/status API of the individual services.
+In "user" mode it operates on per-user state and services.  
+It potentially communicates with a Session Manager process, which again it expects to recognize the same signals as <citerefentry><refentrytitle>per-user-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> does.
+It potentially communicates with a Service Manager process, such as <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> via a local domain socket at <filename>/run/user/<replaceable>$USER</replaceable>/service-manager/control</filename> and via the control/status API of the individual services.
 </para>
 </listitem>
 </itemizedlist>
@@ -101,22 +93,17 @@ A target is generally a collection of services that are started/stopped together
 <refsection><title>Jobs and actions</title>
 
 <para>
-The <command>start</command> and <command>stop</command> subcommands construct
-jobs, which comprise a set of actions.
+The <command>start</command> and <command>stop</command> subcommands construct jobs, which comprise a set of actions.
 Each action is a start or a stop command to the control API of a service/target.
-Jobs are composed by starting with an action on a named service, and then
-following information in the service bundles to related services and targets.
+Jobs are composed by starting with an action on a named service, and then following information in the service bundles to related services and targets.
 The service bundles also determine the order in which the actions are taken.
 </para>
 
 <para>
-A start action simply requests that the service manager bring the
-service/target to the "running" state, if it isn't already there.
+A start action simply requests that the service manager bring the service/target to the "running" state, if it isn't already there.
 A stop action, however, is more complex.
-Initially it requests that the service manager bring the service/target to the
-"stopped" state (if it isn't already there).
-However, if that does not happen within 60 seconds, it requests that the
-service manager send the <code>SIGKILL</code> signal to the service/target.
+Initially it requests that the service manager bring the service/target to the "stopped" state (if it isn't already there).
+However, if that does not happen within 60 seconds, it requests that the service manager send the <code>SIGKILL</code> signal to the service/target.
 </para>
 
 </refsection>
@@ -132,32 +119,20 @@ It contains various subdirectories (which can be symbolic links to directories e
 
 <listitem>
 <para>
-The <filename>service/</filename> and <filename>supervise/</filename>
-subdirectories are (respectively) the service and supervise directories for the
-service, comprising the command information and the control/status API.
-See
-<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-for what service and supervise directories contain.
-(<citerefentry><refentrytitle>service-dt-scanner</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-implements a slight extension here, for compatibility.)
+The <filename>service/</filename> and <filename>supervise/</filename> subdirectories are (respectively) the service and supervise directories for the service, comprising the command information and the control/status API.
+See <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> for what service and supervise directories contain.
+(<citerefentry><refentrytitle>service-dt-scanner</refentrytitle><manvolnum>1</manvolnum></citerefentry> implements a slight extension here, for compatibility.)
 </para>
 <para>
-When bundles are on a read-only filesystem, such as a CD-ROM,
-<filename>supervise</filename> must be a symbolic link pointing to a directory
-on a read-write filesystem, since supervise directories must be writable.
-One might choose a subdirectory of
-<filename>/run/service-bundles/early-supervise/</filename> for example.
-<command>system-control</command> attempts to create the target of such a
-symbolic link before attempting to load the service, to avoid a chicken-and-egg
-situation with "sysinit" services that are set up this way.
+When bundles are on a read-only filesystem, such as a CD-ROM, <filename>supervise</filename> must be a symbolic link pointing to a directory on a read-write filesystem, since supervise directories must be writable.
+One might choose a subdirectory of <filename>/run/service-bundles/early-supervise/</filename> for example.
+<command>system-control</command> attempts to create the target of such a symbolic link before attempting to load the service, to avoid a chicken-and-egg situation with "sysinit" services that are set up this way.
 </para>
 </listitem>
 
 <listitem>
 <para>
-The <filename>wants/</filename>, <filename>conflicts/</filename>, 
-<filename>wanted-by/</filename>, <filename>stopped-by/</filename>, and
-<filename>required-by/</filename> 
+The <filename>wants/</filename>, <filename>conflicts/</filename>, <filename>wanted-by/</filename>, <filename>stopped-by/</filename>, and <filename>required-by/</filename> 
 subdirectories comprise dependency or dependency installation information.
 Each contains a set of symbolic links to other bundle directories for other services.
 </para>
@@ -166,8 +141,7 @@ Each contains a set of symbolic links to other bundle directories for other serv
 
 <listitem>
 <para>
-<filename>wants/</filename> contains links to services that the current service
-"wants".
+<filename>wants/</filename> contains links to services that the current service "wants".
 Starting the current service implies starting the linked-to service as well.
 </para>
 </listitem>
@@ -188,16 +162,14 @@ Stopping the current service implies stopping the linked-to services as well.
 
 <listitem>
 <para>
-<filename>wanted-by/</filename> contains links to (standard) targets that should "want"
-the current service when it is enabled.
+<filename>wanted-by/</filename> contains links to (standard) targets that should "want" the current service when it is enabled.
 Enabling the service places it in the targets' "wants" lists, and disabling the service removes it.
 </para>
 </listitem>
 
 <listitem>
 <para>
-<filename>stopped-by/</filename> contains links to (standard) targets that
-should "conflict" with the current service when it is enabled.
+<filename>stopped-by/</filename> contains links to (standard) targets that should "conflict" with the current service when it is enabled.
 Enabling the service places it in the targets' "conflicts" lists, and disabling the service removes it.
 </para>
 </listitem>
@@ -208,8 +180,7 @@ Enabling the service places it in the targets' "conflicts" lists, and disabling 
 
 <listitem>
 <para>
-The <filename>after/</filename> and <filename>before/</filename> subdirectories comprise
-relationship information.
+The <filename>after/</filename> and <filename>before/</filename> subdirectories comprise relationship information.
 Relationships govern the ordering between the individual actions in a start/stop job.
 </para>
 
@@ -237,14 +208,9 @@ before/stopped after the current service when executing a start/stop job.
 
 <para>
 Relationships are not the same as dependencies.
-A service can "want" another service without having any ordering against it with respect
-to start/stop actions.
+A service can "want" another service without having any ordering against it with respect to start/stop actions.
 Indeed, this is a common case for system targets.
-The <filename>normal</filename> target, for example, "wants" the
-<filename>server</filename>, <filename>workstation</filename>, and
-<filename>multi-user</filename> targets (and by extension everything that they
-in their turn "want"), but all of the wanted services are started in parallel
-with the <filename>normal</filename> target itself.
+The <filename>normal</filename> target, for example, "wants" the <filename>server</filename>, <filename>workstation</filename>, and <filename>multi-user</filename> targets (and by extension everything that they in their turn "want"), but all of the wanted services are started in parallel with the <filename>normal</filename> target itself.
 </para>
 
 <para>
@@ -272,9 +238,7 @@ The search algorithm is as follows:
 
 <itemizedlist>
 <listitem><para>
-A <arg choice='plain'><replaceable>name</replaceable></arg> that ends in
-<filename>.target</filename> is searched for (sans the <filename>.target</filename> suffix)
-in the standard locations for target bundles:
+A <arg choice='plain'><replaceable>name</replaceable></arg> that ends in <filename>.target</filename> is searched for (sans the <filename>.target</filename> suffix) in the standard locations for target bundles:
 </para>
 <orderedlist>
 <listitem><para><filename>/run/service-bundles/targets/</filename></para></listitem>
@@ -283,9 +247,7 @@ in the standard locations for target bundles:
 </orderedlist>
 </listitem>
 <listitem><para>
-A <arg choice='plain'><replaceable>name</replaceable></arg> that ends in
-<filename>.service</filename> or <filename>.socket</filename> is searched for (sans those 
-suffixes) in the standard locations for service bundles:
+A <arg choice='plain'><replaceable>name</replaceable></arg> that ends in <filename>.service</filename> or <filename>.socket</filename> is searched for (sans those suffixes) in the standard locations for service bundles:
 </para>
 <orderedlist>
 <listitem><para><filename>/run/service-bundles/services/</filename></para></listitem>
@@ -297,8 +259,7 @@ suffixes) in the standard locations for service bundles:
 </orderedlist>
 </listitem>
 <listitem><para>
-Any other <arg choice='plain'><replaceable>name</replaceable></arg> is searched
-for (as-is) in the standard locations for service and for target bundles.
+Any other <arg choice='plain'><replaceable>name</replaceable></arg> is searched for (as-is) in the standard locations for service and for target bundles.
 </para></listitem>
 </itemizedlist>
 
@@ -385,26 +346,28 @@ It will fail if it does not have the necessary privileges for sending a signal t
 <table>
 <title>The signals for each subcommand:</title>
 <thead>
-<tr><td rowspan='2'>command</td><td colspan='2'>signal</td></tr>
-<tr><td>on BSD</td><td>on Linux</td></tr>
+<tr><th rowspan='2'>command</th><th colspan='2'>signal</th></tr>
+<tr><th>on BSD</th><th>on Linux</th></tr>
 </thead>
 <tbody>
 <tr><td><command>reboot</command></td><td><code>SIGINT</code></td><td><code>SIGRTMIN + 5</code></td></tr>
-<tr><td><command>reboot</command> <arg choice='plain'>-f</arg></td><td colspan='2'><code>SIGRTMIN + 15</code></td></tr>
+<tr><td><command>reboot</command> <arg choice='plain'>-f</arg></td><td colspan='2' align="center"><code>SIGRTMIN + 15</code></td></tr>
 <tr><td><command>poweroff</command></td><td><code>SIGUSR2</code></td><td><code>SIGRTMIN + 4</code></td></tr>
-<tr><td><command>poweroff</command> <arg choice='plain'>-f</arg></td><td colspan='2'><code>SIGRTMIN + 14</code></td></tr>
+<tr><td><command>poweroff</command> <arg choice='plain'>-f</arg></td><td colspan='2' align='center'><code>SIGRTMIN + 14</code></td></tr>
 <tr><td><command>halt</command></td><td><code>SIGUSR1</code></td><td><code>SIGRTMIN + 3</code></td></tr>
-<tr><td><command>halt</command> <arg choice='plain'>-f</arg></td><td colspan='2'><code>SIGRTMIN + 13</code></td> </tr>
-<tr><td><command>emergency</command></td><td colspan='2'><code>SIGRTMIN + 2</code></td></tr>
+<tr><td><command>halt</command> <arg choice='plain'>-f</arg></td><td colspan='2' align='center'><code>SIGRTMIN + 13</code></td> </tr>
+<tr><td><command>emergency</command></td><td colspan='2' align='center'><code>SIGRTMIN + 2</code></td></tr>
 <tr><td><command>rescue</command></td><td><code>SIGTERM</code></td><td><code>SIGRTMIN + 1</code></td></tr>
 <tr><td><command>normal</command></td><td colspan='2'><code>SIGRTMIN + 0</code></td></tr>
-<tr><td><command>init</command> <group choice='plain'><arg choice='plain'>-b</arg><arg choice='plain'>emergency</arg></group></td><td colspan='2'><code>SIGRTMIN + 2</code></td></tr>
-<tr><td rowspan='2'><command>init</command> <group choice='plain'><arg choice='plain'>-s</arg><arg choice='plain'>1</arg><arg choice='plain'>S</arg><arg choice='plain'>s</arg><arg choice='plain'>single</arg></group></td><td colspan='2'><code>SIGRTMIN + 10</code></td></tr>
+<tr><td><command>init</command> <group choice='plain'><arg choice='plain'>-b</arg><arg choice='plain'>emergency</arg></group></td><td colspan='2' align='center'><code>SIGRTMIN + 2</code></td></tr>
+<tr><td rowspan='2'><command>init</command> <group choice='plain'><arg choice='plain'>-s</arg></group></td><td><code>SIGRTMIN + 2</code></td><td><code>SIGRTMIN + 10</code></td></tr>
+<tr><td></td><td><code>SIGRTMIN + 1</code></td></tr>
+<tr><td rowspan='2'><command>init</command> <group choice='plain'><arg choice='plain'>1</arg><arg choice='plain'>S</arg><arg choice='plain'>s</arg><arg choice='plain'>single</arg></group></td><td colspan='2' align='center'><code>SIGRTMIN + 10</code></td></tr>
 <tr><td><code>SIGTERM</code></td><td><code>SIGRTMIN + 1</code></td></tr>
 <tr><td><command>init</command> <group choice='plain'><arg choice='plain'>H</arg><arg choice='plain'>h</arg></group></td><td><code>SIGUSR1</code></td><td><code>SIGRTMIN + 3</code></td> </tr>
 <tr><td><command>init</command> <arg choice='plain'>0</arg></td><td><code>SIGUSR2</code></td><td><code>SIGRTMIN + 4</code></td></tr>
 <tr><td><command>init</command> <arg choice='plain'>6</arg></td><td><code>SIGINT</code></td><td><code>SIGRTMIN + 5</code></td></tr>
-<tr><td rowspan='2'><command>init</command> <group choice='opt'><arg choice='plain'>2</arg><arg choice='plain'>3</arg><arg choice='plain'>4</arg><arg choice='plain'>5</arg><arg choice='plain'>m</arg><arg choice='plain'>auto</arg></group></td><td colspan='2'><code>SIGRTMIN + 10</code></td></tr>
+<tr><td rowspan='2'><command>init</command> <group choice='opt'><arg choice='plain'>2</arg><arg choice='plain'>3</arg><arg choice='plain'>4</arg><arg choice='plain'>5</arg><arg choice='plain'>m</arg><arg choice='plain'>auto</arg></group></td><td colspan='2' align='center'><code>SIGRTMIN + 10</code></td></tr>
 <tr><td colspan='2'><code>SIGRTMIN + 0</code></td></tr>
 </tbody>
 </table>
@@ -421,7 +384,7 @@ The <arg>--force</arg> command line argument is used within the various targets 
 </para>
 
 <para>
-The <command>init</command> subcommand is spawned by <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry> and <citerefentry><refentrytitle>session-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry> as their initial action.
+The <command>init</command> subcommand is spawned by <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry> and <citerefentry><refentrytitle>per-user-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry> as their initial action.
 They pass it the command line arguments that they themselves were invoked with.
 As such, its command line syntax is modelled on what boot loaders and kernels tend to supply to process #1, which is a largely undocumented and non-standardized mixture of old-style runlevels and options.
 </para>
@@ -479,8 +442,7 @@ The <arg choice='plain'>--update</arg> command line option is reserved for futur
 <para>
 These subcommands process one or more jobs, sending messages to the service manager to start or to stop one or more services.
 Jobs may also involve invoking any number of configurable actions.
-Jobs processing tries to ensure that service dependencies are correctly
-maintained and processed.
+Jobs processing tries to ensure that service dependencies are correctly maintained and processed.
 To control services directly and individually without regard for dependencies, use <citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
 </para>
 
@@ -567,12 +529,8 @@ Although its doco lists one more (<filename>/run/systemd/system-preset</filename
 In addition to those <command>preset</command> looks in extra directories where systemd presets can be overridden by system-contrl-specific information; allowing a system administrator or package writer to preset things one way for systemd and another way for the <command>preset</command> command.
 </para>
 <para>
-As with systemd earlier preset directories override later ones;
-the contents of files with lexically earlier names override the contents of files with lexically later names;
-and
-the default state, in the absence of an explicit preset, is "enabled".
-Directives are matched against
-<replaceable>prefix</replaceable><replaceable>name</replaceable>.
+As with systemd earlier preset directories override later ones; the contents of files with lexically earlier names override the contents of files with lexically later names; and the default state, in the absence of an explicit preset, is "enabled".
+Directives are matched against <replaceable>prefix</replaceable><replaceable>name</replaceable>.
 </para></listitem>
 <listitem><para>
 (unless the <arg choice="plain">--no-rcconf</arg> command line option is set) <filename>/etc/defaults/rc.conf</filename>, <filename>/etc/rc.conf</filename>, and <filename>/etc/rc.conf.local</filename> preset information, specifically the <envar><replaceable>name</replaceable>_enable</envar> variable, interpreting the values <code>true</code>, <code>1</code>, <code>yes</code>, and <code>on</code> as enable, and any other values (including specifically <code>false</code>, <code>0</code>, <code>no</code>, and <code>off</code>) as disable.
@@ -583,15 +541,11 @@ The variable names are matched against just <replaceable>name</replaceable> to a
 <listitem><para>
 (if the <arg choice="plain">--ttys</arg> command line option is set) <filename>/etc/ttys</filename> preset information, specifically the <code>on</code> and <code>off</code> flags as enable and disable, respectively.
 The <code>onifconsole</code> flag is also recognized and processed with reference to the currently active console device (on BSD systems only).
-If <filename>/etc/ttys</filename> does not exist, as is usually the case on Linux operating systems, all TTYs default to preset enabled.
+If <filename>/etc/ttys</filename> does not exist, as is usually the case on Linux operating systems, all TTYs default to preset disabled.
 </para>
 <para>
 The terminal names are matched against just <replaceable>name</replaceable>.
-This allows one to use an ordinary TTY device name as <replaceable>name</replaceable> and combine it with a "templatized" bundle name <replaceable>prefix</replaceable> such as 
-<code>ttylogin@</code>, 
-<code>getty@</code>, 
-or
-<code>autovt@</code>.
+This allows one to use an ordinary TTY device name as <replaceable>name</replaceable> and combine it with a "templatized" bundle name <replaceable>prefix</replaceable> such as <code>ttylogin@</code>, <code>getty@</code>, or <code>agetty@</code>.
 </para></listitem>
 <listitem><para>
 (if the <arg choice="plain">--fstab</arg> command line option is set)
@@ -599,12 +553,7 @@ or
 </para>
 <para>
 The device and directory names are matched against just <replaceable>name</replaceable>, after unescaping it.
-This allows one to use an ordinary device or directory name as <replaceable>name</replaceable> and combine it with a "templatized" bundle name <replaceable>prefix</replaceable> such as 
-<code>mount@</code>, 
-<code>fsck@</code>, 
-<code>swap@</code>, 
-or
-<code>dump@</code>.
+This allows one to use an ordinary device or directory name as <replaceable>name</replaceable> and combine it with a "templatized" bundle name <replaceable>prefix</replaceable> such as <code>mount@</code>, <code>fsck@</code>, <code>swap@</code>, or <code>dump@</code>.
 This is designed in particular for use with service bundles generated by the <command>convert-fstab-services</command> subcommand.
 </para></listitem>
 </itemizedlist>
@@ -787,9 +736,10 @@ These bounds are:
 
 <listitem>
 <para>
-The service must be a simple, forking, or oneshot service.
-DBus and notify services are not converted.
+The service must be a simple, forking, oneshot, or dbus service.
+Notify services are not converted.
 For best results, avoid having forking services in the first place, and change them into simple services wherever possible.
+<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> has no dealings with a Desktop Bus, so dbus services are treated as simple services.
 </para>
 </listitem>
 
@@ -827,17 +777,14 @@ Other highly specialized options that even systemd recommends against, such as <
 <listitem>
 <para>
 Specialized options for TTY management, such as <code>standardinput=tty-force</code>, are not converted.
-Instead of these, employ the
-<citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-and related utilities in the <filename>run</filename> script.
+Instead of these, employ the <citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and related utilities in the <filename>run</filename> script.
 </para>
 </listitem>
 
 <listitem>
 <para>
-Non-standard substitutes for <code>SIGTERM</code> via <code>killsignal</code> are not converted.
-In practice, this is primarily used to substitute <code>SIGHUP</code> for use with "services" that are actually interactive login shells.
+Only the <code>SIGHUP</code> substitute for <code>SIGTERM</code> via <code>killsignal</code> is converted.
+In practice, this is the primary use case in services that are interactive login shells.
 </para>
 </listitem>
 
@@ -869,16 +816,32 @@ It was undocumented for a long time that systemd always sets the <envar>HOME</en
 <listitem><para>It's not documented, but systemd always changes directory when it starts a service.
 It explicitly changes to the root directory when no <code>WorkingDirectory=</code> directive is given.
 The daemontools convention is for services to be run in their service directories.
-Some daemons have been found to rely upon the undocumented systemd behaviour of being in the root directory.
+A small number of daemons have been found to rely upon the undocumented systemd behaviour of being in the root directory.
 </para></listitem>
 <listitem><para>
 A fair few directives can occur in both a socket unit or its associated service unit.
+</para></listitem>
+<listitem><para>
+The default behaviour in systemd in the absence of a <code>Restart=</code> directive is to never auto-restart a service.
+The daemontools convention is for services to always auto-restart, this having been the norm since the 1990s; and this is the default in ideal mode.
+</para></listitem>
+<listitem><para>
+For an <code>Accept=no</code> (i.e. listening) socket service, systemd implicitly applies any redirection that is applied to standard output to standard error as well.
+So (say) <code>StandardOutput=socket</code> attaches both standard output and standard error to the listening socket.
+This coupling is usually not what one wants.
+The UCSPI and daemontools norm is for standard error to be independent from standard output and to require its own explicit redirection, which is the case in ideal mode.
+</para></listitem>
+<listitem><para>
+When one is using <code>StandardInput=tty</code>, systemd requires that standard output and error be explicitly directed to the terminal device.
+Usually, terminal login services being a very common example of this, one wants all three directed to a terminal.
+In ideal mode, the redirection of standard input implies redirecting standard output and error as well.
+(Standard error can be retained at its original place with the <code>StandardError=log</code> extension.)
 </para></listitem>
 </itemizedlist>
 
 <para>
 The <arg choice='plain'>--no-systemd-quirks</arg> command line option turns off these systemd quirks and sets "ideal" mode.
-Alternatively, one can turn off the quirks with various unit file directives:
+Alternatively, one can turn off some quirks with various unit file directives:
 </para>
 
 <itemizedlist>
@@ -956,7 +919,10 @@ The <code>UCSPIRules=</code> setting (defaulting to <code>false</code>) applies 
 The <code>LogUCSPIRules=</code> setting (defaulting to <code>false</code>) causes <citerefentry><refentrytitle>ucspi-socket-rules-check</refentrytitle><manvolnum>1</manvolnum></citerefentry> to print information about access failures.
 </para></listitem>
 <listitem><para>
-The <code>NUMAInterleave</code>, <code>NUMAMemBind</code>, <code>NUMACPUNodeBind</code>, <code>NUMAPhysCPUBind</code>, <code>NUMALocalAlloc</code>, and <code>NUMAPreferred</code> settings cause the generated bundle to invoke <citerefentry><refentrytitle>numactl</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+The <code>NUMAInterleave=</code>, <code>NUMAMemBind=</code>, <code>NUMACPUNodeBind=</code>, <code>NUMAPhysCPUBind=</code>, <code>NUMALocalAlloc=</code>, and <code>NUMAPreferred=</code> settings cause the generated bundle to invoke <citerefentry><refentrytitle>numactl</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para></listitem>
+<listitem><para>
+The <code>StandardError=log</code> setting prevents <code>StandardInput=tty</code> from redirecting standard error.
 </para></listitem>
 </itemizedlist>
 
@@ -1181,6 +1147,35 @@ If the service has an environment template subdirectory named <filename>env/</fi
 </para></listitem>
 <listitem><para>
 <command>print-service-env</command> prints the whole template as list of <replaceable>var</replaceable>=<replaceable>value</replaceable> entries.
+</para></listitem>
+</itemizedlist>
+
+</refsection>
+<refsection><title>filesystem table query subcommands</title>
+
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">get-mount-what</arg>
+<arg ><replaceable>where</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>system-control</command>
+<arg choice="req">get-mount-where</arg>
+<arg ><replaceable>what</replaceable></arg>
+</cmdsynopsis>
+
+<para>
+These subcommands query the <filename>/etc/fstab</filename> database.
+They fill a gap left by the <citerefentry><refentrytitle>getent</refentrytitle><manvolnum>1</manvolnum></citerefentry> command, which has no subcommand for reading the filesystem table.
+Like that command, they query the on-disc administrative database of what is configured to be mounted; not the kernel's list of currently active mounts.
+</para>
+
+<itemizedlist>
+<listitem><para>
+For a given mount-point <replaceable>where</replaceable> <command>get-mount-what</command> prints the volume that is configured to be mounted upon it.
+</para></listitem>
+<listitem><para>
+For a given volume <replaceable>what</replaceable> <command>get-mount-where</command> prints the point where it is configured to be mounted.
 </para></listitem>
 </itemizedlist>
 

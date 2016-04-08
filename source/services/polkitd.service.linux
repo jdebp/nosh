@@ -9,7 +9,6 @@ After=local-syslog.target
 [Service]
 Type=dbus
 ExecStart=/usr/lib/policykit-1/polkitd --no-debug
-Restart=always
 
 [Install]
 WantedBy=workstation.target

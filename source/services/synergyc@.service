@@ -7,10 +7,8 @@ Description=Synergy Client Daemon for user %i
 
 [Service]
 EnvironmentDirectory=env
-#EnvironmentFile=/etc/default/%p
 ExecStart=%p --no-daemon --debug ${DEBUGLEVEL:-INFO} ${SERVERALIAS}
 User=%i
-Restart=always
 
 [Install]
 WantedBy=workstation.target

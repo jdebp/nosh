@@ -8,6 +8,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include "SignalManagement.h"
 
+// A way to set SIG_IGN that is reset by execve().
 static void sig_ignore (int) {}
 
 ReserveSignalsForKQueue::ReserveSignalsForKQueue(
