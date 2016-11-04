@@ -4,7 +4,7 @@
 
 [Unit]
 Description=Standard login on %I
-After=motd-dynamic.service hostname.service
+After=multi-user-pre.target
 
 [Service]
 SessionLeader=true

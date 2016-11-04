@@ -12,7 +12,7 @@ For copyright and licensing terms, see the file named COPYING.
 
 /// \brief An inline function that replicates EV_SET.
 /// This does not evaluate its arguments more than once.
-/// On OpenBSD, the macro does; FreeBSD/PC-BSD uses a temporary in the macro to avoid doing so.
+/// On OpenBSD, the macro does; FreeBSD/TrueOS uses a temporary in the macro to avoid doing so.
 extern inline
 void
 set_event (

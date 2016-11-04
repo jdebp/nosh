@@ -5,7 +5,7 @@
 <manvolnum>8</manvolnum>
 <refmiscinfo class="manual">administrator commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.24</refmiscinfo>
+<refmiscinfo class="version">1.29</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -613,7 +613,7 @@ offsets.
 <refsection><title>The BSD system clock</title>
 
 <para>
-BSDs have a <code>machdep.adkerntz</code> variable and a
+BSDs have a <code>machdep.adjkerntz</code> variable and a
 <code>machdep.wall_cmos_clock</code> variable (see
 <citerefentry><refentrytitle>sysctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>)
 that can be set by the kernel loader from
@@ -632,7 +632,7 @@ and the system clock is initialized incorrectly.
 
 <para>
 So as part of system initialization, <command>system-manager</command>
-calculates <code>machdep.adkerntz</code> and
+calculates <code>machdep.adjkerntz</code> and
 <code>machdep.wall_cmos_clock</code> (the latter from the existence of
 <filename>/etc/wall_cmos_clock</filename> and the former from the timezone
 database), updates them, and changes the system clock with

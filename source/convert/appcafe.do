@@ -3,7 +3,7 @@
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
 #
-# Convert the PC-BSD/TrueOS appcafe external configuration formats.
+# Convert the TrueOS appcafe external configuration formats.
 # This is invoked by all.do .
 #
 

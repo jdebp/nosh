@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.24</refmiscinfo>
+<refmiscinfo class="version">1.29</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -28,7 +28,7 @@
 <refsection><title>Description</title>
 
 <para>
-<command>netlink-datagram-socket-listen</command> is a chain-loading utility that opens a netlink datagram socket bound to <replaceable>protocol</replaceable> and <replaceable>multicast-group</replaceable>, sets the socket to file descriptor 3 (closing whatever that descriptor was), and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
+<command>netlink-datagram-socket-listen</command> is a chain-loading utility that opens a netlink datagram socket bound to <replaceable>protocol</replaceable> and <replaceable>multicast-group</replaceable>, sets the socket to file descriptor 3+<replaceable>n</replaceable> (where <replaceable>n</replaceable> is the number of already-opened listening file descriptors), closing whatever that descriptor was, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
 </para>
 
 <para>
@@ -41,8 +41,10 @@ This is for compatibility with daemons that expect to be run under <citerefentry
 </para>
 
 <para>
-The <arg>--systemd-compatibility</arg> option causes <command>netlink-datagram-socket-listen</command> to set the <envar>LISTEN_FDS</envar> environment variable to 1, and the <envar>LISTEN_PID</envar> environment variable to its own process ID.
-This is for compatibility with daemons that expect to be run under <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+The <arg>--systemd-compatibility</arg> option is for compatibility with daemons that expect to be run under <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+It causes <command>netlink-datagram-socket-listen</command> to set the <envar>LISTEN_FDS</envar> environment variable to the number of listening file descriptors, and the <envar>LISTEN_PID</envar> environment variable to its own process ID.
+If the command is started up with the <envar>LISTEN_FDS</envar> and the <envar>LISTEN_PID</envar> environment variables already appropriately set, the number of listening file descriptors is taken from them and increased by one, otherwise the number of file descriptors is 1.
+Thus a list of listening file descriptors can be built up with multiple commands, as long as they all use the <arg>--systemd-compatibility</arg> option.
 </para>
 
 <para>

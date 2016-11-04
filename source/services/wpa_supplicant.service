@@ -3,10 +3,11 @@
 ## **************************************************************************
 
 [Unit]
-Description=Wi-Fi Protected Access client daemon
+Description=Wi-Fi Protected Access client, Desktop Bus server
 
 [Service]
 Type=dbus
+EnvironmentDirectory=env
 ExecStart=%p -u
 
 [Install]

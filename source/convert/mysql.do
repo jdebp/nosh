@@ -62,6 +62,9 @@ install -d -m 0755 -- "/var/log/mysql/sv"
 r="/var/local/sv"
 e="--no-systemd-quirks --bundle-root"
 
+find "$r/" -maxdepth 1 -type d -name 'mysql@*' -print0 |
+xargs -0 system-control disable --
+
 list_instances |
 while read -r i
 do

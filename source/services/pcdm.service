@@ -3,11 +3,11 @@
 ## **************************************************************************
 
 [Unit]
-Description=PC-BSD display manager
-After=ttylogin@ttyv8 ttylogin@tty9
+Description=PC-BSD/TrueOS display manager
+After=ttylogin@ttyv8 ttylogin@tty9 hald
 
 [Service]
-ExecStart=PDCMd
+ExecStart=PCDMd
 
 [Install]
 WantedBy=workstation.target

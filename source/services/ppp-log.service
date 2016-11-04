@@ -6,8 +6,7 @@
 Description=Combined logger for ppp@ services
 
 [Service]
-PermissionsStartOnly=true
-User=ppp-log
+User=%p
 WorkingDirectory=/var/log/sv
 ExecStart=cyclog ppp/
 RestartSec=1

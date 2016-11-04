@@ -881,7 +881,7 @@ InputFIFO::WriteFunctionKeyDECVT(uint16_t k, uint8_t m)
 		case 21:	WriteFunctionKeyDECVT1(35U,m); break;
 		case 22:	WriteFunctionKeyDECVT1(36U,m); break;
 		default:
-			std::fprintf(stderr, "WARNING: %s: %" PRIx32 "\n", "Unknown function key", k);
+			std::fprintf(stderr, "WARNING: Function key #%" PRId32 " does not have a DEC VT mapping.\n", k);
 			break;
 	}
 }

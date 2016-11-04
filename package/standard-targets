@@ -4,6 +4,7 @@ dumpauto
 emergency
 extra-shared-libraries
 frame-buffer
+fs-servers
 graphics
 halt
 jails
@@ -11,6 +12,7 @@ local-fs
 local-fs-pre
 local-syslog
 multi-user
+multi-user-pre
 name-services
 normal
 poweroff

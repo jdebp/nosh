@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=syslog socket used by local clients to talk to syslog daemons on FreeBSD/PC-BSD
+Description=syslog socket used by local clients to talk to syslog daemons on FreeBSD/TrueOS
 Before=local-syslog.target
 
 [Socket]

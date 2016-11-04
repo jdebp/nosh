@@ -9,8 +9,7 @@ After=local-fs.target
 Before=shutdown.target
 
 [Service]
-PermissionsStartOnly=true
-User=devd-log
+User=%p
 WorkingDirectory=/var/log/sv
 ExecStart=cyclog devd/
 RestartSec=1

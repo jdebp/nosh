@@ -9,7 +9,7 @@ Description=Generic FTP socket for IP6
 Backlog=2
 MaxConnections=2
 NoDelay=false
-ListenStream=[::]:21
+ListenStream=[::]:ftp
 UCSPIRules=true
 Accept=true
 

@@ -11,8 +11,8 @@ After=nisdomain.service
 Type=forking
 # The import procedure is expected to have populated this directory with flags.
 EnvironmentDirectory=env
-ExecStartPre=sh -c '[ -z "`domainname`" ] && echo "WARNING: NIS domainname(1) is not set."'
-ExecStartPre=sh -c 'domain=`domainname` ; [ ! -d /var/yp/$domain/. ] && echo "WARNING: /var/yp/$domain is not a directory."'
+ExecStartPre=sh -c 'test -z "`domainname`" && echo "WARNING: NIS domainname is not set."'
+ExecStartPre=sh -c 'domain=`domainname` ; test -d /var/yp/$domain/. || echo "WARNING: /var/yp/$domain is not a directory."'
 ExecStart=rpc.%p ${flags}
 
 [Install]

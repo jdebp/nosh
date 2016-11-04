@@ -10,7 +10,7 @@
 redo-ifchange /dev "uhidd@.service" 
 
 lr="/var/local/sv/"
-e="--no-systemd-quirks --escape-instance --bundle-root"
+e="--no-systemd-quirks --escape-instance --local-bundle --bundle-root"
 
 list_generic_USB_devices() {
 	seq 0 9 | 
@@ -23,11 +23,18 @@ list_generic_USB_devices() {
 		done
 	done
 }
+is_hid() {
+	usbconfig -d "$1" | grep -E -q ' uhid[[:digit:]]+:'
+}
 
-for i in cyclog@uhidd uhidd kmod@vkbd
+for i in kmod@vkbd
 do
-	test -e "$lr"/"$i" || ln -s -- ../../sv/"$i" "$lr"/
+	test -L "$lr"/"$i" || ln -s -- ../../sv/"$i" "$lr"/
 done
+
+find "$lr/" -maxdepth 1 -type d -name 'uhidd@*' -print0 |
+xargs -0 system-control disable --
+system-control disable uhidd-log
 
 list_generic_USB_devices | 
 while read -r i
@@ -35,16 +42,24 @@ do
 	n="`basename \"$i\"`"
 	if ! test -e "$i"
 	then
-		if system-control find "uhidd@$n" 2>/dev/null 
+		if >/dev/null 2>&1 system-control find "uhidd@$n"
 		then
 			system-control disable "uhidd@$n"
 		fi
 		redo-ifcreate "$i"
 		echo >> "$3" no "$n"
+	elif ! is_hid "$n"
+	then
+		if >/dev/null 2>&1 system-control find "uhidd@$n"
+		then
+			system-control disable "uhidd@$n"
+		fi
+		echo >> "$3" nothid "$n"
 	else
 		system-control convert-systemd-units $e "$lr/" "./uhidd@$n.service"
 		rm -f -- "$lr/uhidd@$n/log"
-		ln -s -- "../../cyclog@uhidd" "$lr/uhidd@$n/log"
+		ln -s -- "../../../sv/uhidd-log" "$lr/uhidd@$n/log"
+		system-control preset uhidd-log
 		system-control preset --prefix "uhidd@" -- "$n"
 		if system-control is-enabled "uhidd@$n"
 		then

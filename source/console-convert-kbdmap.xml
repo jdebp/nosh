@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.24</refmiscinfo>
+<refmiscinfo class="version">1.29</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -89,7 +89,7 @@ Some additional notes:
 There is no ASCII control character named "ns".
 </para></listitem>
 <listitem><para>
-PC98 FreeBSD/PC-BSD keymaps do not use harmonized keycodes and thus do not convert correctly.
+PC98 FreeBSD/TrueOS keymaps do not use harmonized keycodes and thus do not convert correctly.
 </para></listitem>
 <listitem><para>
 <citerefentry><refentrytitle>atkbd</refentrytitle><manvolnum>5</manvolnum></citerefentry> does not define meanings for "<code>fkey65</code>" and higher.

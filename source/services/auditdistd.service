@@ -7,7 +7,7 @@ Description=audit trail distribution daemon
 
 [Service]
 EnvironmentDirectory=env
-ExecStart=%p -F
+ExecStart=%p -l
 
 [Install]
 WantedBy=multi-user.target

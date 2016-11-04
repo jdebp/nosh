@@ -1,0 +1,90 @@
+# shell function library for FreeBSD/TrueOS
+escape() { echo "$1"|sed -e 's/_/_x5f/g' -e 's/@/_x40/g' -e 's/:/_x3a/g' -e 's/+/_x2b/g' ; }
+del_user() { 
+	if getent passwd "$1" > /dev/null 
+	then
+		echo 1>&2 "Removing user:" "$1"
+		pw userdel "$1" 
+	fi
+}
+shut_down() {
+	for i
+	do
+		system-control disable "$i"
+		if system-control is-loaded "$i"
+		then
+			system-control unload-when-stopped "$i"
+			if system-control is-active "$i"
+			then
+				echo 1>&2 "Stop:" "$i"
+				system-control stop "$i"
+			fi
+		fi
+	done
+}
+service_with_dedicated_logger() {
+	if test -z "${nosh_run_package}"
+	then
+		:
+	else
+		shut_down "$1.service" "cyclog@$1.service"
+	fi
+}
+login_service_with_dedicated_logger() {
+	if test -z "${nosh_run_package}"
+	then
+		:
+	else
+		shut_down "ttylogin@$1.service" "cyclog@ttylogin@$1.service"
+	fi
+}
+ktty_login_service_with_dedicated_logger() {
+	case "`uname`" in
+	OpenBSD)	ktty=ttyC; break ;;
+	*)		ktty=ttyv; break ;;
+	esac
+	login_service_with_dedicated_logger "${ktty}$1"
+}
+socket_with_dedicated_logger() {
+	if test -z "${nosh_run_package}"
+	then
+		:
+	else
+		shut_down "$1.socket" "cyclog@$1.service"
+	fi
+}
+service_only() {
+	if test -z "${nosh_run_package}"
+	then
+		:
+	else
+		shut_down "$1.service"
+	fi
+}
+fan_in_logger() {
+	if test -z "${nosh_run_package}"
+	then
+		:
+	else
+		shut_down "$1-log.service"
+	fi
+}
+target() {
+	if test -z "${nosh_run_package}"
+	then
+		:
+	else
+		shut_down "$1.target"
+	fi
+}
+# Don't delete the log service users because the log files still exist.
+log_user() {
+	:
+}
+non_log_user() {
+	local pwescaped="`escape "$1"`"
+	del_user "$pwescaped"
+}
+user_tty() {
+	:
+}

@@ -74,7 +74,7 @@ Linux)	etc_services="../package/common-etc-services ../package/linux-etc-service
 esac
 
 case "${base}" in
-ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|cyclog@*) 
+ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|dhclient-log|uhidd-log|ifconfig-log|cyclog@*) 
 	log=
 	etc=
 	after=
@@ -99,7 +99,7 @@ devd)
 	etc=--etc-bundle
 	after="log"
 	;;
-udev|udev-trigger-add@*)
+udev|udev-trigger-add@*|udev-finish)
 	log="../udev-log"
 	etc=--etc-bundle
 	after="log"

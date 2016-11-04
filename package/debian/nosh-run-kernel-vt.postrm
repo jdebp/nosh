@@ -32,6 +32,8 @@ case "$1" in
 		for i in \
 			kernel-vt-loadkeys \
 			kernel-vt-setfont \
+			kernel-vt-setterm \
+			kernel-vt-kbdrate \
 			ttylogin-starter \
 			;
 		do

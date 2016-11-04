@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Firewall Knock Operator daemon
+
+[Service]
+RuntimeDirectory=%p
+RuntimeDirectoryMode=0700
+ExecStart=%p --foreground
+
+[Install]
+WantedBy=server.target

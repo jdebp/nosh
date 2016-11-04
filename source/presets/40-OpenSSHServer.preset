@@ -10,3 +10,5 @@ enable	cyclog@sshd.service
 enable	sshd.service
 enable	cyclog@ssh.service
 enable	ssh.service
+enable	cyclog@sshgenkeys.service
+enable	sshgenkeys.service

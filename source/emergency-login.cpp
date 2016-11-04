@@ -107,21 +107,21 @@ emergency_login (
 	}
 	endpwent();
 
-	execl(shell, shell, 0);
+	execl(shell, shell, static_cast<const char *>(0));
 	std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, shell, std::strerror(errno));
 
 	shell = std::getenv("SHELL");
 	if (shell) {
-		execl(shell, shell, 0);
+		execl(shell, shell, static_cast<const char *>(0));
 		std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, shell, std::strerror(errno));
 	}
 
 	shell = _PATH_BSHELL;
-	execl(shell, shell, 0);
+	execl(shell, shell, static_cast<const char *>(0));
 	std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, shell, std::strerror(errno));
 
 	shell = "/bin/sh";
-	execl(shell, shell, 0);
+	execl(shell, shell, static_cast<const char *>(0));
 	std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, shell, std::strerror(errno));
 
 	args.insert(args.end(), shell);

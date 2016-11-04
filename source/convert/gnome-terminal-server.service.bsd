@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=GNOME Terminal
+
+[Service]
+systemdUserEnvironment=true
+Environment=DBUS_SESSION_BUS_ADDRESS="unix:runtime=yes"
+ExecStart=/usr/local/libexec/%p
+Restart=no
+
+[Install]

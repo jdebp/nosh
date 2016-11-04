@@ -8,7 +8,8 @@ After=local-syslog.target
 
 [Service]
 Type=dbus
-ExecStart=/usr/lib/x86_64-linux-gnu/colord/%p
+User=colord
+ExecStart=/usr/lib/colord/%p
 
 [Install]
 WantedBy=workstation.target

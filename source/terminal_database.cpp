@@ -21,13 +21,13 @@ is_current_console (
 	std::size_t siz;
 	const int s(sysctl(oid, len, 0, &siz, 0, 0));
 	if (0 > s) return false;
-	std::auto_ptr<char> buf(new(std::nothrow) char[siz]);
-	const int t(sysctl(oid, len, buf, &siz, 0, 0));
+	std::vector<char> buf(siz, char());
+	const int t(sysctl(oid, len, buf.data(), &siz, 0, 0));
 	if (0 > t) return false;
-	const char * avail(std::strchr(buf, '/'));
+	const char * avail(std::memchr(buf.data(), '/', siz));
 	if (!avail) return false;
 	*avail++ = '\0';
-	for (const char * p(buf), * e(0); *p; p = e) {
+	for (const char * p(buf.data()), * e(0); *p; p = e) {
 		e = std::strchr(p, ',');
 		if (e) *e++ = '\0'; else e = std::strchr(p, '\0');
 		if (0 == std::strcmp(p, entry.ty_name)) return true;

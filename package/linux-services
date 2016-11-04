@@ -1,9 +1,14 @@
+Debian-mask-initscripts
+cgmanager
+cgproxy
 colord
 colord-sane
 irqbalance
 kerneloops
 kernel-vt-loadkeys
 kernel-vt-setfont
+kernel-vt-setterm
+kernel-vt-kbdrate
 kmod
 kmod@ipv6
 kmod@loop

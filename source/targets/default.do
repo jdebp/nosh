@@ -30,7 +30,9 @@ esac
 
 redo-ifchange "${unitfile}"
 
-mkdir -p targets.new
+install -d -m 0755 targets.new
+
+rm -r -f targets.new/"${base}"
 
 ./system-control convert-systemd-units --no-systemd-quirks --etc-bundle --bundle-root targets.new/ "${unit}"
 

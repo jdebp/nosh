@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Static network configuration for interface %i
+Before=ifconfig@%i
+
+[Service]
+Type=oneshot
+EnvironmentDirectory=env
+ExecStart=sh /etc/start_if.%i
+ExecStopPost=sh /etc/stop_if.%i
+
+[Install]
+WantedBy=static-networking.target

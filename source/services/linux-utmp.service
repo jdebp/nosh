@@ -4,7 +4,8 @@
 
 [Unit]
 Description=Enable Linux login accounting
-Before=sshd.service ttylogin-starter.service
+Before=multi-user-pre.target
+Wants=multi-user-pre.target
 After=mount@-run.service mount@-.service
 
 [Service]

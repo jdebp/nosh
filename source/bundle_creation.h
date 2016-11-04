@@ -23,7 +23,8 @@ create_links (
 	const char * prog,
 	const std::string & bund,
 	const bool is_target,
-	const bool etc_bundle,
+	const bool services_are_relative,
+	const bool targets_are_relative,
 	const FileDescriptorOwner & bundle_dir_fd,
 	const std::string & names,
 	const std::string & subdir

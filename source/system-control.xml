@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">administrator commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.24</refmiscinfo>
+<refmiscinfo class="version">1.29</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -1122,31 +1122,33 @@ They devolve to the appropriate operating system commands, which are <citerefent
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">set-service-env</arg>
+<arg choice="req"><replaceable>name</replaceable></arg>
 <arg choice='req'><replaceable>var</replaceable></arg>
 <arg><replaceable>value</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">print-service-env</arg>
+<arg choice="req"><replaceable>name</replaceable></arg>
 <arg><replaceable>var</replaceable></arg>
 </cmdsynopsis>
 
 <para>
-If the service has an environment template subdirectory named <filename>env/</filename> (in the format understood by <citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>), these subcommands can be used to manipulate that template.
+If the <arg choice="plain"><replaceable>name</replaceable></arg> service has an environment template subdirectory named <filename>env/</filename> (in the format understood by <citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>), these subcommands can be used to manipulate that template.
 </para>
 
 <itemizedlist>
 <listitem><para>
-<command>set-service-env</command> <arg choice='plain'><replaceable>var</replaceable></arg> <arg choice='plain'><replaceable>value</replaceable></arg> sets <replaceable>var</replaceable> to <replaceable>value</replaceable> in the template, the change not (of course) affecting any currently running service.
+<command>set-service-env</command> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice='plain'><replaceable>var</replaceable></arg> <arg choice='plain'><replaceable>value</replaceable></arg> sets <replaceable>var</replaceable> to <replaceable>value</replaceable> in the template, the change not (of course) affecting any currently running service.
 </para></listitem>
 <listitem><para>
-<command>set-service-env</command> <arg choice='plain'><replaceable>var</replaceable></arg> specifies that the template unset <replaceable>var</replaceable>, the change not (of course) affecting any currently running service.
+<command>set-service-env</command> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice='plain'><replaceable>var</replaceable></arg> specifies that the template unset <replaceable>var</replaceable>, the change not (of course) affecting any currently running service.
 </para></listitem>
 <listitem><para>
-<command>print-service-env</command> <arg choice='plain'><replaceable>var</replaceable></arg> prints (only) the value of <replaceable>var</replaceable> from the template.
+<command>print-service-env</command> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice='plain'><replaceable>var</replaceable></arg> prints (only) the value of <replaceable>var</replaceable> from the template.
 </para></listitem>
 <listitem><para>
-<command>print-service-env</command> prints the whole template as list of <replaceable>var</replaceable>=<replaceable>value</replaceable> entries.
+<command>print-service-env</command> <arg choice="plain"><replaceable>name</replaceable></arg> prints the whole template as list of <replaceable>var</replaceable>=<replaceable>value</replaceable> entries.
 </para></listitem>
 </itemizedlist>
 
@@ -1433,8 +1435,28 @@ One can thus list <filename>remote-fs</filename> in the <filename>after/</filena
 This "local filesystems precursor" target is not a collection; its <filename>wants/</filename> list should be empty.
 It is solely an ordering milestone, that is brought in only if the services that want to order before it are themselves brought in.
 It exists because system initialization services that need to occur before any filesystem checks or mounts, usually special services that initialize an interactive UI for <citerefentry><refentrytitle>fsck</refentrytitle><manvolnum>1</manvolnum></citerefentry>, do not have another way to hold the checks/mounts from commencing until they are done.
-Such services should list this target in their <filename>before/</filename> lists and <filename>wants/</filename> lists.
-Filesystem checks and mounts should list this target (only) in their <filename>after/</filename> lists, so that they order relative to it if the target is brought in but do not themselves bring it in.
+Such services should list this target in their <filename>before/</filename> and <filename>wants/</filename> lists.
+Local filesystem checks, decryptions, and mounts should list this target (only) in their <filename>after/</filename> lists, so that they order relative to it if the target is brought in but do not themselves bring it in.
+</para></listitem>
+</varlistentry>
+
+<varlistentry><term><filename>fs-servers</filename></term>
+<listitem><para>
+This "filesystems servers" target is not a collection; its <filename>wants/</filename> list should be empty.
+It is solely an ordering milestone, that is brought in only if the services that want to order after it are themselves brought in.
+It exists in order to ensure that remote filesystem mounts of volumes on the local machine work, by ordering them after the startup of any filesystem servers (e.g. SAMBA or NFS server daemons).
+Such server services should list this target (only) in their <filename>before/</filename> and <filename>wants/</filename> lists.
+Remote filesystem mounts should list this target (only) in their <filename>after/</filename> lists, so that they order relative to it if the target is brought in but do not themselves bring it in.
+</para></listitem>
+</varlistentry>
+
+<varlistentry><term><filename>multi-user-pre</filename></term>
+<listitem><para>
+This "multi-user precursor" target is not a collection; its <filename>wants/</filename> list should be empty.
+It is solely an ordering milestone, that is brought in only if the services that want to order before it are themselves brought in.
+It exists for services that need to start/execute before any multi-user login.
+Such services should list this target in their <filename>before/</filename> and <filename>wants/</filename> lists.
+Login serviers should list this target (only) in their <filename>after/</filename> lists, so that they order relative to it if the target is brought in but do not themselves bring it in.
 </para></listitem>
 </varlistentry>
 

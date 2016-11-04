@@ -9,7 +9,7 @@ Description=Filesystem check the %I volume
 DefaultDependencies=false
 # Use the non-suffixed form to ensure that we get a relative symbolic link.
 Before=mount@%i
-After=local-fs-pre.target
+After=local-fs-pre.target swapauto.target
 
 [Service]
 Type=oneshot

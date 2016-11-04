@@ -11,7 +11,7 @@ set_if_unset() { if test -z "`system-control print-service-env \"$1\" \"$2\"`" ;
 
 # These get us *only* the configuration variables, safely.
 read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
-list_network_addresses() { read_rc network_addresses || echo 127.53.0.1 | while read -r i ; do echo "$i" ; done ; }
+list_network_addresses() { for i in `read_rc network_addresses || echo 127.53.0.1` ; do echo "$i" ; done ; }
 
 redo-ifchange rc.conf general-services "tinydns@.socket" "tinydns.service"
 
@@ -22,7 +22,7 @@ then
 
 	system-control print-service-env tinydns >> "$3"
 
-	test -r "$s/service/root/data" || echo '.' > "$s/service/root/data"
+	test -r "$s/service/root/data" || echo '.:127.53.0.1:a' > "$s/service/root/data"
 	test -r "$s/service/root/Makefile" || echo 'data.cdb : data ; tinydns-data' > "$s/service/root/Makefile"
 fi
 
@@ -50,7 +50,7 @@ do
 		echo "add $i \$@" >> "${s}"/service/root/add-"$i"
 		chmod 0755 "${s}"/service/root/add-"$i"
 	done
-	test -r "${s}/service/root/data" || echo '.' > "${s}/service/root/data"
+	test -r "${s}/service/root/data" || echo ".:$i:a" > "${s}/service/root/data"
 	test -r "${s}/service/root/Makefile" || echo 'data.cdb : data ; tinydns-data' > "${s}/service/root/Makefile"
 	set_if_unset "${s}/" ROOT "root"
 

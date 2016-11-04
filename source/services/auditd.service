@@ -9,7 +9,7 @@ Description=BSD audit daemon
 # The import procedure is expected to have populated this directory with flags.
 EnvironmentDirectory=env
 # The daemon should properly clean itself up at SIGTERM; if it does not, that is a bug.
-ExecStart=%p -d ${flags}
+ExecStart=%p -l ${flags}
 
 [Install]
 WantedBy=workstation.target

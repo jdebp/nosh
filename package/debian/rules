@@ -2,6 +2,8 @@
 
 .PHONY: build binary install clean stage control
 
+ALL_PACKAGES=nosh-guide nosh-exec nosh-terminal-management nosh-service-management nosh-terminal-extras nosh-systemv-shims nosh-systemd-shims nosh-upstart-shims nosh-debian-shims nosh-openbsd-shims nosh-ucspi-tcp-shims nosh-bundles nosh-run-system-manager nosh-run-via-systemd nosh-run-kernel-vt nosh-run-user-vt nosh-run-virtualbox-guest nosh-run-freedesktop-system-bus nosh-run-freedesktop-kits nosh-run-openssh-server nosh-run-appletalk nosh-run-udev nosh-run-busybox-mdev nosh-run-suckless-mdev nosh-run-vdev nosh-run-local-syslog nosh-run-klog
+
 # The Debian package builder targets this in order to make the package contents.
 build:
 	package/compile
@@ -9,17 +11,17 @@ build:
 # The Debian package builder targets this in order to clean the build areas.
 clean:
 	${RM} debian/files debian/substvars
-	for i in guide exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims openbsd-shims ucspi-tcp-shims bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog ; \
+	for i in ${ALL_PACKAGES} ; \
 	do \
-		${RM} -r debian/nosh-"$$i"/ || exit 1 ; \
+		${RM} -r debian/"$$i"/ || exit 1 ; \
 	done
 	${RM} -r debian/tmp/
 
 # The Debian package builder targets this in order to make the .deb files.
 binary: stage control
-	for i in exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims openbsd-shims ucspi-tcp-shims guide bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog ; \
+	for i in ${ALL_PACKAGES} ; \
 	do \
-		dpkg -b debian/nosh-"$$i" ../ || exit 1 ; \
+		dpkg -b debian/"$$i" ../ || exit 1 ; \
 	done
 
 stage:
@@ -31,41 +33,28 @@ stage:
 control:
 	${RM} debian/files
 	echo Generating control files
-	for i in exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims openbsd-shims ucspi-tcp-shims guide bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog ; \
+	for i in ${ALL_PACKAGES} ; \
 	do \
-		install -d -m 0755 debian/nosh-"$$i"/DEBIAN || exit 1 ; \
-	done
-	for i in exec terminal-management ; \
-	do \
+		install -d -m 0755 debian/"$$i"/DEBIAN || exit 1 ; \
 		${RM} debian/substvars ; \
-		dpkg-shlibdeps debian/nosh-"$$i"/usr/local/bin/* || exit 1 ; \
-		dpkg-gencontrol -pnosh-"$$i" -Pdebian/nosh-"$$i" || exit 1 ; \
-	done
-	for i in service-management ; \
-	do \
-		${RM} debian/substvars ; \
-		dpkg-shlibdeps debian/nosh-"$$i"/usr/local/bin/* || exit 1 ; \
-		dpkg-shlibdeps debian/nosh-"$$i"/usr/local/sbin/* || exit 1 ; \
-		dpkg-gencontrol -pnosh-"$$i" -Pdebian/nosh-"$$i" || exit 1 ; \
-	done
-	for i in systemv-shims ; \
-	do \
-		${RM} debian/substvars ; \
-		dpkg-shlibdeps debian/nosh-"$$i"/usr/local/sbin/* || exit 1 ; \
-		dpkg-gencontrol -pnosh-"$$i" -Pdebian/nosh-"$$i" || exit 1 ; \
-	done
-	for i in systemd-shims upstart-shims debian-shims openbsd-shims ucspi-tcp-shims guide bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog terminal-extras ; \
-	do \
-		${RM} debian/substvars ; \
-		dpkg-gencontrol -pnosh-"$$i" -Pdebian/nosh-"$$i" || exit 1 ; \
-	done
-	for i in exec bundles run-system-manager run-via-systemd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog ; \
-	do \
+		case "$$i" in \
+		nosh-exec|nosh-terminal-management) \
+			dpkg-shlibdeps debian/"$$i"/usr/local/bin/* || exit 1 ; \
+			;; \
+		nosh-service-management) \
+			dpkg-shlibdeps debian/"$$i"/usr/local/bin/* || exit 1 ; \
+			dpkg-shlibdeps debian/"$$i"/usr/local/sbin/* || exit 1 ; \
+			;; \
+		nosh-systemv-shims) \
+			dpkg-shlibdeps debian/"$$i"/usr/local/sbin/* || exit 1 ; \
+			;; \
+		esac ; \
+		dpkg-gencontrol -p"$$i" -Pdebian/"$$i" || exit 1 ; \
 		for j in preinst postinst prerm postrm ; \
 		do \
-			if [ -e debian/nosh-"$$i"."$$j" ] ; \
+			if [ -e debian/"$$i"."$$j" ] ; \
 			then \
-				cp -p debian/nosh-"$$i"."$$j" debian/nosh-"$$i"/DEBIAN/"$$j" || exit 1 ; \
+				cp -p debian/"$$i"."$$j" debian/"$$i"/DEBIAN/"$$j" || exit 1 ; \
 			fi ; \
 		done ; \
 	done

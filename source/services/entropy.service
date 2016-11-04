@@ -9,6 +9,8 @@ Before=netif sshd sshdgenkeys
 [Service]
 Type=oneshot
 ExecStart=./helper load
+# Re-generate the saved randomness as soon as it has been used to re-seed.
+ExecStart=./helper save
 ExecStopPost=./helper save
 # This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes

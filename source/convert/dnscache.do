@@ -12,7 +12,7 @@ dir_not_empty() { test -n "`/bin/ls -A \"$1\"`" ; }
 
 # These get us *only* the configuration variables, safely.
 read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
-list_network_addresses() { read_rc network_addresses || echo 127.0.0.1 | while read -r i ; do echo "$i" ; done ; }
+list_network_addresses() { for i in `read_rc network_addresses || echo 127.0.0.1` ; do echo "$i" ; done ; }
 
 redo-ifchange rc.conf general-services "dnscache@.socket" "dnscache.service"
 

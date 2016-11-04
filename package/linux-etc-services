@@ -11,6 +11,7 @@ suckless-mdev
 suckless-mdev-log
 suckless-mdev-rescan
 udev
+udev-finish
 udev-log
 udev-trigger-add@devices
 udev-trigger-add@subsystems

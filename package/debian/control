@@ -127,10 +127,10 @@ Description: Debian shim service and system management utilities
 
 Package: nosh-openbsd-shims
 Architecture: amd64
-Depends: nosh-service-management
+Depends: nosh-service-management, nosh-systemv-shims (>= 1.28)
+Conflicts: nosh-systemv-shims (<= 1.27)
 Suggests: 
 Recommends: 
-Conflicts: nosh-run-via-systemd, upstart, sysvinit-core, systemd-sysv
 Description: OpenBSD shim service and system management utilities
  This package provides shims for OpenBSD service and system management commands.
   * rcctl
@@ -151,7 +151,7 @@ Description: Bernstein UCSPI-TCP shim service utilities
 
 Package: nosh-bundles
 Architecture: amd64
-Depends: nosh-exec (>=1.28), nosh-service-management (>=1.28), nosh-terminal-management (>= 1.22), adduser
+Depends: nosh-exec (>=1.28), nosh-service-management (>=1.29), nosh-terminal-management (>=1.22), adduser
 Suggests: 
 Recommends: 
 Conflicts: nosh-standard-targets, nosh-sysinit-services, nosh-bsd-services, nosh-bsd-sockets, nosh-regular-sockets, nosh-regular-services
@@ -168,10 +168,10 @@ Suggests:
 Recommends: nosh-run-kernel-vt | nosh-run-user-vt, nosh-systemv-shims, nosh-openbsd-shims, nosh-run-local-syslog, nosh-run-klog, nosh-debian-shims
 Conflicts: nosh-run-via-systemd, upstart, sysvinit-core, systemd-sysv
 Provides: init, systemd-shim
-Description: Run the various AppleTalk services
+Description: Run the nosh system manager
  This package runs the nosh system manager as process #1.
  . 
- It does this on FreeBSD/PC-BSD by modifying /boot/loader.conf .
+ It does this on FreeBSD/TrueOS by modifying /boot/loader.conf .
  . 
  It does this on Linux by installing a symbolic link as /sbin/init .
  . 

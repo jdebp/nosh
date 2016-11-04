@@ -4,6 +4,8 @@
 
 [Unit]
 Description=Create the "dynamic" part of the Message Of The Day
+Before=multi-user-pre.target
+Wants=multi-user-pre.target
 
 [Service]
 Type=oneshot

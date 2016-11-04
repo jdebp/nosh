@@ -10,11 +10,15 @@ Description=Set up kernel virtual terminals font
 Wants=local-fs.target
 
 [Service]
+TTYPath=tty0
+StandardInput=tty
+StandardError=log
 EnvironmentFile=-/etc/vconsole.conf
-ExecStart=setfont -C /dev/tty0 ${FONT} ${FONT_MAP:+-m "${FONT_MAP}"} ${FONT_UNIMAP:+-u "${FONT_UNIMAP}"}
+EnvironmentDirectory=env
+ExecStart=setfont ${FONT} ${FONT_MAP:+-m "${FONT_MAP}"} ${FONT_UNIMAP:+-u "${FONT_UNIMAP}"}
 # This is a one-shot service that can be re-triggered by starting it again.
 RemainAfterExit=1
 Restart=no
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=workstation.target

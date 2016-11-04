@@ -9,8 +9,7 @@ After=local-fs.target
 Before=shutdown.target
 
 [Service]
-PermissionsStartOnly=true
-User=suckless-mdev-log
+User=%p
 WorkingDirectory=/var/log/sv
 ExecStart=cyclog suckless-mdev/
 RestartSec=1

@@ -9,6 +9,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/stat.h>
+#include <cstddef>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -227,6 +228,13 @@ socket_set_bind_to_any (
 	int s,
 	const struct addrinfo & info,
 	bool v
+) ;
+extern
+int
+socket_connect (
+	int s,
+	const void * addr,
+	std::size_t len
 ) ;
 
 #endif

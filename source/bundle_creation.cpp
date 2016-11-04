@@ -39,7 +39,8 @@ create_links (
 	const char * prog,
 	const std::string & bund,
 	const bool is_target,
-	const bool etc_bundle,
+	const bool services_are_relative,
+	const bool targets_are_relative,
 	const FileDescriptorOwner & bundle_dir_fd,
 	const std::string & names,
 	const std::string & subdir
@@ -49,7 +50,7 @@ create_links (
 		const std::string & name(*i);
 		std::string base, link, target;
 		if (ends_in(name, ".target", base)) {
-			if (etc_bundle) {
+			if (targets_are_relative) {
 				if (is_target)
 					target = "../../" + base;
 				else
@@ -61,10 +62,10 @@ create_links (
 		if (ends_in(name, ".service", base)
 		||  ends_in(name, ".socket", base)
 		) {
-			if (etc_bundle)
-				target = "/var/sv/" + base;
-			else
+			if (services_are_relative)
 				target = "../../" + base;
+			else
+				target = "/var/sv/" + base;
 			link = subdir + base;
 		} else 
 		{

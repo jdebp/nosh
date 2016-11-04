@@ -12,6 +12,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sys/un.h>
 #include <unistd.h>
 #include "utils.h"
+#include "fdutils.h"
 #include "popt.h"
 #include "FileDescriptorOwner.h"
 
@@ -43,7 +44,7 @@ monitored_fsck (
 		const int error(errno);
 		std::fprintf(stderr, "%s: ERROR: %s\n", prog, std::strerror(error));
 	} else {
-		if (0 <= connect(socket_fd.get(), reinterpret_cast<const sockaddr *>(&addr), sizeof addr)) {
+		if (0 <= socket_connect(socket_fd.get(), &addr, sizeof addr)) {
 #if defined(__LINUX__) || defined(__linux__)
 			char buf[64];
 			snprintf(buf, sizeof buf, "-C%d", socket_fd.get());

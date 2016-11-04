@@ -48,7 +48,7 @@ new_pkg() {
 			echo "ENDOFTHETEXT"
 		fi
 		echo "scripts: {"
-		for j in pre- post- ""
+		for j in pre- post-
 		do
 			for k in install deinstall upgrade
 			do
@@ -58,6 +58,24 @@ new_pkg() {
 					echo "  $s: <<ENDOFTHETEXT"
 					sed -e 's/^/    /' bsd/"${name}"."$s"
 					echo "ENDOFTHETEXT"
+				elif test -r bsd/"${name}".p
+				then
+					if test -r bsd/"$s".funcs
+					then
+						echo "  $s: <<ENDOFTHETEXT"
+						echo "    #!/bin/sh -"
+						if >/dev/null expr "${name}" : "nosh-run-"
+						then
+							echo "    nosh_run_package=YES"
+						fi
+						sed -e 's/^/    /' bsd/"$s".funcs
+						if test -r bsd/"${name}"."$s".extra
+						then
+							sed -e 's/^/    /' bsd/"${name}"."$s".extra
+						fi
+						sed -e 's/^/    /' bsd/"${name}".p
+						echo "ENDOFTHETEXT"
+					fi
 				fi
 			done
 		done
@@ -121,21 +139,15 @@ old_pkg() {
 #				echo "@conflict $k"
 #			done < bsd/"${name}".conflicts
 #		fi
-#		echo "@scripts {"
-#		for j in pre- post- ""
-#		do
-#			for k in install deinstall upgrade
-#			do
-#				s="$j$k"
-#				if test -r bsd/"${name}"."$s"
-#				then
-#					echo "  $s: <<ENDOFTHETEXT"
-#					sed -e 's/^/    /' bsd/"${name}"."$s"
-#					echo "ENDOFTHETEXT"
-#				fi
-#			done
-#		done
-#		echo "}"
+		if test -r bsd/"${name}".p
+		then
+			if >/dev/null expr "${name}" : "nosh-run-"
+			then
+				awk -f bsd/p-to-oldpkg.run.awk bsd/"${name}".p
+			else
+				awk -f bsd/p-to-oldpkg.bundles.awk bsd/"${name}".p
+			fi
+		fi
 		cd "${dir}"
 		echo "@owner root"
 		echo "@group wheel"

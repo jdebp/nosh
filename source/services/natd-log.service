@@ -6,8 +6,7 @@
 Description=Combined logger for natd@ services
 
 [Service]
-PermissionsStartOnly=true
-User=natd-log
+User=%p
 WorkingDirectory=/var/log/sv
 ExecStart=cyclog natd/
 RestartSec=1

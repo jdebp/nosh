@@ -4,13 +4,15 @@
 
 [Unit]
 Description=BSD static IP6 binding for %i
+After=network-runtime.service
+Wants=network-runtime.service
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
 EnvironmentDirectory=env
-ExecStart=ndp -s "${addr}" ${dest}
-ExecStopPost=ndp -d "${addr}"
+ExecStart=route -6 add ${route} ${fib:+-fib "${fib}"}
+ExecStopPost=route -6 del ${route}
 
 [Install]
-WantedBy=server.target
+WantedBy=static-networking.target

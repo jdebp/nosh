@@ -1,0 +1,20 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=HTTPS socket capable of single-stack IPV6 and IPV6-mapped IPV4
+
+[Socket]
+Backlog=2
+ListenStream=https
+Accept=true
+MaxConnections=16
+UCSPIRules=true
+LogUCSPIRules=yes
+NoDelay=false
+BindIPv6Only=both
+SSLShim=true
+
+[Install]
+WantedBy=server.target

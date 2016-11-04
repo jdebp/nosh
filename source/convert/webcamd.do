@@ -18,6 +18,10 @@ redo-ifchange rc.conf general-services "webcamd@.service"
 r="/var/local/sv"
 e="--no-systemd-quirks --escape-instance --bundle-root"
 
+find "$r/" -maxdepth 1 -type d -name 'webcamd@*' -print0 |
+xargs -0 system-control disable --
+system-control disable webcamd-log
+
 n=0
 while true
 do
@@ -58,6 +62,7 @@ do
 
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../webcamd-log" "$r/${service}/log"
+	system-control preset webcamd-log
 
 	n="`expr $n + 1`"
 done

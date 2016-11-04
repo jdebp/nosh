@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=Undocumented PC-BSD service
+Description=Undocumented PC-BSD/TrueOS service
 
 [Service]
 ExecStartPre=rm -f -- /run/%p.pipe

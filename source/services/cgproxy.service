@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Proxy for the Linux Desktop Bus API control group manager
+
+[Service]
+ExecStart=%p --verbose
+Restart=yes
+
+[Install]
+WantedBy=workstation.target

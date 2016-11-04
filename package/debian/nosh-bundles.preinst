@@ -23,6 +23,20 @@ case "$1" in
 			fi
 		done
 
+                # These services have been discontinued.
+                for I in \
+                        stty-sane@console \
+                        make-utx-log \
+                        ;
+                do
+                        if system-control is-enabled "$I" 2>/dev/null
+                        then
+                                system-control disable "$I"
+                        fi
+                        system-control unload-when-stopped "$I"
+                        system-control stop "$I"
+                done
+
 		# This service has been relocated
 		if test \! -d /var/sv/debian-cron && test -d /var/sv/gnucron
 		then

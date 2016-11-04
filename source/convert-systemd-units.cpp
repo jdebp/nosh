@@ -20,6 +20,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include <pwd.h>
 #include "utils.h"
+#include "runtime-dir.h"
 #include "fdutils.h"
 #include "service-manager-client.h"
 #include "popt.h"
@@ -240,8 +241,22 @@ shell_expand (
 	return s;
 }
 
+static inline
+std::string
+effective_user_name ()
+{
+	if (struct passwd * p = getpwuid(geteuid()))
+		if (p->pw_name) {
+			const std::string n(p->pw_name);
+			endpwent();
+			return n;
+		}
+	endpwent();
+	return "nobody";
+}
+
 struct names {
-	names(const char * a) : arg_name(a), user("root"), runtime_dir("/run/") { split_name(a, unit_dirname, unit_basename); escaped_unit_basename = systemd_name_escape(false, unit_basename); }
+	names(const char * a) : arg_name(a), user(per_user_mode ? effective_user_name() : "root"), runtime_dir(per_user_mode ? effective_user_runtime_dir() : "/run/") { split_name(a, unit_dirname, unit_basename); escaped_unit_basename = systemd_name_escape(false, unit_basename); }
 	void set_prefix(const std::string & v, bool esc, bool alt) { set(esc, alt, escaped_prefix, prefix, v); }
 	void set_instance(const std::string & v, bool esc, bool alt) { set(esc, alt, escaped_instance, instance, v); }
 	void set_bundle(const std::string & r, const std::string & b) { bundle_basename = b; bundle_dirname = r + b; }
@@ -299,6 +314,7 @@ names::substitute (
 			case 'N': r += query_unit_basename(); break;
 			case 'm': r += query_machine_id(); break;
 			case 't': r += query_runtime_dir(); break;
+			case 'U': r += query_user(); break;
 			case '%': default:	r += '%'; r += c; break;
 		}
 	}
@@ -514,15 +530,16 @@ convert_systemd_units (
 ) {
 	const char * prog(basename_of(args[0]));
 	std::string bundle_root;
-	bool escape_instance(false), escape_prefix(false), alt_escape(false), etc_bundle(false), systemd_quirks(true);
+	bool escape_instance(false), escape_prefix(false), alt_escape(false), etc_bundle(false), local_bundle(false), systemd_quirks(true);
 	try {
 		const char * bundle_root_str(0);
 		bool no_systemd_quirks(false);
-		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
+		popt::bool_definition user_option('u', "user", "Create a bundle that runs under the per-user manager.", per_user_mode);
 		popt::string_definition bundle_option('\0', "bundle-root", "directory", "Root directory for bundles.", bundle_root_str);
 		popt::bool_definition escape_instance_option('\0', "escape-instance", "Escape the instance part of a template instantiation.", escape_instance);
 		popt::bool_definition alt_escape_option('\0', "alt-escape", "Use an alternative escape algorithm.", alt_escape);
-		popt::bool_definition etc_bundle_option('\0', "etc-bundle", "Consider this service to live away from the normal service bundle group.", etc_bundle);
+		popt::bool_definition etc_bundle_option('\0', "etc-bundle", "Consider this service to live in the /etc/service-bundles/ area.", etc_bundle);
+		popt::bool_definition local_bundle_option('\0', "local-bundle", "Consider this service to live in a local administrator service bundle area.", local_bundle);
 		popt::bool_definition no_systemd_quirks_option('\0', "no-systemd-quirks", "Turn off systemd quirks.", no_systemd_quirks);
 		popt::definition * main_table[] = {
 			&user_option,
@@ -530,6 +547,7 @@ convert_systemd_units (
 			&escape_instance_option,
 			&alt_escape_option,
 			&etc_bundle_option,
+			&local_bundle_option,
 			&no_systemd_quirks_option
 		};
 		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "unit");
@@ -656,6 +674,7 @@ convert_systemd_units (
 	value * freebind(socket_profile.use("socket", "freebind"));
 	value * receivebuffer(socket_profile.use("socket", "receivebuffer"));
 	value * netlinkraw(socket_profile.use("socket", "netlinkraw"));	// This is an extension to systemd.
+	value * sslshim(socket_profile.use("socket", "sslshim"));	// This is an extension to systemd.
 	value * socket_before(socket_profile.use("unit", "before"));
 	value * socket_after(socket_profile.use("unit", "after"));
 	value * socket_conflicts(socket_profile.use("unit", "conflicts"));
@@ -758,8 +777,10 @@ convert_systemd_units (
 	value * ioschedulingpriority(service_profile.use("service", "ioschedulingpriority"));
 	value * cpuschedulingresetonfork(service_profile.use("service", "cpuschedulingresetonfork"));
 	value * numainterleave(service_profile.use("service", "numainterleave"));
+#endif
 	value * numamembind(service_profile.use("service", "numamembind"));
 	value * numacpunodebind(service_profile.use("service", "numacpunodebind"));
+#if defined(__LINUX__) || defined(__linux__)
 	value * numaphyscpubind(service_profile.use("service", "numaphyscpubind"));
 	value * numalocalalloc(service_profile.use("service", "numalocalalloc"));
 	value * numapreferred(service_profile.use("service", "numapreferred"));
@@ -898,6 +919,7 @@ convert_systemd_units (
 	if (is_bool_true(delegate, false))
 		delegate_control_group += "foreground delegate-control-group-to " + quote(names.query_user()) + " ;\n";
 #else
+	static_cast<void>(is_instance);	// Silence a compiler warning.
 	if (jailid) jail += "jexec " + quote(names.substitute(jailid->last_setting())) + "\n";
 #endif
 	std::string priority;
@@ -979,6 +1001,15 @@ convert_systemd_units (
 			cpuschedulingpolicy->used = false;
 		}
 	}
+	if (numamembind || numacpunodebind) {
+		priority += "numactl";
+		/// \todo TODO: And --mempolicy
+		if (numamembind)
+			priority += " --memdomain " + quote(names.substitute(numamembind->last_setting()));
+		if (numacpunodebind)
+			priority += " --cpudomain " + quote(names.substitute(numacpunodebind->last_setting()));
+		priority += "\n";
+	}
 #endif
 	if (oomscoreadjust)
 		// The -- is necessary because the adjustment could be a negative number, starting with a dash,
@@ -1018,13 +1049,13 @@ convert_systemd_units (
 			setuidgid += "setuidgid-fromenv\n";
 		} else
 			setuidgid += "setuidgid " + quote(names.query_user()) + "\n";
-		if (is_bool_true(systemduserenvironment, systemd_quirks))
-			// This replicates systemd useless features.
-			setuidgid += "userenv\n";
 	} else {
 		if (group)
 			setuidgid += "setgid " + quote(names.substitute(group->last_setting())) + "\n";
 	}
+	if (is_bool_true(systemduserenvironment, systemd_quirks))
+		// This replicates systemd useless features.
+		setuidgid += "userenv\n";
 	const bool setuidgidall(!is_bool_true(permissionsstartonly, false));
 	// systemd always runs services in / by default; daemontools runs them in the service directory.
 	std::string chdir;
@@ -1036,7 +1067,7 @@ convert_systemd_units (
 	if (runtimedirectory) {
 		std::string dirs, dirs_slash;
 		for (std::list<std::string>::const_iterator i(runtimedirectory->all_settings().begin()); runtimedirectory->all_settings().end() != i; ++i) {
-			const std::string dir("/run/" + names.substitute(*i));
+			const std::string dir(names.query_runtime_dir() + names.substitute(*i));
 			dirs += quote(dir);
 			dirs_slash += quote(dir) + "/";
 		}
@@ -1172,19 +1203,30 @@ convert_systemd_units (
 			// There is no non-UCSPI mode for per-connection services.
 			// In ideal mode, input/output are the socket and error is the log.
 			// In quirks mode, we just force the same behaviour as ideal mode.
-			if ((standardinput || systemd_quirks) && !stdin_socket) 
-				std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardInput", "socket");
-			if ((standardoutput || systemd_quirks) && !stdout_inherit && !stdout_socket) 
-				std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardOutput", "socket");
-			if (standarderror && !stderr_log)
-				std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardError", "log");
 			if (!systemd_quirks) {
 				if (stdin_socket) 
 					std::fprintf(stderr, "%s: INFO: %s: Superfluous setting: [%s] %s\n", prog, service_filename.c_str(), "Service", "StandardInput");
+				else if (standardinput) 
+					std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardInput", "socket");
+
 				if (stdout_inherit || stdout_socket)
 					std::fprintf(stderr, "%s: INFO: %s: Superfluous setting: [%s] %s\n", prog, service_filename.c_str(), "Service", "StandardOutput");
+				else if (standardoutput) 
+					std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardOutput", "socket");
+
 				if (stderr_log)
 					std::fprintf(stderr, "%s: INFO: %s: Superfluous setting: [%s] %s\n", prog, service_filename.c_str(), "Service", "StandardError");
+				else if (stderr_inherit)
+					socket_redirect += "fdmove -c 2 1\n";
+				else if (standarderror)
+					std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardError", "log");
+			} else {
+				if (!stdin_socket) 
+					std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardInput", "socket");
+				if (!stdout_inherit && !stdout_socket) 
+					std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardOutput", "socket");
+				if (standarderror && !stderr_log)
+					std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardError", "log");
 			}
 		} else {
 			// Listening-socket services are complicated.
@@ -1196,15 +1238,23 @@ convert_systemd_units (
 				// Listening-socket services can be attached to terminal devices as well.
 				// In ideal mode, input/output/error are the terminal device.
 				// In quirks mode, we just force the same behaviour as ideal mode.
-				if ((standardoutput || systemd_quirks) && !stdout_inherit && !stdout_tty) 
-					std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardOutput", "tty");
-				if (standarderror && !stderr_inherit && !stderr_tty && !stderr_log)
-					std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardError", "tty");
 				if (!systemd_quirks) {
 				   	if (stdout_inherit || stdout_tty)
 						std::fprintf(stderr, "%s: INFO: %s: Superfluous setting: [%s] %s\n", prog, service_filename.c_str(), "Service", "StandardOutput");
+					else if (standardoutput) 
+						std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardOutput", "tty");
+
 					if (stderr_inherit || stderr_tty)
 						std::fprintf(stderr, "%s: INFO: %s: Superfluous setting: [%s] %s\n", prog, service_filename.c_str(), "Service", "StandardError");
+					else if (stderr_log)
+						;	// Dealt with below.
+					else if (standarderror)
+						std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardError", "tty");
+				} else {
+					if (!stdout_inherit && !stdout_tty) 
+						std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardOutput", "tty");
+					if (standarderror && !stderr_inherit && !stderr_tty && !stderr_log)
+						std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardError", "tty");
 				}
 			} else {
 				// There are no half measures ("Don't adopt a controlling terminal and only redirect standard output.") available.
@@ -1230,15 +1280,23 @@ convert_systemd_units (
 			// Non-socket services can take controlling terminals.
 			// In ideal mode, input/output/error default to the terminal device.
 			// In quirks mode, we just force the same behaviour as ideal mode.
-			if ((standardoutput || systemd_quirks) && !stdout_inherit && !stdout_tty) 
-				std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardOutput", "tty");
-			if (standarderror && !stderr_inherit && !stderr_tty && !stderr_log)
-				std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardError", "tty");
 			if (!systemd_quirks) {
 				if (stdout_inherit || stdout_tty)
 					std::fprintf(stderr, "%s: INFO: %s: Superfluous setting: [%s] %s\n", prog, service_filename.c_str(), "Service", "StandardOutput");
+				else if (standardoutput) 
+					std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardOutput", "tty");
+
 				if (stderr_inherit || stderr_tty)
 					std::fprintf(stderr, "%s: INFO: %s: Superfluous setting: [%s] %s\n", prog, service_filename.c_str(), "Service", "StandardError");
+				else if (stderr_log)
+					;	// Dealt with below.
+				else if (standarderror)
+					std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardError", "tty");
+			} else {
+				if (!stdout_inherit && !stdout_tty) 
+					std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardOutput", "tty");
+				if (standarderror && !stderr_inherit && !stderr_tty && !stderr_log)
+					std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardError", "tty");
 			}
 		} else {
 			// There are no half measures ("Don't adopt a controlling terminal and only redirect standard output.") available.
@@ -1370,7 +1428,8 @@ convert_systemd_units (
 			}
 		}
 		if (listenstream) {
-			if (is_local_socket_name(listenstream->last_setting())) {
+			const std::string sockname(names.substitute(listenstream->last_setting()));
+			if (is_local_socket_name(sockname)) {
 				run_or_start << "local-stream-socket-listen ";
 				if (!is_socket_accept) run_or_start << "--systemd-compatibility ";
 				if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
@@ -1379,10 +1438,10 @@ convert_systemd_units (
 				if (socketgroup) run_or_start << "--group " << quote(names.substitute(socketgroup->last_setting())) << " ";
 				if (passcredentials) run_or_start << "--pass-credentials ";
 				if (passsecurity) run_or_start << "--pass-security ";
-				run_or_start << quote(names.substitute(listenstream->last_setting())) << "\n";
+				run_or_start << quote(sockname) << "\n";
 			} else {
 				std::string listenaddress, listenport;
-				split_ip_socket_name(names.substitute(listenstream->last_setting()), listenaddress, listenport);
+				split_ip_socket_name(sockname, listenaddress, listenport);
 				run_or_start << "tcp-socket-listen ";
 				if (!is_socket_accept) run_or_start << "--systemd-compatibility ";
 				if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
@@ -1397,7 +1456,8 @@ convert_systemd_units (
 			}
 		}
 		if (listendatagram) {
-			if (is_local_socket_name(listendatagram->last_setting())) {
+			const std::string sockname(names.substitute(listendatagram->last_setting()));
+			if (is_local_socket_name(sockname)) {
 				run_or_start << "local-datagram-socket-listen --systemd-compatibility ";
 				if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
 				if (socketmode) run_or_start << "--mode " << quote(names.substitute(socketmode->last_setting())) << " ";
@@ -1405,10 +1465,10 @@ convert_systemd_units (
 				if (socketgroup) run_or_start << "--group " << quote(names.substitute(socketgroup->last_setting())) << " ";
 				if (passcredentials) run_or_start << "--pass-credentials ";
 				if (passsecurity) run_or_start << "--pass-security ";
-				run_or_start << quote(names.substitute(listendatagram->last_setting())) << "\n";
+				run_or_start << quote(sockname) << "\n";
 			} else {
 				std::string listenaddress, listenport;
-				split_ip_socket_name(names.substitute(listendatagram->last_setting()), listenaddress, listenport);
+				split_ip_socket_name(sockname, listenaddress, listenport);
 				run_or_start << "udp-socket-listen --systemd-compatibility ";
 #if defined(IPV6_V6ONLY)
 				if (bindipv6only && "both" == tolower(bindipv6only->last_setting())) run_or_start << "--combine4and6 ";
@@ -1420,6 +1480,7 @@ convert_systemd_units (
 			}
 		}
 		if (listenfifo) {
+			const std::string fifoname(names.substitute(listenfifo->last_setting()));
 			run_or_start << "fifo-listen --systemd-compatibility ";
 #if 0 // This does not apply to FIFOs and we want it to generate a diagnostic when present and unused.
 			if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
@@ -1436,7 +1497,7 @@ convert_systemd_units (
 			if (passcredentials) passcredentials->used = false;
 			if (passsecurity) passsecurity->used = false;
 #endif
-			run_or_start << quote(names.substitute(listenfifo->last_setting())) << "\n";
+			run_or_start << quote(fifoname) << "\n";
 		}
 		if (listennetlink) {
 			std::string protocol, multicast_group;
@@ -1451,7 +1512,8 @@ convert_systemd_units (
 		run_or_start << drop_privileges.str();
 		if (is_socket_accept) {
 			if (listenstream) {
-				if (is_local_socket_name(listenstream->last_setting())) {
+				const std::string sockname(names.substitute(listenstream->last_setting()));
+				if (is_local_socket_name(sockname)) {
 					run_or_start << "local-stream-socket-accept ";
 					if (maxconnections) run_or_start << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
 					run_or_start << "\n";
@@ -1469,6 +1531,11 @@ convert_systemd_units (
 			if (is_bool_true(socket_logucspirules, service_logucspirules, false))
 				run_or_start << " --verbose";
 			run_or_start << "\n";
+		}
+		if (is_socket_accept) {
+			if (sslshim) {
+				run_or_start << "ssl-run\n";
+			}
 		}
 		run_or_start << "./service\n";
 
@@ -1527,6 +1594,8 @@ convert_systemd_units (
 		// Optimize away explicit zero-length sleeps.
 		if ("0" != seconds)
 			restart_script << "sleep " << restartsec->last_setting() << "\n";
+	} else if (systemd_quirks && !is_socket_activated) {
+		restart_script << "sleep 0.1\n";
 	}
 	if (execrestartpre) {
 		std::stringstream s;
@@ -1601,8 +1670,10 @@ convert_systemd_units (
 		stop << "true\n";
 
 	// Set the dependency and installation information.
+	const bool services_are_relative(!etc_bundle && !local_bundle);
+	const bool targets_are_relative(etc_bundle);
 
-#define CREATE_LINKS(l,s) (l ? create_links (prog,names.query_bundle_dirname(),is_target,etc_bundle,bundle_dir_fd,names.substitute((l)->last_setting()),(s)) : static_cast<void>(0))
+#define CREATE_LINKS(l,s) (l ? create_links (prog,names.query_bundle_dirname(),is_target,services_are_relative,targets_are_relative,bundle_dir_fd,names.substitute((l)->last_setting()),(s)) : static_cast<void>(0))
 
 	CREATE_LINKS(socket_after, "after/");
 	CREATE_LINKS(service_after, "after/");
@@ -1628,38 +1699,41 @@ convert_systemd_units (
 	);
 	const bool earlysupervise(
 			is_socket_activated ? is_bool_true(socket_earlysupervise, service_earlysupervise, etc_bundle) :
-			is_bool_true(service_earlysupervise, etc_bundle)
+			is_bool_true(service_earlysupervise, !per_user_mode && etc_bundle)
 	);
 	if (defaultdependencies) {
 		if (is_socket_activated)
-			create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "sockets.target", "wanted-by/");
+			create_links(prog, names.query_bundle_dirname(), is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "sockets.target", "wanted-by/");
 		if (is_dbus) {
-			create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "dbus.socket", "after/");
+			create_links(prog, names.query_bundle_dirname(), is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "dbus.socket", "after/");
 #if !defined(__LINUX__) && !defined(__linux__)
 			// Don't want D-Bus on Linux in case the D-Bus daemon is not managed by service-manager.
-			create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "dbus.socket", "wants/");
+			create_links(prog, names.query_bundle_dirname(), is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "dbus.socket", "wants/");
 #endif
 		}
 		if (!is_target) {
-			create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "basic.target", "after/");
-			create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "basic.target", "wants/");
-			create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "shutdown.target", "before/");
-			create_links(prog, names.query_bundle_dirname(), is_target, etc_bundle, bundle_dir_fd, "shutdown.target", "stopped-by/");
+			create_links(prog, names.query_bundle_dirname(), is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "basic.target", "after/");
+			create_links(prog, names.query_bundle_dirname(), is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "basic.target", "wants/");
+			create_links(prog, names.query_bundle_dirname(), is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "shutdown.target", "before/");
+			create_links(prog, names.query_bundle_dirname(), is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "shutdown.target", "stopped-by/");
 		}
 	}
 	if (earlysupervise) {
 		create_link(prog, names.query_bundle_dirname(), bundle_dir_fd, "/run/service-bundles/early-supervise/" + names.query_bundle_basename(), "supervise");
 	}
 	if (listenstream) {
-		if (is_local_socket_name(listenstream->last_setting()))
-			make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, names.substitute(listenstream->last_setting()));
+		const std::string sockname(names.substitute(listenstream->last_setting()));
+		if (is_local_socket_name(sockname))
+			make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, sockname);
 	}
 	if (listendatagram) {
-		if (is_local_socket_name(listendatagram->last_setting()))
-			make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, names.substitute(listendatagram->last_setting()));
+		const std::string sockname(names.substitute(listendatagram->last_setting()));
+		if (is_local_socket_name(sockname))
+			make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, sockname);
 	}
 	if (listenfifo) {
-		make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, names.substitute(listenfifo->last_setting()));
+		const std::string fifoname(names.substitute(listenfifo->last_setting()));
+		make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, fifoname);
 	}
 	flag_file(prog, service_dirname, service_dir_fd, "remain", is_remain);
 	flag_file(prog, service_dirname, service_dir_fd, "use_hangup", is_use_hangup);

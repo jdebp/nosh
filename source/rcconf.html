@@ -46,7 +46,7 @@ The toolset comes with a replacement <a href="rcctl.html"><code>rcctl</code></a>
 
 <p>
 As the manual page mentions, best practice <em>even with the original OpenBSD tool</em> is to <em>not</em> get into the bad habit of using <code>rcctl&nbsp;set&nbsp;</code><i>name</i><code>&nbsp;status</code> instead of <code>rcctl&nbsp;enable&nbsp;</code><i>name</i> and <code>rcctl&nbsp;disable&nbsp;</code><i>name</i>.
-The <code>set</code>/<code>get</code> way of doing things not only doesn't work with the <a href="rcctl.html"><code>rcctl</code></a> shim but doesn't even work for NetBSD, DragonFly BSD, FreeBSD, or PC-BSD, none of which are compatible with OpenBSD's unique <code>rc.conf</code> variable naming scheme.
+The <code>set</code>/<code>get</code> way of doing things not only doesn't work with the <a href="rcctl.html"><code>rcctl</code></a> shim but doesn't even work for NetBSD, DragonFly BSD, FreeBSD, or TrueOS, none of which are compatible with OpenBSD's unique <code>rc.conf</code> variable naming scheme.
 In contrast, the <code>enable</code>/<code>disable</code> way of doing things works both with the original tool and the shim.
 (Ports of the original OpenBSD tool to other BSDs will also likely ensure that <code>enable</code>/<code>disable</code> do the right thing for the target platform.)
 </p>

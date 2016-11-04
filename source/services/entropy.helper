@@ -9,6 +9,14 @@ then
 	exit $?
 fi
 
+case "`uname`" in
+Linux)	file="${file-/var/lib/urandom/random-seed}" ;;
+*BSD)	
+	dir="${dir-/var/db/entropy}" 
+	file="${file-/var/db/entropy-file}" 
+	;;
+esac
+
 load() {
 	case "${dir}" in
 	[Nn][Oo]|'')

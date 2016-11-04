@@ -3,17 +3,17 @@
 ## **************************************************************************
 
 [Unit]
-Description=HTTP socket
+Description=HTTP socket capable of single-stack IPV6 and IPV6-mapped IPV4
 
 [Socket]
 Backlog=2
-BindIPv6Only=both
-ListenStream=80
+ListenStream=http
 Accept=true
 MaxConnections=16
 UCSPIRules=true
 LogUCSPIRules=yes
 NoDelay=false
+BindIPv6Only=both
 
 [Install]
 WantedBy=server.target

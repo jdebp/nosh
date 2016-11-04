@@ -1,0 +1,117 @@
+#!/bin/sh -
+# /run is now in the root.
+test -e /var/run || ln -s -f -- /run /var/
+
+# adjust to new log users
+for i in \
+	devd \
+	natd \
+	sppp \
+	sysinit \
+	;
+do
+	if test -d /var/log/sv/$i/
+	then
+		chown "$i"-log /var/log/sv/$i/
+		test -e /var/log/sv/$i/lock && chown "$i"-log /var/log/sv/$i/lock
+		test -e /var/log/sv/$i/current && chown "$i"-log /var/log/sv/$i/current
+		find /var/log/sv/$i/ -name '@*' -print0|xargs -0 chown "$i"-log
+	fi
+done
+# Adjust to new relationships.
+for I in \
+	kmod@vboxguest \
+	kmod@vboxsf \
+	kmod@vboxvideo \
+	kmod@vboxadd \
+	kmod@vboxdrv \
+	kmod@vboxnetadp \
+	kmod@vboxnetflt \
+	kmod@vboxpci \
+	;
+do
+	if system-control find cyclog@"$I".service >/dev/null 2>&1
+	then
+		rm -f -- /var/sv/cyclog@"$I"/wanted-by/workstation/wants/cyclog@"$I"
+		rm -f -- /var/sv/cyclog@"$I"/wanted-by/workstation
+	fi
+done
+for I in \
+	cyclog@cleanvar \
+	cleanvar \
+	;
+do
+	if system-control find "$I".service >/dev/null 2>&1
+	then
+		rm -f -- /var/sv/"$I"/wanted-by/workstation/wants/"$I"
+		rm -f -- /var/sv/"$I"/wanted-by/sysinit/wants/"$I"
+	fi
+done
+for I in \
+	kernel-vt-kbdcontrol \
+	kernel-vt-vidcontrol \
+	cleanuucp \
+	;
+do
+	if system-control find "$I".service >/dev/null 2>&1
+	then
+		rm -f -- /var/sv/"$I"/wanted-by/sysinit/wants/"$I"
+		rm -f -- /var/sv/"$I"/wanted-by/sysinit
+	fi
+done
+for I in \
+	static-networking \
+	;
+do
+	if system-control find "$I".service >/dev/null 2>&1
+	then
+		rm -f -- /var/sv/"$I"/wanted-by/workstation/wants/"$I"
+		rm -f -- /var/sv/"$I"/stopped-by/shutdown/conflicts/"$I"
+		rm -f -- /var/sv/cyclog@"$I"/wanted-by/workstation/wants/cyclog@"$I"
+		rm -f -- /var/sv/cyclog@"$I"/stopped-by/shutdown/conflicts/cyclog@"$I"
+	fi
+done
+for I in \
+	normal \
+	graphics \
+	workstation \
+	server \
+	;
+do
+	if system-control find "$I".target >/dev/null 2>&1
+	then
+		rm -f -- /etc/service-bundles/targets/"$I"/wants/basic
+		rm -f -- /etc/service-bundles/targets/"$I"/after/basic
+	fi
+done
+for I in \
+	appcafe \
+	extra-shared-libraries \
+	name-services \
+	jails \
+	uhidd \
+	warden \
+	sockets \
+	remote-fs \
+	remote-fs-pre \
+	;
+do
+	if system-control find "$I".target >/dev/null 2>&1
+	then
+		rm -f -- /etc/service-bundles/targets/"$I"/wanted-by/sysinit/wants/"$I"
+		rm -f -- /etc/service-bundles/targets/"$I"/wanted-by/sysinit
+	fi
+done
+for I in \
+	avahi-daemon \
+	gpsd \
+	initctld \
+	lircd \
+	;
+do
+	if system-control find "$I".service >/dev/null 2>&1
+	then
+		rm -f -- /var/sv/"$I"/wanted-by/server/wants/"$I"
+		rm -f -- /var/sv/"$I"/wanted-by/server
+	fi
+done

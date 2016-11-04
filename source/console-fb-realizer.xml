@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.24</refmiscinfo>
+<refmiscinfo class="version">1.29</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -151,10 +151,10 @@ This device is used to negotiate, with the kernel VT subsystem and other coopera
 
 </refsection>
 
-<refsection><title>FreeBSD and PC-BSD</title>
+<refsection><title>FreeBSD and TrueOS</title>
 
 <para>
-Neither FreeBSD nor PC-BSD provide direct access to raw framebuffer and input event devices; they are mediated through the kernel virtual terminal subsystem and one must use a kernel virtual terminal device as both <replaceable>fbname</replaceable> and an AT keyboard device name.
+Neither FreeBSD nor TrueOS provide direct access to raw framebuffer and input event devices; they are mediated through the kernel virtual terminal subsystem and one must use a kernel virtual terminal device as both <replaceable>fbname</replaceable> and an AT keyboard device name.
 <command>console-fb-realizer</command> switches the framebuffer device into graphics mode, the line discipline to raw mode, and the keyboard driver to deliver raw keycodes, for the duration; switching them back to their saved prior settings upon its termination.
 </para>
 
@@ -175,7 +175,7 @@ If italic stroke is unavailable, the italic attribute is rendered as <emphasis>o
 </para>
 
 <para>
-Fonts are loaded from font files, which may be either in the FreeBSD/PC-BSD "vtfont" format or in the straight 8 by 16 unadorned bitmap format used by FreeBSD's "syscons".
+Fonts are loaded from font files, which may be either in the FreeBSD/TrueOS "vtfont" format or in the straight 8 by 16 unadorned bitmap format used by FreeBSD's "syscons".
 (To convert an Adobe BDF format font file to "vtfont" format, use the FreeBSD <citerefentry><refentrytitle>vtfontcvt</refentrytitle><manvolnum>1</manvolnum></citerefentry> utility.)
 Font files are specified by the <replaceable>filename</replaceable> in the various font command-line options:
 <arg choice='plain'>--vtfont-faint-r</arg>, 
@@ -237,7 +237,7 @@ It is this common set that is actually used in key maps.
 
 <para>
 The map is stored in the file <replaceable>kbdmapname</replaceable> in machine-readable form.
-FreeBSD/PC-BSD keymaps can be compiled from the BSD <citerefentry><refentrytitle>kbdmap</refentrytitle><manvolnum>5</manvolnum></citerefentry> human-readable form to this machine-readable form with the <citerefentry><refentrytitle>console-convert-kbdmap</refentrytitle><manvolnum>1</manvolnum></citerefentry> command.
+FreeBSD/TrueOS keymaps can be compiled from the BSD <citerefentry><refentrytitle>kbdmap</refentrytitle><manvolnum>5</manvolnum></citerefentry> human-readable form to this machine-readable form with the <citerefentry><refentrytitle>console-convert-kbdmap</refentrytitle><manvolnum>1</manvolnum></citerefentry> command.
 </para>
 
 <refsection><title>Map files</title>

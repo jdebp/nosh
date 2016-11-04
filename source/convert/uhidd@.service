@@ -4,8 +4,8 @@
 
 [Unit]
 Description=%p service for device %I
-Wants=kmod@vkbd.service cyclog@uhidd.service
-After=kmod@vkbd.service cyclog@uhidd.service
+Wants=kmod@vkbd.service uhidd-log.service
+After=kmod@vkbd.service uhidd-log.service
 
 [Service]
 EnvironmentDirectory=env

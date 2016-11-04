@@ -1,0 +1,23 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Set up kernel virtual terminal screen-saving
+# This writes out terminal control sequences, which should be written after the reset control sequences written by the loadkeys service.
+After=kernel-vt-loadkeys.service
+
+[Service]
+TTYPath=tty0
+StandardInput=tty
+StandardError=log
+EnvironmentFile=-/etc/default/kbd
+EnvironmentFile=-/etc/kbd/config
+EnvironmentDirectory=env
+ExecStart=setterm ${BLANK_DPMS:+-powersave "${BLANK_DPMS}"} ${BLANK_TIME:+-blank "${BLANK_TIME}"} ${POWERDOWN_TIME:+-powerdown "${POWERDOWN_TIME}"} ${flags}
+# This is a one-shot service that can be re-triggered by starting it again.
+RemainAfterExit=1
+Restart=no
+
+[Install]
+WantedBy=workstation.target

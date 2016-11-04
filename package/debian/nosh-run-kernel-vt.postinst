@@ -1,7 +1,10 @@
 #!/bin/sh -
 escape() { echo "$1"|sed -e 's/@/\\x40/g' ; }
 add_user() { getent passwd "$1" > /dev/null || useradd --shell /bin/false "$1" ; }
-add_log() { mkdir -m 0750 -p /var/log/sv/"$2" ; setfacl -m u:"$1"-log:rwx -m g:adm:rx /var/log/sv/"$2" ; }
+add_log() { 
+	install -d -m 0750 -p /var/log/sv/"$2"
+	setfacl -m u:"$1"-log:rwx -m g:adm:rx /var/log/sv/"$2"
+}
 case "$1" in
 	configure)
 		# kernel TTYs
@@ -30,6 +33,8 @@ case "$1" in
 		for i in \
 			kernel-vt-loadkeys \
 			kernel-vt-setfont \
+			kernel-vt-setterm \
+			kernel-vt-kbdrate \
 			ttylogin-starter \
 			;
 		do

@@ -211,11 +211,10 @@ get_relations (
 			struct stat s;
 			if (0 > fstatat(relation_dir.fd(), entry->d_name, &s, AT_SYMLINK_NOFOLLOW)) continue;
 			if (!S_ISLNK(s.st_mode)) continue;
-			std::auto_ptr<char> buf(new(std::nothrow) char [s.st_size]);
-			if (!buf.get()) continue;
-			const int l(readlinkat(relation_dir.fd(), entry->d_name, buf.get(), s.st_size));
+			std::vector<char> buf(s.st_size, char());
+			const int l(readlinkat(relation_dir.fd(), entry->d_name, buf.data(), s.st_size));
 			if (0 > l) continue;
-			std::string d(buf.get(), l);
+			std::string d(buf.data(), l);
 			if ("../" == d.substr(0, 3))
 				d = d.substr(3, d.npos);
 			r.push_back(d);
@@ -260,11 +259,10 @@ get_log (
 	struct stat s;
 	if (0 > fstatat(bundle_dir_fd, "log", &s, AT_SYMLINK_NOFOLLOW)) return std::string();
 	if (!S_ISLNK(s.st_mode)) return std::string();
-	std::auto_ptr<char> buf(new(std::nothrow) char [s.st_size]);
-	if (!buf.get()) return std::string();
-	const int l(readlinkat(bundle_dir_fd, "log", buf.get(), s.st_size));
+	std::vector<char> buf(s.st_size, char());
+	const int l(readlinkat(bundle_dir_fd, "log", buf.data(), s.st_size));
 	if (0 > l) return std::string();
-	return std::string(buf.get(), l);
+	return std::string(buf.data(), l);
 }
 
 /* Main function ************************************************************

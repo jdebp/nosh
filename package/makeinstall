@@ -219,10 +219,11 @@ do
 	cp -p -f -- build/systemd/"$i" config/systemd/"$i"{new}
 done
 (
-	cat package/systemd-presets
-	for i in bundles run-via-systemd run-via-mewburn-rc run-via-openbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-pcbsd-base run-trueos-base
+	for i in bundles run-via-systemd run-via-mewburn-rc run-via-openbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base
 	do
-		cat package/common-nosh-"$i"-presets package/linux-nosh-"$i"-presets package/bsd-nosh-"$i"-presets 
+		test \! -r package/common-nosh-"$i"-presets || cat package/common-nosh-"$i"-presets 
+		test \! -r package/linux-nosh-"$i"-presets || cat package/linux-nosh-"$i"-presets 
+		test \! -r package/bsd-nosh-"$i"-presets || cat package/bsd-nosh-"$i"-presets 
 	done
 ) | awk '!x[$0]++' | while read i
 do
@@ -259,10 +260,11 @@ do
 	mv -f -- config/systemd/"$i"{new} config/systemd/"$i"
 done 
 (
-cat package/systemd-presets 
-for i in bundles run-via-systemd run-via-mewburn-rc run-via-openbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-pcbsd-base run-trueos-base
+for i in bundles run-via-systemd run-via-mewburn-rc run-via-openbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base
 do
-	cat package/common-nosh-"$i"-presets package/linux-nosh-"$i"-presets package/bsd-nosh-"$i"-presets 
+	test \! -r package/common-nosh-$i-presets || cat package/common-nosh-"$i"-presets 
+	test \! -r package/linux-nosh-$i-presets || cat package/linux-nosh-"$i"-presets 
+	test \! -r package/bsd-nosh-$i-presets || cat package/bsd-nosh-"$i"-presets 
 done
 ) | awk '!x[$0]++' | while read i
 do

@@ -4,6 +4,7 @@
 
 [Unit]
 Description=Bonjour service
+After=polkitd.service
 
 [Service]
 Type=dbus

@@ -10,8 +10,7 @@ Wants=local-fs.target
 Before=shutdown.target
 
 [Service]
-PermissionsStartOnly=true
-User=sysinit-log
+User=%p
 WorkingDirectory=/var/log/sv
 ExecStart=cyclog sysinit/
 RestartSec=1

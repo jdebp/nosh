@@ -1,0 +1,22 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Set up kernel virtual terminal screen-saving
+After=kernel-vt-loadkeys.service
+
+[Service]
+TTYPath=tty0
+StandardInput=tty
+StandardError=log
+EnvironmentFile=-/etc/default/kbd
+EnvironmentFile=-/etc/kbd/config
+EnvironmentDirectory=env
+ExecStart=kbdrate ${BLANK_DPMS:+-r "${BLANK_DPMS}"} ${BLANK_TIME:+-d "${BLANK_TIME}"} ${flags}
+# This is a one-shot service that can be re-triggered by starting it again.
+RemainAfterExit=1
+Restart=no
+
+[Install]
+WantedBy=workstation.target

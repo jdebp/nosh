@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=KDE display manager
+After=ttylogin@ttyv8 ttylogin@tty9 hald.service genkdmconf.service
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=%p -nodaemon
+
+[Install]
+# TODO: This might be better as graphical.
+WantedBy=workstation.target

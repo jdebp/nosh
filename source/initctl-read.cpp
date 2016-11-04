@@ -30,13 +30,16 @@ namespace {
 struct Client {
 	Client() : off(0) {}
 
-	char buffer[384];
 	struct initreq {
 		enum { MAGIC = 0x03091969 };
 		enum { RUNLVL = 1 };
 		int magic;
 		int cmd;
 		int runlevel;
+	};
+	union {
+		char buffer[384];
+		initreq request;
 	};
 	std::size_t off;
 } ;
@@ -125,17 +128,16 @@ initctl_read (
 					if (c.off < sizeof c.buffer)
 						break;
 					c.off = 0;
-					const Client::initreq & r(*reinterpret_cast<const Client::initreq *>(c.buffer));
-					if (r.MAGIC != r.magic) {
+					if (c.request.MAGIC != c.request.magic) {
 						std::fprintf(stderr, "%s: ERROR: %s\n", prog, "bad magic number in request");
 						break;
 					}
-					if (r.cmd != r.RUNLVL) {
-						std::fprintf(stderr, "%s: ERROR: %d: %s\n", prog, r.cmd, "unsupported command in request");
+					if (c.request.cmd != c.request.RUNLVL) {
+						std::fprintf(stderr, "%s: ERROR: %d: %s\n", prog, c.request.cmd, "unsupported command in request");
 						break;
 					}
-					if (!std::isprint(r.runlevel)) {
-						std::fprintf(stderr, "%s: ERROR: %d: %s\n", prog, r.runlevel, "unsupported run level in request");
+					if (!std::isprint(c.request.runlevel)) {
+						std::fprintf(stderr, "%s: ERROR: %d: %s\n", prog, c.request.runlevel, "unsupported run level in request");
 						break;
 					}
 					const int pid(fork());
@@ -146,7 +148,7 @@ initctl_read (
 					}
 					if (0 != pid)
 						break;
-					const char option[3] = { '-', static_cast<char>(r.runlevel), '\0' };
+					const char option[3] = { '-', static_cast<char>(c.request.runlevel), '\0' };
 					runlevel_option = option;
 					args.clear();
 					args.insert(args.end(), "telinit");

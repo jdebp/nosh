@@ -70,11 +70,13 @@ process (
 	const char * name,
 	int fd
 ) {
-	char buf[4096], s[16], n[8];
+	char buf[32768], s[16], n[8];
 	size_t s_pos(0), n_pos(0), at(0);
 	bool done(false);
 	enum { BOL, STAMP, BODY } state = BOL;
 	for (;;) {
+		if (BOL == state)
+			std::fflush(stdout);
 		const int rd(read(fd, buf, sizeof buf));
 		if (0 > rd) {
 			const int error(errno);

@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">administrator commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.24</refmiscinfo>
+<refmiscinfo class="version">1.29</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -99,7 +99,7 @@ Unlike the "kbd" toolset's <command>resizecons</command> command, this command i
 
 <para>
 However, it does require a terminal that understands the DEC VT control sequences.
-The Linux and FreeBSD/PC-BSD kernel virtual terminal subsystems do not.
+The Linux and FreeBSD/TrueOS kernel virtual terminal subsystems do not.
 </para>
 
 <para>

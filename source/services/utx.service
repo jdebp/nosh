@@ -5,6 +5,8 @@
 [Unit]
 Description=%p boot/shutdown record generator
 After=local-fs.target
+Before=multi-user-pre.target
+Wants=multi-user-pre.target
 
 [Service]
 Type=oneshot

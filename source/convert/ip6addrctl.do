@@ -4,7 +4,7 @@
 ## **************************************************************************
 #
 # Special setup for ip6addrctl
-# This is invoked by general-services.do .
+# This is invoked by all.do .
 #
 
 # This gets us *only* the configuration variables, safely.

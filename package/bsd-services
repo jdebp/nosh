@@ -24,8 +24,6 @@ crashinfo
 ctld
 ddb
 defaultroute
-dhclient@em0
-entropy
 ftp-proxy
 ftpd
 gssd
@@ -99,11 +97,14 @@ kmod@sem
 kmod@smbfs
 kmod@udf
 kmod@udf_iconv
+kmod@wlan_ccmp
+kmod@wlan_tkip
+kmod@wlan_wep
+kmod@wlan_xauth
 kmod@uhid
 kmod@vkbd
 kmod@xfs
 lpd
-make-utx-log
 mdnsd
 mdnsresponderposix
 mroute4d
@@ -166,4 +167,5 @@ ypset
 ypupdated
 ypxfrd
 zfs
+zfsd
 zfs-jailed

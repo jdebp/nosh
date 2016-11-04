@@ -3,6 +3,7 @@ case "$1" in
 	upgrade)
 		for i in \
 			udev \
+			udev-finish \
 			udev-log \
 			udev-trigger-add@subsystems \
 			udev-trigger-add@devices \

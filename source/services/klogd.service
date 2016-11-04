@@ -6,7 +6,7 @@
 Description=Collector for kernel log messages
 
 [Service]
-User=klogd
+User=%p
 ExecStart=klog-read
 # klog-read understands the LISTEN protocol, so does not need StandardInput=socket.
 

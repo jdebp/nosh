@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=GnuPG cryptographic agent and passphrase cache daemon
+
+[Service]
+RuntimeDirectory=gnupg
+ExecStart=%p --supervised
+
+[Install]

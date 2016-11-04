@@ -13,6 +13,10 @@ enable	cyclog@network-interfaces.service
 enable	network-interfaces.service
 enable	cyclog@network-runtime.service
 enable	network-runtime.service
+enable	cyclog@entropy.service
+enable	entropy.service
+enable  cyclog@nisdomain.service
+enable  nisdomain.service
 
 # Sysinit services
 enable	sysinit-log.service
@@ -28,6 +32,7 @@ enable	sysinit.target
 enable	basic.target
 enable	local-fs.target
 enable	local-fs-pre.target
+enable	fs-servers.target
 enable	remote-fs.target
 enable	remote-fs-pre.target
 enable	static-networking.target
@@ -36,4 +41,5 @@ enable	swapauto.target
 enable	swaplate.target
 enable	workstation.target
 enable	multi-user.target
+enable	multi-user-pre.target
 enable	local-syslog.target

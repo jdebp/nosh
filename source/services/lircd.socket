@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=Linux IRC socket
+Description=LIRC socket
 
 [Socket]
 Backlog=2

@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=PC-BSD Swap Extender daemon
+Description=TrueOS Swap Extender daemon
 
 [Service]
 ExecStart=swapexd

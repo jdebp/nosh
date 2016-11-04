@@ -6,8 +6,7 @@
 Description=Combined logger for ataidle@ services
 
 [Service]
-PermissionsStartOnly=true
-User=ataidle-log
+User=%p
 WorkingDirectory=/var/log/sv
 ExecStart=cyclog ataidle/
 RestartSec=1

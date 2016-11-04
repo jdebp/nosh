@@ -5,6 +5,7 @@
 [Unit]
 Description=BSD %p for %i
 Wants=%p-log.service
+After=%p-log.service
 
 [Service]
 Type=oneshot

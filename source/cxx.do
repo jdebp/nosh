@@ -6,7 +6,7 @@ if type >/dev/null clang++
 then
 	cxx="clang++"
 	cxxflags="-g -pthread -std=gnu++11 -Os -Wall -Wextra -Wshadow -Wcast-qual -Wsynth -Woverloaded-virtual -Wcast-align -integrated-as"
-elif type >/dev/null eg++
+elif test "`uname`" = OpenBSD && type >/dev/null eg++
 then
 	cxx="eg++"
 	cxxflags="-g -pthread -std=gnu++11 -Os -Wall -Wextra -Wshadow -Wcast-qual -Wsynth -Woverloaded-virtual -Wcast-align"

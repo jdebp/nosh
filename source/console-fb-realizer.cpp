@@ -347,6 +347,7 @@ operator != (
 */
 
 namespace {
+
 class KeyboardModifierState
 {
 public:
@@ -388,6 +389,7 @@ protected:
 	std::size_t numable_index() const;
 	std::size_t funcable_index() const;
 };
+
 }
 
 inline
@@ -593,6 +595,7 @@ KeyboardModifierState::query_kbdmap_parameter (
 */
 
 namespace {
+
 class Compositor
 {
 public:
@@ -635,6 +638,7 @@ protected:
 	DirtiableCell & cur_at(coordinate y, coordinate x) { return cur_cells[static_cast<std::size_t>(y) * w + x]; }
 	CharacterCell & new_at(coordinate y, coordinate x) { return new_cells[static_cast<std::size_t>(y) * w + x]; }
 };
+
 }
 
 Compositor::Compositor(coordinate init_h, coordinate init_w) :
@@ -1401,12 +1405,18 @@ Realizer::handle_mouse_button(
 	vt.WriteInputMessage(MessageForMouseButton(button, value, modifiers));
 }
 
-static const
+namespace {
+
 struct Combination {
 	uint32_t c1, c2, r;
 	// We will be using a binary search, so we need this operator.
 	bool operator < ( const Combination & b ) const { return c1 < b.c1 || ( c1 == b.c1 && c2 < b.c2 ); }
-} 
+};
+
+}
+
+static const
+Combination
 /// Rules for combining two dead keys into one, per ISO 9995-3.
 peculiar_combinations1[] = {
 	// Combiner + Combiner => Result
@@ -2527,8 +2537,9 @@ lower_combining_class (
 }
 
 void 
-Realizer::handle_character_input(uint32_t c)
-{
+Realizer::handle_character_input(
+	uint32_t c
+) {
 	if (UnicodeCategorization::IsMarkEnclosing(c)
 	||  UnicodeCategorization::IsMarkNonSpacing(c)
 	) {
@@ -3715,7 +3726,7 @@ HID::handle_input_events(
 
 #elif defined(__FreeBSD__) || defined (__DragonFly__)
 
-/* FreeBSD/PC-BSD/DragonFly BSD HIDs ****************************************
+/* FreeBSD/TrueOS/DragonFly BSD HIDs ****************************************
 // **************************************************************************
 */
 
@@ -4219,6 +4230,7 @@ HIDList::~HIDList()
 */
 
 namespace {
+
 /// \brief Lock out the terminal emulator that is built into the kernel.
 /// 
 /// The lockout has to do three things:
@@ -4258,6 +4270,7 @@ protected:
 	void save_and_mute();
 	void restore();
 };
+
 }
 
 KernelTerminalEmulatorLockout::KernelTerminalEmulatorLockout(int nfd, int rs, int as) : 
@@ -4335,7 +4348,7 @@ KernelTerminalEmulatorLockout::restore()
 		ioctl(fd, KDSETMODE, kdmode);
 #elif defined(__OpenBSD__)
 		ioctl(fd, KDSKBMODE, kbmode);
-		ioctl(fd, KDSETMODE, KD_GRAPHICS);
+		ioctl(fd, KDSETMODE, KD_TEXT);
 #endif
 		ioctl(fd, VT_SETMODE, &vtmode);
 	}

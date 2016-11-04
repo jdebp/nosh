@@ -1,14 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
 [Unit]
 Description=LIRC Infrared Signal Decoder
-Wants=lircd-setup.service
-After=network.target lircd-setup.service
 
 [Service]
+User=lirc
 RuntimeDirectory=lirc
 EnvironmentDirectory=env
 ExecStart=%p --nodaemon ${device:+-d "${device}"} ${config}
-; User=lirc
-; Group=lirc
 StandardInput=socket
 
 [Install]

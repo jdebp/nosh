@@ -1,3 +1,27 @@
+nosh (1.29) unstable; urgency=medium
+
+  * Fixed a documentation bug for set-service-env and print-service-env.
+  * Fixed a bug in the rcctl symbolic link in the nosh-openbsd-shims package.
+  * The kdm@tty7 and kdm@ttyv6 services have been discontinued in favour of a plain kdm.
+  * The nmb, smb, and winbind aliases now exist for nmbd, smbd, and winbindd.
+  * std::auto_ptr is finally gone.
+  * A rare memory corruption bug in safe_execvp() has been fixed.
+  * Fixed a bug in default.html.do that was causing build problems on non-daemontools non-freedt non-nosh machines.
+  * kernel-vt-loadkeys.service now sets UTF-8 input editing mode and UTF-8 keyboard composition mode.
+  * kernel-vt-setterm.service emits various Linux kernel terminal emulator escape sequences for screen saving and whatnot.
+  * More Linux services: udev-finish, cgmanager, cgproxy
+  * More BSD services: powerd++, zfsd
+  * More cross-platform services: rc-local, fwknopd
+  * References to PC-BSD have been mostly converted to TrueOS.
+  * Configuration import of ppp, sppp, rfcomm_ppp, dhclient, wpa_supplicant, natd, and hostapd has been merged into static-networking configuration import.
+  * The FreeBSD/TrueOS packaging install/deinstall scripts have been modified with a view to making OpenBSD packaging possible.
+  * tai64nlocal's buffering has been modified to imitate a subtlety of C streams in the the GNU/BSD C/C++ runtime libraries.
+  * The fs-servers target is now implemented, and there is a new multi-user-pre target.
+  * The make-utx-log service has been removed, as it is redundant with the utx service.
+  * TAI64 calculations know about the leap second at 2016-12-31 23:59:60 +0000.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Fri, 04 Nov 2016 21:09:13 +0000
+
 nosh (1.28) unstable; urgency=low
 
   * Added a machineenv command.

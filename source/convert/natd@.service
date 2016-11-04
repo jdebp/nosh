@@ -4,8 +4,8 @@
 
 [Unit]
 Description=BSD %p for %i
-Wants=kmod@ipdivert, %p-log
-After=kmod@ipdivert
+Wants=kmod@ipdivert.service %p-log.service
+After=kmod@ipdivert.service %p-log.service
 
 [Service]
 Type=oneshot
@@ -13,4 +13,4 @@ EnvironmentDirectory=env
 ExecStart=%p ${type} "%I" ${dhcp}
 
 [Install]
-WantedBy=server.target
+WantedBy=static-networking.target

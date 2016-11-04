@@ -180,10 +180,23 @@ exit_error:
 			} remoteaddr;
 			socklen_t remoteaddrsz = sizeof remoteaddr;
 			const int s(accept(l, reinterpret_cast<sockaddr *>(&remoteaddr), &remoteaddrsz));
-			if (0 > s) goto exit_error;
+			if (0 > s) {
+				const int error(errno);
+				if (ECONNABORTED == error) {
+					std::fprintf(stderr, "%s: ERROR: %s\n", prog, std::strerror(error));
+					close(s);
+					continue;
+				}
+				goto exit_error;
+			}
 
 			const int child(fork());
-			if (0 > child) goto exit_error;
+			if (0 > child) {
+				const int error(errno);
+				std::fprintf(stderr, "%s: ERROR: %s\n", prog, std::strerror(error));
+				close(s);
+				continue;
+			}
 			if (0 != child) {
 				++connections;
 				if (verbose)

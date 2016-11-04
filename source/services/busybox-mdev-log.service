@@ -9,8 +9,7 @@ After=local-fs.target
 Before=shutdown.target
 
 [Service]
-PermissionsStartOnly=true
-User=busybox-mdev-log
+User=%p
 WorkingDirectory=/var/log/sv
 ExecStart=cyclog busybox-mdev/
 RestartSec=1

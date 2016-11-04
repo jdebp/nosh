@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.24</refmiscinfo>
+<refmiscinfo class="version">1.29</refmiscinfo>
 </refmeta>
 
 <refnamediv><refname>login-banner</refname><refpurpose>chain-load utility for printing login banners</refpurpose></refnamediv>
@@ -65,7 +65,7 @@ A single backslash.
 <term><code>\s</code></term>
 <listitem><para>
 The "system" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> function.
-On FreeBSD/PC-BSD, the C library allows this to be overridden by a <code>UNAME_s</code> environment variable.
+On FreeBSD/TrueOS, the C library allows this to be overridden by a <code>UNAME_s</code> environment variable.
 </para></listitem>
 </varlistentry>
 
@@ -88,7 +88,7 @@ The "node" name, from the <citerefentry><refentrytitle>uname</refentrytitle><man
 <term><code>\r</code></term>
 <listitem><para>
 The "release" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> function.
-On FreeBSD/PC-BSD, the C library allows this to be overridden by a <code>UNAME_r</code> environment variable.
+On FreeBSD/TrueOS, the C library allows this to be overridden by a <code>UNAME_r</code> environment variable.
 </para></listitem>
 </varlistentry>
 
@@ -96,7 +96,7 @@ On FreeBSD/PC-BSD, the C library allows this to be overridden by a <code>UNAME_r
 <term><code>\v</code></term>
 <listitem><para>
 The "version" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> function.
-On FreeBSD/PC-BSD, the C library allows this to be overridden by a <code>UNAME_v</code> environment variable.
+On FreeBSD/TrueOS, the C library allows this to be overridden by a <code>UNAME_v</code> environment variable.
 </para></listitem>
 </varlistentry>
 
@@ -104,7 +104,7 @@ On FreeBSD/PC-BSD, the C library allows this to be overridden by a <code>UNAME_v
 <term><code>\m</code></term>
 <listitem><para>
 The "machine" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> function.
-On FreeBSD/PC-BSD, the C library allows this to be overridden by a <code>UNAME_m</code> environment variable.
+On FreeBSD/TrueOS, the C library allows this to be overridden by a <code>UNAME_m</code> environment variable.
 </para></listitem>
 </varlistentry>
 

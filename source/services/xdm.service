@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=xorg display manager
+After=ttylogin@ttyv8 ttylogin@tty9
+
+[Service]
+ExecStart=%p -nodaemon
+
+[Install]
+# TODO: This might be better as graphical.
+WantedBy=workstation.target

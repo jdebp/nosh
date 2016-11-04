@@ -3,7 +3,7 @@
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
 #
-# Convert the PC-BSD Warden external configuration formats.
+# Convert the PC-BSD/TrueOS Warden external configuration formats.
 # This is invoked by all.do .
 #
 

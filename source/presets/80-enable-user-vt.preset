@@ -14,4 +14,3 @@ enable	console-multiplexor@*.service
 enable	cyclog@console-multiplexor@*.service
 
 enable	kernel-vt-*.service
-

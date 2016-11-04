@@ -431,7 +431,7 @@ is_already_mounted (
 ) {
 	struct stat b;
 	if (0 <= stat(fspath.c_str(), &b)) {
-		// This is traditional, and what FreeBSD/PC-BSD does.
+		// This is traditional, and what FreeBSD/TrueOS does.
 		// On-disc volumes on Linux mostly do this, too.
 		if (2 == b.st_ino)
 			return true;
@@ -705,6 +705,18 @@ common_manager (
 #if defined(SIGPWR)
 		SIGPWR,
 #endif
+#if defined(SIGRTMIN)
+		SIGRTMIN + 0,
+		SIGRTMIN + 1,
+		SIGRTMIN + 2,
+		SIGRTMIN + 3,
+		SIGRTMIN + 4,
+		SIGRTMIN + 5,
+		SIGRTMIN + 10,
+		SIGRTMIN + 13,
+		SIGRTMIN + 14,
+		SIGRTMIN + 15,
+#endif
 		0
 	);
 	ReserveSignalsForKQueue kqueue_reservation(
@@ -942,7 +954,7 @@ common_manager (
 					next_prog = arg0_of(args);
 					return;
 				} else
-					std::fprintf(stderr, "%s: INFO: %s (pid %i) started (%s %s)\n", prog, "system-control", system_control_pid, subcommand, option ? option : "");
+					std::fprintf(stderr, "%s: INFO: %s (pid %i) started (%s%s %s)\n", prog, "system-control", system_control_pid, subcommand, is_system ? "" : " --user", option ? option : "");
 			}
 		}
 		if (!has_system_control) {
@@ -965,7 +977,7 @@ common_manager (
 					next_prog = arg0_of(args);
 					return;
 				} else
-					std::fprintf(stderr, "%s: INFO: %s (pid %i) started (%s %s)\n", prog, "system-control", system_control_pid, "init", concat(args).c_str());
+					std::fprintf(stderr, "%s: INFO: %s (pid %i) started (%s%s %s)\n", prog, "system-control", system_control_pid, "init", is_system ? "" : " --user", concat(args).c_str());
 			}
 		}
 		// Exit if stop has been signalled and both the service manager and logger have exited.

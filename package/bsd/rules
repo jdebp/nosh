@@ -4,13 +4,15 @@
 
 .PHONY: build binary stage control clean
 
+BINARY_PACKAGES=exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims openbsd-shims ucspi-tcp-shims guide bundles run-system-manager run-via-mewburn-rc run-via-openbsd-rc run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base
+
 # Target this in order to make the package contents.
 build:
 	package/compile
 
 # Target this in order to clean the build areas.
 clean:
-	for i in guide exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims openbsd-shims ucspi-tcp-shims guide bundles run-system-manager run-via-mewburn-rc run-via-openbsd-rc run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-local-syslog run-klog run-trueos-base run-pcbsd-base ; \
+	for i in guide ${BINARY_PACKAGES} ; \
 	do \
 		rm -r -f bsd/nosh-"$$i"/ || exit 1 ; \
 	done
@@ -18,7 +20,7 @@ clean:
 
 # Target this in order to make the package files.
 binary: stage control
-	for i in exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims openbsd-shims ucspi-tcp-shims guide bundles run-system-manager run-via-mewburn-rc run-via-openbsd-rc run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-local-syslog run-klog run-trueos-base run-pcbsd-base ; \
+	for i in ${BINARY_PACKAGES} ; \
 	do \
 		echo 1>&2 "Building package nosh-$$i." ; \
 		bsd/pkgcreate bsd/nosh-"$$i"/ bsd/nosh-"$$i"/ nosh-"$$i" || exit 1 ; \
@@ -31,7 +33,7 @@ stage:
 	package/stage bsd/tmp bsd
 
 control:
-	for i in exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims openbsd-shims ucspi-tcp-shims guide bundles run-system-manager run-via-mewburn-rc run-via-openbsd-rc run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-local-syslog run-klog run-trueos-base run-pcbsd-base ; \
+	for i in ${BINARY_PACKAGES} ; \
 	do \
 		echo 1>&2 "Building control file for nosh-$$i." ; \
 		bsd/gencontrol nosh-"$$i" bsd/nosh-"$$i" || exit 1 ; \

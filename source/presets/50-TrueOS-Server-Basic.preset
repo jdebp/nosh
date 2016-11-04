@@ -1,0 +1,62 @@
+#
+# Enable basic services for the out-of-the-box TrueOS
+#
+# This is not a systemd preset.
+# It goes in a special nosh system-manager preset directory.
+# It is used by the nosh-run-trueos-server-basic and nosh-run-trueos-desktop-basic packages in order to enable the services themselves.
+#
+
+#
+# These services are common to both TrueOS Server and TrueOS Desktop.
+#
+
+# etc services
+enable	kmod@fuse.service
+
+# Normal services
+enable	cyclog@kmod@fdescfs.service
+enable	kmod@fdescfs.service
+enable	cyclog@kmod@ipfw_nat.service
+enable	kmod@ipfw_nat.service
+enable	cyclog@kmod@libiconv.service
+enable	kmod@libiconv.service
+enable	cyclog@kmod@libmchain.service
+enable	kmod@libmchain.service
+enable	cyclog@kmod@linsysfs.service
+enable	kmod@linsysfs.service
+enable	cyclog@kmod@msdosfs_iconv.service
+enable	kmod@msdosfs_iconv.service
+enable	cyclog@kmod@sem.service
+enable	kmod@sem.service
+enable	cyclog@appcafe-dispatcher.service
+enable	appcafe-dispatcher.service
+enable	cyclog@appcafe-nginx.service
+enable	appcafe-nginx.service
+enable	cyclog@appcafe-php-fpm.service
+enable	appcafe-php-fpm.service
+enable	cyclog@appcafe-ssl-keygen.service
+enable	appcafe-ssl-keygen.service
+enable	cyclog@cleanX.service
+enable	cleanX.service
+enable	cyclog@cleantmp.service
+enable	cleantmp.service
+enable	cyclog@ipfw0.service
+enable	ipfw0.service
+enable	cyclog@ipfw.service
+enable	ipfw.service
+enable	cyclog@iscsid.service
+enable	iscsid.service
+enable	cyclog@newsyslog.service
+enable	newsyslog.service
+enable	cyclog@openntpd.service
+enable	openntpd.service
+enable	cyclog@syscache.service
+enable	syscache.service
+enable	cyclog@pc-sysconfig.service
+enable	pc-sysconfig.service
+enable	cyclog@zfs.service
+enable	zfs.service
+
+# Targets
+enable	warden.target
+enable	appcafe.target

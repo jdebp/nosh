@@ -176,24 +176,20 @@ while read j ;
 do
 	ln -f -- "${src}"/etc/openbsd-rc.d/"$j" "${dest}"/nosh-run-via-openbsd-rc/usr/local/etc/rc.d/
 done < package/openbsd-rc-scripts ;
-for i in bundles run-via-systemd run-via-mewburn-rc run-via-openbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-pcbsd-base run-trueos-base
+for i in bundles run-via-systemd run-via-mewburn-rc run-via-openbsd-rc run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base
 do
 	install -d -m 0755 "${dest}"/nosh-"$i"/usr/local/etc/system-control/presets 
 	(
-	cat package/common-nosh-"$i"-presets
+	test \! -r package/common-nosh-$i-presets || cat package/common-nosh-"$i"-presets
 	case "`uname`" in
-	Linux)	cat package/linux-nosh-"$i"-presets ;;
-	*BSD)	cat package/bsd-nosh-"$i"-presets ;;
+	Linux)	test \! -r package/linux-nosh-$i-presets || cat package/linux-nosh-"$i"-presets ;;
+	*BSD)	test \! -r package/bsd-nosh-$i-presets || cat package/bsd-nosh-"$i"-presets ;;
 	esac
 	) | while read j ;
 	do
 		ln -f -- "${src}"/etc/system-control/presets/"$j" "${dest}"/nosh-"$i"/usr/local/etc/system-control/presets/
 	done
 done
-while read j ;
-do
-	ln -f -- "${src}"/lib/systemd/system-preset/"$j" "${dest}"/nosh-run-via-systemd/usr/local/lib/systemd/system-preset/
-done < package/systemd-presets ;
 
 # Conversion tools
 while read j ;

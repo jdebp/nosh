@@ -311,12 +311,11 @@ make_symlink_target (
 	struct stat s;
 	if (0 > fstatat(bundle_dir_fd, path, &s, AT_SYMLINK_NOFOLLOW)) return;
 	if (!S_ISLNK(s.st_mode)) return;
-	std::auto_ptr<char> buf(new(std::nothrow) char [s.st_size + 1]);
-	if (!buf.get()) return;
-	const int l(readlinkat(bundle_dir_fd, path, buf.get(), s.st_size));
+	std::vector<char> buf(s.st_size + 1, char());
+	const int l(readlinkat(bundle_dir_fd, path, buf.data(), s.st_size));
 	if (0 > l) return;
-	buf.get()[l] = '\0';
-	mkdirat(bundle_dir_fd, buf.get(), mode);
+	buf[l] = '\0';
+	mkdirat(bundle_dir_fd, buf.data(), mode);
 }
 
 /* System control subcommands ***********************************************

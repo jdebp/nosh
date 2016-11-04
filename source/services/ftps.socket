@@ -3,16 +3,16 @@
 ## **************************************************************************
 
 [Unit]
-Description=Generic FTPS socket for both IP4 and IP6
+Description=Generic FTPS socket capable of single-stack IPV6 and IPV6-mapped IPV4
 
 [Socket]
 Backlog=2
-BindIPv6Only=both
 MaxConnections=30
 NoDelay=false
 ListenStream=ftps
 UCSPIRules=true
 Accept=true
+BindIPv6Only=both
 
 [Install]
 WantedBy=server.target

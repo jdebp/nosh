@@ -10,11 +10,17 @@ Description=Set up kernel virtual terminals keyboard map
 Wants=local-fs.target
 
 [Service]
+TTYPath=tty0
+TTYReset=true
+StandardInput=tty
+StandardError=log
 EnvironmentFile=-/etc/vconsole.conf
-ExecStart=loadkeys --console /dev/tty0 --unicode ${KEYMAP:-us} ${KEYMAP_TOGGLE}
+EnvironmentDirectory=env
+ExecStart=kbd_mode -u
+ExecStart=loadkeys --unicode ${KEYMAP:-us} ${KEYMAP_TOGGLE}
 # This is a one-shot service that can be re-triggered by starting it again.
 RemainAfterExit=1
 Restart=no
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=workstation.target

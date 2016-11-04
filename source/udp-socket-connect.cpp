@@ -19,6 +19,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include "popt.h"
 #include "utils.h"
+#include "fdutils.h"
 
 /* Helper functions *********************************************************
 // **************************************************************************
@@ -180,7 +181,7 @@ udp_socket_connect (
 		}
 #endif
 
-		if (0 > connect(s, remote_info->ai_addr, remote_info->ai_addrlen)) goto exit_error;
+		if (0 > socket_connect(s, remote_info->ai_addr, remote_info->ai_addrlen)) goto exit_error;
 
 		sockaddr_storage localaddr;
 		socklen_t localaddrsz = sizeof localaddr;

@@ -4,7 +4,7 @@
 
 [Unit]
 Description=KDE display manager using virtual terminal %i
-After=hald.service, genkdmconf.service
+After=hald.service genkdmconf.service
 
 [Service]
 EnvironmentDirectory=env

@@ -4,10 +4,15 @@
 
 [Unit]
 Description=BSD static NDP binding for %i
+After=network-runtime.service
+Wants=network-runtime.service
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
 EnvironmentDirectory=env
-ExecStart=route -6 add ${route}
-ExecStopPost=route -6 del ${route}
+ExecStart=ndp -s "${addr}" ${dest}
+ExecStopPost=ndp -d "${addr}"
+
+[Install]
+WantedBy=static-networking.target

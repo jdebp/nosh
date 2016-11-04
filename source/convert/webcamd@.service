@@ -4,7 +4,8 @@
 
 [Unit]
 Description=BSD %p for %i
-Wants=kmod@cuse4bsd.service, %p-log
+Wants=kmod@cuse4bsd.service %p-log.service
+After=kmod@cuse4bsd.service %p-log.service
 
 [Service]
 EnvironmentDirectory=env

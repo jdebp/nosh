@@ -75,7 +75,7 @@ connect_service_manager_socket(
 	sockaddr_un addr;
 	addr.sun_family = AF_UNIX;
 	strncpy(addr.sun_path, socket_name , sizeof addr.sun_path);
-	if (0 > connect(socket_fd, reinterpret_cast<const sockaddr *>(&addr), sizeof addr)) {
+	if (0 > socket_connect(socket_fd, &addr, sizeof addr)) {
 		const int error(errno);
 		close(socket_fd);
 		std::fprintf(stderr, "%s: ERROR: %s: %s: %s\n", prog, "connect", socket_name, std::strerror(error));

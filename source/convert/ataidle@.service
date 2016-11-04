@@ -4,7 +4,8 @@
 
 [Unit]
 Description=Apply %p settings to disc %I
-Wants=%p-log
+Wants=%p-log.service
+After=%p-log.service
 DefaultDependencies=no
 
 [Service]

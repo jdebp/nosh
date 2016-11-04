@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=Run PC-BSD first-boot task
+Description=Run PC-BSD/TrueOS first-boot task
 
 [Service]
 Type=oneshot

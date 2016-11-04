@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=PC-BSD appcafe
+Description=TrueOS appcafe
 
 [Service]
 # The configuration import system might need to place imported rc.conf variables here.

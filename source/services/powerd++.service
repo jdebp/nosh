@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%p regular service
+Before=multi-user.target
+Conflicts=powerd.service
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=%p -v -f ${flags}
+ExecStopPost=sh -c 'sysctl dev.cpu.0.freq=`sysctl -n dev.cpu.0.freq_levels | sed -e \'s:/.*::\'`'
+# Normal operation of the daemon is to repeatedly exit if it doesn't like the hardware.
+Restart=on-abort
+
+[Install]
+WantedBy=workstation.target

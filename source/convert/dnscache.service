@@ -12,6 +12,7 @@ EnvironmentUser=dnscache-d
 LimitDATA=3000000
 LimitNOFILE=250
 ExecStart=fdredir -r 0 seed %p
+RestartSec=0.2
 
 [Install]
 WantedBy=workstation.target

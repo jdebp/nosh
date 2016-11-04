@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Run /etc/rc.local if it is executable
+After=network.target
+
+[Service]
+# systemd gets this wrong.
+# There is no "start" argument to /etc/rc.local, which is not a Mewburn/System 5 rc script.
+ExecStart=sh -c 'test -x /etc/rc.local && exec /etc/rc.local'
+
+[Install]
+WantedBy=workstation.target

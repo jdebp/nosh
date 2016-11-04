@@ -621,11 +621,15 @@ export_to_rsyslog (
 						process(c, c.current_file.get());
 						break;
 					}
+#if defined(DEBUG)
 					std::fprintf(stderr, "DEBUG: vnode event ident %lu fflags %x\n", e.ident, e.fflags);
+#endif
 					break;
 				}
 				default:
+#if defined(DEBUG)
 					std::fprintf(stderr, "DEBUG: event filter %hd ident %lu fflags %x\n", e.filter, e.ident, e.fflags);
+#endif
 					break;
 			}
 		}

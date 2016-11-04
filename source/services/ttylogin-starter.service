@@ -4,7 +4,7 @@
 
 [Unit]
 Description=Start TTY login services on all kernel virtual terminals
-After=motd-dynamic.service
+After=multi-user-pre.target
 
 [Service]
 ExecStart=%p

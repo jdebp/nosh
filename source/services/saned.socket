@@ -3,10 +3,12 @@
 ## **************************************************************************
 
 [Unit]
+Description=SANE incoming socket
 
 [Socket]
 ListenStream=6566
 BindIPv6Only=both
+MaxConnections=2
 Accept=true
 
 [Install]

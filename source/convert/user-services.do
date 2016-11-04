@@ -7,11 +7,12 @@
 # This is invoked by all.do .
 #
 
-redo-ifchange /etc/passwd "user-dbus@.socket" "user-dbus.service" "user-dbus-log@.service" "user-services@.service" "user-runtime@.service" "user@.target" "exit.target"
+redo-ifchange /etc/passwd "user-dbus@.socket" "user-dbus.service" "user-dbus-log@.service" "user-services@.service" "user-runtime@.service" "user@.target" "exit.target" "gnome-terminal-server.service" "dirmngr.socket" "dirmngr.service" "gpg-agent.socket" "gpg-agent.service"
 
 lr="/var/local/sv/"
 sr="/etc/service-bundles/services/"
 tr="/etc/service-bundles/targets/"
+eu="--etc-bundle --user"
 e="--no-systemd-quirks --escape-instance --bundle-root"
 
 getent passwd |
@@ -79,12 +80,22 @@ do
 	then
 		ht="$h/.config/service-bundles/targets"
 		install -d -o "$i" -m 0755 "$ht"
-		system-control convert-systemd-units $e "$ht/" "./exit.target"
+
+		system-control convert-systemd-units $eu $e "$ht/" "./exit.target"
 		install -d -o "$i" -m 0755 "$ht/exit/supervise"
 		for t in halt reboot poweroff
 		do
 			rm -f -- "$ht/$t"
 			ln -s -- "exit" "$ht/$t"
 		done
+
+		hs="$h/.config/service-bundles/services"
+		install -d -o "$i" -m 0755 "$hs"
+
+		setuidgid "$i" system-control convert-systemd-units $eu $e "$hs/" "./gnome-terminal-server.service"
+		rm -f -- "$hs/org.gnome.Terminal"
+		setuidgid "$i" ln -s -- "gnome-terminal-server" "$hs/org.gnome.Terminal"
+		setuidgid "$i" system-control convert-systemd-units $eu $e "$hs/" "./dirmngr.socket"
+		setuidgid "$i" system-control convert-systemd-units $eu $e "$hs/" "./gpg-agent.socket"
 	fi
 done

@@ -1,13 +1,15 @@
 #!/bin/sh -
+# /run is now in the root.
+test -e /var/run || ln -s -f -- /run /var/
 
 # Convert from the old 1.16 and earlier directory structure.
 mkdir -m 0755 -p -- /etc/service-bundles
-if [ \! -L /etc/system-manager/targets ] && [ -d /etc/system-manager/targets ] && [ \! -e /etc/service-bundles/targets ]
+if test \! -L /etc/system-manager/targets && test -d /etc/system-manager/targets && test \! -e /etc/service-bundles/targets
 then
 	mv -i -- /etc/system-manager/targets /etc/service-bundles/
 	ln -s -f -- ../service-bundles/targets /etc/system-manager
 fi
-if [ \! -L /etc/sv ] && [ -d /etc/sv ] && [ \! -e /etc/service-bundles/services ]
+if test \! -L /etc/sv && test -d /etc/sv && test \! -e /etc/service-bundles/services
 then
 	mv -i -- /etc/sv /etc/service-bundles/services
 	ln -s -f -- service-bundles/services /etc/sv
@@ -22,11 +24,19 @@ do
 	fi
 done
 
-# This service has been discontinued.
-if system-control is-enabled stty-sane@console 2>/dev/null
-then
-	system-control disable stty-sane@console
-fi
+# These services have been discontinued.
+for I in \
+        stty-sane@console \
+        make-utx-log \
+        ;
+do
+        if system-control is-enabled "$I" 2>/dev/null
+        then
+                system-control disable "$I"
+        fi
+        system-control unload-when-stopped "$I"
+        system-control stop "$I"
+done
 
 # This service has been relocated
 if system-control is-enabled ldconfig 2>/dev/null
@@ -47,6 +57,3 @@ then
 	system-control disable cyclog@gnucron
 	mv -i -- /var/sv/cyclog@gnucron /var/sv/cyclog@debian-cron
 fi
-
-# /run is now in the root.
-test -e /var/run || ln -s -f -- /run /var/

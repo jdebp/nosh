@@ -83,10 +83,16 @@ public:
 	typedef std::map<int, PollFD> PollFDMap;
 	PollFDMap pollfds;
 
-	char signal_buf[sizeof(signalfd_siginfo)];
 	std::size_t signal_off;
-	char notify_buf[sizeof(inotify_event) + NAME_MAX + 1];
+	union {
+		signalfd_siginfo signal_info;
+		char signal_buf[sizeof(signalfd_siginfo)];
+	};
 	std::size_t notify_off;
+	union {
+		inotify_event notify_event;
+		char notify_buf[sizeof(inotify_event) + NAME_MAX + 1];
+	};
 };
 
 typedef std::map<int, Queue *> QueueMap;
@@ -522,7 +528,7 @@ Queue::wait(
 	if (timeout) {
 		pollfd p[1];
 		p[0].fd = epoll.get();
-		p[1].events = POLLIN;
+		p[0].events = POLLIN;
 #if 0 // This code seems unnecessary for a signalfd.
 		sigset_t masked_signals_during_poll;
 		sigprocmask(SIG_SETMASK, 0, &masked_signals_during_poll);
@@ -553,14 +559,13 @@ Queue::wait(
 				const int n(read(signals.get(), signal_buf + signal_off, sizeof signal_buf - signal_off));
 				if (0 >= n) break;
 				signal_off += n;
-				const struct signalfd_siginfo & s(*reinterpret_cast<const struct signalfd_siginfo *>(signal_buf));
-				while (signal_off >= sizeof s) {
+				while (signal_off >= sizeof signal_info) {
 					struct kevent k;
 					// The signal count is not available on Linux.
-					EV_SET(&k, s.ssi_signo, EVFILT_SIGNAL, 0, 0, 1, 0);
+					EV_SET(&k, signal_info.ssi_signo, EVFILT_SIGNAL, 0, 0, 1, 0);
 					return_event(nreturn, pevents, nevents, k);
-					signal_off -= sizeof s;
-					std::memmove(signal_buf, signal_buf + sizeof s, signal_off);
+					signal_off -= sizeof signal_info;
+					std::memmove(signal_buf, signal_buf + sizeof signal_info, signal_off);
 				}
 			}
 		} else
@@ -571,19 +576,18 @@ Queue::wait(
 				const int n(read(notify.get(), notify_buf + notify_off, sizeof notify_buf - notify_off));
 				if (0 >= n) break;
 				notify_off += n;
-				const struct inotify_event & ie(*reinterpret_cast<const struct inotify_event *>(notify_buf));
-				while (notify_off >= sizeof ie && notify_off >= sizeof ie + ie.len) {
-					WatchMap::iterator wi(watches.find(ie.wd));
+				while (notify_off >= sizeof notify_event && notify_off >= sizeof notify_event + notify_event.len) {
+					WatchMap::iterator wi(watches.find(notify_event.wd));
 					if (wi != watches.end()) {
 						Watch & w(wi->second);
-						if (IN_OPEN != ie.mask) {
+						if (IN_OPEN != notify_event.mask) {
 							struct kevent k;
-							EV_SET(&k, w.fd, EVFILT_VNODE, 0, w.notes_for(ie.mask), 0, 0);
+							EV_SET(&k, w.fd, EVFILT_VNODE, 0, w.notes_for(notify_event.mask), 0, 0);
 							return_event(nreturn, pevents, nevents, k);
 						}
 					}
-					notify_off -= sizeof ie + ie.len;
-					std::memmove(notify_buf, notify_buf + sizeof ie + ie.len, notify_off);
+					notify_off -= sizeof notify_event + notify_event.len;
+					std::memmove(notify_buf, notify_buf + sizeof notify_event + notify_event.len, notify_off);
 				}
 			}
 		} else

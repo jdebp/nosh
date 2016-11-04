@@ -5,7 +5,7 @@
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.24</refmiscinfo>
+<refmiscinfo class="version">1.29</refmiscinfo>
 </refmeta>
 
 <refnamediv>
@@ -118,17 +118,14 @@ This is provided for compatibility with screen reader softwares.
 </para>
 
 <para>
-All character data are first decoded from UTF-8 to a stream of Unicode code
-points.
+All character data are first decoded from UTF-8 to a stream of Unicode code points.
 The decoding is directly from UTF-8 to the code points; in particular, UTF-16 is not employed as an intermediary step.
 If a UTF-8 sequence decodes to one of the reserved code points used for UTF-16, no special treatment is given, and the code point is treated as any other.
 </para>
 
 <para>
-The decoder has to do something with invalid UTF-8 encodings, including overlong
-and incomplete character sequences.
-Whatever code point they decode to, such characters are not processed as control
-characters or as parts of control/escape sequences.
+The decoder has to do something with invalid UTF-8 encodings, including overlong and incomplete character sequences.
+Whatever code point they decode to, such characters are not processed as control characters or as parts of control/escape sequences.
 They abort any control/escape sequence that they interrupt, and if not incomplete encodings they are printed as ordinary printing characters even if they are the code points for control characters.
 This behaviour should not be relied upon, and programs should not send such UTF-8 sequences to a terminal.
 </para>
@@ -136,8 +133,7 @@ This behaviour should not be relied upon, and programs should not send such UTF-
 <refsection><title>vcsa buffer</title>
 
 <para>
-The <arg choice='plain'>--vcsa</arg> command line option enables output to the 
-<replaceable>directory</replaceable><filename>/vcsa</filename> file.
+The <arg choice='plain'>--vcsa</arg> command line option enables output to the <replaceable>directory</replaceable><filename>/vcsa</filename> file.
 </para>
 
 <para>
@@ -164,8 +160,7 @@ To handle the full range of attributes, terminal realizing softwares should use 
 <refsection><title>Unicode buffer</title>
 
 <para>
-The <replaceable>directory</replaceable><filename>/display</filename> file 
-begins with a 16-byte header:
+The <replaceable>directory</replaceable><filename>/display</filename> file begins with a 16-byte header:
 </para>
 <orderedlist>
 <listitem><para>4-byte UCS-4 Byte Order Mark in host byte order.</para></listitem>
@@ -649,6 +644,21 @@ This would have resulted in SGR sequences that were unambiguous, since it would 
 A long-standing misunderstanding/misreading on the parts of many people has led, however, to most programs (from terminfo to the Linux kernel terminal emulator) sending and expecting semi-colons instead of colons, leading to ambiguous SGR sequences: CSI <code>1;4;38;5;14;48;2;3;7;224m</code>.
 For compatibility, the terminal emulator has to do the same; even though it would be good to fix this 20-year-old bug.
 </para>
+
+</refsection>
+
+<refsection><title>See also</title>
+
+<variablelist>
+<varlistentry>
+<term>
+<citerefentry><refentrytitle>pty-run</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</term>
+<listitem>
+<para>an I/O pump that pumps data in both directions between the master side of a pseudo-terminal and its own standard I/O</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
 </refsection>
 

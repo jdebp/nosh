@@ -1,0 +1,54 @@
+<refentry id="ssl-run">
+
+<refmeta>
+<refentrytitle>ssl-run</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.29</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>ssl-run</refname>
+<refpurpose>run a program encrypting/decrypting its standard input and output</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>ssl-run</command> 
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>ssl-run</command> is a utility that chain loads <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+function.  
+It redirects the standard input and standard output through a pipe, whose other end is a child process that it spawns.
+</para>
+
+<para>
+The child process has the original standard input and standard output.
+It encrypts data read from the pipe before sending it to its standard output.
+It decripts data read from its standard input before sending it to the pipe.
+</para>
+
+</refsection>
+<refsection><title>See also</title>
+
+<variablelist>
+<varlistentry>
+<term>
+<citerefentry><refentrytitle>recordio</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</term>
+<listitem>
+<para>a similar program that record standard I/O as it passes through</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</refsection>
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

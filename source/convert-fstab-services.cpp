@@ -120,9 +120,9 @@ make_default_dependencies (
 	const bool root,
 	const FileDescriptorOwner & bundle_dir_fd
 ) {
-	create_links(prog, name, is_target, etc_bundle, bundle_dir_fd, "shutdown.target", "before/");
+	create_links(prog, name, is_target, etc_bundle, etc_bundle, bundle_dir_fd, "shutdown.target", "before/");
 	if (!root)
-		create_links(prog, name, is_target, etc_bundle, bundle_dir_fd, "unmount.target", "stopped-by/");
+		create_links(prog, name, is_target, etc_bundle, etc_bundle, bundle_dir_fd, "unmount.target", "stopped-by/");
 }
 
 static
@@ -208,7 +208,7 @@ create_gbde_bundle (
 	make_remain(prog, bundle_fullname + "/service", gbde_service_dir_fd, true);
 
 	const char * const pre_target(local ? "local-fs-pre.target" : "remote-fs-pre.target");
-	create_links(prog, gbde_bundle_dirname, is_target, etc_bundle, gbde_bundle_dir_fd, pre_target, "after/");
+	create_links(prog, gbde_bundle_dirname, is_target, etc_bundle, etc_bundle, gbde_bundle_dir_fd, pre_target, "after/");
 	create_link(prog, gbde_bundle_dirname, gbde_bundle_dir_fd, "../../" + mount_bundle_dirname, "before/" + fsck_bundle_dirname);
 	create_link(prog, gbde_bundle_dirname, gbde_bundle_dir_fd, "../../" + mount_bundle_dirname, "before/" + mount_bundle_dirname);
 	create_link(prog, gbde_bundle_dirname, gbde_bundle_dir_fd, "../../" + mount_bundle_dirname, "wanted-by/" + fsck_bundle_dirname);
@@ -273,7 +273,7 @@ create_geli_bundle (
 	make_remain(prog, bundle_fullname + "/service", geli_service_dir_fd, true);
 
 	const char * const pre_target(local ? "local-fs-pre.target" : "remote-fs-pre.target");
-	create_links(prog, geli_bundle_dirname, is_target, etc_bundle, geli_bundle_dir_fd, pre_target, "after/");
+	create_links(prog, geli_bundle_dirname, is_target, etc_bundle, etc_bundle, geli_bundle_dir_fd, pre_target, "after/");
 	create_link(prog, geli_bundle_dirname, geli_bundle_dir_fd, "../../" + mount_bundle_dirname, "before/" + fsck_bundle_dirname);
 	create_link(prog, geli_bundle_dirname, geli_bundle_dir_fd, "../../" + mount_bundle_dirname, "before/" + mount_bundle_dirname);
 	create_link(prog, geli_bundle_dirname, geli_bundle_dir_fd, "../../" + mount_bundle_dirname, "wanted-by/" + fsck_bundle_dirname);
@@ -347,7 +347,9 @@ create_fsck_bundle (
 	make_remain(prog, bundle_fullname + "/service", fsck_service_dir_fd, true);
 
 	const char * const pre_target(local ? "local-fs-pre.target" : "remote-fs-pre.target");
-	create_links(prog, fsck_bundle_dirname, is_target, etc_bundle, fsck_bundle_dir_fd, pre_target, "after/");
+	create_links(prog, fsck_bundle_dirname, is_target, etc_bundle, etc_bundle, fsck_bundle_dir_fd, pre_target, "after/");
+	// fsck is fairly memory hungry, so we want (non-late) swap available when it is running.
+	create_links(prog, fsck_bundle_dirname, is_target, etc_bundle, etc_bundle, fsck_bundle_dir_fd, "swapauto.target", "after/");
 	create_link(prog, fsck_bundle_dirname, fsck_bundle_dir_fd, "../../" + mount_bundle_dirname, "before/" + mount_bundle_dirname);
 	create_link(prog, fsck_bundle_dirname, fsck_bundle_dir_fd, "../../" + mount_bundle_dirname, "wanted-by/" + mount_bundle_dirname);
 
@@ -437,9 +439,11 @@ create_mount_bundle (
 
 	const char * const target(local ? "local-fs.target" : "remote-fs.target");
 	const char * const pre_target(local ? "local-fs-pre.target" : "remote-fs-pre.target");
-	create_links(prog, mount_bundle_dirname, is_target, etc_bundle, mount_bundle_dir_fd, target, "wanted-by/");
-	create_links(prog, mount_bundle_dirname, is_target, etc_bundle, mount_bundle_dir_fd, target, "before/");
-	create_links(prog, mount_bundle_dirname, is_target, etc_bundle, mount_bundle_dir_fd, pre_target, "after/");
+	if (!local)
+		create_links(prog, mount_bundle_dirname, is_target, etc_bundle, etc_bundle, mount_bundle_dir_fd, "fs-servers.target", "after/");
+	create_links(prog, mount_bundle_dirname, is_target, etc_bundle, etc_bundle, mount_bundle_dir_fd, target, "wanted-by/");
+	create_links(prog, mount_bundle_dirname, is_target, etc_bundle, etc_bundle, mount_bundle_dir_fd, target, "before/");
+	create_links(prog, mount_bundle_dirname, is_target, etc_bundle, etc_bundle, mount_bundle_dir_fd, pre_target, "after/");
 
 	for (std::list<std::string>::const_iterator p(modules.begin()); modules.end() != p; ++p) {
 		const std::string & modname(*p);
@@ -538,9 +542,9 @@ create_swap_bundle (
 	make_remain(prog, bundle_fullname + "/service", swap_service_dir_fd, true);
 
 	if (!has_option(options_list, "late"))
-		create_links(prog, swap_bundle_dirname, is_target, etc_bundle, swap_bundle_dir_fd, "swapauto.target", "wanted-by/");
+		create_links(prog, swap_bundle_dirname, is_target, etc_bundle, etc_bundle, swap_bundle_dir_fd, "swapauto.target", "wanted-by/");
 	else
-		create_links(prog, swap_bundle_dirname, is_target, etc_bundle, swap_bundle_dir_fd, "swaplate.target", "wanted-by/");
+		create_links(prog, swap_bundle_dirname, is_target, etc_bundle, etc_bundle, swap_bundle_dir_fd, "swaplate.target", "wanted-by/");
 
 	create_link(prog, swap_bundle_dirname, swap_bundle_dir_fd, "/run/service-bundles/early-supervise/" + swap_bundle_dirname, "supervise");
 
@@ -602,7 +606,7 @@ create_dump_bundle (
 	make_run_and_restart(prog, bundle_fullname + "/service", "true");
 	make_remain(prog, bundle_fullname + "/service", dump_service_dir_fd, true);
 
-	create_links(prog, dump_bundle_dirname, is_target, etc_bundle, dump_bundle_dir_fd, "dumpauto.target", "wanted-by/");
+	create_links(prog, dump_bundle_dirname, is_target, etc_bundle, etc_bundle, dump_bundle_dir_fd, "dumpauto.target", "wanted-by/");
 
 	create_link(prog, dump_bundle_dirname, dump_bundle_dir_fd, "/run/service-bundles/early-supervise/" + dump_bundle_dirname, "supervise");
 

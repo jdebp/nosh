@@ -46,8 +46,10 @@ socket_set_bind_to_any (
 	bool v
 ) {
 #if defined(SO_BINDANY)
+	static_cast<void>(info);	// Silence a compiler warning.
 	return socket_set_boolean_option(s, SOL_SOCKET, SO_BINDANY, v);
 #elif defined(__LINUX__) || defined(__linux__)
+	static_cast<void>(info);	// Silence a compiler warning.
 	return socket_set_boolean_option(s, SOL_IP, IP_FREEBIND, v);
 #elif defined(__FreeBSD__)
 	switch (info.ai_family) {

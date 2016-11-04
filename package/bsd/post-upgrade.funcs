@@ -1,0 +1,61 @@
+# shell function library for FreeBSD/TrueOS
+try_restart() {
+	for i
+	do
+		if system-control is-loaded "$i" && 
+		   system-control is-active "$i"
+		then
+			echo 1>&2 "Try-Restart:" "$i"
+			system-control try-restart "$i"
+		fi
+	done
+}
+service_with_dedicated_logger() {
+	if test -n "${nosh_run_package}"
+	then
+		try_restart "$1.service" "cyclog@$1.service"
+	fi
+}
+login_service_with_dedicated_logger() {
+	if test -n "${nosh_run_package}"
+	then
+		try_restart "ttylogin@$1.service" "cyclog@ttylogin@$1.service"
+	fi
+}
+ktty_login_service_with_dedicated_logger() {
+	case "`uname`" in
+	OpenBSD)	ktty=ttyC; break ;;
+	*)		ktty=ttyv; break ;;
+	esac
+	login_service_with_dedicated_logger "${ktty}$1"
+}
+socket_with_dedicated_logger() {
+	if test -n "${nosh_run_package}"
+	then
+		try_restart "$1.socket" "cyclog@$1.socket"
+	fi
+}
+service_only() {
+	if test -n "${nosh_run_package}"
+	then
+		try_restart "$1.service"
+	fi
+}
+fan_in_logger() {
+	if test -n "${nosh_run_package}"
+	then
+		try_restart "$1-log.service"
+	fi
+}
+target() {
+	:
+}
+log_user() {
+	:
+}
+non_log_user() {
+	:
+}
+user_tty() {
+	:
+}

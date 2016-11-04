@@ -3,4 +3,4 @@ mkdir -p tmp
 src="`basename "$1"`.xml"
 man="index.html"
 redo-ifchange "${src}" exec
-./exec setlock tmp/index.html.lock sh -c "xmlto --skip-validation -o tmp html \"${src}\" && mv \"tmp/${man}\" \"$3\""
+exec ./exec setlock tmp/index.html.lock sh -c "xmlto --skip-validation -o tmp html \"${src}\" && mv \"tmp/${man}\" \"$3\""

@@ -8,7 +8,11 @@ Description=GPS daemon socket
 [Socket]
 Backlog=2
 BindIPv6Only=both
+# gpsd's rather simplistic code requires this ordering.
+ListenStream=/run/%p.sock
 ListenStream=2947
+# See Debian bug #655504
+SocketMode=0600
 
 [Install]
 WantedBy=workstation.target

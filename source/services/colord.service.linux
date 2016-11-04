@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=ColourManager daemon
+After=local-syslog.target
+
+[Service]
+Type=dbus
+# This service fails to run when not invoked as the superuser.
+#User=colord
+ExecStart=/usr/lib/%p/%p
+
+[Install]
+WantedBy=workstation.target

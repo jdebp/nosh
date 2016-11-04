@@ -6,8 +6,7 @@
 Description=Combined logger for autobridge@ services
 
 [Service]
-PermissionsStartOnly=true
-User=autobridge-log
+User=%p
 WorkingDirectory=/var/log/sv
 ExecStart=cyclog autobridge/
 RestartSec=1

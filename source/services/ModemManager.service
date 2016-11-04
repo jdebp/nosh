@@ -9,7 +9,7 @@ After=local-syslog.target
 
 [Service]
 Type=dbus
-ExecStart=modem-manager
+ExecStart=%p --debug
 # Older versions of NetworkManager have an unfortunate interaction with ModemManager services.
 # So we only restart on failure, rather than always.
 Restart=on-failure

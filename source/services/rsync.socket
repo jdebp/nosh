@@ -3,6 +3,7 @@
 ## **************************************************************************
 
 [Unit]
+Description=rsync server socket
 
 [Socket]
 ListenStream=873

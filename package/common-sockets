@@ -11,6 +11,7 @@ ftp4d
 ftp6d
 git-daemon
 http6d
+https6d
 initctld
 kadmind
 klogd

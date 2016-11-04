@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=PC-BSD Warden jails and jailed daemons collection
+Description=PC-BSD/TrueOS Warden jails and jailed daemons collection
 
 [Service]
 User=nobody

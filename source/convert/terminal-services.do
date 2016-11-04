@@ -71,24 +71,47 @@ else
 fi
 
 list_user_virtual_terminals() {
-	seq 1 3 | sed -e 's:^:/run/dev/vc:'
+	seq 1 3 | sed -e 's:^:vc:' -e 's:$:-tty:'
 }
 
 list_kernel_virtual_terminals() {
 	case "`uname`" in
-	Linux) seq 1 12 | sed -e 's:^:/dev/tty:' ;;
-	OpenBSD) for i in 0 1 2 3 4 5 6 7 8 9 a b ; do echo /dev/ttyC$i ; done ;;
-	*BSD) for i in 0 1 2 3 4 5 6 7 8 9 a b c d e f ; do echo /dev/ttyv$i ; done ;;
+	Linux)
+		seq 1 12 | sed -e 's:^:tty:' 
+		;;
+	OpenBSD)
+		for i in C D E F G H I J
+		do 
+			for j in 0 1 2 3 4 5 6 7 8 9 a b ; do echo tty$i$j ; done 
+		done
+		;;
+	*BSD)
+		for i in 0 1 2 3 4 5 6 7 8 9 a b c d e f ; do echo ttyv$i ; done 
+		;;
 	esac
 }
 
 list_real_terminals() {
 	case "`uname`" in
-	Linux) seq 0 3 | sed -e 's:^:/dev/ttyS:' ;;
-	OpenBSD) for i in 0 1 2 3 4 5 6 7 ; do echo /dev/tty0$i ; done ;;
-	*BSD) for i in 0 1 2 3 4 5 6 7 8 9 a b c d e f ; do echo /dev/ttyu$i ; done ;;
+	# Linux is technically /dev/ttyS[0-9]* , but no-one has that many real terminal devices nowadays.
+	Linux) 
+		seq 0 99 | sed -e 's:^:ttyS:'
+		seq 0 99 | sed -e 's:^:ttyACM:'
+		;;
+	OpenBSD)
+		for i in 0 1 2 3 3 ; do echo ttyU$i ; done
+		for i in 0 1 2 3 4 5 6 7
+		do 
+			for j in 0 1 2 3 4 5 6 7 8 9 a b c d e f ; do echo tty$i$j ; done
+		done
+		;;
+	*BSD)
+		for i in 0 1 2 3 4 5 6 7 8 9 a b c d e f ; do echo ttyu$i ; done 
+		;;
 	esac
 }
+
+redo-ifchange "/dev"
 
 # These files/directories not existing is not an error; but is a reason to rebuild when they appear.
 for i in /etc/ttys /dev
@@ -101,18 +124,40 @@ do
 	fi
 done
 
-list_kernel_virtual_terminals | while read -r i
+list_kernel_virtual_terminals | 
+while read -r n
 do
-	n="`basename \"$i\"`"
-	if test -c "$i"
+	if test -c "/dev/$n"
 	then
 		system-control preset --ttys --prefix "cyclog@ttylogin@" -- "$n"
 		system-control preset --ttys --prefix "ttylogin@" -- "$n"
+		if system-control is-enabled "ttylogin@$n"
+		then
+			echo >> "$3" on "$n"
+		else
+			echo >> "$3" off "$n"
+		fi
 	else
-		system-control disable "cyclog@ttylogin@$n"
-		system-control disable "ttylogin@$n"
-		redo-ifcreate "$i"
+		redo-ifcreate "/dev/$n"
+		if >/dev/null 2>&1 system-control find "cyclog@ttylogin@$n"
+		then
+			system-control disable "cyclog@ttylogin@$n"
+		fi
+		if >/dev/null 2>&1 system-control find "ttylogin@$n"
+		then
+			system-control disable "ttylogin@$n"
+			echo >> "$3" off "$n"
+		else
+			echo >> "$3" no "$n"
+		fi
 	fi
+done
+
+list_user_virtual_terminals | 
+while read -r n
+do
+	system-control preset --ttys --prefix "cyclog@ttylogin@" -- "$n"
+	system-control preset --ttys --prefix "ttylogin@" -- "$n"
 	if system-control is-enabled "ttylogin@$n"
 	then
 		echo >> "$3" on "$n"
@@ -121,35 +166,31 @@ do
 	fi
 done
 
-list_user_virtual_terminals | while read -r i
+list_real_terminals | 
+while read -r n
 do
-	n="`basename \"$i\"`"
-	system-control preset --ttys --prefix "cyclog@ttylogin@" -- "$n-tty"
-	system-control preset --ttys --prefix "ttylogin@" -- "$n-tty"
-	if system-control is-enabled "ttylogin@$n-tty"
-	then
-		echo >> "$3" on "$n-tty"
-	else
-		echo >> "$3" off "$n-tty"
-	fi
-done
-
-list_real_terminals | while read -r i
-do
-	n="`basename \"$i\"`"
-	if test -c "$i"
+	if test -c "/dev/$n"
 	then
 		system-control preset --ttys --prefix "cyclog@ttylogin@" -- "$n"
 		system-control preset --ttys --prefix "ttylogin@" -- "$n"
+		if system-control is-enabled "ttylogin@$n"
+		then
+			echo >> "$3" on "$n"
+		else
+			echo >> "$3" off "$n"
+		fi
 	else
-		system-control disable "cyclog@ttylogin@$n"
-		system-control disable "ttylogin@$n"
-		redo-ifcreate "$i"
-	fi
-	if system-control is-enabled "ttylogin@$n"
-	then
-		echo >> "$3" on "$n"
-	else
-		echo >> "$3" off "$n"
+		redo-ifcreate "/dev/$n"
+		if >/dev/null 2>&1 system-control find "cyclog@ttylogin@$n"
+		then
+			system-control disable "cyclog@ttylogin@$n"
+		fi
+		if >/dev/null 2>&1 system-control find "ttylogin@$n"
+		then
+			system-control disable "ttylogin@$n"
+			echo >> "$3" off "$n"
+		else
+			echo >> "$3" no "$n"
+		fi
 	fi
 done

@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Static network configuration for interface %i
+
+[Service]
+Type=oneshot
+EnvironmentDirectory=env
+ExecStart=%p %i up
+ExecStopPost=%p %i down
+
+[Install]
+WantedBy=static-networking.target

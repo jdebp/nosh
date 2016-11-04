@@ -5,7 +5,6 @@
 
 [Unit]
 Description=additional executable binary formats
-Conflicts=binfmt-support.service
 
 [Service]
 Type=oneshot

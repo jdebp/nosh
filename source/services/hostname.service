@@ -5,7 +5,8 @@
 [Unit]
 Description=Set the dynamic hostname
 DefaultDependencies=false
-Wants=local-fs.target
+Before=multi-user-pre.target
+Wants=multi-user-pre.target local-fs.target
 After=local-fs.target
 
 [Service]

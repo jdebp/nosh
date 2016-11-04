@@ -193,7 +193,7 @@ tcp_socket_connect (
 		}
 #endif
 
-		if (0 > connect(s.get(), remote_info->ai_addr, remote_info->ai_addrlen)) continue;
+		if (0 > socket_connect(s.get(), remote_info->ai_addr, remote_info->ai_addrlen)) continue;
 
 		sockaddr_storage localaddr;
 		socklen_t localaddrsz = sizeof localaddr;

@@ -11,6 +11,7 @@ EnvironmentDirectory=env
 EnvironmentUser=tinydns-d
 LimitDATA=3000000
 ExecStart=%p
+RestartSec=0.2
 
 [Install]
 WantedBy=server.target

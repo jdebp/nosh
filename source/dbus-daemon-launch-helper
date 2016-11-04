@@ -43,10 +43,10 @@ then
 #	for dbus_service
 #	do
 #		dbus_service="`basename \"${dbus_service}\" .service`"
-#		## Vanilla systemd systemctl does not have "reset".
-#		if systemctl is-enabled --quiet -- "${dbus_service#dbus-}"
+#		## Vanilla System 5 rc service does not have "reset".
+#		if chkconfig "${dbus_service#dbus-}" is-enabled
 #		then
-#			systemctl start -- "${dbus_service#dbus-}"
+#			service "${dbus_service#dbus-}" start
 #		fi
 #	done
 else

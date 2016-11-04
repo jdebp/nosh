@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=PC-BSD Warden jail %i
+Description=PC-BSD/TrueOS Warden jail %i
 
 [Service]
 Type=oneshot

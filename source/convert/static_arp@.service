@@ -4,13 +4,15 @@
 
 [Unit]
 Description=BSD static ARP binding for %i
+After=network-runtime.service
+Wants=network-runtime.service
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
 EnvironmentDirectory=env
-ExecStart=ndp -s "${addr}" ${dest}
-ExecStopPost=ndp -d "${addr}"
+ExecStart=arp -S "${addr}" ${dest}
+ExecStopPost=arp -d "${addr}"
 
 [Install]
-WantedBy=server.target
+WantedBy=static-networking.target

@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=Run command within PC-BSD Warden jail %I
+Description=Run command within PC-BSD/TrueOS Warden jail %I
 Wants=warden-jail@%i
 After=warden-jail@%i
 

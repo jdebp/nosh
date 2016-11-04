@@ -1,0 +1,21 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Copy udev rules generated and dumped into /run whilst /etc was mounted read-only
+DefaultDependencies=false
+After=mount@- mount@-etc udev.service
+Before=shutdown.target
+
+[Service]
+# Marking this as oneshot means that it doesn't enter the "running" state until the %p command has exited.
+Type=oneshot
+ExecStart=/lib/udev/%p
+# This is a one-shot service that can be re-triggered by starting it again.
+RemainAfterExit=1
+Restart=no
+
+[Install]
+WantedBy=sysinit.target
+StoppedBy=shutdown.target

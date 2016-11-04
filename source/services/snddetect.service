@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=PC-BSD sound detection
+Description=TrueOS sound detection
 
 [Service]
 EnvironmentDirectory=env

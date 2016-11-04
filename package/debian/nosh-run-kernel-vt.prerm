@@ -1,5 +1,17 @@
 #!/bin/sh -
 case "$1" in
+	upgrade)
+		# TTY ancillaries
+		for i in \
+			kernel-vt-loadkeys \
+			kernel-vt-setfont \
+			kernel-vt-setterm \
+			kernel-vt-kbdrate \
+			;
+		do
+			system-control disable $i.service cyclog@$i.service
+		done
+		;;
 	remove|purge)
 		# Stop the auto-starter first!
 		for i in \
@@ -50,6 +62,8 @@ case "$1" in
 		for i in \
 			kernel-vt-loadkeys \
 			kernel-vt-setfont \
+			kernel-vt-setterm \
+			kernel-vt-kbdrate \
 			;
 		do
 			system-control disable $i.service cyclog@$i.service

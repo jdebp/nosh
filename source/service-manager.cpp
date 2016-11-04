@@ -1264,7 +1264,9 @@ service_manager (
 						}
 						break;
 					case EVFILT_VNODE:
+#if defined(DEBUG)
 						std::fprintf(stderr, "%s: DEBUG: vnode event ident %lu fflags %x\n", prog, e.ident, e.fflags);
+#endif
 						break;
 					case EVFILT_PROC:
 						if (e.fflags & NOTE_FORK) {
@@ -1278,7 +1280,9 @@ service_manager (
 							reap(original_signals, e.data, e.ident);
 						break;
 					default:
+#if defined(DEBUG)
 						std::fprintf(stderr, "%s: DEBUG: event filter %hd ident %lu fflags %x\n", prog, e.filter, e.ident, e.fflags);
+#endif
 						break;
 				}
 			}

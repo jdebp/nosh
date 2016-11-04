@@ -1,0 +1,93 @@
+#
+# Enable basic services for the out-of-the-box TrueOS Desktop (formerly known as PC-BSD)
+#
+# This is not a systemd preset.
+# It goes in a special nosh system-manager preset directory.
+# It is used by the nosh-run-trueos-desktop-basic package in order to enable the services themselves.
+#
+
+#
+# These services are in TrueOS Desktop but not in TrueOS Server.
+#
+
+# etc services
+enable	automount.service
+enable	automountd.service
+enable	autounmountd.service
+enable	devd.service
+enable	devd-log.service
+enable	ldconfig.service
+enable	kmod@geom_uzip.service
+
+# Normal services
+enable	cyclog@kmod@acpi_video.service
+enable	kmod@acpi_video.service
+enable	cyclog@kmod@cuse4bsd.service
+enable	kmod@cuse4bsd.service
+disable	cyclog@kmod@if_bwi.service
+disable	kmod@if_bwi.service
+disable	cyclog@kmod@if_bwn.service
+disable	kmod@if_bwn.service
+disable	cyclog@kmod@iwn1000fw.service
+disable	kmod@iwn1000fw.service
+disable	cyclog@kmod@iwn4965fw.service
+disable	kmod@iwn4965fw.service
+disable	cyclog@kmod@iwn5000fw.service
+disable	kmod@iwn5000fw.service
+disable	cyclog@kmod@iwn5150fw.service
+disable	kmod@iwn5150fw.service
+disable	cyclog@kmod@iwn6000fw.service
+disable	kmod@iwn6000fw.service
+disable	cyclog@kmod@iwn6000g2afw.service
+disable	kmod@iwn6000g2afw.service
+disable	cyclog@kmod@iwn6000g2bfw.service
+disable	kmod@iwn6000g2bfw.service
+disable	cyclog@kmod@iwn6050fw.service
+disable	kmod@iwn6050fw.service
+disable	cyclog@kmod@runfw.service
+disable	kmod@runfw.service
+enable	cyclog@anacron.service
+enable	anacron.service
+enable	cyclog@avahi-daemon.service
+enable	avahi-daemon.service
+disable	cyclog@chkprintcap.service
+disable	chkprintcap.service
+enable	cyclog@org.cups.cups-cancel.service
+enable	org.cups.cups-cancel.service
+enable	cyclog@org.cups.cups-lpd.service
+enable	org.cups.cups-lpd.service
+enable	cyclog@org.cups.cupsd.service
+enable	org.cups.cupsd.service
+enable	cyclog@dbus.service
+enable	dbus.service
+enable	cyclog@hald.service
+enable	hald.service
+disable	cyclog@lpd.service
+disable	lpd.service
+enable	cyclog@mixer@*.service
+enable	mixer@*.service
+enable	cyclog@moused.service
+enable	moused.service
+enable	cyclog@pcdm.service
+enable	pcdm.service
+enable	cyclog@powerd.service
+enable	powerd.service
+disable	cyclog@powerd++.service
+disable	powerd++.service
+disable	cyclog@swapexd.service
+disable	swapexd.service
+enable	cyclog@volmand.service
+enable	volmand.service
+enable	cyclog@rpclockd.service
+enable	rpclockd.service
+enable	cyclog@rpcstatd.service
+enable	rpcstatd.service
+
+# Generated services
+enable	cyclog@uhidd@*.service
+enable	uhidd@*.service
+enable	cyclog@webcamd@*.service
+enable	webcamd@*.service
+
+# Targets
+enable	uhidd.target

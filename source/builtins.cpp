@@ -9,7 +9,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstring>
 #include <cerrno>
 #include <new>
-#include <memory>
 #include <unistd.h>
 #include "utils.h"
 #include "fdutils.h"
@@ -36,14 +35,16 @@ find (
 }
 
 static inline
-char *
-default_path()
-{
+bool
+default_path(
+	std::string & r
+) {
 	const size_t n(confstr(_CS_PATH, NULL, 0));
-	if (!n) return 0;
-	char * p = new(std::nothrow) char[n];
-	if (p) confstr(_CS_PATH, p, n);
-	return p;
+	if (!n) return false;
+	std::vector<char> p(n, char());
+	confstr(_CS_PATH, p.data(), n);
+	r = std::string(p.data(), n);
+	return true;
 }
 
 /// A safer form of execvp() that doesn't include the current directory in the default search path.
@@ -54,16 +55,14 @@ safe_execvp (
 	const char ** args
 ) {
 	const char * path = std::getenv("PATH");
-	std::auto_ptr<char> d;
+	std::string d;
 	if (!path) {
-		d.reset(default_path());
-		path = d.get();
+		if (!default_path(d)) return;
+		path = d.c_str();
 	}
-	if (!path) return;
 
 	const size_t plen = std::strlen(prog);
-	std::auto_ptr<char> buf(new(std::nothrow) char [std::strlen(path) + 1 + plen + 1]);
-	if (!buf.get()) return;
+	std::vector<char> buf(std::strlen(path) + 2 + plen + 1, char());
 
 	int error(ENOENT);	// the most interesting error encountered
 	for (;;) {
@@ -71,16 +70,16 @@ safe_execvp (
 		if (!colon) colon = std::strchr(path, '\0');
 		size_t l(colon - path);
 		if (!l) 
-			buf.get()[l++] = '.';
+			buf[l++] = '.';
 		else
-			memcpy(buf.get(), path, l);
-		buf.get()[l++] = '/';
-		memcpy(buf.get() + l, prog, plen + 1);
+			memcpy(buf.data(), path, l);
+		buf[l++] = '/';
+		memcpy(buf.data() + l, prog, plen + 1);
 
 #if defined(__OpenBSD__)
-		const int rc(execve(buf.get(), const_cast<char **>(args), environ));
+		const int rc(execve(buf.data(), const_cast<char **>(args), environ));
 #else
-		const int fd(open_exec_at(AT_FDCWD, buf.get()));
+		const int fd(open_exec_at(AT_FDCWD, buf.data()));
 		if (0 <= fd) {
 			fexecve(fd, const_cast<char **>(args), environ);
 			const int saved_error(errno);
