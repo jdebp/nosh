@@ -1,0 +1,158 @@
+<title>Log service security</title>
+<link rel="Up" href="logging.html" title="Logging" />
+<link rel="Prev" href="beyond-cyclog.html" title="Beyond cyclog"/>
+<link rel="Next" href="old-log-services.html" title="Handling old log mechanisms"/>
+<h1>
+Log service security
+</h1>
+
+<p>
+Various security measures apply to logging.
+</p>
+
+<h2>
+Separate log services
+</h2>
+
+<p>
+Each service generally has its own dedicated logging service, writing to its own dedicated logging area.
+(A few services, usually a group of strongly related or tightly coupled ones, share a single dedicated logging service amnong them.)
+</p>
+
+<ul>
+<li><p>
+High volume services cannot swamp the log outputs of low volume services.
+One technique used by the nefarious to hide their tracks is to flood the system log so that logs of their subversion attempts are rotated off the top of the log.
+This is not possible with entirely separate log directories.
+</p></li>
+<li><p>
+Log rotation settings are per logging service, and individually adjustable with that service's <code>flags</code> service variable.
+</p></li>
+<li><p>
+There is no fan-in and fan-back-out.
+The path between a service and its logs is direct.
+It does not cross that of other services' logs.
+Nor are log messages (which contain data supplied from the network or potentially untrustworthy users) parsed in order to determine a sorting bin to put them into.
+All log data are already sorted by dint of originating from an individual service, or small group, and go directly into a sorting bin dedicated to it.
+</p></li>
+<li><p>
+There is no central point of failure.
+There's no single central logging service that, if taken down, effectively takes down the rest of the system; and that when brought up requires most of the rest of the services to restart in order to reconnect to it.
+Take down, say, the <code>cyclog@cron</code> service and at most that backs up the log output of the <code>cron</code> service in a kernel buffer for the pipe that connects the twain.
+The pipe is kept open at both ends by the service manager, and when <code>cylog@cron</code> is brought back up it is automatically reconnected to the output of the <code>cron</code> service, with the latter not having to restart or being any the wiser that its log service was temporarily down.
+</p></li>
+</ul>
+
+<h2>
+Dedicated log user accounts
+</h2>
+
+<p>
+All logging service bundles have a dedicated user account associated with them.
+These accounts are created by installing the "bundles" package.
+(They are not destroyed by deinstalling that package; because deinstallation, being possibly a prelude to reinstallation, does not remove log files.)
+</p>
+
+<ul>
+<li><p>
+This account is unprivileged.
+Only the system-manager's own log d&aelig;mon runs as the superuser (because the user account database may be corrupt or nonexistent that early in the bootstrap process, and it is necessary that the system-manager's own log <em>always</em> be capable of running).
+</p></li>
+<li><p>
+It owns only the log files in its service's log directory and their lock file.
+Importantly, it does not own the service's log directory itself, and so even if the log service is somehow subverted, the logger d&aelig;mon has no rights to grant other users access to the log directory.
+Rather, each dedicated logging service is given just create, delete, and search access to the log subdirectory by ACL entries on that subdirectory.
+</p></li>
+<li><p>
+The service's log directory is always owned by the superuser, and only the dedicated log user account has create and delete access there.
+Unprivileged users cannot, say, write mischeivous symbolic links into the directory so that the unwitting log service ends up overwriting some other file(s) somewhere else.
+</p></li>
+<li><p>
+Only the log service process runs under the aegis of that account.
+This protects it, using the normal kernel mechanisms, from other log service d&aelig;mon processes.
+If the "main" service also runs under the aegis of an unprivileged account, it also protects it from the "main" service's d&aelig;mon process(es).
+This means that if the main d&aelig;mon is subverted, it cannot affect its logger d&aelig;mon.
+Nor can it <em>directly</em> manipulate any of its own log files (although it can still of course flood them).
+</p></li>
+</ul>
+
+<h2>
+Reliable log rotation
+</h2>
+
+<p>
+This applies to <a href="cyclog.html"><code>cyclog</code></a> and to many of <a href="beyond-cyclog.html">the alternatives one can use in place of it</a>.
+</p>
+
+<p>
+Because the program writing the log files is the same program that does the log rotation, it knows exactly when to perform rotation.
+There are no windows of opportunity to fill the log storage volume up before the next scheduled rotation, as in older architectures.
+Rotations are not <em>scheduled</em>, at all; they are <em>triggered</em> by the writer knowing that it would otherwise be about to exceed a size limit.
+The size caps on log files and on total log directory size are reliable.
+One can budget space on a log storage disc, by totalling up maximum configured log sizes, with confidence.
+</p>
+
+<p>
+Nor does log rotation trigger the well known problem with GNU <code>tail</code> and BSD <code>tail</code>.
+(If a log file is truncated and then quickly written to, neither <code>tail</code> will output all log data.)
+The log file writer never truncates, or indeed modifies, log files once it has written them up to the size limit.
+Rather, it switches in a new file, with a fresh i-node.
+</p>
+
+<p>
+Indeed, log files are only ever written to in strictly sequential, append-only, fashion.
+These behaviours can be relied upon if one wants to place log directories on storage devices that don't like it when one overrwites the same file(s) in place over and over.
+</p>
+
+<h2 id="old-services">
+Compatibility services
+</h2>
+
+<p>
+<a href="old-log-services.html">Services that provide compatibility with the old "syslog" mechanism</a> comprise a "main" log reading service and a "log" writer service, and posess several security measures.
+</p>
+
+<ul>
+<li><p>
+The various services, for kernel log output, local "syslog" socket, local "privileged syslog" socket, and remote "syslog" via UDP, are all independent of one another.
+The services themselves are independent, as are their log streams.
+It is not possible for a remote client to flood the local logs, or vice versa.
+It is not possible for remote log data to masquerade as local data.
+</p></li>
+<li><p>
+The log reading services themselves run as dedicated unprivileged users.
+They don't need superuser permissions at any point, don't parse client-supplied content (trusted or otherwise), and don't require ownership of or read/write access to any files or directories.
+The only things that they should write are their standard outputs to the connected log writing services; and the only things apart from that that they can write are publicly writable anyway.
+</p><p>
+Should the log reading services be compromised, which is hard(er) given the elimination of parsing, the attacker doesn't gain superuser privileges, or any ownership of or access to any (non-world-accessible) filesystem object.
+</p></li>
+<li><p>
+The log reading services have fixed-size input buffers, and do not rely upon attacker-supplied length fields of any kind.
+They are not subject to attacks where clients specify over-large message sizes.
+</p></li>
+<li><p>
+The log writing services run as <em>different</em> dedicated users, and are insulated from the log readers.
+They, too, do no parsing or conditional processing that depends from potentially attacker-supplied data.
+</p></li>
+<li><p>
+<a href="cyclog.html"><code>cyclog</code></a> and many of <a href="beyond-cyclog.html">the alternatives one can use in place of it</a> are immune to malformed character encodings, control characters, and <code>NUL</code>s.
+</p></li>
+</ul>
+
+<p>
+There are some problems that are, however, inherent in the nature of log services that listen to the world, or even locally, receiving all messages sent to a particular socket endpoint to which multiple clients can connect.
+</p>
+
+<ul>
+<li><p>
+The kernel provides no defences against forged messages being sent through the kernel logging mechanism, and has a mechanism whereby applications softwares can introduce messages into the kernel log stream.
+</p></li>
+<li><p>
+There are no defences against flooding <em>within</em> a given transport mode.
+A remote attacker can flood other remote log data; an unprivileged local attacker can flood other unprivileged local log data; and a privileged local attacker (i.e. one with access to the <code>logpriv</code> socket) can flood other privileged local log data.
+</p></li>
+<li><p>
+There is no client authentication in the UDP RSYSLOG transport.
+Whilst there <em>could be</em> client authentication in the local socket transports, this is not the norm nor what such clients expect.
+</p></li>
+</ul>

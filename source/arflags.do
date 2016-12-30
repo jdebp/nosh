@@ -1,5 +1,5 @@
 #!/bin/sh -e
-if [ "`uname`" = "Interix" ]
+if test _"`uname`" = _"Interix"
 then
 	ar="wlib.exe"
 	arflags="-n -q"

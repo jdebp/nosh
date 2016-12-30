@@ -11,6 +11,7 @@ For copyright and licensing terms, see the file named COPYING.
 /// \brief A wrapper for FILE * that automatically closes the file in its destructor.
 struct FileStar {
 	operator FILE * () const { return f ; }
+	FILE * operator -> () const { return f ; }
 	FileStar(FILE * fp = 0) : f(fp) {}
 	FILE * release() { FILE *fp(f); f = 0; return fp; }
 	FileStar & operator= ( FILE * n ) { assign(n); return *this; }

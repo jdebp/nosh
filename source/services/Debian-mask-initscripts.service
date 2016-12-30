@@ -2,11 +2,9 @@
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
 
-# This is a way of masking out stuff that Debian package maintainer scripts try to enable/disable;
-# but that is wholly inappropriate.
-
 [Unit]
 Description=A no-operation service for Debian
+Description=This is a way of masking out stuff that Debian package maintainer scripts try to enable/disable; but that is wholly inappropriate.
 
 [Service]
 # This intentionally runs pause.

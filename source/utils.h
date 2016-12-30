@@ -144,17 +144,27 @@ extern
 std::string
 ltrim (
 	const std::string & s
-);
+) ;
 extern
 std::string
 rtrim (
 	const std::string & s
-);
+) ;
 extern
 std::string
 tolower (
 	const std::string & s
-);
+) ;
+extern
+bool
+is_bool_true (
+	const std::string & r
+) ;
+extern
+bool
+is_bool_false (
+	const std::string & r
+) ;
 extern
 std::string 
 systemd_name_unescape ( 
@@ -193,7 +203,7 @@ time_to_tai64 (
 	bool leap
 ) ;
 extern
-void
+int
 subreaper (
 	bool on
 ) ;

@@ -144,7 +144,7 @@ exit_scan:
 */
 
 void
-service_dt_scanner (
+service_dt_scanner [[gnu::noreturn]] (
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {

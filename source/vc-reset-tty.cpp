@@ -26,8 +26,10 @@ For copyright and licensing terms, see the file named COPYING.
 
 #define ESC "\033"
 #define CSI ESC "["
+#if defined(__LINUX__) || defined(__linux__)
 #define ST  ESC "/"
 #define OSC ESC "]"
+#endif
 
 // The string that hard resets the terminal from a jammed state, ready for initialization.
 static inline

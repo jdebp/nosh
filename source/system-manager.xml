@@ -486,9 +486,28 @@ This is symbolically linked to <filename>/run/shm</filename> for compatibility w
 </para></listitem>
 </varlistentry>
 
+<varlistentry>
+<term><filename>/sys/fs/cgroup</filename></term>
+<listitem><para>
+A <code>tmpfs</code> filesystem is mounted here with options <code>size=1M</code>, and <code>mode=0755</code>.
+This is so that subdirectories for actual (version 1) control group hierarchies can be created here as further mount points.
+(With version 2 control groups, this would be the root of a single hierarchy.)
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><filename>/sys/fs/cgroup/systemd</filename></term>
+<listitem><para>
+A <code>cgroup</code> filesystem is mounted here with options <code>name=systemd</code> and <code>none</code>.
+This sets up the root of a version 1 control group hierarchy that other toolset's tools will understand.
+(With version 2 control groups, this would be at <code>/sys/fs/cgroup</code> and have no <code>name</code> parameter.)
+</para></listitem>
+</varlistentry>
+
 </variablelist>
 
-</refsection><refsection><title>BSD API filesystems and early devices</title>
+</refsection>
+<refsection><title>BSD API filesystems and early devices</title>
 
 <variablelist>
 

@@ -22,6 +22,7 @@ void
 create_links (
 	const char * prog,
 	const std::string & bund,
+	const bool is_user,
 	const bool is_target,
 	const bool services_are_relative,
 	const bool targets_are_relative,

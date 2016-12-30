@@ -2,17 +2,16 @@
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
 
-# Note that many BSDs no longer include UUCP.
-
 [Unit]
 Description=Clean-up UUCP spool directories
+Description=Note that many BSDs no longer include UUCP.
 
 [Service]
 Type=oneshot
 WorkingDirectory=/var/spool/
 ExecStart=sh -c 'rm -r uucp/.Temp/* ; rm -r lock/*'
 # This is a one-shot service that can be re-triggered by starting it again.
-RemainAfterExit=1
+#RemainAfterExit=1
 Restart=no
 
 [Install]

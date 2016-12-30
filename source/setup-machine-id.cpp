@@ -39,7 +39,7 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 void
-setup_machine_id ( 
+setup_machine_id [[gnu::noreturn]] ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {

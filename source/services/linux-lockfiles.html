@@ -1,0 +1,45 @@
+<title>The linux-lockfiles service</title>
+<link rel="Up" href="../index.html" title="nosh Guide" />
+<h1>
+The <code>linux-lockfiles</code> service
+</h1>
+
+<p>
+The <code>/var/lock</code> directory on various Linux operating systems is considered outmoded.
+It has two uses:
+</p>
+<ul>
+<li><p>
+It was used by the old van Smoorenburg <code>rc</code> system to try to prevent multiple instances of a single service from being run by accident.
+Under an actual service manager, this is of course superfluous.
+The service manager ensures that by its very nature.
+</p></li>
+<li><p>
+It is used by subsystems that want to negotiate access to things like serial devices that can be used both for dial-out and for dial-in login.
+</p></li>
+</ul>
+
+<p>
+The <code>linux-lockfiles</code> service (which is only built and packaged on Linux operating systems, of course) is currently preset to "enabled" and its preset is packaged as one of a handful of "boot essential" services.
+This service creates <code>/run/lock</code> at bootstrap, which is where Linux operating systems nowadays point <code>/var/lock</code> to with a symbolic link.
+</p>
+
+<p>
+In theory, you should also create an <code>/etc/fstab</code> entry for mounting a memory filesystem on top of <code>/run/lock</code> (which <a href="../fstab.html">the <code>/etc/fstab</code> import subsytem</a> will convert into a <code>mount@-run-lock</code> service bundle, which in turn the <code>linux-lockfiles</code> service bundle orders itself before).
+This is because in theory unprivileged users can otherwise attack <code>/run</code> (which they cannot write to) by filling up<code>/run/lock</code> which (alas, for Debian Linux compatibility) they <em>can</em> write to.
+</p>
+
+<p>
+In practice, this is just papering over the cracks, and the better approaches are:
+</p>
+
+<ul>
+<li><p>
+Just do not use <code>linux-lockfiles</code> at all, with a system-administrator-written preset that overrides the (intentionally low priority and overridable) "boot essentials" one that comes in the package.
+</p></li>
+<li><p>
+Make <code>/run/lock</code> not world-writable.
+It is marked as "restricted write access", allowing the world to create files there with restricted permissions on how users can affect one anothers' files and directories.
+This approach involves not making it world-writable <em>at all</em>, and letting only the programs that want to negotiate device access have the ability to create and delete files there.
+</p></li>
+</ul>

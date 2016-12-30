@@ -1,0 +1,73 @@
+<refentry id="follow-log-directories">
+
+<refmeta>
+<refentrytitle>follow-log-directories</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.29</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>follow-log-directories</refname>
+<refpurpose>follow cyclog logs</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>follow-log-directories</command> 
+<arg choice='req'><replaceable>directory</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>follow-log-directories</command> follows activity in log directories with the aid of a set of cursors.
+For each cursor, it monitors the referenced log directory and outputs any log data newer than the cursor to its standard output, writing log messages about its own operation to standard error.
+It saves the new cursor position as it goes, so that if it is terminated and restarted it can resume at the point where it last left off (as long as that position remains somewhere in the referenced log directory).
+</para>
+
+<para>
+<replaceable>directory</replaceable> is a directory of cursor directories.
+Every subdirectory, or symbolic link to a directory, therein whose name does not start with a dot is a cursor directory.
+</para>
+
+<refsection><title>Cursor directory</title>
+
+<para>
+A cursor directory is a way of maintaining a position, a cursor, within a rotating log directory (such as, for example, is maintained by <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+It is non-intrusive and multiple cursors can reference the same log directory.
+</para>
+
+<para>
+A cursor directory has a subdirectory, or (more usually in practice) symbolic link to a directory, that is named <filename>main</filename> and a timestamp file named <filename>last</filename>.
+See <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> for the format of the log directory denoted by <filename>main/</filename>.
+</para>
+
+<para>
+The cursor position is a TAI64N timestamp, in external form, defaulting to zero if the <filename>last</filename> file is not present or does not contain a parseable TAI64N timestamp as its first line.
+This is the TAI64N timestamp of the last log entry that has been read from the log.
+All log entries, and log files, that are timestamped then or older are skipped as the cursor advances.
+</para>
+
+<para>
+In order to be comparable to the current cursor position, all log lines in the pointed-to log directory must have valid TAI64N timestamps, all (non-current) log files must have valid TAI64N names, and all lines in a single file must be in strictly increasing order.
+This is always the case for correctly formatted log directories.
+Erroneous lines without TAI64N timestamps and incorrectly named files are skipped as the cursor advances.
+</para>
+
+</refsection>
+
+<refsection><title>Security</title>
+The only file that the user running <command>follow-log-directories</command> needs write access to is the <filename>last</filename>, which is updated in place without unlinking.
+(Operating systems guarantee that the  <citerefentry><refentrytitle>write</refentrytitle><manvolnum>2</manvolnum></citerefentry> system call works atomically if certain constraints are met; the update of the timestamp in the <filename>last</filename> file fits within those constraints.)
+This file is created if it does not exist, so ensure that it exists and is (say) zero length if that user has no write access to the enclosing cursor directory.
+The user running <command>follow-log-directories</command> needs no owner access to anything; but of course needs read access to log files and read+execute access to the cursors directory, the individual cursor directories, and the log directories.
+</refsection>
+
+</refsection>
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

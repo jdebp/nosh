@@ -8,9 +8,8 @@ Wants=kmod@ipdivert.service %p-log.service
 After=kmod@ipdivert.service %p-log.service
 
 [Service]
-Type=oneshot
 EnvironmentDirectory=env
-ExecStart=%p ${type} "%I" ${dhcp}
+ExecStart=%p --verbose ${type} "%I" ${dhcp}
 
 [Install]
 WantedBy=static-networking.target

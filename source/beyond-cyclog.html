@@ -1,5 +1,7 @@
 <title>Beyond cyclog</title>
 <link rel="Up" href="logging.html" title="Logging" />
+<link rel="Next" href="log-service-security.html" title="Security of logging" />
+<link rel="Prev" href="log-post-processing.html" title="Log post-processing" />
 <h1>
 Beyond <code>cyclog</code>
 </h1>
@@ -10,11 +12,7 @@ The logging services that are supplied out of the box with the package all use t
 
 <p>
 It is not mandatory to use this, and other logging tools exist that can be easily substituted.
-These include 
-<a href="http://untroubled.org/daemontools-encore/multilog.8.html"><code>multilog</code></a>,
-<a href="http://smarden.org/runit/svlogd.8.html"><code>svlogd</code></a>, 
-and
-<a href="http://skarnet.org/software/s6/s6-log.html"><code>s6-log</code></a>.
+These include <a href="http://untroubled.org/daemontools-encore/multilog.8.html"><code>multilog</code></a>, <a href="http://smarden.org/runit/svlogd.8.html"><code>svlogd</code></a>, and <a href="http://skarnet.org/software/s6/s6-log.html"><code>s6-log</code></a>.
 These tools do more than <code>cyclog</code>, which is aimed at covering the most common use case, but by no means all possible use cases.
 They can do filtering by pattern, compression at rotation time, general post-processing at rotation time (with saved state between rotations), and single-line "status" files.
 </p>

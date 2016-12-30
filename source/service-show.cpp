@@ -145,6 +145,19 @@ write_string_value(
 static
 void
 write_numeric_int_value(
+	const std::string & name,
+	int value
+) {
+	if (json) {
+		std::fprintf(stdout, "%c%s:%d", inner_comma, to_json_string(name).c_str(), value);
+		inner_comma = ',';
+	} else
+		std::fprintf(stdout, "%s=%d\n", name.c_str(), value);
+}
+
+static
+void
+write_numeric_int_value(
 	const char * name,
 	int value
 ) {
@@ -153,6 +166,19 @@ write_numeric_int_value(
 		inner_comma = ',';
 	} else
 		std::fprintf(stdout, "%s=%d\n", name, value);
+}
+
+static
+void
+write_numeric_uint64_value(
+	const std::string & name,
+	uint_least64_t value
+) {
+	if (json) {
+		std::fprintf(stdout, "%c%s:%" PRIu64, inner_comma, to_json_string(name).c_str(), value);
+		inner_comma = ',';
+	} else
+		std::fprintf(stdout, "%s=%" PRIu64 "\n", name.c_str(), value);
 }
 
 static
@@ -167,6 +193,15 @@ write_numeric_uint64_value(
 	} else
 		std::fprintf(stdout, "%s=%" PRIu64 "\n", name, value);
 }
+
+static
+const char * const
+status_event[4] = {
+	"Start",
+	"Run",
+	"Restart",
+	"Stop",
+};
 
 static inline
 const char *
@@ -270,7 +305,7 @@ get_log (
 */
 
 void
-service_show (
+service_show [[gnu::noreturn]] (
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {
@@ -302,91 +337,99 @@ service_show (
 	for (std::vector<const char *>::const_iterator i(args.begin()); i != args.end(); ++i) {
 		const char * name(*i);
 
-		int bundle_dir_fd(open_dir_at(AT_FDCWD, name));
-		if (0 > bundle_dir_fd) {
+		const FileDescriptorOwner bundle_dir_fd(open_dir_at(AT_FDCWD, name));
+		if (0 > bundle_dir_fd.get()) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: %s\n", name, std::strerror(error));
 			continue;
 		}
-		const Relations wants(get_relations(bundle_dir_fd, "wants"));
-		const Relations before(get_relations(bundle_dir_fd, "before"));
-		const Relations after(get_relations(bundle_dir_fd, "after"));
-		const Relations conflicts(get_relations(bundle_dir_fd, "conflicts"));
-		const Relations required_by(get_relations(bundle_dir_fd, "required-by"));
-		const Relations wanted_by(get_relations(bundle_dir_fd, "wanted-by"));
-		const Relations stopped_by(get_relations(bundle_dir_fd, "stopped-by"));
-		const std::string log_service(get_log(bundle_dir_fd));
+		const Relations wants(get_relations(bundle_dir_fd.get(), "wants"));
+		const Relations before(get_relations(bundle_dir_fd.get(), "before"));
+		const Relations after(get_relations(bundle_dir_fd.get(), "after"));
+		const Relations conflicts(get_relations(bundle_dir_fd.get(), "conflicts"));
+		const Relations required_by(get_relations(bundle_dir_fd.get(), "required-by"));
+		const Relations wanted_by(get_relations(bundle_dir_fd.get(), "wanted-by"));
+		const Relations stopped_by(get_relations(bundle_dir_fd.get(), "stopped-by"));
+		const std::string log_service(get_log(bundle_dir_fd.get()));
 
-		int service_dir_fd(open_service_dir(bundle_dir_fd));
-		int supervise_dir_fd(open_supervise_dir(bundle_dir_fd));
-		close(bundle_dir_fd); bundle_dir_fd = -1;
-		if (0 > supervise_dir_fd) {
+		const FileDescriptorOwner supervise_dir_fd(open_supervise_dir(bundle_dir_fd.get()));
+		if (0 > supervise_dir_fd.get()) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: %s: %s\n", name, "supervise", std::strerror(error));
-			close(service_dir_fd);
 			continue;
 		}
-		if (0 > service_dir_fd) {
+		const FileDescriptorOwner service_dir_fd(open_service_dir(bundle_dir_fd.get()));
+		if (0 > service_dir_fd.get()) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: %s: %s\n", name, "service", std::strerror(error));
-			close(supervise_dir_fd);
 			continue;
 		}
 
-		const bool initially_up(is_initially_up(service_dir_fd));
-		const bool run_on_empty(!is_done_after_exit(service_dir_fd));
-		close(service_dir_fd); service_dir_fd = -1;
-		int ok_fd(open_writeexisting_at(supervise_dir_fd, "ok"));
-		if (0 > ok_fd) {
+		const bool initially_up(is_initially_up(service_dir_fd.get()));
+		const bool run_on_empty(!is_done_after_exit(service_dir_fd.get()));
+		const bool ready_after_run(is_ready_after_run(service_dir_fd.get()));
+		const FileDescriptorOwner ok_fd(open_writeexisting_at(supervise_dir_fd.get(), "ok"));
+		if (0 > ok_fd.get()) {
 			const int error(errno);
-			close(supervise_dir_fd);
 			if (ENXIO == error)
 				std::fprintf(stderr, "%s: No supervisor is running\n", name);
 			else
 				std::fprintf(stderr, "%s: %s: %s\n", name, "supervise/ok", std::strerror(error));
 			continue;
 		}
-		close(ok_fd), ok_fd = -1;
-		int status_fd(open_read_at(supervise_dir_fd, "status"));
-		close(supervise_dir_fd), supervise_dir_fd = -1;
-		if (0 > status_fd) {
+		const FileDescriptorOwner status_fd(open_read_at(supervise_dir_fd.get(), "status"));
+		if (0 > status_fd.get()) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: %s: %s\n", name, "status", std::strerror(error));
 			continue;
 		}
-		char status[20];
-		const int b(read(status_fd, status, sizeof status));
-		close(status_fd), status_fd = -1;
+		char status[STATUS_BLOCK_SIZE];
+		const ssize_t b(read(status_fd.get(), status, sizeof status));
 		write_section_start(name);
-		if (b < 18)
+		if (b < DAEMONTOOLS_STATUS_BLOCK_SIZE)
 			write_boolean_value("Loading", true);
 		else {
 			const uint64_t s(unpack_bigendian(status, 8));
 //			const uint32_t n(unpack_bigendian(status + 8, 4));
-			const uint32_t p(unpack_littleendian(status + 12, 4));
+			const uint32_t p(unpack_littleendian(status + THIS_PID_OFFSET, 4));
 
-			if (b < 20) {
+			char & want_flag(status[WANT_FLAG_OFFSET]);
+			if (b < ENCORE_STATUS_BLOCK_SIZE) {
 				// supervise doesn't turn off the want flag.
 				if (p) {
-					if ('u' == status[17]) status[17] = '\0';
+					if ('u' == want_flag) want_flag = '\0';
 				} else {
-					if ('d' == status[17]) status[17] = '\0';
+					if ('d' == want_flag) want_flag = '\0';
 				}
 			}
 			write_string_value("DaemontoolsState", p ? "up" : "down");
-			if (b >= 20)
-				write_string_value("DaemontoolsEncoreState", state_of(status[18]));
+			if (b >= ENCORE_STATUS_BLOCK_SIZE)
+				write_string_value("DaemontoolsEncoreState", state_of(status[ENCORE_STATUS_OFFSET]));
 			write_numeric_int_value("MainPID", p);
 			write_numeric_uint64_value("Timestamp", s);
 			bool leap;
 			const uint64_t z(tai64_to_time(s, leap));
 			write_numeric_uint64_value("UTCTimestamp", z);
-			const char * const want('u' == status[17] ? "up" : 'O' == status[17] ? "once at most" : 'o' == status[17] ? "once" : 'd' == status[17] ? "down" : "nothing");
+			const char * const want('u' == want_flag ? "up" : 'O' == want_flag ? "once at most" : 'o' == want_flag ? "once" : 'd' == want_flag ? "down" : "nothing");
 			write_string_value("Want", want);
-			write_boolean_value("Paused", status[16]);
+			write_boolean_value("Paused", status[PAUSE_FLAG_OFFSET]);
+			for (unsigned int j(0U); j < 4U; ++j) {
+				if (b >= (EXIT_STATUSES_OFFSET + j * EXIT_STATUS_SIZE) + EXIT_STATUS_SIZE) {
+					const uint8_t code(status[EXIT_STATUSES_OFFSET + j * EXIT_STATUS_SIZE]);
+					const uint32_t number(unpack_bigendian(status + (EXIT_STATUSES_OFFSET + j * EXIT_STATUS_SIZE + 1U), 4));
+					const uint64_t stamp(unpack_bigendian(status + (EXIT_STATUSES_OFFSET + j * EXIT_STATUS_SIZE + 5U), 8));
+					write_numeric_int_value(status_event[j] + std::string("ExitStatusCode"), code);
+					write_numeric_int_value(status_event[j] + std::string("ExitStatusNumber"), number);
+					write_numeric_uint64_value(status_event[j] + std::string("Timestamp"), stamp);
+					bool s_leap;
+					const uint64_t zulu(tai64_to_time(stamp, s_leap));
+					write_numeric_uint64_value(status_event[j] + std::string("UTCTimestamp"), zulu);
+				}
+			}
 		}
 		write_boolean_value("Enabled", initially_up);
 		write_boolean_value("RemainAfterExit", run_on_empty);
+		write_boolean_value("ReadyAfterRun", ready_after_run);
 		write_string_array("Wants", wants);
 		write_string_array("Before", before);
 		write_string_array("After", after);

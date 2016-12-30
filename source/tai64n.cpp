@@ -62,7 +62,7 @@ process (
 */
 
 void
-tai64n (
+tai64n [[gnu::noreturn]] (
 	const char * & /*next_prog*/,
 	std::vector<const char *> & args
 ) {

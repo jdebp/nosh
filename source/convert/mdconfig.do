@@ -35,7 +35,7 @@ e="--no-systemd-quirks --etc-bundle --bundle-root"
 redo-ifchange rc.conf /etc/fstab mdconfig@.service newfs@.service populate_md@.service
 
 find "$r/" -maxdepth 1 -type d \( -name 'mdconfig@*' -o -name 'newfs@-dev-md*' \) -print0 |
-xargs -0 system-control disable --
+xargs -0 -r system-control disable -- || true
 
 # The md device list is determined by the list of mdconfig_md* rc.conf variables.
 dump_rc |
@@ -55,7 +55,12 @@ do
 	ftype="`get_var2 \"${md}\" fstype`"
 	newfs="`get_var2 \"${md}\" newfs`"
 
-	dev="-dev-${md}"
+	if test "${file}" != "${file%.uzip}"
+	then
+		dev="-dev-${md}.uzip"
+	else
+		dev="-dev-${md}"
+	fi
 
 	# First the service bundle that creates the block special device.
 
@@ -64,8 +69,8 @@ do
 	system-control convert-systemd-units $e "$r/" "./${mdconfig_service}.service"
 	mkdir -p -m 0755 "$r/${mdconfig_service}/service/env"
 	rm -f -- "$r/${mdconfig_service}/log"
-	ln -s -- "../../sysinit-log" "$r/${mdconfig_service}/log"
-	if test "${file}" == "${file%.uzip}"
+	ln -s -- "../sysinit-log" "$r/${mdconfig_service}/log"
+	if test "${file}" != "${file%.uzip}"
 	then
 		rm -f -- "$r/${mdconfig_service}/wants/kmod@geom_uzip"
 		ln -s -- "../../kmod@geom_uzip" "$r/${mdconfig_service}/wants/"
@@ -115,7 +120,7 @@ do
 		system-control convert-systemd-units $e "$r/" "./${newfs_service}.service"
 		mkdir -p -m 0755 "$r/${newfs_service}/service/env"
 		rm -f -- "$r/${newfs_service}/log"
-		ln -s -- "../../sysinit-log" "$r/${newfs_service}/log"
+		ln -s -- "../sysinit-log" "$r/${newfs_service}/log"
 
 		if test -n "${newfs}"
 		then
@@ -149,7 +154,7 @@ do
 		system-control convert-systemd-units $e "$r/" "./${populate_service}.service"
 		mkdir -p -m 0755 "$r/${populate_service}/service/env"
 		rm -f -- "$r/${populate_service}/log"
-		ln -s -- "../../sysinit-log" "$r/${populate_service}/log"
+		ln -s -- "../sysinit-log" "$r/${populate_service}/log"
 
 		if test -n "${owner}"
 		then

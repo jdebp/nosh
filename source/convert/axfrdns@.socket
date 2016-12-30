@@ -1,0 +1,20 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=DNS/TCP socket on %i
+
+[Socket]
+Backlog=2
+BindIPv6Only=both
+ListenStream=%i:domain
+Accept=true
+MaxConnections=16
+UCSPIRules=true
+LogUCSPIRules=yes
+NoDelay=false
+ReceiveBuffer=65536
+
+[Install]
+WantedBy=server.target

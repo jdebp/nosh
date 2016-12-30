@@ -11,7 +11,7 @@ Type=oneshot
 EnvironmentDirectory=env
 ExecStart=usbconfig ${busnum:+-u "${busnum}"} ${addr:+-a "${addr}"} do_request 0x40 0 0 0 0
 # This is a one-shot service that can be re-triggered by starting it again.
-RemainAfterExit=1
+#RemainAfterExit=1
 Restart=no
 
 [Install]

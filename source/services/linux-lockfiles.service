@@ -9,13 +9,13 @@ Before=mount@-run-lock.service
 After=mount@-run.service mount@-.service
 
 [Service]
+# Do not run this as nobody; the whole point is to create a system runtime directory, not a user one.
 #User=nobody
 RuntimeDirectory=lock
 RuntimeDirectoryMode=01777
 # This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
 Restart=always
-ExecStart=true
 
 [Install]
 StoppedBy=shutdown.target

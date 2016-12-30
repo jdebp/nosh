@@ -119,16 +119,16 @@ tai64_to_time (
 ) {
 	leap = false;
 	if (time_t_is_tai())
-		return s - 0x4000000000000000ULL - 10UL;
+		return static_cast<time_t>(s - 0x4000000000000000ULL - 10UL);
 	for (std::size_t i(sizeof leap_seconds_table/sizeof *leap_seconds_table); i > 0U; ) {
 		const struct leapsec & l(leap_seconds_table[--i]);
 		if (l.start == s) {
 			leap = l.leap;
-			return s - 0x4000000000000000ULL - l.offset;
+			return static_cast<time_t>(s - 0x4000000000000000ULL - l.offset);
 		}
-		if (l.start < s) return s - 0x4000000000000000ULL - l.offset;
+		if (l.start < s) return static_cast<time_t>(s - 0x4000000000000000ULL - l.offset);
 	}
-	return s - 0x4000000000000000ULL;
+	return static_cast<time_t>(s - 0x4000000000000000ULL);
 }
 
 uint64_t

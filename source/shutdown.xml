@@ -57,7 +57,7 @@ The upstart, old BSD, XENIX, UnixWare, and systemd <command>shutdown</command> c
 </para>
 
 <para>
-The first two require that the time to shutdown always be specified; the other three default to 1 minute from now in the absence of any specification.
+The first two require that the time to shutdown always be specified, aborting if it is not; the other three default to 1 minute from now in the absence of any specification.
 </para>
 
 <para>
@@ -95,12 +95,11 @@ In order to avoid embarrassment resulting from unexpected defaults, explicitly s
 <para>
 There is no "single-user" mode now.
 Its replacements are the <filename>emergency</filename> and <filename>rescue</filename> targets, described in <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>, which are startup targets that are not reachable via shutdown procedures.
-As a consequence, the compatibility behaviour is as follows:
+As a consequence, poweroff is now the default action and the compatibility behaviour is as follows:
 </para>
 <itemizedlist>
 <listitem><para>
-Poweroff is now the default action.
-The <arg choice='plain'>-h</arg> and <arg choice='plain'>-P</arg> options are considered to be on by default anyway, and thus have no effect.
+The <arg choice='plain'>-h</arg> and <arg choice='plain'>-P</arg> options are considered to be on by default, and thus have no effect.
 </para></listitem>
 <listitem><para>
 The <arg choice='plain'>-r</arg> and <arg choice='plain'>-H</arg> options select the non-default actions.
@@ -108,7 +107,9 @@ The <arg choice='plain'>-r</arg> and <arg choice='plain'>-H</arg> options select
 </itemizedlist>
 
 <para>
-The <arg choice='plain'>-o</arg>, <arg choice='plain'>-d</arg>, <arg choice='plain'>-n</arg>, <arg choice='plain'>-f</arg>, <arg choice='plain'>-F</arg>, and <arg choice='plain'>-t</arg> options from the old toolsets are all errors.
+The <arg choice='plain'>-d</arg>, <arg choice='plain'>-n</arg>, <arg choice='plain'>-f</arg>, <arg choice='plain'>-F</arg>, and <arg choice='plain'>-t</arg> options from the old toolsets are all errors.
+The <arg choice='plain'>-o</arg> option from the old toolsets is ignored.
+Because:
 </para>
 <itemizedlist>
 <listitem><para>

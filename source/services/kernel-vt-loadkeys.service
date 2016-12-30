@@ -10,6 +10,7 @@ Description=Set up kernel virtual terminals keyboard map
 Wants=local-fs.target
 
 [Service]
+Type=oneshot
 TTYPath=tty0
 TTYReset=true
 StandardInput=tty
@@ -19,7 +20,7 @@ EnvironmentDirectory=env
 ExecStart=kbd_mode -u
 ExecStart=loadkeys --unicode ${KEYMAP:-us} ${KEYMAP_TOGGLE}
 # This is a one-shot service that can be re-triggered by starting it again.
-RemainAfterExit=1
+#RemainAfterExit=1
 Restart=no
 
 [Install]

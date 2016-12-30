@@ -23,6 +23,8 @@ ReserveSignalsForKQueue::ReserveSignalsForKQueue(
 		sigaddset(&masked_signals, signo);
 	va_end(l);
 	sigprocmask(SIG_BLOCK, &masked_signals, &original);
+#else
+	static_cast<void>(signo);	// silence compiler warning
 #endif
 }
 

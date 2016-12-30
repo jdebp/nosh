@@ -48,7 +48,7 @@ process_message (
 */
 
 void
-klog_read (
+klog_read [[gnu::noreturn]] (
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {

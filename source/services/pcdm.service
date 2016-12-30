@@ -7,7 +7,12 @@ Description=PC-BSD/TrueOS display manager
 After=ttylogin@ttyv8 ttylogin@tty9 hald
 
 [Service]
-ExecStart=PCDMd
+EnvironmentDirectory=env
+# This is not strictly necessary, but it helps debug process ancestry with ps.
+SessionLeader=true
+# The shell running ./helper can handle this.
+LocalReaper=true
+ExecStart=./helper
 
 [Install]
 WantedBy=workstation.target

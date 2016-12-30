@@ -7,8 +7,6 @@ Description=PC-BSD/TrueOS Warden jails and jailed daemons collection
 
 [Service]
 User=nobody
-# This is a pseudo-daemon that does not have a running process.
-RemainAfterExit=yes
 
 [Install]
 StoppedBy=shutdown.target

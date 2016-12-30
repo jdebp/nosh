@@ -4,14 +4,15 @@
 
 [Unit]
 Description=Bernstein's proxy DNS server daemon, modified to use systemd LISTEN_FDS protocol
-After=network-interfaces.service
+After=network-interfaces.service entropy.service
 
 [Service]
 EnvironmentDirectory=env
 EnvironmentUser=dnscache-d
 LimitDATA=3000000
 LimitNOFILE=250
-ExecStart=fdredir -r 0 seed %p
+# The entropy service, which we are ordered after, ensures that /dev/urandom is re-seeded by the time that this starts up.
+ExecStart=pipe --inwards dd if=/dev/urandom of=/dev/stdout bs=128 count=1 | %p
 RestartSec=0.2
 
 [Install]

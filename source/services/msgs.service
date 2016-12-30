@@ -9,7 +9,7 @@ Description=Make a bounds file for msgs(1) if there isn't one already
 Type=oneshot
 ExecStart=sh -c 'test -d /var/msgs && test ! -f /var/msgs/bounds && test ! -L /var/msgs/bounds && echo 0 > /var/msgs/bounds'
 # This is a one-shot service that can be re-triggered by starting it again.
-RemainAfterExit=1
+#RemainAfterExit=1
 Restart=no
 
 [Install]

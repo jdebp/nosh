@@ -74,7 +74,12 @@ Linux)	etc_services="../package/common-etc-services ../package/linux-etc-service
 esac
 
 case "${base}" in
-ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|dhclient-log|uhidd-log|ifconfig-log|cyclog@*) 
+cyclog@*) 
+	log=
+	etc=
+	after=
+	;;
+ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|dhclient-log|uhidd-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log) 
 	log=
 	etc=
 	after=
@@ -84,7 +89,7 @@ emergency-login@console)
 	etc=--etc-bundle
 	after=
 	;;
-sysinit-log) 
+sysinit-log|suckless-mdev-log|busybox-mdev-log|vdev-log|devd-log) 
 	log=
 	etc=--etc-bundle
 	after=
@@ -129,7 +134,7 @@ suckless-mdev|suckless-mdev-rescan)
 	;;
 esac
 
-./system-control convert-systemd-units --no-systemd-quirks ${escape} ${etc} --bundle-root services.new/ "${unit}"
+./system-control convert-systemd-units --no-systemd-quirks --no-generation-comment ${escape} ${etc} --bundle-root services.new/ "${unit}"
 
 test -n "${log}" && ln -s -f "${log}" services.new/"${base}"/log
 test -n "${after}" && ln -s -f "../${after}" services.new/"${base}"/after/
@@ -149,20 +154,11 @@ case "${base}" in
 cyclog@*) 
 	ln -f -s -- /var/log/sv/"${base#cyclog@}" services.new/"${base}"/main
 	;;
-devd-log) 
-	ln -f -s -- /var/log/sv/devd services.new/"${base}"/main
+devd-log|sysinit-log)
+	ln -f -s -- /var/log/sv/"${base%-log}" services.new/"${base}"/main
 	;;
-sppp-log) 
-	ln -f -s -- /var/log/sv/sppp services.new/"${base}"/main
-	;;
-natd-log) 
-	ln -f -s -- /var/log/sv/natd services.new/"${base}"/main
-	;;
-sysinit-log) 
-	ln -f -s -- /var/log/sv/sysinit services.new/"${base}"/main
-	;;
-ataidle-log) 
-	ln -f -s -- /var/log/sv/ataidle services.new/"${base}"/main
+ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|dhclient-log|uhidd-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log) 
+	ln -f -s -- /var/log/sv/"${base%-log}" services.new/"${base}"/main
 	;;
 esac
 
@@ -229,12 +225,16 @@ tinydns)
 axfrdns)
 	ln -s ../../tinydns/service/root services.new/"${base}"/service/
 	;;
+dbus)
+	redo-ifchange services/system-wide.conf
+	install -m 0644 -- services/system-wide.conf services.new/"${base}"/service/system-wide.conf
+	;;
 esac
 
 if test -e "${name}".tmpfiles 
 then
 	redo-ifchange "${name}".tmpfiles 
-	cp -p "${name}".tmpfiles services.new/"${base}"/service/tmpfiles
+	install -m 0644 -- "${name}".tmpfiles services.new/"${base}"/service/tmpfiles
 fi
 if test -e "${name}".helper
 then

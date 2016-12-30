@@ -2,10 +2,9 @@
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
 
-# This is needed on Linux systems where NetworkManager has been configured not to manage the [ifupdown] interfaces.
-
 [Unit]
 Description=Linux statically-configured network interface settings
+Description=This is needed on Linux systems where NetworkManager has been configured not to manage the [ifupdown] interfaces.
 After=network-runtime.service
 Wants=network-runtime.service
 

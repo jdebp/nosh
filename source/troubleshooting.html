@@ -1,6 +1,5 @@
 <title>Troubleshooting</title>
 <link rel="Up" href="index.html" title="nosh Guide" />
-<link rel="Prev" href="user-virtual-terminals.html" title="user-space virtual terminals" />
 <h1>
 Troubleshooting
 </h1>
@@ -31,7 +30,7 @@ These long-running initialization actions are <em>not</em> necessarily stuck jus
 </p>
 
 <h2 style="border-bottom: 1px solid grey">
-The system bootstrap never fully completes
+The system bootstrap never fully completes.
 </h2>
 
 <p>
@@ -133,3 +132,28 @@ An <code>/etc/fstab</code> entry is ignored.
 The conversion utility ignores entries that are not marked as <code>rw</code>, <code>rq</code>, <code>ro</code>, or <code>sw</code>.
 Ensure that the entry is marked with a correct mount type.
 </p>
+
+<h2 style="border-bottom: 1px solid grey">
+GNOME Terminal refuses to start.
+</h2>
+
+<p>
+The GNOME Terminal command does little more than send its environment and arguments via the Desktop Bus to the <code>org.GNOME.Terminal</code> service.
+Unfortunately, this service is excessively fussy and easy to break.
+</p>
+
+<ul>
+<li><p>
+Despite the fact that it is supposed to be capable of talking to multiple X displays, and so should start up in a "not connected to any displays" mode initially, it actually attempts to connect to an X display at startup.
+So not only must it have the <code>DISPLAY</code> environment variable <a href="per-user-user-services.html#environment">set in its per-service environment</a>, that must denote a currently active X display that will accept cookie-less connections from the GNOME Terminal service.
+</p><p>
+This is just an outright bug.
+</p></li>
+<li><p>
+The GNOME Terminal server requires that a UTF-8 locale be configured in its <code>LANG</code> environment variable, and refuses to start if it is not.
+It cannot be just the <code>C</code> locale.
+</p></li>
+<li><p>
+GNOME Terminal simply does not like some X servers, including the one in FreeBSD/TrueOS 11.
+</p></li>
+</ul>

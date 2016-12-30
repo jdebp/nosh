@@ -73,7 +73,7 @@ machineenv (
 	getdomainname(name, sizeof name);
 	set("DOMAINNAME", name);
 #else
-	const int max(sysconf(_SC_HOST_NAME_MAX));
+	const long max(sysconf(_SC_HOST_NAME_MAX));
 	if (0 > max) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "HOST_NAME_MAX", std::strerror(error));

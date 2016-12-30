@@ -4,6 +4,7 @@ bcron-spool
 dbus
 dbmail-imapd
 dbmail-pop3d
+epmd
 exim4-smtp-relay
 exim4-smtp-submission
 fcgiwrap
@@ -20,6 +21,7 @@ lircd
 local-rsyslogd
 local-syslogd
 local-syslog-read
+mpd
 nagios-nrpe-server
 oidentd
 opal-prd
@@ -28,10 +30,13 @@ qmail-smtp-relay
 qmail-smtp-submission
 rsync
 saned
+sendmail-smtp-relay
+sendmail-smtp-submission
 sshd
 svnserve
 udp-rsyslogd
 udp-syslogd
 udp-syslog-read
 uuidd
+uwsgi-emperor
 vsftpd

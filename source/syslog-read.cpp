@@ -81,7 +81,7 @@ process_message (
 */
 
 void
-syslog_read (
+syslog_read [[gnu::noreturn]] (
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {

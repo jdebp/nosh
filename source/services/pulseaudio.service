@@ -3,13 +3,12 @@
 ## **************************************************************************
 
 [Unit]
-Description=PulseAudio Daemon
+Description=PulseAudio daemon
+Description=https://freedesktop.org/wiki/Software/PulseAudio/Documentation/User/WhatIsWrongWithSystemWide/
  
 [Service]
-# FIXME: Is this really needed?
-systemdWorkingDirectory=on
 PrivateTmp=true
-ExecStart=pulseaudio --system --disallow-exit --disallow-module-loading
+ExecStart=%p --system --disallow-exit --disallow-module-loading
  
 [Install]
 WantedBy=multi-user.target

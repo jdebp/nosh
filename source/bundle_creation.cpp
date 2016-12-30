@@ -14,6 +14,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "fdutils.h"
 #include "bundle_creation.h"
 #include "FileDescriptorOwner.h"
+#include "home-dir.h"
 
 void
 create_link (
@@ -38,6 +39,7 @@ void
 create_links (
 	const char * prog,
 	const std::string & bund,
+	const bool is_user,
 	const bool is_target,
 	const bool services_are_relative,
 	const bool targets_are_relative,
@@ -46,6 +48,7 @@ create_links (
 	const std::string & subdir
 ) {
 	const std::list<std::string> list(split_list(names));
+	const std::string home(effective_user_home_dir());
 	for (std::list<std::string>::const_iterator i(list.begin()); list.end() != i; ++i) {
 		const std::string & name(*i);
 		std::string base, link, target;
@@ -55,17 +58,28 @@ create_links (
 					target = "../../" + base;
 				else
 					target = "../../../targets/" + base;
-			} else
-				target = "/etc/service-bundles/targets/" + base;
+			} else {
+				if (is_user)
+					target = home + "/.config/service-bundles/targets/" + base;
+				else
+					target = "/etc/service-bundles/targets/" + base;
+			}
 			link = subdir + base;
 		} else
 		if (ends_in(name, ".service", base)
 		||  ends_in(name, ".socket", base)
 		) {
-			if (services_are_relative)
-				target = "../../" + base;
-			else
-				target = "/var/sv/" + base;
+			if (services_are_relative) {
+				if (is_target)
+					target = "../../../services/" + base;
+				else
+					target = "../../" + base;
+			} else {
+				if (is_user)
+					target = home + "/.config/service-bundles/services/" + base;
+				else
+					target = "/var/sv/" + base;
+			}
 			link = subdir + base;
 		} else 
 		{
@@ -121,12 +135,17 @@ flag_file (
 	bool make
 ) {
 	if (make) {
-		const FileDescriptorOwner fd(open_writecreate_at(service_dir_fd.get(), name, 0400));
+		FileDescriptorOwner fd(open_read_at(service_dir_fd.get(), name));
 		if (0 > fd.get()) {
-			const int error(errno);
-			std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, service_dirname.c_str(), name, std::strerror(error));
-			throw EXIT_FAILURE;
-		}
+			if (ENOENT == errno)
+				fd.reset(open_writecreate_at(service_dir_fd.get(), name, 0400));
+			if (0 > fd.get()) {
+				const int error(errno);
+				std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, service_dirname.c_str(), name, std::strerror(error));
+				throw EXIT_FAILURE;
+			}
+		} else
+			fchmod(fd.get(), 0400);
 	} else {
 		const int rc(unlinkat(service_dir_fd.get(), name, 0));
 		if (0 > rc && ENOENT != errno) {

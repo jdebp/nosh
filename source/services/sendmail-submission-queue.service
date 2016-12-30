@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Sendmail Submission queue runner daemon
+
+[Service]
+EnvironmentDirectory=env
+LimitMEMORY=70000000
+ExecStart=sendmail -L %p -Ac -q30m ${flags}
+ExecStartPre=sendmail -L %p -Ac -bC
+
+[Install]
+WantedBy=server.target

@@ -47,6 +47,13 @@ is_physical_interface() {
 	esac
 	return 0
 }
+is_natd_interface() {
+	for i in `list_natd_interfaces`
+	do
+		test _"$i" -ne _"$1" || return 0
+	done
+	return 1
+}
 is_ip4_address() { echo "$1" | grep -E -q '^[0-9]+(\.[0-9]+){0,3}$' ; }
 get_ifconfig() { read_rc ifconfig_"$1" || read_rc ifconfig_DEFAULT || true ; }
 
@@ -60,7 +67,6 @@ make_arp() {
 	service="static_arp@$1"
 	system-control convert-systemd-units $e "$r/" "./${service}.service"
 	install -d -m 0755 "$r/${service}/service/env"
-	system-control disable "${service}"
 	system-control set-service-env "$r/${service}" addr "`car $2`"
 	system-control set-service-env "$r/${service}" dest "`cdr $2`"
 	rm -f -- "$r/${service}/log"
@@ -73,7 +79,6 @@ make_ndp() {
 	service="static_ndp@$i"
 	system-control convert-systemd-units $e "$r/" "./${service}.service"
 	install -d -m 0755 "$r/${service}/service/env"
-	system-control disable "${service}"
 	system-control set-service-env "$r/${service}" addr "`car $pair`"
 	system-control set-service-env "$r/${service}" dest "`cdr $pair`"
 	rm -f -- "$r/${service}/log"
@@ -86,7 +91,6 @@ make_ip4_route() {
 	service="static_ip4@$1"
 	system-control convert-systemd-units $e "$r/" "./${service}.service"
 	install -d -m 0755 "$r/${service}/service/env"
-	system-control disable "${service}"
 	system-control set-service-env "$r/${service}" route "$2"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/cyclog@network-interfaces" "$r/${service}/log"
@@ -98,7 +102,6 @@ make_ip6_route() {
 	service="static_ip6@$1"
 	system-control convert-systemd-units $e "$r/" "./${service}.service"
 	install -d -m 0755 "$r/${service}/service/env"
-	system-control disable "${service}"
 	system-control set-service-env "$r/${service}" route "$2"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/cyclog@network-interfaces" "$r/${service}/log"
@@ -167,7 +170,19 @@ make_natd() {
 	else
 		system-control set-service-env "${service}" dynamic ""
 	fi
-	system-control print-service-env "${service}"
+	if get_ifconfig "$1" | grep -q -E '\<NAT\>' || 
+	   is_natd_interface "$1"
+	then
+		system-control preset "${service}"
+	else
+		system-control disable "${service}"
+	fi
+	if system-control is-enabled "${service}"
+	then
+		echo on "${service}"
+	else
+		echo off "${service}"
+	fi
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/natd-log" "$r/${service}/log"
 	system-control preset natd-log
@@ -214,6 +229,7 @@ make_hostap() {
 	fi
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/cyclog@hostapd" "$r/${service}/log"
+	system-control preset cyclog@hostapd
 }
 
 make_wpa() {
@@ -235,6 +251,7 @@ make_wpa() {
 	fi
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/cyclog@wpa_supplicant" "$r/${service}/log"
+	system-control preset cyclog@wpa_supplicant
 }
 
 make_ppp() {
@@ -384,19 +401,6 @@ do
 	make_hostap "$i" >> "$3"
 	make_wpa "$i" >> "$3"
 	make_dhclient "$i" >> "$3"
-done
-
-for i in `list_natd_interfaces`
-do
-	test -n "$i" || continue
-	is_physical_interface "$i" || continue
-	system-control preset "natd@${i}"
-	if system-control is-enabled "natd@${i}"
-	then
-		echo >> "$3" on "natd@${i}"
-	else
-		echo >> "$3" off "natd@${i}"
-	fi
 done
 
 get_var2 ppp profile |

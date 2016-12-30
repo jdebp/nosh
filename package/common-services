@@ -34,7 +34,6 @@ dhclient-log
 dnscache
 dovecot
 entropy
-epmd
 exim4-queue
 fail2ban
 fam
@@ -48,6 +47,7 @@ fscd
 fwknopd
 gdm
 genkdmconf
+geoclue
 gitlab-sidekiq
 gitlab-unicorn
 gogs
@@ -119,6 +119,7 @@ plexmediaserver
 polipo
 polkitd
 postgresql
+postgrey
 powerd
 powerd++
 ppp-log
@@ -136,6 +137,8 @@ salt-minion
 salt-syndic
 samba
 saslauthd
+sendmail-relay-queue
+sendmail-submission-queue
 sickbeard
 slapd
 slim
@@ -159,6 +162,7 @@ swift@object-replicator
 swift@object-updater
 sysctl
 taiclock
+tcsd
 terminal-emulator@vc1
 terminal-emulator@vc2
 terminal-emulator@vc3

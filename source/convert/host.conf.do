@@ -7,7 +7,7 @@
 # This is invoked by all.do .
 #
 
-nss=/etc/nsswitch.conf
+nss=nsswitch.conf
 
 redo-ifchange "$nss"
 echo > "$3" "# Automatically re-generated from $nss"

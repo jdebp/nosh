@@ -192,7 +192,7 @@ repaint (
 */
 
 void
-monitor_fsck_progress ( 
+monitor_fsck_progress [[gnu::noreturn]] ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {
@@ -311,7 +311,7 @@ exit_error:
 				} else {
 					ConnectedClient & client(clients[fd]);
 					char buf[8U * 1024U];
-					const int c(read(fd, buf, sizeof buf));
+					const ssize_t c(read(fd, buf, sizeof buf));
 					if (c > 0)
 						client.lines += std::string(buf, buf + c);
 					if (hangup && !c && !client.lines.empty())

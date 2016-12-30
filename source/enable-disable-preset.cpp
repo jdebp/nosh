@@ -27,6 +27,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include "FileDescriptorOwner.h"
 #include "DirStar.h"
 #include "terminal_database.h"
+#include "runtime-dir.h"
+#include "home-dir.h"
 
 /* Common Internals *********************************************************
 // **************************************************************************
@@ -225,9 +227,11 @@ wildmat (
 				++p;
 				if (p == pe) return false;
 				// Fall through to:
+				[[clang::fallthrough]];
 			default:
 				if (*p != *n) return false;
 				// Fall through to:
+				[[clang::fallthrough]];
 			case '?':
 				++p;
 				++n;
@@ -290,16 +294,51 @@ scan (
 	return false;
 }
 
+static inline
+void
+scan_preset_files (
+	std::string & earliest,
+	const std::string & preset_dir_name,
+	const std::string & name,
+	const std::string & suffix,
+	bool & wants_enable
+) {
+	FileDescriptorOwner preset_dir_fd(open_dir_at(AT_FDCWD, preset_dir_name.c_str()));
+	if (preset_dir_fd.get() < 0) return;
+	const DirStar preset_dir(preset_dir_fd);
+	if (!preset_dir) return;
+	for (;;) {
+		const dirent * entry(readdir(preset_dir));
+		if (!entry) break;
+#if defined(_DIRENT_HAVE_D_TYPE)
+		if (DT_REG != entry->d_type && DT_LNK != entry->d_type) continue;
+#endif
+#if defined(_DIRENT_HAVE_D_NAMLEN)
+		if (1 > entry->d_namlen) continue;
+#endif
+		if ('.' == entry->d_name[0]) continue;
+		const std::string d_name(entry->d_name);
+		if (!earliest.empty() && earliest <= d_name) continue;
+		const std::string p(preset_dir_name + d_name);
+		const int f(open_read_at(preset_dir.fd(), entry->d_name));
+		if (0 > f) continue;
+		FileStar preset_file(fdopen(f, "rt"));
+		if (!preset_file) continue;
+		if (scan(name, suffix, preset_file, wants_enable))
+			earliest = d_name;
+	}
+}
+
 static
 const char *
 preset_directories[] = {
-	"/etc/system-control/presets/",
 	"/etc/systemd/system-preset/",
-	"/usr/share/system-control/presets/",
+	"/etc/system-control/presets/",
 	"/lib/systemd/system-preset/",
+	"/usr/share/system-control/presets/",
 	"/usr/lib/systemd/system-preset/",
-	"/usr/local/etc/system-control/presets/",
 	"/usr/local/lib/systemd/system-preset/",
+	"/usr/local/etc/system-control/presets/",
 };
 
 static inline
@@ -311,32 +350,23 @@ query_systemd_preset (
 ) {
 	wants = true;
 	std::string earliest;
-	for (size_t i(0); i < sizeof preset_directories/sizeof *preset_directories; ++i) {
-		const std::string preset_dir_name(preset_directories[i]);
-		FileDescriptorOwner preset_dir_fd(open_dir_at(AT_FDCWD, preset_dir_name.c_str()));
-		if (preset_dir_fd.get() < 0) continue;
-		const DirStar preset_dir(preset_dir_fd);
-		if (!preset_dir) continue;
-		for (;;) {
-			const dirent * entry(readdir(preset_dir));
-			if (!entry) break;
-#if defined(_DIRENT_HAVE_D_TYPE)
-			if (DT_REG != entry->d_type && DT_LNK != entry->d_type) continue;
-#endif
-#if defined(_DIRENT_HAVE_D_NAMLEN)
-			if (1 > entry->d_namlen) continue;
-#endif
-			if ('.' == entry->d_name[0]) continue;
-			const std::string d_name(entry->d_name);
-			if (!earliest.empty() && earliest <= d_name) continue;
-			const std::string p(preset_dir_name + d_name);
-			const int f(open_read_at(preset_dir.fd(), entry->d_name));
-			if (0 > f) continue;
-			FileStar preset_file(fdopen(f, "rt"));
-			if (!preset_file) continue;
-			if (scan(name, suffix, preset_file, wants))
-				earliest = d_name;
-		}
+	if (per_user_mode) {
+		const std::string h(effective_user_home_dir());
+		const std::string r(effective_user_runtime_dir());
+		const std::string
+		user_preset_directories[6] = {
+			"/etc/systemd/user-preset/",
+			"/lib/systemd/user-preset/",
+			"/usr/lib/systemd/user-preset/",
+			"/usr/local/lib/systemd/user-preset/",
+			h + "/.config/system-control/presets/",
+			r + "/system-control/presets/"
+		};
+		for (const std::string * q(user_preset_directories); q < user_preset_directories + sizeof user_preset_directories/sizeof *user_preset_directories; ++q)
+			scan_preset_files (earliest, *q, name, suffix, wants);
+	} else {
+		for (size_t i(0); i < sizeof preset_directories/sizeof *preset_directories; ++i)
+			scan_preset_files (earliest, preset_directories[i], name, suffix, wants);
 	}
 	return !earliest.empty();
 }
@@ -385,8 +415,8 @@ unescape (
 					c = *q;
 					if (!std::isxdigit(c)) break;
 					++q;
-					c = std::isdigit(c) ? (c - '0') : (std::tolower(c) - 'a' + 10);
-					v = (v << 4) | c;
+					const unsigned char d(std::isdigit(c) ? (c - '0') : (std::tolower(c) - 'a' + 10));
+					v = (v << 4) | d;
 				}
 				r += char(v);
 			}
@@ -453,7 +483,7 @@ determine_preset (
 */
 
 void
-enable ( 
+enable [[gnu::noreturn]] ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {
@@ -494,7 +524,7 @@ enable (
 }
 
 void
-disable ( 
+disable [[gnu::noreturn]] ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {
@@ -535,7 +565,7 @@ disable (
 }
 
 void
-preset ( 
+preset [[gnu::noreturn]] ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {

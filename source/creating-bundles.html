@@ -86,7 +86,7 @@ A rough guide for converting from Mewburn <code>rc.d</code> is:
 <dl>
 <dt><code>FILESYSTEMS</code></dt>
 <dd><p>
-<code>BEFORE FILESYSTEMS</code> does not occur out of the box in BSDs.
+<code>BEFORE FILESYSTEMS</code> does not occur out of the box in BSDs but would be equivalent to <code>before/</code> the <code>local-fs-pre</code> target.
 <code>REQUIRES FILESYSTEMS</code> is equivalent to <code>wants/</code> and <code>after/</code> the <code>local-fs</code> standard target.
 </p></dd>
 <dt><code>SERVERS</code></dt>
@@ -112,6 +112,8 @@ This is somewhat woolly, like <code>NETWORKING</code>.
 Deferring things until "after the system is secure" should be done by ordering them with respect to services such as <code>securelevel</code> if it should be done at all.
 Moreover, the fact that "login services" are held off until the system has waited for pretty much everything else to finish, including services that take a long time to initialize but that would not actually prohibit log-on, is a significant problem with the very idea of this ordering milestone.
 </p><p>
-TTY login services generally order themselves <code>after/</code> other specific services (e.g. <code>hostname</code>) rather than standard targets.
+TTY login services order themselves <code>after/</code> the <code>multi-user-pre</code> standard target.
+A very few services, that actually directly affect multi-user login (such as the production of the message of the day or setting the dynamic hostname) are ordered before this target, equivalent to <code>BEFORE LOGIN</code>.
+Most services should not be.
 </p></dd>
 </dl>

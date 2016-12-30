@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Music Player daemon
+
+[Service]
+RuntimeDirectory=%p
+RuntimeDirectoryMode=02755
+RuntimeDirectoryOwner=%p
+ExecStart=%p --no-daemon --stderr --stdout --verbose /etc/%p.conf
+
+[Install]

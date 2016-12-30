@@ -15,7 +15,7 @@ fi
 # The build and release directories need not be on the same disc volume.
 # And the files released must not be potentially overwritable and truncatable by the compiler/linker during subsequent builds.
 # But released files can be links to other released files, of course.
-mkdir -p -m 0755 command manual config guide
+mkdir -p -m 0755 command manual config guide guide/services
 
 # ##############################################################################
 # Build all of the ...{new} files in ./command and ./manual.
@@ -211,7 +211,7 @@ done
 
 # ##############################################################################
 # Build all of the {new} files in ./config.
-mkdir -p -m 0755 config/presets config/systemd config/convert config/mewburn-rc.d config/openbsd-rc.d config/vt
+install -d -m 0755 config/presets config/systemd config/convert config/mewburn-rc.d config/openbsd-rc.d config/vt config/devd
 cat package/systemd-services package/tmpfiles-snippets |
 while read i
 do
@@ -250,6 +250,13 @@ do
 	rm -f -- config/vt/"$i"{new}
 	cp -p -f -- build/"$i" config/vt/"$i"{new}
 done 
+# Plug and Play manager rulesets
+cat package/devd-rules |
+while read i
+do
+	rm -f -- config/devd/"$i".conf{new}
+	cp -p -f -- build/devd/"$i".conf config/devd/"$i".conf{new}
+done
 
 # ##############################################################################
 # Rename the ...{new} directories and files in ./config.
@@ -292,3 +299,9 @@ for i in issue.vc
 do
 	mv -f -- config/vt/"$i"{new} config/vt/"$i"
 done 
+# Plug and Play manager rulesets
+cat package/devd-rules |
+while read i
+do
+	mv -f -- config/devd/"$i".conf{new} config/devd/"$i".conf
+done

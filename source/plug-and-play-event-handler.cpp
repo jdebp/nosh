@@ -160,7 +160,7 @@ exit_error:
 			const int l(static_cast<int>(p[i].ident));
 
 			char buf[8U * 1024U];
-			const int r(read(l, buf, sizeof buf));
+			const ssize_t r(read(l, buf, sizeof buf));
 			if (0 > r) goto exit_error;
 
 			const int child(fork());

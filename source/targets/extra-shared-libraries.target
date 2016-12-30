@@ -7,8 +7,6 @@ Description=milestone that designates the availability of non-system shared libr
 
 [Service]
 User=nobody
-# This is a pseudo-daemon that does not have a running process.
-RemainAfterExit=yes
 
 [Install]
 StoppedBy=shutdown.target

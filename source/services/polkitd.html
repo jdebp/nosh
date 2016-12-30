@@ -1,0 +1,26 @@
+<title>The PolicyKit service</title>
+<link rel="Up" href="../index.html" title="nosh Guide" />
+<h1>
+The PolicyKit service
+</h1>
+
+<p>
+The PolicyKit program has some bugs that you may encounter.
+<p>
+
+<p>
+The <code>polkitd</code> program itself switches to an unprivileged user.
+Then it tries to read <code>/usr/local/share/polkit-1/rules.d/</code> and <code>/var/run/ConsoleKit/</code>.
+</p>
+
+<p>
+Sometimes <code>/usr/local/share/polkit-1/rules.d/</code> is installed owned by the superuser with <code>rwx------</code> permissions, and so not accessible to the unprivileged user.
+Sometimes the ConsoleKit service is simply not running.
+The <code>polkitd</code> program's failure mode in such scenarios is to keep trying, incessantly, to access these, every few seconds.
+This is visible as the d&aelig;mon constantly consuming (some) CPU time and continually appearing in the listings of <code>top&nbsp;-I</code> and suchlike.
+<p>
+
+<p>
+The fix for the case of <code>/usr/local/share/polkit-1/rules.d/</code> is to grant the unprivileged user read and execute access to it.
+The fix for the case of <code>/var/run/ConsoleKit/</code> is either to create it by hand or to run the ConsoleKit service (whose service bundle creates it as a "runtime directory" for the service, removing it when the service is shut down).
+</p>

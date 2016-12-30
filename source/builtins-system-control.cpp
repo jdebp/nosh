@@ -31,6 +31,7 @@ extern void status ( const char * & , std::vector<const char *> & ) ;
 extern void print_service_env ( const char * & , std::vector<const char *> & ) ;
 extern void set_service_env ( const char * & , std::vector<const char *> & ) ;
 extern void try_restart ( const char * & , std::vector<const char *> & ) ;
+extern void hangup ( const char * & , std::vector<const char *> & ) ;
 extern void is_active ( const char * & , std::vector<const char *> & ) ;
 extern void is_loaded ( const char * & , std::vector<const char *> & ) ;
 extern void is_enabled ( const char * & , std::vector<const char *> & ) ;
@@ -111,8 +112,10 @@ commands[] = {
 	{	"print-service-env",		print_service_env	},
 	{	"set-service-env",		set_service_env		},
 	{	"try-restart",			try_restart		},
+	{	"try-reload-or-restart",	try_restart		},
 	{	"condrestart",			try_restart		},
 	{	"force-reload",			try_restart		},
+	{	"hangup",			hangup			},
 	{	"is-active",			is_active		},
 	{	"is-loaded",			is_loaded		},
 	{	"is-enabled",			is_enabled		},

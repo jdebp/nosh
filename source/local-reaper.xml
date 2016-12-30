@@ -1,0 +1,59 @@
+<refentry id="local-reaper">
+
+<refmeta>
+<refentrytitle>local-reaper</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<refmiscinfo class="version">1.29</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>local-reaper</refname>
+<refpurpose>become a local "Grim Reaper" or not</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>local-reaper</command> 
+<arg choice='req'><replaceable>enable</replaceable></arg> 
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>local-reaper</command> is a chain-loading utility that sets the local "Grim Reaper" setting of the process according to <replaceable>enable</replaceable> and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>local-reaper</command> will ignore.
+</para>
+
+<para>
+<replaceable>enable</replaceable> can be the literal values <code>true</code>, <code>false</code>, <code>on</code>, <code>off</code>, <code>yes</code>, or <code>no</code>.
+</para>
+
+</refsection>
+<refsection><title>Cave!</title>
+
+<para>
+One cannot just apply this willy-nilly.
+</para>
+
+<para>
+Setting a process to be a local "Grim Reaper" when the program that it is running does not handle being notified about children that it did not fork in the first place can cause some programs to misbehave or even crash.
+Most shells understand that they might hear about "disowned" processes that they deliberately lost track of, and can cope with being local reapers.
+Not all other programs do, however.
+</para>
+
+<para>
+Setting a process to be a local "Grim Reaper" when the program that it is running does not itself wait for child processes, or only waits for specifically identified children that it knows about, can cause the process table to fill up with "zombie" entries.
+</para>
+
+</refsection>
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

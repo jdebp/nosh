@@ -9,11 +9,11 @@ After=mount@- mount@-etc udev.service
 Before=shutdown.target
 
 [Service]
-# Marking this as oneshot means that it doesn't enter the "running" state until the %p command has exited.
+# Marking this as a oneshot means that it doesn't become ready until the %p command has exited.
 Type=oneshot
 ExecStart=/lib/udev/%p
 # This is a one-shot service that can be re-triggered by starting it again.
-RemainAfterExit=1
+#RemainAfterExit=1
 Restart=no
 
 [Install]

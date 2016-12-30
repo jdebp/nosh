@@ -88,11 +88,7 @@ finally taken down (but not when it is automatically restarted);
 </itemizedlist>
 
 <para>
-Although there is nothing to stop them from being binaries, the executable
-files are usually scripts interpreted by
-<citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>execlineb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-or a shell.
+Although there is nothing to stop them from being binaries, the executable files are usually scripts interpreted by <citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>execlineb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, or a shell.
 They set up various parts of the process state (using commands such as <citerefentry><refentrytitle>softlimit</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and <citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>) and then chain to the service program proper.
 </para>
 
@@ -132,6 +128,11 @@ A <filename>down</filename> file indicates to <citerefentry><refentrytitle>syste
 <listitem>
 <para>
 A <filename>remain</filename> file indicates to <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> that a service should be marked as "run on empty", so that it is considered still running even if it has no processes.
+</para>
+</listitem>
+<listitem>
+<para>
+A <filename>ready_after_run</filename> file indicates to <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> that a service should be considered "ready" after it has finished running, and either remained in the running state with no processes or transitioned to the stopped state with a prior run recorded in its status.
 </para>
 </listitem>
 <listitem>

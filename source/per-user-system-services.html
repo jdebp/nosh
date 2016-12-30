@@ -1,0 +1,74 @@
+<title>Per-user system services</title>
+<link rel="Up" href="per-user-stuff.html" title="Stuff converted for each user" />
+<h1>
+Per-user system services
+</h1>
+
+<h2>
+Services created
+</h2>
+
+<p>
+The configuration import subsystem creates several services at the system level for each user.
+</p>
+
+<h3>
+<code>user@</code><i>name</i>: user target
+</h3>
+
+<p>
+An umbrella target named <code>user@</code><i>name</i> encompasses all of the other services.
+Starting the target auto-starts all of the other services, if they are enabled.
+</p>
+
+<h3>
+<code>user-runtime@</code><i>name</i>: per-user runtime area
+</h3>
+
+<p>
+This service creates (on startup) and destroys (on shutdown) the per-user runtime area for the user that is in <a href="gazetteer.html#user-runtime"><code>/run/user/</code><i>name</i></a>.
+It wants and is ordered after any mount service for <code>/run/user</code> that may exist.
+It wants and is ordered before any mount service for <code>/run/user/</code><i>name</i> that may exist.
+The import subsystem does not generate or supply such mount services.
+</p>
+
+<h3>
+<code>user-services@</code><i>name</i>: per-user manager
+</h3>
+
+<p>
+This service runs an instance of <a href="per-user-manager.html"><code>per-user-manager</code></a> as the user.
+This in turn runs an instance of <a href="service-manager.html"><code>service-manager</code></a> that manages <a href="per-user-user-services.html">the per-user services</a>.
+</p>
+
+<h3>
+<code>user-dbus@</code><i>name</i>: per-user Desktop Bus broker
+</h3>
+
+<p>
+This service runs an instance of <code>dbus-daemon</code> as the user.
+It uses <a href="gazetteer.html#per-user.conf">a private configuration file</a> from the service definition that ensures that <a href="dbus-daemon-launch-helper.html"><code>dbus-daemon-launch-helper</code></a> is used to <a href="per-user-dbus-demand-start.html">demand-start servers</a>.
+The socket that this broker listens on is in the conventional place at <a href="gazetteer.html#user-bus-socket"><code>/run/user/</code><i>name</i><code>/bus</code></a>.
+</p>
+
+<p>
+This is an old way of starting up a per-user broker service.
+It is usually not used in favour of a broker service that is run by the per-user service manager and thus directly configurable by the user.
+The twain should not be used simultaneously.
+</p>
+
+<h2>
+Usage
+</h2>
+
+<p>
+If you want a user <code>fred</code>'s per-user service management to be auto-started started at bootstrap, simply enable either the <code>user-services@fred</code> service specifically, or enable the <code>user@fred</code> target as a whole.
+</p>
+
+<p>
+To have user <code>fred</code>'s per-user service management start when <code>fred</code> first logs in, have <code>system-control start user@fred</code> (run by the superuser, of course) as part of the login process.
+</p>
+
+<p>
+Users do not have to run any per-user services at all, of course.
+</p>

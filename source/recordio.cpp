@@ -173,7 +173,7 @@ recordio (
 				continue;
 			const int fd(static_cast<int>(e.ident));
 			char buf [4096];
-			const int n(read(fd, buf, sizeof buf));
+			const ssize_t n(read(fd, buf, sizeof buf));
 			if (output_fds[0] == fd) {
 				if (0 > n) {
 					const int error(errno);

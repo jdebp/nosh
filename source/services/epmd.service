@@ -4,12 +4,12 @@
 
 [Unit]
 Description=Erlang Port Mapper service
+Description=Requires equivalents of Debian 8 or later versions of erlang, whose packaging provides the epmd user.
+Description=Requires version 17.3 erlang which understands the LISTEN_FDS protocol, with the unfortunately named -systemd option.
 
 [Service]
-# TODO: Newer versions of erlang packaging apparently provide a separate epmd user.
-User=rabbitmq
-# TODO: Newer versions of erlang can accept an already-opened listening socket with the unfortunately named -systemd option.
-ExecStart=%p
+User=epmd
+ExecStart=%p -systemd
 
 [Install]
 WantedBy=workstation.target

@@ -9,14 +9,14 @@ Wants=sysinit.target
 Before=shutdown.target
 
 [Service]
-PermissionsStartOnly=true
 SessionLeader=true
 TTYReset=true
 TTYPath=console
 BannerLine=Rescue mode log-in.
 StandardInput=tty
 ExecStart=login
-Restart=always
+# This otherwise defaults to true for targets.
+RemainAfterExit=no
 # Some job control shells ignore SIGTERM and need an explicit SIGHUP.
 SendSIGHUP=on
 

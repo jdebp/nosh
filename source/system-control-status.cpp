@@ -142,6 +142,14 @@ try_restart (
 }
 
 void
+hangup ( 
+	const char * & next_prog,
+	std::vector<const char *> & args
+) {
+	common_subcommand(next_prog, args, "service-control", "--hangup-main");
+}
+
+void
 is_active ( 
 	const char * & next_prog,
 	std::vector<const char *> & args

@@ -581,12 +581,27 @@ The Linux, FreeBSD, NetBSD, and SCO consoles all substitute PAD_F1 to PAD_F4 for
 None of this remapping, however, is the domain of the terminal emulator.
 The terminal emulator input protocol deals in a set of "true DEC VT" function keys and separate extended PAD_F1 to PAD_F4 keys, as if there were a real DEC VT and keys F1 to F5 were all (even the always-local F5) set to non-local mode.
 It is entirely up to each realizer to determine what keys on the realizing keyboard generate function key input messages and what real keys generate extended key input messages.
+Local mode function keys are an internal matter for realizers.
 </para>
 
 <para>
 Similarly, the terminal emulator has no dealings in numlock, nor in local editing cursor key modes.
 The calculator keypad keys always generate their "application mode", a.k.a. "numlock off", control sequences; and the cursor/editing keypad keys always generate their "application mode" sequences.
 Such mode switching is an internal matter for realizers.
+</para>
+
+</refsection>
+
+<refsection><title>Control sequences for pasted input</title>
+
+<para>
+The Private Mode #2004 controls whether bracketed paste is switched on.
+When it is, sequences of successive pasted characters are bracketed by DECFNK sequences denoting paste on and paste off.
+</para>
+
+<para>
+To prevent actual pasted character sequences from resembling DECFNK, paste is switched off after every pasted ESC or CSI character.
+If the next character is a pasted one, paste will then be switched back on again.
 </para>
 
 </refsection>

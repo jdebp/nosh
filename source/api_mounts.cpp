@@ -57,7 +57,7 @@ static const struct iovec run[] = {
 	FROM,				MAKE_IOVEC("tmpfs"),
 	FSTYPE,				MAKE_IOVEC("tmpfs"),
 	FSPATH,				MAKE_IOVEC("/run"),
-	MAKE_IOVEC("mode"),		MAKE_IOVEC("01777"),
+	MAKE_IOVEC("mode"),		MAKE_IOVEC("0755"),
 	MAKE_IOVEC("size"),		MAKE_IOVEC("20%"),
 };
 static const struct iovec shm[] = {

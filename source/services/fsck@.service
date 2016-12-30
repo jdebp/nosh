@@ -15,7 +15,7 @@ After=local-fs-pre.target swapauto.target
 Type=oneshot
 ExecStart=%p -C -p %I
 # This is a one-shot service that can be re-triggered by starting it again.
-RemainAfterExit=1
+##RemainAfterExit=1
 Restart=no
 
 [Install]

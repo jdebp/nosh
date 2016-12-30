@@ -3,10 +3,11 @@
 ## **************************************************************************
 
 [Unit]
-Description=GnuPG network certificate management daemon
+Description=GnuPG network certificate management daemon for %U
 
 [Service]
 RuntimeDirectory=gnupg
+EnvironmentDirectory=env
 ExecStart=%p --supervised
 
 [Install]

@@ -1,4 +1,4 @@
-/* coPYING ******************************************************************
+/* COPYING ******************************************************************
 For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
@@ -8,11 +8,13 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <csignal>
 #include <cerrno>
 #include <ctime>
 #include <inttypes.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <curses.h>
@@ -162,6 +164,35 @@ status_event[4] = {
 
 static inline
 void
+write_timestamp (
+	const char * preposition,
+	const uint64_t z,
+	const uint64_t s
+) {
+	char buf[64];
+	const struct tm t(convert(s));
+	const size_t len(std::strftime(buf, sizeof buf, "%F %T %z", &t));
+	std::fprintf(stdout, " %s ", preposition);
+	std::fwrite(buf, len, 1U, stdout);
+	std::fputc(';', stdout);
+	uint64_t secs(z - s);
+	uint64_t mins(secs / 60U);
+	secs %= 60U;
+	uint64_t hours(mins / 60U);
+	mins %= 60U;
+	uint64_t days(hours / 24U);
+	hours %= 24U;
+	if (days > 0U)
+		std::fprintf(stdout, " %" PRIu64 "d", days);
+	if (days > 0 || hours > 0U)
+		std::fprintf(stdout, " %" PRIu64 "h", hours);
+	if (days > 0 || hours > 0U || mins > 0U)
+		std::fprintf(stdout, " %" PRIu64 "m", mins);
+	std::fprintf(stdout, " %" PRIu64 "s ago", secs);
+}
+
+static inline
+void
 display (
 	const char * name,
 	const bool long_form,
@@ -169,6 +200,7 @@ display (
 	const bool is_ok,
 	const bool initially_up,
 	const bool run_on_empty,
+	const bool ready_after_run,
 	const bool use_hangup,
 	const bool use_kill,
 	const uint64_t z,
@@ -177,7 +209,7 @@ display (
 ) {
 	const uint64_t s(unpack_bigendian(status, 8));
 //	const uint32_t n(unpack_bigendian(status + 8, 4));
-	const uint32_t p(unpack_littleendian(status + 12, 4));
+	const uint32_t p(unpack_littleendian(status + THIS_PID_OFFSET, 4));
 
 	std::fprintf(stdout, "%s: ", name);
 	if (long_form) std::fprintf(stdout, "\n\tState   : ");
@@ -187,23 +219,24 @@ display (
 		reset_colour(!colours);
 		std::fputc('\n', stdout);
 	} else
-	if (b < 18) {
+	if (b < DAEMONTOOLS_STATUS_BLOCK_SIZE) {
 		set_exception_colour(!colours);
 		std::fprintf(stdout, "loading");
 		reset_colour(!colours);
 		std::fputc('\n', stdout);
 	} else {
-		if (b < 19) {
+		char & want_flag(status[WANT_FLAG_OFFSET]);
+		if (b < ENCORE_STATUS_BLOCK_SIZE) {
 			// supervise doesn't turn off the want flag.
 			if (p) {
-				if ('u' == status[17]) status[17] = '\0';
+				if ('u' == want_flag) want_flag = '\0';
 			} else {
-				if ('d' == status[17]) status[17] = '\0';
+				if ('d' == want_flag) want_flag = '\0';
 			}
 		}
-		const char state(b >= 19 ? status[18] : p ? encore_status_running : encore_status_stopped);
+		const char state(b >= ENCORE_STATUS_BLOCK_SIZE ? status[ENCORE_STATUS_OFFSET] : p ? encore_status_running : encore_status_stopped);
 		set_colour_of_state(!colours, state);
-		if (b < 19) {
+		if (b < ENCORE_STATUS_BLOCK_SIZE) {
 			std::fprintf(stdout, "%s", p ? "up" : "down");
 		} else {
 			std::fprintf(stdout, "%s", state_of(state));
@@ -211,41 +244,21 @@ display (
 		reset_colour(!colours);
 		if (p && !long_form)
 			std::fprintf(stdout, " (pid %u)", p);
-		if (z >= s) {
-			char buf[64];
-			const struct tm t(convert(s));
-			const size_t len(std::strftime(buf, sizeof buf, "%F %T %z", &t));
-			std::fputs(" since ", stdout);
-			std::fwrite(buf, len, 1U, stdout);
-			std::fputc(';', stdout);
-			uint64_t secs(z - s);
-			uint64_t mins(secs / 60U);
-			secs %= 60U;
-			uint64_t hours(mins / 60U);
-			mins %= 60U;
-			uint64_t days(hours / 24U);
-			hours %= 24U;
-			if (days > 0U)
-				std::fprintf(stdout, " %" PRIu64 "d", days);
-			if (days > 0 || hours > 0U)
-				std::fprintf(stdout, " %" PRIu64 "h", hours);
-			if (days > 0 || hours > 0U || mins > 0U)
-				std::fprintf(stdout, " %" PRIu64 "m", mins);
-			std::fprintf(stdout, " %" PRIu64 "s ago", secs);
-		}
-		const char * const paused(status[16] ? "paused" : "");
-		const char * const want('u' == status[17] ? "want up" : 'O' == status[17] ? "once at most" : 'o' == status[17] ? "once" : 'd' == status[17] ? "want down" : "");
+		if (z >= s) 
+			write_timestamp("since", z, s);
+		const char * const paused(status[PAUSE_FLAG_OFFSET] ? "paused" : "");
+		const char * const want('u' == want_flag ? "want up" : 'O' == want_flag ? "once at most" : 'o' == want_flag ? "once" : 'd' == want_flag ? "want down" : "");
 		if (long_form) {
 			if (p)
 				std::fprintf(stdout, "\n\tMain PID: %u", p);
 			if (*want || *paused)
 				std::fprintf(stdout, "\n\tAction  : %s%s%s", paused, *want && *paused ? ", " : "", want);
 			for (unsigned int i(0U); i < 4U; ++i) {
-				if (b > (23U + i * 5U)) {
-					const uint8_t code(status[19U + i * 5U]);
+				if (b >= (EXIT_STATUSES_OFFSET + i * EXIT_STATUS_SIZE) + EXIT_STATUS_SIZE) {
+					const uint8_t code(status[EXIT_STATUSES_OFFSET + i * EXIT_STATUS_SIZE]);
 					if (0 == code) continue;
 
-					const uint32_t number(unpack_bigendian(status + (20U + i * 5U), 4));
+					const uint32_t number(unpack_bigendian(status + (EXIT_STATUSES_OFFSET + i * EXIT_STATUS_SIZE + 1U), 4));
 					const char * reason(1 == code ? "exit" : classify_signal(number));
 					std::fprintf(stdout, "\n\t%8.8s: %s %u", status_event[i], reason, number);
 					if (1 != code) {
@@ -255,10 +268,13 @@ display (
 					}
 					if (3 == code)
 						std::fputs(" (core dumped)", stdout);
+
+					const uint64_t stamp(unpack_bigendian(status + (EXIT_STATUSES_OFFSET + i * EXIT_STATUS_SIZE + 5U), 8));
+					write_timestamp("at", z, stamp);
 				}
 			}
 		} else {
-			const bool is_up(b < 19 ? p : encore_status_stopped != status[18]);
+			const bool is_up(b < ENCORE_STATUS_BLOCK_SIZE ? p : encore_status_stopped != status[ENCORE_STATUS_OFFSET]);
 			if (*want || *paused || is_up != initially_up)
 				std::fputs("; ", stdout);
 			if (*want || *paused)
@@ -269,9 +285,9 @@ display (
 				set_config_colour(!colours);
 				std::fputs("initially ", stdout);
 				if (initially_up)
-					std::fputs(b < 20 ? "up" : "started", stdout);
+					std::fputs(b < ENCORE_STATUS_BLOCK_SIZE ? "up" : "started", stdout);
 				else
-					std::fputs(b < 20 ? "down" : "stopped", stdout);
+					std::fputs(b < ENCORE_STATUS_BLOCK_SIZE ? "down" : "stopped", stdout);
 				reset_colour(!colours);
 			}
 			std::fputc('.', stdout);
@@ -281,6 +297,7 @@ display (
 	if (long_form) {
 		std::fprintf(stdout, "\tConfig  : %s", initially_up ? "enabled" : "disabled");
 		if (run_on_empty) std::fputs(", run on empty", stdout);
+		if (ready_after_run) std::fputs(", ready after run", stdout);
 		if (use_hangup) std::fputs(", use SIGHUP", stdout);
 		if (!use_kill) std::fputs(", no SIGKILL", stdout);
 		std::fputc('\n', stdout);
@@ -362,6 +379,7 @@ service_status (
 
 		const bool initially_up(is_initially_up(service_dir_fd.get()));
 		const bool run_on_empty(!is_done_after_exit(service_dir_fd.get()));
+		const bool ready_after_run(is_ready_after_run(service_dir_fd.get()));
 		const bool use_hangup(is_use_hangup_signal(service_dir_fd.get()));
 		const bool use_kill(is_use_kill_signal(service_dir_fd.get()));
 		char status[STATUS_BLOCK_SIZE];
@@ -373,16 +391,16 @@ service_status (
 				std::fprintf(stdout, "%s: %s: %s\n", name, "supervise/ok", std::strerror(error));
 				continue;
 			}
-			display(name, long_form, colours, false, initially_up, run_on_empty, use_hangup, use_kill, z, 0U, status);
+			display(name, long_form, colours, false, initially_up, run_on_empty, ready_after_run, use_hangup, use_kill, z, 0U, status);
 		} else {
 			const FileDescriptorOwner status_fd(open_read_at(supervise_dir_fd.get(), "status"));
 			if (0 > status_fd.get()) {
 				const int error(errno);
 				std::fprintf(stdout, "%s: %s: %s\n", name, "status", std::strerror(error));
-				display(name, long_form, colours, true, initially_up, run_on_empty, use_hangup, use_kill, z, 0U, status);
+				display(name, long_form, colours, true, initially_up, run_on_empty, ready_after_run, use_hangup, use_kill, z, 0U, status);
 			} else {
 				const int b(read(status_fd.get(), status, sizeof status));
-				display(name, long_form, colours, true, initially_up, run_on_empty, use_hangup, use_kill, z, static_cast<unsigned int>(b), status);
+				display(name, long_form, colours, true, initially_up, run_on_empty, ready_after_run, use_hangup, use_kill, z, static_cast<unsigned int>(b), status);
 			}
 		}
 
@@ -413,8 +431,12 @@ service_status (
 					next_prog = arg0_of(args);
 					return;
 				}
+#if defined(WEXITED)
+				waitid(P_PID, child, 0, WEXITED);
+#else
 				int cs;
 				waitpid(child, &cs, 0);
+#endif
 			}
 		}
 	}

@@ -1,0 +1,37 @@
+<title>Appcafe services</title>
+<link rel="Up" href="../index.html" title="nosh Guide" />
+<h1>
+Appcafe services
+</h1>
+
+<p>
+Appcafe is one giant service in the Mewburn <code>rc</code> system.
+That is not the case here.
+Here, it comprises:
+</p>
+
+<ul>
+<li><p>
+one target: <code>appcafe</code>, which is what is enabled when one enables "<code>appcafe</code>"
+</p></li>
+<li><p>
+four distinct services: <code>appcafe-nginx</code>, <code>appcafe-dispatcher</code>, <code>appcafe-php-fpm</code>, and <code>appcafe-ssl-keygen</code>, which are wanted by that target when they are enabled
+</p></li>
+</ul>
+
+<p>
+Additionally, in the Mewburn <code>rc</code> system Appcafe is configured by a subsystem-specific configuration file in <code>/usr/local/etc/appcafe.conf</code>.
+Here, the <a href="../rcconf.html"><code>rc.conf</code> conversion subsystem</a> permits the Appcafe settings there to be overridden with normal <code>rc.conf</code> settings:
+</p>
+
+<dl>
+<dt><code>appcafe_nginx_port</code></dt>
+<dd>Overrides <code>port=</code> in <code>/usr/local/etc/appcafe.conf</code>.</dd>
+<dt><code>appcafe_nginx_ssl</code></dt>
+<dd>Overrides <code>ssl=</code> in <code>/usr/local/etc/appcafe.conf</code>.</dd>
+</dl>
+
+<p>
+If you are looking for the <code>nginx.conf</code> used by the <code>appcafe-nginx</code> service, it is in that service's own service directory.
+The <a href="../external-formats.html">external configuration conversion subsystem</a> copies it from the originals in <code>/usr/local/share/appcafe</code>, leaving them untouched, and edits in the <code>port</code> and <code>ssl</code> configuration.
+</p>

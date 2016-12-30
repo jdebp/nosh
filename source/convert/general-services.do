@@ -68,6 +68,7 @@ do
 	firewall)		continue ;; # TODO: Needs to distribute to ipfs and ipfw0.
 	mixer)			continue ;; # Needs to be handled by a converter.
 	nfsv4_server)		continue ;;
+	netif)			continue ;;
 
 	*)			service="$n" ;;
 	esac

@@ -4,10 +4,12 @@
 
 [Unit]
 Description=Per-user "Desktop" bus log service
+Description=Avoid using this; and use a user-level service instead.
 
 [Service]
 User=%I
 WorkingDirectory=/var/log/user/
+ExecStartPre=install -d -m 0750 -o "%I" "/var/log/user/%I"
 ExecStart=cyclog %I/dbus/
 Restart=always
 

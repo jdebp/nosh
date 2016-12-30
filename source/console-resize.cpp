@@ -19,7 +19,7 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 void
-console_resize ( 
+console_resize [[gnu::noreturn]] ( 
 	const char * & /*next_prog*/,
 	std::vector<const char *> & args
 ) {

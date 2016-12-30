@@ -11,7 +11,7 @@ Type=oneshot
 EnvironmentDirectory=env
 ExecStart=sh -c 'test -e /usr/local/etc/appcafe.crt || openssl req -x509 -nodes -newkey rsa:2048 -keyout /usr/local/etc/appcafe.key -out /usr/local/etc/appcafe.crt -days 1024 -subj "/C=US/ST=MY/L=NULL/O=AppCafe/OU=AppCafe/CN=AppCafe/emailAddress=none@example.org"'
 # This is a one-shot service that can be re-triggered by starting it again.
-RemainAfterExit=1
+#RemainAfterExit=1
 Restart=no
 
 [Install]

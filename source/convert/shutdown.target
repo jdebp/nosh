@@ -1,0 +1,8 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Shutdown action group target
+
+[Install]

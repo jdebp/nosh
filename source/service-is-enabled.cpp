@@ -21,7 +21,7 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 void
-service_is_enabled (
+service_is_enabled [[gnu::noreturn]] (
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {

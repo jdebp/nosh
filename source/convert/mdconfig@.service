@@ -6,6 +6,7 @@
 Description=%p a memory disc for device %I
 DefaultDependencies=no
 After=mount@-
+Before=mount@%i
 
 [Service]
 Type=oneshot

@@ -20,7 +20,11 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 void
-set_mount_object ( 
+set_mount_object 
+#if !defined(__LINUX__) && !defined(__linux__)
+	[[gnu::noreturn]] 
+#endif
+( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {

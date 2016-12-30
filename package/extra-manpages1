@@ -19,10 +19,12 @@ false
 fdmove
 fdredir
 fifo-listen
+follow-log-directories
 foreground
 klog-read
 line-banner
 local-datagram-socket-listen
+local-reaper
 local-stream-socket-accept
 local-stream-socket-listen
 netlink-datagram-socket-listen

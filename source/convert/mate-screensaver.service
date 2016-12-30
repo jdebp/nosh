@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=MATE screen saver
+
+[Service]
+Type=dbus
+EnvironmentDirectory=env
+ExecStart=%p
+
+[Install]

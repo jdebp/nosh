@@ -3,14 +3,14 @@
 ## **************************************************************************
 
 [Unit]
-Description=Static network configuration for interface %i
+Description=Network configuration for interface %I
 Before=ifconfig@%i
 
 [Service]
-Type=oneshot
 EnvironmentDirectory=env
-ExecStart=sh /etc/start_if.%i
-ExecStopPost=sh /etc/stop_if.%i
+ExecStart=sh /etc/start_if.'%I'
+ExecStopPost=sh /etc/stop_if.'%I'
+RemainAfterExit=true
 
 [Install]
 WantedBy=static-networking.target

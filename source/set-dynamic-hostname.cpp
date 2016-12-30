@@ -88,7 +88,7 @@ read_first_line (
 */
 
 void
-set_dynamic_hostname ( 
+set_dynamic_hostname [[gnu::noreturn]] ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {

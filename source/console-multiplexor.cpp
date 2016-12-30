@@ -133,7 +133,7 @@ VirtualTerminal::WriteInputMessage(uint32_t m)
 void
 VirtualTerminal::FlushMessages()
 {
-	const int l(write(input_fd.get(), message_buffer, message_pending));
+	const ssize_t l(write(input_fd.get(), message_buffer, message_pending));
 	if (l > 0) {
 		std::memmove(message_buffer, message_buffer + l, message_pending - l);
 		message_pending -= l;
@@ -169,7 +169,7 @@ InputFIFO::InputFIFO(int i) :
 void
 InputFIFO::ReadInput()
 {
-	const int l(read(fd, input_buffer + input_read, sizeof input_buffer - input_read));
+	const ssize_t l(read(fd, input_buffer + input_read, sizeof input_buffer - input_read));
 	if (l > 0)
 		input_read += l;
 }
@@ -306,7 +306,7 @@ copy (
 */
 
 void
-console_multiplexor ( 
+console_multiplexor [[gnu::noreturn]] ( 
 	const char * & /*next_prog*/,
 	std::vector<const char *> & args
 ) {

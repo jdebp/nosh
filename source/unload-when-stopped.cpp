@@ -22,7 +22,7 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 void
-unload_when_stopped ( 
+unload_when_stopped [[gnu::noreturn]] ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {

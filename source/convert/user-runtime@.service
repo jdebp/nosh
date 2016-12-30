@@ -3,20 +3,11 @@
 ## **************************************************************************
 
 [Unit]
-Description=Per-user %I runtime directory
+Description=Per-user runtime for %I
 
 [Service]
-Type=oneshot
 RemainAfterExit=true
-#PermissionsStartOnly=yes
-#User=%I
-ExecStartPre=mkdir -m 0755 /run/user
-ExecStartPre=mkdir -m 0750 /run/user/%I
-ExecStartPre=sh -c "ln -s '%I' /run/user/\"`id -u '%I'`\""
-ExecStartPre=chown %I /run/user/%I
-ExecStopPost=rmdir /run/user/%I
-ExecStopPost=rmdir /run/user
-Restart=always
+User=%I
 
 [Install]
 WantedBy=user@%I.target

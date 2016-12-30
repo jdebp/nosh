@@ -16,22 +16,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include "popt.h"
 #include "FileStar.h"
 
-static
-bool
-is_bool_true (
-	const std::string & r
-) {
-	return "yes" == r || "on" == r || "true" == r;
-}
-
-static
-bool
-is_bool_false (
-	const std::string & r
-) {
-	return "no" == r || "off" == r || "false" == r;
-}
-
 /* Main function ************************************************************
 // **************************************************************************
 */

@@ -8,7 +8,7 @@
 <refmiscinfo class="version">1.29</refmiscinfo>
 </refmeta>
 
-<refnamediv><refname>read-conf</refname><refpurpose>read a Debian-style configuration file and chain</refpurpose></refnamediv>
+<refnamediv><refname>read-conf</refname><refpurpose>read a shell-style configuration file and chain</refpurpose></refnamediv>
 
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -29,8 +29,9 @@ With that option, the failure will be ignored and <replaceable>next-prog</replac
 
 <para>
 <command>read-conf</command> implements a very limited subset of the <citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry> lexical syntax for shell script files.
-Debian-style configuration files are usually shell script files that consist solely of simple variable assignments.
+The configuration files that it reads are usually shell script files that consist solely of simple variable assignments.
 Variable, command, brace, and parameter substitution are generally not used and are not supported by <command>read-conf</command>.
+(This limited syntax is actually a requirement for the likes of <code>/etc/rc.conf</code> on OpenBSD, where it is mandated that system configuration files be parseable by things that are not shell script interpreters.)
 </para>
 
 <para>

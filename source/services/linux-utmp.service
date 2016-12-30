@@ -5,14 +5,13 @@
 [Unit]
 Description=Enable Linux login accounting
 Before=multi-user-pre.target
-Wants=multi-user-pre.target
 After=mount@-run.service mount@-.service
 
 [Service]
 Type=oneshot
 ExecStart=touch /run/utmp
 # This is a one-shot service that can be re-triggered by starting it again.
-RemainAfterExit=1
+#RemainAfterExit=1
 Restart=no
 
 [Install]

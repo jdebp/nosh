@@ -33,6 +33,7 @@ function _system_control_subcommands()
 	'is-active:query whether a service is started'
 	'is-loaded:query whether a service is loaded'
 	'is-enabled:query whether a service is enabled'
+	'hangup:send a HUP signal to a running service'
 	'condrestart:send a TERM signal to a running service'
 	'try-restart:send a TERM signal to a running service'
 	'force-reload:send a TERM signal to a running service'

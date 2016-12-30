@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Yellow Pages LDAP daemon
+Wants=rpcbind.service ypserv.service nis_server.service
+After=nisdomain.service
+
+[Service]
+Type=forking
+# The import procedure is expected to have populated this directory with flags.
+EnvironmentDirectory=env
+ExecStartPre=sh -c 'test -z "`domainname`" && echo "WARNING: NIS domainname is not set."'
+ExecStart=%p -d ${flags}
+
+[Install]
+WantedBy=server.target

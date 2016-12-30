@@ -31,6 +31,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "CharacterCell.h"
 #include "InputMessage.h"
 #include "FileDescriptorOwner.h"
+#include "FileStar.h"
 #include "SignalManagement.h"
 
 /* Support routines  ********************************************************
@@ -411,7 +412,7 @@ closedown()
 */
 
 void
-console_ncurses_realizer ( 
+console_ncurses_realizer [[gnu::noreturn]] ( 
 	const char * & /*next_prog*/,
 	std::vector<const char *> & args
 ) {
@@ -462,7 +463,7 @@ console_ncurses_realizer (
 		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dirname, "display", std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	FILE * const buffer_file(fdopen(buffer_fd.get(), "r"));
+	const FileStar buffer_file(fdopen(buffer_fd.get(), "r"));
 	if (!buffer_file) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dirname, "display", std::strerror(error));
@@ -520,7 +521,6 @@ console_ncurses_realizer (
 			if (0 == error) continue;	// This works around another Linux bug.
 #endif
 			closedown();
-			std::fclose(buffer_file);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "poll", std::strerror(error));
 			throw EXIT_FAILURE;
 		}
@@ -555,6 +555,5 @@ console_ncurses_realizer (
 	}
 
 	closedown();
-	std::fclose(buffer_file);
 	throw EXIT_SUCCESS;
 }

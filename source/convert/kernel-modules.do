@@ -60,7 +60,7 @@ case "`uname`" in
 		sysvshm \
 		;
 	do
-		system-control disable "kmod@$n"
+		system-control disable "kmod@$n" || true
 	done
 	for n in \
 		ipfw_nat \
@@ -100,8 +100,8 @@ case "`uname`" in
 		xfs \
 		;
 	do
-		system-control disable "cyclog@kmod@$n"
-		system-control disable "kmod@$n"
+		system-control disable "cyclog@kmod@$n" || true
+		system-control disable "kmod@$n" || true
 	done
 	;;
 esac
@@ -112,7 +112,7 @@ do
 	# Note that the way that we are setting up prefixes allows variables such as ntfs_enable in /etc/rc.conf{,.local} .
 	case "$n" in
 	autofs)		;;	## log-less on BSD too?
-	fuse)		;;	## log-less on BSD too?
+	fuse)		;;
 	geom_uzip)	;;
 	linux)		;;
 	svr4)		;;

@@ -4,6 +4,7 @@ cyclog
 load-kernel-module
 service-control
 service-dt-scanner
+service-is-enabled
 service-is-ok
 service-is-up
 service-manager

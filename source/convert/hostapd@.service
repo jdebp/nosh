@@ -9,7 +9,7 @@ After=kmod@wlan_xauth.service kmod@wlan_wep.service kmod@wlan_tkip.service kmod@
 
 [Service]
 EnvironmentDirectory=env
-ExecStart=%p /etc/%p-%i.conf
+ExecStart=%p /etc/%p-'%I'.conf
 
 [Install]
 WantedBy=static-networking.target

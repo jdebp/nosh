@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=PulseAudio daemon for %U
+ 
+[Service]
+RuntimeDirectory=pulse
+EnvironmentDirectory=env
+ExecStart=%p --exit-idle-time=-1 ${flags}
+Restart=on-abort
+ 
+[Install]

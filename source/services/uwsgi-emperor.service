@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=uWSGI "Emperor" listening server
+
+[Service]
+RuntimeDirectory=uwsgi
+ExecStart=uwsgi --ini /etc/uwsgi/emperor.ini
+
+[Install]
+WantedBy=server.target

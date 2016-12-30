@@ -19,7 +19,13 @@ However, one can <em>convert</em> and <em>import</em> service configuration from
 </ul>
 
 <p>
-A suite of <code>redo</code> scripts in <code>/etc/system-control/convert/</code> are supplied for tying these altogether.
+A suite of <code>redo</code> scripts in <a href="gazetteer.html#convert"><code>/etc/system-control/convert/</code></a> are supplied for tying these altogether.
 Simply executing <code>redo&nbsp;all</code> in that directory will attempt to import from various external configuration formats into service bundles.
 Because this mechanism detects changes to source files, it means that it only performs conversion actions when source configuration files have changed.
+</p>
+
+<p>
+The <code>redo</code> procedure is best invoked as a post-processing step after running some system utility that has changed an imported system configuration file.
+Consider it a step akin to running <code>pwd_mkdb</code> after editing the <code>master.passwd</code> file; running <code>newaliases</code> after editing the Sendmail <code>aliases</code> file; or <code>cap_mkdb</code> after editing termcap entries.
+It is wasteful to run it at bootstrap.
 </p>

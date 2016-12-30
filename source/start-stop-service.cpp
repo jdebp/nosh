@@ -5,6 +5,7 @@ For copyright and licensing terms, see the file named COPYING.
 
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <set>
 #include <cstddef>
 #include <cstdlib>
@@ -18,6 +19,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <fcntl.h>
 #include "utils.h"
 #include "fdutils.h"
+#include "kqueue_common.h"
 #include "service-manager-client.h"
 #include "popt.h"
 #include "FileDescriptorOwner.h"
@@ -35,11 +37,12 @@ enum {
 
 static bool verbose(false), pretending(false);
 
+namespace {
 struct index : public std::pair<dev_t, ino_t> {
 	index(const struct stat & s) : pair(s.st_dev, s.st_ino) {}
+	std::size_t hash() const { return static_cast<std::size_t>(first) + static_cast<std::size_t>(second); }
 };
 
-namespace {
 struct bundle;
 }
 
@@ -52,6 +55,7 @@ struct bundle {
 		bundle_dir_fd(-1), 
 		supervise_dir_fd(-1), 
 		service_dir_fd(-1), 
+		status_file_fd(-1), 
 		ss_scanned(false), 
 		use_hangup(false), 
 		use_final_kill(false), 
@@ -64,6 +68,7 @@ struct bundle {
 		if (-1 != bundle_dir_fd) { close(bundle_dir_fd); bundle_dir_fd = -1; } 
 		if (-1 != supervise_dir_fd) { close(supervise_dir_fd); supervise_dir_fd = -1; } 
 		if (-1 != service_dir_fd) { close(service_dir_fd); service_dir_fd = -1; } 
+		if (-1 != status_file_fd) { close(status_file_fd); status_file_fd = -1; } 
 	}
 
 	enum {
@@ -71,7 +76,7 @@ struct bundle {
 		WANT_START = 0x2,
 		WANT_STOP = 0x4,
 	};
-	int bundle_dir_fd, supervise_dir_fd, service_dir_fd;
+	int bundle_dir_fd, supervise_dir_fd, service_dir_fd, status_file_fd;
 	std::string path, name;
 	bool ss_scanned, use_hangup, use_final_kill;
 	int order;
@@ -79,14 +84,12 @@ struct bundle {
 	bundle_pointer_set sort_after;
 
 	bool done() const { return job_state >= DONE; }
+	bool initial() const { return job_state < BLOCKED; }
 	bool blocked() const { return job_state < ACTIONED; }
 	void mark_done() { job_state = DONE; }
 	void mark_unblocked() { job_state = ACTIONED; }
 	void mark_blocked() { job_state = BLOCKED; }
-	void tick() {
-		if (DONE > 1 + job_state)	// micro-optimization: only needs to calculate 1 + job_state once
-			++job_state;
-	}
+	void tick();
 	bool needs_action() const { return FORCED == job_state || ORDERED == job_state || REREQUESTED == job_state || ACTIONED == job_state; }
 	bool needs_initial_action() const { return ACTIONED == job_state; }
 	bool needs_harder_action() const { return ORDERED == job_state || REREQUESTED == job_state; }
@@ -108,6 +111,8 @@ struct bundle {
 			kill_daemon(supervise_dir_fd);
 	}
 	void start_initial() { start(supervise_dir_fd); }
+	bool has_started() const;
+	bool has_stopped() const;
 protected:
 	// Our state machine guarantees that state transitions only ever increase the state value.
 	// Even though we don't make use of it, our logic requires at least one state between FORCED and DONE, for timed-out jobs to sit in.
@@ -115,6 +120,39 @@ protected:
 	int job_state;
 };
 }
+
+inline
+void
+bundle::tick() 
+{
+	if (DONE > 1 + job_state)	// micro-optimization: only needs to calculate 1 + job_state once
+		++job_state;
+}
+
+inline
+bool
+bundle::has_started() const
+{
+	if (0 > supervise_dir_fd || !is_ok(supervise_dir_fd)) return false;
+	if (is_ready_after_run(supervise_dir_fd))
+		return 0 < after_run_status_file(status_file_fd);
+	else
+		return 0 < running_status_file(status_file_fd);
+}
+
+inline
+bool
+bundle::has_stopped() const
+{
+	return 0 <= supervise_dir_fd && (!is_ok(supervise_dir_fd) || 0 < stopped_status_file(status_file_fd));
+}
+
+namespace std {
+template <> struct hash<struct index> {
+	size_t operator() (const struct index & v) const { return v.hash(); }
+};
+}
+typedef std::unordered_map<struct index, bundle> bundle_info_map;
 
 static inline
 unsigned
@@ -124,8 +162,6 @@ want_for (
 	const bool want(is_initially_up(service_dir_fd));
 	return want ? bundle::WANT_START : bundle::WANT_STOP;
 }
-
-typedef std::map<struct index, bundle> bundle_info_map;
 
 static inline
 bundle *
@@ -323,14 +359,21 @@ make_symlink_target (
 */
 
 void
-start_stop_common ( 
+start_stop_common [[gnu::noreturn]] ( 
 	const char * & /*next_prog*/,
 	std::vector<const char *> & args,
 	const char * prog,
 	int want
 ) {
-	const int socket_fd(connect_service_manager_socket(!per_user_mode, prog));
-	if (0 > socket_fd) throw EXIT_FAILURE;
+	const FileDescriptorOwner queue(kqueue());
+	if (0 > queue.get()) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kqueue", std::strerror(error));
+		throw EXIT_FAILURE;
+	}
+
+	const FileDescriptorOwner socket_fd(connect_service_manager_socket(!per_user_mode, prog));
+	if (0 > socket_fd.get()) throw EXIT_FAILURE;
 
 	// Create the list of primary target bundles from the command-line arguments, then add in all of the bundles that they relate to.
 	bundle_info_map bundles;
@@ -476,10 +519,10 @@ start_stop_common (
 				std::fprintf(stderr, "%s: LOAD: %s%s\n", prog, b.name.c_str(), run_on_empty ? " (remain)" : "");
 			if (!pretending) {
 				make_supervise_fifos (b.supervise_dir_fd);
-				load(prog, socket_fd, b.name.c_str(), b.supervise_dir_fd, b.service_dir_fd);
+				load(prog, socket_fd.get(), b.name.c_str(), b.supervise_dir_fd, b.service_dir_fd);
 				if (run_on_empty)
-					make_run_on_empty(prog, socket_fd, b.supervise_dir_fd);
-				make_pipe_connectable(prog, socket_fd, b.supervise_dir_fd);
+					make_run_on_empty(prog, socket_fd.get(), b.supervise_dir_fd);
+				make_pipe_connectable(prog, socket_fd.get(), b.supervise_dir_fd);
 				if (!wait_ok(b.supervise_dir_fd, 5000)) {
 					std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, b.name.c_str(), "ok", "Unable to load service bundle.");
 					continue;
@@ -488,64 +531,105 @@ start_stop_common (
 		}
 
 		const FileDescriptorOwner log_bundle_dir_fd(open_dir_at(b.bundle_dir_fd, "log/"));
-		const FileDescriptorOwner log_supervise_dir_fd(open_supervise_dir(log_bundle_dir_fd.get()));
-		const FileDescriptorOwner log_service_dir_fd(open_service_dir(log_bundle_dir_fd.get()));
-		if (0 <= log_supervise_dir_fd.get() && 0 <= log_service_dir_fd.get()) {
-			const bool log_was_already_loaded(is_ok(log_supervise_dir_fd.get()));
-			if (!log_was_already_loaded) {
-				const bool run_on_empty(!is_done_after_exit(log_service_dir_fd.get()));
-				if (verbose)
-					std::fprintf(stderr, "%s: LOAD: %s%s\n", prog, (b.name + "/log").c_str(), run_on_empty ? " (remain)" : "");
-				if (!pretending) {
-					make_supervise_fifos (log_supervise_dir_fd.get());
-					load(prog, socket_fd, (b.name + "/log").c_str(), log_supervise_dir_fd.get(), log_service_dir_fd.get());
-					if (run_on_empty)
-						make_run_on_empty(prog, socket_fd, log_supervise_dir_fd.get());
-					make_pipe_connectable(prog, socket_fd, log_supervise_dir_fd.get());
+		if (0 <= log_bundle_dir_fd.get()) {
+			const FileDescriptorOwner log_supervise_dir_fd(open_supervise_dir(log_bundle_dir_fd.get()));
+			const FileDescriptorOwner log_service_dir_fd(open_service_dir(log_bundle_dir_fd.get()));
+			if (0 <= log_supervise_dir_fd.get() && 0 <= log_service_dir_fd.get()) {
+				const bool log_was_already_loaded(is_ok(log_supervise_dir_fd.get()));
+				if (!log_was_already_loaded) {
+					const bool run_on_empty(!is_done_after_exit(log_service_dir_fd.get()));
+					if (verbose)
+						std::fprintf(stderr, "%s: LOAD: %s%s\n", prog, (b.name + "/log").c_str(), run_on_empty ? " (remain)" : "");
+					if (!pretending) {
+						make_supervise_fifos (log_supervise_dir_fd.get());
+						load(prog, socket_fd.get(), (b.name + "/log").c_str(), log_supervise_dir_fd.get(), log_service_dir_fd.get());
+						if (run_on_empty)
+							make_run_on_empty(prog, socket_fd.get(), log_supervise_dir_fd.get());
+						make_pipe_connectable(prog, socket_fd.get(), log_supervise_dir_fd.get());
+					}
 				}
+				if (!pretending)
+					plumb(prog, socket_fd.get(), b.supervise_dir_fd, log_supervise_dir_fd.get());
 			}
-			if (!pretending)
-				plumb(prog, socket_fd, b.supervise_dir_fd, log_supervise_dir_fd.get());
+		}
+	}
+
+	// Open all of the status files.
+	for (bundle_pointer_list::const_iterator i(sorted.begin()); sorted.end() != i; ++i) {
+		bundle & b(**i);
+		if (0 > b.supervise_dir_fd) continue;
+		b.status_file_fd = open_read_at(b.supervise_dir_fd, "status");
+		if (0 > b.status_file_fd) {
+			const int error(errno);
+			if (bundle::WANT_START == b.wants)
+				std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, b.name.c_str(), "supervise/status", std::strerror(error));
 		}
 	}
 
 	// The main enacting loop; where we keep trying to start/stop any remaining services with pending actions until no more are left.
+	timespec one_second;
+	bool timed_out(true);
+	one_second.tv_sec = 1;
+	one_second.tv_nsec = 0;
+	std::vector<struct kevent> revents(256);
 	for (;;) {
-		bool pending(false);
+		bool any_more_pending(false);
 		for (bundle_pointer_list::const_iterator i(sorted.begin()); sorted.end() != i; ++i) {
 			bundle & b(**i);
+			
+			// Check for any outward transitions that we can make.
+
+			// Finishing the action transitions the state machine to the done state from any state.
 			if (!b.done()) {
 				bool is_done(true);
 				switch (b.wants) {
-					case bundle::WANT_START:
-						is_done = 0 <= b.supervise_dir_fd && is_ok(b.supervise_dir_fd) && 0 < running_status(b.supervise_dir_fd);
-						break;
-					case bundle::WANT_STOP:
-						is_done = 0 <= b.supervise_dir_fd && (!is_ok(b.supervise_dir_fd) || 0 < stopped_status(b.supervise_dir_fd));
-						break;
+					case bundle::WANT_START:	is_done = b.has_started(); break;
+					case bundle::WANT_STOP:		is_done = b.has_stopped(); break;
 				}
 				if (is_done) {
 					if (verbose)
-						std::fprintf(stderr, "%s: DONE: %s%s\n", prog, b.path.c_str(), b.name.c_str());
+						std::fprintf(stderr, "%s: %s: %s%s\n", prog, bundle::WANT_START == b.wants ? "READY" : "DONE", b.path.c_str(), b.name.c_str());
 					b.mark_done();
+					struct kevent k;
+					set_event(&k, b.status_file_fd, EVFILT_VNODE, EV_DELETE|EV_DISABLE, NOTE_WRITE, 0, 0);
+					kevent(queue.get(), &k, 1, 0, 0, 0);
 				}
 			}
 			if (b.done()) continue;
-			pending = true;
+			any_more_pending = true;
 			if (b.blocked()) {
-				b.mark_unblocked();
+				// All dependencies finishing causes transition from BLOCKED to ACTIONED.
+				bool is_blocked(false);
 				const bundle_pointer_set & a(b.sort_after);
 				for (bundle_pointer_set::const_iterator j(a.begin()); a.end() != j; ++j) {
 					bundle * p(*j);
 					if (!p->done()) {
-						if (verbose)
+						if (verbose && b.initial())
 							std::fprintf(stderr, "%s: %s%s: BLOCKED by %s%s\n", prog, b.path.c_str(), b.name.c_str(), p->path.c_str(), p->name.c_str());
-						b.mark_blocked();
+						is_blocked = true;
 						break;
 					}
 				}
-				if (b.blocked()) continue;
-			} 
+				if (is_blocked) {
+					if (b.initial())
+						b.mark_blocked();
+					continue;
+				}
+				if (verbose)
+					std::fprintf(stderr, "%s: UNBLOCKED: %s%s\n", prog, b.path.c_str(), b.name.c_str());
+				b.mark_unblocked();
+				struct kevent k;
+				set_event(&k, b.status_file_fd, EVFILT_VNODE, EV_ADD|EV_ENABLE|EV_CLEAR, NOTE_WRITE, 0, 0);
+				kevent(queue.get(), &k, 1, 0, 0, 0);
+			} else {
+				// Timing out transitions all states at ACTIONED and above to the next state.
+				if (!timed_out) continue;
+				b.tick();
+			}
+
+			// At this point, we have just transitioned into a new state.
+			// Check for actions on entering the state.
+
 			if (b.needs_action()) {
 				switch (b.wants) {
 					case bundle::WANT_START:
@@ -592,17 +676,17 @@ start_stop_common (
 					}
 				}
 			}
-			b.tick();
 		}
-		if (!pending) break;
-		sleep(1);
+		if (!any_more_pending) break;
+		const int ne(kevent(queue.get(), 0, 0, revents.data(), revents.size(), &one_second));
+		timed_out = 0 == ne;
 	}
 
 	throw EXIT_SUCCESS;
 }
 
 void
-activate ( 
+activate [[gnu::noreturn]] ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {
@@ -633,7 +717,7 @@ activate (
 }
 
 void
-deactivate ( 
+deactivate [[gnu::noreturn]] ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {
@@ -664,7 +748,7 @@ deactivate (
 }
 
 void
-isolate ( 
+isolate [[gnu::noreturn]] ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {
@@ -695,7 +779,7 @@ isolate (
 }
 
 void
-reset ( 
+reset [[gnu::noreturn]] ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {

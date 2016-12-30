@@ -25,16 +25,16 @@ The <code>run</code> and <code>service</code> programs are as follows:
 </p>
 
 <blockquote><pre>#!/bin/nosh
-#Run file generated from build/http6d.socket
-tcp-socket-listen --systemd-compatibility --backlog 2 0 80
-softlimit -o 20 -d 50000
+#HTTP socket capable of single-stack IPV6 and IPV6-mapped IPV4
+tcp-socket-listen --backlog 2 --combine4and6 "::0" http
 envuidgid publicfile
-tcp-socket-accept --connection-limit 16 --no-delay 
+hardlimit -o 20 -d 500000
+softlimit -o hard -d hard
+tcp-socket-accept --connection-limit 16
 ucspi-socket-rules-check
 ./service</blockquote></pre>
 
 <blockquote><pre>#!/bin/nosh
-#Service file generated from build/http6d@.service
 #HTTP service over IP4/IP6 using Bernstein's publicfile
 httpd /home/publicfile/public</blockquote></pre>
 
@@ -49,9 +49,10 @@ In the <code>run</code> program:
 </p>
 <ul>
 <li><p><a href="nosh.html"><code>nosh</code></a> chain loads tcp-socket-listen.</p></li>
-<li><p><a href="tcp-socket-listen.html"><code>tcp-socket-listen</code></a> opens a TCP socket, binds it to a wildcard IP address and the well-known TCP port for HTTP, and then chain loads softlimit.</p></li>
-<li><p><a href="softlimit.html"><code>softlimit</code></a> adjusts some kernel resource limits for the current process, and chain loads envuidgid.</p></li>
-<li><p><a href="envuidgid.html"><code>envuidgid</code></a> reads the system's account database for the user "publicfile", sets up some environment variables for later use, and chain loads tcp-socket-accept.</p></li>
+<li><p><a href="tcp-socket-listen.html"><code>tcp-socket-listen</code></a> opens a TCP socket, binds it to a wildcard IP address and the well-known TCP port for HTTP, and then chain loads envuidgid.</p></li>
+<li><p><a href="envuidgid.html"><code>envuidgid</code></a> reads the system's account database for the user "publicfile", sets up some environment variables for later use, and chain loads softlimit.</p></li>
+<li><p><a href="softlimit.html"><code>softlimit</code></a> adjusts some kernel resource limits for the current process, and chain loads hardlimit.</p></li>
+<li><p><a href="hardlimit.html"><code>hardlimit</code></a> adjusts some kernel resource limits for the current process, and chain loads tcp-socket-accept.</p></li>
 <li><p><a href="tcp-socket-accept.html"><code>tcp-socket-accept</code></a> sits waiting for TCP connections on the listening socket that was opened for it, forking a new process for each accepted connection and chain loading to ucspi-socket-rules-check in that process.</p></li>
 <li><p><a href="ucspi-socket-rules-check.html"><code>ucspi-socket-rules-check</code></a> checks a local database, in the service directory, for access controls on the connecting client IP address, and if the client is permitted access chains to the <code>service</code> program.</p></li>
 </ul>
@@ -71,11 +72,8 @@ If publicfile did not change working directory and root directory, for example, 
 </p>
 
 <p>
-Because the service's <code>run</code> program was generated from a systemd unit file, the <code>run</code> program passes tcp-socket-listen the <code>--systemd-compatibility</code> option.  
-This isn't strictly necessary here, since the program that accepts the socket connections doesn't require 
-<a href="http://freedesktop.org/software/systemd/man/sd_listen_fds.html">systemd's LISTEN_FDS protocol</a>
-for knowing which open file descriptor is the listening TCP socket.
-Were it a systemd-specific program, however, it would need this; and the option does no harm to non-systemd-specific server programs.
+Some <code>run</code> programs pass tcp-socket-listen the <code>--systemd-compatibility</code> option, if the program that accepts the socket connections require <a href="http://freedesktop.org/software/systemd/man/sd_listen_fds.html">systemd's LISTEN_FDS protocol</a> for knowing which open file descriptor is the listening TCP socket.
+This protocol also permits one to build up a list of listening sockets, for the final accepting service program to use, by simple dint of chaining multiple programs such as tcp-socket-listen, udp-socket-listen, and local-stream-socket-listen one after another.
 </p>
 
 <p>

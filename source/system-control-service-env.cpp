@@ -83,7 +83,7 @@ print (
 */
 
 void
-print_service_env ( 
+print_service_env [[gnu::noreturn]] ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {
@@ -189,7 +189,7 @@ bad_file:
 }
 
 void
-set_service_env ( 
+set_service_env [[gnu::noreturn]] ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {

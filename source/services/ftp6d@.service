@@ -2,10 +2,9 @@
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
 
-# NOTE: Bernstein's publicfile does not properly support FTP over IPv6 without patches.
-
 [Unit]
 Description=FTP service over IP6 using Bernstein's publicfile
+Description=NOTE: Bernstein's ftpd does not properly support FTP over IPv6 without patches.
 
 [Service]
 EnvironmentUser=publicfile

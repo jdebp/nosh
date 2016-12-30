@@ -1,3 +1,27 @@
+nosh (1.30) unstable; urgency=medium
+
+  * More BSD services: blacklistd, ypldap
+  * More common services: sendmail-relay-queue, sendmail-submission-queue, sendmail-smtp-relay, sendmail-smtp-submission, uwsgi-emperor, mpd, postgrey
+  * The per-user dbus socket path has changed from "dbus/user_bus_socket" to "bus".
+  * The GNOME Terminal server service now works, when one has set DISPLAY appropriately in the service's environment.
+  * eg++ is now only detected and used on OpenBSD, where it is well ahead of g++.
+  * A lot of compiler warnings from clang++ have been eliminated.
+  * The per-user Desktop Bus now runs with user environment set up.  This had been causing problems with some Desktop Bus services that expected to be able to use the HOME environment variable.
+  * Some additional per-user GNOME services have been added, replacing some GNOME bus-activated stuff. The external configuration import now sets these up.
+  * dbus-daemon-launch-helper now works with the per-user service manager.
+  * system-control now has a hangup subcommand.
+  * system-control start/stop now use kevent() on the status file to wait for service state changes.
+    They also use extended status information to properly handle one-shot services.
+  * A bug that caused export-to-rsyslog to skip old files in catchup mode has been fixed.
+  * There is now a follow-log-directories command.
+  * There is now a hardlimit command, that takes the same options as softlimit.
+  * convert-systemd-units now allows setting both soft and hard resource limits.
+  * Added a local-reaper command.
+  * There is now a dummy netlink-datagram-socket-listen for the BSDs that always generates an address family error.
+  * convert-systemd-units now generates service bundles that use install -d rather than separate mkdir and chown.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Fri, 30 Dec 2016 09:47:53 +0000
+
 nosh (1.29) unstable; urgency=medium
 
   * Fixed a documentation bug for set-service-env and print-service-env.

@@ -8,6 +8,7 @@ Description=Set up kernel virtual terminal screen-saving
 After=kernel-vt-loadkeys.service
 
 [Service]
+Type=oneshot
 TTYPath=tty0
 StandardInput=tty
 StandardError=log
@@ -16,7 +17,7 @@ EnvironmentFile=-/etc/kbd/config
 EnvironmentDirectory=env
 ExecStart=setterm ${BLANK_DPMS:+-powersave "${BLANK_DPMS}"} ${BLANK_TIME:+-blank "${BLANK_TIME}"} ${POWERDOWN_TIME:+-powerdown "${POWERDOWN_TIME}"} ${flags}
 # This is a one-shot service that can be re-triggered by starting it again.
-RemainAfterExit=1
+#RemainAfterExit=1
 Restart=no
 
 [Install]

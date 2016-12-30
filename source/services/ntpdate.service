@@ -10,7 +10,7 @@ Type=oneshot
 EnvironmentDirectory=env
 ExecStart=ntpd -n -q -g -f /var/db/ntpd.drift
 # This is a one-shot service that can be re-triggered by starting it again.
-RemainAfterExit=1
+#RemainAfterExit=1
 Restart=no
 
 [Install]

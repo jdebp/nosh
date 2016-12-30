@@ -1,0 +1,51 @@
+#!/bin/sh
+# Login daemon for PCDM
+# This starts the main PCDM UI appropriately
+#------------------------------------
+
+BASEPCDMAUTHFILE="/tmp/.PCDMAuth"
+
+test -e /var/run/nologin && exit 111
+
+# Allow Auto-Login the first time PCDM starts
+#touch "/tmp/.PCDMAutoLogin"
+
+# Clear out a failed marker
+rm -f -- "/tmp/.pcdm-x-failed"
+
+# Check if we are going to re-run the display setup wizard
+if ! test -e "runxsetup"
+then
+  /usr/local/share/pcbsd/xorg-gui/bin/rundetect.sh
+  touch "runxsetup"
+fi
+
+# Randomize the authorization file location
+PCDMAUTHFILE="${BASEPCDMAUTHFILE}-`openssl rand -hex 10`"
+export XAUTHORITY="${PCDMAUTHFILE}" # Set the auth file location
+: > "${PCDMAUTHFILE}" # Create the (empty) authorization file
+xauth -f "${PCDMAUTHFILE}" add :0 MIT-MAGIC-COOKIE-1 "`openssl rand -hex 64`" # Add a default entry to the file (randomized)
+
+# Remove our X success marker
+rm -f -- "/tmp/.pcdm-x-started"
+
+# Now start the X Server
+if ! /bin/exec local-reaper true xinit /usr/local/bin/dbus-launch --exit-with-session PCDM-session -once -- :0 -auth "${PCDMAUTHFILE}" -retro $Xflags
+then
+   if ! test -e "/tmp/.pcdm-x-started" ; then
+      # Looks like X failed to start...
+
+      if test -e "/tmp/.pcdm-x-failed" ; then
+	# Wow, we really failed here, lets try running X wizard
+	rm -f -- "runxsetup"
+	rm -f -- "/tmp/.pcdm-x-failed"
+      else
+	# Lets move xorg.conf away, and try again
+	touch "/tmp/.pcdm-x-failed"
+	mv /etc/X11/xorg.conf /etc/X11/xorg.conf.prevFailed 2>/dev/null
+      fi
+   fi
+fi
+
+#Now remove the authorization file
+rm -f -- "${PCDMAUTHFILE}"

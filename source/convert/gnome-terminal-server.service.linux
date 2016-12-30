@@ -6,8 +6,8 @@
 Description=GNOME Terminal
 
 [Service]
-systemdUserEnvironment=true
-Environment=DBUS_SESSION_BUS_ADDRESS="unix:runtime=yes"
+Type=dbus
+EnvironmentDirectory=env
 ExecStart=/usr/lib/gnome-terminal/%p
 Restart=no
 

@@ -9,7 +9,7 @@ Description=BSD serial device initialization service
 Type=oneshot
 ExecStart=/etc/rc.d/serial
 # This is a one-shot service that can be re-triggered by starting it again.
-RemainAfterExit=1
+#RemainAfterExit=1
 Restart=no
 
 [Install]

@@ -15,7 +15,7 @@ RuntimeDirectoryOwner=_tss
 ExecStartPre=install -d -m 0700 -o _tss -g _tss /usr/local/var/lib/tpm
 ExecStartPre=chmod 0600 /usr/local/etc/%p.conf
 ExecStartPre=chown _tss:_tss /usr/local/etc/%p.conf
-ExecStart=%p -f -c /usr/local/etc/%p.conf
+ExecStart=setuidgid _tss %p -f -c /usr/local/etc/%p.conf
 
 [Install]
 WantedBy=workstation.target

@@ -1,0 +1,177 @@
+<title>The dnscache, tinydns, and axfrdns services</title>
+<link rel="Up" href="../index.html" title="nosh Guide" />
+<h1>
+The <code>dnscache</code>, <code>tinydns</code>, and <code>axfrdns</code> services
+</h1>
+
+<p>
+The Bernstein <code>dnscache</code>, <code>tinydns</code>, and <code>axfrdns</code> tools from djbdns can be run as services, and the proxy and content DNS services are preconfigured with certain defaults.
+</p>
+
+<h2>
+Ways to run the services
+</h2>
+
+<p>
+There are two ways in which these tools can be run as services.
+</p>
+
+<h3>
+One global instance each
+</h3>
+
+<p>
+The service bundles package comes with one predefined system-level service bundle for each of <code>dnscache</code>, <code>tinydns</code>, and <code>axfrdns</code>, and an associated service bundle for each of the associated log services <code>cyclog@dnscache</code>, <code>cyclog@tinydns</code>, and <code>cyclog@axfrdns</code>.
+The <a href="../external-formats.html">external formats import subsystem</a></li> enables these service bundles according to the usual presets such as a <code>dnscache_enable="YES"</code> flag in <code>/etc/rc.conf</code>.
+</p>
+
+<p>
+These service bundles are configured in the conventional ways for djbdns services: 
+variables named <code>ROOT</code>, <code>IP</code>, <code>CACHESIZE</code> and so forth stored in an environment variable directory in the conventional place for a service.
+These can be accessed and modified in the conventional ways:
+</p>
+<ul>
+<li><pre>rcctl set dnscache CACHESIZE 1000000</pre></li>
+<li><pre>system-control print-service-env tinydns IP</pre></li>
+</ul>
+
+<p>
+The exceptions are:
+</p>
+<ul>
+<li><p>
+the listening IP address of the <code>axfrdns</code> service, which is hardwired to <code>::0</code> in the service's <code>run</code> program
+</p></li>
+<li><p>
+the data resource limit of the <code>dnscache</code> service, which is set with a hardwired use of <a href="../hardlimit.html"><code>hardlimit</code></a> in the service's <code>run</code> program
+</p></li>
+</ul>
+
+<p>
+In both cases this is because the <code>run</code> program is not a shell script and does not have shell variable expansion mechanisms for parameterizing what it passes to <code>hardlimit</code> and <a href="../tcp-socket-listen.html"><code>tcp-socket-listen</code></a>.
+The <code>axfrdns</code> service uses <a href="../ucspi-socket-rules-check.html"><code>ucspi-socket-rules-check</code></a>, though, which is how one can arrange to restrict client access.
+</p>
+
+<h3>
+One generated instance per network address
+</h3>
+
+<p>
+For each of the network addresses listed as <code>network_addresses</code> in <code>/etc/rc.conf</code> the <a href="../external-formats.html">external formats import subsystem</a></li> generates a <code>dnscache@</code><i>address</i>, a <code>axfrdns@</code><i>address</i>, and a <code>tinydns@</code><i>address</i> service.
+If there are no network addresses, it generates <code>dnscache@127.0.0.1</code>, <code>axfrdns@127.53.0.1</code>, and <code>tinydns@127.53.0.1</code>.
+</p>
+
+<p>
+This requires <a href="http://jdebp.eu./Softwares/djbwares/">the modified <code>dnscache</code> and <code>tinydns</code> tools from djbwares</a>, because service management arranges to pass in their listening socket(s), already opened and bound to <i>address</i>, as open file descriptors.
+The djbwares versions of the <code>dnscache</code> and <code>tinydns</code> tools have been enhanced to be capable of this (the former requiring two open file descriptors, one a TCP listening socket and one a UDP listening socket).
+</p>
+
+<p>
+Again, the service bundles are configured in the conventional ways for djbdns services: variables in a conventionally-placed environment variable directory, read by <a href="../envdir.html"><code>envdir</code></a> and understood by <a href="../rcctl.html"><code>rcctl</code></a> and other tools.
+However, the <code>IP</code> environment variables are ignored by the djbwares versions of the programs, when they find that they have been supplied the listening socket file descriptors already opened.
+The <code>DATALIMIT</code> variable is also ignored in favour of a hardwired <code>hardlimit</code> invocation.
+</p>
+
+<p>
+The generated per-address services are set up to have their log outputs directed into the log services of the single global services.
+</p>
+
+<p>
+The external formats import subsystem again enables these service bundles according to the usual presets, although a flag in <code>/etc/rc.conf</code> is less convenient than (say) a systemd-style preset file in <code>/etc/system-control/presets/20-dns.preset</code> containing:
+</p>
+<blockquote><pre>
+enable dnscache@127.0.0.1
+enable cyclog@dnscache
+enable axfrdns@127.53.0.1
+enable cyclog@axfrdns
+enable tinydns@127.53.0.1
+enable cyclog@tinydns
+</pre></blockquote>
+
+<h2>
+Content server databases
+</h2>
+
+<p>
+By default, each <code>tinydns</code> service bundle is set up with its own private <code>service/root</code> directory, and each <code>axfrdns</code> is set up with its <code>service/root</code> symbolically linked to that.
+Each <code>service/root</code> directory contains an individual <code>Makefile</code>, <code>data</code> source file, and tools such as <code>add-ns</code> (which are short scripts that need Laurent Bercot's <code>execlineb</code> script interpreter).
+However, they can be pointed at shared databases in three simple ways, if one wants content served from a common shared database:
+</p>
+
+<ul>
+<li><p>
+Make <code>root</code> a symbolic link to a common shared <code>root</code> directory somewhere, just like each <code>axfrdns</code> service does with its related <code>tinydns</code> service.
+</p></li>
+<li><p>
+Modify the <code>ROOT</code> environment variable for the service, by default set in the environment directory to "<code>root</code>" and thus naming the <code>service/root</code> directory, to name a common shared <code>root</code> directory somewhere.
+</p><p>
+The common shared directory will be a common shared changed-root area for all services sharing it.
+It can be anywhere that one likes, with the proviso that the <code>tinydns-d</code> and <code>axfrdns-d</code> user accounts must have the privileges to change directory to it (from their service directories) and the privileges to search it for the <code>data.cdb</code> and to read that file.
+One choice, for example, is to use a <code>dns</code> subdirectory next to the area used by the Bernstein publicfile servers for their data.
+</p></li>
+<li><p>
+Modify the <code>Makefile</code> to duplicate a common shared <code>data.cdb</code> instead of compiling it from the local <code>data</code> source file.
+</p><p>
+You might be doing this anyway if the content DNS server is supposed to be one of a cluster of such servers, sharing their <code>data.cdb</code> files from a single database "master".
+Or you might be sharing bits and pieces of the source <code>data</code> file around and have a <code>Makefile</code> that concatenates them together before compiling them to the <code>data.cdb</code> database.
+</p></li>
+</ul>
+
+<p>
+How and what one does in this area, and the tradeoffs and design decisions, are well beyond the scope of this <i>Guide</i> however.
+</p>
+
+<h2>
+Proxy server configuration
+</h2>
+
+<p>
+By default, each <code>dnscache</code> service bundle is set up with its own private <code>service/root/ip</code> and <code>service/root/servers</code> directories telling it whom to contact with back-end queries and whom to answer on the front end.
+It is a rare configuration where one wants to share these amongst multiple <code>dnscache</code> services, and usually one will not want to do so.
+</p>
+
+<p>
+Note that <code>service/seed</code> files are not used by these services.
+A fresh seed is copied directly from <code>/dev/urandom</code> for every invocation of the d&aelig;mon and sent through a pipe from which it can only be read once.
+<code>dnscache</code> does not require seeds to remain the same from run to run of the server, and a seed in a file has to be (a) only readable by the superuser, (b) specifically <em>not</em> readable by the <code>dnscache-d</code> user, and (c) not shared amongst multiple <code>dnscache</code> services.
+This makes use of the <a href="../pipe.html"><code>pipe</code></a> utility which can set up a pipeline with the main d&aelig;mon process as one of the elements of the pipe (something which cannot be done directly in shell script).
+</p>
+
+<h2>
+What one gets with the default setup
+</h2>
+
+<p>
+You do not have to turn anything else on if the content DNS server on 127.53.0.1 is the <code>tinydns@127.53.0.1</code> service, the proxy DNS server on 127.0.0.1 is the <code>dnscache@127.0.0.1</code> service, and your DNS client library defaults to contacting 127.0.0.1 for proxy DNS service.
+</p>
+
+<ul>
+<li><p>
+Until you change it, the only front-end client that will be recognized according to <code>service/root/ip</code> will be the client with IP address 127.0.0.1.
+You have to <em>explicitly turn on</em> client access to your proxy DNS server to the world.
+It is not automatically turned on for you.
+(Indeed, you have to turn on a <code>dnscache</code> server that listens on something than 127.0.0.1, too.)
+</p><p>
+The <code>dnscache@127.0.0.1</code> service provides proxy DNS service to clients on your local machine, which will all talk to it via the IP address 127.0.0.1 which is the one already recognized client.
+</p><p>
+(If they are configured to talk to it, that is.
+You must have the equivalent of <code>nameserver&nbsp;127.0.0.1</code> in <code>/etc/resolv.conf</code> configured somehow.
+Again, exactly how to configure your DNS client library to talk to 127.0.0.1 is well beyond the scope of this <i>Guide</i>, involving all sorts of complexities and details from DHCP leases to how <code>resolvconf</code> and <code>NetworkManager</code> work.
+Note that on the BSDs, if you don't have any <code>nameserver</code> directives, 127.0.0.1 is the default where the DNS client library goes looking for proxy DNS service; so, again, things should just work with the defaults.)
+</p></li>
+<li><p>
+Until you change it, the <code>service/root/servers/@</code> file in the <code>dnscache@127.0.0.1</code> service bundle will direct all back-end queries made by <code>dnscache</code> to a private <code>.</code> (i.e. root) content DNS server presumed to be listening on 127.53.0.1.
+</p><p>
+The <code>tinydns@127.53.0.1</code> content DNS server is set up as a private root content DNS server.
+It has delegations in its database for all of the (ICANN) top-level domains, and will direct <code>dnscache</code> to the second-level content DNS servers appropriately.
+</p><p>
+It also contains data that will cause it to answer (same-host and same-site originated) queries for reverse lookups of 10.0.0.0/8, 127.0.0.0/8, and 192.168.0.0/16 IP addresses.
+</p><p>
+Keeping this as the configured <code>service/root/servers/@</code> is a good idea for several reasons.
+It is generally good practice to run one's own private root content DNS server.
+It stops a whole lot of DNS traffic for nonexistent stuff leaking out of one's personal computer, or one's organization, onto the public Internet.
+It also means that one is in ultimate control of one's own root, rather than relying upon the altruism of an outside party.
+(It's not something that North Americans tend to appreciate; but the fact that ICANN is sponsored and controlled by the U.S. government is a worry for people in other countries and on other continents.)
+It's also resilient even if the machine's own immediate network connection is lost, and available in the bootstrap even before a machine has gained DHCP leases.
+</p></li>
+</ul>

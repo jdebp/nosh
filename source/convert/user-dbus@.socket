@@ -12,7 +12,7 @@ SocketUser=%I
 SocketMode=0700
 Backlog=2
 MaxConnections=2
-ListenStream=/run/user/%I/dbus/user_bus_socket
+ListenStream=/run/user/%I/bus
 Accept=false
 
 [Install]

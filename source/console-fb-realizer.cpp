@@ -95,10 +95,10 @@ handle_signal (
 */
 
 static inline
-int
+ssize_t
 pread(int fd, bsd_vtfont_header & header, off_t o)
 {
-	const int rc(pread(fd, &header, sizeof header, o));
+	const ssize_t rc(pread(fd, &header, sizeof header, o));
 	if (0 <= rc) {
 		header.glyphs = be32toh(header.glyphs);
 		for (unsigned i(0U); i < 4U; ++i) header.map_lengths[i] = be32toh(header.map_lengths[i]);
@@ -107,10 +107,10 @@ pread(int fd, bsd_vtfont_header & header, off_t o)
 }
 
 static inline
-int
+ssize_t
 pread(int fd, bsd_vtfont_map_entry & me, off_t o)
 {
-	const int rc(pread(fd, &me, sizeof me, o));
+	const ssize_t rc(pread(fd, &me, sizeof me, o));
 	if (0 <= rc) {
 		me.character = be32toh(me.character);
 		me.glyph = be16toh(me.glyph);
@@ -360,9 +360,13 @@ public:
 	bool num_LED() const { return num_lock(); }
 	bool caps_LED() const { return caps_lock()||level2_lock(); }
 	bool scroll_LED() const { return group2(); }
+#if 0 // These are for the future.
 	bool shift_LED() const { return level2_lock()||level2(); }
+#endif
+#if defined(__LINUX__) || defined(__linux__)
 	bool kana_LED() const { return false; }
 	bool compose_LED() const { return false; }
+#endif
 	bool query_dirty_LEDs() const { return dirty_LEDs; }
 	void clean_LEDs() { dirty_LEDs = false; }
 	std::size_t query_kbdmap_parameter (const uint32_t cmd) const;
@@ -3208,7 +3212,7 @@ USBHIDBase::handle_mouse_button(
 			r.handle_mouse_button(modifiers(), TranslateStdButton(button), down);
 		}
 	} else
-		;
+		/* Ignore out of range button. */ ;
 }
 
 inline
@@ -3229,7 +3233,7 @@ USBHIDBase::handle_key(
 		else
 			newkeys.erase(ident);
 	} else
-		;
+		/* Ignore out of range key. */ ;
 }
 #endif
 
@@ -3696,7 +3700,7 @@ HID::handle_input_events(
 			) {
 				handle_key(seen_keyboard, newkeys, ident, down);
 			} else
-				;
+				/* Ignore out of range button/key. */ ;
 		}
 
 		std::memmove(buffer, buffer + report.bytes, sizeof buffer - report.bytes),
@@ -3802,8 +3806,8 @@ protected:
 private:
 	static bool IsSync (char b);
 	static uint8_t Extend7to8 (uint8_t v);
-	static int GetOffset8 (uint8_t one, uint8_t two);
-	static int GetOffset7 (uint8_t one, uint8_t two);
+	static short int GetOffset8 (uint8_t one, uint8_t two);
+	static short int GetOffset7 (uint8_t one, uint8_t two);
 }; 
 
 }
@@ -3923,7 +3927,7 @@ HID::handle_input_events(
 			) {
 				handle_key(seen_keyboard, newkeys, ident, down);
 			} else
-				;
+				/* Ignore out of range button/key. */ ;
 		}
 
 		std::memmove(buffer, buffer + report.bytes, sizeof buffer - report.bytes),
@@ -3993,7 +3997,7 @@ void
 ATKeyboard::handle_input_events(
 	Realizer & r
 ) {
-	const int n(read(device.get(), reinterpret_cast<char *>(buffer) + offset, sizeof buffer - offset));
+	const ssize_t n(read(device.get(), reinterpret_cast<char *>(buffer) + offset, sizeof buffer - offset));
 	if (0 > n) return;
 	for (
 		offset += n;
@@ -4080,14 +4084,14 @@ SysMouse::Extend7to8 ( uint8_t v )
 }
 
 inline
-int
+short int
 SysMouse::GetOffset8 ( uint8_t one, uint8_t two )
 {
 	return static_cast<int8_t>(one) + static_cast<int8_t>(two);
 }
 
 inline
-int
+short int
 SysMouse::GetOffset7 ( uint8_t one, uint8_t two )
 {
 	return GetOffset8(Extend7to8(one), Extend7to8(two));
@@ -4374,7 +4378,7 @@ KernelTerminalEmulatorLockout::release()
 */
 
 void
-console_fb_realizer ( 
+console_fb_realizer [[gnu::noreturn]] ( 
 	const char * & /*next_prog*/,
 	std::vector<const char *> & args
 ) {

@@ -1,0 +1,142 @@
+<title>Demand starting per-user Desktop Bus user services</title>
+<link rel="Up" href="per-user-stuff.html" title="Stuff converted for each user" />
+<h1>
+Demand starting per-user Desktop Bus user services
+</h1>
+
+<p>
+Desktop Bus servers communicate with clients via an intermediary "broker" process, which passes messages around and keeps track of registered server "names".
+Clients generally rely upon servers either being explicitly run or started on demand.
+The old way of demand-starting servers, on systems without per-user service managers, was for the broker process to directly spawn the server processes.
+<a href="http://jdebp.eu./Softwares/nosh/avoid-dbus-bus-activation.html">This so-called "bus activation" should be avoided on systems with service management, for several reasons.</a>
+On systems with per-user service managers, <a href="per-user-user-services.html#dbus">the per-user service manager has a definition of the Desktop Bus server</a> and either the broker process tells the service manager when to start it or the user explicitly enables the service to start automatically at startup using the normal service manager mechanisms.
+Or both.
+</p>
+
+<h2 id="how">
+How it works
+</h2>
+
+<p>
+Demand start of <a href="per-user-user-services.html#dbus">per-user Desktop Bus servers</a> works like this:
+</p>
+
+<ol>
+<li><p>
+A Desktop Bus client contacts the broker and asks it to connect it to the server <code>org.example.Sheila</code>.
+</p></li>
+<li><p>
+Recognizing that no server by that name has yet been registered with it, the Desktop Bus broker scans its server definition files for a server that has <code>Name=org.example.Sheila</code>.
+These files include the overrides at <a href="gazetteer.html#user-dbus-definitions"><code>~</code><i>username</i><code>/.local/share/dbus-1/services</code></a>.
+</p></li>
+<li><p>
+It finds an override named <code>~</code><i>username</i><code>/.local/share/dbus-1/services/org.example.Sheila.service</code> that has <code>Name=org.example.Sheila</code>.
+</p></li>
+<li><p>
+Using <a href="dbus-daemon-launch-helper.html"><code>dbus-daemon-launch-helper</code></a>, the broker sends a <code>system-control --user start org.example.Sheila</code> to the per-user service manager.
+</p></li>
+<li><p>
+The per-user service manager starts the <code>~</code><i>username</i><code>/.config/service-bundles/services/org.example.Sheila</code> service.
+</p></li>
+<li><p>
+The service contacts the Desktop Bus broker (whose address it knows from the <code>DBUS_SESSION_BUS_ADDRESS</code> environment variable that the service is configured with) and registers the <code>org.example.Sheila</code> service.
+</p></li>
+<li><p>
+The broker finally answers the connection request from the original client.
+</p></li>
+</ol>
+
+<h2 id="names">
+Unified server names
+</h2>
+
+<p>
+In theory <a href="dbus-daemon-launch-helper.html"><code>dbus-daemon-launch-helper</code></a> is supposed to look in the Desktop Bus broker server definition file for a <code>SystemdService</code> setting.
+In theory, the name of the service to be started could thus be different from the name that the server registers with the broker when it starts up.
+</p>
+
+<p>
+Moreover: Originally, the <code>Name</code> field in a server definition file could differ from the name of the server definition file itself, too.
+So there would be three names, all different: the name of the server definition file, the <code>Name</code> field within it, and the service management service name named by the <code>SystemdService</code> named within it.
+</p>
+
+<p>
+But the Desktop Bus people discovered that this made it far too easy to mess things up in various surprising ways, and nowadays they try to enforce the convention that the <code>Name</code> is always the same as the server definition filename.
+Adhering to this convention prevents, for one thing, the ambiguous case of two (or more) server definition files with different names that define the same server <code>Name</code> internally.
+The broker actually does not guarantee which server definition file it picks in such a scenario.
+If the server definition file name is always the server registration name, installation and package managers will notice the filename conflict.
+</p>
+
+<p>
+The same reasoning applies to the <code>SystemdService</code> setting, the name seen by the service manager.
+It is far too easy to mess things up in various surprising ways if the names used in service management do not match the server names seen by the broker.
+In practice, this is pointless extra indirection.
+And the systemd people quickly adopted the convention that if the registration name is not the service management name itself, the service management name must have the registration name as an alias, so that the service can be managed using its registration name.
+</p>
+
+<p>
+<code>dbus-daemon-launch-helper</code> thus adopts the convention that the service name given by <code>SystemdService</code>, the registration name given by <code>Name</code>, and the name of the Desktop Bus server definition file, are all the same single name.
+The broker gives the helper the name of the server definition file, so it just uses that as-is, and entirely ignores the server definition file contents and its superfluous, pointless, and problem-enabling <code>Name</code> and <code>SystemdService</code> fields.
+</p>
+
+<h2 id="creating">
+Creating more demand-started services of your own
+</h2>
+
+<p>
+To create your own demand-start Desktop Bus server process, you need to create a user-level service bundle (in <a href="gazetteer.html#user-service-bundles">~/.config/service-bundles/services</a>) for your per-user service manager and a override server definition file for the Desktop Bus broker.
+Proceed as follows:
+</p>
+
+<ol>
+<li><p>
+Find the old server definition file for it.
+This will be somewhere in <code>/usr/local/share/dbus-1/services</code>, or its equivalent.
+</p></li>
+<li><p>
+Make a note of the <code>Exec</code> setting in that file.
+This will be how your service bundle starts the service.
+</p></li>
+<li><p>
+Make a note of the <code>Name</code> setting in that file.
+This will be <a href="#names">the single unified name of everything</a>.
+</p></li>
+<li><p>
+Create a file with that name (plus <code>.service</code>) in <a href="gazetteer.html#user-dbus-definitions">your personal server definitions directory</a> as <code>~/.local/share/dbus-1/services/</code><i>name</i><code>.service</code>.
+Do not worry if it is a different name to the server definition that it is overriding.
+Ironically, one of the complex mechanisms that it makes it so easy to mess things up is the system where the broker "knows" that two differently named files actually define the same server.
+Usually it will be the same name, though, per the modern Desktop Bus naming convention that tries to avoid the mess; and as long as there are just the two files, one in your personal server definitions directory and one in the system-wide (user) server definitions directory, the broker's "directory priority" scheme comes into play and there is no ambiguity.
+</p></li>
+<li><p>
+The file is a Windows INI file.
+Its contents should comprise a <code>[D-BUS&nbsp;Service]</code> section with fields as follows:
+</p>
+<ul>
+<li><code>Name=</code><i>name</i></li>
+<li><code>User=</code><i>username</i></li>
+<li><code>Exec=/bin/exec true</code></li>
+</ul>
+<p>
+(Because of another Desktop Bus bug, it has to contain <code>User=</code><i>something</i>, even though the broker is not running as the superuser.)
+</p></li>
+<li><p>
+Create a service bundle in <a href="gazetteer.html#user-service-bundles">your per-user service bundles area</a> as <code>~/.config/service-bundles/services/</code><i>name</i>.
+<ul>
+<li><p>
+Its <code>run</code> program should contain the command that you noted from the <code>Exec</code> setting earlier.
+</p></li>
+<li><p>
+It should have a <code>wants/</code> and an <code>after/</code> relationship to your <code>~/.config/service-bundles/services/dbus</code> service, and to your <code>~/.config/service-bundles/targets/basic</code> target.
+</p></li>
+<li><p>
+It should have a <code>log/</code> symbolic link to to your <code>~/.config/service-bundles/services/dbus-servers-log</code> service (unless you decide to give it its own private logging service).
+</p></li>
+<li><p>
+It should have a <code>wants/</code> and an <code>after/</code> relationship to its <code>log/</code> service.
+</p></li>
+<li><p>
+It should have a <code>stopped-by/</code> and an <code>before/</code> relationship to your <code>~/.config/service-bundles/targets/shutdown</code> target.
+</p></li>
+</ul>
+</li>
+</ol>

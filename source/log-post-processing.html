@@ -1,0 +1,84 @@
+<title>Log post-processing</title>
+<link rel="Up" href="logging.html" title="Logging" />
+<link rel="Prev" href="log-service-plumbing.html" title="Logging services and plumbing" />
+<link rel="Next" href="beyond-cyclog.html" title="Beyond cyclog"/>
+<h1>
+Log post-processing
+</h1>
+
+<p>
+Log files written by <a href="cyclog.html"><code>cyclog</code></a> and many of <a href="beyond-cyclog.html">the alternatives one can use in place of it</a> are sequences of zero or more variable-length records that end with linefeeds.
+There are a number of tools that can be used to post-process the contents of log directories.
+</p>
+
+<ul>
+
+<li><p>
+One can "follow" a log with the <code>tail&nbsp;-F</code> (not <code>-f</code>) command applied to its <code>current</code> file.
+</p><p>
+Note that this does not "catch up" with old logs, and only processes the current file.
+The <code>-n +0</code> option can be added to follow from the beginning of the current file.
+</p><p>
+Also note that it has a race condition where <code>tail</code> will miss out stuff if (for whatever reason) rotation from one file to the next happens faster than <code>tail</code> can switch files to keep up.
+<code>tail</code> ends up skipping whole files.
+(This is fairly easy to trigger in practice if the output of <code>tail</code> is to something slow like a slow scrolling remote terminal over a low bandwidth or lossy network connection.)
+</p></li>
+
+<li><p>
+One can convert the contents of a log file from external TAI64N form to a human-readable timestamp in the current timezone, with the <a href="tai64nlocal.html"><code>tai64nlocal</code></a> tool, which can be used both as a filter within a post-processing pipeline and as a straight file-reading utility.
+</p><p>
+With GNU <code>awk</code>, <code>tai64nlocal</code> can be used as an awk "co-process" to convert timestamps:
+</p><blockquote><pre>print |&amp; "tai64nlocal"
+"tai64nlocal" |&amp; getline</pre></blockquote></li>
+
+<li><p>
+Log file directories are locked by the log writing programs with the conventional daemontools lockfile mechanism.
+One can arrange to execute tasks, interlocked with the logging service not running, using the <a href="setlock.html"><code>setlock</code></a> tool.
+For example, this arranges to temporarily stop the log service connected to the <code>local-syslog-read</code> service and archive a snapshot of its log directory:
+</p><blockquote><pre>setlock sh -c 'pax -w /var/log/sv/local-syslog-read/@*.[su] /var/log/sv/local-syslog-read/current &gt; snapshot.tar' &amp;
+system-control condrestart cyclog@local-syslog-read</pre></blockquote>
+<p>
+(Note the subtlety of wildcard expansion being deferred until <code>setlock</code> has acquired the lock.)
+</p>
+</li>
+
+<li><p>
+All log lines begin with a timestamp; TAI64N timestamps sort lexically into chronological order; and each log file is by its nature already sorted into chronological order.
+This means that log files are suitable for using the <code>-m</code> option to the <code>sort</code> command, in order to merge sort multiple log files together into a single log.
+</p><p>
+The following example makes use of this to sort all of the last hour's logs from all (nosh managed, system-wide) services together:
+</p><blockquote><pre>find /var/log/sv/*/ -type f \( -name current -o -name '@*.[su]' \) -mmin -60 -print0 |
+xargs -0 sort -m -- |
+tai64nlocal |
+less -S +G</pre></blockquote>
+</li>
+
+<li><p>
+The <a href="follow-log-directories.html"><code>follow-log-directories</code></a> and <a href="export-to-rsyslog.html"><code>export-to-rsyslog</code></a> tools understand the structure of log directories, and can thus do things that <code>tail&nbsp;-F</code> cannot:
+</p>
+<ul>
+<li><p>
+They know the naming scheme for old rotated log files and know to scan through them, reading any that are newer than the point last recorded in their "log cursor", before reading the current file.
+</p></li>
+<li><p>
+They know to skip through any given log file, to the next entry after the point last recorded in their "log cursor".
+</p></li>
+<li><p>
+They know to read all of the way to the end of the current file before taking note of a rename notification triggered by a file rotation.
+</p></li>
+<li><p>
+Their "log cursors" are persistent and tweakable, and not just transient state held within some kernel open file description that is lost when the process holding it open terminates.
+They will "remember" where they last left off if terminated and then re-invoked.
+An administrator can hand-edit the "cursor" file with the TAI64N timestamp of the desired place in the log to (re-)start from.
+</p></li>
+</ul>
+<p>
+With <code>export-to-rsyslog</code> one can build a de-coupled log export service that will export a machine's logs over the network to an RSYSLOG server, without skipping log entries and with the log directory itself being a buffering mechanism that allows the logged service to pull ahead of the export service without the risk of short-lived temporary network glitches blocking the logged service because its output pipe is full.
+</p>
+<p>
+With <code>follow-log-directories</code> one can build de-coupled log post-processing services that do things like pass logs through <code>awk</code> or <code>perl</code> scripts and perform tasks when log entries match particular patterns.
+Again, the log directory itself acts as a buffer that allows the logged service to pull ahead if the tasks happen to take a long time.
+</p>
+</li>
+
+</ul>

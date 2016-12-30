@@ -14,7 +14,7 @@ Type=oneshot
 EnvironmentDirectory=env
 ExecStart=mtree -d -e -U -f /etc/mtree/BSD.%i.dist -p /%I
 # This is a one-shot service that can be re-triggered by starting it again.
-RemainAfterExit=1
+#RemainAfterExit=1
 Restart=no
 
 [Install]

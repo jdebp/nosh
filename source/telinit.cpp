@@ -122,12 +122,13 @@ shutdown (
 	const char * grace_period(0);
 	bool halt(false), reboot(false), no_wall(false), kick_off(false), verbose(false);
 	try {
-		bool hp(true), poweroff(true);
+		bool hp(true), poweroff(true), o(false);
 		popt::bool_definition verbose_option('v', "verbose", "Print messages.", verbose);
 		popt::bool_definition halt_option('H', "halt", "Halt the machine but do not power off if not rebooting.", halt);
 		popt::bool_definition poweroff_option('P', "poweroff", "Compatibility option, on by default.", poweroff);
 		popt::bool_definition h_option('h', 0, "Compatibility option, on by default.", hp);
 		popt::bool_definition p_option('p', 0, "Compatibility option, on by default.", hp);
+		popt::bool_definition o_option('o', 0, "Compatibility option, off by default.", o);
 		popt::bool_definition reboot_option('r', "reboot", "Reboot the machine.", reboot);
 		popt::bool_definition no_wall_option('\0', "no-wall", "Do not send wall messages.", no_wall);
 		popt::bool_definition kick_off_option('k', "kick-off", "Do not enact the final state change.", kick_off);
@@ -139,6 +140,7 @@ shutdown (
 			&poweroff_option,
 			&h_option,
 			&p_option,
+			&o_option,
 			&no_wall_option,
 			&kick_off_option,
 			&grace_period_option
@@ -263,31 +265,31 @@ shutdown (
 		else if (secs <= 15.0)
 			sleep(1);
 		else if (secs <= 60.0) {
-			const int v(static_cast<int>(std::fmod(secs, 15.0)));
+			const unsigned int v(static_cast<unsigned int>(std::fmod(secs, 15.0)));
 			sleep(v ? v : 15);
 		}
 		else if (secs <= 300.0) {
-			const int v(static_cast<int>(std::fmod(secs, 60.0)));
+			const unsigned int v(static_cast<unsigned int>(std::fmod(secs, 60.0)));
 			sleep(v ? v : 60);
 		}
 		else if (secs <= 900.0) {
-			const int v(static_cast<int>(std::fmod(secs, 300.0)));
+			const unsigned int v(static_cast<unsigned int>(std::fmod(secs, 300.0)));
 			sleep(v ? v : 300);
 		}
 		else if (secs <= 3600.0) {
-			const int v(static_cast<int>(std::fmod(secs, 900.0)));
+			const unsigned int v(static_cast<unsigned int>(std::fmod(secs, 900.0)));
 			sleep(v ? v : 900);
 		}
 		else if (secs <= 21600.0) {
-			const int v(static_cast<int>(std::fmod(secs, 3600.0)));
+			const unsigned int v(static_cast<unsigned int>(std::fmod(secs, 3600.0)));
 			sleep(v ? v : 3600);
 		}
 		else if (secs <= 86400.0) {
-			const int v(static_cast<int>(std::fmod(secs, 21600.0)));
+			const unsigned int v(static_cast<unsigned int>(std::fmod(secs, 21600.0)));
 			sleep(v ? v : 21600);
 		}
 		else {
-			const int v(static_cast<int>(std::fmod(secs, 86400.0)));
+			const unsigned int v(static_cast<unsigned int>(std::fmod(secs, 86400.0)));
 			sleep(v ? v : 86400);
 		}
 	       	now = std::time(0);
@@ -325,7 +327,7 @@ rcctl (
 }
 
 void
-runlevel ( 
+runlevel [[gnu::noreturn]] ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {

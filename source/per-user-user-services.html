@@ -1,0 +1,126 @@
+<title>Per-user user services</title>
+<link rel="Up" href="per-user-stuff.html" title="Stuff converted for each user" />
+<h1>
+Per-user user services
+</h1>
+
+<p>
+In addition to setting up <a href="per-user-system-services.html">system-level services for each user</a> the configuration import subsystem sets up a whole load of service bundles for each user, to be managed by that user's personal instance of <a href="service-manager.html"><code>service-manager</code></a>.
+These service bundles live in <a href="gazetteer.html#user-service-bundles">the user's service bundles directory</a> in the user's home directory.
+</p>
+
+<h2>
+The types of services
+</h2>
+
+<p>
+The services fall into one of three main groups: logging, non-Desktop Bus, and Desktop Bus.
+</p>
+
+<h3>
+Logging services
+</h3>
+
+<p>
+There are three major logging services.
+</p>
+
+<dl>
+
+<dt><code>simple-servers-log</code></dt>
+<dd>
+This takes the log outputs of most non-Desktop Bus non-socket servers, and writes it to <code>/var/log/user/</code><i>username</i><code>/simple-servers/</code>.
+</dd>
+<dt><code>socket-servers-log</code></dt>
+<dd>
+This takes the log outputs of most non-Desktop Bus socket servers, and writes it to <code>/var/log/user/</code><i>username</i><code>/socket-servers/</code>.
+</dd>
+<dt><code>dbus-servers-log</code></dt>
+<dd>
+This takes the log outputs of most Desktop Bus servers, and writes it to <code>/var/log/user/</code><i>username</i><code>/dbus-servers/</code>.
+</dd>
+
+</dl>
+
+<h3>
+Non-Desktop Bus services
+</h3>
+
+<p>
+Non-Desktop Bus services are either straightforward simple services or services that listen on sockets.
+They do not require the per-user Desktop Bus broker to be running.
+Examples are:
+</p>
+
+<dl>
+
+<dt><code>emacs</code></dt>
+<dd>
+The emacs d&aelig;mon (<code>--new-daemon</code> mode only).
+</dd>
+<dt><code>urxvt</code></dt>
+<dd>
+The <code>urxvtd</code> d&aelig;mon.
+</dd>
+<dt><code>gpg-agent</code></dt>
+<dd>
+The GPG Agent, listening on <code>/run/user/</code><i>username</i><code>/gnupg/S.gpg-agent</code>.
+</dd>
+
+</dl>
+
+<p>
+These services are not set up with a <code>DBUS_SESSION_BUS_ADDRESS</code> environment variable.
+</p>
+
+<h3 id="dbus">
+Desktop Bus services
+</h3>
+
+<p>
+Desktop Bus services require the per-user Desktop Bus broker to be running.
+This can either be running as the system-level <code>user-dbus@</code><i>username</i> service or as a user-level <code>dbus</code> service.
+The latter requires that the full per-user service manager be running; and cannot be used until the per-user service manager is started.
+</p>
+
+<p>
+They also need to know how to talk to it.
+So the configuration import subsystem sets them up with an environment directory containing a <code>DBUS_SESSION_BUS_ADDRESS</code> environment variable that gives the address (in <code>path=</code> form because no-one understands the <code>runtime=</code> form yet) of the <a href="gazetteer.html#user-bus-socket"><code>/run/user/</code><i>name</i><code>/bus</code></a> socket.
+</p>
+
+<p>
+By convention, a Desktop Bus service is named by a common name by which users refer to it directly (such as <code>gnome-terminal-server</code>), and has an alias pointing to it from its formal Desktop Bus "server" name (such as <code>org.gnome.Terminal</code>).
+The alias is used by the Desktop Bus broker when <a href="per-user-dbus-demand-start.html">demand-starting the service</a>, because the Desktop Bus broker only knows the formal names of services.
+</p>
+
+<h2 id="environment">
+Environment variables
+</h2>
+
+<p>
+Processes run under per-user service management execute in a d&aelig;mon-style context.
+They don't have controlling terminals, and (initially) they only have the environment variables set up by the <code>user-services@</code><i>username</i> service itself, which just runs <a href="userenv.html"><code>userenv</code></a>.
+In particular:
+</p>
+
+<ul>
+<li><p>
+They <em>do not have</em> the environment variables that are set up in the users' rc/profile/login scripts for shells.
+Shells, and thus their rc script mechanisms, are not involved in the running of the per-user service manager instance.
+</p></li>
+<li><p>
+They <em>do not have</em> the environment variables that are set up via the login class records in the users' <code>~/.login_conf</code> and the <code>/etc/login.conf</code> databases.
+Per-user service management does not, conceptually, run within a login session.
+</p></li>
+</ul>
+
+<p>
+Every user-level service is afforded an environment directory in its service definition, in the conventional location that is accessble via the likes of <code>system-control --user print-service-env org.example.Sheila</code>.
+Environment variable for services should be configured there.
+</p>
+
+<p>
+Note that it is generally the wrong thing to do to explicitly set up per-user services with <code>TTY</code> or <code>DISPLAY</code> environment variables, and this is the sign of a faulty service program.
+Service programs serve a single user that can be logged in multiple times in multiple forms of login session.
+They should not require terminal access, and should be capable of connecting to multiple X displays simultaneously and not need an X display in order to start up.
+</p>

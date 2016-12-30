@@ -32,6 +32,7 @@ extern void tcp_socket_accept ( const char * &, std::vector<const char *> & );
 extern void tcp_socket_connect ( const char * &, std::vector<const char *> & );
 extern void ulimit ( const char * &, std::vector<const char *> & );
 extern void softlimit ( const char * &, std::vector<const char *> & );
+extern void hardlimit ( const char * &, std::vector<const char *> & );
 extern void envuidgid ( const char * &, std::vector<const char *> & );
 extern void setuidgid ( const char * &, std::vector<const char *> & );
 extern void setuidgid_fromenv ( const char * &, std::vector<const char *> & );
@@ -65,6 +66,7 @@ extern void make_private_fs ( const char * &, std::vector<const char *> & );
 extern void set_mount_object ( const char * &, std::vector<const char *> & );
 extern void fifo_listen ( const char * &, std::vector<const char *> & );
 extern void export_to_rsyslog ( const char * &, std::vector<const char *> & );
+extern void follow_log_directories ( const char * &, std::vector<const char *> & );
 extern void syslog_read ( const char * &, std::vector<const char *> & );
 extern void klog_read ( const char * &, std::vector<const char *> & );
 extern void cyclog ( const char * &, std::vector<const char *> & );
@@ -73,6 +75,7 @@ extern void tai64nlocal ( const char * &, std::vector<const char *> & );
 extern void monitored_fsck ( const char * &, std::vector<const char *> & );
 extern void plug_and_play_event_handler ( const char * &, std::vector<const char *> & );
 extern void oom_kill_protect ( const char * &, std::vector<const char *> & );
+extern void local_reaper ( const char * &, std::vector<const char *> & );
 extern void move_to_control_group ( const char * &, std::vector<const char *> & );
 extern void delegate_control_group_to ( const char * &, std::vector<const char *> & );
 
@@ -96,6 +99,7 @@ commands[] = {
 	{	"userenv",				userenv				},
 	{	"machineenv",				machineenv			},
 	{	"ulimit",				ulimit				},
+	{	"hardlimit",				hardlimit			},
 	{	"softlimit",				softlimit			},
 	{	"envuidgid",				envuidgid			},
 	{	"setuidgid",				setuidgid			},
@@ -131,6 +135,7 @@ commands[] = {
 	{	"monitored-fsck",			monitored_fsck			},
 	{	"plug-and-play-event-handler",		plug_and_play_event_handler	},
 	{	"oom-kill-protect",			oom_kill_protect		},
+	{	"local-reaper",				local_reaper			},
 	{	"move-to-control-group",		move_to_control_group		},
 	{	"delegate-control-group-to",		delegate_control_group_to	},
 
@@ -150,6 +155,7 @@ personalities[] = {
 	{	"tcp-socket-accept",			tcp_socket_accept		},
 	{	"local-stream-socket-accept",		local_stream_socket_accept	},
 	{	"export-to-rsyslog",			export_to_rsyslog		},
+	{	"follow-log-directories",		follow_log_directories		},
 	{	"syslog-read",				syslog_read			},
 	{	"klog-read",				klog_read			},
 	{	"cyclog",				cyclog				},

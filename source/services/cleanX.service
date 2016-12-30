@@ -10,7 +10,7 @@ Type=oneshot
 WorkingDirectory=/tmp/
 ExecStart=sh -c 'rm -r -f /tmp/.X11-unix /tmp/.XIM-unix /tmp/.ICE-unix /tmp/.font-unix /tmp/.X[0-9].lock ; mkdir -m 1777 /tmp/.X11-unix /tmp/.XIM-unix /tmp/.ICE-unix /tmp/.font-unix'
 # This is a one-shot service that can be re-triggered by starting it again.
-RemainAfterExit=1
+#RemainAfterExit=1
 Restart=no
 
 [Install]

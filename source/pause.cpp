@@ -18,7 +18,7 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 void
-pause ( 
+pause [[gnu::noreturn]] ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {

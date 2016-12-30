@@ -8,9 +8,9 @@ Description=Analyze the last saved core dump
 [Service]
 Type=oneshot
 EnvironmentDirectory=env
-ExecStart=%p ${flags} ${dumpdir:-/var/crash}
+ExecStart=%p ${flags} -d ${dumpdir:-/var/crash}
 # This is a one-shot service that can be re-triggered by starting it again.
-RemainAfterExit=1
+#RemainAfterExit=1
 Restart=no
 
 [Install]

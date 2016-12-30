@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Sendmail SMTP Submission daemon
+
+[Service]
+EnvironmentDirectory=env
+LimitMEMORY=70000000
+ExecStart=sendmail -L %p -Ac -bs ${flags}
+ExecStartPre=sendmail -L %p -Ac -bC
+
+[Install]
+WantedBy=server.target

@@ -8,7 +8,5 @@ EarlySupervise=true
 
 [Service]
 User=nobody
-# This is a pseudo-daemon that does not have a running process.
-RemainAfterExit=yes
 
 [Install]

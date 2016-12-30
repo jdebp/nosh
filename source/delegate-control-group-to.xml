@@ -37,6 +37,15 @@ If a record of the former type is found, version 2 control groups are assumed wi
 If a record of the latter type is found, version 1 control groups are assumed with the relevant control group hierarchy (the only one that is affected by the command) rooted at <filename>/sys/fs/cgroup/systemd</filename>.
 </para>
 
+</refsection>
+<refsection><title>See also</title>
+
+<itemizedlist>
+<listitem><para>
+<citerefentry><refentrytitle>move-to-control-group</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+</itemizedlist>
+
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
 
 </refentry>

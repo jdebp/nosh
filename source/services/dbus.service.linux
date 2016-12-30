@@ -9,10 +9,15 @@ After=machine-id.service extra-shared-libraries.target
 [Service]
 RuntimeDirectory=%p
 RuntimeDirectoryMode=0755
-ExecStartPre=mkdir -p /var/db/%p
-ExecStartPre=sh -c '[ -r /var/db/%p/machine-id ] || ln -s /etc/machine-id /var/db/%p/'
+ExecStartPre=setfacl -m 'u:messagebus:rw' "%t/service-manager/control"
+ExecStartPre=mkdir -p -m 0755 -- /var/db/%p
+ExecStartPre=sh -c 'test -r /var/db/%p/machine-id || ln -s /etc/machine-id /var/db/%p/'
 # The --address=systemd: option is the closest to our UCSPI-LOCAL.
-ExecStart=dbus-daemon --system --nofork --nopidfile --address=systemd:
+ExecStart=dbus-daemon --config-file ./system-wide.conf --nofork --nopidfile --address=systemd:
+# Tell Linux not to account for 4/5 of its memory score.
+OOMScoreAdjust=-800
+# All servers are run through the launch helper, and so there shouldn't be a need for lots of child processes and threads.
+TasksMax=20
 
 [Install]
 WantedBy=workstation.target

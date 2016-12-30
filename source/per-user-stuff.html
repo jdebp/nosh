@@ -1,0 +1,57 @@
+<title>Per-user stuff</title>
+<link rel="Up" href="external-formats.html" title="External formats" />
+<h1>
+Per-user stuff
+</h1>
+
+<p>
+The configuration import subsystem sets up various things for users that it considers to be actual people.
+</p>
+
+<ul>
+<li><p>
+It sets up several <a href="per-user-system-services.html">per-user system-level services</a> and a target that encompasses them.
+</p></li>
+<li><p>
+It sets up several <a href="per-user-user-services.html">per-user user-level services and targets</a>.
+</p></li>
+<li><p>
+It sets up <a href="per-user-dbus-demand-start.html">demand start mechanisms for user-level Desktop Bus services</a>.
+</p></li>
+</ul>
+<p>
+The <code>passwd</code> database is consulted for the list of user accounts on the system.
+User accounts are considered to be actual people when they satisfy all of the following conditions:
+</p>
+
+<ul>
+<li><p>
+Their login shell is not <code>/bin/false</code> or <code>/usr/bin/nologin</code>.
+</p></li>
+<li><p>
+They do not match any of the well-known Debian or FreeBSD system user accounts such as <code>toor</code>, <code>bin</code>, <code>daemon</code>, or <code>uucp</code>.
+</p></li>
+</ul>
+
+<h2>
+Notes:
+</h2>
+
+<p>
+The list of system accounts includes <code>root</code> and no per-user system-level services or per-user management is set up for the superuser.
+</p>
+
+<p>
+Accounts are not checked to see whether they have a home directory, which one might think to be a way to detect users that are people.
+It is possible that the home directory of a real person's account is auto-mounted and that at import time it is currently not.
+Moreover: several non-people accounts have valid home directories, such as <code>alias</code> (for qmail), <code>uucp</code>, and <code>mysql</code>.
+</p>
+
+<p>
+Accounts are not considered non-people for having "*" (or some such) as their password, which one might think to be another way to detect users that are people.
+It is legitimate for a real person's account to have no password in the user account database, and always use private/public keys for login authentication.
+</p>
+
+<p>
+Conversely, accounts are not considered people for having an unlocked, proper, password.
+</p>

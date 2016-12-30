@@ -1,0 +1,512 @@
+<title>Gazetteer</title>
+<link rel="Up" href="index.html" title="nosh Guide" />
+<h1>
+Gazetteer
+</h1>
+
+<p>
+This is a short gazetteer of some of the places in the filesystem.
+It is not a comprehensive map, nor a standard.
+For a map see the <code>hier</code> manual page.
+Many of the things here are dictated by compatibility with other systems.
+</p>
+
+<h2>
+Runtime directories
+</h2>
+
+<dl>
+
+<dt><code>/run</code></dt>
+<dd>
+
+<p>
+This is the system-wide runtime directory.
+From the point of view of service and system management, the following points are important:
+</p>
+
+<ul>
+<li><p>
+It is a memory file system, that is mounted early in the bootstrap process by the <a href="system-manager.html"><code>system-manager</code></a> program.
+Thus its contents can potentially live from early bootstrap to shutdown, but do not live across system restarts, or powering the system down.
+</p></li>
+<li><p>
+It is owned by the superuser, and only the superuser has the access to create/delete files and subdirectories in it.
+This is not an equivalent to <code>/tmp</code>.
+Other users do not have create/delete access, not even POSIX <i>restricted write access</i>.
+</p></li>
+<li><p>
+System-wide services that run as dedicated users can have subdirectories immediately below it.
+The subdirectories are usually set up and torn down by the <code>start</code> and <code>stop</code> programs in their service directories.
+They are usually owned by the dedicated user account for the service, or the superuser, and named after the service.
+</p></li>
+<li><p>
+This is not a data storage area.
+This primarily contains control and status files for services (including FIFOs and sockets), shared memory, and things that are <em>effectively</em> shared memory (such as the display buffers for user-space virtual terminals).
+</p></li>
+</ul>
+
+<p>
+Files to be found here include:
+</p>
+
+<dl>
+<dt><code>/run/utx.active</code></dt><dd>the part of the BSD login database that records currently-logged in users since the last bootstrap, created by the <code>utx</code> service</dd>
+<dt><code>/run/utmp</code></dt><dd>the part of the Linux login database that records currently-logged in users since the last bootstrap, created by the <code>linux-utmp</code> service</dd>
+<dt><code>/run/machine-id</code></dt><dd>the machine ID, usually a simple duplicate of <a href="#machine-id"><code>/etc/machine-id</code></a></dd>
+<dt><code>/run/dmesg.boot</code></dt><dd>a dump of the early kernel log for the current bootstrap, saved by the <code>dmesg</code> service and redundant with the log of the <code>klogd</code> service</dd>
+<dt><code>/run/log</code></dt><dd>the universally writable socket that the <code>local-syslog-read</code> service listens on</dd>
+<dt><code>/run/logpriv</code></dt><dd>the superuser-only writable socket that the <code>local-priv-syslog-read</code> service listens on</dd>
+<dt><code>/run/motd.dynamic</code></dt><dd>the "dynamic" part of the Message Of The Day, created by the <code>motd-dynamic</code> service</dd>
+<dt><code>/run/ld-elf.so.hints</code></dt><dd>the hints database for the dynamic link-loader, created by the <code>ldconfig</code> service</dd>
+</dl>
+
+</dd>
+
+<dt><code>/run/service-manager</code></dt>
+<dd>
+
+<p>
+The runtime area for the system-wide <a href="service-manager.html"><code>service-manager</code></a> instance, spawned by the system manager or run by some other system.
+This contains:
+</p>
+
+<dl>
+<dt><code>/run/service-manager/control</code></dt><dd>the conventional communications socket for the system-wide service manager, only accessible to the superuser and (if the system-wide Desktop Bus broker is running) the <code>messagebus</code> user</dd>
+</dl>
+
+</dd>
+
+<dt><code>/run/system-manager</code></dt>
+<dd>
+
+<p>
+The runtime area for the <a href="system-manager.html"><code>system-manager</code></a>, on a fully-nosh-managed system.
+</p>
+
+</dd>
+
+<dt><code>/run/system-manager/log</code></dt>
+<dd>
+
+<p>
+A log directory that holds the log output of the system-manager, the system-wide service manager, and any <a href="system-control.html"><code>system-control</code></a> commands spawned to enact system state changes.
+It is the <a href="system-manager.html"><code>system-manager</code></a> that sets this up and spawns the logger d&aelig;mon that writes to it.
+If the system-wide service manager is run some other way, this log might be somewhere else.
+</p>
+
+</dd>
+
+<dt><code>/run/service-bundles</code></dt>
+<dd>
+
+<p>
+Ephemeral service bundles for nonce services and targets whose definitions are not intended to last across system restarts.
+This has the same substructure as <a href="#service-bundles"><code>/etc/service-bundles/</code></a> with the addition of <a href="#early-supervise"><code>/run/service-bundles/early-supervise</code></a>.
+</p>
+
+</dd>
+
+<dt id="early-supervise"><code>/run/service-bundles/early-supervise</code></dt>
+<dd>
+
+<p>
+This contains <code>supervise/</code> directories for <a href="anatomy-of-sysinit-service.html#etc">service bundles that live on <code>/etc</code></a> but that need to be run when the root volume is mounted read-only.
+</p>
+
+</dd>
+
+<dt><code>/run/user</code></dt>
+<dd>
+
+<p>
+The container for all per-user runtime directories.
+This is owned by the superuser, with only the superuser having access to create/delete files and subdirectories in it.
+</p>
+
+<p>
+For safety, this should be a mount point of a subordinate memory filesystem, configured via <code>/etc/fstab</code> and converted to a <code>/var/local/sv/mount@-run-user</code> service bundle.
+Otherwise, users can fill up the main <code>/run</code> filesystem and cause problems and mischief.
+An alternative strategy (the existence of which is why <code>/run/user</code> is not mounted as standard by the system manager) is for each individual user's runtime directory to be such a memory filesystem instead, insulating users even from one another.
+</p>
+
+</dd>
+
+<dt id="user-runtime"><code>/run/user/jim</code></dt>
+<dd>
+
+<p>
+The container for the per-user runtime directories belonging to user <code>jim</code>.
+This is owned by <code>jim</code>, with <code>jim</code> having full access to it.
+Files to be found here include:
+</p>
+
+<dl>
+<dt id="user-bus-socket"><code>/run/user/jim/bus</code></dt><dd>
+the conventional socket for <code>jim</code>'s per-user Desktop Bus broker, managed by the <code>user-dbus@jim</code> service
+<p>
+The Desktop Bus people claim that the Desktop Bus "address" <code>unix:runtime=yes</code> points to this socket, and can be used as the value of the <code>DBUS_SESSION_BUS_ADDRESS</code> environment variable.
+In reality, at the time of writing no stable/release version of Debian, FreeBSD, TrueOS, or OpenBSD contains a Desktop Bus broker or library that defaults to this address or even understands this address syntax.
+One has to use the address <code>unix:path=/run/user/${USER}/bus</code> instead.
+</p>
+</dd>
+</dl>
+
+</dd>
+
+<dt><code>/run/user/1001</code></dt>
+<dd>
+
+<p>
+A symbolic link to the per-user runtime directory for user ID 1001, such as <code>jim</code>.
+</p>
+
+</dd>
+
+<dt><code>/run/user/jim/service-manager</code></dt>
+<dd>
+
+<p>
+The runtime area for <code>jim</code>'s per-user <a href="service-manager.html"><code>service-manager</code></a> instance, spawned by <code>jim</code>'s per-user manager or run by some other system.
+This contains:
+</p>
+
+<dl>
+<dt><code>/run/user/jim/service-manager/control</code></dt><dd>the conventional communications socket for <code>jim</code>'s per-user service manager, managed by the <code>user-services@jim</code> service</dd>
+</dl>
+
+</dd>
+
+<dt><code>/run/user/jim/per-user-manager</code></dt>
+<dd>
+
+<p>
+The runtime area for <code>jim</code>'s <a href="per-user-manager.html"><code>per-user-manager</code></a>.
+</p>
+
+</dd>
+
+<dt><code>/run/user/jim/per-user-manager/log</code></dt>
+<dd>
+
+<p>
+A log directory that holds the log output of <code>jim</code>'s per-user service manager, <code>jim</code>'s per-user service manager, and any <a href="system-control.html"><code>system-control</code></a> commands spawned to enact user management state changes.
+It is <code>jim</code>'s <a href="per-user-manager.html"><code>per-user-manager</code></a> that sets this up and spawns the logger d&aelig;mon that writes to it.
+If <code>jim</code>'s per-user service manager is run some other way, this log might be somewhere else.
+</p>
+
+</dd>
+
+<dt><code>/run/dev</code></dt>
+<dd>
+
+<p>
+The container for all runtime user-space devices, such as user-space virtual terminals.
+This is owned by the superuser, with only the superuser having access to create/delete files and subdirectories in it.
+User-space virtual terminals are subdirectories, such as:
+</p>
+
+<dl>
+<dt><code>/run/dev/head0</code></dt><dd>the multiplex virtual terminal intended for head #0, produced by the <code>console-multiplexor@head0</code> service</dd>
+<dt><code>/run/dev/vc1</code></dt><dd>the virtual terminal produced by the <code>terminal-emulator@vc1</code> service to whose TTY side the <code>ttylogin@vc1-tty</code> service attaches</dd>
+<dt><code>/run/dev/vc2</code></dt><dd>the virtual terminal produced by the <code>terminal-emulator@vc2</code> service to whose TTY side the <code>ttylogin@vc2-tty</code> service attaches</dd>
+<dt><code>/run/dev/vc3</code></dt><dd>the virtual terminal produced by the <code>terminal-emulator@vc3</code> service to whose TTY side the <code>ttylogin@vc3-tty</code> service attaches</dd>
+</dl>
+
+<p>
+See <a href="console-terminal-emulator.html"><code>console-terminal-emulator</code></a> for the contents of these directories.
+Virtual terminal directories and their contents are owned by user <code>daemon</code> and with group <code>tty</code>.
+The terminal emulator services run as this user.  (The TTY login services start running as the superuser, obviously.)
+</p>
+
+</dd>
+  
+<dt><code>/run/dbus</code></dt>
+<dd>
+
+<p>
+The runtime area for the system-wide Desktop Bus broker.
+This contains:
+</p>
+
+<dl>
+<dt><code>/run/dbus/system_bus_socket</code></dt><dd>the conventional communications socket for the system-wide Desktop Bus broker</dd>
+</dl>
+
+</dd>
+
+</dl>
+
+<h2>
+System directories
+</h2>
+
+<dl>
+
+<dt><code>/etc</code></dt>
+<dd>
+
+<p>
+Miscellany.
+This directly contains files such as:
+</p>
+
+<dl>
+<dt id="machine-id"><code>/etc/machine-id</code></dt><dd>the machine ID, set up by the <code>machine-id</code> service (which runs <a href="setup-machine-id.html"><code>setup-machine-id</code></a>)</dd>
+<dt id="fstab"><code>/etc/fstab</code></dt><dd>a database table used by the external formats import subsystem <a href="fstab.html">to generate mount, swap, dump, and filesystem check service bundles</a></li></dd>
+<dt id="ttys"><code>/etc/ttys</code></dt><dd>a database table used by <a href="system-control.html"><code>system-control</code></a>'s <code>preset</code> subcommand and the external formats import subsystem <a href="ttys.html">to configure TTY login service bundles</a></li></dd>
+</dl>
+
+</dd>
+
+<dt id="service-bundles"><code>/etc/service-bundles</code></dt>
+<dd>
+
+<p>
+Service bundles, split into services and targets.
+</p>
+
+</dd>
+
+<dt><code>/etc/service-bundles/services</code></dt>
+<dd>
+
+<p>
+Service bundles that need to be accessible when only the root volume is mounted.
+These are usually <a href="anatomy-of-sysinit-service.html">sysinit services</a></li>, with their <code>supervise/</code> subdirectories symbolically linked to subdirectories in <a href="#early-supervise"><code>/run/service-bundles/early-supervise</code></a>.
+</p>
+
+</dd>
+
+<dt><code>/etc/service-bundles/targets</code></dt>
+<dd>
+
+<p>
+Service bundles for all targets.
+These are usually <a href="anatomy-of-sysinit-service.html">sysinit services</a></li>, with their <code>supervise/</code> subdirectories symbolically linked to subdirectories in <a href="#early-supervise"><code>/run/service-bundles/early-supervise</code></a>.
+</p>
+
+</dd>
+
+<dt><code>/etc/system-control</code></dt>
+<dd>
+
+<p>
+A control area.
+</p>
+
+</dd>
+
+<dt id="convert"><code>/etc/system-control/convert</code></dt>
+<dd>
+
+<p>
+The <a href="external-formats.html">external formats import subsystem</a></li>.
+This comprises, amongst other things:
+</p>
+
+<dl>
+<dt><code>/etc/system-control/convert/*.do</code></dt><dd>the redo scripts that drive the import process</dd>
+<dt><code>/etc/system-control/convert/all.do</code></dt><dd>the redo script that is the top level of the whole import process</dd>
+<dt id="rc.conf"><code>/etc/system-control/convert/rc.conf</code></dt>
+<dd>
+a generated amalgamation of all <code>rc.conf</code> configuration files.
+Do not symbolically link any of the <code>rc.conf</code> configuration files to this!
+It is generated <em>from them</em> in the first place.
+The redo script that generates it takes into account the <code>rc_conf_files</code> setting, and amalgamates the extra configuration files that are employed by PC-BSD/TrueOS.
+This can be conveniently used with <a href="read-conf.html"><code>read-conf</code></a> when one needs to access configuration settings from these files.
+</dd>
+<dt><code>/etc/system-control/convert/host.conf</code></dt><dd>a host.conf file generated from <code>/etc/nsswitch.conf</code> which one can symbolically link to <code>/etc/host.conf</code></dd>
+<dt><code>/etc/system-control/convert/*.kbdmap</code></dt><dd>keyboard maps for <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a>, generated from the keyboard maps in <code>/usr/share/vt/keymaps</code> and symbolically linked into the <code>service/kbdmaps</code> subdirectory of any <code>console-fb-realizer@*</code> services</dd>
+<dt><code>/etc/system-control/convert/swap_capsctrl.kbd</code></dt><dd>a keyboard map snippet that is overlaid on top of the ones in <code>/usr/share/vt/keymaps/</code> in order to produce <code>.swapcaps</code> variants</dd>
+<dt><code>/etc/system-control/convert/soft_backspace.kbd</code></dt><dd>a keyboard map snippet that is overlaid on top of the ones in <code>/usr/share/vt/keymaps/</code> in order to ensure that the <code>backspace &#x232b;</code> key is soft-switchable by the terminal emulator and not hardwired to either <code>DEL</code> or <code>BS</code> as the operating system supplied keyboard maps have it</dd>
+<dt><code>/etc/system-control/convert/us_to_uk.kbd</code></dt><dd>a keyboard map snippet that is overlaid on top of the null map, which is U.S. International, in order to produce U.K. International, in the event that there are no <code>/usr/share/vt/keymaps/</code> keyboard maps</dd>
+<dt><code>/etc/system-control/convert/*.service</code><br><code>/etc/system-control/convert/*.target</code></dt><dd>service and target source files used for compiling service and target service bundles, for various import-generated system-wide and per-user services and targets</dd>
+</dl>
+
+</dd>
+
+<dt id="system-control-presets"><code>/etc/system-control/presets</code><br><code>/usr/share/system-control/presets</code><br><code>/usr/local/etc/system-control/presets</code></dt>
+<dd>
+
+<p>
+Directories for nosh package only preset files that only <a href="system-control.html"><code>system-control</code></a>'s <code>preset</code> subcommand searches.
+Preset files that only have meaning for a nosh-managed system, or that are intended to modify and override systemd presets, go here.
+The (approximate) intention is the following split:
+</p>
+
+<dl>
+<dt><code>/etc/system-control/presets</code></code></dt><dd>administrator-supplied presets</dd>
+<dt><code>/usr/share/system-control/presets</code></dt><dd>operating-system-supplied presets</dd>
+<dt><code>/usr/local/etc/system-control/presets</code></dt><dd>non-operating-system third party presets</dd>
+</dl>
+
+</dd>
+
+<dt><code>/etc/systemd/system-preset</code><br><code>/lib/systemd/system-preset</code><br><code>/usr/lib/systemd/system-preset</code><br><code>/usr/local/lib/systemd/system-preset</code></dt>
+<dd>
+
+<p>
+Directories for common preset files, for system-wide services, that <a href="system-control.html"><code>system-control</code></a>'s <code>preset</code> subcommand and systemd's <code>systemctl preset</code> both search.
+</p>
+
+</dd>
+
+<dt><code>/etc/systemd/user-preset</code><br><code>/lib/systemd/user-preset</code><br><code>/usr/lib/systemd/user-preset</code><br><code>/usr/local/lib/systemd/user-preset</code></dt>
+<dd>
+
+<p>
+Directories for common preset files, for per-user services, that <a href="system-control.html"><code>system-control</code></a>'s <code>preset</code> subcommand and systemd's <code>systemctl preset</code> both search.
+</p>
+
+</dd>
+
+<dt><code>/var/sv</code></dt>
+<dd>
+
+<p>
+The main set of packaged service bundles for system-wide services.
+Various files of interest are:
+</p>
+
+<dl>
+<dt><code>/var/sv/dbus/service/system-wide.conf</code></dt><dd>the configuration file used by the system-wide Desktop Bus service, that incorporates <code>/usr/local/etc/dbus-1/system.conf</code> by reference</dd>
+<dt><code>/var/sv/console-fb-realizer@*/service/fonts/*.fnt</code></dt><dd>fonts for <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a></dd>
+</dl>
+
+</dd>
+
+<dt><code>/var/local/sv</code></dt>
+<dd>
+
+<p>
+Administrator-supplied service bundles and service bundles generated by the <a href="external-formats.html">external formats import subsystem</a></li>.
+Various files of interest are:
+</p>
+
+<dl>
+<dt id="per-user.conf"><code>/var/local/sv/user-dbus@jim/service/per-user.conf</code></dt><dd>the configuration file used by <code>jim</code>'s per-user Desktop Bus service, that incorporates <code>/usr/local/etc/dbus-1/session.conf</code> by reference</dd>
+</dl>
+
+</dd>
+
+<dt><code>/var/log/sv</code></dt>
+<dd>
+
+<p>
+Log directories for individual system-wide services, one subdirectory per logging service.
+<a href="log-service-security.html">Individual log subdirectories are always owned by the superuser.</a>
+</p>
+
+</dd>
+
+<dt><code>/var/log/user</code></dt>
+<dd>
+
+<p>
+The container for all per-user logging directories.
+This is owned by the superuser, with only the superuser having access to create/delete files and subdirectories in it.
+</p>
+
+</dd>
+
+<dt><code>/var/log/user/jim</code></dt>
+<dd>
+
+<p>
+Log directories for the individual per-user services run by user <code>jim</code>, one subdirectory per logging service.
+Everything is always owned by <code>jim</code>.
+</p>
+
+</dd>
+
+</dl>
+
+<h2>
+User directories
+</h2>
+
+<dl>
+
+<dt id="user-service-bundles"><code>~jim/.config/service-bundles</code></dt>
+<dd>
+
+<p>
+Service bundles for <code>jim</code>'s per-user services and targets.
+This has the same substructure as <a href="#service-bundles"><code>/etc/service-bundles/</code></a>.
+</p>
+
+<dt id="user-service-bundles"><code>~jim/.config/system-control/presets</code></dt>
+<dd>
+
+<p>
+Presets for <code>jim</code>'s per-user services and targets.
+This has the same substructure as <a href="#system-control-presets"><code>/etc/system-control/presets/</code></a>.
+</p>
+
+</dd>
+
+<dt><code>~jim/.config/service-bundles/services/mpd/service/mpd.conf</code></dt>
+<dd>
+
+<p>
+Where external configuration import sets up <code>jim</code>'s Music Player pointer file that locates its other parts.
+This is symbolically linked from <code>~jim/.config/mpd/mpd.conf</code> so that (unless changed) non-d&aelig;mon Music Players use the same configuration.
+</p>
+
+</dd>
+
+<dt id="user-dbus-definitions"><code>~jim/.local/share/dbus-1/services</code></dt>
+<dd>
+
+<p>
+Where external configuration import sets up override Desktop Bus server definitions.
+These overrides use the per-user service manager to start services that start the various Desktop Bus server programs, instead of the broker spawning them directly.
+They also work around a Desktop Bus broker code bug that requires <code>User=</code> even in per-user files like these, otherwise it does not run <a href="dbus-daemon-launch-helper.html"><code>dbus-daemon-launch-helper</code></a>.
+They include:
+</p>
+
+<dl>
+<dt><code>~jim/.local/share/dbus-1/services/org.kde.knotify.service</code></dt><dd>server definition for KDE's Notify Desktop Bus server</dd>
+<dt><code>~jim/.local/share/dbus-1/services/org.a11y.Bus.service</code></dt><dd>server definition for the subordinate "accessibility" Desktop Bus server</dd>
+<dt><code>~jim/.local/share/dbus-1/services/org.gnome.Terminal.service</code></dt><dd>server definition for GNOME Terminal's d&aelig;mon</dd>
+</dl>
+
+
+</dd>
+
+<dt><code>~jim/.local/share/mpd</code></dt>
+<dd>
+
+<p>
+Where external configuration import sets up <code>jim</code>'s Music Player service's data files and directories.
+These include:
+</p>
+
+<dl>
+<dt><code>~jim/.local/share/mpd/database</code></dt><dd>the player's database</dd>
+<dt><code>~jim/.local/share/mpd/playlists</code></dt><dd>the player's play lists</dd>
+<dt><code>~jim/.local/share/mpd/sticker.sql</code></dt><dd>the player's sticker database</dd>
+</dl>
+
+</dd>
+
+<dt><code>~jim/.cache/mpd/state</code></dt>
+<dd>
+
+<p>
+Where external configuration import sets up <code>jim</code>'s Music Player service's cached runtime player state.
+</p>
+
+</dd>
+
+<dt><code>~jim/Music</code></dt>
+<dd>
+
+<p>
+Where external configuration import sets up <code>jim</code>'s Music Player service's shared (with other players) music files.
+</p>
+
+</dd>
+
+</dl>

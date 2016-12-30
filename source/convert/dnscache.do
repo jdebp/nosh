@@ -26,9 +26,16 @@ then
 
 	system-control print-service-env dnscache >> "$3"
 
-	test -r "$s/service/seed" || dd if=/dev/urandom of="$s/service/seed" bs=128 count=1
-	test -r "$s/service/root/servers/@" || echo '127.53.0.1' > "$s/service/root/servers/@"
-	dir_not_empty "$s/service/root/ip" || touch "$s/service/root/ip/127.0.0.1"
+	test \! -e "${s}/service/seed" || chmod 0 "${s}/service/seed" 
+#	if ! test -r "${s}/service/seed"
+#	then
+#		install -m 0600 /dev/null "${s}/service/seed" 
+#		dd if=/dev/urandom of="${s}/service/seed" bs=128 count=1
+#	elif setuidgid nobody test -r "${s}/service/seed"
+#		chmod 0600 "${s}/service/seed" 
+#	fi
+	test -r "${s}/service/root/servers/@" || echo '127.53.0.1' > "${s}/service/root/servers/@"
+	dir_not_empty "${s}/service/root/ip" || touch "${s}/service/root/ip/127.0.0.1"
 fi
 
 lr="/var/local/sv/"
@@ -50,7 +57,14 @@ do
 	install -d -m 0755 "${s}/service/root"
 	install -d -m 0755 "${s}/service/root/ip"
 	install -d -m 0755 "${s}/service/root/servers"
-	test -r "${s}/service/seed" || dd if=/dev/urandom of="${s}/service/seed" bs=128 count=1
+	test \! -e "${s}/service/seed" || chmod 0 "${s}/service/seed" 
+#	if ! test -r "${s}/service/seed"
+#	then
+#		install -m 0600 /dev/null "${s}/service/seed" 
+#		dd if=/dev/urandom of="${s}/service/seed" bs=128 count=1
+#	elif setuidgid nobody test -r "${s}/service/seed"
+#		chmod 0600 "${s}/service/seed" 
+#	fi
 	test -r "${s}/service/root/servers/@" || echo '127.53.0.1' > "${s}/service/root/servers/@"
 	dir_not_empty "${s}/service/root/ip" || touch "${s}/service/root/ip/127.0.0.1"
 	set_if_unset "${s}/" IPSEND 0.0.0.0

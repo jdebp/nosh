@@ -213,7 +213,7 @@ pty_run (
 
 		if (stdin_ready) {
 			if (!inl) {
-				const int l(read(STDIN_FILENO, inb, sizeof inb));
+				const ssize_t l(read(STDIN_FILENO, inb, sizeof inb));
 				if (l > 0) 
 					inl = l;
 				else if (0 == l)
@@ -222,7 +222,7 @@ pty_run (
 		}
 		if (stdout_ready) {
 			if (outl) {
-				const int l(write(STDOUT_FILENO, outb, outl));
+				const ssize_t l(write(STDOUT_FILENO, outb, outl));
 				if (l > 0) {
 					memmove(outb, outb + l, outl - l);
 					outl -= l;
@@ -231,7 +231,7 @@ pty_run (
 		}
 		if (masterin_ready) {
 			if (!outl) {
-				const int l(read(PTY_MASTER_FILENO, outb, sizeof outb));
+				const ssize_t l(read(PTY_MASTER_FILENO, outb, sizeof outb));
 				if (l > 0) 
 					outl = l;
 				else if (0 == l)
@@ -242,7 +242,7 @@ pty_run (
 			oute = true;
 		if (masterout_ready) {
 			if (inl) {
-				const int l(write(PTY_MASTER_FILENO, inb, inl));
+				const ssize_t l(write(PTY_MASTER_FILENO, inb, inl));
 				if (l > 0) {
 					memmove(inb, inb + l, inl - l);
 					inl -= l;

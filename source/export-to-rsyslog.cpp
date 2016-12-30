@@ -17,11 +17,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
-#if defined(__LINUX__) || defined(__linux__)
-#include "kqueue_linux.h"
-#else
-#include <sys/event.h>
-#endif
+#include "kqueue_common.h"
 #include <dirent.h>
 #include <unistd.h>
 #include "utils.h"
@@ -80,6 +76,30 @@ is_external_tai64n (
 		if (!std::isxdigit(c) || (!std::isdigit(c) && !std::islower(c))) return false;
 	}
 	return true;
+}
+
+static inline
+bool
+is_current (
+	const dirent & e
+) {
+#if defined(_DIRENT_HAVE_D_NAMLEN)
+	return (sizeof "current" - 1) == e.d_namlen && 0 == memcmp(e.d_name, "current", sizeof "current" - 1);
+#else
+	return 0 == std::strcmp(e.d_name, "current");
+#endif
+}
+
+static inline
+bool
+is_lock (
+	const dirent & e
+) {
+#if defined(_DIRENT_HAVE_D_NAMLEN)
+	return (sizeof "lock" - 1) == e.d_namlen && 0 == memcmp(e.d_name, "lock", sizeof "lock" - 1);
+#else
+	return 0 == std::strcmp(e.d_name, "lock");
+#endif
 }
 
 static inline
@@ -146,7 +166,7 @@ Cursor::read_last()
 {
 	if (-1 != last_file.get()) {
 		char stamp[EXTERNAL_TAI64N_LENGTH + 1];
-		const int rc(pread(last_file.get(), stamp, sizeof stamp, 0));
+		const ssize_t rc(pread(last_file.get(), stamp, sizeof stamp, 0));
 		if (sizeof stamp == rc && '\n' == stamp[EXTERNAL_TAI64N_LENGTH] && is_external_tai64n(stamp))
 			std::memcpy(last, stamp, EXTERNAL_TAI64N_LENGTH);
 	}
@@ -203,15 +223,19 @@ inline
 void
 Cursor::eof () 
 {
-	std::fprintf(stderr, "DEBUG: %s: last is now %.*s\n", appname.c_str(), EXTERNAL_TAI64N_LENGTH, last);
+	std::fprintf(stderr, "%s: At EOF, last is now %.*s.\n", appname.c_str(), EXTERNAL_TAI64N_LENGTH, last);
 	switch (state) {
 		case BODY:
 			emit();
 			update(line_stamp);
+			// Fall through to:
+			[[clang::fallthrough]];
 		case SKIP:
 		case STAMP:
 		case ONESPACE:
 			state = BOL;
+			// Fall through to:
+			[[clang::fallthrough]];
 		case BOL:
 			break;
 	}
@@ -315,7 +339,7 @@ exit_scan:
 
 	rewinddir(scan_dir);	// because the last pass left it at EOF.
 
-	std::fprintf(stderr, "DEBUG: Scanning cursors in %s\n", scan_directory);
+	std::fprintf(stderr, "Scanning cursors in %s\n", scan_directory);
 
 	for (;;) {
 		errno = 0;
@@ -329,7 +353,6 @@ exit_scan:
 #endif
 #if defined(_DIRENT_HAVE_D_NAMLEN)
 		if (1 > entry->d_namlen) continue;
-		if (sizeof(service_manager_rpc_message::name) > entry->d_namlen) continue;
 #endif
 		if ('.' == entry->d_name[0]) continue;
 
@@ -358,7 +381,7 @@ exit_scan:
 		Cursor * c(new Cursor(cursor_dir_s));
 		if (!c) continue;
 
-		std::fprintf(stderr, "DEBUG: New cursor %s/%s\n", scan_directory, entry->d_name);
+		std::fprintf(stderr, "New cursor %s/%s\n", scan_directory, entry->d_name);
 
 		std::pair<cursor_collection::iterator, bool> it(cursors.insert(cursor_collection::value_type(cursor_dir_s,c)));
 		if (!it.second) {
@@ -374,7 +397,7 @@ exit_scan:
 		by_main_dir_fd.insert(fd_index::value_type(c->main_dir.get(), c));
 
 		struct kevent e[1];
-		EV_SET(&e[0], c->main_dir.get(), EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE|NOTE_EXTEND, 0, 0);
+		set_event(&e[0], c->main_dir.get(), EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE|NOTE_EXTEND, 0, 0);
 		if (0 > kevent(queue.get(), e, sizeof e/sizeof *e, 0, 0, 0)) {
 			const int error(errno);
 			std::fprintf(stderr, "FATAL: %s: %s\n", "kevent", std::strerror(error));
@@ -418,10 +441,10 @@ exit_scan:
 
 		rewinddir(main_dir);	// because the last pass left it at EOF.
 
-		std::fprintf(stderr, "DEBUG: Scanning %s/%s/%s for old files\n", scan_directory, c.appname.c_str(), "main");
+		std::fprintf(stderr, "Scanning %s/%s/%s for old files\n", scan_directory, c.appname.c_str(), "main");
 
 		bool seen_old(false);
-		char earliest_old[EXTERNAL_TAI64N_LENGTH + 4]; // declorated with @.s
+		char earliest_old[EXTERNAL_TAI64N_LENGTH + 4]; // decorated with @.s
 		for (;;) {
 			errno = 0;
 			const dirent * entry(readdir(main_dir));
@@ -430,23 +453,27 @@ exit_scan:
 				break;
 			}
 #if defined(_DIRENT_HAVE_D_TYPE)
-			if (DT_DIR != entry->d_type && DT_LNK != entry->d_type) continue;
+			if (DT_REG != entry->d_type && DT_LNK != entry->d_type) continue;
 #endif
 #if defined(_DIRENT_HAVE_D_NAMLEN)
 			if (1 > entry->d_namlen) continue;
-			if (sizeof(service_manager_rpc_message::name) > entry->d_namlen) continue;
 #endif
 			if ('.' == entry->d_name[0]) continue;
 
-			if (!is_old(*entry)) continue;
+			if (is_current(*entry) || is_lock(*entry)) continue;
+
+			if (!is_old(*entry)) {
+				std::fprintf(stderr, "%s/%s/%s/%s is not an old file.\n", scan_directory, c.appname.c_str(), "main", entry->d_name);
+				continue;
+			}
 
 			if (c.at_or_beyond(entry->d_name + 1)) {
-				std::fprintf(stderr, "DEBUG: %s/%s/%s/%s is older than last (%.*s).\n", scan_directory, c.appname.c_str(), "main", entry->d_name, EXTERNAL_TAI64N_LENGTH, c.last);
+				std::fprintf(stderr, "%s/%s/%s/%s is older than last (%.*s).\n", scan_directory, c.appname.c_str(), "main", entry->d_name, EXTERNAL_TAI64N_LENGTH, c.last);
 				continue;
 			}
 
 			if (seen_old && 0 >= std::strcmp(earliest_old, entry->d_name)) {
-				std::fprintf(stderr, "DEBUG: %s/%s/%s/%s is not the earliest (%.*s).\n", scan_directory, c.appname.c_str(), "main", entry->d_name, EXTERNAL_TAI64N_LENGTH + 3, earliest_old);
+				std::fprintf(stderr, "%s/%s/%s/%s is not the earliest (%.*s).\n", scan_directory, c.appname.c_str(), "main", entry->d_name, EXTERNAL_TAI64N_LENGTH + 3, earliest_old);
 				continue;
 			}
 
@@ -456,7 +483,7 @@ exit_scan:
 
 		if (!seen_old) break;
 
-		std::fprintf(stderr, "DEBUG: Catching up %s/%s/%s/%s\n", scan_directory, c.appname.c_str(), "main", earliest_old);
+		std::fprintf(stderr, "Catching up %s/%s/%s/%s\n", scan_directory, c.appname.c_str(), "main", earliest_old);
 
 		const FileDescriptorOwner oldest_file_fd(open_read_at(c.main_dir.get(), earliest_old));
 		if (0 > oldest_file_fd.get()) {
@@ -475,17 +502,17 @@ exit_scan:
 		return;
 	}
 
-	std::fprintf(stderr, "DEBUG: Catching up %s/%s/%s/%s\n", scan_directory, c.appname.c_str(), "main", "current");
+	std::fprintf(stderr, "Catching up %s/%s/%s/%s\n", scan_directory, c.appname.c_str(), "main", "current");
 
 	c.current_file.reset(current_file_fd.release());
 	by_current_file_fd.insert(fd_index::value_type(c.current_file.get(), &c));
 
 	process(c, c.current_file.get());
 
-	std::fprintf(stderr, "DEBUG: Synchronized %s/%s/%s/%s, now waiting for changes.\n", scan_directory, c.appname.c_str(), "main", "current");
+	std::fprintf(stderr, "Synchronized %s/%s/%s/%s, now waiting for changes.\n", scan_directory, c.appname.c_str(), "main", "current");
 
 	struct kevent e[1];
-	EV_SET(&e[0], c.current_file.get(), EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE|NOTE_EXTEND, 0, 0);
+	set_event(&e[0], c.current_file.get(), EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE|NOTE_EXTEND, 0, 0);
 	if (0 > kevent(queue.get(), e, sizeof e/sizeof *e, 0, 0, 0)) {
 		const int error(errno);
 		std::fprintf(stderr, "FATAL: %s: %s\n", "kevent", std::strerror(error));
@@ -505,7 +532,7 @@ mark_as_behind (
 		c.eof();
 
 		struct kevent e[1];
-		EV_SET(&e[0], c.current_file.get(), EVFILT_VNODE, EV_DELETE, NOTE_WRITE|NOTE_EXTEND, 0, 0);
+		set_event(&e[0], c.current_file.get(), EVFILT_VNODE, EV_DELETE, NOTE_WRITE|NOTE_EXTEND, 0, 0);
 		if (0 > kevent(queue.get(), e, sizeof e/sizeof *e, 0, 0, 0)) {
 			const int error(errno);
 			std::fprintf(stderr, "FATAL: %s: %s\n", "kevent", std::strerror(error));
@@ -515,7 +542,7 @@ mark_as_behind (
 		by_current_file_fd.erase(c.current_file.get());
 		c.current_file.reset(-1);
 
-		std::fprintf(stderr, "DEBUG: Desynchronized from %s/%s/%s/%s\n", scan_directory, c.appname.c_str(), "main", "current");
+		std::fprintf(stderr, "Desynchronized from %s/%s/%s/%s\n", scan_directory, c.appname.c_str(), "main", "current");
 	}
 }
 
@@ -524,13 +551,13 @@ mark_as_behind (
 */
 
 void
-export_to_rsyslog (
+export_to_rsyslog [[gnu::noreturn]] (
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
-		popt::top_table_definition main_option(0, 0, "Main options", "");
+		popt::top_table_definition main_option(0, 0, "Main options", "directory");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -570,7 +597,7 @@ export_to_rsyslog (
 		throw EXIT_FAILURE;
 	} else {
 		struct kevent e[1];
-		EV_SET(&e[0], scan_dir_fd.get(), EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE|NOTE_EXTEND, 0, 0);
+		set_event(&e[0], scan_dir_fd.get(), EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE|NOTE_EXTEND, 0, 0);
 		if (0 > kevent(queue.get(), e, sizeof e/sizeof *e, 0, 0, 0)) {
 			const int error(errno);
 			std::fprintf(stderr, "FATAL: %s: %s\n", "kevent", std::strerror(error));
@@ -621,15 +648,9 @@ export_to_rsyslog (
 						process(c, c.current_file.get());
 						break;
 					}
-#if defined(DEBUG)
-					std::fprintf(stderr, "DEBUG: vnode event ident %lu fflags %x\n", e.ident, e.fflags);
-#endif
 					break;
 				}
 				default:
-#if defined(DEBUG)
-					std::fprintf(stderr, "DEBUG: event filter %hd ident %lu fflags %x\n", e.filter, e.ident, e.fflags);
-#endif
 					break;
 			}
 		}

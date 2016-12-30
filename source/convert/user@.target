@@ -7,9 +7,6 @@ Description=Per-user %I target
 
 [Service]
 User=%I
-# This is a pseudo-daemon that does not have a running process.
-RemainAfterExit=yes
-Restart=always
 
 [Install]
 # A per-user target is not auto-startable at bootstrap.

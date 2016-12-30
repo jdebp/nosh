@@ -10,7 +10,7 @@ Type=oneshot
 ExecStart=sensors -s
 ExecStart=sensors
 # This is a one-shot service that can be re-triggered by starting it again.
-RemainAfterExit=1
+#RemainAfterExit=1
 Restart=no
 
 [Install]

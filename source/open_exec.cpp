@@ -11,17 +11,17 @@ For copyright and licensing terms, see the file named COPYING.
 #include "fdutils.h"
 
 static inline
-int
+unsigned int
 page_size()
 {
-	const int rc(sysconf(_SC_PAGE_SIZE));
+	const long rc(sysconf(_SC_PAGE_SIZE));
 	if (0 > rc) 
 #if defined(PAGE_SIZE)
 		return PAGE_SIZE;
 #else
 		return 4096;
 #endif
-	return rc;
+	return static_cast<unsigned int>(rc);
 }
 
 static inline
@@ -30,7 +30,7 @@ is_interpreter_magic (
 	int fd
 ) {
 	std::string buf(page_size(), '\0');
-	const int n(pread(fd, const_cast<char *>(buf.data()), buf.length(), 0));
+	const ssize_t n(pread(fd, const_cast<char *>(buf.data()), buf.length(), 0));
 
 	// Minimum possible size, including non-whitespace and a terminator.
 	if (n < 4) return false;

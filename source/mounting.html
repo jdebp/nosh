@@ -20,3 +20,11 @@ The "fsck@-usr" service orders itself before the "mount@-usr" service.
 Note that the "fsck@" service declares itself as wanted by the "mount@" service, rather than the "mount@" service declaring itself as always wanting the "fsck@" service.
 This allows the "fsck@" service to be optional, and for boot-time filesystem checking to be structured in another manner should that be desired.
 </p>
+
+<p>
+Similarly, services like "gbde@-usr" and "geli@-usr" run GBDE and GELI on the relevant volume before both the mount service attempts to mount it and the fsck service attempts to check it.
+</p>
+
+<p>
+Often, all of these are created by <a href="fstab.html">importing the <code>/etc/fstab</code> table</a> and converting it into native service bundles.
+</p>

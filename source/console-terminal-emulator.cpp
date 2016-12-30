@@ -908,6 +908,7 @@ InputFIFO::WriteFunctionKey(uint16_t k, uint8_t m)
 		case LINUX_CONSOLE:
 		case XTERM_PC:	
 		case NETBSD_CONSOLE:
+		case DECVT:
 		default:		return WriteFunctionKeyDECVT(k, m);
 	}
 }
@@ -1219,6 +1220,7 @@ InputFIFO::WriteExtendedKey(uint16_t k, uint8_t m)
 		case LINUX_CONSOLE:	return WriteExtendedKeyLinuxConsole(k, m);
 		case XTERM_PC:		return WriteExtendedKeyXTermPCMode(k, m);
 		case NETBSD_CONSOLE:	return WriteExtendedKeyNetBSDConsole(k, m);
+		case DECVT:
 		default:		return WriteExtendedKeyDECVT(k, m);
 	}
 }
@@ -1579,7 +1581,7 @@ void emulation_definition::action(popt::processor &)
 */
 
 void
-console_terminal_emulator ( 
+console_terminal_emulator [[gnu::noreturn]] ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {

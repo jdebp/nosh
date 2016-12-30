@@ -4,17 +4,15 @@
 
 [Unit]
 Description=Per-user "Desktop" bus service
+Description=Avoid using this; and use a user-level service instead.
 After=user-runtime@%I
 Wants=user-runtime@%I
 
 [Service]
-PermissionsStartOnly=true
+systemdUserEnvironment=true
 User=%I
-ExecStartPre=mkdir -p -m 0750 /run/user/%I/dbus
-ExecStartPre=chown %I: /run/user/%I/dbus
 # The --address=systemd: option is the closest to our UCSPI-LOCAL.
-ExecStart=dbus-daemon --session --nofork --nopidfile --address=systemd:
-ExecStopPost=rmdir /run/user/%I/dbus
+ExecStart=dbus-daemon --config-file ./per-user.conf --nofork --nopidfile --address=systemd:
 Restart=always
 
 [Install]

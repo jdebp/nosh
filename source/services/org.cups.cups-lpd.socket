@@ -7,9 +7,11 @@ Description=Common Unix Printing Service's LPD shim socket
 
 [Socket]
 Backlog=2
-MaxConnections=2
+BindIPv6Only=both
 ListenStream=515
 Accept=true
+MaxConnections=2
+UCSPIRules=true
 
 [Install]
 WantedBy=server.target

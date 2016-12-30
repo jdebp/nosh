@@ -30,7 +30,7 @@
 <refsection><title>Description</title>
 
 <para>
-<command>local-stream-socket-listen</command> is a chain-loading utility that opens a local domain stream socket bound to <replaceable>path</replaceable>, executes a call to <citerefentry><refentrytitle>listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>, sets the socket to file descriptor 3+<replaceable>n</replaceable> (where <replaceable>n</replaceable> is the number of already-opened listening file descriptors), closing whatever that descriptor was, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
+<command>local-stream-socket-listen</command> is a chain-loading utility that opens a local domain stream socket bound to <replaceable>path</replaceable>, executes a call to <citerefentry><refentrytitle>listen</refentrytitle><manvolnum>2</manvolnum></citerefentry>, sets the socket to file descriptor 3+<replaceable>n</replaceable> (where <replaceable>n</replaceable> is the number of already-opened listening file descriptors), closing whatever that descriptor was, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
 </para>
 
 <para>

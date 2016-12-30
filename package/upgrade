@@ -6,8 +6,9 @@ then
 	exit 100
 fi
 case "`uname`" in
-Linux)	extended_regexp="-r -e" ; no_target_dir=-T ;;
-*BSD)	extended_regexp=-E ; no_target_dir=-h ;;
+Linux)		extended_regexp="-r -e" ; no_target_dir=-T ;;
+OpenBSD)	extended_regexp=-E ; no_target_dir="" ;;
+*BSD)		extended_regexp=-E ; no_target_dir=-h ;;
 esac
 cwd="`/bin/pwd`"
 base_plus_version="`basename \"${cwd}\"`"

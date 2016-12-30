@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Postfix Greylisting Service
+Before=postfix.service
+
+[Service]
+EnvironmentDirectory=env
+ExecStartPre=-rm -f %t/%p.pid
+ExecStart=%p --unix=/var/spool/postfix/%p/socket ${options}
+
+[Install]
+WantedBy=server.target

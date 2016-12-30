@@ -19,6 +19,7 @@ unbound	local-unbound
 unbound	local_unbound
 vixiecron	cron
 ypbind	nis_client
+ypldap	nis_ypldap
 yppasswdd	nis_yppasswdd
 ypserv	nis_server
 ypset	nis_ypset

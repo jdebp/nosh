@@ -130,7 +130,7 @@ poweroff (
 */
 
 void
-reboot_poweroff_halt_command (
+reboot_poweroff_halt_command [[gnu::noreturn]] (
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {
@@ -174,7 +174,7 @@ reboot_poweroff_halt_command (
 }
 
 void
-emergency_rescue_normal_command ( 
+emergency_rescue_normal_command [[gnu::noreturn]] ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {

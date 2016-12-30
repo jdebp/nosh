@@ -151,7 +151,7 @@ Description: Bernstein UCSPI-TCP shim service utilities
 
 Package: nosh-bundles
 Architecture: amd64
-Depends: nosh-exec (>=1.28), nosh-service-management (>=1.29), nosh-terminal-management (>=1.22), adduser
+Depends: nosh-exec (>=1.28), nosh-service-management (>=1.30), nosh-terminal-management (>=1.22), adduser
 Suggests: 
 Recommends: 
 Conflicts: nosh-standard-targets, nosh-sysinit-services, nosh-bsd-services, nosh-bsd-sockets, nosh-regular-sockets, nosh-regular-services

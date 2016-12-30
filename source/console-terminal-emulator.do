@@ -2,9 +2,9 @@
 main="`basename "$1"`"
 objects="main-exec.o builtins-${main}.o"
 libraries="builtins.a utils.a"
-#[ "`uname`" = "FreeBSD" ] || kqueue=-lkqueue
-( test "`uname`" = "Linux" || test "`uname`" = "FreeBSD" ) && crypt=-lcrypt
+#test _"`uname`" = _"FreeBSD" || kqueue=-lkqueue
+( test _"`uname`" = _"Linux" || test _"`uname`" = _"FreeBSD" ) && crypt=-lcrypt
 # Needed because emergency-login can be run before filesystems are mounted.
-[ "`uname`" = "FreeBSD" ] && static="-static"
+test _"`uname`" = _"FreeBSD" && static="-static"
 redo-ifchange link ${objects} ${libraries}
 exec ./link "$3" ${objects} ${libraries} ${kqueue} -lncursesw ${crypt} ${static}

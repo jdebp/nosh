@@ -317,7 +317,7 @@ void logger::end () {
 */
 
 void
-cyclog (
+cyclog [[gnu::noreturn]] (
 	const char * & /*next_prog*/,
 	std::vector<const char *> & args
 ) {
@@ -418,7 +418,7 @@ cyclog (
 		} else
 		for (size_t i(0); i < static_cast<size_t>(rc); ++i) {
 			if (EVFILT_READ == p[i].filter && STDIN_FILENO == p[i].ident) {
-				const int rd(read(STDIN_FILENO, buf, sizeof buf));
+				const ssize_t rd(read(STDIN_FILENO, buf, sizeof buf));
 				if (0 > rd) {
 					const int error(errno);
 					if (EINTR != error) {
@@ -428,7 +428,7 @@ cyclog (
 				} else if (0 == rd)
 					goto terminated;
 				pending = done = true;
-				for (int j(0); j < rd; ++j) {
+				for (ssize_t j(0); j < rd; ++j) {
 					const char c(buf[j]);
 					for (logger * l(logger::first); l; l = l->next) 
 						l->put(c);

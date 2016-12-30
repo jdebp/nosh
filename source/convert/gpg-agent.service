@@ -3,10 +3,12 @@
 ## **************************************************************************
 
 [Unit]
-Description=GnuPG cryptographic agent and passphrase cache daemon
+Description=GnuPG cryptographic agent and passphrase cache daemon for %U
 
 [Service]
 RuntimeDirectory=gnupg
+EnvironmentDirectory=env
 ExecStart=%p --supervised
+Restart=on-abort
 
 [Install]

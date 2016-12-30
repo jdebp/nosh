@@ -2,10 +2,9 @@
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
 
-# See http://darkics.org/
-
 [Unit]
-Description=%p audio streaming  daemon
+Description=%p audio streaming daemon
+Description=See http://%p.org/
 
 [Service]
 EnvironmentDirectory=env

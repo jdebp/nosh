@@ -9,7 +9,7 @@ Description=SSH key generation
 Type=oneshot
 ExecStart=sh -c 'for t in rsa dsa ecdsa; do test -f /etc/ssh/ssh_host_${t}_key || ssh-keygen -t ${t} -N "" -f /etc/ssh/ssh_host_${t}_key ; done'
 # This is a one-shot service that can be re-triggered by starting it again.
-RemainAfterExit=1
+#RemainAfterExit=1
 Restart=no
 
 [Install]

@@ -34,7 +34,7 @@ install -d -m 0755 targets.new
 
 rm -r -f targets.new/"${base}"
 
-./system-control convert-systemd-units --no-systemd-quirks --etc-bundle --bundle-root targets.new/ "${unit}"
+./system-control convert-systemd-units --no-systemd-quirks --no-generation-comment --etc-bundle --bundle-root targets.new/ "${unit}"
 
 if grep -q "envdir env" targets.new/"${base}"/service/start targets.new/"${base}"/service/run targets.new/"${base}"/service/stop
 then

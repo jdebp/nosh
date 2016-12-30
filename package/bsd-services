@@ -13,6 +13,7 @@ auditdistd
 automount
 automountd
 autounmountd
+blacklistd
 bsd-serial-init
 bsdstats
 bsnmpd
@@ -30,6 +31,7 @@ gssd
 hastd
 hcsecd
 iocage
+iovctl-log
 ip6addrctl@ipv4
 ip6addrctl@ipv6
 ipf
@@ -149,7 +151,6 @@ swapexd
 swaplate
 syscache
 syslogd
-tcsd
 timed
 timelord
 ubthidhci
@@ -162,6 +163,7 @@ vixiedhcp4d@eth0
 vixiedhcp6d@eth0
 watchdogd
 yppasswdd
+ypldap
 ypserv
 ypset
 ypupdated

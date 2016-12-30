@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Blacklisting service
+After=pf.service devd.service
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=%p -d
+
+[Install]
+WantedBy=workstation.target

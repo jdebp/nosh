@@ -37,7 +37,7 @@ daemontools_semantics:
 		set_close_on_exec(LISTEN_SOCKET_FILENO + i, true);
 	unsetenv("LISTEN_PID");
 	unsetenv("LISTEN_FDS");
-	return lf;
+	return static_cast<unsigned>(lf);
 }
 
 int 
@@ -59,7 +59,7 @@ query_listen_fds_passthrough()
 		unsigned long lf(std::strtoul(listen_fds, const_cast<char **>(&listen_fds), 0));
 		if (*listen_fds || old == listen_fds) goto fail;
 		if (INT_MAX < lf) goto fail;
-		n = lf;
+		n = static_cast<int>(lf);
 	}
 fail:
 	unsetenv("LISTEN_PID");

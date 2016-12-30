@@ -1,0 +1,22 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=TPM access server for Trousers TCGSS
+After=tpmd.service
+Before=named.service hastd.service kerberos.service
+
+[Service]
+User=tss
+RuntimeDirectory=tpm
+RuntimeDirectory=ima
+RuntimeDirectoryMode=0700
+RuntimeDirectoryOwner=tss
+ExecStartPre=install -d -m 0700 -o tss -g tss /usr/local/var/lib/tpm
+ExecStartPre=chmod 0600 /etc/%p.conf
+ExecStartPre=chown tss:tss /etc/%p.conf
+ExecStart=%p -f -c /etc/%p.conf
+
+[Install]
+WantedBy=workstation.target

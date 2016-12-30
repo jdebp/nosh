@@ -9,7 +9,7 @@ After=kmod@wlan_wep.service kmod@wlan_tkip.service kmod@wlan_ccmp.service cyclog
 
 [Service]
 EnvironmentDirectory=env
-ExecStart=%p -i %i -c /etc/%p/%p-%i.conf
+ExecStart=%p -i '%I' -c /etc/%p/%p-'%I'.conf
 
 [Install]
 WantedBy=static-networking.target

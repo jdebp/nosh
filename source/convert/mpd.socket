@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Music Player socket used by %U
+
+[Socket]
+ListenStream=%t/%p/socket
+Backlog=5
+KeepAlive=true
+PassCredentials=true
+
+[Install]

@@ -40,6 +40,10 @@ list_generic_USB_devices |
 while read -r i
 do
 	n="`basename \"$i\"`"
+	system-control convert-systemd-units $e "$lr/" "./uhidd@$n.service"
+	rm -f -- "$lr/uhidd@$n/log"
+	ln -s -- "../../../sv/uhidd-log" "$lr/uhidd@$n/log"
+	install -d -m 0755 -- "$lr/uhidd@$n/service/env"
 	if ! test -e "$i"
 	then
 		if >/dev/null 2>&1 system-control find "uhidd@$n"
@@ -48,17 +52,14 @@ do
 		fi
 		redo-ifcreate "$i"
 		echo >> "$3" no "$n"
-	elif ! is_hid "$n"
+	elif is_hid "$n"
 	then
 		if >/dev/null 2>&1 system-control find "uhidd@$n"
 		then
 			system-control disable "uhidd@$n"
 		fi
-		echo >> "$3" nothid "$n"
+		echo >> "$3" kernel "$n"
 	else
-		system-control convert-systemd-units $e "$lr/" "./uhidd@$n.service"
-		rm -f -- "$lr/uhidd@$n/log"
-		ln -s -- "../../../sv/uhidd-log" "$lr/uhidd@$n/log"
 		system-control preset uhidd-log
 		system-control preset --prefix "uhidd@" -- "$n"
 		if system-control is-enabled "uhidd@$n"

@@ -12,7 +12,7 @@ Conflicts=sane-console.service
 Type=oneshot
 ExecStart=fdredir --update 0 /dev/%I fdmove -c 1 0 fdmove -c 2 1 stty sane
 # This is a one-shot service that can be re-triggered by starting it again.
-RemainAfterExit=1
+#RemainAfterExit=1
 Restart=no
 
 [Install]

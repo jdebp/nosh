@@ -6,15 +6,14 @@
 
 <p>
 The native mechanism for this system is the service bundle.
-<a href="mounting.html">Mounting and unmounting filesystems</a>
-is done with service bundles, as is checking those file systems.
+<a href="mounting.html">Mounting and unmounting filesystems</a> is done with service bundles, as is checking those file systems.
 A fully native system doesn't need <code>/etc/fstab</code> at all, and service bundles to mount and check filesystems can be arranged however and whereever one likes.
 (Although it is good practice to stick with the <code>local-fs</code> target convention.)
 </p>
 
 <p>
 Most systems will not be fully native.
-On such systems, <code>/etc/fstab</code> will have the same status as the BSD <code>/etc/master.passwd</code> and <code>/etc/termcap</code> files:
+On such systems, <a href="gazetteer.html#fstab"><code>/etc/fstab</code></a> will have the same status as the BSD <code>/etc/master.passwd</code> and <code>/etc/termcap</code> files:
 They aren't the actual files that are read in order to operate the system.
 Rather, they are "source" files that have to be "compiled" (with <code>pwd_mkdb</code> and <code>cap_mkdb</code> respectively) into the file databases that the system really uses.
 This compilation is not done on the fly, but only needs to be done every time that the source file is actually changed.

@@ -10,6 +10,8 @@ After=kmod@vkbd.service uhidd-log.service
 [Service]
 EnvironmentDirectory=env
 ExecStart=%p -d -v /dev/%I ${flags}
+# We don't want the daemon auto-restarting if it failed to attach because a kernel device was already present.
+Restart=on-abort
 
 [Install]
 # This is a sub-service that runs under an umbrella service.

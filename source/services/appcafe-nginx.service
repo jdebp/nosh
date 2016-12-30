@@ -10,7 +10,7 @@ EnvironmentDirectory=env
 # Per Debian bug #728015, design and implementation errors prevent "daemon off" from working.
 # It's erroneously conflated with a "no signals" mode.
 Type=forking
-ExecStart=nginx -g "error_log stderr error;" -c "${conf:-/usr/local/etc/appcafe.conf}"
+ExecStart=nginx -g "error_log stderr error;" -c "${conf:-nginx.conf}"
 PrivateTmp=true
 #LimitMEMLOCK=infinity
 #LimitNOFILE=65535

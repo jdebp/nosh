@@ -12,7 +12,6 @@ For copyright and licensing terms, see the file named COPYING.
 #if defined(__LINUX__) || defined(__linux__)
 #define _BSD_SOURCE 1
 #include <sys/ioctl.h>
-#include <sys/prctl.h>
 #include <sys/resource.h>
 #include <linux/kd.h>
 #include <fcntl.h>
@@ -1007,7 +1006,7 @@ common_manager (
 					args.insert(args.end(), "per-user-manager-log.slice");
 				args.insert(args.end(), "cyclog");
 				args.insert(args.end(), "--max-file-size");
-				args.insert(args.end(), "32768");
+				args.insert(args.end(), "262144");
 				args.insert(args.end(), "--max-total-size");
 				args.insert(args.end(), "1048576");
 				args.insert(args.end(), ".");

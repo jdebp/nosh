@@ -21,7 +21,7 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 void
-service_is_up (
+service_is_up [[gnu::noreturn]] (
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {
@@ -52,8 +52,7 @@ service_is_up (
 	const int supervise_dir_fd(open_supervise_dir(bundle_dir_fd));
 	if (0 > supervise_dir_fd) throw static_cast<int>(EXIT_TEMPORARY_FAILURE);
 
-	int ok_fd(open_writeexisting_at(supervise_dir_fd, "ok"));
-	if (0 > ok_fd) throw static_cast<int>(EXIT_TEMPORARY_FAILURE);
+	if (!is_ok(supervise_dir_fd)) throw static_cast<int>(EXIT_TEMPORARY_FAILURE);
 
 	switch (running_status(supervise_dir_fd)) {
 		case  0:	throw static_cast<int>(EXIT_PERMANENT_FAILURE);

@@ -1,0 +1,23 @@
+<title>The urxtd service</title>
+<link rel="Up" href="../index.html" title="nosh Guide" />
+<h1>
+The <code>urxvtd</code> service
+</h1>
+
+<p>
+As part of setting up user configuration, <a href="../external-formats.html">for every "real-person" user the external formats import subsystem generates a user-level service bundle</a> that runs <code>urxvtd</code>, the d&aelig;mon that displays terminal emulations on X displays in response to <code>urxvtc</code>.
+</p>
+
+<p>
+This d&aelig;mon is set up to run <a href="../local-reaper.html"><code>local-reaper</code></a> to mark itself as a "local reaper" program.
+This is possible because <code>urxvtd</code> is happy to handle reaping orphaned child processes that it did not fork itself.
+</p>
+
+<p>
+This is done purely in order to make the process tree look better to users running <code>ps&nbsp;-a&nbsp;-x&nbsp;-d</code> or similar.
+</p>
+
+<p>
+The visible consequences of this are that programs that are run from within urxvt terminal sessions that fork-and-exit-parent (for whatever reason) are reparented in the process tree to have the urxvtd as their parent.
+Without this "local reaper" setting, they would be reparented to the per-user <a href="../service-manager.html"><code>service-manager</code></a> instance that spawned the urxvtd d&aelig;mon, making them appear as if they were also service processes.
+</p>

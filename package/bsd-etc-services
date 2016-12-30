@@ -4,6 +4,7 @@ devd-log
 kmod@geom_uzip
 kmod@linux
 kmod@svr4
+kmod@fuse
 kmod@sysvmsg
 kmod@sysvsem
 kmod@sysvshm

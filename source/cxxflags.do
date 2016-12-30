@@ -1,12 +1,12 @@
 #!/bin/sh -e
-#[ "`uname`" = "FreeBSD" ] || kqueue=="-I /usr/include/kqueue"
+#test _"`uname`" = _"FreeBSD" || kqueue="-I /usr/include/kqueue"
 cppflags="-I . ${kqueue}"
 ldflags="-g -pthread"
 if type >/dev/null clang++
 then
 	cxx="clang++"
-	cxxflags="-g -pthread -std=gnu++11 -Os -Wall -Wextra -Wshadow -Wcast-qual -Wsynth -Woverloaded-virtual -Wcast-align -integrated-as"
-elif test "`uname`" = OpenBSD && type >/dev/null eg++
+	cxxflags="-g -pthread -std=gnu++11 -Os -Weverything -Wno-conversion -Wno-sign-conversion -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-missing-prototypes -Wno-weak-vtables -Wno-packed -Wno-padded -Wpacked -Wno-exit-time-destructors -Wno-global-constructors -Wno-documentation-unknown-command -Wno-zero-length-array -Wno-non-virtual-dtor -integrated-as"
+elif test _"`uname`" = _OpenBSD && type >/dev/null eg++
 then
 	cxx="eg++"
 	cxxflags="-g -pthread -std=gnu++11 -Os -Wall -Wextra -Wshadow -Wcast-qual -Wsynth -Woverloaded-virtual -Wcast-align"

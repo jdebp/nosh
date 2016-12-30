@@ -46,6 +46,15 @@ The command will fail if the process is not allowed to move to the given control
 <replaceable>next-prog</replaceable> may contain its own command line options, which <command>move-to-control-group</command> will ignore.
 </para>
 
+</refsection>
+<refsection><title>See also</title>
+
+<itemizedlist>
+<listitem><para>
+<citerefentry><refentrytitle>delegate-control-group-to</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+</itemizedlist>
+
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
 
 </refentry>

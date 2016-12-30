@@ -23,12 +23,12 @@
 <refsection><title>Description</title>
 
 <para>
-<command>export-to-rsyslog</command> scans <replaceable>directory</replaceable> for cursor directories.
-For each cursor directory found, it monitors the referenced log directory and outputs any log data newer than the cursor, saving the new cursor position.
+<command>export-to-rsyslog</command> is a variation on the <citerefentry><refentrytitle>follow-log-directories</refentrytitle><manvolnum>1</manvolnum></citerefentry> command.
+It operates as that command does, with the aid of the cursors in <replaceable>directory</replaceable>, except that instead of writing log lines to its standard output it sends them across the network to an RSYSLOG server.
 </para>
 
 <para>
-It expects to inherit an open file descriptor, for writing each log line that it reads from a log to the RSYSLOG server.
+It expects to inherit an open file descriptor, for writing each log line that it reads from a log, that is a client of the RSYSLOG server.
 This is file descriptor 7 per the UCSPI convention for client tools.
 </para>
 
@@ -39,7 +39,7 @@ If it is a socket, it must be already connected so that the <citerefentry><refen
 
 <para>
 <command>export-to-rsyslog</command> converts log lines that it has read into RFC 5424 form and then writes them to the server.
-It strips trailing newlines from each log line, converts initial TAI64N timestamps, and employs the result of the <citerefentry><refentrytitle>gethostname</refentrytitle><manvolnum>3</manvolnum></citerefentry> function and the name of the cursor directory in the <replaceable>HOSTNAME</replaceable> and <replaceable>APP-NAME</replaceable> fields.
+It strips trailing newlines from each log line, converts initial TAI64N timestamps, and employs the value of the <envar>TCPLOCALHOST</envar> environment variable (or whatever similar environment variable is denoted by <envar>PROTO</envar>) and the name of the cursor directory in the <replaceable>HOSTNAME</replaceable> and <replaceable>APP-NAME</replaceable> fields.
 It writes each log line with a single system call in order to mark the message boundaries between log lines.
 </para>
 
@@ -54,28 +54,6 @@ On a Linux system where it detects an Olson "right" timezone currently in use, i
 On other Linux systems, and on BSDs, it assumes that the system clock is UTC seconds since the Epoch and attempts to correct for (known) UTC leap seconds in order to determine UTC system clock time.
 </para>
 
-<refsection><title>CURSOR DIRECTORY</title>
-
-<para>
-<replaceable>directory</replaceable> is a directory of cursor directories.
-Every subdirectory, or symbolic link to a directory, therein whose name does not start with a dot is a cursor directory.
-A subdirectory, or (more usually in practice) symbolic link to a directory, beneath each of those cursor directories that is named <filename>main</filename> is a log directory.
-See <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> for the format of a log directory.
-</para>
-
-<para>
-The cursor position is a TAI64N timestamp, in external form, stored in a file named <code>last</code>, defaulting to zero if that file is not present or does not contain a parseable TAI64N timestamp as its first line.
-This is the TAI64N timestamp of the last log entry that has been read from the log.
-All log entries, and log files, that are timestamped then or older are skipped over.
-</para>
-
-<para>
-In order to be comparable to the current cursor position, all log lines must have valid TAI64N timestamps.
-This is always the case for correctly formatted log directories.
-Erroneous lines without TAI64N timestamps are skipped, therefore.
-</para>
-
-</refsection>
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
 
 </refentry>

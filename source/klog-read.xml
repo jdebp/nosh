@@ -48,7 +48,7 @@ It is not suitable for use with UDP or AF_LOCAL syslog sockets, which are datagr
 
 <para>
 Unlike other kernel log servers, this server has no need to be run as the superuser.
-It writes to no files or directories, requires no ownership of any files or directories, and does not even need privileged permissions for FIFO access since it expects to inherit its FIFO already opened from the process that chain-loaded it.
+It writes to no files or directories, requires no ownership of any files or directories, and does not even need privileged permissions for FIFO access since it expects to inherit its FIFO already opened from the program that chain-loaded it.
 </para>
 
 <para>

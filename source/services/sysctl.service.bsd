@@ -9,7 +9,7 @@ Description=sysctl settings
 Type=oneshot
 ExecStart=sh -c 'for f in /etc/sysctl.conf /etc/sysctl.conf.local /etc/system-control/convert/sysctl.conf ; do [ -r $f ] && sysctl -i -f $f ; done'
 # This is a one-shot service that can be re-triggered by starting it again.
-RemainAfterExit=1
+#RemainAfterExit=1
 Restart=no
 
 [Install]

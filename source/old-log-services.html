@@ -1,5 +1,6 @@
 <title>Handling old log mechanisms</title>
 <link rel="Up" href="logging.html" title="Logging" />
+<link rel="Prev" href="log-service-security.html" title="Security of logging" />
 <h1>
 Handling old log mechanisms
 </h1>
@@ -22,9 +23,7 @@ The <a href="klog-read.html"><code>klog-read</code></a> and <a href="syslog-read
 </p>
 
 <p>
-They are intended to be more secure than the old-style <code>rsyslog</code> or Wettstein <code>syslog</code> programs.
-They don't need superuser permissions at any point, don't parse client-supplied content (trusted or otherwise), and don't require ownership of or read/write access to any files or directories.
-Should either be compromised, which is hard(er) given the elimination of parsing, the attacker doesn't gain superuser privileges, or any ownership of or access to any (non-world-accessible) filesystem object.
+They are intended to be <a href="log-service-security.html#old-services">more secure than the old-style <code>rsyslog</code> or Wettstein <code>syslog</code> programs</a>.
 </p>
 
 <p>
@@ -32,6 +31,11 @@ They are also simpler, by design.
 They leave off some of the bells and whistles of those programs, which are less necessary with this toolset or approached an entirely different way.
 Logs are <em>already</em> distributed into multiple sets, by the very nature of dedicated "log" services; logs are already autorotated; logs are already <em>strictly</em> size-capped.
 All of these are the domain of a "log" service that is security-partitioned from the services running <code>klog-read</code> or <code>syslog-read</code>.
+</p>
+
+<p>
+They also build upon service management mechanisms.
+Not providing (for example) UDP log service is a simple matter of stopping and disabling the <code>udp-syslog-read</code> service with service management tools, just like any other service.
 </p>
 
 <h2>
@@ -66,7 +70,5 @@ This service listens to the conventional "syslog" UDP port and writes out all th
 <p>
 They all feed ordinary log services, so local and remote logs end up in a normal, automatically rotated, strictly size capped, set of log files like any other.
 The services are entirely independent, though.
-It is not possible for a remote client to flood the local logs, or vice versa.
-It is not possible for remote log data to masquerade as local data.
+<a href="log-service-security.html#old-services">This has various security benefits.</a>
 </p>
-

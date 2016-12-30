@@ -9,16 +9,14 @@ Wants=user-runtime@%I
 
 [Service]
 systemdUserEnvironment=true
+systemdUserGroups=true
 PermissionsStartOnly=yes
 SessionLeader=yes
 User=%I
 Delegate=yes
-ExecStartPre=mkdir -m 0750 /run/user/%I/service-manager
-ExecStartPre=chown %I /run/user/%I/service-manager
-ExecStartPre=mkdir -m 0750 /run/user/%I/per-user-manager
-ExecStartPre=chown %I /run/user/%I/per-user-manager
-ExecStartPre=mkdir -m 0750 /run/user/%I/per-user-manager/log
-ExecStartPre=chown %I /run/user/%I/per-user-manager/log
+ExecStartPre=install -d -m 0750 -o "%I" "/run/user/%I/service-manager"
+ExecStartPre=install -d -m 0750 -o "%I" "/run/user/%I/per-user-manager"
+ExecStartPre=install -d -m 0750 -o "%I" "/run/user/%I/per-user-manager/log"
 ExecStart=per-user-manager
 ExecStopPost=rmdir /run/user/%I/service-manager
 ExecStopPost=rmdir /run/user/%I/per-user-manager/log

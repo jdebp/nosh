@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=GNOME Weather for %U
+
+[Service]
+Type=dbus
+EnvironmentDirectory=env
+ExecStart=/usr/local/share/org.gnome.Weather/%p --gapplication-service
+Restart=on-abort
+
+[Install]

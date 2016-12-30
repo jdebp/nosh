@@ -10,9 +10,9 @@ Type=oneshot
 # The import procedure is expected to have populated this directory with name.
 EnvironmentDirectory=env
 # The name for this command that is common to both Linux and the BSDs is "domainname".
-ExecStart=domainname ${name}
+ExecStart=domainname "${name}"
 # This is a one-shot service that can be re-triggered by starting it again.
-RemainAfterExit=1
+#RemainAfterExit=1
 Restart=no
 
 [Install]

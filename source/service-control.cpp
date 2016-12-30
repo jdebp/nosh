@@ -40,7 +40,7 @@ void control_character_definition::action(popt::processor &)
 */
 
 void
-service_control (
+service_control [[gnu::noreturn]] (
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {
@@ -154,7 +154,7 @@ service_control (
 		const char * p(controls.c_str());
 		std::size_t l(controls.length());
 		while (l) {
-			const int n(write(control_fd, p, l));
+			const ssize_t n(write(control_fd, p, l));
 			if (0 > n) {
 				const int error(errno);
 				if (EINTR == error) continue;

@@ -10,7 +10,7 @@ Before=org.cups.cupsd.service
 Type=oneshot
 ExecStart=cancel -a
 # This is a one-shot service that can be re-triggered by starting it again.
-RemainAfterExit=1
+#RemainAfterExit=1
 Restart=no
 
 [Install]

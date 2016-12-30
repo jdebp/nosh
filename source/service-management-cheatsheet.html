@@ -226,6 +226,12 @@ Send a <code>TERM</code> signal to restart the cron service.
 </p></li>
 
 <li>
+<pre>system-control hangup ttylogin@vc1-tty</pre>
+<p>
+Send a <code>HUP</code> signal to the session leader/main process of the ttylogin@vc1-tty service.
+</p></li>
+
+<li>
 <pre>system-control cat cron</pre>
 <p>
 Print the contents of the various <code>run</code>, <code>restart</code>, and so forth programs of the cron service.

@@ -10,10 +10,11 @@ After=local-syslog.target extra-shared-libraries.target
 Type=dbus
 RuntimeDirectory=PolicyKit
 RuntimeDirectoryMode=0770
+RuntimeDirectoryOwner=polkitd
 # policykit 0.8
-#ExecStart=/usr/local/libexec/polkitd
+#ExecStart=/usr/local/libexec/%p
 # polkit 0.110
-ExecStart=/usr/local/lib/polkit-1/polkitd
+ExecStart=/usr/local/lib/polkit-1/%p
 
 [Install]
 WantedBy=workstation.target

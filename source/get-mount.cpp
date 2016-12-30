@@ -20,7 +20,7 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 void
-get_mount_where ( 
+get_mount_where [[gnu::noreturn]] ( 
 	const char * & /*next_prog*/,
 	std::vector<const char *> & args
 ) {
@@ -73,7 +73,7 @@ get_mount_where (
 }
 
 void
-get_mount_what ( 
+get_mount_what [[gnu::noreturn]] ( 
 	const char * & /*next_prog*/,
 	std::vector<const char *> & args
 ) {

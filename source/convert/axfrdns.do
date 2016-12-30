@@ -4,15 +4,46 @@
 ## **************************************************************************
 #
 # Special setup for axfrdns.
-# This is invoked by general-services.do .
+# This is invoked by all.do .
 #
-
-s="`system-control find axfrdns`"
 
 set_if_unset() { if test -z "`system-control print-service-env \"$1\" \"$2\"`" ; then system-control set-service-env "$1" "$2" "$3" ; echo "$s: Defaulted $2 to $3." ; fi ; }
 
-redo-ifchange general-services
+# These get us *only* the configuration variables, safely.
+read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
+list_network_addresses() { for i in `read_rc network_addresses || echo 127.53.0.1` ; do echo "$i" ; done ; }
 
-set_if_unset axfrdns ROOT "$s/service/root"
+redo-ifchange rc.conf general-services "axfrdns@.socket" "axfrdns@.service"
 
-system-control print-service-env axfrdns >> "$3"
+if s="`system-control find axfrdns`"
+then
+	set_if_unset axfrdns ROOT "../../tinydns/service/root"
+
+	system-control print-service-env axfrdns >> "$3"
+fi
+
+lr="/var/local/sv/"
+e="--no-systemd-quirks --escape-instance --bundle-root"
+
+list_network_addresses |
+while read -r i
+do
+	test -z "$i" && continue
+	service="axfrdns@$i"
+	s="$lr/${service}"
+
+	system-control convert-systemd-units $e "$lr/" "./${service}.socket"
+	system-control preset "${service}"
+	rm -f -- "${s}/log"
+	ln -s -- "../../../sv/cyclog@axfrdns" "${s}/log"
+
+	install -d -m 0755 "${s}/service/env"
+	set_if_unset "${s}/" ROOT "../../tinydns@$i/service/root"
+
+	if system-control is-enabled "${service}"
+	then
+		echo >> "$3" on "${service}"
+	else
+		echo >> "$3" off "${service}"
+	fi
+done

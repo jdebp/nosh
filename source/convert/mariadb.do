@@ -123,137 +123,136 @@ do
 	rm -f -- "$r/${service}/service/env/TZ"
 
 	print_instance_options "$i" | (
-	while read -r arg
-	do
-		case "${arg}" in
-
-		# options that are recognised by mysqld but that require interception
-		--basedir=*)
-			basedir="${arg#--basedir=}"
-			;;
-		--datadir=*)
-			datadir="${arg#--datadir=}"
-			;;
-		--plugin-dir=*)
-			plugindir="${arg#--plugin-dir=}"
-			;;
-		--ledir=*)
-			ledir="${arg#--ledir=}"
-			;;
-		--defaults-extra-file=*)
-			defaults_extra_file="${arg#--defaults-extra-file=}"
-			;;
-		--port=*)
-			system-control set-service-env "${service}" port "${arg#--port=}"
-			;;
-		--socket=*)
-			system-control set-service-env "${service}" socket "${arg#--socket=}"
-			;;
-		--timezone=*)
-			system-control set-service-env "${service}" TZ "${arg#--timezone=}"
-			;;
-
-		# options that were recognized and enacted by the old mysqld-safe wrapper not by mysqld itself
-		--mysqld=*)
-			mysqld="${arg#--mysqld=}"
-			;;
-		--user=*)
-			system-control set-service-env "${service}" user "${arg#--user=}"
-			;;
-		--nice=*)
-			system-control set-service-env "${service}" nice "${arg#--nice=}"
-			;;
-		--flush-caches=*)
-			system-control set-service-env "${service}" flush_caches "${arg#--flush-caches=}"
-			;;
-		--open-files-limit=*|--open_files_limit=*)
-			system-control set-service-env "${service}" open_file_limit "${arg#--open?files?limit=}"
-			;;
-		--core-file-size=*)
-			system-control set-service-env "${service}" core_file_size "${arg#--core-file-size=}"
-			;;
-		--numa-interleave=*)
-			numa_interleave="${arg#--numa-interleave=}"
-			test -n "${numa_interleave}" && if test 0 -eq "${numa_interleave}"
-			then
-				numa_interleave=""
-			else
-				numa_interleave="all"
-			fi
-			system-control set-service-env "${service}" numa_interleave "${numa_interleave}"
-			;;
-		--pid-file=*)
-			pid_file="${arg#--pid-file=}"
-			;;
-		--malloc-lib=*|--mysqld-version=*)
-			echo >> "$3" "Ignoring unsupported ${arg}"
-			;;
-		--log-error=*|--skip-syslog|--syslog-tag=*|--skip-kill-mysqld*)
-			echo >> "$3" "Ignoring inappropriate ${arg}"
-			;;
-		--syslog) 	# always in effect anyway
-			;;
-
-		# options that are used on the mysqld-safe command line only, which we should never see
-		--help) ;;
-
-		*)
-			printf >> "$r/${service}/service/env/flags" "%s  " "${arg}"
-			;;
-		esac
-	done
-
-	test -n "${ledir}" || ledir="${basedir}/libexec"
-	rm -f -- "$r/${service}/service/bin"
-	rm -f -- "$r/${service}/service/sbin"
-	rm -f -- "$r/${service}/service/share"
-	rm -f -- "$r/${service}/service/libexec"
-	rm -f -- "$r/${service}/service/data"
-	rm -f -- "$r/${service}/service/plugin"
-	ln -s -- "${basedir}/bin" "$r/${service}/service/bin"
-	ln -s -- "${basedir}/sbin" "$r/${service}/service/sbin"
-	ln -s -- "${basedir}/share" "$r/${service}/service/share"
-	ln -s -- "${ledir}" "$r/${service}/service/libexec"
-	ln -s -- "${datadir}" "$r/${service}/service/data"
-	ln -s -- "${plugindir}" "$r/${service}/service/plugin"
-	system-control set-service-env "${service}" basedir "${basedir}"
-	system-control set-service-env "${service}" defaults_extra_file "${defaults_extra_file}"
-	system-control set-service-env "${service}" pid_file "${pid_file}"
-	if test -z "${mysqld}"
-	then
-		for i in libexec/mysqld sbin/mysqld bin/mysqld
+		while read -r arg
 		do
-			if ! test -e "$r/${service}/service/${i}"
-			then
-				redo-ifcreate "$r/${service}/service/${i}"
-			elif ! test -x "$r/${service}/service/${i}"
-			then
-				redo-ifchange "$r/${service}/service/${i}"
-			else
-				mysqld="${i}"
-				break
-			fi
-		done
-	fi
-	if test -z "${mysql_install_db}"
-	then
-		for i in libexec/mysql_install_db sbin/mysql_install_db bin/mysql_install_db
-		do
-			if ! test -e "$r/${service}/service/${i}"
-			then
-				redo-ifcreate "$r/${service}/service/${i}"
-			elif ! test -x "$r/${service}/service/${i}"
-			then
-				redo-ifchange "$r/${service}/service/${i}"
-			else
-				mysql_install_db="${i}"
-				break
-			fi
-		done
-	fi
-	system-control set-service-env "${service}" mysqld "${mysqld}"
-	system-control set-service-env "${service}" mysql_install_db "${mysql_install_db}"
+			case "${arg}" in
 
+			# options that are recognised by mysqld but that require interception
+			--basedir=*)
+				basedir="${arg#--basedir=}"
+				;;
+			--datadir=*)
+				datadir="${arg#--datadir=}"
+				;;
+			--plugin-dir=*)
+				plugindir="${arg#--plugin-dir=}"
+				;;
+			--ledir=*)
+				ledir="${arg#--ledir=}"
+				;;
+			--defaults-extra-file=*)
+				defaults_extra_file="${arg#--defaults-extra-file=}"
+				;;
+			--port=*)
+				system-control set-service-env "${service}" port "${arg#--port=}"
+				;;
+			--socket=*)
+				system-control set-service-env "${service}" socket "${arg#--socket=}"
+				;;
+			--timezone=*)
+				system-control set-service-env "${service}" TZ "${arg#--timezone=}"
+				;;
+
+			# options that were recognized and enacted by the old mysqld-safe wrapper not by mysqld itself
+			--mysqld=*)
+				mysqld="${arg#--mysqld=}"
+				;;
+			--user=*)
+				system-control set-service-env "${service}" user "${arg#--user=}"
+				;;
+			--nice=*)
+				system-control set-service-env "${service}" nice "${arg#--nice=}"
+				;;
+			--flush-caches=*)
+				system-control set-service-env "${service}" flush_caches "${arg#--flush-caches=}"
+				;;
+			--open-files-limit=*|--open_files_limit=*)
+				system-control set-service-env "${service}" open_file_limit "${arg#--open?files?limit=}"
+				;;
+			--core-file-size=*)
+				system-control set-service-env "${service}" core_file_size "${arg#--core-file-size=}"
+				;;
+			--numa-interleave=*)
+				numa_interleave="${arg#--numa-interleave=}"
+				test -n "${numa_interleave}" && if test 0 -eq "${numa_interleave}"
+				then
+					numa_interleave=""
+				else
+					numa_interleave="all"
+				fi
+				system-control set-service-env "${service}" numa_interleave "${numa_interleave}"
+				;;
+			--pid-file=*)
+				pid_file="${arg#--pid-file=}"
+				;;
+			--malloc-lib=*|--mysqld-version=*)
+				echo >> "$3" "Ignoring unsupported ${arg}"
+				;;
+			--log-error=*|--skip-syslog|--syslog-tag=*|--skip-kill-mysqld*)
+				echo >> "$3" "Ignoring inappropriate ${arg}"
+				;;
+			--syslog) 	# always in effect anyway
+				;;
+
+			# options that are used on the mysqld-safe command line only, which we should never see
+			--help) ;;
+
+			*)
+				printf >> "$r/${service}/service/env/flags" "%s  " "${arg}"
+				;;
+			esac
+		done
+
+		test -n "${ledir}" || ledir="${basedir}/libexec"
+		rm -f -- "$r/${service}/service/bin"
+		rm -f -- "$r/${service}/service/sbin"
+		rm -f -- "$r/${service}/service/share"
+		rm -f -- "$r/${service}/service/libexec"
+		rm -f -- "$r/${service}/service/data"
+		rm -f -- "$r/${service}/service/plugin"
+		ln -s -- "${basedir}/bin" "$r/${service}/service/bin"
+		ln -s -- "${basedir}/sbin" "$r/${service}/service/sbin"
+		ln -s -- "${basedir}/share" "$r/${service}/service/share"
+		ln -s -- "${ledir}" "$r/${service}/service/libexec"
+		ln -s -- "${datadir}" "$r/${service}/service/data"
+		ln -s -- "${plugindir}" "$r/${service}/service/plugin"
+		system-control set-service-env "${service}" basedir "${basedir}"
+		system-control set-service-env "${service}" defaults_extra_file "${defaults_extra_file}"
+		system-control set-service-env "${service}" pid_file "${pid_file}"
+		if test -z "${mysqld}"
+		then
+			for i in libexec/mysqld sbin/mysqld bin/mysqld
+			do
+				if ! test -e "$r/${service}/service/${i}"
+				then
+					redo-ifcreate "$r/${service}/service/${i}"
+				elif ! test -x "$r/${service}/service/${i}"
+				then
+					redo-ifchange "$r/${service}/service/${i}"
+				else
+					mysqld="${i}"
+					break
+				fi
+			done
+		fi
+		if test -z "${mysql_install_db}"
+		then
+			for i in libexec/mysql_install_db sbin/mysql_install_db bin/mysql_install_db
+			do
+				if ! test -e "$r/${service}/service/${i}"
+				then
+					redo-ifcreate "$r/${service}/service/${i}"
+				elif ! test -x "$r/${service}/service/${i}"
+				then
+					redo-ifchange "$r/${service}/service/${i}"
+				else
+					mysql_install_db="${i}"
+					break
+				fi
+			done
+		fi
+		system-control set-service-env "${service}" mysqld "${mysqld}"
+		system-control set-service-env "${service}" mysql_install_db "${mysql_install_db}"
 	)
 
 	system-control preset "${service}" "${log}"

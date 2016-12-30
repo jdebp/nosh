@@ -15,7 +15,7 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 void
-false_command ( 
+false_command [[gnu::noreturn]] ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {

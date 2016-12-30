@@ -8,12 +8,12 @@ Wants=%p-log.service
 After=%p-log.service
 
 [Service]
-Type=oneshot
 EnvironmentDirectory=env
-ExecStart=%p "-${mode}" ${nat:+-nat} ${unit:+-unit"${unit}"} ${flags} "%I"
+ExecStartPre=%p "-${mode}" ${nat:+-nat} ${unit:+-unit"${unit}"} ${flags} "%I"
 # \bug FIXME: Fix this.
 ExecStopPost=/etc/rc.d/ipfilter quietresync
 ExecStopPost=service pf condrestart
+RemainAfterExit=true
 
 [Install]
 WantedBy=workstation.target

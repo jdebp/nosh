@@ -48,6 +48,8 @@ static std::vector<pollfd> poll_table;
 // **************************************************************************
 */
 
+namespace {
+
 struct index : public std::pair<dev_t, ino_t> {
 	index(const struct stat & s) : pair(s.st_dev, s.st_ino) {}
 };
@@ -57,10 +59,10 @@ struct service : public index {
 	~service();
 
 	void add_process(int);
-	void stamp_time();
+	void stamp_time(const timespec &);
 	void stamp_activity();
 	void stamp_pending_command();
-	void stamp_process_status();
+	void stamp_process_status(const unsigned int, int, const timespec &);
 	void write_status();
 	void reap (const sigset_t &, int, int);
 	void enact_control_message(const sigset_t &);
@@ -85,8 +87,7 @@ protected:
 		RESTART = 'f',	///< The service is running the "restart" program.
 		STOP = 'o'	///< The service is running the "stop" program.
 	} activity;
-	int process_status;
-	int start_process_status, run_process_status, restart_process_status, stop_process_status;
+	int current_process_status;
 	unsigned char status[STATUS_BLOCK_SIZE];
 	std::set<int> processes;
 
@@ -98,8 +99,9 @@ protected:
 	void killtop(int);
 	void add_input_ready_event(int);
 	void delete_input_ready_event(int);
-	void stamp_process_status(std::size_t, int) ;
 };
+
+}
 
 typedef std::map<int, service *> active_service_map;
 static active_service_map active_services;
@@ -110,6 +112,7 @@ static input_activated_service_map input_activated_services;
 typedef std::map<int, service *> service_control_fifo_map;
 static service_control_fifo_map service_control_fifos;
 
+// \bug FIXME: This should be a map of shared pointers.
 typedef std::map<struct index, service> service_map;
 static service_map services;
 
@@ -148,13 +151,13 @@ pack_littleendian (
 static inline
 bool 
 is_failure (
-	int process_status	///< a wait status from which WIFCONTINED and WIFSTOPPED have already been excluded
+	int wait_status	///< a wait status from which WIFCONTINED and WIFSTOPPED have already been excluded
 ) {
-	if (WIFSIGNALED(process_status)) 
+	if (WIFSIGNALED(wait_status)) 
 		// Any signal at all is a failure.
 		return true;
 	else
-		return WEXITSTATUS(process_status) != EXIT_SUCCESS;
+		return WEXITSTATUS(wait_status) != EXIT_SUCCESS;
 }
 
 service::service(const struct stat & s) : 
@@ -173,11 +176,7 @@ service::service(const struct stat & s) :
 	paused(false), 
 	unload_after_stop(false),
 	activity(NONE), 
-	process_status(-1),
-	start_process_status(-1), 
-	run_process_status(-1), 
-	restart_process_status(-1), 
-	stop_process_status(-1),
+	current_process_status(-1),
 	processes()
 {
 	pipe_fds[0] = pipe_fds[1] = -1;
@@ -200,66 +199,62 @@ service::~service()
 }
 
 void 
-service::stamp_time () 
-{
-	timespec now;
-	clock_gettime(CLOCK_REALTIME, &now);
+service::stamp_time (
+	const timespec & now
+) {
 	const uint64_t s(time_to_tai64(now.tv_sec, false));
 	const uint32_t n(now.tv_nsec);
 	const uint32_t p(has_processes() ? *processes.begin() : 0);
 	pack_bigendian(status +  0, s, 8);
 	pack_bigendian(status +  8, n, 4);
-	pack_littleendian(status + 12, p, 4);
+	pack_littleendian(status + THIS_PID_OFFSET, p, 4);
 }
 
 void 
 service::stamp_activity () 
 {
-	status[16] = has_processes() && paused;
+	status[PAUSE_FLAG_OFFSET] = has_processes() && paused;
 	switch (activity) {
-		case NONE:	status[18] = encore_status_stopped; break;
-		case START:	status[18] = encore_status_starting; break;
-		case RUN:	status[18] = encore_status_running; break;
-		case RESTART:	status[18] = encore_status_failed; break;
-		case STOP:	status[18] = encore_status_stopping; break;
+		case NONE:	status[ENCORE_STATUS_OFFSET] = encore_status_stopped; break;
+		case START:	status[ENCORE_STATUS_OFFSET] = encore_status_starting; break;
+		case RUN:	status[ENCORE_STATUS_OFFSET] = encore_status_running; break;
+		case RESTART:	status[ENCORE_STATUS_OFFSET] = encore_status_failed; break;
+		case STOP:	status[ENCORE_STATUS_OFFSET] = encore_status_stopping; break;
 	}
 }
 
 void 
 service::stamp_pending_command () 
 {
-	status[17] = pending_command;
+	status[WANT_FLAG_OFFSET] = pending_command;
 }
 
 inline
 void 
 service::stamp_process_status (
-	std::size_t offset,
-	int s
+	const unsigned index,
+	int wait_status,
+	const timespec & now
 ) {
-	if (-1 == s) {
+	const std::size_t offset(EXIT_STATUSES_OFFSET + EXIT_STATUS_SIZE * index);
+	if (-1 == wait_status) {
 		status[offset] = 0;
 		pack_bigendian(status + offset + 1U, 0U, 4);
 	} else
-	if (WIFEXITED(s)) {
-		const int code(WEXITSTATUS(s));
+	if (WIFEXITED(wait_status)) {
+		const int code(WEXITSTATUS(wait_status));
 		status[offset] = 1;
 		pack_bigendian(status + offset + 1U, code, 4);
 	} else
 	{
-		const int signo(WTERMSIG(s));
-		status[offset] = WCOREDUMP(s) ? 3 : 2;
+		const int signo(WTERMSIG(wait_status));
+		status[offset] = WCOREDUMP(wait_status) ? 3 : 2;
 		pack_bigendian(status + offset + 1U, signo, 4);
 	}
-}
-
-void 
-service::stamp_process_status()
-{
-	stamp_process_status(19U, start_process_status);
-	stamp_process_status(24U, run_process_status);
-	stamp_process_status(29U, restart_process_status);
-	stamp_process_status(34U, stop_process_status);
+	const uint64_t s(time_to_tai64(now.tv_sec, false));
+	const uint32_t n(now.tv_nsec);
+	pack_bigendian(status + offset +  5U, s, 8);
+	pack_bigendian(status + offset + 13U, n, 4);
 }
 
 void 
@@ -274,8 +269,11 @@ service::add_process (
 	EV_SET(&e, pid, EVFILT_PROC, EV_ADD, NOTE_EXIT|NOTE_FORK|NOTE_TRACK, 0, 0);
 	kevent(queue, &e, 1, 0, 0, 0);
 #endif
-	if (affects_main_process)
-		stamp_time();
+	if (affects_main_process) {
+		timespec now;
+		clock_gettime(CLOCK_REALTIME, &now);
+		stamp_time(now);
+	}
 }
 
 void 
@@ -292,23 +290,25 @@ service::del_process (
 	active_services.erase(pid);
 	processes.erase(pid);
 	if (affects_main_process) {
-		stamp_time();
+		timespec now;
+		clock_gettime(CLOCK_REALTIME, &now);
+		stamp_time(now);
 		switch (activity) {
-			case START:	start_process_status = s; break;
-			case RUN:	run_process_status = s; break;
-			case RESTART:	restart_process_status = s; break;
-			case STOP:	stop_process_status = s; break;
+			case START:	stamp_process_status(0, s, now); break;
+			case RUN:	stamp_process_status(1, s, now); break;
+			case RESTART:	stamp_process_status(2, s, now); break;
+			case STOP:	stamp_process_status(3, s, now); break;
+			case NONE:
 			default:	break;
 		}
-		stamp_process_status();
 	}
-	process_status = s;
+	current_process_status = s;
 }
 
 void
 service::write_status()
 {
-	const int rc(pwrite(status_fd, status, sizeof status, 0));
+	const ssize_t rc(pwrite(status_fd, status, sizeof status, 0));
 	if (0 > rc) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: WARNING: %s: %s: %s\n", prog, name, "supervise/status", std::strerror(error));
@@ -434,6 +434,7 @@ service::enact_control_message (
 		case '_':
 			command = 'd';
 			// Fall through to:
+			[[clang::fallthrough]];
 		case 'u':
 		case 'o':
 		case 'O':
@@ -493,24 +494,36 @@ service::enter_state (
 		case NONE:	
 			write_status(); 
 			return;
-		case START:	
+		case START:
+		{
+			timespec now;
+			clock_gettime(CLOCK_REALTIME, &now);
 			a = start_args; 
-			start_process_status = run_process_status = restart_process_status = stop_process_status = -1; 
-			stamp_process_status(); 
+			stamp_process_status(0, -1, now); 
+			stamp_process_status(1, -1, now); 
+			stamp_process_status(2, -1, now); 
+			stamp_process_status(3, -1, now); 
 			write_status(); 
 			break;
+		}
 		case RUN:	
+		{
+			timespec now;
+			clock_gettime(CLOCK_REALTIME, &now);
 			a = run_args; 
-			run_process_status = -1; 
-			stamp_process_status(); 
+			stamp_process_status(1, -1, now); 
 			write_status(); 
 			break;
+		}
 		case RESTART:	
+		{
+			timespec now;
+			clock_gettime(CLOCK_REALTIME, &now);
 			a = restart_args; 
-			restart_process_status = -1; 
-			stamp_process_status(); 
+			stamp_process_status(2, -1, now); 
 			write_status(); 
 			break;
+		}
 		case STOP:	
 			a = stop_args; 
 			break;
@@ -529,6 +542,8 @@ service::enter_state (
 	std::fflush(stderr);
 	const int rc(fork());
 	if (0 > rc) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, name, *a, std::strerror(error));
 		sleep(1);
 		return;
 	}
@@ -545,8 +560,8 @@ service::enter_state (
 	switch (activity) {
 		default:	break;
 		case RESTART:	
-			if (WIFSIGNALED(process_status)) {
-				const int signo(WTERMSIG(process_status));
+			if (WIFSIGNALED(current_process_status)) {
+				const int signo(WTERMSIG(current_process_status));
 				snprintf(codebuf, sizeof codebuf, "%u", signo);
 				const char * sname(signame(signo));
 				if (!sname) sname = codebuf;
@@ -554,7 +569,7 @@ service::enter_state (
 				restart_args[2] = sname;
 				restart_args[3] = codebuf;
 			} else {
-				const int code(WEXITSTATUS(process_status));
+				const int code(WEXITSTATUS(current_process_status));
 				snprintf(codebuf, sizeof codebuf, "%u", code);
 				restart_args[1] = "exit";
 				restart_args[2] = codebuf;
@@ -640,9 +655,9 @@ service::change_state_if_necessary (
 			switch (pending_command) {
 				case 'O': 	activity = STOP; break;
 				case 'o':	activity = STOP; break;
-				case 'u':	pending_command = '\0'; activity = is_failure(process_status) ? STOP : RUN; break;
+				case 'u':	pending_command = '\0'; activity = is_failure(current_process_status) ? STOP : RUN; break;
 				case 'd':	activity = STOP; break;
-				default:	activity = is_failure(process_status) ? STOP : RUN; break;
+				default:	activity = is_failure(current_process_status) ? STOP : RUN; break;
 			}
 			break;
 		case STOP:
@@ -798,69 +813,53 @@ load (
 
 	service_map::iterator i(services.find(service_dir_s));
 	if (i == services.end()) {
-		const int service_dir_fd2(dup(service_dir_fd));
-		if (0 > service_dir_fd2) return;
-		set_close_on_exec(service_dir_fd2, true);
+		FileDescriptorOwner service_dir_fd2(dup(service_dir_fd));
+		if (0 > service_dir_fd2.get()) return;
+		set_close_on_exec(service_dir_fd2.get(), true);
+		//
 		// We need an explicit lock file, because we cannot lock FIFOs.
-		const int lock_fd(open_lockfile_at(supervise_dir_fd, "lock"));
-		if (0 > lock_fd) {
-			close(service_dir_fd2);
-			return;
-		}
+		FileDescriptorOwner lock_fd(open_lockfile_at(supervise_dir_fd, "lock"));
+		if (0 > lock_fd.get()) return;
+		//
 		// We are allowed to open the read end of a FIFO in non-blocking mode without having to wait for a writer.
 		mkfifoat(supervise_dir_fd, "control", 0600);
-		const int control_fd(open_read_at(supervise_dir_fd, "control"));
-		if (0 > control_fd) {
-			close(lock_fd);
-			close(service_dir_fd2);
-			return;
-		}
+		FileDescriptorOwner control_fd(open_read_at(supervise_dir_fd, "control"));
+		if (0 > control_fd.get()) return;
+		//
 		// We have to keep a client (write) end descriptor open to the control FIFO.
 		// Otherwise, the first control client process triggers POLLHUP when it closes its end.
 		// Opening the FIFO for read+write isn't standard, although it would work on Linux.
-		const int control_client_fd(open_writeexisting_at(supervise_dir_fd, "control"));
-		if (0 > control_client_fd) {
-			close(control_fd);
-			close(lock_fd);
-			close(service_dir_fd2);
-			return;
-		}
+		FileDescriptorOwner control_client_fd(open_writeexisting_at(supervise_dir_fd, "control"));
+		if (0 > control_client_fd.get()) return;
+		//
 		// Unlike daemontools, but like daemontools-encore, we keep the status file open continually.
 		// This permits the supervise directory to be read-only.
-		const int status_fd(open_writetrunc_at(supervise_dir_fd, "status", 0644));
-		if (0 > status_fd) {
-			close(control_client_fd);
-			close(control_fd);
-			close(lock_fd);
-			close(service_dir_fd2);
-			return;
-		}
+		FileDescriptorOwner status_fd(open_writetrunc_at(supervise_dir_fd, "status", 0644));
+		if (0 > status_fd.get()) return;
+		//
 		// The existence of a reader at this FIFO indicates that a supervisor is active.
 		// We must open this after the rest of the control/status API is initialized.
 		// Otherwise clients might try to issue commands/read statuses before the FIFOs are open.
 		mkfifoat(supervise_dir_fd, "ok", 0666);
-		const int ok_fd(open_read_at(supervise_dir_fd, "ok"));
-		if (0 > ok_fd) {
-			close(status_fd);
-			close(control_client_fd);
-			close(control_fd);
-			close(lock_fd);
-			close(service_dir_fd2);
-			return;
-		}
+		FileDescriptorOwner ok_fd(open_read_at(supervise_dir_fd, "ok"));
+		if (0 > ok_fd.get()) return;
+
+		timespec now;
+		clock_gettime(CLOCK_REALTIME, &now);
 		std::pair<service_map::iterator, bool> it(services.insert(service_map::value_type(supervise_dir_s,supervise_dir_s)));
 		service & s(it.first->second);
-		s.lock_fd = lock_fd;
-		s.ok_fd = ok_fd;
-		s.control_fd = control_fd;
-		s.control_client_fd = control_client_fd;
-		s.status_fd = status_fd;
-		s.service_dir_fd = service_dir_fd2;
+		s.lock_fd = lock_fd.release();
+		s.ok_fd = ok_fd.release();
+		s.control_fd = control_fd.release();
+		s.control_client_fd = control_client_fd.release();
+		s.status_fd = status_fd.release();
+		s.service_dir_fd = service_dir_fd2.release();
 		std::strncpy(s.name, name, sizeof s.name);
-		s.stamp_time();
+		s.stamp_time(now);
 		s.stamp_activity();
 		s.stamp_pending_command();
-		s.stamp_process_status();
+		for (unsigned state(0U); state < 4U; ++state)
+			s.stamp_process_status(state, -1, now);
 		s.write_status();
 		s.add_to_control_fifo_list();
 		std::fprintf(stderr, "%s: DEBUG: load %s\n", prog, s.name);
@@ -1038,7 +1037,7 @@ control_message (
 		buf, sizeof buf,
 		0
 	};
-	const int rc(recvmsg(socket_fd, &msg, 0));
+	const ssize_t rc(recvmsg(socket_fd, &msg, 0));
 	if (0 > rc) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "recvmsg", std::strerror(error));
@@ -1109,7 +1108,7 @@ stop_and_unload_all (
 */
 
 void
-service_manager (
+service_manager [[gnu::noreturn]] (
 	const char * & /*next_prog*/,
 	std::vector<const char *> & args
 ) {

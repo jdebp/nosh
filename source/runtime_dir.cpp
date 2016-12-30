@@ -20,16 +20,12 @@ std::string
 effective_user_runtime_dir()
 {
 	std::string r("/run/user/");
-#if defined(__LINUX__) || defined(__linux__)
-	if (const char * l = cuserid(0)) {
-		r += l;
-	} else 
-#endif
-	{
-		if (struct passwd * p = getpwuid(geteuid()))
-			r += p->pw_name;
-		endpwent();
-	}
+	// Do not use cuserid() here.
+	// BSD libc defines L_cuserid as 17.
+	// But GNU libc is even worse and defines it as a mere 9.
+	if (struct passwd * p = getpwuid(geteuid()))
+		r += p->pw_name;
+	endpwent();
 	return r + slash;
 }
 

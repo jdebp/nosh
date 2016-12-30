@@ -6,6 +6,7 @@
 Description=kernel module loader for %i
 
 [Service]
+Type=oneshot
 # Strictly speaking, this shouldn't be needed.
 # But some BSD configuration options map to service settings for kmod@ instances.
 EnvironmentDirectory=env

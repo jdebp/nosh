@@ -90,4 +90,4 @@ enable	cyclog@webcamd@*.service
 enable	webcamd@*.service
 
 # Targets
-enable	uhidd.target
+disable	uhidd.target

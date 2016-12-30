@@ -105,8 +105,20 @@ wait_ok (
 	int timeout
 );
 int
+after_run_status_file (
+	const int status_file_fd
+);
+int
+running_status_file (
+	const int status_file_fd
+);
+int
 running_status (
 	const int supervise_dir_fd
+);
+int
+stopped_status_file (
+	const int status_file_fd
 );
 int
 stopped_status (
@@ -146,6 +158,10 @@ open_supervise_dir (
 ) ;
 bool
 is_initially_up (
+	const int service_dir_fd
+) ;
+bool
+is_ready_after_run (
 	const int service_dir_fd
 ) ;
 bool

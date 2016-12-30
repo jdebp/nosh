@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Music Player socket
+
+[Socket]
+ListenStream=::0:6600
+ListenStream=/run/%p/socket
+Backlog=5
+KeepAlive=true
+PassCredentials=true
+
+[Install]
+WantedBy=workstation.target

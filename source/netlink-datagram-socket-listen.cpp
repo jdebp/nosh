@@ -13,7 +13,11 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#if defined(__LINUX__) || defined(__linux__)
 #include <linux/netlink.h>
+#else
+#include <sys/un.h>
+#endif
 #include <unistd.h>
 #include <grp.h>
 #include "utils.h"
@@ -21,6 +25,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "popt.h"
 #include "listen.h"
 
+#if defined(__LINUX__) || defined(__linux__)
 static const
 struct Protocol {
 	const char * name;
@@ -59,6 +64,7 @@ lookup_netlink_protocol (
 	}
 	return -1;
 }
+#endif
 
 /* Main function ************************************************************
 // **************************************************************************
@@ -130,6 +136,7 @@ netlink_datagram_socket_listen (
 	sigaddset(&masked_signals, SIGPIPE);
 	sigprocmask(SIG_SETMASK, &masked_signals, 0);
 
+#if defined(__LINUX__) || defined(__linux__)
 	sockaddr_nl addr;
 	addr.nl_family = AF_NETLINK;
 	addr.nl_groups = groups;
@@ -137,6 +144,12 @@ netlink_datagram_socket_listen (
 	addr.nl_pad = 0;
 
 	const int s(socket(AF_NETLINK, raw ? SOCK_RAW : SOCK_DGRAM, lookup_netlink_protocol(protocol)));
+#else
+	sockaddr_un addr;
+	addr.sun_family = AF_UNSPEC;
+	errno = EAFNOSUPPORT;
+	const int s(-1);
+#endif
 	if (0 > s) {
 exit_error:
 		const int error(errno);
@@ -159,7 +172,10 @@ exit_error:
 #if defined(SO_RCVBUF)
 	if (has_rcvbuf) {
 		const int size(receive_buffer_size);
-		if (0 > setsockopt(s, SOL_SOCKET, SO_RCVBUFFORCE, &size, sizeof size)
+		if (true
+#if defined(SO_RCVBUFFORCE)
+		&&  0 > setsockopt(s, SOL_SOCKET, SO_RCVBUFFORCE, &size, sizeof size)
+#endif
 		&&  0 > setsockopt(s, SOL_SOCKET, SO_RCVBUF, &size, sizeof size)
 		) 
 			goto exit_error;

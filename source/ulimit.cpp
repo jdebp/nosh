@@ -68,6 +68,10 @@ void resource_limit_definition::action(popt::processor &, const char * text)
 	||  0 == std::strcmp(text, "=")
 	) {
 		val = old.rlim_max;
+	} else
+	if (0 == std::strcmp(text, "soft")
+	) {
+		val = old.rlim_cur;
 	} else {
 		const char * o(text);
 		val = std::strtoul(text, const_cast<char **>(&text), 0);
@@ -91,7 +95,11 @@ resource_limit_definition::rescale (
 void resource_limit_definition::enact(bool hard, bool soft)
 {
 	if (!set) return;
-	const rlimit now = { soft ? val : old.rlim_cur, hard ? val : old.rlim_max };
+	const rlim_t max(hard ? val : old.rlim_max);
+	const rlim_t cur(soft ? val : 
+			RLIM_INFINITY != max && (RLIM_INFINITY == old.rlim_cur || old.rlim_cur > max) ? max :
+			old.rlim_cur);
+	const rlimit now = { cur, max };
 	if (0 > setrlimit(resource, &now)) {
 		const int error(errno);
 #if defined(__LINUX__) || defined(__linux__)
@@ -245,8 +253,10 @@ void memory_resource_limit_definition::enact(bool hard, bool soft)
 			const int error(errno);
 			throw popt::error(long_name, std::strerror(error));
 		}
-		rlimit now = { soft ? val : old.rlim_cur, hard ? val : old.rlim_max };
-		if (now.rlim_cur > now.rlim_max) now.rlim_cur = now.rlim_max;
+		const rlim_t max(hard ? val : old.rlim_max);
+		rlim_t cur(soft ? val : old.rlim_cur);
+		if (RLIM_INFINITY != max && (RLIM_INFINITY == cur || cur > max)) cur = max;
+		const rlimit now = { cur, max };
 		if (0 > setrlimit(resource, &now)) {
 			const int error(errno);
 			throw popt::error(long_name, std::strerror(error));
@@ -407,14 +417,16 @@ ulimit (
 	}
 }
 
+static
 void
-softlimit ( 
+limit ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	const bool hard,
+	const bool soft
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
-		bool hard(false), soft(true);
 		memory_resource_limit_definition memory_option('m', "memory", "bytes", "Limit memory.", 1);
 #if defined(RLIMIT_AS)
 		si_resource_limit_definition address_space_option('a', "virtual-memory", "bytes", "Limit virtual memory.", RLIMIT_AS, 1U);
@@ -467,7 +479,6 @@ softlimit (
 		args = new_args;
 		next_prog = arg0_of(args);
 		if (p.stopped()) throw EXIT_SUCCESS;
-		if (!hard) soft = true;
 		memory_option.enact(hard, soft);
 #if defined(RLIMIT_AS)
 		address_space_option.enact(hard, soft);
@@ -485,4 +496,20 @@ softlimit (
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
 		throw EXIT_FAILURE;
 	}
+}
+
+void
+softlimit ( 
+	const char * & next_prog,
+	std::vector<const char *> & args
+) {
+	limit(next_prog, args, false, true);
+}
+
+void
+hardlimit ( 
+	const char * & next_prog,
+	std::vector<const char *> & args
+) {
+	limit(next_prog, args, true, false);
 }

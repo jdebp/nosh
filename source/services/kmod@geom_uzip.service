@@ -1,0 +1,21 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=kernel module loader for geom_uzip
+DefaultDependencies=off
+
+[Service]
+Type=oneshot
+# Strictly speaking, this shouldn't be needed.
+# But some BSD configuration options map to service settings for kmod@ instances.
+EnvironmentDirectory=env
+ExecStart=system-control load-kernel-module geom_uzip
+ExecStopPost=system-control unload-kernel-module geom_uzip
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
+Restart=no
+
+[Install]
+StoppedBy=shutdown.target

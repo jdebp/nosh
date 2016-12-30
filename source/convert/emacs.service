@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=EMACS Made A Client-Server for %U
+
+[Service]
+#WorkingDirectory=~
+RuntimeDirectory=%p
+EnvironmentDirectory=env
+Environment=SSH_AUTH_SOCK=%t/keyring/ssh
+ExecStart=%p --new-daemon
+
+[Install]
+WantedBy=normal.target

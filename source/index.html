@@ -11,42 +11,66 @@ Each command has a manual page, accessible through the normal <code>man</code> o
 <li><a href="introduction.html">Introduction</a></li>
 <li><a href="familiar-interfaces.html">Interfaces that you are used to</a></li>
 <li><a href="new-interfaces.html">Interfaces that are new</a></li>
-<li>Cheatsheets:</li>
-<ul>
-<li><a href="service-management-cheatsheet.html">Service management cheatsheet</a></li>
-<li><a href="chain-loading-cheatsheet.html">Chain loading cheatsheet</a></li>
-<li><a href="logging-cheatsheet.html">Logging cheatsheet</a></li>
-</ul>
-<li>Anatomy &hellip;</li>
-<ul>
-<li><a href="anatomy-of-regular-service.html">&hellip; of a typical service</a></li>
-<li><a href="anatomy-of-regular-socket.html">&hellip; of a typical TCP service</a></li>
-<li><a href="anatomy-of-system-target.html">&hellip; of a typical target</a></li>
-<li><a href="anatomy-of-sysinit-service.html">&hellip; of a typical sysinit service</a></li>
-</ul>
+<li>Cheatsheets:
+	<ul>
+	<li><a href="service-management-cheatsheet.html">Service management cheatsheet</a></li>
+	<li><a href="chain-loading-cheatsheet.html">Chain loading cheatsheet</a></li>
+	<li><a href="logging-cheatsheet.html">Logging cheatsheet</a></li>
+	</ul>
+</li>
+<li><a href="commands.html">Command and tool list</a></li>
+<li>Anatomy &hellip;
+	<ul>
+	<li><a href="anatomy-of-regular-service.html">&hellip; of a typical service</a></li>
+	<li><a href="anatomy-of-regular-socket.html">&hellip; of a typical TCP service</a></li>
+	<li><a href="anatomy-of-system-target.html">&hellip; of a typical target</a></li>
+	<li><a href="anatomy-of-sysinit-service.html">&hellip; of a typical sysinit service</a></li>
+	</ul>
+</li>
 <li><a href="creating-bundles.html">Creating bundles</a></li>
-<li><a href="external-formats.html">External formats</a></li>
-<ul>
-<li><a href="converting-systemd-units.html">Converting systemd units</a></li>
-<li><a href="fstab.html"><code>/etc/fstab</code> conversion</a></li>
-<li><a href="rcconf.html"><code>/etc/rc.conf</code> conversion</a></li>
-<li><a href="ttys.html">enabling/disabling login services with <code>/etc/ttys</code></a></li>
-</ul>
+<li><a href="external-formats.html">External formats</a>
+	<ul>
+	<li><a href="converting-systemd-units.html">Converting systemd units</a></li>
+	<li><a href="fstab.html"><code>/etc/fstab</code> conversion</a></li>
+	<li><a href="rcconf.html"><code>/etc/rc.conf</code> conversion</a></li>
+	<li><a href="ttys.html">enabling/disabling login services with <code>/etc/ttys</code></a></li>
+	<li><a href="per-user-stuff.html">stuff converted for each user</a>
+		<ul>
+		<li><a href="per-user-system-services.html">system-level services for each user</a>
+		<li><a href="per-user-user-services.html">user-level services for each user</a>
+		<li><a href="per-user-dbus-demand-start.html">demand starting user-level Desktop Bus services</a>
+		</ul>
+	</li>
+	</ul>
+</li>
 <li><a href="startup-and-shutdown.html">Startup and shutdown</a></li>
 <li><a href="svscan-startup.html">Compatible old-style startup</a></li>
 <li><a href="mounting.html">Mounting filesystems</a></li>
-<li><a href="logging.html">Logging</a></li>
-<ul>
-<li><a href="log-service-plumbing.html">Logging services and plumbing</a></li>
-<li><a href="beyond-cyclog.html">Beyond <code>cyclog</code></a></li>
-<li><a href="old-log-services.html">Handling old log mechanisms</a></li>
-</ul>
+<li><a href="logging.html">Logging</a>
+	<ul>
+	<li><a href="log-service-plumbing.html">Logging services and plumbing</a></li>
+	<li><a href="log-post-processing.html">Log post-processing</li>
+	<li><a href="beyond-cyclog.html">Beyond <code>cyclog</code></a></li>
+	<li><a href="log-service-security.html">Security of logging</li>
+	<li><a href="old-log-services.html">Handling old log mechanisms</a></li>
+	</ul>
+</li>
 <li><a href="timestamps.html">Timestamps</a></li>
 <li><a href="terminals.html">Terminals</a></li>
-<ul>
-<li><a href="virtual-terminal-login.html">Virtual terminal login</a></li>
-<li><a href="kernel-virtual-terminals.html">Kernel virtual terminals</a></li>
-<li><a href="user-virtual-terminals.html">User-space virtual terminals</a></li>
-</ul>
+	<ul>
+	<li><a href="virtual-terminal-login.html">Virtual terminal login</a></li>
+	<li><a href="kernel-virtual-terminals.html">Kernel virtual terminals</a></li>
+	<li><a href="user-virtual-terminals.html">User-space virtual terminals</a></li>
+	</ul>
+<li><a href="gazetteer.html">Gazetteer</a></li>
 <li><a href="troubleshooting.html">Troubleshooting</a></li>
+<li>Service notes:</li>
+	<ul>
+	<li><a href="services/appcafe.html">appcafe</a></li>
+	<li><a href="services/djbdns.html">dnscache, tinydns, and axfrdns</a></li>
+	<li><a href="services/linux-lockfiles.html">linux-lockfiles</a></li>
+	<li><a href="services/polkitd.html">polkitd</a></li>
+	<li><a href="services/uhidd.html">uhidd</a></li>
+	<li><a href="services/urxvtd.html">urxvtd</a></li>
+	</ul>
 </ul>

@@ -7,8 +7,6 @@ Description=Collection for all (non-"late") "auto" swap services
 
 [Service]
 User=nobody
-# This is a pseudo-daemon that does not have a running process.
-RemainAfterExit=yes
 
 [Install]
 StoppedBy=shutdown.target

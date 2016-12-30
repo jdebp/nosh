@@ -35,10 +35,14 @@ For copyright and licensing terms, see the file named COPYING.
 #define SHIFTABLE_CONTROL(m,n,o,p,c,q,r,s,t) { 's', { (m),(n),(c),(c),(o),(p),(c),(c),(q),(r),(c),(c),(s),(t),(c),(c) } }
 #define CAPSABLE_CONTROL(m,n,o,p,c,q,r,s,t) { 'c', { (m),(n),(c),(c),(o),(p),(c),(c),(q),(r),(c),(c),(s),(t),(c),(c) } }
 #define NUMABLE(m,n) { 'n', { (m),(n),NOOP(0),NOOP(0),NOOP(0),NOOP(0),NOOP(0),NOOP(0),(m),(n),NOOP(0),NOOP(0),NOOP(0),NOOP(0),NOOP(0),NOOP(0) } }
+#if !defined(__LINUX__) && !defined(__linux__)
 #define FUNCABLE1(m) { 'f', { FUNC(m),FUNC(m),FUNC(m),FUNC(m),SCRN((m)-1U),SCRN((m)-1U),SCRN((m)-1U),SCRN((m)-1U),FUNC(m),FUNC(m),FUNC(m),FUNC(m),SCRN((m)-1U),SCRN((m)-1U),SCRN((m)-1U),SCRN((m)-1U) } }
 #define FUNCABLE2(m,e) { 'f', { EXTE(e),FUNC(m),FUNC(m),FUNC(m),SCRN((m)-1U),SCRN((m)-1U),SCRN((m)-1U),SCRN((m)-1U),EXTE(e),FUNC(m),FUNC(m),FUNC(m),SCRN((m)-1U),SCRN((m)-1U),SCRN((m)-1U),SCRN((m)-1U) } }
+#endif
+#if defined(__LINUX__) || defined(__linux__)
 #define FUNKABLE1(m) { 'f', { FUNK(m),FUNK((m)+12U),FUNK((m)+24U),FUNK((m)+36U),SCRN((m)-1U),SCRN((m)+12U-1U),SCRN((m)+24U-1U),SCRN((m)+36U-1U),FUNK(m),FUNK((m)+12U),FUNK((m)+24U),FUNK((m)+36U),SCRN((m)-1U),SCRN((m)+12U-1U),SCRN((m)+24U-1U),SCRN((m)+36U-1U) } }
 #define FUNKABLE2(m,e) { 'f', { EXTE(e),FUNK((m)+12U),FUNK((m)+24U),FUNK((m)+36U),SCRN((m)-1U),SCRN((m)+12U-1U),SCRN((m)+24U-1U),SCRN((m)+36U-1U),EXTE(e),FUNK((m)+12U),FUNK((m)+24U),FUNK((m)+36U),SCRN((m)-1U),SCRN((m)+12U-1U),SCRN((m)+24U-1U),SCRN((m)+36U-1U) } }
+#endif
 
 #define	NOOP(x)	 (((x) & 0x00FFFFFF) << 0U)
 #define UCSA(x) ((((x) & 0x00FFFFFF) << 0U) | KBDMAP_ACTION_UCS3)
@@ -50,7 +54,9 @@ For copyright and licensing terms, see the file named COPYING.
 #define SYST(x) ((((x) & 0x0000FFFF) << 8U) | KBDMAP_ACTION_SYSTEM)
 #define CONS(x) ((((x) & 0x0000FFFF) << 8U) | KBDMAP_ACTION_CONSUMER)
 #define EXTE(x) ((((x) & 0x0000FFFF) << 8U) | KBDMAP_ACTION_EXTENDED)
+#if !defined(__LINUX__) && !defined(__linux__)
 #define FUNC(x) ((((x) & 0x0000FFFF) << 8U) | KBDMAP_ACTION_FUNCTION)
+#endif
 #define FUNK(x) ((((x) & 0x0000FFFF) << 8U) | KBDMAP_ACTION_FUNCTION1)
 
 /* Base keyboard ************************************************************
@@ -777,10 +783,10 @@ hexval (
 	for (std::string::const_iterator p(s.begin()); s.end() != p; ++p) {
 		const char c(*p);
 		if (std::isdigit(c)) 
-			v = v * 0x10 + (c - '0');
+			v = v * 0x10 + static_cast<unsigned>(c - '0');
 		else
 		if (std::isxdigit(c)) 
-			v = v * 0x10 + (std::tolower(c) - 'a' + 0x0A);
+			v = v * 0x10 + static_cast<unsigned>(std::tolower(c) - 'a' + 0x0A);
 		else
 			break;
 	}
@@ -796,7 +802,7 @@ octval (
 	for (std::string::const_iterator p(s.begin()); s.end() != p; ++p) {
 		const char c(*p);
 		if (std::isdigit(c) && c < '8') 
-			v = v * 0x10 + (c - '0');
+			v = v * 0x10 + static_cast<unsigned>(c - '0');
 		else
 			break;
 	}
@@ -918,7 +924,7 @@ overlay_group2_latch (
 */
 
 void
-console_convert_kbdmap ( 
+console_convert_kbdmap [[gnu::noreturn]] ( 
 	const char * & /*next_prog*/,
 	std::vector<const char *> & args
 ) {

@@ -42,8 +42,8 @@ systemd_name_unescape (
 					c = *q;
 					if (!std::isxdigit(c)) break;
 					++q;
-					c = std::isdigit(c) ? (c - '0') : (std::tolower(c) - 'a' + 10);
-					v = (v << 4) | c;
+					const unsigned char d(std::isdigit(c) ? (c - '0') : (std::tolower(c) - 'a' + 10));
+					v = (v << 4) | d;
 				}
 				r += char(v);
 			}

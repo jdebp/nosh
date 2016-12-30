@@ -14,14 +14,13 @@ For copyright and licensing terms, see the file named COPYING.
 #include <new>
 #include <memory>
 #include <sys/types.h>
-#include <pwd.h>
 #include <unistd.h>
-#include <dirent.h>
 #include <fcntl.h>
 #include "utils.h"
 #include "fdutils.h"
 #include "service-manager-client.h"
 #include "runtime-dir.h"
+#include "home-dir.h"
 #include "popt.h"
 
 /* Global data **************************************************************
@@ -33,25 +32,6 @@ bool per_user_mode(false);
 /* Utilities ****************************************************************
 // **************************************************************************
 */
-
-static inline
-std::string
-effective_user_home ()
-{
-	if (const char * h = std::getenv("HOME")) {
-		return h;
-	} else
-	{
-		if (struct passwd * p = getpwuid(geteuid()))
-			if (p->pw_dir) {
-				const std::string d(p->pw_dir);
-				endpwent();
-				return d;
-			}
-		endpwent();
-	}
-	return "/dev/null/";	// Yes, the final slash is intentional.
-}
 
 static 
 const char * const 
@@ -103,7 +83,7 @@ open_bundle_directory (
 	}
 
 	if (per_user_mode) {
-		const std::string h(effective_user_home());
+		const std::string h(effective_user_home_dir());
 		const std::string r(effective_user_runtime_dir());
 		if (scan_for_target) {
 			suffix = ".target";
@@ -185,7 +165,8 @@ system_control (
 		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", 
 				"halt|reboot|poweroff|"
 				"emergency|rescue|normal|init|sysinit|"
-				"start|stop|try-restart|enable|disable|preset|reset|unload-when-stopped|"
+				"start|stop|enable|disable|preset|reset|unload-when-stopped|"
+				"try-restart|hangup|"
 				"is-active|is-loaded|"
 				"cat|show|status|show-json|"
 				"set-service-env|print-service-env|"

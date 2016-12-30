@@ -1,0 +1,45 @@
+<title>The uhidd services</title>
+<link rel="Up" href="../index.html" title="nosh Guide" />
+<h1>
+The <code>uhidd</code> services
+</h1>
+
+<h2>
+Old behaviour under Mewburn <code>rc</code>
+</h2>
+
+<p>
+In response to a rule in <code>/usr/local/etc/devd/uhidd-devd.conf</code>, the Plug and Play manager starts individual uhidd services on demand as <code>ugen</code> devices appear.
+</p>
+
+<p>
+The <code>rc</code> system has a <code>uhidd_enabled</code> flag, that causes autostart of uhidd services on every <code>ugen</code> device that lives in <code>/dev</code> at that point in the bootstrap.
+</p>
+
+<h2>
+How this system handles things
+</h2>
+
+<p>
+The <a href="../external-formats.html">external formats import subsystem</a></li> generates service bundles from <code>uhidd@ugen0.0</code> to <code>uhidd@ugen9.9</code>.
+If this is not enough, one can simply create more.
+</p>
+
+<p>
+Each of these launches a <code>uhidd</code> d&aelig;mon against the given <code>ugen</code> device, and is individually startable, parameterized via its private environment directory, and enabled just like any other service.
+When enabled, they are wanted by the <code>uhidd</code> target.
+</p>
+
+<p>
+In response to a rule in <code>/usr/local/etc/devd/uhidd-nosh.conf</code>, the Plug and Play manager starts individual uhidd services on demand as <code>ugen</code> devices appear, by running <code>system-control start uhidd@</code><i>device</i>.
+</p>
+
+<p>
+The <code>uhidd</code> target can itself be enabled, which will result in all enabled <code>uhidd@</code><i>device</i> services being automatically started at bootstrap.
+This is the equivalent of <code>uhidd_enabled="YES"</code> in the old <code>rc</code> system, and indeed what directly results from running <code>rcctl enable uhidd</code>.
+</p>
+
+<p>
+The <code>uhidd</code> target can be manually started with <code>system-control start uhidd</code>.
+This is the equivalent of starting the non-specific uhidd service in the old <code>rc</code> system, and indeed what directly results from running <code>service uhidd start</code>.
+</p>

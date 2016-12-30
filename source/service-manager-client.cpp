@@ -7,6 +7,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <csignal>
 #include <cstdio>
 #include <cerrno>
+#include <vector>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -25,11 +26,11 @@ do_rpc_call (
 	size_t count_fds
 ) {
 	struct iovec v[1] = { { const_cast<void*>(base), len } };
-	char buf[CMSG_SPACE(count_fds * sizeof *fds)];
+	std::vector<char> buf(CMSG_SPACE(count_fds * sizeof *fds));
 	struct msghdr msg = {
 		0, 0,
 		v, sizeof v/sizeof *v,
-		buf, static_cast<socklen_t>(sizeof buf),
+		buf.data(), static_cast<socklen_t>(buf.size()),
 		0
 	};
 	struct cmsghdr *cmsg(CMSG_FIRSTHDR(&msg));
@@ -284,38 +285,79 @@ wait_ok (
 	}
 }
 
+static inline
+bool
+has_main_pid (
+	const char status[ENCORE_STATUS_BLOCK_SIZE]
+) {
+	return status[THIS_PID_OFFSET + 0U] || status[THIS_PID_OFFSET + 1U] || status[THIS_PID_OFFSET + 2U] || status[THIS_PID_OFFSET + 3U];
+}
+
+int	/// \returns status \retval -1 error \retval 0 still to finish running \retval 1 finished running
+after_run_status_file (
+	const int status_file_fd
+) {
+	char status[STATUS_BLOCK_SIZE];
+	const ssize_t n(pread(status_file_fd, status, sizeof status, 0));
+	if (ENCORE_STATUS_BLOCK_SIZE > n) return -1;
+	switch (status[ENCORE_STATUS_OFFSET]) {
+		default:			return -1;
+		case encore_status_starting:	return 0;
+		case encore_status_started:	return 0;
+		case encore_status_running:	return !has_main_pid(status);
+		case encore_status_failed:	return 1;
+		case encore_status_stopping:	return 1;
+		case encore_status_stopped:	
+		{
+			if (STATUS_BLOCK_SIZE > n) return -1;
+			const char * const ran_exit_status(status + EXIT_STATUSES_OFFSET + EXIT_STATUS_SIZE * 1);
+			return 0 != ran_exit_status[0];
+		}
+	}
+}
+
+int	/// \returns status \retval -1 error \retval 0 not running \retval 1 running
+running_status_file (
+	const int status_file_fd
+) {
+	char status[ENCORE_STATUS_BLOCK_SIZE];
+	const ssize_t n(pread(status_file_fd, status, sizeof status, 0));
+	if (DAEMONTOOLS_STATUS_BLOCK_SIZE > n) return -1;
+	if (ENCORE_STATUS_BLOCK_SIZE > n) return has_main_pid(status);
+	return encore_status_running == status[ENCORE_STATUS_OFFSET] ? 1 : 0;
+}
+
 int	/// \returns status \retval -1 error \retval 0 not running \retval 1 running
 running_status (
 	const int supervise_dir_fd
 ) {
-	const int status_fd(open_read_at(supervise_dir_fd, "status"));
-	if (0 > status_fd) return -1;
-	char status[20];
-	const int n(read(status_fd, status, sizeof status));
-	close(status_fd);
-	if (18 > n) return -1;
-	if (20 <= n) {
-		return encore_status_running == status[18] ? 1 : 0;
-	} else {
-		return status[12] || status[13] || status[14] || status[15] ? 1 : 0;
-	}
+	const int status_file_fd(open_read_at(supervise_dir_fd, "status"));
+	if (0 > status_file_fd) return -1;
+	const ssize_t n(running_status_file(status_file_fd));
+	close(status_file_fd);
+	return n;
+}
+
+int	/// \returns status \retval -1 error \retval 0 not stopped \retval 1 stopped
+stopped_status_file (
+	const int status_file_fd
+) {
+	char status[ENCORE_STATUS_BLOCK_SIZE];
+	const ssize_t n(pread(status_file_fd, status, sizeof status, 0));
+	if (DAEMONTOOLS_STATUS_BLOCK_SIZE > n) return -1;
+	if (ENCORE_STATUS_BLOCK_SIZE > n) return !has_main_pid(status);
+	return encore_status_stopped == status[ENCORE_STATUS_OFFSET] ? 1 : 0;
 }
 
 int	/// \returns status \retval -1 error \retval 0 not stopped \retval 1 stopped
 stopped_status (
 	const int supervise_dir_fd
 ) {
-	const int status_fd(open_read_at(supervise_dir_fd, "status"));
-	if (0 > status_fd) return -1;
-	char status[20];
-	const int n(read(status_fd, status, sizeof status));
-	close(status_fd);
-	if (18 > n) return -1;
-	if (20 <= n) {
-		return encore_status_stopped == status[18] ? 1 : 0;
-	} else {
-		return !status[12] && !status[13] && !status[14] && !status[15] ? 1 : 0;
-	}
+	const int status_file_fd(open_read_at(supervise_dir_fd, "status"));
+	if (0 > status_file_fd) return -1;
+	const int n(stopped_status_file(status_file_fd));
+	close(status_file_fd);
+	return n;
 }
 
 void
@@ -386,6 +428,13 @@ is_initially_up (
 	const int service_dir_fd
 ) {
 	return no_flag_file(service_dir_fd, "down");
+}
+
+bool
+is_ready_after_run (
+	const int service_dir_fd
+) {
+	return !no_flag_file(service_dir_fd, "ready_after_run");
 }
 
 bool

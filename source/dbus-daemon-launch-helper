@@ -5,6 +5,18 @@
 #
 # Note: This script does NOT need to be set-UID/set-GID to anything.
 
+case "${DBUS_STARTER_BUS_TYPE}" in
+system)
+	opts=''
+	;;
+session)
+	opts='--user'
+	;;
+*)
+	echo 1>&2 "$0: ${DBUS_STARTER_BUS_TYPE}: Not a known bus type."
+	exec false
+esac
+
 if test 0 -ge $#
 then
 	echo 1>&2 "Usage: $0 desktop_bus_service_name(s)..."
@@ -18,7 +30,7 @@ then
 		dbus_service="`basename \"${dbus_service}\" .service`"
 		echo "${dbus_service#dbus-}"
 	done | 
-	xargs -- system-control -- reset --
+	xargs -- system-control ${opts} -- reset --verbose --
 elif >/dev/null 2>&1 which initctl
 then
 	for dbus_service
@@ -26,29 +38,29 @@ then
 		dbus_service="`basename \"${dbus_service}\" .service`"
 		echo "${dbus_service#dbus-}"
 	done | 
-	xargs -- initctl start ## FIXME: Does vanilla upstart initctl support "--" here?
+	xargs -- initctl start ${opts} ## FIXME: Does vanilla upstart initctl support "--" here?
 elif >/dev/null 2>&1 which systemctl
 then
 	for dbus_service
 	do
 		dbus_service="`basename \"${dbus_service}\" .service`"
 		## Vanilla systemd systemctl does not have "reset".
-		if systemctl is-enabled --quiet -- "${dbus_service#dbus-}"
+		if systemctl is-enabled --quiet ${opts} -- "${dbus_service#dbus-}"
 		then
-			systemctl start -- "${dbus_service#dbus-}"
+			systemctl start ${opts} -- "${dbus_service#dbus-}"
 		fi
 	done
-#elif >/dev/null 2>&1 which service
-#then
-#	for dbus_service
-#	do
-#		dbus_service="`basename \"${dbus_service}\" .service`"
-#		## Vanilla System 5 rc service does not have "reset".
-#		if chkconfig "${dbus_service#dbus-}" is-enabled
-#		then
-#			service "${dbus_service#dbus-}" start
-#		fi
-#	done
+elif >/dev/null 2>&1 which service
+then
+	for dbus_service
+	do
+		dbus_service="`basename \"${dbus_service}\" .service`"
+		## Vanilla System 5 rc service does not have "reset".
+		if chkconfig ${opts} "${dbus_service#dbus-}" is-enabled
+		then
+			service ${opts} "${dbus_service#dbus-}" start
+		fi
+	done
 else
 	echo 1>&2 "$0: Cannot determine a command for starting services."
 	exec false

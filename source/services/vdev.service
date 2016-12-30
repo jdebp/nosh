@@ -2,10 +2,9 @@
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
 
-# See http://judecnelson.blogspot.co.uk/2015/01/introducing-vdev.html
-
 [Unit]
 Description=%p plug-and-play manager daemon
+Description=See http://judecnelson.blogspot.co.uk/2015/01/introducing-vdev.html
 DefaultDependencies=false
 Before=shutdown.target
 After=local-fs.target

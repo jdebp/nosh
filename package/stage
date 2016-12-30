@@ -86,15 +86,12 @@ do
 done
 
 # bundles
-for i in bundles ;
-do
-	install -d -m 0755 "${dest}"/nosh-"$i"/run
-	install -d -m 0755 "${dest}"/nosh-"$i"/var/sv 
-	install -d -m 0755 "${dest}"/nosh-"$i"/var/local/sv 
-	install -d -m 0755 "${dest}"/nosh-"$i"/etc/service-bundles/services 
-	install -d -m 0755 "${dest}"/nosh-"$i"/etc/service-bundles/targets 
-	install -d -m 0755 "${dest}"/nosh-"$i"/etc/system-control/convert 
-done
+install -d -m 0755 "${dest}"/nosh-bundles/run
+install -d -m 0755 "${dest}"/nosh-bundles/var/sv 
+install -d -m 0755 "${dest}"/nosh-bundles/var/local/sv 
+install -d -m 0755 "${dest}"/nosh-bundles/etc/service-bundles/services 
+install -d -m 0755 "${dest}"/nosh-bundles/etc/service-bundles/targets 
+install -d -m 0755 "${dest}"/nosh-bundles/etc/system-control/convert 
 install -d -m 0755 "${dest}"/nosh-run-openssh-server/var/sv/
 (
 cat package/common-services package/common-sockets package/common-ttys 
@@ -153,6 +150,9 @@ esac
 do
 	(cd "${src}"/ && pax -r -w -l -- etc/service-bundles/services/"$j" "${absdest}"/nosh-bundles/)
 done
+install -d -m 0755 "${dest}"/nosh-bundles/usr/local/etc/devd 
+( cd "${src}"/ && pax -r -w -- etc/devd "${absdest}"/nosh-bundles/usr/local/ )
+
 
 # units
 install -d -m 0755 "${dest}"/nosh-run-via-openbsd-rc/usr/local/etc/rc.d 

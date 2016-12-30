@@ -156,7 +156,6 @@ initctl_read (
 					args.insert(args.end(), 0);
 					next_prog = arg0_of(args);
 					return;
-					break;
 				}
 				case EVFILT_SIGNAL:
 					switch (e.ident) {

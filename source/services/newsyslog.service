@@ -7,10 +7,11 @@ Description=newsyslog sysinit service
 Before=rsyslog.service syslog.service syslog.target
 
 [Service]
+Type=oneshot
 EnvironmentDirectory=env
-ExecStart=%p
+ExecStart=%p -v
 # This is a one-shot service that can be re-triggered by starting it again.
-RemainAfterExit=1
+#RemainAfterExit=1
 Restart=no
 
 [Install]

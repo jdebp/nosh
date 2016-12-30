@@ -22,6 +22,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <fcntl.h>
 #include "utils.h"
 #include "fdutils.h"
+#include "FileDescriptorOwner.h"
 #include "unpack.h"
 #include "service-manager-client.h"
 #include "service-manager.h"
@@ -51,12 +52,15 @@ set (
 		case EXIT_NAGIOS_OK:
 			if (EXIT_NAGIOS_UNKNOWN == code) status = code;
 			// deliberately fall through
+			[[clang::fallthrough]];
 		case EXIT_NAGIOS_UNKNOWN:
 			if (EXIT_NAGIOS_WARNING == code) status = code;
 			// deliberately fall through
+			[[clang::fallthrough]];
 		case EXIT_NAGIOS_WARNING:
 			if (EXIT_NAGIOS_CRITICAL == code) status = code;
 			// deliberately fall through
+			[[clang::fallthrough]];
 		case EXIT_NAGIOS_CRITICAL:
 			break;
 	}
@@ -80,29 +84,25 @@ check (
 	clock_gettime(CLOCK_REALTIME, &now);
 	const uint64_t z(time_to_tai64(now.tv_sec, false));
 
-	int supervise_dir_fd(open_supervise_dir(bundle_dir_fd));
-	if (0 > supervise_dir_fd) {
+	const FileDescriptorOwner supervise_dir_fd(open_supervise_dir(bundle_dir_fd));
+	if (0 > supervise_dir_fd.get()) {
 		const int error(errno);
 		std::fprintf(stdout, "ERROR: %s/%s: %s\n", name.c_str(), "supervise", std::strerror(error));
 		set(rc, EXIT_NAGIOS_CRITICAL);
 		return;
 	}
 
-	int service_dir_fd(open_service_dir(bundle_dir_fd));
-	if (0 > service_dir_fd) {
+	const FileDescriptorOwner service_dir_fd(open_service_dir(bundle_dir_fd));
+	if (0 > service_dir_fd.get()) {
 		const int error(errno);
 		std::fprintf(stdout, "ERROR: %s/%s: %s\n", name.c_str(), "service", std::strerror(error));
 		set(rc, EXIT_NAGIOS_CRITICAL);
-		close(supervise_dir_fd);
 		return;
 	}
-	const bool initially_up(is_initially_up(service_dir_fd));
-	close(service_dir_fd); service_dir_fd = -1;
+	const bool initially_up(is_initially_up(service_dir_fd.get()));
 
-	int ok_fd(open_writeexisting_at(supervise_dir_fd, "ok"));
-	if (0 > ok_fd) {
+	if (!is_ok(supervise_dir_fd.get())) {
 		const int error(errno);
-		close(supervise_dir_fd); supervise_dir_fd = -1;
 		if (ENXIO == error)
 			not_loaded.push_back(name);
 		else {
@@ -111,21 +111,18 @@ check (
 		}
 		return;
 	}
-	close(ok_fd), ok_fd = -1;
 
-	int status_fd(open_read_at(supervise_dir_fd, "status"));
-	close(supervise_dir_fd); supervise_dir_fd = -1;
-	if (0 > status_fd) {
+	const FileDescriptorOwner status_fd(open_read_at(supervise_dir_fd.get(), "status"));
+	if (0 > status_fd.get()) {
 		const int error(errno);
 		std::fprintf(stdout, "ERROR: %s/%s: %s\n", name.c_str(), "status", std::strerror(error));
 		set(rc, EXIT_NAGIOS_CRITICAL);
 		return;
 	}
-	char status[20];
-	const int b(read(status_fd, status, sizeof status));
-	close(status_fd), status_fd = -1;
+	char status[ENCORE_STATUS_BLOCK_SIZE];
+	const ssize_t b(read(status_fd.get(), status, sizeof status));
 
-	if (b < 18) {
+	if (b < DAEMONTOOLS_STATUS_BLOCK_SIZE) {
 		loading.push_back(name);
 		return;
 	}
@@ -139,8 +136,8 @@ check (
 
 	const uint64_t secs(z - s);
 
-	if (b < 20) {
-		const uint32_t p(unpack_littleendian(status + 12, 4));
+	if (b < ENCORE_STATUS_BLOCK_SIZE) {
+		const uint32_t p(unpack_littleendian(status + THIS_PID_OFFSET, 4));
 		if (!p) {
 			if (initially_up) {
 				stopped.push_back(name);
@@ -154,7 +151,7 @@ check (
 			return;
 		}
 	} else {
-		switch (status[18]) {
+		switch (status[ENCORE_STATUS_OFFSET]) {
 			case encore_status_stopped:
 				if (initially_up) {
 					stopped.push_back(name);
@@ -198,7 +195,7 @@ print (
 }
 
 void
-nagios_check ( 
+nagios_check [[gnu::noreturn]] ( 
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {

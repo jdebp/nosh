@@ -19,7 +19,7 @@ val (
 	for (std::string::const_iterator p(s.begin()); s.end() != p; ++p) {
 		const char c(*p);
 		if (!std::isdigit(c)) break;
-		v = v * 10U + (c - '0');
+		v = v * 10U + static_cast<unsigned char>(c - '0');
 	}
 	return v;
 }
