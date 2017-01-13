@@ -97,19 +97,19 @@ tcpserver (
 
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing listen host name.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * listenhost(args.front());
 	args.erase(args.begin());
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing listen port number.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * listenport(args.front());
 	args.erase(args.begin());
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing next program.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	if (banner) {

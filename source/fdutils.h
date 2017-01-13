@@ -85,6 +85,15 @@ open_writetrunc_at (
 
 extern inline
 int 
+open_writetruncexisting_at (
+	int fd, 
+	const char * name
+) {
+	return openat(fd, name, O_NOCTTY|O_CLOEXEC|O_WRONLY|O_TRUNC|O_NONBLOCK);
+}
+
+extern inline
+int 
 open_writeexisting_at (
 	int fd, 
 	const char * name

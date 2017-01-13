@@ -12,8 +12,8 @@ Type=oneshot
 EnvironmentDirectory=env
 ExecStart=%i -C -f %I
 ExecStopPost=%i -D -f %I
-# This is a one-shot service that can be re-triggered by starting it again.
-#RemainAfterExit=1
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
 Restart=no
 
 [Install]

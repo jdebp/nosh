@@ -9,7 +9,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cerrno>
 #include <cstring>
 #include <unistd.h>
-#include <sys/wait.h>
 #include "utils.h"
 #include "fdutils.h"
 #include "popt.h"
@@ -57,14 +56,14 @@ foreground_background_common (
 
 	if (lhs.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing left-hand side.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	if (rhs.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing right-hand side.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
-	const int pid(fork());
+	const pid_t pid(fork());
 	if (0 > pid) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "fork", std::strerror(error));
@@ -75,7 +74,7 @@ foreground_background_common (
 	next_prog = arg0_of(args);
 	if (do_wait && (0 < pid)) {
 		int status;
-		waitpid(pid, &status, 0);
+		wait_blocking_for_exit_of(pid, status);
 	}
 }
 

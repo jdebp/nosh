@@ -6,6 +6,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <vector>
 #include <map>
 #include <set>
+#include <algorithm>
 #include <iostream>
 #include <cstddef>
 #include <cstdlib>
@@ -219,10 +220,17 @@ wildmat (
 		switch (*p) {
 			case '*':
 				do { ++p; } while (p != pe && '*' == *p);
-				for (std::string::const_iterator b(ne); b != n; --b)
+				if (p == pe)
+					return true;
+				// We are now guaranteed that there's a non-zero-length pattern following the asterisk.
+				for (std::string::const_iterator b(ne); b != n; --b) {
+					// Optimize away the recursion in the case where the first remaining pattern character does not match the first attempted name character.
+					if (b != ne && '\\' != *p && '?' != *p && '[' != *p && *b != *p)
+						continue;
 					if (wildmat(p, pe, b, ne)) 
 						return true;
-				break;
+				}
+				return false;
 			case '\\':
 				++p;
 				if (p == pe) return false;
@@ -236,6 +244,38 @@ wildmat (
 				++p;
 				++n;
 				break;
+			case '[':
+			{
+				++p;
+				const bool invert(p != pe && '^' == *p);
+				if (invert) ++p;
+				bool found(false);
+				if (p != pe && (']' == *p || '-' == *p)) {
+					if (*p == *n)
+						found = true;
+					++p;
+				}
+				const std::string::const_iterator re(find(p, pe, ']'));
+				if (re == pe) return false;	// Malformed pattern matches nothing.
+				while (p != re) {
+					const char first(*p++);
+					if (p != re && '-' == *p) {
+						// Multiple element range from first to last, inclusive
+						++p;
+						if (re == p) return false;	// Malformed pattern matches nothing.
+						const char last(*p++);
+						if (first <= *n && *n <= last)
+							found = true;
+					} else {
+						// Range of 1 element
+						if (first == *n)
+							found = true;
+					}
+				}
+				if (invert == found) return false;
+				++n;
+				break;
+			}
 		}
 	}
 }

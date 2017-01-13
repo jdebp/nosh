@@ -18,7 +18,7 @@ fi
 
 redo-ifchange "${conf}"
 
-for i in jail warden
+for i in jail
 do
 	target="$i".target
 

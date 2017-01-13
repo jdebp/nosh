@@ -15,7 +15,6 @@ For copyright and licensing terms, see the file named COPYING.
 #else
 #include <sys/event.h>
 #endif
-#include <sys/wait.h>
 #include <unistd.h>
 #include "popt.h"
 #include "utils.h"
@@ -51,8 +50,8 @@ reap (
 ) {
 	for (;;) {
 		int status;
-		pid_t c = waitpid(-1, &status, WNOHANG);
-		if (c <= 0) break;
+		pid_t c;
+		if (0 >= wait_nonblocking_for_anychild_exit(c, status)) break;
 		if (children) {
 			--children;
 			if (verbose)
@@ -92,7 +91,7 @@ plug_and_play_event_handler (
 
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing next program.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	const unsigned listen_fds(query_listen_fds());

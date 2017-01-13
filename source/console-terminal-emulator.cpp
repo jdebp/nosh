@@ -1627,7 +1627,7 @@ console_terminal_emulator [[gnu::noreturn]] (
 
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing directory name.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * dirname(args.front());
 	args.erase(args.begin());

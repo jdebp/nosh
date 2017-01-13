@@ -14,6 +14,14 @@ redo-ifchange general-services appcafe-nginx.conf
 dir="`system-control find appcafe-nginx`"
 
 install -m 0644 "appcafe-nginx.conf" "${dir}/service/nginx.conf"
+for i in mime.types fastcgi_params
+do
+	if ! test -r "${dir}/service/${i}"
+	then
+		rm -f -- "${dir}/service/${i}"
+		ln -s -- "/usr/local/share/appcafe/${i}" "${dir}/service/${i}"
+	fi
+done
 
 # These are not used, though.
 set_if_unset appcafe.target root /usr/local/share/appcafe
@@ -24,6 +32,11 @@ set_if_unset appcafe-ssl-keygen root /usr/local/share/appcafe
 
 # This is not needed any more, and is for backwards compatibility with the older service bundle.
 system-control set-service-env appcafe-nginx conf "nginx.conf"
+
+for target in appcafe
+do
+	system-control preset -- "${target}".target
+done
 
 for target in appcafe
 do

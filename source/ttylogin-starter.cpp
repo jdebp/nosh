@@ -15,7 +15,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sys/poll.h>
 #else
 #if 0 // This is no gain over the normal enable/disable mechanisms for services.
-#include <sys/wait.h>
 #include <ttyent.h>
 #endif
 #endif
@@ -210,8 +209,11 @@ ttylogin_starter (
 	endttyent();
 
 	// Reap all of the children just created.
-	int status;
-	waitpid(-1, &status, 0);
+	for (;;) {
+		pid_t c;
+		int status;
+		if (0 >= wait_blocking_for_anychild_exit(c, status)) break;
+	}
 #endif
 
 	args.clear();

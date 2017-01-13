@@ -41,7 +41,7 @@ line_banner (
 
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing banner.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * banner(args.front());
 	args.erase(args.begin());

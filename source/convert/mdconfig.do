@@ -35,7 +35,7 @@ e="--no-systemd-quirks --etc-bundle --bundle-root"
 redo-ifchange rc.conf /etc/fstab mdconfig@.service newfs@.service populate_md@.service
 
 find "$r/" -maxdepth 1 -type d \( -name 'mdconfig@*' -o -name 'newfs@-dev-md*' \) -print0 |
-xargs -0 -r system-control disable -- || true
+xargs -0 -r system-control disable --
 
 # The md device list is determined by the list of mdconfig_md* rc.conf variables.
 dump_rc |

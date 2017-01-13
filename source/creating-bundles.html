@@ -1,6 +1,6 @@
 <title>Creating bundles</title>
 <link rel="Up" href="index.html" title="nosh Guide" />
-<link rel="Next" href="converting-systemd-units.html" title="Converting systemd units" />
+<link rel="Next" href="external-formats.html" title="External formats" />
 <link rel="Prev" href="anatomy-of-sysinit-service.html" title="Anatomy of a sysinit service" />
 <h1>
 Creating bundles
@@ -31,7 +31,13 @@ true</pre></blockquote>
 <p>
 Note that Gerrit Pape's and Wayne Marshall's collections use shells as the script interpreters.
 Several of the scripts can be simplified <em>yet further</em> with use of <code>nosh</code> and its built-in toolset.
-Some of them also rely upon tools such as <code>chpst</code> and <code>tcpsvd</code>, which one of course replaces with the equivalent daemontools-alike tool(s) and some combination of <a href="tcp-socket-listen.html"><code>tcp-socket-listen</code></a>, <a href="tcp-socket-accept.html"><code>tcp-socket-accept</code></a>, and <a href="ucspi-socket-rules-check.html"><code>ucspi-socket-rules-check</code></a>.
+One can replace uses of tools such as <code>chpst</code> and <code>tcpsvd</code> with the equivalent daemontools-alike tool(s) and some combination of <a href="tcp-socket-listen.html"><code>tcp-socket-listen</code></a>, <a href="tcp-socket-accept.html"><code>tcp-socket-accept</code></a>, and <a href="ucspi-socket-rules-check.html"><code>ucspi-socket-rules-check</code></a>.
+</p>
+
+<p>
+However, it is not compulsory to change such <code>run</code> scripts if one has the various relevant tools available.
+Service management places no restrictions upon how a <code>run</code> program is actually implemented.
+<code>run</code> programs just need to be executable, and can after all be written in many ways: in Perl, as shell scripts, as <a href="nosh.html"><code>nosh</code></a> scripts, as <code>execlineb</code> scripts, in Python, or even in compiled languages.
 </p>
 
 <h2>
@@ -73,47 +79,4 @@ ln -s /etc/service-bundles/targets/workstation wanted-by/</pre></blockquote>
 Tailor this according to need, of course.
 </p>
 
-<p>
-The standard targets are akin to the Solaris SMF milestones, including having distinct "server", "workstation", and "multi-user" targets instead of one single target that mixes all three.
-Some other SMF non-milestone services have similar standard target equivalents: "system/filesystem/local" being equivalent to <code>local-fs</code> for example.
-</p>
-
-<p>
-The Mewburn <code>rc.d</code> system has some milestones that do not really correspond well; in part because this package's standard targets are intended to promote more parallelism than NetBSD <code>rc.d</code>.
-A rough guide for converting from Mewburn <code>rc.d</code> is:
-</p>
-
-<dl>
-<dt><code>FILESYSTEMS</code></dt>
-<dd><p>
-<code>BEFORE FILESYSTEMS</code> does not occur out of the box in BSDs but would be equivalent to <code>before/</code> the <code>local-fs-pre</code> target.
-<code>REQUIRES FILESYSTEMS</code> is equivalent to <code>wants/</code> and <code>after/</code> the <code>local-fs</code> standard target.
-</p></dd>
-<dt><code>SERVERS</code></dt>
-<dd><p>
-This is rarely used out of the box in BSDs.
-<code>BEFORE SERVERS</code> usually means being <code>wanted-by/</code> one of the <code>workstation</code>, <code>server</code>, or <code>sysinit</code> standard targets.
-There's little distinction in practice beween <code>REQUIRES SERVERS</code> and <code>REQUIRES DAEMON</code>; with how to convert the latter usually also applying to the former.
-</p></dd>
-<dt><code>DAEMON</code></dt>
-<dd><p>
-A service that <code>REQUIRES DAEMON</code> usually simply <code>wants/</code> the <code>basic</code> standard target and is <code>stopped-by/</code> the <code>shutdown</code> standard target.
-However <code>basic</code> is not an ordering milestone.
-On the gripping hand, a service that is <code>BEFORE DAEMON</code> is usually actually expressing the notion that it is <code>wanted-by/</code> a standard target within <code>basic</code> such as <code>sysinit</code>.
-</p></dd>
-<dt><code>NETWORKING</code></dt>
-<dd><p>
-The idea of "networking" is a very woolly one that doesn't really admit of one single description.
-Rather than relate things to such an ill-defined milestone, relate them to the more specific things that they in reality relate to, such as a default route becoming available, static networking being initialized, individual interfaces coming up, any interface heving carrier, or all networking interfaces having carrier.
-</p></dd>
-<dt><code>LOGIN</code></dt>
-<dd><p>
-This is somewhat woolly, like <code>NETWORKING</code>.
-Deferring things until "after the system is secure" should be done by ordering them with respect to services such as <code>securelevel</code> if it should be done at all.
-Moreover, the fact that "login services" are held off until the system has waited for pretty much everything else to finish, including services that take a long time to initialize but that would not actually prohibit log-on, is a significant problem with the very idea of this ordering milestone.
-</p><p>
-TTY login services order themselves <code>after/</code> the <code>multi-user-pre</code> standard target.
-A very few services, that actually directly affect multi-user login (such as the production of the message of the day or setting the dynamic hostname) are ordered before this target, equivalent to <code>BEFORE LOGIN</code>.
-Most services should not be.
-</p></dd>
-</dl>
+<a href="working-from-rc-scripts.html">One can use old <code>rc</code> scripts as a <em>very</em> rough guide</a>.

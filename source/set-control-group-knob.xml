@@ -1,0 +1,89 @@
+<refentry id="set-control-group-knob">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>set-control-group-knob</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>set-control-group-knob</refname>
+<refpurpose>set a knob in the current control group</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>set-control-group-knob</command>
+<arg choice='opt'>--infinity-is-max</arg>
+<arg choice='opt'>--multiplier-suffixes</arg>
+<arg choice='opt'>--device-name-key</arg>
+<arg choice='opt'>--percent-of <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--nested-key <replaceable>key</replaceable></arg>
+<arg choice='req'><replaceable>knob</replaceable></arg>
+<arg choice='req'><replaceable>value</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>set-control-group-knob</command> is a simple utility that sets the control group knob <replaceable>group</replaceable> in the current control group to <replaceable>value</replaceable>.
+It locates the current control group using the same algorithm as <citerefentry><refentrytitle>move-to-control-group</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and will similiarly fall back to being a no-op  on platforms where <filename>/proc/self/cgroup</filename> does not exist.
+</para>
+
+<para>
+For details on what knobs are available and what values they can be set to, consult the Linux API documentation.
+</para>
+
+<para>
+The Linux I/O control groups mechanism has several knobs that operate in terms of a device "key" that denotes which device the knob setting is affecting.
+The key actually comprises major and minor device numbers, not device file names.
+However, because of Plug and Play these major and minor device numbers are not necessarily stable from run to run of the system, or the same across systems.
+The <arg choice='plain'>--device-name-key</arg> command line option is used to allow one to operate with device file names.
+If that command line option is given, then the first thing that <command>set-control-group-knob</command> does is strip the first white-space delimited word from <replaceable>value</replaceable>, treat it as the name of a block or character device file (failing if that is not the case), and prefix the remainder of <replaceable>value</replaceable> that was left with the major and minor device numbers of the device.
+Other options then act upon the remainder of <replaceable>value</replaceable> as if the device key were not there.
+So, for example, one can use a <replaceable>value</replaceable> of "/dev/null default" in the command line arguments in a script and that will be re-written using the major and minor device numbers of the actual current <filename>/dev/null</filename> device when the <command>set-control-group-knob</command> command is run.
+</para>
+
+<para>
+If the <arg choice='plain'>--infinity-is-max</arg> command line option is given, then if <replaceable>value</replaceable> is <code>infinity</code> it is replaced with <code>max</code>.
+The Linux control groups mechanism actually recognizes "max", not "infinity"; but unfortunately some toolsets have encouraged the use of "infinity" when talking to control groups.
+This provides compatibility with such usage.
+</para>
+
+<para>
+If the <arg choice='plain'>--nested-key</arg> command line option is given, then <replaceable>value</replaceable> when finally written is prefixed by <replaceable>key</replaceable> as a nested key.
+Of course one can simply provide <replaceable>key</replaceable> directly in <replaceable>value</replaceable>.
+This provides a convenience mechanism for using nested keys in scripts without the script having to merge the nested key into the value itself.
+It also enables the options that expect <replaceable>value</replaceable> to take the form of a number followed by a suffix, which do not allow for nested keys in <replaceable>value</replaceable>.
+</para>
+
+<para>
+If the <arg choice='plain'>--multiplier-suffixes</arg> command line option is given and if <replaceable>value</replaceable> is parseable as a number followed by an SI or an IEEE/IEC abbreviation, then it is replaced by the value that results when multiplying the number by the associated scale factor.
+The SI abbreviations are <code>k</code>, <code>M</code>, <code>G</code>, or <code>T</code> denoting the relevant power of 10; the IEEE/IEC abbreviations are <code>Ki</code>, <code>Mi</code>, <code>Gi</code>, and <code>Ti</code> denoting the relevant power of 2.
+</para>
+
+<para>
+If the <arg choice='plain'>--percent-of</arg> command line option is given and <replaceable>value</replaceable> is parseable as a number followed by a percent symbol, then <replaceable>file</replaceable> is read and parsed as a decimal number followed by a newline.
+If opening the file and parsing the number fails, <command>set-control-group-knob</command> exits with a failure code.
+Otherwise, <replaceable>value</replaceable> is replaced by the value of that number, in decimal without exponential notation and rounded to an integer value, multiplied by the given percentage.
+At minimum, 64-bit integer arithmetic is used to calculate the percentage.
+</para>
+
+</refsection>
+<refsection><title>See also</title>
+
+<itemizedlist>
+<listitem><para>
+<citerefentry><refentrytitle>move-to-control-group</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>delegate-control-group-to</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+</itemizedlist>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

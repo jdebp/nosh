@@ -44,13 +44,13 @@ service (
 
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing service name.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * service(args.front());
 	args.erase(args.begin());
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing command name.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * command(args.front());
 	args.erase(args.begin());
@@ -95,13 +95,13 @@ invoke_rcd (
 
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing service name.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * service(args.front());
 	args.erase(args.begin());
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing command name.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * command(args.front());
 	args.erase(args.begin());
@@ -175,14 +175,14 @@ update_rcd (
 
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing service name.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * service(args.front());
 	args.erase(args.begin());
 
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing command name.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * command(args.front());
 	args.erase(args.begin());
@@ -250,7 +250,7 @@ chkconfig (
 
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing service name.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * service(args.front());
 	args.erase(args.begin());

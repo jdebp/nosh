@@ -36,12 +36,12 @@ Daemon environment information
 </h2>
 
 <p>
-Another function of <code>/etc/rc.conf</code> and <code>/etc/rc.conf.local</code> on BSD systems is to hold daemon environment variable information.
+Another function of <code>/etc/rc.conf</code> and <code>/etc/rc.conf.local</code> on BSD systems is to hold d&aelig;mon environment variable information.
 Conventionally, environment variables begin with the name of the service.
 </p>
 
 <p>
-If you always manipulate daemon environment variable information with the BSD <code>rcctl</code> command, rather than by editing <code>/etc/rc.conf</code> and <code>/etc/rc.conf.local</code> directly, then environment variable information will be edited directly within service bundles.
+If you always manipulate d&aelig;mon environment variable information with the BSD <code>rcctl</code> command, rather than by editing <code>/etc/rc.conf</code> and <code>/etc/rc.conf.local</code> directly, then environment variable information will be edited directly within service bundles.
 The toolset comes with a replacement <a href="rcctl.html"><code>rcctl</code></a> command that translates <code>get</code> and <code>set</code> subcommands into the service bundle equivalent, editing files in the service bundle's <code>env/</code> subdirectory with <a href="system-control.html"><code>system-control&nbsp;set-service-env</code></a> and <a href="system-control.html"><code>system-control&nbsp;print-service-env</code></a>.
 </p>
 

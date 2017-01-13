@@ -121,7 +121,7 @@ vc_get_tty (
 
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing TTY name.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * tty_base(args.front());
 	args.erase(args.begin());

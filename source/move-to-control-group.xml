@@ -1,11 +1,11 @@
 <refentry id="move-to-control-group">
 
-<refmeta>
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
 <refentrytitle>move-to-control-group</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.29</refmiscinfo>
+<xi:include href="version.xml" />
 </refmeta>
 
 <refnamediv>
@@ -52,6 +52,9 @@ The command will fail if the process is not allowed to move to the given control
 <itemizedlist>
 <listitem><para>
 <citerefentry><refentrytitle>delegate-control-group-to</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>set-control-group-knob</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 </para></listitem>
 </itemizedlist>
 

@@ -7,5 +7,11 @@
 # It is used by the nosh-run-user-vt package in order to enable TTY login services on user-space virtual terminals.
 #
 
-enable	ttylogin@vc*.service
-enable	cyclog@ttylogin@vc*.service
+enable	ttylogin@vc*-tty.service
+enable	cyclog@ttylogin@vc*-tty.service
+
+disable	ttylogin-starter.service
+disable	cyclog@ttylogin-starter.service
+
+disable	ttylogin@tty[0-9]*.service
+disable	cyclog@ttylogin@tty[0-9]*.service

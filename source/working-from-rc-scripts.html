@@ -1,0 +1,72 @@
+<title>Working from old rc scripts</title>
+<link rel="Up" href="creating-bundles.html" title="Creating bundles" />
+<h1>
+Working from old <code>rc</code> scripts
+</h1>
+
+<p>
+The <code>rc</code> scripts used with the van Smoorenburg <code>rc</code>, Mewburn <code>rc</code>, OpenRC, and OpenBSD <code>rc</code> systems are a <em>very</em> rough guide to what the <code>start</code>, <code>run</code>, <code>restart</code>, and <code>stop</code> programs should do <a href="creating-bundles.html">in a service bundle that you are writing yourself</a>.
+</p>
+
+<p>
+These systems are all written in general purpose scripting languages that can do anything, and there is no general process for converting scripts for such systems.
+The scope for wild variations exists and occurs with depressing regularity in the world.
+There are also three major sub-dialects of van Smoorenburg <code>rc</code> that rely upon blatantly (or, worse, subtly) different helper toolsets.
+</p>
+
+<p>
+Converting a van Smoorenburg <code>rc</code> script is usually the least preferable option.
+More preferable options include converting the equivalent Mewburn <code>rc</code> or OpenBSD <code>rc</code> scripts, which factor out a lot of the chaff that van Smoorenburg <code>rc</code> scripts do longhand.
+Similarly more preferable is <a href="converting-systemd-units.html">converting from a systemd service or socket unit</a> and not working from an old <code>rc</code> script at all.
+It can be done with tools; and can be plumbed in to build procedures.
+As of 2017, the FreeBSD ports tree already has a couple of hundred ports (ranging from Puppet through iodine to Wildfly) that have systemd service and socket units in their distfiles that <em>could</em> be automatically converted by the port.
+</p>
+
+<h2 id="milestones">
+milestones
+</h2>
+
+<p>
+The standard targets are akin to the Solaris SMF milestones, including having distinct "server", "workstation", and "multi-user" targets instead of one single target that mixes all three.
+Some other SMF non-milestone services have similar standard target equivalents: "system/filesystem/local" being equivalent to <code>local-fs</code> for example.
+</p>
+
+<p>
+The Mewburn <code>rc</code> system has some milestones that do not really correspond well; in part because this package's standard targets are intended to promote more parallelism than mewburn <code>rc</code>.
+A rough guide for converting from Mewburn <code>rc</code> is:
+</p>
+
+<dl>
+<dt><code>FILESYSTEMS</code></dt>
+<dd><p>
+<code>BEFORE FILESYSTEMS</code> does not occur out of the box in BSDs but would be equivalent to <code>before/</code> the <code>local-fs-pre</code> target.
+<code>REQUIRES FILESYSTEMS</code> is equivalent to <code>wants/</code> and <code>after/</code> the <code>local-fs</code> standard target.
+</p></dd>
+<dt><code>SERVERS</code></dt>
+<dd><p>
+This is rarely used out of the box in BSDs.
+<code>BEFORE SERVERS</code> usually means being <code>wanted-by/</code> one of the <code>workstation</code>, <code>server</code>, or <code>sysinit</code> standard targets.
+There's little distinction in practice beween <code>REQUIRES SERVERS</code> and <code>REQUIRES DAEMON</code>; with how to convert the latter usually also applying to the former.
+</p></dd>
+<dt><code>DAEMON</code></dt>
+<dd><p>
+A service that <code>REQUIRES DAEMON</code> usually simply <code>wants/</code> the <code>basic</code> standard target and is <code>stopped-by/</code> the <code>shutdown</code> standard target.
+However <code>basic</code> is not an ordering milestone.
+On the gripping hand, a service that is <code>BEFORE DAEMON</code> is usually actually expressing the notion that it is <code>wanted-by/</code> a standard target within <code>basic</code> such as <code>sysinit</code>.
+</p></dd>
+<dt><code>NETWORKING</code></dt>
+<dd><p>
+The idea of "networking" is a very woolly one that doesn't really admit of one single description.
+Rather than relate things to such an ill-defined milestone, relate them to the more specific things that they in reality relate to, such as a default route becoming available, static networking being initialized, individual interfaces coming up, any interface heving carrier, or all networking interfaces having carrier.
+</p></dd>
+<dt><code>LOGIN</code></dt>
+<dd><p>
+This is somewhat woolly, like <code>NETWORKING</code>.
+Deferring things until "after the system is secure" should be done by ordering them with respect to services such as <code>securelevel</code> if it should be done at all.
+Moreover, the fact that "login services" are held off until the system has waited for pretty much everything else to finish, including services that take a long time to initialize but that would not actually prohibit log-on, is a significant problem with the very idea of this ordering milestone.
+</p><p>
+TTY login services order themselves <code>after/</code> the <code>multi-user-pre</code> standard target.
+A very few services, that actually directly affect multi-user login (such as the production of the message of the day or setting the dynamic hostname) are ordered before this target, equivalent to <code>BEFORE LOGIN</code>.
+Most services should not be.
+</p></dd>
+</dl>

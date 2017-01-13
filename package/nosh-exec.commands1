@@ -34,6 +34,7 @@ pipe
 prependpath
 read-conf
 recordio
+set-control-group-knob
 set-dynamic-hostname
 set-mount-object
 setenv

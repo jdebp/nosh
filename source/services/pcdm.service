@@ -12,7 +12,12 @@ EnvironmentDirectory=env
 SessionLeader=true
 # The shell running ./helper can handle this.
 LocalReaper=true
-ExecStart=./helper
+RuntimeDirectory=PCDM
+RuntimeDirectoryMode=0700
+ExecStartPre=./helper allow-auto-login
+ExecStartPre=./helper check-bootflags
+ExecStart=./helper run
+ExecRestartPre=./helper fall-back-on-failure "$@"
 
 [Install]
 WantedBy=workstation.target

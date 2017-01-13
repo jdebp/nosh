@@ -1,0 +1,43 @@
+<title>Jailing services</title>
+<link rel="Up" href="index.html" title="nosh Guide" />
+<h1>
+Jailing services
+</h1>
+
+<p>
+Using FreeBSD jails involves two things, a service that creates/destroys a jail, and zero or more services that are then run in that jail.
+<a href="converting-jails.html">The external configuration import subsystem converts jails</a> to this native form.
+</p>
+
+<h2 id="jails">
+Jail services
+</h2>
+
+<p>
+Jail services are a simple exercise in the use of the BSD <code>jail</code> command.
+The service's <code>start</code> program uses <code>jail&nbsp;-c</code> with its <code>persist</code> option to create a jail that keeps running even whilst it contains no processes.
+The service is marked as "ready after run" and "remain", and has a no-op <code>run</code> program that does nothing but exit.
+The service's <code>stop</code> program uses <code>jail&nbsp;-r</code> to remove the jail.
+</p>
+
+<p>
+Thus a jail's lifetime is controlled by the start and stop of a service, which has no running process itself.
+</p>
+
+<p>
+The various configuration settings for the <code>jail</code> command are exposed as service environment variables, accessible with the <a href="rcctl.html"><code>rcctl</code></a> or the <a href="system-control.html"><code>set-service-env</code></a> and <a href="system-control.html"><code>print-service-env</code></a> commands.
+</p>
+
+<h2 id="jailed">
+Jailed services
+</h2>
+
+<p>
+Services that run in a jail, jailed services, simply use the BSD <code>jexec</code> command in its chain-loading mode.
+They use it to move the current process, the d&aelig;mon itself, into a jail created and destroyed by a jail service.
+</p>
+
+<p>
+They have <code>wants/</code> and <code>after/</code> relationships to the jail service.
+Because the jail service becomes ready after the jail is fully created, they do not run until there is a jail for them to switch themselves into; and starting them implicitly starts the service for the jail that they run in.
+</p>

@@ -154,14 +154,14 @@ do
 done < package/tmpfiles-snippets
 while read -r i
 do
-	# NetBSD rc script files
-	install -m 0644 -- config/mewburn-rc.d/"$i" "${root1}"etc/mewburn-rc.d/"$i"{new}
+	# Mewburn rc script files
+	install -m 0755 -- config/mewburn-rc.d/"$i" "${root1}"etc/mewburn-rc.d/"$i"{new}
 	mv -f -- "${root1}"etc/mewburn-rc.d/"$i"{new} "${root1}"etc/mewburn-rc.d/"$i"
 done < package/mewburn-rc-scripts
 while read -r i
 do
-	# NetBSD rc script files
-	install -m 0644 -- config/openbsd-rc.d/"$i" "${root1}"etc/openbsd-rc.d/"$i"{new}
+	# Mewburn rc script files
+	install -m 0755 -- config/openbsd-rc.d/"$i" "${root1}"etc/openbsd-rc.d/"$i"{new}
 	mv -f -- "${root1}"etc/openbsd-rc.d/"$i"{new} "${root1}"etc/openbsd-rc.d/"$i"
 done < package/openbsd-rc-scripts
 for i in issue.vc

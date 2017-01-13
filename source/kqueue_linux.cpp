@@ -13,12 +13,13 @@ For copyright and licensing terms, see the file named COPYING.
 #include <vector>
 #include <deque>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/epoll.h>
 #include <sys/inotify.h>
 #include <sys/poll.h>
 #include <sys/signalfd.h>
-#include <sys/stat.h>
+#include <fcntl.h>	// Needed for fstatat(), contrary to the manual
 #include <unistd.h>
 #include "kqueue_linux.h"
 #include "FileDescriptorOwner.h"
@@ -109,7 +110,7 @@ get_path_from_procfs(
 	if (0 > snprintf(procfs_path, sizeof procfs_path, "/proc/self/fd/%d", fd))
 		return -1;
 	struct stat s;
-	if (0 > lstat(procfs_path, &s))
+	if (0 > fstatat(AT_FDCWD, procfs_path, &s, AT_SYMLINK_NOFOLLOW))
 		return -1;
 	path = static_cast<char *>(std::malloc(s.st_size + 1));
 	if (!path) return errno = ENOMEM, -1;

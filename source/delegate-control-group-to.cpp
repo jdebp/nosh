@@ -44,7 +44,7 @@ delegate_control_group_to (
 
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing account name.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * owner(args.front());
 	args.erase(args.begin());

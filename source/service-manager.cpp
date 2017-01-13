@@ -23,9 +23,9 @@ For copyright and licensing terms, see the file named COPYING.
 #else
 #include <sys/poll.h>
 #endif
+#include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/file.h>
-#include <sys/wait.h>
 #include <sys/un.h>
 #include <dirent.h>
 #include <unistd.h>
@@ -65,7 +65,6 @@ struct service : public index {
 	void stamp_process_status(const unsigned int, int, const timespec &);
 	void write_status();
 	void reap (const sigset_t &, int, int);
-	void enact_control_message(const sigset_t &);
 	void enact_control_message(const sigset_t &, char);
 	void add_to_input_activation_list();
 	void delete_from_input_activation_list();
@@ -462,17 +461,6 @@ service::enact_control_message (
 	}
 }
 
-inline
-void 
-service::enact_control_message (
-	const sigset_t & original_signals
-) {
-	char command;
-	const int rc(read(control_fd, &command, 1));
-	if (0 > rc) return;
-	enact_control_message(original_signals, command);
-}
-
 static const char * const start_args[] = { "start", 0 };
 static const char * const run_args[] = { "run", 0 };
 static const char * const stop_args[] = { "stop", 0 };
@@ -840,7 +828,13 @@ load (
 		// The existence of a reader at this FIFO indicates that a supervisor is active.
 		// We must open this after the rest of the control/status API is initialized.
 		// Otherwise clients might try to issue commands/read statuses before the FIFOs are open.
+		// We have to cope with the fact that our umask might be too restrictive for this.
 		mkfifoat(supervise_dir_fd, "ok", 0666);
+#if !defined(__LINUX__) && !defined(__linux__)
+		fchmodat(supervise_dir_fd, "ok", 0666, AT_SYMLINK_NOFOLLOW);
+#else
+		fchmodat(supervise_dir_fd, "ok", 0666, 0);
+#endif
 		FileDescriptorOwner ok_fd(open_read_at(supervise_dir_fd, "ok"));
 		if (0 > ok_fd.get()) return;
 
@@ -987,12 +981,8 @@ reaper (
 ) {
 	for (;;) {
 		int status;
-#if defined(WIFCONTINUED) && defined(WCONTINUED)
-		const pid_t c(waitpid(-1, &status, WNOHANG|WUNTRACED|WCONTINUED));
-#else
-		const pid_t c(waitpid(-1, &status, WNOHANG|WUNTRACED));
-#endif
-		if (0 >= c) break;
+		pid_t c;
+		if (0 >= wait_nonblocking_for_anychild_stopcontexit(c, status)) break;
 		reap(original_signals, status, c);
 	}
 }
@@ -1018,7 +1008,18 @@ input_ready_event (
 		if (i != service_control_fifos.end()) {
 			service & s(*i->second);
 
-			s.enact_control_message(original_signals);
+			char command;
+			const int rc(read(s.control_fd, &command, 1));
+			if (0 <= rc) {
+				s.enact_control_message(original_signals, command);
+				if ('x' == command && s.unloadable()) {
+					service_map::iterator j(services.find(s));
+					if (j != services.end()) {
+						std::fprintf(stderr, "%s: DEBUG: unloading %s\n", prog, s.name);
+						services.erase(j);
+					}
+				}
+			}
 		}
 	}
 }

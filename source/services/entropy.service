@@ -7,6 +7,7 @@ Description=Save/restore randomness
 Before=netif sshd sshdgenkeys
 
 [Service]
+EnvironmentDirectory=env
 ExecStart=./helper load
 # Re-generate the saved randomness as soon as it has been used to re-seed.
 ExecStart=./helper save

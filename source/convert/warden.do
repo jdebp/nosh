@@ -34,6 +34,22 @@ convert_setting() {
 	system-control set-service-env -- "${jail_service}" "$2" "`sed -e 's: :,:g' \"$1\"`"
 }
 
+for target in warden
+do
+	system-control preset -- "${target}".target
+done
+
+for target in warden
+do
+	if system-control is-enabled "${target}.target"
+	then
+		echo >> "$3" on "${target}"
+	else
+		echo >> "$3" off "${target}"
+	fi
+#	system-control print-service-env "${target}.target" >> "$3"
+done
+
 ls -d -1 "${JDIR}/".*.meta 2>/dev/null |
 while read -r JMETADIR
 do
@@ -73,13 +89,13 @@ do
 	fi
 
 	# This is fairly basic and needs improvement.
-	# \todo TODO: devfs-ruleset
 	convert_setting "${JMETADIR}/jail-flags" flags
 	convert_setting "${JMETADIR}/host" hostname
 	convert_setting "${JMETADIR}/ipv4" ipv4
 	convert_setting "${JMETADIR}/alias-ipv4" "alias_ipv4"
 	convert_setting "${JMETADIR}/ipv6" ipv6
 	convert_setting "${JMETADIR}/alias-ipv6" "alias_ipv6"
+	convert_setting "${JMETADIR}/devfs-ruleset" "devfs_ruleset"
 
 	if test -r "${JMETADIR}/jail-start"
 	then

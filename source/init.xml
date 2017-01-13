@@ -1,11 +1,11 @@
 <refentry id="init">
 
-<refmeta>
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
 <refentrytitle>init</refentrytitle>
 <manvolnum>8</manvolnum>
 <refmiscinfo class="manual">administrator commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.29</refmiscinfo>
+<xi:include href="version.xml" />
 </refmeta>
 
 <refnamediv>

@@ -32,7 +32,7 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-static sig_atomic_t terminate_signalled(false), interrupt_signalled(false), hangup_signalled(false), update_needed(false);
+static sig_atomic_t terminate_signalled(false), interrupt_signalled(false), hangup_signalled(false);
 
 static
 void
@@ -195,6 +195,7 @@ enum { CELL_LENGTH = 16U, HEADER_LENGTH = 16U };
 static inline
 void
 handle_input_event(
+	bool & update_needed,
 	InputFIFO & input_fd,
 	VirtualTerminalList & vts,
 	VirtualTerminalList::iterator & current_vt
@@ -332,7 +333,7 @@ console_multiplexor [[gnu::noreturn]] (
 
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing multiplexor virtual terminal directory name.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * dirname(args.front());
 	args.erase(args.begin());
@@ -435,7 +436,7 @@ console_multiplexor [[gnu::noreturn]] (
 		}
 	}
 
-	update_needed = true;
+	bool update_needed(true);
 
 	VirtualTerminalList::iterator old_vt(vts.end());
 
@@ -446,14 +447,11 @@ console_multiplexor [[gnu::noreturn]] (
 	std::vector<struct kevent> p(max_events);
 	std::size_t index(0U);
 
+	const struct timespec immediate_timeout = { 0, 0 };
+
 	while (true) {
 		if (terminate_signalled||interrupt_signalled||hangup_signalled) 
 			break;
-		if (update_needed) {
-			update_needed = false;
-			const VirtualTerminal & vt(**current_vt);
-			copy(vt, buffer_file);
-		}
 		if (old_vt != current_vt) {
 			const VirtualTerminal & cvt(**current_vt);
 			symlinkat(cvt.query_dir_name(), dir_fd.get(), "active.new");
@@ -470,7 +468,7 @@ console_multiplexor [[gnu::noreturn]] (
 			old_vt = current_vt;
 		}
 
-		const int rc(kevent(queue, p.data(), index, p.data(), p.size(), 0));
+		const int rc(kevent(queue, p.data(), index, p.data(), p.size(), update_needed ? &immediate_timeout : 0));
 
 		if (0 > rc) {
 			const int error(errno);
@@ -480,6 +478,15 @@ console_multiplexor [[gnu::noreturn]] (
 		}
 
 		index = 0;
+
+		if (0 == rc) {
+			if (update_needed) {
+				update_needed = false;
+				const VirtualTerminal & vt(**current_vt);
+				copy(vt, buffer_file);
+			}
+			continue;
+		}
 
 		for (size_t i(0); i < static_cast<size_t>(rc); ++i) {
 			const struct kevent & e(p[i]);
@@ -491,7 +498,7 @@ console_multiplexor [[gnu::noreturn]] (
 				handle_signal(e.ident);
 			if (EVFILT_READ == e.filter) {
 				if (input.get() == static_cast<int>(e.ident))
-					handle_input_event(input, vts, current_vt);
+					handle_input_event(update_needed, input, vts, current_vt);
 			}
 			if (EVFILT_WRITE == e.filter) {
 				for (VirtualTerminalList::iterator t(vts.begin()); t != vts.end(); ++t) {

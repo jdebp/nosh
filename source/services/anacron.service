@@ -5,9 +5,13 @@
 [Unit]
 Description=anacron scheduling service
 
+# This has been a thorn in the side of the systemd people since 2014.
+# It isn't a oneshot, because it is ready as soon as the program is started.
+# It isn't a simple, because it runs to completion and then exits rather than remaining running.
 [Service]
-ExecStartPre=on_ac_power
+#ExecStartPre=on_ac_power
 ExecStart=%p -d -s
+RemainAfterExit=true
 Restart=never
 
 [Install]

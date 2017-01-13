@@ -1,11 +1,11 @@
 <refentry id="tai64nlocal">
 
-<refmeta>
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
 <refentrytitle>tai4nlocal</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.29</refmiscinfo>
+<xi:include href="version.xml" />
 </refmeta>
 
 <refnamediv><refname>tai64nlocal</refname><refpurpose>filter to translate external TAI64N timestamps</refpurpose></refnamediv>

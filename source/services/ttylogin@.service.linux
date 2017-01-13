@@ -22,6 +22,10 @@ TTYVHangup=no
 TTYPrompt=no
 # Some job control shells ignore SIGTERM and need an explicit SIGHUP.
 SendSIGHUP=on
+TasksAccounting=true
+CPUAccounting=true
+IOAccounting=true
+MemoryAccounting=true
 
 [Install]
 WantedBy=multi-user.target

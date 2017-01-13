@@ -13,6 +13,11 @@ redo-ifchange /etc/fstab
 r="/etc/service-bundles/services/"
 o="--etc-bundle --overwrite"
 
+case "`uname`" in
+Linux)	esc='\' ;;
+*BSD)	esc='_' ;;
+esac
+
 system-control convert-fstab-services --bundle-root "$r" $o
 
 for i in mount fsck swap dump
@@ -44,15 +49,15 @@ case "`uname`" in
 	}" | 
 	sh -e
 	zfs list -H -o canmount,mountpoint -t filesystem |
-	awk '{ if ($2 != "none" && $1 == "noauto") { gsub("-","\\x2d",$2); gsub("/","-",$2); print "system-control disable mount@\""$2"\""; } }' | 
+	awk '{ if ($2 != "none" && $1 == "noauto") { gsub("-","'${esc}'x2d",$2); gsub("/","-",$2); print "system-control disable mount@\""$2"\""; } }' | 
 	sh -e
 	zfs list -H -o canmount,mountpoint -t filesystem |
-	awk '{ if ($2 != "none" && $1 == "on") { gsub("-","\\x2d",$2); gsub("/","-",$2); print "system-control enable mount@\""$2"\""; } }' | 
+	awk '{ if ($2 != "none" && $1 == "on") { gsub("-","'${esc}'x2d",$2); gsub("/","-",$2); print "system-control enable mount@\""$2"\""; } }' | 
 	sh -e
 	zfs list -H -o canmount,mountpoint -t filesystem |
-	awk '{ if ($2 != "none") { gsub("-","\\x2d",$2); gsub("/","-",$2); print $1" mount@"$2; } }' >> "$3"
+	awk '{ if ($2 != "none") { gsub("-","'${esc}'x2d",$2); gsub("/","-",$2); print $1" mount@"$2; } }' >> "$3"
 	zfs list -H -o canmount,mountpoint -t filesystem / |
-	awk '{ if ($2 != "none" && $1 != "off") { gsub("-","\\x2d",$2); gsub("/","-",$2); print "system-control enable mount@\""$2"\""; } }' | 
+	awk '{ if ($2 != "none" && $1 != "off") { gsub("-","'${esc}'x2d",$2); gsub("/","-",$2); print "system-control enable mount@\""$2"\""; } }' | 
 	sh -e
 
 	# ZFS volumes can have swap enabled via a property org.freebsd:swap=on .
@@ -77,3 +82,15 @@ case "`uname`" in
 	done
 	;;
 esac
+
+for i in mount fsck
+do
+	if ! system-control find "$i@-" >/dev/null 2>&1
+	then
+		echo 1>&2 WARNING: / volume $i@ service bundle is absent.
+	elif ! system-control is-enabled "$i@-"
+	then
+		# This is a semi-legitimate thing to do, since this is always a remount/update, but one rarely wants to do it.
+		echo 1>&2 WARNING: / volume $i@ service bundle is disabled.
+	fi
+done

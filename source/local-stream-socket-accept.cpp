@@ -15,7 +15,6 @@ For copyright and licensing terms, see the file named COPYING.
 #else
 #include <sys/event.h>
 #endif
-#include <sys/wait.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
@@ -72,12 +71,12 @@ reap (
 ) {
 	for (;;) {
 		int status;
-		pid_t c = waitpid(-1, &status, WNOHANG);
-		if (c <= 0) break;
+		pid_t child;
+		if (0 >= wait_nonblocking_for_anychild_exit(child, status)) break;
 		if (connections) {
 			--connections;
 			if (verbose)
-				std::fprintf(stderr, "%s: %u ended status %i %lu/%lu\n", prog, c, status, connections, connection_limit);
+				std::fprintf(stderr, "%s: %u ended status %i %lu/%lu\n", prog, child, status, connections, connection_limit);
 		}
 	}
 }
@@ -116,7 +115,7 @@ local_stream_socket_accept (
 
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing next program.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	const unsigned listen_fds(query_listen_fds());

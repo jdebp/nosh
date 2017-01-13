@@ -6,20 +6,22 @@ For copyright and licensing terms, see the file named COPYING.
 #include <vector>
 #include <sys/reboot.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 #include <sys/time.h>
 #include "kqueue_common.h"
 #if defined(__LINUX__) || defined(__linux__)
 #define _BSD_SOURCE 1
-#include <sys/ioctl.h>
 #include <sys/resource.h>
 #include <linux/kd.h>
 #include <fcntl.h>
 #include <mntent.h>
+#include <sys/vt.h>
 #else
 #include <sys/sysctl.h>
 #endif
+#include <sys/ioctl.h>
+#include <sys/uio.h>
 #include <sys/mount.h>
+#include <sys/wait.h>
 #include <dirent.h>
 #include <unistd.h>
 #include <cstddef>
@@ -41,10 +43,11 @@ For copyright and licensing terms, see the file named COPYING.
 #include "FileStar.h"
 #include "FileDescriptorOwner.h"
 #include "SignalManagement.h"
+#include "control_groups.h"
 
-static int service_manager_pid(-1);
-static int cyclog_pid(-1);
-static int system_control_pid(-1);
+static pid_t service_manager_pid(-1);
+static pid_t cyclog_pid(-1);
+static pid_t system_control_pid(-1);
 
 static inline
 std::string
@@ -79,9 +82,9 @@ static sig_atomic_t fasthalt_signalled (false);
 static sig_atomic_t fastpoweroff_signalled (false);
 static sig_atomic_t fastreboot_signalled (false);
 static sig_atomic_t unknown_signalled (false);
-#define has_service_manager (-1 != service_manager_pid)
-#define has_cyclog (-1 != cyclog_pid)
-#define has_system_control (-1 != system_control_pid)
+#define has_service_manager (static_cast<pid_t>(-1) != service_manager_pid)
+#define has_cyclog (static_cast<pid_t>(-1) != cyclog_pid)
+#define has_system_control (static_cast<pid_t>(-1) != system_control_pid)
 #define stop_signalled (fasthalt_signalled || fastpoweroff_signalled || fastreboot_signalled)
 
 static inline
@@ -247,6 +250,18 @@ open_logging_pipe (
 	write_log_pipe.reset(pipe_fds[1]);
 }
 
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+static
+int
+setnoctty ( 
+) {
+	const FileDescriptorOwner fd(open_readwriteexisting_at(AT_FDCWD, "/dev/tty"));
+	if (0 <= fd.get()) return -1;
+	if (!isatty(fd.get())) return errno = ENOTTY, -1;
+	return ioctl(fd.get(), TIOCNOTTY, 0);
+}
+#endif
+
 static inline
 void
 setup_process_state(
@@ -257,6 +272,9 @@ setup_process_state(
 		setsid();
 #if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__) || defined(__NetBSD__)
 		setlogin("root");
+#endif
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+		setnoctty();
 #endif
 		chdir("/");
 		umask(0022);
@@ -454,11 +472,55 @@ is_already_mounted (
 }
 
 static inline
+std::list<std::string>
+split_whitespace_columns (
+	const std::string & s
+) {
+	std::list<std::string> r;
+	std::string q;
+	for (std::string::const_iterator p(s.begin()); s.end() != p; ++p) {
+		if (!std::isspace(*p)) {
+			q += *p;
+		} else {
+			if (!q.empty()) {
+				r.push_back(q);
+				q.clear();
+			}
+		}
+	}
+	if (!q.empty()) r.push_back(q);
+	return r;
+}
+
+static inline
+unsigned
+query_control_group_level(
+) {
+	std::ifstream i("/proc/filesystems");
+	unsigned l(0U);
+	if (!i.fail()) while (2U > l) {
+		std::string line;
+		std::getline(i, line, '\n');
+		if (i.eof()) break;
+		const std::list<std::string> cols(split_whitespace_columns(line));
+		if (cols.empty()) continue;
+		if (1U > l && "cgroup" == cols.back()) l = 1U;
+		if (2U > l && "cgroup2" == cols.back()) l = 2U;
+	}
+	return l;
+}
+
+static inline
 void
 setup_kernel_api_volumes_and_devices(
 	const char * prog
 ) {
+	const unsigned cgl(query_control_group_level());
 	for (std::vector<api_mount>::const_iterator i(api_mounts.begin()); api_mounts.end() != i; ++i) {
+		if (i->cgl && cgl != i->cgl) {
+			std::fprintf(stderr, "%s: INFO: %s: %s\n", prog, i->name, "Not required by this kernel.");
+			continue;
+		}
 		const std::string fspath(fspath_from_mount(i->iov, i->ioc));
 		bool update(false);
 		if (!fspath.empty()) {
@@ -538,12 +600,24 @@ dup(
 
 static inline
 void
+mark_not_filled(
+	FileDescriptorOwner filler_stdio[LISTEN_SOCKET_FILENO + 1], 
+	FileDescriptorOwner saved_stdio[LISTEN_SOCKET_FILENO + 1], 
+	int fd
+) {
+	if (0 <= filler_stdio[fd].release())
+		saved_stdio[fd].reset(-1);
+}
+
+static inline
+void
 last_resort_io_defaults(
 	const bool is_system,
 	const char * prog,
 	const FileDescriptorOwner & dev_null,
 	FileDescriptorOwner saved_stdio[LISTEN_SOCKET_FILENO + 1]
 ) {
+	// Populate saved standard input as /dev/null if it was initially closed as we inherited it.
 	if (0 > saved_stdio[STDIN_FILENO].get())
 		saved_stdio[STDIN_FILENO].reset(dup(prog, dev_null));
 	if (is_system) {
@@ -559,14 +633,17 @@ last_resort_io_defaults(
 			ioctl(dev_console.get(), KDSIGACCEPT, SIGWINCH);
 #endif
 		}
-		// Populate saved standard output/error if they were initially closed, making the console the logger of last resort.
+		// Populate saved standard output as /dev/console if it was initially closed.
+		// The console is the logger of last resort.
 		if (0 > saved_stdio[STDOUT_FILENO].get())
 			saved_stdio[STDOUT_FILENO].reset(dup(prog, dev_console));
 	} else {
-		// The logger of last resort is whatever we inherited, or /dev/null if the descriptors were closed.
+		// Populate saved standard output as standard input if it was initially closed.
+		// The logger of last resort is whatever standard input is.
 		if (0 > saved_stdio[STDOUT_FILENO].get())
 			saved_stdio[STDOUT_FILENO].reset(dup(prog, saved_stdio[STDIN_FILENO]));
 	}
+	// Populate saved standard error as standard output if it was initially closed.
 	if (0 > saved_stdio[STDERR_FILENO].get())
 		saved_stdio[STDERR_FILENO].reset(dup(prog, saved_stdio[STDOUT_FILENO]));
 }
@@ -610,6 +687,85 @@ end_system()
 }
 
 static
+struct iovec
+cgroup_controllers[4] = { 
+	MAKE_IOVEC("+cpu"),
+	MAKE_IOVEC("+memory"),
+	MAKE_IOVEC("+io"),
+	MAKE_IOVEC("+pids"),
+};
+
+static
+const char *
+cgroup_paths[] = {
+	"",
+	"/service-manager.slice"
+	// We don't need system-control.slice or *-manager-log.slice because they don't distribute onwards to further groups.
+};
+
+static inline
+void
+initialize_root_control_groups (
+	const char * prog
+) {
+	FileStar self_cgroup(open_my_control_group_info("/proc/self/cgroup"));
+	if (!self_cgroup) {
+		const int error(errno);
+		if (ENOENT != error)	// This is what we'll see on a BSD.
+			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "/proc/self/cgroup", std::strerror(error));
+		return;
+	} 
+	std::string prefix("/sys/fs/cgroup"), current;
+	if (!read_my_control_group(self_cgroup, "", current)) {
+		if (!read_my_control_group(self_cgroup, "name=systemd", current)) 
+			return;
+		prefix += "/systemd";
+	}
+	const std::string cgroup_root(prefix + current);
+	const FileDescriptorOwner cgroup_root_fd(open_dir_at(AT_FDCWD, cgroup_root.c_str()));
+	if (0 > cgroup_root_fd.get()) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, cgroup_root.c_str(), std::strerror(error));
+		return;
+	}
+	const std::string me_slice(cgroup_root + "/me.slice");
+	if (0 > mkdirat(AT_FDCWD, me_slice.c_str(), 0755)) {
+		const int error(errno);
+		if (EEXIST != error)
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, me_slice.c_str(), std::strerror(error));
+	} else {
+		const std::string knobname(me_slice + "/cgroup.procs");
+		const FileDescriptorOwner cgroup_procs_fd(open_appendexisting_at(AT_FDCWD, knobname.c_str()));
+		if (0 > cgroup_procs_fd.get()
+		||  0 > write(cgroup_procs_fd.get(), "0\n", 2)) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, knobname.c_str(), std::strerror(error));
+		}
+	}
+	for (const char ** p(cgroup_paths); p < cgroup_paths + sizeof cgroup_paths/sizeof *cgroup_paths; ++p) {
+		const char * group(*p);
+
+		if (0 > mkdirat(cgroup_root_fd.get(), (cgroup_root + group).c_str(), 0755)) {
+			const int error(errno);
+			if (EEXIST != error)
+				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, (cgroup_root + group).c_str(), std::strerror(error));
+		}
+		const std::string knobname((cgroup_root + group) + "/cgroup.subtree_control");
+		const FileDescriptorOwner cgroup_knob_fd(open_writetruncexisting_at(cgroup_root_fd.get(), knobname.c_str()));
+		if (0 > cgroup_knob_fd.get()) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, knobname.c_str(), std::strerror(error));
+			continue;
+		}
+		for (const struct iovec * v(cgroup_controllers); v < cgroup_controllers + sizeof cgroup_controllers/sizeof *cgroup_controllers; ++v)
+			if (0 > writev(cgroup_knob_fd.get(), v, 1)) {
+				const int error(errno);
+				std::fprintf(stderr, "%s: ERROR: %s: %.*s: %s\n", prog, knobname.c_str(), static_cast<int>(v->iov_len), v->iov_base, std::strerror(error));
+			}
+	}
+}
+
+static
 const char *
 system_manager_logdirs[] = {
 	"/var/log/system-manager",
@@ -648,13 +804,13 @@ common_manager (
 	args.erase(args.begin());
 
 	// We must ensure that no new file descriptors are allocated in the standard+systemd file descriptors range, otherwise dup2() and automatic-close() in child processes go wrong later.
-	FileDescriptorOwner faked_stdio[LISTEN_SOCKET_FILENO + 1] = { -1, -1, -1, -1 };
+	FileDescriptorOwner filler_stdio[LISTEN_SOCKET_FILENO + 1] = { -1, -1, -1, -1 };
 	for (
 		FileDescriptorOwner root(open_dir_at(AT_FDCWD, "/")); 
 		0 <= root.get() && root.get() <= LISTEN_SOCKET_FILENO; 
 		root.reset(dup(root.release()))
 	) {
-		faked_stdio[root.get()].reset(root.get());
+		filler_stdio[root.get()].reset(root.get());
 	}
 
 	// The system manager runs with standard I/O connected to a (console) TTY.
@@ -662,14 +818,15 @@ common_manager (
 	// We want to save these, if they are open, for use as log destinations of last resort during shutdown.
 	FileDescriptorOwner saved_stdio[LISTEN_SOCKET_FILENO + 1] = { -1, -1, -1, -1 };
 	for (std::size_t i(0U); i < sizeof saved_stdio/sizeof *saved_stdio; ++i) {
-#if !defined(__LINUX__) && !defined(__linux__)
-		// The exception is anything open from the system manager to a TTY on BSD.
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+		// The exception is anything open from the system manager to a TTY on FreeBSD.
 		// FreeBSD initializes process #1 with a controlling terminal!
 		// The only way to get rid of it is to close all open file descriptors to it.
 		if (is_system && 0 < isatty(i)) {
 			FileDescriptorOwner root(open_dir_at(AT_FDCWD, "/")); 
 			dup2(root.get(), i);
-			faked_stdio[i].reset(i);
+			if (0 > filler_stdio[i].get())
+				filler_stdio[i].reset(i);
 		} else
 #endif
 			saved_stdio[i].reset(dup(i));
@@ -679,11 +836,9 @@ common_manager (
 	// We don't want our output cluttering a TTY and device files such as /dev/null and /dev/console do not exist yet.
 	FileDescriptorOwner read_log_pipe(-1), write_log_pipe(-1);
 	open_logging_pipe(prog, read_log_pipe, write_log_pipe);
-	if (0 <= faked_stdio[STDOUT_FILENO].release())
-		saved_stdio[STDOUT_FILENO].reset(-1);
+	mark_not_filled(filler_stdio, saved_stdio, STDOUT_FILENO);
 	dup2(write_log_pipe.get(), STDOUT_FILENO);
-	if (0 <= faked_stdio[STDERR_FILENO].release())
-		saved_stdio[STDERR_FILENO].reset(-1);
+	mark_not_filled(filler_stdio, saved_stdio, STDERR_FILENO);
 	dup2(write_log_pipe.get(), STDERR_FILENO);
 
 	// Now we perform the process initialization that does thing like mounting /dev.
@@ -759,17 +914,16 @@ common_manager (
 		if (!am_in_jail()) 
 			start_system();
 	}
+	initialize_root_control_groups(prog);
 
 	// Now we can use /dev/console, /dev/null, and the rest.
 	const FileDescriptorOwner dev_null_fd(open_null(prog));
-	if (0 <= faked_stdio[STDIN_FILENO].release())
-		saved_stdio[STDIN_FILENO].reset(-1);
+	mark_not_filled(filler_stdio, saved_stdio, STDIN_FILENO);
 	dup2(dev_null_fd.get(), STDIN_FILENO);
 	last_resort_io_defaults(is_system, prog, dev_null_fd, saved_stdio);
 
 	const FileDescriptorOwner service_manager_socket_fd(listen_service_manager_socket(is_system, prog));
-	if (0 <= faked_stdio[LISTEN_SOCKET_FILENO].get())
-		saved_stdio[LISTEN_SOCKET_FILENO].reset(-1);
+	mark_not_filled(filler_stdio, saved_stdio, LISTEN_SOCKET_FILENO);
 
 #if defined(DEBUG)	// This is not an emergency mode.  Do not abuse as such.
 	if (is_system) {
@@ -837,7 +991,7 @@ common_manager (
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
 	}
 
-	faked_stdio[LISTEN_SOCKET_FILENO].reset(-1);
+	filler_stdio[LISTEN_SOCKET_FILENO].reset(-1);
 
 	/// FIXME \bug This mechanism cannot work.
 	if (!is_system) {
@@ -850,8 +1004,8 @@ common_manager (
 		if (child_signalled) {
 			for (;;) {
 				int status;
-				const pid_t c(waitpid(-1, &status, WNOHANG));
-				if (c <= 0) break;
+				pid_t c;
+				if (0 >= wait_nonblocking_for_anychild_exit(c, status)) break;
 				if (c == service_manager_pid) {
 					std::fprintf(stderr, "%s: WARNING: %s (pid %i) ended status %i\n", prog, "service-manager", c, status);
 					service_manager_pid = -1;
@@ -940,7 +1094,7 @@ common_manager (
 					// Replace the original arguments with this.
 					args.clear();
 					args.insert(args.end(), "move-to-control-group");
-					args.insert(args.end(), "system-control.slice");
+					args.insert(args.end(), "../system-control.slice");
 					args.insert(args.end(), "system-control");
 					args.insert(args.end(), subcommand);
 					if (verbose)
@@ -971,7 +1125,7 @@ common_manager (
 						args.insert(args.begin(), "--user");
 					args.insert(args.begin(), "init");
 					args.insert(args.begin(), "system-control");
-					args.insert(args.begin(), "system-control.slice");
+					args.insert(args.begin(), "../system-control.slice");
 					args.insert(args.begin(), "move-to-control-group");
 					next_prog = arg0_of(args);
 					return;
@@ -1001,9 +1155,9 @@ common_manager (
 				args.clear();
 				args.insert(args.end(), "move-to-control-group");
 				if (is_system)
-					args.insert(args.end(), "system-manager-log.slice");
+					args.insert(args.end(), "../system-manager-log.slice");
 				else
-					args.insert(args.end(), "per-user-manager-log.slice");
+					args.insert(args.end(), "../per-user-manager-log.slice");
 				args.insert(args.end(), "cyclog");
 				args.insert(args.end(), "--max-file-size");
 				args.insert(args.end(), "262144");
@@ -1046,7 +1200,7 @@ common_manager (
 				default_all_signals();
 				args.clear();
 				args.insert(args.end(), "move-to-control-group");
-				args.insert(args.end(), "service-manager.slice");
+				args.insert(args.end(), "../service-manager.slice/me.slice");
 				args.insert(args.end(), "service-manager");
 				args.insert(args.end(), 0);
 				next_prog = arg0_of(args);

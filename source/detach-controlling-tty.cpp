@@ -18,6 +18,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <fcntl.h>
 #include "popt.h"
 #include "utils.h"
+#include "fdutils.h"
 #include "FileDescriptorOwner.h"
 
 /* Main function ************************************************************
@@ -46,7 +47,7 @@ detach_controlling_tty (
 		throw EXIT_FAILURE;
 	}
 
-	const FileDescriptorOwner fd(open(tty, O_RDWR|O_NOCTTY, 0));
+	const FileDescriptorOwner fd(open_readwriteexisting_at(AT_FDCWD, tty));
 	if (0 <= fd.get()) {
 		if (!isatty(fd.get())) {
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, tty, "Not a terminal device.");

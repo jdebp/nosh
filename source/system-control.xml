@@ -1,11 +1,11 @@
 <refentry id="system-control">
 
-<refmeta>
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
 <refentrytitle>system-control</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">administrator commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.29</refmiscinfo>
+<xi:include href="version.xml" />
 </refmeta>
 
 <refnamediv>
@@ -418,6 +418,9 @@ The <arg choice='plain'>--update</arg> command line option is reserved for futur
 <arg choice="plain">start</arg>
 <arg choice="plain">activate</arg>
 </group>
+<arg choice='opt'>--colour</arg>
+<arg choice='opt'>--verbose</arg>
+<arg choice='opt'>--pretend</arg>
 <arg rep='repeat'><replaceable>names</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
@@ -426,16 +429,25 @@ The <arg choice='plain'>--update</arg> command line option is reserved for futur
 <arg choice="plain">stop</arg>
 <arg choice="plain">deactivate</arg>
 </group>
+<arg choice='opt'>--colour</arg>
+<arg choice='opt'>--verbose</arg>
+<arg choice='opt'>--pretend</arg>
 <arg rep='repeat'><replaceable>names</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">isolate</arg>
+<arg choice='opt'>--colour</arg>
+<arg choice='opt'>--verbose</arg>
+<arg choice='opt'>--pretend</arg>
 <arg rep='repeat'><replaceable>names</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">reset</arg>
+<arg choice='opt'>--colour</arg>
+<arg choice='opt'>--verbose</arg>
+<arg choice='opt'>--pretend</arg>
 <arg rep='repeat'><replaceable>names</replaceable></arg>
 </cmdsynopsis>
 
@@ -447,6 +459,13 @@ To control services directly and individually without regard for dependencies, u
 </para>
 
 <para>
+The <arg choice="plain">--verbose</arg> command line option cause information about actions taken and blocked/unblocked services to be written to standard error as jobs are processed.
+If the standard error is a terminal, <command>system-control</command> uses whatever it can find via the terminfo library to display various parts of the output in different colours, highlighting different events in different colours.
+The <arg choice='plain'>--colour</arg> command line option tells it to do this unconditionally, even if its standard error is not a terminal.
+The <arg choice='plain'>--pretend</arg> command line option tells it to only pretend that it is taking actions, and not actually take them.
+</para>
+
+<para>
 The <command>reset</command> command is intended to be used by package installer programs.
 It is translated into either <command>start</command> or <command>stop</command> according to whether the service is enabled or disabled; and can be thought of, if one likes, as "reset to however the service is configured to be at bootstrap".
 This allows package installers to remain in blissful ignorance of whether a service should be started or stopped after installing the package for it.
@@ -454,8 +473,7 @@ Instead, the package installer simply executes the <command>preset</command> com
 </para>
 
 <para>
-The <command>isolate</command> subcommand exists for compatibility, and is
-equivalent to <command>start</command>.
+The <command>isolate</command> subcommand exists for compatibility, and is equivalent to <command>start</command>.
 </para>
 
 </refsection>

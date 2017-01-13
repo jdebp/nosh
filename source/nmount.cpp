@@ -21,6 +21,8 @@ nmount (
 	int flags
 ) {
 	std::string path, type, from, data;
+	// NULL data is different from empty data in Linux mount() for at least cgroup2 filesystem.
+	bool hasdata(false);
 
 	for (unsigned int u(0U); u + 1U < ioc; u += 2U) {
 		const std::string var(convert(iov[u]));
@@ -34,6 +36,7 @@ nmount (
 			path = convert(iov[u + 1U]);
 		else 
 		{
+			hasdata = true;
 			if (!data.empty())
 				data = data + ",";
 			data = data + var;
@@ -42,7 +45,7 @@ nmount (
 		}
 	}
 
-	return mount(from.c_str(), path.c_str(), type.c_str(), static_cast<unsigned long>(flags), data.c_str());
+	return mount(from.c_str(), path.c_str(), type.c_str(), static_cast<unsigned long>(flags), hasdata ? data.c_str() : 0);
 }
 
 #elif defined(__OpenBSD__)

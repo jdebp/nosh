@@ -1,11 +1,11 @@
 <refentry id="appendpath">
 
-<refmeta>
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
 <refentrytitle>appendpath</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.29</refmiscinfo>
+<xi:include href="version.xml" />
 </refmeta>
 
 <refnamediv><refname>appendpath</refname><refpurpose>add a dir to a path environment variable then chain</refpurpose></refnamediv>

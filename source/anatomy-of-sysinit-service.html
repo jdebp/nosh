@@ -12,48 +12,59 @@ Various pre-packaged services are "sysinit" services, started as a result of bei
 
 <p>
 The machine-id service in the sysinit services collection is an example of a sysinit service.
-Its <code>run</code>, <code>stop</code>, and <code>restart</code> programs are all fairly straightforward and self-explanatory.
-And its <code>remain</code> flag file causes the service to be considered a "run on empty" service by the service manager, as a target is.
-This is because the meat of the service is in its <code>start</code> program, run when the service is brought up from being down, as happens at boot time because the service (when enabled) is wanted by the "sysinit" target.
+Its <code>start</code>, <code>stop</code>, and <code>restart</code> programs are all fairly straightforward and self-explanatory.
+And its <code>ready_after_exit</code> flag file causes the service to be considered ready only when its <code>run</code> program has exited.
+This is because the service is a "single-shot" service, considered "ready" when its <code>run</code> program has done its work.
 </p>
 
+<blockquote><pre>#!/bin/nosh
+#Set up the machine ID
+move-to-control-group ../machine-id.service
+envdir env
+setup-machine-id</pre></blockquote>
+
 <p>
-The <code>start</code> program runs the <a href="setup-machine-id.html"><code>setup-machine-id</code></a> utility.
+The <code>run</code> program runs the <a href="setup-machine-id.html"><code>setup-machine-id</code></a> utility.
 This utility performs boot-time actions that set up the <code>/etc/machine-id</code> and <code>/run/machine-id</code> files.
 </p>
 
 <p>
-Most "sysinit" services do their work in their <code>start</code> programs.
-Only a few, such as the the plug and play manager service and its log service, have long-lived daemon processes.
-</p>
-
-<p>
-The supervise directories for most "sysinit" services live under <code>/run</code> (more specifically usually <a href="gazetteer.html#early-supervise"><code>/run/service-bundles/early-supervise</code></a>), because they must be writable before the filesystem containing <code>/etc</code> is remounted read-write.
-The service manager is told to load them, and thus needs to create their control/status API files, <a href="startup-and-shutdown.html#sysinit">first thing in the bootstrap procedure</a>.
+Most "sysinit" services are single-shot services that do their work and then exit.
+Only a few, such as the log services and the plug and play manager service, have long-lived d&aelig;mon processes.
 </p>
 
 <h2 id="etc">
-"etc" sysinit services
+location
 </h2>
 
 <p>
-Some "sysinit" services live in <code>/etc/service-bundles/services</code>.
-These are the "sysinit" services that are part of, or that precede, bringing up local filesystems; loaded in parallel with (or even before) mounting <code>/usr</code> and <code>/var</code>.
+"sysinit" services live in <code>/etc/service-bundles/services</code>.
+This is because "sysinit" services are part of, or precede, bringing up local filesystems; loaded in parallel with (or even before) mounting <code>/usr</code> and <code>/var</code> and re-mounting <code>/</code> read-write.
 </p>
 
 <p>
-Apart from the plug and play manager service, the "etc" sysinit services all use one single sysinit-log logging service.
-The plug and play manager service has its own logging service.
+For the same reasons, the supervise directories for "sysinit" services live under <code>/run</code> (more specifically usually <a href="gazetteer.html#early-supervise"><code>/run/service-bundles/early-supervise</code></a>), because they must be writable before the filesystem containing <code>/etc</code> is remounted read-write.
+The service manager is told to load them, and thus needs to create their control/status API files, <a href="startup-and-shutdown.html#sysinit">first thing in the bootstrap procedure</a>.
+</p>
+
+<h2 id="logging">
+logging
+</h2>
+
+<p>
+With the exception of the plug and play manager service, sysinit services all use <a href="log-service-plumbing.html">a fan-in model of log service plumbing</a>.
+The plug and play manager is a long-running service and has its own dedicated log service.
+Most other sysinit services are single-shot services that do not have long-running processes, and their log outputs all fan-in to a single "sysinit-log" logging service.
 </p>
 
 <p>
 The logging services have to come up after the filesystem containing <code>/var/log</code> is available and writable.
 Log data from the logged services sits in its input pipe until then.
-The consequence of this is that too much log output from "etc" sysinit services has the potential to deadlock the system.
+The consequence of this is that too much log output from sysinit services has the potential to deadlock the system.
 (Too much output from the plug and play manager service simply halts it until its log service comes up.
 The plug and play manager usually isn't in the critical path for mounting <code>/var/log</code> read-write.)
 </p>
 
 <p>
-So it is very important to minimize the amount of output generated by "etc" sysinit services.
+So it is very important to minimize the amount of output generated by sysinit services.
 </p>

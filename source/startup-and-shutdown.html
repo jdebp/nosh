@@ -1,7 +1,7 @@
 <title>Startup and shutdown</title>
 <link rel="Up" href="index.html" title="nosh Guide" />
 <link rel="Next" href="svscan-shutdown.html" title="Compatible old-style startup" />
-<link rel="Prev" href="converting-systemd-units.html" title="Converting systemd units" />
+<link rel="Prev" href="external-formats.html" title="External formats" />
 <h1>
 Startup and shutdown
 </h1>
@@ -35,7 +35,7 @@ In response to <code>SIGRTMIN + 10</code> the system management state machine sp
 </p></li>
 <li id="sysinit"><p>
 <code>system-control</code> activates the "sysinit" target.
-This is a special system target that is expected to bring up "sysinit" services, and encompasses targets such as "local-fs".
+This is a special system target that is expected to bring up <a href="anatomy-of-sysinit-service.html">"sysinit" services</a>, and encompasses targets such as "local-fs".
 After the target is started, the system is expected to have performed fundamental initialization tasks such as:
 </p>
 <ul>
@@ -103,9 +103,9 @@ Their <code>start</code> programs invoke <code>system-control halt --force</code
 (These are the systemd signals on both BSD and Linux, as there is no BSD mechanism to be compatible with, here.)
 </p></li>
 <li><p>
-In response to the signal the system management state machine attempts to terminate the service manager and its logger daemon.
+In response to the signal the system management state machine attempts to terminate the service manager and its logger d&aelig;mon.
 All services should have been shut down already, but the service manager attempts to shut down all services that it manages when it is told to terminate.
-The logger daemon is expected to close when it reaches EOF on the pipe that is attached to its standard input, which happens after the service manager process closes and the system manager (process #1) closes its open file descriptor for the write end of the pipe.
+The logger d&aelig;mon is expected to close when it reaches EOF on the pipe that is attached to its standard input, which happens after the service manager process closes and the system manager (process #1) closes its open file descriptor for the write end of the pipe.
 </p></li>
 <li><p>
 The system management state machine at last enters its final state, halting, rebooting, or powering off the machine directly with the appropriate system calls, after asking the kernel to flush the filesystem cache to disc.

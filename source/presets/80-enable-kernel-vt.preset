@@ -6,8 +6,5 @@
 # It is used by the nosh-bundles package in order to enable certain mandatory basics without which a system simply won't work.
 #
 
-disable	cyclog@ttylogin@vc*-tty.service
-disable	ttylogin@vc*-tty.service
-
-enable	cyclog@kernel-vt-*.service
 enable	kernel-vt-*.service
+enable	cyclog@kernel-vt-*.service

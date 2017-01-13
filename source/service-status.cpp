@@ -7,13 +7,13 @@ For copyright and licensing terms, see the file named COPYING.
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
+#include <cstdio>
 #include <cstring>
 #include <csignal>
 #include <cerrno>
 #include <ctime>
 #include <inttypes.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -81,7 +81,7 @@ put (
 	const int colour
 ) {
 #if defined(__OpenBSD__)
-	// Fix an OpenBSD const incorrectness bug.
+	// OpenBSD requires a const incorrectness bodge.
 	tputs(tparm(const_cast<char *>(s), colour), 1, putchar);
 #else
 	tputs(tparm(s, colour), 1, putchar);
@@ -130,7 +130,7 @@ reset_colour (
 	if (no_colours) return;
 	const char * s(tigetstr(op));
 	if (!s || reinterpret_cast<const char *>(-1) == s) {
-		s = tigetstr("setaf");
+		s = tigetstr(setaf);
 		if (!s) return;
 		put(s, COLOR_DEFAULT);
 	} else
@@ -409,6 +409,10 @@ service_status (
 
 			if (0 <= log_main_dir_fd.get()) {
 				std::fflush(stdout);
+
+				// We are going to clean up the grandchild(ren) so that our parent does not get stuck with zombies.
+				subreaper(true);
+
 				const int child(fork());
 				if (0 > child) {
 					const int error(errno);
@@ -431,12 +435,11 @@ service_status (
 					next_prog = arg0_of(args);
 					return;
 				}
-#if defined(WEXITED)
-				waitid(P_PID, child, 0, WEXITED);
-#else
-				int cs;
-				waitpid(child, &cs, 0);
-#endif
+				for (;;) {
+					int child_status;
+					pid_t c;
+					if (0 >= wait_blocking_for_anychild_exit(c, child_status)) break;
+				}
 			}
 		}
 	}

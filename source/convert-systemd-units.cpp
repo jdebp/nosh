@@ -202,6 +202,8 @@ quote (
 	return r;
 }
 
+/// \brief Convert from nosh and systemd quoting and escaping rules to the ones for sh.
+/// sh metacharacters other than $ and # are also disabled by escaping them.
 static
 std::string
 escape_metacharacters (
@@ -213,8 +215,7 @@ escape_metacharacters (
 		char c(*p);
 		switch (state) {
 			case NORMAL:
-				if ('\\' == c && p != s.end()) {
-					r += c; 
+				if ('\\' == c && p + 1 != s.end()) {
 					r += c; 
 					c = *++p;
 				} else if ('\'' == c) state = SQUOT;
@@ -223,17 +224,21 @@ escape_metacharacters (
 					r += '\\';
 				break;
 			case DQUOT:
-				if ('\\' == c && p != s.end()) {
-					r += c; 
-					r += c; 
+				if ('\\' == c && p + 1 != s.end()) {
+					// nosh and systemd escaping within double quotes differs from that of sh.
+					// sh has some quite wacky rules where \ is mostly not an escape character.
 					c = *++p;
+					if ('`' == c || '\\' == c || '\"' == c)
+						r += '\\'; 
 				} else if ('\"' == c) state = NORMAL;
 				break;
 			case SQUOT:
-				if ('\\' == c && p != s.end()) {
-					r += c; 
-					r += c; 
+				if ('\\' == c && p + 1 != s.end()) {
+					// nosh and systemd escaping within single quotes differs from that of sh.
+					// In the sh rules \ is never an escape character and There is no way to quote ' .
 					c = *++p;
+					if ('\'' == c)
+						r += "'\\'"; 
 				} else if ('\'' == c) state = NORMAL;
 				break;
 		}
@@ -503,6 +508,18 @@ split_netlink_socket_name (
 	}
 }
 
+#if defined(__LINUX__) || defined(__linux__)
+static inline
+std::string
+set_controller_command (
+	const char * controller,
+	bool enable
+) {
+	const std::string flag(enable ? "+" : "-");
+	return "foreground set-control-group-knob ../cgroup.subtree_control " + quote(flag + controller) + " ;\n";
+}
+#endif
+
 static inline
 bool
 is_section_heading (
@@ -641,7 +658,7 @@ convert_systemd_units [[gnu::noreturn]] (
 
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing argument(s).");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	struct names names(args.front());
@@ -862,10 +879,23 @@ convert_systemd_units [[gnu::noreturn]] (
 	value * numaphyscpubind(service_profile.use("service", "numaphyscpubind"));
 	value * numalocalalloc(service_profile.use("service", "numalocalalloc"));
 	value * numapreferred(service_profile.use("service", "numapreferred"));
+	value * cpuaccounting(service_profile.use("service", "cpuaccounting"));
+	value * cpuweight(service_profile.use("service", "cpuweight"));
+	value * cpuquota(service_profile.use("service", "cpuquota"));
+	value * tasksaccounting(service_profile.use("service", "tasksaccounting"));
 	value * tasksmax(service_profile.use("service", "tasksmax"));
-	value * memorylimit(service_profile.use("service", "memorylimit"));
+	value * memoryaccounting(service_profile.use("service", "memoryaccounting"));
+	value * memorylow(service_profile.use("service", "memorylow"));
+	value * memoryhigh(service_profile.use("service", "memoryhigh"));
+	value * memorymax(service_profile.use("service", "memorymax"));
+	value * memoryswapmax(service_profile.use("service", "memoryswapmax"));
+	value * ioaccounting(service_profile.use("service", "ioaccounting"));
 	value * ioweight(service_profile.use("service", "ioweight"));
 	value * iodeviceweight(service_profile.use("service", "iodeviceweight"));
+	value * ioreadbandwidthmax(service_profile.use("service", "ioreadbandwidthmax"));
+	value * ioreadiopsmax(service_profile.use("service", "ioreadiopsmax"));
+	value * iowritebandwidthmax(service_profile.use("service", "iowritebandwidthmax"));
+	value * iowriteiopsmax(service_profile.use("service", "iowriteiopsmax"));
 #endif
 	value * oomscoreadjust(service_profile.use("service", "oomscoreadjust"));
 	value * cpuschedulingpolicy(service_profile.use("service", "cpuschedulingpolicy"));
@@ -997,20 +1027,86 @@ convert_systemd_units [[gnu::noreturn]] (
 
 	// Construct various common command strings.
 
-	std::string jail, control_group, delegate_control_group;
+	std::string jail, enable_control_group_controllers, move_to_control_group, control_group_knobs;
 #if defined(__LINUX__) || defined(__linux__)
-	control_group += "move-to-control-group ";
-	if (slice) 
-		control_group += "../" + quote(names.substitute(slice->last_setting())) + "/";
-	if (is_instance) {
-		control_group += ((quote(names.query_escaped_prefix() + "@") + ".") + (is_target ? "target" : "service")) + "\n";
-		control_group += "move-to-control-group ";
-		control_group += ((quote(names.query_bundle_basename()) + ".") + (is_target ? "target" : "service")) + "\n";
-	} else {
-		control_group += ((quote(names.query_bundle_basename()) + ".") + (is_target ? "target" : "service")) + "\n";
+	bool cpu_accounting(is_bool_true(cpuaccounting, false));
+	bool memory_accounting(is_bool_true(memoryaccounting, false));
+	bool tasks_accounting(is_bool_true(tasksaccounting, false));
+	bool io_accounting(is_bool_true(ioaccounting, false));
+	if (cpuweight) {
+		control_group_knobs += "foreground set-control-group-knob cpu.weight " + quote(names.substitute(cpuweight->last_setting())) + " ;\n";
+		cpu_accounting = true;
 	}
+	if (cpuquota) {
+		control_group_knobs += "foreground set-control-group-knob cpu.max " + quote(names.substitute(cpuquota->last_setting())) + " ;\n";
+		cpu_accounting = true;
+	}
+	if (tasksmax) {
+		control_group_knobs += "foreground set-control-group-knob --percent-of /proc/sys/kernel/threads-max --infinity-is-max pids.max " + quote(names.substitute(tasksmax->last_setting())) + " ;\n";
+		tasks_accounting = true;
+	}
+	if (memorylow) {
+		/// FIXME: memmax?
+		control_group_knobs += "foreground set-control-group-knob --infinity-is-max --multiplier-suffixes memory.low " + quote(names.substitute(memorylow->last_setting())) + " ;\n";
+		memory_accounting = true;
+	}
+	if (memoryhigh) {
+		/// FIXME: memmax?
+		control_group_knobs += "foreground set-control-group-knob --infinity-is-max --multiplier-suffixes memory.high " + quote(names.substitute(memoryhigh->last_setting())) + " ;\n";
+		memory_accounting = true;
+	}
+	if (memorymax) {
+		/// FIXME: memmax?
+		control_group_knobs += "foreground set-control-group-knob --infinity-is-max --multiplier-suffixes memory.max " + quote(names.substitute(memorymax->last_setting())) + " ;\n";
+		memory_accounting = true;
+	}
+	if (memoryswapmax) {
+		/// FIXME: memmax?
+		control_group_knobs += "foreground set-control-group-knob --infinity-is-max --multiplier-suffixes memory.swap.max " + quote(names.substitute(memoryswapmax->last_setting())) + " ;\n";
+		memory_accounting = true;
+	}
+	if (ioweight) {
+		control_group_knobs += "foreground set-control-group-knob io.weight " + quote(names.substitute(ioweight->last_setting())) + " ;\n";
+		io_accounting = true;
+	}
+	if (iodeviceweight) {
+		control_group_knobs += "foreground set-control-group-knob --device-name-key io.weight " + quote(names.substitute(iodeviceweight->last_setting())) + " ;\n";
+		io_accounting = true;
+	}
+	if (ioreadbandwidthmax) {
+		control_group_knobs += "foreground set-control-group-knob --device-name-key --nested-key rbs --infinity-is-max --multiplier-suffixes io.weight " + quote(names.substitute(ioreadbandwidthmax->last_setting())) + " ;\n";
+		io_accounting = true;
+	}
+	if (ioreadiopsmax) {
+		control_group_knobs += "foreground set-control-group-knob --device-name-key --nested-key rios --infinity-is-max --multiplier-suffixes io.weight " + quote(names.substitute(ioreadiopsmax->last_setting())) + " ;\n";
+		io_accounting = true;
+	}
+	if (iowritebandwidthmax) {
+		control_group_knobs += "foreground set-control-group-knob --device-name-key --nested-key wbs --infinity-is-max --multiplier-suffixes io.weight " + quote(names.substitute(iowritebandwidthmax->last_setting())) + " ;\n";
+		io_accounting = true;
+	}
+	if (iowriteiopsmax) {
+		control_group_knobs += "foreground set-control-group-knob --device-name-key --nested-key wios --infinity-is-max --multiplier-suffixes io.weight " + quote(names.substitute(iowriteiopsmax->last_setting())) + " ;\n";
+		io_accounting = true;
+	}
+	if (cpu_accounting)
+		enable_control_group_controllers += set_controller_command("cpu", cpu_accounting);
+	if (memory_accounting)
+		enable_control_group_controllers += set_controller_command("memory", memory_accounting);
+	if (io_accounting)
+		enable_control_group_controllers += set_controller_command("io", io_accounting);
+	if (tasks_accounting)
+		enable_control_group_controllers += set_controller_command("pids", tasks_accounting);
+	move_to_control_group += "move-to-control-group ../";
+	if (slice) 
+		move_to_control_group += "../" + quote(names.substitute(slice->last_setting())) + "/";
+	if (is_instance) {
+		move_to_control_group += ((quote(names.query_escaped_prefix() + "@") + ".") + (is_target ? "target" : "service")) + "\n";
+		move_to_control_group += "move-to-control-group ";
+	}
+	move_to_control_group += ((quote(names.query_bundle_basename()) + ".") + (is_target ? "target" : "service")) + "\n";
 	if (is_bool_true(delegate, false))
-		delegate_control_group += "foreground delegate-control-group-to " + quote(names.query_user()) + " ;\n";
+		control_group_knobs += "foreground delegate-control-group-to " + quote(names.query_user()) + " ;\n";
 #else
 	static_cast<void>(is_instance);	// Silence a compiler warning.
 	if (jailid) jail += "jexec " + quote(names.substitute(jailid->last_setting())) + "\n";
@@ -1052,18 +1148,6 @@ convert_systemd_units [[gnu::noreturn]] (
 		if (numapreferred)
 			priority += " --preferred " + quote(names.substitute(numapreferred->last_setting()));
 		priority += "\n";
-	}
-	if (tasksmax) {
-		priority += "#set-control-group-option pids.max " + quote(names.substitute(tasksmax->last_setting())) + "\n";
-	}
-	if (memorylimit) {
-		priority += "#set-control-group-option memory.max " + quote(names.substitute(memorylimit->last_setting())) + "\n";
-	}
-	if (ioweight) {
-		priority += "#set-control-group-option io.weight " + quote(names.substitute(ioweight->last_setting())) + "\n";
-	}
-	if (iodeviceweight) {
-		priority += "#set-control-group-option io.weight " + quote(names.substitute(iodeviceweight->last_setting())) + "\n";
 	}
 #else
 	if (cpuschedulingpolicy) {
@@ -1463,7 +1547,8 @@ convert_systemd_units [[gnu::noreturn]] (
 
 	std::stringstream perilogue_setup_environment;
 	perilogue_setup_environment << jail;
-	perilogue_setup_environment << control_group;
+	perilogue_setup_environment << enable_control_group_controllers;
+	perilogue_setup_environment << move_to_control_group;
 	perilogue_setup_environment << priority;
 	if (setuidgidall) perilogue_setup_environment << envuidgid;
 	perilogue_setup_environment << env;
@@ -1479,7 +1564,7 @@ convert_systemd_units [[gnu::noreturn]] (
 
 	std::stringstream setup_environment;
 	setup_environment << jail;
-	setup_environment << control_group;
+	setup_environment << move_to_control_group;
 	setup_environment << priority;
 	setup_environment << envuidgid;
 	setup_environment << env;
@@ -1673,9 +1758,9 @@ convert_systemd_units [[gnu::noreturn]] (
 	if (merge_run_into_start) {
 		run << (is_remain || is_oneshot ? "true" : "pause") << "\n";
 	} else {
-		if (execstartpre || runtimedirectory) {
+		if (execstartpre || runtimedirectory || !control_group_knobs.empty()) {
 			start << perilogue_setup_environment.str();
-			start << delegate_control_group;
+			start << control_group_knobs;
 			start << createrundir;
 			start << perilogue_drop_privileges.str();
 			if (execstartpre) {
@@ -1709,12 +1794,12 @@ convert_systemd_units [[gnu::noreturn]] (
 		std::stringstream s;
 		s << perilogue_setup_environment.str();
 		s << perilogue_drop_privileges.str();
-		for (std::list<std::string>::const_iterator i(execstartpre->all_settings().begin()); execstartpre->all_settings().end() != i; ) {
+		for (std::list<std::string>::const_iterator i(execrestartpre->all_settings().begin()); execrestartpre->all_settings().end() != i; ) {
 			std::list<std::string>::const_iterator j(i++);
-			if (execstartpre->all_settings().begin() != j) s << " \\;\n"; 
-			if (execstartpre->all_settings().end() != i) s << "foreground "; 
+			if (execrestartpre->all_settings().begin() != j) s << " \\;\n"; 
+			if (execrestartpre->all_settings().end() != i) s << "foreground "; 
 			const std::string & val(*j);
-			s << names.substitute(shell_expand(strip_leading_minus(val)));
+			s << names.substitute(escape_metacharacters(strip_leading_minus(val)));
 		}
 		restart_script << escape_newlines(s.str()) << "\n";
 	}

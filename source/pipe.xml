@@ -1,11 +1,11 @@
 <refentry id="pipe">
 
-<refmeta>
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
 <refentrytitle>pipe</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.29</refmiscinfo>
+<xi:include href="version.xml" />
 </refmeta>
 
 <refnamediv><refname>pipe</refname><refpurpose>execute two commands with a pipe between them</refpurpose></refnamediv>
@@ -14,6 +14,9 @@
 <cmdsynopsis>
 <command>pipe</command> 
 <arg choice='opt'>--inwards</arg> 
+<arg choice='opt'>--error</arg> 
+<arg choice='opt'>--grandchild</arg> 
+<arg choice='opt'>--ignore-children</arg> 
 <arg choice='opt'>--separator <replaceable>alt-sep</replaceable></arg> 
 <arg choice='req'><replaceable>left-prog</replaceable></arg> 
 <arg choice='req'>|</arg> 
@@ -40,6 +43,13 @@ If the <arg choice='opt'>--inwards</arg> command line option is used, <replaceab
 
 <para>
 The <arg choice='opt'>--separator</arg> command line option specifies an alternative separator argument, to scan for in place of <arg choice='req'>|</arg>.
+</para>
+
+<para>
+The <arg choice='opt'>--grandchild</arg> command line option causes whichever side of the pipe that is run in the forked child to perform a second fork and then exit, so that that side of the pipe runs in an orphaned child process.
+This is useful when it is known that the side of the pipe that runs in the forked parent never cleans up its terminated children.
+However, it makes the process tree less obvious.
+An alternative to this is the <arg choice='opt'>--ignore-children</arg> command line option which makes the parent program ignore the <code>SIGCHLD</code> signal.
 </para>
 
 </refsection>

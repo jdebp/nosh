@@ -1,16 +1,17 @@
 #
-# Enable user virtual terminal services
+# Enable user virtual terminal services other than login services
 #
 # This is not a systemd preset.
 # It goes in a special nosh system-manager preset directory.
 # It is used by the nosh-run-user-vt package in order to enable the user-space virtual terminals themselves.
 #
 
-enable	terminal-emulator@vc*.service
-enable	cyclog@terminal-emulator@vc*.service
+enable	terminal-emulator@*.service
+enable	cyclog@terminal-emulator@*.service
 enable	console-fb-realizer@*.service
 enable	cyclog@console-fb-realizer@*.service
 enable	console-multiplexor@*.service
 enable	cyclog@console-multiplexor@*.service
 
 enable	kernel-vt-*.service
+enable	cyclog@kernel-vt-*.service

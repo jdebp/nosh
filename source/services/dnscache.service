@@ -12,7 +12,7 @@ EnvironmentUser=dnscache-d
 LimitDATA=3000000
 LimitNOFILE=250
 # The entropy service, which we are ordered after, ensures that /dev/urandom is re-seeded by the time that this starts up.
-ExecStart=pipe --inwards dd if=/dev/urandom of=/dev/stdout bs=128 count=1 | %p
+ExecStart=pipe --grandchild --inwards dd if=/dev/urandom of=/dev/stdout bs=128 count=1 | %p
 RestartSec=0.2
 
 [Install]

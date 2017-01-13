@@ -104,7 +104,7 @@ daemontools,
 <a href="http://untroubled.org/daemontools-encore/">daemontools-encore</a>, 
 <a href="http://skarnet.org/software/s6/">s6</a>, 
 <a href="http://b0llix.net/perp/">perp</a>, and 
-<a href="http://smarden.org/runit/">runit</a> all share the problems of having no (or almost no) system manager and having little to no daemon startup/shutdown ordering mechanisms.
+<a href="http://smarden.org/runit/">runit</a> all share the problems of having no (or almost no) system manager and having little to no d&aelig;mon startup/shutdown ordering mechanisms.
 The traditional mechanism for addressing this is the "thundering herd solution": keep bringing a service up, once per second, until its dependences are up and it finally stays up.
 This is suboptimal, to say the least; and it ignores the problem of proper shutdown ordering entirely.
 nosh provides the same daemontools mechanisms, but builds a full service and system management mechanism on top of them.
@@ -141,7 +141,7 @@ This not only reflects the roots of the package in BSDs, which never had run lev
 You are strongly encouraged to un-learn the idea of run-levels.
 </p> </li>
 <li><p>
-<strong> Proper, safe, reliable daemon tracking. </strong>
+<strong> Proper, safe, reliable d&aelig;mon tracking. </strong>
 PID files are tantamount to a loaded gun left lying around for a system administrator to shoot random processes with.
 Parsing the output of <code>ps</code> with shell script is even worse.
 The service manager tracks services properly, without stale information lying around and without race conditions.

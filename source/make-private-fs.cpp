@@ -134,11 +134,11 @@ make_private_fs (
 		static const struct api_mount mounts[] = 
 		{
 #if defined(__LINUX__) || defined(__linux__)
-			{	MAKE_DATA(dev),		MS_NOSUID|MS_STRICTATIME|MS_NOEXEC		},
-			{	MAKE_DATA(pts),		MS_NOSUID|MS_STRICTATIME|MS_NOEXEC		},
+			{	MAKE_DATA(dev),		0U,	MS_NOSUID|MS_STRICTATIME|MS_NOEXEC		},
+			{	MAKE_DATA(pts),		0U,	MS_NOSUID|MS_STRICTATIME|MS_NOEXEC		},
 #else
-			{	MAKE_DATA(dev),		MNT_NOSUID|MNT_NOEXEC				},
-			{	MAKE_DATA(fds),		MNT_NOSUID|MNT_NOEXEC				},
+			{	MAKE_DATA(dev),		0U,	MNT_NOSUID|MNT_NOEXEC				},
+			{	MAKE_DATA(fds),		0U,	MNT_NOSUID|MNT_NOEXEC				},
 #endif
 		};
 

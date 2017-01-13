@@ -1,51 +1,123 @@
-#!/bin/sh
+#!/bin/sh -
 # Login daemon for PCDM
 # This starts the main PCDM UI appropriately
 #------------------------------------
 
-BASEPCDMAUTHFILE="/tmp/.PCDMAuth"
+allow-auto-login() {
+	# Allow Auto-Login the first time PCDM starts
+	touch "/tmp/.PCDMAutoLogin"
+}
 
-test -e /var/run/nologin && exit 111
+check-bootflags() {
+	# Check whether the user has selected to (re-)run stuff from the boot loader.
+	# We do not reset the kenv flags, as this check is only done at service startup, and also the flags might be shared.
+	if runwiz="`kenv runwiz 2>/dev/null`"
+	then
+		if test _"${runwiz}" = _"YES"
+		then
+			rm -f -- "runxsetup"
+		fi
+	fi
+	if xvesa="`kenv xvesa 2>/dev/null`"
+	then
+		if test _"${xvesa}" = _"YES"
+		then
+			touch "runxvesa"
+		fi
+	fi
+}
 
-# Allow Auto-Login the first time PCDM starts
-#touch "/tmp/.PCDMAutoLogin"
+run_firstboot() {
+	fluxbox &
+	PID=$!
+	userenv --set-path --set-other --set-tools --set-timezone --set-locale pc-firstboot
+	kill -9 -- ${PID}
+}
 
-# Clear out a failed marker
-rm -f -- "/tmp/.pcdm-x-failed"
+run() {
+	test -e /var/run/nologin && exit 111
 
-# Check if we are going to re-run the display setup wizard
-if ! test -e "runxsetup"
-then
-  /usr/local/share/pcbsd/xorg-gui/bin/rundetect.sh
-  touch "runxsetup"
-fi
+	# Switch to VESA 1024x768 if there is a flag file saying to do so.
+	if test -e "runxvesa"
+	then
+		rm -f -- "runxvesa"
+		echo 1>&2 "Using failsafe VESA 1024x768 mode."
+		mv /etc/X11/xorg.conf /etc/X11/xorg.conf.preVesa.backup
+		cp /usr/local/share/pcbsd/xorg-gui/cardDetect/XF86Config.compat /etc/X11/xorg.conf
+	fi
 
-# Randomize the authorization file location
-PCDMAUTHFILE="${BASEPCDMAUTHFILE}-`openssl rand -hex 10`"
-export XAUTHORITY="${PCDMAUTHFILE}" # Set the auth file location
-: > "${PCDMAUTHFILE}" # Create the (empty) authorization file
-xauth -f "${PCDMAUTHFILE}" add :0 MIT-MAGIC-COOKIE-1 "`openssl rand -hex 64`" # Add a default entry to the file (randomized)
+	# (Re-)run the display setup wizard if there is no flag file saying that it has been run.
+	if ! test -e "runxsetup"
+	then
+		touch "runxsetup"
+		exec /usr/local/share/pcbsd/xorg-gui/bin/rundetect.sh
+	fi
 
-# Remove our X success marker
-rm -f -- "/tmp/.pcdm-x-started"
+	# Run first boot setup if there is no flag file saying that it has been run.
+	if ! test -e "runfirstgui"
+	then
+		touch "runfirstgui"
+		cp -R /usr/local/share/pcbsd/fluxboxinit /root/.fluxbox
+		exec startx "$0"run_firstboot
+	fi
 
-# Now start the X Server
-if ! /bin/exec local-reaper true xinit /usr/local/bin/dbus-launch --exit-with-session PCDM-session -once -- :0 -auth "${PCDMAUTHFILE}" -retro $Xflags
-then
-   if ! test -e "/tmp/.pcdm-x-started" ; then
-      # Looks like X failed to start...
+	# Randomize the authorization file location
+	BASEPCDMAUTHFILE="/run/PCDM/auth"
+	PCDMAUTHFILE="${BASEPCDMAUTHFILE}-`openssl rand -hex 10`"
+	export XAUTHORITY="${PCDMAUTHFILE}" # Set the auth file location
+	: > "${PCDMAUTHFILE}" # Create the (empty) authorization file
+	xauth -f "${PCDMAUTHFILE}" add :0 MIT-MAGIC-COOKIE-1 "`openssl rand -hex 64`" # Add a default entry to the file (randomized)
 
-      if test -e "/tmp/.pcdm-x-failed" ; then
-	# Wow, we really failed here, lets try running X wizard
-	rm -f -- "runxsetup"
+	# Clear out a failed marker
 	rm -f -- "/tmp/.pcdm-x-failed"
-      else
-	# Lets move xorg.conf away, and try again
-	touch "/tmp/.pcdm-x-failed"
-	mv /etc/X11/xorg.conf /etc/X11/xorg.conf.prevFailed 2>/dev/null
-      fi
-   fi
-fi
 
-#Now remove the authorization file
-rm -f -- "${PCDMAUTHFILE}"
+	# Remove our X success marker
+	rm -f -- "/tmp/.pcdm-x-started"
+
+	# Now start the X Server
+	local-reaper true xinit /bin/exec local-reaper true "$0" session -- :0 -auth "${PCDMAUTHFILE}" -retro $Xflags
+	rc=$?
+
+	# Now remove the authorization file
+	rm -f -- "${PCDMAUTHFILE}"
+
+	return ${rc}
+}
+
+fall-back-on-failure() {
+	case "$1" in
+		e*)
+			if test 0 -ne "$2"
+			then
+				 if ! test -e "/tmp/.pcdm-x-started" ; then
+					# Looks like X failed to start...
+					if test -e "/tmp/.pcdm-x-failed" ; then
+						# Wow, we really failed here, lets try running X wizard
+						rm -f -- "runxsetup"
+						rm -f -- "/tmp/.pcdm-x-failed"
+					else
+						# Lets move xorg.conf away, and try again
+						touch "/tmp/.pcdm-x-failed"
+						mv /etc/X11/xorg.conf /etc/X11/xorg.conf.prevFailed 2>/dev/null
+					fi
+				fi
+			else
+				:
+			fi
+			;;
+		t*)
+			;;
+		k*)
+			;;
+		a*)
+			;;
+		c*|*)
+			;;
+	esac
+}
+
+session() {
+	dbus-launch --exit-with-session PCDM-session -once
+}
+
+eval "$@"

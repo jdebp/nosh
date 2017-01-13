@@ -1,11 +1,11 @@
 <refentry id="setuidgid-fromenv">
 
-<refmeta>
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
 <refentrytitle>setuidgid-fromenv</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.29</refmiscinfo>
+<xi:include href="version.xml" />
 </refmeta>
 
 <refnamediv><refname>setuidgid-fromenv</refname><refpurpose>set process UID and GID(s) then chain</refpurpose></refnamediv>
@@ -19,11 +19,7 @@
 <refsection><title>Description</title>
 
 <para>
-<command>setuidgid-fromenv</command> is a chain-loading utility that sets the
-process real+effective UID, real+effective GID, and supplementary GID list; and
-then chain loads to <replaceable>next-prog</replaceable> with the
-<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-function.  
+<command>setuidgid-fromenv</command> is a chain-loading utility that sets the process real+effective UID, real+effective GID, and supplementary GID list; and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
 </para>
 
 <para>
@@ -31,13 +27,9 @@ function.
 </para>
 
 <para>
-The real+effective UID and real+effective GID are set to the values given in
-the <envar>UID</envar> and <envar>GID</envar> environment variables.
-If the <envar>GIDLIST</envar> environment variable exists, it is taken to be a
-list of GIDs which <command>setuidgid-fromenv</command> sets as the process
-list of supplementary GIDs.
-Otherwise, if it does not exist, the supplementary GIDs list is set to just
-the primary GID.
+The real+effective UID and real+effective GID are set to the values given in the <envar>UID</envar> and <envar>GID</envar> environment variables.
+If the <envar>GIDLIST</envar> environment variable exists, it is taken to be a list of GIDs which <command>setuidgid-fromenv</command> sets as the process list of supplementary GIDs.
+Otherwise, if it does not exist, the supplementary GIDs list is set to just the primary GID.
 </para>
 
 <para>

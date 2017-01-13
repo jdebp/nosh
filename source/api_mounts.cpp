@@ -21,6 +21,16 @@ static const struct iovec sys[] = {
 	FSTYPE,				MAKE_IOVEC("sysfs"),
 	FSPATH,				MAKE_IOVEC("/sys"),
 };
+static const struct iovec cg2[] = {
+	FROM,				MAKE_IOVEC("cgroup2"),
+	FSTYPE,				MAKE_IOVEC("cgroup2"),
+	FSPATH,				MAKE_IOVEC("/sys/fs/cgroup"),
+};
+static const struct iovec sc2[] = {
+	FROM,				MAKE_IOVEC("cgroup2"),
+	FSTYPE,				MAKE_IOVEC("cgroup2"),
+	FSPATH,				MAKE_IOVEC("/sys/fs/cgroup/systemd"),
+};
 static const struct iovec cg1[] = {
 	FROM,				MAKE_IOVEC("tmpfs"),
 	FSTYPE,				MAKE_IOVEC("tmpfs"),
@@ -28,7 +38,7 @@ static const struct iovec cg1[] = {
 	MAKE_IOVEC("mode"),		MAKE_IOVEC("0755"),
 	MAKE_IOVEC("size"),		MAKE_IOVEC("1M"),
 };
-static const struct iovec scg[] = {
+static const struct iovec sc1[] = {
 	FROM,				MAKE_IOVEC("cgroup"),
 	FSTYPE,				MAKE_IOVEC("cgroup"),
 	FSPATH,				MAKE_IOVEC("/sys/fs/cgroup/systemd"),
@@ -97,20 +107,22 @@ static const struct iovec shm[] = {
 static const struct api_mount data[] = 
 {
 #if defined(__LINUX__) || defined(__linux__)
-	{	MAKE_DATA(proc),	MS_NOSUID|MS_NODEV				},
-	{	MAKE_DATA(sys),		MS_NOSUID|MS_NOEXEC|MS_NODEV			},
-	{	MAKE_DATA(cg1),		MS_NOSUID|MS_NOEXEC|MS_NODEV			},
-	{	MAKE_DATA(scg),		MS_NOSUID|MS_NOEXEC|MS_NODEV			},
-	{	MAKE_DATA(dev),		MS_NOSUID|MS_STRICTATIME			},
-	{	MAKE_DATA(pts),		MS_NOSUID|MS_STRICTATIME|MS_NOEXEC		},
-	{	MAKE_DATA(run),		MS_NOSUID|MS_STRICTATIME|MS_NODEV		},
-	{	MAKE_DATA(shm),		MS_NOSUID|MS_STRICTATIME|MS_NOEXEC|MS_NODEV	},
+	{	MAKE_DATA(proc),	0U,	MS_NOSUID|MS_NODEV				},
+	{	MAKE_DATA(sys),		0U,	MS_NOSUID|MS_NOEXEC|MS_NODEV			},
+	{	MAKE_DATA(cg1),		1U,	MS_NOSUID|MS_NOEXEC|MS_NODEV			},
+	{	MAKE_DATA(sc1),		1U,	MS_NOSUID|MS_NOEXEC|MS_NODEV			},
+	{	MAKE_DATA(cg2),		2U,	MS_NOSUID|MS_NOEXEC|MS_NODEV			},
+	{	MAKE_DATA(sc2),		2U,	MS_NOSUID|MS_NOEXEC|MS_NODEV			},
+	{	MAKE_DATA(dev),		0U,	MS_NOSUID|MS_STRICTATIME			},
+	{	MAKE_DATA(pts),		0U,	MS_NOSUID|MS_STRICTATIME|MS_NOEXEC		},
+	{	MAKE_DATA(run),		0U,	MS_NOSUID|MS_STRICTATIME|MS_NODEV		},
+	{	MAKE_DATA(shm),		0U,	MS_NOSUID|MS_STRICTATIME|MS_NOEXEC|MS_NODEV	},
 #else
-	{	MAKE_DATA(proc),	MNT_NOSUID					},
-	{	MAKE_DATA(dev),		MNT_NOSUID|MNT_NOEXEC				},
-	{	MAKE_DATA(fds),		MNT_NOSUID|MNT_NOEXEC				},
-	{	MAKE_DATA(run),		MNT_NOSUID					},
-	{	MAKE_DATA(shm),		MNT_NOSUID|MNT_NOEXEC				},
+	{	MAKE_DATA(proc),	0U,	MNT_NOSUID					},
+	{	MAKE_DATA(dev),		0U,	MNT_NOSUID|MNT_NOEXEC				},
+	{	MAKE_DATA(fds),		0U,	MNT_NOSUID|MNT_NOEXEC				},
+	{	MAKE_DATA(run),		0U,	MNT_NOSUID					},
+	{	MAKE_DATA(shm),		0U,	MNT_NOSUID|MNT_NOEXEC				},
 #endif
 };
 

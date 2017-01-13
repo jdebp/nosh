@@ -1,11 +1,11 @@
 <refentry id="setuidgid">
 
-<refmeta>
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
 <refentrytitle>setuidgid</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.29</refmiscinfo>
+<xi:include href="version.xml" />
 </refmeta>
 
 <refnamediv><refname>setuidgid</refname><refpurpose>set process UID and GID(s) then chain</refpurpose></refnamediv>
@@ -22,12 +22,7 @@
 <refsection><title>Description</title>
 
 <para>
-<command>setuidgid</command> is a chain-loading utility that sets the process
-real+effective UID and real+effective GID to the values for
-<replaceable>account</replaceable> in the system account database and then
-chain loads to <replaceable>next-prog</replaceable> with the
-<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-function.  
+<command>setuidgid</command> is a chain-loading utility that sets the process real+effective UID and real+effective GID to the values for <replaceable>account</replaceable> in the system account database and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
 </para>
 
 <para>
@@ -35,24 +30,16 @@ function.
 </para>
 
 <para>
-If the <arg>--supplementary</arg> option is used, setuidgid will also set the
-supplementary GIDs for the groups to which account belongs, as listed in the
-groups database. 
-Without that option, it only sets the GID that is listed for account in the
-password database, ignoring the group database, and clears the list of
-supplementary groups entirely.
+If the <arg choice='plain'>--supplementary</arg> option is used, setuidgid will also set the supplementary GIDs for the groups to which account belongs, as listed in the groups database. 
+Without that option, it only sets the GID that is listed for account in the password database, ignoring the group database, and clears the list of supplementary groups entirely.
 </para>
 
 <para>
-In either case, the command will fail if the process is not running
-under the aegis of the superuser. Non-superusers are not permitted to
-alter the supplementary groups list.
+In either case, the command will fail if the process is not running under the aegis of the superuser. Non-superusers are not permitted to alter the supplementary groups list.
 </para>
 
 <para>
-If it cannot find an account named account in the database, or fails
-setting the groups or user ID, it does not chain and exits with status
-code 111.
+If it cannot find an account named account in the database, or fails setting the groups or user ID, it does not chain and exits with status code 111.
 </para>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

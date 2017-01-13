@@ -11,8 +11,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cerrno>
 #include <sys/types.h>
 #include "kqueue_common.h"
-#include <sys/wait.h>
 #include <sys/ioctl.h>
+#include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
 #include "popt.h"
@@ -75,7 +75,7 @@ pty_run (
 
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing next program.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	const int child(fork());
@@ -144,8 +144,8 @@ pty_run (
 		if (child_signalled) {
 			child_signalled = false;
 			for (;;) {
-				const pid_t c(waitpid(-1, &status, WNOHANG|WUNTRACED));
-				if (c <= 0) break;
+				pid_t c;
+				if (0 >= wait_nonblocking_for_anychild_stopexit(c, status)) break;
 				if (c != child) continue;
 				if (WIFSTOPPED(status)) {
 					if (!pass_through) {
@@ -187,9 +187,9 @@ pty_run (
 			if (pass_through)
 				tcsetattr_nointr(STDIN_FILENO, TCSADRAIN, original_attr);
 			if (!WIFEXITED(status))
-				waitpid(child, &status, 0);
+				wait_blocking_for_exit_of(child, status);
 			const int error(errno);
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "poll", std::strerror(error));
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
 			throw EXIT_FAILURE;
 		}
 
@@ -254,6 +254,6 @@ pty_run (
 	if (pass_through)
 		tcsetattr_nointr(STDIN_FILENO, TCSADRAIN, original_attr);
 	if (!WIFEXITED(status))
-		waitpid(child, &status, 0);
+		wait_blocking_for_exit_of(child, status);
 	throw WIFEXITED(status) ? WEXITSTATUS(status) : static_cast<int>(EXIT_TEMPORARY_FAILURE);
 }

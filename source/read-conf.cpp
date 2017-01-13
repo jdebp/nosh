@@ -43,7 +43,7 @@ read_conf (
 	}
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing file name.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * file(args.front());
 	args.erase(args.begin());

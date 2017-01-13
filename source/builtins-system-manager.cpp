@@ -18,11 +18,13 @@ extern void emergency_rescue_normal_command ( const char * & , std::vector<const
 extern void isolate ( const char * & , std::vector<const char *> & ) ;
 extern void activate ( const char * & , std::vector<const char *> & ) ;
 extern void cyclog ( const char * & , std::vector<const char *> & ) ;
+extern void foreground ( const char * & , std::vector<const char *> & ) ;
 extern void system_control ( const char * & , std::vector<const char *> & ) ;
 extern void init ( const char * & , std::vector<const char *> & ) ;
 extern void system_manager ( const char * & , std::vector<const char *> & ) ;
 extern void service_manager ( const char * & , std::vector<const char *> & ) ;
 extern void move_to_control_group ( const char * &, std::vector<const char *> & );
+extern void set_control_group_knob ( const char * &, std::vector<const char *> & );
 
 extern const
 struct command 
@@ -32,6 +34,8 @@ commands[] = {
 	{	"system-control",		system_control		},
 	{	"cyclog",			cyclog			},
 	{	"move-to-control-group",	move_to_control_group	},
+	{	"foreground",			foreground		},
+	{	"set-control-group-knob",	set_control_group_knob	},
 
 	// These are the system-control subcommands used by system-manager.
 	{	"init",			init			},

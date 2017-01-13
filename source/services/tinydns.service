@@ -9,7 +9,7 @@ After=network-interfaces.service
 [Service]
 EnvironmentUser=tinydns-d
 EnvironmentDirectory=env
-LimitDATA=300000
+LimitDATA=3000000
 ExecStart=%p
 
 [Install]

@@ -1,0 +1,21 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Standard format %p logging service for %I
+Before=%I.service
+
+[Service]
+WorkingDirectory=/var/log/sv/
+User=%i-log
+ExecStart=%p %I/
+TasksMax=1
+CPUAccounting=true
+IOAccounting=true
+MemoryAccounting=true
+
+[Install]
+# Whatever the service being logged installs to, THIS service is a workstation service.
+# Logging to workstation log facilities is a workstation thing.
+WantedBy=workstation.target

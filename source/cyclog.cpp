@@ -351,7 +351,7 @@ cyclog [[gnu::noreturn]] (
 	}
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing log directory name.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	for (std::vector<const char *>::const_iterator i(args.begin()); i != args.end(); ++i) {

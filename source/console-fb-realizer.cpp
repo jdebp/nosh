@@ -4470,13 +4470,13 @@ console_fb_realizer [[gnu::noreturn]] (
 
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing virtual terminal directory name.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * vt_dirname(args.front());
 	args.erase(args.begin());
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing framebuffer device file name.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * fb_filename(args.front());
 	args.erase(args.begin());
@@ -4639,6 +4639,9 @@ console_fb_realizer [[gnu::noreturn]] (
 	usr2_signalled = true;
 
 	bool active(false);
+	bool reload_vt(true);
+
+	const struct timespec immediate_timeout = { 0, 0 };
 
 	vt.reload();
 	while (true) {
@@ -4706,7 +4709,7 @@ console_fb_realizer [[gnu::noreturn]] (
 				realizer.paint_changed_cells_onto_framebuffer();
 		}
 
-		const int rc(kevent(queue.get(), p, index, p, sizeof p/sizeof *p, 0));
+		const int rc(kevent(queue.get(), p, index, p, sizeof p/sizeof *p, reload_vt ? &immediate_timeout : 0));
 
 		if (0 > rc) {
 			const int error(errno);
@@ -4719,7 +4722,14 @@ console_fb_realizer [[gnu::noreturn]] (
 
 		index = 0;
 
-		bool reload_vt(false);
+		if (0 == rc) {
+			if (reload_vt) {
+				vt.reload();
+				realizer.set_display_update_needed();
+				reload_vt = false;
+			}
+			continue;
+		}
 
 		for (std::size_t i(0); i < static_cast<std::size_t>(rc); ++i) {
 			const struct kevent & e(p[i]);
@@ -4759,11 +4769,6 @@ console_fb_realizer [[gnu::noreturn]] (
 				input.set_LEDs();
 				input.clean_LEDs();
 			}
-		}
-
-		if (reload_vt) {
-			vt.reload();
-			realizer.set_display_update_needed();
 		}
 	}
 

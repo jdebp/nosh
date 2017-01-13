@@ -51,7 +51,7 @@ oom_kill_protect (
 
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing protection level.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * arg(args.front());
 	args.erase(args.begin());

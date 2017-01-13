@@ -98,6 +98,12 @@ split_fstab_options (
 	const char * o
 ) ;
 extern
+void
+delete_fstab_option (
+	std::list<std::string> &,
+	const char * o
+) ;
+extern
 bool
 has_option (
 	const std::list<std::string> & options,
@@ -227,6 +233,54 @@ extern
 const char *
 signame (
 	int signo
+) ;
+extern
+int
+wait_nonblocking_for_anychild_stopcontexit (
+	pid_t & child,
+	int & status
+) ;
+extern
+int
+wait_nonblocking_for_anychild_stopexit (
+	pid_t & child,
+	int & status
+) ;
+extern
+int
+wait_nonblocking_for_anychild_exit (
+	pid_t & child,
+	int & status
+) ;
+extern
+int
+wait_blocking_for_anychild_exit (
+	pid_t & child,
+	int & status
+) ;
+extern
+int
+wait_nonblocking_for_stopcontexit_of (
+	const pid_t child,
+	int & status
+) ;
+extern
+int
+wait_nonblocking_for_stopexit_of (
+	const pid_t child,
+	int & status
+) ;
+extern
+int
+wait_nonblocking_for_exit_of (
+	const pid_t child,
+	int & status
+) ;
+extern
+int
+wait_blocking_for_exit_of (
+	const pid_t child,
+	int & status
 ) ;
 
 #endif

@@ -41,8 +41,8 @@ move_to_control_group (
 	}
 
 	if (args.empty()) {
-		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing account name.");
-		throw EXIT_FAILURE;
+		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing control group name.");
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * group(args.front());
 	args.erase(args.begin());

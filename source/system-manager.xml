@@ -1,11 +1,11 @@
 <refentry id="system-manager">
 
-<refmeta>
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
 <refentrytitle>system-manager</refentrytitle>
 <manvolnum>8</manvolnum>
 <refmiscinfo class="manual">administrator commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.29</refmiscinfo>
+<xi:include href="version.xml" />
 </refmeta>
 
 <refnamediv>
@@ -81,15 +81,14 @@ It does very little to its process state, which is inherited by the service mana
 
 <listitem>
 <para>
-It sets itself as a session leader, as if by
-<citerefentry><refentrytitle>setsid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+It sets itself as a session leader, as if by <citerefentry><refentrytitle>setsid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+If, as is the case on FreeBSD/TrueOS, the session already has a controlling TTY device, the association from the session to that device is removed.
 </para>
 </listitem>
 
 <listitem>
 <para>
-(On operating systems that support this)
-It calls <citerefentry><refentrytitle>setlogin</refentrytitle><manvolnum>2</manvolnum></citerefentry> to set the session's login name to <code>root</code>.
+(On operating systems that support this) It calls <citerefentry><refentrytitle>setlogin</refentrytitle><manvolnum>2</manvolnum></citerefentry> to set the session's login name to <code>root</code>.
 </para>
 </listitem>
 
@@ -160,6 +159,13 @@ It creates the device nodes for various "early" devices that are required to exi
 
 <listitem>
 <para>
+If control groups are available and it is in one, it enables the CPU, memory, IO, and tasks control group controllers for its own control group and for the <filename>service-manager.slice</filename> control group immediately below it.
+It moves itself into a <filename>me.slice</filename> control group, so that the controllers can be enabled for sub-groups.
+</para>
+</listitem>
+
+<listitem>
+<para>
 It instructs the kernel to send the signals for various optional system events such as <code>secure-attention-key</code> and <code>kbrequest</code>.
 </para>
 </listitem>
@@ -184,10 +190,8 @@ The operating system re-parents any orphaned processes to it.
 
 <listitem>
 <para>
-After creating a local domain socket at
-<filename>/run/service-manager/control</filename>,
-it spawns an instance of
-<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+After creating a local domain socket at <filename>/run/service-manager/control</filename>, it spawns an instance of <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+If control groups are available, it is run in its own dedicated <filename>service-manager.slice</filename> subordinate control group below the system-manager's original own.
 This is the global service manager for the system, controlled through the socket.
 It is not expected to ever terminate (before shutdown).
 If it does, <command>system-manager</command> re-spawns it.
@@ -196,11 +200,9 @@ If it does, <command>system-manager</command> re-spawns it.
 
 <listitem>
 <para>
-As system events occur, it spawns (ephemeral) instances of
-<citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-These calculate the details of service and target dependencices for system
-state changes, and pass instructions to the global service manager for bringing
-services up and down.
+As system events occur, it spawns (ephemeral) instances of <citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+If control groups are available, they are is run in their own dedicated <filename>service-control.slice</filename> subordinate control group below the system-manager's original own.
+These calculate the details of service and target dependencices for system state changes, and pass instructions to the global service manager for bringing services up and down.
 Only one instance is spawned at a time.
 </para>
 </listitem>
@@ -208,6 +210,7 @@ Only one instance is spawned at a time.
 <listitem>
 <para>
 It spawns an instance of <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> with its input connected to the read end of a pipe.
+If control groups are available, it is run in its own dedicated <filename>system-manager-log.slice</filename> subordinate control group below the system-manager's original own.
 This process is expected to only terminate when the pipe is closed.
 If it terminates otherwise, <command>system-manager</command> simply re-spawns it.
 </para>

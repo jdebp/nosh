@@ -9,6 +9,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <set>
 #include <cstddef>
 #include <cstdlib>
+#include <cstdio>
 #include <csignal>
 #include <cstring>
 #include <cerrno>
@@ -17,6 +18,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <curses.h>
+#include <term.h>
 #include "utils.h"
 #include "fdutils.h"
 #include "kqueue_common.h"
@@ -30,6 +33,57 @@ enum {
 	STOP = 0,
 	START = 1
 };
+
+/* Pretty coloured output ***************************************************
+// **************************************************************************
+*/
+
+enum { COLOR_DEFAULT = 9 };
+
+static
+#if !defined(__OpenBSD__)
+const
+#endif
+char 
+	setaf[] = "setaf",
+	op[] = "op";
+
+static inline
+int
+puterr (
+	int c
+) {
+	return std::fputc(c, stderr);
+}
+
+static inline
+void
+put (
+	const char * s,
+	const int colour
+) {
+#if defined(__OpenBSD__)
+	// OpenBSD requires a const incorrectness bodge.
+	tputs(tparm(const_cast<char *>(s), colour), 1, puterr);
+#else
+	tputs(tparm(s, colour), 1, puterr);
+#endif
+}
+
+static inline
+void
+reset_colour (
+	bool no_colours
+) {
+	if (no_colours) return;
+	const char * s(tigetstr(op));
+	if (!s || reinterpret_cast<const char *>(-1) == s) {
+		s = tigetstr(setaf);
+		if (!s) return;
+		put(s, COLOR_DEFAULT);
+	} else
+		tputs(s, 1, puterr);
+}
 
 /* Utilities ****************************************************************
 // **************************************************************************
@@ -76,6 +130,7 @@ struct bundle {
 		WANT_START = 0x2,
 		WANT_STOP = 0x4,
 	};
+	enum event { LOAD, LOG_LOAD, RUN_ON_EMPTY, LOG_RUN_ON_EMPTY, IS_BLOCKED, IS_BLOCKING, IS_UNBLOCKED, IS_START, IS_STOP, STOP_HARDER, STOP_HARDEST, CANNOT_START, CANNOT_STOP, IS_READY, IS_DONE };
 	int bundle_dir_fd, supervise_dir_fd, service_dir_fd, status_file_fd;
 	std::string path, name;
 	bool ss_scanned, use_hangup, use_final_kill;
@@ -113,11 +168,15 @@ struct bundle {
 	void start_initial() { start(supervise_dir_fd); }
 	bool has_started() const;
 	bool has_stopped() const;
+	void print_event(const char *, bool, enum event) const;
 protected:
 	// Our state machine guarantees that state transitions only ever increase the state value.
 	// Even though we don't make use of it, our logic requires at least one state between FORCED and DONE, for timed-out jobs to sit in.
 	enum { INITIAL, BLOCKED, ACTIONED, REREQUESTED = ACTIONED + 30, ORDERED = REREQUESTED + 30, FORCED = ORDERED + 30, TIMEDOUT = FORCED + 30, DONE } ;
 	int job_state;
+	static const char * name_of (enum event);
+	static void set_colour_of (bool, enum event);
+	static int colour_of (enum event);
 };
 }
 
@@ -134,7 +193,7 @@ bool
 bundle::has_started() const
 {
 	if (0 > supervise_dir_fd || !is_ok(supervise_dir_fd)) return false;
-	if (is_ready_after_run(supervise_dir_fd))
+	if (is_ready_after_run(service_dir_fd))
 		return 0 < after_run_status_file(status_file_fd);
 	else
 		return 0 < running_status_file(status_file_fd);
@@ -145,6 +204,82 @@ bool
 bundle::has_stopped() const
 {
 	return 0 <= supervise_dir_fd && (!is_ok(supervise_dir_fd) || 0 < stopped_status_file(status_file_fd));
+}
+
+inline
+const char *
+bundle::name_of (
+	enum event e
+) {
+	switch (e) {
+		case LOAD:			return "load";
+		case LOG_LOAD:			return "remain";
+		case RUN_ON_EMPTY:		return "log-load";
+		case LOG_RUN_ON_EMPTY:		return "log-remain";
+		case IS_BLOCKED:		return "blocked";
+		case IS_BLOCKING:		return "blocker";
+		case IS_UNBLOCKED:		return "unblocked";
+		case IS_START:			return "start";
+		case IS_STOP:			return "stop";
+		case STOP_HARDER:		return "stop harder";
+		case STOP_HARDEST:		return "stop hardest";
+		case CANNOT_START:		return "cannot start";
+		case CANNOT_STOP:		return "cannot stop";
+		case IS_READY:			return "ready";
+		case IS_DONE:			return "done";
+		default:			return "unknown";
+	}
+}
+
+inline
+int
+bundle::colour_of (
+	enum event e
+) {
+	switch (e) {
+		case LOAD:			return COLOR_BLUE;
+		case LOG_LOAD:			return COLOR_BLUE;
+		case RUN_ON_EMPTY:		return COLOR_BLUE;
+		case LOG_RUN_ON_EMPTY:		return COLOR_BLUE;
+		case IS_BLOCKED:		return COLOR_MAGENTA;
+		case IS_BLOCKING:		return COLOR_MAGENTA;
+		case IS_UNBLOCKED:		return COLOR_CYAN;
+		case IS_START:			return COLOR_YELLOW;
+		case IS_STOP:			return COLOR_YELLOW;
+		case STOP_HARDER:		return COLOR_YELLOW;
+		case STOP_HARDEST:		return COLOR_YELLOW;
+		case CANNOT_START:		return COLOR_RED;
+		case CANNOT_STOP:		return COLOR_RED;
+		case IS_READY:			return COLOR_GREEN;
+		case IS_DONE:			return COLOR_GREEN;
+		default:			return COLOR_DEFAULT;
+	}
+}
+
+inline
+void
+bundle::set_colour_of (
+	bool no_colours,
+	enum bundle::event e
+) {
+	if (no_colours) return;
+	const char * s(tigetstr(setaf));
+	if (!s || reinterpret_cast<const char *>(-1) == s) return;
+	put(s, colour_of(e));
+}
+
+inline
+void 
+bundle::print_event(
+	const char * prog,
+	bool no_colours, 
+	enum event e
+) const {
+	std::fprintf(stderr, "%s: ", prog);
+	set_colour_of(no_colours, e);
+	std::fprintf(stderr, "%s", name_of(e));
+	reset_colour(no_colours);
+	std::fprintf(stderr, " %s%s\n", path.c_str(), name.c_str());
 }
 
 namespace std {
@@ -363,8 +498,15 @@ start_stop_common [[gnu::noreturn]] (
 	const char * & /*next_prog*/,
 	std::vector<const char *> & args,
 	const char * prog,
-	int want
+	int want,
+	bool no_colours
 ) {
+	if (!no_colours) {
+		int err;
+		if (OK != setupterm(0, STDERR_FILENO, &err))
+			no_colours = true;
+	}
+
 	const FileDescriptorOwner queue(kqueue());
 	if (0 > queue.get()) {
 		const int error(errno);
@@ -515,8 +657,11 @@ start_stop_common [[gnu::noreturn]] (
 		const bool was_already_loaded(is_ok(b.supervise_dir_fd));
 		if (!was_already_loaded) {
 			const bool run_on_empty(!is_done_after_exit(b.service_dir_fd));
-			if (verbose)
-				std::fprintf(stderr, "%s: LOAD: %s%s\n", prog, b.name.c_str(), run_on_empty ? " (remain)" : "");
+			if (verbose) {
+				b.print_event(prog, no_colours, b.LOAD);
+				if (run_on_empty)
+					b.print_event(prog, no_colours, b.RUN_ON_EMPTY);
+			}
 			if (!pretending) {
 				make_supervise_fifos (b.supervise_dir_fd);
 				load(prog, socket_fd.get(), b.name.c_str(), b.supervise_dir_fd, b.service_dir_fd);
@@ -524,7 +669,7 @@ start_stop_common [[gnu::noreturn]] (
 					make_run_on_empty(prog, socket_fd.get(), b.supervise_dir_fd);
 				make_pipe_connectable(prog, socket_fd.get(), b.supervise_dir_fd);
 				if (!wait_ok(b.supervise_dir_fd, 5000)) {
-					std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, b.name.c_str(), "ok", "Unable to load service bundle.");
+					std::fprintf(stderr, "%s: ERROR: %s/%s/%s: %s\n", prog, b.path.c_str(), b.name.c_str(), "ok", "Unable to load service bundle.");
 					continue;
 				}
 			}
@@ -538,8 +683,11 @@ start_stop_common [[gnu::noreturn]] (
 				const bool log_was_already_loaded(is_ok(log_supervise_dir_fd.get()));
 				if (!log_was_already_loaded) {
 					const bool run_on_empty(!is_done_after_exit(log_service_dir_fd.get()));
-					if (verbose)
-						std::fprintf(stderr, "%s: LOAD: %s%s\n", prog, (b.name + "/log").c_str(), run_on_empty ? " (remain)" : "");
+					if (verbose) {
+						b.print_event(prog, no_colours, b.LOG_LOAD);
+						if (run_on_empty)
+							b.print_event(prog, no_colours, b.LOG_RUN_ON_EMPTY);
+					}
 					if (!pretending) {
 						make_supervise_fifos (log_supervise_dir_fd.get());
 						load(prog, socket_fd.get(), (b.name + "/log").c_str(), log_supervise_dir_fd.get(), log_service_dir_fd.get());
@@ -588,7 +736,7 @@ start_stop_common [[gnu::noreturn]] (
 				}
 				if (is_done) {
 					if (verbose)
-						std::fprintf(stderr, "%s: %s: %s%s\n", prog, bundle::WANT_START == b.wants ? "READY" : "DONE", b.path.c_str(), b.name.c_str());
+						b.print_event(prog, no_colours, bundle::WANT_START == b.wants ? b.IS_READY: b.IS_DONE);
 					b.mark_done();
 					struct kevent k;
 					set_event(&k, b.status_file_fd, EVFILT_VNODE, EV_DELETE|EV_DISABLE, NOTE_WRITE, 0, 0);
@@ -604,8 +752,10 @@ start_stop_common [[gnu::noreturn]] (
 				for (bundle_pointer_set::const_iterator j(a.begin()); a.end() != j; ++j) {
 					bundle * p(*j);
 					if (!p->done()) {
-						if (verbose && b.initial())
-							std::fprintf(stderr, "%s: %s%s: BLOCKED by %s%s\n", prog, b.path.c_str(), b.name.c_str(), p->path.c_str(), p->name.c_str());
+						if (verbose && b.initial()) {
+							b.print_event(prog, no_colours, b.IS_BLOCKED);
+							p->print_event(prog, no_colours, p->IS_BLOCKING);
+						}
 						is_blocked = true;
 						break;
 					}
@@ -616,7 +766,7 @@ start_stop_common [[gnu::noreturn]] (
 					continue;
 				}
 				if (verbose)
-					std::fprintf(stderr, "%s: UNBLOCKED: %s%s\n", prog, b.path.c_str(), b.name.c_str());
+					b.print_event(prog, no_colours, b.IS_UNBLOCKED);
 				b.mark_unblocked();
 				struct kevent k;
 				set_event(&k, b.status_file_fd, EVFILT_VNODE, EV_ADD|EV_ENABLE|EV_CLEAR, NOTE_WRITE, 0, 0);
@@ -637,11 +787,11 @@ start_stop_common [[gnu::noreturn]] (
 						if (0 > b.supervise_dir_fd) break;
 						const bool was_already_loaded(is_ok(b.supervise_dir_fd));
 						if (!was_already_loaded)
-							std::fprintf(stderr, "%s: CANNOT START: %s%s\n", prog, b.path.c_str(), b.name.c_str());
+							b.print_event(prog, no_colours, b.CANNOT_START);
 						else 
 						if (b.needs_initial_action()) {
 							if (verbose)
-								std::fprintf(stderr, "%s: START: %s%s\n", prog, b.path.c_str(), b.name.c_str());
+								b.print_event(prog, no_colours, b.IS_START);
 							if (!pretending)
 								b.start_initial();
 						}
@@ -652,23 +802,23 @@ start_stop_common [[gnu::noreturn]] (
 						if (0 > b.supervise_dir_fd) break;
 						const bool was_already_loaded(is_ok(b.supervise_dir_fd));
 						if (!was_already_loaded)
-							std::fprintf(stderr, "%s: CANNOT STOP: %s%s\n", prog, b.path.c_str(), b.name.c_str());
+							b.print_event(prog, no_colours, b.CANNOT_STOP);
 						else
 						if (b.needs_hardest_action()) {
 							if (verbose)
-								std::fprintf(stderr, "%s: STOP (hardest): %s%s\n", prog, b.path.c_str(), b.name.c_str());
+								b.print_event(prog, no_colours, b.STOP_HARDEST);
 							if (!pretending)
 								b.stop_hardest();
 						} else 
 						if (b.needs_harder_action()) {
 							if (verbose)
-								std::fprintf(stderr, "%s: STOP (harder): %s%s\n", prog, b.path.c_str(), b.name.c_str());
+								b.print_event(prog, no_colours, b.STOP_HARDER);
 							if (!pretending)
 								b.stop_harder();
 						} else 
 						if (b.needs_initial_action()) {
 							if (verbose)
-								std::fprintf(stderr, "%s: STOP: %s%s\n", prog, b.path.c_str(), b.name.c_str());
+								b.print_event(prog, no_colours, b.IS_STOP);
 							if (!pretending)
 								b.stop_initial();
 						}
@@ -690,13 +840,16 @@ activate [[gnu::noreturn]] (
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {
+	bool colours(isatty(STDERR_FILENO));
 	const char * prog(basename_of(args[0]));
 	try {
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
+		popt::bool_definition colours_option('\0', "colour", "Force output in colour even if standard error is not a terminal.", colours);
 		popt::bool_definition verbose_option('v', "verbose", "Display verbose information.", verbose);
 		popt::bool_definition pretending_option('n', "pretend", "Pretend to take action, without telling the service manager to do anything.", pretending);
 		popt::definition * main_table[] = {
 			&user_option,
+			&colours_option,
 			&verbose_option,
 			&pretending_option
 		};
@@ -713,7 +866,7 @@ activate [[gnu::noreturn]] (
 		throw EXIT_FAILURE;
 	}
 
-	start_stop_common(next_prog, args, prog, START);
+	start_stop_common(next_prog, args, prog, START, !colours);
 }
 
 void
@@ -721,13 +874,16 @@ deactivate [[gnu::noreturn]] (
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {
+	bool colours(isatty(STDERR_FILENO));
 	const char * prog(basename_of(args[0]));
 	try {
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
+		popt::bool_definition colours_option('\0', "colour", "Force output in colour even if standard error is not a terminal.", colours);
 		popt::bool_definition verbose_option('v', "verbose", "Display verbose information.", verbose);
 		popt::bool_definition pretending_option('n', "pretend", "Pretend to take action, without telling the service manager to do anything.", pretending);
 		popt::definition * main_table[] = {
 			&user_option,
+			&colours_option,
 			&verbose_option,
 			&pretending_option
 		};
@@ -744,7 +900,7 @@ deactivate [[gnu::noreturn]] (
 		throw EXIT_FAILURE;
 	}
 
-	start_stop_common(next_prog, args, prog, STOP);
+	start_stop_common(next_prog, args, prog, STOP, !colours);
 }
 
 void
@@ -752,13 +908,16 @@ isolate [[gnu::noreturn]] (
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {
+	bool colours(isatty(STDERR_FILENO));
 	const char * prog(basename_of(args[0]));
 	try {
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
+		popt::bool_definition colours_option('\0', "colour", "Force output in colour even if standard error is not a terminal.", colours);
 		popt::bool_definition verbose_option('v', "verbose", "Display verbose information.", verbose);
 		popt::bool_definition pretending_option('n', "pretend", "Pretend to take action, without telling the service manager to do anything.", pretending);
 		popt::definition * main_table[] = {
 			&user_option,
+			&colours_option,
 			&verbose_option,
 			&pretending_option
 		};
@@ -775,7 +934,7 @@ isolate [[gnu::noreturn]] (
 		throw EXIT_FAILURE;
 	}
 
-	start_stop_common(next_prog, args, prog, START);
+	start_stop_common(next_prog, args, prog, START, !colours);
 }
 
 void
@@ -783,13 +942,16 @@ reset [[gnu::noreturn]] (
 	const char * & next_prog,
 	std::vector<const char *> & args
 ) {
+	bool colours(isatty(STDERR_FILENO));
 	const char * prog(basename_of(args[0]));
 	try {
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
+		popt::bool_definition colours_option('\0', "colour", "Force output in colour even if standard error is not a terminal.", colours);
 		popt::bool_definition verbose_option('v', "verbose", "Display verbose information.", verbose);
 		popt::bool_definition pretending_option('n', "pretend", "Pretend to take action, without telling the service manager to do anything.", pretending);
 		popt::definition * main_table[] = {
 			&user_option,
+			&colours_option,
 			&verbose_option,
 			&pretending_option
 		};
@@ -806,5 +968,5 @@ reset [[gnu::noreturn]] (
 		throw EXIT_FAILURE;
 	}
 
-	start_stop_common(next_prog, args, prog, DEFAULT);
+	start_stop_common(next_prog, args, prog, DEFAULT, !colours);
 }

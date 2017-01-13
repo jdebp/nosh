@@ -30,6 +30,19 @@ split_fstab_options (
 	return r;
 }
 
+void
+delete_fstab_option (
+	std::list<std::string> & options,
+	const char * o
+) {
+	for (std::list<std::string>::iterator i(options.begin()); options.end() != i; ) {
+		if (*i == o)
+			i = options.erase(i);
+		else
+			++i;
+	}
+}
+
 bool
 has_option (
 	const std::list<std::string> & options,

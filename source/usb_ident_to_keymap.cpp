@@ -301,7 +301,7 @@ usb_ident_to_keymap_index (
 			case 0x022B:	break;	// return KBDMAP_INDEX_HISTORY;
 		} 
 	else
-		;
+		/* This is not a system, keyboard, or consumer key. */ ;
 
 	return 0xFFFF;
 }

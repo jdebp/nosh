@@ -39,7 +39,7 @@ umask (
 
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing TTY name.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * text(args.front()), * old(text);
 	args.erase(args.begin());

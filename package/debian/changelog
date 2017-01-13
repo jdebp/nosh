@@ -1,3 +1,23 @@
+nosh (1.31) unstable; urgency=medium
+
+  * The start/stop/reset subcommands of system-control now output colourized verbose mode messages.
+  * The various cleanuucp/cleantmp/cleanX services are now intentionally more difficult to re-trigger.
+    We don't want them re-triggered if the administrator simply starts the normal target a second time.
+    So they are now "remain" services, that must be explicitly stopped in order to be restarted.
+  * The Appcafe configuration import has been improved, and some problems with its nginx part have been fixed.
+  * tinydns configuration import now creates data for ALL of the private/local reverse lookup domain names.
+  * A bug has been fixed in setuidgid-fromenv that prevented multiple supplementary groups.
+  * userenv now can set a lot more environment variables, specified in login.conf .
+  * Some rare corner case bugs in quoting and escaping when convert-systemd-units generates sh commands have been fixed.
+  * An omission that has made emergency-login@console disabled since 1.29 has been fixed.
+  * Generated makefiles for tinydns have been fixed so that they work with both BSD make and GNU make.
+  * There is now a set-control-group-knob command, and convert-systemd-units makes use of it.
+  * The Debian service bundles use a slightly different Linux control group layout.
+  * The pipe command has gained the ability to orphan or clean up the child process.
+  * Presets now support wildmat-style character set wildcards.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Fri, 13 Jan 2017 22:09:29 +0000
+
 nosh (1.30) unstable; urgency=medium
 
   * More BSD services: blacklistd, ypldap

@@ -44,11 +44,12 @@ main (
 	} catch (int r) {
 		return r;
 	}
-	if (args.empty())
+	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing terminal command.");
-	else {
+		return EXIT_USAGE;
+	} else {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, next_prog, std::strerror(error));
+		return EXIT_FAILURE;
 	}
-	return EXIT_FAILURE;
 }

@@ -40,18 +40,18 @@ The "qmail-smtp-relay" service, for example, is plumbed to a "cyclog@qmail-smtp-
 <p>
 In the second scenario multiple services all fan-in to a single logging service.
 This scenario is exemplified by most of the "sysinit" services that are bundled with the package.
-<a href="anatomy-of-sysinit-service.html#etc">They are all plumbed to a single "sysinit-log" logging service</a>.
+<a href="anatomy-of-sysinit-service.html#logging">They are all plumbed to a single "sysinit-log" logging service</a>.
 This scenario has the disadvantage that the log outputs of multiple parallel concurrent service daemons are mashed together into a single log.
-Were these permanently running daemon processes all emitting log output all of the time, this would cause a mess.
-But the "sysinit" services that are plumbed to "sysinit-log" in fact do most of their work in their <code>startup</code> programs and have heavy ordering dependencies upon one another.
+Were these permanently running d&aelig;mon processes all emitting log output all of the time, this would cause a mess.
+But the "sysinit" services that are plumbed to "sysinit-log" are single-shot services that in fact do their work before becoming ready, and have heavy ordering dependencies upon one another.
 They have one period of activity, and it usually doesn't overlap the activities of the other services.
 </p>
 
 <p>
 There is also logging for the system-wide service manager itself.
-The system manager starts a logging daemon, an instance of <a href="cyclog.html"><code>cyclog</code></a>, whose standard input is connected to the read end of a pipe, the write end of which is connected to the standard output/error of the system-wide service manager process.
-If a service is not plumbed to another service, then it inherits its standard output and standard error from the service manager, and its log output goes to that logging daemon.
-However, that logging daemon logs to a temporary filesystem (the log files being written to <code>/run/system-manager/log</code>) and has an intentionally small cap on the log file sizes.
+The system manager starts a logging d&aelig;mon, an instance of <a href="cyclog.html"><code>cyclog</code></a>, whose standard input is connected to the read end of a pipe, the write end of which is connected to the standard output/error of the system-wide service manager process.
+If a service is not plumbed to another service, then it inherits its standard output and standard error from the service manager, and its log output goes to that logging d&aelig;mon.
+However, that logging d&aelig;mon logs to a temporary filesystem (the log files being written to <code>/run/system-manager/log</code>) and has an intentionally small cap on the log file sizes.
 It is not suitable for general-purpose logging, and is intended to log just the output of the service manager itself, and perhaps the (fairly humdrum) outputs of <code>cyclog</code> logging daemons.
 All other daemons should, properly, be plumbed to a logging service.
 </p>

@@ -56,6 +56,7 @@ setuidgid_fromenv (
 			e = std::strchr(p, ',');
 			if (!e) e = std::strchr(p, '\0');
 			const std::string v(p, e);
+			if (*e) ++e;
 			const char * text(v.c_str()), * old(text);
 			const gid_t g(std::strtoul(text, const_cast<char **>(&text), 0));
 			if (text == old || *text) {

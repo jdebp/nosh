@@ -7,6 +7,8 @@ Description=VirtualBox guest additions daemon
 
 [Service]
 ExecStart=VBoxService -f
+RestartSec=5
+Restart=on-abort
 
 [Install]
 WantedBy=virtualbox-guest.target

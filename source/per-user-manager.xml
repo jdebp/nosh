@@ -1,11 +1,11 @@
 <refentry id="per-user-manager">
 
-<refmeta>
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
 <refentrytitle>per-user-manager</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">administrator commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.29</refmiscinfo>
+<xi:include href="version.xml" />
 </refmeta>
 
 <refnamediv>
@@ -61,6 +61,13 @@ This yields a slightly more informative process tree.
 </para>
 </listitem>
 
+<listitem>
+<para>
+If control groups are available and it is in one, it enables the CPU, memory, IO, and tasks control group controllers for its own control group and for the <filename>service-manager.slice</filename> control group immediately below it.
+It moves itself into a <filename>me.slice</filename> control group, so that the controllers can be enabled for sub-groups.
+</para>
+</listitem>
+
 </itemizedlist>
 
 <para>
@@ -104,13 +111,17 @@ The operating system (if this is supported) re-parents any orphaned descendent p
 <listitem>
 <para>
 After creating a local domain socket named <filename>/run/user/<replaceable>$USER</replaceable>/service-manager/control</filename> it spawns an instance of <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+If control groups are available, it is run in its own dedicated <filename>service-manager.slice</filename> subordinate control group below the system-manager's original own.
 This is the local service manager for the user, controlled through the socket.
+It is not expected to ever terminate (before user-level shutdown).
+If it does, <command>per-user-manager</command> re-spawns it.
 </para>
 </listitem>
 
 <listitem>
 <para>
 As events occur, it spawns (ephemeral) instances of <citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+If control groups are available, they are is run in their own dedicated <filename>service-control.slice</filename> subordinate control group below the system-manager's original own.
 These calculate the details of service and target dependencices for user-wide state changes, and pass instructions to the local service manager for bringing services up and down.
 Only one instance is spawned at a time.
 </para>
@@ -119,6 +130,7 @@ Only one instance is spawned at a time.
 <listitem>
 <para>
 It spawns an instance of <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> with its input connected to the read end of a pipe.
+If control groups are available, it is run in its own dedicated <filename>per-user-manager-log.slice</filename> subordinate control group below the system-manager's original own.
 This process is expected to only terminate when the pipe is closed.
 If it terminates otherwise, <command>per-user-manager</command> simply re-spawns it.
 </para>

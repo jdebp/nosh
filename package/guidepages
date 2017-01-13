@@ -5,6 +5,7 @@ anatomy-of-system-target
 beyond-cyclog
 chain-loading-cheatsheet
 commands
+converting-jails
 converting-systemd-units
 creating-bundles
 external-formats
@@ -13,7 +14,9 @@ fstab
 gazetteer
 index
 introduction
+jailing-services
 kernel-virtual-terminals
+limiting-services
 log-post-processing
 log-service-plumbing
 log-service-security
@@ -42,3 +45,4 @@ troubleshooting
 ttys
 user-virtual-terminals
 virtual-terminal-login
+working-from-rc-scripts

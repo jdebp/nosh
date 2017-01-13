@@ -146,7 +146,7 @@ login_banner (
 
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing issue file name.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * issue_filename(args.front());
 	args.erase(args.begin());

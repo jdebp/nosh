@@ -13,7 +13,7 @@ RuntimeDirectoryMode=0755
 #ExecStartPre=sh -c "setfacl -m 'u:messagebus:rw' \"%t/service-manager/control\" || setfacl -m 'user:messagebus:rws::allow' \"%t/service-manager/control\""
 ExecStartPre=chgrp -v -- messagebus "%t/service-manager/control"
 ExecStartPre=chmod -v -- g=rw "%t/service-manager/control"
-ExecStartPre=mkdir -p -m 0755 -- /var/db/%p
+ExecStartPre=install -d -m 0755 -- /var/db/%p
 ExecStartPre=sh -c 'test -r /var/db/%p/machine-id || ln -s /etc/machine-id /var/db/%p/'
 # BSD dbus doesn't support --nopidfile even though that would be nice here.
 # BSD dbus doesn't support --address=systemd: even though that would be the closest to our UCSPI-LOCAL.

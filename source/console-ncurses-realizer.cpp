@@ -436,7 +436,7 @@ console_ncurses_realizer [[gnu::noreturn]] (
 	}
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing file name.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * dirname(args.front());
 	args.erase(args.begin());

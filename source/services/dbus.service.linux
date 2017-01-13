@@ -10,7 +10,7 @@ After=machine-id.service extra-shared-libraries.target
 RuntimeDirectory=%p
 RuntimeDirectoryMode=0755
 ExecStartPre=setfacl -m 'u:messagebus:rw' "%t/service-manager/control"
-ExecStartPre=mkdir -p -m 0755 -- /var/db/%p
+ExecStartPre=install -d -m 0755 -- /var/db/%p
 ExecStartPre=sh -c 'test -r /var/db/%p/machine-id || ln -s /etc/machine-id /var/db/%p/'
 # The --address=systemd: option is the closest to our UCSPI-LOCAL.
 ExecStart=dbus-daemon --config-file ./system-wide.conf --nofork --nopidfile --address=systemd:

@@ -4,29 +4,14 @@
 #
 # This is not a systemd preset.
 # It goes in a special nosh system-manager preset directory.
-# It is used by the nosh-run-kernel-vt package in order to enable TTY login services on user-space virtual terminals.
+# It is used by the nosh-run-kernel-vt package in order to enable TTY login services on kernel virtual terminals.
 #
+
+disable	ttylogin@vc*-tty.service
+disable	cyclog@ttylogin@vc*-tty.service
 
 enable	ttylogin-starter.service
 enable	cyclog@ttylogin-starter.service
 
-disable	cyclog@ttylogin@tty0*.service
-disable	cyclog@ttylogin@tty1*.service
-disable	cyclog@ttylogin@tty2*.service
-disable	cyclog@ttylogin@tty3*.service
-disable	cyclog@ttylogin@tty4*.service
-disable	cyclog@ttylogin@tty5*.service
-disable	cyclog@ttylogin@tty6*.service
-disable	cyclog@ttylogin@tty7*.service
-disable	cyclog@ttylogin@tty8*.service
-disable	cyclog@ttylogin@tty9*.service
-disable	ttylogin@tty0*.service
-disable	ttylogin@tty1*.service
-disable	ttylogin@tty2*.service
-disable	ttylogin@tty3*.service
-disable	ttylogin@tty4*.service
-disable	ttylogin@tty5*.service
-disable	ttylogin@tty6*.service
-disable	ttylogin@tty7*.service
-disable	ttylogin@tty8*.service
-disable	ttylogin@tty9*.service
+disable	ttylogin@tty[0-9]*.service
+disable	cyclog@ttylogin@tty[0-9]*.service

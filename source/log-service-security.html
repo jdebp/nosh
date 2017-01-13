@@ -43,7 +43,7 @@ The pipe is kept open at both ends by the service manager, and when <code>cylog@
 </p></li>
 </ul>
 
-<h2>
+<h2 id="users">
 Dedicated log user accounts
 </h2>
 
@@ -93,7 +93,7 @@ One can budget space on a log storage disc, by totalling up maximum configured l
 </p>
 
 <p>
-Nor does log rotation trigger the well known problem with GNU <code>tail</code> and BSD <code>tail</code>.
+Nor does log rotation trigger one of the well known problems with GNU <code>tail</code> and BSD <code>tail</code>.
 (If a log file is truncated and then quickly written to, neither <code>tail</code> will output all log data.)
 The log file writer never truncates, or indeed modifies, log files once it has written them up to the size limit.
 Rather, it switches in a new file, with a fresh i-node.
@@ -102,6 +102,11 @@ Rather, it switches in a new file, with a fresh i-node.
 <p>
 Indeed, log files are only ever written to in strictly sequential, append-only, fashion.
 These behaviours can be relied upon if one wants to place log directories on storage devices that don't like it when one overrwites the same file(s) in place over and over.
+</p>
+
+<p>
+(<a href="http://jdebp.eu/FGA/do-not-use-logrotate.html">GNU <code>tail</code> and BSD <code>tail</code> have more than one problem</a>, though.
+For avoiding the other problems, one has to use something like <a href="follow-log-directories.html"><code>follow-log-directories</code></a> which actually knows that it is looking at a log directoryi, rather than only knowing to look at a single file.)
 </p>
 
 <h2 id="old-services">

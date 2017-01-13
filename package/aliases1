@@ -32,6 +32,7 @@ exec	plug-and-play-event-handler
 exec	prependpath
 exec	read-conf
 exec	recordio
+exec	set-control-group-knob
 exec	set-dynamic-hostname
 exec	set-mount-object
 exec	setenv

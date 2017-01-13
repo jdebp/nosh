@@ -78,6 +78,7 @@ extern void oom_kill_protect ( const char * &, std::vector<const char *> & );
 extern void local_reaper ( const char * &, std::vector<const char *> & );
 extern void move_to_control_group ( const char * &, std::vector<const char *> & );
 extern void delegate_control_group_to ( const char * &, std::vector<const char *> & );
+extern void set_control_group_knob ( const char * &, std::vector<const char *> & );
 
 extern const
 struct command 
@@ -138,6 +139,7 @@ commands[] = {
 	{	"local-reaper",				local_reaper			},
 	{	"move-to-control-group",		move_to_control_group		},
 	{	"delegate-control-group-to",		delegate_control_group_to	},
+	{	"set-control-group-knob",		set_control_group_knob		},
 
 	// Terminals
 	{	"pause",				pause				},

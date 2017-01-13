@@ -26,6 +26,22 @@ do
 	system-control disable "$n"
 done
 
+for target in jails
+do
+	system-control preset -- "${target}".target
+done
+
+for target in jails
+do
+	if system-control is-enabled "${target}.target"
+	then
+		echo >> "$3" on "${target}"
+	else
+		echo >> "$3" off "${target}"
+	fi
+#	system-control print-service-env "${target}.target" >> "$3"
+done
+
 for i in `list_jails`
 do
 	test -z "$i" && continue
@@ -41,6 +57,11 @@ do
 
 	system-control preset -- "${jail_service}"
 	system-control preset -- "${jailed_service}"
+
+	if v="`get_config \"$i\" "conf"`" && test -n "$v"
+	then
+		system-control set-service-env -- "${jail_service}" "conf" "$v"
+	fi
 
 	dump_rc |
 	awk -F = "/jail_${i}_/{l=length(\"jail_${i}_\"); print substr(\$1,l+1,length(\$1)-l);}" |

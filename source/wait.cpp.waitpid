@@ -1,0 +1,119 @@
+/* COPYING ******************************************************************
+For copyright and licensing terms, see the file named COPYING.
+// **************************************************************************
+*/
+
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <cerrno>
+#include <csignal>
+#include "utils.h"
+
+#if !defined(WSTOPPED)
+#define WSTOPPED WUNTRACED
+#endif
+
+/* Waiting for child processes **********************************************
+// **************************************************************************
+// 
+// This form of the library uses the old waitpid() function.
+// That conflates process group IDs and process IDs, which is problematic when we might be dealing with process #1.
+// WEXITED is implicit, furthermore.
+*/
+
+static inline
+int	/// \retval -1 error \retval 0 no child \retval >0 found child
+wait_for_anychild (
+	pid_t & child,
+	int & status,
+	int flags
+) {
+	for (;;) {
+		const pid_t rc(waitpid(-1, &status, flags));
+		if (static_cast<pid_t>(-1) == rc) {
+			if (EINTR != errno) return -1;
+		} else
+		if (static_cast<pid_t>(0) == rc) {
+			return 0;
+		} else {
+			child = rc;
+	       		return 1;
+	 	}
+	}
+}
+
+int	/// \retval -1 error \retval 0 no child \retval >0 found child
+wait_nonblocking_for_anychild_stopcontexit (
+	pid_t & child,
+	int & status
+) {
+	return wait_for_anychild(child, status, WNOHANG|WSTOPPED|WCONTINUED);
+}
+
+int	/// \retval -1 error \retval 0 no child \retval >0 found child
+wait_nonblocking_for_anychild_stopexit (
+	pid_t & child,
+	int & status
+) {
+	return wait_for_anychild(child, status, WNOHANG|WSTOPPED);
+}
+
+int	/// \retval -1 error \retval 0 no child \retval >0 found child
+wait_nonblocking_for_anychild_exit (
+	pid_t & child,
+	int & status
+) {
+	return wait_for_anychild(child, status, WNOHANG);
+}
+
+int	/// \retval -1 error \retval 0 no child \retval >0 found child
+wait_blocking_for_anychild_exit (
+	pid_t & child,
+	int & status
+) {
+	return wait_for_anychild(child, status, 0);
+}
+
+static inline
+int	/// \retval -1 error \retval 0 no child \retval >0 found child
+wait_for_event_of (
+	const pid_t child,
+	int & status,
+	int flags
+) {
+	for (;;) {
+		const pid_t rc(waitpid(child, &status, flags));
+		if (static_cast<pid_t>(-1) == rc) {
+			if (EINTR != errno) return -1;
+		} else
+		if (static_cast<pid_t>(0) == rc) {
+			return 0;
+		} else {
+	       		return 1;
+	 	}
+	}
+}
+
+int	/// \retval -1 error \retval 0 no child \retval >0 found child
+wait_nonblocking_for_stopcontexit_of (
+	const pid_t child,
+	int & status
+) {
+	return wait_for_event_of(child, status, WNOHANG|WSTOPPED|WCONTINUED);
+}
+
+int	/// \retval -1 error \retval 0 no child \retval >0 found child
+wait_nonblocking_for_stopexit_of (
+	const pid_t child,
+	int & status
+) {
+	return wait_for_event_of(child, status, WNOHANG|WSTOPPED);
+}
+
+int	/// \retval -1 error \retval 0 no child \retval >0 found child
+wait_blocking_for_exit_of (
+	const pid_t child,
+	int & status
+) {
+	return wait_for_event_of(child, status, 0);
+}

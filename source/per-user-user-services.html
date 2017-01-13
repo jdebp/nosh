@@ -119,8 +119,20 @@ Every user-level service is afforded an environment directory in its service def
 Environment variable for services should be configured there.
 </p>
 
+<h3 id="faulty-programs">
+Faulty programs that require login session environment variables in their d&aelig;mon mode
+</h3>
+
 <p>
-Note that it is generally the wrong thing to do to explicitly set up per-user services with <code>TTY</code> or <code>DISPLAY</code> environment variables, and this is the sign of a faulty service program.
+It is the wrong thing to do to explicitly set up per-user services with <code>TTY</code> or <code>DISPLAY</code> environment variables, and this is the sign of a faulty service program.
 Service programs serve a single user that can be logged in multiple times in multiple forms of login session.
 They should not require terminal access, and should be capable of connecting to multiple X displays simultaneously and not need an X display in order to start up.
+</p>
+
+<p>
+Programs that are known to get this wrong include GNOME Terminal, KDE Notify, GNOME Weather, GNOME Maps, and MATE Notification.
+These fail to work if they are not given a <code>DISPLAY</code> environment variable in order to start up in their initial not-a-client-of-any-displays-yet state, where no D-BUS clients have connected to tell them about X displays to make windows on.  
+This is accounted for in the configuration import subsystem, which sets up a <code>DISPLAY</code> environment variable for each user's </code>gnome-terminal-server</code>, <code>knotify</code>, <code>org.gnome.Weather.Application</code>, <code>org.gnome.Maps</code> and <code>mate-notification-daemon</code> service.  
+It just sets up <code>DISPLAY</code> as <code>:0</code> for the service.  
+You might need to tweak this for unusual X setups.
 </p>

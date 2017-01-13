@@ -45,7 +45,7 @@ cat (
 
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing service name(s).");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
@@ -62,7 +62,7 @@ cat (
 			std::fprintf(stderr, "%s: FATAL: %s%s/%s: %s\n", prog, path.c_str(), name.c_str(), "service", std::strerror(error));
 			throw EXIT_FAILURE;
 		}
-		const int child(fork());
+		const pid_t child(fork());
 		if (0 > child) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "fork", std::strerror(error));
@@ -86,7 +86,7 @@ cat (
 			return;
 		} else {
 			int status;
-			waitpid(child, &status, 0);
+			wait_blocking_for_exit_of(child, status);
 		}
 		close(service_dir_fd);
 		close(bundle_dir_fd);

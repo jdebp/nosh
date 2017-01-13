@@ -10,8 +10,8 @@ Description=Note that many BSDs no longer include UUCP.
 Type=oneshot
 WorkingDirectory=/var/spool/
 ExecStart=sh -c 'rm -r uucp/.Temp/* ; rm -r lock/*'
-# This is a one-shot service that can be re-triggered by starting it again.
-#RemainAfterExit=1
+# This is a one-shot service that remains running without a main process, because we do not want to run it multiple times.
+RemainAfterExit=true
 Restart=no
 
 [Install]

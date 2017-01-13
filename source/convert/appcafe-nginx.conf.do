@@ -7,7 +7,14 @@
 # This is invoked by appcafe.do .
 #
 
-redo-ifchange rc.conf /usr/local/etc/appcafe.conf
+redo-ifchange rc.conf
+if test -r /usr/local/etc/appcafe.conf
+then
+	redo-ifchange /usr/local/etc/appcafe.conf
+else
+	redo-ifcreate /usr/local/etc/appcafe.conf
+	exit 0
+fi
 
 # This gets us *only* the configuration variables, safely.
 read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }

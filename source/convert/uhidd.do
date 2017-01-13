@@ -36,11 +36,28 @@ find "$lr/" -maxdepth 1 -type d -name 'uhidd@*' -print0 |
 xargs -0 system-control disable --
 system-control disable uhidd-log
 
+for target in uhidd
+do
+	system-control preset -- "${target}".target
+done
+
+for target in uhidd
+do
+	if system-control is-enabled "${target}.target"
+	then
+		echo >> "$3" on "${target}"
+	else
+		echo >> "$3" off "${target}"
+	fi
+#	system-control print-service-env "${target}.target" >> "$3"
+done
+
 list_generic_USB_devices | 
 while read -r i
 do
 	n="`basename \"$i\"`"
 	system-control convert-systemd-units $e "$lr/" "./uhidd@$n.service"
+	rm -f -- "$lr/uhidd@$n/wants/cyclog@uhidd"
 	rm -f -- "$lr/uhidd@$n/log"
 	ln -s -- "../../../sv/uhidd-log" "$lr/uhidd@$n/log"
 	install -d -m 0755 -- "$lr/uhidd@$n/service/env"

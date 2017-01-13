@@ -16,13 +16,44 @@ list_network_addresses() { for i in `read_rc network_addresses || echo 127.53.0.
 redo-ifchange rc.conf general-services "tinydns@.socket" "tinydns.service"
 
 generate_private() {
-cat << EOF
-.127.in-addr.arpa:127.53.0.1:a:::lo
+awk -F : '/^\./ { print $0 ":::si"; print $0 ":::lo"; next; } { print; }' << EOF
+# BEGIN http://jdebp.eu./FGA/dns-private-address-split-horizon.html#WhatToDo
+.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa:127.53.0.1:a
+.1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa:127.53.0.1:a
+.D.F.ip6.arpa:127.53.0.1:a
+.8.E.F.ip6.arpa:127.53.0.1:a
+.9.E.F.ip6.arpa:127.53.0.1:a
+.A.E.F.ip6.arpa:127.53.0.1:a
+.B.E.F.ip6.arpa:127.53.0.1:a
+.C.E.F.ip6.arpa:127.53.0.1:a
+.D.E.F.ip6.arpa:127.53.0.1:a
+.E.E.F.ip6.arpa:127.53.0.1:a
+.F.E.F.ip6.arpa:127.53.0.1:a
+.0.in-addr.arpa:127.53.0.1:a
+.10.in-addr.arpa:127.53.0.1:a
+.127.in-addr.arpa:127.53.0.1:a
+.254.169.in-addr.arpa:127.53.0.1:a
+.16.172.in-addr.arpa:127.53.0.1:a
+.17.172.in-addr.arpa:127.53.0.1:a
+.18.172.in-addr.arpa:127.53.0.1:a
+.19.172.in-addr.arpa:127.53.0.1:a
+.20.172.in-addr.arpa:127.53.0.1:a
+.21.172.in-addr.arpa:127.53.0.1:a
+.22.172.in-addr.arpa:127.53.0.1:a
+.23.172.in-addr.arpa:127.53.0.1:a
+.24.172.in-addr.arpa:127.53.0.1:a
+.25.172.in-addr.arpa:127.53.0.1:a
+.26.172.in-addr.arpa:127.53.0.1:a
+.27.172.in-addr.arpa:127.53.0.1:a
+.28.172.in-addr.arpa:127.53.0.1:a
+.29.172.in-addr.arpa:127.53.0.1:a
+.30.172.in-addr.arpa:127.53.0.1:a
+.31.172.in-addr.arpa:127.53.0.1:a
+.2.0.192.in-addr.arpa:127.53.0.1:a
+.168.192.in-addr.arpa:127.53.0.1:a
+.255.255.255.255.in-addr.arpa:127.53.0.1:a
+# END http://jdebp.eu./FGA/dns-private-address-split-horizon.html#WhatToDo
 =1.0.53.127.in-addr.arpa:127.53.0.1:::lo
-.10.in-addr.arpa:127.53.0.1:a:::si
-.10.in-addr.arpa:127.53.0.1:a:::lo
-.168.192.in-addr.arpa:127.53.0.1:a:::si
-.168.192.in-addr.arpa:127.53.0.1:a:::lo
 EOF
 }
 
@@ -48,7 +79,7 @@ data: private public root
 root: root.zone
 	@echo  > \$@.tmp '# Generated file; do not edit directly.'
 	@echo >> \$@.tmp '# Delete root.zone to cause a re-fetch from ICANN.'
-	awk -F : '/^&/ { print \$\$1 ":" \$\$2 ":" \$\$3 ":::lo"; } /^\+/ { print \$\$1 ":" \$\$2 ":::lo"; }' \$> | sort -t : -k 2 -k 1 >> \$@.tmp
+	awk -F : '/^&/ { print \$\$1 ":" \$\$2 ":" \$\$3 ":::lo"; } /^\+/ { print \$\$1 ":" \$\$2 ":::lo"; }' root.zone | sort -t : -k 2 -k 1 >> \$@.tmp
 	mv -f -- \$@.tmp \$@
 
 root.zone:
@@ -63,8 +94,11 @@ then
 
 	system-control print-service-env tinydns >> "$3"
 
+	redo-ifchange "${s}/service/root"
+
 	test -r "${s}/service/root/private" || generate_private > "${s}/service/root/private"
 	test -r "${s}/service/root/public" || : > "${s}/service/root/public"
+	test -e "${s}/service/root/data.original" || mv -- "${s}/service/root/data" "${s}/service/root/data.original"
 	test -e "${s}/service/root/Makefile.original" || mv -- "${s}/service/root/Makefile" "${s}/service/root/Makefile.original"
 	test -r "${s}/service/root/Makefile" || generate_Makefile > "${s}/service/root/Makefile"
 fi
@@ -95,7 +129,6 @@ do
 	done
 	test -r "${s}/service/root/public" || : > "${s}/service/root/public"
 	test -r "${s}/service/root/private" || generate_private > "${s}/service/root/private"
-	test -e "${s}/service/root/Makefile.original" || mv -- "${s}/service/root/Makefile" "${s}/service/root/Makefile.original"
 	test -r "${s}/service/root/Makefile" || generate_Makefile > "${s}/service/root/Makefile"
 	set_if_unset "${s}/" ROOT "root"
 

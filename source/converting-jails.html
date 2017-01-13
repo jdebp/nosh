@@ -1,0 +1,34 @@
+<title>Importing jail configurations</title>
+<link rel="Up" href="external-formats.html" title="External formats" />
+<h1>
+Importing jail configurations
+</h1>
+
+<p>
+The native mechanism for this system is the service bundle.
+Natively, <a href="jailing-services.html">jails are a combination of "jail" services and "jailed" services</a>.
+The external configuration import subsystem converts both FreeBSD version 9 and PC-BSD Warden jails into native service bundles.
+All services and targets are subject to the usual service preset mechanism.
+</p>
+
+<p>
+FreeBSD 9 jails are specified with settings in <code>rc.conf</code> and become pairs of <code>v9-jail@</code><i>jailname</i> and <code>v9-jailed@</code><i>jailname</i> services.
+All converted services, when enabled, are wanted by the <code>jails</code> target.
+To enable the converted jails each jail and jailed service must have an explicit enable and the <code>jails</code> target enabled with <code>jails_enable="YES"</code> in <code>rc.conf</code>.
+</p>
+
+<p>
+Note that converted jails <em>always</em> start in parallel.
+There is no notion of starting them sequentially.
+The <code>jail_parallel_start</code> setting is ignored.
+</p>
+
+<p>
+Warden jails are specified with directories in the jail directory (in turn specified by a setting in <code>warden.conf</code>) and become pairs of <code>warden-jail@</code><i>jailname</i> and <code>warden-jailed@</code><i>jailname</i> services.
+All converted services, when enabled, are wanted by the <code>warden</code> target.
+To enable the converted jails each jail must have an explicit enable and the <code>warden</code> target enabled with <code>warden_enable="YES"</code> in <code>rc.conf</code>.
+</p>
+
+<p>
+If start and stop programs are not provided, conversion attempts to auto-detect the type of the jailed system (by detecting the files of various system management tools) and generate stop and start settings accordingly.
+</p>

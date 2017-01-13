@@ -24,7 +24,7 @@ In a POSIX-conformant shell script, these would have to be all on a single logic
 <li>
 <pre>setuidgid myservice-d</pre>
 <p>
-Drop privileges and operate henceforth under the aegis of user account <code>myservice-d</code>, the (dedicated) user account for this service.
+<a href="limiting-services.html#users">Drop privileges</a> and operate henceforth under the aegis of user account <code>myservice-d</code>, the (dedicated) user account for this service.
 </p></li>
 
 <li>
@@ -36,7 +36,7 @@ Set up the environment with the ID information of user account <code>myservice-d
 <li>
 <pre>setuidgid-fromenv</pre>
 <p>
-Drop privileges and operate henceforth under the aegis of the user account whose ID information is given in the environment.
+<a href="limiting-services.html#users">Drop privileges</a> and operate henceforth under the aegis of the user account whose ID information is given in the environment.
 </p></li>
 
 <li>
@@ -55,7 +55,7 @@ An environment directory with this this name, specifically, is compatible with t
 <li>
 <pre>softlimit -o 2048</pre>
 <p>
-Adjust the soft limit on the number of open file descriptors (in each d&aelig;mon process of the service) to 2048.
+<a href="limiting-services.html#Unix-limits">Adjust the soft limit</a> on the number of open file descriptors (in each d&aelig;mon process of the service) to 2048.
 </p>
 </li>
 
@@ -69,7 +69,7 @@ Redirect standard input to read from an existing file named <code>seed</code>.
 <li>
 <pre>jexec wibble</pre>
 <p>
-Switch to running in (BSD) jail <code>wibble</code>, which (presumably) another service is maintaining with the <code>jail</code> command.
+<a href="jailing-services.html#jailed">Switch to running in (BSD) jail</a> <code>wibble</code>, which (presumably) another service is maintaining with the <code>jail</code> command.
 </p>
 </li>
 

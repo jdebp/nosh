@@ -187,7 +187,7 @@ shutdown (
 	} else {
 		if (args.empty()) {
 			std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing time.");
-			throw EXIT_FAILURE;
+			throw static_cast<int>(EXIT_USAGE);
 		}
 		const char * timespec(args.front());
 		args.erase(args.begin());
@@ -234,7 +234,7 @@ shutdown (
 		if (verbose)
 			std::fprintf(stderr, "%s: INFO: Shutdown in %g seconds.\n", prog, secs);
 		if (!no_wall && secs <= 86400.0 && (secs < 1.0 || secs >= 15.0)) {
-			const int wall(fork());
+			const pid_t wall(fork());
 			if (-1 == wall) {
 				const int error(errno);
 				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
@@ -257,7 +257,8 @@ shutdown (
 				next_prog = arg0_of(args);
 				return;
 			} else {
-				waitpid(wall, 0, 0);
+				int status;
+				wait_blocking_for_exit_of(wall, status);
 			}
 		}
 		if (secs <= 0.0)

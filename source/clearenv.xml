@@ -1,11 +1,11 @@
 <refentry id="clearenv">
 
-<refmeta>
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
 <refentrytitle>clearenv</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>
-<refmiscinfo class="version">1.29</refmiscinfo>
+<xi:include href="version.xml" />
 </refmeta>
 
 <refnamediv><refname>clearenv</refname><refpurpose>clear the entire environment then chain</refpurpose></refnamediv>
@@ -63,6 +63,9 @@ You can work around these bugs by ensuring that <replaceable>next-prog</replacea
 </para></listitem>
 <listitem><para>
 <citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>userenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 </para></listitem>
 </itemizedlist>
 

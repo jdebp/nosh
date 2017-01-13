@@ -189,7 +189,7 @@ system_control (
 
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing command name.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	// Effectively, all subcommands are implemented by chaining to builtins of the same name.

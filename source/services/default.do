@@ -218,9 +218,6 @@ tinydns)
 		echo "add $i \$@" >> services.new/"${base}"/service/root/add-"$i"
 		chmod 0755 services.new/"${base}"/service/root/add-"$i"
 	done
-
-	echo 'data.cdb: data; tinydns-data' > services.new/"${base}"/service/root/Makefile
-	chmod 0644 services.new/"${base}"/service/root/Makefile
 	;;
 axfrdns)
 	ln -s ../../tinydns/service/root services.new/"${base}"/service/

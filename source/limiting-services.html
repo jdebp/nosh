@@ -1,0 +1,298 @@
+<title>Limiting services</title>
+<link rel="Up" href="index.html" title="nosh Guide" />
+<h1>
+Limiting services
+</h1>
+
+<p>
+It is a common requirement to place limits on what services can do.
+</p>
+
+<h2 id="users">
+Running under the aegises of unprivileged user accounts
+</h2>
+
+<p>
+One way to limit services is to use the operating system's mechanisms that limit what unprivileged users can do.
+One "drops privileges" from running as the superuser to running as an unprivileged user.
+One then &hellip;
+</p>
+<ul>
+<li><p>
+&hellip; controls what files, directories, processes, and other objects the unprivileged user account owns.
+Ownership grants the privilege to change the access permissions of owned objects.
+</p><p>
+One common approach is to not have the unprivileged user own any files or directories, but rather have the files and directories that it uses owned by the superuser.
+An access control rule on the object then grants read/write/execute access without granting ownership.
+</p></li>
+<li><p>
+&hellip; controls the access that the unprivileged user account has to files, directories, processes, andother objects.
+In general such privileges should be minimal, with the unprivileged user account not able to read or to write things that it does not need to read or to write.
+</p></li>
+<li><p>
+&hellip; sets per-user disc quotas and the like.
+</p></li>
+</ul>
+
+<p>
+Sometimes the main d&aelig;mon program itself drops privileges, internally.
+Usually it does this as part of an overall sequence of setting up a changed root and then dropping privileges.
+(This is because it requires a lot more setup, and a lot more files and directories exposed, to use chain-loading to set up a changed root.
+Chain loading involves the overlay of new process images that must be visible, along with the dynamic loader and any dynamically loaded shared objects, in the changed root environment.
+All of that needs to be set up with hard links, bind mounts, and whatnot.)
+In such cases, one can use <a href="envuidgid.html"><code>envuidgid</code></a> to look up the user ID and group ID of the unprivileged user account that the program should switch to, and place them in the environment for it to read.
+</p>
+
+<p>
+Othertimes privileges are dropped by a sequence of chain-loading tools leading up to the execution of the main d&aelig;mon program itself.
+Usually this is the case where there is no changed root involved.
+In such cases, one can use <a href="setuidgid.html"><code>setuidgid</code></a> or <a href="setuidgid-fromenv.html"><code>setuidgid-fromenv</code></a> to drop privileges.
+</p>
+
+<p>
+<a href="log-service-security.html#users">This is heavily used in logging services.</a>
+</p>
+
+<h2 id="limits">
+Resource limits
+</h2>
+
+<p>
+Operating systems provide one or two mechanisms for setting resource limits for services.
+</p>
+
+<h3 id="Unix-limits">
+Using the original Unix resource limit mechanism
+</h3>
+
+<p>
+The original Unix resource limit mechanism is controllable in a <code>run</code> program by using the <a href="softlimit.html"><code>softlimit</code></a> and the <a href="hardlimit.html"><code>hardlimit</code></a> utilities, which have the conventional daemontools style of interface (complete with a unified "memory" setting that sets several limits as one), or the <a href="ulimit.html"><code>ulimit</code></a> utility, which has an interface similar to the built-in command of the same name in POSIX-conformant shells.
+This resource limit mechanism has some well-known lacks, which one may or may not hit, depending from exactly what one's d&aelig;mon does.
+A d&aelig;mon that never spawns child processes will not, for example, raise the well-known problem that some of these Unix resource limits are <em>per-process</em>.
+</p>
+
+<p>
+For example:
+<a href="http://docs.mongodb.org/manual/reference/ulimit/#recommended-settings">The authors of MongoDB recommend several resource settings</a> for when running MongoDB under a service manager.
+The <code>run</code> program for the MongoDB service bundle implements them as follows:
+</p>
+<blockquote><pre>hardlimit -o 64000 -p 64000
+softlimit -o hard -p hard</pre></blockquote>
+
+<h3 id="control-groups">
+Using the Linux control groups
+</h3>
+
+<p>
+The Linux "control groups" mechanism is an enhanced and improved version of the original Unix mechanism, intended to overcome some of its limitations with respect to limits constraining multiple processes.
+It is used from <code>run</code> programs with the <a href="move-to-control-group.html"><code>move-to-control-group</code></a>, the <a href="set-control-group-knob.html"><code>set-control-group-knob</code></a>, and the <a href="delegate-control-group-to.html"><code>delegate-control-to-knob</code></a> utilities.
+</p>
+
+<p>
+The basic principles of operation are these:
+</p>
+
+<ul>
+<li><p>
+All service processes start out in the same control group as the service manager itself is running.
+This control group is created by the service manager as a child of the original control group that it started out running in.
+It moves itself into that sub-group, so that the original control group has no processes.
+</p></li>
+<li><p>
+Each service's service bundle is responsible for moving the service processes out of the service manager's control group and into its own dedicated control group, and for placing the limits on the control group.
+This happens as follows:
+</p>
+<ul>
+<li><p>
+In the <code>start</code> program one uses <a href="move-to-control-group.html"><code>move-to-control-group</code></a>, <a href="set-control-group-knob.html"><code>set-control-group-knob</code></a>, and <a href="delegate-control-group-to.html"><code>delegate-control-group-to</code></a> to create and then change control group, to set the various knobs on the control group to limit processes run within it, and to enable (if appropriate) the creation of further sub-groups by the unprivileged account that the service processes run as.
+</p></li>
+<li><p>
+In the <code>run</code> program one uses <a href="move-to-control-group.html"><code>move-to-control-group</code></a> to change control group to the same control group.
+This is done before dropping privileges.
+</p></li>
+</ul>
+</li>
+<li><p>
+Conventionally, the services run in sibling control groups to the service manager's control group.
+</p><p>
+When <a href="system-manager.html"><code>system-manager</code></a>, <a href="per-user-manager.html"><code>per-user-manager</code></a>, or some other program spawns the service manager in the first place, it places it into a control group.
+This original control group becomes a common root control group for a whole lot of sub-groups, including one for the service manager itself and others for individual services.
+</p></li>
+<li><p>
+Control group names for services conventionally end in <code>.service</code>.
+The service manager, system manager, and per-user manager use names ending in <code>.slice</code> so that there are no possibilities for name conflicts.
+(These extensions are determined by the Linux control groups API, which explicitly guarantees that control group knob names will not end in these extensions.)
+</p></li>
+</ul>
+
+<p>
+An example of this is the <code>user-services@</code><i>username</i> service, whose <code>start</code> program sets up a control group for the service, changes to it, and allows the named user to make further sub-groups:
+</p>
+<blockquote><pre>move-to-control-group ../"user-services@".service
+move-to-control-group "user-services@<i>username</i>".service
+foreground delegate-control-group-to <i>username</i> ;</pre></blockquote>
+
+<p>
+Its <code>run</code> program changes to the same control group and then drops privileges:
+</p>
+<blockquote><pre>move-to-control-group ../"user-services@".service
+move-to-control-group "user-services@<i>username</i>".service
+setsid
+setuidgid --supplementary <i>username</i></pre></blockquote>
+
+<p>
+Notice that this is an instance of a service that is generated (<a href="per-user-system-services.html">by the external formats conversion mechanism individually for each user</a>) from a template.
+It employs a convention of a two-level set of control groups, one for all services generated from the template and one for each individual instance.
+</p>
+
+<p>
+An example of a service that twiddles control group knobs is the <code>dbus</code> service, whose <code>start</code> program limits the number of processes that can run in the control group:
+</p>
+<blockquote><pre>foreground set-control-group-knob ../cgroup.subtree_control "+pids" ;
+move-to-control-group ../dbus.service
+oom-kill-protect -- -800
+foreground set-control-group-knob --percent-of /proc/sys/kernel/threads-max --infinity-is-max pids.max 20 ;</pre></blockquote>
+
+<p>
+Its <code>run</code> program only needs to change to the same control group before dropping privileges (which is actually done by the main d&aelig;mon program itself):
+</p>
+<blockquote><pre>move-to-control-group ../dbus.service
+oom-kill-protect -- -800</pre></blockquote>
+
+<p>
+This uses <a href="set-control-group-knob.html"><code>set-control-group-knob</code></a> for two things:
+</p>
+<ul>
+<li><p>
+It ensures that the "pids" controller is enabled in the control group, by writing to the <code>cgroup.subtree_control</code> file in its <em>parent</em> control group.
+</p></li>
+<li><p>
+It limits the number of processes in the control group by writing to the <code>pids.max</code> file in the control group itself.
+(The various additional settings result from this being a generated <code>start</code> program that takes this setting from a data file.
+The data file allows expressing the number in two other ways, as a percentage of the kernel's <code>threads-max</code> setting and as the word "infinity".
+Neither of those is actually understood by the Linux control groups mechanism itself.
+The additional settings translate those into the actual knob values that the Linux control group mechanism accepts.)
+</p></li>
+</ul>
+
+<p>
+A full description of what control group knobs there are and what limits they effect is beyond the scope of this <i>Guide</i>.
+See the documentation that accompanies the kernel, in particular <code>Documentation/cgroup-v2.txt</code>.
+</p>
+
+<p>
+There is a notion circulated that a central "control groups manager" is required for Linux control groups.
+This is simply untrue, and the result of a control group "manager" (which merely did some rules matching in order to slap control groups onto processes that did not do control groups themselves) and a <em>rejected proposal</em> from systemd being presented on the World Wide Web for many years as if it were accomplished fact.
+Control groups do not require a central "manager", and were designed to be used in a distributed fashion with no central controller at all.
+The distributed operation here, where individual services create and configure control groups, separate to the system manager and service manager which also create and configure other control groups, is demonstration of that.
+</p>
+
+<h4 id="control-groups-example">
+An example of what this results in
+</h4>
+
+<p>
+Here is a (slightly shortened) view of what the (unified) control groups tree looks like, as printed by <code>systemd-cgls&nbsp;/</code>, on a system that uses the native system manager, per-user manager, and service manager.
+The instances of <code>/sbin/init</code> are the system manager (PID 1), its logging service (PID 204), and the system-wide service manager (PID 205).
+</p>
+<blockquote><pre>/:
+&#x251C;&#x2501;me.slice
+&#x2502; &#x2514;&#x2501;1 /sbin/init
+&#x251C;&#x2501;service-manager.slice
+&#x2502; &#x251C;&#x2501;ttylogin@.service
+&#x2502; &#x2502; &#x251C;&#x2501;ttylogin@vc3-tty.service
+&#x2502; &#x2502; &#x2502; &#x2514;&#x2501;935 login
+&#x2502; &#x2502; &#x2502; &#x2514;&#x2501;27326 systemd-cgls /
+&#x2502; &#x2502; &#x2514;&#x2501;ttylogin@vc2-tty.service
+&#x2502; &#x2502;   &#x2514;&#x2501;941 login
+&#x2502; &#x251C;&#x2501;tinydns.service
+&#x2502; &#x2502; &#x2514;&#x2501;926 tinydns
+&#x2502; &#x251C;&#x2501;dnscache.service
+&#x2502; &#x2502; &#x2514;&#x2501;927 dnscache
+&#x2502; &#x251C;&#x2501;NetworkManager.service
+&#x2502; &#x2502; &#x251C;&#x2501;1020 NetworkManager --no-daemon
+&#x2502; &#x2502; &#x2514;&#x2501;1636 /sbin/dhclient -d -q -sf /usr/lib/NetworkManager/nm-dhcp-helper -p&hellip;
+&#x2502; &#x251C;&#x2501;dbus.service
+&#x2502; &#x2502; &#x2514;&#x2501;846 dbus-daemon --config-file ./system-wide.conf --nofork --nopidfile -&hellip;
+&#x2502; &#x251C;&#x2501;udev-log.service
+&#x2502; &#x2502; &#x2514;&#x2501;245 cyclog udev/
+&#x2502; &#x251C;&#x2501;me.slice
+&#x2502; &#x2502; &#x2514;&#x2501;205 /sbin/init
+&#x2502; &#x251C;&#x2501;user-services@.service
+&#x2502; &#x2502; &#x2514;&#x2501;user-services@jim.service
+&#x2502; &#x2502;   &#x251C;&#x2501;me.slice
+&#x2502; &#x2502;   &#x2502; &#x2514;&#x2501;27299 per-user-manager
+&#x2502; &#x2502;   &#x251C;&#x2501;service-manager.slice
+&#x2502; &#x2502;   &#x2502; &#x2514;&#x2501;me.slice
+&#x2502; &#x2502;   &#x2502;   &#x251C;&#x2501;27302 service-manager
+&#x2502; &#x2502;   &#x2502;   &#x251C;&#x2501;simple-servers-log.service
+&#x2502; &#x2502;   &#x2502;   &#x2502; &#x2514;&#x2501;27309 cyclog jim/simple-servers/
+&#x2502; &#x2502;   &#x2502;   &#x2514;&#x2501;urxvt.service
+&#x2502; &#x2502;   &#x2502;     &#x251C;&#x2501;27312 urxvtd
+&#x2502; &#x2502;   &#x2502;     &#x2514;&#x2501;27313 urxvtd
+&#x2502; &#x2502;   &#x2514;&#x2501;per-user-manager-log.slice
+&#x2502; &#x2502;     &#x2514;&#x2501;27301 cyclog --max-file-size 262144 --max-total-size 1048576 .
+&#x2502; &#x251C;&#x2501;klogd.service
+&#x2502; &#x2502; &#x2514;&#x2501;847 klog-read
+&#x2502; &#x251C;&#x2501;udev.service
+&#x2502; &#x2502; &#x2514;&#x2501;250 udevd --debug
+&#x2502; &#x2514;&#x2501;cyclog@.service
+&#x2502;   &#x251C;&#x2501;cyclog@dnscache.service
+&#x2502;   &#x2502; &#x2514;&#x2501;725 cyclog dnscache/
+&#x2502;   &#x251C;&#x2501;cyclog@NetworkManager.service
+&#x2502;   &#x2502; &#x2514;&#x2501;713 cyclog NetworkManager/
+&#x2502;   &#x251C;&#x2501;cyclog@terminal-emulator@vc2.service
+&#x2502;   &#x2502; &#x2514;&#x2501;724 cyclog terminal-emulator@vc2/
+&#x2502;   &#x251C;&#x2501;cyclog@local-syslog-read.service
+&#x2502;   &#x2502; &#x2514;&#x2501;738 cyclog local-syslog-read/
+&#x2502;   &#x251C;&#x2501;cyclog@tinydns.service
+&#x2502;   &#x2502; &#x2514;&#x2501;720 cyclog tinydns/
+&#x2502;   &#x251C;&#x2501;cyclog@dbus.service
+&#x2502;   &#x2502; &#x2514;&#x2501;735 cyclog dbus/
+&#x2502;   &#x251C;&#x2501;cyclog@terminal-emulator@vc3.service
+&#x2502;   &#x2502; &#x2514;&#x2501;716 cyclog terminal-emulator@vc3/
+&#x2502;   &#x251C;&#x2501;cyclog@ttylogin@vc2-tty.service
+&#x2502;   &#x2502; &#x2514;&#x2501;759 cyclog ttylogin@vc2-tty/
+&#x2502;   &#x251C;&#x2501;cyclog@ttylogin@vc3-tty.service
+&#x2502;   &#x2502; &#x2514;&#x2501;760 cyclog ttylogin@vc3-tty/
+&#x2502;   &#x2514;&#x2501;cyclog@klogd.service
+&#x2502;     &#x2514;&#x2501;711 cyclog klogd/
+&#x2514;&#x2501;system-manager-log.slice
+  &#x2514;&#x2501;204 /sbin/init</pre></blockquote>
+
+<h2 id="other">
+Other toolsets and other settings
+</h2>
+
+<p>
+The nosh toolset is not the only toolset with chain loading tools for affecting d&aelig;mon process state.
+Other toolsets include various useful chain loading tools relating to resource usage control, such as:
+</p>
+<dl>
+<dt><code>rtprio</code> (BSD) and <code>chrt</code> (Linux)</dt>
+<dd>Change scheduling priority.</dd>
+<dt><code>numactl</code> (Linux)</dt>
+<dd>Change NUMA settings.</dd>
+</dl>
+
+<h2 id="linux-namespaces">
+Mounts and namespaces
+</h2>
+
+<p>
+Linux has a system of namespaces which can be used to limit what a service sees of the rest of the system.
+(See the Linux kernel doco for details of what the namespaces are.)
+</p>
+
+<p>
+Manipulating Linux namespaces is the province of the <a href="unshare.html"><code>unshare</code></a>, <a href="set-mount-object.html"><code>set-mount-object</code></a>, and <a href="make-private-fs.html"><code>make-private-fs</code></a> commands, used in chains in <code>run</code> programs.
+With them a process detaches from one or more shared namespaces, and then manipulates its (now) private namespaces to show a different view of the system.
+</p>
+
+<p>
+For example, one can set up a "no hardware devices" view of the world, where only the "API" devices (for shared memory, pseudo-terminals, file descriptors, randomness, and suchlike) are available, with the following chain:
+</p>
+<blockquote><pre>unshare --mount
+set-mount-object --recursive slave /
+make-private-fs --devices
+set-mount-object --recursive shared /</pre></blockquote>

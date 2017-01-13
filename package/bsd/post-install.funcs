@@ -94,10 +94,9 @@ fan_in_logger() {
 target() {
 	if test -z "${nosh_run_package}"
 	then
-		system-control preset "$1.target"
+                :
 	else
 		system-control preset "$1.target"
-		start_up "$1.target"
 	fi
 }
 log_user() {
@@ -117,6 +116,6 @@ non_log_user() {
 user_tty() { 
 	if test -z "${nosh_run_package}"
 	then
-		grep -q "^$1\>" /etc/ttys || echo >> /etc/ttys "$1" "/bin/false" "xterm" "on" "secure"
+		grep -q "^$1\>" /etc/ttys || echo >> /etc/ttys "$1" "/bin/exec foreground pause ; false" "xterm" "on" "secure"
 	fi
 }
