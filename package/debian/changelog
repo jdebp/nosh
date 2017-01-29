@@ -1,3 +1,19 @@
+nosh (1.32) unstable; urgency=medium
+
+  * console-fb-realizer can now make use of FreeBSD ugen devices, in addition to uhid devices.
+  * The --kernel-vt option of console-fb-realizer no longer takes an argument.
+  * Services that use shell syntax such as "for" and "&&" now explicitly invoke the shell.
+  * system-control reset no longer loops indefinitely if it does not have permission to open the "ok" file or to load a service.
+  * There is now a detach-kernel-usb-driver command for FreeBSD.
+  * There is now a create-control-group command.
+  * Real terminals now have their own chapter in the Guide.
+  * userenv can now set Desktop Bus and XDG Runtime environment variables.
+  * The (unpackaged) Z Shell command-line completions have been improved.
+  * system-manager now mounts the API filesystems correctly on systems where the Debian initramfs isn doing that for it.
+  * convert-systemd-units now properly handles control groups for services generated from templates and for services that specify "slices".
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Sun, 29 Jan 2017 19:49:22 +0000
+
 nosh (1.31) unstable; urgency=medium
 
   * The start/stop/reset subcommands of system-control now output colourized verbose mode messages.

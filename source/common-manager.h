@@ -22,7 +22,7 @@ struct api_mount {
 	const char * name;
 	struct iovec * iov;
 	unsigned int ioc;
-	unsigned cgl;
+	unsigned collection;
 	int flags;
 };
 

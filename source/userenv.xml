@@ -20,6 +20,8 @@
 <arg>--set-tools</arg> 
 <arg>--set-term</arg> 
 <arg>--set-locale</arg> 
+<arg>--set-xdg</arg> 
+<arg>--set-dbus</arg> 
 <arg>--set-timezone</arg> 
 <arg>--set-other</arg> 
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
@@ -36,6 +38,8 @@ and then chain loads to <replaceable>next-prog</replaceable> with the <citerefen
 <para>
 <replaceable>next-prog</replaceable> may contain its own command line options, which <command>userenv</command> will ignore.
 </para>
+
+<refsection><title>Universal variables</title>
 
 <para>
 The following environment variables are always set:
@@ -64,6 +68,8 @@ Set to the pathname of the user's shell program, as given in the system account 
 
 </variablelist>
 
+</refsection><refsection><title>Path variables</title>
+
 <para>
 The following environment variables are set from the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database if the <arg choice='plain'>--set-path</arg> command-line option is used:
 </para>
@@ -75,10 +81,11 @@ The following environment variables are set from the <citerefentry><refentrytitl
 </varlistentry><varlistentry>
 <term><envar>MANPATH</envar></term>
 <listitem><para>Set to the value of the <code>manpath</code> capability, defaulting to unset if there is no capability.</para></listitem>
-</varlistentry><varlistentry>
 </varlistentry>
 
 </variablelist>
+
+</refsection><refsection><title>Tools variables</title>
 
 <para>
 The following environment variables are set from the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database if the <arg choice='plain'>--set-tools</arg> command-line option is used:
@@ -98,10 +105,11 @@ This is the one that is not <citerefentry><refentrytitle>ed</refentrytitle><manv
 </varlistentry><varlistentry>
 <term><envar>PAGER</envar></term>
 <listitem><para>Set to the value of the <code>pager</code> capability, defaulting if there is no capability to <command>more</command>.</para></listitem>
-</varlistentry><varlistentry>
 </varlistentry>
 
 </variablelist>
+
+</refsection><refsection><title>Terminal variables</title>
 
 <para>
 The following environment variables are set from the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database if the <arg choice='plain'>--set-term</arg> command-line option is used:
@@ -119,6 +127,8 @@ Moreover: The <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>
 
 </variablelist>
 
+</refsection><refsection><title>Locale variables</title>
+
 <para>
 The following environment variables are set from the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database if the <arg choice='plain'>--set-locale</arg> command-line option is used:
 </para>
@@ -130,10 +140,11 @@ The following environment variables are set from the <citerefentry><refentrytitl
 </varlistentry><varlistentry>
 <term><envar>MM_CHARSET</envar></term>
 <listitem><para>Set to the value of the <code>charset</code> capability, defaulting to <code>UTF-8</code> if there is no capability.</para></listitem>
-</varlistentry><varlistentry>
 </varlistentry>
 
 </variablelist>
+
+</refsection><refsection><title>Timezone variables</title>
 
 <para>
 The following environment variables are set from the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database if the <arg choice='plain'>--set-timezone</arg> command-line option is used:
@@ -143,17 +154,48 @@ The following environment variables are set from the <citerefentry><refentrytitl
 <varlistentry>
 <term><envar>TZ</envar></term>
 <listitem><para>Set to the value of the <code>timezone</code> capability, defaulting to <code>UTC</code> if there is no capability.</para></listitem>
-</varlistentry><varlistentry>
 </varlistentry>
 
 </variablelist>
 
+</refsection><refsection><title>XDG variables</title>
+
+<para>
+The following environment variables are set if the <arg choice='plain'>--set-xdg</arg> command-line option is used:
+</para>
+<variablelist>
+
+<varlistentry>
+<term><envar>XDG_RUNTIME_DIR</envar></term>
+<listitem><para>Set to <filename>/run/user/<replaceable>username</replaceable>/</filename>.</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+</refsection><refsection><title>Desktop Bus variables</title>
+
+<para>
+The following environment variables are set if the <arg choice='plain'>--set-dbus</arg> command-line option is used:
+</para>
+<variablelist>
+
+<varlistentry>
+<term><envar>DBUS_SESSION_BUS_ADDRESS</envar></term>
+<listitem><para>Set to <filename>unix:path=/run/user/<replaceable>username</replaceable>/bus</filename>.</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+</refsection><refsection><title>Other variables</title>
+
 <para>
 If the <arg choice='plain'>--set-other</arg> command-line option is used, all environment variables are set from the <code>setenv</code> capability in the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database.
 Both the system and user databases are processed.
-In line with the behaviour of <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>, any conflicting environment variables set here will be overridden by the variables taken from other capabilities and from the user account database, with the exception of the tools variables, which will conversely be overriden by any settings here.
-This ordering is because the tools variables are an extension, setting variables for which people will have been using <code>setenv</code>.
+In line with the behaviour of <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>, any conflicting environment variables set here will be overridden by the variables taken from other capabilities and from the user account database, with the exceptions of the tools, XDG, and Desktop Bus variables, which will conversely be overriden by any settings here.
+This ordering is because the tools, XDG, and Desktop Bus variables are an extension, setting variables for which people will have been using <code>setenv</code>.
 </para>
+
+</refsection>
 
 </refsection><refsection><title>bugs and compatibility</title>
 

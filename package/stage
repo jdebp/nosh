@@ -15,6 +15,7 @@ src="${1}"
 dest="${2}"
 absdest="`readlink -f "${dest}"`/"
 
+##########################################################
 # binaries and doco
 for i in exec terminal-management service-management terminal-extras systemv-shims systemd-shims upstart-shims debian-shims openbsd-shims ucspi-tcp-shims ;
 do
@@ -78,6 +79,7 @@ Linux)	ln -f -s system-manager "${dest}"/nosh-run-system-manager/sbin/init ;;
 esac
 ln -f -- "${src}"/man/man1/tcpserver.1 "${dest}"/nosh-ucspi-tcp-shims/usr/local/man/man1/ 
 
+##########################################################
 # more doco
 for i in guide ;
 do
@@ -85,6 +87,7 @@ do
 	( cd "${src}"/ && pax -r -w -- share/doc/nosh "${absdest}"/nosh-"$i"/usr/local/ )
 done
 
+##########################################################
 # bundles
 install -d -m 0755 "${dest}"/nosh-bundles/run
 install -d -m 0755 "${dest}"/nosh-bundles/var/sv 
@@ -154,6 +157,7 @@ install -d -m 0755 "${dest}"/nosh-bundles/usr/local/etc/devd
 ( cd "${src}"/ && pax -r -w -- etc/devd "${absdest}"/nosh-bundles/usr/local/ )
 
 
+##########################################################
 # units
 install -d -m 0755 "${dest}"/nosh-run-via-openbsd-rc/usr/local/etc/rc.d 
 install -d -m 0755 "${dest}"/nosh-run-via-mewburn-rc/usr/local/etc/rc.d 
@@ -191,6 +195,7 @@ do
 	done
 done
 
+##########################################################
 # Conversion tools
 while read j ;
 do

@@ -151,7 +151,7 @@ Description: Bernstein UCSPI-TCP shim service utilities
 
 Package: nosh-bundles
 Architecture: amd64
-Depends: nosh-exec (>=1.31), nosh-service-management (>=1.31), nosh-terminal-management (>=1.22), adduser
+Depends: nosh-exec (>=1.32), nosh-service-management (>=1.31), nosh-terminal-management (>=1.22), adduser
 Suggests: 
 Recommends: 
 Conflicts: nosh-standard-targets, nosh-sysinit-services, nosh-bsd-services, nosh-bsd-sockets, nosh-regular-sockets, nosh-regular-services
@@ -174,14 +174,8 @@ Description: Run the nosh system manager
  It does this on FreeBSD/TrueOS by modifying /boot/loader.conf .
  . 
  It does this on Linux by installing a symbolic link as /sbin/init .
- . 
- Notes:
-  * This does not install any System 5 compatibility shim commands (halt, reboot, poweroff, &c.).
-    For those, install the (recommended) nosh-systemv-shims package.
-  * This does not install any OpenBSD compatibility shim commands (rcctl &c.).
-    For those, install the (recommended) nosh-openbsd-shims package.
-  * This does not install any systemd compatibility shims (systemctl &c.).
-    For those, install the nosh-systemd-shims package.
+ .
+ Additionally, as part of (re-)installation, it invokes redo on the external configuration import subsystem.
 
 Package: nosh-run-kernel-vt
 Architecture: amd64

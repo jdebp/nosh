@@ -5,6 +5,8 @@
 [Unit]
 Description=Network configuration for interface %I
 Before=ifconfig@%i
+Wants=ifconfig-log.service
+After=ifconfig-log.service
 
 [Service]
 EnvironmentDirectory=env

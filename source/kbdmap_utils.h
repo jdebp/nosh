@@ -7,7 +7,6 @@ For copyright and licensing terms, see the file named COPYING.
 #define INCLUDE_KBDMAP_UTILS_H
 
 #include <stdint.h>
-#include "kbdmap.h"
 
 extern
 uint16_t
@@ -19,6 +18,11 @@ extern
 uint16_t
 usb_ident_to_keymap_index (
 	const uint32_t ident
+) ;
+extern
+uint16_t
+linux_keycode_to_keymap_index (
+	const uint16_t k
 ) ;
 #endif
 

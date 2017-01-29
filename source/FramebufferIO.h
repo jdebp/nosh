@@ -25,7 +25,8 @@ class FramebufferIO :
 public:
 	FramebufferIO(int pfd, bool l80);
 	~FramebufferIO();
-	void save_and_set_graphics_mode(const char *, const char *);
+	void save(const char *, const char *);
+	void set_graphics_mode(const char *, const char *);
 	void restore();
 #if defined(__LINUX__) || defined(__linux__)
 	std::size_t query_size() const { return fixed_info.smem_len; }

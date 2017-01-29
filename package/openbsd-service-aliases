@@ -23,3 +23,7 @@ getty@tty04	ttylogin@tty04
 getty@tty05	ttylogin@tty05
 getty@tty06	ttylogin@tty06
 getty@tty07	ttylogin@tty07
+getty@ttyU0	ttylogin@ttyU0
+getty@ttyU1	ttylogin@ttyU1
+getty@ttyU2	ttylogin@ttyU2
+getty@ttyU3	ttylogin@ttyU3

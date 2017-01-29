@@ -30,6 +30,7 @@ per-user-stuff
 per-user-system-services
 per-user-user-services
 rcconf
+real-terminal-login
 service-management-cheatsheet
 services/appcafe
 services/djbdns

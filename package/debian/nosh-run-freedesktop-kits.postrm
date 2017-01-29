@@ -2,6 +2,7 @@
 case "$1" in
 	upgrade)
 		for i in \
+			avahi-daemon \
 			colord \
 			colord-sane \
 			console-kit-daemon \

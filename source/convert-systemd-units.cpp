@@ -512,11 +512,20 @@ split_netlink_socket_name (
 static inline
 std::string
 set_controller_command (
+	unsigned levels,
 	const char * controller,
 	bool enable
 ) {
 	const std::string flag(enable ? "+" : "-");
-	return "foreground set-control-group-knob ../cgroup.subtree_control " + quote(flag + controller) + " ;\n";
+	const std::string p("foreground set-control-group-knob ");
+	const std::string s("cgroup.subtree_control " + quote(flag + controller) + " ;\n");
+	std::string r, d;
+	while (levels > 0U) {
+		d += "../";
+		r = p + d + s + r;
+		--levels;
+	}
+	return r;
 }
 #endif
 
@@ -1027,7 +1036,7 @@ convert_systemd_units [[gnu::noreturn]] (
 
 	// Construct various common command strings.
 
-	std::string jail, enable_control_group_controllers, move_to_control_group, control_group_knobs;
+	std::string jail, enable_control_group_controllers, create_control_group, move_to_control_group, control_group_knobs;
 #if defined(__LINUX__) || defined(__linux__)
 	bool cpu_accounting(is_bool_true(cpuaccounting, false));
 	bool memory_accounting(is_bool_true(memoryaccounting, false));
@@ -1089,22 +1098,26 @@ convert_systemd_units [[gnu::noreturn]] (
 		control_group_knobs += "foreground set-control-group-knob --device-name-key --nested-key wios --infinity-is-max --multiplier-suffixes io.weight " + quote(names.substitute(iowriteiopsmax->last_setting())) + " ;\n";
 		io_accounting = true;
 	}
+	const unsigned control_group_levels(1U + !!slice + !!is_instance);
 	if (cpu_accounting)
-		enable_control_group_controllers += set_controller_command("cpu", cpu_accounting);
+		enable_control_group_controllers += set_controller_command(control_group_levels, "cpu", cpu_accounting);
 	if (memory_accounting)
-		enable_control_group_controllers += set_controller_command("memory", memory_accounting);
+		enable_control_group_controllers += set_controller_command(control_group_levels, "memory", memory_accounting);
 	if (io_accounting)
-		enable_control_group_controllers += set_controller_command("io", io_accounting);
+		enable_control_group_controllers += set_controller_command(control_group_levels, "io", io_accounting);
 	if (tasks_accounting)
-		enable_control_group_controllers += set_controller_command("pids", tasks_accounting);
-	move_to_control_group += "move-to-control-group ../";
-	if (slice) 
-		move_to_control_group += "../" + quote(names.substitute(slice->last_setting())) + "/";
-	if (is_instance) {
-		move_to_control_group += ((quote(names.query_escaped_prefix() + "@") + ".") + (is_target ? "target" : "service")) + "\n";
-		move_to_control_group += "move-to-control-group ";
+		enable_control_group_controllers += set_controller_command(control_group_levels, "pids", tasks_accounting);
+	std::string control_group_name("..");
+	if (slice)  {
+		control_group_name += "/../" + names.substitute(slice->last_setting());
+		create_control_group += "foreground create-control-group " + quote(control_group_name) + " ;\n";
 	}
-	move_to_control_group += ((quote(names.query_bundle_basename()) + ".") + (is_target ? "target" : "service")) + "\n";
+	if (is_instance) {
+		control_group_name += "/" + (names.query_escaped_prefix() + "@.") + (is_target ? "target" : "service");
+		create_control_group += "foreground create-control-group " + quote(control_group_name) + " ;\n";
+	}
+	control_group_name += "/" + (names.query_bundle_basename() + ".") + (is_target ? "target" : "service");
+	move_to_control_group += "move-to-control-group " + quote(control_group_name) + "\n";
 	if (is_bool_true(delegate, false))
 		control_group_knobs += "foreground delegate-control-group-to " + quote(names.query_user()) + " ;\n";
 #else
@@ -1547,8 +1560,9 @@ convert_systemd_units [[gnu::noreturn]] (
 
 	std::stringstream perilogue_setup_environment;
 	perilogue_setup_environment << jail;
-	perilogue_setup_environment << enable_control_group_controllers;
+	perilogue_setup_environment << create_control_group;
 	perilogue_setup_environment << move_to_control_group;
+	perilogue_setup_environment << enable_control_group_controllers;
 	perilogue_setup_environment << priority;
 	if (setuidgidall) perilogue_setup_environment << envuidgid;
 	perilogue_setup_environment << env;

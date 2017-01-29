@@ -1,4 +1,5 @@
 50-TrueOS-Server-Basic.preset
 50-TrueOS-Desktop-Basic.preset
 90-bsd-boot-essentials.preset
+90-bsd-static-networking.preset
 90-common-boot-essentials.preset

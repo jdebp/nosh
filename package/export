@@ -42,7 +42,7 @@ done
 do
 	# Manual page
 	rm -f -- "${root1}"man/man1/"$i.1"{new}
-	install -m 0644 -o "${user}" -g "${group}" -p -- manual/"$i.1" "${root1}"man/man1/"$i.1"{new}
+	install -m 0444 -o "${user}" -g "${group}" -p -- manual/"$i.1" "${root1}"man/man1/"$i.1"{new}
 	mv -f -- "${root1}"man/man1/"$i.1"{new} "${root1}"man/man1/"$i.1"
 done
 (
@@ -59,7 +59,7 @@ done
 do
 	# Manual page
 	rm -f -- "${root1}"man/man8/"$i.8"{new}
-	install -m 0644 -o "${user}" -g "${group}" -p -- manual/"$i.8" "${root1}"man/man8/"$i.8"{new}
+	install -m 0444 -o "${user}" -g "${group}" -p -- manual/"$i.8" "${root1}"man/man8/"$i.8"{new}
 	mv -f -- "${root1}"man/man8/"$i.8"{new} "${root1}"man/man8/"$i.8"
 done
 (
@@ -79,7 +79,7 @@ done
 do
 	# Documentation
 	rm -f -- "${root1}"share/doc/nosh/"$i.html"{new}
-	install -m 0644 -o "${user}" -g "${group}" -p -- guide/"$i.html" "${root1}"share/doc/nosh/"$i.html"{new}
+	install -m 0444 -o "${user}" -g "${group}" -p -- guide/"$i.html" "${root1}"share/doc/nosh/"$i.html"{new}
 	mv -f -- "${root1}"share/doc/nosh/"$i.html"{new} "${root1}"share/doc/nosh/"$i.html"
 done
 (
@@ -88,28 +88,28 @@ done
 do
 	# Plug and Play manager rulesets
 	rm -f -- "${root2}"etc/devd/"$i.conf"{new}
-	install -m 0644 -o "${user}" -g "${group}" -p -- config/devd/"$i.conf" "${root2}"etc/devd/"$i.conf"{new}
+	install -m 0444 -o "${user}" -g "${group}" -p -- config/devd/"$i.conf" "${root2}"etc/devd/"$i.conf"{new}
 	mv -f -- "${root2}"etc/devd/"$i.conf"{new} "${root2}"etc/devd/"$i.conf"
 done
 for i in COPYING
 do
 	# Documentation
 	rm -f -- "${root1}"share/doc/nosh/"$i"{new}
-	install -m 0644 -o "${user}" -g "${group}" -p -- guide/"$i" "${root1}"share/doc/nosh/"$i"{new}
+	install -m 0444 -o "${user}" -g "${group}" -p -- guide/"$i" "${root1}"share/doc/nosh/"$i"{new}
 	mv -f -- "${root1}"share/doc/nosh/"$i"{new} "${root1}"share/doc/nosh/"$i"
 done
 while read -r i
 do
 	# Executable
 	rm -f -- "${root1}"bin/"$i"{new}
-	install -m 0755 -o "${user}" -g "${group}" -p -- command/"$i" "${root1}"bin/"$i"{new}
+	install -m 0555 -o "${user}" -g "${group}" -p -- command/"$i" "${root1}"bin/"$i"{new}
 	mv -f -- "${root1}"bin/"$i"{new} "${root1}"bin/"$i"
 done < package/commands1
 while read -r i
 do
 	# Executable
 	rm -f -- "${root1}"sbin/"$i"{new}
-	install -m 0755 -o "${user}" -g "${group}" -p -- command/"$i" "${root1}"sbin/"$i"{new}
+	install -m 0555 -o "${user}" -g "${group}" -p -- command/"$i" "${root1}"sbin/"$i"{new}
 	mv -f -- "${root1}"sbin/"$i"{new} "${root1}"sbin/"$i"
 done < package/commands8
 while read command alias
@@ -129,7 +129,7 @@ do
 	# Unmerged /usr binaries to /bin
 	rm -f -- "${root2}"bin/"$j"{new}
 	ln -f -- "${root1}"bin/"$j" "${root2}"bin/"$j"{new} 2>/dev/null ||
-	install -m 0755 -o "${user}" -g "${group}" -p -- "${root1}"bin/"$j" "${root2}"bin/"$j"{new}
+	install -m 0555 -o "${user}" -g "${group}" -p -- "${root1}"bin/"$j" "${root2}"bin/"$j"{new}
 	mv -f -- "${root2}"bin/"$j"{new} "${root2}"bin/"$j"
 done
 for j in system-manager
@@ -137,37 +137,37 @@ do
 	# Unmerged /usr binaries to /sbin
 	rm -f -- "${root2}"sbin/"$j"{new}
 	ln -f -- "${root1}"sbin/"$j" "${root2}"sbin/"$j"{new} 2>/dev/null ||
-	install -m 0755 -o "${user}" -g "${group}" -p -- "${root1}"sbin/"$j" "${root2}"sbin/"$j"{new}
+	install -m 0555 -o "${user}" -g "${group}" -p -- "${root1}"sbin/"$j" "${root2}"sbin/"$j"{new}
 	mv -f -- "${root2}"sbin/"$j"{new} "${root2}"sbin/"$j"
 done
 while read -r i
 do
 	# systemd service units
-	install -m 0644 -- config/systemd/"$i" "${root1}"lib/systemd/system/"$i"{new}
+	install -m 0444 -- config/systemd/"$i" "${root1}"lib/systemd/system/"$i"{new}
 	mv -f -- "${root1}"lib/systemd/system/"$i"{new} "${root1}"lib/systemd/system/"$i"
 done < package/systemd-services
 while read -r i
 do
 	# systemd temp files
-	install -m 0644 -- config/systemd/"$i" "${root1}"lib/tmpfiles.d/"$i"{new}
+	install -m 0444 -- config/systemd/"$i" "${root1}"lib/tmpfiles.d/"$i"{new}
 	mv -f -- "${root1}"lib/tmpfiles.d/"$i"{new} "${root1}"lib/tmpfiles.d/"$i"
 done < package/tmpfiles-snippets
 while read -r i
 do
 	# Mewburn rc script files
-	install -m 0755 -- config/mewburn-rc.d/"$i" "${root1}"etc/mewburn-rc.d/"$i"{new}
+	install -m 0555 -- config/mewburn-rc.d/"$i" "${root1}"etc/mewburn-rc.d/"$i"{new}
 	mv -f -- "${root1}"etc/mewburn-rc.d/"$i"{new} "${root1}"etc/mewburn-rc.d/"$i"
 done < package/mewburn-rc-scripts
 while read -r i
 do
 	# Mewburn rc script files
-	install -m 0755 -- config/openbsd-rc.d/"$i" "${root1}"etc/openbsd-rc.d/"$i"{new}
+	install -m 0555 -- config/openbsd-rc.d/"$i" "${root1}"etc/openbsd-rc.d/"$i"{new}
 	mv -f -- "${root1}"etc/openbsd-rc.d/"$i"{new} "${root1}"etc/openbsd-rc.d/"$i"
 done < package/openbsd-rc-scripts
 for i in issue.vc
 do
 	# vt config files
-	install -m 0644 -- config/vt/"$i" "${root1}"etc/"$i"{new}
+	install -m 0444 -- config/vt/"$i" "${root1}"etc/"$i"{new}
 	mv -f -- "${root1}"etc/"$i"{new} "${root1}"etc/"$i"
 done
 (
@@ -182,15 +182,15 @@ done
 ) | while read -r i
 do
 	# override systemd presets when importing to nosh
-	install -m 0644 -- config/presets/"$i" "${root2}"etc/system-control/presets/"$i"{new}
+	install -m 0444 -- config/presets/"$i" "${root2}"etc/system-control/presets/"$i"{new}
 	mv -f -- "${root2}"etc/system-control/presets/"$i"{new} "${root2}"etc/system-control/presets/"$i"
 done
 while read -r i
 do
 	# conversion scripts for external formats, and service templates that they use
 	case "$i" in
-	*.do)	m=0755 ;;
-	*)	m=0644 ;;
+	*.do)	m=0555 ;;
+	*)	m=0444 ;;
 	esac
 	install -m "$m" -- config/convert/"$i" "${root2}"etc/system-control/convert/"$i"{new}
 	mv -f -- "${root2}"etc/system-control/convert/"$i"{new} "${root2}"etc/system-control/convert/"$i"

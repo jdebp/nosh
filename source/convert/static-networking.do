@@ -57,7 +57,7 @@ is_natd_interface() {
 is_ip4_address() { echo "$1" | grep -E -q '^[0-9]+(\.[0-9]+){0,3}$' ; }
 get_ifconfig() { read_rc ifconfig_"$1" || read_rc ifconfig_DEFAULT || true ; }
 
-redo-ifchange rc.conf general-services "static_arp@.service" "static_ndp@.service" "static_ip4@.service" "static_ip6@.service" "natd@.service" "hostapd@.service" "dhclient@.service" "wpa_supplicant@.service" "rfcomm_pppd@.service" "ppp@.service" "spppcontrol@.service"
+redo-ifchange rc.conf general-services "static_arp@.service" "static_ndp@.service" "static_ip4@.service" "static_ip6@.service" "natd@.service" "hostapd@.service" "dhclient@.service" "wpa_supplicant@.service" "rfcomm_pppd@.service" "ppp@.service" "spppcontrol@.service" "ifscript@.service" "ifconfig@.service"
 
 r="/var/local/sv"
 e="--no-systemd-quirks --escape-instance --local-bundle --bundle-root"
@@ -319,7 +319,7 @@ make_rfcomm_pppd() {
 find "$r/" -maxdepth 1 -type d \( -name 'static_arp@*' -o -name 'static_ndp@*' -o -name 'static_ip4@*' -o -name 'static_ip6@*' -o -name 'natd@*' -o -name 'hostapd@*' -o -name 'wpa_supplicant@*' -o -name 'dhclient@*' -o -name 'ppp@*' -o -name 'spppcontrol@*' -o -name 'rfcomm_pppd@*' \) -print0 |
 xargs -0 system-control disable
 
-system-control disable natd-log dhclient-log rfcomm_pppd-log ppp-log sppp-log
+system-control disable ifconfig-log natd-log dhclient-log rfcomm_pppd-log ppp-log sppp-log
 
 list_static_arp |
 while read -r i
@@ -364,7 +364,7 @@ fi
 
 # Some IP6 static routes are pre-defined.
 #  * IP4 mapped and compatible IP6 addresses are null-routed.
-#  * Link-local unicast IP6 addresses are null-routed.
+#  * Link-local unicast and multicast IP6 addresses are null-routed.
 make_ip6_route _v4mapped '::ffff:0.0.0.0 -prefixlen 96 ::1 -reject'
 make_ip6_route _v4compat '::0.0.0.0 -prefixlen 96 ::1 -reject'
 make_ip6_route _lla 'fe80:: -prefixlen 10 ::1 -reject'

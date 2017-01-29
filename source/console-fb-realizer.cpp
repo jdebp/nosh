@@ -30,7 +30,9 @@ For copyright and licensing terms, see the file named COPYING.
 #include <linux/kd.h>
 #include <linux/input.h>
 #include <endian.h>
+#include "ttyutils.h"
 #elif defined(__OpenBSD__)
+#include <sys/uio.h>
 #include <sys/endian.h>
 #include <termios.h>
 #include <dev/wscons/wsconsio.h>
@@ -40,12 +42,15 @@ For copyright and licensing terms, see the file named COPYING.
 #include "ttyutils.h"
 #include "kbdmap_utils.h"
 #else
+#include <sys/uio.h>
 #include <sys/mouse.h>
 #include <sys/kbio.h>
 #include <sys/consio.h>
 #include <sys/endian.h>
 #include <termios.h>
+#define HID_USAGE(u) ((u) & 0xffff)
 #include <dev/usb/usbhid.h>
+#include <dev/usb/usbdi.h>
 #include <dev/usb/usb_ioctl.h>
 #include "ttyutils.h"
 #include "kbdmap_utils.h"
@@ -54,6 +59,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <fcntl.h>
 #include "utils.h"
 #include "fdutils.h"
+#include "pack.h"
 #include "popt.h"
 #include "CharacterCell.h"
 #include "InputMessage.h"
@@ -68,6 +74,22 @@ For copyright and licensing terms, see the file named COPYING.
 #include "UnicodeClassification.h"
 #include "SignalManagement.h"
 #include <term.h>
+
+extern inline
+void
+append_event (
+	std::vector<struct kevent> & p,
+	uintptr_t ident,
+	short filter,
+	unsigned short flags,
+	unsigned int fflags,
+	intptr_t data,
+	void *udata
+) {
+	struct kevent ev;
+	set_event(&ev, ident, filter, flags, fflags, data, udata);
+	p.push_back(ev);
+}
 
 /* Signal handling **********************************************************
 // **************************************************************************
@@ -351,7 +373,7 @@ namespace {
 class KeyboardModifierState
 {
 public:
-	KeyboardModifierState();
+	KeyboardModifierState(bool);
 
 	uint8_t modifiers() const;
 	uint8_t nolevel_nogroup_noctrl_modifiers() const;
@@ -360,13 +382,9 @@ public:
 	bool num_LED() const { return num_lock(); }
 	bool caps_LED() const { return caps_lock()||level2_lock(); }
 	bool scroll_LED() const { return group2(); }
-#if 0 // These are for the future.
 	bool shift_LED() const { return level2_lock()||level2(); }
-#endif
-#if defined(__LINUX__) || defined(__linux__)
 	bool kana_LED() const { return false; }
 	bool compose_LED() const { return false; }
-#endif
 	bool query_dirty_LEDs() const { return dirty_LEDs; }
 	void clean_LEDs() { dirty_LEDs = false; }
 	std::size_t query_kbdmap_parameter (const uint32_t cmd) const;
@@ -397,10 +415,12 @@ protected:
 }
 
 inline
-KeyboardModifierState::KeyboardModifierState() : 
+KeyboardModifierState::KeyboardModifierState(
+	bool initial_numlock
+) : 
 	shift_state(0U), 
 	latch_state(0U), 
-	lock_state(0U),
+	lock_state(initial_numlock ? bit(KBDMAP_MODIFIER_NUM) : 0U),
 	dirty_LEDs(true)
 {
 }
@@ -2659,7 +2679,7 @@ class HIDBase :
 	public KeyboardModifierState
 {
 public:
-	HIDBase(const KeyboardMap & m) : map(m) {}
+	HIDBase(const KeyboardMap & m, bool n) : KeyboardModifierState(n), map(m) {}
 
 	void handle_keyboard (Realizer &, const uint8_t row, const uint8_t col, uint32_t v);
 	void handle_keyboard (Realizer &, const uint16_t index, uint32_t v);
@@ -2667,142 +2687,7 @@ public:
 protected:
 	const KeyboardMap & map;
 
-};
-
-#if !defined(__LINUX__) && !defined(__linux__)
-class USBHIDBase :
-	public HIDBase
-{
-public:
-	USBHIDBase(const KeyboardMap & km);
-
-protected:
-	typedef uint32_t UsageID;
-	enum {
-		USAGE_CONSUMER_AC_PAN	= 0x000C0238,
-	};
-
-	struct ParserContext {
-		struct Item { 
-			Item(uint32_t pd, std::size_t ps): d(pd), s(ps) {}
-			Item() : d(), s() {}
-			uint32_t d; 
-			std::size_t s; 
-		};
-		Item globals[16], locals[16];
-		bool has_min, has_max;
-		ParserContext() : has_min(false), has_max(false) { wipe_globals(); wipe_locals(); }
-		void clear_locals() { wipe_locals(); idents.clear(); has_min = has_max = false; }
-		const Item & logical_minimum() const { return globals[1]; }
-		const Item & logical_maximum() const { return globals[2]; }
-		const Item & report_size() const { return globals[7]; }
-		const Item & report_id() const { return globals[8]; }
-		const Item & report_count() const { return globals[9]; }
-		const Item & usage_minimum() const { return locals[1]; }
-		const Item & usage_maximum() const { return locals[2]; }
-		UsageID ident() const { return ident(usage(), page()); }
-		void add_ident() { idents.push_back(ident()); }
-		UsageID take_variable_ident() { 
-			if (!idents.empty()) {
-				const UsageID v(idents.front());
-				if (idents.size() > 1) idents.pop_front();
-				return v;
-			} else
-			if (has_min) {
-				const UsageID v(ident_minimum());
-				if (has_max && v < ident_maximum()) {
-					// Reset to full size because pages are not min/max boundaries and we don't want page wraparound.
-					locals[1].d = v + 1;
-					locals[1].s = 4;
-				}
-				return v;
-			} else
-				return ident();
-		}
-	protected:
-		std::deque<UsageID> idents;
-		static UsageID ident(const Item & u, const Item & p) { return u.s < 3 ? HID_USAGE2(p.d, u.d) : u.d; }
-		const Item & page() const { return globals[0]; }
-		const Item & usage() const { return locals[0]; }
-		UsageID ident_minimum() const { return ident(usage_minimum(), page()); }
-		UsageID ident_maximum() const { return ident(usage_maximum(), page()); }
-		void wipe_locals() { for (std::size_t i(0); i < sizeof locals/sizeof *locals; ++i) locals[i].d = locals[i].s = 0U; }
-		void wipe_globals() { for (std::size_t i(0); i < sizeof globals/sizeof *globals; ++i) globals[i].d = globals[i].s = 0U; }
-	};
-	struct ReportField {
-		static int64_t mm(const ParserContext::Item & control, const ParserContext::Item & value) 
-		{ 
-			const uint32_t control_signbit(1U << (control.s * 8U - 1U));
-			const uint32_t value_signbit(1U << (value.s * 8U - 1U));
-			if ((control.d & control_signbit) && (value.d & value_signbit)) {
-				const uint32_t v(value.d | ~(value_signbit - 1U));
-				return static_cast<int32_t>(v);
-			} else
-				return static_cast<int64_t>(value.d); 
-		}
-		ReportField(std::size_t p, std::size_t l): pos(p), len(l) {}
-		std::size_t pos, len;
-	};
-	struct InputVariable : public ReportField {
-		InputVariable(UsageID i, std::size_t p, std::size_t l, bool r, const ParserContext::Item & mi, const ParserContext::Item & ma): ReportField(p, l), relative(r), ident(i), min(mm(mi, mi)), max(mm(mi, ma)) {}
-		bool relative;
-		UsageID ident;
-		int64_t min, max;
-	};
-	struct InputIndex : public ReportField {
-		InputIndex(std::size_t p, std::size_t l, UsageID umi, UsageID uma, const ParserContext::Item & imi, const ParserContext::Item & ima): ReportField(p, l), min_ident(umi), max_ident(uma), min_index(mm(imi, imi)), max_index(mm(imi, ima)) {}
-		UsageID min_ident, max_ident;
-		int64_t min_index, max_index;
-	};
-	struct InputReportDescription {
-		InputReportDescription() : bits(0U), bytes(0U) {}
-		std::size_t bits, bytes;
-		typedef std::list<InputVariable> Variables;
-		Variables variables;
-		typedef std::list<InputIndex> Indices;
-		Indices array_indices;
-	};
-	struct OutputVariable : public ReportField {
-		OutputVariable(UsageID i, std::size_t p, std::size_t l): ReportField(p, l), ident(i) {}
-		UsageID ident;
-	};
-	struct OutputIndex : public ReportField {
-		OutputIndex(std::size_t p, std::size_t l, UsageID umi, UsageID uma): ReportField(p, l), min_ident(umi), max_ident(uma) {}
-		UsageID min_ident, max_ident;
-	};
-	struct OutputReportDescription {
-		OutputReportDescription() : bits(0U), bytes(0U) {}
-		std::size_t bits, bytes;
-		typedef std::list<OutputVariable> Variables;
-		Variables variables;
-		typedef std::list<OutputIndex> Indices;
-		Indices array_indices;
-	};
-	typedef std::map<uint8_t, InputReportDescription> InputReports;
-	typedef std::map<uint8_t, OutputReportDescription> OutputReports;
-	typedef std::set<uint32_t> KeysPressed;
-
-	char buffer[4096];
-	std::size_t offset;
-	bool has_report_ids;
-	InputReports input_reports;
-	OutputReports output_reports;
-
-	bool read_description(unsigned char * const b, const std::size_t maxlen, const std::size_t actlen);
-	bool IsInRange(const InputVariable & f, uint32_t);
-	uint32_t GetUnsignedField(const ReportField & f, std::size_t);
-	bool IsInRange(const InputVariable & f, int32_t);
-	int32_t GetSignedField(const ReportField & f, std::size_t);
-
-	uint16_t stdbuttons;
-	static unsigned short TranslateStdButton(const unsigned short button);
-	void handle_mouse_movement(Realizer & r, const InputReportDescription & report, const InputVariable & f, const uint16_t axis);
-	void handle_mouse_button(Realizer & r, uint32_t ident, bool down);
-
-	KeysPressed keys;
-	static void handle_key(bool & seen_keyboard, KeysPressed & keys, uint32_t ident, bool down);
-};
-#endif
+ };
 
 }
 
@@ -2904,10 +2789,176 @@ HIDBase::handle_keyboard (
 }
 
 #if !defined(__LINUX__) && !defined(__linux__)
+namespace {
+
+class USBHIDBase :
+	public HIDBase
+{
+public:
+	virtual ~USBHIDBase() {}
+	void set_input_fd(int fd) { input.reset(fd); }
+	int query_input_fd() const { return input.get(); }
+	void handle_input_events(Realizer &);
+	void set_LEDs();
+
+protected:
+	typedef uint32_t UsageID;
+	enum {
+		USAGE_CONSUMER_AC_PAN	= 0x000C0238,
+	};
+#if defined(__OpenBSD__)
+	enum {
+		HUP_LEDS		= HUP_LED,
+		USB_SHORT_XFER_OK	= USBD_SHORT_XFER_OK,
+	};
+	static uint16_t HID_USAGE(UsageID d) { return d & 0xFFFF; }
+#endif
+	enum {
+#if !defined(__OpenBSD__)
+		HUL_NUM_LOCK	= 0x0001,
+		HUL_CAPS_LOCK	= 0x0002,
+		HUL_SCROLL_LOCK	= 0x0003,
+		HUL_COMPOSE	= 0x0004,
+		HUL_KANA	= 0x0005,
+#endif
+		HUL_SHIFT	= 0x0007,
+	};
+
+	struct ParserContext {
+		struct Item { 
+			Item(uint32_t pd, std::size_t ps): d(pd), s(ps) {}
+			Item() : d(), s() {}
+			uint32_t d; 
+			std::size_t s; 
+		};
+		Item globals[16], locals[16];
+		bool has_min, has_max;
+		ParserContext() : has_min(false), has_max(false) { wipe_globals(); wipe_locals(); }
+		void clear_locals() { wipe_locals(); idents.clear(); has_min = has_max = false; }
+		const Item & logical_minimum() const { return globals[1]; }
+		const Item & logical_maximum() const { return globals[2]; }
+		const Item & report_size() const { return globals[7]; }
+		const Item & report_id() const { return globals[8]; }
+		const Item & report_count() const { return globals[9]; }
+		UsageID ident() const { return ident(usage(), page()); }
+		UsageID ident_minimum() const { return ident(usage_minimum(), page()); }
+		UsageID ident_maximum() const { return ident(usage_maximum(), page()); }
+		void add_ident() { idents.push_back(ident()); }
+		UsageID take_variable_ident() { 
+			if (!idents.empty()) {
+				const UsageID v(idents.front());
+				if (idents.size() > 1) idents.pop_front();
+				return v;
+			} else
+			if (has_min) {
+				const UsageID v(ident_minimum());
+				if (has_max && v < ident_maximum()) {
+					// Reset to full size because pages are not min/max boundaries and we don't want page wraparound.
+					locals[1].d = v + 1;
+					locals[1].s = 4;
+				}
+				return v;
+			} else
+				return ident();
+		}
+	protected:
+		std::deque<UsageID> idents;
+		static UsageID ident(const Item & u, const Item & p) { return u.s < 3 ? HID_USAGE2(p.d, u.d) : u.d; }
+		const Item & page() const { return globals[0]; }
+		const Item & usage() const { return locals[0]; }
+		const Item & usage_minimum() const { return locals[1]; }
+		const Item & usage_maximum() const { return locals[2]; }
+		void wipe_locals() { for (std::size_t i(0); i < sizeof locals/sizeof *locals; ++i) locals[i].d = locals[i].s = 0U; }
+		void wipe_globals() { for (std::size_t i(0); i < sizeof globals/sizeof *globals; ++i) globals[i].d = globals[i].s = 0U; }
+	};
+	struct ReportField {
+		static int64_t mm(const ParserContext::Item & control, const ParserContext::Item & value) 
+		{ 
+			const uint32_t control_signbit(1U << (control.s * 8U - 1U));
+			const uint32_t value_signbit(1U << (value.s * 8U - 1U));
+			if ((control.d & control_signbit) && (value.d & value_signbit)) {
+				const uint32_t v(value.d | ~(value_signbit - 1U));
+				return static_cast<int32_t>(v);
+			} else
+				return static_cast<int64_t>(value.d); 
+		}
+		ReportField(std::size_t p, std::size_t l): pos(p), len(l) {}
+		std::size_t pos, len;
+	};
+	struct InputVariable : public ReportField {
+		InputVariable(UsageID i, std::size_t p, std::size_t l, bool r, const ParserContext::Item & mi, const ParserContext::Item & ma): ReportField(p, l), relative(r), ident(i), min(mm(mi, mi)), max(mm(mi, ma)) {}
+		bool relative;
+		UsageID ident;
+		int64_t min, max;
+	};
+	struct InputIndex : public ReportField {
+		InputIndex(std::size_t p, std::size_t l, UsageID umi, UsageID uma, const ParserContext::Item & imi, const ParserContext::Item & ima): ReportField(p, l), min_ident(umi), max_ident(uma), min_index(mm(imi, imi)), max_index(mm(imi, ima)) {}
+		UsageID min_ident, max_ident;
+		int64_t min_index, max_index;
+	};
+	struct InputReportDescription {
+		InputReportDescription() : bits(0U), bytes(0U) {}
+		std::size_t bits, bytes;
+		typedef std::list<InputVariable> Variables;
+		Variables variables;
+		typedef std::list<InputIndex> Indices;
+		Indices array_indices;
+	};
+	struct OutputVariable : public ReportField {
+		OutputVariable(UsageID i, std::size_t p, std::size_t l): ReportField(p, l), ident(i) {}
+		UsageID ident;
+	};
+	struct OutputIndex : public ReportField {
+		OutputIndex(std::size_t p, std::size_t l, UsageID umi, UsageID uma): ReportField(p, l), min_ident(umi), max_ident(uma) {}
+		UsageID min_ident, max_ident;
+	};
+	struct OutputReportDescription {
+		OutputReportDescription() : bits(0U), bytes(0U) {}
+		std::size_t bits, bytes;
+		typedef std::list<OutputVariable> Variables;
+		Variables variables;
+		typedef std::list<OutputIndex> Indices;
+		Indices array_indices;
+	};
+	typedef std::map<uint8_t, InputReportDescription> InputReports;
+	typedef std::map<uint8_t, OutputReportDescription> OutputReports;
+	typedef std::set<UsageID> KeysPressed;
+
+	USBHIDBase(const KeyboardMap &, bool);
+
+	FileDescriptorOwner input;
+	char output_buffer[4096];
+	char input_buffer[4096];
+	std::size_t input_offset;
+	bool has_report_ids;
+	InputReports input_reports;
+	OutputReports output_reports;
+
+	bool read_description(unsigned char * const b, const std::size_t maxlen, const std::size_t actlen);
+	bool IsInRange(const InputVariable & f, uint32_t);
+	uint32_t GetUnsignedField(const ReportField & f, std::size_t);
+	bool IsInRange(const InputVariable & f, int32_t);
+	int32_t GetSignedField(const ReportField & f, std::size_t);
+
+	virtual void write_output_report(const uint8_t, std::size_t) = 0;
+	void SetUnsignedField(const ReportField & f, std::size_t, uint32_t);
+
+	uint16_t stdbuttons;
+	static unsigned short TranslateStdButton(const unsigned short button);
+	void handle_mouse_movement(Realizer & r, const InputReportDescription & report, const InputVariable & f, const uint16_t axis);
+	void handle_mouse_button(Realizer & r, UsageID ident, bool down);
+
+	KeysPressed keys;
+	static void handle_key(bool & seen_keyboard, KeysPressed & keys, UsageID ident, bool down);
+};
+
+}
+
 inline
-USBHIDBase::USBHIDBase(const KeyboardMap & km) : 
-	HIDBase(km),
-	offset(0U),
+USBHIDBase::USBHIDBase(const KeyboardMap & km, bool n) : 
+	HIDBase(km, n),
+	input(-1),
+	input_offset(0U),
 	has_report_ids(false),
 	stdbuttons(0U)
 {
@@ -2937,17 +2988,17 @@ USBHIDBase::GetUnsignedField(
 		const std::size_t bytepos(f.pos >> 3U);
 		if (bytepos >= report_size) return 0U;
 		if (f.len <= 8U) {
-			uint8_t v(*reinterpret_cast<const uint8_t *>(buffer + bytepos));
+			uint8_t v(*reinterpret_cast<const uint8_t *>(input_buffer + bytepos));
 			if (f.len < 8U) v &= 0xFF >> (8U - f.len);
 			return v;
 		}
 		if (f.len <= 16U) {
-			uint16_t v(le16toh(*reinterpret_cast<const uint16_t *>(buffer + bytepos)));
+			uint16_t v(le16toh(*reinterpret_cast<const uint16_t *>(input_buffer + bytepos)));
 			if (f.len < 16U) v &= 0xFFFF >> (16U - f.len);
 			return v;
 		}
 		if (f.len <= 32U) {
-			uint32_t v(le32toh(*reinterpret_cast<const uint32_t *>(buffer + bytepos)));
+			uint32_t v(le32toh(*reinterpret_cast<const uint32_t *>(input_buffer + bytepos)));
 			if (f.len < 32U) v &= 0xFFFFFFFF >> (32U - f.len);
 			return v;
 		}
@@ -2956,7 +3007,7 @@ USBHIDBase::GetUnsignedField(
 	if (1U == f.len) {
 		const std::size_t bytepos(f.pos >> 3U);
 		if (bytepos >= report_size) return 0U;
-		const uint8_t v(*reinterpret_cast<const uint8_t *>(buffer + bytepos));
+		const uint8_t v(*reinterpret_cast<const uint8_t *>(input_buffer + bytepos));
 		return (v >> (f.pos & 7U)) & 1U;
 	}
 	/// \bug FIXME: This doesn't handle unaligned >1-bit fields.
@@ -2984,21 +3035,21 @@ USBHIDBase::GetSignedField(
 		const std::size_t bytepos(f.pos >> 3U);
 		if (bytepos >= report_size) return 0U;
 		if (f.len <= 8U) {
-			uint8_t v(*reinterpret_cast<const uint8_t *>(buffer + bytepos));
+			uint8_t v(*reinterpret_cast<const uint8_t *>(input_buffer + bytepos));
 			if (f.len < 8U) v &= 0xFF >> (8U - f.len);
 			const uint8_t signbit(1U << (f.len - 1U));
 			if (v & signbit) v |= ~(signbit - 1U);
 			return static_cast<int8_t>(v);
 		}
 		if (f.len <= 16U) {
-			uint16_t v(le16toh(*reinterpret_cast<const uint16_t *>(buffer + bytepos)));
+			uint16_t v(le16toh(*reinterpret_cast<const uint16_t *>(input_buffer + bytepos)));
 			if (f.len < 16U) v &= 0xFFFF >> (16U - f.len);
 			const uint16_t signbit(1U << (f.len - 1U));
 			if (v & signbit) v |= ~(signbit - 1U);
 			return static_cast<int16_t>(v);
 		}
 		if (f.len <= 32U) {
-			uint32_t v(le32toh(*reinterpret_cast<const uint32_t *>(buffer + bytepos)));
+			uint32_t v(le32toh(*reinterpret_cast<const uint32_t *>(input_buffer + bytepos)));
 			if (f.len < 32U) v &= 0xFFFFFFFF >> (32U - f.len);
 			const uint32_t signbit(1U << (f.len - 1U));
 			if (v & signbit) v |= ~(signbit - 1U);
@@ -3009,7 +3060,7 @@ USBHIDBase::GetSignedField(
 	if (1U == f.len) {
 		const std::size_t bytepos(f.pos >> 3U);
 		if (bytepos >= report_size) return 0U;
-		const uint8_t v(*reinterpret_cast<const uint8_t *>(buffer + bytepos));
+		const uint8_t v(*reinterpret_cast<const uint8_t *>(input_buffer + bytepos));
 		// The 1 bit is the sign bit, so sign extension gets us this.
 		return (v >> (f.pos & 7U)) & 1U ? -1 : 0;
 	}
@@ -3024,6 +3075,51 @@ USBHIDBase::IsInRange(
 	int32_t v
 ) {
 	return v <= f.max && v >= f.min;
+}
+
+inline
+void 
+USBHIDBase::SetUnsignedField(
+	const ReportField & f,
+	std::size_t report_size,
+	uint32_t value
+) {
+	if (0U == f.len) return;
+	// Byte-aligned fields can be optimized.
+	if (0U == (f.pos & 7U)) {
+		const std::size_t bytepos(f.pos >> 3U);
+		if (bytepos >= report_size) return;
+		if (f.len <= 8U) {
+			uint8_t v(*reinterpret_cast<const uint8_t *>(output_buffer + bytepos));
+			v &= 0xFF << f.len;
+			v |= value & (0xFF >> (8U - f.len));
+			*reinterpret_cast<uint8_t *>(output_buffer + bytepos) = v;
+		}
+		if (f.len <= 16U) {
+			uint16_t v(le16toh(*reinterpret_cast<const uint16_t *>(output_buffer + bytepos)));
+			v &= 0xFFFF << f.len;
+			v |= value & (0xFFFF >> (16U - f.len));
+			*reinterpret_cast<uint16_t *>(output_buffer + bytepos) = htole16(v);
+		}
+		if (f.len <= 32U) {
+			uint32_t v(le32toh(*reinterpret_cast<const uint32_t *>(output_buffer + bytepos)));
+			v &= 0xFFFFFFFF << f.len;
+			v |= value & (0xFFFFFFFF >> (32U - f.len));
+			*reinterpret_cast<uint32_t *>(output_buffer + bytepos) = htole32(v);
+		}
+	}
+	// 1-bit fields can be optimized.
+	if (1U == f.len) {
+		const std::size_t bytepos(f.pos >> 3U);
+		if (bytepos >= report_size) return;
+		uint8_t & v(*reinterpret_cast<uint8_t *>(output_buffer + bytepos));
+		const uint8_t mask(1U << (f.pos & 7U));
+		if (value) 
+			v |= mask;
+		else
+			v &= ~mask;
+	}
+	/// \bug FIXME: This doesn't handle unaligned >1-bit fields.
 }
 
 inline
@@ -3074,101 +3170,99 @@ USBHIDBase::read_description (
 		}
 		ParserContext & context(context_stack.top());
 		switch (type) {
-		case LONG:
-			size = datum & 0xFF;
-			tag = (datum >> 8) & 0xFF;
-			if (i + size > actlen) break;
-			i += size;
-			break;
-		case LOCAL:
-			context.locals[tag] = ParserContext::Item(datum, size);
-			if (USAGE == tag) context.add_ident();
-			if (MIN == tag) context.has_min = true;
-			if (MAX == tag) context.has_max = true;
-			break;
-		case GLOBAL:
-			if (PUSH == tag)
-				context_stack.push(context);
-			else
-			if (POP == tag) {
-				if (context_stack.size() > 1)
-					context_stack.pop();
-			} else
-			if (PUSH > tag) {
-				context.globals[tag] = ParserContext::Item(datum, size);
-				if (REPORT_ID == tag) has_report_ids = true;
-			}
-			break;
-		case MAIN:
-			{
-			switch (tag) {
-			case INPUT:
-			{
-				if (!enable_fields) break;
-				InputReportDescription & r(input_reports[context.report_id().d]);
-				if (datum & HIO_CONST) {
-					r.bits += context.report_size().d * context.report_count().d;
-				} else
-				if (datum & HIO_VARIABLE) {
-					for ( std::size_t count(0U); count < context.report_count().d; ++count ) {
-						const UsageID ident(context.take_variable_ident());
-						const bool relative(HIO_RELATIVE & datum);
-						r.variables.push_back(InputVariable(ident, r.bits, context.report_size().d, relative, context.logical_minimum(), context.logical_maximum()));
-						r.bits += context.report_size().d;
-					}
-				} else
-				{
-					for ( std::size_t count(0U); count < context.report_count().d; ++count ) {
-						r.array_indices.push_back(InputIndex(r.bits, context.report_size().d, context.usage_minimum().d, context.usage_maximum().d, context.logical_minimum(), context.logical_maximum()));
-						r.bits += context.report_size().d;
-					}
-				}
-				r.bytes = (r.bits + 7U) >> 3U;
+			case LONG:
+				size = datum & 0xFF;
+				tag = (datum >> 8) & 0xFF;
+				if (i + size > actlen) break;
+				i += size;
 				break;
-			}
-			case OUTPUT:
-			{
-				if (!enable_fields) break;
-				OutputReportDescription & r(output_reports[context.report_id().d]);
-				if (datum & HIO_CONST) {
-					r.bits += context.report_size().d * context.report_count().d;
-				} else
-				if (datum & HIO_VARIABLE) {
-				for ( std::size_t count(0U); count < context.report_count().d; ++count ) {
-					const UsageID ident(context.take_variable_ident());
-						r.variables.push_back(OutputVariable(ident, r.bits, context.report_size().d));
-						r.bits += context.report_size().d;
-					}
-				} else
-				{
-					for ( std::size_t count(0U); count < context.report_count().d; ++count ) {
-						r.array_indices.push_back(OutputIndex(r.bits, context.report_size().d, context.usage_minimum().d, context.usage_maximum().d));
-						r.bits += context.report_size().d;
-					}
-				}
-				r.bytes = (r.bits + 7U) >> 3U;
+			case LOCAL:
+				context.locals[tag] = ParserContext::Item(datum, size);
+				if (USAGE == tag) context.add_ident();
+				if (MIN == tag) context.has_min = true;
+				if (MAX == tag) context.has_max = true;
 				break;
-			}
-			case COLLECT:
-				if (0 == collection_level && APPLICATION == datum) {
-					enable_fields = 
-						HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_MOUSE) == context.ident() || 
-						HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_KEYBOARD) == context.ident() ||
-						HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_KEYPAD) == context.ident();
-				}
-				++collection_level;
-				break;
-			case END:
-				if (collection_level > 0) {
-					--collection_level;
-					if (0 == collection_level)
-						enable_fields = false;
+			case GLOBAL:
+				if (PUSH == tag)
+					context_stack.push(context);
+				else
+				if (POP == tag) {
+					if (context_stack.size() > 1)
+						context_stack.pop();
+				} else
+				if (PUSH > tag) {
+					context.globals[tag] = ParserContext::Item(datum, size);
+					if (REPORT_ID == tag) has_report_ids = true;
 				}
 				break;
-			}
-			context.clear_locals();
-			break;
-			}
+			case MAIN:
+				switch (tag) {
+					case INPUT:
+					{
+						if (!enable_fields) break;
+						InputReportDescription & r(input_reports[context.report_id().d]);
+						if (datum & HIO_CONST) {
+							r.bits += context.report_size().d * context.report_count().d;
+						} else
+						if (datum & HIO_VARIABLE) {
+							for ( std::size_t count(0U); count < context.report_count().d; ++count ) {
+								const UsageID ident(context.take_variable_ident());
+								const bool relative(HIO_RELATIVE & datum);
+								r.variables.push_back(InputVariable(ident, r.bits, context.report_size().d, relative, context.logical_minimum(), context.logical_maximum()));
+								r.bits += context.report_size().d;
+							}
+						} else
+						{
+							for ( std::size_t count(0U); count < context.report_count().d; ++count ) {
+								r.array_indices.push_back(InputIndex(r.bits, context.report_size().d, context.ident_minimum(), context.ident_maximum(), context.logical_minimum(), context.logical_maximum()));
+								r.bits += context.report_size().d;
+							}
+						}
+						r.bytes = (r.bits + 7U) >> 3U;
+						break;
+					}
+					case OUTPUT:
+					{
+						if (!enable_fields) break;
+						OutputReportDescription & r(output_reports[context.report_id().d]);
+						if (datum & HIO_CONST) {
+							r.bits += context.report_size().d * context.report_count().d;
+						} else
+						if (datum & HIO_VARIABLE) {
+						for ( std::size_t count(0U); count < context.report_count().d; ++count ) {
+							const UsageID ident(context.take_variable_ident());
+								r.variables.push_back(OutputVariable(ident, r.bits, context.report_size().d));
+								r.bits += context.report_size().d;
+							}
+						} else
+						{
+							for ( std::size_t count(0U); count < context.report_count().d; ++count ) {
+								r.array_indices.push_back(OutputIndex(r.bits, context.report_size().d, context.ident_minimum(), context.ident_maximum()));
+								r.bits += context.report_size().d;
+							}
+						}
+						r.bytes = (r.bits + 7U) >> 3U;
+						break;
+					}
+					case COLLECT:
+						if (0 == collection_level && APPLICATION == datum) {
+							enable_fields = 
+								HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_MOUSE) == context.ident() || 
+								HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_KEYBOARD) == context.ident() ||
+								HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_KEYPAD) == context.ident();
+						}
+						++collection_level;
+						break;
+					case END:
+						if (collection_level > 0) {
+							--collection_level;
+							if (0 == collection_level)
+								enable_fields = false;
+						}
+						break;
+				}
+				context.clear_locals();
+				break;
 		}
 	}
 
@@ -3198,7 +3292,7 @@ inline
 void 
 USBHIDBase::handle_mouse_button(
 	Realizer & r,
-	uint32_t ident, 
+	UsageID ident, 
 	bool down
 ) {
 	if (HID_USAGE2(HUP_BUTTON, 0) < ident && HID_USAGE2(HUP_BUTTON, 32U) >= ident) {
@@ -3220,7 +3314,7 @@ void
 USBHIDBase::handle_key(
 	bool & seen_keyboard, 
 	KeysPressed & newkeys, 
-	uint32_t ident, 
+	UsageID ident, 
 	bool down
 ) {
 	if ((HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_SYSTEM_CONTROL) <= ident && HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_LAST_SYSTEM_KEY) >= ident)
@@ -3235,6 +3329,151 @@ USBHIDBase::handle_key(
 	} else
 		/* Ignore out of range key. */ ;
 }
+
+inline
+void
+USBHIDBase::handle_input_events(
+	Realizer & r
+) {
+	const int n(read(input.get(), reinterpret_cast<char *>(input_buffer) + input_offset, sizeof input_buffer - input_offset));
+	if (0 > n) return;
+
+	KeysPressed newkeys;
+	bool seen_keyboard(false);
+
+	for (
+		input_offset += n;
+		input_offset > 0;
+	    ) {
+		uint8_t report_id(0);
+		if (has_report_ids) {
+			report_id = input_buffer[0];
+			std::memmove(input_buffer, input_buffer + 1, sizeof input_buffer - 1),
+			--input_offset;
+		}
+		InputReports::const_iterator rp(input_reports.find(report_id));
+		if (input_reports.end() == rp) break;
+		const InputReportDescription & report(rp->second);
+		if (input_offset < report.bytes) break;
+
+		for (InputReportDescription::Variables::const_iterator i(report.variables.begin()); i != report.variables.end(); ++i) {
+			const InputVariable & f(*i);
+			if (HID_USAGE2(HUP_BUTTON, 0) <= f.ident && HID_USAGE2(HUP_BUTTON, 0xFFFF) >= f.ident) {
+				const uint32_t down(GetUnsignedField(f, report.bytes));
+				if (IsInRange(f, down))
+					handle_mouse_button(r, f.ident, down);
+			} else
+			if ((HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_SYSTEM_CONTROL) <= f.ident && HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_LAST_SYSTEM_KEY) >= f.ident)
+			||  (HID_USAGE2(HUP_KEYBOARD, 0) <= f.ident && HID_USAGE2(HUP_KEYBOARD, 0xFFFF) >= f.ident)
+			||  (HID_USAGE2(HUP_CONSUMER, 0) <= f.ident && HID_USAGE2(HUP_CONSUMER, 0xFFFF) >= f.ident)
+			) {
+				const uint32_t down(GetUnsignedField(f, report.bytes));
+				if (IsInRange(f, down))
+					handle_key(seen_keyboard, newkeys, f.ident, down);
+			} else
+			switch (f.ident) {
+				case HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X):
+					handle_mouse_movement(r, report, f, r.AXIS_X);
+					break;
+				case HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Y):
+					handle_mouse_movement(r, report, f, r.AXIS_Y);
+					break;
+				case HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_WHEEL):
+					handle_mouse_movement(r, report, f, r.V_SCROLL);
+					break;
+				case HID_USAGE2(HUP_CONSUMER, HUC_AC_PAN):
+					handle_mouse_movement(r, report, f, r.H_SCROLL);
+					break;
+			}
+		}
+		for (InputReportDescription::Indices::const_iterator i(report.array_indices.begin()); i != report.array_indices.end(); ++i) {
+			const InputIndex & f(*i);
+			const uint32_t v(GetUnsignedField(f, report.bytes));
+			if (v < f.min_index || v > f.max_index) continue;
+			uint32_t ident(v + f.min_ident - f.min_index);
+			if (ident > f.max_ident) ident = f.max_ident;
+
+			const bool down(true);	// Implied by the existence of the index value.
+			if (HID_USAGE2(HUP_BUTTON, 0) < ident && HID_USAGE2(HUP_BUTTON, 0xFFFF) >= ident) {
+				handle_mouse_button(r, ident, down);
+			} else
+			if ((HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_SYSTEM_CONTROL) <= ident && HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_LAST_SYSTEM_KEY) >= ident)
+			||  (HID_USAGE2(HUP_KEYBOARD, 0) <= ident && HID_USAGE2(HUP_KEYBOARD, 0xFFFF) >= ident)
+			||  (HID_USAGE2(HUP_CONSUMER, 0) <= ident && HID_USAGE2(HUP_CONSUMER, 0xFFFF) >= ident)
+			) {
+				handle_key(seen_keyboard, newkeys, ident, down);
+			} else
+				/* Ignore out of range button/key. */ ;
+		}
+
+		std::memmove(input_buffer, input_buffer + report.bytes, sizeof input_buffer - report.bytes),
+		input_offset -= report.bytes;
+	}
+
+	if (seen_keyboard) {
+		for (KeysPressed::iterator was(keys.begin()); was != keys.end(); ) {
+			KeysPressed::iterator now(newkeys.find(*was));
+			const uint16_t index(usb_ident_to_keymap_index(*was));
+			if (newkeys.end() == now) {
+				handle_keyboard(r, index, 0);
+				was = keys.erase(was);
+			} else {
+				handle_keyboard(r, index, 2);
+				newkeys.erase(now);
+				++was;
+			}
+		}
+		for (KeysPressed::iterator now(newkeys.begin()); now != newkeys.end(); now = newkeys.erase(now)) {
+			const uint16_t index(usb_ident_to_keymap_index(*now));
+			handle_keyboard(r, index, 1);
+			keys.insert(*now);
+		}
+	}
+}
+
+inline
+void 
+USBHIDBase::set_LEDs(
+) {
+	for (OutputReports::const_iterator rp(output_reports.begin()); output_reports.end() != rp; ++rp) {
+		const uint8_t report_id(rp->first);
+		const OutputReportDescription & report(rp->second);
+		if (sizeof output_buffer < report.bytes) continue;
+
+		memset(output_buffer, 0, report.bytes);
+
+		bool seen_LED(false);
+		for (OutputReportDescription::Variables::const_iterator i(report.variables.begin()); i != report.variables.end(); ++i) {
+			const OutputVariable & f(*i);
+			if (HID_USAGE2(HUP_LEDS, 0) <= f.ident && HID_USAGE2(HUP_LEDS, 0xFFFF) >= f.ident) {
+				switch (HID_USAGE(f.ident)) {
+					case HUL_NUM_LOCK:
+						SetUnsignedField(f, report.bytes, num_LED());
+						break;
+					case HUL_CAPS_LOCK:
+						SetUnsignedField(f, report.bytes, caps_LED());
+						break;
+					case HUL_SCROLL_LOCK:
+						SetUnsignedField(f, report.bytes, scroll_LED());
+						break;
+					case HUL_COMPOSE:
+						SetUnsignedField(f, report.bytes, compose_LED());
+						break;
+					case HUL_KANA:
+						SetUnsignedField(f, report.bytes, kana_LED());
+						break;
+					case HUL_SHIFT:
+						SetUnsignedField(f, report.bytes, shift_LED());
+						break;
+				}
+				seen_LED = true;
+			}
+		}
+
+		if (seen_LED)
+			write_output_report(report_id, report.bytes);
+	}
+}
 #endif
 
 #if defined(__LINUX__) || defined(__linux__)
@@ -3247,7 +3486,7 @@ USBHIDBase::handle_key(
 static inline
 uint16_t
 linux_evdev_keycode_to_keymap_index (
-	uint16_t k
+	const uint16_t k
 ) {
 	switch (k) {
 		default:	break;
@@ -3429,16 +3668,17 @@ linux_evdev_keycode_to_keymap_index (
 }
 
 namespace {
+
 class HID :
 	public HIDBase
 {
 public:
-	HID(const KeyboardMap & km);
+	HID(const KeyboardMap &, bool);
 	~HID() {}
 
-	bool open(int d, const char * n);
+	void set_input_fd(int fd) { input.reset(fd); }
 	int query_input_fd() const { return input.get(); }
-	bool read_description() const { return true; }
+	bool grab_exclusive();
 	void set_LEDs();
 	void handle_input_events(Realizer &);
 protected:
@@ -3449,24 +3689,92 @@ protected:
 	static int TranslateAbsAxis(const uint16_t code);
 	static int TranslateRelAxis(const uint16_t code);
 };
+
+/// On Linux, these devices are character devices with a terminal line discipline that speak the kbio protocol.
+class KernelVT :
+	public HIDBase
+{
+public:
+	KernelVT(const KeyboardMap &, bool, int, int);
+	~KernelVT();
+
+	void reset(const char *, unsigned long);
+	int query_input_fd() const { return device.get(); }
+	void release();
+	bool is_active();
+	void set_LEDs();
+	void handle_input_events(Realizer &);
+protected:
+	FileDescriptorOwner device;
+	unsigned long vtnr;
+
+	char buffer[16];
+	std::size_t offset;
+	unsigned state;
+	bool up;
+	uint16_t mediumraw;
+
+	termios original_attr;
+	struct vt_mode vtmode;
+	const int release_signal, acquire_signal;
+#if defined(KDGKBMUTE) && defined(KDSKBMUTE)
+	int kbmute;
+#endif
+	long kdmode;
+	long kbmode;
+	void save_and_set_mode();
+	void restore();
+
+	bool pressed[16384];	///< used for determining auto-repeat keypresses
+	bool is_pressed(uint8_t code) const { return pressed[code]; }
+	void set_pressed(uint8_t code, bool v) { pressed[code] = v; }
+};
+
+/// On Linux, ps2mouse devices are character devices that speak the PS/2 mouse protocol.
+class PS2Mouse :
+	public HIDBase
+{
+public:
+	PS2Mouse(const KeyboardMap &);
+	~PS2Mouse();
+
+	void set_input_fd(int);
+	int query_input_fd() const { return device.get(); }
+	void handle_input_events(Realizer & r);
+protected:
+	enum { MOUSE_PS2_PACKETSIZE = 3 };
+	enum { MOUSE_PS2_STDBUTTONS = 3 };
+	enum { MOUSE_PS2_MAXBUTTON = 3 };
+	FileDescriptorOwner device;
+	unsigned char buffer[MOUSE_PS2_PACKETSIZE * 16];
+	std::size_t offset;
+
+	void save_and_set_mode() {}
+	void restore() {}
+
+	uint16_t stdbuttons;
+	static int TranslateStdButton(const unsigned short button);
+	static short int GetOffset9 (uint8_t one, uint8_t two);
+}; 
+
 }
 
 inline
-HID::HID(const KeyboardMap & km) : 
-	HIDBase(km),
+HID::HID(
+	const KeyboardMap & km,
+	bool n
+) : 
+	HIDBase(km, n),
 	input(-1),
 	offset(0U)
 {
 }
 
 inline
-bool
-HID::open(
-	int d, 
-	const char * n
-) { 
-	input.reset(open_readwriteexisting_at(d, n)); 
-	return input.get() >= 0;
+bool 
+HID::grab_exclusive(
+) {
+	return 0 <= ioctl(input.get(), EVIOCGRAB, true);
 }
 
 inline
@@ -3563,172 +3871,247 @@ HID::handle_input_events(
 	}
 }
 
-#elif defined(__OpenBSD__)
-
-/* OpenBSD HIDs *************************************************************
-// **************************************************************************
-*/
-
-namespace {
-
-class HID :
-	public USBHIDBase
-{
-public:
-	HID(const KeyboardMap & km);
-
-	bool open(int d, const char * n);
-	int query_input_fd() const { return input.get(); }
-	bool read_description();
-	void set_LEDs();
-	void handle_input_events(Realizer &);
-protected:
-	FileDescriptorOwner input, control;
-	using USBHIDBase::read_description;
-};
-
-}
-
 inline
-HID::HID(const KeyboardMap & km) : 
-	USBHIDBase(km),
-	input(-1), 
-	control(-1)
+KernelVT::KernelVT(
+	const KeyboardMap & km,
+	bool n,
+	int rs,
+	int as
+) : 
+	HIDBase(km, n),
+	device(-1), 
+	vtnr(0UL),
+	offset(0U),
+	state(0U),
+	original_attr(),
+	vtmode(),
+	release_signal(rs),
+	acquire_signal(as),
+#if defined(KDGKBMUTE) && defined(KDSKBMUTE)
+	kbmute(),
+#endif
+	kdmode(),
+	kbmode()
 {
+	for (unsigned i(0U); i < sizeof pressed/sizeof *pressed; ++i)
+		pressed[i] = false;
 }
 
-inline
-bool 
-HID::open(
-	int d, 
-	const char * n
-) { 
-	input.reset(open_readwriteexisting_at(d, n)); 
-	control.reset(dup(input.get())); 
-	return input.get() >= 0;
-}
-
-bool 
-HID::read_description()
+KernelVT::~KernelVT()
 {
-	usb_ctl_report_desc d = { 0, { 0 } };
-	const std::size_t maxlen(sizeof d.ucrd_data);
-
-	d.ucrd_size = maxlen;
-	if (0 > ioctl(control.get(), USB_GET_REPORT_DESC, &d)) return false;
-
-	return read_description(d.ucrd_data, maxlen, d.ucrd_size);
+	restore();
 }
 
 inline
 void 
-HID::set_LEDs(
+KernelVT::reset(
+	const char * prog, 
+	unsigned long n 
+) { 
+	if (vtnr == n) return;
+	char name[64];
+	std::snprintf(name, sizeof name, "/dev/tty%lu", n);
+	FileDescriptorOwner fd(open_readwriteexisting_at(AT_FDCWD, name));
+	if (0 > fd.get()) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, std::strerror(error));
+		throw EXIT_FAILURE;
+	}
+	restore();
+	device.reset(fd.release()); 
+	vtnr = n;
+	save_and_set_mode();
+}
+
+inline
+void 
+KernelVT::release()
+{
+	restore();
+	device.release(); 
+	vtnr = 0UL;
+}
+
+inline
+void 
+KernelVT::set_LEDs(
 ) {
-	/// \todo TODO
+	if (-1 != device.get()) {
+		ioctl(device.get(), KDSETLED, (caps_LED() ? LED_CAP : 0)|(num_LED() ? LED_NUM : 0)|(scroll_LED() ? LED_SCR : 0));
+	}
 }
 
 inline
 void
-HID::handle_input_events(
+KernelVT::handle_input_events(
 	Realizer & r
 ) {
-	const int n(read(input.get(), reinterpret_cast<char *>(buffer) + offset, sizeof buffer - offset));
+	const ssize_t n(read(device.get(), reinterpret_cast<char *>(buffer) + offset, sizeof buffer - offset));
 	if (0 > n) return;
-
-	KeysPressed newkeys;
-	bool seen_keyboard(false);
-
 	for (
 		offset += n;
-		offset > 0;
-	    ) {
-		uint8_t report_id(0);
-		if (has_report_ids) {
-			report_id = buffer[0];
-			std::memmove(buffer, buffer + 1, sizeof buffer - 1),
-			--offset;
+		offset > 0 && offset >= sizeof *buffer;
+		std::memmove(buffer, buffer + 1U, sizeof buffer - sizeof *buffer),
+		offset -= sizeof *buffer
+	) {
+		switch (state) {
+			case 0U:
+				mediumraw = buffer[0] & 0x7F;
+				up = buffer[0] & 0x80;
+				if (0x00 == mediumraw) {
+					mediumraw = 0x0000;
+					++state;
+				}
+				break;
+			case 1U:
+				mediumraw = buffer[0] & 0x7F;
+				++state;
+				break;
+			default:
+				mediumraw = (mediumraw << 7) | (buffer[0] & 0x7F);
+				state = 0U;
+				break;
 		}
-		InputReports::const_iterator rp(input_reports.find(report_id));
-		if (input_reports.end() == rp) break;
-		const InputReportDescription & report(rp->second);
-		if (offset < report.bytes) break;
+		if (0U == state) {
+			const unsigned value(up ? 0U : is_pressed(mediumraw) ? 2U : 1U);
+			set_pressed(mediumraw, !up);
 
-		for (InputReportDescription::Variables::const_iterator i(report.variables.begin()); i != report.variables.end(); ++i) {
-			const InputVariable & f(*i);
-			if (HID_USAGE2(HUP_BUTTON, 0) <= f.ident && HID_USAGE2(HUP_BUTTON, 0xFFFF) >= f.ident) {
-				const uint32_t down(GetUnsignedField(f, report.bytes));
-				if (IsInRange(f, down))
-					handle_mouse_button(r, f.ident, down);
-			} else
-			if ((HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_SYSTEM_CONTROL) <= f.ident && HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_LAST_SYSTEM_KEY) >= f.ident)
-			||  (HID_USAGE2(HUP_KEYBOARD, 0) <= f.ident && HID_USAGE2(HUP_KEYBOARD, 0xFFFF) >= f.ident)
-			||  (HID_USAGE2(HUP_CONSUMER, 0) <= f.ident && HID_USAGE2(HUP_CONSUMER, 0xFFFF) >= f.ident)
-			) {
-				const uint32_t down(GetUnsignedField(f, report.bytes));
-				if (IsInRange(f, down))
-					handle_key(seen_keyboard, newkeys, f.ident, down);
-			} else
-			switch (f.ident) {
-				case HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X):
-					handle_mouse_movement(r, report, f, r.AXIS_X);
-					break;
-				case HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Y):
-					handle_mouse_movement(r, report, f, r.AXIS_Y);
-					break;
-				case HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_WHEEL):
-					handle_mouse_movement(r, report, f, r.V_SCROLL);
-					break;
-				case HID_USAGE2(HUP_CONSUMER, HUC_AC_PAN):
-					handle_mouse_movement(r, report, f, r.H_SCROLL);
-					break;
-			}
-		}
-		for (InputReportDescription::Indices::const_iterator i(report.array_indices.begin()); i != report.array_indices.end(); ++i) {
-			const InputIndex & f(*i);
-			const uint32_t v(GetUnsignedField(f, report.bytes));
-			if (v < f.min_index || v > f.max_index) continue;
-			uint32_t ident(v + f.min_ident - f.min_index);
-			if (ident > f.max_ident) ident = f.max_ident;
-
-			const bool down(true);	// Implied by the existence of the index value.
-			if (HID_USAGE2(HUP_BUTTON, 0) < ident && HID_USAGE2(HUP_BUTTON, 0xFFFF) >= ident) {
-				handle_mouse_button(r, ident, down);
-			} else
-			if ((HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_SYSTEM_CONTROL) <= ident && HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_LAST_SYSTEM_KEY) >= ident)
-			||  (HID_USAGE2(HUP_KEYBOARD, 0) <= ident && HID_USAGE2(HUP_KEYBOARD, 0xFFFF) >= ident)
-			||  (HID_USAGE2(HUP_CONSUMER, 0) <= ident && HID_USAGE2(HUP_CONSUMER, 0xFFFF) >= ident)
-			) {
-				handle_key(seen_keyboard, newkeys, ident, down);
-			} else
-				/* Ignore out of range button/key. */ ;
-		}
-
-		std::memmove(buffer, buffer + report.bytes, sizeof buffer - report.bytes),
-		offset -= report.bytes;
-	}
-
-	if (seen_keyboard) {
-		for (KeysPressed::iterator was(keys.begin()); was != keys.end(); ) {
-			KeysPressed::iterator now(newkeys.find(*was));
-			const uint16_t index(usb_ident_to_keymap_index(*was));
-			if (newkeys.end() == now) {
-				handle_keyboard(r, index, 0);
-				was = keys.erase(was);
-			} else {
-				handle_keyboard(r, index, 2);
-				newkeys.erase(now);
-				++was;
-			}
-		}
-		for (KeysPressed::iterator now(newkeys.begin()); now != newkeys.end(); now = newkeys.erase(now)) {
-			const uint16_t index(usb_ident_to_keymap_index(*now));
-			handle_keyboard(r, index, 1);
-			keys.insert(*now);
+			const uint16_t index(linux_evdev_keycode_to_keymap_index(mediumraw));
+			handle_keyboard(r, index, value);
 		}
 	}
 }
 
-#elif defined(__FreeBSD__) || defined (__DragonFly__)
+void 
+KernelVT::save_and_set_mode()
+{
+	if (-1 != device.get()) {
+		// This is the BSD way of acquiring the controlling TTY.
+		// On Linux, the 1 flag causes the forcible removal of this controlling TTY from existing processes, if we have the privileges.
+		ioctl(device.get(), TIOCSCTTY, 1);
+		// Set the VT switching to send the given release and acquire signals to this process.
+		ioctl(device.get(), VT_GETMODE, &vtmode);
+		struct vt_mode m = { VT_PROCESS, 0, static_cast<short>(release_signal), static_cast<char>(acquire_signal), 0 };
+		ioctl(device.get(), VT_SETMODE, &m);
+		// Tell the terminal emulator not to draw its character buffer, with KD_GRAPHICS or equivalent.
+		ioctl(device.get(), KDGETMODE, &kdmode);
+		ioctl(device.get(), KDSETMODE, KD_GRAPHICS);
+#if defined(KDGKBMUTE) && defined(KDSKBMUTE)
+		ioctl(device.get(), KDGKBMUTE, &kbmute);
+		ioctl(device.get(), KDSKBMUTE, 0);
+#endif
+		// The line discipline needs to be set to raw mode for the duration.
+		if (0 <= tcgetattr_nointr(device.get(), original_attr))
+			tcsetattr_nointr(device.get(), TCSADRAIN, make_raw(original_attr));
+		// And beneath that the keyboard needs to be set to keycode mode.
+		ioctl(device.get(), KDGKBMODE, &kbmode);
+		ioctl(device.get(), KDSKBMODE, K_MEDIUMRAW);
+		// Set the LED operation to manual mode for the duration.
+		ioctl(device.get(), KDSETLED, 0U);
+	}
+}
+
+void
+KernelVT::restore()
+{
+	if (-1 != device.get()) {
+		ioctl(device.get(), KDSETLED, -1U);
+		ioctl(device.get(), KDSKBMODE, kbmode);
+		tcsetattr_nointr(device.get(), TCSADRAIN, original_attr);
+#if defined(KDGKBMUTE) && defined(KDSKBMUTE)
+		ioctl(device.get(), KDSKBMUTE, kbmute);
+#endif
+		ioctl(device.get(), KDSETMODE, kdmode);
+		ioctl(device.get(), VT_SETMODE, &vtmode);
+		ioctl(device.get(), TIOCNOTTY, 0);
+	}
+}
+
+bool
+KernelVT::is_active()
+{
+	if (-1 == device.get()) return true;
+	struct vt_stat s;
+	if (0 > ioctl(device.get(), VT_GETSTATE, &s)) return false;
+	return s.v_active == vtnr;
+}
+
+inline
+PS2Mouse::PS2Mouse(
+	const KeyboardMap & km
+) : 
+	HIDBase(km, false),
+	device(-1), 
+	offset(0U),
+	stdbuttons(0U)
+{
+}
+
+PS2Mouse::~PS2Mouse()
+{
+	restore();
+}
+
+inline
+void 
+PS2Mouse::set_input_fd(
+	int n
+) { 
+	restore();
+	device.reset(n); 
+	save_and_set_mode();
+}
+
+inline
+int
+PS2Mouse::TranslateStdButton(
+	const unsigned short button
+) {
+	switch (button) {
+		case 0U:	return 0;
+		case 1U:	return 2;
+		case 2U:	return 1;
+		default:	return -1;
+	}
+}
+
+inline
+short int
+PS2Mouse::GetOffset9 ( uint8_t hi, uint8_t lo )
+{
+	return hi & 0x01 ? static_cast<int16_t>(lo & 0xFF) - 256 : static_cast<int16_t>(lo & 0xFF);
+}
+
+inline
+void
+PS2Mouse::handle_input_events(
+	Realizer & r
+) {
+	const int n(read(device.get(), reinterpret_cast<char *>(buffer) + offset, sizeof buffer - offset));
+	if (0 > n) return;
+	offset += n;
+	for (;;) {
+		if (offset < MOUSE_PS2_PACKETSIZE) break;
+ 		if (short int dx = GetOffset9((buffer[0] & 0x10) >> 4, buffer[1]))
+			r.handle_mouse_relpos(modifiers(), r.AXIS_X, dx);
+		if (short int dy = GetOffset9((buffer[0] & 0x20) >> 5, buffer[2]))
+			// Vertical movement is negated for some undocumented reason.
+			r.handle_mouse_relpos(modifiers(), r.AXIS_Y, -dy);
+		const unsigned newstdbuttons(buffer[0] & MOUSE_PS2_STDBUTTONS);
+		for (unsigned short button(0U); button < MOUSE_PS2_MAXBUTTON; ++button) {
+			const unsigned long mask(1UL << button);
+			if ((stdbuttons & mask) != (newstdbuttons & mask)) {
+				const bool down(newstdbuttons & mask);
+				r.handle_mouse_button(modifiers(), TranslateStdButton(button), down);
+			}
+		}
+		stdbuttons = newstdbuttons;
+		std::memmove(buffer, buffer + MOUSE_PS2_PACKETSIZE, sizeof buffer - MOUSE_PS2_PACKETSIZE * sizeof *buffer),
+		offset -= MOUSE_PS2_PACKETSIZE * sizeof *buffer;
+	}
+}
+
+#elif defined(__FreeBSD__) || defined (__DragonFly__) || defined(__OpenBSD__)
 
 /* FreeBSD/TrueOS/DragonFly BSD HIDs ****************************************
 // **************************************************************************
@@ -3736,31 +4119,49 @@ HID::handle_input_events(
 
 namespace {
 
-class HID :
+typedef USBHIDBase HID;
+
+class USBHID :
 	public USBHIDBase
 {
 public:
-	HID(const KeyboardMap & km);
+	USBHID(const KeyboardMap &, bool);
+	~USBHID() {}
 
-	bool open(int d, const char * n);
-	int query_input_fd() const { return input.get(); }
 	bool read_description();
-	void set_LEDs();
-	void handle_input_events(Realizer &);
 protected:
-	FileDescriptorOwner input, control;
+	void write_output_report(const uint8_t, std::size_t);
 	using USBHIDBase::read_description;
 };
 
+class GenericUSB :
+	public USBHIDBase
+{
+public:
+	GenericUSB(const KeyboardMap &, bool);
+	~GenericUSB() {}
+
+	void set_control_fd(int fd) { control.reset(fd); }
+	bool read_description();
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+	bool is_kernel_driver_attached(int) const;
+	bool detach_kernel_driver(int);
+#endif
+protected:
+	FileDescriptorOwner control;
+	using USBHIDBase::read_description;
+
+	void write_output_report(const uint8_t, std::size_t);
+};
+
 /// On the BSDs, atkbd devices are character devices with a terminal line discipline that speak the kbio protocol.
-class ATKeyboard :
+class ATKeyboardBase :
 	public HIDBase
 {
 public:
-	ATKeyboard(const KeyboardMap & km);
-	~ATKeyboard();
+	ATKeyboardBase(const KeyboardMap &, bool);
+	~ATKeyboardBase() {}
 
-	bool open(int d, const char * n);
 	int query_input_fd() const { return device.get(); }
 	void set_LEDs();
 	void handle_input_events(Realizer &);
@@ -3769,25 +4170,57 @@ protected:
 	char buffer[16];
 	std::size_t offset;
 
-	termios original_attr;
-	long kbmode;
-	void save_and_set_code_mode();
-	void restore();
-
 	bool pressed[256];	///< used for determining auto-repeat keypresses
 	bool is_pressed(uint8_t code) const { return pressed[code]; }
 	void set_pressed(uint8_t code, bool v) { pressed[code] = v; }
 };
 
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+class ATKeyboard :
+	public ATKeyboardBase
+{
+public:
+	ATKeyboard(const KeyboardMap &, bool);
+	~ATKeyboard();
+
+	void reset(int);
+protected:
+	termios original_attr;
+	long kbmode;
+	void save_and_set_mode();
+	void restore();
+};
+#endif
+
+class KernelVT :
+	public ATKeyboardBase
+{
+public:
+	KernelVT(const KeyboardMap &, bool, int, int);
+	~KernelVT();
+
+	void reset(int);
+	bool is_active();
+protected:
+	struct vt_mode vtmode;
+	const int release_signal, acquire_signal;
+	termios original_attr;
+	long kdmode;
+	long kbmode;
+	void save_and_set_mode();
+	void restore();
+};
+
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 /// On the BSDs, sysmouse devices are character devices with a terminal line discipline that speak the sysmouse protocol.
 class SysMouse :
 	public HIDBase
 {
 public:
-	SysMouse(const KeyboardMap & km);
+	SysMouse(const KeyboardMap &);
 	~SysMouse();
 
-	bool open(int d, const char * n);
+	void set_input_fd(int);
 	int query_input_fd() const { return device.get(); }
 	void handle_input_events(Realizer & r);
 protected:
@@ -3809,192 +4242,156 @@ private:
 	static short int GetOffset8 (uint8_t one, uint8_t two);
 	static short int GetOffset7 (uint8_t one, uint8_t two);
 }; 
+#endif
 
 }
 
 inline
-HID::HID(const KeyboardMap & km) : 
-	USBHIDBase(km),
-	input(-1), 
-	control(-1)
+USBHID::USBHID(
+	const KeyboardMap & km,
+	bool n
+) : 
+	USBHIDBase(km, n)
 {
 }
 
-inline
+#if defined(__FreeBSD__) || defined (__DragonFly__)
 bool 
-HID::open(
-	int d, 
-	const char * n
-) { 
-	input.reset(open_readwriteexisting_at(d, n)); 
-	control.reset(dup(input.get())); 
-	return input.get() >= 0;
-}
-
-bool 
-HID::read_description()
+USBHID::read_description()
 {
 	usb_gen_descriptor d = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, { 0, 0, 0, 0 } };
 
 	d.ugd_maxlen = 65535U;
-	if (0 > ioctl(control.get(), USB_GET_REPORT_DESC, &d)) return false;
+	if (0 > ioctl(input.get(), USB_GET_REPORT_DESC, &d)) return false;
 	std::vector<unsigned char> b(d.ugd_actlen);
 	const std::size_t maxlen(d.ugd_actlen);
 	d.ugd_data = b.data();
 	d.ugd_maxlen = maxlen;
-	if (0 > ioctl(control.get(), USB_GET_REPORT_DESC, &d)) return false;
+	if (0 > ioctl(input.get(), USB_GET_REPORT_DESC, &d)) return false;
 
 	return read_description(b.data(), maxlen, d.ugd_actlen);
 }
+#endif
 
-inline
+#if defined(__OpenBSD__)
+bool 
+USBHID::read_description()
+{
+	usb_ctl_report_desc d = { 0, { 0 } };
+	const std::size_t maxlen(sizeof d.ucrd_data);
+
+	d.ucrd_size = maxlen;
+	if (0 > ioctl(input.get(), USB_GET_REPORT_DESC, &d)) return false;
+
+	return read_description(d.ucrd_data, maxlen, d.ucrd_size);
+}
+#endif
+
 void 
-HID::set_LEDs(
+USBHID::write_output_report(
+	const uint8_t report_id,
+	std::size_t report_size
 ) {
-	/// \todo TODO
+	struct iovec v[] = {
+		{ const_cast<uint8_t *>(&report_id), has_report_ids ? 1U : 0U },
+		{ output_buffer, report_size },
+	};
+	writev(input.get(), v, sizeof v/sizeof *v);
 }
 
 inline
-void
-HID::handle_input_events(
-	Realizer & r
+GenericUSB::GenericUSB(
+	const KeyboardMap & km,
+	bool n
+) : 
+	USBHIDBase(km, n),
+	control(-1)
+{
+}
+
+bool 
+GenericUSB::read_description()
+{
+	std::vector<unsigned char> b(0x8000);
+	usb_ctl_request d;
+	d.ucr_addr = 0;
+	d.ucr_actlen = 0;
+	d.ucr_data = b.data();
+	d.ucr_flags = USB_SHORT_XFER_OK;
+	d.ucr_request.bmRequestType = 0x80 | 0x01;			// device to host, interface
+	d.ucr_request.bRequest = 0x06;					// GET_DESCRIPTOR
+	pack_littleendian(d.ucr_request.wValue, 0x2200, 2U);		// UHID report descriptor
+	pack_littleendian(d.ucr_request.wIndex, 0x0000, 2U);		// interface zero
+	pack_littleendian(d.ucr_request.wLength, b.size(), 2U);
+
+	if (0 > ioctl(control.get(), USB_DO_REQUEST, &d)) return false;
+
+	return read_description(b.data(), b.size(), d.ucr_actlen);
+}
+
+void 
+GenericUSB::write_output_report(
+	const uint8_t report_id,
+	std::size_t report_size
 ) {
-	const int n(read(input.get(), reinterpret_cast<char *>(buffer) + offset, sizeof buffer - offset));
-	if (0 > n) return;
+	usb_ctl_request d;
+	d.ucr_addr = 0;
+	d.ucr_actlen = 0;
+	d.ucr_data = output_buffer;
+	d.ucr_flags = USB_SHORT_XFER_OK;
+	d.ucr_request.bmRequestType = 0x00 | 0x20 | 0x01;			// host to device, class, interface
+	d.ucr_request.bRequest = 0x09;						// SET_REPORT
+	pack_littleendian(d.ucr_request.wValue, 0x0200 | report_id, 2U);	// output report
+	pack_littleendian(d.ucr_request.wIndex, 0x0000, 2U);			// interface zero
+	pack_littleendian(d.ucr_request.wLength, report_size, 2U);
 
-	KeysPressed newkeys;
-	bool seen_keyboard(false);
+	ioctl(control.get(), USB_DO_REQUEST, &d);
+}
 
-	for (
-		offset += n;
-		offset > 0;
-	    ) {
-		uint8_t report_id(0);
-		if (has_report_ids) {
-			report_id = buffer[0];
-			std::memmove(buffer, buffer + 1, sizeof buffer - 1),
-			--offset;
-		}
-		InputReports::const_iterator rp(input_reports.find(report_id));
-		if (input_reports.end() == rp) break;
-		const InputReportDescription & report(rp->second);
-		if (offset < report.bytes) break;
-
-		for (InputReportDescription::Variables::const_iterator i(report.variables.begin()); i != report.variables.end(); ++i) {
-			const InputVariable & f(*i);
-			if (HID_USAGE2(HUP_BUTTON, 0) <= f.ident && HID_USAGE2(HUP_BUTTON, 0xFFFF) >= f.ident) {
-				const uint32_t down(GetUnsignedField(f, report.bytes));
-				if (IsInRange(f, down))
-					handle_mouse_button(r, f.ident, down);
-			} else
-			if ((HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_SYSTEM_CONTROL) <= f.ident && HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_LAST_SYSTEM_KEY) >= f.ident)
-			||  (HID_USAGE2(HUP_KEYBOARD, 0) <= f.ident && HID_USAGE2(HUP_KEYBOARD, 0xFFFF) >= f.ident)
-			||  (HID_USAGE2(HUP_CONSUMER, 0) <= f.ident && HID_USAGE2(HUP_CONSUMER, 0xFFFF) >= f.ident)
-			) {
-				const uint32_t down(GetUnsignedField(f, report.bytes));
-				if (IsInRange(f, down))
-					handle_key(seen_keyboard, newkeys, f.ident, down);
-			} else
-			switch (f.ident) {
-				case HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X):
-					handle_mouse_movement(r, report, f, r.AXIS_X);
-					break;
-				case HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Y):
-					handle_mouse_movement(r, report, f, r.AXIS_Y);
-					break;
-				case HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_WHEEL):
-					handle_mouse_movement(r, report, f, r.V_SCROLL);
-					break;
-				case HID_USAGE2(HUP_CONSUMER, HUC_AC_PAN):
-					handle_mouse_movement(r, report, f, r.H_SCROLL);
-					break;
-			}
-		}
-		for (InputReportDescription::Indices::const_iterator i(report.array_indices.begin()); i != report.array_indices.end(); ++i) {
-			const InputIndex & f(*i);
-			const uint32_t v(GetUnsignedField(f, report.bytes));
-			if (v < f.min_index || v > f.max_index) continue;
-			uint32_t ident(v + f.min_ident - f.min_index);
-			if (ident > f.max_ident) ident = f.max_ident;
-
-			const bool down(true);	// Implied by the existence of the index value.
-			if (HID_USAGE2(HUP_BUTTON, 0) < ident && HID_USAGE2(HUP_BUTTON, 0xFFFF) >= ident) {
-				handle_mouse_button(r, ident, down);
-			} else
-			if ((HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_SYSTEM_CONTROL) <= ident && HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_LAST_SYSTEM_KEY) >= ident)
-			||  (HID_USAGE2(HUP_KEYBOARD, 0) <= ident && HID_USAGE2(HUP_KEYBOARD, 0xFFFF) >= ident)
-			||  (HID_USAGE2(HUP_CONSUMER, 0) <= ident && HID_USAGE2(HUP_CONSUMER, 0xFFFF) >= ident)
-			) {
-				handle_key(seen_keyboard, newkeys, ident, down);
-			} else
-				/* Ignore out of range button/key. */ ;
-		}
-
-		std::memmove(buffer, buffer + report.bytes, sizeof buffer - report.bytes),
-		offset -= report.bytes;
-	}
-
-	if (seen_keyboard) {
-		for (KeysPressed::iterator was(keys.begin()); was != keys.end(); ) {
-			KeysPressed::iterator now(newkeys.find(*was));
-			const uint16_t index(usb_ident_to_keymap_index(*was));
-			if (newkeys.end() == now) {
-				handle_keyboard(r, index, 0);
-				was = keys.erase(was);
-			} else {
-				handle_keyboard(r, index, 2);
-				newkeys.erase(now);
-				++was;
-			}
-		}
-		for (KeysPressed::iterator now(newkeys.begin()); now != newkeys.end(); now = newkeys.erase(now)) {
-			const uint16_t index(usb_ident_to_keymap_index(*now));
-			handle_keyboard(r, index, 1);
-			keys.insert(*now);
-		}
-	}
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+inline
+bool 
+GenericUSB::is_kernel_driver_attached(
+	int index
+) const {
+	return 0 <= ioctl(control.get(), USB_IFACE_DRIVER_ACTIVE, &index);
 }
 
 inline
-ATKeyboard::ATKeyboard(const KeyboardMap & km) : 
-	HIDBase(km),
+bool 
+GenericUSB::detach_kernel_driver(
+	int index
+) {
+	return 0 <= ioctl(control.get(), USB_IFACE_DRIVER_DETACH, &index);
+}
+#endif
+
+inline
+ATKeyboardBase::ATKeyboardBase(
+	const KeyboardMap & km,
+	bool n
+) : 
+	HIDBase(km, n),
 	device(-1), 
-	offset(0U) ,
-	original_attr(),
-	kbmode(K_XLATE)
+	offset(0U)
 {
 	for (unsigned i(0U); i < sizeof pressed/sizeof *pressed; ++i)
 		pressed[i] = false;
 }
 
-ATKeyboard::~ATKeyboard()
-{
-	restore();
-}
-
-inline
-bool 
-ATKeyboard::open(
-	int d, 
-	const char * n
-) { 
-	device.reset(open_read_at(d, n)); 
-	save_and_set_code_mode();
-	return device.get() >= 0;
-}
-
 inline
 void 
-ATKeyboard::set_LEDs(
+ATKeyboardBase::set_LEDs(
 ) {
 	if (-1 != device.get()) {
-		ioctl(device.get(), KDSETLED, (caps_LED() ? LED_CAP : 0)|(num_LED() ? LED_NUM : 0)|(scroll_LED() ? LED_SCR : 0));
+		const int newled((caps_LED() ? LED_CAP : 0)|(num_LED() ? LED_NUM : 0)|(scroll_LED() ? LED_SCR : 0));
+		ioctl(device.get(), KDSETLED, newled);
 	}
 }
 
 inline
 void
-ATKeyboard::handle_input_events(
+ATKeyboardBase::handle_input_events(
 	Realizer & r
 ) {
 	const ssize_t n(read(device.get(), reinterpret_cast<char *>(buffer) + offset, sizeof buffer - offset));
@@ -4016,34 +4413,145 @@ ATKeyboard::handle_input_events(
 	}
 }
 
-/// The line discipline needs to be set to raw mode for the duration.
-/// And beneath that the keyboard needs to be set to keycode mode.
-/// We set the LED operation to manual mode for the duration, too.
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+ATKeyboard::ATKeyboard(
+	const KeyboardMap & km,
+	bool n
+) :
+	ATKeyboardBase(km, n),
+	original_attr(),
+	kbmode()
+{
+	save_and_set_mode();
+}
+
+ATKeyboard::~ATKeyboard()
+{
+	restore();
+}
+
+inline
 void 
-ATKeyboard::save_and_set_code_mode()
+ATKeyboard::reset(
+	int n
+) { 
+	restore();
+	device.reset(n); 
+	save_and_set_mode();
+}
+
+void 
+ATKeyboard::save_and_set_mode()
 {
 	if (-1 != device.get()) {
-		ioctl(device.get(), KDGKBMODE, &kbmode);
-		ioctl(device.get(), KDSKBMODE, K_CODE);
-		ioctl(device.get(), KDSETLED, 0U);
+		// The line discipline needs to be set to raw mode for the duration.
 		if (0 <= tcgetattr_nointr(device.get(), original_attr))
 			tcsetattr_nointr(device.get(), TCSADRAIN, make_raw(original_attr));
-	}
+		// And beneath that the keyboard needs to be set to keycode mode.
+		ioctl(device.get(), KDGKBMODE, &kbmode);
+		ioctl(device.get(), KDSKBMODE, K_CODE);
+ 	}
 }
 
 void
 ATKeyboard::restore()
 {
 	if (-1 != device.get()) {
-		tcsetattr_nointr(device.get(), TCSADRAIN, original_attr);
 		ioctl(device.get(), KDSKBMODE, kbmode);
-		ioctl(device.get(), KDSETLED, -1U);
+		tcsetattr_nointr(device.get(), TCSADRAIN, original_attr);
+	}
+}
+#endif
+
+KernelVT::KernelVT(
+	const KeyboardMap & km, 
+	bool n,
+	int rs, 
+	int as
+) :
+	ATKeyboardBase(km, n),
+	vtmode(),
+	release_signal(rs),
+	acquire_signal(as),
+	original_attr(),
+	kdmode(),
+	kbmode()
+{
+	save_and_set_mode();
+}
+
+KernelVT::~KernelVT()
+{
+	restore();
+}
+
+void
+KernelVT::save_and_set_mode()
+{
+	if (-1 != device.get()) {
+		ioctl(device.get(), VT_GETMODE, &vtmode);
+		// Set the VT switching to send the given release and acquire signals to this process.
+		struct vt_mode m = { VT_PROCESS, 0, static_cast<short>(release_signal), static_cast<char>(acquire_signal), static_cast<char>(acquire_signal) };
+		ioctl(device.get(), VT_SETMODE, &m);
+		// Tell the terminal emulator not to draw its character buffer, with KD_GRAPHICS or equivalent.
+#if defined(__OpenBSD__)
+		// OpenBSD bug: There's no API for finding out the prior drawing setting, so we always restore to KD_TEXT.
+		kdmode = KD_TEXT;
+#else
+		ioctl(device.get(), KDGETMODE, &kdmode);
+#endif
+		ioctl(device.get(), KDSETMODE, KD_GRAPHICS);
+		// The line discipline needs to be set to raw mode for the duration.
+		if (0 <= tcgetattr_nointr(device.get(), original_attr))
+			tcsetattr_nointr(device.get(), TCSADRAIN, make_raw(original_attr));
+		// And beneath that the keyboard needs to be set to keycode mode.
+		ioctl(device.get(), KDGKBMODE, &kbmode);
+#if defined(__OpenBSD__)
+		ioctl(device.get(), KDSKBMODE, K_RAW);
+#else
+		ioctl(device.get(), KDSKBMODE, K_CODE);
+#endif
+ 	}
+ }
+
+void
+KernelVT::restore()
+{
+	if (-1 != device.get()) {
+		ioctl(device.get(), KDSKBMODE, kbmode);
+		tcsetattr_nointr(device.get(), TCSADRAIN, original_attr);
+		ioctl(device.get(), KDSETMODE, kdmode);
+		ioctl(device.get(), VT_SETMODE, &vtmode);
 	}
 }
 
+void 
+KernelVT::reset(int nfd) 
+{ 
+	restore(); 
+	device.reset(nfd);
+	save_and_set_mode();
+}
+
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+bool
+KernelVT::is_active()
+{
+	if (-1 == device.get()) return true;
+	int active;
+	if (0 > ioctl(device.get(), VT_GETACTIVE, &active)) return false;
+	int index;
+	if (0 > ioctl(device.get(), VT_GETINDEX, &index)) return false;
+	return active == index;
+}
+#endif
+
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 inline
-SysMouse::SysMouse(const KeyboardMap & km) : 
-	HIDBase(km),
+SysMouse::SysMouse(
+	const KeyboardMap & km
+) : 
+	HIDBase(km, false),
 	device(-1), 
 	offset(0U),
 	original_attr(),
@@ -4059,14 +4567,13 @@ SysMouse::~SysMouse()
 }
 
 inline
-bool 
-SysMouse::open(
-	int d, 
-	const char * n
+void 
+SysMouse::set_input_fd(
+	int n
 ) { 
-	device.reset(open_read_at(d, n)); 
+	restore();
+	device.reset(n); 
 	save_and_set_sysmouse_level();
-	return device.get() >= 0;
 }
 
 inline
@@ -4129,7 +4636,7 @@ SysMouse::handle_input_events(
  		if (short int dx = GetOffset8(buffer[1], buffer[3]))
 			r.handle_mouse_relpos(modifiers(), r.AXIS_X, dx);
 		if (short int dy = GetOffset8(buffer[2], buffer[4]))
-			// Vertical movement is negated for some undocumented reason.
+			// Vertical movement is negated in the original MouseSystems device protocol.
 			r.handle_mouse_relpos(modifiers(), r.AXIS_Y, -dy);
 		const bool ext(offset >= MOUSE_SYS_PACKETSIZE && !IsSync(buffer[5]) && !IsSync(buffer[6]) && !IsSync(buffer[7]));
 	       	if (ext) {
@@ -4202,6 +4709,7 @@ SysMouse::restore()
 		ioctl(device.get(), MOUSE_SETLEVEL, &level);
 	}
 }
+#endif
 
 #else
 
@@ -4218,7 +4726,12 @@ namespace {
 class HIDList : public std::list<HID *> {
 public:
 	~HIDList();
-	HID & add(const KeyboardMap & km) { HID * p(new HID(km)); push_back(p); return *p; }
+#if defined(__LINUX__) || defined(__linux__)
+	HID & add(const KeyboardMap & km, bool n) { HID * p(new HID(km, n)); push_back(p); return *p; }
+#elif defined(__FreeBSD__) || defined (__DragonFly__) || defined(__OpenBSD__)
+	GenericUSB & add_ugen(const KeyboardMap & km, bool n) { GenericUSB * p(new GenericUSB(km, n)); push_back(p); return *p; }
+	USBHID & add_uhid(const KeyboardMap & km, bool n) { USBHID * p(new USBHID(km, n)); push_back(p); return *p; }
+#endif
 };
 
 }
@@ -4227,150 +4740,6 @@ HIDList::~HIDList()
 {
 	for (iterator p(begin()); end() != p; p = erase(p))
 		delete *p;
-}
-
-/* Sharing the framebuffer with kernel virtual terminals ********************
-// **************************************************************************
-*/
-
-namespace {
-
-/// \brief Lock out the terminal emulator that is built into the kernel.
-/// 
-/// The lockout has to do three things:
-/// 1. Set the VT switching to send the given release and acquire signals to this process.
-/// 2. Tell the terminal emulator not to draw its character buffer, with KD_GRAPHICS or euivalent.
-///	* OpenBSD bug: There's no API for finding out the prior drawing setting, so we always restore to KD_TEXT.
-/// 3. Tell the terminal emulator not to read keyboard/mouse input packets.
-///	* On Linux, the newest mechanism, that doesn't react badly with other things that independently change the KVT mode, is KBMUTE.
-///	* On Linux, an older mechanism, that is at least better than setting raw mode, is K_OFF.
-///	* Otherwise, fall back to just setting raw mode.
-class KernelTerminalEmulatorLockout :
-	public FileDescriptorOwner
-{
-public:
-	KernelTerminalEmulatorLockout(int nfd, int rs, int as);
-	~KernelTerminalEmulatorLockout();
-	void reset(int nfd);
-	int release();
-protected:
-	struct vt_mode vtmode;
-	const int release_signal, acquire_signal;
-#if defined(__LINUX__) || defined(__linux__)
-#	if defined(KDGKBMUTE) && defined(KDSKBMUTE)
-	int kbmute;
-#	elif defined(K_OFF)
-	long kbmode;
-#	else
-	long kbmode;
-#	endif
-	long kdmode;
-#elif defined(__FreeBSD__) || defined(__DragonFly__)
-	long kdmode;
-#elif defined(__OpenBSD__)
-	long kbmode;
-	long kdmode;
-#endif
-	void save_and_mute();
-	void restore();
-};
-
-}
-
-KernelTerminalEmulatorLockout::KernelTerminalEmulatorLockout(int nfd, int rs, int as) : 
-	FileDescriptorOwner(nfd),
-	vtmode(),
-	release_signal(rs),
-	acquire_signal(as),
-#if defined(__LINUX__) || defined(__linux__)
-#	if defined(KDGKBMUTE) && defined(KDSKBMUTE)
-	kbmute(),
-#	else
-	kbmode(),
-#	endif
-	kdmode()
-#elif defined(__FreeBSD__) || defined(__DragonFly__)
-	kdmode()
-#elif defined(__OpenBSD__)
-	kbmode(),
-	kdmode()
-#endif
-{
-	save_and_mute();
-}
-
-KernelTerminalEmulatorLockout::~KernelTerminalEmulatorLockout()
-{
-	restore();
-}
-
-void
-KernelTerminalEmulatorLockout::save_and_mute()
-{
-	if (-1 != fd) {
-		ioctl(fd, VT_GETMODE, &vtmode);
-		struct vt_mode m = { VT_PROCESS, 0, static_cast<short>(release_signal), static_cast<char>(acquire_signal), 0 };
-		ioctl(fd, VT_SETMODE, &m);
-#if defined(__LINUX__) || defined(__linux__)
-		ioctl(fd, KDGETMODE, &kdmode);
-		ioctl(fd, KDSETMODE, KD_GRAPHICS);
-#	if defined(KDGKBMUTE) && defined(KDSKBMUTE)
-		ioctl(fd, KDGKBMUTE, &kbmute);
-		ioctl(fd, KDSKBMUTE, 0);
-#	elif defined(K_OFF)
-		ioctl(fd, KDGKBMODE, &kbmode);
-		ioctl(fd, KDSKBMODE, K_OFF);
-#	else
-		ioctl(fd, KDGKBMODE, &kbmode);
-		ioctl(fd, KDSKBMODE, K_RAW);
-#	endif
-#elif defined(__FreeBSD__) || defined(__DragonFly__)
-		ioctl(fd, KDGETMODE, &kdmode);
-		ioctl(fd, KDSETMODE, KD_GRAPHICS);
-#elif defined(__OpenBSD__)
-		ioctl(fd, KDSETMODE, KD_GRAPHICS);
-		ioctl(fd, KDGKBMODE, &kbmode);
-		ioctl(fd, KDSKBMODE, K_RAW);
-#endif
-	}
-}
-
-void
-KernelTerminalEmulatorLockout::restore()
-{
-	if (-1 != fd) {
-#if defined(__LINUX__) || defined(__linux__)
-#	if defined(KDGKBMUTE) && defined(KDSKBMUTE)
-		ioctl(fd, KDSKBMUTE, kbmute);
-#	elif defined(K_OFF)
-		ioctl(fd, KDSKBMODE, kbmode);
-#	else
-		ioctl(fd, KDSKBMODE, kbmode);
-#	endif
-		ioctl(fd, KDSETMODE, kdmode);
-#elif defined(__FreeBSD__) || defined(__DragonFly__)
-		ioctl(fd, KDSETMODE, kdmode);
-#elif defined(__OpenBSD__)
-		ioctl(fd, KDSKBMODE, kbmode);
-		ioctl(fd, KDSETMODE, KD_TEXT);
-#endif
-		ioctl(fd, VT_SETMODE, &vtmode);
-	}
-}
-
-void 
-KernelTerminalEmulatorLockout::reset(int nfd) 
-{ 
-	if (nfd != fd) restore(); 
-	FileDescriptorOwner::reset(nfd); 
-	save_and_mute();
-}
-
-int 
-KernelTerminalEmulatorLockout::release() 
-{ 
-	restore(); 
-	return FileDescriptorOwner::release(); 
 }
 
 /* Main function ************************************************************
@@ -4383,27 +4752,46 @@ console_fb_realizer [[gnu::noreturn]] (
 	std::vector<const char *> & args
 ) {
 	const char * prog(basename_of(args[0]));
-	const char * kernel_vt(0);
 	const char * keyboard_map_filename(0);
-#if defined(__FreeBSD__) || defined(__DragonFly__)
+#if defined(__LINUX__) || defined(__linux__)
+	unsigned long kernel_vt_number(0U);
+#elif defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
+	const char * kernel_vt_filename(0);
+#endif
+#if defined(__LINUX__) || defined(__linux__)
+	const char * ps2mouse_filename(0);
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
 	const char * atkeyboard_filename(0);
 	const char * sysmouse_filename(0);
 #endif
-	std::list<std::string> input_filenames;
-	bool bold_as_colour(false);
 	bool limit_80_columns(false);
+	std::list<std::string> input_filenames;
+	std::list< std::pair<std::string,std::string> > ugen_input_filenames;
+	bool bold_as_colour(false);
+	bool initial_numlock(false);
 	FontSpecList fonts;
 	unsigned long quadrant(3U);
 
 	try {
+#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
+		bool has_kernel_vt(false);
+#endif
 		popt::bool_definition bold_as_colour_option('\0', "bold-as-colour", "Forcibly render boldface as a colour brightness change.", bold_as_colour);
-		popt::string_definition kernel_vt_option('\0', "kernel-vt", "device", "Use the kernel FB sharing protocol via this device.", kernel_vt);
 		popt::string_list_definition input_option('\0', "input", "device", "Use the this input device.", input_filenames);
-#if defined(__FreeBSD__) || defined(__DragonFly__)
+#if defined(__LINUX__) || defined(__linux__)
+		popt::unsigned_number_definition kernel_vt_number_option('\0', "kernel-vt-number", "number", "Use the given kernel virtual terminal.", kernel_vt_number, 10);
+#elif defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
 		popt::bool_definition limit_80_columns_option('\0', "80-columns", "Limit to no wider than 80 columns.", limit_80_columns);
+		popt::bool_definition kernel_vt_option('\0', "kernel-vt", "Use a kernel virtual terminal device.", has_kernel_vt);
+		popt::string_pair_list_definition ugen_input_option('\0', "ugen-input", "device", "Use the this ugen input device.", ugen_input_filenames);
+#endif
+#if defined(__LINUX__) || defined(__linux__)
+		popt::string_definition ps2mouse_option('\0', "ps2mouse", "device", "Use this ps2mouse input device.", ps2mouse_filename);
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
 		popt::string_definition atkeyboard_option('\0', "atkeyboard", "device", "Use this atkbd input device.", atkeyboard_filename);
 		popt::string_definition sysmouse_option('\0', "sysmouse", "device", "Use this sysmouse input device.", sysmouse_filename);
 #endif
+		popt::bool_definition initial_numlock_option('\0', "initial-numlock", "Turn NumLock on, initially.", initial_numlock);
 		popt::string_definition keyboard_map_option('\0', "keyboard-map", "filename", "Use this keyboard map.", keyboard_map_filename);
 		popt::unsigned_number_definition quadrant_option('\0', "quadrant", "number", "Position the terminal in quadrant 0, 1, 2, or 3.", quadrant, 0);
 		fontspec_definition vtfont_option('\0', "vtfont", "filename", "Use this font as a medium+bold upright vt font.", fonts, -1, CombinedFont::Font::UPRIGHT);
@@ -4427,13 +4815,21 @@ console_fb_realizer [[gnu::noreturn]] (
 		fontspec_definition font_bold_i_option('\0', "font-bold-i", "filename", "Use this font as a bold-italic font.", fonts, CombinedFont::Font::BOLD, CombinedFont::Font::ITALIC);
 		popt::definition * top_table[] = {
 			&bold_as_colour_option,
-			&kernel_vt_option,
 			&input_option,
-#if defined(__FreeBSD__) || defined(__DragonFly__)
+#if defined(__LINUX__) || defined(__linux__)
+			&kernel_vt_number_option,
+#elif defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
+			&kernel_vt_option,
 			&limit_80_columns_option,
+			&ugen_input_option,
+#endif
+#if defined(__LINUX__) || defined(__linux__)
+			&ps2mouse_option,
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
 			&atkeyboard_option,
 			&sysmouse_option,
 #endif
+			&initial_numlock_option,
 			&keyboard_map_option,
 			&quadrant_option,
 			&vtfont_option,
@@ -4463,6 +4859,10 @@ console_fb_realizer [[gnu::noreturn]] (
 		p.process(true /* strictly options before arguments */);
 		args = new_args;
 		if (p.stopped()) throw EXIT_SUCCESS;
+#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
+		if (has_kernel_vt)
+			kernel_vt_filename = std::getenv("TTY");
+#endif
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
 		throw static_cast<int>(EXIT_USAGE);
@@ -4474,12 +4874,27 @@ console_fb_realizer [[gnu::noreturn]] (
 	}
 	const char * vt_dirname(args.front());
 	args.erase(args.begin());
+#if defined(__LINUX__) || defined(__linux__)
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing framebuffer device file name.");
 		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * fb_filename(args.front());
 	args.erase(args.begin());
+#elif defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
+	const char * fb_filename(0);
+	if (args.empty()) {
+		if (kernel_vt_filename)
+			fb_filename = kernel_vt_filename;
+		else {
+			std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing framebuffer device file name.");
+			throw static_cast<int>(EXIT_USAGE);
+		}
+	} else {
+		fb_filename = args.front();
+		args.erase(args.begin());
+	}
+#endif
 	if (!args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, args.front(), "Unexpected argument.");
 		throw static_cast<int>(EXIT_USAGE);
@@ -4487,10 +4902,12 @@ console_fb_realizer [[gnu::noreturn]] (
 
 	CombinedFont font;
 	HIDList inputs;
-	KeyboardMap map;
-#if defined(__FreeBSD__) || defined(__DragonFly__)
-	ATKeyboard atkbd(map);
-	SysMouse sysmou(map);
+	KeyboardMap keyboard_map;
+#if defined(__LINUX__) || defined(__linux__)
+	PS2Mouse ps2mou(keyboard_map);
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
+	ATKeyboard atkbd(keyboard_map, initial_numlock);
+	SysMouse sysmou(keyboard_map);
 #endif
 
 	// Open non-devices first, so that abends during setup don't leave hardware in strange states.
@@ -4518,8 +4935,7 @@ console_fb_realizer [[gnu::noreturn]] (
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kqueue", std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	struct kevent p[512];
-	std::size_t index(0U);
+	std::vector<struct kevent> ip;
 
 	FileDescriptorOwner vt_dir_fd(open_dir_at(AT_FDCWD, vt_dirname));
 	if (0 > vt_dir_fd.get()) {
@@ -4542,8 +4958,10 @@ console_fb_realizer [[gnu::noreturn]] (
 	buffer_fd.release();
 	FileDescriptorOwner input_fd(-1);
 	if (!input_filenames.empty()
-#if defined(__FreeBSD__) || defined(__DragonFly__)
-	|| atkeyboard_filename || sysmouse_filename 
+#if defined(__LINUX__) || defined(__linux__)
+	|| ps2mouse_filename
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
+	|| atkeyboard_filename || sysmouse_filename || !ugen_input_filenames.empty()
 #endif
 	) {
        		input_fd.reset(open_writeexisting_at(vt_dir_fd.get(), "input"));
@@ -4555,10 +4973,10 @@ console_fb_realizer [[gnu::noreturn]] (
 	}
 	vt_dir_fd.release();
 	VirtualTerminal vt(buffer_file.release(), input_fd.release());
-	set_event(&p[index++], vt.query_buffer_fd(), EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE, 0, 0);
+	append_event(ip, vt.query_buffer_fd(), EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE, 0, 0);
 
 	if (keyboard_map_filename)
-		LoadKeyMap(prog, map, keyboard_map_filename);
+		LoadKeyMap(prog, keyboard_map, keyboard_map_filename);
 
 	// Now open devices.
 
@@ -4568,63 +4986,151 @@ console_fb_realizer [[gnu::noreturn]] (
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, fb_filename, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-#if defined(__FreeBSD__) || defined(__DragonFly__)
-	if (atkeyboard_filename) {
-		if (!atkbd.open(AT_FDCWD, atkeyboard_filename)) {
-			const int error(errno);
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, atkeyboard_filename, std::strerror(error));
-			throw EXIT_FAILURE;
-		}
-		set_event(&p[index++], atkbd.query_input_fd(), EVFILT_READ, EV_ADD|EV_DISABLE, 0, 0, 0);
-	}
-	if (sysmouse_filename) {
-		if (!sysmou.open(AT_FDCWD, sysmouse_filename)) {
-			const int error(errno);
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, sysmouse_filename, std::strerror(error));
-			throw EXIT_FAILURE;
-		}
-		set_event(&p[index++], sysmou.query_input_fd(), EVFILT_READ, EV_ADD|EV_DISABLE, 0, 0, 0);
-	}
-#endif
+	fb.save(prog, fb_filename);
 	ReserveSignalsForKQueue kqueue_reservation(SIGTERM, SIGINT, SIGHUP, SIGPIPE, SIGWINCH, SIGUSR1, SIGUSR2, 0);
 	PreventDefaultForFatalSignals ignored_signals(SIGTERM, SIGINT, SIGHUP, SIGPIPE, SIGUSR1, SIGUSR2, 0);
-	set_event(&p[index++], SIGWINCH, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	set_event(&p[index++], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	set_event(&p[index++], SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	set_event(&p[index++], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	set_event(&p[index++], SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	append_event(ip, SIGWINCH, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	append_event(ip, SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	append_event(ip, SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	append_event(ip, SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	append_event(ip, SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 
-	KernelTerminalEmulatorLockout kvt(-1, SIGUSR1, SIGUSR2);
-	if (kernel_vt) {
-		kvt.reset(open_readwriteexisting_at(AT_FDCWD, kernel_vt));
-		if (0 > kvt.get()) {
-			const int error(errno);
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, kernel_vt, std::strerror(error));
-			throw EXIT_FAILURE;
-		}
-		set_event(&p[index++], SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-		set_event(&p[index++], SIGUSR2, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+#if defined(__LINUX__) || defined(__linux__)
+	KernelVT kvt(keyboard_map, initial_numlock, SIGUSR1, SIGUSR2);
+	if (kernel_vt_number > 0UL) {
+		kvt.reset(prog, kernel_vt_number);
+		append_event(ip, SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		append_event(ip, SIGUSR2, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		append_event(ip, kvt.query_input_fd(), EVFILT_READ, EV_ADD|EV_DISABLE, 0, 0, 0);
 	}
 
 	for (std::list<std::string>::const_iterator i(input_filenames.begin()); input_filenames.end() != i; ++i) {
-		if (index >= sizeof p/sizeof *p) continue;
-
 		const std::string & input_filename(*i);
-		HID & input(inputs.add(map));
-		if (!input.open(AT_FDCWD, input_filename.c_str())) {
+		HID & input(inputs.add(keyboard_map, initial_numlock));
+		FileDescriptorOwner fd1(open_readwriteexisting_at(AT_FDCWD, input_filename.c_str())); 
+		if (0 > fd1.get()) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, input_filename.c_str(), std::strerror(error));
 			throw EXIT_FAILURE;
 		}
+		input.set_input_fd(fd1.release());
+		if (!input.grab_exclusive()) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, input_filename.c_str(), std::strerror(error));
+			throw EXIT_FAILURE;
+		}
+		append_event(ip, input.query_input_fd(), EVFILT_READ, EV_ADD|EV_DISABLE, 0, 0, 0);
+	}
+#elif defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
+	KernelVT kvt(keyboard_map, initial_numlock, SIGUSR1, SIGUSR2);
+	if (kernel_vt_filename) {
+		FileDescriptorOwner fd(open_readwriteexisting_at(AT_FDCWD, kernel_vt_filename));
+		if (0 > fd.get()) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, kernel_vt_filename, std::strerror(error));
+			throw EXIT_FAILURE;
+		}
+		if (!isatty(fd.get())) {
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, kernel_vt_filename, "Not a terminal device.");
+			throw EXIT_FAILURE;
+		}
+		kvt.reset(fd.release());
+		append_event(ip, SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		append_event(ip, SIGUSR2, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+		append_event(ip, kvt.query_input_fd(), EVFILT_READ, EV_ADD|EV_DISABLE, 0, 0, 0);
+	}
+
+	for (std::list<std::string>::const_iterator i(input_filenames.begin()); input_filenames.end() != i; ++i) {
+		const std::string & input_filename(*i);
+		USBHID & input(inputs.add_uhid(keyboard_map, initial_numlock));
+		FileDescriptorOwner fd1(open_readwriteexisting_at(AT_FDCWD, input_filename.c_str())); 
+		if (0 > fd1.get()) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, input_filename.c_str(), std::strerror(error));
+			throw EXIT_FAILURE;
+		}
+		input.set_input_fd(fd1.release());
 		if (!input.read_description()) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, input_filename.c_str(), std::strerror(error));
 			throw EXIT_FAILURE;
 		}
-		set_event(&p[index++], input.query_input_fd(), EVFILT_READ, EV_ADD|EV_DISABLE, 0, 0, 0);
+		append_event(ip, input.query_input_fd(), EVFILT_READ, EV_ADD|EV_DISABLE, 0, 0, 0);
 	}
+	for (std::list< std::pair<std::string,std::string> >::const_iterator i(ugen_input_filenames.begin()); ugen_input_filenames.end() != i; ++i) {
+		const std::string & control_filename(i->first);
+		const std::string & input_filename(i->second);
+		GenericUSB & input(inputs.add_ugen(keyboard_map, initial_numlock));
+		// The control device is for control requests and output/feature reports.
+		FileDescriptorOwner fd1(open_readwriteexisting_at(AT_FDCWD, control_filename.c_str())); 
+		if (0 > fd1.get()) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, control_filename.c_str(), std::strerror(error));
+			throw EXIT_FAILURE;
+		}
+		// The input device is for input reports only.
+		FileDescriptorOwner fd2(open_read_at(AT_FDCWD, input_filename.c_str())); 
+		if (0 > fd2.get()) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, input_filename.c_str(), std::strerror(error));
+			throw EXIT_FAILURE;
+		}
+		input.set_control_fd(fd1.release());
+		input.set_input_fd(fd2.release());
+		if (!input.read_description()) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, input_filename.c_str(), std::strerror(error));
+			throw EXIT_FAILURE;
+		}
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+		if (input.is_kernel_driver_attached(0)) {
+			std::fprintf(stderr, "%s: INFO: %s: %s\n", prog, input_filename.c_str(), "Detaching kernel device driver from ugen device.");
+			if (!input.detach_kernel_driver(0)) {
+				const int error(errno);
+				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, input_filename.c_str(), std::strerror(error));
+				throw EXIT_FAILURE;
+			}
+		}
+#endif
+		append_event(ip, input.query_input_fd(), EVFILT_READ, EV_ADD|EV_DISABLE, 0, 0, 0);
+	}
+#endif
 
-	fb.save_and_set_graphics_mode(prog, fb_filename);
+#if defined(__LINUX__) || defined(__linux__)
+	if (ps2mouse_filename) {
+		FileDescriptorOwner fd1(open_readwriteexisting_at(AT_FDCWD, ps2mouse_filename)); 
+		if (0 > fd1.get()) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, ps2mouse_filename, std::strerror(error));
+			throw EXIT_FAILURE;
+		}
+		ps2mou.set_input_fd(fd1.release());
+		append_event(ip, ps2mou.query_input_fd(), EVFILT_READ, EV_ADD|EV_DISABLE, 0, 0, 0);
+	}
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
+	if (atkeyboard_filename) {
+		FileDescriptorOwner fd1(open_readwriteexisting_at(AT_FDCWD, atkeyboard_filename)); 
+		if (0 > fd1.get()) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, atkeyboard_filename, std::strerror(error));
+			throw EXIT_FAILURE;
+		}
+		atkbd.reset(fd1.release());
+		append_event(ip, atkbd.query_input_fd(), EVFILT_READ, EV_ADD|EV_DISABLE, 0, 0, 0);
+	}
+	if (sysmouse_filename) {
+		FileDescriptorOwner fd1(open_readwriteexisting_at(AT_FDCWD, sysmouse_filename)); 
+		if (0 > fd1.get()) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, sysmouse_filename, std::strerror(error));
+			throw EXIT_FAILURE;
+		}
+		sysmou.set_input_fd(fd1.release());
+		append_event(ip, sysmou.query_input_fd(), EVFILT_READ, EV_ADD|EV_DISABLE, 0, 0, 0);
+	}
+#endif
+
+	fb.set_graphics_mode(prog, fb_filename);
 
 	void * const base(mmap(0, fb.query_size(), PROT_READ|PROT_WRITE, MAP_SHARED, fb.get(), 0));
 	if (MAP_FAILED == base) {
@@ -4636,7 +5142,13 @@ console_fb_realizer [[gnu::noreturn]] (
 	GraphicsInterface gdi(base, fb.query_size(), fb.query_yres(), fb.query_xres(), fb.query_stride(), fb.query_depth());
 	Realizer realizer(fb, !font.has_faint(), bold_as_colour, gdi, font, vt);
 
+#if defined(__LINUX__) || defined(__linux__)
+	usr2_signalled = kvt.is_active();
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
+	usr2_signalled = kvt.is_active();
+#elif defined(__OpenBSD__)
 	usr2_signalled = true;
+#endif
 
 	bool active(false);
 	bool reload_vt(true);
@@ -4648,24 +5160,42 @@ console_fb_realizer [[gnu::noreturn]] (
 		if (terminate_signalled||interrupt_signalled||hangup_signalled) 
 			break;
 		if (usr1_signalled)  {
+			usr1_signalled = false;
 			if (active) {
-#if defined(__FreeBSD__) || defined(__DragonFly__)
+#if defined(__LINUX__) || defined(__linux__)
+				if (kernel_vt_number > 0UL)
+					append_event(ip, kvt.query_input_fd(), EVFILT_READ, EV_DISABLE, 0, 0, 0);
+				if (ps2mouse_filename)
+					append_event(ip, ps2mou.query_input_fd(), EVFILT_READ, EV_DISABLE, 0, 0, 0);
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
+				if (kernel_vt_filename)
+					append_event(ip, kvt.query_input_fd(), EVFILT_READ, EV_DISABLE, 0, 0, 0);
 				if (atkeyboard_filename)
-					set_event(&p[index++], atkbd.query_input_fd(), EVFILT_READ, EV_DISABLE, 0, 0, 0);
+					append_event(ip, atkbd.query_input_fd(), EVFILT_READ, EV_DISABLE, 0, 0, 0);
 				if (sysmouse_filename)
-					set_event(&p[index++], sysmou.query_input_fd(), EVFILT_READ, EV_DISABLE, 0, 0, 0);
+					append_event(ip, sysmou.query_input_fd(), EVFILT_READ, EV_DISABLE, 0, 0, 0);
 #endif
 				for (HIDList::const_iterator i(inputs.begin()); inputs.end() != i; ++i) {
 					const HID & input(**i);
-					set_event(&p[index++], input.query_input_fd(), EVFILT_READ, EV_DISABLE, 0, 0, 0);
+					append_event(ip, input.query_input_fd(), EVFILT_READ, EV_DISABLE, 0, 0, 0);
 				}
+				active = false;
 			}
-			active = false;
 		}
 		if (usr2_signalled) {
+			usr2_signalled = false;
 			if (!active) {
 				realizer.paint_all_cells_onto_framebuffer();
-#if defined(__FreeBSD__) || defined(__DragonFly__)
+#if defined(__LINUX__) || defined(__linux__)
+				if (kvt.query_dirty_LEDs()) {
+					kvt.set_LEDs();
+					kvt.clean_LEDs();
+				}
+#elif defined(__FreeBSD__) || defined (__DragonFly__)
+				if (kvt.query_dirty_LEDs()) {
+					kvt.set_LEDs();
+					kvt.clean_LEDs();
+				}
 				if (atkbd.query_dirty_LEDs()) {
 					atkbd.set_LEDs();
 					atkbd.clean_LEDs();
@@ -4678,18 +5208,25 @@ console_fb_realizer [[gnu::noreturn]] (
 						input.clean_LEDs();
 					}
 				}
-#if defined(__FreeBSD__) || defined(__DragonFly__)
+#if defined(__LINUX__) || defined(__linux__)
+				if (kernel_vt_number > 0UL)
+					append_event(ip, kvt.query_input_fd(), EVFILT_READ, EV_ENABLE, 0, 0, 0);
+				if (ps2mouse_filename)
+					append_event(ip, ps2mou.query_input_fd(), EVFILT_READ, EV_ENABLE, 0, 0, 0);
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
+				if (kernel_vt_filename)
+					append_event(ip, kvt.query_input_fd(), EVFILT_READ, EV_ENABLE, 0, 0, 0);
 				if (atkeyboard_filename)
-					set_event(&p[index++], atkbd.query_input_fd(), EVFILT_READ, EV_ENABLE, 0, 0, 0);
+					append_event(ip, atkbd.query_input_fd(), EVFILT_READ, EV_ENABLE, 0, 0, 0);
 				if (sysmouse_filename)
-					set_event(&p[index++], sysmou.query_input_fd(), EVFILT_READ, EV_ENABLE, 0, 0, 0);
+					append_event(ip, sysmou.query_input_fd(), EVFILT_READ, EV_ENABLE, 0, 0, 0);
 #endif
 				for (HIDList::const_iterator i(inputs.begin()); inputs.end() != i; ++i) {
 					const HID & input(**i);
-					set_event(&p[index++], input.query_input_fd(), EVFILT_READ, EV_ENABLE, 0, 0, 0);
+					append_event(ip, input.query_input_fd(), EVFILT_READ, EV_ENABLE, 0, 0, 0);
 				}
+				active = true;
 			}
-			active = true;
 		}
 		if (realizer.display_update_needed()) {
 			realizer.display_updated();
@@ -4699,8 +5236,10 @@ console_fb_realizer [[gnu::noreturn]] (
 			realizer.transfer_cursor_pos();
 			realizer.transfer_cursor_state();
 			if (!inputs.empty()
-#if defined(__FreeBSD__) || defined(__DragonFly__)
-			|| sysmouse_filename
+#if defined(__LINUX__) || defined(__linux__)
+			|| ps2mouse_filename
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
+			|| sysmouse_filename || !ugen_input_filenames.empty()
 #endif
 			)
 				realizer.transfer_pointer_state();
@@ -4709,18 +5248,22 @@ console_fb_realizer [[gnu::noreturn]] (
 				realizer.paint_changed_cells_onto_framebuffer();
 		}
 
-		const int rc(kevent(queue.get(), p, index, p, sizeof p/sizeof *p, reload_vt ? &immediate_timeout : 0));
+		struct kevent p[512];
+		const int rc(kevent(queue.get(), ip.data(), ip.size(), p, sizeof p/sizeof *p, reload_vt ? &immediate_timeout : 0));
+		ip.clear();
 
 		if (0 > rc) {
 			const int error(errno);
 			if (EINTR == error) continue;
 			fb.restore();
+#if defined(__LINUX__) || defined(__linux__)
 			kvt.release();
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "poll", std::strerror(error));
+#elif defined(__FreeBSD__) || defined (__DragonFly__)
+			kvt.reset(-1);
+#endif
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
 			throw EXIT_FAILURE;
 		}
-
-		index = 0;
 
 		if (0 == rc) {
 			if (reload_vt) {
@@ -4742,7 +5285,14 @@ console_fb_realizer [[gnu::noreturn]] (
 					handle_signal(e.ident);
 					break;
 				case EVFILT_READ:
-#if defined(__FreeBSD__) || defined(__DragonFly__)
+#if defined(__LINUX__) || defined(__linux__)
+					if (kvt.query_input_fd() == static_cast<int>(e.ident)) 
+						kvt.handle_input_events(realizer);
+					if (ps2mou.query_input_fd() == static_cast<int>(e.ident)) 
+						ps2mou.handle_input_events(realizer);
+#elif defined(__FreeBSD__) || defined (__DragonFly__)
+					if (kvt.query_input_fd() == static_cast<int>(e.ident)) 
+						kvt.handle_input_events(realizer);
 					if (atkbd.query_input_fd() == static_cast<int>(e.ident)) 
 						atkbd.handle_input_events(realizer);
 					if (sysmou.query_input_fd() == static_cast<int>(e.ident)) 
@@ -4757,7 +5307,16 @@ console_fb_realizer [[gnu::noreturn]] (
 			}
 		}
 
-#if defined(__FreeBSD__) || defined(__DragonFly__)
+#if defined(__LINUX__) || defined(__linux__)
+		if (kvt.query_dirty_LEDs()) {
+			kvt.set_LEDs();
+			kvt.clean_LEDs();
+		}
+#elif defined(__FreeBSD__) || defined (__DragonFly__)
+		if (kvt.query_dirty_LEDs()) {
+			kvt.set_LEDs();
+			kvt.clean_LEDs();
+		}
 		if (atkbd.query_dirty_LEDs()) {
 			atkbd.set_LEDs();
 			atkbd.clean_LEDs();

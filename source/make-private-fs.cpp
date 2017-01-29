@@ -147,7 +147,7 @@ make_private_fs (
 #if defined(__LINUX__) || defined(__linux__)
 			{	"/dev/ptmx",	"pts/ptmx"		},
 			{	"/dev/fd",	"/proc/self/fd"		},
-			{	"/dev/core",	"/proc/kcore"		},
+//			{	"/dev/core",	"/proc/kcore"		},
 			{	"/dev/stdin",	"/proc/self/fd/0"	},
 			{	"/dev/stdout",	"/proc/self/fd/1"	},
 			{	"/dev/stderr",	"/proc/self/fd/2"	},

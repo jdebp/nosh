@@ -1,0 +1,8 @@
+#!/bin/sh -e
+exec \
+/bin/exec \
+vc-get-tty "$1" -- \
+open-controlling-tty \
+vc-reset-tty \
+login-banner /etc/issue \
+login

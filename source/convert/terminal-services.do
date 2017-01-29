@@ -23,19 +23,18 @@ set_if_unset() { if test -z "`system-control print-service-env \"$1\" \"$2\"`" ;
 
 case "`uname`" in
 Linux)
-	set_if_unset console-fb-realizer@head0 KERNEL_VT "/dev/tty1"
-	set_if_unset console-fb-realizer@head0 TTY "/dev/tty1"
-	set_if_unset console-fb-realizer@head0 FRAMEBUFFER /dev/fb0
+	set_if_unset console-fb-realizer@head0 KERNEL_VT "1"
+	set_if_unset console-fb-realizer@head0 FRAMEBUFFER "/dev/fb0"
 	set_if_unset console-fb-realizer@head0 KBDMAP kbdmaps/us.kbdmap
-	set_if_unset console-fb-realizer@head0 KEYBOARD /dev/input/event0
-	set_if_unset console-fb-realizer@head0 MOUSE /dev/input/event1
+	set_if_unset console-fb-realizer@head0 INPUTS "--ps2mouse /dev/input/mice"
+	set_if_unset console-fb-realizer@head0 OWNED_DEVICES "/dev/input/event0 /dev/input/mice /dev/tty1 /dev/fb0"
 	;;
 *BSD)
-	set_if_unset console-fb-realizer@head0 TTY "/dev/ttyv0"
-	set_if_unset console-fb-realizer@head0 FRAMEBUFFER /dev/ttyv0
+	set_if_unset console-fb-realizer@head0 KERNEL_VT "ttyv0"
 	set_if_unset console-fb-realizer@head0 KBDMAP kbdmaps/us.kbdmap
-	set_if_unset console-fb-realizer@head0 ATKEYBOARD /dev/ttyv0
-	set_if_unset console-fb-realizer@head0 MOUSE /dev/uhid0
+	set_if_unset console-fb-realizer@head0 INPUTS "--sysmouse /dev/sysmouse"
+	set_if_unset console-fb-realizer@head0 OWNED_DEVICES "/dev/uhid0 /dev/sysmouse /dev/ttyv0"
+	set_if_unset console-fb-realizer@head0 DETACHED_UGEN_DEVICES ""
 	;;
 esac
 

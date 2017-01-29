@@ -3,12 +3,6 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-#if !defined(__LINUX__) && !defined(__linux__)
-#if defined(__OpenBSD__)
-#include <dev/usb/usb.h>
-#endif
-#include <dev/usb/usbhid.h>
-#endif
 #include "kbdmap.h"
 #include "kbdmap_utils.h"
 

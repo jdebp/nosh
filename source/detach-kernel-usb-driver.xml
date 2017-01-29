@@ -1,0 +1,50 @@
+<refentry id="detach-kernel-usb-driver">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>detach-kernel-usb-driver</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>detach-kernel-usb-driver</refname>
+<refpurpose>detach the kernel's own drivers from Generic USB devices</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>detach-kernel-usb-driver</command> 
+<arg choice='req' rep='repeat'><replaceable>filename</replaceable></arg> 
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>detach-kernel-usb-driver</command> opens the device files <replaceable>filename</replaceable>, which is assumed to be a Generic USB (<citerefentry><refentrytitle>ugen</refentrytitle><manvolnum>4</manvolnum></citerefentry>) device, and instructs the kernel to detach its other device drivers from the device with the <citerefentry><refentrytitle>ioctl</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+The usual use of the command is to prevent the kernel from automatically adding a USB keyboard  or mouse to the set of devices constituting the primary user station, so that it can be employed for another user station.
+</para>
+
+<para>
+On kernels where this is configured, which includes TrueOS kernels, the kernel detects the appearance of a USB HID device and automatically attaches a <citerefentry><refentrytitle>ums</refentrytitle><manvolnum>4</manvolnum></citerefentry> or a <citerefentry><refentrytitle>ukbd</refentrytitle><manvolnum>4</manvolnum></citerefentry> device to it.
+Plug and Play manager rules, in response to these devices, cause instances of <citerefentry><refentrytitle>moused</refentrytitle><manvolnum>1</manvolnum></citerefentry> to be started for each HID mouse and cause each HID keyboard to be attached to the primary user station and the kernel virtual terminals.
+</para>
+
+<para>
+<command>detach-kernel-usb-driver</command> causes these <citerefentry><refentrytitle>ums</refentrytitle><manvolnum>4</manvolnum></citerefentry> and <citerefentry><refentrytitle>ukbd</refentrytitle><manvolnum>4</manvolnum></citerefentry> devices to be removed.
+This permits the original <citerefentry><refentrytitle>ugen</refentrytitle><manvolnum>4</manvolnum></citerefentry> device to be used for another user station.
+</para>
+
+</refsection><refsection><title>See also</title>
+
+<itemizedlist>
+<listitem><para>
+<citerefentry><refentrytitle>console-fb-realizer</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+</itemizedlist>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

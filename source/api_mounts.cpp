@@ -11,13 +11,15 @@ For copyright and licensing terms, see the file named COPYING.
 #include "common-manager.h"
 
 #if defined(__LINUX__) || defined(__linux__)
-// Defining a FROM for tmpfs and cgroup mounts is important, even though it is meaningless.
+// Defining a FROM for all mounts is important, even though it is meaningless.
 // Otherwise the empty string between whitespace that results in /proc/self/mountinfo confuses the parser in libmount.
 static const struct iovec proc[] = {
+	FROM,				MAKE_IOVEC("proc"),
 	FSTYPE,				MAKE_IOVEC("proc"),
 	FSPATH,				MAKE_IOVEC("/proc"),
 };
 static const struct iovec sys[] = {
+	FROM,				MAKE_IOVEC("sysfs"),
 	FSTYPE,				MAKE_IOVEC("sysfs"),
 	FSPATH,				MAKE_IOVEC("/sys"),
 };
@@ -46,12 +48,14 @@ static const struct iovec sc1[] = {
 	MAKE_IOVEC("none"),		ZERO_IOVEC(),
 };
 static const struct iovec dev[] = {
+	FROM,				MAKE_IOVEC("devtmpfs"),
 	FSTYPE,				MAKE_IOVEC("devtmpfs"),
 	FSPATH,				MAKE_IOVEC("/dev"),
 	MAKE_IOVEC("mode"),		MAKE_IOVEC("0755"),
 	MAKE_IOVEC("size"),		MAKE_IOVEC("10M"),
 };
 static const struct iovec pts[] = {
+	FROM,				MAKE_IOVEC("devpts"),
 	FSTYPE,				MAKE_IOVEC("devpts"),
 	FSPATH,				MAKE_IOVEC("/dev/pts"),
 	MAKE_IOVEC("ptmxmode"),		MAKE_IOVEC("0666"),

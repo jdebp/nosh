@@ -2,6 +2,7 @@ exec	appendpath
 exec	chdir
 exec	chroot
 exec	clearenv
+exec	create-control-group
 exec	cyclog
 exec	delegate-control-group-to
 exec	envdir
@@ -99,6 +100,7 @@ console-terminal-emulator	console-ncurses-realizer
 console-terminal-emulator	console-clear
 console-terminal-emulator	console-resize
 console-terminal-emulator	detach-controlling-tty
+console-terminal-emulator	detach-kernel-usb-driver
 console-terminal-emulator	emergency-login
 console-terminal-emulator	login-banner
 console-terminal-emulator	login-process

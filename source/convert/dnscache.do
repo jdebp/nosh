@@ -16,6 +16,53 @@ list_network_addresses() { for i in `read_rc network_addresses || echo 127.0.0.1
 
 redo-ifchange rc.conf general-services "dnscache@.socket" "dnscache.service"
 
+list_graft_points() {
+	# http://jdebp.eu./FGA/dns-private-address-split-horizon.html#WhatToDo
+	for d in \
+		0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0 \
+		D.F \
+		8.E.F \
+		9.E.F \
+		A.E.F \
+		B.E.F \
+		C.E.F \
+		D.E.F \
+		E.E.F \
+		F.E.F \
+	;
+	do
+		echo "${d}.ip6.arpa"
+	done
+	for d in \
+		0 \
+		10 \
+		127 \
+		254.169 \
+		16.172 \
+		17.172 \
+		18.172 \
+		19.172 \
+		20.172 \
+		21.172 \
+		22.172 \
+		23.172 \
+		24.172 \
+		25.172 \
+		26.172 \
+		27.172 \
+		28.172 \
+		29.172 \
+		30.172 \
+		31.172 \
+		2.0.192 \
+		168.192 \
+		255.255.255.255 \
+	;
+	do
+		echo "${d}.in-addr.arpa"
+	done
+}
+
 if s="`system-control find dnscache`"
 then
 	set_if_unset dnscache IPSEND 0.0.0.0
@@ -35,6 +82,11 @@ then
 #		chmod 0600 "${s}/service/seed" 
 #	fi
 	test -r "${s}/service/root/servers/@" || echo '127.53.0.1' > "${s}/service/root/servers/@"
+	list_graft_points |
+	while read -r d
+	do
+		test -r "${s}/service/root/servers/${d}" || ln "${s}/service/root/servers/@" "${s}/service/root/servers/${d}"
+	done
 	dir_not_empty "${s}/service/root/ip" || touch "${s}/service/root/ip/127.0.0.1"
 fi
 
@@ -66,6 +118,11 @@ do
 #		chmod 0600 "${s}/service/seed" 
 #	fi
 	test -r "${s}/service/root/servers/@" || echo '127.53.0.1' > "${s}/service/root/servers/@"
+	list_graft_points |
+	while read -r d
+	do
+		test -r "${s}/service/root/servers/${d}" || ln "${s}/service/root/servers/@" "${s}/service/root/servers/${d}"
+	done
 	dir_not_empty "${s}/service/root/ip" || touch "${s}/service/root/ip/127.0.0.1"
 	set_if_unset "${s}/" IPSEND 0.0.0.0
 	set_if_unset "${s}/" CACHESIZE 1000000

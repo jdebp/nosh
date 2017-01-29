@@ -20,11 +20,11 @@ enum {
 	KBDMAP_ACTION_UCS3	= 0x01000000,
 	KBDMAP_ACTION_SYSTEM	= 0x02000000,
 	KBDMAP_ACTION_MODIFIER	= 0x03000000,
-	// Don'[t clash with 0x04000000 being X mouse positions in input messages.
-	// Don'[t clash with 0x05000000 being Y mouse positions in input messages.
-	// Don'[t clash with 0x06000000 being mouse wheel in input messages.
-	// Don'[t clash with 0x07000000 being mouse buttons in input messages.
-	// Don'[t clash with 0x09000000 being pasted UCS3 in input messages.
+	// Don't clash with 0x04000000 being X mouse positions in input messages.
+	// Don't clash with 0x05000000 being Y mouse positions in input messages.
+	// Don't clash with 0x06000000 being mouse wheel in input messages.
+	// Don't clash with 0x07000000 being mouse buttons in input messages.
+	// Don't clash with 0x09000000 being pasted UCS3 in input messages.
 	KBDMAP_ACTION_SCREEN	= 0x0A000000,
 	KBDMAP_ACTION_CONSUMER	= 0x0C000000,
 	KBDMAP_ACTION_EXTENDED	= 0x0E000000,

@@ -31,6 +31,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include <fcntl.h>
 #include "utils.h"
+#include "pack.h"
 #include "fdutils.h"
 #include "listen.h"
 #include "service-manager.h"
@@ -118,34 +119,6 @@ static service_map services;
 /* Supervision **************************************************************
 // **************************************************************************
 */
-
-static inline
-void
-pack_bigendian (
-	unsigned char * buf,
-	uint64_t v,
-	std::size_t len
-) {
-	while (len) {
-		--len;
-		buf[len] = v & 0xFF;
-		v >>= 8;
-	}
-}
-
-static inline
-void
-pack_littleendian (
-	unsigned char * buf,
-	uint64_t v,
-	std::size_t len
-) {
-	while (len) {
-		--len;
-		*buf++ = v & 0xFF;
-		v >>= 8;
-	}
-}
 
 static inline
 bool 

@@ -111,6 +111,7 @@ struct bundle {
 		service_dir_fd(-1), 
 		status_file_fd(-1), 
 		ss_scanned(false), 
+		primary_target(false),
 		use_hangup(false), 
 		use_final_kill(false), 
 		order(-1), 
@@ -133,7 +134,7 @@ struct bundle {
 	enum event { LOAD, LOG_LOAD, RUN_ON_EMPTY, LOG_RUN_ON_EMPTY, IS_BLOCKED, IS_BLOCKING, IS_UNBLOCKED, IS_START, IS_STOP, STOP_HARDER, STOP_HARDEST, CANNOT_START, CANNOT_STOP, IS_READY, IS_DONE };
 	int bundle_dir_fd, supervise_dir_fd, service_dir_fd, status_file_fd;
 	std::string path, name;
-	bool ss_scanned, use_hangup, use_final_kill;
+	bool ss_scanned, primary_target, use_hangup, use_final_kill;
 	int order;
 	unsigned wants;
 	bundle_pointer_set sort_after;
@@ -365,6 +366,7 @@ add_primary_target_bundles (
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, *i, std::strerror(error));
 			throw EXIT_FAILURE;
 		}
+		bp->primary_target = true;
 	}
 }
 
@@ -489,6 +491,36 @@ make_symlink_target (
 	mkdirat(bundle_dir_fd, buf.data(), mode);
 }
 
+static inline
+bool
+load (
+	const char * prog,
+	bool no_colours,
+	bundle & b,
+	const int socket_fd,
+	const int supervise_dir_fd,
+	const int service_dir_fd,
+	const std::string name,
+	bundle::event load_event,
+	bundle::event run_on_empty_event
+) {
+	const bool was_already_loaded(is_ok(supervise_dir_fd));
+	if (was_already_loaded) return true;
+	const bool run_on_empty(!is_done_after_exit(service_dir_fd));
+	if (verbose) {
+		b.print_event(prog, no_colours, load_event);
+		if (run_on_empty)
+			b.print_event(prog, no_colours, run_on_empty_event);
+	}
+	if (pretending) return true;
+	make_supervise_fifos (supervise_dir_fd);
+	load(prog, socket_fd, name.c_str(), supervise_dir_fd, service_dir_fd);
+	if (run_on_empty)
+		make_run_on_empty(prog, socket_fd, supervise_dir_fd);
+	make_pipe_connectable(prog, socket_fd, supervise_dir_fd);
+	return wait_ok(supervise_dir_fd, 5000);
+}
+
 /* System control subcommands ***********************************************
 // **************************************************************************
 */
@@ -543,7 +575,7 @@ start_stop_common [[gnu::noreturn]] (
 	}
 
 	// Check that we aren't starting and stopping a bundle at the same time.
-	bool conflicts(false);
+	bool any_conflicts(false);
 	for (bundle_info_map::const_iterator i(bundles.begin()); bundles.end() != i; ++i) {
 		switch (i->second.wants) {
 			case bundle::WANT_NONE:
@@ -552,11 +584,11 @@ start_stop_common [[gnu::noreturn]] (
 				break;
 			default:
 				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, i->second.name.c_str(), "Conflicting job requirements.");
-				conflicts = true;
+				any_conflicts = true;
 				break;
 		}
 	}
-	if (conflicts) throw EXIT_FAILURE;
+	if (any_conflicts) throw EXIT_FAILURE;
 
 	// Apply the bundle orderings to each bundle, now that we have the full set of bundles upon which we are operating (and it is self-consistent).
 	// This is complicated by the fact that ordering depends from whether a predecessor/successor is being started or stopped and whether this bundle is being started or stopped.
@@ -634,6 +666,7 @@ start_stop_common [[gnu::noreturn]] (
 
 	// Make the various "supervise" directories, if they are in a RAM volume, and open file descriptors for them.
 	umask(0022);
+	bool any_missing_supervise(false);
 	for (bundle_pointer_list::const_iterator i(sorted.begin()); sorted.end() != i; ++i) {
 		bundle & b(**i);
 		if (bundle::WANT_NONE == b.wants) continue;
@@ -643,76 +676,64 @@ start_stop_common [[gnu::noreturn]] (
 		if (0 > b.supervise_dir_fd) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, b.name.c_str(), "supervise", std::strerror(error));
+			if (b.primary_target)
+				any_missing_supervise = true;
+			else
+				b.wants = b.WANT_NONE;
 		}
 	}
+	if (any_missing_supervise) throw EXIT_FAILURE;
 
 	// Load any services (into the service manager) that are about to be started but that are not already loaded.
 	// Do the same for their log services, even if those log services are not part of the calculated bundle set.
 	// This is because the service manager must have the log service loaded in order to plumb the main service's output to the right place, even if the log service isn't being acted upon here.
+	bool any_not_loaded(false);
 	for (bundle_pointer_list::const_iterator i(sorted.begin()); sorted.end() != i; ++i) {
 		bundle & b(**i);
 		if (bundle::WANT_START != b.wants) continue;
 		if (0 > b.supervise_dir_fd) continue;
 
-		const bool was_already_loaded(is_ok(b.supervise_dir_fd));
-		if (!was_already_loaded) {
-			const bool run_on_empty(!is_done_after_exit(b.service_dir_fd));
-			if (verbose) {
-				b.print_event(prog, no_colours, b.LOAD);
-				if (run_on_empty)
-					b.print_event(prog, no_colours, b.RUN_ON_EMPTY);
-			}
-			if (!pretending) {
-				make_supervise_fifos (b.supervise_dir_fd);
-				load(prog, socket_fd.get(), b.name.c_str(), b.supervise_dir_fd, b.service_dir_fd);
-				if (run_on_empty)
-					make_run_on_empty(prog, socket_fd.get(), b.supervise_dir_fd);
-				make_pipe_connectable(prog, socket_fd.get(), b.supervise_dir_fd);
-				if (!wait_ok(b.supervise_dir_fd, 5000)) {
-					std::fprintf(stderr, "%s: ERROR: %s/%s/%s: %s\n", prog, b.path.c_str(), b.name.c_str(), "ok", "Unable to load service bundle.");
-					continue;
-				}
-			}
+		if (!load(prog, no_colours, b, socket_fd.get(), b.supervise_dir_fd, b.service_dir_fd, b.name, b.LOAD, b.RUN_ON_EMPTY)) {
+			std::fprintf(stderr, "%s: ERROR: %s/%s/%s: %s\n", prog, b.path.c_str(), b.name.c_str(), "ok", "Unable to load service bundle.");
+			if (b.primary_target)
+				any_not_loaded = true;
+			else
+				b.wants = b.WANT_NONE;
+			continue;
 		}
-
 		const FileDescriptorOwner log_bundle_dir_fd(open_dir_at(b.bundle_dir_fd, "log/"));
 		if (0 <= log_bundle_dir_fd.get()) {
 			const FileDescriptorOwner log_supervise_dir_fd(open_supervise_dir(log_bundle_dir_fd.get()));
 			const FileDescriptorOwner log_service_dir_fd(open_service_dir(log_bundle_dir_fd.get()));
 			if (0 <= log_supervise_dir_fd.get() && 0 <= log_service_dir_fd.get()) {
-				const bool log_was_already_loaded(is_ok(log_supervise_dir_fd.get()));
-				if (!log_was_already_loaded) {
-					const bool run_on_empty(!is_done_after_exit(log_service_dir_fd.get()));
-					if (verbose) {
-						b.print_event(prog, no_colours, b.LOG_LOAD);
-						if (run_on_empty)
-							b.print_event(prog, no_colours, b.LOG_RUN_ON_EMPTY);
-					}
-					if (!pretending) {
-						make_supervise_fifos (log_supervise_dir_fd.get());
-						load(prog, socket_fd.get(), (b.name + "/log").c_str(), log_supervise_dir_fd.get(), log_service_dir_fd.get());
-						if (run_on_empty)
-							make_run_on_empty(prog, socket_fd.get(), log_supervise_dir_fd.get());
-						make_pipe_connectable(prog, socket_fd.get(), log_supervise_dir_fd.get());
-					}
+				const std::string log_name(b.name + "/log");
+				if (!load(prog, no_colours, b, socket_fd.get(), log_supervise_dir_fd.get(), log_service_dir_fd.get(), log_name, b.LOG_LOAD, b.LOG_RUN_ON_EMPTY)) {
+					std::fprintf(stderr, "%s: ERROR: %s/%s/%s: %s\n", prog, b.path.c_str(), log_name.c_str(), "ok", "Unable to load service bundle.");
+					continue;
 				}
 				if (!pretending)
 					plumb(prog, socket_fd.get(), b.supervise_dir_fd, log_supervise_dir_fd.get());
 			}
 		}
 	}
+	if (any_not_loaded) throw EXIT_FAILURE;
 
 	// Open all of the status files.
+	bool any_status_not_opened(false);
 	for (bundle_pointer_list::const_iterator i(sorted.begin()); sorted.end() != i; ++i) {
 		bundle & b(**i);
 		if (0 > b.supervise_dir_fd) continue;
 		b.status_file_fd = open_read_at(b.supervise_dir_fd, "status");
 		if (0 > b.status_file_fd) {
 			const int error(errno);
-			if (bundle::WANT_START == b.wants)
+			if (bundle::WANT_START == b.wants) {
 				std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, b.name.c_str(), "supervise/status", std::strerror(error));
+				if (b.primary_target)
+					any_status_not_opened = true;
+			}
 		}
 	}
+	if (any_status_not_opened) throw EXIT_FAILURE;
 
 	// The main enacting loop; where we keep trying to start/stop any remaining services with pending actions until no more are left.
 	timespec one_second;

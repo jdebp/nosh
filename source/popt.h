@@ -147,11 +147,12 @@ namespace popt {
 	};
 	struct string_list_definition : public compound_named_definition {
 	public:
-		string_list_definition(char s, const char * l, const char * a, const char * d, std::list<std::string> & v) : compound_named_definition(s, l, a, d), value_list(v) {}
+		typedef std::list<std::string> list_type;
+		string_list_definition(char s, const char * l, const char * a, const char * d, list_type & v) : compound_named_definition(s, l, a, d), value_list(v) {}
 		virtual void action(processor &, const char *);
 		virtual ~string_list_definition();
 	protected:
-		std::list<std::string> & value_list;
+		list_type & value_list;
 	};
 	struct bool_definition : public simple_named_definition {
 	public:
@@ -185,6 +186,33 @@ namespace popt {
 		virtual void action(processor &, const char *);
 	protected:
 		signed long & value;
+	};
+	struct compound_2arg_named_definition : public named_definition {
+	public:
+		compound_2arg_named_definition(char s, const char * l, const char * a, const char * d) : named_definition(s, l, a, d) {}
+		virtual ~compound_2arg_named_definition() = 0;
+		virtual void action(processor &, const char *, const char *) = 0;
+		virtual bool execute(processor & proc, char c);
+		virtual bool execute(processor &, char c, const char * s);
+		virtual bool execute(processor & proc, const char * s);
+	};
+	struct string_pair_definition : public compound_2arg_named_definition {
+	public:
+		string_pair_definition(char s, const char * l, const char * a, const char * d, const char * & v1, const char * & v2) : compound_2arg_named_definition(s, l, a, d), value1(v1), value2(v2) {}
+		virtual void action(processor &, const char *, const char *);
+		virtual ~string_pair_definition();
+	protected:
+		const char * & value1, * & value2;
+	};
+	struct string_pair_list_definition : public compound_2arg_named_definition {
+	public:
+		typedef std::pair<std::string,std::string> pair_type;
+		typedef std::list<pair_type> list_type;
+		string_pair_list_definition(char s, const char * l, const char * a, const char * d, list_type & v) : compound_2arg_named_definition(s, l, a, d), value_list(v) {}
+		virtual void action(processor &, const char *, const char *);
+		virtual ~string_pair_list_definition();
+	protected:
+		list_type & value_list;
 	};
 }
 #endif

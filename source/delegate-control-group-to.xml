@@ -42,6 +42,9 @@ If a record of the latter type is found, version 1 control groups are assumed wi
 
 <itemizedlist>
 <listitem><para>
+<citerefentry><refentrytitle>create-control-group</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
 <citerefentry><refentrytitle>move-to-control-group</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 </para></listitem>
 <listitem><para>

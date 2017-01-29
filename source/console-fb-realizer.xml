@@ -16,34 +16,37 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>console-fb-realizer</command>
-<arg choice='req'>--kernel-vt <replaceable>filename</replaceable></arg>
-<arg choice='req'>--input <replaceable>filename</replaceable></arg>
-<arg choice='req'>--atkeyboard <replaceable>filename</replaceable></arg>
-<arg choice='req'>--sysmouse <replaceable>filename</replaceable></arg>
-<arg choice='req'>--keyboard-map <replaceable>filename</replaceable></arg>
-<arg choice='req'>--font-light-r <replaceable>filename</replaceable></arg>
-<arg choice='req'>--font-light-o <replaceable>filename</replaceable></arg>
-<arg choice='req'>--font-light-i <replaceable>filename</replaceable></arg>
-<arg choice='req'>--font-medium-r <replaceable>filename</replaceable></arg>
-<arg choice='req'>--font-medium-o <replaceable>filename</replaceable></arg>
-<arg choice='req'>--font-medium-i <replaceable>filename</replaceable></arg>
-<arg choice='req'>--font-demibold-r <replaceable>filename</replaceable></arg>
-<arg choice='req'>--font-demibold-o <replaceable>filename</replaceable></arg>
-<arg choice='req'>--font-demibold-i <replaceable>filename</replaceable></arg>
-<arg choice='req'>--font-bold-r <replaceable>filename</replaceable></arg>
-<arg choice='req'>--font-bold-o <replaceable>filename</replaceable></arg>
-<arg choice='req'>--font-bold-i <replaceable>filename</replaceable></arg>
-<arg choice='req'>--vtfont-faint-r <replaceable>filename</replaceable></arg>
-<arg choice='req'>--vtfont-faint-o <replaceable>filename</replaceable></arg>
-<arg choice='req'>--vtfont-faint-i <replaceable>filename</replaceable></arg>
-<arg choice='req'>--vtfont-normal-r <replaceable>filename</replaceable></arg>
-<arg choice='req'>--vtfont-normal-o <replaceable>filename</replaceable></arg>
-<arg choice='req'>--vtfont-normal-i <replaceable>filename</replaceable></arg>
-<arg choice='req'>--vtfont <replaceable>filename</replaceable></arg>
-<arg choice='req'>--quadrant <replaceable>number</replaceable></arg>
-<arg choice='req'>--bold-as-colour</arg>
+<arg choice='opt'>--kernel-vt</arg>
+<arg choice='opt'>--kernel-vt-number <replaceable>number</replaceable></arg>
+<arg choice='opt'>--input <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--ugen-input <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--atkeyboard <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--sysmouse <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--keyboard-map <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--font-light-r <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--font-light-o <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--font-light-i <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--font-medium-r <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--font-medium-o <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--font-medium-i <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--font-demibold-r <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--font-demibold-o <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--font-demibold-i <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--font-bold-r <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--font-bold-o <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--font-bold-i <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--vtfont-faint-r <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--vtfont-faint-o <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--vtfont-faint-i <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--vtfont-normal-r <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--vtfont-normal-o <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--vtfont-normal-i <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--vtfont <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--quadrant <replaceable>number</replaceable></arg>
+<arg choice='opt'>--bold-as-colour</arg>
+<arg choice='opt'>--80-columns</arg>
 <arg choice='req'><replaceable>vcname</replaceable></arg>
-<arg choice='req'><replaceable>fbname</replaceable></arg>
+<arg choice='opt'><replaceable>fbname</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -59,7 +62,7 @@ These are the "master side" interfaces of the user-space virtual terminal, as de
 </para>
 
 <para>
-It also opens the framebuffer device <replaceable>fbname</replaceable> and the input devices (if any) specified by command line options.
+It also opens the framebuffer device and the input devices (if any) specified by command line options.
 These are the concrete devices with which the user-space virtual terminal is to be realized.
 It is the user's responsibility to ensure that these refer to the same, single, physical user station.
 </para>
@@ -84,81 +87,139 @@ renders the contents of the character/attribute buffer file for the virtual term
 
 </itemizedlist>
 
-<refsection><title>Specifying input devices</title>
-
 <para>
-The <arg choice='plain'>--input</arg> command line option designates the superior choices of input device for each platform.
-On Linux, they must designate event devices, using the evdev subsystem.
-On the BSDs they must designate USB HID devices, using the <citerefentry><refentrytitle>uhid</refentrytitle><manvolnum>4</manvolnum></citerefentry> protocol.
+The framebuffer device need not be the same size or height:width ratio as the virtual terminal display.
+When it is smaller than the display, the realizer will move the framebuffer around as a "window" onto the virtual terminal display, such that the cursor position is always within the window.
+When it is larger than the display, the realizer will align the virtual terminal display to one corner of the framebuffer, as specified by the <arg choice='plain'>--quardant</arg> command-line option.
+It will render the parts of the framebuffer outwith the virtual terminal display area as black.
 </para>
 
+</refsection>
+
+<refsection><title>Specifying I/O devices</title>
+
 <para>
-On the BSDs the <arg choice='plain'>--atkeyboard</arg> and <arg choice='plain'>--sysmouse</arg> command line options designate inferior choices of input device, where the others are unavailable.
-The former must designate keyboard devices, using the <citerefentry><refentrytitle>atkbd</refentrytitle><manvolnum>4</manvolnum></citerefentry> protocol; and the latter the must designate mouse devices, using the <citerefentry><refentrytitle>mouse</refentrytitle><manvolnum>4</manvolnum></citerefentry> protocol.
-These systems are inferior because:
+I/O devices are specified by various command-line options.
 </para>
 
-<itemizedlist>
+<variablelist>
 
+<varlistentry>
+<term><arg choice='plain'>--input <replaceable>filename</replaceable></arg></term>
 <listitem><para>
-The BSD sysmouse subsystem, <citerefentry><refentrytitle>moused</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and the various USB add-ons such as <citerefentry><refentrytitle>uhidd</refentrytitle><manvolnum>1</manvolnum></citerefentry>, are incapable of supporting absolute-position pointing devices, such as USB tablets.
-The protocols simply don't support the notion.
+This command-line option option designates the superior choices of input device for each platform, the fundamental Human Input devices enumerated by the operating system.
+On Linux, <replaceable>filename</replaceable> must be the device file name of an event device, using the evdev subsystem, such as <filename>/dev/input/event0</filename> for example.
+On the BSDs <replaceable>filename</replaceable> must be the device file name of a USB HID device, using the <citerefentry><refentrytitle>uhid</refentrytitle><manvolnum>4</manvolnum></citerefentry> protocol, such as <filename>/dev/uhid0</filename> for example.
+</para><para>
+The "type" of the device (e.g. keyboard, tablet, mouse, and so forth) is queried from the device itself, without need for explicitly describing it on the command line.
+Any combination of mouse, tablet, and keyboard input events in a single USB device can be handled.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><arg choice='plain'>--gen-input <replaceable>control-filename</replaceable> <replaceable>function-filename</replaceable></arg></term>
+<listitem><para>
+This command-line option option designates a slightly less superior choice of input device on the BSDs.
+<replaceable>control-filename</replaceable> and <replaceable>function-filename</replaceable> must be the the device file names of Generic USB control and function devices, using the <citerefentry><refentrytitle>ugen</refentrytitle><manvolnum>4</manvolnum></citerefentry> protocol, such as <filename>/dev/usb/0.2.0</filename> and <filename>/dev/usb/0.2.1</filename> for example.
+</para><para>
+This is slightly less superior because it does not employ the operating system to filter out USB devices that are not Human Input devices.
+One can incorrectly give the names of non-HID devices to this option, and <command>console-fb-realizer</command> will attempt to use them as USB HID devices.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><arg choice='plain'>--atkeyboard <replaceable>filename</replaceable></arg></term>
+<listitem><para>
+This command-line option option designates an inferior choice of input device.
+<replaceable>filename</replaceable> must be a device that speaks the "kbio" API to programs.
+On Linux only kernel virtual terminal devices speak this protocol.
+On the BSDs, <replaceable>filename</replaceable> must be an a kernel virtual terminal device or an <citerefentry><refentrytitle>atkbd</refentrytitle><manvolnum>4</manvolnum></citerefentry> device, such as <filename>/dev/atkbd0</filename>, <filename>/dev/kbdmux0</filename>, or <filename>/dev/ukbd0</filename> for examples.
+</para><para>
+This option employed with a kernel virtual terminal device is not generally as useful or functional as the Linux <arg choice='plain'>--kernel-vt-number</arg> or the BSD <arg choice='plain'>--kernel-vt</arg> option, of whose functionality it is essentially a subset.
+</para><para>
+This is inferior because the AT Keyboard model does not include things that are accessible via the USB HID protocol and (to a lesser extent) the Linux input event protocol.
+Those latter support extra keypads and more keys, including extra extended keys (equals, comma,  plus/minus, and brackets on the calculator keypad for examples) and consumer device keys (calculator, WWW, and eject for examples).
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><arg choice='plain'>--sysmouse <replaceable>filename</replaceable></arg></term>
+<listitem><para>
+This command-line option option designates an inferior choice of input device on the BSDs.
+<replaceable>filename</replaceable> must be a device that speaks the BSD <citerefentry><refentrytitle>mouse</refentrytitle><manvolnum>4</manvolnum></citerefentry> protocol to programs, such as <filename>/dev/sysmouse</filename> or <filename>/dev/psm0</filename> for examples.
+BSD mouse devices, while speaking their own idiosyncratic protocols at "mouse level 1" all have a common "mouse level 2" of operation where they all speak this same protocol.
+</para><para>
+However, this protocol is limited compared to using the USB HID devices directly.
+It has no support for absolute-position pointing devices, such as USB tablets, because the protocol simply does not support the notion of transmitting absolute position information, only relative pointer movements.
 </para><para>
 Transparent "mouse integration" under some virtual machine systems requires support for absolute-position pointing devices.
+(In Oracle VirtualBox, for example, when "mouse integration" is off, host machine mouse input is reported to the guest machine as input from a relative-positioning mouse device; but when "mouse integration" is on, host machine mouse input is reported to the guest machine as input from an absolute-positioning tablet device.)
+This type of device cannot work with them.
 </para></listitem>
+</varlistentry>
 
+<varlistentry>
+<term><arg choice='plain'>--ps2mouse <replaceable>filename</replaceable></arg></term>
 <listitem><para>
-The USB HID protocol and the Linux input event protocol do not need to specify the "type" of the device, as that is determined from the device's input stream.
-Any combination of mouse, tablet, and keyboard input events in a single device can be handled.
+This command-line option option designates an inferior choice of input device on Linux.
+<replaceable>filename</replaceable> must be a device that speaks the Linux ps2 mouse protocol to programs, such as <filename>/dev/input/mice</filename> for example.
+</para><para>
+This protocol has no scope for mice wheels, more than 3 buttons, Z or W axes.
+It is also poorly effected in some virtual machine systems, which try to enforce a relationship between "mickeys" in the virtual hardware and pixels on the host display, and do not always do that right.
 </para></listitem>
+</varlistentry>
 
+<varlistentry>
+<term><arg choice='plain'>--kernel-vt</arg></term>
 <listitem><para>
-The USB HID protocol and (to a lesser extent) the Linux input event protocol support extra keypads and more keys, including extra extended keys (equals, comma,  plus/minus, and brackets on the calculator keypad, for examples) and consumer device keys (calculator, WWW, and eject for examples).
+This command-line option option designates using a kernel virtual terminal for input, output, and device sharing on the BSDs.
+One still designates the mouse device separately with an <arg choice='plain'>--input</arg> or a <arg choice='plain'>--sysmouse</arg> command line option, however.
+On the BSDs, the underlying keyboard input and framebuffer output devices are accessible via a kernel virtual terminal.
+</para><para>
+The realizer obtains the name of the allocated kernel virtual terminal device from the value of the <envar>TTY</envar> environment variable.
+(One can invoke the realizer via <citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> or a similar command that obtains a virtual terminal device name from an abbreviation, or just supply the full device name.
+Note that it is <emphasis>not</emphasis> required to pre-open this device, nor to set it as the controlling terminal.)
+It is used for keyboard input, framebuffer output, and device sharing and must speak the "fbio" and "kbio" APIs to programs.
+</para><para>
+For the duration, the realizer switches the virtual terminal display into a suitable graphics mode, configures it to deliver raw keycodes, switches its line discipline to non-canonical input (i.e. "raw") mode, and tells it not to draw output from the virtual terminal on the screen nor to send input to the virtual terminal from the keyboard; switching all of these back to their saved prior settings upon its termination.
+The realizer attempts to choose the highest resolution graphics mode available that has a 32-bit or 24-bit colour depth.
+The <arg choice='plain'>--80-columns</arg> option constrains its choice to graphics modes that are no wider than 80 columns (1280 pixels).
 </para></listitem>
+</varlistentry>
 
-</itemizedlist>
+<varlistentry>
+<term><arg choice='plain'>--kernel-vt-number <replaceable>number</replaceable></arg></term>
+<listitem><para>
+This command-line option option designates using a kernel virtual terminal for input and device sharing on Linux.
+One still designates the mouse and framebuffer devices separately with an <arg choice='plain'>--input</arg> or a <arg choice='plain'>--ps2mouse</arg> command line option and a <replaceable>fbname</replaceable> command line argument, however.
+On Linux, only the underlying keyboard input devices are accessible via a kernel virtual terminal.
+</para><para>
+The realizer needs to know the <replaceable>number</replaceable> of the kernel virtual terminal, rather than its name.
+(The BSDs have an API where, with an open file descriptor to a kernel virtual terminal device, one can obtain its virtual terminal number.
+Linux lacks such an API.
+Note that it is <emphasis>not</emphasis> required to pre-open this device, nor to set it as the controlling terminal.)
+</para><para>
+For the duration, the realizer configures the virtual terminal to deliver raw keycodes, switches its line discipline to non-canonical input (i.e. "raw") mode, and tells it not to draw output from the virtual terminal on the screen nor to send input to the virtual terminal from the keyboard; switching all of these back to their saved prior settings upon its termination.
+</para></listitem>
+</varlistentry>
 
-</refsection>
+<varlistentry>
+<term><arg choice='plain'><replaceable>fbname</replaceable></arg></term>
+<listitem><para>
+This command-line option option designates a choice of output device.
+<replaceable>fbname</replaceable> must be a device that speaks the "fbio" API to programs.
+On Linux only framebuffer devices, such as <filename>/dev/fb0</filename>, speak this protocol.
+(Remember that "kernel mode setting" device drivers create simple framebuffer devices for programs that use the "fbio" API.)
+On the BSDs, <replaceable>fbname</replaceable> must be an a kernel virtual terminal device, as framebuffers are not directly accessible via separate devices.
+On the BSDs, the <arg choice='plain'>--kernel-vt</arg> command-line option implies using the kernel virtual terminal's framebuffer, and renders this command-line argument superfluous.
+</para></listitem>
+</varlistentry>
 
-</refsection>
-
-<refsection><title>Multiple user stations</title>
-
-<para>
-Setting up multiple user stations is a simple matter of running multiple <command>console-fb-realizer</command> processes, each using the individual framebuffer and input event devices for a particular user station.
-Multiplexing one realizer across multiple virtual terminals is done with an intermediary such as <citerefentry><refentrytitle>console-multiplexor</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-</para>
-
-</refsection>
-
-<refsection><title>Sharing framebuffer and event devices</title>
-
-<para>
-In the simplest use case, <replaceable>fbname</replaceable> and the keyboard and mouse event devices are wholly dedicated to this realizer, and are not shared with anything else.
-</para>
-
-<refsection><title>Linux</title>
-
-<para>
-On Linux, this can be the case as long as <replaceable>fbname</replaceable> and the event devices are not also used by the kernel virtual terminal subsystem (or another program such as an X server).
-This will definitely be the case if the kernel has been compiled not to have a virtual terminal subsystem in the first place (and no X server has been instructed to use the same devices).
-</para>
-
-<para>
-If the framebuffer and input event devices are also used by the kernel virtual terminal subsystem, however, then the <arg choice='plain'>--kernel-vt</arg> command-line option must be used to specify the <replaceable>filename</replaceable> of an appropriate kernel VT device.
-This device is used to negotiate, with the kernel VT subsystem and other cooperating systems (such as an X server), shared access to the framebuffer and to the input event subsystem.
-</para>
-
-</refsection>
-
-<refsection><title>FreeBSD and TrueOS</title>
+</variablelist>
 
 <para>
-Neither FreeBSD nor TrueOS provide direct access to raw framebuffer and input event devices; they are mediated through the kernel virtual terminal subsystem and one must use a kernel virtual terminal device as both <replaceable>fbname</replaceable> and an AT keyboard device name.
-<command>console-fb-realizer</command> switches the framebuffer device into graphics mode, the line discipline to raw mode, and the keyboard driver to deliver raw keycodes, for the duration; switching them back to their saved prior settings upon its termination.
+For a tutorial on how to employ these in concert, see the Nosh Guide.
 </para>
-
-</refsection>
 
 </refsection>
 
@@ -170,6 +231,7 @@ Only faint, boldface, and italic involve font support, mapping to four font weig
 Strikethrough and underline attributes are rendered not through font selection but by overwriting the non-strikethrough non-underline glphys with appropriate horizontal lines.
 If faint and demibold weights are unavailable, the faint attribute is emulated by shading the foreground and background colours towards black.
 If bold weight is unavailable, the bold attribute is rendered by overlaying a glyph with a shifted copy of itself.
+(The <arg choice='plain'>--bold-as-colour</arg> command-line option will as an alternative always render boldface by tinting foreground colours towards white, but this is of limited use with applications that employ 256-colour or true-colour terminal controls, as many do nowadays.)
 If italic stroke is unavailable, the italic attribute is rendered as <emphasis>oblique</emphasis> by shifting the upright glyph.
 (Oblique is not the same as italic, note, and is often an inferior substitute for it.)
 </para>
@@ -225,7 +287,7 @@ This does not, of course, affect the operation of the terminal emulator or the p
 
 </refsection>
 
-<refsection><title>Keyboard</title>
+<refsection><title>Keyboard mapping</title>
 
 <para>
 The keyboard input event device provides a sequence of keycode numbers, with attached press/release flags.

@@ -1,5 +1,4 @@
-#compdef init telinit svcadm systemctl initctl rcctl system-control service-status service-control console-convert-kbdmap console-clear console-resize service-is-ok service-is-up service-show reboot halt haltsys poweroff shutdown
-#compdef init telinit svcadm systemctl initctl rcctl system-control system-manager per-user-manager service-manager svstat service-status svc service-control console-terminal-emulator console-convert-kbdmap console-clear console-resize console-multiplexor console-fb-realizer console-ncurses-realizer svscan service-dt-scanner svok service-is-ok svup service-is-up svshow service-show emergency rescue normal reboot halt haltsys poweroff shutdown
+#compdef init telinit svcadm systemctl initctl rcctl system-control system-manager per-user-manager service-manager svstat service-status svc service-control start stop reset preset console-terminal-emulator console-convert-kbdmap console-clear resizecons console-resize console-multiplexor console-fb-realizer console-ncurses-realizer svscan service-dt-scanner svok service-is-ok svup service-is-up svshow service-show emergency rescue normal reboot halt haltsys poweroff shutdown
 ## **************************************************************************
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
@@ -55,24 +54,25 @@ function _system_control_subarguments()
 	local -a common 
 	local w1="$words[1]"
 
-	common=('--help[Display option help]' '--usage[Display option usage]' --)
+	common=(-s '--help[Display option help]' '--usage[Display option usage]')
 	words[1]="$words[1] $words[2]"
 
 	local curcontext="${curcontext%:*:*}:system-control-$words[2]:" 
 
 	case "$words[2]" in
 	init|emergency|rescue|normal|halt|poweroff|reboot)
-		_message -r "${service} has no options or parameters." ;;
+		_message -r "${service} has no options or parameters." -- ;;
 	load-kernel-module|unload-kernel-module)
-		_arguments '2:module name:_files' ${common} ;;
+		_arguments -S $common '2:module name:_files' -- ;;
 	set-service-env)
-		_arguments '2:service name:_directories' '3:name:' '4::value:' ${common} ;;
+		_arguments -S $common '2:service name:_directories' '3:name:' '4::value:' -- ;;
 	print-service-env)
-		_arguments '2:service name:_directories' '3::value:' ${common} ;;
+		_arguments -S $common '2:service name:_directories' '3::value:' -- ;;
 	convert-systemd-units)
-		_arguments '2:unit name:_files' ${common} ;;
+		_arguments -S $common '2:unit name:_files' -- ;;
 	*)
-		_arguments '*:service name:_directories' ${common} ;;
+		local -a dir=(/var/local/sv /var/sv /etc/service-bundles/services /etc/service-bundles/targets)
+		_arguments $common '*:service name:_path_files -/ -W dir' -- ;;
 	esac
 
 	words[1]="${w1}"
@@ -80,31 +80,31 @@ function _system_control_subarguments()
 
 local lstate state
 local -a common
-common=('--help[Display option help]' '--usage[Display option usage]' --)
+common=(-s '--help[Display option help]' '--usage[Display option usage]')
 
 case "${service}" in
 service-manager|per-user-manager|system-manager)
 	_message -r "${service} has no options or parameters." ;;
 systemctl|initctl|rcctl|svcadm|system-control) 
-	_arguments '1:subcommand:_system_control_subcommands' '*:subargs:_system_control_subarguments' $common ;;
+	_arguments -A $common '1:subcommand:_system_control_subcommands' '*:subargs:_system_control_subarguments' -- ;;
 init|telinit)
-	_arguments '1:runlevel:(0 1 2 3 4 5 6 m auto H h S s single emergency)' $common ;;
+	_arguments -S $common '1:runlevel:((0:poweroff 1:rescue 2:normal 3:normal 4:normal 5:normal 6:reboot m:normal auto:normal H:halt h:halt S:rescue s:rescue single:rescue emergency))' -- ;;
 svshow|service-show|svstat|service-status|svok|service-is-ok|svup|service-is-up|svc|service-control)
-	_arguments '*:service directory:_directories' $common ;;
+	_arguments '*:service directory:_directories' -- ;;
 svscan|service-st-scanner)
-	_arguments '1:scan directory:_directories' $common ;;
+	_arguments -S $common '1:scan directory:_directories' -- ;;
 console-multiplexor)
-	_arguments '1:composite virtual console directory:_directories' '*:source virtual console directory:_directories' $common ;;
+	_arguments -S $common '1:composite virtual console directory:_directories' '*:source virtual console directory:_directories' -- ;;
 console-terminal-emulator)
-	_arguments '1:virtual console directory:_directories' $common ;;
+	_arguments -S $common '1:virtual console directory:_directories' -- ;;
 console-fb-realizer)
-	_arguments '1:virtual console directory:_directories' '2:framebuffer device:_files' $common ;;
+	_arguments -S $common '1:virtual console directory:_directories' '2:framebuffer device:_files' -- ;;
 console-ncurses-realizer)
-	_arguments '1:virtual console directory:_directories' $common ;;
+	_arguments -S $common '1:virtual console directory:_directories' -- ;;
 console-convert-kbdmap)
-	_arguments '*:BSD kbd map files:_directories' $common ;;
+	_arguments -S $common '*:BSD kbd map files:_directories' -- ;;
 shutdown)
-	_arguments '1:time:' '2:message:' $common ;;
+	_arguments -S $common '1:time:' '2:message:' -- ;;
 *)
-	_arguments $common ;;
+	_arguments -A $common -- ;;
 esac

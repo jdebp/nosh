@@ -3,6 +3,7 @@ background
 chdir
 chroot
 clearenv
+create-control-group
 delegate-control-group-to
 envdir
 envuidgid

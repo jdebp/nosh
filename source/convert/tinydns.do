@@ -97,8 +97,19 @@ then
 	redo-ifchange "${s}/service/root"
 
 	test -r "${s}/service/root/private" || generate_private > "${s}/service/root/private"
-	test -r "${s}/service/root/public" || : > "${s}/service/root/public"
-	test -e "${s}/service/root/data.original" || mv -- "${s}/service/root/data" "${s}/service/root/data.original"
+	if ! test -r "${s}/service/root/public" 
+	then
+		if test -e "${s}/service/root/data"
+		then
+			mv -- "${s}/service/root/data" "${s}/service/root/public"
+		else
+			: > "${s}/service/root/public"
+		fi
+	fi
+	if test -e "${s}/service/root/data" && ! test -e "${s}/service/root/data.original" 
+	then
+		mv -- "${s}/service/root/data" "${s}/service/root/data.original"
+	fi
 	test -e "${s}/service/root/Makefile.original" || mv -- "${s}/service/root/Makefile" "${s}/service/root/Makefile.original"
 	test -r "${s}/service/root/Makefile" || generate_Makefile > "${s}/service/root/Makefile"
 fi

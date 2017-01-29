@@ -1,7 +1,7 @@
 #!/bin/sh -
-# Login daemon for PCDM
-# This starts the main PCDM UI appropriately
-#------------------------------------
+## **************************************************************************
+## Derived from the PCDM system in PC-BSD/TrueOS
+## **************************************************************************
 
 allow-auto-login() {
 	# Allow Auto-Login the first time PCDM starts
@@ -35,6 +35,7 @@ run_firstboot() {
 }
 
 run() {
+	## \bug FIXME: This ignores the setting in /etc/login.conf .
 	test -e /var/run/nologin && exit 111
 
 	# Switch to VESA 1024x768 if there is a flag file saying to do so.

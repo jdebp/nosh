@@ -76,6 +76,7 @@ extern void monitored_fsck ( const char * &, std::vector<const char *> & );
 extern void plug_and_play_event_handler ( const char * &, std::vector<const char *> & );
 extern void oom_kill_protect ( const char * &, std::vector<const char *> & );
 extern void local_reaper ( const char * &, std::vector<const char *> & );
+extern void create_control_group ( const char * &, std::vector<const char *> & );
 extern void move_to_control_group ( const char * &, std::vector<const char *> & );
 extern void delegate_control_group_to ( const char * &, std::vector<const char *> & );
 extern void set_control_group_knob ( const char * &, std::vector<const char *> & );
@@ -137,6 +138,7 @@ commands[] = {
 	{	"plug-and-play-event-handler",		plug_and_play_event_handler	},
 	{	"oom-kill-protect",			oom_kill_protect		},
 	{	"local-reaper",				local_reaper			},
+	{	"create-control-group",			create_control_group		},
 	{	"move-to-control-group",		move_to_control_group		},
 	{	"delegate-control-group-to",		delegate_control_group_to	},
 	{	"set-control-group-knob",		set_control_group_knob		},

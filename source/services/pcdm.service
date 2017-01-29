@@ -13,7 +13,7 @@ SessionLeader=true
 # The shell running ./helper can handle this.
 LocalReaper=true
 RuntimeDirectory=PCDM
-RuntimeDirectoryMode=0700
+RuntimeDirectoryMode=0755
 ExecStartPre=./helper allow-auto-login
 ExecStartPre=./helper check-bootflags
 ExecStart=./helper run

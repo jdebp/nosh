@@ -27,13 +27,13 @@
 </para>
 
 <para>
-This program is primarily used in TTY login services, but is only necessary therein if <replaceable>next-prog</replaceable> has timeout functionality that cannot be switched off, as is the case for Linux <filename>/bin/login</filename>.
+This program is primarily used in TTY login services, but is only necessary therein if <replaceable>next-prog</replaceable> has timeout functionality that cannot be switched off, as is the case for FreeBSD <filename>/usr/bin/login</filename>.
 <command>login-prompt</command> effectively delays running that program, and commencing the timeout, until the user has responded to a prompt.
 This prevents login processes that timeout from continually respawning on unused terminals.
 </para>
 
 <para>
-this can be used as a means to defer running a login program until a user has actually presssed Enter on a terminal.
+This can be used as a means to defer running a login program until a user has actually presssed Enter on a terminal.
 </para>
 
 <para>

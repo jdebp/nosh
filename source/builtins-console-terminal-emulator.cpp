@@ -21,6 +21,7 @@ extern void console_resize ( const char * &, std::vector<const char *> & );
 extern void console_clear ( const char * &, std::vector<const char *> & );
 extern void console_terminal_emulator ( const char * &, std::vector<const char *> & );
 extern void detach_controlling_tty ( const char * &, std::vector<const char *> & );
+extern void detach_kernel_usb_driver ( const char * &, std::vector<const char *> & );
 extern void emergency_login ( const char * &, std::vector<const char *> & );
 extern void line_banner ( const char * &, std::vector<const char *> & );
 extern void login_banner ( const char * &, std::vector<const char *> & );
@@ -54,6 +55,7 @@ commands[] = {
 
 	// Chain-loading non-terminals
 	{	"detach-controlling-tty",	detach_controlling_tty		},
+	{	"detach-kernel-usb-driver",	detach_kernel_usb_driver	},
 	{	"line-banner",			line_banner			},
 	{	"login-banner",			login_banner			},
 	{	"login-process",		login_process			},

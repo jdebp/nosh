@@ -18,6 +18,7 @@ command_args="PATH /usr/local/bin:/usr/local/sbin local-datagram-socket-listen /
 
 service_manager_precmd()
 {
+	mount -t fdescfs fdescfs /dev/fd
 	mkdir -p /run/service-manager/log
 }
 

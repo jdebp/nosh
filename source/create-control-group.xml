@@ -1,0 +1,60 @@
+<refentry id="create-control-group">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>create-control-group</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>create-control-group</refname>
+<refpurpose>create another control group</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>create-control-group</command>
+<arg choice='req'><replaceable>group</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>create-control-group</command> is a utility that creates the process control group <replaceable>group</replaceable> with <citerefentry><refentrytitle>mkdir</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
+</para>
+
+<para>
+On platforms where <filename>/proc/self/cgroup</filename> does not exist, this command is a no-op, for script compatibility.
+Otherwise, that file is searched for a control group record with a blank controller field or (failing that) with a <code>name=systemd</code> controller field.
+</para>
+
+<para>
+If a record of the former type is found, version 2 control groups are assumed with the single control group hierarchy rooted at <filename>/sys/fs/cgroup</filename>.
+If a record of the latter type is found, version 1 control groups are assumed with the relevant control group hierarchy (the only one that is affected by the command) rooted at <filename>/sys/fs/cgroup/systemd</filename>.
+</para>
+
+<para>
+The command will fail if the process cannot create the given control group and it does not already exist.
+</para>
+
+</refsection>
+<refsection><title>See also</title>
+
+<itemizedlist>
+<listitem><para>
+<citerefentry><refentrytitle>move-to-control-group</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>delegate-control-group-to</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>set-control-group-knob</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+</itemizedlist>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

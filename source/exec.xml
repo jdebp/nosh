@@ -89,6 +89,7 @@ The alternative names are:
 <command>machineenv</command>, 
 <command>make-private-fs</command>,
 <command>monitored-fsck</command>,
+<command>create-control-group</command>,
 <command>move-to-control-group</command>,
 <command>netlink-datagram-socket-listen</command>,
 <command>nosh</command>,

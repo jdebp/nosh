@@ -6,6 +6,7 @@ console-ncurses-realizer
 console-resize
 console-terminal-emulator
 detach-controlling-tty
+detach-kernel-usb-driver
 emergency-login
 login-banner
 login-process

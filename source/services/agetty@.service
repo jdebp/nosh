@@ -8,7 +8,7 @@ After=motd-dynamic.service hostname.service
 
 [Service]
 SessionLeader=true
-ExecStart=agetty %I
+ExecStart=%p %I
 RestartSec=0
 # Some job control shells ignore SIGTERM and need an explicit SIGHUP.
 SendSIGHUP=on

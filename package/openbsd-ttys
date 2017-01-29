@@ -6,6 +6,10 @@ getty@tty04
 getty@tty05
 getty@tty06
 getty@tty07
+getty@ttyU0
+getty@ttyU1
+getty@ttyU2
+getty@ttyU3
 ttylogin@ttyC0
 ttylogin@ttyC1
 ttylogin@ttyC2

@@ -1,0 +1,6 @@
+#!/command/execlineb -S0
+vc-get-tty "$1"
+open-controlling-tty
+vc-reset-tty --hard-reset
+login-banner /etc/issue
+login

@@ -8,7 +8,7 @@ After=motd-dynamic.service hostname.service
 
 [Service]
 SessionLeader=true
-ExecStart=/usr/libexec/getty std.9600 %I
+ExecStart=/usr/libexec/%p std.9600 %I
 RestartSec=0
 # Some job control shells ignore SIGTERM and need an explicit SIGHUP.
 SendSIGHUP=on

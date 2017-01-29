@@ -39,10 +39,7 @@ system-control disable uhidd-log
 for target in uhidd
 do
 	system-control preset -- "${target}".target
-done
 
-for target in uhidd
-do
 	if system-control is-enabled "${target}.target"
 	then
 		echo >> "$3" on "${target}"

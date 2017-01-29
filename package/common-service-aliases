@@ -1,7 +1,9 @@
 ../local/sv/mariadb@	mariadb
 ../local/sv/mysql@	mysql
 ModemManager	org.freedesktop.ModemManager
+ModemManager	org.freedesktop.ModemManager1
 NetworkManager	org.freedesktop.NetworkManager
+NetworkManager	org.freedesktop.NetworkManager1
 NetworkManager-dispatcher	org.freedesktop.nm_dispatcher
 avahi-daemon	avahi_daemon
 avahi-daemon	org.freedesktop.Avahi
@@ -26,6 +28,7 @@ powerd++	powerdxx
 rc-local	rc.local
 samba		samba-ad-dc
 smbd		smb
+sppp-log	spppcontrol-log
 systemd-logind	org.freedesktop.login1
 tcsd		trousers
 timedated	org.freedesktop.timedate1

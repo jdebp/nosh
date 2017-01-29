@@ -51,6 +51,9 @@ The command will fail if the process is not allowed to move to the given control
 
 <itemizedlist>
 <listitem><para>
+<citerefentry><refentrytitle>create-control-group</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
 <citerefentry><refentrytitle>delegate-control-group-to</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 </para></listitem>
 <listitem><para>

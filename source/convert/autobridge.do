@@ -38,7 +38,7 @@ do
 		echo >> "$3" off "${service}"
 	fi
 	system-control print-service-env "${service}" >> "$3"
-	install -m 0755 -- autobridge.helper "$r/${service}/service/helper"
+	install -m 0555 -- autobridge.helper "$r/${service}/service/helper"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../sv/autobridge-log" "$r/${service}/log"
 	system-control preset autobridge-log

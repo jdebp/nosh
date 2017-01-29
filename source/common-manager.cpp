@@ -512,15 +512,12 @@ query_control_group_level(
 
 static inline
 void
-setup_kernel_api_volumes_and_devices(
-	const char * prog
+setup_kernel_api_volumes(
+	const char * prog,
+	unsigned collection
 ) {
-	const unsigned cgl(query_control_group_level());
 	for (std::vector<api_mount>::const_iterator i(api_mounts.begin()); api_mounts.end() != i; ++i) {
-		if (i->cgl && cgl != i->cgl) {
-			std::fprintf(stderr, "%s: INFO: %s: %s\n", prog, i->name, "Not required by this kernel.");
-			continue;
-		}
+		if (collection != i->collection) continue;
 		const std::string fspath(fspath_from_mount(i->iov, i->ioc));
 		bool update(false);
 		if (!fspath.empty()) {
@@ -538,6 +535,27 @@ setup_kernel_api_volumes_and_devices(
 			if (EBUSY != error)
 				std::fprintf(stderr, "%s: ERROR: %s: %s: %s\n", prog, "nmount", i->name, std::strerror(error));
 		}
+	}
+}
+
+static inline
+void
+setup_kernel_api_volumes_and_devices(
+	const char * prog
+) {
+	setup_kernel_api_volumes(prog, 0U); // Base collection, wanted everywhere
+
+	// This must be queried after /proc has been mounted.
+	const unsigned cgl(query_control_group_level());
+	std::fprintf(stderr, "%s: INFO: Control group level is %u\n", prog, cgl);
+
+	switch (cgl) {
+		case 1U:
+			setup_kernel_api_volumes(prog, 1U); // Old cgroups v1 collection
+			break;
+		case 2U:
+			setup_kernel_api_volumes(prog, 2U); // cgroups v2 collection
+			break;
 	}
 	for (std::vector<api_symlink>::const_iterator i(api_symlinks.begin()); api_symlinks.end() != i; ++i) {
 		if (0 > symlink(i->target, i->name)) {

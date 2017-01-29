@@ -4,7 +4,8 @@
 
 [Unit]
 Description=ColourManager daemon
-After=local-syslog.target
+# colord-sane refuses to start if it cannot talk to avahi.
+After=local-syslog.target avahi-daemon.service
 
 [Service]
 Type=dbus

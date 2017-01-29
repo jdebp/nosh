@@ -16,6 +16,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <login_cap.h>
 #endif
 #include "utils.h"
+#include "runtime-dir.h"
 #include "popt.h"
 
 static inline
@@ -30,7 +31,29 @@ set (
 		unsetenv(var);
 }
 
+static inline
+void
+set (
+	const char * var,
+	const std::string & val
+) {
+	setenv(var, val.c_str(), 1);
+}
+
 #if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
+
+static inline
+void
+set_if (
+	const std::string & var,
+	bool cond,
+	const std::string & val
+) {
+	if (cond)
+		setenv(var.c_str(), val.c_str(), 1);
+	else
+		unsetenv(var.c_str());
+}
 
 /// \brief Perform the login.conf substitutions before setting an environment variable.
 static inline
@@ -68,7 +91,7 @@ set (
 			} else
 				s += c;
 		}
-		set(var, s.c_str());
+		set(var, s);
 	}
 }
 
@@ -84,7 +107,7 @@ set_vec (
 		char c = *vec++;
 		if (!c) {
 end:
-			set(var.c_str(), &var == cur ? 0 : val.c_str());
+			set_if(var, &var != cur, val);
 			break;
 		} else
 		if ('\\' == c) {
@@ -104,7 +127,7 @@ end:
 				*cur += pw->pw_name;
 		} else
 		if (',' == c) {
-			set(var.c_str(), &var == cur ? 0 : val.c_str());
+			set_if(var, &var != cur, val);
 			cur = &var;
 			var.clear();
 			val.clear();
@@ -296,6 +319,8 @@ userenv (
 	bool set_term(false);
 	bool set_timezone(false);
 	bool set_locale(false);
+	bool set_dbus(false);
+	bool set_xdg(false);
 	bool set_other(false);
 	try {
 		popt::bool_definition set_path_option('p', "set-path", "Set the PATH and MANPATH environment variables.", set_path);
@@ -307,6 +332,8 @@ userenv (
 		popt::bool_definition set_term_option('t', "set-term", "Set the TERM environment variable.", set_term);
 		popt::bool_definition set_timezone_option('z', "set-timezone", "Set the TZ environment variable.", set_timezone);
 		popt::bool_definition set_locale_option('l', "set-locale", "Set the LANG and MM_CHARSET environment variables.", set_locale);
+		popt::bool_definition set_dbus_option('l', "set-dbus", "Set the DBUS_SESSION_BUS_ADDRESS environment variable.", set_dbus);
+		popt::bool_definition set_xdg_option('l', "set-xdg", "Set the XDG_RUNTIME_DIR environment variable.", set_xdg);
 		popt::bool_definition set_other_option('o', "set-other", "Set other environment variables.", set_other);
 		popt::definition * top_table[] = {
 			&set_path_option,
@@ -318,6 +345,8 @@ userenv (
 			&set_term_option,
 			&set_timezone_option,
 			&set_locale_option,
+			&set_dbus_option,
+			&set_xdg_option,
 			&set_other_option
 		};
 		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "prog");
@@ -338,8 +367,8 @@ userenv (
 	std::ostringstream us, gs;
 	us << uid;
 	gs << gid;
-	set("UID", us.str().c_str());
-	set("GID", gs.str().c_str());
+	set("UID", us.str());
+	set("GID", gs.str());
 	if (const passwd * pw = getpwuid(uid)) {
 #if defined(__FreeBSD__) || defined(__DragonFly__)
 		LoginDBOwner lc_system(login_getsystemclass(pw));
@@ -351,7 +380,7 @@ userenv (
 		LoginDBOwner lc_system;
 		LoginDBOwner lc_user;
 #endif
-		// This one is supersedable by setenv in login.conf.
+		// These three are supersedable by setenv in login.conf.
 		if (set_tools) {
 			// POSIX gives us two choices of default line editor; we do not dump ed on people.
 			set_str("EDITOR", "editor", pw, lc_system, lc_user, "ex");
@@ -359,6 +388,10 @@ userenv (
 			set_str("VISUAL", "visual", pw, lc_system, lc_user, "vi");
 			set_str("PAGER", "pager", pw, lc_system, lc_user, "more");
 		}
+		if (set_xdg)
+			set("XDG_RUNTIME_DIR", "/run/user/" + std::string(pw->pw_name) + "/");
+		if (set_dbus)
+			set("DBUS_SESSION_BUS_ADDRESS", "unix:path=/run/user/" + std::string(pw->pw_name) + "/bus");
 		// setenv in login.conf can be superseded by all of the rest.
 		if (set_other)
 			set_vec("setenv", pw, lc_system, lc_user);
@@ -387,6 +420,10 @@ userenv (
 			set("EDITOR", 0);
 			set("PAGER", 0);
 		}
+		if (set_xdg)
+			set("XDG_RUNTIME_DIR", 0);
+		if (set_dbus)
+			set("DBUS_SESSION_BUS_ADDRESS", 0);
 		if (set_path) {
 			// Always use STDPATH, even for non-superusers.
 			set("PATH", _PATH_STDPATH);

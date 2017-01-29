@@ -23,19 +23,46 @@ FramebufferIO::~FramebufferIO()
 }
 
 void
-FramebufferIO::save_and_set_graphics_mode(
+FramebufferIO::save(
 	const char * prog, 
 	const char * fb_filename
 ) {
 #if defined(__LINUX__) || defined(__linux__)
-	if ((0 > ioctl(fd, FBIOGET_FSCREENINFO, &fixed_info))
-	|| (0 > ioctl(fd, FBIOGET_VSCREENINFO, &old_variable_info))
-	) {
+	if (0 > ioctl(fd, FBIOGET_VSCREENINFO, &old_variable_info)) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, fb_filename, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	variable_info = old_variable_info;	/// TODO: \todo change mode
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
+	if (0 > ioctl(fd, FBIO_GETMODE, &old_video_mode)) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, fb_filename, std::strerror(error));
+		throw EXIT_FAILURE;
+	}
+#elif defined(__OpenBSD__)
+	if (0 > ioctl(fd, WSDISPLAYIO_GMODE, &old_video_mode)) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, fb_filename, std::strerror(error));
+		throw EXIT_FAILURE;
+	}
+#else
+#	error "Don't know how to control your framebuffer device."
+#endif
+}
+
+void
+FramebufferIO::set_graphics_mode(
+	const char * prog, 
+	const char * fb_filename
+) {
+#if defined(__LINUX__) || defined(__linux__)
+	if (0 > ioctl(fd, FBIOGET_FSCREENINFO, &fixed_info)) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, fb_filename, std::strerror(error));
+		throw EXIT_FAILURE;
+	}
+	// To change mode, use video= on the kernel command line or on the command line for the relevant fb module.
+	variable_info = old_variable_info;
 	if (fixed_info.type != FB_TYPE_PACKED_PIXELS) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, fb_filename, "Not a packed pixel device.");
 		throw EXIT_FAILURE;
@@ -45,11 +72,6 @@ FramebufferIO::save_and_set_graphics_mode(
 		throw EXIT_FAILURE;
 	}
 #elif defined(__FreeBSD__) || defined(__DragonFly__)
-	if (0 > ioctl(fd, FBIO_GETMODE, &old_video_mode)) {
-		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, fb_filename, std::strerror(error));
-		throw EXIT_FAILURE;
-	}
     	int max_depth(0);
 	for (int mode(0); mode <= M_VESA_MODE_MAX; ++mode) {
 		mode_info.vi_mode = mode;
@@ -97,12 +119,6 @@ FramebufferIO::save_and_set_graphics_mode(
 	}
 #elif defined(__OpenBSD__)
 	video_mode = WSDISPLAYIO_MODE_DUMBFB;
-	if ((0 > ioctl(fd, WSDISPLAYIO_GMODE, &old_video_mode))
-	) {
-		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, fb_filename, std::strerror(error));
-		throw EXIT_FAILURE;
-	}
 #if defined(WSDISPLAYIO_SGFXMODE)
 	static const wsdisplayio_gfx_mode modes[] = {
 		// 160 columns
