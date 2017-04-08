@@ -171,7 +171,7 @@ system_control (
 				"cat|show|status|show-json|"
 				"set-service-env|print-service-env|"
 				"convert-systemd-units|convert-fstab-services|"
-				"nagios-check-services|load-kernel-module|unload-kernel-module|"
+				"nagios-check-service|load-kernel-module|unload-kernel-module|"
 				"version"
 				" args..."
 		);

@@ -62,6 +62,9 @@ case "${base}" in
 cyclog@*)
 	escape="--alt-escape --escape-instance"
 	;;
+ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|dhclient-log|uhidd-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log) 
+	escape="--alt-escape --escape-prefix"
+	;;
 *)
 	escape=
 	;;

@@ -469,6 +469,20 @@ CC[] = {
 };
 static const ClosedRangeWithRank * const CC_end(CC + sizeof CC/sizeof *CC);
  
+// These ranges are hand-constructed.
+static const 
+ClosedRange
+Bd[] = {
+	{ 0x00002500, 0x0000257F }, { 0x00002580, 0x0000259F },
+},
+Hr[] = {
+	{ 0x00002014, 0x00002014 }, { 0x000023AF, 0x000023AF }, { 0x00002500, 0x00002501 }, { 0x00002504, 0x00002505 },
+	{ 0x00002508, 0x00002509 }, { 0x0000254C, 0x0000254D }, { 0x00002550, 0x00002550 }, { 0x00002580, 0x00002588 },
+	{ 0x00002591, 0x00002594 }, { 0x00002580, 0x00002580 },
+};
+static const ClosedRange * const Bd_end(Bd + sizeof Bd/sizeof *Bd);
+static const ClosedRange * const Hr_end(Hr + sizeof Hr/sizeof *Hr);
+
 }
 
 namespace UnicodeCategorization {
@@ -489,6 +503,18 @@ bool
 IsOtherFormat(uint32_t character)
 {
 	return Contains(Cf, Cf_end, character);
+}
+
+bool 
+IsDrawing(uint32_t character)
+{
+	return Contains(Bd, Bd_end, character);
+}
+
+bool 
+IsHorizontallyRepeatable(uint32_t character)
+{
+	return Contains(Hr, Hr_end, character);
 }
 
 unsigned int 

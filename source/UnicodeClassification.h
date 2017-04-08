@@ -26,6 +26,14 @@ extern
 unsigned int 
 CombiningClass(uint32_t character);
 
+extern
+bool 
+IsDrawing(uint32_t character);
+
+extern
+bool 
+IsHorizontallyRepeatable(uint32_t character);
+
 }
 
 #endif

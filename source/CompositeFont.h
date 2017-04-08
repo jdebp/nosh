@@ -29,31 +29,29 @@ public:
 		enum Weight { LIGHT, MEDIUM, DEMIBOLD, BOLD, NUM_WEIGHTS };
 		enum Slant { UPRIGHT, ITALIC, OBLIQUE, NUM_SLANTS };
 
-		Font ( Weight w, Slant s, unsigned short y, unsigned short x ) : weight(w), slant(s), height(y), width(x) {}
+		Font ( Weight w, Slant s ) : weight(w), slant(s) {}
 		virtual ~Font() = 0;
 
 		Weight query_weight() const { return weight; }
 		Slant query_slant() const { return slant; }
-//		unsigned short query_height() const { return height; }
-		unsigned short query_width() const { return width; }
 
-		virtual bool Read(uint32_t, uint16_t b[16]) = 0;
+		virtual bool Read(uint32_t, uint16_t b[16], unsigned short &, unsigned short &) = 0;
 		virtual bool empty() const = 0;
 	protected:
 		Weight weight;
 		Slant slant;
-		unsigned short height, width;
 		void AddMapping(UnicodeMap & unicode_map, uint32_t character, std::size_t glyph_number, std::size_t count);
 	};
 	struct MemoryFont : public Font {
-		MemoryFont(Weight w, Slant s, unsigned short y, unsigned short x, void * b, std::size_t z, std::size_t o) : Font(w, s, y, x), base(b), size(z), offset(o) {}
+		MemoryFont(Weight w, Slant s, unsigned short y, unsigned short x, void * b, std::size_t z, std::size_t o) : Font(w, s), base(b), size(z), offset(o), height(y), width(x) {}
 		void AddMapping(uint32_t c, std::size_t g, std::size_t l) { Font::AddMapping(unicode_map, c, g, l); }
 	protected:
 		void * base;
 		std::size_t size, offset;
+		unsigned short height, width;
 		UnicodeMap unicode_map;
 		~MemoryFont() {}
-		virtual bool Read(uint32_t, uint16_t b[16]);
+		virtual bool Read(uint32_t, uint16_t b[16], unsigned short &, unsigned short &);
 		virtual bool empty() const { return unicode_map.empty(); }
 	};
 	struct MemoryMappedFont : public MemoryFont {
@@ -62,28 +60,20 @@ public:
 		~MemoryMappedFont();
 	};
 	struct FileFont : public Font, public FileDescriptorOwner {
-		FileFont(int f, Weight w, Slant s, unsigned short y, unsigned short x, unsigned short fy, unsigned short fx);
+		FileFont(int f, Weight w, Slant s, unsigned short y, unsigned short x);
 		off_t GlyphOffset(std::size_t g) ;
 	protected:
-		unsigned short original_height, original_width;
+		unsigned short height, width;
 
 		~FileFont() ;
-		unsigned short query_cell_size() const { return ((original_width + 7U) / 8U) * original_height; }
-	};
-	struct SmallFileFont : public FileFont {
-		SmallFileFont(int f, Weight w, Slant s, unsigned short y, unsigned short x);
-		void AddMapping(uint32_t c, std::size_t g, std::size_t l) { FileFont::AddMapping(unicode_map, c, g, l); }
-	protected:
-		UnicodeMap unicode_map;
-		virtual bool Read(uint32_t, uint16_t b[16]);
-		virtual bool empty() const { return unicode_map.empty(); }
+		unsigned short query_cell_size() const { return ((width + 7U) / 8U) * height; }
 	};
 	struct LeftFileFont : public FileFont {
 		LeftFileFont(int f, Weight w, Slant s, unsigned short y, unsigned short x);
 		void AddMapping(uint32_t c, std::size_t g, std::size_t l) { FileFont::AddMapping(unicode_map, c, g, l); }
 	protected:
 		UnicodeMap unicode_map;
-		virtual bool Read(uint32_t, uint16_t b[16]);
+		virtual bool Read(uint32_t, uint16_t b[16], unsigned short &, unsigned short &);
 		virtual bool empty() const { return unicode_map.empty(); }
 	};
 	struct LeftRightFileFont : public FileFont {
@@ -92,7 +82,7 @@ public:
 		void AddRightMapping(uint32_t c, std::size_t g, std::size_t l) { FileFont::AddMapping(right_map, c, g, l); }
 	protected:
 		UnicodeMap left_map, right_map;
-		virtual bool Read(uint32_t, uint16_t b[16]);
+		virtual bool Read(uint32_t, uint16_t b[16], unsigned short &, unsigned short &);
 		virtual bool empty() const { return left_map.empty() && right_map.empty(); }
 	};
 
@@ -100,7 +90,6 @@ public:
 
 	MemoryFont * AddMemoryFont(Font::Weight, Font::Slant, unsigned short y, unsigned short x, void * b, std::size_t z, std::size_t o);
 	MemoryMappedFont * AddMemoryMappedFont(Font::Weight, Font::Slant, unsigned short y, unsigned short x, void * b, std::size_t z, std::size_t o);
-	SmallFileFont * AddSmallFileFont(int, Font::Weight, Font::Slant, unsigned short y, unsigned short x);
 	LeftFileFont * AddLeftFileFont(int, Font::Weight, Font::Slant, unsigned short y, unsigned short x);
 	LeftRightFileFont * AddLeftRightFileFont(int, Font::Weight, Font::Slant, unsigned short y, unsigned short x);
 

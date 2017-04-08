@@ -83,7 +83,9 @@ The alternative names are:
 <command>hardlimit</command>, 
 <command>klog-read</command>
 <command>line-banner</command>, 
-<command>local-datagram-socket-accept</command>,
+<command>local-datagram-socket-listen</command>,
+<command>local-seqpacket-socket-accept</command>,
+<command>local-seqpacket-socket-listen</command>,
 <command>local-stream-socket-accept</command>,
 <command>local-stream-socket-listen</command>, 
 <command>machineenv</command>, 

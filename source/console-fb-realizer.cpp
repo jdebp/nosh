@@ -226,27 +226,7 @@ bad_file:
 			return;
 	}
 
-	if (header.height <= 8U && header.width <= 8U) {
-		if (CombinedFont::SmallFileFont * f = font.AddSmallFileFont(font_fd.release(), weight, slant, header.height, header.width)) {
-			bsd_vtfont_map_entry me;
-			const off_t start(f->GlyphOffset(header.glyphs) + sizeof me * skipped_entries(header, vtfont_index));
-			for (unsigned c(0U); c < entries(header, vtfont_index); ++c) {
-				if (0 > pread(f->get(), me, start + c * sizeof me)) goto bad_file;
-				f->AddMapping(me.character, me.glyph, me.count + 1U);
-			}
-		}
-	} else
-	if (header.width > 8U || !has_right(header, vtfont_index)) {
-		if (CombinedFont::LeftFileFont * f = font.AddLeftFileFont(font_fd.release(), weight, slant, header.height, header.width)) {
-			bsd_vtfont_map_entry me;
-			const off_t start(f->GlyphOffset(header.glyphs) + sizeof me * skipped_entries(header, vtfont_index));
-			for (unsigned c(0U); c < entries(header, vtfont_index); ++c) {
-				if (0 > pread(f->get(), me, start + c * sizeof me)) goto bad_file;
-				f->AddMapping(me.character, me.glyph, me.count + 1U);
-			}
-		}
-	} else
-	{
+	if (header.width <= 8U && has_right(header, vtfont_index)) {
 		if (CombinedFont::LeftRightFileFont * f = font.AddLeftRightFileFont(font_fd.release(), weight, slant, header.height, header.width)) {
 			bsd_vtfont_map_entry me;
 			const off_t left_start(f->GlyphOffset(header.glyphs) + sizeof me * skipped_entries(header, vtfont_index));
@@ -258,6 +238,16 @@ bad_file:
 			for (unsigned c(0U); c < entries(header, vtfont_index + 1U); ++c) {
 				if (0 > pread(f->get(), me, right_start + c * sizeof me)) goto bad_file;
 				f->AddRightMapping(me.character, me.glyph, me.count + 1U);
+			}
+		}
+	} else
+	{
+		if (CombinedFont::LeftFileFont * f = font.AddLeftFileFont(font_fd.release(), weight, slant, header.height, header.width)) {
+			bsd_vtfont_map_entry me;
+			const off_t start(f->GlyphOffset(header.glyphs) + sizeof me * skipped_entries(header, vtfont_index));
+			for (unsigned c(0U); c < entries(header, vtfont_index); ++c) {
+				if (0 > pread(f->get(), me, start + c * sizeof me)) goto bad_file;
+				f->AddMapping(me.character, me.glyph, me.count + 1U);
 			}
 		}
 	}
@@ -382,7 +372,9 @@ public:
 	bool num_LED() const { return num_lock(); }
 	bool caps_LED() const { return caps_lock()||level2_lock(); }
 	bool scroll_LED() const { return group2(); }
+#if !defined(__LINUX__) && !defined(__linux__)
 	bool shift_LED() const { return level2_lock()||level2(); }
+#endif
 	bool kana_LED() const { return false; }
 	bool compose_LED() const { return false; }
 	bool query_dirty_LEDs() const { return dirty_LEDs; }
@@ -842,7 +834,9 @@ public:
 
 	int query_buffer_fd() const { return fileno(buffer_file.operator FILE *()); }
 	coordinate query_h() const { return h; }
+#if 0
 	coordinate query_w() const { return w; }
+#endif
 	coordinate query_screen_y() const { return screen_y; }
 	coordinate query_screen_x() const { return screen_x; }
 	coordinate query_visible_y() const { return visible_y; }
@@ -3700,6 +3694,8 @@ public:
 
 	void reset(const char *, unsigned long);
 	int query_input_fd() const { return device.get(); }
+	void acknowledge_switch_to();
+	void permit_switch_from();
 	void release();
 	bool is_active();
 	void set_LEDs();
@@ -4036,6 +4032,20 @@ KernelVT::is_active()
 	return s.v_active == vtnr;
 }
 
+void 
+KernelVT::acknowledge_switch_to()
+{
+	if (-1 != device.get())
+		ioctl(device.get(), VT_RELDISP, VT_ACKACQ);
+}
+
+void 
+KernelVT::permit_switch_from()
+{
+	if (-1 != device.get())
+		ioctl(device.get(), VT_RELDISP, 1);
+}
+
 inline
 PS2Mouse::PS2Mouse(
 	const KeyboardMap & km
@@ -4201,6 +4211,8 @@ public:
 
 	void reset(int);
 	bool is_active();
+	void acknowledge_switch_to();
+	void permit_switch_from();
 protected:
 	struct vt_mode vtmode;
 	const int release_signal, acquire_signal;
@@ -4545,6 +4557,20 @@ KernelVT::is_active()
 	return active == index;
 }
 #endif
+
+void 
+KernelVT::acknowledge_switch_to()
+{
+	if (-1 != device.get())
+		ioctl(device.get(), VT_RELDISP, VT_ACKACQ);
+}
+
+void 
+KernelVT::permit_switch_from()
+{
+	if (-1 != device.get())
+		ioctl(device.get(), VT_RELDISP, 1);
+}
 
 #if defined(__FreeBSD__) || defined(__DragonFly__)
 inline
@@ -5181,6 +5207,11 @@ console_fb_realizer [[gnu::noreturn]] (
 				}
 				active = false;
 			}
+#if defined(__LINUX__) || defined(__linux__)
+			kvt.permit_switch_from();
+#elif defined(__FreeBSD__) || defined (__DragonFly__)
+			kvt.permit_switch_from();
+#endif
 		}
 		if (usr2_signalled) {
 			usr2_signalled = false;
@@ -5227,6 +5258,11 @@ console_fb_realizer [[gnu::noreturn]] (
 				}
 				active = true;
 			}
+#if defined(__LINUX__) || defined(__linux__)
+			kvt.acknowledge_switch_to();
+#elif defined(__FreeBSD__) || defined (__DragonFly__)
+			kvt.acknowledge_switch_to();
+#endif
 		}
 		if (realizer.display_update_needed()) {
 			realizer.display_updated();

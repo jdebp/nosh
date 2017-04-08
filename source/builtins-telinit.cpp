@@ -13,21 +13,23 @@ For copyright and licensing terms, see the file named COPYING.
 
 // These are the built-in commands visible in the BSD/SystemV compatibility utilities.
 
-void reboot_poweroff_halt_command ( const char * & , std::vector<const char *> & ) ;
-void rcctl ( const char * & , std::vector<const char *> & ) ;
-void wrap_system_control_subcommand ( const char * & , std::vector<const char *> & ) ;
-void shutdown ( const char * & , std::vector<const char *> & ) ;
-void telinit ( const char * & , std::vector<const char *> & ) ;
-void runlevel ( const char * & , std::vector<const char *> & ) ;
-void service ( const char * & , std::vector<const char *> & ) ;
-void chkconfig ( const char * & , std::vector<const char *> & ) ;
-void invoke_rcd ( const char * & , std::vector<const char *> & ) ;
-void update_rcd ( const char * & , std::vector<const char *> & ) ;
-void initctl_read ( const char * & , std::vector<const char *> & ) ;
+extern void reboot_poweroff_halt_command ( const char * & , std::vector<const char *> & ) ;
+extern void rcctl ( const char * & , std::vector<const char *> & ) ;
+extern void wrap_system_control_subcommand ( const char * & , std::vector<const char *> & ) ;
+extern void shutdown ( const char * & , std::vector<const char *> & ) ;
+extern void telinit ( const char * & , std::vector<const char *> & ) ;
+extern void runlevel ( const char * & , std::vector<const char *> & ) ;
+extern void service ( const char * & , std::vector<const char *> & ) ;
+extern void chkconfig ( const char * & , std::vector<const char *> & ) ;
+extern void invoke_rcd ( const char * & , std::vector<const char *> & ) ;
+extern void update_rcd ( const char * & , std::vector<const char *> & ) ;
+extern void initctl_read ( const char * & , std::vector<const char *> & ) ;
+extern void foreground ( const char * & , std::vector<const char *> & ) ;
 
 extern const
 struct command 
 commands[] = {
+	// These are personalities that are also available as built-in commands.
 	{	"shutdown",		shutdown				},
 	{	"reboot",		reboot_poweroff_halt_command		},
 	{	"halt",			reboot_poweroff_halt_command		},
@@ -41,7 +43,7 @@ commands[] = {
 	{	"rescue",		wrap_system_control_subcommand		},
 	{	"normal",		wrap_system_control_subcommand		},
 	{	"telinit",		telinit					},
-	{	"runlevel",		runlevel					},
+	{	"runlevel",		runlevel				},
 	{	"init",			telinit					},
 	{	"service",		service					},
 	{	"chkconfig",		chkconfig				},
@@ -49,6 +51,9 @@ commands[] = {
 	{	"update-rc.d",		update_rcd				},
 	{	"rcctl",		rcctl					},
 	{	"initctl-read",		initctl_read				},
+
+	// These are spawned by other commands.
+	{	"foreground",			foreground		},
 };
 const std::size_t num_commands = sizeof commands/sizeof *commands;
 

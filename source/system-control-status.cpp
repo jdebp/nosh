@@ -142,6 +142,14 @@ try_restart (
 }
 
 void
+unload_when_stopped ( 
+	const char * & next_prog,
+	std::vector<const char *> & args
+) {
+	common_subcommand(next_prog, args, "service-control", "--exit");
+}
+
+void
 hangup ( 
 	const char * & next_prog,
 	std::vector<const char *> & args

@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Simple Linux Utility for Resource Management node daemon
+After=network.target munge.service
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=%p ${OPTIONS}
+LimitNOFILE=51200
+LimitMEMLOCK=infinity
+LimitSTACK=infinity
+
+[Install]
+WantedBy=server.target

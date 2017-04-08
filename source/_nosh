@@ -44,6 +44,7 @@ function _system_control_subcommands()
 	"cat:print a service bundle's control scripts"
 	'set-service-env:change a standard-format env/ directory for a service'
 	'print-service-env:display a standard-format env/ directory for a service'
+	'escape:escape names as the conversion utilities do'
 	)
 	_describe -t command 'sub-commands' commands
 }
@@ -51,31 +52,60 @@ function _system_control_subcommands()
 function _system_control_subarguments()
 {
 	local lstate state tmpargv tmp cache cur next
-	local -a common 
+	local -a common dir
 	local w1="$words[1]"
 
 	common=(-s '--help[Display option help]' '--usage[Display option usage]')
+	dir=(/var/local/sv /var/sv /etc/service-bundles/services /etc/service-bundles/targets)
 	words[1]="$words[1] $words[2]"
 
 	local curcontext="${curcontext%:*:*}:system-control-$words[2]:" 
 
 	case "$words[2]" in
-	init|emergency|rescue|normal|halt|poweroff|reboot)
-		_message -r "${service} has no options or parameters." -- ;;
+	emergency|rescue|normal|halt|poweroff|reboot)
+		_arguments -S $common -- ;;
+	init)
+		_arguments -S $common '2:run level:_runlevels' -- ;;
 	load-kernel-module|unload-kernel-module)
 		_arguments -S $common '2:module name:_files' -- ;;
 	set-service-env)
-		_arguments -S $common '2:service name:_directories' '3:name:' '4::value:' -- ;;
+		_arguments -S $common '2:service name:_path_files -/ -W dir' '3:name:' '4::value:' -- ;;
 	print-service-env)
-		_arguments -S $common '2:service name:_directories' '3::value:' -- ;;
+		_arguments -S $common '2:service name:_path_files -/ -W dir' '3::value:' -- ;;
 	convert-systemd-units)
 		_arguments -S $common '2:unit name:_files' -- ;;
+	escape)
+		_arguments -S $common '*:name: ' -- ;;
 	*)
-		local -a dir=(/var/local/sv /var/sv /etc/service-bundles/services /etc/service-bundles/targets)
 		_arguments $common '*:service name:_path_files -/ -W dir' -- ;;
 	esac
 
 	words[1]="${w1}"
+}
+
+function _runlevels()
+{
+	local -a runlevels
+	runlevels=(
+	'0:poweroff'
+	'1:rescue'
+	'2:normal'
+	'3:normal'
+	'4:normal'
+	'5:normal'
+	'6:reboot'
+	'm:normal'
+	'auto:normal'
+	'H:halt'
+	'h:halt'
+	'S:rescue'
+	's:rescue'
+	'single:rescue'
+	'B:emergency'
+	'b:emergency'
+	'emergency:emergency'
+	)
+	_describe -t runlevel 'run levels' runlevels
 }
 
 local lstate state
@@ -86,11 +116,11 @@ case "${service}" in
 service-manager|per-user-manager|system-manager)
 	_message -r "${service} has no options or parameters." ;;
 systemctl|initctl|rcctl|svcadm|system-control) 
-	_arguments -A $common '1:subcommand:_system_control_subcommands' '*:subargs:_system_control_subarguments' -- ;;
+	_arguments -A '-*' $common '1:subcommand:_system_control_subcommands' '*:subargs:_system_control_subarguments' -- ;;
 init|telinit)
-	_arguments -S $common '1:runlevel:((0:poweroff 1:rescue 2:normal 3:normal 4:normal 5:normal 6:reboot m:normal auto:normal H:halt h:halt S:rescue s:rescue single:rescue emergency))' -- ;;
+	_arguments -S $common '1:runlevel:_runlevels' -- ;;
 svshow|service-show|svstat|service-status|svok|service-is-ok|svup|service-is-up|svc|service-control)
-	_arguments '*:service directory:_directories' -- ;;
+	_arguments -S '*:service directory:_directories' -- ;;
 svscan|service-st-scanner)
 	_arguments -S $common '1:scan directory:_directories' -- ;;
 console-multiplexor)
@@ -106,5 +136,5 @@ console-convert-kbdmap)
 shutdown)
 	_arguments -S $common '1:time:' '2:message:' -- ;;
 *)
-	_arguments -A $common -- ;;
+	_arguments -A '-*' $common -- ;;
 esac

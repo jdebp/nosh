@@ -45,6 +45,7 @@ gvfs-mtp-volume-monitor.service
 gvfs-udisks2-volume-monitor.service
 host.conf.do
 hostapd@.service
+ibus-daemon.service
 ifconfig@.service
 ifscript@.service
 intrat.target
@@ -56,9 +57,7 @@ kdm.do
 kernel-modules.do
 kernel-vt.do
 knotify.service
-mariadb-log@.service
-mariadb.do
-mariadb@.service
+ldconfig.do
 mate-notification-daemon.service
 mate-screensaver.service
 mdconfig.do
@@ -69,11 +68,18 @@ mpd.service
 mpd.socket
 mysql-log@.service
 mysql.do
-mysql@.service
+mysql@.service.do
+mysql@.service.percona
+mysql@.service.mysql
+mysql@.service.mariadb
 natd@.service
 newfs@.service
 nsswitch.conf.do
 openldap.do
+openvpn.do
+openvpn@.service
+openvpn-log@.service
+openvpn-otp@.service
 org.gnome.Maps.service
 org.gnome.Weather.Application.service
 pefs-mount@.service
@@ -127,6 +133,7 @@ warden.do
 webcamd.do
 webcamd@.service
 wpa_supplicant@.service
+xdg-desktop-portal-gtk.service
 zeitgeist-daemon.service
 zeitgeist-datahub.service
 zeitgeist-fts.service

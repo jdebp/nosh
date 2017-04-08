@@ -6,6 +6,7 @@ console-clear
 console-convert-kbdmap
 console-fb-realizer
 console-multiplexor
+console-multiplexor-control
 console-ncurses-realizer
 console-resize
 create-control-group
@@ -27,6 +28,8 @@ klog-read
 line-banner
 local-datagram-socket-listen
 local-reaper
+local-seqpacket-socket-accept
+local-seqpacket-socket-listen
 local-stream-socket-accept
 local-stream-socket-listen
 login-banner

@@ -212,7 +212,7 @@ create_gbde_bundle (
 ) {
 	const bool is_target(false);
 	const bool root(false);
-	const std::string gbde_bundle_dirname("gbde@" + systemd_name_escape(false, gbde));
+	const std::string gbde_bundle_dirname("gbde@" + systemd_name_escape(false, false, gbde));
 
 	if (0 > mkdirat(bundle_root_fd.get(), gbde_bundle_dirname.c_str(), 0755)) {
 		const int error(errno);
@@ -282,7 +282,7 @@ create_geli_bundle (
 ) {
 	const bool is_target(false);
 	const bool root(false);
-	const std::string geli_bundle_dirname("geli@" + systemd_name_escape(false, geli));
+	const std::string geli_bundle_dirname("geli@" + systemd_name_escape(false, false, geli));
 
 	if (0 > mkdirat(bundle_root_fd.get(), geli_bundle_dirname.c_str(), 0755)) {
 		const int error(errno);
@@ -404,12 +404,12 @@ create_fsck_bundle (
 		create_link(prog, fsck_bundle_dirname, fsck_bundle_dir_fd, "../../kmod@fuse", "wants/kmod@fuse");
 	}
 	if (gbde) {
-		const std::string geom_service("gbde@" + systemd_name_escape(false, *gbde));
+		const std::string geom_service("gbde@" + systemd_name_escape(false, false, *gbde));
 		create_link(prog, fsck_bundle_dirname, fsck_bundle_dir_fd, "../../" + geom_service, "after/" + geom_service);
 		create_link(prog, fsck_bundle_dirname, fsck_bundle_dir_fd, "../../" + geom_service, "wants/" + geom_service);
 	}
 	if (geli) {
-		const std::string geom_service("geli@" + systemd_name_escape(false, *geli));
+		const std::string geom_service("geli@" + systemd_name_escape(false, false, *geli));
 		create_link(prog, fsck_bundle_dirname, fsck_bundle_dir_fd, "../../" + geom_service, "after/" + geom_service);
 		create_link(prog, fsck_bundle_dirname, fsck_bundle_dir_fd, "../../" + geom_service, "wants/" + geom_service);
 	}
@@ -497,12 +497,12 @@ create_mount_bundle (
 		create_link(prog, mount_bundle_dirname, mount_bundle_dir_fd, "../../kmod@" + modname, "wants/kmod@" + modname);
 	}
 	if (gbde) {
-		const std::string geom_service("gbde@" + systemd_name_escape(false, *gbde));
+		const std::string geom_service("gbde@" + systemd_name_escape(false, false, *gbde));
 		create_link(prog, mount_bundle_dirname, mount_bundle_dir_fd, "../../" + geom_service, "after/" + geom_service);
 		create_link(prog, mount_bundle_dirname, mount_bundle_dir_fd, "../../" + geom_service, "wants/" + geom_service);
 	}
 	if (geli) {
-		const std::string geom_service("geli@" + systemd_name_escape(false, *geli));
+		const std::string geom_service("geli@" + systemd_name_escape(false, false, *geli));
 		create_link(prog, mount_bundle_dirname, mount_bundle_dir_fd, "../../" + geom_service, "after/" + geom_service);
 		create_link(prog, mount_bundle_dirname, mount_bundle_dir_fd, "../../" + geom_service, "wants/" + geom_service);
 	}
@@ -627,7 +627,7 @@ create_dump_bundle (
 ) {
 	const bool is_target(false);
 	const bool root(false);
-	const std::string dump_bundle_dirname("dump@" + systemd_name_escape(false, what));
+	const std::string dump_bundle_dirname("dump@" + systemd_name_escape(false, false, what));
 
 	if (0 > mkdirat(bundle_root_fd.get(), dump_bundle_dirname.c_str(), 0755)) {
 		const int error(errno);
@@ -750,8 +750,8 @@ convert_fstab_services [[gnu::noreturn]] (
 		||  (0 == std::strcmp(type, "??"))
 #endif
 		) {
-			const std::string fsck_bundle_dirname("fsck@" + systemd_name_escape(false, where));
-			const std::string mount_bundle_dirname("mount@" + systemd_name_escape(false, where));
+			const std::string fsck_bundle_dirname("fsck@" + systemd_name_escape(false, false, where));
+			const std::string mount_bundle_dirname("mount@" + systemd_name_escape(false, false, where));
 			const bool local(!nodev && is_local_type(entry->fs_vfstype));
 			const bool preenable(is_preenable_type(entry->fs_vfstype));
 			std::string gbde, geli, fuse;
@@ -775,7 +775,7 @@ convert_fstab_services [[gnu::noreturn]] (
 		} else
 		if (0 == std::strcmp(type, "sw")) {
 			const bool local(true);
-			const std::string swap_bundle_dirname("swap@" + systemd_name_escape(false, what));
+			const std::string swap_bundle_dirname("swap@" + systemd_name_escape(false, false, what));
 			std::string gbde, geli;
 			const bool is_gbde(ends_in(what, ".bde", gbde));
 			const bool is_geli(ends_in(what, ".eli", geli));
@@ -862,8 +862,8 @@ write_volume_service_bundles [[gnu::noreturn]] (
 
 	std::list<std::string> options_list(split_fstab_options(mntops));
 
-	const std::string fsck_bundle_dirname("fsck@" + systemd_name_escape(false, where));
-	const std::string mount_bundle_dirname("mount@" + systemd_name_escape(false, where));
+	const std::string fsck_bundle_dirname("fsck@" + systemd_name_escape(false, false, where));
+	const std::string mount_bundle_dirname("mount@" + systemd_name_escape(false, false, where));
 	const bool local(!has_option(options_list, "_nodev") && is_local_type(vfstype));
 	const bool preenable(is_preenable_type(vfstype));
 	std::string gbde, geli, fuse;

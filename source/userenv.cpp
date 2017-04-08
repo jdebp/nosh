@@ -388,8 +388,23 @@ userenv (
 			set_str("VISUAL", "visual", pw, lc_system, lc_user, "vi");
 			set_str("PAGER", "pager", pw, lc_system, lc_user, "more");
 		}
-		if (set_xdg)
+		if (set_xdg) {
 			set("XDG_RUNTIME_DIR", "/run/user/" + std::string(pw->pw_name) + "/");
+			// TrueOS Desktop adds /share to the default search path.
+			// But it inverts this order, making "local" the lowest priority.
+			// We give "local" data files priority over the operating system data files, as the XDG Desktop Specification does.
+			set("XDG_DATA_DIRS", "/usr/local/share:/usr/share:/share");
+#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
+			set("XDG_CONFIG_DIRS", "/usr/local/etc/xdg");
+#else
+			// The default of /etc/xdg applies to everyone else.
+			set("XDG_CONFIG_DIRS", 0);
+#endif
+			// XDG_CONFIG_HOME defaults to $HOME/.config which is fine.
+			set("XDG_CONFIG_HOME", 0);
+			// XDG_DATA_HOME defaults to $HOME/.local/share which is fine.
+			set("XDG_DATA_HOME", 0);
+		}
 		if (set_dbus)
 			set("DBUS_SESSION_BUS_ADDRESS", "unix:path=/run/user/" + std::string(pw->pw_name) + "/bus");
 		// setenv in login.conf can be superseded by all of the rest.
@@ -420,8 +435,13 @@ userenv (
 			set("EDITOR", 0);
 			set("PAGER", 0);
 		}
-		if (set_xdg)
+		if (set_xdg) {
 			set("XDG_RUNTIME_DIR", 0);
+			set("XDG_DATA_DIRS", 0);
+			set("XDG_CONFIG_DIRS", 0);
+			set("XDG_CONFIG_HOME", 0);
+			set("XDG_DATA_HOME", 0);
+		}
 		if (set_dbus)
 			set("DBUS_SESSION_BUS_ADDRESS", 0);
 		if (set_path) {

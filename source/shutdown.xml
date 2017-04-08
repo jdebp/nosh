@@ -10,7 +10,7 @@
 
 <refnamediv>
 <refname>shutdown</refname>
-<refpurpose>BSD/System V compatibility utility for system shutdown</refpurpose>
+<refpurpose>BSD/System 5 compatibility utility for system shutdown</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>

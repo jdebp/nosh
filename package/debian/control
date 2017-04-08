@@ -26,8 +26,9 @@ Description: Minimal non-shell script processor and various chain-load utilities
  .
  Also present are commands useful for daemon implementations:
   * false, line-banner, true, recordio, setlock,
-  * fifo--listen,
+  * fifo-listen,
   * local-datagram-socket-listen,
+  * local-seqpacket-socket-accept, local-seqpacket-socket-listen,
   * local-stream-socket-accept, local-stream-socket-listen,
   * udp-socket-listen,
   * tcp-socket-accept, tcp-socket-listen, 
@@ -75,27 +76,37 @@ Description: Extra terminal utilities
  This package provides extra tools for use with terminals, including:
   * getty, ptybandage, ptyrun
 
+Package: nosh-zsh-completion
+Architecture: amd64
+Depends: 
+Suggests: 
+Recommends: zsh, nosh-exec, nosh-service-management, nosh-terminal-management
+Description: Z shell completion functions for the nosh toolset
+ This package provides Z shell completion facilities for nosh toolset commands.
+
 Package: nosh-systemv-shims
 Architecture: amd64
 Depends: ${shlibs:Depends}, nosh-service-management
 Suggests: 
 Recommends: 
+Will-Conflict: sysvinit-utils
 Description: BSD and System 5 shim service and system management utilities
  This package provides shims for old-style BSD and System 5 system management commands.
   * service, chkconfig
   * init, shutdown, telinit, halt, poweroff, reboot, runlevel
   * emergency, normal, rescue
-  * fasthalt, fastpoweroff, fastboot
  .
  The shims simply invoke native service management commands.
  .
  For rcctl, use the nosh-openbsd-shims package.
+ For fastboot, fasthalt, and fastpoweroff, use the nosh-bsd-shims package.
 
 Package: nosh-systemd-shims
 Architecture: amd64
 Depends: nosh-service-management
 Suggests: 
 Recommends: 
+Will-Conflict: systemd
 Description: systemd shim service and system management utilities
  This package provides shims for systemd service and system management commands.
   * systemctl, systemd
@@ -113,12 +124,38 @@ Description: upstart shim service and system management utilities
  .
  The shims simply invoke native service management commands.
 
+Package: nosh-execline-shims
+Architecture: amd64
+Depends: nosh-exec
+Suggests: 
+Recommends: 
+Conflicts: execline
+Description: execline utility shims
+ This package provides shims for execline commands.
+  * foreground, background
+ .
+ The shims simply invoke nosh built-in commands.
+
+Package: nosh-core-shims
+Architecture: amd64
+Depends: nosh-exec
+Suggests: 
+Recommends: 
+Will-Conflict: coreutils, util-linux
+Description: core utility shims
+ This package provides shims for core utility commands.
+  * true, false, chroot, ulimit, umask
+  * unshare, setsid
+ .
+ The shims simply invoke nosh built-in commands.
+
 Package: nosh-debian-shims
 Architecture: amd64
 Depends: nosh-service-management
 Suggests: 
 Recommends: 
 Conflicts: nosh-run-via-systemd, upstart, sysvinit-core, systemd-sysv
+Provides: sysv-rc
 Description: Debian shim service and system management utilities
  This package provides shims for Debian service and system management commands.
   * invoke-rc.d, update-rc.d
@@ -137,21 +174,47 @@ Description: OpenBSD shim service and system management utilities
  .
  The shims simply invoke native service management commands.
 
+Package: nosh-bsd-shims
+Architecture: amd64
+Depends: nosh-service-management
+Conflicts: fastboot
+Suggests: 
+Recommends: 
+Description: BSD shim service and system management utilities
+ This package provides shims for old-style BSD system management commands.
+ Many of these were in the BSD compatibility package in AT&T Unix System 5 Release 4.
+  * fastboot, fasthalt, fastpoweroff
+ .
+ The shims simply invoke native service management commands.
+
 Package: nosh-ucspi-tcp-shims
 Architecture: amd64
 Depends: nosh-exec
 Suggests: 
 Recommends: 
-Conflicts: ucspi-tcp
+Conflicts: ucspi-tcp, nosh-exec (<=1.32)
 Description: Bernstein UCSPI-TCP shim service utilities
  This package provides shims for UCSPI-TCP service commands.
-  * tcpserver
+  * tcpserver, recordio
  .
  The shims simply invoke native service management commands.
 
+Package: nosh-kbd-shims
+Architecture: amd64
+Depends: nosh-terminal-management
+Will-Conflict: kbd
+Suggests: 
+Recommends: 
+Description: shim kbd utilities
+ This package provides shims for commands from the old kbd toolset.
+  * resizecons, chvt
+  * clear_console
+ .
+ The shims simply invoke native virtual console management commands.
+
 Package: nosh-bundles
 Architecture: amd64
-Depends: nosh-exec (>=1.32), nosh-service-management (>=1.31), nosh-terminal-management (>=1.22), adduser
+Depends: nosh-exec (>=1.32), nosh-service-management (>=1.33), nosh-terminal-management (>=1.22), adduser
 Suggests: 
 Recommends: 
 Conflicts: nosh-standard-targets, nosh-sysinit-services, nosh-bsd-services, nosh-bsd-sockets, nosh-regular-sockets, nosh-regular-services
@@ -163,9 +226,9 @@ Description: Service bundles
 
 Package: nosh-run-system-manager
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles, redo
+Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, redo
 Suggests: 
-Recommends: nosh-run-kernel-vt | nosh-run-user-vt, nosh-systemv-shims, nosh-openbsd-shims, nosh-run-local-syslog, nosh-run-klog, nosh-debian-shims
+Recommends: nosh-run-kernel-vt | nosh-run-user-vt, nosh-systemv-shims, nosh-debian-shims, nosh-bsd-shims, nosh-openbsd-shims, nosh-run-local-syslog, nosh-run-klog
 Conflicts: nosh-run-via-systemd, upstart, sysvinit-core, systemd-sysv
 Provides: init, systemd-shim
 Description: Run the nosh system manager
@@ -177,9 +240,27 @@ Description: Run the nosh system manager
  .
  Additionally, as part of (re-)installation, it invokes redo on the external configuration import subsystem.
 
+Package: nosh-run-debian-desktop-base
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management (>=1.33), nosh-terminal-management, nosh-bundles (>=1.33)
+Suggests: 
+Recommends: 
+Conflicts: nosh-run-debian-server-base, nosh-bundles (<=1.32)
+Description: Run base Debian services for a desktop system
+ This package runs base Debian services for a desktop system.
+
+Package: nosh-run-debian-server-base
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management (>=1.33), nosh-terminal-management, nosh-bundles (>=1.33)
+Suggests: 
+Recommends: 
+Conflicts: nosh-run-debian-desktop-base, nosh-bundles (<=1.32)
+Description: Run base Debian services for a server system
+ This package runs base Debian services for a server system.
+
 Package: nosh-run-kernel-vt
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.16), nosh-terminal-management, nosh-bundles
+Depends: nosh-exec, nosh-service-management (>=1.33), nosh-terminal-management, nosh-bundles
 Suggests: 
 Recommends: 
 Description: Run old-style kernel virtual terminals
@@ -187,15 +268,15 @@ Description: Run old-style kernel virtual terminals
 
 Package: nosh-run-user-vt
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.16), nosh-terminal-management, nosh-bundles
+Depends: nosh-exec, nosh-service-management (>=1.33), nosh-terminal-management, nosh-bundles
 Suggests: 
-Recommends: 
+Recommends: nosh-kbd-shims
 Description: Run new-style application-mode virtual terminals
  This package runs new-style application-mode virtual terminals, rendered via the (first) framebuffer and the input event stream.
 
 Package: nosh-run-via-systemd
 Architecture: amd64
-Depends: nosh-service-management (>=1.16), systemd, nosh-bundles
+Depends: nosh-service-management (>=1.33), systemd, nosh-bundles
 Suggests: 
 Recommends: 
 Replaces: nosh-systemd-services
@@ -209,7 +290,7 @@ Description: Run the nosh service manager and daemontools service scanner via sy
 
 Package: nosh-run-virtualbox-guest
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles
+Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles
 Suggests: 
 Recommends: 
 Description: Run VirtualBox guest additions
@@ -217,7 +298,7 @@ Description: Run VirtualBox guest additions
 
 Package: nosh-run-freedesktop-system-bus
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles
+Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles
 Suggests: 
 Recommends: dbus
 Description: Run the system-wide message bus from freedesktop.org
@@ -225,7 +306,7 @@ Description: Run the system-wide message bus from freedesktop.org
 
 Package: nosh-run-freedesktop-kits
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles, nosh-run-freedesktop-system-bus
+Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, nosh-run-freedesktop-system-bus
 Suggests: 
 Recommends: network-manager, modemmanager, packagekit, policykit-1, consolekit
 Description: Run the various "kit" programs from freedesktop.org
@@ -241,7 +322,7 @@ Description: Run the various "kit" programs from freedesktop.org
 
 Package: nosh-run-openssh-server
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles
+Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles
 Suggests: 
 Recommends: openssh-server
 Description: Run the OpenSSH server
@@ -249,7 +330,7 @@ Description: Run the OpenSSH server
 
 Package: nosh-run-appletalk
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles
+Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles
 Suggests: 
 Recommends: 
 Description: Run the various AppleTalk services
@@ -261,7 +342,7 @@ Description: Run the various AppleTalk services
 
 Package: nosh-run-udev
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles, udev
+Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, udev
 Suggests: 
 Recommends: 
 Conflicts: nosh-run-busybox-mdev, nosh-run-suckless-mdev, nosh-run-vdev
@@ -270,7 +351,7 @@ Description: Run udev as the device manager.
 
 Package: nosh-run-busybox-mdev
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles, busybox
+Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, busybox
 Suggests: 
 Recommends: 
 Conflicts: nosh-run-udev, nosh-run-suckless-mdev, nosh-run-vdev
@@ -279,7 +360,7 @@ Description: Run BusyBox mdev as the device manager.
 
 Package: nosh-run-suckless-mdev
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles, smdev
+Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, smdev
 Suggests: 
 Recommends: 
 Conflicts: nosh-run-udev, nosh-run-suckless-mdev, nosh-run-vdev
@@ -288,7 +369,7 @@ Description: Run SuckLess mdev as the device manager.
 
 Package: nosh-run-vdev
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles, vdev
+Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, vdev
 Suggests: 
 Recommends: 
 Conflicts: nosh-run-busybox-mdev, nosh-run-suckless-mdev, nosh-run-udev
@@ -297,7 +378,7 @@ Description: Run vdev as the device manager.
 
 Package: nosh-run-local-syslog
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles
+Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles
 Provides: system-log-daemon
 Suggests: 
 Recommends: 
@@ -307,7 +388,7 @@ Description: Run the local syslog service.
 
 Package: nosh-run-klog
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.16), nosh-bundles
+Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles
 Provides: linux-kernel-log-daemon
 Suggests: 
 Recommends: 

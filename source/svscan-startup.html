@@ -119,4 +119,17 @@ systemd activates the <code>service-manager.service</code> service, running <cod
 <li><p>
 <code>service-manager</code> loads and manages the services that <code>service-dt-scanner</code> tells it to.
 </p></li>
+<li><p>
+systemd activates the <code>system-control-normal.service</code> service, spawning <code>system-control start normal</code>.
+</p>
+<ol>
+<li><p>
+<code>system-control start</code> finds all of the services wanted-by the <code>normal</code> target, sends a LOAD command for every such service to the <code>/run/service-manager/control</code> socket, and sends a START command.
+(A special cut-out, only in place when the system is configured to run under systemd, prevents the <code>sysinit</code> target and its dependencies from being started, on the grounds that systemd services and targets take care of its equivalent.)
+</p></li>
+<li><p>
+<code>service-manager</code> loads and manages the services that <code>system-control start</code> tells it to.
+</p></li>
+</ol>
+</li>
 </ol>

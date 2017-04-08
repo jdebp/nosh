@@ -8,3 +8,5 @@
 
 enable	cyclog@console-kit-daemon.service
 enable	console-kit-daemon.service
+enable	cyclog@org.freedesktop.ConsoleKit.service
+enable	org.freedesktop.ConsoleKit.service

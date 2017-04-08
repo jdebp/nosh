@@ -59,15 +59,18 @@ run() {
 	then
 		touch "runfirstgui"
 		cp -R /usr/local/share/pcbsd/fluxboxinit /root/.fluxbox
-		exec startx "$0"run_firstboot
+		exec startx "$0" run_firstboot
 	fi
 
+	display=":0"
+
 	# Randomize the authorization file location
-	BASEPCDMAUTHFILE="/run/PCDM/auth"
-	PCDMAUTHFILE="${BASEPCDMAUTHFILE}-`openssl rand -hex 10`"
-	export XAUTHORITY="${PCDMAUTHFILE}" # Set the auth file location
-	: > "${PCDMAUTHFILE}" # Create the (empty) authorization file
-	xauth -f "${PCDMAUTHFILE}" add :0 MIT-MAGIC-COOKIE-1 "`openssl rand -hex 64`" # Add a default entry to the file (randomized)
+	authfilesdirectory="/run/PCDM/auth"
+	install -d -m 01777 "${authfilesdirectory}"
+	authfile="${authfilesdirectory}/`openssl rand -hex 10`"
+	export XAUTHORITY="${authfile}" # Set the auth file location
+	: > "${authfile}" # Create the (empty) authorization file
+	xauth -f "${authfile}" add "${display}" MIT-MAGIC-COOKIE-1 "`openssl rand -hex 64`" # Add a default entry to the file (randomized)
 
 	# Clear out a failed marker
 	rm -f -- "/tmp/.pcdm-x-failed"
@@ -76,7 +79,9 @@ run() {
 	rm -f -- "/tmp/.pcdm-x-started"
 
 	# Now start the X Server
-	local-reaper true xinit /bin/exec local-reaper true "$0" session -- :0 -auth "${PCDMAUTHFILE}" -retro $Xflags
+	# The xinit will be a local reaper, which it can handle.
+	# The "session" instance of this helper will be a local reaper, which the shell can handle.
+	local-reaper true xinit /bin/exec local-reaper true "$0" session -- "${display}" -auth "${PCDMAUTHFILE}" -retro $Xflags
 	rc=$?
 
 	# Now remove the authorization file

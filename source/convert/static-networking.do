@@ -12,13 +12,17 @@ read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
 get_var1() { read_rc "$1" || true ; }
 get_var2() { read_rc "$1"_"$2" || true ; }
 get_var3() { read_rc "$1"_"$2"_"$3" || read_rc "$1"_"$3" || true ; }
+get_var4() { read_rc "$1"_"$2"_"$3" || read_rc "$1"_"$4" || true ; }
 car() { echo "$1" ; }
 cdr() { shift ; echo "$@" ; }
-list_static_arp() { for i in `get_var1 static_arp_pairs` ; do echo "$i" ; done ; }
-list_static_ndp() { for i in `get_var1 static_ndp_pairs` ; do echo "$i" ; done ; }
-list_static_ip4() { for i in `get_var1 static_routes` ; do echo "$i" ; done ; }
-list_static_ip6() { for i in `get_var1 ipv6_static_routes` ; do echo "$i" ; done ; }
+list_static_arp() { for i in `get_var1 static_arp_pairs` ; do printf "%s\n" "$i" ; done ; }
+list_static_ndp() { for i in `get_var1 static_ndp_pairs` ; do printf "%s\n" "$i" ; done ; }
+list_static_ip4() { for i in `get_var1 static_routes` ; do printf "%s\n" "$i" ; done ; }
+list_static_ip6() { for i in `get_var1 ipv6_static_routes` ; do printf "%s\n" "$i" ; done ; }
 list_natd_interfaces() { read_rc natd_interface || true ; }
+get_ifconfig1() { read_rc ifconfig_"$1" || read_rc ifconfig_DEFAULT || true ; }
+get_ifconfig2() { read_rc ifconfig_"$1"_"$2" || read_rc ifconfig_DEFAULT_"$2" || true ; }
+get_ipv6_prefix1() { read_rc ipv6_prefix_"$1" || read_rc ipv6_prefix_DEFAULT || true ; }
 list_auto_network_interfaces() {
 	case "`uname`" in
 	Linux)	/bin/ls /sys/class/net ;;
@@ -26,16 +30,34 @@ list_auto_network_interfaces() {
 	esac
 }
 list_network_interfaces() { 
-	local s
-	if ! s="`read_rc network_interfaces`"
+	local n
+	local c
+	local i
+
+	if ! n="`read_rc network_interfaces`"
 	then
-		list_auto_network_interfaces
-	elif test "auto" = "$s" || test "AUTO" = "$s"
+		n="`list_auto_network_interfaces`"
+	elif test _"auto" = _"$n" || test _"AUTO" = _"$n"
 	then
-		list_auto_network_interfaces
-	else
-		echo "$s"
+		n="`list_auto_network_interfaces`"
 	fi
+	c="`read_rc cloned_interfaces`" || :
+
+	# This is "effectively mandatory" and must be first.
+	case "`uname`" in
+	Linux)	echo lo ;;
+	*)	echo lo0 ;;
+	esac
+
+	for i in $n $c
+	do
+		case "$i" in
+			lo0|lo)			;;
+			epair[0-9]*[ab])	;;
+			epair[0-9]*)		echo "${i}a" "${i}b" ;;
+			*)			echo "$i" ;;
+		esac
+	done
 }
 is_physical_interface() {
 	case "$1" in
@@ -47,15 +69,146 @@ is_physical_interface() {
 	esac
 	return 0
 }
+is_ip_interface() {
+	case "$1" in
+		pflog[0-9]*)	return 1 ;;
+		pfsync[0-9]*)	return 1 ;;
+		usbus[0-9]*)	return 1 ;;
+		an[0-9]*)	return 1 ;;
+		ath[0-9]*)	return 1 ;;
+		ipw[0-9]*)	return 1 ;;
+		ipfw[0-9]*)	return 1 ;;
+		iwi[0-9]*)	return 1 ;;
+		iwn[0-9]*)	return 1 ;;
+		ral[0-9]*)	return 1 ;;
+		wi[0-9]*)	return 1 ;;
+		wl[0-9]*)	return 1 ;;
+		wpi[0-9]*)	return 1 ;;
+	esac
+	return 0
+}
+is_ipv6_default_interface() {
+	local n
+
+	if n="`read_rc ipv6_default_interface`"
+	then
+		test _"$n" != _"$1" || return 0
+	fi
+	return 1
+}
 is_natd_interface() {
 	for i in `list_natd_interfaces`
 	do
-		test _"$i" -ne _"$1" || return 0
+		test _"$i" != _"$1" || return 0
 	done
 	return 1
 }
 is_ip4_address() { echo "$1" | grep -E -q '^[0-9]+(\.[0-9]+){0,3}$' ; }
-get_ifconfig() { read_rc ifconfig_"$1" || read_rc ifconfig_DEFAULT || true ; }
+filter_ifconfig() { 
+	local i
+	local n
+	local o
+
+	n="$1"
+	shift
+
+	o=""
+	for i
+	do
+		case "$i" in
+			SYNCDHCP|NOSYNCDHCP|DHCP|WPA|HOSTAP|NOAUTO)
+				;;
+			inet|inet4|inet6|link|ether|ipx|atalk|lladr)
+				if test _"$i" = _"$n"
+				then
+					o="$i"
+				else
+					o=""
+				fi
+				;;
+			*)
+				test -z "$o" || printf "%s " "$i"
+			       	;;
+		esac
+	done
+	test -z "$o" || printf "\n"
+}
+get_filtered_ifconfig2() { 
+	local i
+	local c
+
+	if ! c="`get_ifconfig1 "$1"`"
+	then
+		case "$1" in
+		lo0)	c="inet 127.0.0.1 inet6 -ifdisabled" ;;
+		*)	c="inet6 -ifdisabled" ;;
+		esac
+	fi
+
+	filter_ifconfig "$2" $c
+}
+get_filtered_ifconfig3() {
+	local i
+	local c
+
+	if ! c="`get_ifconfig2 "$1" "$2"`"
+	then
+		case "$2:$1" in
+		aliases:lo0)	c="inet 127.0.0.1/8" ;;
+		*)		c="" ;;
+		esac
+	fi
+
+	filter_ifconfig "$3" $c
+}
+get_ipv6_prefix() {
+	local i
+	local l
+
+	for i in `get_ipv6_prefix1 "$1"`
+	do
+		case "$i" in
+			*/*)	l="${i#*/}" ; i="${i%/*}" ;;
+			*)	l="64" ;;
+		esac
+		i="${i%::*}"
+		i="${i%:}"
+		printf "%s:: prefixlen %s eui64\n" "$i" "$l"
+		printf "%s:: prefixlen %s anycast\n" "$i" "$l"
+	done
+}
+get_link_opts() {
+	get_filtered_ifconfig2 "$1" link
+	get_filtered_ifconfig2 "$1" ether
+	get_filtered_ifconfig2 "$1" lladr
+}
+get_inet4_opts() {
+	get_filtered_ifconfig2 "$1" inet
+	get_filtered_ifconfig2 "$1" inet4
+	get_filtered_ifconfig3 "$1" ipv4 inet
+}
+get_inet6_opts() {
+	get_filtered_ifconfig2 "$1" inet6
+	get_filtered_ifconfig3 "$1" ipv6 inet6
+	if is_ipv6_default_interface "$1"
+	then
+		printf -- "%s " defaultif
+	else
+		printf -- "%s " -defaultif
+	fi
+}
+get_link_aliases() {
+	get_filtered_ifconfig3 "$1" aliases link
+	get_filtered_ifconfig3 "$1" aliases ether
+	get_filtered_ifconfig3 "$1" aliases lladr
+}
+get_inet4_aliases() {
+	get_filtered_ifconfig3 "$1" aliases inet
+}
+get_inet6_aliases() {
+	get_filtered_ifconfig3 "$1" aliases inet6
+	get_ipv6_prefix "$1"
+}
 
 redo-ifchange rc.conf general-services "static_arp@.service" "static_ndp@.service" "static_ip4@.service" "static_ip6@.service" "natd@.service" "hostapd@.service" "dhclient@.service" "wpa_supplicant@.service" "rfcomm_pppd@.service" "ppp@.service" "spppcontrol@.service" "ifscript@.service" "ifconfig@.service"
 
@@ -113,7 +266,7 @@ make_ifscript() {
 	service="ifscript@$1"
 	system-control convert-systemd-units $e "$r/" "./${service}.service"
 	install -d -m 0755 "$r/${service}/service/env"
-	if get_ifconfig "$1" | grep -q -E '\<NOAUTO\>'
+	if get_ifconfig1 "$1" | grep -q -E '\<NOAUTO\>'
 	then
 		system-control disable "${service}"
 	else
@@ -135,7 +288,13 @@ make_ifconfig() {
 	service="ifconfig@$1"
 	system-control convert-systemd-units $e "$r/" "./${service}.service"
 	install -d -m 0755 "$r/${service}/service/env"
-	if get_ifconfig "$1" | grep -q -E '\<NOAUTO\>'
+	system-control set-service-env "$r/${service}" link_opts "`get_link_opts "$1"`"
+	system-control set-service-env "$r/${service}" inet4_opts "`get_inet4_opts "$1"`"
+	system-control set-service-env "$r/${service}" inet6_opts "`get_inet6_opts "$1"`"
+	system-control set-service-env "$r/${service}" link_aliases "`get_link_aliases "$1"`"
+	system-control set-service-env "$r/${service}" inet4_aliases "`get_inet4_aliases "$1"`"
+	system-control set-service-env "$r/${service}" inet6_aliases "`get_inet6_aliases "$1"`"
+	if get_ifconfig1 "$1" | grep -q -E '\<NOAUTO\>'
 	then
 		system-control disable "${service}"
 	else
@@ -164,13 +323,13 @@ make_natd() {
 	else
 		system-control set-service-env "${service}" type "-alias"
 	fi
-	if get_ifconfig "$1" | grep -q -E '\<(SYNC|NOSYNC)DHCP\>'
+	if get_ifconfig1 "$1" | grep -q -E '\<(SYNC|NOSYNC)DHCP\>'
 	then
 		system-control set-service-env "${service}" dynamic "-dynamic"
 	else
 		system-control set-service-env "${service}" dynamic ""
 	fi
-	if get_ifconfig "$1" | grep -q -E '\<NAT\>' || 
+	if get_ifconfig1 "$1" | grep -q -E '\<NAT\>' || 
 	   is_natd_interface "$1"
 	then
 		system-control preset "${service}"
@@ -193,7 +352,9 @@ make_dhclient() {
 	service="dhclient@$1"
 	system-control convert-systemd-units $e "$r/" "./${service}.service"
 	install -d -m 0755 "$r/${service}/service/env"
-	if get_ifconfig "$1" | grep -q -E '\<DHCP\>'
+	if is_physical_interface "$1" &&
+	   is_ip_interface "$1" &&
+	   get_ifconfig1 "$1" | grep -q -E '\<DHCP\>'
 	then
 		system-control preset "${service}"
 	else
@@ -215,7 +376,7 @@ make_hostap() {
 	service="hostapd@$1"
 	system-control convert-systemd-units $e "$r/" "./${service}.service"
 	install -d -m 0755 "$r/${service}/service/env"
-	if get_ifconfig "$1" | grep -q -E '\<HOSTAP\>'
+	if get_ifconfig1 "$1" | grep -q -E '\<HOSTAP\>'
 	then
 		system-control preset "${service}"
 	else
@@ -237,7 +398,7 @@ make_wpa() {
 	service="wpa_supplicant@$1"
 	system-control convert-systemd-units $e "$r/" "./${service}.service"
 	install -d -m 0755 "$r/${service}/service/env"
-	if get_ifconfig "$1" | grep -q -E '\<WPA\>'
+	if get_ifconfig1 "$1" | grep -q -E '\<WPA\>'
 	then
 		system-control preset "${service}"
 	else
@@ -394,7 +555,6 @@ fi
 for i in `list_network_interfaces`
 do
 	test -n "$i" || continue
-	is_physical_interface "$i" || continue
 	make_ifscript "$i" >> "$3"
 	make_ifconfig "$i" >> "$3"
 	make_natd "$i" >> "$3"
@@ -403,22 +563,19 @@ do
 	make_dhclient "$i" >> "$3"
 done
 
-get_var2 ppp profile |
-while read -r i
+for i in `get_var2 ppp profile`
 do
 	test -z "$i" && continue
 	make_ppp "$i" >> "$3"
 done
 
-get_var2 sppp interfaces |
-while read -r i
+for i in `get_var2 sppp interfaces`
 do
 	test -z "$i" && continue
 	make_sppp "$i" >> "$3"
 done
 
-get_var2 rfcomm_pppd_server profile |
-while read -r i
+for i in `get_var2 rfcomm_pppd_server profile`
 do
 	test -z "$i" && continue
 	make_rfcomm_pppd "$i" >> "$3"

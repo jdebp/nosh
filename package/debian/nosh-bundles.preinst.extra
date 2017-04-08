@@ -1,0 +1,60 @@
+#!/bin/sh -
+# Extra pre-upgrade for nosh-bundles
+
+# Convert from the old 1.16 and earlier directory structure.
+mkdir -m 0755 -p -- /etc/service-bundles
+if test \! -L /etc/system-manager/targets && test -d /etc/system-manager/targets && test \! -e /etc/service-bundles/targets
+then
+	mv -i -- /etc/system-manager/targets /etc/service-bundles/
+	ln -s -f -- ../service-bundles/targets /etc/system-manager
+fi
+if test \! -L /etc/sv && test -d /etc/sv && test \! -e /etc/service-bundles/services
+then
+	mv -i -- /etc/sv /etc/service-bundles/services
+	ln -s -f -- service-bundles/services /etc/sv
+fi
+for d in / /usr/local/
+do
+	mkdir -m 0755 -p -- "${d}"etc/system-control
+	if test \! -L "${d}"etc/system-manager/presets && test -d "${d}"etc/system-manager/presets
+	then
+		mv -i -- "${d}"etc/system-manager/presets "${d}"etc/system-control/
+		ln -s -f -- ../system-control/presets "${d}"etc/system-manager
+	fi
+done
+
+# These services have been discontinued.
+for I in \
+	openvpn@server \
+	openvpn@client \
+	stty-sane@console \
+	make-utx-log \
+	;
+do
+	if system-control find "$I" >/dev/null 2>&1
+	then
+		if system-control is-enabled "$I" 2>/dev/null
+		then
+			system-control disable "$I"
+		fi
+		if system-control is-loaded "$I" 2>/dev/null
+		then
+			system-control unload-when-stopped "$I"
+			system-control stop "$I"
+		fi
+	fi
+done
+
+# This service has been relocated
+if test \! -d /var/sv/debian-cron && test -d /var/sv/gnucron
+then
+	system-control disable gnucron
+	mv -i -- /var/sv/gnucron /var/sv/debian-cron
+fi
+
+# This service has been relocated
+if test \! -d /var/sv/cyclog@debian-cron && test -d /var/sv/cyclog@gnucron
+then
+	system-control disable cyclog@gnucron
+	mv -i -- /var/sv/cyclog@gnucron /var/sv/cyclog@debian-cron
+fi

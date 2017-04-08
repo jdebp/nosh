@@ -1,7 +1,7 @@
 <refentry id="ptybandage">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
-<refentrytitle>ptyrun</refentrytitle>
+<refentrytitle>ptybandage</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>

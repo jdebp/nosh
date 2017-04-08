@@ -138,6 +138,9 @@ exit_error:
 	if (0 > socket_set_bind_to_any(s, *info, bind_to_any)) goto exit_error;
 	if (AF_INET6 == info->ai_family) {
 #if defined(IPV6_V6ONLY)
+#	if defined(__OpenBSD__)
+		if (combine4and6)
+#	endif
 		if (0 > socket_set_boolean_option(s, IPPROTO_IPV6, IPV6_V6ONLY, !combine4and6)) goto exit_error;
 #endif
 	}

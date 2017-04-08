@@ -1,0 +1,6 @@
+service_with_dedicated_logger "VBoxService"
+service_with_dedicated_logger "kmod@vboxdrv"
+service_with_dedicated_logger "kmod@vboxnetadp"
+service_with_dedicated_logger "kmod@vboxnetflt"
+service_with_dedicated_logger "kmod@vboxpci"
+target "virtualbox-guest"

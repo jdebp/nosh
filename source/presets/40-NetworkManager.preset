@@ -8,5 +8,13 @@
 
 enable	cyclog@NetworkManager.service
 enable	NetworkManager.service
+enable	cyclog@network-manager.service
+enable	network-manager.service
+enable	cyclog@org.freedesktop.NetworkManager1.service
+enable	org.freedesktop.NetworkManager1.service
+enable	cyclog@org.freedesktop.NetworkManager.service
+enable	org.freedesktop.NetworkManager.service
 enable	cyclog@NetworkManager-dispatcher.service
 enable	NetworkManager-dispatcher.service
+enable	cyclog@org.freedesktop.nm_dispatcher.service
+enable	org.freedesktop.nm_dispatcher.service

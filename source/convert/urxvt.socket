@@ -6,7 +6,7 @@
 Description=RXVT (Unicode) daemon control socket for %U
 
 [Socket]
-ListenStream=%t/urxvt/daemon
+ListenStream=%t/%p/daemon
 SocketMode=0600
 
 [Install]

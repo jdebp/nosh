@@ -13,6 +13,8 @@ For copyright and licensing terms, see the file named COPYING.
 #if defined(__LINUX__) || defined(__linux__)
 #include <linux/vt.h>
 #include <sys/poll.h>
+#include "FileDescriptorOwner.h"
+#include "FileStar.h"
 #else
 #if 0 // This is no gain over the normal enable/disable mechanisms for services.
 #include <ttyent.h>
@@ -92,28 +94,26 @@ ttylogin_starter (
 	sigaction(SIGCHLD,&sa,NULL);
 
 #if defined(__LINUX__) || defined(__linux__)
-	const int class_dir_fd(open_dir_at(AT_FDCWD, class_dir));
-	if (0 > class_dir_fd) {
+	FileDescriptorOwner class_dir_fd(open_dir_at(AT_FDCWD, class_dir));
+	if (0 > class_dir_fd.get()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, class_dir, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	const int tty_dir_fd(open_dir_at(class_dir_fd, tty));
-	if (0 > tty_dir_fd) {
+	FileDescriptorOwner tty_dir_fd(open_dir_at(class_dir_fd.get(), tty));
+	if (0 > tty_dir_fd.get()) {
 		const int error(errno);
-		close(class_dir_fd);
 		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, class_dir, tty, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	close(class_dir_fd);
-	const int active_file_fd(open_read_at(tty_dir_fd, active));
-	if (0 > active_file_fd) {
+	class_dir_fd.release();
+	FileDescriptorOwner active_file_fd(open_read_at(tty_dir_fd.get(), active));
+	if (0 > active_file_fd.get()) {
 		const int error(errno);
-		close(tty_dir_fd);
 		std::fprintf(stderr, "%s: FATAL: %s/%s/%s: %s\n", prog, class_dir, tty, active, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	close(tty_dir_fd);
+	tty_dir_fd.release();
 
 	// Pre-create the kernel virtual terminals so that the user can switch to them in the first place.
 	for (unsigned n(0U); n < num_ttys; ++n) {
@@ -123,15 +123,16 @@ ttylogin_starter (
 		if (0 <= tty_fd) close(tty_fd);
 	}
 
-	FILE * active_file(fdopen(active_file_fd, "r"));
+	FileStar active_file(fdopen(active_file_fd.get(), "r"));
 	if (!active_file) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s/%s/%s: %s\n", prog, class_dir, tty, active, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
 	pollfd p;
-	p.fd = active_file_fd;
+	p.fd = active_file_fd.get();
 	p.events = POLLPRI;
+	active_file_fd.release();
 	for (;;) {
 		const int rc(poll(&p, 1, -1));
 		if (0 > rc) {
@@ -149,7 +150,6 @@ ttylogin_starter (
 			const bool success(read_line(active_file, ttyname));
 			if (!success) {
 				const int error(errno);
-				std::fclose(active_file);
 				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, active, std::strerror(error));
 				throw EXIT_FAILURE;
 			}
@@ -158,7 +158,6 @@ ttylogin_starter (
 				const int error(errno);
 				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
 			} else if (0 == system_control_pid) {
-				std::fclose(active_file);
 				service_name = prefix + ttyname + ".service";
 				log_service_name = log_prefix + service_name;
 				args.clear();

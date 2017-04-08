@@ -1,0 +1,7 @@
+# Common post-install for Debian
+case "$1" in
+	configure)
+		extra
+                common
+		;;
+esac

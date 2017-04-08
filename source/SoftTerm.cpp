@@ -1568,18 +1568,18 @@ SoftTerm::Write(uint32_t character, bool decoder_error, bool overlong)
 	switch (state) {
 		case NORMAL:
 			if (decoder_error || overlong)
-				Print(character);
+				Print(true, character);
 			else if (IsControl(character))
 				ProcessControlCharacter(character);
 			else
-				Print(character); 
+				Print(false, character); 
 			break;
 		case ESCAPE1:
 			if (decoder_error)
 				state = NORMAL;
 			else if (overlong) {
 				state = NORMAL;
-				Print(character);
+				Print(true, character);
 			} else if (IsControl(character))
 				ProcessControlCharacter(character);
 			else
@@ -1590,7 +1590,7 @@ SoftTerm::Write(uint32_t character, bool decoder_error, bool overlong)
 				state = NORMAL;
 			else if (overlong) {
 				state = NORMAL;
-				Print(character);
+				Print(true, character);
 			} else if (IsControl(character))
 				ProcessControlCharacter(character);
 			else
@@ -1598,11 +1598,11 @@ SoftTerm::Write(uint32_t character, bool decoder_error, bool overlong)
 			break;
 		case CONTROL1:
 		case CONTROL2:
-			if (decoder_error || overlong)
+			if (decoder_error)
 				state = NORMAL;
 			else if (overlong) {
 				state = NORMAL;
-				Print(character);
+				Print(true, character);
 			} else if (IsControl(character))
 				ProcessControlCharacter(character);
 			else
@@ -1947,8 +1947,10 @@ SoftTerm::ControlSequence(uint32_t character)
 }
 
 void 
-SoftTerm::Print(uint32_t character)
-{
+SoftTerm::Print(
+	bool error,
+	uint32_t character
+) {
 	if (advance_pending) {
  		if (WillWrap()) Advance();
  		advance_pending = false;
@@ -1963,11 +1965,12 @@ SoftTerm::Print(uint32_t character)
 	} else {
 		const coordinate columns(display_origin.x + display_margin.w);
 		const ScreenBuffer::coordinate s(columns * active_cursor.y + active_cursor.x);
+		const CharacterCell::attribute_type a(attributes ^ (error ? CharacterCell::INVERSE : 0));
 		if (UnicodeCategorization::IsMarkEnclosing(character)) {
-			screen.WriteNCells(s, 1U, CharacterCell(character, attributes, foreground, background));
+			screen.WriteNCells(s, 1U, CharacterCell(character, a, foreground, background));
 		} else {
 			if (!overstrike) InsertCharacters(1U);
-			screen.WriteNCells(s, 1U, CharacterCell(character, attributes, foreground, background));
+			screen.WriteNCells(s, 1U, CharacterCell(character, a, foreground, background));
 			advance_pending = WillWrap();
 			if (!advance_pending) Advance();
 		}

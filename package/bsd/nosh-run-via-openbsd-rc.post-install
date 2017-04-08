@@ -1,7 +1,11 @@
 #!/bin/sh -
+
+# Re-apply presets to services that are cut-out by a special preset in this package.
 system-control preset sysinit.target local-syslog.target
 system-control preset static-networking.target
 system-control preset remote-fs.target remote-fs-pre.target
+
+# Preset and start OpenBSD rc services
 sysrc service_manager_enable=YES
 sysrc service_manager_svscan_enable=YES
 sysrc system_control_normal_enable=YES

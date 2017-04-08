@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Redis key-value store common runtime directory
+
+[Service]
+RuntimeDirectory=redis
+RuntimeDirectoryOwner=redis
+RuntimeDirectoryMode=02775
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
+
+[Install]
+WantedBy=server.target

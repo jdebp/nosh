@@ -16,6 +16,7 @@ For copyright and licensing terms, see the file named COPYING.
 extern void console_convert_kbdmap ( const char * &, std::vector<const char *> & );
 extern void console_fb_realizer ( const char * &, std::vector<const char *> & );
 extern void console_multiplexor ( const char * &, std::vector<const char *> & );
+extern void console_multiplexor_control ( const char * &, std::vector<const char *> & );
 extern void console_ncurses_realizer ( const char * &, std::vector<const char *> & );
 extern void console_resize ( const char * &, std::vector<const char *> & );
 extern void console_clear ( const char * &, std::vector<const char *> & );
@@ -42,6 +43,7 @@ commands[] = {
 	{	"console-convert-kbdmap",	console_convert_kbdmap		},
 	{	"console-fb-realizer",		console_fb_realizer		},
 	{	"console-multiplexor",		console_multiplexor		},
+	{	"console-multiplexor-control",	console_multiplexor_control	},
 	{	"console-ncurses-realizer",	console_ncurses_realizer	},
 	{	"console-resize",		console_resize			},
 	{	"console-clear",		console_clear			},
@@ -51,6 +53,7 @@ commands[] = {
 	{	"pty-run",			pty_run				},
 	{	"resizecons",			console_resize			},
 	{	"clear_console",		console_clear			},
+	{	"chvt",				console_multiplexor_control	},
 	{	"ttylogin-starter",		ttylogin_starter		},
 
 	// Chain-loading non-terminals

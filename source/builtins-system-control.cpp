@@ -28,6 +28,7 @@ extern void cat ( const char * & , std::vector<const char *> & ) ;
 extern void show ( const char * & , std::vector<const char *> & ) ;
 extern void show_json ( const char * & , std::vector<const char *> & ) ;
 extern void status ( const char * & , std::vector<const char *> & ) ;
+extern void escape ( const char * & , std::vector<const char *> & ) ;
 extern void print_service_env ( const char * & , std::vector<const char *> & ) ;
 extern void set_service_env ( const char * & , std::vector<const char *> & ) ;
 extern void try_restart ( const char * & , std::vector<const char *> & ) ;
@@ -109,6 +110,7 @@ commands[] = {
 	{	"show",				show			},
 	{	"show-json",			show_json		},
 	{	"status",			status			},
+	{	"escape",			escape			},
 	{	"print-service-env",		print_service_env	},
 	{	"set-service-env",		set_service_env		},
 	{	"try-restart",			try_restart		},

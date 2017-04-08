@@ -22,20 +22,27 @@ The <code>-n +0</code> option can be added to follow from the beginning of the c
 Also note that it has a race condition where <code>tail</code> will miss out stuff if (for whatever reason) rotation from one file to the next happens faster than <code>tail</code> can switch files to keep up.
 <code>tail</code> ends up skipping whole files.
 (This is fairly easy to trigger in practice if the output of <code>tail</code> is to something slow like a slow scrolling remote terminal over a low bandwidth or lossy network connection.)
+</p><p>
+<a href="http://jdebp.eu/FGA/do-not-use-logrotate.html">GNU <code>tail</code> and BSD <code>tail</code> have a multiplicity of problems handling rotated log files</a>.
 </p></li>
 
 <li><p>
 One can convert the contents of a log file from external TAI64N form to a human-readable timestamp in the current timezone, with the <a href="tai64nlocal.html"><code>tai64nlocal</code></a> tool, which can be used both as a filter within a post-processing pipeline and as a straight file-reading utility.
 </p><p>
 With GNU <code>awk</code>, <code>tai64nlocal</code> can be used as an awk "co-process" to convert timestamps:
-</p><blockquote><pre>print |&amp; "tai64nlocal"
-"tai64nlocal" |&amp; getline</pre></blockquote></li>
+</p>
+<blockquote><pre>print |&amp; "tai64nlocal"
+"tai64nlocal" |&amp; getline</pre></blockquote>
+<p>
+Over the years, many log administration and analysis tools, from logstash to Sawmill (to name but two), have gained the ability to understand TAI64N directly, without need for using <a href="tai64nlocal.html"><code>tai64nlocal</code></a> as an intermediary.
+</p>
+</li>
 
 <li><p>
 Log file directories are locked by the log writing programs with the conventional daemontools lockfile mechanism.
 One can arrange to execute tasks, interlocked with the logging service not running, using the <a href="setlock.html"><code>setlock</code></a> tool.
 For example, this arranges to temporarily stop the log service connected to the <code>local-syslog-read</code> service and archive a snapshot of its log directory:
-</p><blockquote><pre>setlock sh -c 'pax -w /var/log/sv/local-syslog-read/@*.[su] /var/log/sv/local-syslog-read/current &gt; snapshot.tar' &amp;
+</p><blockquote><pre>setlock /var/log/sv/local-syslog-read/lock sh -c 'pax -w /var/log/sv/local-syslog-read/@*.[su] /var/log/sv/local-syslog-read/current &gt; snapshot.tar' &amp;
 system-control condrestart cyclog@local-syslog-read</pre></blockquote>
 <p>
 (Note the subtlety of wildcard expansion being deferred until <code>setlock</code> has acquired the lock.)

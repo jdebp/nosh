@@ -27,7 +27,7 @@
 <refname>update-rc.d</refname>
 <refname>invoke-rc.d</refname>
 <refname>runlevel</refname>
-<refpurpose>BSD/System V compatibility utilities for system and service control</refpurpose>
+<refpurpose>BSD/System 5 compatibility utilities for system and service control</refpurpose>
 </refnamediv>
 
 <refsection><title>Description</title>
@@ -37,7 +37,7 @@
 </para>
 
 <para>
-The various commands that it provides are compatibility shims only; they do not support the full capabilities of the original commands, only a common-use subset for providing an easy migration path for old BSD and System V habits and scripts.
+The various commands that it provides are compatibility shims only; they do not support the full capabilities of the original commands, only a common-use subset for providing an easy migration path for old BSD and System 5 habits and scripts.
 Avoid using them if possible.
 </para>
 
@@ -162,7 +162,7 @@ It does not support their <arg choice='plain'>-d</arg> option, whose behaviour i
 
 <para>
 These commands are all shims around <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-As such, they all operate on native nosh services, not on old BSD or System V shell scripts.
+As such, they all operate on native nosh services, not on old BSD or System 5 shell scripts.
 Their actions are defined in terms of service management actions, not in terms of running shell scripts.
 For example: 
 <command>service</command> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice="plain">start</arg> has the meaning of starting a named service, not of invoking a shell script with an argument.

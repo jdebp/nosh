@@ -372,13 +372,13 @@ scan_preset_files (
 static
 const char *
 preset_directories[] = {
-	"/etc/systemd/system-preset/",
 	"/etc/system-control/presets/",
-	"/lib/systemd/system-preset/",
+	"/etc/systemd/system-preset/",
+	"/usr/local/etc/system-control/presets/",
 	"/usr/share/system-control/presets/",
+	"/lib/systemd/system-preset/",
 	"/usr/lib/systemd/system-preset/",
 	"/usr/local/lib/systemd/system-preset/",
-	"/usr/local/etc/system-control/presets/",
 };
 
 static inline
@@ -394,13 +394,16 @@ query_systemd_preset (
 		const std::string h(effective_user_home_dir());
 		const std::string r(effective_user_runtime_dir());
 		const std::string
-		user_preset_directories[6] = {
+		user_preset_directories[9] = {
+			"/etc/system-control/user-presets/",
 			"/etc/systemd/user-preset/",
+			h + "/.config/system-control/presets/",
+			r + "/system-control/presets/",
+			"/usr/local/etc/system-control/user-presets/",
+			"/usr/share/system-control/user-presets/",
 			"/lib/systemd/user-preset/",
 			"/usr/lib/systemd/user-preset/",
 			"/usr/local/lib/systemd/user-preset/",
-			h + "/.config/system-control/presets/",
-			r + "/system-control/presets/"
 		};
 		for (const std::string * q(user_preset_directories); q < user_preset_directories + sizeof user_preset_directories/sizeof *user_preset_directories; ++q)
 			scan_preset_files (earliest, *q, name, suffix, wants);

@@ -1,0 +1,3 @@
+telinit	fastboot
+telinit	fasthalt
+telinit	fastpoweroff

@@ -12,17 +12,17 @@
 
 <refsynopsisdiv>
 <cmdsynopsis>
-<command>line-banner</command> <arg choice='req'><replaceable>banner</replaceable></arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+<command>line-banner</command> 
+<arg choice='opt'>--NVT</arg> 
+<arg choice='req'><replaceable>banner</replaceable></arg> 
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection><title>Description</title>
 
 <para>
-<command>line-banner</command> is a chain-loading utility that prints the 
-1-line banner <replaceable>banner</replaceable> (followed by a newline) to its
-standard output, and then chain loads to <replaceable>next-prog</replaceable> with the
-<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+<command>line-banner</command> is a chain-loading utility that prints the 1-line banner <replaceable>banner</replaceable> (followed by a newline) to its standard output, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
 </para>
 
 <para>
@@ -31,6 +31,11 @@ standard output, and then chain loads to <replaceable>next-prog</replaceable> wi
 
 <para>
 <command>line-banner</command> makes no alteration to process state.
+</para>
+
+<para>
+If the <arg choice='plain'>--NVT</arg> command-line option is used, the newline follows the Network Virtual Terminal convention of carriage return plus a linefeed.
+Normally, it follows the Unix convention of just a linefeed.
 </para>
 
 </refsection><refsection><title>EXAMPLE</title>
@@ -48,7 +53,7 @@ envuidgid publicfile
 softlimit -o 20 -d 50000
 tcp-socket-listen -b 2 0 80
 tcp-socket-accept -v -c 2 -x cdb.tcp -l 0 --no-delay
-line-banner "220 Features: a p ."
+line-banner --NVT "220 Features: a p ."
 ftpd /home/publicfile/public
 </programlisting>
 
@@ -63,7 +68,7 @@ envuidgid publicfile \
 softlimit -o 20 -d 50000 \
 tcp-socket-listen -b 2 0 80 \
 tcp-socket-accept -v -c 2 -x cdb.tcp -l 0 --no-delay \
-line-banner '220 Features: a p .' \
+line-banner --NVT '220 Features: a p .' \
 ftpd /home/publicfile/public
 </programlisting>
 

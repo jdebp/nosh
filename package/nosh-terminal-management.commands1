@@ -2,6 +2,7 @@ console-clear
 console-convert-kbdmap
 console-fb-realizer
 console-multiplexor
+console-multiplexor-control
 console-ncurses-realizer
 console-resize
 console-terminal-emulator

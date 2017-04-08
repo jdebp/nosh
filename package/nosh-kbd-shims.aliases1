@@ -1,0 +1,3 @@
+console-clear	clear_console
+console-multiplexor-control	chvt
+console-resize	resizecons

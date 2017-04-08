@@ -194,9 +194,10 @@ bool
 bundle::has_started() const
 {
 	if (0 > supervise_dir_fd || !is_ok(supervise_dir_fd)) return false;
-	if (is_ready_after_run(service_dir_fd))
-		return 0 < after_run_status_file(status_file_fd);
-	else
+	if (is_ready_after_run(service_dir_fd)) {
+		const bool include_stopped(is_done_after_exit(service_dir_fd));
+		return 0 < after_run_status_file(status_file_fd, include_stopped);
+	} else
 		return 0 < running_status_file(status_file_fd);
 }
 

@@ -67,6 +67,23 @@ set (
 }
 
 static inline
+bool
+has_main_pid (
+	const char status[ENCORE_STATUS_BLOCK_SIZE]
+) {
+	return status[THIS_PID_OFFSET + 0U] || status[THIS_PID_OFFSET + 1U] || status[THIS_PID_OFFSET + 2U] || status[THIS_PID_OFFSET + 3U];
+}
+
+static inline
+bool
+has_exited_run (
+	const char status[STATUS_BLOCK_SIZE]
+) {
+	const char * const ran_exit_status(status + EXIT_STATUSES_OFFSET + EXIT_STATUS_SIZE * 1);
+	return 0 != ran_exit_status[0];
+}
+
+static inline
 void
 check ( 
 	const int bundle_dir_fd,
@@ -75,6 +92,7 @@ check (
 	std::vector<std::string> & loading,
 	std::vector<std::string> & clock_skewed,
 	std::vector<std::string> & stopped,
+	std::vector<std::string> & started,
 	std::vector<std::string> & disabled,
 	std::vector<std::string> & below_min_seconds,
 	std::vector<std::string> & failed,
@@ -100,6 +118,7 @@ check (
 		return;
 	}
 	const bool initially_up(is_initially_up(service_dir_fd.get()));
+	const bool ready_after_run(is_ready_after_run(service_dir_fd.get()));
 
 	if (!is_ok(supervise_dir_fd.get())) {
 		const int error(errno);
@@ -119,7 +138,7 @@ check (
 		set(rc, EXIT_NAGIOS_CRITICAL);
 		return;
 	}
-	char status[ENCORE_STATUS_BLOCK_SIZE];
+	char status[STATUS_BLOCK_SIZE];
 	const ssize_t b(read(status_fd.get(), status, sizeof status));
 
 	if (b < DAEMONTOOLS_STATUS_BLOCK_SIZE) {
@@ -153,6 +172,12 @@ check (
 	} else {
 		switch (status[ENCORE_STATUS_OFFSET]) {
 			case encore_status_stopped:
+				if (ready_after_run) {
+					if (STATUS_BLOCK_SIZE <= b) {
+						if (has_exited_run(status))
+							break;
+					}
+				}
 				if (initially_up) {
 					stopped.push_back(name);
 				} else {
@@ -160,12 +185,26 @@ check (
 				}
 				return;
 			case encore_status_started:
+				started.push_back(name);
+				return;
 			case encore_status_starting:
 			case encore_status_stopping:
-			case encore_status_running:
 				if (secs < min_seconds) {
 					below_min_seconds.push_back(name);
 					return;
+				}
+				break;
+			case encore_status_running:
+				if (ready_after_run) {
+					if (has_main_pid(status)) {
+						started.push_back(name);
+						return;
+					}
+				} else {
+					if (secs < min_seconds) {
+						below_min_seconds.push_back(name);
+						return;
+					}
 				}
 				break;
 			default:
@@ -222,7 +261,7 @@ nagios_check [[gnu::noreturn]] (
 	}
 
 	int rc(EXIT_NAGIOS_OK);
-	std::vector<std::string> not_loaded, loading, clock_skewed, stopped, disabled, below_min_seconds, failed;
+	std::vector<std::string> not_loaded, loading, clock_skewed, stopped, started, disabled, below_min_seconds, failed;
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
 		std::string path, name, suffix;
 		const int bundle_dir_fd(open_bundle_directory("", *i, path, name, suffix));
@@ -233,12 +272,13 @@ nagios_check [[gnu::noreturn]] (
 			set(rc, EXIT_NAGIOS_CRITICAL);
 			continue;
 		}
-		check(bundle_dir_fd, p, not_loaded, loading, clock_skewed, stopped, disabled, below_min_seconds, failed, rc);
+		check(bundle_dir_fd, p, not_loaded, loading, clock_skewed, stopped, started, disabled, below_min_seconds, failed, rc);
 		close(bundle_dir_fd);
 	}
 	print("not loaded", not_loaded, rc, EXIT_NAGIOS_CRITICAL);
 	print("clock skewed", clock_skewed, rc, EXIT_NAGIOS_CRITICAL);
 	print("stopped", stopped, rc, EXIT_NAGIOS_CRITICAL);
+	print("started", started, rc, EXIT_NAGIOS_WARNING);
 	print("failed/restarting", failed, rc, EXIT_NAGIOS_CRITICAL);
 	print("still loading", loading, rc, EXIT_NAGIOS_WARNING);
 	print("below minimum runtime", below_min_seconds, rc, critical_if_below_min ? EXIT_NAGIOS_CRITICAL : EXIT_NAGIOS_WARNING);

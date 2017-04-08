@@ -69,6 +69,12 @@
 		print "@unexec","system-control","unload-when-stopped",two ".service";
 		print "@unexec","system-control","stop",two ".service";
 	} else
+	if ("service_only_no_run" == $1) {
+		print "@exec","system-control","preset",two ".service";
+		print "@unexec","system-control","disable",two ".service";
+		print "@unexec","system-control","unload-when-stopped",two ".service";
+		print "@unexec","system-control","stop",two ".service";
+	} else
 	if ("target" == $1) {
 		print "@exec","system-control","preset",two ".target";
 		print "@unexec","system-control","disable",two ".target";

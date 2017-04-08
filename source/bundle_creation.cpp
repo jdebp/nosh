@@ -118,7 +118,7 @@ make_mount_interdependencies (
 	while (remove_last_component(where)) {
 		const bool to_root(is_root(where.c_str()));
 		if (prevent_root_link && to_root) break;
-		const std::string param(systemd_name_escape(false, where));
+		const std::string param(systemd_name_escape(false, false, where));
 		const std::string link("after/mount@" + param);
 		const std::string target(etc_mount + param);
 		create_link(prog, name, bundle_dir_fd, target, link);

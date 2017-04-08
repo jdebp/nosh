@@ -44,8 +44,10 @@ extern void fdredir ( const char * &, std::vector<const char *> & );
 extern void read_conf ( const char * &, std::vector<const char *> & );
 extern void setlock ( const char * &, std::vector<const char *> & );
 extern void local_datagram_socket_listen ( const char * &, std::vector<const char *> & );
-extern void local_stream_socket_listen ( const char * &, std::vector<const char *> & );
+extern void local_seqpacket_socket_accept ( const char * &, std::vector<const char *> & );
+extern void local_seqpacket_socket_listen ( const char * &, std::vector<const char *> & );
 extern void local_stream_socket_accept ( const char * &, std::vector<const char *> & );
+extern void local_stream_socket_listen ( const char * &, std::vector<const char *> & );
 #if defined(__LINUX__) || defined(__linux__)
 extern void netlink_datagram_socket_listen ( const char * &, std::vector<const char *> & );
 #endif
@@ -128,6 +130,7 @@ commands[] = {
 	{	"udp-socket-listen",			udp_socket_listen		},
 	{	"local-datagram-socket-listen",		local_datagram_socket_listen	},
 	{	"local-stream-socket-listen",		local_stream_socket_listen	},
+	{	"local-seqpacket-socket-listen",	local_seqpacket_socket_listen	},
 #if defined(__LINUX__) || defined(__linux__)
 	{	"netlink-datagram-socket-listen",	netlink_datagram_socket_listen	},
 #endif
@@ -158,6 +161,7 @@ personalities[] = {
 	// These are not internal commands so that the output of ps looks prettier for long-running service processes that employ them.
 	{	"tcp-socket-accept",			tcp_socket_accept		},
 	{	"local-stream-socket-accept",		local_stream_socket_accept	},
+	{	"local-seqpacket-socket-accept",	local_seqpacket_socket_accept	},
 	{	"export-to-rsyslog",			export_to_rsyslog		},
 	{	"follow-log-directories",		follow_log_directories		},
 	{	"syslog-read",				syslog_read			},

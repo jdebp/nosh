@@ -7,9 +7,11 @@ Description="For Easy Rule Making" firewall
 
 [Service]
 Type=oneshot
+# https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=762726
+# https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=796611
 EnvironmentDirectory=env
 ExecStart=%p "${config:-/etc/%p.conf}"
-ExecStopPost=%p -f "${config:-/etc/%p.conf}"
+ExecStopPost=%p --flush "${config:-/etc/%p.conf}"
 # This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
 Restart=no

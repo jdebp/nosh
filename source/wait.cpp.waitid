@@ -22,6 +22,26 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 static inline
+int
+make_status (
+	const siginfo_t & si
+) {
+	switch (si.si_code) {
+		case CLD_EXITED:	return W_EXITCODE(si.si_status, 0);
+		case CLD_KILLED:	return W_EXITCODE(0, si.si_status);
+		case CLD_DUMPED:	
+		{
+			const int s(W_EXITCODE(0, si.si_status));
+			return WCOREDUMP(s);	// This macro is utterly ridiculous in the GNU C library.
+		}
+		case CLD_STOPPED:	return W_STOPCODE(si.si_status);
+		case CLD_TRAPPED:	return W_STOPCODE(si.si_status);
+		default:
+		case CLD_CONTINUED:	return WCONTINUED;
+	}
+}
+
+static inline
 int	/// \retval -1 error \retval 0 no child \retval >0 found child
 wait_for_anychild (
 	pid_t & child,
@@ -37,7 +57,7 @@ wait_for_anychild (
 		if (0 == si.si_pid || 0 == si.si_signo) 
 			return 0;
 		else {
-			status = si.si_status;
+			status = make_status(si);
 			child = si.si_pid;
 			return 1;
 		}
@@ -92,7 +112,7 @@ wait_for_event_of (
 		if (0 == si.si_pid || 0 == si.si_signo) 
 			return 0;
 		else {
-			status = si.si_status;
+			status = make_status(si);
 			return 1;
 		}
 	}

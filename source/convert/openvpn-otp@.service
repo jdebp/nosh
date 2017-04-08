@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=OpenVPN OTP service for "%i" configuration
+Before=openvpn@%i
+
+[Service]
+User=%p
+WorkingDirectory=root
+ExecStart=%p 
+ExecStopPost=install -m 0600 /dev/null secret.up
+RestartSec=20
+
+[Install]
+#WantedBy=openvpn.target

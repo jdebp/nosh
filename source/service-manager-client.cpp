@@ -295,7 +295,8 @@ has_main_pid (
 
 int	/// \returns status \retval -1 error \retval 0 still to finish running \retval 1 finished running
 after_run_status_file (
-	const int status_file_fd
+	const int status_file_fd,
+	const bool include_stopped
 ) {
 	char status[STATUS_BLOCK_SIZE];
 	const ssize_t n(pread(status_file_fd, status, sizeof status, 0));
@@ -306,9 +307,10 @@ after_run_status_file (
 		case encore_status_started:	return 0;
 		case encore_status_running:	return !has_main_pid(status);
 		case encore_status_failed:	return 1;
-		case encore_status_stopping:	return 1;
+		case encore_status_stopping:	return include_stopped ? 1 : 0;
 		case encore_status_stopped:	
 		{
+			if (!include_stopped) return 0;
 			if (STATUS_BLOCK_SIZE > n) return -1;
 			const char * const ran_exit_status(status + EXIT_STATUSES_OFFSET + EXIT_STATUS_SIZE * 1);
 			return 0 != ran_exit_status[0];

@@ -175,11 +175,13 @@ extern
 std::string 
 systemd_name_unescape ( 
 	bool, 
+	bool, 
 	const std::string & 
 ) ;
 extern
 std::string 
 systemd_name_escape ( 
+	bool, 
 	bool, 
 	const std::string & 
 ) ;

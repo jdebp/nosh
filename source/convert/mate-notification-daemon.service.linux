@@ -8,7 +8,7 @@ Description=MATE notifications daemon
 [Service]
 Type=dbus
 EnvironmentDirectory=env
-ExecStart=/usr/lib/mate/%p
+ExecStart=/usr/lib/%p/%p
 Restart=no
 
 [Install]

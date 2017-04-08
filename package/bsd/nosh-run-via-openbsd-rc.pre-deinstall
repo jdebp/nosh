@@ -1,4 +1,6 @@
 #!/bin/sh -
+
+# Stop and disable OpenBSD rc services.
 /usr/sbin/service system-control-normal stop
 /usr/sbin/service service-manager-svscan stop
 /usr/sbin/service service-manager stop

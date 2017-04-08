@@ -74,6 +74,9 @@ If the "main" service also runs under the aegis of an unprivileged account, it a
 This means that if the main d&aelig;mon is subverted, it cannot affect its logger d&aelig;mon.
 Nor can it <em>directly</em> manipulate any of its own log files (although it can still of course flood them).
 </p></li>
+<li><p>
+Logging services cannot eat into the disc space that is reserved to the superuser for emergencies.
+</p></li>
 </ul>
 
 <h2>
@@ -106,7 +109,7 @@ These behaviours can be relied upon if one wants to place log directories on sto
 
 <p>
 (<a href="http://jdebp.eu/FGA/do-not-use-logrotate.html">GNU <code>tail</code> and BSD <code>tail</code> have more than one problem</a>, though.
-For avoiding the other problems, one has to use something like <a href="follow-log-directories.html"><code>follow-log-directories</code></a> which actually knows that it is looking at a log directoryi, rather than only knowing to look at a single file.)
+For avoiding the other problems, one has to use something like <a href="follow-log-directories.html"><code>follow-log-directories</code></a> which actually knows that it is looking at a log directory, rather than only knowing to look at a single file.)
 </p>
 
 <h2 id="old-services">

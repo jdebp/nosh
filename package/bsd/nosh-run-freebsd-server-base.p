@@ -7,7 +7,7 @@ service_with_dedicated_logger "nisdomain"
 service_with_dedicated_logger "entropy"
 fan_in_logger "sysinit"
 service_only "dmesg"
-service_only "emergency-login@console"
+service_only_no_run "emergency-login@console"
 service_only "hostname"
 service_only "machine-id"
 # BSD-specific targets, services, and sockets

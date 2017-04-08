@@ -64,6 +64,22 @@ open_env_dir (
 
 static inline
 void
+set (
+	bool full,
+	FILE * f,
+	const char * val
+) {
+	bool last_lf(false);
+	for (int c(*val++); '\0' != c; c = *val++) {
+		if (!full && '\n' == c) c = '\0';
+		std::fputc(c, f);
+		last_lf = '\n' == c;
+	}
+	if (!last_lf) std::fputc('\n', f);
+}
+
+static inline
+void
 print ( 
 	bool full,
 	FILE * f 
@@ -251,10 +267,13 @@ set_service_env [[gnu::noreturn]] (
 		}
 
 		FileStar f(fdopen(var_fd.get(), "w"));
-		if (!f) throw EXIT_FAILURE;
+		if (!f) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: ERROR: %s%s/%s%s%s: %s\n", prog, path.c_str(), name.c_str(), "service/", "env/", var, std::strerror(error));
+			throw EXIT_FAILURE;
+		}
 		var_fd.release();
-		std::fputs(val, f);
-		std::fputc('\n', f);
+		set(full, f, val);
 	}
 
 	throw EXIT_SUCCESS;

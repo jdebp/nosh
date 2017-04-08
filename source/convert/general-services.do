@@ -41,9 +41,10 @@ do
 	jail_devfs)		continue ;; # This is a jail configuration item, not a service.
 	jail_mount)		continue ;; # This is a jail configuration item, not a service.
 	kldxref)		continue ;; # This is not a service.
+	ldconfig)		continue ;; # This is handled by a special conversion.
 	linux)			continue ;;
-	moused_nondefault)	continue ;; # This is not used for services.
 	mariadb)		continue ;; # This is handled by a special conversion.
+	moused_nondefault)	continue ;; # This is not used for services.
 	mysql)			continue ;; # This is handled by a special conversion.
 	opensm)			continue ;; # This seems to have disappeared as of FreeBSD 10.
 	pcbsdinit)		continue ;;

@@ -1,0 +1,42 @@
+# shell function library for FreeBSD/TrueOS
+old_escape() { system-control escape --alt-escape --no-ext-escape -- "$@" ; }
+escape() { system-control escape --alt-escape -- "$@" ; }
+service_with_dedicated_logger() {
+	:
+}
+login_service_with_dedicated_logger() {
+	:
+}
+ktty_login_service_with_dedicated_logger() {
+	case "`uname`" in
+	OpenBSD)	ktty=ttyC; break ;;
+	Linux)		ktty=tty; break ;;
+	*)		ktty=ttyv; break ;;
+	esac
+	login_service_with_dedicated_logger "${ktty}$1"
+}
+socket_with_dedicated_logger() {
+	:
+}
+service_only() {
+	:
+}
+service_only_no_run() {
+        :
+}
+fan_in_logger() {
+	:
+}
+target() {
+	:
+}
+log_user() {
+	:
+}
+non_log_user() {
+	:
+}
+user_tty() {
+	:
+}
+

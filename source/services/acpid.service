@@ -6,7 +6,7 @@
 Description=ACPI daemon
 
 [Service]
-ExecStart=%p -f -d
+ExecStart=%p -f -d -l
 StandardInput=socket
 
 [Install]

@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Standard format OpenVPN logging service for "%i" configuration
+Before=openvpn@%i openvpn-otp@%i
+
+[Service]
+WorkingDirectory=/var/log/openvpn/sv/
+User=%p
+ExecStart=cyclog %i/
+
+[Install]
+# Whatever the service being logged installs to, THIS service is a workstation service.
+# Logging to workstation log facilities is a workstation thing.
+WantedBy=workstation.target

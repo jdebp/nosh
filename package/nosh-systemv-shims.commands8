@@ -1,8 +1,5 @@
 chkconfig
 emergency
-fastboot
-fasthalt
-fastpoweroff
 halt
 haltsys
 init

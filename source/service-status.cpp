@@ -61,13 +61,24 @@ char
 static inline
 int
 colour_of_state (
+	bool ready_after_run,
+	uint32_t main_pid,
+	bool exited_run,
 	char c
 ) {
 	switch (c) {
-		case encore_status_stopped:	return COLOR_WHITE;
+		case encore_status_stopped:
+			if (ready_after_run)
+				return exited_run ? COLOR_GREEN : COLOR_WHITE;
+			else
+				return COLOR_WHITE;
 		case encore_status_starting:	return COLOR_YELLOW;
 		case encore_status_started:	return COLOR_MAGENTA;
-		case encore_status_running:	return COLOR_GREEN;
+		case encore_status_running:
+			if (ready_after_run)
+				return main_pid ? COLOR_YELLOW : COLOR_GREEN;
+			else
+				return COLOR_GREEN;
 		case encore_status_stopping:	return COLOR_YELLOW;
 		case encore_status_failed:	return COLOR_RED;
 		default:			return COLOR_DEFAULT;
@@ -103,12 +114,15 @@ static inline
 void
 set_colour_of_state (
 	bool no_colours,
+	bool ready_after_run,
+	uint32_t main_pid,
+	bool exited_run,
 	char c
 ) {
 	if (no_colours) return;
 	const char * s(tigetstr(setaf));
 	if (!s || reinterpret_cast<const char *>(-1) == s) return;
-	put(s, colour_of_state(c));
+	put(s, colour_of_state(ready_after_run, main_pid, exited_run, c));
 }
 
 static inline
@@ -140,17 +154,39 @@ reset_colour (
 static inline
 const char *
 state_of (
+	bool ready_after_run,
+	uint32_t main_pid,
+	bool exited_run,
 	char c
 ) {
 	switch (c) {
-		case encore_status_stopped:	return "stopped";
+		case encore_status_stopped:	
+			if (ready_after_run)
+				return exited_run ? "done" : "stopped";
+			else
+				return "stopped";
 		case encore_status_starting:	return "starting";
 		case encore_status_started:	return "started";
-		case encore_status_running:	return "running";
+		case encore_status_running:	
+			if (ready_after_run)
+				return main_pid ? "started" : "ready";
+			else
+				return "running";
 		case encore_status_stopping:	return "stopping";
 		case encore_status_failed:	return "failed";
 		default:			return "unknown";
 	}
+}
+
+static inline
+bool
+has_exited_run (
+	const unsigned int b,
+	const char status[STATUS_BLOCK_SIZE]
+) {
+	if (b < STATUS_BLOCK_SIZE) return false;
+	const char * const ran_exit_status(status + EXIT_STATUSES_OFFSET + EXIT_STATUS_SIZE * 1);
+	return 0 != ran_exit_status[0];
 }
 
 static
@@ -235,11 +271,12 @@ display (
 			}
 		}
 		const char state(b >= ENCORE_STATUS_BLOCK_SIZE ? status[ENCORE_STATUS_OFFSET] : p ? encore_status_running : encore_status_stopped);
-		set_colour_of_state(!colours, state);
+		const bool exited_run(has_exited_run(b, status));
+		set_colour_of_state(!colours, ready_after_run, p, exited_run, state);
 		if (b < ENCORE_STATUS_BLOCK_SIZE) {
 			std::fprintf(stdout, "%s", p ? "up" : "down");
 		} else {
-			std::fprintf(stdout, "%s", state_of(state));
+			std::fprintf(stdout, "%s", state_of(ready_after_run, p, exited_run, state));
 		}
 		reset_colour(!colours);
 		if (p && !long_form)

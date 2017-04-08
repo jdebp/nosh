@@ -301,9 +301,9 @@ effective_user_name ()
 }
 
 struct names {
-	names(const char * a) : arg_name(a), user(per_user_mode ? effective_user_name() : "root"), runtime_dir(per_user_mode ? effective_user_runtime_dir() : "/run/") { split_name(a, unit_dirname, unit_basename); escaped_unit_basename = systemd_name_escape(false, unit_basename); }
-	void set_prefix(const std::string & v, bool esc, bool alt) { set(esc, alt, escaped_prefix, prefix, v); }
-	void set_instance(const std::string & v, bool esc, bool alt) { set(esc, alt, escaped_instance, instance, v); }
+	names(const char * a) : arg_name(a), user(per_user_mode ? effective_user_name() : "root"), runtime_dir(per_user_mode ? effective_user_runtime_dir() : "/run/") { split_name(a, unit_dirname, unit_basename); escaped_unit_basename = systemd_name_escape(false, false, unit_basename); }
+	void set_prefix(const std::string & v, bool esc, bool alt, bool ext) { set(esc, alt, ext, escaped_prefix, prefix, v); }
+	void set_instance(const std::string & v, bool esc, bool alt, bool ext) { set(esc, alt, ext, escaped_instance, instance, v); }
 	void set_bundle(const std::string & r, const std::string & b) { bundle_basename = b; bundle_dirname = r + b; }
 	void set_machine_id(const std::string & v) { machine_id = v; }
 	void set_user(const std::string & u) { user = u; runtime_dir = "/run/user/" + u + "/"; }
@@ -324,11 +324,11 @@ struct names {
 	std::list<std::string> substitute ( const std::list<std::string> & );
 protected:
 	std::string arg_name, unit_dirname, unit_basename, escaped_unit_basename, prefix, escaped_prefix, instance, escaped_instance, bundle_basename, bundle_dirname, machine_id, user, runtime_dir;
-	void set ( bool esc, bool alt, std::string & escaped, std::string & normal, const std::string & value ) {
+	void set ( bool esc, bool alt, bool ext, std::string & escaped, std::string & normal, const std::string & value ) {
 		if (esc)
-			escaped = systemd_name_escape(alt, normal = value);
+			escaped = systemd_name_escape(alt, ext, normal = value);
 		else
-			normal = systemd_name_unescape(alt, escaped = value);
+			normal = systemd_name_unescape(alt, ext, escaped = value);
 	}
 };
 
@@ -628,14 +628,16 @@ convert_systemd_units [[gnu::noreturn]] (
 ) {
 	const char * prog(basename_of(args[0]));
 	std::string bundle_root;
-	bool escape_instance(false), escape_prefix(false), alt_escape(false), etc_bundle(false), local_bundle(false), systemd_quirks(true), generation_comment(true);
+	bool escape_instance(false), escape_prefix(false), alt_escape(false), ext_escape(false), etc_bundle(false), local_bundle(false), systemd_quirks(true), generation_comment(true);
 	try {
 		const char * bundle_root_str(0);
-		bool no_systemd_quirks(false), no_generation_comment(false);
+		bool no_ext_escape(false), no_systemd_quirks(false), no_generation_comment(false);
 		popt::bool_definition user_option('u', "user", "Create a bundle that runs under the per-user manager.", per_user_mode);
 		popt::string_definition bundle_option('\0', "bundle-root", "directory", "Root directory for bundles.", bundle_root_str);
 		popt::bool_definition escape_instance_option('\0', "escape-instance", "Escape the instance part of a template instantiation.", escape_instance);
+		popt::bool_definition escape_prefix_option('\0', "escape-prefix", "Escape the prefix part of a template instantiation.", escape_prefix);
 		popt::bool_definition alt_escape_option('\0', "alt-escape", "Use an alternative escape algorithm.", alt_escape);
+		popt::bool_definition no_ext_escape_option('\0', "no-ext-escape", "Do not use an extended escape sequences.", no_ext_escape);
 		popt::bool_definition etc_bundle_option('\0', "etc-bundle", "Consider this service to live in the /etc/service-bundles/ area.", etc_bundle);
 		popt::bool_definition local_bundle_option('\0', "local-bundle", "Consider this service to live in a service bundle area like /var/local/sv/.", local_bundle);
 		popt::bool_definition no_systemd_quirks_option('\0', "no-systemd-quirks", "Turn off systemd quirks.", no_systemd_quirks);
@@ -644,7 +646,9 @@ convert_systemd_units [[gnu::noreturn]] (
 			&user_option,
 			&bundle_option,
 			&escape_instance_option,
+			&escape_prefix_option,
 			&alt_escape_option,
+			&no_ext_escape_option,
 			&etc_bundle_option,
 			&local_bundle_option,
 			&no_systemd_quirks_option,
@@ -658,6 +662,7 @@ convert_systemd_units [[gnu::noreturn]] (
 		args = new_args;
 		if (p.stopped()) throw EXIT_SUCCESS;
 		if (bundle_root_str) bundle_root = bundle_root_str + std::string("/");
+		ext_escape = !no_ext_escape;
 		systemd_quirks = !no_systemd_quirks;
 		generation_comment = !no_generation_comment;
 	} catch (const popt::error & e) {
@@ -701,7 +706,7 @@ convert_systemd_units [[gnu::noreturn]] (
 		names.set_bundle(bundle_root, bundle_basename);
 	}
 
-	names.set_prefix(names.query_bundle_basename(), escape_prefix, alt_escape);
+	names.set_prefix(names.query_bundle_basename(), escape_prefix, alt_escape, ext_escape);
 
 	machine_id::erase();
 	if (!machine_id::read_non_volatile() && !machine_id::read_fallbacks())
@@ -716,9 +721,9 @@ convert_systemd_units [[gnu::noreturn]] (
 		if (!socket_file && ENOENT == errno) {
 			std::string::size_type atc(names.query_bundle_basename().find('@'));
 			if (names.query_bundle_basename().npos != atc) {
-				names.set_prefix(names.query_bundle_basename().substr(0, atc), escape_prefix, alt_escape);
+				names.set_prefix(names.query_bundle_basename().substr(0, atc), escape_prefix, alt_escape, ext_escape);
 				++atc;
-				names.set_instance(names.query_bundle_basename().substr(atc, names.query_bundle_basename().npos), escape_instance, alt_escape);
+				names.set_instance(names.query_bundle_basename().substr(atc, names.query_bundle_basename().npos), escape_instance, alt_escape, ext_escape);
 				is_instance = true;
 				socket_unit_name = names.query_unit_dirname() + names.query_escaped_prefix() + "@.socket";
 				socket_file = find(socket_unit_name, socket_filename);
@@ -741,9 +746,9 @@ convert_systemd_units [[gnu::noreturn]] (
 		if (!service_file && ENOENT == errno) {
 			std::string::size_type atc(names.query_bundle_basename().find('@'));
 			if (names.query_bundle_basename().npos != atc) {
-				names.set_prefix(names.query_bundle_basename().substr(0, atc), escape_prefix, alt_escape);
+				names.set_prefix(names.query_bundle_basename().substr(0, atc), escape_prefix, alt_escape, ext_escape);
 				++atc;
-				names.set_instance(names.query_bundle_basename().substr(atc, names.query_bundle_basename().npos), escape_instance, alt_escape);
+				names.set_instance(names.query_bundle_basename().substr(atc, names.query_bundle_basename().npos), escape_instance, alt_escape, ext_escape);
 				is_instance = true;
 				service_unit_name = (names.query_unit_dirname() + names.query_escaped_prefix() + "@.") + (is_target ? "target" : "service");
 				service_file = find(service_unit_name, service_filename);
@@ -757,6 +762,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	value * listenfifo(socket_profile.use("socket", "listenfifo"));
 	value * listennetlink(socket_profile.use("socket", "listennetlink"));
 	value * listendatagram(socket_profile.use("socket", "listendatagram"));
+	value * listensequentialpacket(socket_profile.use("socket", "listensequentialpacket"));
 #if defined(IPV6_V6ONLY)
 	value * bindipv6only(socket_profile.use("socket", "bindipv6only"));
 #endif
@@ -852,6 +858,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	value * environment(service_profile.use("service", "environment"));
 	value * environmentfile(service_profile.use("service", "environmentfile"));
 	value * environmentdirectory(service_profile.use("service", "environmentdirectory"));	// This is an extension to systemd.
+	value * fullenvironmentdirectory(service_profile.use("service", "fullenvironmentdirectory"));	// This is an extension to systemd.
 	value * environmentuser(service_profile.use("service", "environmentuser"));	// This is an extension to systemd.
 	value * environmentappendpath(service_profile.use("service", "environmentappendpath"));	// This is an extension to systemd.
 #if defined(__LINUX__) || defined(__linux__)
@@ -955,8 +962,8 @@ convert_systemd_units [[gnu::noreturn]] (
 		}
 	}
 	if (is_socket_activated) {
-		if (!listenstream && !listendatagram && !listenfifo && !listennetlink) {
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, socket_filename.c_str(), "Missing mandatory ListenStream/ListenDatagram/ListenFIFO entry.");
+		if (!listenstream && !listendatagram && !listenfifo && !listennetlink && !listensequentialpacket) {
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, socket_filename.c_str(), "Missing mandatory ListenStream/ListenDatagram/ListenFIFO/ListenSequentialPacket entry.");
 			throw EXIT_FAILURE;
 		}
 		if (listendatagram) {
@@ -1108,7 +1115,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	if (tasks_accounting)
 		enable_control_group_controllers += set_controller_command(control_group_levels, "pids", tasks_accounting);
 	std::string control_group_name("..");
-	if (slice)  {
+	if (slice) {
 		control_group_name += "/../" + names.substitute(slice->last_setting());
 		create_control_group += "foreground create-control-group " + quote(control_group_name) + " ;\n";
 	}
@@ -1345,9 +1352,10 @@ convert_systemd_units [[gnu::noreturn]] (
 		}
 	}
 	if (environmentdirectory) {
+		const std::string opt(is_bool_true(fullenvironmentdirectory, false) ? "--full " : "");
 		for (std::list<std::string>::const_iterator i(environmentdirectory->all_settings().begin()); environmentdirectory->all_settings().end() != i; ++i) {
 			const std::string & val(*i);
-			env += "envdir " + quote(names.substitute(val)) + "\n";
+			env += "envdir " + opt + quote(names.substitute(val)) + "\n";
 		}
 	}
 	if (environmentuser) env += "envuidgid " + quote(names.substitute(environmentuser->last_setting())) + "\n";
@@ -1681,6 +1689,35 @@ convert_systemd_units [[gnu::noreturn]] (
 #if defined(SO_REUSEPORT)
 				if (is_bool_true(reuseport, false)) run_or_start << "--reuse-port ";
 #endif
+				if (is_bool_true(freebind, false)) run_or_start << "--bind-to-any ";
+				run_or_start << quote(listenaddress) << " " << quote(listenport) << "\n";
+			}
+		}
+		if (listensequentialpacket) {
+			const std::string sockname(names.substitute(listensequentialpacket->last_setting()));
+			if (is_local_socket_name(sockname)) {
+				run_or_start << "local-seqpacket-socket-listen ";
+				if (!is_socket_accept) run_or_start << "--systemd-compatibility ";
+				if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
+				if (socketmode) run_or_start << "--mode " << quote(names.substitute(socketmode->last_setting())) << " ";
+				if (socketuser) run_or_start << "--user " << quote(names.substitute(socketuser->last_setting())) << " ";
+				if (socketgroup) run_or_start << "--group " << quote(names.substitute(socketgroup->last_setting())) << " ";
+				if (passcredentials) run_or_start << "--pass-credentials ";
+				if (passsecurity) run_or_start << "--pass-security ";
+				run_or_start << quote(sockname) << "\n";
+			} else {
+				std::string listenaddress, listenport;
+				split_ip_socket_name(sockname, listenaddress, listenport);
+				run_or_start << "ip-seqpacket-socket-listen ";
+				if (!is_socket_accept) run_or_start << "--systemd-compatibility ";
+				if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
+#if defined(IPV6_V6ONLY)
+				if (bindipv6only && "both" == tolower(bindipv6only->last_setting())) run_or_start << "--combine4and6 ";
+#endif
+#if defined(SO_REUSEPORT)
+				if (is_bool_true(reuseport, false)) run_or_start << "--reuse-port ";
+#endif
+				if (is_bool_true(freebind, false)) run_or_start << "--bind-to-any ";
 				run_or_start << quote(listenaddress) << " " << quote(listenport) << "\n";
 			}
 		}
@@ -1711,6 +1748,8 @@ convert_systemd_units [[gnu::noreturn]] (
 			if (is_bool_true(netlinkraw, false)) run_or_start << "--raw ";
 			if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
 			if (receivebuffer) run_or_start << "--receive-buffer-size " << quote(receivebuffer->last_setting()) << " ";
+			if (passcredentials) run_or_start << "--pass-credentials ";
+			if (passsecurity) run_or_start << "--pass-security ";
 			run_or_start << quote(protocol) << " " << quote(multicast_group) << "\n";
 		}
 		run_or_start << setup_environment.str();
@@ -1724,6 +1763,20 @@ convert_systemd_units [[gnu::noreturn]] (
 					run_or_start << "\n";
 				} else {
 					run_or_start << "tcp-socket-accept ";
+					if (maxconnections) run_or_start << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
+					if (is_bool_true(keepalive, false)) run_or_start << "--keepalives ";
+					if (is_bool_true(nodelay, false)) run_or_start << "--no-delay ";
+					run_or_start << "\n";
+				}
+			}
+			if (listensequentialpacket) {
+				const std::string sockname(names.substitute(listensequentialpacket->last_setting()));
+				if (is_local_socket_name(sockname)) {
+					run_or_start << "local-seqpacket-socket-accept ";
+					if (maxconnections) run_or_start << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
+					run_or_start << "\n";
+				} else {
+					run_or_start << "ip-seqpacket-socket-accept ";
 					if (maxconnections) run_or_start << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
 					if (is_bool_true(keepalive, false)) run_or_start << "--keepalives ";
 					if (is_bool_true(nodelay, false)) run_or_start << "--no-delay ";
@@ -1772,7 +1825,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	if (merge_run_into_start) {
 		run << (is_remain || is_oneshot ? "true" : "pause") << "\n";
 	} else {
-		if (execstartpre || runtimedirectory || !control_group_knobs.empty()) {
+		if (execstartpre || runtimedirectory || !create_control_group.empty() || !control_group_knobs.empty()) {
 			start << perilogue_setup_environment.str();
 			start << control_group_knobs;
 			start << createrundir;
@@ -1937,6 +1990,11 @@ convert_systemd_units [[gnu::noreturn]] (
 	}
 	if (listendatagram) {
 		const std::string sockname(names.substitute(listendatagram->last_setting()));
+		if (is_local_socket_name(sockname))
+			make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, sockname);
+	}
+	if (listensequentialpacket) {
+		const std::string sockname(names.substitute(listensequentialpacket->last_setting()));
 		if (is_local_socket_name(sockname))
 			make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, sockname);
 	}

@@ -3,15 +3,15 @@
 ## **************************************************************************
 
 [Unit]
-Description=1-wire accessed via a FUSE mount at %t/owfs
+Description=1-wire accessed via a FUSE mount at %t/%p
 After=owserver.socket
 Wants=kmod@fuse
 
 [Service]
 EnvironmentDirectory=env
-RuntimeDirectory=owfs
-ExecStart=%p --foreground --allow_other --mountpoint "%t/owfs" ${flags}
-ExecStopPost=umount "%t/owfs"
+RuntimeDirectory=%p
+ExecStart=%p --foreground --allow_other --mountpoint "%t/%p" ${flags}
+ExecStopPost=umount "%t/%p"
 
 [Install]
 WantedBy=server.target

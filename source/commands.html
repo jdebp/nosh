@@ -41,6 +41,7 @@ General process state:
 <li><p> <a href="fdredir.html"><code>fdredir</code></a> &mdash; open file descriptors for reading, writing, append, and so forth </p></li>
 <li><p> <a href="foreground.html"><code>foreground</code></a> &mdash; run a child process synchronously, before continuing </p></li>
 <li><p> <a href="hardlimit.html"><code>hardlimit</code></a> &mdash; change hard resource limits </p></li>
+<li><p> <a href="local-reaper.html"><code>local-reaper</code></a> &mdash; set the local "Grim Reaper" status on/off </p></li>
 <li><p> <a href="machineenv.html"><code>machineenv</code></a> &mdash; initialize "machine" environment variables such as <code>HOSTNAME</code>, <code>MACHINEID</code>, and <code>DOMAINNAME</code> </p></li>
 <li><p> <a href="make-private-fs.html"><code>make-private-fs</code></a> &mdash; mount private filesystems in various places to hide the global filesystems from view </p></li>
 <li><p> <a href="move-to-control-group.html"><code>move-to-control-group</code></a> &mdash; change into a given control group, absolute or relative to the current one </p></li>
@@ -87,6 +88,8 @@ Interacting with <a href="../../FGA/UCSPI.html">UCSPI</a> servers:
 <li><p> <a href="line-banner.html"><code>line-banner</code></a> &mdash; print the initial greeting that some UCSPI-TCP services do not print for themselves </p></li>
 <li><p> <a href="fifo-listen.html"><code>fifo-listen</code></a> &mdash; open a listening FIFO </p></li>
 <li><p> <a href="local-datagram-socket-listen.html"><code>local-datagram-socket-listen</code></a> &mdash; open a listening AF_LOCAL datagram socket </p></li>
+<li><p> <a href="local-seqpacket-socket-accept.html"><code>local-seqpacket-socket-accept</code></a> &mdash; accept connections on an AF_LOCAL sequential packet socket, with concurrency control </p></li>
+<li><p> <a href="local-seqpacket-socket-listen.html"><code>local-seqpacket-socket-listen</code></a> &mdash; open a listening AF_LOCAL sequantial packet socket </p></li>
 <li><p> <a href="local-stream-socket-accept.html"><code>local-stream-socket-accept</code></a> &mdash; accept connections on an AF_LOCAL stream socket, with concurrency control </p></li>
 <li><p> <a href="local-stream-socket-listen.html"><code>local-stream-socket-listen</code></a> &mdash; open a listening AF_LOCAL stream socket </p></li>
 <li><p> <a href="netlink-datagram-socket-listen.html"><code>netlink-datagram-socket-listen</code></a> &mdash; open a listening AF_NETLINK datagram socket </p></li>
@@ -135,6 +138,7 @@ User space virtual terminal services and terminal tools:
 <li><p> <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a> &mdash; "realize" a user-space virtual terminal onto a physical "head", i.e a keyboard input event device and a framebuffer display device, with specified fonts and keyboard maps </p></li>
 <li><p> <a href="console-ncurses-realizer.html"><code>console-ncurses-realizer</code></a> &mdash; "realize" a user-space virtual terminal onto another terminal using Wide NCurses </p></li>
 <li><p> <a href="console-multiplexor.html"><code>console-multiplexor</code></a> &mdash; multiplex several user-space virtual terminals into one, using the conventional <code>alt</code>-plus-function-key hotkeys </p></li>
+<li><p> <a href="console-multiplexor-control.html"><code>console-multiplexor-control</code></a> &mdash; control multiplexed user-space virtual terminals </p></li>
 <li><p> <a href="console-resize.html"><code>console-resize</code></a> (a.k.a. <code>resizecons</code>) &mdash; resize a terminal's display using DEC VT control sequences, which can properly pass over remote connections and don't need superuser privileges </p></li>
 <li><p> <a href="console-terminal-emulator.html"><code>console-terminal-emulator</code></a> &mdash; provide the internal workings of a user-space virtual terminal, compatible with the Linux/FreeBSD/SCO kernel terminal emulators or a DEC VT </p></li>
 </ul>
@@ -245,7 +249,7 @@ Other subcommands are:
 <li> <code>system-control unload-kernel-module</code> &mdash; simple and portable shim for the operating system's kernel module unloading tool, used to make portable <code>kmod@</code> service bundles </p></li>
 <li> <code>system-control convert-fstab-services</code> &mdash; generate <code>swap@</code>, <code>dump@</code>, <code>fsck@</code>, and <code>mount@</code> service bundles from the contents of <code>/etc/fstab</code> </p></li>
 <li> <code>system-control write-volume-service-bundles</code> &mdash; generate the <code>swap@</code>, <code>dump@</code>, <code>fsck@</code>, and <code>mount@</code> service bundles for a single volume </p></li>
-<li> <code>system-control nagios-check-services</code> &mdash; a very simple Nagios passive check plug-in that raises critical alerts for non-running enabled services and warnings for disabled services </p></li>
+<li> <code>system-control nagios-check-service</code> &mdash; a very simple Nagios passive check plug-in that raises critical alerts for non-running enabled services and warnings for disabled services </p></li>
 <li> <code>system-control get-mount-where</code> &mdash; find the mount "where" from its "what" </p></li>
 <li> <code>system-control get-mount-what</code> &mdash; find the mount "what" from its "where" </p></li>
 </li>

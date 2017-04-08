@@ -169,6 +169,27 @@ The following environment variables are set if the <arg choice='plain'>--set-xdg
 <term><envar>XDG_RUNTIME_DIR</envar></term>
 <listitem><para>Set to <filename>/run/user/<replaceable>username</replaceable>/</filename>.</para></listitem>
 </varlistentry>
+<varlistentry>
+<term><envar>XDG_CONFIG_DIRS</envar></term>
+<listitem><para>Set to <filename>/usr/local/etc/xdg</filename> on the BSDs, unset (so applications use the default of <filename>/etc/xdg</filename>) on other operating systems.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><envar>XDG_CONFIG_HOME</envar></term>
+<listitem><para>Unset, so that applications use the default of <filename><replaceable>$HOME</replaceable>/.config</filename>.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><envar>XDG_DATA_DIRS</envar></term>
+<listitem><para>
+Set to <filename>/usr/local/share</filename>:<filename>/usr/share</filename>:<filename>/share</filename>.
+The addition of <filename>/share</filename> comes from TrueOS Desktop.
+Note that TrueOS Desktop orders the directories the other way around, giving operating system data files priority over "site local" ones.
+This ordering, on the other hand, is the ordering that is used in the XDG Desktop Specification.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><envar>XDG_DATA_HOME</envar></term>
+<listitem><para>Unset, so that applications use the default of <filename><replaceable>$HOME</replaceable>/.local/share</filename>.</para></listitem>
+</varlistentry>
 
 </variablelist>
 
@@ -181,7 +202,10 @@ The following environment variables are set if the <arg choice='plain'>--set-dbu
 
 <varlistentry>
 <term><envar>DBUS_SESSION_BUS_ADDRESS</envar></term>
-<listitem><para>Set to <filename>unix:path=/run/user/<replaceable>username</replaceable>/bus</filename>.</para></listitem>
+<listitem><para>
+Set to <filename>unix:path=/run/user/<replaceable>username</replaceable>/bus</filename>.
+(In practice, <filename>unix:runtime=yes</filename> is not actually supported yet by most operating systems.)
+</para></listitem>
 </varlistentry>
 
 </variablelist>

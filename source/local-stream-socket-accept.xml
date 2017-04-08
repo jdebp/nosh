@@ -35,9 +35,7 @@ It loops forever, accepting local socket connections and (for each such connecti
 </para>
 
 <para>
-Following the UCSPI conventions,
-<command>local-stream-socket-accept</command> sets up several environment variables containing information
-about the local socket connection.
+Following the UCSPI conventions, <command>local-stream-socket-accept</command> sets up several environment variables containing information about the local socket connection.
 </para>
 
 <variablelist>
@@ -99,13 +97,10 @@ The effective GID of the remote (client) process that connected.
 </variablelist>
 
 <para>
-If the <arg>--verbose</arg> option is used, <command>local-stream-socket-accept</command> logs information about processes
-spawned and the current and maximum number of connections.
+If the <arg>--verbose</arg> option is used, <command>local-stream-socket-accept</command> logs information about processes spawned and the current and maximum number of connections.
 The latter is set with the <arg>--connection-limit</arg> option, which defaults to 40.
-If it is reached, <command>local-stream-socket-accept</command> stops accepting new connections
-until one or more child processes exit.
-<command>local-stream-socket-accept</command> always limits the number of connections, and has
-no notion of an "unlimited" number of connections.
+If it is reached, <command>local-stream-socket-accept</command> stops accepting new connections until one or more child processes exit.
+<command>local-stream-socket-accept</command> always limits the number of connections, and has no notion of an "unlimited" number of connections.
 </para>
 
 </refsection><refsection><title>USAGE</title>
@@ -114,43 +109,22 @@ no notion of an "unlimited" number of connections.
 <command>local-stream-socket-accept</command> can be used 
 <itemizedlist>
 <listitem>
-as a "socket-activated" daemon monitored by
-<citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-(with the systemd-recommended <code>Accept=false</code>),
+as a "socket-activated" daemon monitored by <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry> (with the systemd-recommended <code>Accept=false</code>),
 </listitem>
 <listitem>
-as a daemon started by
-<citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-(with <code>wait</code> and as long as it is chained via 
-<command>fdmove</command> <arg choice="plain">0</arg> <arg choice="plain">3</arg>), and
+as a daemon started by <citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry> (with <code>wait</code> and as long as it is chained via <command>fdmove</command> <arg choice="plain">0</arg> <arg choice="plain">3</arg>), and
 </listitem>
 <listitem>
-as a simple daemon chained from
-<citerefentry><refentrytitle>local-stream-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-and monitored by
-<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+as a simple daemon chained from <citerefentry><refentrytitle>local-stream-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry> and monitored by <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </listitem>
 </itemizedlist>
-Together, <command>local-stream-socket-accept</command> and
-<citerefentry><refentrytitle>local-stream-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-replace
-<citerefentry><refentrytitle>unixserver</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-from ucspi-unix.
+Together, <command>local-stream-socket-accept</command> and <citerefentry><refentrytitle>local-stream-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry> replace <citerefentry><refentrytitle>unixserver</refentrytitle><manvolnum>1</manvolnum></citerefentry> from ucspi-unix.
 </para>
 
 <para>
-To change the process' UID and GID after a successful 
-call to <citerefentry><refentrytitle>accept</refentrytitle><manvolnum>2</manvolnum></citerefentry>,
-simply chain to
-<citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-or
-<citerefentry><refentrytitle>setuidgid-fromenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-This is, however, not usually necessary because unprivileged processes can accept any
-connections.
-It is preferable to chain <command>local-stream-socket-accept</command> from 
-<citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-or
-<citerefentry><refentrytitle>setuidgid-fromenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+To change the process' UID and GID after a successful call to <citerefentry><refentrytitle>accept</refentrytitle><manvolnum>2</manvolnum></citerefentry>, simply chain to <citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry> or <citerefentry><refentrytitle>setuidgid-fromenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+This is, however, not usually necessary because unprivileged processes can accept any connections.
+It is preferable to chain <command>local-stream-socket-accept</command> from <citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry> or <citerefentry><refentrytitle>setuidgid-fromenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

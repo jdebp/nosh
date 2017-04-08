@@ -1,0 +1,102 @@
+<refentry id="local-seqpacket-socket-listen">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>local-seqpacket-socket-listen</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>local-seqpacket-socket-listen</refname>
+<refpurpose>create a socket listening for incoming AF_LOCAL sequential packets and chain</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>local-seqpacket-socket-listen</command>
+<arg>--uid <replaceable>number</replaceable></arg>
+<arg>--gid <replaceable>number</replaceable></arg>
+<arg>--mode <replaceable>number</replaceable></arg>
+<arg>--pass-credentials</arg>
+<arg>--pass-security</arg>
+<arg>--upstart-compatibility</arg>
+<arg>--systemd-compatibility</arg>
+<arg choice='req'><replaceable>path</replaceable></arg>
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>local-seqpacket-socket-listen</command> is a chain-loading utility that opens a local domain sequential packet socket bound to <replaceable>path</replaceable>, sets the socket to file descriptor 3+<replaceable>n</replaceable> (where <replaceable>n</replaceable> is the number of already-opened listening file descriptors), closing whatever that descriptor was, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>local-seqpacket-socket-listen</command> will ignore.
+</para>
+
+<para>
+After binding the socket to <replaceable>path</replaceable>, <command>local-seqpacket-socket-listen</command> changes the owner UID of the socket to that specified with the <arg>--uid</arg> command line argument (if supplied), changes the GID of the socket to that specified with the <arg>--gid</arg> command line argument (if supplied), and changes the permissions of the socket to those specified with the <arg>--mode</arg> command line argument (if supplied).
+The normal conventions for numbers apply, so for octal permissions use a leading zero.
+Symbolic permissions and account names are not supported.
+</para>
+
+<para>
+The <arg>--pass-credentials</arg> option causes <command>local-seqpacket-socket-listen</command> to request the <code>SO_PASSCRED</code> socket option.
+The <arg>--pass-security</arg> option causes it to request the <code>SO_PASSSEC</code> socket option.
+</para>
+
+<para>
+The <arg>--upstart-compatibility</arg> option causes <command>local-seqpacket-socket-listen</command> to set the <envar>UPSTART_FDS</envar> environment variable to 3, and the <envar>UPSTART_EVENTS</envar> environment variable to <literal>socket</literal>.
+This is for compatibility with daemons that expect to be run under <citerefentry><refentrytitle>upstart</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+<para>
+The <arg>--systemd-compatibility</arg> option is for compatibility with daemons that expect to be run under <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+It causes <command>local-seqpacket-socket-listen</command> to set the <envar>LISTEN_FDS</envar> environment variable to the number of listening file descriptors, and the <envar>LISTEN_PID</envar> environment variable to its own process ID.
+If the command is started up with the <envar>LISTEN_FDS</envar> and the <envar>LISTEN_PID</envar> environment variables already appropriately set, the number of listening file descriptors is taken from them and increased by one, otherwise the number of file descriptors is 1.
+Thus a list of listening file descriptors can be built up with multiple commands, as long as they all use the <arg>--systemd-compatibility</arg> option.
+</para>
+
+<para>
+For compatibility with daemons that expect to be run under <citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry>, inheriting the listening socket as their standard input, simply use <command>fdmove</command> <arg choice="plain">0</arg> <arg choice="plain">3</arg> in <replaceable>next-prog</replaceable>.
+See <citerefentry><refentrytitle>fdmove</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+</refsection><refsection><title>Security</title>
+
+<para>
+Because of an oversight in operating systems that prevents <citerefentry><refentrytitle>fchmod</refentrytitle><manvolnum>2</manvolnum></citerefentry> and <citerefentry><refentrytitle>fchown</refentrytitle><manvolnum>2</manvolnum></citerefentry> from working with bound local domain sockets, <command>local-seqpacket-socket-listen</command> calls <citerefentry><refentrytitle>chmod</refentrytitle><manvolnum>2</manvolnum></citerefentry> and <citerefentry><refentrytitle>chown</refentrytitle><manvolnum>2</manvolnum></citerefentry> on <replaceable>path</replaceable>.
+Because of an oversight in operating systems that prevents <citerefentry><refentrytitle>bind</refentrytitle><manvolnum>2</manvolnum></citerefentry> from being able to re-use old local domain socket addresses, <command>local-seqpacket-socket-listen</command> attempts to delete, with <citerefentry><refentrytitle>unlink</refentrytitle><manvolnum>2</manvolnum></citerefentry>, any file named <replaceable>path</replaceable> before binding.
+An attacker who could change what file is denoted by <replaceable>path</replaceable> in between the calls to <citerefentry><refentrytitle>bind</refentrytitle><manvolnum>2</manvolnum></citerefentry> and the call to <citerefentry><refentrytitle>chmod</refentrytitle><manvolnum>2</manvolnum></citerefentry> and <citerefentry><refentrytitle>chown</refentrytitle><manvolnum>2</manvolnum></citerefentry> could change the permissions and ownership of any file in the filesystem.
+An attacker who could change what file is denoted by <replaceable>path</replaceable> before the call to <citerefentry><refentrytitle>unlink</refentrytitle><manvolnum>2</manvolnum></citerefentry> could unlink any file in the filesystem.
+</para>
+
+<para>
+To avoid these security holes, ensure that none of the directories in the path to <replaceable>path</replaceable> (not just the final one) are writable by untrusted users or groups; and ensure that untrusted programs cannot supply <replaceable>path</replaceable>.
+</para>
+
+</refsection><refsection><title>USAGE</title>
+
+<para>
+<command>local-seqpacket-socket-listen</command> can be used as a simple daemon monitored by
+<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+<command>local-seqpacket-socket-listen</command> overlaps the functionality of
+<citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+(in the systemd-recommended configuration of <code>Accept=false</code> sockets).
+</para>
+
+<para>
+To change the process' UID and GID after opening the socket,
+simply chain through
+<citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

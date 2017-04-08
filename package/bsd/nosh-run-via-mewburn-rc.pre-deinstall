@@ -1,4 +1,6 @@
 #!/bin/sh -
+
+# Stop and disable Mewburn rc services.
 /usr/sbin/service system-control-normal onestop
 /usr/sbin/service service-manager-svscan onestop
 /usr/sbin/service service-manager onestop

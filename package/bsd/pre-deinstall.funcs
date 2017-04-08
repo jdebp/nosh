@@ -1,9 +1,9 @@
 # shell function library for FreeBSD/TrueOS
-escape() { echo "$1"|sed -e 's/_/_x5f/g' -e 's/@/_x40/g' -e 's/:/_x3a/g' -e 's/+/_x2b/g' ; }
+escape() { system-control escape --alt-escape -- "$@" ; }
 del_user() { 
 	if getent passwd "$1" > /dev/null 
 	then
-		echo 1>&2 "Removing user:" "$1"
+		printf 1>&2 "Removing user: %s\n" "$1"
 		pw userdel "$1" 
 	fi
 }
@@ -16,7 +16,7 @@ shut_down() {
 			system-control unload-when-stopped "$i"
 			if system-control is-active "$i"
 			then
-				echo 1>&2 "Stop:" "$i"
+				printf 1>&2 "Stop: %s\n" "$i"
 				system-control stop "$i"
 			fi
 		fi
@@ -41,6 +41,7 @@ login_service_with_dedicated_logger() {
 ktty_login_service_with_dedicated_logger() {
 	case "`uname`" in
 	OpenBSD)	ktty=ttyC; break ;;
+	Linux)		ktty=tty; break ;;
 	*)		ktty=ttyv; break ;;
 	esac
 	login_service_with_dedicated_logger "${ktty}$1"
@@ -54,6 +55,14 @@ socket_with_dedicated_logger() {
 	fi
 }
 service_only() {
+	if test -z "${nosh_run_package}"
+	then
+		:
+	else
+		shut_down "$1.service"
+	fi
+}
+service_only_no_run() {
 	if test -z "${nosh_run_package}"
 	then
 		:

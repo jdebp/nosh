@@ -11,6 +11,7 @@ fcgiwrap
 ftp4d
 ftp6d
 git-daemon
+gopher6d
 http6d
 https6d
 initctld

@@ -18,6 +18,8 @@ exec	klog-read
 exec	line-banner
 exec	local-datagram-socket-listen
 exec	local-reaper
+exec	local-seqpacket-socket-accept
+exec	local-seqpacket-socket-listen
 exec	local-stream-socket-accept
 exec	local-stream-socket-listen
 exec	machineenv
@@ -96,6 +98,7 @@ service-status	svstat
 console-terminal-emulator	console-convert-kbdmap
 console-terminal-emulator	console-fb-realizer
 console-terminal-emulator	console-multiplexor
+console-terminal-emulator	console-multiplexor-control
 console-terminal-emulator	console-ncurses-realizer
 console-terminal-emulator	console-clear
 console-terminal-emulator	console-resize
@@ -114,3 +117,4 @@ console-terminal-emulator	vc-get-tty
 console-terminal-emulator	vc-reset-tty
 console-clear	clear_console
 console-resize	resizecons
+console-multiplexor-control	chvt

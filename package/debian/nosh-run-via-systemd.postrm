@@ -1,6 +1,8 @@
 #!/bin/sh -
 case "$1" in
+	# post-deinstall for nosh-run-via-systemd
 	remove|purge)
+		# Re-apply presets to services that were cut-out by a special preset in this package.
 		system-control preset sysinit.target dbus.socket local-syslog.target
 		system-control preset static-networking.target
 		system-control preset remote-fs.target remote-fs-pre.target

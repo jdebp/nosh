@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=ibus daemon
+
+[Service]
+Type=dbus
+EnvironmentDirectory=env
+ExecStart=%p --xim
+
+[Install]

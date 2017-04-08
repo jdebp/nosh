@@ -1,0 +1,132 @@
+<refentry id="local-seqpacket-socket-accept">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>local-seqpacket-socket-accept</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>local-seqpacket-socket-accept</refname>
+<refpurpose>accept incoming local socket connections and spawn a program per connection</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>local-seqpacket-socket-accept</command>
+<arg>--verbose</arg>
+<arg>--connection-limit <replaceable>number</replaceable></arg>
+<arg>--localname <replaceable>hostname</replaceable></arg>
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>local-seqpacket-socket-accept</command> expects file descriptor 3 to be a socket that has been set up with <citerefentry><refentrytitle>local-seqpacket-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry> to listen for incoming local socket connections.
+It loops forever, accepting local socket connections and (for each such connection) spawning <replaceable>next-prog</replaceable>, closing the listening socket in the child process and setting the connected socket as the child process' standard input and standard output.
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>local-seqpacket-socket-accept</command> will ignore.
+</para>
+
+<para>
+Following the UCSPI conventions, <command>local-seqpacket-socket-accept</command> sets up several environment variables containing information about the local socket connection.
+</para>
+
+<variablelist>
+
+<varlistentry>
+<term><envar>PROTO</envar></term>
+<listitem>
+<para>
+This always has the value <code>UNIX</code>.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><envar>UNIXLOCALPATH</envar></term>
+<listitem>
+<para>
+The local (server) pathname of the socket.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><envar>UNIXREMOTEPATH</envar></term>
+<listitem>
+<para>
+The remote (client) pathname of the socket.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><envar>UNIXREMOTEPID</envar></term>
+<listitem>
+<para>
+The PID of the remote (client) process that connected.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><envar>UNIXREMOTEUID</envar></term>
+<listitem>
+<para>
+The effective UID of the remote (client) process that connected.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><envar>UNIXREMOTEGID</envar></term>
+<listitem>
+<para>
+The effective GID of the remote (client) process that connected.
+</para>
+</listitem>
+</varlistentry>
+
+</variablelist>
+
+<para>
+If the <arg>--verbose</arg> option is used, <command>local-seqpacket-socket-accept</command> logs information about processes spawned and the current and maximum number of connections.
+The latter is set with the <arg>--connection-limit</arg> option, which defaults to 40.
+If it is reached, <command>local-seqpacket-socket-accept</command> stops accepting new connections until one or more child processes exit.
+<command>local-seqpacket-socket-accept</command> always limits the number of connections, and has no notion of an "unlimited" number of connections.
+</para>
+
+</refsection><refsection><title>USAGE</title>
+
+<para>
+<command>local-seqpacket-socket-accept</command> can be used 
+<itemizedlist>
+<listitem>
+as a "socket-activated" daemon monitored by <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry> (with the systemd-recommended <code>Accept=false</code>),
+</listitem>
+<listitem>
+as a daemon started by <citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry> (with <code>wait</code> and as long as it is chained via <command>fdmove</command> <arg choice="plain">0</arg> <arg choice="plain">3</arg>), and
+</listitem>
+<listitem>
+as a simple daemon chained from <citerefentry><refentrytitle>local-seqpacket-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry> and monitored by <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</listitem>
+</itemizedlist>
+Together, <command>local-seqpacket-socket-accept</command> and <citerefentry><refentrytitle>local-seqpacket-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry> replace <citerefentry><refentrytitle>unixserver</refentrytitle><manvolnum>1</manvolnum></citerefentry> from ucspi-unix.
+</para>
+
+<para>
+To change the process' UID and GID after a successful call to <citerefentry><refentrytitle>accept</refentrytitle><manvolnum>2</manvolnum></citerefentry>, simply chain to <citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry> or <citerefentry><refentrytitle>setuidgid-fromenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+This is, however, not usually necessary because unprivileged processes can accept any connections.
+It is preferable to chain <command>local-seqpacket-socket-accept</command> from <citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry> or <citerefentry><refentrytitle>setuidgid-fromenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

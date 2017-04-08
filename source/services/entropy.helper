@@ -6,11 +6,16 @@
 if ! test -w /dev/random || ! test -c /dev/random
 then
 	echo 1>&2 "/dev/random is not available."
-	exit $?
+	exec false
 fi
 
+# These are fallback defaults to the conventional Linux/FreeBSD/OpenBSD locations.
+# An unconventional location should be signalled by actually setting the service environment variables and not relying upon a fallback default.
+# The external configuration import subsystem (q.v.) uses what is in /etc/rc.conf, generating a fake rc.conf with these settings on Linux operating systems.
 case "`uname`" in
-Linux)	file="${file-/var/lib/urandom/random-seed}" ;;
+Linux)	
+	file="${file-/var/lib/urandom/random-seed}"
+	;;
 *BSD)	
 	dir="${dir-/var/db/entropy}" 
 	file="${file-/var/db/entropy-file}" 

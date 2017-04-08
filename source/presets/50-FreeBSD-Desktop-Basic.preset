@@ -50,6 +50,10 @@ enable	cyclog@anacron.service
 enable	anacron.service
 enable	cyclog@avahi-daemon.service
 enable	avahi-daemon.service
+enable	cyclog@avahi_daemon.service
+enable	avahi_daemon.service
+enable	cyclog@org.freedesktop.Avahi.service
+enable	org.freedesktop.Avahi.service
 disable	cyclog@chkprintcap.service
 disable	chkprintcap.service
 enable	cyclog@org.cups.cups-cancel.service

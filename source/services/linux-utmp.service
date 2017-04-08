@@ -6,6 +6,7 @@
 Description=Enable Linux login accounting
 Before=multi-user-pre.target
 After=mount@-run.service mount@-.service
+AfterMountsFor=/run
 
 [Service]
 Type=oneshot

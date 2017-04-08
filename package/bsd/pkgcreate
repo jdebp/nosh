@@ -14,7 +14,7 @@ new_pkg() {
 }
 old_pkg() {
 	local version comment maintainer
-	version="`bsd/tmp/bin/system-control version|awk '{print $3;}'`"
+	version="`bsd/tmp/command/system-control version|awk '{print $3;}'`"
 	maintainer="`sed -n -e '/Maintainer:/s/^Maintainer://p' package/debian/control`"
 	comment="nosh toolset: $i"
 	pkg_create -f "$1/+MANIFEST" -d "$1/+DESC" -D COMMENT="${comment}" -D MAINTAINER="${maintainer}" -D FULLPKGPATH="sysutils/$3" -p / -B "$2" "./$3-${version}.tgz"

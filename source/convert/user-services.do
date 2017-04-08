@@ -297,6 +297,7 @@ do
 			user_simple_dbus_service "gvfs-metadata" "org.gtk.vfs.Metadata"
 			user_simple_dbus_service "gvfs-mtp-volume-monitor" "org.gtk.Private.MTPVolumeMonitor"
 			user_simple_dbus_service "gvfs-udisks2-volume-monitor" "org.gtk.Private.UDisks2VolumeMonitor"
+			user_simple_dbus_service "ibus-daemon" "org.freedesktop.IBus"
 			user_simple_dbus_service "knotify" "org.kde.knotify"
 			user_simple_dbus_service "mate-notification-daemon" "org.freedesktop.mate.Notifications" "org.freedesktop.Notifications"
 			user_simple_dbus_service "mate-screensaver" "org.mate.ScreenSaver"
@@ -305,6 +306,7 @@ do
 			user_simple_dbus_service "zeitgeist-daemon" "org.gnome.zeitgeist.Engine"
 			user_simple_dbus_service "zeitgeist-datahub" "org.gnome.zeitgeist.datahub"
 			user_simple_dbus_service "zeitgeist-fts" "org.gnome.zeitgeist.SimpleIndexer"
+			user_simple_dbus_service "xdg-desktop-portal-gtk" "org.freedesktop.implo.portal.desktop.gtk"
 
 			user_dbus_definition "org.gnome.Maps"
 			user_dbus_definition "org.gnome.Weather.Application"

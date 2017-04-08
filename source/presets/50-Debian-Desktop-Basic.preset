@@ -1,0 +1,47 @@
+#
+# Enable basic services for the out-of-the-box Debian Desktop
+#
+# This is not a systemd preset.
+# It goes in a special nosh system-manager preset directory.
+# It is used by the nosh-run-trueos-desktop-basic package in order to enable the services themselves.
+#
+
+#
+# These services are in Debian Desktop but not in Debian Server.
+#
+
+# etc services
+
+# Normal services
+enable	cyclog@anacron.service
+enable	anacron.service
+enable	cyclog@avahi-daemon.service
+enable	avahi-daemon.service
+enable	cyclog@avahi_daemon.service
+enable	avahi_daemon.service
+enable	cyclog@org.freedesktop.Avahi.service
+enable	org.freedesktop.Avahi.service
+disable	cyclog@chkprintcap.service
+disable	chkprintcap.service
+disable	cyclog@org.cups.cups-cancel.service
+disable	org.cups.cups-cancel.service
+disable	cyclog@org.cups.cups-lpd.service
+disable	org.cups.cups-lpd.service
+disable	cyclog@org.cups.cupsd.service
+disable	org.cups.cupsd.service
+enable	cyclog@dbus.service
+enable	dbus.service
+disable	cyclog@hald.service
+disable	hald.service
+disable	cyclog@org.freedesktop.Hal.service
+disable	org.freedesktop.Hal.service
+disable	cyclog@lpd.service
+disable	lpd.service
+enable	cyclog@rpclockd.service
+enable	rpclockd.service
+enable	cyclog@rpcstatd.service
+enable	rpcstatd.service
+
+# Generated services
+
+# Targets

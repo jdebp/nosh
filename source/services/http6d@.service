@@ -9,7 +9,7 @@ Description=NOTE: Bernstein's publicfile supports HTTP over both IPv4 and IPv6 w
 [Service]
 EnvironmentUser=publicfile
 LimitNOFILE=20
-LimitDATA=500000
+LimitDATA=5000000
 ExecStart=httpd /home/publicfile/public
 
 [Install]

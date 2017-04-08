@@ -26,6 +26,9 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
+// This must have static storage duration as we are using it in args.
+static std::string banner_storage;
+
 void
 tcpserver ( 
 	const char * & next_prog,
@@ -113,8 +116,12 @@ tcpserver (
 	}
 
 	if (banner) {
-		args.insert(args.begin(), banner);
+		banner_storage = banner;
+		if (*banner && '\n' == banner_storage.back())
+			banner_storage.erase(banner_storage.end() - 1);
+		args.insert(args.begin(), banner_storage.c_str());
 		args.insert(args.begin(), "--");
+		args.insert(args.begin(), "--NVT");
 		args.insert(args.begin(), "line-banner");
 	}
 	args.insert(args.begin(), "--");

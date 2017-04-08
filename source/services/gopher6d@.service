@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=GOPHER service over IP4/IP6 using djbwares' gopherd
+Description=NOTE: djbwares' gopherd supports GOPHER over both IPv4 and IPv6 without patches.
+
+[Service]
+EnvironmentDirectory=env
+EnvironmentUser=publicfile
+LimitNOFILE=20
+LimitDATA=5000000
+ExecStart=${localhost:+setenv ${PROTO:-TCP}LOCALHOST "${localhost}"} gopherd /home/publicfile/public
+
+[Install]
+WantedBy=server.target

@@ -1,7 +1,0 @@
-system-control	svcadm
-service-control	svc
-service-is-up	svup
-service-is-ok	svok
-service-status	svstat
-service-show	svshow
-service-dt-scanner	svscan

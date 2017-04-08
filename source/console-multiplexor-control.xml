@@ -1,0 +1,105 @@
+<refentry id="console-multiplexor-control">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>console-multiplexor-control</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>console-multiplexor-control</refname>
+<refpurpose>control a user-space virtual terminal multiplexor</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>console-multiplexor-control</command>
+<group choice='opt' rep='repeat'>
+<arg choice='req'><replaceable>command</replaceable></arg>
+<arg choice='req'><replaceable>command</replaceable>@<replaceable>vtname</replaceable></arg>
+</group>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>chvt</command>
+<group choice='opt' rep='repeat'>
+<arg choice='req'><replaceable>command</replaceable></arg>
+<arg choice='req'><replaceable>command</replaceable>@<replaceable>vtname</replaceable></arg>
+</group>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>console-multiplexor-control</command> controls a (user-space) virtual terminal that is driven by <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+<para>
+<replaceable>vtname</replaceable> is the (optional) name of the virtual terminal, relative to <filename>/run/dev</filename>.
+</para>
+
+<para>
+<replaceable>command</replaceable> is one of:
+</para>
+
+<variablelist>
+
+<varlistentry>
+<term><code>S</code></term>
+<listitem><para>
+Switch to the first session.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><code>N</code></term>
+<listitem><para>
+Switch to the next session.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><code>P</code></term>
+<listitem><para>
+Switch to the previous session.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><replaceable>number</replaceable></term>
+<listitem><para>
+Switch to the session numbered <replaceable>number</replaceable>.
+Sessions are numbered starting from zero.
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+</refsection>
+
+<refsection><title>Security</title>
+
+<para>
+Session switching is done by injecting switch command events into the input stream.
+Permission to inject things into the input stream is implicitly permission to generate arbitrary keyboard and mouse input to a session.
+Usually the only accounts with such privileges are the superuser and the accounts used to run the daemons that form the user-space virtual terminal subsystem.
+</para>
+
+<para>
+Session switching under programmatic control with a tool such as this can unexpectedly switch users away from password prompts and the like.
+Be careful about granting users the privilege of performing these actions.
+For best results, only the user physically at the user station(s) where the multiplex virtual terminal is being realized should be able to generate session switches, with actual keyboard actions.
+</para>
+
+<para>
+(The kernel virtual terminal system shares these caveats and risks.
+They are simply rarely discussed.)
+</para>
+
+</refsection>
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

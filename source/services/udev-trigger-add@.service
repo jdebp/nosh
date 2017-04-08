@@ -15,7 +15,7 @@ ExecStart=udevadm trigger --action=add --type=%i
 RemainAfterExit=yes
 Restart=never
 # This is an outrageous bodge.
-ExecStartPre=sleep 5
+ExecStartPre=sleep 2
 
 [Install]
 WantedBy=sysinit.target

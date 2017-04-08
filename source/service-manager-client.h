@@ -106,7 +106,8 @@ wait_ok (
 );
 int
 after_run_status_file (
-	const int status_file_fd
+	const int status_file_fd,
+	const bool include_stopped
 );
 int
 running_status_file (

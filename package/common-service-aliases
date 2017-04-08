@@ -26,6 +26,7 @@ packagekit	org.freedesktop.PackageKit
 polkitd		org.freedesktop.PolicyKit1
 powerd++	powerdxx
 rc-local	rc.local
+redis-server    redis
 samba		samba-ad-dc
 smbd		smb
 sppp-log	spppcontrol-log

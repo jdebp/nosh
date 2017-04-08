@@ -8,3 +8,7 @@
 
 enable	cyclog@avahi-daemon.service
 enable	avahi-daemon.service
+enable	cyclog@avahi_daemon.service
+enable	avahi_daemon.service
+enable	cyclog@org.freedesktop.Avahi.service
+enable	org.freedesktop.Avahi.service

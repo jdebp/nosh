@@ -277,6 +277,10 @@ init (
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
 		const char *p(*i);
 		if (p[0] && !p[1]) switch (p[0]) {
+			case 'B':
+			case 'b':
+				if (action < EMERGENCY) action = EMERGENCY;
+				break;
 			case '1':
 			case 'S':
 			case 's':

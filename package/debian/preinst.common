@@ -1,0 +1,7 @@
+# Common pre-upgrade for Debian
+case "$1" in
+	upgrade)
+		extra
+                common
+		;;
+esac

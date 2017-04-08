@@ -17,6 +17,7 @@ extern "C" int clearenv();
 // **************************************************************************
 */
 
+// This must have static storage duration as we are using it in args.
 static std::string login_storage;
 static const std::string dash("-");
 

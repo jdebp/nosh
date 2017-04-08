@@ -16,3 +16,10 @@ tai64n
 tai64nlocal
 unload-kernel-module
 dbus-daemon-launch-helper
+svc
+svup
+svok
+svstat
+svshow
+svscan
+svcadm

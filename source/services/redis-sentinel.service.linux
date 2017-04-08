@@ -1,0 +1,28 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Redis key-value store sentinel
+After=redis-runtime
+Wants=redis-runtime
+
+[Service]
+NUMAInterleave=all
+User=redis
+ExecStart=%p /etc/redis/sentinel.conf
+LimitNOFILE=64000
+# These are what a Debian person thinks, and are not the official word from redis development.
+PrivateTmp=yes
+PrivateDevices=yes
+#ProtectHome=yes
+#ReadOnlyDirectories=/
+#ReadWriteDirectories=-/var/lib/redis
+#ReadWriteDirectories=-/var/log/redis
+#ReadWriteDirectories=-/run/redis
+#CapabilityBoundingSet=~CAP_SYS_PTRACE
+#ProtectSystem=true
+#ReadWriteDirectories=-/etc/redis
+
+[Install]
+WantedBy=server.target

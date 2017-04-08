@@ -125,7 +125,7 @@ protected:
 	bool IsControl(uint32_t);
 	bool IsIntermediate(uint32_t);
 	bool IsParameter(uint32_t);
-	void Print(uint32_t);
+	void Print(bool, uint32_t);
 	void Escape1(uint32_t);
 	void Escape2(uint32_t);
 	void ControlSequence(uint32_t);

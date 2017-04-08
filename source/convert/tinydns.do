@@ -110,7 +110,7 @@ then
 	then
 		mv -- "${s}/service/root/data" "${s}/service/root/data.original"
 	fi
-	test -e "${s}/service/root/Makefile.original" || mv -- "${s}/service/root/Makefile" "${s}/service/root/Makefile.original"
+	test -e "${s}/service/root/Makefile.original" || test \! -e "${s}/service/root/Makefile" || mv -- "${s}/service/root/Makefile" "${s}/service/root/Makefile.original"
 	test -r "${s}/service/root/Makefile" || generate_Makefile > "${s}/service/root/Makefile"
 fi
 

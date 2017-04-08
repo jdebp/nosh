@@ -92,8 +92,6 @@ nscd
 ntpd
 ntpdate
 openntpd
-openvpn@client
-openvpn@server
 org.cups.cups-cancel
 org.cups.cupsd
 ossec@agentd
@@ -128,6 +126,9 @@ pulseaudio
 qmail-send
 rabbitmq-server
 rc-local
+redis-runtime
+redis-sentinel
+redis-server
 rfcomm_pppd-log
 rpcbind
 rtadvd
@@ -143,6 +144,9 @@ sickbeard
 slapd
 slim
 slurpd
+slurmd
+slurmdbd
+slurmctld
 smartd
 smbd
 sppp-log

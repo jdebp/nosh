@@ -1,0 +1,15 @@
+/* COPYING ******************************************************************
+For copyright and licensing terms, see the file named COPYING.
+// **************************************************************************
+*/
+
+// Debian useradd allows backslash in user/group names.
+static const char ESCAPE_CHAR('\\');
+
+static inline
+bool
+prohibited_in_alt(
+	const char c
+) {
+	return std::isspace(c) || '\\' == c || '/' == c || '@' == c || ':' == c || ',' == c || '+' == c;
+}

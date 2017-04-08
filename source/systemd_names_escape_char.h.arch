@@ -1,0 +1,15 @@
+/* COPYING ******************************************************************
+For copyright and licensing terms, see the file named COPYING.
+// **************************************************************************
+*/
+
+// Arch useradd disallows backslash in user/group names.
+static const char ESCAPE_CHAR('_');
+
+static inline
+bool
+prohibited_in_alt(
+	const char c
+) {
+	return (!std::isalnum(c) || std::isupper(c)) && '-' != c;
+}

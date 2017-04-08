@@ -1,0 +1,34 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%p (MariaDB) database server for %i
+# This is an exception to the standard practice for log services.
+# It makes the behaviour similar to what DB administrators are used to.
+# The mysqld_safe script obscures the fact that it forks a separate logging daemon process.
+After=mysql-log@%i
+Wants=mysql-log@%i
+Conflicts=mariadb@%i
+
+[Service]
+#Type=notify
+EnvironmentDirectory=env
+ExecStartPre=setuidgid "${user}" ${core_file_size:+softlimit -c "${core_file_size}"} ${open_file_limit:+softlimit -o "${open_file_limit}"} ${numa_interleave:+numactl --interleave "${numa_interleave}"} ${nice:+nice -n "${nice}"} sh -c 'test -d ./data/mysql/ || exec "${mysql_install_db}" --defaults-group-suffix="%I" ${defaults_extra_file:+--defaults-extra-file "${defaults_extra_file}"} --basedir=./ --datadir=./data --plugin_dir=./plugin'
+ExecStartPre=sh -c 'test ! "${flush_caches}" || ( sync ; sysctl -q -w vm.drop_caches=3 )'
+ExecStartPre=chown "${user}" /run/mysqld%I
+ExecStart=setuidgid "${user}" ${core_file_size:+softlimit -c "${core_file_size}"} ${open_file_limit:+softlimit -o "${open_file_limit}"} ${numa_interleave:+numactl --interleave "${numa_interleave}"} ${nice:+nice -n "${nice}"} "${mysqld}" --defaults-group-suffix="%I" ${defaults_extra_file:+--defaults-extra-file "${defaults_extra_file}"} --basedir=./ --datadir=./data --plugin_dir=./plugin --socket="${socket:-%t/mysqld.sock}" ${port:+--port="${port}"} --pid-file "${pid_file:-%t/mysqld.pid}" ${flags}
+RuntimeDirectory=mysqld%I
+RuntimeDirectoryMode=0755
+# We do not forcibly kill database servers, for better or for worse.
+SendSIGKILL=false
+# This works around a security hole where the server opens sensitive files with predictable names in /tmp/ .
+PrivateTmp=true
+# on-failure or always would auto-restart when the configuration file is invalid.
+# on-abort would auto-restart in cases where manual recovery is needed.
+Restart=on-success
+RestartSec=5
+Umask=007
+
+[Install]
+WantedBy=server.target

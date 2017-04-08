@@ -1,0 +1,7 @@
+# Common pre-deinstall for Debian
+case "$1" in
+	remove|purge)
+		extra
+                common
+		;;
+esac

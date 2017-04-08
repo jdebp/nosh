@@ -70,6 +70,33 @@ convert_longhand() {
 	"
 }
 
+# These get us *only* the operating system variables, safely.
+read_os() { /bin/exec clearenv read-conf /etc/os-release "`which printenv`" "$1" ; }
+
+convert_linux() {
+	# Stuff that can be overriden by explicit lines in rc.conf comes first.
+	printf "entropy_enable=%s\n" "DUMMY"
+	case "`read_os ID`:`read_os VERSION_ID`" in
+	arch:*|centos:*|rhel:*)
+		printf "entropy_file=%s\n" "/var/lib/systemd/random-seed"
+		;;
+	debian:*|ubuntu:*)
+		printf "entropy_file=%s\n" "/var/lib/urandom/random-seed"
+		;;
+	*)      	
+		printf "entropy_file=%s\n" "/var/lib/urandom/random-seed"
+		;;
+	esac
+
+	if test -r /etc/rc.conf
+	then
+		redo-ifchange /etc/rc.conf
+		cat /etc/rc.conf
+	fi
+
+	# Now for stuff that always overrides rc.conf .
+}
+
 if test -r "${freenas_db}"
 then
 	convert_freenas > "$3"
@@ -85,8 +112,16 @@ fi
 if test -r "${default_rc}"
 then
 	convert_longhand > "$3"
-else
-	echo > "$3" '# no rc.conf file'
+	exit $?
 fi
 
+# This is a fairly arbitrary test.
+if test -r /etc/os-release
+then
+	redo-ifchange /etc/os-release
+	convert_linux > "$3"
+	exit $?
+fi
+
+echo > "$3" '# no rc.conf file'
 exit $?

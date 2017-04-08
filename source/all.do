@@ -8,9 +8,9 @@ command8_lists="../package/commands8 ../package/extra-manpages8"
 
 (
 
-echo version.h 
+echo version.h systemd_names_escape_char.h
 echo getty getty-noreset
-echo services/colord.service services/console-fb-realizer@.service services/cyclog@.service services/dbus.service services/geoclue.service services/klogd.socket services/local-priv-syslog.socket services/local-syslog.socket services/network-interfaces.service services/nfsd.service services/nscd.service services/polkitd.service services/sysctl.service services/system-wide.conf services/tcsd.service services/ttylogin@.service services/upower.service
+echo services/colord.service services/console-fb-realizer@.service services/cyclog@.service services/dbus.service services/geoclue.service services/klogd.socket services/local-priv-syslog.socket services/local-syslog.socket services/network-interfaces.service services/nfsd.service services/nscd.service services/polkitd.service services/redis-sentinel.service services/redis-server.service services/sysctl.service services/system-wide.conf services/tcsd.service services/ttylogin@.service services/upower.service
 echo convert/user-dbus.service convert/gnome-terminal-server.service convert/at-spi-dbus-bus.service convert/gvfs-daemon.service convert/gvfs-udisks2-volume-monitor.service convert/gvfs-afc-volume-monitor.service convert/gvfs-goa-volume-monitor.service convert/gvfs-hal-volume-monitor.service convert/gvfs-gphoto2-volume-monitor.service convert/gvfs-mtp-volume-monitor.service convert/gvfs-metadata.service convert/gconfd.service convert/dconf-service.service convert/per-user.conf convert/mate-notification-daemon.service convert/mpd.service convert/zeitgeist-fts.service convert/dbus.service
 echo ${service_lists} ${target_lists} ${mount_lists} ${command1_lists} ${command8_lists}
 

@@ -1,0 +1,7 @@
+exec	chroot
+exec	false
+exec	setsid
+exec	true
+exec	ulimit
+exec	umask
+exec	unshare

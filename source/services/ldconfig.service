@@ -11,11 +11,12 @@ Wants=local-fs.target
 
 [Service]
 Type=oneshot
-# The import procedure is expected to have populated this directory with paths, paths_aout, and paths32.
+# The import procedure is expected to have populated this directory with paths_elf, paths_aout, and paths_elf32.
+# paths, paths_32, and paths_aout can be used to add paths to what are converted by the import procedure.
 EnvironmentDirectory=env
-ExecStart=%p -elf -v /lib /usr/lib /usr/local/lib ${paths} /etc/ld-elf.so.conf
-ExecStart=%p -32 -v /lib /usr/lib /usr/local/lib ${paths32} /etc/ld-elf32.so.conf
-ExecStart=%p -aout -v /lib/aout /usr/lib/aout /usr/local/lib/aout ${paths_aout=${paths}} /etc/ld.so.conf
+ExecStart=%p -elf -v ${rc_paths_elf} ${paths} /etc/ld-elf.so.conf
+ExecStart=%p -32 -v ${rc_paths_elf32} ${paths_32} /etc/ld-elf32.so.conf
+ExecStart=%p -aout -v ${rc_paths_aout} ${paths_aout} /etc/ld.so.conf
 # This is a one-shot service that can be re-triggered by starting it again.
 ##RemainAfterExit=1
 Restart=no

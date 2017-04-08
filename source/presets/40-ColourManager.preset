@@ -10,3 +10,5 @@ enable	cyclog@colord-sane.service
 enable	colord-sane.service
 enable	cyclog@colord.service
 enable	colord.service
+enable	cyclog@org.freedesktop.ColorManager.service
+enable	org.freedesktop.ColorManager.service
