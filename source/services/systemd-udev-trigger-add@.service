@@ -1,0 +1,23 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=systemd-udev plug-and-play manager one-shot initialization for %i
+DefaultDependencies=false
+Before=shutdown.target
+After=local-fs.target systemd-udev.service
+Conflicts=udev-trigger@%i
+
+[Service]
+Type=oneshot
+ExecStart=udevadm trigger --action=add --type=%i
+# This only has meaningful behaviour at bootstrap, not later.
+RemainAfterExit=yes
+Restart=never
+# This is an outrageous bodge.
+ExecStartPre=sleep 2
+
+[Install]
+WantedBy=sysinit.target
+StoppedBy=shutdown.target

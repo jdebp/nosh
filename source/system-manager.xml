@@ -282,7 +282,7 @@ This will activate the <code>emergency</code> target.
 
 <varlistentry>
 <term>
-<code>SIGRTMIN + 1</code> (and, for compatibility <code>SIGTERM</code> on BSD) 
+<code>SIGRTMIN + 1</code>
 </term>
 <listitem><para>
 Spawn <command>system-control</command> <arg choice="plain">start</arg> <arg choice="plain">rescue</arg>.
@@ -324,11 +324,9 @@ This will activate the <code>secure-attention-key</code> target.
 </varlistentry>
 
 <varlistentry>
-<term>
-<code>SIGRTMIN + 13</code>,
-<code>SIGRTMIN + 14</code>, and
-<code>SIGRTMIN + 15</code>
-</term>
+<term><code>SIGRTMIN + 13</code></term>
+<term><code>SIGRTMIN + 14</code></term>
+<term><code>SIGRTMIN + 15</code></term>
 <listitem><para>
 Close the pipe, terminate the service manager, and wait a short while for it.
 If the system manager is the system-wide process #1, tell the kernel to flush its disc cache and (respectively) halt, power off, or reboot the system.

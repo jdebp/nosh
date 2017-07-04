@@ -72,7 +72,8 @@ log (
 void
 recordio ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 
@@ -108,13 +109,6 @@ recordio (
 		throw EXIT_FAILURE;
 	}
 
-	const int queue(kqueue());
-	if (0 > queue) {
-		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kqueue", std::strerror(error));
-		throw EXIT_FAILURE;
-	}
-
 	const int child(fork());
 
 	if (0 > child) {
@@ -147,6 +141,13 @@ recordio (
 
 	close(input_fds[0]); input_fds[0] = -1;
 	close(output_fds[1]); output_fds[1] = -1;
+
+	const int queue(kqueue());
+	if (0 > queue) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kqueue", std::strerror(error));
+		throw EXIT_FAILURE;
+	}
 
 	PreventDefaultForFatalSignals ignored_signals(SIGPIPE, 0);
 

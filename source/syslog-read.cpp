@@ -83,7 +83,8 @@ process_message (
 void
 syslog_read [[gnu::noreturn]] (
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
@@ -104,7 +105,7 @@ syslog_read [[gnu::noreturn]] (
 		throw EXIT_FAILURE;
 	}
 
-	const unsigned listen_fds(query_listen_fds());
+	const unsigned listen_fds(query_listen_fds(envs));
 	if (1U > listen_fds) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "LISTEN_FDS", std::strerror(error));

@@ -4,7 +4,7 @@
 
 [Unit]
 Description=newsyslog sysinit service
-Before=rsyslog.service syslog.service syslog.target
+Before=local-priv-rsyslogd.service local-priv-syslogd.service local-rsyslogd.service local-syslogd.service udp-rsyslogd.service udp-syslogd.service syslogd.service local-syslog.target
 
 [Service]
 Type=oneshot

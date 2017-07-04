@@ -53,7 +53,7 @@ The <arg choice='plain'>-O</arg>, <arg choice='plain'>-P</arg>, <arg choice='pla
 </para>
 
 <para>
-The and <arg choice='plain'>-b</arg> command-line option is passed through to <command>tcp-socket-listen</command>, with any of its option arguments.
+The <arg choice='plain'>-b</arg> command-line option is passed through to <command>tcp-socket-listen</command>, with any of its option arguments.
 The <arg choice='plain'>-v</arg>, <arg choice='plain'>-D</arg>, <arg choice='plain'>-o</arg> <arg choice='plain'>-l</arg>, and <arg choice='plain'>-c</arg> options are passed through to <command>tcp-socket-accept</command>, with any of their option arguments.
 The <arg choice='plain'>-U</arg> command-line option causes <command>setuidgid-fromenv</command> to be invoked.
 The <arg choice='plain'>-B <replaceable>banner</replaceable></arg> command-line option causes <command>line-banner</command> to be invoked, with <replaceable>banner</replaceable> as the banner.

@@ -12,11 +12,12 @@ For copyright and licensing terms, see the file named COPYING.
 #include <pwd.h>
 #include <unistd.h>
 #include "home-dir.h"
+#include "ProcessEnvironment.h"
 
 std::string
-effective_user_home_dir ()
+effective_user_home_dir (const ProcessEnvironment & envs)
 {
-	if (const char * h = std::getenv("HOME")) {
+	if (const char * h = envs.query("HOME")) {
 		return h;
 	} else
 	{

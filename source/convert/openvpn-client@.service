@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=OpenVPN client service using "%i" configuration
+After=network-interfaces.service entropy.service
+
+[Service]
+PrivateTmp=true
+ExecStart=openvpn --errors-to-stderr --suppress-timestamps --verb 3 --nobind --config ./config
+LimitNPROC=10
+RestartSec=30
+
+[Install]
+WantedBy=workstation.target

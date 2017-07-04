@@ -67,6 +67,7 @@ static
 bool 
 process (
 	const char * prog,
+	const ProcessEnvironment & envs,
 	const char * name,
 	int fd
 ) {
@@ -128,7 +129,7 @@ process (
 					} else
 					{
 						bool leap;
-						const std::time_t t(tai64_to_time(convert(s, s_pos), leap));
+						const std::time_t t(tai64_to_time(envs, convert(s, s_pos), leap));
 						const uint32_t nano(convert(n, n_pos));
 						struct tm tm;
 						if (localtime_r(&t, &tm)) {
@@ -161,7 +162,8 @@ process (
 void
 tai64nlocal [[gnu::noreturn]] (
 	const char * & /*next_prog*/,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
@@ -181,7 +183,7 @@ tai64nlocal [[gnu::noreturn]] (
 		throw static_cast<int>(EXIT_USAGE);
 	}
 	if (args.empty()) {
-		if (!process(prog, "<stdin>", STDIN_FILENO))
+		if (!process(prog, envs, "<stdin>", STDIN_FILENO))
 			throw static_cast<int>(EXIT_TEMPORARY_FAILURE);	// Bernstein daemontools compatibility
 	} else {
 		for (std::vector<const char *>::const_iterator i(args.begin()); i != args.end(); ++i) {
@@ -192,7 +194,7 @@ tai64nlocal [[gnu::noreturn]] (
 				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, std::strerror(error));
 				throw static_cast<int>(EXIT_PERMANENT_FAILURE);	// Bernstein daemontools compatibility
 			}
-			if (!process(prog, name, fd))
+			if (!process(prog, envs, name, fd))
 				throw static_cast<int>(EXIT_TEMPORARY_FAILURE);	// Bernstein daemontools compatibility
 			close(fd);
 		}

@@ -130,6 +130,7 @@ static inline
 void
 create_links (
 	const char * prog,
+	const ProcessEnvironment & envs,
 	const std::string & bund,
 	const bool is_target,
 	const bool etc_bundle,
@@ -137,22 +138,23 @@ create_links (
 	const std::string & names,
 	const std::string & subdir
 ) {
-	create_links(prog, bund, false, is_target, etc_bundle, etc_bundle, bundle_dir_fd, names, subdir);
+	create_links(prog, envs, bund, false, is_target, etc_bundle, etc_bundle, bundle_dir_fd, names, subdir);
 }
 
 static 
 void
 make_default_dependencies (
 	const char * prog,
+	const ProcessEnvironment & envs,
 	const std::string & name,
 	const bool is_target,
 	const bool etc_bundle,
 	const bool root,
 	const FileDescriptorOwner & bundle_dir_fd
 ) {
-	create_links(prog, name, is_target, etc_bundle, bundle_dir_fd, "shutdown.target", "before/");
+	create_links(prog, envs, name, is_target, etc_bundle, bundle_dir_fd, "shutdown.target", "before/");
 	if (!root)
-		create_links(prog, name, is_target, etc_bundle, bundle_dir_fd, "unmount.target", "stopped-by/");
+		create_links(prog, envs, name, is_target, etc_bundle, bundle_dir_fd, "unmount.target", "stopped-by/");
 }
 
 static
@@ -200,6 +202,7 @@ static inline
 void
 create_gbde_bundle (
 	const char * prog,
+	const ProcessEnvironment & envs,
 	const char * what,
 	const bool local,
 	const bool overwrite,
@@ -234,12 +237,12 @@ create_gbde_bundle (
 	make_service(gbde_bundle_dir_fd.get());
 	const FileDescriptorOwner gbde_service_dir_fd(open_service_dir(gbde_bundle_dir_fd.get()));
 	make_orderings_and_relations(gbde_bundle_dir_fd.get());
-	make_default_dependencies(prog, gbde_bundle_dirname, is_target, etc_bundle, root, gbde_bundle_dir_fd);
+	make_default_dependencies(prog, envs, gbde_bundle_dirname, is_target, etc_bundle, root, gbde_bundle_dir_fd);
 	make_run_and_restart(prog, bundle_fullname + "/service", "false");
 	make_remain(prog, bundle_fullname + "/service", gbde_service_dir_fd, true);
 
 	const char * const pre_target(local ? "local-fs-pre.target" : "remote-fs-pre.target");
-	create_links(prog, gbde_bundle_dirname, is_target, etc_bundle, gbde_bundle_dir_fd, pre_target, "after/");
+	create_links(prog, envs, gbde_bundle_dirname, is_target, etc_bundle, gbde_bundle_dir_fd, pre_target, "after/");
 	if (fsck_bundle_dirname) {
 		create_link(prog, gbde_bundle_dirname, gbde_bundle_dir_fd, "../../" + *fsck_bundle_dirname, "before/" + *fsck_bundle_dirname);
 		create_link(prog, gbde_bundle_dirname, gbde_bundle_dir_fd, "../../" + *fsck_bundle_dirname, "wanted-by/" + *fsck_bundle_dirname);
@@ -268,6 +271,7 @@ static inline
 void
 create_geli_bundle (
 	const char * prog,
+	const ProcessEnvironment & envs,
 	const char * what,
 	const bool local,
 	const bool overwrite,
@@ -304,12 +308,12 @@ create_geli_bundle (
 	make_service(geli_bundle_dir_fd.get());
 	const FileDescriptorOwner geli_service_dir_fd(open_service_dir(geli_bundle_dir_fd.get()));
 	make_orderings_and_relations(geli_bundle_dir_fd.get());
-	make_default_dependencies(prog, geli_bundle_dirname, is_target, etc_bundle, root, geli_bundle_dir_fd);
+	make_default_dependencies(prog, envs, geli_bundle_dirname, is_target, etc_bundle, root, geli_bundle_dir_fd);
 	make_run_and_restart(prog, bundle_fullname + "/service", "false");
 	make_remain(prog, bundle_fullname + "/service", geli_service_dir_fd, true);
 
 	const char * const pre_target(local ? "local-fs-pre.target" : "remote-fs-pre.target");
-	create_links(prog, geli_bundle_dirname, is_target, etc_bundle, geli_bundle_dir_fd, pre_target, "after/");
+	create_links(prog, envs, geli_bundle_dirname, is_target, etc_bundle, geli_bundle_dir_fd, pre_target, "after/");
 	if (fsck_bundle_dirname) {
 		create_link(prog, geli_bundle_dirname, geli_bundle_dir_fd, "../../" + *fsck_bundle_dirname, "before/" + *fsck_bundle_dirname);
 		create_link(prog, geli_bundle_dirname, geli_bundle_dir_fd, "../../" + *fsck_bundle_dirname, "wanted-by/" + *fsck_bundle_dirname);
@@ -347,6 +351,7 @@ static inline
 void
 create_fsck_bundle (
 	const char * prog,
+	const ProcessEnvironment & envs,
 	const char * what,
 #if defined(__LINUX__) || defined(__linux__)
 	const bool preenable,
@@ -387,15 +392,15 @@ create_fsck_bundle (
 	make_service(fsck_bundle_dir_fd.get());
 	const FileDescriptorOwner fsck_service_dir_fd(open_service_dir(fsck_bundle_dir_fd.get()));
 	make_orderings_and_relations(fsck_bundle_dir_fd.get());
-	make_default_dependencies(prog, fsck_bundle_dirname, is_target, etc_bundle, root, fsck_bundle_dir_fd);
+	make_default_dependencies(prog, envs, fsck_bundle_dirname, is_target, etc_bundle, root, fsck_bundle_dir_fd);
 	make_run_and_restart(prog, bundle_fullname + "/service", "false");
 	/// \bug FIXME: Should be false when we get system-control capable of dealing with this.
 	make_remain(prog, bundle_fullname + "/service", fsck_service_dir_fd, true);
 
 	const char * const pre_target(local ? "local-fs-pre.target" : "remote-fs-pre.target");
-	create_links(prog, fsck_bundle_dirname, is_target, etc_bundle, fsck_bundle_dir_fd, pre_target, "after/");
+	create_links(prog, envs, fsck_bundle_dirname, is_target, etc_bundle, fsck_bundle_dir_fd, pre_target, "after/");
 	// fsck is fairly memory hungry, so we want (non-late) swap available when it is running.
-	create_links(prog, fsck_bundle_dirname, is_target, etc_bundle, fsck_bundle_dir_fd, "swapauto.target", "after/");
+	create_links(prog, envs, fsck_bundle_dirname, is_target, etc_bundle, fsck_bundle_dir_fd, "swapauto.target", "after/");
 	create_link(prog, fsck_bundle_dirname, fsck_bundle_dir_fd, "../../" + mount_bundle_dirname, "before/" + mount_bundle_dirname);
 	create_link(prog, fsck_bundle_dirname, fsck_bundle_dir_fd, "../../" + mount_bundle_dirname, "wanted-by/" + mount_bundle_dirname);
 
@@ -441,6 +446,7 @@ static inline
 void
 create_mount_bundle (
 	const char * prog,
+	const ProcessEnvironment & envs,
 	const char * what,
 	const char * where,
 	const char * fstype,
@@ -479,17 +485,17 @@ create_mount_bundle (
 	make_service(mount_bundle_dir_fd.get());
 	const FileDescriptorOwner mount_service_dir_fd(open_service_dir(mount_bundle_dir_fd.get()));
 	make_orderings_and_relations(mount_bundle_dir_fd.get());
-	make_default_dependencies(prog, mount_bundle_dirname, is_target, etc_bundle, root, mount_bundle_dir_fd);
+	make_default_dependencies(prog, envs, mount_bundle_dirname, is_target, etc_bundle, root, mount_bundle_dir_fd);
 	make_run_and_restart(prog, bundle_fullname + "/service", "true");
 	make_remain(prog, bundle_fullname + "/service", mount_service_dir_fd, true);
 
 	const char * const target(local ? "local-fs.target" : "remote-fs.target");
 	const char * const pre_target(local ? "local-fs-pre.target" : "remote-fs-pre.target");
 	if (!local)
-		create_links(prog, mount_bundle_dirname, is_target, etc_bundle, mount_bundle_dir_fd, "fs-servers.target", "after/");
-	create_links(prog, mount_bundle_dirname, is_target, etc_bundle, mount_bundle_dir_fd, target, "wanted-by/");
-	create_links(prog, mount_bundle_dirname, is_target, etc_bundle, mount_bundle_dir_fd, target, "before/");
-	create_links(prog, mount_bundle_dirname, is_target, etc_bundle, mount_bundle_dir_fd, pre_target, "after/");
+		create_links(prog, envs, mount_bundle_dirname, is_target, etc_bundle, mount_bundle_dir_fd, "fs-servers.target", "after/");
+	create_links(prog, envs, mount_bundle_dirname, is_target, etc_bundle, mount_bundle_dir_fd, target, "wanted-by/");
+	create_links(prog, envs, mount_bundle_dirname, is_target, etc_bundle, mount_bundle_dir_fd, target, "before/");
+	create_links(prog, envs, mount_bundle_dirname, is_target, etc_bundle, mount_bundle_dir_fd, pre_target, "after/");
 
 	for (std::list<std::string>::const_iterator p(modules.begin()); modules.end() != p; ++p) {
 		const std::string & modname(*p);
@@ -552,6 +558,7 @@ static inline
 void
 create_swap_bundle (
 	const char * prog,
+	const ProcessEnvironment & envs,
 	const char * what,
 	const bool overwrite,
 	const bool etc_bundle,
@@ -583,14 +590,14 @@ create_swap_bundle (
 	make_service(swap_bundle_dir_fd.get());
 	const FileDescriptorOwner swap_service_dir_fd(open_service_dir(swap_bundle_dir_fd.get()));
 	make_orderings_and_relations(swap_bundle_dir_fd.get());
-	make_default_dependencies(prog, swap_bundle_dirname, is_target, etc_bundle, root, swap_bundle_dir_fd);
+	make_default_dependencies(prog, envs, swap_bundle_dirname, is_target, etc_bundle, root, swap_bundle_dir_fd);
 	make_run_and_restart(prog, bundle_fullname + "/service", "true");
 	make_remain(prog, bundle_fullname + "/service", swap_service_dir_fd, true);
 
 	if (!has_option(options_list, "late"))
-		create_links(prog, swap_bundle_dirname, is_target, etc_bundle, swap_bundle_dir_fd, "swapauto.target", "wanted-by/");
+		create_links(prog, envs, swap_bundle_dirname, is_target, etc_bundle, swap_bundle_dir_fd, "swapauto.target", "wanted-by/");
 	else
-		create_links(prog, swap_bundle_dirname, is_target, etc_bundle, swap_bundle_dir_fd, "swaplate.target", "wanted-by/");
+		create_links(prog, envs, swap_bundle_dirname, is_target, etc_bundle, swap_bundle_dir_fd, "swaplate.target", "wanted-by/");
 
 	create_link(prog, swap_bundle_dirname, swap_bundle_dir_fd, "/run/service-bundles/early-supervise/" + swap_bundle_dirname, "supervise");
 
@@ -618,6 +625,7 @@ static inline
 void
 create_dump_bundle (
 	const char * prog,
+	const ProcessEnvironment & envs,
 	const char * what,
 	const bool overwrite,
 	const bool etc_bundle,
@@ -649,11 +657,11 @@ create_dump_bundle (
 	make_service(dump_bundle_dir_fd.get());
 	const FileDescriptorOwner dump_service_dir_fd(open_service_dir(dump_bundle_dir_fd.get()));
 	make_orderings_and_relations(dump_bundle_dir_fd.get());
-	make_default_dependencies(prog, dump_bundle_dirname, is_target, etc_bundle, root, dump_bundle_dir_fd);
+	make_default_dependencies(prog, envs, dump_bundle_dirname, is_target, etc_bundle, root, dump_bundle_dir_fd);
 	make_run_and_restart(prog, bundle_fullname + "/service", "true");
 	make_remain(prog, bundle_fullname + "/service", dump_service_dir_fd, true);
 
-	create_links(prog, dump_bundle_dirname, is_target, etc_bundle, dump_bundle_dir_fd, "dumpauto.target", "wanted-by/");
+	create_links(prog, envs, dump_bundle_dirname, is_target, etc_bundle, dump_bundle_dir_fd, "dumpauto.target", "wanted-by/");
 
 	create_link(prog, dump_bundle_dirname, dump_bundle_dir_fd, "../../" + swap_bundle_dirname, "after/" + swap_bundle_dirname);
 
@@ -682,7 +690,8 @@ create_dump_bundle (
 void
 convert_fstab_services [[gnu::noreturn]] ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	const char * bundle_root(0);
@@ -766,12 +775,12 @@ convert_fstab_services [[gnu::noreturn]] (
 				modules.push_back(entry->fs_vfstype);
 
 			if (is_gbde)
-				create_gbde_bundle(prog, what, local, overwrite, etc_bundle, bundle_root_fd, bundle_root, gbde, &fsck_bundle_dirname, mount_bundle_dirname);
+				create_gbde_bundle(prog, envs, what, local, overwrite, etc_bundle, bundle_root_fd, bundle_root, gbde, &fsck_bundle_dirname, mount_bundle_dirname);
 			if (is_geli)
-				create_geli_bundle(prog, what, local, overwrite, etc_bundle, bundle_root_fd, bundle_root, geli, &fsck_bundle_dirname, mount_bundle_dirname, false, options_list);
+				create_geli_bundle(prog, envs, what, local, overwrite, etc_bundle, bundle_root_fd, bundle_root, geli, &fsck_bundle_dirname, mount_bundle_dirname, false, options_list);
 			if (entry->fs_passno > 0)
-				create_fsck_bundle(prog, what, preenable, local, overwrite, is_fuse, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd, bundle_root, fsck_bundle_dirname, mount_bundle_dirname);
-			create_mount_bundle(prog, what, where, entry->fs_vfstype, options_list, local, overwrite, modules, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd, bundle_root, mount_bundle_dirname);
+				create_fsck_bundle(prog, envs, what, preenable, local, overwrite, is_fuse, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd, bundle_root, fsck_bundle_dirname, mount_bundle_dirname);
+			create_mount_bundle(prog, envs, what, where, entry->fs_vfstype, options_list, local, overwrite, modules, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd, bundle_root, mount_bundle_dirname);
 		} else
 		if (0 == std::strcmp(type, "sw")) {
 			const bool local(true);
@@ -780,11 +789,11 @@ convert_fstab_services [[gnu::noreturn]] (
 			const bool is_gbde(ends_in(what, ".bde", gbde));
 			const bool is_geli(ends_in(what, ".eli", geli));
 			if (is_gbde)
-				create_gbde_bundle(prog, what, local, overwrite, etc_bundle, bundle_root_fd, bundle_root, gbde, 0, swap_bundle_dirname);
+				create_gbde_bundle(prog, envs, what, local, overwrite, etc_bundle, bundle_root_fd, bundle_root, gbde, 0, swap_bundle_dirname);
 			if (is_geli)
-				create_geli_bundle(prog, what, local, overwrite, etc_bundle, bundle_root_fd, bundle_root, geli, 0, swap_bundle_dirname, true, options_list);
-			create_swap_bundle(prog, what, overwrite, etc_bundle, bundle_root_fd, bundle_root, swap_bundle_dirname, options_list);
-			create_dump_bundle(prog, what, overwrite, etc_bundle, bundle_root_fd, bundle_root, swap_bundle_dirname);
+				create_geli_bundle(prog, envs, what, local, overwrite, etc_bundle, bundle_root_fd, bundle_root, geli, 0, swap_bundle_dirname, true, options_list);
+			create_swap_bundle(prog, envs, what, overwrite, etc_bundle, bundle_root_fd, bundle_root, swap_bundle_dirname, options_list);
+			create_dump_bundle(prog, envs, what, overwrite, etc_bundle, bundle_root_fd, bundle_root, swap_bundle_dirname);
 		} else
 			std::fprintf(stderr, "%s: WARNING: %s: %s: %s\n", prog, where, type, "Unrecognized type.");
 	}
@@ -796,7 +805,8 @@ convert_fstab_services [[gnu::noreturn]] (
 void
 write_volume_service_bundles [[gnu::noreturn]] ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	const char * bundle_root(0);
@@ -881,12 +891,12 @@ write_volume_service_bundles [[gnu::noreturn]] (
 		modules.push_back(vfstype);
 
 	if (is_gbde)
-		create_gbde_bundle(prog, what, local, overwrite, etc_bundle, bundle_root_fd, bundle_root, gbde, &fsck_bundle_dirname, mount_bundle_dirname);
+		create_gbde_bundle(prog, envs, what, local, overwrite, etc_bundle, bundle_root_fd, bundle_root, gbde, &fsck_bundle_dirname, mount_bundle_dirname);
 	if (is_geli)
-		create_geli_bundle(prog, what, local, overwrite, etc_bundle, bundle_root_fd, bundle_root, geli, &fsck_bundle_dirname, mount_bundle_dirname, false, options_list);
+		create_geli_bundle(prog, envs, what, local, overwrite, etc_bundle, bundle_root_fd, bundle_root, geli, &fsck_bundle_dirname, mount_bundle_dirname, false, options_list);
 	if (want_fsck)
-		create_fsck_bundle(prog, what, preenable, local, overwrite, is_fuse, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd, bundle_root, fsck_bundle_dirname, mount_bundle_dirname);
-	create_mount_bundle(prog, what, where, vfstype, options_list, local, overwrite, modules, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd, bundle_root, mount_bundle_dirname);
+		create_fsck_bundle(prog, envs, what, preenable, local, overwrite, is_fuse, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd, bundle_root, fsck_bundle_dirname, mount_bundle_dirname);
+	create_mount_bundle(prog, envs, what, where, vfstype, options_list, local, overwrite, modules, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd, bundle_root, mount_bundle_dirname);
 
 	throw EXIT_SUCCESS;
 }

@@ -14,9 +14,8 @@ Type=oneshot
 TTYPath=tty0
 StandardInput=tty
 StandardError=log
-EnvironmentFile=-/etc/vconsole.conf
 EnvironmentDirectory=env
-ExecStart=setfont ${FONT} ${FONT_MAP:+-m "${FONT_MAP}"} ${FONT_UNIMAP:+-u "${FONT_UNIMAP}"}
+ExecStart=setfont ${font8x16:+"${font8x16}"} ${font8x14:+"${font8x14}"} ${font8x8:+"${font8x8}"} ${fontmap:+-m "${fontmap}"} ${scrnmap:+-u "${scrnmap}"} ${flags}
 # This is a one-shot service that can be re-triggered by starting it again.
 #RemainAfterExit=1
 Restart=no

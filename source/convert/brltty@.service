@@ -1,0 +1,21 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%p server for %I
+# This is an exception to the standard practice for log services.
+# It makes the behaviour similar to what BrlTTY users are used to.
+After=brltty-log.service
+Wants=brltty-log.service
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=%p --configuration-file "%I"
+RuntimeDirectory=%p@%i
+RuntimeDirectoryMode=0755
+# Usually this is not the thing that we want the OOM killer to target.
+OOMScoreAdjust=-900
+
+[Install]
+WantedBy=workstation.target

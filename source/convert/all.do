@@ -7,11 +7,11 @@
 # Use the "redo" command to run this .do script, via "redo all".
 # 2016-01-24: This line forces a rebuild because of the new dependency tree.
 #
-common="geom mdmfs mdconfig ataidle ftp-proxy dnscache tinydns axfrdns kdm savecore webcamd mysql securelevel iovctl openldap static-networking pefs kernel-vt syslogd volumes general-services terminal-services kernel-modules user-services host.conf sysctl.conf openvpn"
+common="ataidle axfrdns brltty dnscache ftp-proxy general-services geom host.conf hostname iovctl java-home kdm kernel-modules kernel-vt mdconfig mysql nfs ntp openldap openvpn pefs savecore securelevel static-networking sysctl.conf syslogd system-installer terminal-services tinydns user-services volumes webcamd"
 
 case "`uname`" in
 *BSD)
-	platform="ip6addrctl appcafe jails v9-jails warden autobridge stf uhidd ldconfig"
+	platform="appcafe autobridge ip6addrctl jails ldconfig mdmfs mixer stf uhidd v9-jails warden"
 	;;
 *)
 	platform=""

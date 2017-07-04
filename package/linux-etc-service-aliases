@@ -1,2 +1,2 @@
 hostname	hostname.sh
-udev		systemd-udevd
+systemd-udev	systemd-udevd

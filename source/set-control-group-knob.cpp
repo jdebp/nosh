@@ -66,7 +66,8 @@ read_first_line_number (
 void
 set_control_group_knob [[gnu::noreturn]] ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 	const char * percent_of(0);

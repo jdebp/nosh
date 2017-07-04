@@ -16,56 +16,38 @@ For copyright and licensing terms, see the file named COPYING.
 #include <login_cap.h>
 #endif
 #include "utils.h"
+#include "ProcessEnvironment.h"
 #include "runtime-dir.h"
 #include "popt.h"
-
-static inline
-void
-set (
-	const char * var,
-	const char * val
-) {
-	if (val)
-		setenv(var, val, 1);
-	else
-		unsetenv(var);
-}
-
-static inline
-void
-set (
-	const char * var,
-	const std::string & val
-) {
-	setenv(var, val.c_str(), 1);
-}
 
 #if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
 
 static inline
 void
 set_if (
+	ProcessEnvironment & envs,
 	const std::string & var,
 	bool cond,
 	const std::string & val
 ) {
 	if (cond)
-		setenv(var.c_str(), val.c_str(), 1);
+		envs.set(var, val);
 	else
-		unsetenv(var.c_str());
+		envs.unset(var);
 }
 
 /// \brief Perform the login.conf substitutions before setting an environment variable.
 static inline
 void
 set (
+	ProcessEnvironment & envs,
 	const passwd * pw,
 	const char * var,
 	const char * val,
 	bool is_path
 ) {
 	if (!val)
-		set(var, val);
+		envs.set(var, val);
 	else {
 		std::string s;
 		while (char c = *val++) {
@@ -91,13 +73,14 @@ set (
 			} else
 				s += c;
 		}
-		set(var, s);
+		envs.set(var, s);
 	}
 }
 
 static inline
 void
 set_vec (
+	ProcessEnvironment & envs,
 	const passwd * pw,
 	const char * vec
 ) {
@@ -107,7 +90,7 @@ set_vec (
 		char c = *vec++;
 		if (!c) {
 end:
-			set_if(var, &var != cur, val);
+			set_if(envs, var, &var != cur, val);
 			break;
 		} else
 		if ('\\' == c) {
@@ -127,7 +110,7 @@ end:
 				*cur += pw->pw_name;
 		} else
 		if (',' == c) {
-			set_if(var, &var != cur, val);
+			set_if(envs, var, &var != cur, val);
 			cur = &var;
 			var.clear();
 			val.clear();
@@ -201,6 +184,7 @@ LoginDBOwner::getcapstr(
 static inline
 void
 set_str (
+	ProcessEnvironment & envs,
 	const char * var,
 	const char * cap,
 	const passwd * pw,
@@ -211,12 +195,13 @@ set_str (
 	const char * val(lc_user.getcapstr(cap, def, 0));
 	if (!val || def == val)
 		val = lc_system.getcapstr(cap, def, def);
-	set(pw, var, val, false);
+	set(envs, pw, var, val, false);
 }
 
 static inline
 void
 set_pathstr (
+	ProcessEnvironment & envs,
 	const char * var,
 	const char * cap,
 	const passwd * pw,
@@ -229,12 +214,13 @@ set_pathstr (
 	const char * val(lc_user.getcapstr(cap, def, 0));
 	if (!val || def == val)
 		val = lc_system.getcapstr(cap, def, def);
-	set(pw, var, val, true);
+	set(envs, pw, var, val, true);
 }
 
 static inline
 void
 set_vec (
+	ProcessEnvironment & envs,
 	const char * cap,
 	const passwd * pw,
 	LoginDBOwner & lc
@@ -243,19 +229,20 @@ set_vec (
 	// And OpenBSD does not have the function at all.
 	const char * val(lc.getcapstr(cap, 0, 0));
 	if (val)
-		set_vec(pw, val);
+		set_vec(envs, pw, val);
 }
 
 static inline
 void
 set_vec (
+	ProcessEnvironment & envs,
 	const char * cap,
 	const passwd * pw,
 	LoginDBOwner & lc_system,
 	LoginDBOwner & lc_user
 ) {
-	set_vec(cap, pw, lc_system);
-	set_vec(cap, pw, lc_user);
+	set_vec(envs, cap, pw, lc_system);
+	set_vec(envs, cap, pw, lc_user);
 }
 
 #else
@@ -267,6 +254,7 @@ struct LoginDBOwner {};
 static inline
 void
 set_str (
+	ProcessEnvironment & envs,
 	const char * var,
 	const char *,
 	const passwd *,
@@ -274,12 +262,13 @@ set_str (
 	LoginDBOwner &,
 	const char * def
 ) {
-	set(var, def);
+	envs.set(var, def);
 }
 
 static inline
 void
 set_pathstr (
+	ProcessEnvironment & envs,
 	const char * var,
 	const char *,
 	const passwd *,
@@ -287,12 +276,13 @@ set_pathstr (
 	LoginDBOwner &,
 	const char * def
 ) {
-	set(var, def);
+	envs.set(var, def);
 }
 
 static inline
 void
 set_vec (
+	ProcessEnvironment &,
 	const char *,
 	const passwd *,
 	LoginDBOwner &,
@@ -309,7 +299,8 @@ set_vec (
 void
 userenv ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	bool set_path(false);
@@ -367,8 +358,8 @@ userenv (
 	std::ostringstream us, gs;
 	us << uid;
 	gs << gid;
-	set("UID", us.str());
-	set("GID", gs.str());
+	envs.set("UID", us.str());
+	envs.set("GID", gs.str());
 	if (const passwd * pw = getpwuid(uid)) {
 #if defined(__FreeBSD__) || defined(__DragonFly__)
 		LoginDBOwner lc_system(login_getsystemclass(pw));
@@ -383,86 +374,86 @@ userenv (
 		// These three are supersedable by setenv in login.conf.
 		if (set_tools) {
 			// POSIX gives us two choices of default line editor; we do not dump ed on people.
-			set_str("EDITOR", "editor", pw, lc_system, lc_user, "ex");
+			set_str(envs, "EDITOR", "editor", pw, lc_system, lc_user, "ex");
 			// POSIX gives us one choice of default visual editor.
-			set_str("VISUAL", "visual", pw, lc_system, lc_user, "vi");
-			set_str("PAGER", "pager", pw, lc_system, lc_user, "more");
+			set_str(envs, "VISUAL", "visual", pw, lc_system, lc_user, "vi");
+			set_str(envs, "PAGER", "pager", pw, lc_system, lc_user, "more");
 		}
 		if (set_xdg) {
-			set("XDG_RUNTIME_DIR", "/run/user/" + std::string(pw->pw_name) + "/");
+			envs.set("XDG_RUNTIME_DIR", "/run/user/" + std::string(pw->pw_name) + "/");
 			// TrueOS Desktop adds /share to the default search path.
 			// But it inverts this order, making "local" the lowest priority.
 			// We give "local" data files priority over the operating system data files, as the XDG Desktop Specification does.
-			set("XDG_DATA_DIRS", "/usr/local/share:/usr/share:/share");
+			envs.set("XDG_DATA_DIRS", "/usr/local/share:/usr/share:/share");
 #if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
-			set("XDG_CONFIG_DIRS", "/usr/local/etc/xdg");
+			envs.set("XDG_CONFIG_DIRS", "/usr/local/etc/xdg");
 #else
 			// The default of /etc/xdg applies to everyone else.
-			set("XDG_CONFIG_DIRS", 0);
+			envs.set("XDG_CONFIG_DIRS", 0);
 #endif
 			// XDG_CONFIG_HOME defaults to $HOME/.config which is fine.
-			set("XDG_CONFIG_HOME", 0);
+			envs.set("XDG_CONFIG_HOME", 0);
 			// XDG_DATA_HOME defaults to $HOME/.local/share which is fine.
-			set("XDG_DATA_HOME", 0);
+			envs.set("XDG_DATA_HOME", 0);
 		}
 		if (set_dbus)
-			set("DBUS_SESSION_BUS_ADDRESS", "unix:path=/run/user/" + std::string(pw->pw_name) + "/bus");
+			envs.set("DBUS_SESSION_BUS_ADDRESS", "unix:path=/run/user/" + std::string(pw->pw_name) + "/bus");
 		// setenv in login.conf can be superseded by all of the rest.
 		if (set_other)
-			set_vec("setenv", pw, lc_system, lc_user);
+			set_vec(envs, "setenv", pw, lc_system, lc_user);
 		if (set_path) {
 			// Always default to STDPATH, even for non-superusers.
-			set_pathstr("PATH", "path", pw, lc_system, lc_user, _PATH_STDPATH);
-			set_pathstr("MANPATH", "manpath", pw, lc_system, lc_user, 0);
+			set_pathstr(envs, "PATH", "path", pw, lc_system, lc_user, _PATH_STDPATH);
+			set_pathstr(envs, "MANPATH", "manpath", pw, lc_system, lc_user, 0);
 		}
 		if (set_user) {
-			set("HOME", pw->pw_dir);
-			set("USER", pw->pw_name);
-			set("LOGNAME", pw->pw_name);
+			envs.set("HOME", pw->pw_dir);
+			envs.set("USER", pw->pw_name);
+			envs.set("LOGNAME", pw->pw_name);
 		}
 		if (set_shell)
-			set("SHELL", *pw->pw_shell ? pw->pw_shell : _PATH_BSHELL);
+			envs.set("SHELL", *pw->pw_shell ? pw->pw_shell : _PATH_BSHELL);
 		if (set_term)
-			set_str("TERM", "term", pw, lc_system, lc_user, 0);
+			set_str(envs, "TERM", "term", pw, lc_system, lc_user, 0);
 		if (set_timezone)
-			set_str("TZ", "timezone", pw, lc_system, lc_user, "UTC");
+			set_str(envs, "TZ", "timezone", pw, lc_system, lc_user, "UTC");
 		if (set_locale) {
-			set_str("LANG", "lang", pw, lc_system, lc_user, "POSIX");
-			set_str("MM_CHARSET", "charset", pw, lc_system, lc_user, "UTF-8");
+			set_str(envs, "LANG", "lang", pw, lc_system, lc_user, "POSIX");
+			set_str(envs, "MM_CHARSET", "charset", pw, lc_system, lc_user, "UTF-8");
 		}
 	} else {
 		if (set_tools) {
-			set("EDITOR", 0);
-			set("PAGER", 0);
+			envs.set("EDITOR", 0);
+			envs.set("PAGER", 0);
 		}
 		if (set_xdg) {
-			set("XDG_RUNTIME_DIR", 0);
-			set("XDG_DATA_DIRS", 0);
-			set("XDG_CONFIG_DIRS", 0);
-			set("XDG_CONFIG_HOME", 0);
-			set("XDG_DATA_HOME", 0);
+			envs.set("XDG_RUNTIME_DIR", 0);
+			envs.set("XDG_DATA_DIRS", 0);
+			envs.set("XDG_CONFIG_DIRS", 0);
+			envs.set("XDG_CONFIG_HOME", 0);
+			envs.set("XDG_DATA_HOME", 0);
 		}
 		if (set_dbus)
-			set("DBUS_SESSION_BUS_ADDRESS", 0);
+			envs.set("DBUS_SESSION_BUS_ADDRESS", 0);
 		if (set_path) {
 			// Always use STDPATH, even for non-superusers.
-			set("PATH", _PATH_STDPATH);
-			set("MANPATH", 0);
+			envs.set("PATH", _PATH_STDPATH);
+			envs.set("MANPATH", 0);
 		}
 		if (set_user) {
-			set("HOME", 0);
-			set("USER", 0);
-			set("LOGNAME", 0);
+			envs.set("HOME", 0);
+			envs.set("USER", 0);
+			envs.set("LOGNAME", 0);
 		}
 		if (set_shell)
-			set("SHELL", _PATH_BSHELL);
+			envs.set("SHELL", _PATH_BSHELL);
 		if (set_term)
-			set("TERM", 0);
+			envs.set("TERM", 0);
 		if (set_timezone)
-			set("TZ", "UTC");
+			envs.set("TZ", "UTC");
 		if (set_locale) {
-			set("LANG", "POSIX");
-			set("MM_CHARSET", "UTF-8");
+			envs.set("LANG", "POSIX");
+			envs.set("MM_CHARSET", "UTF-8");
 		}
 	}
 	endpwent();

@@ -1,3 +1,29 @@
+nosh (1.34) unstable; urgency=medium
+
+  * More Linux services: udev-settle, nft
+  * More common services: opentsdb, caddy, apache2, wso2server, system-installer-log
+  * More targets: finish-update, finish-install
+  * vixiedhcpd is no longer templatized.
+  * static-networking configuration import now creates dhcpcd@ services.
+  * A kqueue file descriptor bug in recordio on FreeBSD has been fixed.
+  * systemd-udev and udev are now separate, as eudev and systemd-udevd have now diverged significantly.
+    There is now a separate run-systemd-udev package for the former.
+  * A newline repetition bug in line-banner that was throwing off publicfile FTP service has been fixed.
+  * mountd, nfsd, and gssd are now common services, with rpc* alias names.
+  * The users target is now implemented.
+  * openvpn@ is now split into openvpn-client@ and openvpn-server@.
+  * A problem where per-user-manager did not correctly enter its private control group if invoked a second time around has been fixed.
+  * The external configuration import subsystem now handles the various console settings files.
+  * A bug in print-service-env and set-service-env triggered by environment variable names that are absolute pathnames has been fixed.
+  * The leaky BSD C library and GNU C library environment variable handling is no longer used.
+  * set-dynamic-hostname no longer erroneously thinks that the hostname has already been set on FreeBSD.
+  * The logic for looking for the static hostname in various places has been moved out of set-dynamic-hostname, which now simply looks for an environment variable, into the external configuration import subsystem.
+  * SoftTerm now implements Xterm's extensions to DECSCUSR.
+  * console-fb-realizer now renders multiple cursor shapes.
+  * convert-systemd-units now can convert socket definitions that list multiple listening sockets of a single type, for the benefit of gpg-agent.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Tue, 04 Jul 2017 15:58:34 +0100
+
 nosh (1.33) unstable; urgency=medium
 
   * The Debian packaging install/deinstall scripts have been modified with a view to making Arch packaging possible.
@@ -18,7 +44,6 @@ nosh (1.33) unstable; urgency=medium
   * MySQL 5.7 or newer is now the requirement of the mysql service bundle autogeneration.
   * More common services: gopher6d, redis-runtime, redis-server, redis-sentinel
   * Added local-seqpacket-socket-listen and local-seqpacket-socket-accept .
-  * The -B option to tcpserver now handles final newlines in the banner better.
 
  -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Sat, 08 Apr 2017 16:13:00 +0100
 

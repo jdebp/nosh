@@ -9,10 +9,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cerrno>
 #include <cstring>
 #include "utils.h"
+#include "ProcessEnvironment.h"
 #include "popt.h"
-#if !defined(_GNU_SOURCE)
-extern "C" int clearenv();
-#endif
 
 /* Main function ************************************************************
 // **************************************************************************
@@ -21,9 +19,10 @@ extern "C" int clearenv();
 static
 char *
 save (
+	ProcessEnvironment & envs,
 	const char * var
 ) {
-	const char * val = std::getenv(var);
+	const char * val = envs.query(var);
 	if (!val) return 0;
 	const size_t len(std::strlen(val));
 	char * sav(new char[len + 1]);
@@ -34,11 +33,12 @@ save (
 static
 void
 restore (
+	ProcessEnvironment & envs,
 	const char * var,
 	char * & val
 ) {
 	if (val) {
-		setenv(var, val, 1);
+		envs.set(var, val);
 		delete[] val, val = 0;
 	}
 }
@@ -46,7 +46,8 @@ restore (
 void
 clearenv ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	bool keep_path(false);
@@ -98,52 +99,51 @@ clearenv (
 	char * lc_time(0);
 
 	if (keep_path) {
-		path = save("PATH");
-		ld_library_path = save("LD_LIBRARY_PATH");
+		path = save(envs, "PATH");
+		ld_library_path = save(envs, "LD_LIBRARY_PATH");
 	}
 	if (keep_user) {
-		home = save("HOME");
-		user = save("USER");
-		logname = save("LOGNAME");
+		home = save(envs, "HOME");
+		user = save(envs, "USER");
+		logname = save(envs, "LOGNAME");
 	}
 	if (keep_shell)
-		shell = save("SHELL");
+		shell = save(envs, "SHELL");
 	if (keep_term) {
-		term = save("TERM");
-		tty = save("TTY");
+		term = save(envs, "TERM");
+		tty = save(envs, "TTY");
 	}
 	if (keep_locale) {
-		lang = save("LANG");
-		lc_all = save("LC_ALL");
-		lc_collate = save("LC_COLLATE");
-		lc_ctype = save("LC_CTYPE");
-		lc_messages = save("LC_MESSAGES");
-		lc_monetary = save("LC_MONETARY");
-		lc_numeric = save("LC_NUMERIC");
-		lc_time = save("LC_TIME");
+		lang = save(envs, "LANG");
+		lc_all = save(envs, "LC_ALL");
+		lc_collate = save(envs, "LC_COLLATE");
+		lc_ctype = save(envs, "LC_CTYPE");
+		lc_messages = save(envs, "LC_MESSAGES");
+		lc_monetary = save(envs, "LC_MONETARY");
+		lc_numeric = save(envs, "LC_NUMERIC");
+		lc_time = save(envs, "LC_TIME");
 	}
 
-	const int rc(clearenv());
-	if (0 > rc) {
+	if (!envs.clear()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "clearenv", std::strerror(error));
 		throw EXIT_FAILURE;
 	}
 
-	restore("PATH", path);
-	restore("LD_LIBRARY_PATH", ld_library_path);
-	restore("HOME", home);
-	restore("USER", user);
-	restore("LOGNAME", logname);
-	restore("SHELL", shell);
-	restore("TERM", term);
-	restore("TTY", tty);
-	restore("LANG", lang);
-	restore("LC_ALL", lc_all);
-	restore("LC_COLLATE", lc_collate);
-	restore("LC_CTYPE", lc_ctype);
-	restore("LC_MESSAGES", lc_messages);
-	restore("LC_MONETARY", lc_monetary);
-	restore("LC_NUMERIC", lc_numeric);
-	restore("LC_TIME", lc_time);
+	restore(envs, "PATH", path);
+	restore(envs, "LD_LIBRARY_PATH", ld_library_path);
+	restore(envs, "HOME", home);
+	restore(envs, "USER", user);
+	restore(envs, "LOGNAME", logname);
+	restore(envs, "SHELL", shell);
+	restore(envs, "TERM", term);
+	restore(envs, "TTY", tty);
+	restore(envs, "LANG", lang);
+	restore(envs, "LC_ALL", lc_all);
+	restore(envs, "LC_COLLATE", lc_collate);
+	restore(envs, "LC_CTYPE", lc_ctype);
+	restore(envs, "LC_MESSAGES", lc_messages);
+	restore(envs, "LC_MONETARY", lc_monetary);
+	restore(envs, "LC_NUMERIC", lc_numeric);
+	restore(envs, "LC_TIME", lc_time);
 }

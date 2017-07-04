@@ -12,6 +12,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sys/prctl.h>
 #endif
 #include "utils.h"
+#include "ProcessEnvironment.h"
 
 /* Main function ************************************************************
 // **************************************************************************
@@ -20,10 +21,12 @@ For copyright and licensing terms, see the file named COPYING.
 int
 main (
 	int argc, 
-	const char * argv[] 
+	const char * argv[],
+	const char * envp[] 
 ) {
 	if (argc < 1) return EXIT_FAILURE;
 	std::vector<const char *> args(argv, argv + argc);
+	ProcessEnvironment envs(envp);
 	const char * next_prog(arg0_of(args));
 	const char * prog(basename_of(next_prog));
 	const command * c(find(prog, true));
@@ -39,8 +42,8 @@ main (
 		prctl(PR_SET_NAME, prog);
 #	endif
 #endif
-		c->func(next_prog, args);
-		exec_terminal (prog, next_prog, args);
+		c->func(next_prog, args, envs);
+		exec_terminal (prog, next_prog, args, envs);
 	} catch (int r) {
 		return r;
 	}

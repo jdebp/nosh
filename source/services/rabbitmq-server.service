@@ -5,7 +5,7 @@
 [Unit]
 Description=Rabbit-MQ AMQP broker service
 After=epmd.service
-Requires=epmd.service
+Wants=epmd.service
 
 [Service]
 WorkingDirectory=/var/lib/rabbitmq

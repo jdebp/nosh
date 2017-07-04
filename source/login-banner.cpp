@@ -25,6 +25,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "ttyname.h"
 #include "FileStar.h"
 #include "utils.h"
+#include "ProcessEnvironment.h"
 
 /* Filename manipulation ****************************************************
 // **************************************************************************
@@ -126,7 +127,8 @@ static const char release_filename[] = "/etc/os-release";
 void
 login_banner ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
@@ -152,13 +154,13 @@ login_banner (
 	args.erase(args.begin());
 	next_prog = arg0_of(args);
 
-	const char * tty(get_controlling_tty_name());
+	const char * tty(get_controlling_tty_name(envs));
 	const char * line(tty ? strip_dev(tty) : 0);
 	struct utsname uts;
 	uname(&uts);
 	const unsigned long users(count_users());
 	const std::time_t now(std::time(0));
-	const char * domainname(std::getenv("LOCALDOMAIN"));	// Convention in both the BIND and djbdns DNS clients.
+	const char * domainname(envs.query("LOCALDOMAIN"));	// Convention in both the BIND and djbdns DNS clients.
 #if !defined(_GNU_SOURCE)
 	char domainname_buf[MAXHOSTNAMELEN];
 #endif

@@ -8,10 +8,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstdlib>
 #include <cerrno>
 #include "utils.h"
+#include "ProcessEnvironment.h"
 #include "popt.h"
-#if !defined(_GNU_SOURCE)
-extern "C" int clearenv();
-#endif
 
 /* Main function ************************************************************
 // **************************************************************************
@@ -24,7 +22,8 @@ static const std::string dash("-");
 void
 command_exec ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	bool clear(false);
 	bool login(false);
@@ -60,5 +59,5 @@ command_exec (
 		args[0] = login_storage.c_str();
 	}
 	if (clear)
-		clearenv();
+		envs.clear();
 }

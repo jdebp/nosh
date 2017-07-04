@@ -7,32 +7,9 @@
 # This is invoked by all.do .
 #
 
-# This is the systemd system, with several .d files full of module list files.
-read_dir() { 
-	for d 
-	do 
-		test \! -d "$d" || ( 
-			cd "$d" && find -maxdepth 1 -name '*.conf' -a \( -type l -o -type f \)
-		) | 
-		while read -r i 
-		do 
-			echo "$d" "$i" 
-		done 
-	done 
-}
-list_modules_linux() { 
-	read_dir /etc/modules-load.d/ /lib/modules-load.d/ /usr/lib/modules-load.d/ /usr/local/lib/modules-load.d/ | 
-	awk '{ if (!x[$2]++) print $1$2"\n"; }' | 
-	xargs grep -h -- '^[^;#]' 
-	echo autofs
-	echo ipv6
-	echo unix
-	true
-}
-
 # This is the BSD system, with settings in /etc/rc.conf{,.local}
 read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" || true ; }
-list_modules_bsd() { 
+list_modules() { 
 	( 
 		read_rc kld_list || true
 # ibcs2 is in the FreeBSD 10 rc.d scripts, but is not actually present as kernel modules any more.
@@ -41,8 +18,6 @@ list_modules_bsd() {
 	fmt -w 1
 	true
 }
-
-list_modules() { case "`uname`" in Linux) list_modules_linux ;; *BSD) list_modules_bsd ;; esac ; }
 
 redo-ifchange rc.conf
 

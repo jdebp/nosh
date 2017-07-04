@@ -25,6 +25,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <grp.h>
 #include "popt.h"
 #include "utils.h"
+#include "ProcessEnvironment.h"
 #include "listen.h"
 #include "SignalManagement.h"
 
@@ -43,24 +44,13 @@ handle_signal (
 	child_signalled = true;
 }
 
-static
-void
-env (
-	const char * name,
-	const char * value
-) {
-	if (value)
-		setenv(name, value, 1);
-	else
-		unsetenv(name);
-}
-
 static inline
 const char *
 q (
+	const ProcessEnvironment & envs,
 	const char * name
 ) {
-	const char * value(std::getenv(name));
+	const char * value(envs.query(name));
 	return value ? value : "";
 }
 
@@ -91,7 +81,8 @@ reap (
 void
 tcp_socket_accept ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	unsigned long connection_limit = 40U;
@@ -139,7 +130,7 @@ tcp_socket_accept (
 		throw static_cast<int>(EXIT_USAGE);
 	}
 
-	const unsigned listen_fds(query_listen_fds());
+	const unsigned listen_fds(query_listen_fds(envs));
 	if (1U > listen_fds) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "LISTEN_FDS", std::strerror(error));
@@ -253,7 +244,7 @@ exit_error:
 			if (s != STDIN_FILENO && s != STDOUT_FILENO)
 				close(s);
 
-			env("PROTO", "TCP");
+			envs.set("PROTO", "TCP");
 			switch (localaddr.ss_family) {
 				case AF_INET:
 				{
@@ -261,8 +252,8 @@ exit_error:
 					char port[64], ip[INET_ADDRSTRLEN];
 					if (0 == inet_ntop(localaddr4.sin_family, &localaddr4.sin_addr, ip, sizeof ip)) goto exit_error;
 					snprintf(port, sizeof port, "%u", ntohs(localaddr4.sin_port));
-					env("TCPLOCALIP", ip);
-					env("TCPLOCALPORT", port);
+					envs.set("TCPLOCALIP", ip);
+					envs.set("TCPLOCALPORT", port);
 					break;
 				}
 				case AF_INET6:
@@ -271,13 +262,13 @@ exit_error:
 					char port[64], ip[INET6_ADDRSTRLEN];
 					if (0 == inet_ntop(localaddr6.sin6_family, &localaddr6.sin6_addr, ip, sizeof ip)) goto exit_error;
 					snprintf(port, sizeof port, "%u", ntohs(localaddr6.sin6_port));
-					env("TCPLOCALIP", ip);
-					env("TCPLOCALPORT", port);
+					envs.set("TCPLOCALIP", ip);
+					envs.set("TCPLOCALPORT", port);
 					break;
 				}
 				default:
-					env("TCPLOCALIP", 0);
-					env("TCPLOCALPORT", 0);
+					envs.set("TCPLOCALIP", 0);
+					envs.set("TCPLOCALPORT", 0);
 					break;
 			}
 			switch (remoteaddr.ss_family) {
@@ -287,8 +278,8 @@ exit_error:
 					char port[64], ip[INET_ADDRSTRLEN];
 					if (0 == inet_ntop(remoteaddr4.sin_family, &remoteaddr4.sin_addr, ip, sizeof ip)) goto exit_error;
 					snprintf(port, sizeof port, "%u", ntohs(remoteaddr4.sin_port));
-					env("TCPREMOTEIP", ip);
-					env("TCPREMOTEPORT", port);
+					envs.set("TCPREMOTEIP", ip);
+					envs.set("TCPREMOTEPORT", port);
 					break;
 				}
 				case AF_INET6:
@@ -297,22 +288,22 @@ exit_error:
 					char port[64], ip[INET6_ADDRSTRLEN];
 					if (0 == inet_ntop(remoteaddr6.sin6_family, &remoteaddr6.sin6_addr, ip, sizeof ip)) goto exit_error;
 					snprintf(port, sizeof port, "%u", ntohs(remoteaddr6.sin6_port));
-					env("TCPREMOTEIP", ip);
-					env("TCPREMOTEPORT", port);
+					envs.set("TCPREMOTEIP", ip);
+					envs.set("TCPREMOTEPORT", port);
 					break;
 				}
 				default:
-					env("TCPREMOTEIP", 0);
-					env("TCPREMOTEPORT", 0);
+					envs.set("TCPREMOTEIP", 0);
+					envs.set("TCPREMOTEPORT", 0);
 					break;
 			}
-			env("TCPLOCALHOST", localname);
-			env("TCPLOCALINFO", 0);
-			env("TCPREMOTEHOST", 0);
-			env("TCPREMOTEINFO", 0);
+			envs.set("TCPLOCALHOST", localname);
+			envs.set("TCPLOCALINFO", 0);
+			envs.set("TCPREMOTEHOST", 0);
+			envs.set("TCPREMOTEINFO", 0);
 
 			if (verbose)
-				std::fprintf(stderr, "%s: %u %s %s %s %s\n", prog, getpid(), q("TCPLOCALIP"), q("TCPLOCALPORT"), q("TCPREMOTEIP"), q("TCPREMOTEPORT"));
+				std::fprintf(stderr, "%s: %u %s %s %s %s\n", prog, getpid(), q(envs, "TCPLOCALIP"), q(envs, "TCPLOCALPORT"), q(envs, "TCPREMOTEIP"), q(envs, "TCPREMOTEPORT"));
 
 			return;
 		}

@@ -7,9 +7,45 @@
 <p>
 The native mechanism for this system is the service bundle.
 Services are enabled/disabled with service bundle mechanisms, and service environment variables are set with the likes of <a href="envdir.html"><code>envdir</code></a> processing a directory within the service bundle.
-The external formats import subsystem creates <a href="gazetteer.html#rc.conf">an amalgamated <code>rc.conf</code> file</a> which incorporates <code>/etc/default/rc.conf</code> and any other files mentioned in its <code>rc_conf_files</code> setting including <code>/etc/rc.conf</code>, <code>/etc/rc.conf.local</code>, and any further extra files employed by the likes of PC-BSD/TrueOS.
+The external formats import subsystem creates <a href="gazetteer.html#rc.conf">an amalgamated <code>rc.conf</code> file</a> which incorporates the information from all of the several system <code>rc.conf</code> files as well as from other sources.
 There are two ways in which settings from it are then imported.
 </p>
+
+<h2>
+<code>rc.conf</code> contents
+</h2>
+
+<p>
+<a href="gazetteer.html#rc.conf">The amalgamated <code>rc.conf</code> file</a> incorporates the information from:
+</p>
+<ul>
+<li><p>
+The FreeNAS <code>/data/freenas-v1.db</code> database, in particular the enabled "system tunables".
+</p></li>
+<li><p>
+<code>/etc/default/rc.conf</code>, which is the "known starting point" of the <code>rc.conf</code> system.
+</p></li>
+<li><p>
+All files named in the <code>rc_conf_files</code> setting that is in <code>/etc/default/rc.conf</code>.
+These include <code>/etc/rc.conf</code>, <code>/etc/rc.conf.local</code>, and any further extra files employed by the likes of PC-BSD/TrueOS.
+</p></li>
+<li><p>
+The result of converting several console settings files into the equivalent FreeBSD/TrueOS <code>rc.conf</code> settings:
+</p>
+<ul>
+<li><p>
+<code>/etc/vconsole.conf</code>, which is the systemd console settings file;
+</p></li>
+<li><p>
+<code>/etc/defaults/console-setup</code> and <code>/etc/defaults/keyboard</code>, which are the Debian console-setup and keyboard packages' console settings files;
+and
+</p></li>
+<li><p>
+<code>/etc/kbd/config</code>, which is the Debian kbd package's console settings file.
+</p></li>
+</ul>
+</li>
+</ul>
 
 <h2>
 Service preset information

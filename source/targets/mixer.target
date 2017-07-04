@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%p umbrella
+
+[Service]
+User=nobody
+
+[Install]
+WantedBy=workstation.target

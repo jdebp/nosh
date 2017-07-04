@@ -20,6 +20,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <pwd.h>
 #include "popt.h"
 #include "utils.h"
+#include "ProcessEnvironment.h"
 
 /* Main function ************************************************************
 // **************************************************************************
@@ -28,7 +29,8 @@ For copyright and licensing terms, see the file named COPYING.
 void
 envuidgid ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	bool supplementary(false);
@@ -79,13 +81,13 @@ exit_error:
 			if (!gidlist.empty()) gidlist += ",";
 			gidlist += gid;
 		}
-		if (0 > setenv("GIDLIST", gidlist.c_str(), 1)) goto exit_error;
+		if (!envs.set("GIDLIST", gidlist)) goto exit_error;
 	} else {
-		if (0 > unsetenv("GIDLIST")) goto exit_error;
+		if (0 > envs.unset("GIDLIST")) goto exit_error;
 	}
 	char uid[64], gid[64];
 	snprintf(uid, sizeof uid, "%u", p->pw_uid);
 	snprintf(gid, sizeof gid, "%u", p->pw_gid);
-	if (0 > setenv("UID", uid, 1)) goto exit_error;
-	if (0 > setenv("GID", gid, 1)) goto exit_error;
+	if (!envs.set("UID", uid)) goto exit_error;
+	if (!envs.set("GID", gid)) goto exit_error;
 }

@@ -16,6 +16,7 @@ kmod@unix
 kmod@uvesafb
 linux-utmp
 mdadm
+nft
 pommed
 sudo
 ttylogin-starter

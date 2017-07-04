@@ -20,6 +20,13 @@ open_exec_at (
 	const char * name
 );
 
+extern
+int 
+open_non_interpreted_exec_at (
+	int dir_fd, 
+	const char * name
+);
+
 extern inline
 int 
 open_dir_at (

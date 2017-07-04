@@ -39,7 +39,7 @@ SoftTerm::SoftTerm(SoftTerm::ScreenBuffer & s, SoftTerm::KeyboardBuffer & k, Sof
 	attributes(0),
 	foreground(default_foreground),
 	background(default_background),
-	cursor_type(CursorSprite::BOX),
+	cursor_type(CursorSprite::BLOCK),
 	cursor_attributes(CursorSprite::VISIBLE|CursorSprite::BLINK),
 	send_DECLocator(false),
 	send_XTermMouse(false)
@@ -201,8 +201,11 @@ SoftTerm::ClearToEOD()
 	const ScreenBuffer::coordinate stride(ScreenBuffer::coordinate(display_margin.w) + display_origin.x);
 	const ScreenBuffer::coordinate rows(ScreenBuffer::coordinate(display_margin.h) + display_origin.y);
 	const ScreenBuffer::coordinate s(stride * active_cursor.y + active_cursor.x);
-	const ScreenBuffer::coordinate l(stride * (rows - 1U - active_cursor.y) + (stride - active_cursor.x));
-	screen.WriteNCells(s, l, ErasureCell());
+	const ScreenBuffer::coordinate e(stride * rows);
+	if (s < e) {
+		const ScreenBuffer::coordinate l(e - s);
+		screen.WriteNCells(s, l, ErasureCell());
+	}
 }
 
 void 
@@ -211,7 +214,8 @@ SoftTerm::ClearToEOL()
 	// Erasure ignores margins.
 	const ScreenBuffer::coordinate stride(ScreenBuffer::coordinate(display_margin.w) + display_origin.x);
 	const ScreenBuffer::coordinate s(stride * active_cursor.y + active_cursor.x);
-	screen.WriteNCells(s, stride - active_cursor.x, ErasureCell());
+	if (active_cursor.x < stride)
+		screen.WriteNCells(s, stride - active_cursor.x, ErasureCell());
 }
 
 void 
@@ -220,8 +224,10 @@ SoftTerm::ClearFromBOD()
 	// Erasure ignores margins.
 	const ScreenBuffer::coordinate stride(ScreenBuffer::coordinate(display_margin.w) + display_origin.x);
 	const ScreenBuffer::coordinate s(stride * display_origin.y);
-	const ScreenBuffer::coordinate l(stride * (active_cursor.y - display_origin.y) + active_cursor.x + 1U);
-	screen.WriteNCells(s, l, ErasureCell());
+	if (display_origin.y <= active_cursor.y) {
+		const ScreenBuffer::coordinate l(stride * (active_cursor.y - display_origin.y) + active_cursor.x + 1U);
+		screen.WriteNCells(s, l, ErasureCell());
+	}
 }
 
 void 
@@ -230,7 +236,8 @@ SoftTerm::ClearFromBOL()
 	// Erasure ignores margins.
 	const ScreenBuffer::coordinate stride(ScreenBuffer::coordinate(display_margin.w) + display_origin.x);
 	const ScreenBuffer::coordinate s(stride * active_cursor.y + display_origin.x);
-	screen.WriteNCells(s, active_cursor.x - display_origin.x + 1U, ErasureCell());
+	if (display_origin.x <= active_cursor.x)
+		screen.WriteNCells(s, active_cursor.x - display_origin.x + 1U, ErasureCell());
 }
 
 void 
@@ -305,7 +312,7 @@ SoftTerm::InsertLinesInScrollAreaAt(coordinate top, coordinate n)
 			const ScreenBuffer::coordinate s(stride * (r - n) + left_margin);
 			screen.CopyNCells(d, s, w);
 		}
-		for (ScreenBuffer::coordinate r(top + n - 1U); r >= top; --r) {
+		for (ScreenBuffer::coordinate r(top + n); r-- > top; ) {
 			const ScreenBuffer::coordinate d(stride * r + left_margin);
 			screen.WriteNCells(d, w, ErasureCell());
 		}
@@ -857,20 +864,25 @@ Map256Colour (
 void 
 SoftTerm::SetAttributes()
 {
-	if (3 == argc && 38U == args[0] && 5U == args[1]) {
-		foreground = Map256Colour(args[2] % 256U);
-	} else
-	if (3 == argc && 48U == args[0] && 5U == args[1]) {
-		background = Map256Colour(args[2] % 256U);
-	} else
-	if (5 == argc && 38U == args[0] && 2U == args[1]) {
-		foreground = CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,args[2] % 256U,args[3] % 256U,args[4] % 256U);
-	} else
-	if (5 == argc && 48U == args[0] && 2U == args[1]) {
-		background = CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,args[2] % 256U,args[3] % 256U,args[4] % 256U);
-	} else
-	for (std::size_t i(0U); i < argc; ++i)
-		SetAttribute (args[i]);
+	for (std::size_t i(0U); i < argc; ) {
+		if (i + 3U <= argc && 38U == args[i + 0U] && 5U == args[i + 1U]) {
+			foreground = Map256Colour(args[i + 2U] % 256U);
+			i += 3U;
+		} else
+		if (i + 3U <= argc && 48U == args[i + 0U] && 5U == args[i + 1U]) {
+			background = Map256Colour(args[i + 2U] % 256U);
+			i += 3U;
+		} else
+		if (i + 5U <= argc && 38U == args[i + 0U] && 2U == args[i + 1U]) {
+			foreground = CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,args[i + 2U] % 256U,args[i + 3U] % 256U,args[i + 4U] % 256U);
+			i += 5U;
+		} else
+		if (i + 5U <= argc && 48U == args[i + 0U] && 2U == args[i + 1U]) {
+			background = CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,args[i + 2U] % 256U,args[i + 3U] % 256U,args[i + 4U] % 256U);
+			i += 5U;
+		} else
+			SetAttribute (args[i++]);
+	}
 }
 
 void 
@@ -958,6 +970,13 @@ SoftTerm::RestoreAttributes()
 void 
 SoftTerm::SetLinesPerPage()
 {
+	// This is a bodge to accommodate progreams such as NeoVIM that hardwire this xterm control sequence.
+	if (3 == argc && 8U == args[0]) {
+		const coordinate rows(args[1]);
+		const coordinate columns(args[2]);
+		if (columns >= 2U && rows >= 2U)
+			Resize(columns, rows);
+	} else
 	if (argc) {
 		const coordinate n(args[argc - 1U]);
 		// The DEC VT minimum is 80 columns; we are more liberal since we are not constrained by CRT hardware.
@@ -1175,7 +1194,7 @@ SoftTerm::SetSCOCursorType()
 }
 
 // This control sequence is implemented by the Linux virtual terminal and used by programs such as vim.
-// See Linux/Documentation/VGA-softcursor.txt .
+// See Linux/Documentation/admin-guide/VGA-softcursor.txt .
 void 
 SoftTerm::SetLinuxCursorType()
 {
@@ -1183,7 +1202,7 @@ SoftTerm::SetLinuxCursorType()
 	switch (args[0] & 0x0F) {
 		case 0U:
 			cursor_attributes |= CursorSprite::VISIBLE;
-			cursor_type = CursorSprite::BOX; 
+			cursor_type = CursorSprite::BLOCK; 
 			break;
 		case 1U:
 			cursor_attributes &= ~CursorSprite::VISIBLE;
@@ -1220,15 +1239,39 @@ SoftTerm::SetCursorStyle()
 				break;
 			case 2U:
 				cursor_attributes &= ~CursorSprite::BLINK;
-				cursor_type = CursorSprite::UNDERLINE; 
+				cursor_type = CursorSprite::BLOCK; 
 				break;
 			case 3U:
 				cursor_attributes |= CursorSprite::BLINK;
-				cursor_type = CursorSprite::BLOCK; 
+				cursor_type = CursorSprite::UNDERLINE; 
 				break;
 			case 4U:
 				cursor_attributes &= ~CursorSprite::BLINK;
 				cursor_type = CursorSprite::UNDERLINE; 
+				break;
+			case 5U:
+				cursor_attributes |= CursorSprite::BLINK;
+				cursor_type = CursorSprite::BAR; 
+				break;
+			case 6U:
+				cursor_attributes &= ~CursorSprite::BLINK;
+				cursor_type = CursorSprite::BAR; 
+				break;
+			case 7U:
+				cursor_attributes |= CursorSprite::BLINK;
+				cursor_type = CursorSprite::BOX; 
+				break;
+			case 8U:
+				cursor_attributes &= ~CursorSprite::BLINK;
+				cursor_type = CursorSprite::BOX; 
+				break;
+			case 9U:
+				cursor_attributes |= CursorSprite::BLINK;
+				cursor_type = CursorSprite::STAR; 
+				break;
+			case 10U:
+				cursor_attributes &= ~CursorSprite::BLINK;
+				cursor_type = CursorSprite::STAR; 
 				break;
 		}
 	UpdateCursorType();
@@ -1768,6 +1811,7 @@ SoftTerm::ControlSequence(uint32_t character)
 			case 'J':
 			case 'K':
 			case 'x':
+			case 'r':
 				FinishArg(0U); 
 				break;
 			case 'H':
@@ -1775,13 +1819,6 @@ SoftTerm::ControlSequence(uint32_t character)
 				FinishArg(1U); 
 				if (argc < 2U) FinishArg(1U); 
 				break;
-			case 'r':
-			{
-				const coordinate columns(display_origin.x + display_margin.w);
-				FinishArg(argc < 1U ? 1U : columns); 
-				FinishArg(argc < 2U ? columns : 0U); 
-				break;
-			}
 			default:	
 				FinishArg(1U); 
 				break;

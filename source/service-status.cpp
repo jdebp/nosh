@@ -34,10 +34,11 @@ For copyright and licensing terms, see the file named COPYING.
 static inline
 struct tm
 convert(
+	const ProcessEnvironment & envs,
 	const uint64_t & s
 ) {
 	bool leap;
-	const std::time_t t(tai64_to_time(s, leap));
+	const std::time_t t(tai64_to_time(envs,s, leap));
 	struct tm tm;
 	localtime_r(&t, &tm);
 	if (leap) ++tm.tm_sec;
@@ -201,12 +202,13 @@ status_event[4] = {
 static inline
 void
 write_timestamp (
+	const ProcessEnvironment & envs,
 	const char * preposition,
 	const uint64_t z,
 	const uint64_t s
 ) {
 	char buf[64];
-	const struct tm t(convert(s));
+	const struct tm t(convert(envs, s));
 	const size_t len(std::strftime(buf, sizeof buf, "%F %T %z", &t));
 	std::fprintf(stdout, " %s ", preposition);
 	std::fwrite(buf, len, 1U, stdout);
@@ -230,6 +232,7 @@ write_timestamp (
 static inline
 void
 display (
+	const ProcessEnvironment & envs,
 	const char * name,
 	const bool long_form,
 	const bool colours,
@@ -282,7 +285,7 @@ display (
 		if (p && !long_form)
 			std::fprintf(stdout, " (pid %u)", p);
 		if (z >= s) 
-			write_timestamp("since", z, s);
+			write_timestamp(envs, "since", z, s);
 		const char * const paused(status[PAUSE_FLAG_OFFSET] ? "paused" : "");
 		const char * const want('u' == want_flag ? "want up" : 'O' == want_flag ? "once at most" : 'o' == want_flag ? "once" : 'd' == want_flag ? "want down" : "");
 		if (long_form) {
@@ -307,7 +310,7 @@ display (
 						std::fputs(" (core dumped)", stdout);
 
 					const uint64_t stamp(unpack_bigendian(status + (EXIT_STATUSES_OFFSET + i * EXIT_STATUS_SIZE + 5U), 8));
-					write_timestamp("at", z, stamp);
+					write_timestamp(envs, "at", z, stamp);
 				}
 			}
 		} else {
@@ -351,7 +354,8 @@ static std::string current;
 void
 service_status (
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 
@@ -392,7 +396,7 @@ service_status (
 
 	timespec now;
 	clock_gettime(CLOCK_REALTIME, &now);
-	const uint64_t z(time_to_tai64(now.tv_sec, false));
+	const uint64_t z(time_to_tai64(envs, now.tv_sec, false));
 
 	reset_colour(!colours);
 
@@ -428,16 +432,16 @@ service_status (
 				std::fprintf(stdout, "%s: %s: %s\n", name, "supervise/ok", std::strerror(error));
 				continue;
 			}
-			display(name, long_form, colours, false, initially_up, run_on_empty, ready_after_run, use_hangup, use_kill, z, 0U, status);
+			display(envs, name, long_form, colours, false, initially_up, run_on_empty, ready_after_run, use_hangup, use_kill, z, 0U, status);
 		} else {
 			const FileDescriptorOwner status_fd(open_read_at(supervise_dir_fd.get(), "status"));
 			if (0 > status_fd.get()) {
 				const int error(errno);
 				std::fprintf(stdout, "%s: %s: %s\n", name, "status", std::strerror(error));
-				display(name, long_form, colours, true, initially_up, run_on_empty, ready_after_run, use_hangup, use_kill, z, 0U, status);
+				display(envs, name, long_form, colours, true, initially_up, run_on_empty, ready_after_run, use_hangup, use_kill, z, 0U, status);
 			} else {
 				const int b(read(status_fd.get(), status, sizeof status));
-				display(name, long_form, colours, true, initially_up, run_on_empty, ready_after_run, use_hangup, use_kill, z, static_cast<unsigned int>(b), status);
+				display(envs, name, long_form, colours, true, initially_up, run_on_empty, ready_after_run, use_hangup, use_kill, z, static_cast<unsigned int>(b), status);
 			}
 		}
 

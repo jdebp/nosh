@@ -15,4 +15,4 @@ Restart=on-abort
 
 [Install]
 # This is a sub-service that runs under an umbrella service.
-WantedBy=uhidd.target
+WantedBy=%p.target

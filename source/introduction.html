@@ -66,7 +66,7 @@ There is no repeated building of things, over and over again at bootstrap time, 
 <strong> The primary foreign configuration formats are systemd units and BSD databases. </strong> 
 The world is already, independently, doing the work of replacing Linux "System 5" <code>rc</code> scripts, and has been since 2011.
 Nowadays, "other people's stuff" comes with systemd units.
-Likewise, replacing the NetBSD <code>rc</code> scripts has been a large part of the nosh project and the majority is now replaced with service bundles and a mechanism for generating service bundles from the BSD databases such as <code>/etc/fstab</code>.
+Likewise, replacing the Mewburn <code>rc</code> scripts has been a large part of the nosh project and the majority is now replaced with service bundles and a mechanism for generating service bundles from the BSD databases such as <code>/etc/fstab</code> and <code>/etc/rc.conf</code>.
 Those are therefore the primary foreign configuration file formats that are addressed by conversion/import tools.
 </p> </li>
 </ul>
@@ -82,7 +82,7 @@ Here are some of the distinctive major features where the system is different by
 <ul>
 <li> <p>
 <strong> System bootstrap only runs the enabled services. </strong>
-The NetBSD <code>rc</code> mechanism always runs every shell script, relying upon shell scripts to <em>disable themselves</em> when they see a <code>foo_enable=NO</code> shell variable.
+The Mewburn <code>rc</code> mechanism always runs every shell script, relying upon shell scripts to <em>disable themselves</em> when they see a <code>foo_enable=NO</code> shell variable.
 nosh simply doesn't run disabled services at all at boot time.
 </p> </li>
 <li> <p> 

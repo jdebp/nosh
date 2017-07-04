@@ -19,6 +19,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <pwd.h>
 #include "popt.h"
 #include "utils.h"
+#include "ProcessEnvironment.h"
 #include "ttyutils.h"
 
 termios
@@ -37,7 +38,8 @@ make_noecho (
 void
 emergency_login ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
@@ -110,7 +112,7 @@ emergency_login (
 	execl(shell, shell, static_cast<const char *>(0));
 	std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, shell, std::strerror(errno));
 
-	shell = std::getenv("SHELL");
+	shell = envs.query("SHELL");
 	if (shell) {
 		execl(shell, shell, static_cast<const char *>(0));
 		std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, shell, std::strerror(errno));

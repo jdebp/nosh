@@ -4,7 +4,7 @@
 
 [Unit]
 Description=%p service using "%i" configuration
-After=syslog.target
+After=local-syslog.target
 
 [Service]
 PrivateTmp=true

@@ -210,7 +210,7 @@ before/stopped after the current service when executing a start/stop job.
 Relationships are not the same as dependencies.
 A service can "want" another service without having any ordering against it with respect to start/stop actions.
 Indeed, this is a common case for system targets.
-The <filename>normal</filename> target, for example, "wants" the <filename>server</filename>, <filename>workstation</filename>, and <filename>multi-user</filename> targets (and by extension everything that they in their turn "want"), but all of the wanted services are started in parallel with the <filename>normal</filename> target itself.
+The <filename>normal</filename> target, for example, "wants" the <filename>server</filename>, <filename>workstation</filename>, <filename>multi-user</filename>, <filename>static-networking</filename> , and <filename>users</filename> targets (and by extension everything that they in their turn "want"), but all of the wanted services are started in parallel with the <filename>normal</filename> target itself.
 </para>
 
 <para>
@@ -346,29 +346,29 @@ It will fail if it does not have the necessary privileges for sending a signal t
 <table>
 <title>The signals for each subcommand:</title>
 <thead>
-<tr><th rowspan='2'>command</th><th colspan='2'>signal</th></tr>
+<tr><th rowspan='2'>command</th><th colspan='2' align='center'>signal</th></tr>
 <tr><th>on BSD</th><th>on Linux</th></tr>
 </thead>
 <tbody>
-<tr><td><command>reboot</command></td><td><code>SIGINT</code></td><td><code>SIGRTMIN + 5</code></td></tr>
-<tr><td><command>reboot</command> <arg choice='plain'>-f</arg></td><td colspan='2' align="center"><code>SIGRTMIN + 15</code></td></tr>
-<tr><td><command>poweroff</command></td><td><code>SIGUSR2</code></td><td><code>SIGRTMIN + 4</code></td></tr>
-<tr><td><command>poweroff</command> <arg choice='plain'>-f</arg></td><td colspan='2' align='center'><code>SIGRTMIN + 14</code></td></tr>
 <tr><td><command>halt</command></td><td><code>SIGUSR1</code></td><td><code>SIGRTMIN + 3</code></td></tr>
 <tr><td><command>halt</command> <arg choice='plain'>-f</arg></td><td colspan='2' align='center'><code>SIGRTMIN + 13</code></td> </tr>
+<tr><td><command>poweroff</command></td><td><code>SIGUSR2</code></td><td><code>SIGRTMIN + 4</code></td></tr>
+<tr><td><command>poweroff</command> <arg choice='plain'>-f</arg></td><td colspan='2' align='center'><code>SIGRTMIN + 14</code></td></tr>
+<tr><td><command>reboot</command></td><td><code>SIGINT</code></td><td><code>SIGRTMIN + 5</code></td></tr>
+<tr><td><command>reboot</command> <arg choice='plain'>-f</arg></td><td colspan='2' align="center"><code>SIGRTMIN + 15</code></td></tr>
 <tr><td><command>emergency</command></td><td colspan='2' align='center'><code>SIGRTMIN + 2</code></td></tr>
-<tr><td><command>rescue</command></td><td><code>SIGTERM</code></td><td><code>SIGRTMIN + 1</code></td></tr>
-<tr><td><command>normal</command></td><td colspan='2'><code>SIGRTMIN + 0</code></td></tr>
-<tr><td><command>init</command> <group choice='plain'><arg choice='plain'>-b</arg><arg choice='plain'>b</arg><arg choice='plain'>emergency</arg></group></td><td colspan='2' align='center'><code>SIGRTMIN + 2</code></td></tr>
+<tr><td><command>rescue</command></td><td colspan='2' align='center'><code>SIGRTMIN + 1</code></td></tr>
+<tr><td><command>normal</command></td><td colspan='2' align='center'><code>SIGRTMIN + 0</code></td></tr>
+<tr><td rowspan='2' valign='center'><command>init</command> <group choice='opt'><arg choice='plain'>2</arg><arg choice='plain'>3</arg><arg choice='plain'>4</arg><arg choice='plain'>5</arg><arg choice='plain'>m</arg><arg choice='plain'>auto</arg></group></td><td colspan='2' align='center'><code>SIGRTMIN + 10</code></td></tr>
+<tr><td colspan='2' align='center'><code>SIGRTMIN + 0</code></td></tr>
+<tr><td rowspan='2'><command>init</command> <group choice='plain'><arg choice='plain'>1</arg><arg choice='plain'>S</arg><arg choice='plain'>s</arg><arg choice='plain'>single</arg></group></td><td colspan='2' align='center'><code>SIGRTMIN + 10</code></td></tr>
+<tr><td colspan='2' align='center'><code>SIGRTMIN + 1</code></td></tr>
 <tr><td rowspan='2'><command>init</command> <group choice='plain'><arg choice='plain'>-s</arg></group></td><td><code>SIGRTMIN + 2</code></td><td><code>SIGRTMIN + 10</code></td></tr>
 <tr><td></td><td><code>SIGRTMIN + 1</code></td></tr>
-<tr><td rowspan='2'><command>init</command> <group choice='plain'><arg choice='plain'>1</arg><arg choice='plain'>S</arg><arg choice='plain'>s</arg><arg choice='plain'>single</arg></group></td><td colspan='2' align='center'><code>SIGRTMIN + 10</code></td></tr>
-<tr><td><code>SIGTERM</code></td><td><code>SIGRTMIN + 1</code></td></tr>
+<tr><td><command>init</command> <group choice='plain'><arg choice='plain'>-b</arg><arg choice='plain'>b</arg><arg choice='plain'>emergency</arg></group></td><td colspan='2' align='center'><code>SIGRTMIN + 2</code></td></tr>
 <tr><td><command>init</command> <group choice='plain'><arg choice='plain'>H</arg><arg choice='plain'>h</arg></group></td><td><code>SIGUSR1</code></td><td><code>SIGRTMIN + 3</code></td> </tr>
 <tr><td><command>init</command> <arg choice='plain'>0</arg></td><td><code>SIGUSR2</code></td><td><code>SIGRTMIN + 4</code></td></tr>
 <tr><td><command>init</command> <arg choice='plain'>6</arg></td><td><code>SIGINT</code></td><td><code>SIGRTMIN + 5</code></td></tr>
-<tr><td rowspan='2'><command>init</command> <group choice='opt'><arg choice='plain'>2</arg><arg choice='plain'>3</arg><arg choice='plain'>4</arg><arg choice='plain'>5</arg><arg choice='plain'>m</arg><arg choice='plain'>auto</arg></group></td><td colspan='2' align='center'><code>SIGRTMIN + 10</code></td></tr>
-<tr><td colspan='2'><code>SIGRTMIN + 0</code></td></tr>
 </tbody>
 </table>
 
@@ -506,7 +506,7 @@ These subcommands enable or disable one or more services or targets, so that the
 
 <para>
 Each service bundle specifies a (symbolically linked) list of target bundles in its <filename>wanted-by/</filename> directory.
-Usually these will be the <filename>workstation</filename>, <filename>server</filename>, or <filename>multi-user</filename> standard targets.
+Usually these will be the <filename>workstation</filename>, <filename>server</filename>, <filename>users</filename>, or <filename>multi-user</filename> standard targets.
 For each bundle, enabling the service involves symbolically linking its bundle directory into the target bundle's <filename>wants/</filename> list, and disabling the service involves removing that link.
 </para>
 
@@ -802,9 +802,8 @@ For best results, avoid having forking services in the first place, and change t
 
 <listitem>
 <para>
-Only TCP, UDP, local domain datagram, local domain stream, and netlink datagram sockets are converted.
-The <filename>run</filename>/<filename>service</filename> script makes use of <citerefentry><refentrytitle>udp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>tcp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>local-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>local-stream-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>netlink-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>tcp-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and <citerefentry><refentrytitle>local-stream-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry> to spawn services, either to listen to the accepting socket or to respond on connecting sockets.
-FIFOs and sequential packet sockets are not supported, in the absence of similar tools.
+Only TCP, UDP, local domain datagram, local domain stream, local domain sequential packet, FIFO, and netlink datagram sockets are converted.
+The <filename>run</filename>/<filename>service</filename> script makes use of <citerefentry><refentrytitle>udp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>tcp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>local-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>local-stream-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>local-seqpacket-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fifo-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>netlink-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>tcp-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>local-stream-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and <citerefentry><refentrytitle>local-seqpacket-socket-accept</refentrytitle><manvolnum>1</manvolnum></citerefentry> to spawn services, either to listen to the accepting socket or to respond on connecting sockets.
 </para>
 </listitem>
 
@@ -1588,6 +1587,24 @@ All "late" "swap" services should be listed in its <filename>wants/</filename> l
 <listitem><para>
 This target is a collection that is wanted by "sysinit"; it is not an ordering milestone.
 All "dump" services should be listed in its <filename>wants/</filename> lists.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><filename>finish-install</filename></term>
+<term><filename>finish-update</filename></term>
+<listitem><para>
+These targets "wants" the various services that finish a system install or a system upgrade.
+They are collections that are used to group services, but are not ordering milestones.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><filename>reboot-after-install</filename></term>
+<term><filename>reboot-after-update</filename></term>
+<listitem><para>
+These target <filename>wants/</filename> the <filename>reboot</filename> target.
+They are ordering milestones, with all <filename>finish-install</filename>/<filename>finish-update</filename> services expected to order themselves <filename>before/</filename> these targets.
 </para></listitem>
 </varlistentry>
 

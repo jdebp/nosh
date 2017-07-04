@@ -7,7 +7,8 @@
 #
 
 # Ordinary services
-enable	cyclog@ldconfig.service
+# This now uses the sysinit-log log.
+#enable	cyclog@ldconfig.service
 enable	ldconfig.service
 enable	cyclog@sysctl.service
 enable	sysctl.service
@@ -19,6 +20,10 @@ enable	cyclog@vixiecron.service
 enable	vixiecron.service
 enable	cyclog@crashinfo.service
 enable	crashinfo.service
+enable	freebsd-install-finish.service
+enable	trueos-install-finish.service
+enable	freebsd-update-finish.service
+enable	trueos-update-finish.service
 
 # Sysinit services
 enable	devd-log.service

@@ -30,7 +30,8 @@ static const char tty[] = "/dev/tty";
 void
 detach_controlling_tty ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 	try {

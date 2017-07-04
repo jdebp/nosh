@@ -7,6 +7,9 @@ For copyright and licensing terms, see the file named COPYING.
 #include <stdint.h>
 #include <cstring>
 #include "utils.h"
+#if defined(__LINUX__) || defined(__linux__)
+#include "ProcessEnvironment.h"
+#endif
 
 static const
 struct leapsec {
@@ -84,16 +87,16 @@ ends_with (
 
 static inline
 bool
-time_t_is_tai()
+time_t_is_tai(const ProcessEnvironment & envs)
 {
 	if (0 > checked) {
-		if (const char * tz = std::getenv("TZ")) {
+		if (const char * tz = envs.query("TZ")) {
 			if (begins_with(tz, "right/")) checked = 1;
 			if (begins_with(tz, "posix/")) checked = 0;
 		}
 	}
 	if (0 > checked) {
-		if (const char * tzdir = std::getenv("TZDIR")) {
+		if (const char * tzdir = envs.query("TZDIR")) {
 			if (ends_with(tzdir, "/right")) checked = 1;
 			if (ends_with(tzdir, "/posix")) checked = 0;
 		}
@@ -105,7 +108,7 @@ time_t_is_tai()
 
 static inline
 bool
-time_t_is_tai()
+time_t_is_tai(const ProcessEnvironment &)
 {
 	return false;
 }
@@ -114,11 +117,12 @@ time_t_is_tai()
 
 time_t
 tai64_to_time (
+	const ProcessEnvironment & envs,
 	const uint64_t s,
 	bool & leap
 ) {
 	leap = false;
-	if (time_t_is_tai())
+	if (time_t_is_tai(envs))
 		return static_cast<time_t>(s - 0x4000000000000000ULL - 10UL);
 	for (std::size_t i(sizeof leap_seconds_table/sizeof *leap_seconds_table); i > 0U; ) {
 		const struct leapsec & l(leap_seconds_table[--i]);
@@ -133,11 +137,12 @@ tai64_to_time (
 
 uint64_t
 time_to_tai64 (
+	const ProcessEnvironment & envs,
 	const std::time_t s,
 	bool leap
 ) {
 	const uint64_t z(0x4000000000000000ULL + s);
-	if (time_t_is_tai())
+	if (time_t_is_tai(envs))
 		return z + 10UL;
 	for (std::size_t i(sizeof leap_seconds_table/sizeof *leap_seconds_table); i-- > 0U; ) {
 		const struct leapsec & l(leap_seconds_table[i]);

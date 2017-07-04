@@ -4,7 +4,7 @@
 
 [Unit]
 Description=OpenVPN OTP service for "%i" configuration
-Before=openvpn@%i
+Before=openvpn-client@%i
 
 [Service]
 User=%p
@@ -14,4 +14,4 @@ ExecStopPost=install -m 0600 /dev/null secret.up
 RestartSec=20
 
 [Install]
-#WantedBy=openvpn.target
+WantedBy=openvpn-client@%i

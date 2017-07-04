@@ -13,18 +13,18 @@ For copyright and licensing terms, see the file named COPYING.
 
 // These are the built-in commands visible in the statically linked system-manager.
 
-extern void reboot_poweroff_halt_command ( const char * & , std::vector<const char *> & ) ;
-extern void emergency_rescue_normal_command ( const char * & , std::vector<const char *> & ) ;
-extern void isolate ( const char * & , std::vector<const char *> & ) ;
-extern void activate ( const char * & , std::vector<const char *> & ) ;
-extern void cyclog ( const char * & , std::vector<const char *> & ) ;
-extern void foreground ( const char * & , std::vector<const char *> & ) ;
-extern void system_control ( const char * & , std::vector<const char *> & ) ;
-extern void init ( const char * & , std::vector<const char *> & ) ;
-extern void system_manager ( const char * & , std::vector<const char *> & ) ;
-extern void service_manager ( const char * & , std::vector<const char *> & ) ;
-extern void move_to_control_group ( const char * &, std::vector<const char *> & );
-extern void set_control_group_knob ( const char * &, std::vector<const char *> & );
+extern void reboot_poweroff_halt_command ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void emergency_rescue_normal_command ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void isolate ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void activate ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void cyclog ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void foreground ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void system_control ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void init ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void system_manager ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void service_manager ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void move_to_control_group ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void set_control_group_knob ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 
 extern const
 struct command 

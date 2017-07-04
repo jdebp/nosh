@@ -7,6 +7,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <map>
 #include <set>
 #include <utility>
+#include <memory>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -31,11 +32,11 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include <fcntl.h>
 #include "utils.h"
-#include "pack.h"
 #include "fdutils.h"
+#include "ProcessEnvironment.h"
+#include "pack.h"
 #include "listen.h"
 #include "service-manager.h"
-#include "environ.h"
 #include "FileDescriptorOwner.h"
 
 static const char * prog(0);
@@ -56,7 +57,7 @@ struct index : public std::pair<dev_t, ino_t> {
 };
 
 struct service : public index {
-	service(const struct stat &);
+	service(const struct stat &, ProcessEnvironment &);
 	~service();
 
 	void add_process(int);
@@ -90,6 +91,7 @@ protected:
 	int current_process_status;
 	unsigned char status[STATUS_BLOCK_SIZE];
 	std::set<int> processes;
+	ProcessEnvironment & envs;
 
 	void change_state_if_necessary (const sigset_t &);
 	void enter_state(const sigset_t &);
@@ -99,12 +101,26 @@ protected:
 	void killtop(int);
 	void add_input_ready_event(int);
 	void delete_input_ready_event(int);
+#if !defined(__LINUX__) && !defined(__linux__)
+	void delete_from_pending_forks();
+#endif
 };
 
 }
 
-typedef std::map<int, service *> active_service_map;
-static active_service_map active_services;
+typedef std::map<int, service *> pid_to_service_map;
+static pid_to_service_map active_services;
+
+#if !defined(__LINUX__) && !defined(__linux__)
+struct forked_parent {
+	forked_parent() : s(0), c(0) {}
+	service * s;
+	int c;
+};
+typedef std::map<int, forked_parent> pid_to_forked_parents_map;
+static pid_to_forked_parents_map forked_parents;
+typedef std::pair<pid_to_forked_parents_map::iterator, bool> forked_parent_lookup;
+#endif
 
 typedef std::map<int, service *> input_activated_service_map;
 static input_activated_service_map input_activated_services;
@@ -113,7 +129,8 @@ typedef std::map<int, service *> service_control_fifo_map;
 static service_control_fifo_map service_control_fifos;
 
 // \bug FIXME: This should be a map of shared pointers.
-typedef std::map<struct index, service> service_map;
+typedef std::shared_ptr<service> service_pointer;
+typedef std::map<struct index, service_pointer> service_map;
 static service_map services;
 
 /* Supervision **************************************************************
@@ -132,7 +149,7 @@ is_failure (
 		return WEXITSTATUS(wait_status) != EXIT_SUCCESS;
 }
 
-service::service(const struct stat & s) : 
+service::service(const struct stat & s, ProcessEnvironment & e) : 
 	index(s),
 	in(STDIN_FILENO), 
 	out(STDOUT_FILENO), 
@@ -149,7 +166,8 @@ service::service(const struct stat & s) :
 	unload_after_stop(false),
 	activity(NONE), 
 	current_process_status(-1),
-	processes()
+	processes(),
+	envs(e)
 {
 	pipe_fds[0] = pipe_fds[1] = -1;
 	name[0] = '\0';
@@ -157,6 +175,9 @@ service::service(const struct stat & s) :
 
 service::~service() 
 {
+#if !defined(__LINUX__) && !defined(__linux__)
+	delete_from_pending_forks();
+#endif
 	delete_from_input_activation_list();
 	delete_from_control_fifo_list();
 	close(pipe_fds[0]);
@@ -174,7 +195,7 @@ void
 service::stamp_time (
 	const timespec & now
 ) {
-	const uint64_t s(time_to_tai64(now.tv_sec, false));
+	const uint64_t s(time_to_tai64(envs, now.tv_sec, false));
 	const uint32_t n(now.tv_nsec);
 	const uint32_t p(has_processes() ? *processes.begin() : 0);
 	pack_bigendian(status +  0, s, 8);
@@ -223,7 +244,7 @@ service::stamp_process_status (
 		status[offset] = WCOREDUMP(wait_status) ? 3 : 2;
 		pack_bigendian(status + offset + 1U, signo, 4);
 	}
-	const uint64_t s(time_to_tai64(now.tv_sec, false));
+	const uint64_t s(time_to_tai64(envs, now.tv_sec, false));
 	const uint32_t n(now.tv_nsec);
 	pack_bigendian(status + offset +  5U, s, 8);
 	pack_bigendian(status + offset + 13U, n, 4);
@@ -235,9 +256,10 @@ service::add_process (
 ) {
 	const bool affects_main_process(processes.empty());
 	if (!processes.insert(pid).second) return;
-	active_services.insert(active_service_map::value_type(pid, this));
+	active_services.insert(pid_to_service_map::value_type(pid, this));
 #if !defined(__LINUX__) && !defined(__linux__)
 	struct kevent e;
+	// NOTE_EXIT is incompatible with NOTE_TRACK within a single kqueue, as they both set the data field.
 	EV_SET(&e, pid, EVFILT_PROC, EV_ADD, NOTE_EXIT|NOTE_FORK|NOTE_TRACK, 0, 0);
 	kevent(queue, &e, 1, 0, 0, 0);
 #endif
@@ -256,6 +278,7 @@ service::del_process (
 	const bool affects_main_process(!processes.empty() && pid == *processes.begin());
 #if !defined(__LINUX__) && !defined(__linux__)
 	struct kevent e;
+	// NOTE_EXIT is incompatible with NOTE_TRACK within a single kqueue, as they both set the data field.
 	EV_SET(&e, pid, EVFILT_PROC, EV_DELETE, NOTE_EXIT|NOTE_FORK|NOTE_TRACK, 0, 0);
 	kevent(queue, &e, 1, 0, 0, 0);
 #endif
@@ -367,6 +390,20 @@ service::delete_from_control_fifo_list ()
 		delete_input_ready_event(fd);
 	}
 }
+
+#if !defined(__LINUX__) && !defined(__linux__)
+inline
+void 
+service::delete_from_pending_forks()
+{
+	for ( pid_to_forked_parents_map::iterator i(forked_parents.begin()) ; forked_parents.end() != i ; ) {
+		if (this == i->second.s)
+			i = forked_parents.erase(i);
+		else
+			++i;
+	}
+}
+#endif
 
 void 
 service::killall(
@@ -519,6 +556,9 @@ service::enter_state (
 
 	char codebuf[16];
 	switch (activity) {
+		case RUN:	
+		case START:	
+		case STOP:	
 		default:	break;
 		case RESTART:	
 			if (WIFSIGNALED(current_process_status)) {
@@ -549,9 +589,9 @@ service::enter_state (
 	if (err != STDERR_FILENO) close(err);
 
 #if defined(__OpenBSD__)
-	execve(*a, const_cast<char **>(a), environ);
+	execve(*a, const_cast<char **>(a), const_cast<char **>(envs.data()));
 #else
-	fexecve(fd.get(), const_cast<char **>(a), environ);
+	fexecve(fd.get(), const_cast<char **>(a), const_cast<char **>(envs.data()));
 #endif
 	const int error(errno);
 	std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, name, *a, std::strerror(error));
@@ -673,9 +713,11 @@ service::reap (
 // **************************************************************************
 */
 
-#if defined(__LINUX__) || defined(__linux__)
-
 static sig_atomic_t child_signalled = false;
+
+static sig_atomic_t stop_signalled = false;
+
+#if defined(__LINUX__) || defined(__linux__)
 
 static
 void
@@ -685,8 +727,6 @@ sig_child (
 	if (SIGCHLD != signo) return;
 	child_signalled = true;
 }
-
-static sig_atomic_t stop_signalled = false;
 
 static 
 void 
@@ -747,13 +787,13 @@ plumb (
 	if (!is_directory(in_supervise_dir_fd, in_supervise_dir_s)) return;
 	service_map::iterator in_supervise_dir_i(services.find(in_supervise_dir_s));
 	if (in_supervise_dir_i == services.end()) return;
-	service & in_s(in_supervise_dir_i->second);
+	service & in_s(*(in_supervise_dir_i->second));
 
 	struct stat out_supervise_dir_s;
 	if (!is_directory(out_supervise_dir_fd, out_supervise_dir_s)) return;
 	service_map::iterator out_supervise_dir_i(services.find(out_supervise_dir_s));
 	if (out_supervise_dir_i == services.end()) return;
-	service & out_s(out_supervise_dir_i->second);
+	service & out_s(*(out_supervise_dir_i->second));
 
 	std::fprintf(stderr, "%s: DEBUG: plumb %s to %s\n", prog, out_s.name, in_s.name);
 	if (-1 != in_s.pipe_fds[1])
@@ -763,6 +803,7 @@ plumb (
 static
 void
 load (
+	ProcessEnvironment & envs,
 	const char * name,
 	int supervise_dir_fd,
 	int service_dir_fd
@@ -813,8 +854,9 @@ load (
 
 		timespec now;
 		clock_gettime(CLOCK_REALTIME, &now);
-		std::pair<service_map::iterator, bool> it(services.insert(service_map::value_type(supervise_dir_s,supervise_dir_s)));
-		service & s(it.first->second);
+		const service_pointer sp(new service(supervise_dir_s,envs));
+		std::pair<service_map::iterator, bool> it(services.insert(service_map::value_type(supervise_dir_s,sp)));
+		service & s(*(it.first->second));
 		s.lock_fd = lock_fd.release();
 		s.ok_fd = ok_fd.release();
 		s.control_fd = control_fd.release();
@@ -842,7 +884,7 @@ make_input_activated (
 	if (!is_directory(supervise_dir_fd, supervise_dir_s)) return;
 	service_map::iterator supervise_dir_i(services.find(supervise_dir_s));
 	if (supervise_dir_i == services.end()) return;
-	service & s(supervise_dir_i->second);
+	service & s(*(supervise_dir_i->second));
 
 	std::fprintf(stderr, "%s: DEBUG: make input activated %s\n", prog, s.name);
 	s.add_to_input_activation_list();
@@ -858,7 +900,7 @@ set_unload (
 	service_map::iterator supervise_dir_i(services.find(supervise_dir_s));
 	if (supervise_dir_i == services.end()) return;
 
-	service & s(supervise_dir_i->second);
+	service & s(*(supervise_dir_i->second));
 	std::fprintf(stderr, "%s: DEBUG: set unload after stop %s\n", prog, s.name);
 	s.set_unload();
 	if (s.unloadable()) {
@@ -876,7 +918,7 @@ make_pipe_connectable (
 	if (!is_directory(supervise_dir_fd, supervise_dir_s)) return;
 	service_map::iterator supervise_dir_i(services.find(supervise_dir_s));
 	if (supervise_dir_i == services.end()) return;
-	service & s(supervise_dir_i->second);
+	service & s(*(supervise_dir_i->second));
 
 	std::fprintf(stderr, "%s: DEBUG: add pipe for %s\n", prog, s.name);
 	if (-1 == s.pipe_fds[1] && -1 == s.pipe_fds[0]) {
@@ -894,7 +936,7 @@ make_run_on_empty (
 	if (!is_directory(supervise_dir_fd, supervise_dir_s)) return;
 	service_map::iterator supervise_dir_i(services.find(supervise_dir_s));
 	if (supervise_dir_i == services.end()) return;
-	service & s(supervise_dir_i->second);
+	service & s(*(supervise_dir_i->second));
 
 	std::fprintf(stderr, "%s: DEBUG: run-on-empty set for %s\n", prog, s.name);
 	s.run_on_empty = true;
@@ -906,19 +948,61 @@ make_run_on_empty (
 
 #if !defined(__LINUX__) && !defined(__linux__)
 static inline
+forked_parent_lookup
+find_forked_parent (
+	int ppid
+) {
+	forked_parent_lookup r(forked_parents.insert(pid_to_forked_parents_map::value_type(ppid, forked_parent())));
+	pid_to_forked_parents_map::iterator & i(r.first);
+	forked_parent & f(i->second);
+	if (r.second) {
+		pid_to_service_map::iterator j(active_services.find(ppid));
+		if (j != active_services.end())
+			f.s = j->second;
+		else {
+			f.s = 0;
+			std::fprintf(stderr, "%s: WARNING: unable to locate service of forked PPID %u\n", prog, ppid);
+		}
+	}
+	return r;
+}
+
+static inline
+void
+register_forked_parent (
+	int ppid
+) {
+	forked_parent_lookup r(find_forked_parent(ppid));
+	pid_to_forked_parents_map::iterator & i(r.first);
+	forked_parent & f(i->second);
+#if defined(DEBUG)
+	if (f.s)
+		std::fprintf(stderr, "%s: DEBUG: %s: pid %d has forked\n", prog, f.s->name, ppid);
+	else
+		std::fprintf(stderr, "%s: DEBUG: pid %d has forked\n", prog, ppid);
+#endif
+	++f.c;
+	if (0 == f.c)
+		forked_parents.erase(i);
+}
+
+static inline
 void
 register_forked_child (
 	int pid,
 	int ppid
 ) {
-	active_service_map::iterator i(active_services.find(ppid));
-	if (i == active_services.end()) {
-		std::fprintf(stderr, "%s: DEBUG: unable to register PID %u child of PPID %u\n", prog, pid, ppid);
-		return;
-	}
-	service & s(*i->second);
-
-	s.add_process(pid);
+	forked_parent_lookup r(find_forked_parent(ppid));
+	pid_to_forked_parents_map::iterator & i(r.first);
+	forked_parent & f(i->second);
+	if (f.s) {
+		f.s->add_process(pid);
+		std::fprintf(stderr, "%s: DEBUG: %s: registered PID %u child of PPID %u\n", prog, f.s->name, pid, ppid);
+	} else
+		std::fprintf(stderr, "%s: WARNING: unable to locate service of forked PID %u child of PPID %u\n", prog, pid, ppid);
+	--f.c;
+	if (0 == f.c)
+		forked_parents.erase(i);
 }
 #endif
 
@@ -929,7 +1013,7 @@ reap (
 	int status,
 	int pid
 ) {
-	active_service_map::iterator i(active_services.find(pid));
+	pid_to_service_map::iterator i(active_services.find(pid));
 	if (i == active_services.end()) {
 		if (WIFSTOPPED(status))
 			kill(pid, SIGCONT);
@@ -1000,6 +1084,7 @@ input_ready_event (
 static inline
 void
 control_message (
+	ProcessEnvironment & envs,
 	int socket_fd
 ) {
 	service_manager_rpc_message m;
@@ -1034,7 +1119,7 @@ control_message (
 					plumb(fds[0], fds[1]);
 					break;
 				case service_manager_rpc_message::LOAD:
-					load(m.name, fds[0], fds[1]);
+					load(envs, m.name, fds[0], fds[1]);
 					break;
 				case service_manager_rpc_message::MAKE_INPUT_ACTIVATED:
 					make_input_activated(fds[0]);
@@ -1066,7 +1151,7 @@ stop_and_unload_all (
 	for (service_map::iterator supervise_dir_i(services.begin()); services.end() != supervise_dir_i; ) {
 		// Pre-increment because we might be erasing.
 		service_map::iterator i(supervise_dir_i++);
-		service & s(i->second);
+		service & s(*(i->second));
 		s.enact_control_message(original_signals, 'd');
 		std::fprintf(stderr, "%s: DEBUG: set unload after stop %s\n", prog, s.name);
 		s.set_unload();
@@ -1084,7 +1169,8 @@ stop_and_unload_all (
 void
 service_manager [[gnu::noreturn]] (
 	const char * & /*next_prog*/,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	prog = basename_of(args[0]);
 
@@ -1099,7 +1185,7 @@ service_manager [[gnu::noreturn]] (
 	sigset_t original_signals;
 	sigprocmask(SIG_SETMASK, 0, &original_signals);
 
-	const unsigned listen_fds(query_listen_fds());
+	const unsigned listen_fds(query_listen_fds(envs));
 	if (1U > listen_fds) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "LISTEN_FDS", std::strerror(error));
@@ -1191,15 +1277,21 @@ service_manager [[gnu::noreturn]] (
 #endif
 
 	bool in_shutdown(false);
+	const timespec zero_timeout = { 0, 0 };
 	for (;;) {
 		try {
 			if (in_shutdown) {
 				if (services.empty()) break;
 				std::fprintf(stderr, "%s: INFO: %s %lu %s\n", prog, "Shutdown requested but there are", services.size(), "services still active.");
 			}
+			if (stop_signalled) {
+				stop_and_unload_all(original_signals);
+				in_shutdown = true;
+				stop_signalled = false;
+			}
 #if !defined(__LINUX__) && !defined(__linux__)
 			struct kevent p[1024];
-			const int rc(kevent(queue, 0, 0, p, sizeof p/sizeof *p, 0));
+			const int rc(kevent(queue, 0, 0, p, sizeof p/sizeof *p, child_signalled ? &zero_timeout : 0));
 			if (0 > rc) {
 				const int error(errno);
 				if (EINTR == error) continue;
@@ -1211,7 +1303,7 @@ service_manager [[gnu::noreturn]] (
 				switch (e.filter) {
 					case EVFILT_READ:
 						if (LISTEN_SOCKET_FILENO <= static_cast<int>(e.ident) && LISTEN_SOCKET_FILENO + static_cast<int>(listen_fds) > static_cast<int>(e.ident))
-							control_message(e.ident);
+							control_message(envs, e.ident);
 						else
 							input_ready_event(original_signals, e.ident);
 						break;
@@ -1221,13 +1313,10 @@ service_manager [[gnu::noreturn]] (
 							case SIGINT:
 							case SIGQUIT:
 							case SIGHUP:
-								std::fprintf(stderr, "%s: DEBUG: stop signalled\n", prog);
-								stop_and_unload_all(original_signals);
-								std::fprintf(stderr, "%s: DEBUG: setting in_shutdown to true\n", prog);
-								in_shutdown = true;
+								stop_signalled = true;
 								break;
 							case SIGCHLD:
-								reaper(original_signals);
+								child_signalled = true;
 								break;
 							case SIGPIPE:
 							case SIGTSTP:
@@ -1242,15 +1331,7 @@ service_manager [[gnu::noreturn]] (
 #endif
 						break;
 					case EVFILT_PROC:
-						if (e.fflags & NOTE_FORK) {
-#if defined(DEBUG)
-							std::fprintf(stderr, "%s: DEBUG: proc event PID %lu forked\n", prog, e.ident);
-#endif
-						}
-						if (e.fflags & NOTE_CHILD)
-							register_forked_child(e.ident, e.data);
-						if (e.fflags & NOTE_EXIT)
-							reap(original_signals, e.data, e.ident);
+						// We deal with this specially, later.
 						break;
 					default:
 #if defined(DEBUG)
@@ -1259,16 +1340,49 @@ service_manager [[gnu::noreturn]] (
 						break;
 				}
 			}
-#else
+			// Special handling of EVFILT_PROC:
+			// The order here is important.
+			// We must attach the process to its parent's service before registering any forks that it has done.
+			// We must process all forks and new children before reaping any exited processes and cleaning their PIDs from the services.
+			for (std::size_t i(0); i < static_cast<std::size_t>(rc); ++i) {
+				const struct kevent & e(p[i]);
+				if (EVFILT_PROC != e.filter) continue;
+				const int pid(e.ident);
+				if (e.fflags & NOTE_CHILD) {
+					if (e.fflags & NOTE_EXIT)
+						std::fprintf(stderr, "%s: WARNING: unable to register child PID %u that has already exited\n", prog, pid);
+					else
+						register_forked_child(pid, e.data);
+				}
+				if (e.fflags & NOTE_FORK) {
+					if (e.fflags & NOTE_TRACKERR)
+						std::fprintf(stderr, "%s: WARNING: kernel unable to track child forked from PPID %u\n", prog, pid);
+					else
+						register_forked_parent(pid);
+				}
+			}
+			// NOTE_EXIT is incompatible with NOTE_TRACK within a single kqueue, as they both set the data field.
+			// So this should ideally not be triggered, if we can arrange it.
+			// Since we need to process SIGCHILD for untracked children anyway, we should just let the SIGCHLD reaper handle all exits.
+			for (std::size_t i(0); i < static_cast<std::size_t>(rc); ++i) {
+				const struct kevent & e(p[i]);
+				if (EVFILT_PROC != e.filter) continue;
+				const int pid(e.ident);
+				if (e.fflags & NOTE_EXIT) {
+					int status;
+					wait_nonblocking_for_stopcontexit_of(pid, status);
+					reap(original_signals, e.data, pid);
+				}
+			}
 			if (child_signalled) {
 				reaper(original_signals);
 				child_signalled = false;
-				continue;
 			}
-			if (stop_signalled) {
-				stop_and_unload_all(original_signals);
-				stop_signalled = false;
-				in_shutdown = true;
+#else
+			// This must happen before the main poll because of the continue on EINTR.
+			if (child_signalled) {
+				reaper(original_signals);
+				child_signalled = false;
 				continue;
 			}
 			if (0 > ppoll(poll_table.data(), poll_table.size(), 0, &masked_signals_during_poll)) {
@@ -1280,7 +1394,7 @@ service_manager [[gnu::noreturn]] (
 			for (std::vector<pollfd>::iterator i(poll_table.begin()); i != poll_table.end(); ++i) {
 				if (i->revents & POLLIN) {
 					if (LISTEN_SOCKET_FILENO <= i->fd && LISTEN_SOCKET_FILENO + static_cast<int>(listen_fds) > i->fd)
-						control_message(i->fd);
+						control_message(envs, i->fd);
 					else
 						input_ready_event(original_signals, i->fd);
 					break;

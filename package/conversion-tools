@@ -10,6 +10,8 @@ autobridge@.service
 axfrdns.do
 axfrdns@.service
 axfrdns@.socket
+brltty.do
+brltty@.service
 cyclog@.service
 dbus-servers-log.service
 dbus.service
@@ -18,6 +20,7 @@ dconf-editor.service
 dconf-service.service
 default.kbdmap.do
 dhclient@.service
+dhcpcd@.service
 dirmngr.service
 dirmngr.socket
 dnscache.do
@@ -45,6 +48,7 @@ gvfs-mtp-volume-monitor.service
 gvfs-udisks2-volume-monitor.service
 host.conf.do
 hostapd@.service
+hostname.do
 ibus-daemon.service
 ifconfig@.service
 ifscript@.service
@@ -53,6 +57,7 @@ iovctl.do
 iovctl@.service
 ip6addrctl.do
 jails.do
+java-home.do
 kdm.do
 kernel-modules.do
 kernel-vt.do
@@ -66,6 +71,8 @@ mdmfs.do
 mpd.conf
 mpd.service
 mpd.socket
+mixer.do
+mixer@.service
 mysql-log@.service
 mysql.do
 mysql@.service.do
@@ -74,10 +81,13 @@ mysql@.service.mysql
 mysql@.service.mariadb
 natd@.service
 newfs@.service
+nfs.do
 nsswitch.conf.do
+ntp.do
 openldap.do
 openvpn.do
-openvpn@.service
+openvpn-server@.service
+openvpn-client@.service
 openvpn-log@.service
 openvpn-otp@.service
 org.gnome.Maps.service
@@ -96,6 +106,7 @@ securelevel.do
 shutdown.target
 simple-servers-log.service
 socket-servers-log.service
+sockets.target
 soft_backspace.kbd
 spppcontrol@.service
 static-networking.do
@@ -107,6 +118,7 @@ stf.do
 swap_capsctrl.kbd
 sysctl.conf.do
 syslogd.do
+system-installer.do
 terminal-services.do
 tinydns.do
 tinydns.service

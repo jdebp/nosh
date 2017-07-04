@@ -385,13 +385,14 @@ static inline
 bool	/// \returns setting \retval true explicit \retval false defaulted
 query_systemd_preset (
 	bool & wants,	///< always set to a value
+	const ProcessEnvironment & envs,
 	const std::string & name,
 	const std::string & suffix
 ) {
 	wants = true;
 	std::string earliest;
 	if (per_user_mode) {
-		const std::string h(effective_user_home_dir());
+		const std::string h(effective_user_home_dir(envs));
 		const std::string r(effective_user_runtime_dir());
 		const std::string
 		user_preset_directories[9] = {
@@ -499,6 +500,7 @@ static inline
 bool
 determine_preset (
 	const char * prog,
+	const ProcessEnvironment & envs,
 	bool system,
 	bool rcconf,
 	bool ttys,
@@ -509,7 +511,7 @@ determine_preset (
 ) {
 	bool wants(false);
 	// systemd (and system-manager) settings take precedence over compatibility ones.
-	if (system && query_systemd_preset(wants, prefix + name, suffix))
+	if (system && query_systemd_preset(wants, envs, prefix + name, suffix))
 		return wants;
 	// The newer BSD rc.conf takes precedence over the older Sixth Edition ttys .
 	if (rcconf && query_rcconf_preset(wants, prog, name))
@@ -528,7 +530,8 @@ determine_preset (
 void
 enable [[gnu::noreturn]] ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
@@ -552,7 +555,7 @@ enable [[gnu::noreturn]] (
 	bool failed(false);
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
 		std::string path, name, suffix;
-		const FileDescriptorOwner bundle_dir_fd(open_bundle_directory("", *i, path, name, suffix));
+		const FileDescriptorOwner bundle_dir_fd(open_bundle_directory(envs, "", *i, path, name, suffix));
 		if (0 > bundle_dir_fd.get()) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, *i, std::strerror(error));
@@ -569,7 +572,8 @@ enable [[gnu::noreturn]] (
 void
 disable [[gnu::noreturn]] ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
@@ -593,7 +597,7 @@ disable [[gnu::noreturn]] (
 	bool failed(false);
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
 		std::string path, name, suffix;
-		const FileDescriptorOwner bundle_dir_fd(open_bundle_directory("", *i, path, name, suffix));
+		const FileDescriptorOwner bundle_dir_fd(open_bundle_directory(envs, "", *i, path, name, suffix));
 		if (0 > bundle_dir_fd.get()) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, *i, std::strerror(error));
@@ -610,7 +614,8 @@ disable [[gnu::noreturn]] (
 void
 preset [[gnu::noreturn]] ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	const char * prefix("");
@@ -649,14 +654,14 @@ preset [[gnu::noreturn]] (
 	const std::string p(prefix);
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
 		std::string path, name, suffix;
-		const FileDescriptorOwner bundle_dir_fd(open_bundle_directory(prefix, *i, path, name, suffix));
+		const FileDescriptorOwner bundle_dir_fd(open_bundle_directory(envs, prefix, *i, path, name, suffix));
 		if (0 > bundle_dir_fd.get()) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s%s: %s\n", prog, prefix, name.c_str(), std::strerror(error));
 			failed = true;
 			continue;
 		}
-		const bool make(determine_preset(prog, !no_system, !no_rcconf, ttys, fstab, p, name, suffix));
+		const bool make(determine_preset(prog, envs, !no_system, !no_rcconf, ttys, fstab, p, name, suffix));
 		if (dry_run)
 			std::fprintf(stdout, "%s %s\n", make ? "enable" : "disable", (path + p + name).c_str());
 		else

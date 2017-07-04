@@ -14,7 +14,7 @@ get_conf() { read_rc $1 || true ; }
 redo-ifchange rc.conf general-services
 
 service="securelevel"
-if ! s="`system-control find \"${service}\"`"
+if ! s="`system-control find \"${service}\" 2>/dev/null`"
 then
 	exit 0
 fi

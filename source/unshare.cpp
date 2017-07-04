@@ -23,7 +23,8 @@ static inline int unshare ( int ) { return 0 ; }
 void
 unshare ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 	bool network(false), mount(false), ipc(false), uts(false);

@@ -1,3 +1,4 @@
+../local/sv/brltty@-etc-brltty.conf	brltty
 ../local/sv/mariadb@	mariadb
 ../local/sv/mysql@	mysql
 ModemManager	org.freedesktop.ModemManager
@@ -27,6 +28,9 @@ polkitd		org.freedesktop.PolicyKit1
 powerd++	powerdxx
 rc-local	rc.local
 redis-server    redis
+gssd		rpcgssd
+mountd		rpcmountd
+nfsd		rpcnfsd
 samba		samba-ad-dc
 smbd		smb
 sppp-log	spppcontrol-log

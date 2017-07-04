@@ -8,7 +8,9 @@ For copyright and licensing terms, see the file named COPYING.
 
 #include <string>
 
-extern std::string login_user_runtime_dir();
+struct ProcessEnvironment;
+
+extern std::string login_user_runtime_dir(const ProcessEnvironment &);
 extern std::string effective_user_runtime_dir();
 
 #endif

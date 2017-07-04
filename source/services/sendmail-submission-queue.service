@@ -4,6 +4,8 @@
 
 [Unit]
 Description=Sendmail Submission queue runner daemon
+# Sendmail abends invisibly if it cannot connect to a local syslog socket.
+After=local-syslog.target
 
 [Service]
 EnvironmentDirectory=env

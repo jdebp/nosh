@@ -13,6 +13,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include "runtime-dir.h"
 #include "fdutils.h"
+#include "ProcessEnvironment.h"
 
 static const std::string slash("/");
 
@@ -30,16 +31,16 @@ effective_user_runtime_dir()
 }
 
 std::string
-login_user_runtime_dir()
+login_user_runtime_dir(const ProcessEnvironment & envs)
 {
 	std::string r("/run/user/");
 	if (const char * l = getlogin()) {
 		r += l;
 	} else 
-	if (const char * u = std::getenv("USER")) {
+	if (const char * u = envs.query("USER")) {
 		r += u;
 	} else
-	if (const char * n = std::getenv("LOGNAME")) {
+	if (const char * n = envs.query("LOGNAME")) {
 		r += n;
 	} else
 	{

@@ -7,7 +7,7 @@ Description="Desktop" bus service
 
 [Service]
 # The --address=systemd: option is the closest to our UCSPI-LOCAL.
-ExecStart=dbus-daemon --config-file ./per-user.conf --nofork --nopidfile --address=systemd:
+ExecStart=%p-daemon --config-file ./per-user.conf --nofork --nopidfile --address=systemd:
 Restart=always
 RestartSec=0.5
 

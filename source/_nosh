@@ -1,4 +1,4 @@
-#compdef init telinit svcadm systemctl initctl rcctl system-control system-manager per-user-manager service-manager svstat service-status svc service-control start stop reset preset console-terminal-emulator console-convert-kbdmap console-clear resizecons console-resize console-multiplexor console-fb-realizer console-ncurses-realizer svscan service-dt-scanner svok service-is-ok svup service-is-up svshow service-show emergency rescue normal reboot halt haltsys poweroff shutdown
+#compdef init telinit svcadm systemctl initctl rcctl system-control system-manager per-user-manager service-manager svstat service-status svc service-control start stop reset preset console-terminal-emulator console-convert-kbdmap console-clear resizecons console-resize console-multiplexor console-fb-realizer console-ncurses-realizer svscan service-dt-scanner svok service-is-ok svup service-is-up svshow service-show emergency rescue normal reboot halt haltsys poweroff shutdown clearenv setenv unsetenv
 ## **************************************************************************
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
@@ -32,6 +32,7 @@ function _system_control_subcommands()
 	'is-active:query whether a service is started'
 	'is-loaded:query whether a service is loaded'
 	'is-enabled:query whether a service is enabled'
+	'is-service-manager-client:query whether the service manager is running'
 	'hangup:send a HUP signal to a running service'
 	'condrestart:send a TERM signal to a running service'
 	'try-restart:send a TERM signal to a running service'
@@ -135,6 +136,10 @@ console-convert-kbdmap)
 	_arguments -S $common '*:BSD kbd map files:_directories' -- ;;
 shutdown)
 	_arguments -S $common '1:time:' '2:message:' -- ;;
+setenv)
+	_arguments -S $common '1:variable:' '2:value:' -- ;;
+unsetenv)
+	_arguments -S $common '1:variable:' -- ;;
 *)
 	_arguments -A '-*' $common -- ;;
 esac

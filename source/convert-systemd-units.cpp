@@ -104,14 +104,15 @@ is_regular (
 }
 
 struct value {
+	typedef std::list<std::string> settings;
 	value() : used(false), d() {}
 	value(const std::string & v) : used(false), d() { d.push_back(v); }
 	void append(const std::string & v) { d.push_back(v); }
 	std::string last_setting() const { return d.empty() ? std::string() : d.back(); }
-	const std::list<std::string> & all_settings() const { return d; }
+	const settings & all_settings() const { return d; }
 	bool used;
 protected:
-	std::list<std::string> d;
+	settings d;
 };
 
 struct profile {
@@ -300,13 +301,14 @@ effective_user_name ()
 	return "nobody";
 }
 
+namespace {
 struct names {
 	names(const char * a) : arg_name(a), user(per_user_mode ? effective_user_name() : "root"), runtime_dir(per_user_mode ? effective_user_runtime_dir() : "/run/") { split_name(a, unit_dirname, unit_basename); escaped_unit_basename = systemd_name_escape(false, false, unit_basename); }
 	void set_prefix(const std::string & v, bool esc, bool alt, bool ext) { set(esc, alt, ext, escaped_prefix, prefix, v); }
 	void set_instance(const std::string & v, bool esc, bool alt, bool ext) { set(esc, alt, ext, escaped_instance, instance, v); }
 	void set_bundle(const std::string & r, const std::string & b) { bundle_basename = b; bundle_dirname = r + b; }
 	void set_machine_id(const std::string & v) { machine_id = v; }
-	void set_user(const std::string & u) { user = u; runtime_dir = "/run/user/" + u + "/"; }
+	void set_user(const std::string & u) { user = u; if (per_user_mode) runtime_dir = "/run/user/" + u + "/"; }
 	const std::string & query_arg_name () const { return arg_name; }
 	const std::string & query_unit_dirname () const { return unit_dirname; }
 	const std::string & query_unit_basename () const { return unit_basename; }
@@ -331,6 +333,7 @@ protected:
 			normal = systemd_name_unescape(alt, ext, escaped = value);
 	}
 };
+}
 
 std::string
 names::substitute (
@@ -608,7 +611,7 @@ report_unused (
 			const std::string & var(i1->first);
 			const value & v(i1->second);
 			if (!v.used) {
-				for (std::list<std::string>::const_iterator i(v.all_settings().begin()); v.all_settings().end() != i; ++i) {
+				for (value::settings::const_iterator i(v.all_settings().begin()); v.all_settings().end() != i; ++i) {
 				       const std::string & val(*i);
 			       	       std::fprintf(stderr, "%s: WARNING: %s: Unused setting: [%s] %s = %s\n", prog, name.c_str(), section.c_str(), var.c_str(), val.c_str());
 				}
@@ -624,7 +627,8 @@ report_unused (
 void
 convert_systemd_units [[gnu::noreturn]] (
 	const char * & /*next_prog*/,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	std::string bundle_root;
@@ -709,7 +713,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	names.set_prefix(names.query_bundle_basename(), escape_prefix, alt_escape, ext_escape);
 
 	machine_id::erase();
-	if (!machine_id::read_non_volatile() && !machine_id::read_fallbacks())
+	if (!machine_id::read_non_volatile() && !machine_id::read_fallbacks(envs))
 	       machine_id::create();
 	names.set_machine_id(machine_id::human_readable_form_compact());
 
@@ -763,6 +767,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	value * listennetlink(socket_profile.use("socket", "listennetlink"));
 	value * listendatagram(socket_profile.use("socket", "listendatagram"));
 	value * listensequentialpacket(socket_profile.use("socket", "listensequentialpacket"));
+	value * filedescriptorname(socket_profile.use("socket", "filedescriptorname"));
 #if defined(IPV6_V6ONLY)
 	value * bindipv6only(socket_profile.use("socket", "bindipv6only"));
 #endif
@@ -999,7 +1004,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	if (killsignal && !killsignal_is_term)
 		killsignal->used = false;
 	if (runtimedirectory) {
-		for (std::list<std::string>::const_iterator i(runtimedirectory->all_settings().begin()); runtimedirectory->all_settings().end() != i; ++i) {
+		for (value::settings::const_iterator i(runtimedirectory->all_settings().begin()); runtimedirectory->all_settings().end() != i; ++i) {
 			const std::string dir(names.substitute(*i));
 			// Yes, this is more draconian than systemd.
 			if (dir.length() < 1 || '.' == dir[0]) {
@@ -1268,7 +1273,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	std::string createrundir, removerundir;
 	if (runtimedirectory) {
 		std::string dirs, dirs_slash;
-		for (std::list<std::string>::const_iterator i(runtimedirectory->all_settings().begin()); runtimedirectory->all_settings().end() != i; ++i) {
+		for (value::settings::const_iterator i(runtimedirectory->all_settings().begin()); runtimedirectory->all_settings().end() != i; ++i) {
 			const std::string dir(names.query_runtime_dir() + names.substitute(*i));
 			if (!dirs.empty()) dirs += ' ';
 			if (!dirs_slash.empty()) dirs_slash += ' ';
@@ -1345,7 +1350,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	}
 	std::string env;
 	if (environmentfile) {
-		for (std::list<std::string>::const_iterator i(environmentfile->all_settings().begin()); environmentfile->all_settings().end() != i; ++i) {
+		for (value::settings::const_iterator i(environmentfile->all_settings().begin()); environmentfile->all_settings().end() != i; ++i) {
 			std::string val;
 			const bool minus(strip_leading_minus(*i, val));
 			env += "read-conf " + ((minus ? "--oknofile " : "") + quote(names.substitute(val))) + "\n";
@@ -1353,14 +1358,14 @@ convert_systemd_units [[gnu::noreturn]] (
 	}
 	if (environmentdirectory) {
 		const std::string opt(is_bool_true(fullenvironmentdirectory, false) ? "--full " : "");
-		for (std::list<std::string>::const_iterator i(environmentdirectory->all_settings().begin()); environmentdirectory->all_settings().end() != i; ++i) {
+		for (value::settings::const_iterator i(environmentdirectory->all_settings().begin()); environmentdirectory->all_settings().end() != i; ++i) {
 			const std::string & val(*i);
 			env += "envdir " + opt + quote(names.substitute(val)) + "\n";
 		}
 	}
 	if (environmentuser) env += "envuidgid " + quote(names.substitute(environmentuser->last_setting())) + "\n";
 	if (environment) {
-		for (std::list<std::string>::const_iterator i(environment->all_settings().begin()); environment->all_settings().end() != i; ++i) {
+		for (value::settings::const_iterator i(environment->all_settings().begin()); environment->all_settings().end() != i; ++i) {
 			const std::string & datum(*i);
 			const std::list<std::string> list(names.substitute(split_list(datum)));
 			for (std::list<std::string>::const_iterator j(list.begin()); list.end() != j; ++j) {
@@ -1373,7 +1378,7 @@ convert_systemd_units [[gnu::noreturn]] (
 		}
 	}
 	if (environmentappendpath) {
-		for (std::list<std::string>::const_iterator i(environmentappendpath->all_settings().begin()); environmentappendpath->all_settings().end() != i; ++i) {
+		for (value::settings::const_iterator i(environmentappendpath->all_settings().begin()); environmentappendpath->all_settings().end() != i; ++i) {
 			const std::string & datum(*i);
 			const std::list<std::string> list(names.substitute(split_list(datum)));
 			for (std::list<std::string>::const_iterator j(list.begin()); list.end() != j; ++j) {
@@ -1551,7 +1556,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	if (bannerfile)
 		greeting_message += "login-banner " + quote(names.substitute(bannerfile->last_setting())) + "\n";
 	if (bannerline)
-		for (std::list<std::string>::const_iterator i(bannerline->all_settings().begin()); bannerline->all_settings().end() != i; ++i) {
+		for (value::settings::const_iterator i(bannerline->all_settings().begin()); bannerline->all_settings().end() != i; ++i) {
 			const std::string & val(*i);
 			greeting_message += "line-banner " + quote(names.substitute(val)) + "\n";
 		}
@@ -1608,7 +1613,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	execute_command << greeting_message;
 	if (merge_run_into_start) {
 		if (execstartpre) {
-			for (std::list<std::string>::const_iterator i(execstartpre->all_settings().begin()); execstartpre->all_settings().end() != i; ++i ) {
+			for (value::settings::const_iterator i(execstartpre->all_settings().begin()); execstartpre->all_settings().end() != i; ++i ) {
 				execute_command << "foreground "; 
 				execute_command << names.substitute(shell_expand(strip_leading_minus(*i)));
 				execute_command << " ;\n"; 
@@ -1616,7 +1621,7 @@ convert_systemd_units [[gnu::noreturn]] (
 		}
 	}
 	if (execstart) {
-		for (std::list<std::string>::const_iterator i(execstart->all_settings().begin()); execstart->all_settings().end() != i; ) {
+		for (value::settings::const_iterator i(execstart->all_settings().begin()); execstart->all_settings().end() != i; ) {
 			std::list<std::string>::const_iterator j(i++);
 			if (execstart->all_settings().begin() != j) execute_command << " ;\n"; 
 			if (execstart->all_settings().end() != i) execute_command << "foreground "; 
@@ -1635,152 +1640,176 @@ convert_systemd_units [[gnu::noreturn]] (
 		run << multi_line_comment("Run file generated from " + (is_socket_activated ? socket_filename : service_filename));
 	if (is_socket_activated) {
 		if (socket_description) {
-			for (std::list<std::string>::const_iterator i(socket_description->all_settings().begin()); socket_description->all_settings().end() != i; ++i) {
+			for (value::settings::const_iterator i(socket_description->all_settings().begin()); socket_description->all_settings().end() != i; ++i) {
 				const std::string & val(*i);
 				run_or_start << multi_line_comment(names.substitute(val));
 			}
 		}
+		if (filedescriptorname) {
+			std::string socknames;
+			for (value::settings::const_iterator i(filedescriptorname->all_settings().begin()); filedescriptorname->all_settings().end() != i; ++i) {
+				if (filedescriptorname->all_settings().begin() != i)
+					socknames += ":";
+				socknames += names.substitute(*i);
+			}
+			run_or_start << "setenv LISTEN_FDNAMES " << quote(socknames) << "\n";
+		}
 		if (listenstream) {
-			const std::string sockname(names.substitute(listenstream->last_setting()));
-			if (is_local_socket_name(sockname)) {
-				run_or_start << "local-stream-socket-listen ";
-				if (!is_socket_accept) run_or_start << "--systemd-compatibility ";
-				if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
-				if (socketmode) run_or_start << "--mode " << quote(names.substitute(socketmode->last_setting())) << " ";
-				if (socketuser) run_or_start << "--user " << quote(names.substitute(socketuser->last_setting())) << " ";
-				if (socketgroup) run_or_start << "--group " << quote(names.substitute(socketgroup->last_setting())) << " ";
-				if (passcredentials) run_or_start << "--pass-credentials ";
-				if (passsecurity) run_or_start << "--pass-security ";
-				run_or_start << quote(sockname) << "\n";
-			} else {
-				std::string listenaddress, listenport;
-				split_ip_socket_name(sockname, listenaddress, listenport);
-				run_or_start << "tcp-socket-listen ";
-				if (!is_socket_accept) run_or_start << "--systemd-compatibility ";
-				if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
+			for (value::settings::const_iterator i(listenstream->all_settings().begin()); listenstream->all_settings().end() != i; ++i) {
+				const std::string sockname(names.substitute(*i));
+				if (is_local_socket_name(sockname)) {
+					run_or_start << "local-stream-socket-listen ";
+					if (!is_socket_accept) run_or_start << "--systemd-compatibility ";
+					if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
+					if (socketmode) run_or_start << "--mode " << quote(names.substitute(socketmode->last_setting())) << " ";
+					if (socketuser) run_or_start << "--user " << quote(names.substitute(socketuser->last_setting())) << " ";
+					if (socketgroup) run_or_start << "--group " << quote(names.substitute(socketgroup->last_setting())) << " ";
+					if (passcredentials) run_or_start << "--pass-credentials ";
+					if (passsecurity) run_or_start << "--pass-security ";
+					run_or_start << quote(sockname) << "\n";
+				} else {
+					std::string listenaddress, listenport;
+					split_ip_socket_name(sockname, listenaddress, listenport);
+					run_or_start << "tcp-socket-listen ";
+					if (!is_socket_accept) run_or_start << "--systemd-compatibility ";
+					if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
 #if defined(IPV6_V6ONLY)
-				if (bindipv6only && "both" == tolower(bindipv6only->last_setting())) run_or_start << "--combine4and6 ";
+					if (bindipv6only && "both" == tolower(bindipv6only->last_setting())) run_or_start << "--combine4and6 ";
 #endif
 #if defined(SO_REUSEPORT)
-				if (is_bool_true(reuseport, false)) run_or_start << "--reuse-port ";
+					if (is_bool_true(reuseport, false)) run_or_start << "--reuse-port ";
 #endif
-				if (is_bool_true(freebind, false)) run_or_start << "--bind-to-any ";
-				run_or_start << quote(listenaddress) << " " << quote(listenport) << "\n";
+					if (is_bool_true(freebind, false)) run_or_start << "--bind-to-any ";
+					run_or_start << quote(listenaddress) << " " << quote(listenport) << "\n";
+				}
 			}
 		}
 		if (listendatagram) {
-			const std::string sockname(names.substitute(listendatagram->last_setting()));
-			if (is_local_socket_name(sockname)) {
-				run_or_start << "local-datagram-socket-listen --systemd-compatibility ";
-				if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
-				if (socketmode) run_or_start << "--mode " << quote(names.substitute(socketmode->last_setting())) << " ";
-				if (socketuser) run_or_start << "--user " << quote(names.substitute(socketuser->last_setting())) << " ";
-				if (socketgroup) run_or_start << "--group " << quote(names.substitute(socketgroup->last_setting())) << " ";
-				if (passcredentials) run_or_start << "--pass-credentials ";
-				if (passsecurity) run_or_start << "--pass-security ";
-				run_or_start << quote(sockname) << "\n";
-			} else {
-				std::string listenaddress, listenport;
-				split_ip_socket_name(sockname, listenaddress, listenport);
-				run_or_start << "udp-socket-listen --systemd-compatibility ";
+			for (value::settings::const_iterator i(listendatagram->all_settings().begin()); listendatagram->all_settings().end() != i; ++i) {
+				const std::string sockname(names.substitute(*i));
+				if (is_local_socket_name(sockname)) {
+					run_or_start << "local-datagram-socket-listen --systemd-compatibility ";
+					if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
+					if (socketmode) run_or_start << "--mode " << quote(names.substitute(socketmode->last_setting())) << " ";
+					if (socketuser) run_or_start << "--user " << quote(names.substitute(socketuser->last_setting())) << " ";
+					if (socketgroup) run_or_start << "--group " << quote(names.substitute(socketgroup->last_setting())) << " ";
+					if (passcredentials) run_or_start << "--pass-credentials ";
+					if (passsecurity) run_or_start << "--pass-security ";
+					run_or_start << quote(sockname) << "\n";
+				} else {
+					std::string listenaddress, listenport;
+					split_ip_socket_name(sockname, listenaddress, listenport);
+					run_or_start << "udp-socket-listen --systemd-compatibility ";
 #if defined(IPV6_V6ONLY)
-				if (bindipv6only && "both" == tolower(bindipv6only->last_setting())) run_or_start << "--combine4and6 ";
+					if (bindipv6only && "both" == tolower(bindipv6only->last_setting())) run_or_start << "--combine4and6 ";
 #endif
 #if defined(SO_REUSEPORT)
-				if (is_bool_true(reuseport, false)) run_or_start << "--reuse-port ";
+					if (is_bool_true(reuseport, false)) run_or_start << "--reuse-port ";
 #endif
-				if (is_bool_true(freebind, false)) run_or_start << "--bind-to-any ";
-				run_or_start << quote(listenaddress) << " " << quote(listenport) << "\n";
+					if (is_bool_true(freebind, false)) run_or_start << "--bind-to-any ";
+					run_or_start << quote(listenaddress) << " " << quote(listenport) << "\n";
+				}
 			}
 		}
 		if (listensequentialpacket) {
-			const std::string sockname(names.substitute(listensequentialpacket->last_setting()));
-			if (is_local_socket_name(sockname)) {
-				run_or_start << "local-seqpacket-socket-listen ";
-				if (!is_socket_accept) run_or_start << "--systemd-compatibility ";
-				if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
-				if (socketmode) run_or_start << "--mode " << quote(names.substitute(socketmode->last_setting())) << " ";
-				if (socketuser) run_or_start << "--user " << quote(names.substitute(socketuser->last_setting())) << " ";
-				if (socketgroup) run_or_start << "--group " << quote(names.substitute(socketgroup->last_setting())) << " ";
-				if (passcredentials) run_or_start << "--pass-credentials ";
-				if (passsecurity) run_or_start << "--pass-security ";
-				run_or_start << quote(sockname) << "\n";
-			} else {
-				std::string listenaddress, listenport;
-				split_ip_socket_name(sockname, listenaddress, listenport);
-				run_or_start << "ip-seqpacket-socket-listen ";
-				if (!is_socket_accept) run_or_start << "--systemd-compatibility ";
-				if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
+			for (value::settings::const_iterator i(listensequentialpacket->all_settings().begin()); listensequentialpacket->all_settings().end() != i; ++i) {
+				const std::string sockname(names.substitute(*i));
+				if (is_local_socket_name(sockname)) {
+					run_or_start << "local-seqpacket-socket-listen ";
+					if (!is_socket_accept) run_or_start << "--systemd-compatibility ";
+					if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
+					if (socketmode) run_or_start << "--mode " << quote(names.substitute(socketmode->last_setting())) << " ";
+					if (socketuser) run_or_start << "--user " << quote(names.substitute(socketuser->last_setting())) << " ";
+					if (socketgroup) run_or_start << "--group " << quote(names.substitute(socketgroup->last_setting())) << " ";
+					if (passcredentials) run_or_start << "--pass-credentials ";
+					if (passsecurity) run_or_start << "--pass-security ";
+					run_or_start << quote(sockname) << "\n";
+				} else {
+					std::string listenaddress, listenport;
+					split_ip_socket_name(sockname, listenaddress, listenport);
+					run_or_start << "ip-seqpacket-socket-listen ";
+					if (!is_socket_accept) run_or_start << "--systemd-compatibility ";
+					if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
 #if defined(IPV6_V6ONLY)
-				if (bindipv6only && "both" == tolower(bindipv6only->last_setting())) run_or_start << "--combine4and6 ";
+					if (bindipv6only && "both" == tolower(bindipv6only->last_setting())) run_or_start << "--combine4and6 ";
 #endif
 #if defined(SO_REUSEPORT)
-				if (is_bool_true(reuseport, false)) run_or_start << "--reuse-port ";
+					if (is_bool_true(reuseport, false)) run_or_start << "--reuse-port ";
 #endif
-				if (is_bool_true(freebind, false)) run_or_start << "--bind-to-any ";
-				run_or_start << quote(listenaddress) << " " << quote(listenport) << "\n";
+					if (is_bool_true(freebind, false)) run_or_start << "--bind-to-any ";
+					run_or_start << quote(listenaddress) << " " << quote(listenport) << "\n";
+				}
 			}
 		}
 		if (listenfifo) {
-			const std::string fifoname(names.substitute(listenfifo->last_setting()));
-			run_or_start << "fifo-listen --systemd-compatibility ";
+			for (value::settings::const_iterator i(listenfifo->all_settings().begin()); listenfifo->all_settings().end() != i; ++i) {
+				const std::string fifoname(names.substitute(*i));
+				run_or_start << "fifo-listen --systemd-compatibility ";
 #if 0 // This does not apply to FIFOs and we want it to generate a diagnostic when present and unused.
-			if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
+				if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
 #else
-			if (backlog) backlog->used = false;
+				if (backlog) backlog->used = false;
 #endif
-			if (socketmode) run_or_start << "--mode " << quote(names.substitute(socketmode->last_setting())) << " ";
-			if (socketuser) run_or_start << "--user " << quote(names.substitute(socketuser->last_setting())) << " ";
-			if (socketgroup) run_or_start << "--group " << quote(names.substitute(socketgroup->last_setting())) << " ";
+				if (socketmode) run_or_start << "--mode " << quote(names.substitute(socketmode->last_setting())) << " ";
+				if (socketuser) run_or_start << "--user " << quote(names.substitute(socketuser->last_setting())) << " ";
+				if (socketgroup) run_or_start << "--group " << quote(names.substitute(socketgroup->last_setting())) << " ";
 #if 0 // This does not apply to FIFOs and we want it to generate a diagnostic when present and unused.
-			if (passcredentials) run_or_start << "--pass-credentials ";
-			if (passsecurity) run_or_start << "--pass-security ";
+				if (passcredentials) run_or_start << "--pass-credentials ";
+				if (passsecurity) run_or_start << "--pass-security ";
 #else
-			if (passcredentials) passcredentials->used = false;
-			if (passsecurity) passsecurity->used = false;
+				if (passcredentials) passcredentials->used = false;
+				if (passsecurity) passsecurity->used = false;
 #endif
-			run_or_start << quote(fifoname) << "\n";
+				run_or_start << quote(fifoname) << "\n";
+			}
 		}
 		if (listennetlink) {
-			std::string protocol, multicast_group;
-			split_netlink_socket_name(names.substitute(listennetlink->last_setting()), protocol, multicast_group);
-			run_or_start << "netlink-datagram-socket-listen --systemd-compatibility ";
-			if (is_bool_true(netlinkraw, false)) run_or_start << "--raw ";
-			if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
-			if (receivebuffer) run_or_start << "--receive-buffer-size " << quote(receivebuffer->last_setting()) << " ";
-			if (passcredentials) run_or_start << "--pass-credentials ";
-			if (passsecurity) run_or_start << "--pass-security ";
-			run_or_start << quote(protocol) << " " << quote(multicast_group) << "\n";
+			for (value::settings::const_iterator i(listennetlink->all_settings().begin()); listennetlink->all_settings().end() != i; ++i) {
+				const std::string sockname(names.substitute(*i));
+				std::string protocol, multicast_group;
+				split_netlink_socket_name(sockname, protocol, multicast_group);
+				run_or_start << "netlink-datagram-socket-listen --systemd-compatibility ";
+				if (is_bool_true(netlinkraw, false)) run_or_start << "--raw ";
+				if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
+				if (receivebuffer) run_or_start << "--receive-buffer-size " << quote(receivebuffer->last_setting()) << " ";
+				if (passcredentials) run_or_start << "--pass-credentials ";
+				if (passsecurity) run_or_start << "--pass-security ";
+				run_or_start << quote(protocol) << " " << quote(multicast_group) << "\n";
+			}
 		}
 		run_or_start << setup_environment.str();
 		run_or_start << drop_privileges.str();
 		if (is_socket_accept) {
 			if (listenstream) {
-				const std::string sockname(names.substitute(listenstream->last_setting()));
-				if (is_local_socket_name(sockname)) {
-					run_or_start << "local-stream-socket-accept ";
-					if (maxconnections) run_or_start << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
-					run_or_start << "\n";
-				} else {
-					run_or_start << "tcp-socket-accept ";
-					if (maxconnections) run_or_start << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
-					if (is_bool_true(keepalive, false)) run_or_start << "--keepalives ";
-					if (is_bool_true(nodelay, false)) run_or_start << "--no-delay ";
-					run_or_start << "\n";
+				for (value::settings::const_iterator i(listenstream->all_settings().begin()); listenstream->all_settings().end() != i; ++i) {
+					const std::string sockname(names.substitute(*i));
+					if (is_local_socket_name(sockname)) {
+						run_or_start << "local-stream-socket-accept ";
+						if (maxconnections) run_or_start << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
+						run_or_start << "\n";
+					} else {
+						run_or_start << "tcp-socket-accept ";
+						if (maxconnections) run_or_start << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
+						if (is_bool_true(keepalive, false)) run_or_start << "--keepalives ";
+						if (is_bool_true(nodelay, false)) run_or_start << "--no-delay ";
+						run_or_start << "\n";
+					}
 				}
 			}
 			if (listensequentialpacket) {
-				const std::string sockname(names.substitute(listensequentialpacket->last_setting()));
-				if (is_local_socket_name(sockname)) {
-					run_or_start << "local-seqpacket-socket-accept ";
-					if (maxconnections) run_or_start << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
-					run_or_start << "\n";
-				} else {
-					run_or_start << "ip-seqpacket-socket-accept ";
-					if (maxconnections) run_or_start << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
-					if (is_bool_true(keepalive, false)) run_or_start << "--keepalives ";
-					if (is_bool_true(nodelay, false)) run_or_start << "--no-delay ";
-					run_or_start << "\n";
+				for (value::settings::const_iterator i(listensequentialpacket->all_settings().begin()); listensequentialpacket->all_settings().end() != i; ++i) {
+					const std::string sockname(names.substitute(*i));
+					if (is_local_socket_name(sockname)) {
+						run_or_start << "local-seqpacket-socket-accept ";
+						if (maxconnections) run_or_start << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
+						run_or_start << "\n";
+					} else {
+						run_or_start << "ip-seqpacket-socket-accept ";
+						if (maxconnections) run_or_start << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
+						if (is_bool_true(keepalive, false)) run_or_start << "--keepalives ";
+						if (is_bool_true(nodelay, false)) run_or_start << "--no-delay ";
+						run_or_start << "\n";
+					}
 				}
 			}
 		}
@@ -1804,7 +1833,7 @@ convert_systemd_units [[gnu::noreturn]] (
 		if (generation_comment)
 			service << multi_line_comment("Service file generated from " + service_filename);
 		if (service_description) {
-			for (std::list<std::string>::const_iterator i(service_description->all_settings().begin()); service_description->all_settings().end() != i; ++i) {
+			for (value::settings::const_iterator i(service_description->all_settings().begin()); service_description->all_settings().end() != i; ++i) {
 				const std::string & val(*i);
 				service << multi_line_comment(names.substitute(val));
 			}
@@ -1813,7 +1842,7 @@ convert_systemd_units [[gnu::noreturn]] (
 		service << execute_command.str();
 	} else {
 		if (service_description) {
-			for (std::list<std::string>::const_iterator i(service_description->all_settings().begin()); service_description->all_settings().end() != i; ++i) {
+			for (value::settings::const_iterator i(service_description->all_settings().begin()); service_description->all_settings().end() != i; ++i) {
 				const std::string & val(*i);
 				run_or_start << multi_line_comment(names.substitute(val));
 			}
@@ -1831,7 +1860,7 @@ convert_systemd_units [[gnu::noreturn]] (
 			start << createrundir;
 			start << perilogue_drop_privileges.str();
 			if (execstartpre) {
-				for (std::list<std::string>::const_iterator i(execstartpre->all_settings().begin()); execstartpre->all_settings().end() != i; ) {
+				for (value::settings::const_iterator i(execstartpre->all_settings().begin()); execstartpre->all_settings().end() != i; ) {
 					std::list<std::string>::const_iterator j(i++);
 					if (execstartpre->all_settings().begin() != j) start << " ;\n"; 
 					if (execstartpre->all_settings().end() != i) start << "foreground "; 
@@ -1859,9 +1888,11 @@ convert_systemd_units [[gnu::noreturn]] (
 	}
 	if (execrestartpre) {
 		std::stringstream s;
+		// This allows execline builtins to be used even if neither execline nor the execline-shims are installed.
+		s << "/bin/exec\n";
 		s << perilogue_setup_environment.str();
 		s << perilogue_drop_privileges.str();
-		for (std::list<std::string>::const_iterator i(execrestartpre->all_settings().begin()); execrestartpre->all_settings().end() != i; ) {
+		for (value::settings::const_iterator i(execrestartpre->all_settings().begin()); execrestartpre->all_settings().end() != i; ) {
 			std::list<std::string>::const_iterator j(i++);
 			if (execrestartpre->all_settings().begin() != j) s << " \\;\n"; 
 			if (execrestartpre->all_settings().end() != i) s << "foreground "; 
@@ -1918,7 +1949,7 @@ convert_systemd_units [[gnu::noreturn]] (
 		stop << removerundir;
 		stop << perilogue_drop_privileges.str();
 		if (execstoppost) {
-			for (std::list<std::string>::const_iterator i(execstoppost->all_settings().begin()); execstoppost->all_settings().end() != i; ) {
+			for (value::settings::const_iterator i(execstoppost->all_settings().begin()); execstoppost->all_settings().end() != i; ) {
 				std::list<std::string>::const_iterator j(i++);
 				if (execstoppost->all_settings().begin() != j) stop << " ;\n"; 
 				if (execstoppost->all_settings().end() != i) stop << "foreground "; 
@@ -1935,7 +1966,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	const bool services_are_relative(per_user_mode || (!etc_bundle && !local_bundle));
 	const bool targets_are_relative(per_user_mode || etc_bundle);
 
-#define CREATE_LINKS(l,s) (l ? create_links (prog,names.query_bundle_dirname(),per_user_mode,is_target,services_are_relative,targets_are_relative,bundle_dir_fd,names.substitute((l)->last_setting()),(s)) : static_cast<void>(0))
+#define CREATE_LINKS(l,s) (l ? create_links (prog,envs,names.query_bundle_dirname(),per_user_mode,is_target,services_are_relative,targets_are_relative,bundle_dir_fd,names.substitute((l)->last_setting()),(s)) : static_cast<void>(0))
 
 	CREATE_LINKS(socket_after, "after/");
 	CREATE_LINKS(service_after, "after/");
@@ -1960,47 +1991,55 @@ convert_systemd_units [[gnu::noreturn]] (
 			is_bool_true(service_defaultdependencies, true)
 	);
 	const bool earlysupervise(
-			is_socket_activated ? is_bool_true(socket_earlysupervise, service_earlysupervise, etc_bundle) :
+			is_socket_activated ? is_bool_true(socket_earlysupervise, service_earlysupervise, !per_user_mode && etc_bundle) :
 			is_bool_true(service_earlysupervise, !per_user_mode && etc_bundle)
 	);
 	if (defaultdependencies) {
 		if (is_socket_activated)
-			create_links(prog, names.query_bundle_dirname(), per_user_mode, is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "sockets.target", "wanted-by/");
+			create_links(prog, envs, names.query_bundle_dirname(), per_user_mode, is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "sockets.target", "wanted-by/");
 		if (is_dbus) {
-			create_links(prog, names.query_bundle_dirname(), per_user_mode, is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "dbus.socket", "after/");
+			create_links(prog, envs, names.query_bundle_dirname(), per_user_mode, is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "dbus.socket", "after/");
 #if !defined(__LINUX__) && !defined(__linux__)
 			// Don't want D-Bus on Linux in case the D-Bus daemon is not managed by service-manager.
-			create_links(prog, names.query_bundle_dirname(), per_user_mode, is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "dbus.socket", "wants/");
+			create_links(prog, envs, names.query_bundle_dirname(), per_user_mode, is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "dbus.socket", "wants/");
 #endif
 		}
 		if (!is_target) {
-			create_links(prog, names.query_bundle_dirname(), per_user_mode, is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "basic.target", "after/");
-			create_links(prog, names.query_bundle_dirname(), per_user_mode, is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "basic.target", "wants/");
-			create_links(prog, names.query_bundle_dirname(), per_user_mode, is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "shutdown.target", "before/");
-			create_links(prog, names.query_bundle_dirname(), per_user_mode, is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "shutdown.target", "stopped-by/");
+			create_links(prog, envs, names.query_bundle_dirname(), per_user_mode, is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "basic.target", "after/");
+			create_links(prog, envs, names.query_bundle_dirname(), per_user_mode, is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "basic.target", "wants/");
+			create_links(prog, envs, names.query_bundle_dirname(), per_user_mode, is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "shutdown.target", "before/");
+			create_links(prog, envs, names.query_bundle_dirname(), per_user_mode, is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "shutdown.target", "stopped-by/");
 		}
 	}
 	if (earlysupervise) {
-		create_link(prog, names.query_bundle_dirname(), bundle_dir_fd, "/run/service-bundles/early-supervise/" + names.query_bundle_basename(), "supervise");
+		create_link(prog, names.query_bundle_dirname(), bundle_dir_fd, names.query_runtime_dir() + "service-bundles/early-supervise/" + names.query_bundle_basename(), "supervise");
 	}
 	if (listenstream) {
-		const std::string sockname(names.substitute(listenstream->last_setting()));
-		if (is_local_socket_name(sockname))
-			make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, sockname);
+		for (value::settings::const_iterator i(listenstream->all_settings().begin()); listenstream->all_settings().end() != i; ++i) {
+			const std::string sockname(names.substitute(*i));
+			if (is_local_socket_name(sockname))
+				make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, sockname);
+		}
 	}
 	if (listendatagram) {
-		const std::string sockname(names.substitute(listendatagram->last_setting()));
-		if (is_local_socket_name(sockname))
-			make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, sockname);
+		for (value::settings::const_iterator i(listendatagram->all_settings().begin()); listendatagram->all_settings().end() != i; ++i) {
+			const std::string sockname(names.substitute(*i));
+			if (is_local_socket_name(sockname))
+				make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, sockname);
+		}
 	}
 	if (listensequentialpacket) {
-		const std::string sockname(names.substitute(listensequentialpacket->last_setting()));
-		if (is_local_socket_name(sockname))
-			make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, sockname);
+		for (value::settings::const_iterator i(listensequentialpacket->all_settings().begin()); listensequentialpacket->all_settings().end() != i; ++i) {
+			const std::string sockname(names.substitute(*i));
+			if (is_local_socket_name(sockname))
+				make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, sockname);
+		}
 	}
 	if (listenfifo) {
-		const std::string fifoname(names.substitute(listenfifo->last_setting()));
-		make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, fifoname);
+		for (value::settings::const_iterator i(listenfifo->all_settings().begin()); listenfifo->all_settings().end() != i; ++i) {
+			const std::string fifoname(names.substitute(*i));
+			make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, fifoname);
+		}
 	}
 	flag_file(prog, service_dirname, service_dir_fd, "ready_after_run", is_oneshot);
 	flag_file(prog, service_dirname, service_dir_fd, "remain", is_remain);

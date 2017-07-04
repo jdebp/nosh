@@ -8,6 +8,8 @@ For copyright and licensing terms, see the file named COPYING.
 
 #include <string>
 
-extern std::string effective_user_home_dir();
+struct ProcessEnvironment;
+
+extern std::string effective_user_home_dir(const ProcessEnvironment &);
 
 #endif

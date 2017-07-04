@@ -49,5 +49,12 @@ then
 	system-control set-service-env "${s}" rc_paths_elf32 "/lib /usr/lib /usr/local/lib `get_var1 _paths` `get_var1 32_paths` `get_files _local_dirs _local32_dirs`"
 	system-control set-service-env "${s}" rc_paths_aout "/lib/aout /usr/lib/aout /usr/local/lib/aout `get_var2 _paths_aout _paths`"
 
+	system-control preset -- "${s}"
+	if system-control is-enabled "${s}"
+	then
+		echo >> "$3" on "${s}"
+	else
+		echo >> "$3" off "${s}"
+	fi
 	system-control print-service-env "${s}" >> "$3"
 fi

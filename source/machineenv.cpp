@@ -16,20 +16,9 @@ For copyright and licensing terms, see the file named COPYING.
 #endif
 #include <unistd.h>
 #include "utils.h"
+#include "ProcessEnvironment.h"
 #include "popt.h"
 #include "machine_id.h"
-
-static inline
-void
-set (
-	const char * var,
-	const char * val
-) {
-	if (val)
-		setenv(var, val, 1);
-	else
-		unsetenv(var);
-}
 
 /* Main function ************************************************************
 // **************************************************************************
@@ -38,7 +27,8 @@ set (
 void
 machineenv ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
@@ -57,21 +47,21 @@ machineenv (
 	}
 
 	machine_id::erase();
-	if (!machine_id::read_non_volatile() && !machine_id::read_fallbacks())
+	if (!machine_id::read_non_volatile() && !machine_id::read_fallbacks(envs))
 	       machine_id::create();
-	set("MACHINEID", machine_id::human_readable_form_compact().c_str());
+	envs.set("MACHINEID", machine_id::human_readable_form_compact());
 
 #if defined(_GNU_SOURCE)
 	struct utsname uts;
 	uname(&uts);
-	set("HOSTNAME", uts.nodename);
-	set("DOMAINNAME", uts.domainname);
+	envs.set("HOSTNAME", uts.nodename);
+	envs.set("DOMAINNAME", uts.domainname);
 #elif defined(HOST_NAME_MAX)
 	char name[HOST_NAME_MAX + 1];
 	gethostname(name, sizeof name);
-	set("HOSTNAME", name);
+	envs.set("HOSTNAME", name);
 	getdomainname(name, sizeof name);
-	set("DOMAINNAME", name);
+	envs.set("DOMAINNAME", name);
 #else
 	const long max(sysconf(_SC_HOST_NAME_MAX));
 	if (0 > max) {
@@ -81,8 +71,8 @@ machineenv (
 	}
 	std::string name(max + 1, ' ');
 	gethostname(const_cast<char *>(name.data()), max + 1);
-	set("HOSTNAME", name.c_str());
+	envs.set("HOSTNAME", name);
 	getdomainname(const_cast<char *>(name.data()), max + 1);
-	set("DOMAINNAME", name.c_str());
+	envs.set("DOMAINNAME", name);
 #endif
 }

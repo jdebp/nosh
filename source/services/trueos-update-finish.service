@@ -1,0 +1,21 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Finish off a TrueOS upgrade after the reboot into the system.
+DefaultDependencies=false
+Wants=local-fs.target
+After=local-fs.target
+Before=reboot-after-update.target
+
+[Service]
+Type=oneshot
+ExecStart=pc-updatemanager finish-major-update
+# This only has meaningful behaviour at bootstrap, not later.
+RemainAfterExit=yes
+Restart=never
+
+[Install]
+StoppedBy=shutdown.target
+WantedBy=finish-update.target

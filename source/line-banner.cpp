@@ -18,7 +18,8 @@ For copyright and licensing terms, see the file named COPYING.
 void
 line_banner ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 	bool nvt(false);

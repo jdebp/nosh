@@ -17,6 +17,8 @@ enable	cyclog@cleanX.service
 enable	cleanX.service
 enable	cyclog@cleantmp.service
 enable	cleantmp.service
+enable	cyclog@ntpd.service
+enable	ntpd.service
 disable	cyclog@openntpd.service
 disable	openntpd.service
 

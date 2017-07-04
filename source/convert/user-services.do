@@ -7,7 +7,7 @@
 # This is invoked by all.do .
 #
 
-redo-ifchange /etc/passwd "user-dbus@.socket" "user-dbus.service" "user-dbus-log@.service" "user-services@.service" "user-runtime@.service" "user@.target" "exit.target" "per-user.conf" "mpd.conf"
+redo-ifchange /etc/passwd "user-dbus@.socket" "user-dbus.service" "user-dbus-log@.service" "user-services@.service" "user-runtime@.service" "run-user-directory@.service" "user@.target" "exit.target" "per-user.conf" "mpd.conf"
 
 lr="/var/local/sv/"
 sr="/etc/service-bundles/services/"
@@ -271,6 +271,7 @@ do
 			done
 
 			user_target "shutdown"
+			user_target "sockets"
 
 			user_fan_in_logger "dbus-servers"
 			user_fan_in_logger "socket-servers"

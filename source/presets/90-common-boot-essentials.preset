@@ -22,6 +22,7 @@ enable  nisdomain.service
 
 # Sysinit services
 enable	sysinit-log.service
+enable	sysinit-log.service
 enable	dmesg.service
 enable	hostname.service
 enable	hostname.sh.service
@@ -31,18 +32,23 @@ enable	fsck@-.service
 enable	mount@-.service
 
 # Targets
-enable	sysinit.target
 enable	basic.target
-enable	local-fs.target
-enable	local-fs-pre.target
+enable	finish-install.target
+enable	finish-update.target
 enable	fs-servers.target
-enable	remote-fs.target
+enable	local-fs-pre.target
+enable	local-fs.target
+enable	local-syslog.target
+enable	multi-user-pre.target
+enable	multi-user.target
+enable	reboot-after-install.target
+enable	reboot-after-update.target
 enable	remote-fs-pre.target
-enable	static-networking.target
+enable	remote-fs.target
 enable	server.target
+enable	static-networking.target
 enable	swapauto.target
 enable	swaplate.target
+enable	sysinit.target
+enable	users.target
 enable	workstation.target
-enable	multi-user.target
-enable	multi-user-pre.target
-enable	local-syslog.target

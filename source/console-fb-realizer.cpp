@@ -61,6 +61,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "fdutils.h"
 #include "pack.h"
 #include "popt.h"
+#include "ProcessEnvironment.h"
 #include "CharacterCell.h"
 #include "InputMessage.h"
 #include "FileDescriptorOwner.h"
@@ -991,8 +992,14 @@ VirtualTerminal::reload ()
 		cursor_state = 0;
 	else if (CursorSprite::UNDERLINE == ctype)
 		cursor_state = 1;
-	else
+	else if (CursorSprite::BAR == ctype)
 		cursor_state = 2;
+	else if (CursorSprite::BOX == ctype)
+		cursor_state = 3;
+	else if (CursorSprite::BLOCK == ctype)
+		cursor_state = 4;
+	else
+		cursor_state = 5;
 	if (PointerSprite::VISIBLE != (pattr & PointerSprite::VISIBLE))
 		pointer_state = 0;
 	else 
@@ -1082,11 +1089,17 @@ protected:
 	Monospace16x16Font & font;
 	GlyphCache glyph_cache;		///< a recently-used cache of handles to 2-colour bitmaps
 	const GlyphBitmapHandle mouse_glyph_handle;
+	const GlyphBitmapHandle underline_glyph_handle;
+	const GlyphBitmapHandle bar_glyph_handle;
+	const GlyphBitmapHandle box_glyph_handle;
+	const GlyphBitmapHandle block_glyph_handle;
+	const GlyphBitmapHandle star_glyph_handle;
 	const CharacterCell::colour_type mouse_fg;
 
 	bool update_needed;
 	void do_paint(bool changed);
 
+	GlyphBitmapHandle GetCursorGlyphBitmap() const;
 	GlyphBitmapHandle GetCachedGlyphBitmap(uint32_t character, CharacterCell::attribute_type attributes);
 	void ApplyAttributesToGlyphBitmap(GlyphBitmapHandle handle , CharacterCell::attribute_type attributes);
 	void PlotGreek(GlyphBitmapHandle handle, uint32_t character);
@@ -1121,6 +1134,11 @@ Realizer::Realizer(
 	gdi(g),
 	font(mf),
 	mouse_glyph_handle(gdi.MakeGlyphBitmap()),
+	underline_glyph_handle(gdi.MakeGlyphBitmap()),
+	bar_glyph_handle(gdi.MakeGlyphBitmap()),
+	box_glyph_handle(gdi.MakeGlyphBitmap()),
+	block_glyph_handle(gdi.MakeGlyphBitmap()),
+	star_glyph_handle(gdi.MakeGlyphBitmap()),
 	mouse_fg(31,0xFF,0xFF,0xFF),
 	update_needed(true),
 	pointer_xpixel(0),
@@ -1143,10 +1161,39 @@ Realizer::Realizer(
 	mouse_glyph_handle->Plot(13, 0xA005);
 	mouse_glyph_handle->Plot(14, 0xC003);
 	mouse_glyph_handle->Plot(15, 0xFFFF);
+
+	star_glyph_handle->Plot( 0, 0x8001);
+	star_glyph_handle->Plot( 1, 0x4182);
+	star_glyph_handle->Plot( 2, 0x2184);
+	star_glyph_handle->Plot( 3, 0x1188);
+	star_glyph_handle->Plot( 4, 0x0990);
+	star_glyph_handle->Plot( 5, 0x05A0);
+	star_glyph_handle->Plot( 6, 0x03C0);
+	star_glyph_handle->Plot( 7, 0x7FFE);
+	star_glyph_handle->Plot( 8, 0x7FFE);
+	star_glyph_handle->Plot( 9, 0x03C0);
+	star_glyph_handle->Plot(10, 0x05A0);
+	star_glyph_handle->Plot(11, 0x0990);
+	star_glyph_handle->Plot(12, 0x1188);
+	star_glyph_handle->Plot(13, 0x2184);
+	star_glyph_handle->Plot(14, 0x4182);
+	star_glyph_handle->Plot(15, 0x8001);
+
+	for (unsigned row(0U); row < 16U; ++row) {
+		underline_glyph_handle->Plot(row, row < 14U ? 0x0000 : 0xFFFF);
+		box_glyph_handle->Plot(row, row < 2U || row > 13U ? 0xFFFF : 0xC003);
+		block_glyph_handle->Plot(row, 0xFFFF);
+		bar_glyph_handle->Plot(row, 0xC000);
+	}
 }
 
 Realizer::~Realizer()
 {
+	gdi.DeleteGlyphBitmap(star_glyph_handle);
+	gdi.DeleteGlyphBitmap(block_glyph_handle);
+	gdi.DeleteGlyphBitmap(box_glyph_handle);
+	gdi.DeleteGlyphBitmap(bar_glyph_handle);
+	gdi.DeleteGlyphBitmap(underline_glyph_handle);
 	gdi.DeleteGlyphBitmap(mouse_glyph_handle);
 }
 
@@ -1189,6 +1236,18 @@ Realizer::PlotGreek(GlyphBitmapHandle handle, uint32_t character)
 		for (unsigned row(2U); row < 14U; ++row) handle->Plot(row, 0x3FFC);
 		handle->Plot(14, 0);
 		handle->Plot(15, 0);
+	}
+}
+
+Realizer::GlyphBitmapHandle 
+Realizer::GetCursorGlyphBitmap() const
+{
+	switch (cursor_state) {
+		default:	return star_glyph_handle;
+		case 1U:	return underline_glyph_handle;
+		case 2U:	return bar_glyph_handle;
+		case 3U:	return box_glyph_handle;
+		case 4U:	return block_glyph_handle;
 	}
 }
 
@@ -1245,22 +1304,36 @@ Realizer::do_paint(bool force)
 				}
 			}
 			if (is_marked(row, col) && cursor_state > 0) {
-				invert(fg);
-				invert(bg);
-			}
-			// Being invisible is always the same glyph, so we don't cache it.
-			if (CharacterCell::INVISIBLE & font_attributes) {
-				const GlyphBitmapHandle handle(gdi.MakeGlyphBitmap());
-				PlotGreek(handle, 0x20);
-				ApplyAttributesToGlyphBitmap(handle, font_attributes);
-				gdi.BitBLT(screen, handle, row * CHARACTER_PIXEL_HEIGHT, col * CHARACTER_PIXEL_WIDTH, fg, bg);
-				gdi.DeleteGlyphBitmap(handle);
+				const GlyphBitmapHandle cursor_handle(GetCursorGlyphBitmap());
+				if (CharacterCell::INVISIBLE & font_attributes) {
+					// Being invisible leaves just the cursor glyph.
+					invert(fg);
+					gdi.BitBLT(screen, cursor_handle, row * CHARACTER_PIXEL_HEIGHT, col * CHARACTER_PIXEL_WIDTH, fg, bg);
+				} else {
+					CharacterCell::colour_type fgs[2] = { fg, fg };
+					CharacterCell::colour_type bgs[2] = { bg, bg };
+					invert(fgs[1]);
+					invert(bgs[1]);
+					const GlyphBitmapHandle handle(GetCachedGlyphBitmap(c.character, font_attributes));
+					gdi.BitBLTMask(screen, handle, cursor_handle, row * CHARACTER_PIXEL_HEIGHT, col * CHARACTER_PIXEL_WIDTH, fgs, bgs);
+				}
 			} else {
-				const GlyphBitmapHandle handle(GetCachedGlyphBitmap(c.character, font_attributes));
-				gdi.BitBLT(screen, handle, row * CHARACTER_PIXEL_HEIGHT, col * CHARACTER_PIXEL_WIDTH, fg, bg);
+				if (CharacterCell::INVISIBLE & font_attributes) {
+					// Being invisible is always the same glyph, so we don't cache it.
+					const GlyphBitmapHandle handle(gdi.MakeGlyphBitmap());
+					PlotGreek(handle, 0x20);
+					ApplyAttributesToGlyphBitmap(handle, font_attributes);
+					gdi.BitBLT(screen, handle, row * CHARACTER_PIXEL_HEIGHT, col * CHARACTER_PIXEL_WIDTH, fg, bg);
+					gdi.DeleteGlyphBitmap(handle);
+				} else {
+					const GlyphBitmapHandle handle(GetCachedGlyphBitmap(c.character, font_attributes));
+					gdi.BitBLT(screen, handle, row * CHARACTER_PIXEL_HEIGHT, col * CHARACTER_PIXEL_WIDTH, fg, bg);
+				}
 			}
-			if (is_pointer(row, col) && pointer_state > 0)
-				gdi.BitBLTAlpha(screen, mouse_glyph_handle, row * CHARACTER_PIXEL_HEIGHT, col * CHARACTER_PIXEL_WIDTH, mouse_fg);
+			if (is_pointer(row, col) && pointer_state > 0) {
+				CharacterCell::colour_type mfg(mouse_fg);
+				gdi.BitBLTAlpha(screen, mouse_glyph_handle, row * CHARACTER_PIXEL_HEIGHT, col * CHARACTER_PIXEL_WIDTH, mfg);
+			}
 			c.untouch();
 		}
 	}
@@ -4775,7 +4848,8 @@ HIDList::~HIDList()
 void
 console_fb_realizer [[gnu::noreturn]] ( 
 	const char * & /*next_prog*/,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	const char * keyboard_map_filename(0);
@@ -4887,7 +4961,7 @@ console_fb_realizer [[gnu::noreturn]] (
 		if (p.stopped()) throw EXIT_SUCCESS;
 #if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
 		if (has_kernel_vt)
-			kernel_vt_filename = std::getenv("TTY");
+			kernel_vt_filename = envs.query("TTY");
 #endif
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);

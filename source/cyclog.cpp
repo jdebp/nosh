@@ -65,8 +65,9 @@ is_old (
 // **************************************************************************
 */
 
+namespace {
 struct logger {
-	logger(const char * n, int df, int lf) : 
+	logger(const char * n, int df, int lf, const ProcessEnvironment & e) : 
 		next(first), 
 		prevnext(&first), 
 		dir_name(n),
@@ -74,7 +75,8 @@ struct logger {
 		lock_fd(lf), 
 		current_fd(-1),
 		bol(true),
-		off(0)
+		off(0),
+		envs(e)
 	{ 
 		if (first) first->prevnext = &next; 
 		first = this; 
@@ -106,6 +108,7 @@ protected:
 	uint64_t current_size;
 	char buf[4096];
 	unsigned off;
+	const ProcessEnvironment & envs;
 
 	void close(const char * name);
 	void pause (const char * s, const char * n);
@@ -114,6 +117,7 @@ protected:
 	int unlink_oldest_file();
 	void write (const char *, std::size_t);
 };
+}
 
 logger * logger::first(0);
 
@@ -233,7 +237,7 @@ void logger::rotate() {
 	if (0 <= current_fd) {
 		timespec now;
 		clock_gettime(CLOCK_REALTIME, &now);
-		const uint64_t secs(time_to_tai64(now.tv_sec, false));
+		const uint64_t secs(time_to_tai64(envs, now.tv_sec, false));
 		const uint32_t nano(now.tv_nsec);
 
 		char * name_u(0);
@@ -288,7 +292,7 @@ void logger::put (char c) {
 	if (bol) {
 		timespec now;
 		clock_gettime(CLOCK_REALTIME, &now);
-		const uint64_t secs(time_to_tai64(now.tv_sec, false));
+		const uint64_t secs(time_to_tai64(envs, now.tv_sec, false));
 		const uint32_t nano(now.tv_nsec);
 		char stamp[27];
 		snprintf(stamp, sizeof stamp, "@%016" PRIx64 "%08" PRIx32 " ", secs, nano);
@@ -319,7 +323,8 @@ void logger::end () {
 void
 cyclog [[gnu::noreturn]] (
 	const char * & /*next_prog*/,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
@@ -368,7 +373,7 @@ cyclog [[gnu::noreturn]] (
 			std::fprintf(stderr, "%s: FATAL: %s/lock: %s\n", prog, name, std::strerror(error));
 			throw EXIT_FAILURE;
 		}
-		logger *l(new logger(name, dir_fd, lock_fd));
+		logger *l(new logger(name, dir_fd, lock_fd, envs));
 		l->start();
 	}
 

@@ -11,6 +11,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cerrno>
 #include <cctype>
 #include "utils.h"
+#include "ProcessEnvironment.h"
 #include "popt.h"
 
 /* Main function ************************************************************
@@ -20,7 +21,8 @@ For copyright and licensing terms, see the file named COPYING.
 void
 read_conf (
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	bool oknofile(false);
@@ -63,7 +65,7 @@ read_conf (
 		const std::string::size_type p(s.find('='));
 		const std::string var(s.substr(0, p));
 		const std::string val(p == std::string::npos ? std::string() : s.substr(p + 1, std::string::npos));
-		if (0 > setenv(var.c_str(), val.c_str(), 1)) {
+		if (!envs.set(var, val)) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, var.c_str(), std::strerror(error));
 			throw EXIT_FAILURE;

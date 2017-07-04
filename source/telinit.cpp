@@ -32,7 +32,8 @@ stripfast (
 void
 reboot_poweroff_halt_command (
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 	bool force(stripfast(prog));
@@ -95,7 +96,8 @@ reboot_poweroff_halt_command (
 void
 wrap_system_control_subcommand (
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	args.insert(args.begin(), "system-control");
 	next_prog = arg0_of(args);
@@ -116,7 +118,8 @@ formats[] = {
 void
 shutdown (
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 	const char * grace_period(0);
@@ -315,7 +318,8 @@ shutdown (
 void
 rcctl (
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	next_prog = args[0] = "system-control";
 	if (args.size() > 1) {
@@ -330,7 +334,8 @@ rcctl (
 void
 runlevel [[gnu::noreturn]] ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
@@ -355,7 +360,8 @@ runlevel [[gnu::noreturn]] (
 void
 telinit ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	args[0] = "init";
 	args.insert(args.begin(), "system-control");

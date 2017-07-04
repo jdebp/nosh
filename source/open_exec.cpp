@@ -8,6 +8,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include <fcntl.h>
 #include <string>
+#include <cerrno>
 #include "fdutils.h"
 
 static inline
@@ -53,30 +54,50 @@ is_interpreter_magic (
 
 extern
 int 
+open_non_interpreted_exec_at (
+	int dir_fd, 
+	const char * name
+) {
+	// Witness this SUS/POSIX madness.
+	int fd(openat(dir_fd, name, O_NOCTTY|O_CLOEXEC|O_RDONLY|O_NONBLOCK));
+	if (0 <= fd) {
+		if (is_interpreter_magic(fd)) {
+			close(fd);
+			errno = ENOEXEC;
+			return -1;
+		}
+	}
+#if defined(O_EXEC)
+	const int efd(openat(dir_fd, name, O_NOCTTY|O_CLOEXEC|O_EXEC|O_NONBLOCK));
+	if (0 <= efd) {
+		if (0 <= fd) close(fd);
+		fd = efd;
+	}
+#endif
+	return fd;
+}
+
+extern
+int 
 open_exec_at (
 	int dir_fd, 
 	const char * name
 ) {
 	// Witness this SUS/POSIX madness.
 	int fd(openat(dir_fd, name, O_NOCTTY|O_CLOEXEC|O_RDONLY|O_NONBLOCK));
-	if (0 > fd) {
-#if defined(O_EXEC)
-		return openat(dir_fd, name, O_NOCTTY|O_CLOEXEC|O_EXEC|O_NONBLOCK);
-#else
-		return fd;
-#endif
-	}
-	if (is_interpreter_magic(fd)) 
-		// Executable scripts need to see a valid /dev/fd/N that must be readable.
-		set_close_on_exec(fd, false);	
-	else {
-#if defined(O_EXEC)
-		const int efd(openat(dir_fd, name, O_NOCTTY|O_CLOEXEC|O_EXEC|O_NONBLOCK));
-		if (0 <= efd) {
-			close(fd);
-			fd = efd;
+	if (0 <= fd) {
+		if (is_interpreter_magic(fd)) {
+			// Executable scripts need to see a valid /dev/fd/N that must be readable.
+			set_close_on_exec(fd, false);
+			return fd;
 		}
-#endif
 	}
+#if defined(O_EXEC)
+	const int efd(openat(dir_fd, name, O_NOCTTY|O_CLOEXEC|O_EXEC|O_NONBLOCK));
+	if (0 <= efd) {
+		if (0 <= fd) close(fd);
+		fd = efd;
+	}
+#endif
 	return fd;
 }

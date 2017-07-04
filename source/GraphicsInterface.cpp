@@ -99,6 +99,66 @@ GraphicsInterface::ScreenBitmap::Plot (unsigned short y, unsigned short x, uint1
 }
 
 void 
+GraphicsInterface::ScreenBitmap::Plot (unsigned short y, unsigned short x, uint16_t bits, uint16_t mask, const CharacterCell::colour_type foregrounds[2], const CharacterCell::colour_type backgrounds[2])
+{
+	// The stride is in bytes, so this calculation is always in bytes and is common.
+	void * const start(static_cast<uint8_t *>(base) + std::size_t(stride) * y);
+	switch (depth) {
+		case 15U:
+		{
+			uint16_t * const p(static_cast<uint16_t *>(start) + x);
+			const uint16_t fs[2] = { colour15(foregrounds[0]), colour15(foregrounds[1]) };
+			const uint16_t bs[2] = { colour15(backgrounds[0]), colour15(backgrounds[1]) };
+			for (unsigned off(16U); off-- > 0U; bits >>= 1U, mask >>= 1U) {
+				const bool bit(bits & 1U);
+				const unsigned index(mask & 1U);
+				p[off] = bit ? fs[index] : bs[index];
+			}
+			break;
+		}
+		case 16U:
+		{
+			uint16_t * const p(static_cast<uint16_t *>(start) + x);
+			const uint16_t fs[2] = { colour16(foregrounds[0]), colour16(foregrounds[1]) };
+			const uint16_t bs[2] = { colour16(backgrounds[0]), colour16(backgrounds[1]) };
+			for (unsigned off(16U); off-- > 0U; bits >>= 1U, mask >>= 1U) {
+				const bool bit(bits & 1U);
+				const unsigned index(mask & 1U);
+				p[off] = bit ? fs[index] : bs[index];
+			}
+			break;
+		}
+		case 24U:
+		{
+			uint8_t * const p(static_cast<uint8_t *>(start) + 3U * x);
+			uint8_t fs[2][3], bs[2][3];
+			colour24(fs[0], foregrounds[0]);
+			colour24(fs[1], foregrounds[1]);
+			colour24(bs[0], backgrounds[0]);
+			colour24(bs[1], backgrounds[1]);
+			for (unsigned off(16U); off-- > 0U; bits >>= 1U, mask >>= 1U) {
+				const bool bit(bits & 1U);
+				const unsigned index(mask & 1U);
+				std::memcpy(p + 3U * off, bit ? fs[index] : bs[index], 3U);
+			}
+			break;
+		}
+		case 32U:
+		{
+			uint32_t * const p(static_cast<uint32_t *>(start) + x);
+			const uint32_t fs[2] = { colour32(foregrounds[0]), colour32(foregrounds[1]) };
+			const uint32_t bs[2] = { colour32(backgrounds[0]), colour32(backgrounds[1]) };
+			for (unsigned off(16U); off-- > 0U; bits >>= 1U, mask >>= 1U) {
+				const bool bit(bits & 1U);
+				const unsigned index(mask & 1U);
+				p[off] = bit ? fs[index] : bs[index];
+			}
+			break;
+		}
+	}
+}
+
+void 
 GraphicsInterface::ScreenBitmap::AlphaBlend (unsigned short y, unsigned short x, uint16_t bits, const CharacterCell::colour_type & colour)
 {
 	// The stride is in bytes, so this calculation is always in bytes and is common.
@@ -181,6 +241,16 @@ GraphicsInterface::BitBLT(ScreenBitmapHandle s, GlyphBitmapHandle g, unsigned sh
 	for (unsigned row(0U); row < 16U; ++row) {
 		const uint16_t bits(g->Row(row));
 		s->Plot(y + row, x, bits, foreground, background);
+	}
+}
+
+void 
+GraphicsInterface::BitBLTMask(ScreenBitmapHandle s, GlyphBitmapHandle g, GlyphBitmapHandle m, unsigned short y, unsigned short x, const CharacterCell::colour_type foregrounds[2], const CharacterCell::colour_type backgrounds[2])
+{
+	for (unsigned row(0U); row < 16U; ++row) {
+		const uint16_t bits(g->Row(row));
+		const uint16_t mask(m->Row(row));
+		s->Plot(y + row, x, bits, mask, foregrounds, backgrounds);
 	}
 }
 

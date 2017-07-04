@@ -13,7 +13,7 @@ dump_rc() { clearenv read-conf rc.conf "`which printenv`" ; }
 list_jails() { read_rc jail_list || true ; }
 get_config() { read_rc jail_"$1"_"$2" || read_rc jail_"$2" || true ; }
 
-if_yes() { case "$1" in [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]) echo "$2" ;; esac ; }
+if_yes() { case "$1" in [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1) echo "$2" ;; esac ; }
 
 redo-ifchange rc.conf general-services "v9-jail@.service" "v9-jailed@.service"
 

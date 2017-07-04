@@ -22,7 +22,8 @@ For copyright and licensing terms, see the file named COPYING.
 void
 cat ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
@@ -50,7 +51,7 @@ cat (
 
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
 		std::string path, name, suffix;
-		const int bundle_dir_fd(open_bundle_directory("", *i, path, name, suffix));
+		const int bundle_dir_fd(open_bundle_directory(envs, "", *i, path, name, suffix));
 		if (0 > bundle_dir_fd) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, *i, std::strerror(error));

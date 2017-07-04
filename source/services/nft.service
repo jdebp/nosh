@@ -1,0 +1,21 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Netfilter tables firewall
+
+[Service]
+# Marking this as oneshot means that it doesn't enter the "running" state until the load command has exited.
+Type=oneshot
+EnvironmentDirectory=env
+ProtectHome=true
+ProtectSystem=full
+ExecStart=%p -f "${config:-/etc/nftables.conf}"
+ExecStopPost=%p flush ruleset
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
+Restart=no
+
+[Install]
+WantedBy=workstation.target

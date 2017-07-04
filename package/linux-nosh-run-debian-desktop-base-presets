@@ -1,4 +1,5 @@
 50-Debian-Server-Basic.preset
 50-Debian-Desktop-Basic.preset
 90-linux-boot-essentials.preset
+90-linux-static-networking.preset
 90-common-boot-essentials.preset

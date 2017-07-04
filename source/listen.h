@@ -8,7 +8,9 @@ For copyright and licensing terms, see the file named COPYING.
 
 enum { LISTEN_SOCKET_FILENO = 3 };
 
-extern unsigned query_listen_fds();
-extern int query_listen_fds_passthrough();
+struct ProcessEnvironment;
+
+extern unsigned query_listen_fds(ProcessEnvironment &);
+extern int query_listen_fds_passthrough(ProcessEnvironment &);
 
 #endif

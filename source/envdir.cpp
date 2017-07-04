@@ -23,7 +23,8 @@ For copyright and licensing terms, see the file named COPYING.
 void
 envdir ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	bool ignore_nodir(false), full(false), chomp(false);
@@ -64,7 +65,7 @@ envdir (
 			throw EXIT_FAILURE;
 		}
 	} else {
-		if (!process_env_dir(prog, dir, scan_dir_fd, false /*errors are fatal*/, full, chomp))
+		if (!process_env_dir(prog, envs, dir, scan_dir_fd, false /*errors are fatal*/, full, chomp))
 			throw EXIT_FAILURE;
 	}
 }

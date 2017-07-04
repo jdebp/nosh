@@ -15,6 +15,7 @@ Package: nosh-exec
 Architecture: amd64
 Depends: ${shlibs:Depends}
 Suggests: 
+Breaks: nosh-bundles (<= 1.33)
 Recommends: 
 Description: Minimal non-shell script processor and various chain-load utilities useful for services
  nosh is a minimal script processor for use in the #! lines of scripts.
@@ -214,7 +215,7 @@ Description: shim kbd utilities
 
 Package: nosh-bundles
 Architecture: amd64
-Depends: nosh-exec (>=1.32), nosh-service-management (>=1.33), nosh-terminal-management (>=1.22), adduser
+Depends: nosh-exec (>=1.34), nosh-service-management (>=1.34), nosh-terminal-management (>=1.22), adduser
 Suggests: 
 Recommends: 
 Conflicts: nosh-standard-targets, nosh-sysinit-services, nosh-bsd-services, nosh-bsd-sockets, nosh-regular-sockets, nosh-regular-services
@@ -345,16 +346,29 @@ Architecture: amd64
 Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, udev
 Suggests: 
 Recommends: 
-Conflicts: nosh-run-busybox-mdev, nosh-run-suckless-mdev, nosh-run-vdev
+Conflicts: nosh-run-busybox-mdev, nosh-run-suckless-mdev, nosh-run-vdev, nosh-run-systemd-udev
 Description: Run udev as the device manager.
+ This package causes udev to be run as the plug-and-play device manager.
+ .
+ For systemd's udev, use the nosh-run-systemd-udev package instead.
+
+Package: nosh-run-systemd-udev
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles (>=1.34), udev
+Suggests: 
+Recommends: 
+Conflicts: nosh-run-busybox-mdev, nosh-run-suckless-mdev, nosh-run-vdev, nosh-run-udev
+Description: Run systemd-udev as the device manager.
  This package causes systemd udev to be run as the plug-and-play device manager.
+ .
+ For non-systemd udev, use the nosh-run-udev package instead.
 
 Package: nosh-run-busybox-mdev
 Architecture: amd64
 Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, busybox
 Suggests: 
 Recommends: 
-Conflicts: nosh-run-udev, nosh-run-suckless-mdev, nosh-run-vdev
+Conflicts: nosh-run-udev, nosh-run-suckless-mdev, nosh-run-vdev, nosh-run-systemd-udev
 Description: Run BusyBox mdev as the device manager.
  This package causes BusyBox mdev to be run as the plug-and-play device manager.
 
@@ -363,7 +377,7 @@ Architecture: amd64
 Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, smdev
 Suggests: 
 Recommends: 
-Conflicts: nosh-run-udev, nosh-run-suckless-mdev, nosh-run-vdev
+Conflicts: nosh-run-udev, nosh-run-suckless-mdev, nosh-run-vdev, nosh-run-systemd-udev
 Description: Run SuckLess mdev as the device manager.
  This package causes SuckLess mdev to be run as the plug-and-play device manager.
 
@@ -372,7 +386,7 @@ Architecture: amd64
 Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, vdev
 Suggests: 
 Recommends: 
-Conflicts: nosh-run-busybox-mdev, nosh-run-suckless-mdev, nosh-run-udev
+Conflicts: nosh-run-busybox-mdev, nosh-run-suckless-mdev, nosh-run-udev, nosh-run-systemd-udev
 Description: Run vdev as the device manager.
  This package causes Devuan vdev to be run as the plug-and-play device manager.
 

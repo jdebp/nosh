@@ -138,13 +138,13 @@ do
 		fi
 	else
 		redo-ifcreate "/dev/$n"
-		if >/dev/null 2>&1 system-control find "cyclog@ttylogin@$n"
+		if s="`system-control find \"cyclog@ttylogin@$n\" 2>/dev/null`"
 		then
-			system-control disable "cyclog@ttylogin@$n"
+			system-control disable "$s"
 		fi
-		if >/dev/null 2>&1 system-control find "ttylogin@$n"
+		if s="`system-control find \"ttylogin@$n\" 2>/dev/null`"
 		then
-			system-control disable "ttylogin@$n"
+			system-control disable "$s"
 			echo >> "$3" off "$n"
 		else
 			echo >> "$3" no "$n"
@@ -180,13 +180,13 @@ do
 		fi
 	else
 		redo-ifcreate "/dev/$n"
-		if >/dev/null 2>&1 system-control find "cyclog@ttylogin@$n"
+		if s="`system-control find \"cyclog@ttylogin@$n\" 2>/dev/null`"
 		then
-			system-control disable "cyclog@ttylogin@$n"
+			system-control disable "$s"
 		fi
-		if >/dev/null 2>&1 system-control find "ttylogin@$n"
+		if s="`system-control find \"ttylogin@$n\" 2>/dev/null`"
 		then
-			system-control disable "ttylogin@$n"
+			system-control disable "$s"
 			echo >> "$3" off "$n"
 		else
 			echo >> "$3" no "$n"

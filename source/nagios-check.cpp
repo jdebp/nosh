@@ -86,6 +86,7 @@ has_exited_run (
 static inline
 void
 check ( 
+	const ProcessEnvironment & envs,
 	const int bundle_dir_fd,
 	const std::string & name,
 	std::vector<std::string> & not_loaded,
@@ -100,7 +101,7 @@ check (
 ) {
 	timespec now;
 	clock_gettime(CLOCK_REALTIME, &now);
-	const uint64_t z(time_to_tai64(now.tv_sec, false));
+	const uint64_t z(time_to_tai64(envs, now.tv_sec, false));
 
 	const FileDescriptorOwner supervise_dir_fd(open_supervise_dir(bundle_dir_fd));
 	if (0 > supervise_dir_fd.get()) {
@@ -236,7 +237,8 @@ print (
 void
 nagios_check [[gnu::noreturn]] ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	bool critical_if_below_min(false);
@@ -264,7 +266,7 @@ nagios_check [[gnu::noreturn]] (
 	std::vector<std::string> not_loaded, loading, clock_skewed, stopped, started, disabled, below_min_seconds, failed;
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
 		std::string path, name, suffix;
-		const int bundle_dir_fd(open_bundle_directory("", *i, path, name, suffix));
+		const int bundle_dir_fd(open_bundle_directory(envs, "", *i, path, name, suffix));
 		const std::string p(path + name);
 		if (0 > bundle_dir_fd) {
 			const int error(errno);
@@ -272,7 +274,7 @@ nagios_check [[gnu::noreturn]] (
 			set(rc, EXIT_NAGIOS_CRITICAL);
 			continue;
 		}
-		check(bundle_dir_fd, p, not_loaded, loading, clock_skewed, stopped, started, disabled, below_min_seconds, failed, rc);
+		check(envs, bundle_dir_fd, p, not_loaded, loading, clock_skewed, stopped, started, disabled, below_min_seconds, failed, rc);
 		close(bundle_dir_fd);
 	}
 	print("not loaded", not_loaded, rc, EXIT_NAGIOS_CRITICAL);

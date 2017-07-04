@@ -44,10 +44,11 @@ do
 	ldconfig)		continue ;; # This is handled by a special conversion.
 	linux)			continue ;;
 	mariadb)		continue ;; # This is handled by a special conversion.
+	mixer)			continue ;; # This is replaced by templatized services.
 	moused_nondefault)	continue ;; # This is not used for services.
 	mysql)			continue ;; # This is handled by a special conversion.
 	opensm)			continue ;; # This seems to have disappeared as of FreeBSD 10.
-	pcbsdinit)		continue ;;
+	pcbsdinit)		continue ;; # Service management of individual services supersedes this.
 	ppp)			continue ;; # This is handled by a special conversion.
 	rfcomm_pppd_server)	continue ;; # This is handled by a special conversion.
 	sendmail*)		continue ;; # In the process of being dropped by the BSDs.
@@ -67,7 +68,6 @@ do
 	# Other variables we haven't got around to having bundles for, yet.
 	adjkerntz)		continue ;;
 	firewall)		continue ;; # TODO: Needs to distribute to ipfs and ipfw0.
-	mixer)			continue ;; # Needs to be handled by a converter.
 	nfsv4_server)		continue ;;
 	netif)			continue ;;
 

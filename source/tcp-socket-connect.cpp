@@ -20,30 +20,20 @@ For copyright and licensing terms, see the file named COPYING.
 #include "popt.h"
 #include "utils.h"
 #include "fdutils.h"
+#include "ProcessEnvironment.h"
 #include "FileDescriptorOwner.h"
 
 /* Helper functions *********************************************************
 // **************************************************************************
 */
 
-static
-void
-env (
-	const char * name,
-	const char * value
-) {
-	if (value)
-		setenv(name, value, 1);
-	else
-		unsetenv(name);
-}
-
 static inline
 const char *
 q (
+	const ProcessEnvironment & envs,
 	const char * name
 ) {
-	const char * value(std::getenv(name));
+	const char * value(envs.query(name));
 	return value ? value : "";
 }
 
@@ -54,7 +44,8 @@ q (
 void
 tcp_socket_connect ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	const char * localhost(0);
@@ -204,7 +195,7 @@ tcp_socket_connect (
 		if (6 == s.get() || 7 == s.get())
 			s.release();
 
-		env("PROTO", "TCP");
+		envs.set("PROTO", "TCP");
 		switch (localaddr.ss_family) {
 			case AF_INET:
 			{
@@ -212,8 +203,8 @@ tcp_socket_connect (
 				char port[64], ip[INET_ADDRSTRLEN];
 				if (0 == inet_ntop(localaddr4.sin_family, &localaddr4.sin_addr, ip, sizeof ip)) goto exit_error;
 				snprintf(port, sizeof port, "%u", ntohs(localaddr4.sin_port));
-				env("TCPLOCALIP", ip);
-				env("TCPLOCALPORT", port);
+				envs.set("TCPLOCALIP", ip);
+				envs.set("TCPLOCALPORT", port);
 				break;
 			}
 			case AF_INET6:
@@ -222,13 +213,13 @@ tcp_socket_connect (
 				char port[64], ip[INET6_ADDRSTRLEN];
 				if (0 == inet_ntop(localaddr6.sin6_family, &localaddr6.sin6_addr, ip, sizeof ip)) goto exit_error;
 				snprintf(port, sizeof port, "%u", ntohs(localaddr6.sin6_port));
-				env("TCPLOCALIP", ip);
-				env("TCPLOCALPORT", port);
+				envs.set("TCPLOCALIP", ip);
+				envs.set("TCPLOCALPORT", port);
 				break;
 			}
 			default:
-				env("TCPLOCALIP", 0);
-				env("TCPLOCALPORT", 0);
+				envs.set("TCPLOCALIP", 0);
+				envs.set("TCPLOCALPORT", 0);
 				break;
 		}
 		switch (remote_info->ai_family) {
@@ -238,8 +229,8 @@ tcp_socket_connect (
 				char port[64], ip[INET_ADDRSTRLEN];
 				if (0 == inet_ntop(remoteaddr4.sin_family, &remoteaddr4.sin_addr, ip, sizeof ip)) goto exit_error;
 				snprintf(port, sizeof port, "%u", ntohs(remoteaddr4.sin_port));
-				env("TCPREMOTEIP", ip);
-				env("TCPREMOTEPORT", port);
+				envs.set("TCPREMOTEIP", ip);
+				envs.set("TCPREMOTEPORT", port);
 				break;
 			}
 			case AF_INET6:
@@ -248,22 +239,22 @@ tcp_socket_connect (
 				char port[64], ip[INET6_ADDRSTRLEN];
 				if (0 == inet_ntop(remoteaddr6.sin6_family, &remoteaddr6.sin6_addr, ip, sizeof ip)) goto exit_error;
 				snprintf(port, sizeof port, "%u", ntohs(remoteaddr6.sin6_port));
-				env("TCPREMOTEIP", ip);
-				env("TCPREMOTEPORT", port);
+				envs.set("TCPREMOTEIP", ip);
+				envs.set("TCPREMOTEPORT", port);
 				break;
 			}
 			default:
-				env("TCPREMOTEIP", 0);
-				env("TCPREMOTEPORT", 0);
+				envs.set("TCPREMOTEIP", 0);
+				envs.set("TCPREMOTEPORT", 0);
 				break;
 		}
-		env("TCPLOCALHOST", localhost);
-		env("TCPLOCALINFO", 0);
-		env("TCPREMOTEHOST", 0);
-		env("TCPREMOTEINFO", 0);
+		envs.set("TCPLOCALHOST", localhost);
+		envs.set("TCPLOCALINFO", 0);
+		envs.set("TCPREMOTEHOST", 0);
+		envs.set("TCPREMOTEINFO", 0);
 
 		if (verbose)
-			std::fprintf(stderr, "%s: %u %s %s %s %s\n", prog, getpid(), q("TCPLOCALIP"), q("TCPLOCALPORT"), q("TCPREMOTEIP"), q("TCPREMOTEPORT"));
+			std::fprintf(stderr, "%s: %u %s %s %s %s\n", prog, getpid(), q(envs, "TCPLOCALIP"), q(envs, "TCPLOCALPORT"), q(envs, "TCPREMOTEIP"), q(envs, "TCPREMOTEPORT"));
 
 		return;
 	}

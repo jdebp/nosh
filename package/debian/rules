@@ -2,7 +2,7 @@
 
 .PHONY: build binary install clean stage control
 
-BINARY_PACKAGES=guide exec terminal-management service-management terminal-extras zsh-completion systemv-shims systemd-shims upstart-shims execline-shims core-shims debian-shims bsd-shims openbsd-shims ucspi-tcp-shims kbd-shims bundles run-system-manager run-via-systemd run-debian-desktop-base run-debian-server-base run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog
+BINARY_PACKAGES=guide exec terminal-management service-management terminal-extras zsh-completion systemv-shims systemd-shims upstart-shims execline-shims core-shims debian-shims bsd-shims openbsd-shims ucspi-tcp-shims kbd-shims bundles run-system-manager run-via-systemd run-debian-desktop-base run-debian-server-base run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog
 
 # The Debian package builder targets this in order to make the package contents.
 build:

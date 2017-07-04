@@ -12,7 +12,7 @@ RuntimeDirectory=%p
 RuntimeDirectoryMode=0750
 PrivateTmp=true
 #LimitMEMLOCK=infinity
-#LimitNOFILE=65535
+LimitNOFILE=65535
 
 [Install]
 WantedBy=server.target

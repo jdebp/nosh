@@ -23,7 +23,8 @@ For copyright and licensing terms, see the file named COPYING.
 void
 service_is_enabled [[gnu::noreturn]] (
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 	try {

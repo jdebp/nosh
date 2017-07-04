@@ -11,6 +11,7 @@ For copyright and licensing terms, see the file named COPYING.
 #endif
 #include <cstdlib>
 #include "jail.h"
+#include "ProcessEnvironment.h"
 
 #if defined(__FreeBSD__) || defined(__DragonFly__)
 static inline
@@ -31,7 +32,7 @@ am_in_bsd_jail ()
 
 extern
 bool 
-am_in_jail() 
+am_in_jail(const ProcessEnvironment & envs) 
 {
 #if defined(__FreeBSD__) || defined(__DragonFly__)
 	const int r(am_in_bsd_jail());
@@ -41,5 +42,5 @@ am_in_jail()
 	//	* existence of /proc/vz and non-existence of /proc/bc on OpenVZ
 
 	// systemd protocol for containers
-	return !!std::getenv("container");
+	return !!envs.query("container");
 }

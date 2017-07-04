@@ -22,6 +22,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <grp.h>
 #include "popt.h"
 #include "utils.h"
+#include "ProcessEnvironment.h"
 #include "listen.h"
 #include "SignalManagement.h"
 
@@ -40,24 +41,13 @@ handle_signal (
 	child_signalled = true;
 }
 
-static
-void
-env (
-	const char * name,
-	const char * value
-) {
-	if (value)
-		setenv(name, value, 1);
-	else
-		unsetenv(name);
-}
-
 static inline
 const char *
 q (
+	const ProcessEnvironment & envs,
 	const char * name
 ) {
-	const char * value(std::getenv(name));
+	const char * value(envs.query(name));
 	return value ? value : "";
 }
 
@@ -88,7 +78,8 @@ reap (
 void
 local_seqpacket_socket_accept ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	unsigned long connection_limit = 40U;
@@ -118,7 +109,7 @@ local_seqpacket_socket_accept (
 		throw static_cast<int>(EXIT_USAGE);
 	}
 
-	const unsigned listen_fds(query_listen_fds());
+	const unsigned listen_fds(query_listen_fds(envs));
 	if (1U > listen_fds) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "LISTEN_FDS", std::strerror(error));
@@ -218,28 +209,28 @@ exit_error:
 			if (s != STDIN_FILENO && s != STDOUT_FILENO)
 				close(s);
 
-			env("PROTO", "UNIX");
+			envs.set("PROTO", "UNIX");
 			switch (localaddr.u.sun_family) {
 				case AF_LOCAL:
 					if (localaddrsz > offsetof(sockaddr_un, sun_path) && localaddr.u.sun_path[0])
-						env("UNIXLOCALPATH", localaddr.u.sun_path);
+						envs.set("UNIXLOCALPATH", localaddr.u.sun_path);
 					else
-						env("UNIXLOCALPATH", 0);
+						envs.set("UNIXLOCALPATH", 0);
 					break;
 				default:
-					env("UNIXLOCALPATH", 0);
+					envs.set("UNIXLOCALPATH", 0);
 					break;
 			}
-			env("UNIXLOCALUID", 0);
-			env("UNIXLOCALGID", 0);
-			env("UNIXLOCALPID", 0);
+			envs.set("UNIXLOCALUID", 0);
+			envs.set("UNIXLOCALGID", 0);
+			envs.set("UNIXLOCALPID", 0);
 			switch (remoteaddr.u.sun_family) {
 				case AF_LOCAL:
 				{
 					if (remoteaddrsz > offsetof(sockaddr_un, sun_path) && remoteaddr.u.sun_path[0])
-						env("UNIXREMOTEPATH", remoteaddr.u.sun_path);
+						envs.set("UNIXREMOTEPATH", remoteaddr.u.sun_path);
 					else
-						env("UNIXREMOTEPATH", 0);
+						envs.set("UNIXREMOTEPATH", 0);
 #if defined(SO_PEERCRED)
 #if defined(__LINUX__) || defined(__linux__)
 					struct ucred u;
@@ -252,28 +243,28 @@ exit_error:
 					if (0 == getsockopt(s, SOL_SOCKET, SO_PEERCRED, &u, &ul)) goto exit_error;
 					char buf[64];
 					snprintf(buf, sizeof buf, "%u", u.pid);
-					env("UNIXREMOTEPID", buf);
+					envs.set("UNIXREMOTEPID", buf);
 					snprintf(buf, sizeof buf, "%u", u.gid);
-					env("UNIXREMOTEGID", buf);
+					envs.set("UNIXREMOTEGID", buf);
 					snprintf(buf, sizeof buf, "%u", u.uid);
-					env("UNIXREMOTEUID", buf);
+					envs.set("UNIXREMOTEUID", buf);
 #else
-					env("UNIXREMOTEPID", 0);
-					env("UNIXREMOTEGID", 0);
-					env("UNIXREMOTEUID", 0);
+					envs.set("UNIXREMOTEPID", 0);
+					envs.set("UNIXREMOTEGID", 0);
+					envs.set("UNIXREMOTEUID", 0);
 #endif
 					break;
 				}
 				default:
-					env("UNIXREMOTEPATH", 0);
-					env("UNIXREMOTEPID", 0);
-					env("UNIXREMOTEGID", 0);
-					env("UNIXREMOTEUID", 0);
+					envs.set("UNIXREMOTEPATH", 0);
+					envs.set("UNIXREMOTEPID", 0);
+					envs.set("UNIXREMOTEGID", 0);
+					envs.set("UNIXREMOTEUID", 0);
 					break;
 			}
 
 			if (verbose)
-				std::fprintf(stderr, "%s: %u %s %s %s %s %s\n", prog, getpid(), q("UNIXLOCALPATH"), q("UNIXREMOTEPATH"), q("UNIXREMOTEPID"), q("UNIXREMOTEUID"), q("UNIXREMOTEGID"));
+				std::fprintf(stderr, "%s: %u %s %s %s %s %s\n", prog, getpid(), q(envs, "UNIXLOCALPATH"), q(envs, "UNIXREMOTEPATH"), q(envs, "UNIXREMOTEPID"), q(envs, "UNIXREMOTEUID"), q(envs, "UNIXREMOTEGID"));
 
 			return;
 		}

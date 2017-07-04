@@ -1,4 +1,5 @@
 NetworkManager	network-manager
+nft	nftables
 agetty@ttyS0	ttylogin@ttyS0
 agetty@ttyS1	ttylogin@ttyS1
 agetty@ttyS2	ttylogin@ttyS2
@@ -40,3 +41,4 @@ Debian-mask-initscripts	mtab.sh
 Debian-mask-initscripts	udev-mtab
 Debian-mask-initscripts	x11-common
 Debian-mask-initscripts	single
+network-interfaces	networking

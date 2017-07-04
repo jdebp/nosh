@@ -8,7 +8,6 @@
 #
 
 # This gets us *only* the configuration variables, safely.
-dump_rc() { clearenv read-conf rc.conf "`which printenv`" ; }
 read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
 get_var1() { read_rc "$1" || true ; }
 get_var2() { read_rc ftpproxy_"$1" || read_rc ftpproxy_"$2" || true ; }

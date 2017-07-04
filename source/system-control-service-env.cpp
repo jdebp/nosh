@@ -32,12 +32,13 @@ static inline
 int
 open_env_dir (
 	const char * prog,
+	const ProcessEnvironment & envs,
 	const char * service,
 	std::string & path,
 	std::string & name
 ) {
 	std::string suffix;
-	const int bundle_dir_fd(open_bundle_directory("", service, path, name, suffix));
+	const int bundle_dir_fd(open_bundle_directory(envs, "", service, path, name, suffix));
 	if (0 > bundle_dir_fd) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, service, std::strerror(error));
@@ -101,7 +102,8 @@ print (
 void
 print_service_env [[gnu::noreturn]] ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	bool full(false);
@@ -133,7 +135,7 @@ print_service_env [[gnu::noreturn]] (
 	args.erase(args.begin());
 
 	std::string path, name;
-	FileDescriptorOwner env_dir_fd(open_env_dir(prog, service, path, name));
+	FileDescriptorOwner env_dir_fd(open_env_dir(prog, envs, service, path, name));
 
 	if (args.empty()) {
 		// No second argument; print all variables and their values (c.f. "printenv").
@@ -186,14 +188,15 @@ bad_file:
 		}
 	} else {
 		// Explicit second argument; print just that variable's value (c.f. "printenv VAR").
-		const char * const var(args.front());
+		const char * const raw_var(args.front());
 		args.erase(args.begin());
 		if (!args.empty()) {
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, args.front(), "Unexpected argument.");
 			throw static_cast<int>(EXIT_USAGE);
 		}
 
-		const int var_fd(open_read_at(env_dir_fd.get(), var));
+		const std::string var('/' == *raw_var ? std::string(".") + raw_var : std::string(raw_var));
+		const int var_fd(open_read_at(env_dir_fd.get(), var.c_str()));
 		if (0 > var_fd) throw EXIT_FAILURE;
 
 		FileStar f(fdopen(var_fd, "r"));
@@ -207,7 +210,8 @@ bad_file:
 void
 set_service_env [[gnu::noreturn]] ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	bool full(false);
@@ -241,16 +245,17 @@ set_service_env [[gnu::noreturn]] (
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing variable name.");
 		throw static_cast<int>(EXIT_USAGE);
 	}
-	const char * const var(args.front());
+	const char * const raw_var(args.front());
 	args.erase(args.begin());
 
 	std::string path, name;
-	FileDescriptorOwner env_dir_fd(open_env_dir(prog, service, path, name));
+	FileDescriptorOwner env_dir_fd(open_env_dir(prog, envs, service, path, name));
 
-	FileDescriptorOwner var_fd(open_writetrunc_at(env_dir_fd.get(), var, 0644));
+	const std::string var('/' == *raw_var ? std::string(".") + raw_var : std::string(raw_var));
+	FileDescriptorOwner var_fd(open_writetrunc_at(env_dir_fd.get(), var.c_str(), 0644));
 	if (0 > var_fd.get()) {
 		const int error(errno);
-		std::fprintf(stderr, "%s: ERROR: %s%s/%s%s%s: %s\n", prog, path.c_str(), name.c_str(), "service/", "env/", var, std::strerror(error));
+		std::fprintf(stderr, "%s: ERROR: %s%s/%s%s%s: %s\n", prog, path.c_str(), name.c_str(), "service/", "env/", var.c_str(), std::strerror(error));
 		throw EXIT_FAILURE;
 	}
 
@@ -269,7 +274,7 @@ set_service_env [[gnu::noreturn]] (
 		FileStar f(fdopen(var_fd.get(), "w"));
 		if (!f) {
 			const int error(errno);
-			std::fprintf(stderr, "%s: ERROR: %s%s/%s%s%s: %s\n", prog, path.c_str(), name.c_str(), "service/", "env/", var, std::strerror(error));
+			std::fprintf(stderr, "%s: ERROR: %s%s/%s%s%s: %s\n", prog, path.c_str(), name.c_str(), "service/", "env/", var.c_str(), std::strerror(error));
 			throw EXIT_FAILURE;
 		}
 		var_fd.release();

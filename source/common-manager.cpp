@@ -33,6 +33,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <fstream>
 #include "utils.h"
 #include "fdutils.h"
+#include "ProcessEnvironment.h"
 #include "nmount.h"
 #include "listen.h"
 #include "popt.h"
@@ -98,22 +99,21 @@ record_signal_system (
 #if defined(SAK_SIGNAL)
 		case SAK_SIGNAL:	sak_signalled = true; break;
 #endif
-#if defined(__LINUX__) || defined(__linux__)
-		case SIGTERM:		break;
-#else
-		case RESCUE_SIGNAL:	rescue_signalled = true; break;
-		case HALT_SIGNAL:	halt_signalled = true; break;
-		case POWEROFF_SIGNAL:	poweroff_signalled = true; break;
-		case REBOOT_SIGNAL:	reboot_signalled = true; break;
-#endif
 #if defined(SIGPWR)
 		case SIGPWR:		power_signalled = true; break;
 #endif
+#if !defined(__LINUX__) && !defined(__linux__)
+		case POWEROFF_SIGNAL:	poweroff_signalled = true; break;
+		case HALT_SIGNAL:	halt_signalled = true; break;
+		case REBOOT_SIGNAL:	reboot_signalled = true; break;
+#endif
 #if !defined(SIGRTMIN)
 		case EMERGENCY_SIGNAL:	emergency_signalled = true; break;
+		case RESCUE_SIGNAL:	rescue_signalled = true; break;
 		case NORMAL_SIGNAL:	normal_signalled = true; break;
 		case SYSINIT_SIGNAL:	sysinit_signalled = true; break;
 		case FORCE_REBOOT_SIGNAL:	fastreboot_signalled = true; break;
+		case FORCE_POWEROFF_SIGNAL:	fastpoweroff_signalled = true; break;
 #endif
 		default:
 #if defined(SIGRTMIN)
@@ -213,7 +213,7 @@ env_files[] = {
 
 static
 const char * 
-manager_directories[] = {
+system_manager_directories[] = {
 	"/run/system-manager",
 	"/run/system-manager/log",
 	"/run/service-bundles",
@@ -223,7 +223,7 @@ manager_directories[] = {
 };
 
 static
-const struct api_symlink manager_symlinks[] = 
+const struct api_symlink system_manager_symlinks[] = 
 {
 	// Compatibilitu with early supervise bundles from version 1.16 and earlier.
 	{	"/run/system-manager/early-supervise",	"../service-bundles/early-supervise"		},
@@ -266,7 +266,8 @@ static inline
 void
 setup_process_state(
 	const bool is_system,
-	const char * prog
+	const char * prog,
+	ProcessEnvironment & envs
 ) {
 	if (is_system) {
 		setsid();
@@ -282,8 +283,8 @@ setup_process_state(
 		// We cannot omit /sbin and /bin from the path because we cannot reliably detect that they duplicate /usr/bin and /usr/sbin at this point.
 		// On some systems, /usr/sbin and /usr/bin are the symbolic links, and don't exist until we have mounted /usr .
 		// On other systems, /sbin and /bin are the symbolic links, but /usr isn't a mount point and everything is on the root volume.
-		setenv("PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", 1);
-		setenv("LANG", "C", 1);
+		envs.set("PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin");
+		envs.set("LANG", "C");
 
 		// parse /etc/locale.d as if by envdir.
 		const int scan_dir_fd(open_dir_at(AT_FDCWD, "/etc/locale.d"));
@@ -292,7 +293,7 @@ setup_process_state(
 			if (ENOENT != error)
 				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "/etc/locale.d", std::strerror(error));
 		} else
-			process_env_dir(prog, "/etc/locale.d", scan_dir_fd, true /*ignore errors*/, false /*first lines only*/, false /*no chomping*/);
+			process_env_dir(prog, envs, "/etc/locale.d", scan_dir_fd, true /*ignore errors*/, false /*first lines only*/, false /*no chomping*/);
 
 		for (std::size_t fi(0); fi < sizeof env_files/sizeof *env_files; ++fi) {
 			const char * filename(env_files[fi]);
@@ -311,7 +312,7 @@ setup_process_state(
 					const std::string::size_type p(s.find('='));
 					const std::string var(s.substr(0, p));
 					const std::string val(p == std::string::npos ? std::string() : s.substr(p + 1, std::string::npos));
-					setenv(var.c_str(), val.c_str(), 1);
+					envs.set(var, val);
 				}
 				break;
 			} catch (const char * r) {
@@ -568,21 +569,42 @@ setup_kernel_api_volumes_and_devices(
 static inline
 void
 make_needed_run_directories(
+	const bool is_system,
 	const char * prog
 ) {
-	for (std::size_t fi(0); fi < sizeof manager_directories/sizeof *manager_directories; ++fi) {
-		const char * dirname(manager_directories[fi]);
-		if (0 > mkdir(dirname, 0755)) {
-			const int error(errno);
-			if (EEXIST != error)
-				std::fprintf(stderr, "%s: ERROR: %s: %s: %s\n", prog, "mkdir", dirname, std::strerror(error));
+	if (is_system) {
+		for (std::size_t fi(0); fi < sizeof system_manager_directories/sizeof *system_manager_directories; ++fi) {
+			const char * dirname(system_manager_directories[fi]);
+			if (0 > mkdir(dirname, 0755)) {
+				const int error(errno);
+				if (EEXIST != error)
+					std::fprintf(stderr, "%s: ERROR: %s: %s: %s\n", prog, "mkdir", dirname, std::strerror(error));
+			}
 		}
-	}
-	for (std::size_t fi(0); fi < sizeof manager_symlinks/sizeof *manager_symlinks; ++fi) {
-		const api_symlink * const i(manager_symlinks + fi);
-		if (0 > symlink(i->target, i->name)) {
-			const int error(errno);
-			std::fprintf(stderr, "%s: ERROR: %s: %s: %s\n", prog, "symlink", i->name, std::strerror(error));
+		for (std::size_t fi(0); fi < sizeof system_manager_symlinks/sizeof *system_manager_symlinks; ++fi) {
+			const api_symlink * const i(system_manager_symlinks + fi);
+			if (0 > symlink(i->target, i->name)) {
+				const int error(errno);
+				std::fprintf(stderr, "%s: ERROR: %s: %s: %s\n", prog, "symlink", i->name, std::strerror(error));
+			}
+		}
+	} else {
+		const
+		std::string
+		user_manager_directories[] = {
+			effective_user_runtime_dir() + "per-user-manager",
+			effective_user_runtime_dir() + "per-user-manager/log",
+			effective_user_runtime_dir() + "service-bundles",
+			effective_user_runtime_dir() + "service-bundles/early-supervise",
+			effective_user_runtime_dir() + "service-manager",
+		};
+		for (std::size_t fi(0); fi < sizeof user_manager_directories/sizeof *user_manager_directories; ++fi) {
+			const char * dirname(user_manager_directories[fi].c_str());
+			if (0 > mkdir(dirname, 0755)) {
+				const int error(errno);
+				if (EEXIST != error)
+					std::fprintf(stderr, "%s: ERROR: %s: %s: %s\n", prog, "mkdir", dirname, std::strerror(error));
+			}
 		}
 	}
 }
@@ -749,9 +771,10 @@ initialize_root_control_groups (
 	const std::string me_slice(cgroup_root + "/me.slice");
 	if (0 > mkdirat(AT_FDCWD, me_slice.c_str(), 0755)) {
 		const int error(errno);
-		if (EEXIST != error)
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, me_slice.c_str(), std::strerror(error));
+		if (EEXIST == error) goto group_exists;
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, me_slice.c_str(), std::strerror(error));
 	} else {
+group_exists:
 		const std::string knobname(me_slice + "/cgroup.procs");
 		const FileDescriptorOwner cgroup_procs_fd(open_appendexisting_at(AT_FDCWD, knobname.c_str()));
 		if (0 > cgroup_procs_fd.get()
@@ -778,7 +801,7 @@ initialize_root_control_groups (
 		for (const struct iovec * v(cgroup_controllers); v < cgroup_controllers + sizeof cgroup_controllers/sizeof *cgroup_controllers; ++v)
 			if (0 > writev(cgroup_knob_fd.get(), v, 1)) {
 				const int error(errno);
-				std::fprintf(stderr, "%s: ERROR: %s: %.*s: %s\n", prog, knobname.c_str(), static_cast<int>(v->iov_len), v->iov_base, std::strerror(error));
+				std::fprintf(stderr, "%s: ERROR: %s: %.*s: %s\n", prog, knobname.c_str(), static_cast<int>(v->iov_len), static_cast<const char *>(v->iov_base), std::strerror(error));
 			}
 	}
 }
@@ -814,7 +837,8 @@ void
 common_manager ( 
 	const bool is_system,
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	record_signal = (is_system ? record_signal_system : record_signal_user);
 
@@ -862,7 +886,7 @@ common_manager (
 	// Now we perform the process initialization that does thing like mounting /dev.
 	// Errors mounting things go down the pipe, from which nothing is reading as yet.
 	// We must be careful about not writing too much to this pipe without a running cyclog process.
-	setup_process_state(is_system, prog);
+	setup_process_state(is_system, prog, envs);
 	PreventDefaultForFatalSignals ignored_signals(
 		SIGTERM, 
 		SIGINT, 
@@ -928,8 +952,10 @@ common_manager (
 #error "Don't know what needs to be done about the system clock."
 #endif
 		setup_kernel_api_volumes_and_devices(prog);
-		make_needed_run_directories(prog);
-		if (!am_in_jail()) 
+	}
+	make_needed_run_directories(is_system, prog);
+	if (is_system) {
+		if (!am_in_jail(envs)) 
 			start_system();
 	}
 	initialize_root_control_groups(prog);
@@ -1010,13 +1036,6 @@ common_manager (
 	}
 
 	filler_stdio[LISTEN_SOCKET_FILENO].reset(-1);
-
-	/// FIXME \bug This mechanism cannot work.
-	if (!is_system) {
-		char pid[64];
-		snprintf(pid, sizeof pid, "%u", getpid());
-		setenv("MANAGER_PID", pid, 1);
-	}
 
 	for (;;) {
 		if (child_signalled) {
@@ -1251,7 +1270,7 @@ common_manager (
 
 	if (is_system) {
 		sync();
-		if (!am_in_jail()) 
+		if (!am_in_jail(envs)) 
 			end_system();
 	}
 	throw EXIT_SUCCESS;
@@ -1260,17 +1279,19 @@ common_manager (
 void
 per_user_manager ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const bool is_system(1 == getpid());
-	common_manager(is_system, next_prog, args);
+	common_manager(is_system, next_prog, args, envs);
 }
 
 void
 system_manager ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const bool is_system(1 == getpid());
-	common_manager(is_system, next_prog, args);
+	common_manager(is_system, next_prog, args, envs);
 }

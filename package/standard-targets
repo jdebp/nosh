@@ -3,6 +3,8 @@ basic
 dumpauto
 emergency
 extra-shared-libraries
+finish-install
+finish-update
 frame-buffer
 fs-servers
 graphics
@@ -11,12 +13,15 @@ jails
 local-fs
 local-fs-pre
 local-syslog
+mixer
 multi-user
 multi-user-pre
 name-services
 normal
 poweroff
 reboot
+reboot-after-install
+reboot-after-update
 remote-fs
 remote-fs-pre
 rescue
@@ -30,6 +35,7 @@ sysinit
 uhidd
 unmount
 update
+users
 virtualbox-guest
 virtualbox-host
 warden

@@ -13,28 +13,29 @@ For copyright and licensing terms, see the file named COPYING.
 
 // These are the built-in commands visible in the console utilities.
 
-extern void console_convert_kbdmap ( const char * &, std::vector<const char *> & );
-extern void console_fb_realizer ( const char * &, std::vector<const char *> & );
-extern void console_multiplexor ( const char * &, std::vector<const char *> & );
-extern void console_multiplexor_control ( const char * &, std::vector<const char *> & );
-extern void console_ncurses_realizer ( const char * &, std::vector<const char *> & );
-extern void console_resize ( const char * &, std::vector<const char *> & );
-extern void console_clear ( const char * &, std::vector<const char *> & );
-extern void console_terminal_emulator ( const char * &, std::vector<const char *> & );
-extern void detach_controlling_tty ( const char * &, std::vector<const char *> & );
-extern void detach_kernel_usb_driver ( const char * &, std::vector<const char *> & );
-extern void emergency_login ( const char * &, std::vector<const char *> & );
-extern void line_banner ( const char * &, std::vector<const char *> & );
-extern void login_banner ( const char * &, std::vector<const char *> & );
-extern void login_process ( const char * &, std::vector<const char *> & );
-extern void login_prompt ( const char * &, std::vector<const char *> & );
-extern void monitor_fsck_progress ( const char * &, std::vector<const char *> & );
-extern void open_controlling_tty ( const char * &, std::vector<const char *> & );
-extern void pty_get_tty ( const char * &, std::vector<const char *> & );
-extern void pty_run ( const char * &, std::vector<const char *> & );
-extern void ttylogin_starter ( const char * &, std::vector<const char *> & );
-extern void vc_get_tty ( const char * &, std::vector<const char *> & );
-extern void vc_reset_tty ( const char * &, std::vector<const char *> & );
+extern void console_convert_kbdmap ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void console_fb_realizer ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void console_multiplexor ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void console_multiplexor_control ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void console_ncurses_realizer ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void console_resize ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void console_clear ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void console_terminal_emulator ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void detach_controlling_tty ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void detach_kernel_usb_driver ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void emergency_login ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void line_banner ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void login_banner ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void login_process ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void login_prompt ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void monitor_fsck_progress ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void open_controlling_tty ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void pty_get_tty ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void pty_run ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void setsid ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void ttylogin_starter ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void vc_get_tty ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void vc_reset_tty ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 
 extern const
 struct command 
@@ -67,6 +68,9 @@ commands[] = {
 	{	"vc-reset-tty",			vc_reset_tty			},
 	{	"open-controlling-tty",		open_controlling_tty		},
 	{	"pty-get-tty",			pty_get_tty			},
+
+	// These are commonly used in chains with the above.
+	{	"setsid",			setsid				},
 };
 const std::size_t num_commands = sizeof commands/sizeof *commands;
 

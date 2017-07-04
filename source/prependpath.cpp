@@ -11,6 +11,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstring>
 #include "utils.h"
 #include "popt.h"
+#include "ProcessEnvironment.h"
 
 /* Main function ************************************************************
 // **************************************************************************
@@ -19,7 +20,8 @@ For copyright and licensing terms, see the file named COPYING.
 void
 prependpath ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
@@ -49,19 +51,17 @@ prependpath (
 	const char * dir(args.front());
 	args.erase(args.begin());
 	next_prog = arg0_of(args);
-	if (const char * val = std::getenv(var)) {
+	if (const char * val = envs.query(var)) {
 		std::string s(dir);
 		s += ':';
 		s += val;
-		const int rc(setenv(var, s.c_str(), 1));
-		if (0 > rc) {
+		if (!envs.set(var, s)) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, var, std::strerror(error));
 			throw EXIT_FAILURE;
 		}
 	} else {
-		const int rc(setenv(var, dir, 1));
-		if (0 > rc) {
+		if (!envs.set(var, dir)) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, var, std::strerror(error));
 			throw EXIT_FAILURE;

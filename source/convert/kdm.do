@@ -9,7 +9,6 @@
 
 # These get us *only* the configuration variables, safely.
 read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
-dump_rc() { clearenv read-conf rc.conf "`which printenv`" ; }
 get_var1() { read_rc "$1" || true ; }
 get_var2() { read_rc "$1" || read_rc "$2" || true ; }
 

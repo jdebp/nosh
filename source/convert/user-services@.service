@@ -5,7 +5,7 @@
 [Unit]
 Description=Per-user %I service manager
 After=user-runtime@%I
-Wants=user-runtime@%I
+Requires=user-runtime@%I
 
 [Service]
 systemdUserEnvironment=true
@@ -14,13 +14,7 @@ PermissionsStartOnly=yes
 SessionLeader=yes
 User=%I
 Delegate=yes
-ExecStartPre=install -d -m 0750 -o "%I" "/run/user/%I/service-manager"
-ExecStartPre=install -d -m 0750 -o "%I" "/run/user/%I/per-user-manager"
-ExecStartPre=install -d -m 0750 -o "%I" "/run/user/%I/per-user-manager/log"
 ExecStart=per-user-manager
-ExecStopPost=rmdir /run/user/%I/service-manager
-ExecStopPost=rmdir /run/user/%I/per-user-manager/log
-ExecStopPost=rmdir /run/user/%I/per-user-manager
 Restart=always
 
 [Install]

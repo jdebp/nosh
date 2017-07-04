@@ -3,6 +3,7 @@ NetworkManager
 NetworkManager-dispatcher
 VBoxService
 anacron
+apache2
 ataidle-log
 atd
 autobridge-log
@@ -11,6 +12,8 @@ bcron-start
 bcron-update
 bluetooth
 bootparams
+brltty-log
+caddy
 ccpd
 celery-beat
 celery@example
@@ -31,6 +34,7 @@ debian-cron
 deluge-web
 deluged
 dhclient-log
+dhcpcd-log
 dnscache
 dovecot
 entropy
@@ -51,6 +55,7 @@ geoclue
 gitlab-sidekiq
 gitlab-unicorn
 gogs
+gssd
 hald
 hostapd
 hostnamed
@@ -92,6 +97,7 @@ nscd
 ntpd
 ntpdate
 openntpd
+opentsdb
 org.cups.cups-cancel
 org.cups.cupsd
 ossec@agentd
@@ -165,6 +171,7 @@ swift@object-auditor
 swift@object-replicator
 swift@object-updater
 sysctl
+system-installer-log
 taiclock
 tcsd
 terminal-emulator@vc1
@@ -174,7 +181,6 @@ timedated
 tinydns
 tor
 udisks
-uhidd-log
 upower
 virecover
 vnstat
@@ -183,5 +189,6 @@ webcamd-log
 wicd
 winbindd
 wpa_supplicant
+wso2server
 xdm
 ypbind

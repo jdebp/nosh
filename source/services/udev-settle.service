@@ -1,0 +1,22 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Wait for the udev event queue to be emptied.
+Description=A service that depends from this is poorly designed.
+DefaultDependencies=false
+After=mount@- mount@-etc udev udev-trigger-add@devices udev-trigger-add@subsystems systemd-udev systemd-udev-trigger-add@devices systemd-udev-trigger-add@subsystems
+Before=shutdown.target sysinit.target
+
+[Service]
+# Marking this as a oneshot means that it doesn't become ready until the command has exited.
+Type=oneshot
+ExecStart=udevadm settle
+# This is a one-shot service that can be re-triggered by starting it again.
+#RemainAfterExit=1
+Restart=no
+
+[Install]
+WantedBy=sysinit.target
+StoppedBy=shutdown.target

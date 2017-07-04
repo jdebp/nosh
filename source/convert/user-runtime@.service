@@ -4,6 +4,7 @@
 
 [Unit]
 Description=Per-user runtime for %I
+#Requires=user@%I.target
 
 [Service]
 RemainAfterExit=true

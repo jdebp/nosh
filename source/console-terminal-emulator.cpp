@@ -21,6 +21,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "fdutils.h"
 #include "ttyutils.h"
 #include "utils.h"
+#include "ProcessEnvironment.h"
 #include "SoftTerm.h"
 #include "InputMessage.h"
 #include "FileDescriptorOwner.h"
@@ -285,7 +286,7 @@ void
 VCSA::ScrollDown(coordinate s, coordinate e, coordinate n, const CharacterCell & c)
 {
 	char ca[2];
-	while (e - n > s) {
+	while (e > s + n) {
 		--e;
 		const off_t target(MakeOffset(e));
 		const off_t source(MakeOffset(e - n));
@@ -441,8 +442,8 @@ void
 UnicodeBuffer::ScrollDown(coordinate s, coordinate e, coordinate n, const CharacterCell & c)
 {
 	char ca[CELL_LENGTH * 256U];
-	for (coordinate w(sizeof ca / CELL_LENGTH); e - n > s; ) {
-		if (s > (e - n) - w) w = (e - n) - s;
+	for (coordinate w(sizeof ca / CELL_LENGTH); e > s + n; ) {
+		if (s + n + w > e) w = e - (s + n);
 		e -= w;
 		const off_t target(MakeOffset(e));
 		const off_t source(MakeOffset(e - n));
@@ -452,7 +453,7 @@ UnicodeBuffer::ScrollDown(coordinate s, coordinate e, coordinate n, const Charac
 	for (coordinate i(0U); i < (sizeof ca / CELL_LENGTH); ++i)
 		MakeCA(ca + CELL_LENGTH * i, c);
 	for (coordinate w(sizeof ca / CELL_LENGTH); e > s; ) {
-		if (s > e - w) w = e - s;
+		if (s + w > e) w = e - s;
 		e -= w;
 		pwrite(fd, ca, CELL_LENGTH * w, MakeOffset(e));
 	}
@@ -1583,7 +1584,8 @@ void emulation_definition::action(popt::processor &)
 void
 console_terminal_emulator [[gnu::noreturn]] ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 #if defined(__LINUX__) || defined(__linux__)
@@ -1636,7 +1638,7 @@ console_terminal_emulator [[gnu::noreturn]] (
 		throw static_cast<int>(EXIT_USAGE);
 	}
 
-	const char * tty(std::getenv("TTY"));
+	const char * tty(envs.query("TTY"));
 	if (!tty) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "TTY", "Missing environment variable.");
 		throw EXIT_FAILURE;
@@ -1760,7 +1762,7 @@ console_terminal_emulator [[gnu::noreturn]] (
 		}
 
 		if (masterin_ready) {
-			char b[4096];
+			char b[16384];
 			const int l(read(PTY_MASTER_FILENO, b, sizeof b));
 			if (l > 0) {
 				for (int i(0); i < l; ++i)

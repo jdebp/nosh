@@ -41,7 +41,8 @@ For copyright and licensing terms, see the file named COPYING.
 void
 setup_machine_id [[gnu::noreturn]] ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	bool verbose(false);
@@ -73,7 +74,7 @@ setup_machine_id [[gnu::noreturn]] (
 	erase();
 	bool rewrite(false);
 	if (!read_non_volatile() || is_null()) {
-		if (!read_fallbacks() || is_null())
+		if (!read_fallbacks(envs) || is_null())
 			create();
 		rewrite = true;
 	}

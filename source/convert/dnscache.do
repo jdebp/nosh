@@ -12,7 +12,7 @@ dir_not_empty() { test -n "`/bin/ls -A \"$1\"`" ; }
 
 # These get us *only* the configuration variables, safely.
 read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
-list_network_addresses() { for i in `read_rc network_addresses || echo 127.0.0.1` ; do echo "$i" ; done ; }
+list_network_addresses() { ( read_rc network_addresses || echo 127.0.0.1 ) | fmt -w 1 ; }
 
 redo-ifchange rc.conf general-services "dnscache@.socket" "dnscache.service"
 
@@ -87,7 +87,11 @@ then
 	do
 		test -r "${s}/service/root/servers/${d}" || ln "${s}/service/root/servers/@" "${s}/service/root/servers/${d}"
 	done
-	dir_not_empty "${s}/service/root/ip" || touch "${s}/service/root/ip/127.0.0.1"
+	if ! dir_not_empty "${s}/service/root/ip"
+	then
+		touch "${s}/service/root/ip/127.0.0.1"
+		touch "${s}/service/root/ip/127.53.0.1"
+	fi
 fi
 
 lr="/var/local/sv/"

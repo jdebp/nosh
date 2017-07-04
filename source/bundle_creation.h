@@ -21,6 +21,7 @@ create_link (
 void
 create_links (
 	const char * prog,
+	const ProcessEnvironment & envs,
 	const std::string & bund,
 	const bool is_user,
 	const bool is_target,

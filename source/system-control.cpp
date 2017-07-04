@@ -53,6 +53,7 @@ service_bundle_prefixes[8] = {
 
 int
 open_bundle_directory (
+	const ProcessEnvironment & envs,
 	const char * prefix,
 	const char * arg,
 	std::string & path,
@@ -83,7 +84,7 @@ open_bundle_directory (
 	}
 
 	if (per_user_mode) {
-		const std::string h(effective_user_home_dir());
+		const std::string h(effective_user_home_dir(envs));
 		const std::string r(effective_user_runtime_dir());
 		if (scan_for_target) {
 			suffix = ".target";
@@ -143,7 +144,8 @@ open_bundle_directory (
 void
 system_control ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
@@ -167,12 +169,12 @@ system_control (
 				"emergency|rescue|normal|init|sysinit|"
 				"start|stop|enable|disable|preset|reset|unload-when-stopped|"
 				"try-restart|hangup|"
-				"is-active|is-loaded|"
+				"is-active|is-loaded|is-enabled|"
 				"cat|show|status|show-json|"
 				"set-service-env|print-service-env|"
 				"convert-systemd-units|convert-fstab-services|"
 				"nagios-check-service|load-kernel-module|unload-kernel-module|"
-				"version"
+				"is-service-manager-client|version"
 				" args..."
 		);
 

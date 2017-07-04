@@ -5,7 +5,7 @@
 [Unit]
 Description=Per-user "Desktop" bus socket
 After=user-runtime@%I
-Wants=user-runtime@%I
+Requires=user-runtime@%I
 
 [Socket]
 SocketUser=%I

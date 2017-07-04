@@ -42,7 +42,8 @@ void control_character_definition::action(popt::processor &)
 void
 service_control [[gnu::noreturn]] (
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 

@@ -9,6 +9,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cerrno>
 #include <cstring>
 #include "utils.h"
+#include "ProcessEnvironment.h"
 #include "popt.h"
 
 /* Main function ************************************************************
@@ -18,7 +19,8 @@ For copyright and licensing terms, see the file named COPYING.
 void
 setenv ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
@@ -48,7 +50,7 @@ setenv (
 	const char * val(args.front());
 	args.erase(args.begin());
 	next_prog = arg0_of(args);
-	if (0 > setenv(var, val, 1)) {
+	if (!envs.set(var, val)) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, var, std::strerror(error));
 		throw EXIT_FAILURE;

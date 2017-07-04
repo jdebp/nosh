@@ -14,10 +14,11 @@
 enable	automount.service
 enable	automountd.service
 enable	autounmountd.service
+enable	kmod@geom_uzip.service
+# These three are duplicated in 90-bsd-boot-essentials.
 enable	devd.service
 enable	devd-log.service
 enable	ldconfig.service
-enable	kmod@geom_uzip.service
 
 # Normal services
 enable	cyclog@kmod@acpi_video.service
@@ -56,6 +57,10 @@ enable	cyclog@org.freedesktop.Avahi.service
 enable	org.freedesktop.Avahi.service
 disable	cyclog@chkprintcap.service
 disable	chkprintcap.service
+enable	cyclog@ntpd.service
+enable	ntpd.service
+disable	cyclog@openntpd.service
+disable	openntpd.service
 enable	cyclog@org.cups.cups-cancel.service
 enable	org.cups.cups-cancel.service
 enable	cyclog@org.cups.cups-lpd.service
@@ -95,3 +100,4 @@ enable	webcamd@*.service
 
 # Targets
 disable	uhidd.target
+disable	mixer.target

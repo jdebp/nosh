@@ -1,0 +1,23 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Reboot after booting into a installed system.
+DefaultDependencies=false
+Wants=reboot.target
+Before=reboot.target
+Wants=local-fs.target
+After=local-fs.target
+
+[Service]
+EnvironmentDirectory=env
+Type=oneshot
+ExecStart=sh -c 'test -n "${firstboot_sentinel}" && rm "${firstboot_sentinel}-reboot"'
+# This only has meaningful behaviour at bootstrap, not later.
+RemainAfterExit=yes
+Restart=never
+
+[Install]
+StoppedBy=shutdown.target
+WantedBy=finish-install.target

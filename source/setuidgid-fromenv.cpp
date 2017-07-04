@@ -12,6 +12,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <grp.h>
 #include "popt.h"
 #include "utils.h"
+#include "ProcessEnvironment.h"
 
 /* Main function ************************************************************
 // **************************************************************************
@@ -20,7 +21,8 @@ For copyright and licensing terms, see the file named COPYING.
 void
 setuidgid_fromenv ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
@@ -40,7 +42,7 @@ setuidgid_fromenv (
 	std::vector<gid_t> groups;
 	gid_t gid(-1);
 	uid_t uid(-1);
-	if (const char * text = std::getenv("GID")) {
+	if (const char * text = envs.query("GID")) {
 		const char * old(text);
 		gid = std::strtoul(text, const_cast<char **>(&text), 0);
 		if (text == old || *text) {
@@ -51,7 +53,7 @@ setuidgid_fromenv (
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "GID", "Missing environment variable.");
 		throw EXIT_FAILURE;
 	}
-	if (const char * p = std::getenv("GIDLIST")) {
+	if (const char * p = envs.query("GIDLIST")) {
 		for ( const char * e(0); *p; p = e) {
 			e = std::strchr(p, ',');
 			if (!e) e = std::strchr(p, '\0');
@@ -68,7 +70,7 @@ setuidgid_fromenv (
 	}
 	if (groups.empty())
 		groups.push_back(gid);
-	if (const char * text = std::getenv("UID")) {
+	if (const char * text = envs.query("UID")) {
 		const char * old(text);
 		uid = std::strtoul(text, const_cast<char **>(&text), 0);
 		if (text == old || *text) {

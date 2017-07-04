@@ -113,7 +113,8 @@ default_tabs_string ()
 void
 vc_reset_tty ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	bool no_utf_8(false);
 	bool no_newline(false);

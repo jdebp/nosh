@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=SunRPC mount daemon
+Wants=rpcnfsd.service rpcbind.service
+After=rpcbind.service
+
+[Service]
+# The import procedure is expected to have populated this directory with flags.
+EnvironmentDirectory=env
+ExecStart=rpc.%p -F ${flags}
+
+[Install]
+WantedBy=server.target

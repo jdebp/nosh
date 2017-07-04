@@ -38,6 +38,7 @@ create_link (
 void
 create_links (
 	const char * prog,
+	const ProcessEnvironment & envs,
 	const std::string & bund,
 	const bool is_user,
 	const bool is_target,
@@ -48,7 +49,7 @@ create_links (
 	const std::string & subdir
 ) {
 	const std::list<std::string> list(split_list(names));
-	const std::string home(effective_user_home_dir());
+	const std::string home(effective_user_home_dir(envs));
 	for (std::list<std::string>::const_iterator i(list.begin()); list.end() != i; ++i) {
 		const std::string & name(*i);
 		std::string base, link, target;

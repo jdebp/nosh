@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Vixie/ISC DHCP over IPv6 server
+
+[Service]
+Umask=022
+EnvironmentDirectory=env
+ExecStart=dhcpd -6 -f -d -q ${conf:+-cf "${conf}"} ${leasesfile:+-lf "${leasesfile}"} ${ifaces}
+
+[Install]
+WantedBy=server.target

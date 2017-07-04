@@ -1,0 +1,19 @@
+[Unit]
+Description=Caddy HTTP/2 web server
+
+[Service]
+User=www-data
+Group=www-data
+LimitNOFILE=65536
+LimitNPROC=64
+ExecStart=%p -log stdout -agree=true -conf=/etc/%p/Caddyfile -root=/var/tmp
+PrivateTmp=true
+PrivateDevices=true
+ProtectHome=true
+ProtectSystem=full
+; Letsencrypt-issued SSL certificates will be written to this directory.
+Environment=CADDYPATH=/etc/ssl/%p
+ReadWriteDirectories=/etc/ssl/%p
+
+[Install]
+WantedBy=server.target

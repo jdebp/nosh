@@ -8,7 +8,7 @@ Description=See http://judecnelson.blogspot.co.uk/2015/01/introducing-vdev.html
 DefaultDependencies=false
 Before=shutdown.target
 After=local-fs.target
-Conflicts=busybox-mdev udev suckless-mdev
+Conflicts=busybox-mdev udev suckless-mdev systemd-udev
 
 [Service]
 EnvironmentDirectory=env

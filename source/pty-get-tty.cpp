@@ -12,6 +12,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <fcntl.h>
 #include "popt.h"
 #include "utils.h"
+#include "ProcessEnvironment.h"
 
 /* Main function ************************************************************
 // **************************************************************************
@@ -20,7 +21,8 @@ For copyright and licensing terms, see the file named COPYING.
 void
 pty_get_tty ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
@@ -60,5 +62,5 @@ error_exit:
 		close(fd);
 
 	// Export the tty name to the environment so that later programs can get hold of it.
-	setenv("TTY", tty, 1);
+	envs.set("TTY", tty);
 }

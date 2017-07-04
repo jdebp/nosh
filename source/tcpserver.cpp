@@ -32,7 +32,8 @@ static std::string banner_storage;
 void
 tcpserver ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 	bool verbose(false);
@@ -117,8 +118,11 @@ tcpserver (
 
 	if (banner) {
 		banner_storage = banner;
-		if (*banner && '\n' == banner_storage.back())
+		if (!banner_storage.empty() && '\n' == banner_storage.back()) {
 			banner_storage.erase(banner_storage.end() - 1);
+			if (!banner_storage.empty() && '\r' == banner_storage.back())
+				banner_storage.erase(banner_storage.end() - 1);
+		}
 		args.insert(args.begin(), banner_storage.c_str());
 		args.insert(args.begin(), "--");
 		args.insert(args.begin(), "--NVT");

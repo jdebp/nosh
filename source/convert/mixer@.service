@@ -1,0 +1,19 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%p service for device %I
+Wants=mixer-log.service
+After=mixer-log.service
+
+[Service]
+ExecStartPre=sh -c '%p -f /dev/%I `cat /var/db/%I-state`'
+ExecStopPost=fdredir --write 1 /var/db/%I-state %p -f /dev/%I -s 
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
+Restart=no
+
+[Install]
+# This is a sub-service that runs under an umbrella service.
+WantedBy=%p.target

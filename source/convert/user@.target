@@ -3,10 +3,10 @@
 ## **************************************************************************
 
 [Unit]
-Description=Per-user %I target
+Description=Per-user target for user %I
 
 [Service]
 User=%I
 
 [Install]
-# A per-user target is not auto-startable at bootstrap.
+WantedBy=users.target

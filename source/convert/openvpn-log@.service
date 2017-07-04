@@ -4,7 +4,7 @@
 
 [Unit]
 Description=Standard format OpenVPN logging service for "%i" configuration
-Before=openvpn@%i openvpn-otp@%i
+Before=openvpn-server@%i openvpn-client@%i openvpn-otp@%i
 
 [Service]
 WorkingDirectory=/var/log/openvpn/sv/

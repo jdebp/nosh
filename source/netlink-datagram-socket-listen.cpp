@@ -22,6 +22,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <grp.h>
 #include "utils.h"
 #include "fdutils.h"
+#include "ProcessEnvironment.h"
 #include "popt.h"
 #include "listen.h"
 
@@ -73,7 +74,8 @@ lookup_netlink_protocol (
 void
 netlink_datagram_socket_listen ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	unsigned long receive_buffer_size(0U);
@@ -182,7 +184,7 @@ exit_error:
 	}
 #endif
 
-	const int fd_index(systemd_compatibility ? query_listen_fds_passthrough() : 0);
+	const int fd_index(systemd_compatibility ? query_listen_fds_passthrough(envs) : 0);
 	if (LISTEN_SOCKET_FILENO + fd_index != s) {
 		if (0 > dup2(s, LISTEN_SOCKET_FILENO + fd_index)) goto exit_error;
 		close(s);
@@ -190,17 +192,17 @@ exit_error:
 	set_close_on_exec(LISTEN_SOCKET_FILENO + fd_index, false);
 
 	if (upstart_compatibility) {
-		setenv("UPSTART_EVENTS", "socket", 1);
+		envs.set("UPSTART_EVENTS", "socket");
 		char fd[64];
 		snprintf(fd, sizeof fd, "%u", LISTEN_SOCKET_FILENO + fd_index);
-		setenv("UPSTART_FDS", fd, 1);
+		envs.set("UPSTART_FDS", fd);
 	}
 	if (systemd_compatibility) {
 		char buf[64];
 		snprintf(buf, sizeof buf, "%d", fd_index + 1);
-		setenv("LISTEN_FDS", buf, 1);
+		envs.set("LISTEN_FDS", buf);
 		snprintf(buf, sizeof buf, "%u", getpid());
-		setenv("LISTEN_PID", buf, 1);
+		envs.set("LISTEN_PID", buf);
 	}
 
 	sigprocmask(SIG_SETMASK, &original_signals, 0);

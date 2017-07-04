@@ -41,3 +41,7 @@ getty@ttyuc	ttylogin@ttyuc
 getty@ttyud	ttylogin@ttyud
 getty@ttyue	ttylogin@ttyue
 getty@ttyuf	ttylogin@ttyuf
+vixiedhcp4d   isc-dhcpd
+vixiedhcp6d   isc-dhcpd6
+vixiedhcp4d   dhcpd
+vixiedhcp6d   dhcpd6

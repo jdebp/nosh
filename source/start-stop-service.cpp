@@ -342,12 +342,13 @@ add_bundle (
 static inline
 bundle *
 add_bundle_searching_path (
+	const ProcessEnvironment & envs,
 	bundle_info_map & bundles,
 	const char * arg,
 	int want
 ) {
 	std::string path, name, suffix;
-	const int bundle_dir_fd(open_bundle_directory ("", arg, path, name, suffix));
+	const int bundle_dir_fd(open_bundle_directory (envs, "", arg, path, name, suffix));
 	if (0 > bundle_dir_fd) return 0;
 	return add_bundle(bundles, bundle_dir_fd, path, name, want);
 }
@@ -356,12 +357,13 @@ static inline
 void
 add_primary_target_bundles (
 	const char * prog,
+	const ProcessEnvironment & envs,
 	bundle_info_map & bundles,
 	const std::vector<const char *> & args,
 	int want
 ) {
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
-		bundle * bp(add_bundle_searching_path(bundles, *i, want));
+		bundle * bp(add_bundle_searching_path(envs, bundles, *i, want));
 		if (!bp) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, *i, std::strerror(error));
@@ -530,6 +532,7 @@ void
 start_stop_common [[gnu::noreturn]] ( 
 	const char * & /*next_prog*/,
 	std::vector<const char *> & args,
+	const ProcessEnvironment & envs,
 	const char * prog,
 	int want,
 	bool no_colours
@@ -552,7 +555,7 @@ start_stop_common [[gnu::noreturn]] (
 
 	// Create the list of primary target bundles from the command-line arguments, then add in all of the bundles that they relate to.
 	bundle_info_map bundles;
-	add_primary_target_bundles(prog, bundles, args, want);
+	add_primary_target_bundles(prog, envs, bundles, args, want);
 	for (;;) {
 		bool done_one(false);
 		for (bundle_info_map::iterator i(bundles.begin()); bundles.end() != i; ++i) {
@@ -566,6 +569,9 @@ start_stop_common [[gnu::noreturn]] (
 						add_related_bundles(bundles, i->second, "conflicts/", STOP);
 						break;
 					case bundle::WANT_STOP:
+#if 0 /// TODO \todo Maybe, in the future.
+						add_related_bundles(bundles, i->second, "on-stop/", START);
+#endif
 						add_related_bundles(bundles, i->second, "required-by/", STOP);
 						break;
 				}
@@ -860,7 +866,8 @@ start_stop_common [[gnu::noreturn]] (
 void
 activate [[gnu::noreturn]] ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	bool colours(isatty(STDERR_FILENO));
 	const char * prog(basename_of(args[0]));
@@ -888,13 +895,14 @@ activate [[gnu::noreturn]] (
 		throw EXIT_FAILURE;
 	}
 
-	start_stop_common(next_prog, args, prog, START, !colours);
+	start_stop_common(next_prog, args, envs, prog, START, !colours);
 }
 
 void
 deactivate [[gnu::noreturn]] ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	bool colours(isatty(STDERR_FILENO));
 	const char * prog(basename_of(args[0]));
@@ -922,13 +930,14 @@ deactivate [[gnu::noreturn]] (
 		throw EXIT_FAILURE;
 	}
 
-	start_stop_common(next_prog, args, prog, STOP, !colours);
+	start_stop_common(next_prog, args, envs, prog, STOP, !colours);
 }
 
 void
 isolate [[gnu::noreturn]] ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	bool colours(isatty(STDERR_FILENO));
 	const char * prog(basename_of(args[0]));
@@ -956,13 +965,14 @@ isolate [[gnu::noreturn]] (
 		throw EXIT_FAILURE;
 	}
 
-	start_stop_common(next_prog, args, prog, START, !colours);
+	start_stop_common(next_prog, args, envs, prog, START, !colours);
 }
 
 void
 reset [[gnu::noreturn]] ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	bool colours(isatty(STDERR_FILENO));
 	const char * prog(basename_of(args[0]));
@@ -990,5 +1000,5 @@ reset [[gnu::noreturn]] (
 		throw EXIT_FAILURE;
 	}
 
-	start_stop_common(next_prog, args, prog, DEFAULT, !colours);
+	start_stop_common(next_prog, args, envs, prog, DEFAULT, !colours);
 }

@@ -7,6 +7,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <fstream>
 #include "machine_id.h"
 #include "jail.h"
+#include "ProcessEnvironment.h"
 
 /* library functions for accessing the machine ID ***************************
 // **************************************************************************
@@ -177,9 +178,9 @@ write_one_line_hostuuid (
 
 static inline
 bool
-read_container_id ()
+read_container_id (const ProcessEnvironment & envs)
 {
-	if (const char * c = std::getenv("container_uuid"))
+	if (const char * c = envs.query("container_uuid"))
 		return read_uuid(c);
 	return false;
 }
@@ -439,9 +440,9 @@ validate ()
 }
 
 bool
-read_fallbacks ()
+read_fallbacks (const ProcessEnvironment & envs)
 {
-	return read_volatile() || read_host_uuid() || read_backwards_compatible_non_volatile() || (am_in_jail() ? read_container_id : read_boot_id)();
+	return read_volatile() || read_host_uuid() || read_backwards_compatible_non_volatile() || (am_in_jail(envs) ? read_container_id(envs) : read_boot_id());
 }
 
 }

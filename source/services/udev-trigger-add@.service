@@ -7,6 +7,7 @@ Description=udev plug-and-play manager one-shot initialization for %i
 DefaultDependencies=false
 Before=shutdown.target
 After=local-fs.target udev.service
+Conflicts=systemd-udev-trigger@%i
 
 [Service]
 Type=oneshot

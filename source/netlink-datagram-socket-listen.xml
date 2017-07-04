@@ -10,7 +10,7 @@
 
 <refnamediv>
 <refname>netlink-datagram-socket-listen</refname>
-<refpurpose>create a socket listening for incoming TCP connections and chain</refpurpose>
+<refpurpose>create a socket listening for incoming Netlink datagrams and chain</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>

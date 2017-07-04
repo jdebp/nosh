@@ -861,7 +861,6 @@ process (
 		uint32_t cmds[8] = { 0 };
 		for (unsigned j(0U); j < sizeof cmds/sizeof *cmds; ++j) {
 			const std::string as(strip_field(line));
-			if (j >= sizeof cmds/sizeof *cmds) continue;
 			cmds[j] = action(prog, name, ln, as);
 			seen_scrn |= KBDMAP_ACTION_SCREEN == (cmds[j] & KBDMAP_ACTION_MASK);
 			is_all_nop &= 0x00 == (cmds[j] & KBDMAP_ACTION_MASK);
@@ -926,7 +925,8 @@ overlay_group2_latch (
 void
 console_convert_kbdmap [[gnu::noreturn]] ( 
 	const char * & /*next_prog*/,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 	try {

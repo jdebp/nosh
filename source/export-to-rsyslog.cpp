@@ -22,6 +22,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include "utils.h"
 #include "fdutils.h"
+#include "ProcessEnvironment.h"
 #include "FileDescriptorOwner.h"
 #include "DirStar.h"
 #include "popt.h"
@@ -125,7 +126,7 @@ struct index : public std::pair<dev_t, ino_t> {
 
 class Cursor : public index {
 public:
-	Cursor ( const struct stat & );
+	Cursor ( const struct stat &, const ProcessEnvironment & );
 	~Cursor() {}
 	std::string appname;
 	FileDescriptorOwner main_dir, last_file, current_file;
@@ -142,12 +143,13 @@ protected:
 	std::size_t line_stamp_pos;
 	void process(char);
 	void emit();
+	const ProcessEnvironment & envs;
 };
 
 }
 
 inline
-Cursor::Cursor ( const struct stat & s ) :
+Cursor::Cursor ( const struct stat & s, const ProcessEnvironment & e ) :
 	index(s),
 	appname(),
 	main_dir(-1),
@@ -155,7 +157,8 @@ Cursor::Cursor ( const struct stat & s ) :
 	current_file(-1),
 	state(BOL),
 	message(),
-	line_stamp_pos(0)
+	line_stamp_pos(0),
+	envs(e)
 {
 	std::memset(last, '0', EXTERNAL_TAI64N_LENGTH);
 }
@@ -192,7 +195,7 @@ void
 Cursor::emit ()
 {
 	bool leap;
-	const std::time_t t(tai64_to_time(convert(line_stamp, EXTERNAL_TAI64_LENGTH), leap));
+	const std::time_t t(tai64_to_time(envs, convert(line_stamp, EXTERNAL_TAI64_LENGTH), leap));
 	const uint32_t nano(convert(line_stamp + EXTERNAL_TAI64_LENGTH, EXTERNAL_TAI64N_LENGTH - EXTERNAL_TAI64_LENGTH));
 	struct tm tm;
 	localtime_r(&t, &tm);
@@ -322,6 +325,7 @@ static fd_index by_main_dir_fd;
 static inline
 void
 rescan (
+	const ProcessEnvironment & envs,
 	const FileDescriptorOwner & queue,
 	const FileDescriptorOwner & scan_dir_fd,
 	const char * scan_directory
@@ -378,7 +382,7 @@ exit_scan:
 			continue;
 		}
 
-		Cursor * c(new Cursor(cursor_dir_s));
+		Cursor * c(new Cursor(cursor_dir_s, envs));
 		if (!c) continue;
 
 		std::fprintf(stderr, "New cursor %s/%s\n", scan_directory, entry->d_name);
@@ -553,7 +557,8 @@ mark_as_behind (
 void
 export_to_rsyslog [[gnu::noreturn]] (
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
@@ -576,9 +581,9 @@ export_to_rsyslog [[gnu::noreturn]] (
 	}
 	const char * const scan_directory(args[0]);
 
-	if (const char * proto = std::getenv("PROTO")) {
+	if (const char * proto = envs.query("PROTO")) {
 		const std::string n(proto + std::string("LOCALHOST"));
-		if (const char * localhost = std::getenv(n.c_str())) {
+		if (const char * localhost = envs.query(n.c_str())) {
 			hostname = localhost;
 		}
 	}
@@ -608,7 +613,7 @@ export_to_rsyslog [[gnu::noreturn]] (
 	bool rescan_needed(true);
 	for (;;) {
 		if (rescan_needed) {
-			rescan(queue, scan_dir_fd, scan_directory);
+			rescan(envs, queue, scan_dir_fd, scan_directory);
 			rescan_needed = false;
 		}
 

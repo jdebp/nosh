@@ -58,7 +58,8 @@ parse_number(
 void
 console_multiplexor_control [[gnu::noreturn]] ( 
 	const char * & /*next_prog*/,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 

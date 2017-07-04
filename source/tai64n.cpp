@@ -24,12 +24,15 @@ static
 bool 
 process (
 	const char * prog,
+	const ProcessEnvironment & envs,
 	const char * name,
 	int fd
 ) {
 	char buf[4096];
 	bool done(false), bol(true);
 	for (;;) {
+		if (bol)
+			std::fflush(stdout);
 		const int rd(read(fd, buf, sizeof buf));
 		if (0 > rd) {
 			const int error(errno);
@@ -43,7 +46,7 @@ process (
 			if (bol) {
 				timespec now;
 				clock_gettime(CLOCK_REALTIME, &now);
-				const uint64_t secs(time_to_tai64(now.tv_sec, false));
+				const uint64_t secs(time_to_tai64(envs, now.tv_sec, false));
 				const uint32_t nano(now.tv_nsec);
 				std::fprintf(stdout, "@%016" PRIx64 "%08" PRIx32 " ", secs, nano);
 				bol = false;
@@ -64,7 +67,8 @@ process (
 void
 tai64n [[gnu::noreturn]] (
 	const char * & /*next_prog*/,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
@@ -80,7 +84,7 @@ tai64n [[gnu::noreturn]] (
 		throw static_cast<int>(EXIT_USAGE);
 	}
 	if (args.empty()) {
-		if (!process(prog, "<stdin>", STDIN_FILENO))
+		if (!process(prog, envs, "<stdin>", STDIN_FILENO))
 			throw static_cast<int>(EXIT_TEMPORARY_FAILURE);	// Bernstein daemontools compatibility
 	} else {
 		for (std::vector<const char *>::const_iterator i(args.begin()); i != args.end(); ++i) {
@@ -91,7 +95,7 @@ tai64n [[gnu::noreturn]] (
 				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, std::strerror(error));
 				throw static_cast<int>(EXIT_PERMANENT_FAILURE);	// Bernstein daemontools compatibility
 			}
-			if (!process(prog, name, fd))
+			if (!process(prog, envs, name, fd))
 				throw static_cast<int>(EXIT_TEMPORARY_FAILURE);	// Bernstein daemontools compatibility
 			close(fd);
 		}

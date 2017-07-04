@@ -291,7 +291,8 @@ memory_resource_limit_definition::rescale (
 void
 ulimit ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
@@ -501,7 +502,8 @@ limit (
 void
 softlimit ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	limit(next_prog, args, false, true);
 }
@@ -509,7 +511,8 @@ softlimit (
 void
 hardlimit ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	limit(next_prog, args, true, false);
 }

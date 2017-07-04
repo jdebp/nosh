@@ -20,29 +20,19 @@ For copyright and licensing terms, see the file named COPYING.
 #include "popt.h"
 #include "utils.h"
 #include "fdutils.h"
+#include "ProcessEnvironment.h"
 
 /* Helper functions *********************************************************
 // **************************************************************************
 */
 
-static
-void
-env (
-	const char * name,
-	const char * value
-) {
-	if (value)
-		setenv(name, value, 1);
-	else
-		unsetenv(name);
-}
-
 static inline
 const char *
 q (
+	const ProcessEnvironment & envs,
 	const char * name
 ) {
-	const char * value(std::getenv(name));
+	const char * value(envs.query(name));
 	return value ? value : "";
 }
 
@@ -53,7 +43,8 @@ q (
 void
 udp_socket_connect ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	const char * localhost(0);
@@ -192,7 +183,7 @@ udp_socket_connect (
 		if (s != 6 && s != 7)
 			close(s);
 
-		env("PROTO", "UDP");
+		envs.set("PROTO", "UDP");
 		switch (localaddr.ss_family) {
 			case AF_INET:
 			{
@@ -200,8 +191,8 @@ udp_socket_connect (
 				char port[64], ip[INET_ADDRSTRLEN];
 				if (0 == inet_ntop(localaddr4.sin_family, &localaddr4.sin_addr, ip, sizeof ip)) goto exit_error;
 				snprintf(port, sizeof port, "%u", ntohs(localaddr4.sin_port));
-				env("UDPLOCALIP", ip);
-				env("UDPLOCALPORT", port);
+				envs.set("UDPLOCALIP", ip);
+				envs.set("UDPLOCALPORT", port);
 				break;
 			}
 			case AF_INET6:
@@ -210,13 +201,13 @@ udp_socket_connect (
 				char port[64], ip[INET6_ADDRSTRLEN];
 				if (0 == inet_ntop(localaddr6.sin6_family, &localaddr6.sin6_addr, ip, sizeof ip)) goto exit_error;
 				snprintf(port, sizeof port, "%u", ntohs(localaddr6.sin6_port));
-				env("UDPLOCALIP", ip);
-				env("UDPLOCALPORT", port);
+				envs.set("UDPLOCALIP", ip);
+				envs.set("UDPLOCALPORT", port);
 				break;
 			}
 			default:
-				env("UDPLOCALIP", 0);
-				env("UDPLOCALPORT", 0);
+				envs.set("UDPLOCALIP", 0);
+				envs.set("UDPLOCALPORT", 0);
 				break;
 		}
 		switch (remote_info->ai_family) {
@@ -226,8 +217,8 @@ udp_socket_connect (
 				char port[64], ip[INET_ADDRSTRLEN];
 				if (0 == inet_ntop(remoteaddr4.sin_family, &remoteaddr4.sin_addr, ip, sizeof ip)) goto exit_error;
 				snprintf(port, sizeof port, "%u", ntohs(remoteaddr4.sin_port));
-				env("UDPREMOTEIP", ip);
-				env("UDPREMOTEPORT", port);
+				envs.set("UDPREMOTEIP", ip);
+				envs.set("UDPREMOTEPORT", port);
 				break;
 			}
 			case AF_INET6:
@@ -236,22 +227,22 @@ udp_socket_connect (
 				char port[64], ip[INET6_ADDRSTRLEN];
 				if (0 == inet_ntop(remoteaddr6.sin6_family, &remoteaddr6.sin6_addr, ip, sizeof ip)) goto exit_error;
 				snprintf(port, sizeof port, "%u", ntohs(remoteaddr6.sin6_port));
-				env("UDPREMOTEIP", ip);
-				env("UDPREMOTEPORT", port);
+				envs.set("UDPREMOTEIP", ip);
+				envs.set("UDPREMOTEPORT", port);
 				break;
 			}
 			default:
-				env("UDPREMOTEIP", 0);
-				env("UDPREMOTEPORT", 0);
+				envs.set("UDPREMOTEIP", 0);
+				envs.set("UDPREMOTEPORT", 0);
 				break;
 		}
-		env("UDPLOCALHOST", localhost);
-		env("UDPLOCALINFO", 0);
-		env("UDPREMOTEHOST", 0);
-		env("UDPREMOTEINFO", 0);
+		envs.set("UDPLOCALHOST", localhost);
+		envs.set("UDPLOCALINFO", 0);
+		envs.set("UDPREMOTEHOST", 0);
+		envs.set("UDPREMOTEINFO", 0);
 
 		if (verbose)
-			std::fprintf(stderr, "%s: %u %s %s %s %s\n", prog, getpid(), q("UDPLOCALIP"), q("UDPLOCALPORT"), q("UDPREMOTEIP"), q("UDPREMOTEPORT"));
+			std::fprintf(stderr, "%s: %u %s %s %s %s\n", prog, getpid(), q(envs, "UDPLOCALIP"), q(envs, "UDPLOCALPORT"), q(envs, "UDPREMOTEIP"), q(envs, "UDPREMOTEPORT"));
 
 		return;
 	}

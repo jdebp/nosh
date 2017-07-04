@@ -21,9 +21,11 @@ enum {
 	EXIT_PERMANENT_FAILURE = 100
 };
 
+struct ProcessEnvironment;
+
 struct command {
 	const char * name;
-	void (*func) ( const char * &, std::vector<const char *> & );
+	void (*func) ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 } ;
 extern const command commands[], personalities[];
 extern const std::size_t num_commands, num_personalities;
@@ -38,7 +40,8 @@ void
 exec_terminal (
 	const char * & prog,
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) ;
 extern
 const command *
@@ -75,6 +78,7 @@ extern
 bool
 process_env_dir (
 	const char * prog,
+	ProcessEnvironment & envs,
 	const char * dir,
 	int scan_dir_fd,
 	bool ignore_errors,
@@ -202,11 +206,13 @@ multi_line_comment (
 ) ;
 time_t
 tai64_to_time (
+	const ProcessEnvironment & envs,
 	const uint64_t s,
 	bool & leap
 ) ;
 uint64_t
 time_to_tai64 (
+	const ProcessEnvironment & envs,
 	const std::time_t s,
 	bool leap
 ) ;

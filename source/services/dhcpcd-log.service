@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Combined logger for dhcpcd@ services
+
+[Service]
+User=%p
+WorkingDirectory=/var/log/sv
+ExecStart=cyclog dhcpcd/
+RestartSec=1
+
+[Install]
+WantedBy=workstation.target
+

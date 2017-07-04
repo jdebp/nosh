@@ -19,6 +19,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "popt.h"
 #include "ttyname.h"
 #include "utils.h"
+#include "ProcessEnvironment.h"
 
 /* Filename manipulation ****************************************************
 // **************************************************************************
@@ -73,7 +74,8 @@ id_from (
 void
 login_process ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	const char * override_id(0);
@@ -95,7 +97,7 @@ login_process (
 		throw EXIT_FAILURE;
 	}
 
-	const char * tty(get_controlling_tty_name());
+	const char * tty(get_controlling_tty_name(envs));
 	if (!tty) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "stdin", std::strerror(error));
@@ -114,7 +116,7 @@ login_process (
 	u.ut_session = getsid(0);
 	std::strncpy(u.ut_user, "LOGIN", sizeof u.ut_user);
 	std::strncpy(u.ut_line, line, sizeof u.ut_line);
-	if (const char * host = std::getenv("HOST"))
+	if (const char * host = envs.query("HOST"))
 		std::strncpy(u.ut_host, host, sizeof u.ut_host);
 	// gettimeofday() doesn't work directly because the member structure isn't actually a timeval.
 	struct timeval tv;

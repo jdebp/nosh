@@ -15,10 +15,9 @@ TTYPath=tty0
 TTYReset=true
 StandardInput=tty
 StandardError=log
-EnvironmentFile=-/etc/vconsole.conf
 EnvironmentDirectory=env
 ExecStart=kbd_mode -u
-ExecStart=loadkeys --unicode ${KEYMAP:-us} ${KEYMAP_TOGGLE}
+ExecStart=loadkeys --unicode ${keymap:+"${keymap}"} ${flags}
 # This is a one-shot service that can be re-triggered by starting it again.
 #RemainAfterExit=1
 Restart=no

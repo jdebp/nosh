@@ -1,0 +1,20 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Linux kernel Netlink socket for receiving plug and play events
+Description=and %p control socket
+
+[Socket]
+Accept=false
+# Netlink doesn't implement a difference between datagram and raw socket types.
+# But some servers (step forward, systemd-udevd) are overly fussy and require raw sockets.
+NetlinkRaw=true
+# If this is too low, a flurry of P&P events can cause the kernel to run out of buffers and wedge P&P service forever.
+ReceiveBuffer=134217728
+#ReceiveBuffer=128M
+ListenNetlink=kobject-uevent 1
+ListenSequentialPacket=%t/%p/control
+SocketMode=0600
+PassCredentials=true

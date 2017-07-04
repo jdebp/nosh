@@ -20,12 +20,13 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 // These must have static storage duration as we are using them in args.
-static std::string dir_arg_buffer, procs_arg_buffer;
+static std::string dir_arg_buffer, procs_arg_buffer, subtree_control_arg_buffer;
 
 void
 delegate_control_group_to ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
@@ -70,6 +71,7 @@ delegate_control_group_to (
 	current = prefix + current;
 	dir_arg_buffer = current + "/";
 	procs_arg_buffer = current + "/cgroup.procs";
+	subtree_control_arg_buffer = current + "/cgroup.subtree_control";
 
 	args.clear();
 	args.insert(args.end(), "chown");
@@ -77,6 +79,7 @@ delegate_control_group_to (
 	args.insert(args.end(), owner);
 	args.insert(args.end(), dir_arg_buffer.c_str());
 	args.insert(args.end(), procs_arg_buffer.c_str());
+	args.insert(args.end(), subtree_control_arg_buffer.c_str());
 	args.insert(args.end(), 0);
 	next_prog = arg0_of(args);
 }

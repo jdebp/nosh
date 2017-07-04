@@ -11,10 +11,8 @@ Type=oneshot
 TTYPath=tty0
 StandardInput=tty
 StandardError=log
-EnvironmentFile=-/etc/default/kbd
-EnvironmentFile=-/etc/kbd/config
 EnvironmentDirectory=env
-ExecStart=kbdrate ${BLANK_DPMS:+-r "${BLANK_DPMS}"} ${BLANK_TIME:+-d "${BLANK_TIME}"} ${flags}
+ExecStart=kbdrate ${rate:+-r "${rate}"} ${delay:+-d "${delay}"} ${flags}
 # This is a one-shot service that can be re-triggered by starting it again.
 #RemainAfterExit=1
 Restart=no

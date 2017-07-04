@@ -17,29 +17,16 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include "FileStar.h"
 #include "utils.h"
+#include "ProcessEnvironment.h"
 #include "jail.h"
 #include "popt.h"
-
-static
-const char * 
-env_files[] = {
-	"/etc/sysconfig/network",	// CentOS/Fedora (HOSTNAME=...)
-	"/etc/conf.d/hostname",		// Gentoo (HOSTNAME=...)
-	"/etc/rc.conf",			// BSDs (hostname=...)
-};
-
-static
-const char * 
-line_files[] = {
-	"/etc/hostname",	// recommended, and systemd
-	"/etc/HOSTNAME",	// 
-};
 
 static inline
 bool
 is_dynamic_hostname_set ()
 {
-	std::vector<char> hostname(sysconf(_SC_HOST_NAME_MAX) + 1);
+	std::vector<char> hostname;
+	hostname.resize(sysconf(_SC_HOST_NAME_MAX) + 1);
 	const int r(gethostname(hostname.data(), hostname.size()));
 	if (0 > r) return false;
 #if defined(__LINUX__) || defined(__linux__)
@@ -59,28 +46,13 @@ is_dynamic_hostname_set ()
 
 static inline
 const char * 
-get_static_hostname_env()
+get_static_hostname_env(const ProcessEnvironment & envs)
 {
-	if (const char * h = std::getenv("hostname")) 
+	if (const char * h = envs.query("hostname")) 
 		return h;
-	if (const char * h = std::getenv("HOSTNAME")) 
+	if (const char * h = envs.query("HOSTNAME")) 
 		return h;
 	return 0;
-}
-
-static inline
-std::string
-read_first_line (
-	FILE * f
-) {
-	std::string a;
-	for (;;) {
-		const int c(std::fgetc(f));
-		if (std::feof(f)) break;
-		if ('\n' == c) break;
-		a += char(c);
-	}
-	return a;
 }
 
 /* Main function ************************************************************
@@ -90,7 +62,8 @@ read_first_line (
 void
 set_dynamic_hostname [[gnu::noreturn]] ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	bool force(false), verbose(false);
@@ -119,7 +92,7 @@ set_dynamic_hostname [[gnu::noreturn]] (
 		throw static_cast<int>(EXIT_USAGE);
 	}
 
-	if (am_in_jail() && !set_dynamic_hostname_is_allowed()) {
+	if (am_in_jail(envs) && !set_dynamic_hostname_is_allowed()) {
 		if (verbose)
 			std::fprintf(stderr, "%s: INFO: %s\n", prog, "Cannot set the dynamic hostname in this jail.");
 		throw EXIT_SUCCESS;
@@ -131,65 +104,16 @@ set_dynamic_hostname [[gnu::noreturn]] (
 		throw EXIT_SUCCESS;
 	}
 
-	unsetenv("HOSTNAME");
-	unsetenv("hostname");
+	const char * h(get_static_hostname_env(envs));
 
-	const char * h(get_static_hostname_env());
-
-	if (!h) {
-		for (std::size_t fi(0); fi < sizeof line_files/sizeof *line_files; ++fi) {
-			const char * filename(line_files[fi]);
-			const char * var(basename_of(filename));
-			FileStar f(std::fopen(filename, "r"));
-			if (!f) {
-				const int error(errno);
-				if (ENOENT != error)
-					std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, filename, std::strerror(error));
-				continue;
-			}
-			try {
-				std::string val(read_first_line(f));
-				if (val.length())
-					setenv(var, val.c_str(), 1);
-				h = get_static_hostname_env();
-			} catch (const char * r) {
-				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, filename, r);
-			}
-		}
-	}
-	if (!h) {
-		for (std::size_t fi(0); fi < sizeof env_files/sizeof *env_files; ++fi) {
-			const char * filename(env_files[fi]);
-			FileStar f(std::fopen(filename, "r"));
-			if (!f) {
-				const int error(errno);
-				if (ENOENT != error)
-					std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, filename, std::strerror(error));
-				continue;
-			}
-			try {
-				std::vector<std::string> env_strings(read_file(f));
-				for (std::vector<std::string>::const_iterator i(env_strings.begin()); i != env_strings.end(); ++i) {
-					const std::string & s(*i);
-					const std::string::size_type p(s.find('='));
-					const std::string var(s.substr(0, p));
-					const std::string val(p == std::string::npos ? std::string() : s.substr(p + 1, std::string::npos));
-					setenv(var.c_str(), val.c_str(), 1);
-				}
-				h = get_static_hostname_env();
-			} catch (const char * r) {
-				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, filename, r);
-			}
-		}
-	}
 #if defined(__FreeBSD__) || defined(__DragonFly__)
 	if (!h) {
 		char val[129];
 		const int n(kenv(KENV_GET, "dhcp.host-name", val, sizeof val - 1));
 		if (0 < n) {
 			val[n] = '\0';
-			setenv("hostname", val, 1);
-			h = get_static_hostname_env();
+			envs.set("hostname", val);
+			h = get_static_hostname_env(envs);
 		}
 	}
 #endif

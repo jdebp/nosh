@@ -1,0 +1,27 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%pd plug-and-play manager daemon
+DefaultDependencies=false
+Before=shutdown.target
+After=local-fs.target local-syslog.target
+Conflicts=busybox-mdev vdev suckless-mdev
+
+[Service]
+RuntimeDirectory=%p
+ExecStart=/lib/systemd/%pd --debug
+Restart=on-abort
+# The nutty default of systemd-udevd is to log to the kernel log buffer.
+# This despite it being integrated into systemd where capturing standard error is a norm.
+# A bug in systemd-udevd means that if one supplies --debug the log is not opened to the correct place, because --debug doesn't invoke log_open() after changing the log target to standard error.
+# So we have to supply this in the environment.
+# All just to get systemd-udevd to log to its standard error.
+# Oh yes, incidentally: console-prefixed isn't available in the Debian 8 systemd.
+Environment=SYSTEMD_LOG_TARGET=console
+Environment=SYSTEMD_LOG_LOCATION=yes
+
+[Install]
+WantedBy=sysinit.target
+StoppedBy=shutdown.target

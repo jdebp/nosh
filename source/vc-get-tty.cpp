@@ -18,6 +18,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <grp.h>
 #include "popt.h"
 #include "utils.h"
+#include "ProcessEnvironment.h"
 
 /* terminal processing ******************************************************
 // **************************************************************************
@@ -93,7 +94,8 @@ unlockvc (
 void
 vc_get_tty ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	bool full_hostname(false);
 	const char * term = default_term();
@@ -167,10 +169,10 @@ vc_get_tty (
 	}
 
 	// Export the tty name to the environment so that later programs can get hold of it.
-	setenv("TTY", tty, 1);
+	envs.set("TTY", tty);
 
 	// Export the hostname, similarly.
-	setenv("HOST", hostname.data(), 1);
+	envs.set("HOST", hostname.data());
 
-	setenv("TERM", term, 1);
+	envs.set("TERM", term);
 }

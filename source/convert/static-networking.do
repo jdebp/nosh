@@ -20,9 +20,9 @@ list_static_ndp() { for i in `get_var1 static_ndp_pairs` ; do printf "%s\n" "$i"
 list_static_ip4() { for i in `get_var1 static_routes` ; do printf "%s\n" "$i" ; done ; }
 list_static_ip6() { for i in `get_var1 ipv6_static_routes` ; do printf "%s\n" "$i" ; done ; }
 list_natd_interfaces() { read_rc natd_interface || true ; }
-get_ifconfig1() { read_rc ifconfig_"$1" || read_rc ifconfig_DEFAULT || true ; }
-get_ifconfig2() { read_rc ifconfig_"$1"_"$2" || read_rc ifconfig_DEFAULT_"$2" || true ; }
-get_ipv6_prefix1() { read_rc ipv6_prefix_"$1" || read_rc ipv6_prefix_DEFAULT || true ; }
+get_ifconfig1() { read_rc ifconfig_"$1" || read_rc ifconfig_DEFAULT ; }
+get_ifconfig2() { read_rc ifconfig_"$1"_"$2" || read_rc ifconfig_DEFAULT_"$2" ; }
+get_ipv6_prefix1() { read_rc ipv6_prefix_"$1" || read_rc ipv6_prefix_DEFAULT ; }
 list_auto_network_interfaces() {
 	case "`uname`" in
 	Linux)	/bin/ls /sys/class/net ;;
@@ -165,7 +165,7 @@ get_ipv6_prefix() {
 	local i
 	local l
 
-	for i in `get_ipv6_prefix1 "$1"`
+	for i in `get_ipv6_prefix1 "$1" || true`
 	do
 		case "$i" in
 			*/*)	l="${i#*/}" ; i="${i%/*}" ;;
@@ -209,11 +209,31 @@ get_inet6_aliases() {
 	get_filtered_ifconfig3 "$1" aliases inet6
 	get_ipv6_prefix "$1"
 }
+if_yes() { case "$1" in [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1) echo "$2" ;; esac ; }
 
-redo-ifchange rc.conf general-services "static_arp@.service" "static_ndp@.service" "static_ip4@.service" "static_ip6@.service" "natd@.service" "hostapd@.service" "dhclient@.service" "wpa_supplicant@.service" "rfcomm_pppd@.service" "ppp@.service" "spppcontrol@.service" "ifscript@.service" "ifconfig@.service"
+redo-ifchange rc.conf general-services "static_arp@.service" "static_ndp@.service" "static_ip4@.service" "static_ip6@.service" "natd@.service" "hostapd@.service" "dhclient@.service" "dhcpcd@.service" "wpa_supplicant@.service" "rfcomm_pppd@.service" "ppp@.service" "spppcontrol@.service" "ifscript@.service" "ifconfig@.service"
 
 r="/var/local/sv"
 e="--no-systemd-quirks --escape-instance --local-bundle --bundle-root"
+if dhclient="`read_rc dhclient_program`" && test -n "${dhclient}"
+then
+	dhclient="`basename \"${dhclient}\"`"
+else
+	dhclient="dhclient"
+fi
+
+show_enable() {
+	local i
+	for i
+	do
+		if system-control is-enabled "$i"
+		then
+			echo on "$i"
+		else
+			echo off "$i"
+		fi
+	done
+}
 
 make_arp() {
 	local service
@@ -272,12 +292,7 @@ make_ifscript() {
 	else
 		system-control preset "${service}"
 	fi
-	if system-control is-enabled "${service}"
-	then
-		echo on "${service}"
-	else
-		echo off "${service}"
-	fi
+	show_enable "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/ifconfig-log" "$r/${service}/log"
 	system-control preset ifconfig-log
@@ -300,12 +315,7 @@ make_ifconfig() {
 	else
 		system-control preset "${service}"
 	fi
-	if system-control is-enabled "${service}"
-	then
-		echo on "${service}"
-	else
-		echo off "${service}"
-	fi
+	show_enable "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/ifconfig-log" "$r/${service}/log"
 	system-control preset ifconfig-log
@@ -336,12 +346,7 @@ make_natd() {
 	else
 		system-control disable "${service}"
 	fi
-	if system-control is-enabled "${service}"
-	then
-		echo on "${service}"
-	else
-		echo off "${service}"
-	fi
+	show_enable "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/natd-log" "$r/${service}/log"
 	system-control preset natd-log
@@ -354,21 +359,37 @@ make_dhclient() {
 	install -d -m 0755 "$r/${service}/service/env"
 	if is_physical_interface "$1" &&
 	   is_ip_interface "$1" &&
+	   test 0 -lt "`expr \"${dhclient}\" : dhclient`" &&
 	   get_ifconfig1 "$1" | grep -q -E '\<DHCP\>'
 	then
 		system-control preset "${service}"
 	else
 		system-control disable "${service}"
 	fi
-	if system-control is-enabled "${service}"
-	then
-		echo on "${service}"
-	else
-		echo off "${service}"
-	fi
+	show_enable "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/dhclient-log" "$r/${service}/log"
 	system-control preset dhclient-log
+}
+
+make_dhcpcd() {
+	local service
+	service="dhcpcd@$1"
+	system-control convert-systemd-units $e "$r/" "./${service}.service"
+	install -d -m 0755 "$r/${service}/service/env"
+	if is_physical_interface "$1" &&
+	   is_ip_interface "$1" &&
+	   test 0 -lt "`expr \"${dhclient}\" : dhcpcd`" &&
+	   get_ifconfig1 "$1" | grep -q -E '\<DHCP\>'
+	then
+		system-control preset "${service}"
+	else
+		system-control disable "${service}"
+	fi
+	show_enable "${service}"
+	rm -f -- "$r/${service}/log"
+	ln -s -- "../../../sv/dhcpcd-log" "$r/${service}/log"
+	system-control preset dhcpcd-log
 }
 
 make_hostap() {
@@ -382,12 +403,7 @@ make_hostap() {
 	else
 		system-control disable "${service}"
 	fi
-	if system-control is-enabled "${service}"
-	then
-		echo on "${service}"
-	else
-		echo off "${service}"
-	fi
+	show_enable "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/cyclog@hostapd" "$r/${service}/log"
 	system-control preset cyclog@hostapd
@@ -404,12 +420,7 @@ make_wpa() {
 	else
 		system-control disable "${service}"
 	fi
-	if system-control is-enabled "${service}"
-	then
-		echo on "${service}"
-	else
-		echo off "${service}"
-	fi
+	show_enable "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/cyclog@wpa_supplicant" "$r/${service}/log"
 	system-control preset cyclog@wpa_supplicant
@@ -420,16 +431,16 @@ make_ppp() {
 	service="ppp@$i"
 	system-control convert-systemd-units $e "$r/" "./${service}.service"
 	install -d -m 0755 -- "$r/${service}/service/env"
-	system-control preset "${service}"
+	if test _"${ppp_server_enable}" = _"YES"
+	then
+		system-control preset "${service}"
+	else
+		system-control disable "${service}"
+	fi
 	system-control set-service-env "${service}" mode "`get_var3 ppp \"$i\" mode`"
 	system-control set-service-env "${service}" nat "`get_var3 ppp \"$i\" nat`"
 	system-control set-service-env "${service}" unit "`get_var3 ppp \"$i\" unit`"
-	if system-control is-enabled "${service}"
-	then
-		echo on "${service}"
-	else
-		echo off "${service}"
-	fi
+	show_enable "${service}"
 	system-control print-service-env "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/ppp-log" "$r/${service}/log"
@@ -443,12 +454,7 @@ make_sppp() {
 	install -d -m 0755 -- "$r/${service}/service/env"
 	system-control preset "${service}"
 	system-control set-service-env "${service}" args "`get_var2 spppconfig \"$i\"`"
-	if system-control is-enabled "${service}"
-	then
-		echo on "${service}"
-	else
-		echo off "${service}"
-	fi
+	show_enable "${service}"
 	system-control print-service-env "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../sv/sppp-log" "$r/${service}/log"
@@ -460,27 +466,36 @@ make_rfcomm_pppd() {
 	service="rfcomm_pppd@$i"
 	system-control convert-systemd-units $e "$r/" "./${service}.service"
 	install -d -m 0755 -- "$r/${service}/service/env"
-	system-control preset "${service}"
+	if test _"${rfcomm_pppd_server_enable}" = _"YES"
+	then
+		system-control preset "${service}"
+	else
+		system-control disable "${service}"
+	fi
 	system-control set-service-env "${service}" dun "`get_var3 rfcomm_pppd_server \"$i\" register_dun`"
 	system-control set-service-env "${service}" sp "`get_var3 rfcomm_pppd_server \"$i\" register_sp`"
 	system-control set-service-env "${service}" channel "`get_var3 rfcomm_pppd_server \"$i\" channel`"
 	system-control set-service-env "${service}" addr "`get_var3 rfcomm_pppd_server \"$i\" bdaddr`"
-	if system-control is-enabled "${service}"
-	then
-		echo on "${service}"
-	else
-		echo off "${service}"
-	fi
+	show_enable "${service}"
 	system-control print-service-env "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/rfcomm_pppd-log" "$r/${service}/log"
 	system-control preset rfcomm_pppd-log
 }
 
-find "$r/" -maxdepth 1 -type d \( -name 'static_arp@*' -o -name 'static_ndp@*' -o -name 'static_ip4@*' -o -name 'static_ip6@*' -o -name 'natd@*' -o -name 'hostapd@*' -o -name 'wpa_supplicant@*' -o -name 'dhclient@*' -o -name 'ppp@*' -o -name 'spppcontrol@*' -o -name 'rfcomm_pppd@*' \) -print0 |
+find "$r/" -maxdepth 1 -type d \( -name 'static_arp@*' -o -name 'static_ndp@*' -o -name 'static_ip4@*' -o -name 'static_ip6@*' -o -name 'natd@*' -o -name 'hostapd@*' -o -name 'wpa_supplicant@*' -o -name 'dhclient@*' -o -name 'dhcpcd@*' -o -name 'ppp@*' -o -name 'spppcontrol@*' -o -name 'rfcomm_pppd@*' \) -print0 |
 xargs -0 system-control disable
 
-system-control disable ifconfig-log natd-log dhclient-log rfcomm_pppd-log ppp-log sppp-log
+system-control disable ifconfig-log natd-log dhclient-log dhcpcd-log natd-log rfcomm_pppd-log ppp-log sppp-log
+
+if rfcomm_pppd_server_enable="`read_rc rfcomm_pppd_server_enable`"
+then
+	rfcomm_pppd_server_enable="`if_yes \"${rfcomm_pppd_server_enable}\" YES`"
+fi
+if ppp_server_enable="`read_rc ppp_server_enable`"
+then
+	ppp_server_enable="`if_yes \"${ppp_server_enable}\" YES`"
+fi
 
 list_static_arp |
 while read -r i
@@ -561,6 +576,7 @@ do
 	make_hostap "$i" >> "$3"
 	make_wpa "$i" >> "$3"
 	make_dhclient "$i" >> "$3"
+	make_dhcpcd "$i" >> "$3"
 done
 
 for i in `get_var2 ppp profile`

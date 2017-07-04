@@ -16,6 +16,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "popt.h"
 #include "utils.h"
 #include "fdutils.h"
+#include "ProcessEnvironment.h"
 
 /* Main function ************************************************************
 // **************************************************************************
@@ -118,7 +119,8 @@ operator & (
 void
 ucspi_socket_rules_check ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
@@ -144,18 +146,18 @@ ucspi_socket_rules_check (
 		throw static_cast<int>(EXIT_USAGE);
 	}
 
-	const char * proto(std::getenv("PROTO"));
+	const char * proto(envs.query("PROTO"));
 	if (!proto) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "PROTO", "Missing environment variable.");
 		throw EXIT_FAILURE;
 	}
 	if (0 == std::strcmp(proto, "UNIX")) {
-		const char * uid(std::getenv("UNIXREMOTEUID"));
+		const char * uid(envs.query("UNIXREMOTEUID"));
 		if (!uid) {
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "UNIXREMOTEUID", "Missing environment variable.");
 			throw EXIT_FAILURE;
 		}
-		const char * gid(std::getenv("UNIXREMOTEGID"));
+		const char * gid(envs.query("UNIXREMOTEGID"));
 		if (!gid) {
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "UNIXREMOTEGID", "Missing environment variable.");
 			throw EXIT_FAILURE;
@@ -168,7 +170,7 @@ ucspi_socket_rules_check (
 		throw EXIT_FAILURE;
 	} else
 	if (0 == std::strcmp(proto, "TCP")) {
-		const char * ip(std::getenv("TCPREMOTEIP"));
+		const char * ip(envs.query("TCPREMOTEIP"));
 		if (!ip) {
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "TCPREMOTEIP", "Missing environment variable.");
 			throw EXIT_FAILURE;
@@ -206,7 +208,7 @@ ucspi_socket_rules_check (
 		throw EXIT_FAILURE;
 	} else
 	if (0 == std::strcmp(proto, "TCP6")) {
-		const char * ip(std::getenv("TCP6REMOTEIP"));
+		const char * ip(envs.query("TCP6REMOTEIP"));
 		if (!ip) {
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "TCP6REMOTEIP", "Missing environment variable.");
 			throw EXIT_FAILURE;

@@ -39,7 +39,8 @@ static std::string service_name, log_service_name;
 void
 ttylogin_starter ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 	const char * prefix("ttylogin@");

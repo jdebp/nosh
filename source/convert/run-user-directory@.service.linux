@@ -1,0 +1,24 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Per-user runtime directory for %I
+#AfterMountsFor=/run
+#WantsMountsFor=/run
+#AfterMountsFor=/run/user
+#WantsMountsFor=/run/user
+Before=user-runtime@%I
+
+[Service]
+RemainAfterExit=true
+PermissionsStartOnly=yes
+User=%I
+ExecStartPre=install -d -m 0755 /run/user
+ExecStartPre=install -d -m 0750 -o '%I' '/run/user/%I'
+ExecStartPre=sh -c "ln -T -s '%I' \"/run/user/`id -u '%I'`\""
+ExecStopPost=rmdir '/run/user/%I'
+ExecStopPost=rmdir /run/user
+
+[Install]
+WantedBy=user-runtime@%I

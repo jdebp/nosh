@@ -62,7 +62,7 @@ case "${base}" in
 cyclog@*)
 	escape="--alt-escape --escape-instance"
 	;;
-ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|dhclient-log|uhidd-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log) 
+ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|brltty-log|dhclient-log|dhcpcd-log|mixer-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log|system-installer-log) 
 	escape="--alt-escape --escape-prefix"
 	;;
 *)
@@ -82,7 +82,7 @@ cyclog@*)
 	etc=
 	after=
 	;;
-ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|dhclient-log|uhidd-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log) 
+ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|brltty-log|dhclient-log|dhcpcd-log|mixer-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log|system-installer-log) 
 	log=
 	etc=
 	after=
@@ -107,6 +107,11 @@ devd)
 	etc=--etc-bundle
 	after="log"
 	;;
+systemd-udev|systemd-udev-trigger-add@*)
+	log="../systemd-udev-log"
+	etc=--etc-bundle
+	after="log"
+	;;
 udev|udev-trigger-add@*|udev-finish)
 	log="../udev-log"
 	etc=--etc-bundle
@@ -115,6 +120,11 @@ udev|udev-trigger-add@*|udev-finish)
 busybox-mdev|busybox-mdev-rescan)
 	log="../busybox-mdev-log"
 	etc=--etc-bundle
+	after="log"
+	;;
+trueos-update-finish|trueos-install-finish|freebsd-update-finish|freebsd-install-finish)
+	log="../system-installer-log"
+	etc=
 	after="log"
 	;;
 suckless-mdev|suckless-mdev-rescan)
@@ -160,7 +170,7 @@ cyclog@*)
 devd-log|sysinit-log)
 	ln -f -s -- /var/log/sv/"${base%-log}" services.new/"${base}"/main
 	;;
-ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|dhclient-log|uhidd-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log) 
+ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|brltty-log|dhclient-log|dhcpcd-log|mixer-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log|system-installer-log)
 	ln -f -s -- /var/log/sv/"${base%-log}" services.new/"${base}"/main
 	;;
 esac

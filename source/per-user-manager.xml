@@ -166,38 +166,54 @@ User-local events are flagged by sending various signals to the per-user manager
 <variablelist>
 
 <varlistentry>
-<term>
-<code>SIGINT</code>,
-<code>SIGTERM</code>,
-<code>SIGHUP</code>,
-<code>SIGPIPE</code>,
-<code>SIGRTMIN + 3</code>,
-<code>SIGRTMIN + 4</code>, or
-<code>SIGRTMIN + 5</code>
-</term>
+<term><code>SIGRTMIN + 0</code></term>
+<term><code>SIGRTMIN + 1</code></term>
+<term><code>SIGRTMIN + 2</code></term>
+<listitem><para>
+Spawn <command>system-control</command> <arg choice="plain">start</arg> <arg choice="plain">normal</arg>.
+This will activate the <code>normal</code> target, which is an alias for the <code>intrat</code> target.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><code>SIGINT</code></term>
+<term><code>SIGTERM</code></term>
+<term><code>SIGHUP</code></term>
+<term><code>SIGPIPE</code></term>
+<term><code>SIGRTMIN + 3</code></term>
+<term><code>SIGRTMIN + 4</code></term>
+<term><code>SIGRTMIN + 5</code></term>
 <listitem><para>
 Spawn <command>system-control</command> <arg choice="plain">start</arg> <arg choice="plain">halt</arg>.
-This will activate the <code>halt</code> target.
+This will activate the <code>halt</code> target an alias for the <code>exit</code> target.
 </para>
 <para>
-Implicit in activating the <code>halt</code> target is activating the <code>shutdown</code> target, which deactivates everything else.
+Implicit in activating the <code>exit</code> target is activating the <code>shutdown</code> target, which deactivates everything else.
 (This is written into the packaged target definitions, not hardwired into <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>.)
 </para>
 </listitem>
 </varlistentry>
 
 <varlistentry>
-<term>
-<code>SIGRTMIN + 13</code>,
-<code>SIGRTMIN + 14</code>, and
-<code>SIGRTMIN + 15</code>
-</term>
+<term><code>SIGRTMIN + 10</code></term>
+<listitem><para>
+Spawn <command>system-control</command> <arg choice="plain">start</arg> <arg choice="plain">sysinit</arg>.
+This will activate the <code>sysinit</code> target an alias for the <code>intrat</code> target.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><code>SIGRTMIN + 13</code></term>
+<term><code>SIGRTMIN + 14</code></term>
+<term><code>SIGRTMIN + 15</code></term>
 <listitem><para>
 Close the pipe, terminate the service manager, and wait a short while for it.
 Then exit.
 </para>
 <para>
-When the <code>halt</code> target is fully active, it is expected to send the <code>SIGRTMIN + 13</code> signal to the per-user manager process.
+When the <code>exit</code> target is fully active, it is expected to send the <code>SIGRTMIN + 13</code> signal to the per-user manager process.
 In the packaged target definitions, they use the <arg>--force</arg> option to the <command>halt</command> subcommand of <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry> to do this.
 Do not send these signals directly, as this does not shut down services in order.
 </para>

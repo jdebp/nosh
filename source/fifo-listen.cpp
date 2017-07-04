@@ -17,6 +17,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "utils.h"
 #include "popt.h"
 #include "fdutils.h"
+#include "ProcessEnvironment.h"
 #include "listen.h"
 
 /* Main function ************************************************************
@@ -26,7 +27,8 @@ For copyright and licensing terms, see the file named COPYING.
 void
 fifo_listen ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	signed long uid(-1), gid(-1), mode(0600);
@@ -102,7 +104,7 @@ exit_error:
 		if (0 > chown(listenpath, u ? u->pw_uid : -1, g ? g->gr_gid : -1)) goto exit_error;
 	}
 
-	const int fd_index(systemd_compatibility ? query_listen_fds_passthrough() : 0);
+	const int fd_index(systemd_compatibility ? query_listen_fds_passthrough(envs) : 0);
 	if (LISTEN_SOCKET_FILENO + fd_index != s) {
 		if (0 > dup2(s, LISTEN_SOCKET_FILENO + fd_index)) goto exit_error;
 		close(s);
@@ -112,8 +114,8 @@ exit_error:
 	if (systemd_compatibility) {
 		char buf[64];
 		snprintf(buf, sizeof buf, "%d", fd_index + 1);
-		setenv("LISTEN_FDS", buf, 1);
+		envs.set("LISTEN_FDS", buf);
 		snprintf(buf, sizeof buf, "%u", getpid());
-		setenv("LISTEN_PID", buf, 1);
+		envs.set("LISTEN_PID", buf);
 	}
 }

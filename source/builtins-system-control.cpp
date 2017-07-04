@@ -13,53 +13,54 @@ For copyright and licensing terms, see the file named COPYING.
 
 // These are the built-in commands visible in the per-user-manager and system-control utililties.
 
-extern void init ( const char * & , std::vector<const char *> & ) ;
-extern void reboot_poweroff_halt_command ( const char * & , std::vector<const char *> & ) ;
-extern void emergency_rescue_normal_command ( const char * & , std::vector<const char *> & ) ;
-extern void activate ( const char * & , std::vector<const char *> & ) ;
-extern void deactivate ( const char * & , std::vector<const char *> & ) ;
-extern void isolate ( const char * & , std::vector<const char *> & ) ;
-extern void reset ( const char * & , std::vector<const char *> & ) ;
-extern void enable ( const char * & , std::vector<const char *> & ) ;
-extern void disable ( const char * & , std::vector<const char *> & ) ;
-extern void preset ( const char * & , std::vector<const char *> & ) ;
-extern void find ( const char * & , std::vector<const char *> & ) ;
-extern void cat ( const char * & , std::vector<const char *> & ) ;
-extern void show ( const char * & , std::vector<const char *> & ) ;
-extern void show_json ( const char * & , std::vector<const char *> & ) ;
-extern void status ( const char * & , std::vector<const char *> & ) ;
-extern void escape ( const char * & , std::vector<const char *> & ) ;
-extern void print_service_env ( const char * & , std::vector<const char *> & ) ;
-extern void set_service_env ( const char * & , std::vector<const char *> & ) ;
-extern void try_restart ( const char * & , std::vector<const char *> & ) ;
-extern void hangup ( const char * & , std::vector<const char *> & ) ;
-extern void is_active ( const char * & , std::vector<const char *> & ) ;
-extern void is_loaded ( const char * & , std::vector<const char *> & ) ;
-extern void is_enabled ( const char * & , std::vector<const char *> & ) ;
-extern void convert_fstab_services ( const char * & , std::vector<const char *> & ) ;
-extern void get_mount_where ( const char * & , std::vector<const char *> & ) ;
-extern void get_mount_what ( const char * & , std::vector<const char *> & ) ;
-extern void write_volume_service_bundles ( const char * & , std::vector<const char *> & ) ;
-extern void convert_systemd_units ( const char * & , std::vector<const char *> & ) ;
-extern void nagios_check ( const char * & , std::vector<const char *> & ) ;
-extern void load_kernel_module ( const char * & , std::vector<const char *> & ) ;
-extern void unload_kernel_module ( const char * & , std::vector<const char *> & ) ;
-extern void system_control ( const char * & , std::vector<const char *> & ) ;
-extern void per_user_manager ( const char * & , std::vector<const char *> & ) ;
-extern void service_manager ( const char * & , std::vector<const char *> & ) ;
-extern void setsid ( const char * & , std::vector<const char *> & ) ;
-extern void system_version ( const char * & , std::vector<const char *> & ) ;
-extern void unload_when_stopped ( const char * & , std::vector<const char *> & ) ;
-extern void service_dt_scanner ( const char * &, std::vector<const char *> & );
-extern void service_control ( const char * &, std::vector<const char *> & );
-extern void service_is_enabled ( const char * &, std::vector<const char *> & );
-extern void service_is_ok ( const char * &, std::vector<const char *> & );
-extern void service_is_up ( const char * &, std::vector<const char *> & );
-extern void service_status ( const char * &, std::vector<const char *> & );
-extern void service_show ( const char * &, std::vector<const char *> & );
-extern void pipe ( const char * &, std::vector<const char *> & );
-extern void tai64nlocal ( const char * &, std::vector<const char *> & );
-extern void move_to_control_group ( const char * &, std::vector<const char *> & );
+extern void init ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void reboot_poweroff_halt_command ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void emergency_rescue_normal_command ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void activate ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void deactivate ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void isolate ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void reset ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void enable ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void disable ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void preset ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void find ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void cat ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void show ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void show_json ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void status ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void escape ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void print_service_env ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void set_service_env ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void try_restart ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void hangup ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void is_active ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void is_loaded ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void is_enabled ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void is_service_manager_client ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void convert_fstab_services ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void get_mount_where ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void get_mount_what ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void write_volume_service_bundles ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void convert_systemd_units ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void nagios_check ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void load_kernel_module ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void unload_kernel_module ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void system_control ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void per_user_manager ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void service_manager ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void setsid ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void system_version ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void unload_when_stopped ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void service_dt_scanner ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void service_control ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void service_is_enabled ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void service_is_ok ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void service_is_up ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void service_status ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void service_show ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void pipe ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void tai64nlocal ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void move_to_control_group ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 
 extern const
 struct command 
@@ -121,6 +122,7 @@ commands[] = {
 	{	"is-active",			is_active		},
 	{	"is-loaded",			is_loaded		},
 	{	"is-enabled",			is_enabled		},
+	{	"is-service-manager-client",	is_service_manager_client	},
 	{	"unload-when-stopped",		unload_when_stopped	},
 	{	"convert-fstab-services",	convert_fstab_services	},
 	{	"get-mount-where",		get_mount_where		},

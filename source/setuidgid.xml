@@ -39,7 +39,7 @@ In either case, the command will fail if the process is not running under the ae
 </para>
 
 <para>
-If it cannot find an account named account in the database, or fails setting the groups or user ID, it does not chain and exits with status code 111.
+If it cannot find an account named <replaceable>account</replaceable> in the database, or fails setting the groups or user ID, it does not chain and exits with status code 111.
 </para>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

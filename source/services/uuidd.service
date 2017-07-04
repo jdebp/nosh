@@ -6,7 +6,7 @@
 Description=util-linux UUID listening daemon
 
 [Service]
-User=uuidd
+User=%p
 RuntimeDirectory=%p
 RuntimeDirectoryMode=0755
 ExecStart=%p --socket-activation

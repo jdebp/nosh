@@ -8,7 +8,7 @@ Before=nfscbd.service
 
 [Service]
 EnvironmentDirectory=env
-ExecStart=%p
+ExecStart=%p ${flags} ${manage_gids}
 
 [Install]
 WantedBy=server.target

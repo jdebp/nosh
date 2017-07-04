@@ -10,6 +10,8 @@ For copyright and licensing terms, see the file named COPYING.
 
 extern bool per_user_mode;	// Shared with the system manager client API.
 
+struct ProcessEnvironment;
+
 void
 plumb (
 	const char * prog,
@@ -143,6 +145,7 @@ make_supervise_fifos (
 ) ;
 int 
 open_bundle_directory ( 
+	const ProcessEnvironment & envs,
 	const char * prefix, 
 	const char * arg, 
 	std::string & path, 

@@ -35,7 +35,8 @@ convert (
 void
 nosh ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 	if (2 != args.size()) {

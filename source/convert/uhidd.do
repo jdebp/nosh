@@ -60,17 +60,17 @@ do
 	install -d -m 0755 -- "$lr/uhidd@$n/service/env"
 	if ! test -e "$i"
 	then
-		if >/dev/null 2>&1 system-control find "uhidd@$n"
+		if s="`system-control find \"uhidd@$n\" 2>/dev/null`"
 		then
-			system-control disable "uhidd@$n"
+			system-control disable "$s"
 		fi
 		redo-ifcreate "$i"
 		echo >> "$3" no "$n"
 	elif is_hid "$n"
 	then
-		if >/dev/null 2>&1 system-control find "uhidd@$n"
+		if s="`system-control find \"uhidd@$n\" 2>/dev/null`"
 		then
-			system-control disable "uhidd@$n"
+			system-control disable "$s"
 		fi
 		echo >> "$3" kernel "$n"
 	else

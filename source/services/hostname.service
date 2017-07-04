@@ -11,6 +11,7 @@ After=local-fs.target
 
 [Service]
 Type=oneshot
+EnvironmentDirectory=env
 ExecStart=set-dynamic-hostname
 # This is a one-shot service that can be re-triggered by starting it again.
 #RemainAfterExit=1

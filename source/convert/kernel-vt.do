@@ -13,38 +13,10 @@ get_var() { read_rc "$1" || true ; }
 
 redo-ifchange rc.conf general-services
 
-case "`uname`" in
-*BSD)	;;
-*)	echo > "$3" 'No kernel-vt';exit 0;;
-esac
-
-for i in keyboard keybell keyrate
-do
-	v="`get_var \"$i\"`"
-	case "$v" in
-	[Nn][Oo])
-		system-control set-service-env kernel-vt-kbdcontrol "$i"
-		;;
-	*)
-		system-control set-service-env kernel-vt-kbdcontrol "$i" "$v"
-		;;
-	esac
-done
-
-for i in font8x8 font8x14 font8x16 blanktime cursor scrnmap
-do
-	v="`get_var \"$i\"`"
-	case "$v" in
-	[Nn][Oo])
-		system-control set-service-env kernel-vt-vidcontrol "$i"
-		;;
-	*)
-		system-control set-service-env kernel-vt-vidcontrol "$i" "$v"
-		;;
-	esac
-done
-
-keymap="`get_var \"keymap\"`"
+if ! keymap="`read_rc \"keymap\"`"
+then
+	keymap="us"
+fi
 original="${keymap}"
 # There are a whole bunch of old names for keyboard mappings that systems could be using.
 # Note that this is NOT the same as the modernizations done by the /etc/rc.d system in the syscons to vt conversion.
@@ -81,6 +53,7 @@ fr.macbook.acc)			keymap="fr.macbook";;
 fr.iso.acc)			keymap="fr.acc";;
 fr.iso)				keymap="fr";;
 el.iso07)			keymap="gr";;
+gb.*|gb)			keymap="uk";;
 gr.us101.acc)			keymap="gr.101.acc";;
 hr.iso)				keymap="hr";;
 hu.iso2.101keys)		keymap="hu.101";;
@@ -118,21 +91,125 @@ uk.*)				keymap="uk";;
 us.iso.acc)			keymap="us.acc";;
 us.pc-ctrl)			keymap="us.capsctrl";;
 us.iso)				keymap="us";;
+[Nn][Oo])			keymap="us";;
 esac
-if ! test "${original}" = "${keymap}"
+if ! test _"${original}" = _"${keymap}"
 then
 	echo 1>&2 $0: Please adjust /etc/rc.conf to read keymap="${keymap}".
 fi
-case "${keymap}" in
-[Nn][Oo])
-	system-control set-service-env console-fb-realizer@head0 "KBDMAP" "kbdmaps/us.kbdmap"
-	system-control set-service-env kernel-vt-kbdcontrol "keymap" "us"
-	;;
-*)
-	system-control set-service-env console-fb-realizer@head0 "KBDMAP" "kbdmaps/${keymap}.kbdmap"
-	system-control set-service-env kernel-vt-kbdcontrol "keymap" "${keymap}"
-	;;
-esac
-system-control print-service-env kernel-vt-kbdcontrol >> "$3"
-system-control print-service-env kernel-vt-vidcontrol >> "$3"
-system-control print-service-env console-fb-realizer@head0 "KBDMAP" >> "$3"
+
+if s="`system-control find kernel-vt-kbdcontrol 2>/dev/null`"
+then
+	for i in keyboard keybell keyrate
+	do
+		v="`get_var \"$i\"`"
+		case "$v" in
+		[Nn][Oo]|'')
+			system-control set-service-env "${s}" "$i"
+			;;
+		*)
+			system-control set-service-env "${s}" "$i" "$v"
+			;;
+		esac
+	done
+	system-control set-service-env "${s}" "keymap" "${keymap}"
+	printf >> "$3" "%s:\n" "${s}"
+	system-control print-service-env "${s}" >> "$3"
+fi
+
+if s="`system-control find kernel-vt-vidcontrol 2>/dev/null`"
+then
+	for i in font8x8 font8x14 font8x16 blanktime cursor scrnmap
+	do
+		v="`get_var \"$i\"`"
+		case "$v" in
+		[Nn][Oo]|'')
+			system-control set-service-env "${s}" "$i"
+			;;
+		*)
+			system-control set-service-env "${s}" "$i" "$v"
+			;;
+		esac
+	done
+	printf >> "$3" "%s:\n" "${s}"
+	system-control print-service-env "${s}" >> "$3"
+fi
+
+if s="`system-control find kernel-vt-loadkeys 2>/dev/null`"
+then
+	system-control set-service-env "${s}" "keymap" "${keymap}"
+	printf >> "$3" "%s:\n" "${s}"
+	system-control print-service-env "${s}" >> "$3"
+fi
+
+if s="`system-control find kernel-vt-setfont 2>/dev/null`"
+then
+	for i in font8x8 font8x14 font8x16 scrnmap fontmap
+	do
+		v="`get_var \"$i\"`"
+		case "$v" in
+		[Nn][Oo]|'')
+			system-control set-service-env "${s}" "$i"
+			;;
+		*)
+			system-control set-service-env "${s}" "$i" "$v"
+			;;
+		esac
+	done
+	printf >> "$3" "%s:\n" "${s}"
+	system-control print-service-env "${s}" >> "$3"
+fi
+
+if s="`system-control find kernel-vt-setterm 2>/dev/null`"
+then
+	for i in blanktime
+	do
+		v="`get_var \"$i\"`"
+		case "$v" in
+		[Nn][Oo]|'')
+			system-control set-service-env "${s}" "$i"
+			;;
+		*)
+			system-control set-service-env "${s}" "$i" "$v"
+			;;
+		esac
+	done
+	printf >> "$3" "%s:\n" "${s}"
+	system-control print-service-env "${s}" >> "$3"
+fi
+
+if s="`system-control find kernel-vt-kbdrate 2>/dev/null`"
+then
+	v="`get_var \"keyrate\"`"
+	# This service does not understand the kbdcontrol high-level settings, so we have to translate to the low-level kbdrate ones.
+	case "$v" in
+	[Nn][Oo]|'')
+		system-control set-service-env "${s}" "rate"
+		system-control set-service-env "${s}" "delay"
+		;;
+	slow)
+		system-control set-service-env "${s}" "rate" "1000"
+		system-control set-service-env "${s}" "delay" "504"
+		;;
+	normal)
+		system-control set-service-env "${s}" "rate" "500"
+		system-control set-service-env "${s}" "delay" "126"
+		;;
+	fast)
+		system-control set-service-env "${s}" "rate" "250"
+		system-control set-service-env "${s}" "delay" "34"
+		;;
+	*)
+		system-control set-service-env "${s}" "rate" "${v%%.*}"
+		system-control set-service-env "${s}" "delay" "${v#*.}"
+		;;
+	esac
+	printf >> "$3" "%s:\n" "${s}"
+	system-control print-service-env "${s}" >> "$3"
+fi
+
+# This is a common service, so no need for a find test.
+system-control set-service-env console-fb-realizer@head0 "KBDMAP" "kbdmaps/${keymap}.kbdmap"
+
+printf >> "$3" "%s:\n" console-fb-realizer@head0
+system-control print-service-env console-fb-realizer@head0 >> "$3"

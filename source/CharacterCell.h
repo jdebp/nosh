@@ -16,9 +16,10 @@ struct CursorSprite {
 	};
 	enum glyph_type {
 		UNDERLINE = 0U,
-		STAR = 1U,
+		BAR = 1U,
 		BOX = 2U,
-		BLOCK = 3U
+		BLOCK = 3U,
+		STAR = 4U
 	};
 };
 struct PointerSprite {

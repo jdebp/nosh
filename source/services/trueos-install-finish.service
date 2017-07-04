@@ -1,0 +1,24 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Finish off a TrueOS install after the reboot into the system.
+DefaultDependencies=false
+Wants=local-fs.target
+After=local-fs.target
+Before=reboot-after-install.target
+
+[Service]
+EnvironmentDirectory=env
+Type=oneshot
+ExecStart=rm /var/.pcbsd-firstboot
+ExecStart=sh -c 'test -n "${firstboot_sentinel}" && rm "${firstboot_sentinel}"'
+ExecStart=/usr/local/share/pcbsd/scripts/first-boot.sh
+# This only has meaningful behaviour at bootstrap, not later.
+RemainAfterExit=yes
+Restart=never
+
+[Install]
+StoppedBy=shutdown.target
+WantedBy=finish-install.target

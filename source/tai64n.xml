@@ -48,6 +48,12 @@ On a Linux system where it detects an Olson "right" timezone currently in use, i
 On other Linux systems, and on BSDs, it assumes that the system clock is UTC seconds since the Epoch and attempts to correct for (known) UTC leap seconds in order to determine TAI.
 </para>
 
+<para>
+<command>tai64n</command> uses the C/C++ runtime library for output, and therefore has the normal C/C++ stream buffering semantics.
+It uses the <citerefentry><refentrytitle>read</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function for input, however.
+To duplicate the GNU and BSD C/C++ runtime libraries' behaviours, it explicitly flushes the output's buffer whenever it is about to read more input and that input is the beginning of a new line.
+</para>
+
 </refsection><refsection><title>COMPATIBILITY</title>
 
 <para>

@@ -11,8 +11,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include <new>
 #include <unistd.h>
 #include "utils.h"
+#include "ProcessEnvironment.h"
 #include "fdutils.h"
-#include "environ.h"
 
 /* Table of commands ********************************************************
 // **************************************************************************
@@ -36,7 +36,7 @@ find (
 
 static inline
 bool
-default_path(
+default_path (
 	std::string & r
 ) {
 	const size_t n(confstr(_CS_PATH, NULL, 0));
@@ -47,14 +47,44 @@ default_path(
 	return true;
 }
 
+static inline
+void
+internal_execve (
+	const char * prog,
+	const char * const * args,
+	const char * const * envs
+) {
+#if defined(__OpenBSD__)
+	execve(prog, const_cast<char **>(args), const_cast<char **>(envs));
+#elif defined(__LINUX__) || defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
+	const int fd(open_non_interpreted_exec_at(AT_FDCWD, prog));
+	if (0 <= fd) {
+		fexecve(fd, const_cast<char **>(args), const_cast<char **>(envs));
+		const int saved_error(errno);
+		close(fd);
+		errno = saved_error;
+	}
+	execve(prog, const_cast<char **>(args), const_cast<char **>(envs));
+#else
+	const int fd(open_exec_at(AT_FDCWD, prog));
+	if (0 <= fd) {
+		fexecve(fd, const_cast<char **>(args), const_cast<char **>(envs));
+		const int saved_error(errno);
+		close(fd);
+		errno = saved_error;
+	}
+#endif
+}
+
 /// A safer form of execvp() that doesn't include the current directory in the default search path.
 static inline
 void
 safe_execvp (
 	const char * prog,
-	const char ** args
+	const char * const * args,
+	ProcessEnvironment & envs
 ) {
-	const char * path = std::getenv("PATH");
+	const char * path = envs.query("PATH");
 	std::string d;
 	if (!path) {
 		if (!default_path(d)) return;
@@ -76,17 +106,7 @@ safe_execvp (
 		buf[l++] = '/';
 		memcpy(buf.data() + l, prog, plen + 1);
 
-#if defined(__OpenBSD__)
-		const int rc(execve(buf.data(), const_cast<char **>(args), environ));
-#else
-		const int fd(open_exec_at(AT_FDCWD, buf.data()));
-		if (0 <= fd) {
-			fexecve(fd, const_cast<char **>(args), environ);
-			const int saved_error(errno);
-			close(fd);
-			errno = saved_error;
-		}
-#endif
+		internal_execve(buf.data(), args, envs.data());
 		if (ENOENT == errno) 
 			errno = error;	// Restore a more interesting error.
 		else if ((EACCES != errno) && (EPERM != errno) && (EISDIR != errno)) 
@@ -103,23 +123,24 @@ void
 exec_terminal (
 	const char * & prog,
 	const char * & next_program,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	for (;;) {
 		if (args.empty()) return;
 
 		if (std::strchr(next_program, '/')) {
 			args.push_back(0);
-			execv(next_program, const_cast<char **>(args.data()));
+			internal_execve(next_program, args.data(), envs.data());
 			return;
 		} else if (const command * c = find(next_program, false)) {
 			prog = basename_of(next_program);
 			setprocname(prog);
 			setprocargv(args.size(), args.data());
-			c->func(next_program, args);
+			c->func(next_program, args, envs);
 		} else {
 			args.push_back(0);
-			safe_execvp(next_program, args.data());
+			safe_execvp(next_program, args.data(), envs);
 			return;
 		}
 	}

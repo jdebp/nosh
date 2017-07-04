@@ -1,0 +1,27 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=A distributed, scalable Time Series Database written on top of HBase
+After=network.target
+
+[Service]
+# Installation needs to:
+# . Perform all of the *.jar lookup in the package base directory, /usr/local/share/%p, and populate CLASSPATH in the envdir.
+# . Set BIGTABLE_SUPPORT to -Xbootclasspath/p:alpn-boot*.jar and put that into the envdir.
+# . Search for JAVA_HOME and put that into the envdir.
+EnvironmentDirectory=env
+User=%p
+LimitNOFILE=65536
+# Note that
+# -XX:OnOutOfMemoryError=/usr/local/share/%p/tools/%p_restart.py
+# is incorrectly designed for running under service management.
+# Not only does the service manager handle restart, so all that the java program need do is exit when it encounters this condition;
+# but the service does not run as the superuser and could not manage itself anyway.
+ExecStart="${JAVA_HOME}/bin/java" ${JAVA_OPTS} -Xmx6000 -classpath "${CLASSPATH}:${HBASE_CONF}" -enableassertions -enablesystemassertions ${BIGTABLE_SUPPORT} -DLOG_FILE_PREFIX=/var/log/%p/%m- net.%p.tools.TSDMain
+PermissionsStartOnly=yes
+ExecStartPre=install -d -m 0755 -o %p /var/log/%p
+
+[Install]
+WantedBy=server.target

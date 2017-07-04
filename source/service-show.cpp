@@ -307,7 +307,8 @@ get_log (
 void
 service_show [[gnu::noreturn]] (
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 
@@ -408,7 +409,7 @@ service_show [[gnu::noreturn]] (
 			write_numeric_int_value("MainPID", p);
 			write_numeric_uint64_value("Timestamp", s);
 			bool leap;
-			const uint64_t z(tai64_to_time(s, leap));
+			const uint64_t z(tai64_to_time(envs, s, leap));
 			write_numeric_uint64_value("UTCTimestamp", z);
 			const char * const want('u' == want_flag ? "up" : 'O' == want_flag ? "once at most" : 'o' == want_flag ? "once" : 'd' == want_flag ? "down" : "nothing");
 			write_string_value("Want", want);
@@ -422,7 +423,7 @@ service_show [[gnu::noreturn]] (
 					write_numeric_int_value(status_event[j] + std::string("ExitStatusNumber"), number);
 					write_numeric_uint64_value(status_event[j] + std::string("Timestamp"), stamp);
 					bool s_leap;
-					const uint64_t zulu(tai64_to_time(stamp, s_leap));
+					const uint64_t zulu(tai64_to_time(envs, stamp, s_leap));
 					write_numeric_uint64_value(status_event[j] + std::string("UTCTimestamp"), zulu);
 				}
 			}

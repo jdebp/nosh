@@ -10,9 +10,14 @@ lvm
 suckless-mdev
 suckless-mdev-log
 suckless-mdev-rescan
+systemd-udev
+systemd-udev-log
+systemd-udev-trigger-add@devices
+systemd-udev-trigger-add@subsystems
 udev
 udev-finish
 udev-log
+udev-settle
 udev-trigger-add@devices
 udev-trigger-add@subsystems
 vdev

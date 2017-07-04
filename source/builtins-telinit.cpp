@@ -13,18 +13,18 @@ For copyright and licensing terms, see the file named COPYING.
 
 // These are the built-in commands visible in the BSD/SystemV compatibility utilities.
 
-extern void reboot_poweroff_halt_command ( const char * & , std::vector<const char *> & ) ;
-extern void rcctl ( const char * & , std::vector<const char *> & ) ;
-extern void wrap_system_control_subcommand ( const char * & , std::vector<const char *> & ) ;
-extern void shutdown ( const char * & , std::vector<const char *> & ) ;
-extern void telinit ( const char * & , std::vector<const char *> & ) ;
-extern void runlevel ( const char * & , std::vector<const char *> & ) ;
-extern void service ( const char * & , std::vector<const char *> & ) ;
-extern void chkconfig ( const char * & , std::vector<const char *> & ) ;
-extern void invoke_rcd ( const char * & , std::vector<const char *> & ) ;
-extern void update_rcd ( const char * & , std::vector<const char *> & ) ;
-extern void initctl_read ( const char * & , std::vector<const char *> & ) ;
-extern void foreground ( const char * & , std::vector<const char *> & ) ;
+extern void reboot_poweroff_halt_command ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void rcctl ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void wrap_system_control_subcommand ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void shutdown ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void telinit ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void runlevel ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void service ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void chkconfig ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void invoke_rcd ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void update_rcd ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void initctl_read ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void foreground ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
 
 extern const
 struct command 
@@ -53,7 +53,7 @@ commands[] = {
 	{	"initctl-read",		initctl_read				},
 
 	// These are spawned by other commands.
-	{	"foreground",			foreground		},
+	{	"foreground",		foreground				},
 };
 const std::size_t num_commands = sizeof commands/sizeof *commands;
 

@@ -7,10 +7,11 @@ Description=NFS daemon (NFSv4 enabled)
 Requires=kmod@nfsd
 Wants=rpcbind.service mountd.service nfsuserd.service kmod@nfsd
 Conflicts=nfsserver.service
+After=gssd.service
 
 [Service]
 EnvironmentDirectory=env
-ExecStart=%p ${flags}
+ExecStart=%p ${flags} ${old}
 Restart=never
 
 [Install]

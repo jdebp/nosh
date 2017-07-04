@@ -14,12 +14,14 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include "utils.h"
 #include "fdutils.h"
+#include "ProcessEnvironment.h"
 #include "FileDescriptorOwner.h"
 #include "DirStar.h"
 
 bool
 process_env_dir (
 	const char * prog,
+	ProcessEnvironment & envs,
 	const char * dir,
 	int scan_dir_fd,
 	bool ignore_errors,
@@ -70,7 +72,7 @@ bad_file:
 			continue;
 		}
 		if (0 == s.st_size) {
-			if (0 > unsetenv(entry->d_name)) {
+			if (!envs.unset(entry->d_name)) {
 				const int error(errno);
 				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, entry->d_name, std::strerror(error));
 				if (!ignore_errors)
@@ -78,7 +80,7 @@ bad_file:
 			}
 		} else {
 			const std::string val(read_env_file(prog, dir, entry->d_name, var_file_fd.get(), full, chomp));
-			if (0 > setenv(entry->d_name, val.c_str(), 1)) {
+			if (!envs.set(entry->d_name, val)) {
 				const int error(errno);
 				std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dir, entry->d_name, std::strerror(error));
 				if (!ignore_errors)

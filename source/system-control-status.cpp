@@ -24,12 +24,13 @@ static inline
 std::vector<std::string>
 lookup_bundle_directories (
 	const char * prog,
-	const std::vector<const char *> & args
+	const std::vector<const char *> & args,
+	const ProcessEnvironment & envs
 ) {
 	std::vector<std::string> r;
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {
 		std::string path, name, suffix;
-		const int rc(open_bundle_directory("", *i, path, name, suffix));
+		const int rc(open_bundle_directory(envs, "", *i, path, name, suffix));
 		if (0 > rc) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, *i, std::strerror(error));
@@ -64,6 +65,7 @@ void
 common_subcommand ( 
 	const char * & next_prog,
 	std::vector<const char *> & args,
+	const ProcessEnvironment & envs,
 	const char * command,
 	const char * arg
 ) {
@@ -89,7 +91,7 @@ common_subcommand (
 		throw EXIT_FAILURE;
 	}
 
-	args_storage = lookup_bundle_directories(prog, args);
+	args_storage = lookup_bundle_directories(prog, args, envs);
 	args = convert(args_storage);
 	if (arg)
 		args.insert(args.begin(), arg);
@@ -104,79 +106,89 @@ common_subcommand (
 void
 find ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
-	common_subcommand(next_prog, args, "ls", "-1d");
+	common_subcommand(next_prog, args, envs, "ls", "-1d");
 }
 
 void
 show_json ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
-	common_subcommand(next_prog, args, "service-show", "--json");
+	common_subcommand(next_prog, args, envs, "service-show", "--json");
 }
 
 void
 show ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
-	common_subcommand(next_prog, args, "service-show", NULL);
+	common_subcommand(next_prog, args, envs, "service-show", NULL);
 }
 
 void
 status ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
-	common_subcommand(next_prog, args, "service-status", NULL);
+	common_subcommand(next_prog, args, envs, "service-status", NULL);
 }
 
 void
 try_restart ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
-	common_subcommand(next_prog, args, "service-control", "--terminate");
+	common_subcommand(next_prog, args, envs, "service-control", "--terminate");
 }
 
 void
 unload_when_stopped ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
-	common_subcommand(next_prog, args, "service-control", "--exit");
+	common_subcommand(next_prog, args, envs, "service-control", "--exit");
 }
 
 void
 hangup ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
-	common_subcommand(next_prog, args, "service-control", "--hangup-main");
+	common_subcommand(next_prog, args, envs, "service-control", "--hangup-main");
 }
 
 void
 is_active ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
-	common_subcommand(next_prog, args, "service-is-up", NULL);
+	common_subcommand(next_prog, args, envs, "service-is-up", NULL);
 }
 
 void
 is_loaded ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
-	common_subcommand(next_prog, args, "service-is-ok", NULL);
+	common_subcommand(next_prog, args, envs, "service-is-ok", NULL);
 }
 
 void
 is_enabled ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
-	common_subcommand(next_prog, args, "service-is-enabled", NULL);
+	common_subcommand(next_prog, args, envs, "service-is-enabled", NULL);
 }

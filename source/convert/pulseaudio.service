@@ -12,3 +12,4 @@ ExecStart=%p --exit-idle-time=-1 ${flags}
 Restart=on-abort
  
 [Install]
+WantedBy=normal.target

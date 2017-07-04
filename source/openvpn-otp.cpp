@@ -1,3 +1,10 @@
+/* COPYING ******************************************************************
+For copyright and licensing terms, see the file named COPYING.
+// **************************************************************************
+*/
+
+#include <vector>
+#include <cstdio>
 #include <openssl/md5.h>
 #include <iostream>
 #include <fstream>
@@ -6,6 +13,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <unistd.h>
+#include "utils.h"
+#include "popt.h"
 
 static inline
 void
@@ -79,26 +88,38 @@ write_user_and_password (
 	}
 }
 
-int
-main (
-	int argc, 
-	const char ** argv
+void
+openvpn_otp [[gnu::noreturn]] (
+	const char * & next_prog,
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
-	if (1 != argc) {
-		std::cerr << "Usage: " << argv[0] << "\n";
-		return EXIT_FAILURE;
-	}
+	const char * prog(basename_of(args[0]));
 	try {
-		for (;;) {
-			char u[1024];
-			read_file(argv[0], u, sizeof u, "user_name");
-			unsigned char m[MD5_DIGEST_LENGTH] = "";
-			calculate_password(argv[0], m);
-			write_user_and_password(argv[0], u, m);
-			sleep(10);
-		}
-	} catch (const int i) {
-		return i;
+		popt::definition * top_table[] = {
+		};
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "prog");
+
+		std::vector<const char *> new_args;
+		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
+		p.process(true /* strictly options before arguments */);
+		args = new_args;
+		next_prog = arg0_of(args);
+		if (p.stopped()) throw EXIT_SUCCESS;
+	} catch (const popt::error & e) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
+		throw EXIT_FAILURE;
 	}
-	return 0;
+	if (!args.empty()) {
+		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Unexpected argument(s).");
+		throw static_cast<int>(EXIT_USAGE);
+	}
+	for (;;) {
+		char u[1024];
+		read_file(prog, u, sizeof u, "user_name");
+		unsigned char m[MD5_DIGEST_LENGTH] = "";
+		calculate_password(prog, m);
+		write_user_and_password(prog, u, m);
+		sleep(10);
+	}
 }

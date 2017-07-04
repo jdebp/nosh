@@ -10,7 +10,7 @@
 
 <refnamediv>
 <refname>udp-socket-listen</refname>
-<refpurpose>create a socket listening for incoming UDP connections and chain</refpurpose>
+<refpurpose>create a socket listening for incoming UDP datagrams and chain</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>

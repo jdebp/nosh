@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Per-user subsystems target
+EarlySupervise=true
+
+[Service]
+User=nobody
+
+[Install]
+StoppedBy=shutdown.target
+WantedBy=normal.target

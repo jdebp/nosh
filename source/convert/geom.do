@@ -21,15 +21,15 @@ while read -r n
 do
 	where="${n#$r/mount@}"
 	what="`tail -n 2 \"$n/service/start\"|head -n 1|sed -e 's:/dev/::'`"
-	if >/dev/null 2>&1 system-control find "gdbe@$where"
+	if s="`system-control find \"gdbe@$where\" 2>/dev/null`"
 	then
-		system-control set-service-env "gdbe@$where" lock "`get_conf gbde_lock_\"$what\"`"
-		system-control print-service-env "gbde@$where" >> "$3"
+		system-control set-service-env "$s" lock "`get_conf gbde_lock_\"$what\"`"
+		system-control print-service-env "$s" >> "$3"
 	fi
-	if >/dev/null 2>&1 system-control find "geli@$where"
+	if s="`system-control find \"geli@$where\" 2>/dev/null`"
 	then
-		system-control set-service-env "geli@$where" flags "`get_conf eli_\"$what\"_flags`"
-		system-control set-service-env "geli@$where" autodetach "`get_conf geli_\"$what\"_autodetach`"
-		system-control print-service-env "geli@$where" >> "$3"
+		system-control set-service-env "$s" flags "`get_conf eli_\"$what\"_flags`"
+		system-control set-service-env "$s" autodetach "`get_conf geli_\"$what\"_autodetach`"
+		system-control print-service-env "$s" >> "$3"
 	fi
 done

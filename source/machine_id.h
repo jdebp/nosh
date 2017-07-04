@@ -17,6 +17,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include "uuid/uuid.h"
 #endif
 
+struct ProcessEnvironment;
+
 namespace machine_id {
 
 extern uuid_t the_machine_id;
@@ -60,7 +62,7 @@ write_volatile_hostuuid (
 bool 
 validate () ;
 bool
-read_fallbacks () ;
+read_fallbacks (const ProcessEnvironment &) ;
 
 }
 

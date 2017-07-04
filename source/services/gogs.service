@@ -4,7 +4,7 @@
 
 [Unit]
 Description=Go Git Service
-After=syslog.target
+After=local-syslog.target
 After=network.target
 
 [Service]

@@ -40,8 +40,10 @@ enable	cyclog@iscsid.service
 enable	iscsid.service
 enable	cyclog@newsyslog.service
 enable	newsyslog.service
-enable	cyclog@openntpd.service
-enable	openntpd.service
+enable	cyclog@ntpd.service
+enable	ntpd.service
+disable	cyclog@openntpd.service
+disable	openntpd.service
 enable	cyclog@zfs.service
 enable	zfs.service
 

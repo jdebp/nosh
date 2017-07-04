@@ -13,6 +13,7 @@ For copyright and licensing terms, see the file named COPYING.
 #endif
 #include <unistd.h>
 #include "utils.h"
+#include "ProcessEnvironment.h"
 #include "popt.h"
 #include "FileStar.h"
 
@@ -27,7 +28,8 @@ static const char oom_score_filename[] = "/proc/self/oom_score_adj";
 void
 oom_kill_protect ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	bool oknoaccess(false);
@@ -57,7 +59,7 @@ oom_kill_protect (
 	args.erase(args.begin());
 
 	if (0 == std::strcmp(arg, "fromenv")) {
-		const char * env(std::getenv("oomprotect"));
+		const char * env(envs.query("oomprotect"));
 		if (!env) {
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "oomprotect", "Missing environment value");
 			throw EXIT_FAILURE;

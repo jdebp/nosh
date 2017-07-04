@@ -28,7 +28,8 @@ For copyright and licensing terms, see the file named COPYING.
 void
 make_private_fs ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 	bool temp(false), devices(false);

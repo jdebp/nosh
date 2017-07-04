@@ -36,7 +36,7 @@ extern bool per_user_mode;	// Shared with the service manager client API.
 #define	EMERGENCY_SIGNAL	(SIGRTMIN + 2)
 #else
 // On OpenBSD we do the best of a bad job.
-#define	EMERGENCY_SIGNAL	SIGINFO
+#define	EMERGENCY_SIGNAL	SIGIO
 #endif
 
 // This signal tells process #1 to spawn "system-control start sysinit".
@@ -49,12 +49,12 @@ extern bool per_user_mode;	// Shared with the service manager client API.
 #endif
 
 // This signal tells process #1 to enter what BSD terms "single user mode" and what systemd terms "rescue mode".
-#if defined(__LINUX__) || defined(__linux__)
-// On Linux, we go with systemd since upstart and System 5 init do not have a defined convention.
+#if defined(SIGRTMIN)
+// We go with systemd since upstart and System 5 init do not have a defined convention.
 #define RESCUE_SIGNAL	(SIGRTMIN + 1)
 #else
-// On the BSDs, it is SIGTERM.
-#define RESCUE_SIGNAL	SIGTERM
+// On OpenBSD we do the best of a bad job.
+#define	RESCUE_SIGNAL	SIGURG
 #endif
 
 // This signal tells process #1 to enter what BSD terms "multi user mode" and what systemd terms "default mode".
@@ -71,7 +71,8 @@ extern bool per_user_mode;	// Shared with the service manager client API.
 // On Linux, we go with systemd since upstart and System 5 init do not have a defined convention.
 #define SAK_SIGNAL	SIGINT
 #else
-// On the BSDs, this is overlapped by reboot request.
+// On the BSDs, it is SIGINFO.
+#define SAK_SIGNAL	SIGINFO
 #endif
 
 // This signal tells process #1 to activate the reboot target.
@@ -79,7 +80,7 @@ extern bool per_user_mode;	// Shared with the service manager client API.
 // On Linux, we go with systemd since upstart and System 5 init do not have a defined convention.
 #define REBOOT_SIGNAL	(SIGRTMIN + 5)
 #else
-// On the BSDs, it is SIGINT and overlaps secure-attention-key.
+// On the BSDs, it is SIGINT.
 #define REBOOT_SIGNAL	SIGINT
 #endif
 
@@ -123,7 +124,8 @@ extern bool per_user_mode;	// Shared with the service manager client API.
 // BSD init, upstart, systemd, and System 5 init do not have a defined convention.
 #define FORCE_POWEROFF_SIGNAL	(SIGRTMIN + 14)
 #else
-// And we cannot define this at all on OpenBSD!
+// On OpenBSD we do the best of a bad job.
+#define FORCE_POWEROFF_SIGNAL	SIGTERM
 #endif
 
 #endif

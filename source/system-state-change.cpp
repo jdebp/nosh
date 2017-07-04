@@ -37,12 +37,7 @@ static inline
 int
 query_user_manager_pid()
 {
-	const char * manager_pid(std::getenv("MANAGER_PID"));
-	if (!manager_pid) return getsid(0);
-	const char * old = manager_pid;
-	const long l(std::strtol(manager_pid, const_cast<char **>(&manager_pid), 0));
-	if (*manager_pid || old == manager_pid) return getsid(0);
-	return static_cast<int>(l);
+	return getsid(0);
 }
 
 static
@@ -132,7 +127,8 @@ poweroff (
 void
 reboot_poweroff_halt_command [[gnu::noreturn]] (
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 	bool force(stripfast(prog));
@@ -176,7 +172,8 @@ reboot_poweroff_halt_command [[gnu::noreturn]] (
 void
 emergency_rescue_normal_command [[gnu::noreturn]] ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
@@ -214,7 +211,8 @@ emergency_rescue_normal_command [[gnu::noreturn]] (
 void
 init ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 	enum Action { ///< in order of lowest to highest precedence

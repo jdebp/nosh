@@ -42,7 +42,8 @@ void open_mode_definition::action(popt::processor &)
 void
 fdredir ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 	unsigned long permissions = 0666;

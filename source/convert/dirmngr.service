@@ -11,3 +11,4 @@ EnvironmentDirectory=env
 ExecStart=%p --supervised
 
 [Install]
+WantedBy=normal.target

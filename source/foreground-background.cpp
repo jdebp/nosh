@@ -81,7 +81,8 @@ foreground_background_common (
 void
 foreground ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	foreground_background_common(true, ";", next_prog, args);
 }
@@ -89,7 +90,8 @@ foreground (
 void
 background ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
 ) {
 	foreground_background_common(false, "&", next_prog, args);
 }

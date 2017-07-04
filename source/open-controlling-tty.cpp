@@ -18,6 +18,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <fcntl.h>
 #include "popt.h"
 #include "utils.h"
+#include "ProcessEnvironment.h"
 
 /* Main function ************************************************************
 // **************************************************************************
@@ -26,7 +27,8 @@ For copyright and licensing terms, see the file named COPYING.
 void
 open_controlling_tty ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 #if defined(_GNU_SOURCE)
 	bool vhangup(false);
@@ -64,7 +66,7 @@ open_controlling_tty (
 		throw EXIT_FAILURE;
 	}
 
-	const char * tty(std::getenv("TTY"));
+	const char * tty(envs.query("TTY"));
 	if (!tty) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "TTY", "Missing environment variable.");
 		throw EXIT_FAILURE;

@@ -11,6 +11,6 @@ Accept=false
 # But some servers (step forward, udev) are overly fussy and require raw sockets.
 NetlinkRaw=true
 # If this is too low, a flurry of P&P events can cause the kernel to run out of buffers and wedge P&P service forever.
-#ReceiveBuffer=134217728
-ReceiveBuffer=128M
+ReceiveBuffer=134217728
+#ReceiveBuffer=128M
 ListenNetlink=kobject-uevent 1

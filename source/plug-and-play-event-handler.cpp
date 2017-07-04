@@ -18,6 +18,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include "popt.h"
 #include "utils.h"
+#include "ProcessEnvironment.h"
 #include "listen.h"
 #include "SignalManagement.h"
 
@@ -67,7 +68,8 @@ reap (
 void
 plug_and_play_event_handler ( 
 	const char * & next_prog,
-	std::vector<const char *> & args
+	std::vector<const char *> & args,
+	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
 	bool verbose(false);
@@ -94,7 +96,7 @@ plug_and_play_event_handler (
 		throw static_cast<int>(EXIT_USAGE);
 	}
 
-	const unsigned listen_fds(query_listen_fds());
+	const unsigned listen_fds(query_listen_fds(envs));
 	if (1U > listen_fds) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "LISTEN_FDS", std::strerror(error));
@@ -181,7 +183,7 @@ exit_error:
 						const std::string::size_type q(s.find('='));
 						const std::string var(s.substr(0, q));
 						const std::string val(q == std::string::npos ? std::string() : s.substr(q + 1, std::string::npos));
-						setenv(var.c_str(), val.c_str(), 1);
+						envs.set(var, val);
 					}
 					if (e >= r) break;
 					++e;
