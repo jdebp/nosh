@@ -1,1 +1,2 @@
 system-control	systemctl
+system-control	systemd-escape

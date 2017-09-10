@@ -1,7 +1,8 @@
 avahi-daemon
 axfrdns
+clamav
 bcron-spool
-dbus
+dbus-daemon
 dbmail-imapd
 dbmail-pop3d
 epmd

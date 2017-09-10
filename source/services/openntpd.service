@@ -6,8 +6,10 @@
 Description=OpenBSD NTP daemon
 
 [Service]
+Type=forking
 EnvironmentDirectory=env
 ExecStart=ntpd -d ${config:+-f "${config}"} ${flags}
+RestartSec=60
 
 [Install]
 WantedBy=workstation.target

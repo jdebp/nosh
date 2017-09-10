@@ -52,7 +52,13 @@ esac
 
 ##########################################################
 # binaries and doco
-for i in exec terminal-management service-management terminal-extras zsh-completion systemv-shims systemd-shims upstart-shims execline-shims core-shims debian-shims bsd-shims openbsd-shims ucspi-tcp-shims kbd-shims ;
+
+case "`uname`" in
+Linux)	extra_packages="logrotate-shims" ;;
+*BSD)	extra_packages="" ;;
+esac
+
+for i in exec terminal-management service-management terminal-extras zsh-completion systemv-shims systemd-shims upstart-shims execline-shims core-shims debian-shims bsd-shims openbsd-shims ucspi-tcp-shims kbd-shims ${extra_packages} ;
 do
 	if test -s package/nosh-"$i".commands1 || test -s package/nosh-"$i".aliases1 ;
 	then
@@ -134,8 +140,8 @@ done
 install -d -m 0755 "${dest}"/nosh-bundles/var/sv 
 install -d -m 0755 "${dest}"/nosh-bundles/var/local/sv 
 install -d -m 0755 "${dest}"/nosh-bundles/etc/service-bundles/services 
+install -d -m 0755 "${dest}"/nosh-bundles/etc/service-bundles/generators 
 install -d -m 0755 "${dest}"/nosh-bundles/etc/service-bundles/targets 
-install -d -m 0755 "${dest}"/nosh-bundles/etc/system-control/convert 
 (
 	cat package/common-services package/common-sockets package/common-ttys 
 	case "`uname`" in
@@ -178,10 +184,11 @@ done
 do
 	(cd "${src}"/config/services && pax -r -w -l -- "$j" "${absdest}"/nosh-bundles/etc/service-bundles/services/)
 done
-for j in issue.vc
+for j in cyclog@.service kmod@.service
 do
-	(cd "${src}"/config/vt && pax -r -w -l -- "$j" "${absdest}"/nosh-bundles/etc/)
-done
+	(cd "${src}"/config/service-generators && pax -r -w -l -- "$j" "${absdest}"/nosh-bundles/etc/service-bundles/generators/)
+done 
+ln -f -s "${docprefix}"/doc/nosh/COPYING "${dest}"/nosh-bundles/etc/service-bundles/generators/
 (
 	cat package/common-etc-services 
 	case "`uname`" in
@@ -191,6 +198,13 @@ done
 ) | while read j ;
 do
 	(cd "${src}"/config/services && pax -r -w -l -- "$j" "${absdest}"/nosh-bundles/etc/service-bundles/services/)
+done
+
+##########################################################
+# ancilliaries
+for j in issue.vc
+do
+	(cd "${src}"/config/vt && pax -r -w -l -- "$j" "${absdest}"/nosh-bundles/etc/)
 done
 install -d -m 0755 "${dest}"/nosh-bundles/"${etcprefix}"/etc/devd 
 ( cd "${src}"/config && pax -r -w -l -- devd "${absdest}"/nosh-bundles/"${etcprefix}"/etc/)
@@ -204,7 +218,7 @@ do
 done
 
 ##########################################################
-# units
+# Running under foreign service management
 install -d -m 0755 "${dest}"/nosh-run-via-openbsd-rc/"${etcprefix}"/etc/rc.d 
 install -d -m 0755 "${dest}"/nosh-run-via-mewburn-rc/"${etcprefix}"/etc/rc.d 
 install -d -m 0755 "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system 
@@ -243,7 +257,9 @@ done
 
 ##########################################################
 # Conversion tools
+install -d -m 0755 "${dest}"/nosh-bundles/etc/system-control/convert 
 while read j ;
 do
 	ln -f -- "${src}"/config/convert/"$j" "${dest}"/nosh-bundles/etc/system-control/convert/
 done < package/conversion-tools
+ln -f -s "${docprefix}"/doc/nosh/COPYING "${dest}"/nosh-bundles/etc/system-control/convert/

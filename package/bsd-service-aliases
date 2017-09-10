@@ -14,9 +14,8 @@ rpclockd	rpc_lockd
 rpcstatd	rpc_statd
 securelevel	kern_securelevel
 snddetect	pc-sounddetect
+stf     6to4
 ugidfw	bsdextended
-unbound	local-unbound
-unbound	local_unbound
 vixiecron	cron
 ypbind	nis_client
 ypldap	nis_ypldap

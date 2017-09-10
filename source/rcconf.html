@@ -1,4 +1,4 @@
-<title>Importing systemd unit files</title>
+<title>/etc/rc.conf conversion</title>
 <link rel="Up" href="external-formats.html" title="External formats" />
 <h1>
 <code>/etc/rc.conf</code> conversion
@@ -7,45 +7,13 @@
 <p>
 The native mechanism for this system is the service bundle.
 Services are enabled/disabled with service bundle mechanisms, and service environment variables are set with the likes of <a href="envdir.html"><code>envdir</code></a> processing a directory within the service bundle.
-The external formats import subsystem creates <a href="gazetteer.html#rc.conf">an amalgamated <code>rc.conf</code> file</a> which incorporates the information from all of the several system <code>rc.conf</code> files as well as from other sources.
-There are two ways in which settings from it are then imported.
+The external formats import subsystem first <a href="rcconf-amalgamation.html">creates an amalgamated <code>rc.conf</code> file</a> which incorporates the information from all of the several system <code>rc.conf</code> files as well as from other sources.
+Then it translates from that amalgamated form into the native mechanisms for this system.
 </p>
-
-<h2>
-<code>rc.conf</code> contents
-</h2>
 
 <p>
-<a href="gazetteer.html#rc.conf">The amalgamated <code>rc.conf</code> file</a> incorporates the information from:
+There are three ways in which settings from it are then imported: service presets, d&aelig;mon environment variables, and the generation of nonce service bundles.
 </p>
-<ul>
-<li><p>
-The FreeNAS <code>/data/freenas-v1.db</code> database, in particular the enabled "system tunables".
-</p></li>
-<li><p>
-<code>/etc/default/rc.conf</code>, which is the "known starting point" of the <code>rc.conf</code> system.
-</p></li>
-<li><p>
-All files named in the <code>rc_conf_files</code> setting that is in <code>/etc/default/rc.conf</code>.
-These include <code>/etc/rc.conf</code>, <code>/etc/rc.conf.local</code>, and any further extra files employed by the likes of PC-BSD/TrueOS.
-</p></li>
-<li><p>
-The result of converting several console settings files into the equivalent FreeBSD/TrueOS <code>rc.conf</code> settings:
-</p>
-<ul>
-<li><p>
-<code>/etc/vconsole.conf</code>, which is the systemd console settings file;
-</p></li>
-<li><p>
-<code>/etc/defaults/console-setup</code> and <code>/etc/defaults/keyboard</code>, which are the Debian console-setup and keyboard packages' console settings files;
-and
-</p></li>
-<li><p>
-<code>/etc/kbd/config</code>, which is the Debian kbd package's console settings file.
-</p></li>
-</ul>
-</li>
-</ul>
 
 <h2>
 Service preset information
@@ -68,7 +36,7 @@ The enable flag actually behaves as an inverted inhibitor, simply blocking all a
 </p>
 
 <h2>
-Daemon environment information
+D&aelig;mon environment information
 </h2>
 
 <p>
@@ -87,3 +55,34 @@ The <code>set</code>/<code>get</code> way of doing things not only doesn't work 
 In contrast, the <code>enable</code>/<code>disable</code> way of doing things works both with the original tool and the shim.
 (Ports of the original OpenBSD tool to other BSDs will also likely ensure that <code>enable</code>/<code>disable</code> do the right thing for the target platform.)
 </p>
+
+<h2>
+Nonce service bundles
+</h2>
+
+<p>
+<code>/etc/rc.conf</code> and <code>/etc/rc.conf.local</code> on BSD systems also imply the existence of various service bundles, in particular the existence of service bundles for <a href="networking.html">various networking services attached to specific network interfaces</a>.
+</p>
+
+<p>
+From the information in those files (as amalgamated, possibly including other sources of network configuration that have been first translated into the BSD form) the import subsystem generates nonce services such as <code>ifconfig@lo</code> which are resposible for running network interface configuration commands and d&aelig;mons.
+</p>
+
+<p>
+The meanings of the various <code>network_interfaces</code>, <code>dhclient_program</code>, <code>ifconfig_<i>name</i></code>, <code>ifconfig_<i>name</i>_ipv6</code>, and <code>ifconfig_<i>name</i>_aliases</code> settings that drive this are roughly as described in the <code>rc.conf</code> user manual page in FreeBSD, TrueOS, and DragonFly BSD.
+There are some slight variations.
+For examples:
+</p>
+<ul>
+<li>
+<p>
+Some of the settings that FreeBSD already deprecates are outright not supported in the conversion process.
+Do not rely upon <code>ipv4_addrs_<i>name</i></code>, <code>ipv6_enable</code>, <code>ipv6_prefer</code>, <code>gif_interfaces</code> and suchlike to work.
+</p>
+</li>
+<li>
+<p>
+The <code>dhclient_program</code> setting is used to switch amongst various DHCP client softwares, and controls which services are enabled.
+</p>
+</li>
+</ul>

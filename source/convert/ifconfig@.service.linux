@@ -1,0 +1,27 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Network configuration for interface %I
+Wants=%p-log.service
+After=%p-log.service
+
+[Service]
+EnvironmentDirectory=env
+ExecStartPre=sh -c 'test -n "${link_opts}" && %p '"'%I'"' hw ether ${link_opts}'
+ExecStartPre=sh -c 'printenv link_aliases | while read -r a ; do test -n "${a}" && %p '"'%I'"' hw ether "${a}" ; done'
+ExecStartPre=sh -c 'test -n "${inet6_opts}" && %p '"'%I'"' inet6 ${inet6_opts}'
+ExecStartPre=sh -c 'printenv inet6_aliases | while read -r a ; do test -n "${a}" && %p '"'%I'"' inet6 add ${a} ; done'
+ExecStartPre=sh -c 'test -n "${inet4_opts}" && %p '"'%I'"' inet ${inet4_opts}'
+ExecStartPre=sh -c 'printenv inet4_aliases | while read -r a ; do test -n "${a}" && %p '"'%I'"' inet add ${a} ; done'
+ExecStartPre=%p '%I' up
+ExecStopPost=%p '%I' down
+ExecStopPost=sh -c 'printenv inet4_aliases | while read -r a ; do test -n "${a}" && %p '"'%I'"' inet del ${a} ; done'
+ExecStopPost=sh -c 'printenv inet6_aliases | while read -r a ; do test -n "${a}" && %p '"'%I'"' inet6 del ${a} ; done'
+#ExecStopPost=sh -c 'printenv link_aliases | while read -r a ; do test -n "${a}" && %p '"'%I'"' hw ether del ${a} ; done'
+#ExecStopPost=%p '%I' inet6 -accept_rtadv ifdisabled
+RemainAfterExit=true
+
+[Install]
+WantedBy=static-networking.target

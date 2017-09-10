@@ -28,7 +28,8 @@ It is designed to be run as part of system or container/jail initialization.
 </para>
 
 <para>
-The dynamic hostname is the hostname that is returned from the <citerefentry><refentrytitle>gethostname</refentrytitle><manvolnum>2</manvolnum></citerefentry> and the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> library functions, which may vary during the system's lifetime as the machine is (for example) granted DHCP leases.
+The dynamic hostname is the hostname that is returned from the <citerefentry><refentrytitle>gethostname</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function, which may vary during the system's lifetime as the machine is (for example) granted DHCP leases.
+On operating systems such as FreeBSD, OpenBSD, and Linux, the dynamic hostname is the same as the nodename that is returned by the the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function (although the POSIX standard does not in fact require this).
 </para>
 
 <para>
@@ -57,13 +58,13 @@ However, for best results, administrators should obey the rules set out in RFC 1
 the characters 
 <code>A</code>&#x2013;<code>Z</code>, 
 <code>a</code>&#x2013;<code>z</code>, 
-<code>0</code>&#x2013;<code>9</code>, and 
+<code>0</code>&#x2013;<code>9</code>, 
+<code>.</code>, and
 <code>-</code>
-(preferring lowercase, since RFC 1123 Host Names are not case sensitive)
+(preferring lowercase, since RFC 1123 Host Names are not case sensitive) with the first character not being either <code>.</code> or <code>-</code> and the last character not being <code>.</code>
 </para></listitem>
 <listitem><para>
-a maximum of 63 characters
-(hostnames here being the first label of an RFC 1123 Host Name)
+a maximum of 63 characters (hostnames here being the initial label(s) of an RFC 1123 Host Name)
 </para></listitem>
 </itemizedlist>
 
@@ -73,10 +74,10 @@ For clarity, observe that a RFC 1123 Host Name comprises two parts:
 
 <itemizedlist>
 <listitem><para>
-the dynamic hostname, as set by this command, comprising the first label; and
+the dynamic hostname, as set by this command, comprising the initial one or more labels (usually only the first label); and
 </para></listitem>
 <listitem><para>
-the domain name, as returned by the <citerefentry><refentrytitle>getdomainname</refentrytitle><manvolnum>2</manvolnum></citerefentry> and the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> library functions, comprising the remaining labels.
+the domain name, as returned by the <citerefentry><refentrytitle>getdomainname</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function (and on Linux the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function), comprising the remaining labels.
 </para></listitem>
 </itemizedlist>
 

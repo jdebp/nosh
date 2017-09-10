@@ -7,14 +7,12 @@ Description=Per-user "Desktop" bus service
 Description=Avoid using this; and use a user-level service instead.
 After=user-runtime@%I
 Wants=user-runtime@%I
+Conflicts=user-dbus-daemon@%I
 
 [Service]
 systemdUserEnvironment=true
 User=%I
-# BSD dbus doesn't support --nopidfile, even though that would be nice here.
-# BSD dbus doesn't support --address=systemd: even though that would be the closest to our UCSPI-LOCAL.
-# BSD dbus doesn't support --address=unix:runtime=yes even though that would be a reasonable fallback that we could bodge.
-ExecStart=dbus-daemon --config-file ./per-user.conf --nofork --address="unix:path=/run/user/%I/bus"
+ExecStart=dbus-broker-launch -v --scope user --listen inherit
 Restart=always
 
 [Install]

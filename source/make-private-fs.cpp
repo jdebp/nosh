@@ -146,16 +146,16 @@ make_private_fs (
 		const static struct api_symlink symlinks[] = 
 		{
 #if defined(__LINUX__) || defined(__linux__)
-			{	"/dev/ptmx",	"pts/ptmx"		},
-			{	"/dev/fd",	"/proc/self/fd"		},
-//			{	"/dev/core",	"/proc/kcore"		},
-			{	"/dev/stdin",	"/proc/self/fd/0"	},
-			{	"/dev/stdout",	"/proc/self/fd/1"	},
-			{	"/dev/stderr",	"/proc/self/fd/2"	},
-			{	"/dev/shm",	"/run/shm"		},
+			{	1,	"/dev/ptmx",	"pts/ptmx"		},
+			{	0,	"/dev/fd",	"/proc/self/fd"		},
+//			{	0,	"/dev/core",	"/proc/kcore"		},
+			{	0,	"/dev/stdin",	"/proc/self/fd/0"	},
+			{	0,	"/dev/stdout",	"/proc/self/fd/1"	},
+			{	0,	"/dev/stderr",	"/proc/self/fd/2"	},
+			{	0,	"/dev/shm",	"/run/shm"		},
 #else
-			{	"/dev/urandom",	"random"		},
-			{	"/dev/shm",	"/run/shm"		},
+			{	0,	"/dev/urandom",	"random"		},
+			{	0,	"/dev/shm",	"/run/shm"		},
 #endif
 		};
 
@@ -187,21 +187,25 @@ make_private_fs (
 			}
 			if (0 > nmount(i->iov, i->ioc, i->flags)) {
 				const int error(errno);
-				std::fprintf(stderr, "%s: ERROR: %s: %s: %s\n", prog, "nmount", i->name, std::strerror(error));
+				std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, "nmount", i->name, std::strerror(error));
 				throw EXIT_FAILURE;
 			}
 		}
 		for (const api_symlink * i(symlinks); (symlinks + sizeof symlinks/sizeof *symlinks) != i; ++i) {
-			if (0 > symlink(i->target, i->name)) {
+			for (int force = !!i->force ; ; --force) {
+				if (0 <= symlink(i->target, i->name)) break;
 				const int error(errno);
-				std::fprintf(stderr, "%s: ERROR: %s: %s: %s\n", prog, "symlink", i->name, std::strerror(error));
-				throw EXIT_FAILURE;
+				if (!force || EEXIST != error) {
+					std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, "symlink", i->name, std::strerror(error));
+					throw EXIT_FAILURE;
+				}
+				unlink(i->name);
 			}
 		}
 		const FileDescriptorOwner new_dev_fd(open_dir_at(AT_FDCWD, "/dev"));
 		if (0 > new_dev_fd.get()) {
 			const int error(errno);
-			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "/dev", std::strerror(error));
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "/dev", std::strerror(error));
 			throw EXIT_FAILURE;
 		}
 		for (const char ** i(device_files); (device_files + sizeof device_files/sizeof *device_files) != i; ++i) {

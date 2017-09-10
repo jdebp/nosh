@@ -7,17 +7,18 @@
 #
 
 # Ordinary services
-disable	static_arp@*.service
-disable	static_ndp@*.service
-disable	static_ip4@*.service
-disable	static_ip6@*.service
-disable	ifconfig@*.service
-disable	ifscript@*.service
+enable	static_arp@*.service
+enable	static_ndp@*.service
+enable	static_ip4@*.service
+enable	static_ip6@*.service
+enable	ifconfig@*.service
+enable	ifscript@*.service
 disable	natd@*.service
 enable	dhclient@*.service
 enable	dhcpcd@*.service
+enable	udhcpc@*.service
 disable	hostap@*.service
-disable	wpa_supplicant@*.service
+enable	wpa_supplicant@*.service
 disable	ppp@*.service
 disable	spppcontrol@*.service
 disable	rfcomm_pppd@*.service

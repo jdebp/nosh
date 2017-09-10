@@ -10,7 +10,7 @@ EnvironmentDirectory=env
 User=%p
 RuntimeDirectory=%p
 ExecStart=%p -E -D -f "${CFGFILE:-/etc/%p/%p.cfg}" -m "${SHM_MEMORY:-64}" -M "${PKG_MEMORY:-8}"
-Restart=on-abort
+RestartSec=5
 
 [Install]
 WantedBy=server.target

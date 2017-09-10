@@ -165,7 +165,7 @@ Until you change it, the <code>service/root/servers/@</code> file in the <code>d
 The <code>tinydns@127.53.0.1</code> content DNS server is set up as a private root content DNS server.
 It has delegations in its database for all of the (ICANN) top-level domains, and will direct <code>dnscache</code> to the second-level content DNS servers appropriately.
 </p><p>
-It also contains data that will cause it to answer (same-host and same-site originated) queries for reverse lookups of 10.0.0.0/8, 127.0.0.0/8, and 192.168.0.0/16 IP addresses.
+It also contains data that will cause it to answer (same-host and same-site originated) queries for <a href="http://jdebp.eu./FGA/dns-private-address-split-horizon.html#WhatToDo">reverse lookups of 10.0.0.0/8, 127.0.0.0/8, and 192.168.0.0/16 IP addresses, and some others</a>.
 </p><p>
 Keeping this as the configured <code>service/root/servers/@</code> is a good idea for several reasons.
 It is generally good practice to run one's own private root content DNS server.

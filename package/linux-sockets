@@ -1,4 +1,5 @@
 acpid
+dbus-broker
 gpsd
 kpropd
 systemd-syslog-read

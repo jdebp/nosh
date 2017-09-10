@@ -8,7 +8,9 @@ After=motd-dynamic.service hostname.service
 
 [Service]
 SessionLeader=true
-ExecStart=%p %I
+# The login-options are specific to util-linux login.
+# This needs fixing if we ever find agetty ported to a BSD.
+ExecStart=%p --keep-baud --login-options '-p -- \u' %I
 RestartSec=0
 # Some job control shells ignore SIGTERM and need an explicit SIGHUP.
 SendSIGHUP=on

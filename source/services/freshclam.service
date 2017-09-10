@@ -6,7 +6,8 @@
 Description=Update ClamAV database daemon
 
 [Service]
-ExecStart=%p --daemon --stdout
+ExecStart=%p --foreground --stdout
+RestartSec=7200
 
 [Install]
 WantedBy=workstation.target

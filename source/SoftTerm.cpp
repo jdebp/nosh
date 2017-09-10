@@ -1873,7 +1873,7 @@ SoftTerm::ControlSequence(uint32_t character)
 /* CUP */		case 'H':	GotoYX(); break;
 /* CHT */		case 'I':	HorizontalTab(OneIfZero(SumArgs()), true); break;
 /* ED */		case 'J':	EraseInDisplay(); break;
-/* EK */		case 'K':	EraseInLine(); break;
+/* EL */		case 'K':	EraseInLine(); break;
 /* IL */		case 'L':	InsertLines(OneIfZero(SumArgs())); break;
 /* DL */		case 'M':	DeleteLines(OneIfZero(SumArgs())); break;
 /* EF */		case 'N':	break; // Erase Field has no applicability as there are no fields.

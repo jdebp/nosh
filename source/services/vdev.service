@@ -14,7 +14,7 @@ Conflicts=busybox-mdev udev suckless-mdev systemd-udev
 EnvironmentDirectory=env
 ExecStartPre=restorecon -R ${MOUNTPOINT:-/dev}
 ExecStart=%p --foreground --config-file ${CONFIG:-/etc/vdev/vdev.conf} $OPTIONS ${MOUNTPOINT:-/dev}
-Restart=on-abort
+RestartSec=5
 
 [Install]
 WantedBy=sysinit.target

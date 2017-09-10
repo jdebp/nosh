@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Elasticsearch
+After=network.target
+
+[Service]
+# Installation needs to:
+# . Search for JAVA_HOME and put that into the envdir.
+EnvironmentDirectory=env
+User=%p
+LimitNOFILE=65536
+ExecStart="${ES_HOME:-/usr/share/%p}/bin/%p" +-Des.default.path.home="${ES_HOME:-/usr/share/%p}" ${LOG_DIR:+-Des.default.path.logs="${LOG_DIR}"} -Des.default.path.data="${DATA_DIR:-/var/lib/%p}" ${CONF_DIR:+-Des.default.path.conf="${CONF_DIR}"} ${CONF_FILE:+-Des.default.config="${CONF_FILE}"}
+
+[Install]
+WantedBy=server.target

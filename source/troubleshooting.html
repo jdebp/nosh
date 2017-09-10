@@ -133,6 +133,18 @@ The conversion utility ignores entries that are not marked as <code>rw</code>, <
 Ensure that the entry is marked with a correct mount type.
 </p>
 
+<p>
+The conversion utility uses the conventional C library functions <code>getfsent()</code> et al. to parse the <code>/etc/fstab</code> file.
+It does not use its own private custom parser.
+These C library functions do not behave as do the custom parsers in some other utilities.
+</p>
+
+<p>
+In particular, note that <code>getfsent()</code> <em>does not</em> determine the <code>sw</code> status from the filesystem type field as some custom parsers do.
+The BSDs explicitly require, as stated in their <code>/etc/fstab</code> manuals, that swap entries be marked as <code>sw</code>.
+The same requirement actually exists in the GNU C library, but its manual does not mention this and some custom parsers deviate from the behaviour of the GNU C library and thereby make it erroneously appear that this is not necessary.
+</p>
+
 <h2 style="border-bottom: 1px solid grey">
 GNOME Terminal refuses to start.
 </h2>

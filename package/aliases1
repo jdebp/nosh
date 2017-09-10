@@ -83,6 +83,7 @@ system-control	show-json
 system-control	start
 system-control	status
 system-control	stop
+system-control	systemd-escape
 service-control	service-dt-scanner
 service-control	service-is-enabled
 service-control	service-is-ok

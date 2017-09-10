@@ -12,7 +12,7 @@ Conflicts=busybox-mdev vdev suckless-mdev systemd-udev
 [Service]
 RuntimeDirectory=%p
 ExecStart=%pd
-Restart=on-abort
+RestartSec=5
 # The nutty default of udevd is to log to the kernel log buffer.
 # Unlike systemd-udevd, udevd has no way of averting this nuttiness.
 

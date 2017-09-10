@@ -4,14 +4,12 @@
 
 [Unit]
 Description=Linux statically-configured network interface settings
-Description=This is needed on Linux systems where NetworkManager has been configured not to manage the [ifupdown] interfaces.
+Description=This is needed on Linux systems for statically configured network interfaces.
 After=network-runtime.service
 Wants=network-runtime.service
 
 [Service]
-Type=oneshot
-ExecStart=ifup --verbose --all
-ExecStopPost=ifdown --verbose --all
+# We no longer run ifup/ifdown here.
 # This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes
 Restart=no

@@ -54,17 +54,6 @@ fi
 
 if t="`system-control find reboot-after-install.target 2>/dev/null`"
 then
-	if test -e "${f}-reboot"
-	then
-		system-control set-service-env "$t" reboot reboot
-	else
-		system-control set-service-env "$t" reboot
-	fi
-	system-control print-service-env "$t" reboot >> "$3"
-fi
-
-if t="`system-control find reboot-after-install.target 2>/dev/null`"
-then
 	system-control set-service-env "$t" firstboot_sentinel "$f"
 	system-control print-service-env "$t" firstboot_sentinel >> "$3"
 fi

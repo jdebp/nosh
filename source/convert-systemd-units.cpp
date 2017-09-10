@@ -861,6 +861,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	value * group(service_profile.use("service", "group"));
 	value * umask(service_profile.use("service", "umask"));
 	value * environment(service_profile.use("service", "environment"));
+	value * unsetenvironment(service_profile.use("service", "unsetenvironment"));	// This is an extension to systemd.
 	value * environmentfile(service_profile.use("service", "environmentfile"));
 	value * environmentdirectory(service_profile.use("service", "environmentdirectory"));	// This is an extension to systemd.
 	value * fullenvironmentdirectory(service_profile.use("service", "fullenvironmentdirectory"));	// This is an extension to systemd.
@@ -1374,6 +1375,16 @@ convert_systemd_units [[gnu::noreturn]] (
 				const std::string var(s.substr(0, eq));
 				const std::string val(eq == std::string::npos ? std::string() : s.substr(eq + 1, std::string::npos));
 				env += "setenv " + quote(var) + " " + quote(val) + "\n";
+			}
+		}
+	}
+	if (unsetenvironment) {
+		for (value::settings::const_iterator i(unsetenvironment->all_settings().begin()); unsetenvironment->all_settings().end() != i; ++i) {
+			const std::string & datum(*i);
+			const std::list<std::string> list(names.substitute(split_list(datum)));
+			for (std::list<std::string>::const_iterator j(list.begin()); list.end() != j; ++j) {
+				const std::string & var(*j);
+				env += "unsetenv " + quote(var) + "\n";
 			}
 		}
 	}

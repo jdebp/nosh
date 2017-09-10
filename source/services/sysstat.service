@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Insert a dummy record in %p's current daily data file to indicate that the counters have restarted from 0.
+
+[Service]
+# The service is "ready" after it has run to completion.
+Type=oneshot
+# This enables controlling service options with rcctl set and rcctl get .
+EnvironmentDirectory=env
+ExecStart=/usr/lib/%p/sadc -F -L ${OPTIONS} "${DIR:--}"
+
+[Install]
+WantedBy=workstation.target

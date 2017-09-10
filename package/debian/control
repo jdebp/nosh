@@ -37,7 +37,7 @@ Description: Minimal non-shell script processor and various chain-load utilities
 
 Package: nosh-service-management
 Architecture: amd64
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, libc-bin (>=2.13-1)
 Breaks: nosh-bundles (<= 1.30)
 Suggests:
 Recommends: kmod
@@ -212,6 +212,16 @@ Description: shim kbd utilities
   * clear_console
  .
  The shims simply invoke native virtual console management commands.
+
+Package: nosh-logrotate-shims
+Architecture: amd64
+Depends: nosh-bundles
+Suggests: 
+Recommends: 
+Provides: logrotate
+Description: Shim for the logrotate package
+ This package is an empty package that resolves a package dependency from packages like mgetty and rabbitmq-server.
+ These packages force a dependency upon the logrotate even though their service bundles use cyclog and logrotate is nowhere involved.
 
 Package: nosh-bundles
 Architecture: amd64

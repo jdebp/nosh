@@ -31,8 +31,8 @@ Five kinds of unit can be converted:
 There are a few restrictions (summarized here, for details, see the <a href="convert-systemd-units.html"><code>convert-systemd-units</code></a> manual):
 </p>
 <ul>
-<li><p>The service must be a forking, oneshot, or simple service; not a dbus or notify service.</p></li>
-<li><p>The socket must be a TCP, UDP, local-domain stream, local-domain datagram, or netlink datagram socket.  Sequenced packet socket and FIFOs are not convertible, although there's nothing in principle stopping (say) UCSPI-FIFO tools and conventions from being invented and used.</p></li>
+<li><p>The service must be a forking, oneshot, dbus, or simple service; not a notify service.</p></li>
+<li><p>The socket must be a TCP, UDP, local-domain stream, local-domain datagram, local-domain sequential-packet, FIFO, or netlink datagram socket.  Other socket types are not convertible, although there's nothing in principle stopping UCSPI tools and conventions for them from being invented and used.</p></li>
 <li><p>Some esoteric options are not convertible.  Nor are some Linux-kernel-only options.</p></li>
 </ul>
 

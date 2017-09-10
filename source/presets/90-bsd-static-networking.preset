@@ -16,6 +16,7 @@ enable	ifscript@*.service
 enable	natd@*.service
 enable	dhclient@*.service
 enable	dhcpcd@*.service
+enable	udhcpc@*.service
 enable	hostap@*.service
 enable	wpa_supplicant@*.service
 enable	ppp@*.service

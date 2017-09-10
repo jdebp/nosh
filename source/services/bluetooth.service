@@ -9,6 +9,8 @@ After=local-syslog.target
 [Service]
 Type=dbus
 ExecStart=%pd -n
+ProtectHome=true
+LimitNPROC=1
 
 [Install]
 WantedBy=workstation.target

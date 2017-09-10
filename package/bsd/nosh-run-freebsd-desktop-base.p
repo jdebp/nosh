@@ -1,6 +1,6 @@
 # service list
 # common targets, services, and sockets
-service_with_dedicated_logger "dbus"
+service_with_dedicated_logger "dbus-daemon"
 service_with_dedicated_logger "motd-dynamic"
 service_with_dedicated_logger "network-interfaces"
 service_with_dedicated_logger "network-runtime"

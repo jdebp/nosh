@@ -846,7 +846,7 @@ In practice, this is the primary use case in services that are interactive login
 
 <listitem>
 <para>
-Linux-only mechanisms such as <code>capabilityboundingset</code>, I/O scheduling, and control groups are not converted.
+Linux-only mechanisms such as <code>capabilityboundingset</code> and I/O scheduling are not converted.
 This is merely down to a lack of known chaining commands for manipulating those mechanisms.
 </para>
 </listitem>
@@ -869,15 +869,17 @@ It replicates several quirks of systemd:
 <itemizedlist>
 <listitem><para>
 It was undocumented for a long time that systemd always sets the <envar>HOME</envar>, <envar>USER</envar>, and <envar>LOGNAME</envar> environment variables whenever a <code>User=</code> directive says to change the user account.
+To this, quirks mode adds the <envar>SHELL</envar> environment variable, even though systemd has not customarily implicitly set that variable too.
+Ideal mode does not set these environment variables implicitly, since dedicated user accounts for running services do not necessarily have home directories and suchlike.
 </para></listitem>
 <listitem><para>
 A <code>User=</code> directive specifies setting all of the supplementary groups for a user account in addition to its primary group.
-The daemontools convention is to just set the primary group when switching to the dedicated unprivileged account for a service.
+The daemontools convention is to just set the primary group when switching to the dedicated unprivileged account for a service, which is the case in ideal mode.
 </para></listitem>
 <listitem><para>
 It's not documented, but systemd always changes directory when it starts a service.
 It explicitly changes to the root directory when no <code>WorkingDirectory=</code> directive is given.
-The daemontools convention is for services to be run in their service directories.
+The daemontools convention is for services to be run in their service directories, which is the case in ideal mode.
 A small number of daemons have been found to rely upon the undocumented systemd behaviour of being in the root directory.
 </para></listitem>
 <listitem><para>
@@ -908,16 +910,16 @@ Alternatively, one can turn off some quirks with various unit file directives:
 
 <itemizedlist>
 <listitem><para>
-The <code>systemdWorkingDirectory=</code> setting (defaulting to <code>true</code>) if <code>false</code> causes the generated bundle to not bother changing directory to the root.
+The <code>systemdWorkingDirectory=</code> setting (defaulting to <code>true</code> in quirks mode) if <code>false</code> causes the generated bundle to not bother changing directory to the root.
 Set this on services and targets where the daemon program is happy to run in the <filename>service</filename> directory.
 </para></listitem>
 <listitem><para>
-The <code>systemdUserEnvironment=</code> setting (defaulting to <code>true</code>) if <code>false</code> causes the generated bundle to not bother setting the user environment variables.
+The <code>systemdUserEnvironment=</code> setting (defaulting to <code>true</code> in quirks mode) if <code>false</code> causes the generated bundle to not bother setting the user environment variables.
 Set this on services and targets where the daemon program has no need for the <envar>HOME</envar>, <envar>USER</envar>, <envar>LOGNAME</envar>, or <envar>SHELL</envar> environment variables.
 This is the case for most daemon programs.
 </para></listitem>
 <listitem><para>
-The <code>systemdUserGroups=</code> setting (defaulting to <code>true</code>) if <code>false</code> causes the generated bundle to not bother setting the suplementary user groups.
+The <code>systemdUserGroups=</code> setting (defaulting to <code>true</code> in quirks mode) if <code>false</code> causes the generated bundle to not bother setting the suplementary user groups.
 Set this on services and targets where the daemon program has no need for supplementary group access.
 This is the case for almost all daemon programs.
 </para></listitem>

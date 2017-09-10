@@ -62,7 +62,7 @@ case "${base}" in
 cyclog@*)
 	escape="--alt-escape --escape-instance"
 	;;
-ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|brltty-log|dhclient-log|dhcpcd-log|mixer-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log|system-installer-log) 
+ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|brltty-log|dhclient-log|dhcpcd-log|udhcpc-log|mixer-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log|system-installer-log) 
 	escape="--alt-escape --escape-prefix"
 	;;
 *)
@@ -82,7 +82,7 @@ cyclog@*)
 	etc=
 	after=
 	;;
-ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|brltty-log|dhclient-log|dhcpcd-log|mixer-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log|system-installer-log) 
+ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|brltty-log|dhclient-log|dhcpcd-log|udhcpc-log|mixer-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log|system-installer-log) 
 	log=
 	etc=
 	after=
@@ -170,13 +170,17 @@ cyclog@*)
 devd-log|sysinit-log)
 	ln -f -s -- /var/log/sv/"${base%-log}" services.new/"${base}"/main
 	;;
-ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|brltty-log|dhclient-log|dhcpcd-log|mixer-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log|system-installer-log)
+ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|brltty-log|dhclient-log|dhcpcd-log|udhcpc-log|mixer-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log|system-installer-log)
 	ln -f -s -- /var/log/sv/"${base%-log}" services.new/"${base}"/main
 	;;
 esac
 
 case "${base}" in
-kmod@vboxadd|kmod@vboxsf|kmod@vboxguest|kmod@vboxvideo)
+kmod@vboxvideo)
+	ln -f -s -- /etc/service-bundles/targets/virtualbox-guest services.new/"${base}"/wanted-by/
+	ln -f -s -- ../../kmod@uvesafb services.new/"${base}"/after/
+	;;
+kmod@vboxadd|kmod@vboxsf|kmod@vboxguest)
 	ln -f -s -- /etc/service-bundles/targets/virtualbox-guest services.new/"${base}"/wanted-by/
 	;;
 kmod@vboxdrv|kmod@vboxnetadp|kmod@vboxnetflt|kmod@vboxpci)
@@ -235,7 +239,7 @@ tinydns)
 axfrdns)
 	ln -s ../../tinydns/service/root services.new/"${base}"/service/
 	;;
-dbus)
+dbus-daemon|dbus)
 	redo-ifchange services/system-wide.conf
 	install -m 0644 -- services/system-wide.conf services.new/"${base}"/service/system-wide.conf
 	;;

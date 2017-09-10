@@ -12,6 +12,7 @@ kernel-vt-kbdrate
 kmod
 kmod@ipv6
 kmod@loop
+kmod@sg
 kmod@unix
 kmod@uvesafb
 linux-utmp
@@ -19,6 +20,7 @@ mdadm
 nft
 pommed
 sudo
+sysstat
 ttylogin-starter
 update-binfmts
 wettsteinsyslogd

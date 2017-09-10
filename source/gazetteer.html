@@ -146,7 +146,7 @@ Files to be found here include:
 the conventional socket for <code>jim</code>'s per-user Desktop Bus broker, managed by the <code>user-dbus@jim</code> service
 <p>
 The Desktop Bus people claim that the Desktop Bus "address" <code>unix:runtime=yes</code> points to this socket, and can be used as the value of the <code>DBUS_SESSION_BUS_ADDRESS</code> environment variable.
-In reality, at the time of writing no stable/release version of Debian, FreeBSD, TrueOS, or OpenBSD contains a Desktop Bus broker or library that defaults to this address or even understands this address syntax.
+In reality, at the time of writing (2016) no stable/release version of Debian, FreeBSD, TrueOS, or OpenBSD contains a Desktop Bus broker or library that defaults to this address or even understands this address syntax.
 One has to use the address <code>unix:path=/run/user/${USER}/bus</code> instead.
 </p>
 </dd>
@@ -310,10 +310,9 @@ This comprises, amongst other things:
 <dt><code>/etc/system-control/convert/all.do</code></dt><dd>the redo script that is the top level of the whole import process</dd>
 <dt id="rc.conf"><code>/etc/system-control/convert/rc.conf</code></dt>
 <dd>
-a generated amalgamation of all <code>rc.conf</code> configuration files.
+a <a href="rcconf-amalgamation.html">generated amalgamation of all <code>rc.conf</code> configuration files</a> and several other external sources of configuration information.
 Do not symbolically link any of the <code>rc.conf</code> configuration files to this!
 It is generated <em>from them</em> in the first place.
-The redo script that generates it takes into account the <code>rc_conf_files</code> setting, and amalgamates the extra configuration files that are employed by PC-BSD/TrueOS.
 This can be conveniently used with <a href="read-conf.html"><code>read-conf</code></a> when one needs to access configuration settings from these files.
 </dd>
 <dt><code>/etc/system-control/convert/host.conf</code></dt><dd>a host.conf file generated from <code>/etc/nsswitch.conf</code> which one can symbolically link to <code>/etc/host.conf</code></dd>

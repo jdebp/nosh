@@ -323,8 +323,8 @@ userenv (
 		popt::bool_definition set_term_option('t', "set-term", "Set the TERM environment variable.", set_term);
 		popt::bool_definition set_timezone_option('z', "set-timezone", "Set the TZ environment variable.", set_timezone);
 		popt::bool_definition set_locale_option('l', "set-locale", "Set the LANG and MM_CHARSET environment variables.", set_locale);
-		popt::bool_definition set_dbus_option('l', "set-dbus", "Set the DBUS_SESSION_BUS_ADDRESS environment variable.", set_dbus);
-		popt::bool_definition set_xdg_option('l', "set-xdg", "Set the XDG_RUNTIME_DIR environment variable.", set_xdg);
+		popt::bool_definition set_dbus_option('d', "set-dbus", "Set the DBUS_SESSION_BUS_ADDRESS environment variable.", set_dbus);
+		popt::bool_definition set_xdg_option('x', "set-xdg", "Set the XDG_RUNTIME_DIR environment variable.", set_xdg);
 		popt::bool_definition set_other_option('o', "set-other", "Set other environment variables.", set_other);
 		popt::definition * top_table[] = {
 			&set_path_option,

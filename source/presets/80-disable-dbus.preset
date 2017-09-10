@@ -6,4 +6,5 @@
 # It is used by the nosh-run-via-systemd/mewburn-rc/openbsd-rc packages in order to disable certain mandatory basics which are handled by external service management.
 #
 
-disable dbus.service
+disable dbus-daemon.service
+disable dbus-broker.service

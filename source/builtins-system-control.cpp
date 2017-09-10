@@ -29,6 +29,7 @@ extern void show ( const char * & , std::vector<const char *> &, ProcessEnvironm
 extern void show_json ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
 extern void status ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
 extern void escape ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
+extern void systemd_escape ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
 extern void print_service_env ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
 extern void set_service_env ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
 extern void try_restart ( const char * & , std::vector<const char *> &, ProcessEnvironment & );
@@ -149,5 +150,6 @@ personalities[] = {
 	{	"svup",			service_is_up		},
 	{	"svshow",		service_show		},
 	{	"svstat",		service_status		},
+	{	"systemd-escape",	systemd_escape		},
 };
 const std::size_t num_personalities = sizeof personalities/sizeof *personalities;

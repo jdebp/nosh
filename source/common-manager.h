@@ -11,6 +11,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <csignal>
 
 struct api_symlink {
+	int force;
 	const char * name, * target;
 };
 

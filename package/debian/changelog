@@ -1,3 +1,21 @@
+nosh (1.35) unstable; urgency=medium
+
+  * External configuration import now handles /etc/network/interfaces .
+  * A bug that resulted in the ldconfig service being disabled has been fixed.
+  * There is now a nosh-logrotate-shims package for packages that erroneously think that they use logrotate.
+  * dbus is now dbus-daemon, allowing for dbus-broker to be substituted should
+    that become viable in the future.
+    dbus-broker is not in fact a functional Desktop Bus subsystem right now.
+    Its developers have strongly tied it to an internal systemd mechanism.
+  * More Linux services: sysstat
+  * More common services: elasticsearch
+  * The Guide now has a chapter on how networking is handled.
+  * unbound is now a common service.
+  * clamd is now clamav, which now uses the undocumented --foreground option and receives its listening control socket already opened.
+  * freshclam uses the undocumented --foreground option as well.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Sun, 10 Sep 2017 08:36:17 +0100
+
 nosh (1.34) unstable; urgency=medium
 
   * More Linux services: udev-settle, nft

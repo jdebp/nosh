@@ -33,8 +33,10 @@ disable	cyclog@org.cups.cups-lpd.service
 disable	org.cups.cups-lpd.service
 disable	cyclog@org.cups.cupsd.service
 disable	org.cups.cupsd.service
-enable	cyclog@dbus.service
-enable	dbus.service
+enable	cyclog@dbus-daemon.service
+enable	dbus-daemon.service
+disable	cyclog@dbus-broker.service
+disable	dbus-broker.service
 disable	cyclog@hald.service
 disable	hald.service
 disable	cyclog@org.freedesktop.Hal.service

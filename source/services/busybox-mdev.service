@@ -11,7 +11,7 @@ Conflicts=udev vdev suckless-mdev systemd-udev
 
 [Service]
 ExecStart=clearenv --keep-path plug-and-play-event-handler --verbose busybox mdev
-Restart=on-abort
+RestartSec=5
 # plug-and-play-event-handler understands the LISTEN protocol, so does not need StandardInput=socket.
 
 [Install]

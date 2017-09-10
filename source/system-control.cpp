@@ -60,7 +60,7 @@ open_bundle_directory (
 	std::string & name,
 	std::string & suffix
 ) {
-	if (const char * slash = std::strchr(arg, '/')) {
+	if (const char * slash = std::strrchr(arg, '/')) {
 		path = std::string(arg, slash + 1);
 		name = std::string(slash + 1);
 		suffix = std::string();
@@ -174,7 +174,8 @@ system_control (
 				"set-service-env|print-service-env|"
 				"convert-systemd-units|convert-fstab-services|"
 				"nagios-check-service|load-kernel-module|unload-kernel-module|"
-				"is-service-manager-client|version"
+				"is-service-manager-client|"
+				"version"
 				" args..."
 		);
 

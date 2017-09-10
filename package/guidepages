@@ -23,6 +23,7 @@ log-service-security
 logging
 logging-cheatsheet
 mounting
+networking
 new-interfaces
 old-log-services
 per-user-dbus-demand-start
@@ -30,6 +31,7 @@ per-user-stuff
 per-user-system-services
 per-user-user-services
 rcconf
+rcconf-amalgamation
 real-terminal-login
 service-management-cheatsheet
 services/appcafe

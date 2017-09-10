@@ -25,13 +25,17 @@ done
 
 relocate_var_sv() {
         local e
+	e=1
         if test -d "/var/sv/$1" && test \! -d "/var/sv/$2"
         then
-                system-control is-enabled "/var/sv/$1"
-                e=$?
-                system-control disable "/var/sv/$1"
+                if system-control is-enabled "/var/sv/$1"
+		then
+			e=0
+			system-control disable "/var/sv/$1"
+		fi
+		printf 1>&2 "Renaming service bundle directory: %s to %s\n" "$1" "$2"
                 mv -i -- "/var/sv/$1" "/var/sv/$2"
-                test $e -eq 0 && system-control enable "/var/sv/$2"
+                test $e -ne 0 || system-control enable "/var/sv/$2"
         fi
 }
 
@@ -54,6 +58,31 @@ discontinue() {
         done
 }
 
+# This relies upon stopping and starting the service under its old name.
+# Always invoke this before renaming the log service bundle, therefore.
+rename_log() {
+	local e
+	e=1
+	if getent passwd "$1"-log > /dev/null &&
+	!  getent passwd "$2"-log > /dev/null
+	then
+		printf 1>&2 "Renaming user: %s to %s\n" "$1"-log "$2"-log
+		if system-control is-loaded cyclog@"$1" &&
+		   system-control is-active cyclog@"$1"
+		then
+			e=0
+			system-control stop cyclog@"$1"
+		fi
+		usermod -l "$2"-log "$1"-log
+		test $e -ne 0 || system-control start cyclog@"$1"
+	fi
+        if test -d "/var/log/sv/$1" && test \! -d "/var/log/sv/$2"
+        then
+		printf 1>&2 "Renaming log directory: %s to %s\n" "$1" "$2"
+                mv -i -- "/var/log/sv/$1" "/var/log/sv/$2"
+        fi
+}
+
 # These services have been discontinued.
 discontinue \
 	/var/sv/openvpn@server \
@@ -64,4 +93,11 @@ discontinue \
 
 # These services have been relocated.
 relocate_var_sv gnucron debian-cron
+rename_log gnucron debian-cron	# Must run before relocate_var_sv.
 relocate_var_sv cyclog@gnucron cyclog@debian-cron
+relocate_var_sv dbus dbus-daemon
+rename_log dbus dbus-daemon	# Must run before relocate_var_sv.
+relocate_var_sv cyclog@dbus cyclog@dbus-daemon
+relocate_var_sv clamd clamav
+rename_log clamd clamav	# Must run before relocate_var_sv.
+relocate_var_sv cyclog@clamd cyclog@clamav

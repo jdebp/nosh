@@ -1,0 +1,20 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Clam anti-virus socket
+
+[Socket]
+Backlog=2
+MaxConnections=2
+ListenStream=%t/%p/clamd.ctl
+SocketUser=%p
+SocketGroup=%p
+FileDescriptorName=control
+#ListenStream=127.0.0.1:3310
+BindIPV6Only=both
+Accept=false
+
+[Install]
+WantedBy=workstation.target

@@ -72,6 +72,18 @@ strip_fuse (
 	return s;
 }
 
+#if defined(__LINUX__) || defined(__linux__)
+static inline
+bool 
+is_swap_type (
+	const char * fstype
+) {
+	return 
+		0 != std::strcmp(fstype, "swap")
+	;
+}
+#endif
+
 static inline
 bool 
 is_local_type (
@@ -749,6 +761,9 @@ convert_fstab_services [[gnu::noreturn]] (
 		delete_fstab_option(options_list, "noauto");
 		delete_fstab_option(options_list, "nofail");
 
+#if defined(__LINUX__) || defined(__linux__)
+		const bool is_vfs_swap(!nodev && is_swap_type(entry->fs_vfstype));
+#endif
 		if (0 == std::strcmp(type, "xx")) {
 			continue;
 		} else
@@ -756,7 +771,7 @@ convert_fstab_services [[gnu::noreturn]] (
 		||  (0 == std::strcmp(type, "rq"))
 		||  (0 == std::strcmp(type, "ro"))
 #if defined(__LINUX__) || defined(__linux__)
-		||  (0 == std::strcmp(type, "??"))
+		||  (!is_vfs_swap && 0 == std::strcmp(type, "??"))
 #endif
 		) {
 			const std::string fsck_bundle_dirname("fsck@" + systemd_name_escape(false, false, where));
@@ -782,7 +797,11 @@ convert_fstab_services [[gnu::noreturn]] (
 				create_fsck_bundle(prog, envs, what, preenable, local, overwrite, is_fuse, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd, bundle_root, fsck_bundle_dirname, mount_bundle_dirname);
 			create_mount_bundle(prog, envs, what, where, entry->fs_vfstype, options_list, local, overwrite, modules, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd, bundle_root, mount_bundle_dirname);
 		} else
-		if (0 == std::strcmp(type, "sw")) {
+		if (0 == std::strcmp(type, "sw")
+#if defined(__LINUX__) || defined(__linux__)
+		||  (is_vfs_swap && 0 == std::strcmp(type, "??"))
+#endif
+		) {
 			const bool local(true);
 			const std::string swap_bundle_dirname("swap@" + systemd_name_escape(false, false, what));
 			std::string gbde, geli;

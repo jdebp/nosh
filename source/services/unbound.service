@@ -9,9 +9,27 @@ Description=%p proxy DNS server daemon
 PermissionsStartOnly=true
 EnvironmentDirectory=env
 User=%p
-ExecStartPre=local-%p-setup -u %p -w ${workdir:-/var/%p} -c ${config:-${workdir:-/var/%p}/%p.conf} -f ${forwardconf:-${workdir:-/var/%p}/forward.conf} -a ${anchor:-${workdir:-/var/%p}/root.key} ${forwarders}
-ExecStartPre=%p-anchor -a ${anchor:-${workdir:-/var/%p}/root.key}
-ExecStart=%p -c ${config:-${workdir:-/var/%p}/%p.conf} -d
+ExecStartPre=sh -c 'test -r "${config:-${workdir:-/var/%p}/%p.conf}" || exec local-%p-setup -u %p -w "${workdir:-/var/%p}" -c "${config:-${workdir:-/var/%p}/%p.conf}" -f "${forwardconf:-${workdir:-/var/%p}/forward.conf}" -a "${anchor:-${workdir:-/var/%p}/root.key}" ${forwarders}"'
+ExecStartPre=sh -c 'test -r "${anchor:-${workdir:-/var/%p}/root.key}" || exec %p-anchor -a "${anchor:-${workdir:-/var/%p}/root.key}"'
+# Two -d s are not a mistake; it makes the program log to standard error.
+ExecStart=%p -c "${config:-${workdir:-/var/%p}/%p.conf}" -d -d
+# These are proposed by the software's authors; they aren't used by Arch or others.
+RuntimeDirectory=%p
+CapabilityBoundingSet=CAP_IPC_LOCK CAP_NET_BIND_SERVICE CAP_SETGID CAP_SETUID CAP_SYS_CHROOT
+MemoryDenyWriteExecute=true
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectHome=true
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectSystem=strict
+ReadWritePaths=/var/%p /run/%p
+RestrictAddressFamilies=AF_INET AF_UNIX
+RestrictRealtime=true
+SystemCallArchitectures=native
+SystemCallFilter=~@clock @cpu-emulation @debug @keyring @module mount @obsolete @resources
 
 [Install]
 WantedBy=workstation.target

@@ -4,11 +4,12 @@
 
 [Unit]
 Description=VirtualBox guest additions daemon
+# This daemon uses Desktop Bus.
+After=dbus
 
 [Service]
 ExecStart=VBoxService -f
 RestartSec=5
-Restart=on-abort
 
 [Install]
 WantedBy=virtualbox-guest.target

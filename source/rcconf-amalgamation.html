@@ -1,0 +1,84 @@
+<title>rc.conf amalgamation</title>
+<link rel="Up" href="rcconf.html" title="/etc/rc.conf conversion" />
+<h1>
+<code>rc.conf</code> amalgamation
+</h1>
+
+<p>
+Before <a href="rcconf.html">converting into the native form for this system</a> the external formats import subsystem first creates <a href="gazetteer.html#rc.conf">an amalgamated <code>rc.conf</code> file</a> which incorporates the information from all of the several system <code>rc.conf</code> files as well as from other sources.
+</p>
+
+<p>
+This file incorporates the information from:
+</p>
+<ul>
+<li><p>
+<code>/etc/default/rc.conf</code>, which is the "known starting point" of the <code>rc.conf</code> system.
+</p></li>
+<li><p>
+All files named in the <code>rc_conf_files</code> setting that is in <code>/etc/default/rc.conf</code>.
+These include <code>/etc/rc.conf</code>, <code>/etc/rc.conf.local</code>, and any further extra files employed by the likes of TrueOS/PC-BSD.
+</p><p>
+Note that OpenBSD nowadays has the explicit requirement that <code>/etc/rc.conf</code> not employ <em>any</em> shell constructs other than simple variable assignments, and actually be a data file with <code><i>variable</i>=<i>value</i></code> assignments that can be processed without using a shell language interpreter.
+The amalgamation system enforces this on Linux.
+One can get away, to a small extent, with using shell scripting in these files on FreeBSD and TrueOS/PC-BSD; however it is strongly recommended to follow the lead of OpenBSD here and <em>not</em> do so.
+</p></li>
+<li><p>
+The FreeNAS <code>/data/freenas-v1.db</code> database, in particular the enabled "system tunables".
+</p></li>
+<li><p>
+The results of converting several Debian settings files into the equivalent FreeBSD/TrueOS <code>rc.conf</code> settings:
+</p>
+<ul>
+<li><p>
+<code>/etc/vconsole.conf</code>, which is the systemd console settings file;
+</p></li>
+<li><p>
+<code>/etc/defaults/console-setup</code> and <code>/etc/defaults/keyboard</code>, which are the Debian console-setup and keyboard packages' console settings files;
+</p></li>
+<li><p>
+<code>/etc/kbd/config</code>, which is the Debian kbd package's console settings file;
+</p>
+<p>and</p>
+</li>
+<li><p>
+<code>/etc/network/interfaces</code>, which is the Debian ifupdown package's network interface settings file.
+</p></li>
+</ul>
+</li>
+<li><p>
+Several hostname settings files:
+</p>
+<ul>
+<li><p>
+<code>/etc/HOSTNAME</code> and <code>/etc/hostname</code>
+</p></li>
+<li><p>
+<code>/etc/sysconfig/network</code>, <code>/etc/conf.d/hostname</code>, and <code>/etc/default/hostname</code>, which are expected to be <code>rc.conf</code> style settings files with <code>hostname</code> or <code>HOSTNAME</code> settings
+</p>
+<p>
+The same restriction applies these as to <code>/etc/rc.conf</code>: they should not employ <em>any</em> shell constructs other than simple variable assignments.
+</p></li>
+</ul>
+<p>
+This takes over external configuration import functionality that used to be, but is no longer, part of <a href="set-dynamic-hostname.html"><code>set-dynamic-hostname</code></a>.
+<code>set-dynamic-hostname</code> only uses native configuration mechanisms, environment variables, now; relying upon the external configuration import subsystem to translate all of the aforementioned non-native configuration systems.
+</p>
+</li>
+</ul>
+
+<p>
+The result is an amalgam that can be conveniently used with <a href="read-conf.html"><code>read-conf</code></a> when one needs to access configuration settings.
+This amalgam is the unified source of information for the subsequent conversion into native form.
+</p>
+
+<p>
+The amalgamation process is not designed to be restrictive when it comes to platforms.
+It permits (for examples) a Debian-style <code>/etc/network/interfaces</code> to be used on FreeBSD, or a FreeNAS database to be used on Debian.
+</p>
+
+<p>
+The conversion of a Debian-style <code>/etc/network/interfaces</code> can cope with the "new-style" assignments of multiple IP address to a single network interface, where one repeats the same <code>iface &hellip; static</code> "stanza" several times.
+However, it does not convert any <code>post-up</code> or <code>pre-down</code> settings.
+Those do not have <code>rc.conf</code> equivalents; and the conversion of <code>/etc/network/interfaces</code> is constrained to stuff that does not constitute the execution of arbitrary commands and programs.
+</p>

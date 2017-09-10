@@ -8,11 +8,10 @@ Description=BSD use PXEBOOT DHCP-supplied DNS servers
 [Service]
 Type=oneshot
 EnvironmentDirectory=env
-ExecStart=pipe ./helper | sh -c 'exec resolvconf -a `kenv boot.netif.name`:dhcp4'
+ExecStart=pipe ./helper | sh -c 'exec resolvconf -a "`kenv boot.netif.name`":dhcp4'
 # This is a one-shot service that can be re-triggered by starting it again.
 #RemainAfterExit=1
 Restart=no
 
 [Install]
 WantedBy=workstation.target
-

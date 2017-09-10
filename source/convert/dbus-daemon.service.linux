@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description="Desktop" bus service
+
+[Service]
+# The --address=systemd: option is the closest to our UCSPI-LOCAL.
+ExecStart=%p --config-file ./per-user.conf --nofork --nopidfile --address=systemd:
+Restart=always
+RestartSec=0.5
+
+[Install]
+WantedBy=normal.target

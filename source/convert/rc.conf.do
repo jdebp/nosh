@@ -12,6 +12,12 @@ default_rc="/etc/defaults/rc.conf"
 read_variable() { clearenv read-conf "$1" "`which printenv`" "$2" ; }
 read_optional_variable() { read_variable "$1" "$2" || echo "$3" ; }
 
+case "`uname`" in
+Linux)		extended_regexp="-r" ;;
+OpenBSD)	extended_regexp="-E" ;;
+*BSD)		extended_regexp="-E" ;;
+esac
+
 convert_hostname() {
 	local f h
 	for f in /etc/HOSTNAME /etc/hostname
@@ -22,6 +28,7 @@ convert_hostname() {
 			continue
 		fi
 		read -r h < "$f"
+		redo-ifchange "$f"
 		printf "# Converted from %s:\n" "${f}"
 		printf "hostname=\"%s\"\n" "${h}"
 		return 0
@@ -33,9 +40,10 @@ convert_hostname() {
 			redo-ifcreate "$f"
 			continue
 		fi
+		redo-ifchange "$f"
+		printf "# Converted from %s:\n" "${f}"
 		if h="`read_variable \"$f\" hostname`" || h="`read_variable \"$f\" HOSTNAME`"
 		then
-			printf "# Converted from %s:\n" "${f}"
 			printf "hostname=\"%s\"\n" "${h}"
 			return 0
 		fi
@@ -45,9 +53,9 @@ convert_hostname() {
 
 find_dotconf_files() { 
 	local d
-	for d in /etc /usr/local/etc /usr/share /usr/local/share /lib /usr/lib /usr/local/lib
+	for d in /etc /usr/local/etc /share /usr/share /usr/local/share /lib /usr/lib /usr/local/lib
 	do 
-		test \! -d "$d/$1" || ( 
+		test ! -d "$d/$1" || ( 
 			cd "$d/$1" && find -maxdepth 1 -name '*.conf' -a \( -type l -o -type f \)
 		) | 
 		while read -r i 
@@ -65,6 +73,7 @@ list_modules_linux() {
 	echo unix
 	# This is the systemd system, with several .d files full of module list files.
 	find_dotconf_files modules-load.d | xargs grep -h -- '^[^;#]' 
+	find_dotconf_files modules-load.d | xargs redo-ifchange --
 }
 
 found_fonts() {
@@ -96,58 +105,67 @@ found_fonts() {
 }
 
 find_named_fonts() {
-	case "`uname`" in
-	Linux)
-		cd /usr/share/consolefonts/ &&
-		for i
-		do
-			find . -name "${i}".psf.gz
-		done
-		;;
-	*)
-		cd /usr/share/syscons/fonts/ &&
-		for i
-		do
-			find . -name "${i}".fnt
-		done
-		cd /usr/share/vt/fonts/ &&
-		for i
-		do
-			find . -name "${i}".fnt
-		done
-		;;
-	esac | 
+	(
+		if cd /usr/share/consolefonts/ 2>/dev/null
+		then
+			redo-ifchange /usr/share/consolefonts/ 
+			for i
+			do
+				find . -name "${i}".psf.gz
+			done
+		fi
+		if cd /usr/share/syscons/fonts/ 2>/dev/null
+		then
+			redo-ifchange /usr/share/syscons/fonts/ 
+			for i
+			do
+				find . -name "${i}".fnt
+			done
+		fi
+		if cd /usr/share/vt/fonts/ 2>/dev/null
+		then
+			redo-ifchange /usr/share/vt/fonts/ 
+			for i
+			do
+				find . -name "${i}".fnt
+			done
+		fi
+	) | 
 	found_fonts
 }
 
 find_matching_fonts() {
 	local face="$1"
 	local size="$2"
-	case "`uname`" in
-	Linux)
-		cd /usr/share/consolefonts/ &&
-		find . -name "Uni*-${face:-*}${size:-*}".psf.gz
-		;;
-	*)
-		cd /usr/share/syscons/fonts/ &&
-		find . -name "Uni*-${face:-*}${size:-*}".fnt
-		cd /usr/share/vt/fonts/ &&
-		find . -name "Uni*-${face:-*}${size:-*}".fnt
-		;;
-	esac | 
+	(
+		if cd /usr/share/consolefonts/ 2>/dev/null
+		then
+			redo-ifchange /usr/share/consolefonts/ 
+			find . -name "Uni*-${face:-*}${size:-*}".psf.gz
+		fi
+		if cd /usr/share/syscons/fonts/ 2>/dev/null
+		then
+			redo-ifchange /usr/share/syscons/fonts/ 
+			find . -name "Uni*-${face:-*}${size:-*}".fnt
+		fi
+		if cd /usr/share/vt/fonts/ 2>/dev/null
+		then
+			redo-ifchange /usr/share/vt/fonts/ 
+			find . -name "Uni*-${face:-*}${size:-*}".fnt
+		fi
+	) | 
 	found_fonts
 }
 
 convert_debian_console_settings() {
 	local confile=/etc/default/console-setup
-	if test -r "${confile}"
+	if ! test -r "${confile}"
 	then
-		redo-ifchange "${confile}"
-		printf "# Converted from %s:\n" "${confile}"
-	else
 		redo-ifcreate "${confile}"
 		return
 	fi
+	redo-ifchange "${confile}"
+	printf "# Converted from %s:\n" "${confile}"
 	local i
 
 	local charmap
@@ -249,14 +267,13 @@ convert_debian_console_settings() {
 
 convert_systemd_console_settings() {
 	local vccfile=/etc/vconsole.conf
-	if test -r "${vccfile}"
+	if ! test -r "${vccfile}"
 	then
-		redo-ifchange "${vccfile}"
-		printf "# Converted from %s:\n" "${vccfile}"
-	else
 		redo-ifcreate "${vccfile}"
 		return
 	fi
+	redo-ifchange "${vccfile}"
+	printf "# Converted from %s:\n" "${vccfile}"
 	local i
 
 	local keymap
@@ -268,13 +285,7 @@ convert_systemd_console_settings() {
 	local font
 	if font="`read_variable \"${vccfile}\" FONT`"
 	then
-		(
-		cd /usr/share/consolefonts/ &&
-		for i in ${font}
-		do
-			find . -name "${i}".psf.gz | found_linux_fonts
-		done
-		)
+		find_named_fonts ${font}
 	fi
 
 	local fontmap
@@ -292,14 +303,13 @@ convert_systemd_console_settings() {
 
 convert_linux_kbdconf_console_settings() {
 	local kbdfile=/etc/kbd/config
-	if test -r "${kbdfile}"
+	if ! test -r "${kbdfile}"
 	then
-		redo-ifchange "${kbdfile}"
-		printf "# Converted from %s:\n" "${kbdfile}"
-	else
 		redo-ifcreate "${kbdfile}"
 		return
 	fi
+	redo-ifchange "${kbdfile}"
+	printf "# Converted from %s:\n" "${kbdfile}"
 	local i
 
 	local blanktime
@@ -342,13 +352,7 @@ convert_linux_kbdconf_console_settings() {
 	local font
 	if font="`read_variable \"${kbdfile}\" CONSOLE_FONT`"
 	then
-		(
-		cd /usr/share/consolefonts/ &&
-		for i in ${font}
-		do
-			find . -name "${i}".psf.gz | found_linux_fonts
-		done
-		)
+		find_named_fonts ${font}
 	fi
 
 	local fontmap
@@ -360,14 +364,13 @@ convert_linux_kbdconf_console_settings() {
 
 convert_linux_defkbd_console_settings() {
 	local kbdfile=/etc/default/keyboard
-	if test -r "${kbdfile}"
+	if ! test -r "${kbdfile}"
 	then
-		redo-ifchange "${kbdfile}"
-		printf "# Converted from %s:\n" "${kbdfile}"
-	else
 		redo-ifcreate "${kbdfile}"
 		return
 	fi
+	redo-ifchange "${kbdfile}"
+	printf "# Converted from %s:\n" "${kbdfile}"
 	local i
 
 	local keymap layout variant
@@ -386,6 +389,20 @@ convert_linux_defkbd_console_settings() {
 		delay="`read_variable \"${kbdfile}\" KEYBOARD_DELAY || :`"
 		printf "keyrate=\"%s\"\n" "${rate}${delay:+.${delay}}"
 	fi
+}
+
+convert_debian_network_interfaces() {
+	local confile=/etc/network/interfaces
+	if ! test -r "${confile}"
+	then
+		redo-ifcreate "${confile}"
+		return
+	fi
+	redo-ifchange "${confile}"
+	printf "# Converted from %s:\n" "${confile}"
+	redo-ifchange debian-interfaces.awk
+	sed ${extended_regexp} -e 's/^[[:space:]]\+#.*$//' "${confile}" |
+	awk -f debian-interfaces.awk
 }
 
 convert_longhand() {
@@ -449,8 +466,14 @@ convert_longhand() {
 
 convert_freenas() {
 	convert_hostname
+	convert_debian_network_interfaces
+
+	# In order, so that systemd overrides kbd overrides Debian.
 	convert_debian_console_settings
+	convert_linux_kbdconf_console_settings
+	convert_linux_defkbd_console_settings
 	convert_systemd_console_settings
+
 	convert_longhand
 
 	redo-ifchange "${freenas_db}"
@@ -463,6 +486,26 @@ convert_freenas() {
 		# FIXME: This is a poor man's quoting mechanism, and isn't robust.
 		printf "%s=\"%s\"" "${var}" "${val}"
 	done
+}
+
+find_dhcp_client() {
+	local m
+	if m="`which dhclient 2>&1`"
+	then
+		printf "dhclient_program=%s\n" "${m}"
+	elif m="`which dhclient3 2>&1`"
+	then
+		printf "dhclient_program=%s\n" "${m}"
+	elif m="`which udhcpc 2>&1`"
+	then
+		printf "dhclient_program=%s\n" "${m}"
+	elif m="`which dhcpcd 2>&1`"
+	then
+		printf "dhclient_program=%s\n" "${m}"
+	elif m="`which dhcpcd5 2>&1`"
+	then
+		printf "dhclient_program=%s\n" "${m}"
+	fi
 }
 
 convert_linux() {
@@ -486,17 +529,12 @@ convert_linux() {
 		printf "entropy_file=%s\n" "/var/lib/urandom/random-seed"
 		;;
 	esac
-	if m="`which dhclient 2>&1`"
-	then
-		printf "dhclient_program=%s\n" "${m}"
-	elif m="`which dhcpcd5 2>&1`"
-	then
-		printf "dhclient_program=%s\n" "${m}"
-	fi
+	find_dhcp_client
 	m="`list_modules_linux | tr '\r\n' ' '`"
 	printf "kld_list=\"%s\"\n" "${m}"
 
 	convert_hostname
+	convert_debian_network_interfaces
 
 	# In order, so that systemd overrides kbd overrides Debian.
 	convert_debian_console_settings
@@ -514,9 +552,28 @@ convert_linux() {
 }
 
 convert_any() {
+	#####
+	# Stuff that can be overriden by explicit lines in rc.conf comes first.
+
+	case "`uname`" in
+	OpenBSD)
+		printf "entropy_file=%s\n" "/etc/random.seed"
+		;;
+	esac
+	find_dhcp_client
+
 	convert_hostname
+	convert_debian_network_interfaces
+
+	# In order, so that systemd overrides kbd overrides Debian.
 	convert_debian_console_settings
+	convert_linux_kbdconf_console_settings
+	convert_linux_defkbd_console_settings
 	convert_systemd_console_settings
+
+	#####
+	# Now rc.conf itself.
+
 	convert_longhand
 }
 
@@ -540,6 +597,8 @@ then
 	exit $?
 elif test _"`uname`" == _"Linux"
 then
+	redo-ifcreate /etc/os-release
+	redo-ifcreate /usr/lib/os-release
 	convert_linux /dev/null > "$3"
 	exit $?
 fi

@@ -23,7 +23,7 @@ list_natd_interfaces() { read_rc natd_interface || true ; }
 get_ifconfig1() { read_rc ifconfig_"$1" || read_rc ifconfig_DEFAULT ; }
 get_ifconfig2() { read_rc ifconfig_"$1"_"$2" || read_rc ifconfig_DEFAULT_"$2" ; }
 get_ipv6_prefix1() { read_rc ipv6_prefix_"$1" || read_rc ipv6_prefix_DEFAULT ; }
-list_auto_network_interfaces() {
+list_available_network_interfaces() {
 	case "`uname`" in
 	Linux)	/bin/ls /sys/class/net ;;
 	*)	ifconfig -l ;;
@@ -36,10 +36,10 @@ list_network_interfaces() {
 
 	if ! n="`read_rc network_interfaces`"
 	then
-		n="`list_auto_network_interfaces`"
+		n="`list_available_network_interfaces`"
 	elif test _"auto" = _"$n" || test _"AUTO" = _"$n"
 	then
-		n="`list_auto_network_interfaces`"
+		n="`list_available_network_interfaces`"
 	fi
 	c="`read_rc cloned_interfaces`" || :
 
@@ -173,8 +173,8 @@ get_ipv6_prefix() {
 		esac
 		i="${i%::*}"
 		i="${i%:}"
-		printf "%s:: prefixlen %s eui64\n" "$i" "$l"
-		printf "%s:: prefixlen %s anycast\n" "$i" "$l"
+		printf "%s::/%s eui64\n" "$i" "$l"
+		printf "%s::/%s anycast\n" "$i" "$l"
 	done
 }
 get_link_opts() {
@@ -190,12 +190,17 @@ get_inet4_opts() {
 get_inet6_opts() {
 	get_filtered_ifconfig2 "$1" inet6
 	get_filtered_ifconfig3 "$1" ipv6 inet6
-	if is_ipv6_default_interface "$1"
-	then
-		printf -- "%s " defaultif
-	else
-		printf -- "%s " -defaultif
-	fi
+	case "`uname`" in
+	*BSD)	
+		if is_ipv6_default_interface "$1"
+		then
+			printf -- "%s " defaultif
+		else
+			printf -- "%s " -defaultif
+		fi
+		;;
+	*)	;;
+	esac
 }
 get_link_aliases() {
 	get_filtered_ifconfig3 "$1" aliases link
@@ -211,7 +216,7 @@ get_inet6_aliases() {
 }
 if_yes() { case "$1" in [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1) echo "$2" ;; esac ; }
 
-redo-ifchange rc.conf general-services "static_arp@.service" "static_ndp@.service" "static_ip4@.service" "static_ip6@.service" "natd@.service" "hostapd@.service" "dhclient@.service" "dhcpcd@.service" "wpa_supplicant@.service" "rfcomm_pppd@.service" "ppp@.service" "spppcontrol@.service" "ifscript@.service" "ifconfig@.service"
+redo-ifchange rc.conf general-services "static_arp@.service" "static_ndp@.service" "static_ip4@.service" "static_ip6@.service" "natd@.service" "hostapd@.service" "dhclient@.service" "udhcpc@.service" "dhcpcd@.service" "wpa_supplicant@.service" "rfcomm_pppd@.service" "ppp@.service" "spppcontrol@.service" "ifscript@.service" "ifconfig@.service"
 
 r="/var/local/sv"
 e="--no-systemd-quirks --escape-instance --local-bundle --bundle-root"
@@ -235,6 +240,14 @@ show_enable() {
 	done
 }
 
+show_settings() {
+	local i
+	for i
+	do
+		system-control print-service-env "${i}" | sed -e 's/^/	/'
+	done
+}
+
 make_arp() {
 	local service
 	service="static_arp@$1"
@@ -242,9 +255,11 @@ make_arp() {
 	install -d -m 0755 "$r/${service}/service/env"
 	system-control set-service-env "$r/${service}" addr "`car $2`"
 	system-control set-service-env "$r/${service}" dest "`cdr $2`"
+	system-control preset "${service}"
+	show_enable "${service}"
+	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/cyclog@network-interfaces" "$r/${service}/log"
-	system-control preset "${service}"
 }
 
 make_ndp() {
@@ -254,9 +269,11 @@ make_ndp() {
 	install -d -m 0755 "$r/${service}/service/env"
 	system-control set-service-env "$r/${service}" addr "`car $pair`"
 	system-control set-service-env "$r/${service}" dest "`cdr $pair`"
+	system-control preset "${service}"
+	show_enable "${service}"
+	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/cyclog@network-interfaces" "$r/${service}/log"
-	system-control preset "${service}"
 }
 
 make_ip4_route() {
@@ -265,9 +282,11 @@ make_ip4_route() {
 	system-control convert-systemd-units $e "$r/" "./${service}.service"
 	install -d -m 0755 "$r/${service}/service/env"
 	system-control set-service-env "$r/${service}" route "$2"
+	system-control preset "${service}"
+	show_enable "${service}"
+	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/cyclog@network-interfaces" "$r/${service}/log"
-	system-control preset "${service}"
 }
 
 make_ip6_route() {
@@ -276,9 +295,11 @@ make_ip6_route() {
 	system-control convert-systemd-units $e "$r/" "./${service}.service"
 	install -d -m 0755 "$r/${service}/service/env"
 	system-control set-service-env "$r/${service}" route "$2"
+	system-control preset "${service}"
+	show_enable "${service}"
+	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/cyclog@network-interfaces" "$r/${service}/log"
-	system-control preset "${service}"
 }
 
 make_ifscript() {
@@ -293,6 +314,7 @@ make_ifscript() {
 		system-control preset "${service}"
 	fi
 	show_enable "${service}"
+	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/ifconfig-log" "$r/${service}/log"
 	system-control preset ifconfig-log
@@ -316,6 +338,7 @@ make_ifconfig() {
 		system-control preset "${service}"
 	fi
 	show_enable "${service}"
+	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/ifconfig-log" "$r/${service}/log"
 	system-control preset ifconfig-log
@@ -347,6 +370,7 @@ make_natd() {
 		system-control disable "${service}"
 	fi
 	show_enable "${service}"
+	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/natd-log" "$r/${service}/log"
 	system-control preset natd-log
@@ -360,16 +384,40 @@ make_dhclient() {
 	if is_physical_interface "$1" &&
 	   is_ip_interface "$1" &&
 	   test 0 -lt "`expr \"${dhclient}\" : dhclient`" &&
-	   get_ifconfig1 "$1" | grep -q -E '\<DHCP\>'
+	   get_ifconfig1 "$1" | grep -q -E '\<DHCP\>' &&
+	   ! get_ifconfig1 "$1" | grep -q -E '\<NOAUTO\>'
 	then
 		system-control preset "${service}"
 	else
 		system-control disable "${service}"
 	fi
 	show_enable "${service}"
+	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/dhclient-log" "$r/${service}/log"
 	system-control preset dhclient-log
+}
+
+make_udhcpc() {
+	local service
+	service="udhcpc@$1"
+	system-control convert-systemd-units $e "$r/" "./${service}.service"
+	install -d -m 0755 "$r/${service}/service/env"
+	if is_physical_interface "$1" &&
+	   is_ip_interface "$1" &&
+	   test 0 -lt "`expr \"${udhcpc}\" : udhcpc`" &&
+	   get_ifconfig1 "$1" | grep -q -E '\<DHCP\>' &&
+	   ! get_ifconfig1 "$1" | grep -q -E '\<NOAUTO\>'
+	then
+		system-control preset "${service}"
+	else
+		system-control disable "${service}"
+	fi
+	show_enable "${service}"
+	show_settings "${service}"
+	rm -f -- "$r/${service}/log"
+	ln -s -- "../../../sv/udhcpc-log" "$r/${service}/log"
+	system-control preset udhcpc-log
 }
 
 make_dhcpcd() {
@@ -380,13 +428,15 @@ make_dhcpcd() {
 	if is_physical_interface "$1" &&
 	   is_ip_interface "$1" &&
 	   test 0 -lt "`expr \"${dhclient}\" : dhcpcd`" &&
-	   get_ifconfig1 "$1" | grep -q -E '\<DHCP\>'
+	   get_ifconfig1 "$1" | grep -q -E '\<DHCP\>' &&
+	   ! get_ifconfig1 "$1" | grep -q -E '\<NOAUTO\>'
 	then
 		system-control preset "${service}"
 	else
 		system-control disable "${service}"
 	fi
 	show_enable "${service}"
+	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/dhcpcd-log" "$r/${service}/log"
 	system-control preset dhcpcd-log
@@ -404,6 +454,7 @@ make_hostap() {
 		system-control disable "${service}"
 	fi
 	show_enable "${service}"
+	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/cyclog@hostapd" "$r/${service}/log"
 	system-control preset cyclog@hostapd
@@ -421,6 +472,7 @@ make_wpa() {
 		system-control disable "${service}"
 	fi
 	show_enable "${service}"
+	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/cyclog@wpa_supplicant" "$r/${service}/log"
 	system-control preset cyclog@wpa_supplicant
@@ -441,7 +493,7 @@ make_ppp() {
 	system-control set-service-env "${service}" nat "`get_var3 ppp \"$i\" nat`"
 	system-control set-service-env "${service}" unit "`get_var3 ppp \"$i\" unit`"
 	show_enable "${service}"
-	system-control print-service-env "${service}"
+	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/ppp-log" "$r/${service}/log"
 	system-control preset ppp-log
@@ -455,7 +507,7 @@ make_sppp() {
 	system-control preset "${service}"
 	system-control set-service-env "${service}" args "`get_var2 spppconfig \"$i\"`"
 	show_enable "${service}"
-	system-control print-service-env "${service}"
+	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../sv/sppp-log" "$r/${service}/log"
 	system-control preset sppp-log
@@ -477,7 +529,7 @@ make_rfcomm_pppd() {
 	system-control set-service-env "${service}" channel "`get_var3 rfcomm_pppd_server \"$i\" channel`"
 	system-control set-service-env "${service}" addr "`get_var3 rfcomm_pppd_server \"$i\" bdaddr`"
 	show_enable "${service}"
-	system-control print-service-env "${service}"
+	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
 	ln -s -- "../../../sv/rfcomm_pppd-log" "$r/${service}/log"
 	system-control preset rfcomm_pppd-log
@@ -500,31 +552,28 @@ fi
 list_static_arp |
 while read -r i
 do
-	echo >> "$3" static_arp@${i}
 	test -n "$i" || continue
 	pair="`get_var2 static_arp \"$i\"`"
 	test -n "$pair" || continue
-	make_arp "$i" "$pair"
+	make_arp "$i" "$pair" >> "$3"
 done
 
 list_static_ndp |
 while read -r i
 do
-	echo >> "$3" static_ndp@${i}
 	test -n "$i" || continue
 	pair="`get_var2 static_ndp \"$i\"`"
 	test -n "$pair" || continue
-	make_ndp "$i" "$pair"
+	make_ndp "$i" "$pair" >> "$3"
 done
 
 list_static_ip4 |
 while read -r i
 do
-	echo >> "$3" static_ip4@${i}
 	test -n "$i" || continue
 	pair="`get_var2 route \"$i\"`"
 	test -n "$pair" || continue
-	make_ip4_route "$i" "$pair"
+	make_ip4_route "$i" "$pair" >> "$3"
 done
 
 if d="`get_var1 defaultrouter`"
@@ -533,27 +582,38 @@ then
 		[Nn][Oo]|'')
 			;;
 		*)
-			make_ip4 "_default" "default ${d}"
+			make_ip4 "_default" "default ${d}" >> "$3"
 			;;
 	esac
 fi
 
-# Some IP6 static routes are pre-defined.
+# Some static routes are pre-defined.
 #  * IP4 mapped and compatible IP6 addresses are null-routed.
+#  * Interface-local multicast IP6 addresses are null-routed.
 #  * Link-local unicast and multicast IP6 addresses are null-routed.
-make_ip6_route _v4mapped '::ffff:0.0.0.0 -prefixlen 96 ::1 -reject'
-make_ip6_route _v4compat '::0.0.0.0 -prefixlen 96 ::1 -reject'
-make_ip6_route _lla 'fe80:: -prefixlen 10 ::1 -reject'
-make_ip6_route _llma 'ff02:: -prefixlen 16 ::1 -reject'
+#  * 6to4 mappings of interface-local multicast IP4 addresses are null-routed.
+#  * 6to4 mappings of link-local unicast and multicast IP4 addresses are null-routed.
+#  * interface-local IP4 addresses are null-routed.
+#  * link-local unicast and multicast IP4 addresses are null-routed.
+make_ip6_route _v4mapped '::ffff:0.0.0.0 -prefixlen 96 ::1 -reject' >> "$3"
+make_ip6_route _v4compat '::0.0.0.0 -prefixlen 96 ::1 -reject' >> "$3"
+make_ip6_route _lla 'fe80:: -prefixlen 10 ::1 -reject' >> "$3"
+make_ip6_route _ilma 'ff01:: -prefixlen 16 ::1 -reject' >> "$3"
+make_ip6_route _llma 'ff02:: -prefixlen 16 ::1 -reject' >> "$3"
+make_ip6_route _6to4lla '2002:A9FE:: -prefixlen 32 ::1 -reject' >> "$3"
+make_ip6_route _6to4ilma '2002:7F00:: -prefixlen 24 ::1 -reject' >> "$3"
+make_ip6_route _6to4llma '2002:e000:: -prefixlen 20 ::1 -reject' >> "$3"
+make_ip4_route _lla '169.254.0.0 -prefixlen 16 127.0.0.1 -reject' >> "$3"
+make_ip4_route _ilma '127.0.0.0 -prefixlen 8 127.0.0.1 -reject' >> "$3"
+make_ip4_route _llma '224.0.0.0 -prefixlen 4 127.0.0.1 -reject' >> "$3"
 
 list_static_ip6 |
 while read -r i
 do
-	echo >> "$3" static_ip6@${i}
 	test -n "$i" || continue
 	pair="`get_var2 ipv6_route \"$i\"`"
 	test -n "$pair" || continue
-	make_ip6_route "$i" "$pair"
+	make_ip6_route "$i" "$pair" >> "$3"
 done
 
 if d="`get_var1 ipv6_defaultrouter`"
@@ -562,7 +622,7 @@ then
 		[Nn][Oo]|'')
 			;;
 		*)
-			make_ip6_route "_default" "default ${d}"
+			make_ip6_route "_default" "default ${d}" >> "$3"
 			;;
 	esac
 fi
@@ -576,6 +636,7 @@ do
 	make_hostap "$i" >> "$3"
 	make_wpa "$i" >> "$3"
 	make_dhclient "$i" >> "$3"
+	make_udhcpc "$i" >> "$3"
 	make_dhcpcd "$i" >> "$3"
 done
 

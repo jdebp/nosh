@@ -12,8 +12,6 @@ nfsserver	oldnfs_server
 rpclockd	rpc_lockd
 rpcstatd	rpc_statd
 ugidfw	bsdextended
-unbound	local-unbound
-unbound	local_unbound
 openbsd-cron	cron
 getty@tty00	ttylogin@tty00
 getty@tty01	ttylogin@tty01

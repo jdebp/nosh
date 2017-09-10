@@ -112,7 +112,16 @@ It sets the hardwired default environment:
 <listitem>
 <para><envar>PATH</envar>=<filename>/usr/local/bin</filename>:<filename>/usr/local/sbin</filename>:<filename>/usr/bin</filename>:<filename>/usr/sbin</filename>:<filename>/bin</filename>:<filename>/sbin</filename></para>
 </listitem>
-<listitem><para><envar>LANG</envar>=<code>C</code></para></listitem>
+<listitem>
+<itemizedlist>
+<listitem>
+<para><envar>LANG</envar>=<code>C.UTF-8</code> (Linux operating systems, per <ulink url="https://sourceware.org/glibc/wiki/Proposals/C.UTF-8">the GNU C library project</ulink> and consequent initiatives in Gentoo, Fedora, Debian, and others)</para> 
+</listitem>
+<listitem>
+<para><envar>LANG</envar>=<code>C</code> (others)</para> 
+</listitem>
+</itemizedlist>
+</listitem>
 </itemizedlist>
 </listitem>
 
@@ -182,7 +191,7 @@ It corrects the system clock.
 
 <para>
 <command>system-manager</command> operates as a "grim reaper", cleaning up after any child processes that exit.
-The operating system re-parents any orphaned processes to it.
+The operating system re-parents a few orphaned processes (mainly ones started directly by the kernel) to it.
 <command>system-manager</command> spawns exactly three processes itself:
 </para>
 
@@ -195,6 +204,9 @@ If control groups are available, it is run in its own dedicated <filename>servic
 This is the global service manager for the system, controlled through the socket.
 It is not expected to ever terminate (before shutdown).
 If it does, <command>system-manager</command> re-spawns it.
+</para>
+<para>
+Most orphaned processes in the system are re-parented to this sub-process, or further subordinate per-user service manager processes, and not to <command>system-manager</command>.
 </para>
 </listitem>
 

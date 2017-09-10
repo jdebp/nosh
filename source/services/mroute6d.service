@@ -7,7 +7,7 @@ Description=IPv6 mroute daemon
 
 [Service]
 EnvironmentDirectory=env
-ExecStart=pim6dd
+ExecStart=%p
 
 [Install]
 WantedBy=server.target

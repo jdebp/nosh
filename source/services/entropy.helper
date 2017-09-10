@@ -51,6 +51,7 @@ save() {
 	[Nn][Oo]|'')
 		;;
 	*)
+		umask 077
 		dd if=/dev/random of="${file}" bs=4096 count=1
 		;;
 	esac

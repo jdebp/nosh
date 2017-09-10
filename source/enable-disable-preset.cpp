@@ -297,10 +297,23 @@ matches (
 	const std::string & suffix
 ) {
 	std::string base;
-	if (ends_in(pattern, suffix, base))
-		return wildmat(base, name);
-	else
-		return wildmat(pattern, name);
+	if (suffix.empty()) {
+		if (ends_in(pattern, ".target", base))
+			return wildmat(base, name);
+		else
+		if (ends_in(pattern, ".service", base))
+			return wildmat(base, name);
+		else
+		if (ends_in(pattern, ".socket", base))
+			return wildmat(base, name);
+		else
+			return wildmat(pattern, name);
+	} else {
+		if (ends_in(pattern, suffix, base))
+			return wildmat(base, name);
+		else
+			return wildmat(pattern, name);
+	}
 }
 
 static
@@ -657,7 +670,7 @@ preset [[gnu::noreturn]] (
 		const FileDescriptorOwner bundle_dir_fd(open_bundle_directory(envs, prefix, *i, path, name, suffix));
 		if (0 > bundle_dir_fd.get()) {
 			const int error(errno);
-			std::fprintf(stderr, "%s: ERROR: %s%s: %s\n", prog, prefix, name.c_str(), std::strerror(error));
+			std::fprintf(stderr, "%s: ERROR: %s%s%s: %s\n", prog, path.c_str(), prefix, name.c_str(), std::strerror(error));
 			failed = true;
 			continue;
 		}

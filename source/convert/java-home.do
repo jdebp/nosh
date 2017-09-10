@@ -202,3 +202,4 @@ list_jvms | nl -p >> "$3"
 
 specific_home "opentsdb" "1.6 1.7 1.8" "" "" >> "$3"
 specific_home "wso2server" "1.7 1.8" "" "" >> "$3"
+specific_home "elasticsearch" "1.6 1.7 1.8" "" "" >> "$3"

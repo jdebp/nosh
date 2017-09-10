@@ -94,10 +94,15 @@ awk >> "$3" -F = '
 }
 /^/ { 
 	n = $1; 
-	if ("gateway_enable" != n && "forward_sourceroute" != n && "accept_sourceroute" != n) next;
+	if ("gateway_enable" != n && "forward_sourceroute" != n && "accept_sourceroute" != n && "log_in_vain" != n) next;
 	if ("gateway_enable" == n) n = "forwarding" ; 
 	if ("forward_sourceroute" == n) n = "sourceroute" ; 
-	if ("yes" == $2 || "YES" == $2 || "true" == $2 || "1" == $2 || "on" == $2) v = "1"; else v = "0"; 
-	print "net.inet.ip."n"="v; 
+	if ("log_in_vain" != n) {
+		if ("yes" == $2 || "YES" == $2 || "true" == $2 || "1" == $2 || "on" == $2) v = "1"; else v = "0";
+		print "net.inet.ip."n"="v; 
+	} else {
+		print "net.inet.tcp."n"="v; 
+		print "net.inet.udp."n"="v; 
+	}
 }
 '

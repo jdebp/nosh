@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=s6 fd holder socket
+
+[Socket]
+ListenStream=/run/%p
+SocketMode=0666
+
+[Install]
+WantedBy=workstation.target

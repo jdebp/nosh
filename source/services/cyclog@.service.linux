@@ -9,7 +9,7 @@ Before=%I.service
 [Service]
 WorkingDirectory=/var/log/sv/
 User=%i-log
-ExecStart=%p %I/
+ExecStart=%p "%I/"
 TasksMax=1
 CPUAccounting=true
 IOAccounting=true

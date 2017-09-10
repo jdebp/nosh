@@ -70,15 +70,15 @@ function _system_control_subarguments()
 	load-kernel-module|unload-kernel-module)
 		_arguments -S $common '2:module name:_files' -- ;;
 	set-service-env)
-		_arguments -S $common '2:service name:_path_files -/ -W dir' '3:name:' '4::value:' -- ;;
+		_arguments -A '-*' $common '2:service name:_path_files -/ -W dir' '3:name:' '4::value:' -- ;;
 	print-service-env)
-		_arguments -S $common '2:service name:_path_files -/ -W dir' '3::value:' -- ;;
+		_arguments -A '-*' $common '2:service name:_path_files -/ -W dir' '3::value:' -- ;;
 	convert-systemd-units)
-		_arguments -S $common '2:unit name:_files' -- ;;
+		_arguments -A '-*' $common '2:unit name:_files' -- ;;
 	escape)
-		_arguments -S $common '*:name: ' -- ;;
+		_arguments -A '-*' $common '*:name: ' -- ;;
 	*)
-		_arguments $common '*:service name:_path_files -/ -W dir' -- ;;
+		_arguments -A '-*' $common '*:service name:_path_files -/ -W dir' -- ;;
 	esac
 
 	words[1]="${w1}"
@@ -121,25 +121,25 @@ systemctl|initctl|rcctl|svcadm|system-control)
 init|telinit)
 	_arguments -S $common '1:runlevel:_runlevels' -- ;;
 svshow|service-show|svstat|service-status|svok|service-is-ok|svup|service-is-up|svc|service-control)
-	_arguments -S '*:service directory:_directories' -- ;;
-svscan|service-st-scanner)
-	_arguments -S $common '1:scan directory:_directories' -- ;;
+	_arguments -A '-*' '*:service directory:_directories' -- ;;
+svscan|service-dt-scanner)
+	_arguments -A '-*' $common '1:scan directory:_directories' -- ;;
 console-multiplexor)
-	_arguments -S $common '1:composite virtual console directory:_directories' '*:source virtual console directory:_directories' -- ;;
+	_arguments -A '-*' $common '1:composite virtual console directory:_directories' '*:source virtual console directory:_directories' -- ;;
 console-terminal-emulator)
-	_arguments -S $common '1:virtual console directory:_directories' -- ;;
+	_arguments -A '-*' $common '1:virtual console directory:_directories' -- ;;
 console-fb-realizer)
-	_arguments -S $common '1:virtual console directory:_directories' '2:framebuffer device:_files' -- ;;
+	_arguments -A '-*' $common '1:virtual console directory:_directories' '2:framebuffer device:_files' -- ;;
 console-ncurses-realizer)
-	_arguments -S $common '1:virtual console directory:_directories' -- ;;
+	_arguments -A '-*' $common '1:virtual console directory:_directories' -- ;;
 console-convert-kbdmap)
-	_arguments -S $common '*:BSD kbd map files:_directories' -- ;;
+	_arguments -A '-*' $common '*:BSD kbd map files:_directories' -- ;;
 shutdown)
-	_arguments -S $common '1:time:' '2:message:' -- ;;
+	_arguments -A '-*' $common '1:time:' '2:message:' -- ;;
 setenv)
-	_arguments -S $common '1:variable:' '2:value:' -- ;;
+	_arguments -A '-*' $common '1:variable:' '2:value:' -- ;;
 unsetenv)
-	_arguments -S $common '1:variable:' -- ;;
+	_arguments -A '-*' $common '1:variable:' -- ;;
 *)
 	_arguments -A '-*' $common -- ;;
 esac

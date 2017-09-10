@@ -1,0 +1,207 @@
+<title>Networking</title>
+<link rel="Up" href="index.html" title="nosh Guide" />
+<link rel="Prev" href="mounting.html" title="Mounting filesystems" />
+<link rel="Next" href="logging.html" title="Logging" />
+<h1>
+Networking
+</h1>
+
+<p>
+A prefaratory note on the terminology used here:
+Configuration and address assignment are two different things.
+The difference between <i>dynamic configuration</i> and <i>static configuration</i> lies in whether the interface is configured in response to Plug and Play events or unconditionally at system bootstrap/shutdown.
+The difference between <i>dynamic address assignment</i> and <i>static address assignment</i> is whether the IP address(es) are hardwired into the configuration or obtained at runtime by a DHCP client/assigned by stateless auto-configuration.
+</p>
+
+<h2>
+Generated services
+</h2>
+
+<p>
+The nitty-gritty of managing network configuration is done with two suites of services, that are generated from templates based upon a parameter.
+They are individually preset and disabled in accordance with how the various network interfaces and static networking table entries are intended to be configured.
+</p>
+
+<h3>
+per-network-interface generated services
+</h3>
+
+<p>
+The first suite is grouped by <i>name</i>, the name of a network interface:
+</p>
+
+<dl>
+
+<dt><code>ifscript@<i>name</i></code></dt>
+<dd>
+<p>
+A service that does not have a long-running d&aelig;mon process, that runs <code>/etc/start_if.<i>name</i></code> and <code>/etc/stop_if.<i>name</i></code> scripts at start and stop.
+These are the first and last things that are run for the interface.
+</p>
+</dd> 
+<dt><code>ifconfig@<i>name</i></code></dt>
+<dd>
+<p>
+A service that does not have a long-running d&aelig;mon process, that runs <code>ifconfig</code> with various options for link-level, IPv4, and IPv6 settings, at start and stop.
+This is the service that configures and deconfigures statically-assigned IPv4 and IPv6 addresses, and link-level (MAC) addresses.
+</p>
+</dd>
+
+<dt><code>natd@<i>name</i></code></dt>
+<dt><code>dhclient@<i>name</i></code></dt>
+<dt><code>udhcpc@<i>name</i></code></dt>
+<dt><code>dhcpcd@<i>name</i></code></dt>
+<dt><code>hostap@<i>name</i></code></dt>
+<dt><code>wpa@<i>name</i></code></dt>
+<dt><code>ppp@<i>name</i></code></dt>
+<dt><code>sppcontrol@<i>name</i></code></dt>
+<dt><code>rfcomm_pppd@<i>name</i></code></dt>
+<dd>
+<p>
+These services have a long-running d&aelig;mon process; <code>natd</code>, <code>dhclient</code>, <code>udhcpc</code>, <code>dhcpcd</code>, <code>hostap</code>, <code>hostap</code>, <code>wpa</code>, <code>pppd</code>, <code>sppcontrol</code>, and <code>rfcomm_pppd</code> respectively.
+They are ordered to start after <code>ifconfig@<i>name</i></code> has started and to stop before it is stopped, but they are not ordered relative to one another.
+</p>
+<p>
+One does not, of course, run all of these services; only some of them.
+For starters, one generally only wants one of the DHCP clients to be running, for an individual interface, at a time.
+</p>
+</dd>
+
+</dl>
+
+<h3>
+administrator-labelled generated services
+</h3>
+
+<p>
+The second suite is grouped by an arbitrary label <i>label</i>:
+</p>
+
+<dl>
+
+<dt><code>static_arp@<i>label</i></code></dt>
+<dt><code>static_ndp@<i>label</i></code></dt>
+<dd>
+<p>
+These services do not have a long-running d&aelig;mon process, but at start and stop set up and tear down static entries in the IPv4 and IPv6 ARP and NDP tables.
+</p>
+</dd>
+
+<dt><code>static_ip4@<i>label</i></code></dt>
+<dt><code>static_ip6@<i>label</i></code></dt>
+<dd>
+<p>
+These services do not have a long-running d&aelig;mon process, but at start and stop set up and tear down static IPv4 and IPv6 routing table entries.
+</p>
+<p>
+Conventionally, there are some services in this set that set up routing that all systems are supposed to have:
+</p>
+<dl>
+<dt><code>static_ip6@_v4mapped</code></dt>
+<dd><p>This ensures that IPv4-mapped IPv6 addresses, 0::FFFF:0:0/96, are not routed.</p></dd>
+<dt><code>static_ip6@_v4compat</code></dt>
+<dd><p>This ensures that IPv4-compatible IPv6 addresses, 0::0000:0:0/96, are not routed.</p></dd>
+<dt><code>static_ip6@_lla</code></dt>
+<dd><p>
+This ensures that link-local unicast addresses, FE80::/10, are not routed.
+(Note that <em>site</em>-local addresses, FEC0::/10, <em>are</em> routable.)
+</p></dd>
+<dt><code>static_ip6@_ilma</code></dt>
+<dd><p>This ensures that interface-local multicast addresses, FF01::/16, are not routed.</p></dd>
+<dt><code>static_ip6@_llma</code></dt>
+<dd><p>This ensures that link-local multicast addresses, FF02::/16, are not routed.</p></dd>
+<dt><code>static_ip6@_6to4lla</code></dt>
+<dd><p>This ensures that 6to4-mapped link-local unicast IPv4 addresses, 2002:A9FE::/32, are not routed.</p></dd>
+<dt><code>static_ip6@_6to4ilma</code></dt>
+<dd><p>This ensures that 6to4-mapped link-local multicast IPv4 addresses, 2002:E000::/20, are not routed.</p></dd>
+<dt><code>static_ip6@_6to4llma</code></dt>
+<dd><p>This ensures that 6to4-mapped interface-local IPv4 addresses, 2002:7F00::/24, are not routed.</p></dd>
+<dt><code>static_ip4@_lla</code></dt>
+<dd><p>This ensures that link-local unicast IPv4 addresses, 169.254.0.0/16, are not routed.</p></dd>
+<dt><code>static_ip4@_llma</code></dt>
+<dd><p>This ensures that link-local multicast IPv4 addresses, 224.0.0.0/4, are not routed.</p></dd>
+<dt><code>static_ip4@_llma</code></dt>
+<dd><p>This ensures that interface-local IPv4 addresses, 127.0.0.0/8, are not routed.</p></dd>
+</dl>
+<p>
+Various other parts of the system match up with these.
+<a href="services/djbdns.html">The <code>tinydns</code> service</a> by default is set up to <a href="http://jdebp.eu./FGA/dns-private-address-split-horizon.html#WhatToDo">publish reverse lookups</a> for these IP address ranges.
+The <code>ip6addrctl</code> service sets an explicit address selection policy for these address ranges.
+</p>
+</dd>
+
+</dl>
+
+<h2>
+Standard services
+</h2>
+
+<p>
+All of the generated services have a <code>wanted-by/</code> relationship to the <code>static-networking</code> target (which has the alias name <code>networking</code> on Linux operating systems).
+This is a standard target, that is in turn wanted by the <code>normal</code> target.
+</p>
+
+<p>
+The <code>network-interfaces</code> service no longer has any function.
+Its old purpose was to run the <code>ifup -a</code> and <code>ifdown -a</code> commands on Linux operating systems.
+Not only are these commands not necessarily available across all such operating systems, but the functionality of those commands is now superseded by the aforementioned suites of generated services.
+<code>ifup</code> and <code>ifdown</code> essentially do the same task as them, but badly.
+<code>ifup</code> and <code>ifdown</code> run most of the same programs, DHCP clients and commands to set up and tear down IP address configuration; but they do not run the long-running d&aelig;mons under proper service management.
+</p>
+
+<p>
+The <code>network-runtime</code> service handles the creation and destruction of the <code>/run/network</code> runtime directory that various other services use.
+</p>
+
+<h2>
+Plug-and-Play and dynamic configuration
+</h2>
+
+<p>
+Dynamically-configured networking involves starting services in response to network events sent to the Plug and Play manager.
+</p>
+
+<ul>
+
+<li>
+<p>
+On FreeBSD/TrueOS the Plug and Play manager is <code>devd</code> and the link from the Plug and Play manager to the network services is the <code>/usr/local/etc/devd/netif-nosh.conf</code> configuration file.
+This configuration file specifies various events that will start the <code>ifscript@<i>name</i></code>, <code>ifconfig@<i>name</i></code>, and <code>dhclient@<i>name</i></code> services for an interface.
+</p>
+</li>
+
+<li>
+<p>
+On Linux operating systems, the Plug and Play manager can be <code>eudev</code>, Busybox <code>mdev</code>, Suckless <code>mdev</code>, <code>systemd-udev</code>, or <code>vdev</code>.
+There are as yet no supplied configuration files for linking them to the network services.
+</p>
+</li>
+
+</ul>
+
+<p>
+Note that services are not generated on the fly by the Plug-and-Play subsystem.
+The services to invoke must have been already generated.
+</p>
+
+<h2>
+Presets and static configuration
+</h2>
+
+<p>
+As mentioned, <code>static-networking</code> is a standard target, that is in turn wanted by the <code>normal</code> target.
+Thus individual generated networking services can be enabled so that they are automatically started at bootstrap.
+This is "static" inasmuch as what services are started is irrespective of Plug and Play events.
+</p>
+
+<p>
+It is a good idea to preset, rather than directly enable, the services.
+The <code>90-bsd-static-networking</code> and <code>90-linux-static-networking</code> preset files govern presetting services, and limit by default what networking services will be enabled (by presetting) on a platform.
+For example: The presets prevent <code>natd@<i>name</i></code> and <code>sppcontrol@<i>name</i></code> generated services from being enabled (by presetting) on non-BSD platforms that do not have these d&aelig;mons.
+</p>
+
+<p>
+Whilst one can generate such services in other ways, it is commonly the case that generated services are created by <a href="external-formats.html">the external configuration import subsystem</a> in response to networking configuration settings <a href="rcconf.html">that it reads from <code>rc.conf</code></a>.
+These settings determine the list of network interfaces to generate services for (<code>network_interfaces</code>), settings for things like the <code>ifconfig@<i>name</i></code> services (<code>ifconfig_</i>name</i></code> et al.), and the name of the DHCP client to use (<code>dhclient_program</code>).
+They may, in their turn, be derived from other things as part of <a href="rcconf-amalgamation.html"><code>rc.conf</code> amalgamation</a>.
+</p>

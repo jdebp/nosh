@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Bluetooth OBEX
+
+[Service]
+Type=dbus
+EnvironmentDirectory=env
+ExecStart=/usr/lib/bluetooth/%pd
+Restart=no
+
+[Install]

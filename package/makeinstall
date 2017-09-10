@@ -212,7 +212,7 @@ done
 
 # ##############################################################################
 # Build all of the {new} files in ./config.
-install -d -m 0755 config/presets config/systemd config/convert config/mewburn-rc.d config/openbsd-rc.d config/vt config/devd config/zsh
+install -d -m 0755 config/presets config/systemd config/convert config/mewburn-rc.d config/openbsd-rc.d config/vt config/devd config/zsh config/service-generators
 cat package/systemd-services package/tmpfiles-snippets |
 while read i
 do
@@ -262,6 +262,11 @@ for i in _nosh
 do
 	rm -f -- config/zsh/"$i"{new}
 	install -m 0444 -p -- build/"$i" config/zsh/"$i"{new}
+done 
+for i in cyclog@.service kmod@.service
+do
+	rm -f -- config/service-generators/"$i"{new}
+	install -m 0444 -p -- build/services/"$i" config/service-generators/"$i"{new}
 done 
 # Plug and Play manager rulesets
 cat package/devd-rules |
@@ -315,6 +320,10 @@ done
 for i in _nosh
 do
 	mv -f -- config/zsh/"$i"{new} config/zsh/"$i"
+done 
+for i in cyclog@.service kmod@.service
+do
+	mv -f -- config/service-generators/"$i"{new} config/service-generators/"$i"
 done 
 # Plug and Play manager rulesets
 cat package/devd-rules |

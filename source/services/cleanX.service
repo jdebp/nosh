@@ -8,7 +8,9 @@ Description=Clean-up X socket directories
 [Service]
 Type=oneshot
 WorkingDirectory=/tmp/
-ExecStart=sh -c 'rm -r -f /tmp/.X11-unix /tmp/.XIM-unix /tmp/.ICE-unix /tmp/.font-unix /tmp/.X[0-9].lock ; mkdir -m 1777 /tmp/.X11-unix /tmp/.XIM-unix /tmp/.ICE-unix /tmp/.font-unix'
+ExecStart=sh -c 'exec rm -r -f /tmp/.X11-unix /tmp/.XIM-unix /tmp/.ICE-unix /tmp/.font-unix /tmp/.X[0-9].lock'
+ExecStart=install -d -m 1777 /tmp/.X11-unix /tmp/.XIM-unix /tmp/.ICE-unix /tmp/.font-unix
+ExecStopPost=sh -c 'exec rm -r -f /tmp/.X11-unix /tmp/.XIM-unix /tmp/.ICE-unix /tmp/.font-unix /tmp/.X[0-9].lock'
 # This is a one-shot service that remains running without a main process, because we do not want to run it multiple times.
 RemainAfterExit=true
 Restart=no

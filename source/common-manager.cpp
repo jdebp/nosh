@@ -223,11 +223,13 @@ system_manager_directories[] = {
 };
 
 static
-const struct api_symlink system_manager_symlinks[] = 
+const struct api_symlink system_manager_symlinks_data[] = 
 {
-	// Compatibilitu with early supervise bundles from version 1.16 and earlier.
-	{	"/run/system-manager/early-supervise",	"../service-bundles/early-supervise"		},
+	// Compatibility with early supervise bundles from version 1.16 and earlier.
+	{	0,	"/run/system-manager/early-supervise",	"../service-bundles/early-supervise"		},
 };
+
+static const std::vector<api_symlink> system_manager_symlinks(system_manager_symlinks_data, system_manager_symlinks_data + sizeof system_manager_symlinks_data/sizeof *system_manager_symlinks_data);
 
 /* Utilities for the main program *******************************************
 // **************************************************************************
@@ -284,7 +286,12 @@ setup_process_state(
 		// On some systems, /usr/sbin and /usr/bin are the symbolic links, and don't exist until we have mounted /usr .
 		// On other systems, /sbin and /bin are the symbolic links, but /usr isn't a mount point and everything is on the root volume.
 		envs.set("PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin");
+#if defined(__LINUX__) || defined(__linux__)
+		// https://sourceware.org/glibc/wiki/Proposals/C.UTF-8
+		envs.set("LANG", "C.UTF-8");
+#else
 		envs.set("LANG", "C");
+#endif
 
 		// parse /etc/locale.d as if by envdir.
 		const int scan_dir_fd(open_dir_at(AT_FDCWD, "/etc/locale.d"));
@@ -541,6 +548,25 @@ setup_kernel_api_volumes(
 
 static inline
 void
+make_all(
+	const char * prog,
+	const std::vector<api_symlink> & symlinks
+) {
+	for (std::vector<api_symlink>::const_iterator i(symlinks.begin()); symlinks.end() != i; ++i) {
+		for (int force = !!i->force ; ; --force) {
+			if (0 <= symlink(i->target, i->name)) break;
+			const int error(errno);
+			if (!force || EEXIST != error) {
+				std::fprintf(stderr, "%s: ERROR: %s: %s: %s\n", prog, "symlink", i->name, std::strerror(error));
+				break;
+			}
+			unlink(i->name);
+		}
+	}
+}
+
+static inline
+void
 setup_kernel_api_volumes_and_devices(
 	const char * prog
 ) {
@@ -558,12 +584,7 @@ setup_kernel_api_volumes_and_devices(
 			setup_kernel_api_volumes(prog, 2U); // cgroups v2 collection
 			break;
 	}
-	for (std::vector<api_symlink>::const_iterator i(api_symlinks.begin()); api_symlinks.end() != i; ++i) {
-		if (0 > symlink(i->target, i->name)) {
-			const int error(errno);
-			std::fprintf(stderr, "%s: ERROR: %s: %s: %s\n", prog, "symlink", i->name, std::strerror(error));
-		}
-	}
+	make_all(prog, api_symlinks);
 }
 
 static inline
@@ -581,13 +602,7 @@ make_needed_run_directories(
 					std::fprintf(stderr, "%s: ERROR: %s: %s: %s\n", prog, "mkdir", dirname, std::strerror(error));
 			}
 		}
-		for (std::size_t fi(0); fi < sizeof system_manager_symlinks/sizeof *system_manager_symlinks; ++fi) {
-			const api_symlink * const i(system_manager_symlinks + fi);
-			if (0 > symlink(i->target, i->name)) {
-				const int error(errno);
-				std::fprintf(stderr, "%s: ERROR: %s: %s: %s\n", prog, "symlink", i->name, std::strerror(error));
-			}
-		}
+		make_all(prog, system_manager_symlinks);
 	} else {
 		const
 		std::string
@@ -1127,7 +1142,7 @@ common_manager (
 					std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
 				} else if (0 == system_control_pid) {
 					default_all_signals();
-					alarm(180);
+					alarm(300);
 					// Replace the original arguments with this.
 					args.clear();
 					args.insert(args.end(), "move-to-control-group");

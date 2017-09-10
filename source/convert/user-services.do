@@ -7,7 +7,7 @@
 # This is invoked by all.do .
 #
 
-redo-ifchange /etc/passwd "user-dbus@.socket" "user-dbus.service" "user-dbus-log@.service" "user-services@.service" "user-runtime@.service" "run-user-directory@.service" "user@.target" "exit.target" "per-user.conf" "mpd.conf"
+redo-ifchange /etc/passwd "user-dbus-daemon@.socket" "user-dbus-daemon.service" "user-dbus-broker@.socket" "user-dbus-broker.service" "user-dbus-log@.service" "user-services@.service" "user-runtime@.service" "run-user-directory@.service" "user@.target" "exit.target" "per-user.conf" "mpd.conf"
 
 lr="/var/local/sv/"
 sr="/etc/service-bundles/services/"
@@ -200,12 +200,18 @@ do
 	ln -s -- "/var/log/user/$i/dbus" "$lr/user-dbus-log@$i/main"
 
 	# This is a system-level service that is disabled in favour of the user-level dbus service.
-	system-control convert-systemd-units $e "$lr/" "./user-dbus@$i.socket"
-	system-control disable "$lr/user-dbus@$i"
-	echo "user-dbus@$i" >> "$3"
-	rm -f -- "$lr/user-dbus@$i/log"
-	ln -s -- "../user-dbus-log@$i" "$lr/user-dbus@$i/log"
-	install -m 0644 -- "per-user.conf" "$lr/user-dbus@$i/service/per-user.conf"
+	system-control convert-systemd-units $e "$lr/" "./user-dbus-daemon@$i.socket"
+	system-control disable "$lr/user-dbus-daemon@$i"
+	echo "user-dbus-daemon@$i" >> "$3"
+	rm -f -- "$lr/user-dbus-daemon@$i/log"
+	ln -s -- "../user-dbus-log@$i" "$lr/user-dbus-daemon@$i/log"
+	install -m 0644 -- "per-user.conf" "$lr/user-dbus-daemon@$i/service/per-user.conf"
+	system-control convert-systemd-units $e "$lr/" "./user-dbus-broker@$i.socket"
+	system-control disable "$lr/user-dbus-broker@$i"
+	echo "user-dbus-broker@$i" >> "$3"
+	rm -f -- "$lr/user-dbus-broker@$i/log"
+	ln -s -- "../user-dbus-log@$i" "$lr/user-dbus-broker@$i/log"
+	install -m 0644 -- "per-user.conf" "$lr/user-dbus-broker@$i/service/per-user.conf"
 
 	system-control convert-systemd-units $e "$lr/" "./user-services@$i.service"
 	system-control enable "$lr/user-services@$i"
@@ -288,7 +294,9 @@ do
 			user_simple_dbus_service "dconf-service" "ca.desrt.dconf"
 			user_simple_dbus_service "gconfd" "org.gnome.GConf"
 			user_simple_dbus_service "gedit" "org.gnome.gedit"
-			user_simple_dbus_service "gnome-keyring-daemon" "org.freedesktop.secrets"
+			user_simple_dbus_service "gnome-keyring-daemon" "org.gnome.keyring" "org.freedesktop.secrets"
+			user_simple_dbus_service "gnome-shell" "org.gnome.Shell"
+			user_simple_dbus_service "gnome-settings-daemon" "org.gnome.SettingsDaemon.XSettings"
 			user_simple_dbus_service "gnome-terminal-server" "org.gnome.Terminal"
 			user_simple_dbus_service "gvfs-afc-volume-monitor" "org.gtk.Private.AfcVolumeMonitor"
 			user_simple_dbus_service "gvfs-daemon" "org.gtk.vfs.Daemon"
@@ -302,6 +310,7 @@ do
 			user_simple_dbus_service "knotify" "org.kde.knotify"
 			user_simple_dbus_service "mate-notification-daemon" "org.freedesktop.mate.Notifications" "org.freedesktop.Notifications"
 			user_simple_dbus_service "mate-screensaver" "org.mate.ScreenSaver"
+			user_simple_dbus_service "obex" "org.bluez.obex" "dbus-org.bluez.obex"
 			user_simple_dbus_service "org.gnome.Maps"
 			user_simple_dbus_service "org.gnome.Weather.Application"
 			user_simple_dbus_service "zeitgeist-daemon" "org.gnome.zeitgeist.Engine"

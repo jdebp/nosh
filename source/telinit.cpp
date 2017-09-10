@@ -68,6 +68,10 @@ reboot_poweroff_halt_command (
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
 		throw EXIT_FAILURE;
 	}
+	if (!args.empty()) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, args.front(), "Unexpected argument.");
+		throw static_cast<int>(EXIT_USAGE);
+	}
 
 	args.clear();
 	if (force) {
@@ -351,6 +355,10 @@ runlevel [[gnu::noreturn]] (
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
 		throw EXIT_FAILURE;
+	}
+	if (!args.empty()) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, args.front(), "Unexpected argument.");
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	std::cout << "N N\n";

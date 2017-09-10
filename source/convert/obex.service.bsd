@@ -3,12 +3,12 @@
 ## **************************************************************************
 
 [Unit]
-Description=Clam anti-virus
+Description=Bluetooth OBEX
 
 [Service]
+Type=dbus
 EnvironmentDirectory=env
-User=%p
-ExecStart=%p ${config:+--config-file "${config}"} ${flags}
+ExecStart=/usr/local/libexec/%pd
+Restart=no
 
 [Install]
-WantedBy=server.target
