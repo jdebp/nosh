@@ -4,6 +4,7 @@ NetworkManager-dispatcher
 VBoxService
 anacron
 apache2
+apacheds
 ataidle-log
 atd
 autobridge-log
@@ -60,6 +61,7 @@ hald
 hostapd
 hostnamed
 ifconfig-log
+jenkins
 kamailio
 kdm
 keepalived
@@ -183,14 +185,17 @@ tinydns
 tor
 udhcpc-log
 udisks
+udisks2
 unbound
 upower
+utx
 virecover
 vnstat
 volmand
 webcamd-log
 wicd
 winbindd
+wlandebug-log
 wpa_supplicant
 wso2server
 xdm

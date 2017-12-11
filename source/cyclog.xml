@@ -23,32 +23,25 @@
 <refsection><title>Description</title>
 
 <para>
-<command>cyclog</command> is a simple logging utility that logs everything that it receives on
-its standard input to a set of log file directories named as
-its command arguments.
-It automatically timestamps logs, produces time-sortable log file names,
-rotates log files, and caps log directory sizes.
+<command>cyclog</command> is a simple logging utility that logs everything that it receives on its standard input to a set of log file directories named as its command arguments.
+It automatically timestamps logs, produces time-sortable log file names, rotates log files, and caps log directory sizes.
 </para>
 
 <para>
 At startup, <command>cyclog</command> attempts to open all of the <replaceable>directories</replaceable>.
 If they are directories (or symbolic links to the same), it treats them as log directories.
-Otherwise, if they don't exist or are other types of file such as regular files, device
-files, or FIFOs, it aborts startup without reading from standard input.
+Otherwise, if they don't exist or are other types of file such as regular files, device files, or FIFOs, it aborts startup without reading from standard input.
 </para>
 
 <para>
-It keeps a file descriptor open to each log directory for its lifetime, and
-accesses files relative to that open file descriptor.
-Log directories can thus be renamed as it is running, and it will continue to
-use the original directory, wherever it is renamed to.
+It keeps a file descriptor open to each log directory for its lifetime, and accesses files relative to that open file descriptor.
+Log directories can thus be renamed as it is running, and it will continue to use the original directory, wherever it is renamed to.
 </para>
 
-<refsection><title>LOG DIRECTORY</title>
+<refsection><title>Log directory</title>
 
 <para>
-A log directory is compatible with the log directories employed by daemontools'
-and daemontools-encore's <citerefentry><refentrytitle>multilog</refentrytitle><manvolnum>1</manvolnum></citerefentry>, s6's <citerefentry><refentrytitle>s6-log</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and runit's <citerefentry><refentrytitle>svlog</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+A log directory is compatible with the log directories employed by daemontools' and daemontools-encore's <citerefentry><refentrytitle>multilog</refentrytitle><manvolnum>1</manvolnum></citerefentry>, s6's <citerefentry><refentrytitle>s6-log</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and runit's <citerefentry><refentrytitle>svlog</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 It contains:
 </para>
 
@@ -56,18 +49,13 @@ It contains:
 
 <listitem>
 <para>
-a <filename>lock</filename> file (compatible with
-<citerefentry><refentrytitle>setlock</refentrytitle><manvolnum>1</manvolnum></citerefentry>)
-that prevents two logging processes from sharing an active log directory;
+a <filename>lock</filename> file (compatible with <citerefentry><refentrytitle>setlock</refentrytitle><manvolnum>1</manvolnum></citerefentry>) that prevents two logging processes from sharing an active log directory;
 </para>
 </listitem>
 
 <listitem>
 <para>
-a set of old log files, named as <code>@</code> followed by a TAI64N timestamp in external
-form (16 hexadecimal digits of seconds and 8 hexadecimal digits of nanoseconds)
-and either <code>.s</code> (safely written to disc) or <code>.u</code> (aborted whilst writing to disc
-and possibly incomplete);
+a set of old log files, named as <code>@</code> followed by a TAI64N timestamp in external form (16 hexadecimal digits of seconds and 8 hexadecimal digits of nanoseconds) and either <code>.s</code> (safely written to disc) or <code>.u</code> (aborted whilst writing to disc and possibly incomplete);
 and
 </para>
 </listitem>
@@ -81,76 +69,54 @@ a <filename>current</filename> file where incoming log data are currently being 
 </itemizedlist>
 
 <para>
-An active <filename>current</filename> file, or an old log file or a <filename>current</filename> file that was not
-written to disc by <command>cyclog</command> properly shutting down, has permissions 0644.
-A <filename>current</filename> file or an old log file where <command>cyclog</command> properly shut down 
-has permissions 0744.
+An active <filename>current</filename> file, or an old log file or a <filename>current</filename> file that was not written to disc by <command>cyclog</command> properly shutting down, has permissions 0644.
+A <filename>current</filename> file or an old log file where <command>cyclog</command> properly shut down has permissions 0744.
+(See the Compatibility section.)
 </para>
 
 <para>
-<command>cyclog</command> shuts down when either it sees EOF on its standard input, or it
-receives one of the "good" termination signals (<code>SIGTERM</code>, <code>SIGPIPE</code>,
-<code>SIGINT</code>, or <code>SIGHUP</code>).
-At shut down, <command>cyclog</command> writes all pending data that it has already read from
-standard input, flushes <filename>current</filename> to disc, and changes <filename>current</filename>'s permissions.
+<command>cyclog</command> shuts down when either it sees EOF on its standard input, or it receives one of the "good" termination signals (<code>SIGTERM</code>, <code>SIGPIPE</code>, <code>SIGINT</code>, or <code>SIGHUP</code>).
+At shut down, <command>cyclog</command> writes all pending data that it has already read from standard input, flushes <filename>current</filename> to disc, and changes <filename>current</filename>'s permissions.
 At start up, it changes <filename>current</filename>'s permissions and carries on.
 </para>
 
-</refsection><refsection><title>RELIABLE PIPED INPUT</title>
+</refsection><refsection><title>Reliable piped input</title>
 
 <para>
-In the normal case, the standard input of <command>cyclog</command> will be a pipe; and both
-ends of the the pipe will be open in a long-lived supervisor process such as
-<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-<command>cyclog</command>, as aforementioned, ensures that it writes all data read
-from its standard input, even if it is terminated by a (good) signal.
+In the normal case, the standard input of <command>cyclog</command> will be a pipe; and both ends of the the pipe will be open in a long-lived supervisor process such as <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+<command>cyclog</command>, as aforementioned, ensures that it writes all data read from its standard input, even if it is terminated by a (good) signal.
 </para>
 
 <para>
 Thus no log data are lost, even if <command>cyclog</command> is shut down and restarted.
 </para>
 
-</refsection><refsection><title>AUTOMATIC LOG ROTATION</title>
+</refsection><refsection><title>Automatic log rotation</title>
 
 <para>
-<command>cyclog</command> performs automatic log rotation when it writes a
-linefeed within <replaceable>margin</replaceable> bytes of the maximum size
-(<replaceable>max-file-size</replaceable>) of the <filename>current</filename>
-file, when it is about to exceed that size, or when it receives a
-<code>SIGALRM</code>.  
-It flushes <filename>current</filename> to disc, changes its permissions and renames it to
-a timestamped name, and then creates a new <filename>current</filename> file.
-The TAI64N timestamp of an old log file is the timestamp of when <command>cyclog</command>
-rotated <filename>current</filename> to that file.
+<command>cyclog</command> performs automatic log rotation when it writes a linefeed within <replaceable>margin</replaceable> bytes of the maximum size (<replaceable>max-file-size</replaceable>) of the <filename>current</filename> file, when it is about to exceed that size, or when it receives a <code>SIGALRM</code>.  
+It flushes <filename>current</filename> to disc, changes its permissions and renames it to a timestamped name, and then creates a new <filename>current</filename> file.
+The TAI64N timestamp of an old log file is the timestamp of when <command>cyclog</command> rotated <filename>current</filename> to that file.
 </para>
 
 <para>
-At log rotation, and also at startup, it checks to ensure that the total size
-of all log files in the directory does not exceed the maximum total size
-(<replaceable>max-total-size</replaceable>).
+At log rotation, and also at startup, it checks to ensure that the total size of all log files in the directory does not exceed the maximum total size (<replaceable>max-total-size</replaceable>).
 (It only totals the sizes of <filename>current</filename> and old log files.  
 Other files, not managed or created by <command>cyclog</command>, are ignored.)
-If the total exceeds that maximum, it deletes each old log file with the
-numerically lowest name until either the total is less than the maximum or
-there is only the <filename>current</filename> file left.
+If the total exceeds that maximum, it deletes each old log file with the numerically lowest name until either the total is less than the maximum or there is only the <filename>current</filename> file left.
 </para>
 
 <para>
-Thus the maximum size of all log files at any time is <replaceable>max-total-size</replaceable> (the
-total size after the last rotation) plus <replaceable>max-file-size</replaceable> (the data written
-since that rotation).
-The default <replaceable>max-file-size</replaceable> is 16MiB
-and the default <replaceable>max-total-size</replaceable> is 1GiB.
+Thus the maximum size of all log files at any time is <replaceable>max-total-size</replaceable> (the total size after the last rotation) plus <replaceable>max-file-size</replaceable> (the data written since that rotation).
+The default <replaceable>max-file-size</replaceable> is 16MiB and the default <replaceable>max-total-size</replaceable> is 1GiB.
 </para>
 
 <para>
 <command>cyclog</command> totals file sizes rather than space allocated on disc.
-The amount of space allocated to all files may be, depending from the
-filesystem type and the maxima chosen, higher or lower than the space usage
-calculated by <command>cyclog</command>.
+The amount of space allocated to all files may be, depending from the filesystem type and the maxima chosen, higher or lower than the space usage calculated by <command>cyclog</command>.
 </para>
 
-</refsection><refsection><title>TIMESTAMPS</title>
+</refsection><refsection><title>Timestamps</title>
 
 <para>
 <command>cyclog</command> writes a timestamp at the beginning of every line written to <filename>current</filename>, which is the time when it processes the beginning of a line.  
@@ -169,7 +135,7 @@ On a Linux system where it detects an Olson "right" timezone currently in use, i
 On other Linux systems, and on BSDs, it assumes that the system clock is UTC seconds since the Epoch and attempts to correct for (known) UTC leap seconds in order to determine TAI.
 </para>
 
-</refsection></refsection><refsection><title>COMPATIBILITY</title>
+</refsection></refsection><refsection><title>Compatibility</title>
 
 <para>
 A <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> utility was part of daemontools version 0.53.
@@ -185,6 +151,9 @@ As such, it does not implement a script syntax, does not have pattern matching, 
 <para>
 The version 0.53 <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> used permissions 0644 and 0444 to flag files that had not been written to disc.
 <command>cyclog</command> adopts the convention employed by the later <citerefentry><refentrytitle>multilog</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and thence <citerefentry><refentrytitle>s6-log</refentrytitle><manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>svlog</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+This convention changed to using the owner execute permission bit rather than the owner write permission bit as the flag.
+<command>cyclog</command> does not make use of the execute permission bit itself, but it sets and clears it as appropriate for interoperability with those tools.
+<citerefentry><refentrytitle>multilog</refentrytitle><manvolnum>1</manvolnum></citerefentry> altered the convention in order to cope with scenarios where it would end up trying to open a read-only file for writing.
 </para>
 
 <para>

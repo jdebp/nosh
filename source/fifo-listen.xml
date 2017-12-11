@@ -36,16 +36,16 @@
 </para>
 
 <para>
-After opening it, using the permissions specified with the <arg>--mode</arg> command line argument (if supplied), <command>fifo-listen</command> changes the owner UID of the FIFO to that specified with the <arg>--uid</arg> command line argument (if supplied), and changes the GID of the FIFO to that specified with the <arg>--gid</arg> command line argument (if supplied).
+After opening it, using the permissions specified with the <arg choice='plain'>--mode</arg> command line argument (if supplied), <command>fifo-listen</command> changes the owner UID of the FIFO to that specified with the <arg choice='plain'>--uid</arg> command line argument (if supplied), and changes the GID of the FIFO to that specified with the <arg choice='plain'>--gid</arg> command line argument (if supplied).
 The normal conventions for numbers apply, so for octal permissions use a leading zero.
 Symbolic permissions and account names are not supported.
 </para>
 
 <para>
-The <arg>--systemd-compatibility</arg> option is for compatibility with daemons that expect to be run under <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+The <arg choice='plain'>--systemd-compatibility</arg> option is for compatibility with daemons that expect to be run under <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 It causes <command>fifo-listen</command> to set the <envar>LISTEN_FDS</envar> environment variable to the number of listening file descriptors, and the <envar>LISTEN_PID</envar> environment variable to its own process ID.
 If the command is started up with the <envar>LISTEN_FDS</envar> and the <envar>LISTEN_PID</envar> environment variables already appropriately set, the number of listening file descriptors is taken from them and increased by one, otherwise the number of file descriptors is 1.
-Thus a list of listening file descriptors can be built up with multiple commands, as long as they all use the <arg>--systemd-compatibility</arg> option.
+Thus a list of listening file descriptors can be built up with multiple commands, as long as they all use the <arg choice='plain'>--systemd-compatibility</arg> option.
 </para>
 
 <para>

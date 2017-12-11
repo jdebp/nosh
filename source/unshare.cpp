@@ -27,17 +27,21 @@ unshare (
 	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
-	bool network(false), mount(false), ipc(false), uts(false);
+	bool network(false), mount(false), ipc(false), uts(false), process(false), user(false);
 	try {
 		popt::bool_definition network_option('n', "network", "Unshare the network namespace.", network);
 		popt::bool_definition uts_option('u', "uts", "Unshare the UTS namespace.", uts);
 		popt::bool_definition mount_option('m', "mount", "Unshare the mount namespace.", mount);
 		popt::bool_definition ipc_option('i', "ipc", "Unshare the IPC namespace.", ipc);
+		popt::bool_definition process_option('p', "process", "Unshare the process ID namespace.", process);
+		popt::bool_definition user_option('u', "user", "Unshare the user ID namespace.", user);
 		popt::definition * top_table[] = {
 			&network_option,
 			&mount_option,
 			&ipc_option,
-			&uts_option
+			&uts_option,
+			&process_option,
+			&user_option
 		};
 		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "prog");
 
@@ -58,6 +62,8 @@ unshare (
 		(network ? CLONE_NEWNET : 0) |
 		(ipc ? CLONE_NEWIPC : 0) |
 		(uts ? CLONE_NEWUTS : 0) |
+		(process ? CLONE_NEWPID : 0) |
+		(user ? CLONE_NEWUSER : 0) |
 #endif
 		0
 	);

@@ -1,0 +1,116 @@
+<refentry id="find-matching-jvm">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>find-matching-jvm</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>find-matching-jvm</refname>
+<refpurpose>set the JAVA_HOME environmnent variable to denote a JVM that matches some criteria</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>find-matching-jvm</command> 
+<arg choice='opt' rep='repeat'>--version <replaceable>v</replaceable></arg> 
+<arg choice='opt' rep='repeat'>--operating-system <replaceable>os</replaceable></arg> 
+<arg choice='opt' rep='repeat'>--manufacturer <replaceable>m</replaceable></arg> 
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>find-matching-jvm</command> is a chain-loading utility that sets the <envar>JAVA_HOME</envar> environment variable to denote the root directory for a JVM that matches zero or more version, operating system, and manufacturer criteria, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+If the environment variable is already set, it simply chain loads and does not alter it.
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>find-matching-jvm</command> will ignore.
+</para>
+
+<para>
+<command>find-matching-jvm</command> scans through the list of available JVMs and matches them against zero or more criteria.
+The command-line options describe the match criteria.
+They may occur multiple times, in order to specify more than one possible match.
+If any of them are not supplied at all, then all JVMs are considered to match that aspect.
+They are:
+</para>
+
+<variablelist>
+<varlistentry>
+<term>
+<arg choice='plain'>--version <replaceable>v</replaceable></arg> 
+</term>
+<listitem>
+<para>
+The JVM must be Java version <replaceable>v</replaceable>, which will be in the form 1.6, 1.7, 1.8, and so forth.
+JVM version numbers in the form 1.<replaceable>x</replaceable>.<replaceable>y</replaceable> and just <replaceable>x</replaceable> are renormalized into 1.<replaceable>x</replaceable> form for comparison.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--operating-system <replaceable>os</replaceable></arg> 
+</term>
+<listitem>
+<para>
+<replaceable>os</replaceable> is <code>native</code> to denote a JVM that is "native" to the host operating system or <code>foreign</code> to denote a "foreign" JVM.
+Currently, the only "foreign" JVMs are JVMs ported from Linux to the BSDs.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--manufacturer <replaceable>m</replaceable></arg> 
+</term>
+<listitem>
+<para>
+<replaceable>m</replaceable> is one of <code>openjdk</code>, <code>sun</code>, <code>oracle</code>, or <code>gnu</code> denoting the various (widely known) JVM manufacturers.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+<para>
+If the <filename>/usr/local/etc/jvms</filename> file exists, it is expected to be a (potentially commented) list of JVM programs, in descending priority order.
+The <envar>JAVA_HOME</envar> variable is set to the root of the JVM subtree, which is presumed to be the directory above the directory containing the first matching named JVM program.
+</para>
+
+<para>
+If that file does not exist, then if the <filename>/usr/lib/jvm</filename> directory exists it is presumed to contain all of the JVM subtree root directories, either directly or as symbolic links.
+The <filename>default-java</filename> entry is ignored; all other entries are sorted into descending version order.
+The <envar>JAVA_HOME</envar> variable is set to the first matching JVM subtree.
+</para>
+
+<para>
+Failing either of those, the <filename>/usr/local/bin/java</filename>, <filename>/usr/bin/java</filename>, and <filename>/bin/java</filename> files are checked in order, and if they exist they are matched against the criteria.
+For matching purposes they are considered to have no version, "native" operating system, and no manufacturer.
+They will thus only match if no explicit version or manufacturer criterion is specified.
+</para>
+
+<para>
+Failure to find a matching JVM, which can occur if there are no JVMs that match the given criteria or if there are no JVMs available to match in the first place, is a fatal error.
+</para>
+
+</refsection><refsection><title>See also</title>
+
+<variablelist>
+<varlistentry>
+<term>
+<citerefentry><refentrytitle>find-default-jvm</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</term>
+<listitem><para>
+This has a slightly different mechanism that does not ignore the <filename>/usr/lib/jvm/default-java</filename> file and that always succeeds in setting the environment variable to something, even if there is no JVM on the system.
+</para></listitem>
+</varlistentry>
+</variablelist>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

@@ -178,7 +178,9 @@ convert_debian_console_settings() {
 
 	local codeset
 	if codeset="`read_variable \"${confile}\" CODESET`" && 
+	   test _"Uni1" != _"${codeset}" &&
 	   test _"Uni2" != _"${codeset}" &&
+	   test _"Uni3" != _"${codeset}" &&
 	   test _"guess" != _"${codeset}"
 	then
 		echo 1>&2 $0: "${confile}": "${codeset}": Non-Unicode CODESET ignored.

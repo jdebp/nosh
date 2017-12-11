@@ -16,6 +16,17 @@ echo ${service_lists} ${target_lists} ${mount_lists} ${command1_lists} ${command
 
 cat ../package/commands1 ../package/commands8
 
+cat ${command1_lists} | 
+while read -r i
+do 
+	echo "$i.1" "$i.html"
+done
+cat ${command8_lists} | 
+while read -r i
+do 
+	echo "$i.8" "$i.html"
+done
+
 awk '!x[$0]++' ${service_lists} |
 sort |
 while read -r i
@@ -35,17 +46,6 @@ while read -r i
 do
 	echo services/fsck@"$i"
 	echo services/mount@"$i"
-done
-
-cat ${command1_lists} | 
-while read -r i
-do 
-	echo "$i.1" "$i.html"
-done
-cat ${command8_lists} | 
-while read -r i
-do 
-	echo "$i.8" "$i.html"
 done
 
 ) | 

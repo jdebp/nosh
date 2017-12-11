@@ -16,4 +16,4 @@ ExecStopPost=service pf condrestart
 RemainAfterExit=true
 
 [Install]
-WantedBy=workstation.target
+WantedBy=static-networking.target

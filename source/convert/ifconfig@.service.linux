@@ -6,9 +6,11 @@
 Description=Network configuration for interface %I
 Wants=%p-log.service
 After=%p-log.service
+PartOf=netif@%i
 
 [Service]
 EnvironmentDirectory=env
+#ExecStartPre=sh -c 'test -n "${create_opts}" && %p '"'%I'"' create ${create_opts}'
 ExecStartPre=sh -c 'test -n "${link_opts}" && %p '"'%I'"' hw ether ${link_opts}'
 ExecStartPre=sh -c 'printenv link_aliases | while read -r a ; do test -n "${a}" && %p '"'%I'"' hw ether "${a}" ; done'
 ExecStartPre=sh -c 'test -n "${inet6_opts}" && %p '"'%I'"' inet6 ${inet6_opts}'
@@ -21,7 +23,8 @@ ExecStopPost=sh -c 'printenv inet4_aliases | while read -r a ; do test -n "${a}"
 ExecStopPost=sh -c 'printenv inet6_aliases | while read -r a ; do test -n "${a}" && %p '"'%I'"' inet6 del ${a} ; done'
 #ExecStopPost=sh -c 'printenv link_aliases | while read -r a ; do test -n "${a}" && %p '"'%I'"' hw ether del ${a} ; done'
 #ExecStopPost=%p '%I' inet6 -accept_rtadv ifdisabled
+#ExecStartPre=sh -c 'test -n "${create_opts}" && %p -n '"'%I'"' destroy'
 RemainAfterExit=true
 
 [Install]
-WantedBy=static-networking.target
+WantedBy=netif@%i

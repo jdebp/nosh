@@ -86,6 +86,7 @@ mysql@.service.mysql
 mysql@.service.mariadb
 natd@.service
 newfs@.service
+netif@.service
 nfs.do
 nsswitch.conf.do
 ntp.do
@@ -153,6 +154,7 @@ warden-jailed@.service
 warden.do
 webcamd.do
 webcamd@.service
+wlandebug@.service
 wpa_supplicant@.service
 xdg-desktop-portal-gtk.service
 zeitgeist-daemon.service

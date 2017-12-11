@@ -7,6 +7,7 @@ Description=Network configuration for interface %I
 Before=ifconfig@%i
 Wants=ifconfig-log.service
 After=ifconfig-log.service
+PartOf=netif@%i
 
 [Service]
 EnvironmentDirectory=env
@@ -15,4 +16,4 @@ ExecStopPost=sh /etc/stop_if.'%I'
 RemainAfterExit=true
 
 [Install]
-WantedBy=static-networking.target
+WantedBy=netif@%i

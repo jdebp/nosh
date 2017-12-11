@@ -341,6 +341,7 @@ read_host_uuid ()
 #if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
 	std::size_t siz(0);
 	if (0 > sysctl(host_uuid_oid, sizeof host_uuid_oid/sizeof *host_uuid_oid, 0, &siz, 0, 0)) return false;
+	if (37 > siz) return false;
 	char * buf(static_cast<char *>(malloc(siz)));
 	if (!buf) return false;
 	if (0 > sysctl(host_uuid_oid, sizeof host_uuid_oid/sizeof *host_uuid_oid, buf, &siz, 0, 0)) {

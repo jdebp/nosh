@@ -16,9 +16,16 @@ PermissionsStartOnly=yes
 User=%I
 ExecStartPre=install -d -m 0755 /run/user
 ExecStartPre=install -d -m 0750 -o '%I' '/run/user/%I'
-ExecStartPre=sh -c "ln -s '%I' \"/run/user/`id -u '%I'`\""
 ExecStopPost=rmdir '/run/user/%I'
 ExecStopPost=rmdir /run/user
+# the sensible way of doing things:
+# The POSIX portable character set guarantees that account names will not contain colons, as does the structure of the account database.
+# Whereas account names can easily contain digits.
+ExecStartPre=sh -c "exec ln -s -- '%I' \"/run/user/:`id -u '%I'`\""
+ExecStopPost=sh -c "exec rm \"/run/user/:`id -u '%I'`\""
+# systemd compatibility:
+ExecStartPre=sh -c "exec ln -s -- '%I' \"/run/user/`id -u '%I'`\""
+ExecStopPost=sh -c "exec rm \"/run/user/`id -u '%I'`\""
 
 [Install]
 WantedBy=user-runtime@%I

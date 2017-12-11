@@ -203,10 +203,10 @@ Control of services and access to service status is thus subject to ordinary per
 </para>
 
 <para>
-Bernstein's daemontools employs an 18-byte <filename>state</filename> file.
-daemontools has no notion of "starting", "failing", or "stopping" states for services, and its state file provides only simple binary "up" or "down" state information.
-Guenter's daemontools-encore employs a 20-byte <filename>state</filename> that includes extra state information for the aforementioned states.  
-<command>service-manager</command> uses the same file format.
+Bernstein's daemontools employs an 18-byte <filename>status</filename> file.
+daemontools has no notion of "starting", "failing", or "stopping" states for services, and its status file provides only simple binary "up" or "down" state information.
+Guenter's daemontools-encore employs a 19-byte <filename>status</filename> that includes extra state information for the aforementioned states.  
+<command>service-manager</command> employs an 87-byte <filename>status</filename> that adds exit status and timestamp information for the start, run, restart, and stop programs.
 </para>
 
 <para>
@@ -233,7 +233,61 @@ The service manager permits arbitrary-length pipelines of services, as well as f
 (However, fan-in should be used sparingly as it generally causes more administrative headaches than it solves.)
 </para>
 
+</refsection><refsection><title>Service states</title>
+
+<para>
+If a service is not known to the service manager, it is in an unloaded state, and none of the information in the <filename>status</filename> file is valid.
+Otherwise, service states in that file follow the daemontools-encore paradigm:
+</para>
+
+<variablelist>
+
+<varlistentry>
+<term>stopped</term>
+<listitem><para>
+No service process is executing.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>starting</term>
+<listitem><para>
+The service's <filename>start</filename> program is currently executing.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>started</term>
+<listitem><para>
+This state is not used.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>running</term>
+<listitem><para>
+The service's <filename>run</filename> program is currently executing.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>failed</term>
+<listitem><para>
+The service's <filename>restart</filename> program is currently executing.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term>stopping</term>
+<listitem><para>
+The service's <filename>stop</filename> program is currently executing.
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+
 </refsection>
+
 </refsection>
 <refsection><title>RESTART</title>
 

@@ -1,19 +1,23 @@
 #!/bin/sh -e
 # See http://skarnet.org./software/compile.html
-if [ \! -d package ] || [ \! -d source ]
+if test \! -d package || test \! -d source
 then
 	echo "You are not in the right directory." 1>&2
 	exit 100
 fi
-if [ \! -d build ]
+if test \! -d build
 then
 	echo "You have not prepared the build area." 1>&2
 	exit 100
 fi
 
 # Rebuild.
-case "`uname`" in
-Linux) cpus="`fgrep -c processor /proc/cpuinfo`" ;;
-*BSD) cpus="`sysctl -n hw.ncpu`" ;;
-esac
-exec redo --directory build --jobs "${cpus}" -- all
+if ! > /dev/null expr "${MAKEFLAGS}" : "--jobs" &&
+   ! > /dev/null expr "${REDOFLAGS}" : "--jobs"
+then
+	case "`uname`" in
+	Linux) cpus="`fgrep -c processor /proc/cpuinfo`" ;;
+	*BSD) cpus="`sysctl -n hw.ncpu`" ;;
+	esac
+fi
+exec redo --directory build ${cpus:+--jobs "${cpus}"} -- all

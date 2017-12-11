@@ -1,0 +1,70 @@
+<refentry id="login-update-utmpx">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>login-update-utmpx</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>login-update-utmpx</refname>
+<refpurpose>update the login log and active login table</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>login-update-utmpx</command>
+<group choice='req'>
+<arg choice='plain'>boot</arg>
+<arg choice='plain'>reboot</arg>
+<arg choice='plain'>shutdown</arg>
+</group>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>utx</command>
+<group choice='req'>
+<arg choice='plain'>boot</arg>
+<arg choice='plain'>reboot</arg>
+<arg choice='plain'>shutdown</arg>
+</group>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>login-update-utmpx</command> updates the <citerefentry><refentrytitle>utmpx</refentrytitle><manvolnum>3</manvolnum></citerefentry> login log and active login table.
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+Invoked with the <arg choice='plain'>boot</arg> or <arg choice='plain'>reboot</arg> subcommands, it writes a new <code>BOOT_TIME</code> entry.
+This is designed to be invoked at system bootstrap before any login services are started.
+<command>login-update-utmpx</command> creates the files for the login log and the active login table if they do not already exist.
+The entry can be later read with <command>who</command> <arg choice='plain'>-b</arg> or <command>last</command> <arg choice='plain'>reboot</arg>.
+</para>
+</listitem>
+
+<listitem>
+<para>
+Invoked with the <arg choice='plain'>shutdown</arg> subcommand, it writes a new <code>SHUTDOWN_TIME</code> entry.
+This is designed to be invoked at system shutdown after all login services have been stopped.
+The entry can be later read with <command>last</command> <arg choice='plain'>reboot</arg>.
+(On Linux operating systems, which do not have <code>SHUTDOWN_TIME</code>, the entry is a fake <code>RUN_LVL</code> entry that can be later read with <command>who</command> <arg choice='plain'>-r</arg>.)
+</para>
+</listitem>
+
+</itemizedlist>
+
+<para>
+On operating systems such as FreeBSD, note that <command>login-update-utmpx</command> always erases all entries from the active login table, as an effect of the <citerefentry><refentrytitle>pututmpx</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function.
+</para>
+
+</refsection>
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

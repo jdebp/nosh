@@ -64,6 +64,7 @@ kmod@geom_gate
 kmod@ibcs2
 kmod@if_bwi
 kmod@if_bwn
+kmod@if_vlan
 kmod@ipdivert
 kmod@ipfw_nat
 kmod@ipl
@@ -161,7 +162,6 @@ ubthidhci
 ugidfw
 uhidd-log
 usbhidaction@-dev-uhid0
-utx
 vixiecron
 vixiedhcp4d
 vixiedhcp6d

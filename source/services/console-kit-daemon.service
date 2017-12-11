@@ -6,6 +6,7 @@
 Description=ConsoleKit daemon
 
 [Service]
+Type=dbus
 ExecStart=%p --no-daemon
 
 [Install]

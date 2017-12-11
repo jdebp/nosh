@@ -376,6 +376,8 @@ make_orderings_and_relations (
 	mkdirat(bundle_dir_fd, "after", 0755);
 	mkdirat(bundle_dir_fd, "before", 0755);
 	mkdirat(bundle_dir_fd, "wants", 0755);
+	mkdirat(bundle_dir_fd, "expects", 0755);
+	mkdirat(bundle_dir_fd, "requires", 0755);
 	mkdirat(bundle_dir_fd, "conflicts", 0755);
 	mkdirat(bundle_dir_fd, "wanted-by", 0755);
 	mkdirat(bundle_dir_fd, "required-by", 0755);

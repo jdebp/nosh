@@ -76,6 +76,14 @@ extern bool per_user_mode;	// Shared with the service manager client API.
 #define SAK_SIGNAL	SIGINFO
 #endif
 
+// This signal tells process #1 that the Keyboard Request sequence has been pressed.
+#if defined(__LINUX__) || defined(__linux__)
+// On Linux, the kernel has a defined convention.
+#define KBREQ_SIGNAL	SIGWINCH
+#else
+// The BSDs have no convention.
+#endif
+
 // This signal tells process #1 to activate the reboot target.
 #if defined(__LINUX__) || defined(__linux__)
 // On Linux, we go with systemd since upstart and System 5 init do not have a defined convention.
@@ -107,6 +115,27 @@ extern bool per_user_mode;	// Shared with the service manager client API.
 #if defined(SIGRTMIN)
 // BSD init, upstart, systemd, and System 5 init do not have a defined convention.
 #define FORCE_HALT_SIGNAL	(SIGRTMIN + 13)
+#else
+// And we cannot define this at all on OpenBSD!
+#endif
+
+// This signal tells process #1 to activate the powercycle target.
+#if defined(__LINUX__) || defined(__linux__)
+// On Linux, we go with systemd since upstart and System 5 init do not have a defined convention.
+#define POWERCYCLE_SIGNAL	(SIGRTMIN + 7)
+#elif defined(SIGRTMIN)
+// On the BSDs that have real-time signals, it is SIGWINCH.
+#define POWERCYCLE_SIGNAL	(SIGRTMIN + 7)
+//#define POWERCYCLE_SIGNAL	SIGWINCH
+#else
+// On OpenBSD we do the best of a bad job.
+#define POWERCYCLE_SIGNAL	SIGWINCH
+#endif
+
+// This signal tells process #1 to shut down and power cycle.
+#if defined(SIGRTMIN)
+// BSD init, upstart, systemd, and System 5 init do not have a defined convention.
+#define FORCE_POWERCYCLE_SIGNAL	(SIGRTMIN + 17)
 #else
 // And we cannot define this at all on OpenBSD!
 #endif

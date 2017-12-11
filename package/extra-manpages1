@@ -22,6 +22,8 @@ false
 fdmove
 fdredir
 fifo-listen
+find-default-jvm
+find-matching-jvm
 follow-log-directories
 foreground
 klog-read
@@ -35,6 +37,7 @@ local-stream-socket-listen
 login-banner
 login-process
 login-prompt
+login-update-utmpx
 machineenv
 make-private-fs
 monitor-fsck-progress

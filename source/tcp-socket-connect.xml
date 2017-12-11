@@ -45,13 +45,13 @@ By UCSPI convention the chained-to program is expected to use file descriptor 6 
 </para>
 
 <para>
-If the <arg>--numeric-host</arg> command line option is used, then no name lookup is done on <replaceable>host</replaceable> and it must be (a human readable form of) an IP address.
-If the <arg>--numeric-service</arg> command line option is used, then no name lookup is done on <replaceable>service</replaceable> and it must be a port number.
+If the <arg choice='plain'>--numeric-host</arg> command line option is used, then no name lookup is done on <replaceable>host</replaceable> and it must be (a human readable form of) an IP address.
+If the <arg choice='plain'>--numeric-service</arg> command line option is used, then no name lookup is done on <replaceable>service</replaceable> and it must be a port number.
 Otherwise, <replaceable>host</replaceable> is looked up using the system name resolution facility and <replaceable>port</replaceable> can be an alphanumeric service name.
 </para>
 
 <para>
-The <arg>--check-interfaces</arg> option prevents the use of any IPv4 addresses if there are no IPv4 addresses on any network interface, and the use of any IPv6 addresses if there are no IPv6 addresses.
+The <arg choice='plain'>--check-interfaces</arg> option prevents the use of any IPv4 addresses if there are no IPv4 addresses on any network interface, and the use of any IPv6 addresses if there are no IPv6 addresses.
 This isn't particularly useful on a dynamically configured system where network interface IP addresses can come and go.
 </para>
 
@@ -75,7 +75,7 @@ This always has the value <code>TCP</code>.
 </term><listitem>
 <para>
 The local (client) IP address of the connecting socket, in human-readable form.
-Normally, the operating system assigns this; but an explicit assignment can be requested with the <arg>--local-address</arg> command-line option, where <replaceable>address</replaceable> is a numeric IP address that is available and matches the protocol of the remote end.
+Normally, the operating system assigns this; but an explicit assignment can be requested with the <arg choice='plain'>--local-address</arg> command-line option, where <replaceable>address</replaceable> is a numeric IP address that is available and matches the protocol of the remote end.
 </para>
 </listitem>
 </varlistentry>
@@ -85,7 +85,7 @@ Normally, the operating system assigns this; but an explicit assignment can be r
 </term><listitem>
 <para>
 The local (client) port number of the connecting socket.
-Normally, the operating system assigns this; but an explicit assignment can be requested with the <arg>--local-port</arg> command-line option, where <replaceable>port</replaceable> is a numeric port number.
+Normally, the operating system assigns this; but an explicit assignment can be requested with the <arg choice='plain'>--local-port</arg> command-line option, where <replaceable>port</replaceable> is a numeric port number.
 </para>
 </listitem>
 </varlistentry>
@@ -94,7 +94,7 @@ Normally, the operating system assigns this; but an explicit assignment can be r
 <envar>TCPLOCALHOST</envar>
 </term><listitem>
 <para>
-The value of <replaceable>name</replaceable> set by the <arg>--local-name</arg> option; guaranteed unset if that option is not used.
+The value of <replaceable>name</replaceable> set by the <arg choice='plain'>--local-name</arg> option; guaranteed unset if that option is not used.
 </para>
 </listitem>
 </varlistentry>
@@ -138,11 +138,11 @@ Guaranteed unset.
 </variablelist>
 
 <para>
-If the <arg>--verbose</arg> option is used, <command>tcp-socket-connect</command> logs information about connections made.
+If the <arg choice='plain'>--verbose</arg> option is used, <command>tcp-socket-connect</command> logs information about connections made.
 </para>
 
 <para>
-The <arg>--no-keepalives</arg>, <arg>--no-kill-IP-options</arg>, and <arg>--no-delay</arg> command line options set options on the connected socket.
+The <arg choice='plain'>--no-keepalives</arg>, <arg choice='plain'>--no-kill-IP-options</arg>, and <arg choice='plain'>--no-delay</arg> command line options set options on the connected socket.
 The first disables the use of TCP keepalive probes (which are used by default to ensure that dead connections are noticed and eliminated); the second permits IP options (which are removed by default) so that clients can set source routes; and the third disables the "Nagle" delay algorithm used for slow clients.
 </para>
 

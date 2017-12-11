@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Network interface services umbrella for interface %I
+
+[Service]
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=true
+
+[Install]
+WantedBy=static-networking.target

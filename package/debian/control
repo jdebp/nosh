@@ -63,7 +63,7 @@ Description: Virtual terminal, pseudo-terminal, and TUI login tools
  This package provides tools for creating and using pseudo-terminals and virtual consoles.
  .
  Included here are tools for TUI login:
- * login-banner,login-process, login-prompt, open-controlling-tty, ttylogin-starter
+ * login-banner, login-process, login-prompt, open-controlling-tty, ttylogin-starter
  .
  Also present are commands for pseudo-terminals and virtual consoles:
   * console-terminal-emulator, console-ncurses-realizer, console-fb-realizer, pty-get-tty, pty-run, vc-get-tty, vc-reset-tty
@@ -94,12 +94,13 @@ Will-Conflict: sysvinit-utils
 Description: BSD and System 5 shim service and system management utilities
  This package provides shims for old-style BSD and System 5 system management commands.
   * service, chkconfig
-  * init, shutdown, telinit, halt, poweroff, reboot, runlevel
+  * init, shutdown, telinit, halt, haltsys, poweroff, reboot, runlevel
   * emergency, normal, rescue
  .
  The shims simply invoke native service management commands.
  .
  For rcctl, use the nosh-openbsd-shims package.
+ For utx, use the nosh-freebsd-shims package.
  For fastboot, fasthalt, and fastpoweroff, use the nosh-bsd-shims package.
 
 Package: nosh-systemd-shims
@@ -175,6 +176,18 @@ Description: OpenBSD shim service and system management utilities
  .
  The shims simply invoke native service management commands.
 
+Package: nosh-freebsd-shims
+Architecture: amd64
+Depends: nosh-terminal-management
+Conflicts: nosh-systemv-shims (<= 1.27)
+Suggests: 
+Recommends: 
+Description: FreeBSD shim service and system management utilities
+ This package provides shims for FreeBSD service, login, and system management commands.
+  * utx
+ .
+ The shims simply invoke native management commands.
+
 Package: nosh-bsd-shims
 Architecture: amd64
 Depends: nosh-service-management
@@ -239,7 +252,7 @@ Package: nosh-run-system-manager
 Architecture: amd64
 Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, redo
 Suggests: 
-Recommends: nosh-run-kernel-vt | nosh-run-user-vt, nosh-systemv-shims, nosh-debian-shims, nosh-bsd-shims, nosh-openbsd-shims, nosh-run-local-syslog, nosh-run-klog
+Recommends: nosh-run-kernel-vt | nosh-run-user-vt, nosh-systemv-shims, nosh-debian-shims, nosh-bsd-shims, nosh-openbsd-shims, nosh-freebsd-shims, nosh-run-local-syslog, nosh-run-klog
 Conflicts: nosh-run-via-systemd, upstart, sysvinit-core, systemd-sysv
 Provides: init, systemd-shim
 Description: Run the nosh system manager
@@ -329,6 +342,7 @@ Description: Run the various "kit" programs from freedesktop.org
   * PackageKit
   * ConsoleKit
   * UDisks
+  * UDisks2
   * UPower
 
 Package: nosh-run-openssh-server

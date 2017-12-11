@@ -8,6 +8,7 @@ Requires=sshdgenkeys.service
 After=sshdgenkeys.service
 
 [Service]
+LocalReaper=true
 EnvironmentDirectory=env
 RuntimeDirectory=%p
 RuntimeDirectoryMode=0755

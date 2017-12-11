@@ -12,7 +12,10 @@
 
 <refsynopsisdiv>
 <cmdsynopsis>
-<command>login-banner</command> <arg>--utmp-filename <replaceable>filename</replaceable></arg> <arg choice='req'><replaceable>template-filename</replaceable></arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+<command>login-banner</command>
+<arg>--utmp-filename <replaceable>filename</replaceable></arg>
+<arg choice='req'><replaceable>template-filename</replaceable></arg>
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 

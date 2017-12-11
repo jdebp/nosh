@@ -256,23 +256,27 @@ System-wide events are flagged, by the kernel and by other programs, by sending 
 <varlistentry>
 <term>
 <code>SIGRTMIN + 3</code>,
-<code>SIGRTMIN + 4</code>, and
-<code>SIGRTMIN + 5</code>
+<code>SIGRTMIN + 4</code>,
+<code>SIGRTMIN + 5</code>, and
+<code>SIGRTMIN + 7</code>
 (and, for compatibility, respectively
 <code>SIGUSR1</code>,
-<code>SIGUSR2</code>, and
-<code>SIGINT</code> 
+<code>SIGUSR2</code>,
+<code>SIGINT</code>, and
+<code>SIGWINCH</code>
 on BSD) 
 </term>
 <listitem><para>
 Spawn (respectively)
 <command>system-control</command> <arg choice="plain">start</arg> <arg choice="plain">halt</arg>,
-<command>system-control</command> <arg choice="plain">start</arg> <arg choice="plain">poweroff</arg>, or
-<command>system-control</command> <arg choice="plain">start</arg> <arg choice="plain">reboot</arg>.
+<command>system-control</command> <arg choice="plain">start</arg> <arg choice="plain">poweroff</arg>,
+<command>system-control</command> <arg choice="plain">start</arg> <arg choice="plain">reboot</arg>, or
+<command>system-control</command> <arg choice="plain">start</arg> <arg choice="plain">powercycle</arg>.
 This will activate the 
 <code>halt</code>,
-<code>poweroff</code>, or
-<code>reboot</code> 
+<code>poweroff</code>,
+<code>reboot</code>, or
+<code>powercycle</code>
 target.
 </para>
 <para>
@@ -320,7 +324,7 @@ take action to deal with impending power failure.
 </varlistentry>
 
 <varlistentry>
-<term><code>SIGWINCH</code></term>
+<term><code>SIGWINCH</code> (on Linux)</term>
 <listitem><para>
 Spawn <command>system-control</command> <arg choice="plain">activate</arg> <arg choice="plain">kbrequest</arg>.
 This will activate the <code>kbrequest</code> target.
@@ -339,24 +343,15 @@ This will activate the <code>secure-attention-key</code> target.
 <term><code>SIGRTMIN + 13</code></term>
 <term><code>SIGRTMIN + 14</code></term>
 <term><code>SIGRTMIN + 15</code></term>
+<term><code>SIGRTMIN + 17</code></term>
 <listitem><para>
 Close the pipe, terminate the service manager, and wait a short while for it.
-If the system manager is the system-wide process #1, tell the kernel to flush its disc cache and (respectively) halt, power off, or reboot the system.
+If the system manager is the system-wide process #1, tell the kernel to flush its disc cache and (respectively) halt, power off, reboot, or power cycle the system.
 Otherwise, if the system manager is running in a container/jail, just exit.
 </para>
 <para>
-When the <code>reboot</code>, <code>halt</code>, and <code>poweroff</code>
-targets are fully active, they are expected to send the 
-<code>SIGRTMIN + 15</code>, <code>SIGRTMIN + 13</code>, and <code>SIGRTMIN + 14</code> signals
-(respectively) to process #1.
-In the packaged target definitions, they use
-the <arg>--force</arg> option to the 
-<command>reboot</command>,
-<command>halt</command>, and
-<command>poweroff</command>
-subcommands of
-<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-to do this.
+When the <code>reboot</code>, <code>halt</code>, <code>powercycle</code>, and <code>poweroff</code> targets are fully active, they are expected to send the <code>SIGRTMIN + 15</code>, <code>SIGRTMIN + 13</code>, <code>SIGRTMIN + 17</code>, and <code>SIGRTMIN + 14</code> signals (respectively) to process #1.
+In the packaged target definitions, they use the <arg choice='plain'>--force</arg> option to the <command>reboot</command>, <command>halt</command>, <command>poweroff</command>, and <command>powercycle</command> subcommands of <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry> to do this.
 Do not send these signals directly, as this does not shut down services in order.
 </para>
 </listitem>

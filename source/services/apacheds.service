@@ -1,0 +1,19 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Apache directory server
+After=network.target
+
+[Service]
+# Installation needs to:
+# . Put JAVA_OPTS, ADS_CONTROLS, ADS_EXTENDED_OPERATIONS, ADS_INSTANCES, ADS_INSTANCE, and ADS_HOME into the envdir.
+JVMVersions=1.6 1.7 1.8
+EnvironmentDirectory=env
+User=%p
+ExecStart="${JAVA_HOME}/bin/java" ${JAVA_OPTS} -D%p.controls="${ADS_CONTROLS}" -D%p.extendedOperations="${ADS_EXTENDED_OPERATIONS}" -Dlog4j.configuration="file:${ADS_INSTANCES}/${ADS_INSTANCE}/conf/log4j.properties" -D%p.log.dir="${ADS_INSTANCES}/${ADS_INSTANCE}/log" -cp "${ADS_HOME}"'/lib/*' org.apache.directory.server.UberjarMain "${ADS_INSTANCES}/${ADS_INSTANCE}/"
+PrivateTmp=true
+
+[Install]
+WantedBy=server.target

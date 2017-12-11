@@ -40,15 +40,18 @@ reboot_poweroff_halt_command (
 	if (0 == std::strcmp(prog, "boot")) prog = "reboot";
 	try {
 		bool poweroff(false);
+		bool powercycle(false);
 		bool halt(false);
 		bool reboot(false);
 		popt::bool_definition force_option('f', "force", "Bypass service shutdown jobs.", force);
 		popt::bool_definition poweroff_option('p', "poweroff", "Power off, even if this is not the poweroff command.", poweroff);
+		popt::bool_definition powercycle_option('c', "powercycle", "Power cycle, even if this is not the powercycle command.", powercycle);
 		popt::bool_definition halt_option('h', "halt", "Halt, even if this is not the halt command.", halt);
 		popt::bool_definition reboot_option('r', "reboot", "Reboot, even if this is not the reboot command.", reboot);
 		popt::definition * main_table[] = {
 			&force_option,
 			&poweroff_option,
+			&powercycle_option,
 			&halt_option,
 			&reboot_option
 		};
@@ -62,6 +65,7 @@ reboot_poweroff_halt_command (
 		if (p.stopped()) throw EXIT_SUCCESS;
 
 		if (poweroff) prog = "poweroff";
+		else if (powercycle) prog = "powercycle";
 		else if (reboot) prog = "reboot";
 		else if (halt) prog = "halt";
 	} catch (const popt::error & e) {
@@ -83,10 +87,14 @@ reboot_poweroff_halt_command (
 		static char opt[3] = { '-', ' ', '\0' };
 
 		args.insert(args.end(), "shutdown");
-		opt[1] = prog[0];
+		if ('p' == prog[0] && 'c' == prog[5])
+			opt[1] = 'c';
 #if defined(__LINUX__) || defined(__linux__)
-		if ('h' == opt[1]) opt[1] = 'H';
+		else if ('h' == prog[0])
+			opt[1] = 'H';
 #endif
+		else
+			opt[1] = prog[0];
 		args.insert(args.end(), opt);
 		// systemd shutdown has this sensible default if the time specification is omitted.
 		// BSD shutdown does not.
@@ -127,14 +135,15 @@ shutdown (
 ) {
 	const char * prog(basename_of(args[0]));
 	const char * grace_period(0);
-	bool halt(false), reboot(false), no_wall(false), kick_off(false), verbose(false);
+	bool halt(false), reboot(false), powercycle(false), no_wall(false), kick_off(false), verbose(false);
 	try {
-		bool hp(true), poweroff(true), o(false);
+		bool poweroff(true), o(false);
 		popt::bool_definition verbose_option('v', "verbose", "Print messages.", verbose);
-		popt::bool_definition halt_option('H', "halt", "Halt the machine but do not power off if not rebooting.", halt);
-		popt::bool_definition poweroff_option('P', "poweroff", "Compatibility option, on by default.", poweroff);
-		popt::bool_definition h_option('h', 0, "Compatibility option, on by default.", hp);
-		popt::bool_definition p_option('p', 0, "Compatibility option, on by default.", hp);
+		popt::bool_definition halt_option('h', "halt", "Halt the machine.", halt);
+		popt::bool_definition h_option('H', 0, "Halt the machine.", halt);
+		popt::bool_definition poweroff_option('p', "poweroff", "Compatibility option, on by default.", poweroff);
+		popt::bool_definition p_option('P', 0, "Compatibility option, on by default.", poweroff);
+		popt::bool_definition powercycle_option('c', "powercycle", "Power cycle the machine.", powercycle);
 		popt::bool_definition o_option('o', 0, "Compatibility option, off by default.", o);
 		popt::bool_definition reboot_option('r', "reboot", "Reboot the machine.", reboot);
 		popt::bool_definition no_wall_option('\0', "no-wall", "Do not send wall messages.", no_wall);
@@ -144,9 +153,10 @@ shutdown (
 			&verbose_option,
 			&reboot_option,
 			&halt_option,
-			&poweroff_option,
 			&h_option,
+			&poweroff_option,
 			&p_option,
+			&powercycle_option,
 			&o_option,
 			&no_wall_option,
 			&kick_off_option,
@@ -313,6 +323,8 @@ shutdown (
 		args.insert(args.end(), "reboot");
 	else if (halt)
 		args.insert(args.end(), "halt");
+	else if (powercycle)
+		args.insert(args.end(), "powercycle");
 	else
 		args.insert(args.end(), "poweroff");
 	args.insert(args.end(), 0);

@@ -83,7 +83,7 @@ exit_error:
 		}
 		if (!envs.set("GIDLIST", gidlist)) goto exit_error;
 	} else {
-		if (0 > envs.unset("GIDLIST")) goto exit_error;
+		if (!envs.unset("GIDLIST")) goto exit_error;
 	}
 	char uid[64], gid[64];
 	snprintf(uid, sizeof uid, "%u", p->pw_uid);

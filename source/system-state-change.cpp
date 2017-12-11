@@ -97,27 +97,40 @@ reboot (
 	send_signal_to_manager_process(prog, force ? FORCE_REBOOT_SIGNAL : REBOOT_SIGNAL) ;
 } 
 
-#if defined(FORCE_HALT_SIGNAL)
 static inline
 void
 halt (
 	const char * prog,
 	bool force
 ) {
+#if defined(FORCE_HALT_SIGNAL)
 	send_signal_to_manager_process(prog, force ? FORCE_HALT_SIGNAL : HALT_SIGNAL) ;
-}
 #endif
+}
 
-#if defined(FORCE_POWEROFF_SIGNAL)
 static inline
 void
 poweroff (
 	const char * prog,
 	bool force
 ) {
+#if defined(FORCE_POWEROFF_SIGNAL)
 	send_signal_to_manager_process(prog, force ? FORCE_POWEROFF_SIGNAL : POWEROFF_SIGNAL) ;
-}
 #endif
+}
+
+static inline
+void
+powercycle (
+	const char * prog,
+	bool force
+) {
+#if defined(FORCE_POWERCYCLE_SIGNAL)
+	send_signal_to_manager_process(prog, force ? FORCE_POWERCYCLE_SIGNAL : POWERCYCLE_SIGNAL) ;
+#else
+	send_signal_to_manager_process(prog, force ? FORCE_REBOOT_SIGNAL : REBOOT_SIGNAL) ;
+#endif
+}
 
 /* System control commands **************************************************
 // **************************************************************************
@@ -159,12 +172,16 @@ reboot_poweroff_halt_command [[gnu::noreturn]] (
 
 	switch (prog[0]) {
 		case 'r':	reboot(prog, force); break;
-#if defined(FORCE_HALT_SIGNAL)
 		case 'h':	halt(prog, force); break;
-#endif
-#if defined(FORCE_POWEROFF_SIGNAL)
-		case 'p':	poweroff(prog, force); break;
-#endif
+		case 'p':	
+			if ('o' == prog[5]) {
+				poweroff(prog, force); break;
+			}
+			if ('c' == prog[5]) {
+				powercycle(prog, force); break;
+			}
+			// Fall through to:
+			[[clang::fallthrough]];
 		default:
 			std::fprintf(stderr, "%s: FATAL: %c: %s\n", prog, prog[0], "Unknown action");
 			throw EXIT_FAILURE;
@@ -225,13 +242,10 @@ init (
 	const char * prog(basename_of(args[0]));
 	enum Action { ///< in order of lowest to highest precedence
 		NORMAL = 0,
-#if defined(FORCE_HALT_SIGNAL)
 		HALT,
-#endif
 		REBOOT,
-#if defined(FORCE_POWEROFF_SIGNAL)
+		POWERCYCLE,
 		POWEROFF,
-#endif
 		UPDATE,
 		RESCUE,
 		EMERGENCY
@@ -292,17 +306,17 @@ init (
 			case 's':
 				if (action < RESCUE) action = RESCUE;
 				break;
-#if defined(FORCE_HALT_SIGNAL)
 			case 'H':
 			case 'h':
 				if (action < HALT) action = HALT;
 				break;
-#endif
-#if defined(FORCE_POWEROFF_SIGNAL)
+			case 'C':
+			case 'c':
+				if (action < POWERCYCLE) action = POWERCYCLE;
+				break;
 			case '0':
 				if (action < POWEROFF) action = POWEROFF;
 				break;
-#endif
 			case '6':
 				if (action < REBOOT) action = REBOOT;
 				break;
@@ -349,19 +363,18 @@ init (
 			args.insert(args.end(), 0);
 			next_prog = arg0_of(args);
 			return;
-#if defined(FORCE_POWEROFF_SIGNAL)
 		case POWEROFF:
 			poweroff(prog, false);
 			break;
-#endif
+		case POWERCYCLE:
+			powercycle(prog, false);
+			break;
 		case REBOOT:
 			reboot(prog, false);
 			break;
-#if defined(FORCE_HALT_SIGNAL)
 		case HALT:
 			halt(prog, false);
 			break;
-#endif
 		case NORMAL:
 		default:
 			normal(prog);

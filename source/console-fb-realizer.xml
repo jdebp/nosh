@@ -90,7 +90,7 @@ renders the contents of the character/attribute buffer file for the virtual term
 <para>
 The framebuffer device need not be the same size or height:width ratio as the virtual terminal display.
 When it is smaller than the display, the realizer will move the framebuffer around as a "window" onto the virtual terminal display, such that the cursor position is always within the window.
-When it is larger than the display, the realizer will align the virtual terminal display to one corner of the framebuffer, as specified by the <arg choice='plain'>--quardant</arg> command-line option.
+When it is larger than the display, the realizer will align the virtual terminal display to one corner of the framebuffer, as specified by the <arg choice='plain'>--quadrant</arg> command-line option.
 It will render the parts of the framebuffer outwith the virtual terminal display area as black.
 </para>
 
@@ -227,13 +227,14 @@ For a tutorial on how to employ these in concert, see the Nosh Guide.
 
 <para>
 Virtual terminal display buffers have faint, boldface, italic, strikethrough, and underline attributes for character cells.
-Only faint, boldface, and italic involve font support, mapping to four font weights (light, medium, demibold, and bold) and two slants (upright and italic).
+Only faint, boldface, and italic involve font support, mapping to four font weights (light, medium, demibold, and bold) and three slants (upright, italic, and oblique).
 Strikethrough and underline attributes are rendered not through font selection but by overwriting the non-strikethrough non-underline glphys with appropriate horizontal lines.
 If faint and demibold weights are unavailable, the faint attribute is emulated by shading the foreground and background colours towards black.
 If bold weight is unavailable, the bold attribute is rendered by overlaying a glyph with a shifted copy of itself.
 (The <arg choice='plain'>--bold-as-colour</arg> command-line option will as an alternative always render boldface by tinting foreground colours towards white, but this is of limited use with applications that employ 256-colour or true-colour terminal controls, as many do nowadays.)
-If italic stroke is unavailable, the italic attribute is rendered as <emphasis>oblique</emphasis> by shifting the upright glyph.
+If italic stroke is unavailable, the first fallback is to use an oblique font.
 (Oblique is not the same as italic, note, and is often an inferior substitute for it.)
+If neither italic nor oblique are available, the italic attribute is rendered by shifting the upright glyph into an oblique form within the character bounding square if the character size permits.
 </para>
 
 <para>
@@ -259,16 +260,31 @@ Font files are specified by the <replaceable>filename</replaceable> in the vario
 <arg choice='plain'>--font-bold-r</arg>, 
 <arg choice='plain'>--font-bold-o</arg>, and
 <arg choice='plain'>--font-bold-i</arg>.
-Fonts must be monospace fonts with a height of 8, 14, 15, or 16 and a width of 8, 9, 12, or 16.
-All glyphs are rendered in a 16 by 16 bounding square, with 8 by 8 pixel fonts doubled to 16 by 16 pixels.
 </para>
 
 <para>
 The weight and slant are encoded via these command-line options, because meta-information about weight and slant is not in a font file itself (it usually being encoded in the filename).
-The "vtfont" format has glyph sets for a pair of unspecified weights that are mapped by the command-line option: medium and bold (in the case of "normal") or light and demibold (in the case of "faint").
-The "vtfont" command-line options load both sets of glyphs from the font, with the slant specified by the option.
-The "font" command-line options are the only way to load bitmap fonts.
-When used with "vtfont" fonts, they only load one set of glyphs from the font, with weight and slant as specified by the option, providing fine-grained control of what glyphs are used from what "vtfont" font.
+Bitmap fonts contain just one glyph set.
+The "vtfont" format has two glyph sets for a pair of unspecified weights.
+</para>
+<itemizedlist>
+<listitem><para>
+The "vtfont" command-line options load both sets of glyphs from a "vtfont" format font.
+"normal" in the option name specifies that the presumed weights of the pair are medium and bold; "faint" specifies that the presumed weights are light and demibold.
+"r", "o", and "i" specify the presumed slants as upright, oblique, and italic respectively.
+</para></listitem>
+<listitem><para>
+The "font" command-line options are the only way to load bitmap fonts, and can also be used to load just the first set of glyphs from a "vtfont" format font, providing fine-grained control of what glyphs are used if that is required.
+Again, "r", "o", and "i" in the option name specify the presumed slants as upright, oblique, and italic respectively.
+The four presumable weights in the option name are "light", "medium", "demibold", and "bold".
+</para></listitem>
+</itemizedlist>
+
+<para>
+Fonts must be monospace fonts with a height of 8, 14, 15, or 16 and a width of 8, 9, 12, or 16.
+All glyphs are rendered in a 16 by 16 bounding square, with 8 by 8 pixel fonts doubled to 16 by 16 pixels.
+8 by 16 pixel block graphic and box drawing characters are doubled in width.
+Any "horizontally extendable" characters (such as the em dash) not otherwise extended to 16 pixels wide are extended by overlaying themselves to the right.
 </para>
 
 <para>

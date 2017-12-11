@@ -12,6 +12,8 @@ exec	false
 exec	fdmove
 exec	fdredir
 exec	fifo-listen
+exec	find-default-jvm
+exec	find-matching-jvm
 exec	follow-log-directories
 exec	foreground
 exec	klog-read
@@ -109,6 +111,7 @@ console-terminal-emulator	emergency-login
 console-terminal-emulator	login-banner
 console-terminal-emulator	login-process
 console-terminal-emulator	login-prompt
+console-terminal-emulator	login-update-utmpx
 console-terminal-emulator	monitor-fsck-progress
 console-terminal-emulator	open-controlling-tty
 console-terminal-emulator	pty-get-tty
@@ -119,3 +122,4 @@ console-terminal-emulator	vc-reset-tty
 console-clear	clear_console
 console-resize	resizecons
 console-multiplexor-control	chvt
+login-update-utmpx	utx

@@ -9,7 +9,7 @@ After=rpcbind.service nfsclient.service
 
 [Service]
 EnvironmentDirectory=env
-ExecStart=%p
+ExecStart=%p ${flags}
 
 [Install]
 WantedBy=workstation.target

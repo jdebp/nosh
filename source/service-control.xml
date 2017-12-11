@@ -198,7 +198,7 @@ Send a 'z' command to send a SIGTSTP signal to the service.
 </refsection></refsection><refsection><title>COMPATIBILITY</title>
 
 <para>
-For daemontools and daemontools-encore compatibility, this command is also available as <command>svc</command>; and the options are also available in the abbreviated forms <arg>-u</arg>, <arg>-d</arg>, and so forth.
+For daemontools and daemontools-encore compatibility, this command is also available as <command>svc</command>; and the options are also available in the abbreviated forms <arg choice='plain'>-u</arg>, <arg choice='plain'>-d</arg>, and so forth.
 </para>
 
 <para>

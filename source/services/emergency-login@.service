@@ -10,7 +10,7 @@ DefaultDependencies=false
 [Service]
 SessionLeader=true
 StandardInput=tty
-ExecStart=emergency-login
+ExecStart=%p
 Restart=always
 RestartSec=0
 TTYPath=%I

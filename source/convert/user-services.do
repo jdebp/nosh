@@ -150,6 +150,22 @@ user_target() {
 	setuidgid "$i" system-control convert-systemd-units $eu $e "$ht/" "./$1.target"
 }
 
+relocate_user_service() {
+        local e
+	e=1
+        if test -d "$hs/$1" && test \! -d "$hs/$2"
+        then
+                if setuidgid "$i" system-control --user is-enabled "$hs/$1"
+		then
+			e=0
+			setuidgid "$i" system-control --user disable "$hs/$1"
+		fi
+		printf 1>&2 "Renaming %s's service bundle directory: %s to %s\n" "$i" "$1" "$2"
+                setuidgid "$i" mv -i -- "$hs/$1" "$hs/$2"
+                test $e -ne 0 || setuidgid "$i" system-control --user enable "$hs/$2"
+        fi
+}
+
 getent passwd |
 awk -F : '{ if (!match($7,"/nologin$") && !match($7,"/false$")) print $1; }' |
 while read -r i
@@ -286,12 +302,15 @@ do
 			setuidgid "$i" userenv system-control --user enable "socket-servers-log"
 			setuidgid "$i" userenv system-control --user enable "simple-servers-log"
 
-			user_socket_dbus_service "dbus"
-			test -r "$hs/dbus/service/per-user.conf" || install -o "$i" -m 0644 -- "per-user.conf" "$hs/dbus/service/per-user.conf"
+			relocate_user_service "dbus" "dbus-daemon"
+			test -h "$hs/dbus" || setuidgid "$i" ln -s "dbus-daemon" "$hs/dbus"
+			user_socket_dbus_service "dbus-daemon"
+			test -r "$hs/dbus-daemon/service/per-user.conf" || install -o "$i" -m 0644 -- "per-user.conf" "$hs/dbus/service/per-user.conf"
 
 			user_simple_dbus_service "at-spi-dbus-bus" "org.a11y.Bus"
 			user_simple_dbus_service "dconf-editor" "ca.desrt.dconf-editor"
 			user_simple_dbus_service "dconf-service" "ca.desrt.dconf"
+			user_simple_dbus_service "dunst" "org.knopwob.dunst"
 			user_simple_dbus_service "gconfd" "org.gnome.GConf"
 			user_simple_dbus_service "gedit" "org.gnome.gedit"
 			user_simple_dbus_service "gnome-keyring-daemon" "org.gnome.keyring" "org.freedesktop.secrets"
@@ -327,6 +346,7 @@ do
 			user_display "mate-notification-daemon"	# The fact that the MATE Notification server requires an X display at startup is a bug.
 			user_display "org.gnome.Weather.Application"	# The fact that the GNOME Weather server requires an X display at startup is a bug.
 			user_display "org.gnome.Maps"	# The fact that the GNOME Maps server requires an X display at startup is a bug.
+			user_display "dunst"	# The fact that Dunst requires an X display at startup is a bug.
 
 			user_simple_socket "dirmngr"
 			user_simple_socket "gpg-agent"

@@ -34,15 +34,9 @@ and then chain loads to <replaceable>next-prog</replaceable> with the <citerefen
 </para>
 
 <para>
-When the <arg>--keep-path</arg> command line option is used, <command>clearenv</command> will not clear
-the <envar>PATH</envar> and <envar>LD_LIBRARY_PATH</envar> environment variables.
-When the <arg>--keep-locale</arg> option is used, it will not clear the
-environment variables used by the GNU C Library for locale settings,
-namely <envar>LANG</envar>, <envar>LC_ALL</envar>, <envar>LC_COLLATE</envar>. <envar>LC_CTYPE</envar>, <envar>LC_MESSAGES</envar>,
-<envar>LC_MONETARY</envar>, <envar>LC_NUMERIC</envar>, and <envar>LC_TIME</envar>.
-Similarly <arg>--keep-shell</arg> stops the clearing of <envar>SHELL</envar>; 
-<arg>--keep-term</arg> stops the clearing of <envar>TERM</envar> and <envar>TTY</envar>; and
-<arg>--keep-user</arg> stops the clearing of <envar>HOME</envar>, <envar>USER</envar>, and <envar>LOGNAME</envar>.
+When the <arg choice='plain'>--keep-path</arg> command line option is used, <command>clearenv</command> will not clear the <envar>PATH</envar> and <envar>LD_LIBRARY_PATH</envar> environment variables.
+When the <arg choice='plain'>--keep-locale</arg> option is used, it will not clear the environment variables used by the GNU C Library for locale settings, namely <envar>LANG</envar>, <envar>LC_ALL</envar>, <envar>LC_COLLATE</envar>. <envar>LC_CTYPE</envar>, <envar>LC_MESSAGES</envar>, <envar>LC_MONETARY</envar>, <envar>LC_NUMERIC</envar>, and <envar>LC_TIME</envar>.
+Similarly <arg choice='plain'>--keep-shell</arg> stops the clearing of <envar>SHELL</envar>; <arg choice='plain'>--keep-term</arg> stops the clearing of <envar>TERM</envar> and <envar>TTY</envar>; and <arg choice='plain'>--keep-user</arg> stops the clearing of <envar>HOME</envar>, <envar>USER</envar>, and <envar>LOGNAME</envar>.
 </para>
 
 </refsection><refsection><title>BUGS</title>

@@ -5,6 +5,8 @@
 Log service plumbing
 </h1>
 
+<h2>Managed services logging</h2>
+
 <p>
 In daemontools, a "main" service could optionally have a similar "log" service associated with it, the output of the one fed into the input of the other.
 Successors to daemontools, such as <a href="http://untroubled.org/daemontools-encore/">daemontools-encore</a> and <a href="http://smarden.org/runit/">runit</a>, have proceeded in the direction of hardwiring a 1:1 relationship between a "main" service and a "log" service, to the extent of making the utility commands non-orthogonal for "log" services.
@@ -31,21 +33,28 @@ In theory one could set up lengthy pipelines of services, each with its standard
 In practice there are two common scenarios.
 </p>
 
-<p>
-In the first scenario there is, as with the old daemontools, <a href="http://untroubled.org/daemontools-encore/">daemontools-encore</a>, and <a href="http://smarden.org/runit/">runit</a> systems, one logging service for each logged service.
+<ul>
+
+<li><p>
+<strong>one logging service for each logged service:</strong>
+This scenario is the same as on the old daemontools, <a href="http://untroubled.org/daemontools-encore/">daemontools-encore</a>, and <a href="http://smarden.org/runit/">runit</a> systems.
 This scenario is exemplified by most of the "regular" services that are bundled with the package.
 The "qmail-smtp-relay" service, for example, is plumbed to a "cyclog@qmail-smtp-relay" logging service.
-</p>
+</p></li>
 
-<p>
-In the second scenario multiple services all fan-in to a single logging service.
+<li><p>
+<strong>multiple services all fan-in to a single logging service:</strong>
 This scenario is exemplified by most of the "sysinit" services that are bundled with the package.
 <a href="anatomy-of-sysinit-service.html#logging">They are all plumbed to a single "sysinit-log" logging service</a>.
 This scenario has the disadvantage that the log outputs of multiple parallel concurrent service daemons are mashed together into a single log.
 Were these permanently running d&aelig;mon processes all emitting log output all of the time, this would cause a mess.
 But the "sysinit" services that are plumbed to "sysinit-log" are single-shot services that in fact do their work before becoming ready, and have heavy ordering dependencies upon one another.
 They have one period of activity, and it usually doesn't overlap the activities of the other services.
-</p>
+</p></li>
+
+</ul>
+
+<h2>System manager and per-user manager logging</h2>
 
 <p>
 There is also logging for the system-wide service manager itself.

@@ -756,13 +756,13 @@ convert_fstab_services [[gnu::noreturn]] (
 		if (!what || !where) continue;
 
 		std::list<std::string> options_list(split_fstab_options(entry->fs_mntops));
-		const bool nodev(has_option(options_list, "_nodev"));
-		delete_fstab_option(options_list, "_nodev");
+		const bool netdev(has_option(options_list, "_netdev"));
+		delete_fstab_option(options_list, "_netdev");
 		delete_fstab_option(options_list, "noauto");
 		delete_fstab_option(options_list, "nofail");
 
 #if defined(__LINUX__) || defined(__linux__)
-		const bool is_vfs_swap(!nodev && is_swap_type(entry->fs_vfstype));
+		const bool is_vfs_swap(!netdev && is_swap_type(entry->fs_vfstype));
 #endif
 		if (0 == std::strcmp(type, "xx")) {
 			continue;
@@ -776,7 +776,7 @@ convert_fstab_services [[gnu::noreturn]] (
 		) {
 			const std::string fsck_bundle_dirname("fsck@" + systemd_name_escape(false, false, where));
 			const std::string mount_bundle_dirname("mount@" + systemd_name_escape(false, false, where));
-			const bool local(!nodev && is_local_type(entry->fs_vfstype));
+			const bool local(!netdev && is_local_type(entry->fs_vfstype));
 			const bool preenable(is_preenable_type(entry->fs_vfstype));
 			std::string gbde, geli, fuse;
 			const bool is_fuse(begins_with(basename_of(what), "fuse", fuse) && fuse.length() > 1 && std::isdigit(fuse[0]));
@@ -893,14 +893,14 @@ write_volume_service_bundles [[gnu::noreturn]] (
 
 	const std::string fsck_bundle_dirname("fsck@" + systemd_name_escape(false, false, where));
 	const std::string mount_bundle_dirname("mount@" + systemd_name_escape(false, false, where));
-	const bool local(!has_option(options_list, "_nodev") && is_local_type(vfstype));
+	const bool local(!has_option(options_list, "_netdev") && is_local_type(vfstype));
 	const bool preenable(is_preenable_type(vfstype));
 	std::string gbde, geli, fuse;
 	const bool is_fuse(begins_with(basename_of(what), "fuse", fuse) && fuse.length() > 1 && std::isdigit(fuse[0]));
 	const bool is_gbde(ends_in(what, ".bde", gbde));
 	const bool is_geli(ends_in(what, ".eli", geli));
 	std::list<std::string> modules;
-	delete_fstab_option(options_list, "_nodev");
+	delete_fstab_option(options_list, "_netdev");
 	delete_fstab_option(options_list, "noauto");
 	delete_fstab_option(options_list, "nofail");
 

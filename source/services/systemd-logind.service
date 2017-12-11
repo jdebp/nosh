@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%p daemon
+
+[Service]
+Type=dbus
+ExecStart=/lib/systemd/%p
+LimitNOFILE=16384
+
+[Install]
+WantedBy=workstation.target

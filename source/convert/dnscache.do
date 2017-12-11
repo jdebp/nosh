@@ -20,6 +20,9 @@ list_graft_points() {
 	# http://jdebp.eu./FGA/dns-private-address-split-horizon.html#WhatToDo
 	for d in \
 		0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0 \
+		E.F.9.A.2.0.0.2 \
+		F.7.2.0.0.2 \
+		E.2.0.0.2 \
 		D.F \
 		8.E.F \
 		9.E.F \
@@ -29,6 +32,8 @@ list_graft_points() {
 		D.E.F \
 		E.E.F \
 		F.E.F \
+		1.0.F.F \
+		2.0.F.F \
 	;
 	do
 		echo "${d}.ip6.arpa"
@@ -56,6 +61,7 @@ list_graft_points() {
 		31.172 \
 		2.0.192 \
 		168.192 \
+		224 \
 		255.255.255.255 \
 	;
 	do

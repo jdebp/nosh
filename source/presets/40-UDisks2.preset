@@ -1,0 +1,10 @@
+#
+# Enable UDisks services
+#
+# This is not a systemd preset.
+# It goes in a special nosh system-manager preset directory.
+# It is used by the nosh-run-freedesktop-kits package in order to enable the services themselves.
+#
+
+enable	cyclog@udisks2.service
+enable	udisks2.service

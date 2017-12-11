@@ -9,7 +9,7 @@ entropy	urandom
 motd-dynamic	motd
 org.cups.cups-lpd	lpd
 org.cups.cupsd	cups
-org.freedesktop.login1	systemd-logind
+systemd-logind  org.freedesktop.login1	
 sshd	ssh
 sysctl	procps
 update-binfmts	binfmt-support

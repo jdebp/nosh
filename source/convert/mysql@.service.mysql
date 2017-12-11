@@ -14,10 +14,10 @@ Conflicts=mariadb@%i
 [Service]
 #Type=notify
 EnvironmentDirectory=env
-ExecStartPre=setuidgid "${user}" ${core_file_size:+softlimit -c "${core_file_size}"} ${open_file_limit:+softlimit -o "${open_file_limit}"} ${numa_interleave:+numactl --interleave "${numa_interleave}"} ${nice:+nice -n "${nice}"} sh -c 'test -d ./data/mysql/ || exec "${mysqld}" --defaults-group-suffix="%I" ${defaults_extra_file:+--defaults-extra-file "${defaults_extra_file}"} --initialize --basedir=./ --datadir=./data --plugin_dir=./plugin'
+ExecStartPre=setuidgid "${user}" softlimit ${core_file_size:+-c "${core_file_size}"} ${open_file_limit:+-o "${open_file_limit}"} ${numa_interleave:+numactl --interleave "${numa_interleave}"} ${nice:+nice -n "${nice}"} sh -c 'test -d ./data/mysql/ || exec "${mysqld}" --defaults-group-suffix="%I" ${defaults_extra_file:+--defaults-extra-file "${defaults_extra_file}"} --initialize --basedir=./ --datadir=./data --plugin_dir=./plugin'
 ExecStartPre=sh -c 'test ! "${flush_caches}" || ( sync ; sysctl -q -w vm.drop_caches=3 )'
 ExecStartPre=chown "${user}" /run/mysqld%I
-ExecStart=setuidgid "${user}" ${core_file_size:+softlimit -c "${core_file_size}"} ${open_file_limit:+softlimit -o "${open_file_limit}"} ${numa_interleave:+numactl --interleave "${numa_interleave}"} ${nice:+nice -n "${nice}"} "${mysqld}" --defaults-group-suffix="%I" ${defaults_extra_file:+--defaults-extra-file "${defaults_extra_file}"} --basedir=./ --datadir=./data --plugin_dir=./plugin --socket="${socket:-%t/mysqld.sock}" ${port:+--port="${port}"} --pid-file "${pid_file:-%t/mysqld.pid}" ${flags}
+ExecStart=setuidgid "${user}" softlimit ${core_file_size:+-c "${core_file_size}"} ${open_file_limit:+-o "${open_file_limit}"} ${numa_interleave:+numactl --interleave "${numa_interleave}"} ${nice:+nice -n "${nice}"} "${mysqld}" --defaults-group-suffix="%I" ${defaults_extra_file:+--defaults-extra-file "${defaults_extra_file}"} --basedir=./ --datadir=./data --plugin_dir=./plugin --socket="${socket:-%t/mysqld.sock}" ${port:+--port="${port}"} --pid-file "${pid_file:-%t/mysqld.pid}" ${flags}
 RuntimeDirectory=mysqld%I
 RuntimeDirectoryMode=0755
 # We do not forcibly kill database servers, for better or for worse.

@@ -2,6 +2,7 @@ telinit	chkconfig
 telinit	emergency
 telinit	fastboot
 telinit	fasthalt
+telinit	fastpowercycle
 telinit	fastpoweroff
 telinit	halt
 telinit	haltsys
@@ -9,6 +10,7 @@ telinit	init
 telinit	initctl-read
 telinit	invoke-rc.d
 telinit	normal
+telinit	powercycle
 telinit	poweroff
 telinit	rcctl
 telinit	reboot

@@ -29,7 +29,7 @@ sane (
 	if (!no_tostop) 
 		t.c_lflag |= TOSTOP;
 #if defined(_POSIX_VDISABLE)
-	// See IEEE 1003.1 Interpretation Request #27 for why _POSIX_DISABLE is not usable as a preprocessor expression.
+	// See IEEE 1003.1 Interpretation Request #27 for why _POSIX_VDISABLE is not usable as a preprocessor expression.
        	if (-1 != _POSIX_VDISABLE)
 		for (unsigned i(0); i < sizeof t.c_cc/sizeof *t.c_cc; ++i) t.c_cc[i] = _POSIX_VDISABLE;
 	else {

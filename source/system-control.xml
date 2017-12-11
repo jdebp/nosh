@@ -132,8 +132,7 @@ One might choose a subdirectory of <filename>/run/service-bundles/early-supervis
 
 <listitem>
 <para>
-The <filename>wants/</filename>, <filename>conflicts/</filename>, <filename>wanted-by/</filename>, <filename>stopped-by/</filename>, and <filename>required-by/</filename> 
-subdirectories comprise dependency or dependency installation information.
+The <filename>wants/</filename>, <filename>requires/</filename>, <filename>conflicts/</filename>, <filename>wanted-by/</filename>, <filename>stopped-by/</filename>, and <filename>required-by/</filename> subdirectories comprise dependency or dependency installation information.
 Each contains a set of symbolic links to other bundle directories for other services.
 </para>
 
@@ -143,6 +142,13 @@ Each contains a set of symbolic links to other bundle directories for other serv
 <para>
 <filename>wants/</filename> contains links to services that the current service "wants".
 Starting the current service implies starting the linked-to service as well.
+</para>
+</listitem>
+
+<listitem>
+<para>
+<filename>requires/</filename> contains links to services that should be "required-by" the current service when it is enabled.
+Enabling the service places it in the targets' "required-by" lists, and disabling the service removes it.
 </para>
 </listitem>
 
@@ -300,6 +306,11 @@ It does not contain the string "upstart".
 </cmdsynopsis>
 <cmdsynopsis>
 <command>system-control</command>
+<arg choice="req">powercycle</arg>
+<group><arg choice="plain">-f</arg><arg choice="plain">--force</arg></group>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>system-control</command>
 <arg choice="req">poweroff</arg>
 <group><arg choice="plain">-f</arg><arg choice="plain">--force</arg></group>
 </cmdsynopsis>
@@ -356,6 +367,8 @@ It will fail if it does not have the necessary privileges for sending a signal t
 <tr><td><command>poweroff</command> <arg choice='plain'>-f</arg></td><td colspan='2' align='center'><code>SIGRTMIN + 14</code></td></tr>
 <tr><td><command>reboot</command></td><td><code>SIGINT</code></td><td><code>SIGRTMIN + 5</code></td></tr>
 <tr><td><command>reboot</command> <arg choice='plain'>-f</arg></td><td colspan='2' align="center"><code>SIGRTMIN + 15</code></td></tr>
+<tr><td><command>powercycle</command></td><td><code>SIGWINCH</code></td><td><code>SIGRTMIN + 7</code></td></tr>
+<tr><td><command>powercycle</command> <arg choice='plain'>-f</arg></td><td colspan='2' align='center'><code>SIGRTMIN + 17</code></td></tr>
 <tr><td><command>emergency</command></td><td colspan='2' align='center'><code>SIGRTMIN + 2</code></td></tr>
 <tr><td><command>rescue</command></td><td colspan='2' align='center'><code>SIGRTMIN + 1</code></td></tr>
 <tr><td><command>normal</command></td><td colspan='2' align='center'><code>SIGRTMIN + 0</code></td></tr>
@@ -367,13 +380,14 @@ It will fail if it does not have the necessary privileges for sending a signal t
 <tr><td></td><td><code>SIGRTMIN + 1</code></td></tr>
 <tr><td><command>init</command> <group choice='plain'><arg choice='plain'>-b</arg><arg choice='plain'>b</arg><arg choice='plain'>emergency</arg></group></td><td colspan='2' align='center'><code>SIGRTMIN + 2</code></td></tr>
 <tr><td><command>init</command> <group choice='plain'><arg choice='plain'>H</arg><arg choice='plain'>h</arg></group></td><td><code>SIGUSR1</code></td><td><code>SIGRTMIN + 3</code></td> </tr>
+<tr><td><command>init</command> <group choice='plain'><arg choice='plain'>C</arg><arg choice='plain'>c</arg></group></td><td><code>SIGWINCH</code></td><td><code>SIGRTMIN + 7</code></td> </tr>
 <tr><td><command>init</command> <arg choice='plain'>0</arg></td><td><code>SIGUSR2</code></td><td><code>SIGRTMIN + 4</code></td></tr>
 <tr><td><command>init</command> <arg choice='plain'>6</arg></td><td><code>SIGINT</code></td><td><code>SIGRTMIN + 5</code></td></tr>
 </tbody>
 </table>
 
 <para>
-Exactly how the system powers off, halts, reboots, switches to normal, emergency, or rescue modes, and so forth is entirely up to whatever is running as process #1, which is expected to be in charge of system state.
+Exactly how the system power cycles, powers off, halts, reboots, switches to normal, emergency, or rescue modes, and so forth is entirely up to whatever is running as process #1, which is expected to be in charge of system state.
 These subcommands do nothing except send the signals to command the system manager.
 They do not directly enact any system state change themselves.
 In part this is because that would open up the possibility of the service manager killing the process that was (partway through) enacting the state changes, if a state change happened to affect the service running the <command>system-control</command> command.
@@ -943,6 +957,9 @@ This makes it possible, for example, for a single service unit file to just say 
 The <code>LimitMemory=</code> setting translates to the <arg choice='plain'>-m</arg> option of <citerefentry><refentrytitle>softlimit</refentrytitle><manvolnum>1</manvolnum></citerefentry>, for setting multiple "memory" resource limits in one go.
 </para></listitem>
 <listitem><para>
+The <code>MachineEnvironment=</code> setting (defaulting to <code>false</code>) if <code>true</code> causes the generated bundle to set the machine environment variables with <citerefentry><refentrytitle>machineenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para></listitem>
+<listitem><para>
 The <code>EnvironmentAppendPath=</code> setting acts like <code>Environment</code> except that the specified environment variables are augmented with <citerefentry><refentrytitle>appendpath</refentrytitle><manvolnum>1</manvolnum></citerefentry> rather than replaced.
 </para></listitem>
 <listitem><para>
@@ -992,6 +1009,13 @@ The <code>LogUCSPIRules=</code> setting (defaulting to <code>false</code>) cause
 </para></listitem>
 <listitem><para>
 The <code>NUMAInterleave=</code>, <code>NUMAMemBind=</code>, <code>NUMACPUNodeBind=</code>, <code>NUMAPhysCPUBind=</code>, <code>NUMALocalAlloc=</code>, and <code>NUMAPreferred=</code> settings cause the generated bundle to invoke <citerefentry><refentrytitle>numactl</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para></listitem>
+<listitem><para>
+The <code>JVMVersions=</code>, <code>JVMOperatingSystems=</code>, and <code>JVMManufacturers=</code> settings cause the generated bundle to invoke <citerefentry><refentrytitle>find-matching-jvm</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Each setting's value is a space-separated list, which is turned into zero or more equivalent command-line options.
+</para></listitem>
+<listitem><para>
+The <code>JVMDefault=</code> setting (defaulting to <code>false</code>) if <code>true</code> causes the generated bundle to invoke <citerefentry><refentrytitle>find-default-jvm</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para></listitem>
 <listitem><para>
 The <code>StandardError=log</code> setting prevents <code>StandardInput=tty</code> from redirecting standard error.
@@ -1082,9 +1106,10 @@ The <command>write-volume-service-bundles</command> subcommand writes service bu
 It always creates a <filename>mount@<replaceable>directory</replaceable></filename> bundle that at service startup mounts <replaceable>source</replaceable> there with the options <replaceable>options</replaceable> (if any) and at service shutdown unmounts it.
 </para>
 <para>
-The bundle is created as <filename>wanted-by/</filename> the system <code>local-fs.target</code> or the system <code>remote-fs.target</code>, depending from the filesystem type <replaceable>fstype</replaceable>.
+The bundle is created as <filename>wanted-by/</filename> the system <code>local-fs.target</code> or the system <code>remote-fs.target</code>, depending from the filesystem type <replaceable>fstype</replaceable> and whether the <replaceable>options</replaceable> contains <code>_netdev</code>.
 This so that it is started during autoboot when it is enabled.
 The list of types that are considered to be "remote" is a superset of the old Debian list from <filename>mountall.sh</filename>, with a few additions from the BSDs.
+The <code>_netdev</code> option overrides this list and forces a bundle to be unconditionally considered "remote".
 </para>
 <para>
 "API" filesystems (see <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>) and the root filesystem are specially handled:
@@ -1110,6 +1135,7 @@ So when the bundle is enabled <command>fsck</command> is run (on <replaceable>so
 The bundles generated by these subcommands are written in the current directory (or in the <arg choice='plain'><replaceable>root</replaceable></arg> directory).
 They are not enabled by the conversion process, but can be started and enabled as they stand, with the <command>start</command> and <command>preset</command> subcommands, just like any other service bundle.
 With <command>preset</command> the <arg choice='plain'>--fstab</arg> option is appropriate of course.
+(It is <command>preset</command> that handles the <code>noauto</code> option; which this subcommand ignores and silently removes from the option list that it writes into the service bundle.)
 </para>
 
 <para>
@@ -1318,7 +1344,7 @@ So in the absence of orderings in between the individual services wanted by thos
 
 <varlistentry><term><filename>emergency</filename></term>
 <listitem><para>
-This target is the target started by the <command>init</command> subcommand with the <arg>-b</arg> option.
+This target is the target started by the <command>init</command> subcommand with the <arg choice='plain'>-b</arg> option.
 Starting it is intended to bring up the system in "emergency mode", bringing up no services, mounting no (non-system) volumes, and bringing up just "emergency mode" services, such as a secure login on the default terminal.
 </para><para>
 It "wants" no other targets or services.
@@ -1329,7 +1355,7 @@ So in "emergency mode" (if nothing else has been started) only the system filesy
 <varlistentry>
 <term><filename>rescue</filename></term>
 <listitem><para>
-This target is the target started by the <command>init</command> subcommand with the <arg>-s</arg> option.
+This target is the target started by the <command>init</command> subcommand with the <arg choice='plain'>-s</arg> option.
 Starting it is intended to bring up the system in "rescue mode", bringing up with it the fundamental system initialization services and a secure login user interface.
 </para><para>
 It "wants" the <filename>sysinit</filename> target, but not the <filename>basic</filename> target.
@@ -1339,7 +1365,7 @@ It "wants" the <filename>sysinit</filename> target, but not the <filename>basic<
 <varlistentry>
 <term><filename>update</filename></term>
 <listitem><para>
-This target is the target started by the <command>init</command> subcommand with the <arg>--update</arg> option.
+This target is the target started by the <command>init</command> subcommand with the <arg choice='plain'>--update</arg> option.
 Starting it is intended to bring up the system in "update mode", bringing up with it the fundamental system initialization services and the system update utility.
 </para><para>
 It "wants" the <filename>sysinit</filename> target, but not the <filename>basic</filename> target.
@@ -1353,21 +1379,22 @@ It "wants" the <filename>sysinit</filename> target, but not the <filename>basic<
 <refsection><title>shutdown</title>
 
 <para>
-The <command>poweroff</command>, <command>halt</command>, and <command>reboot</command> subcommands invoke several standard targets indirectly.
+The <command>poweroff</command>, <command>powercycle</command>, <command>halt</command>, and <command>reboot</command> subcommands invoke several standard targets indirectly.
 </para>
 
 <variablelist>
 
 <varlistentry>
 <term><filename>poweroff</filename></term>
+<term><filename>powercycle</filename></term>
 <term><filename>halt</filename></term>
 <term><filename>reboot</filename></term>
 <listitem><para>
-These three targets both "want" the <filename>shutdown</filename> target and order themselves to start after it.
+These four targets both "want" the <filename>shutdown</filename> target and order themselves to start after it.
 Thus starting them shuts down all services and then, once this has been done, starts these targets.
 They are usually started by the System Manager, in response to system control commands requesting system reboot, halt, or power off.
-When they (finally) start, they invoke the <command>reboot</command>, <command>halt</command>, and <command>poweroff</command> subcommands of <command>system-control</command> with the <arg choice="req">-f</arg> command-line option.
-This signals the System Manager to enact the actual reboot, halt, or power-off action.
+When they (finally) start, they invoke the <command>reboot</command>, <command>halt</command>, <command>powercycle</command>, and <command>poweroff</command> subcommands of <command>system-control</command> with the <arg choice="req">-f</arg> command-line option.
+This signals the System Manager to enact the actual reboot, halt, power-cycle, or power-off action.
 </para></listitem>
 </varlistentry>
 
@@ -1461,7 +1488,7 @@ It is a collection that is used to group services, but is not an ordering milest
 Starting this target is intended to shut down all running normal services.
 All normal services should be in this target's <filename>conflicts/</filename> list.
 It is also an ordering milestone, in that all services listed in its <filename>conflicts/</filename> list should also be listed in its <filename>after/</filename> list.
-<filename>shutdown</filename> is then listed in the <filename>after/</filename> list of the <filename>poweroff</filename>, <filename>halt</filename>, and <filename>reboot</filename> target to ensure that they are only started after the system has entered "shutdown mode".
+<filename>shutdown</filename> is then listed in the <filename>after/</filename> list of the <filename>poweroff</filename>, <filename>powercycle</filename>, <filename>halt</filename>, and <filename>reboot</filename> target to ensure that they are only started after the system has entered "shutdown mode".
 </para></listitem>
 </varlistentry>
 
@@ -1469,7 +1496,7 @@ It is also an ordering milestone, in that all services listed in its <filename>c
 <listitem><para>
 Starting this target is intended to unmount all filesystems, both local and remote.
 All <filename>mount@*</filename> services should be in this target's <filename>conflicts/</filename> list.
-<filename>unmount</filename> is then listed in the <filename>after/</filename> list of the <filename>poweroff</filename>, <filename>halt</filename>, and <filename>reboot</filename> target to ensure that they are only started after the system has unmounted all filesystems.
+<filename>unmount</filename> is then listed in the <filename>after/</filename> list of the <filename>poweroff</filename>, <filename>powercycle</filename>, <filename>halt</filename>, and <filename>reboot</filename> target to ensure that they are only started after the system has unmounted all filesystems.
 </para></listitem>
 </varlistentry>
 

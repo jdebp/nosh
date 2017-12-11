@@ -89,6 +89,7 @@ discontinue \
 	/var/sv/openvpn@client \
 	stty-sane@console \
 	make-utx-log \
+	linux-utmp \
 	;
 
 # These services have been relocated.

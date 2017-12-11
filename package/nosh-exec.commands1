@@ -10,6 +10,8 @@ export-to-rsyslog
 fdmove
 fdredir
 fifo-listen
+find-default-jvm
+find-matching-jvm
 follow-log-directories
 hardlimit
 klog-read

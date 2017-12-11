@@ -75,18 +75,20 @@ static sig_atomic_t rescue_signalled (false);
 static sig_atomic_t emergency_signalled (false);
 static sig_atomic_t halt_signalled (false);
 static sig_atomic_t poweroff_signalled (false);
+static sig_atomic_t powercycle_signalled (false);
 static sig_atomic_t reboot_signalled (false);
 static sig_atomic_t power_signalled (false);
 static sig_atomic_t kbrequest_signalled (false);
 static sig_atomic_t sak_signalled (false);
 static sig_atomic_t fasthalt_signalled (false);
 static sig_atomic_t fastpoweroff_signalled (false);
+static sig_atomic_t fastpowercycle_signalled (false);
 static sig_atomic_t fastreboot_signalled (false);
 static sig_atomic_t unknown_signalled (false);
 #define has_service_manager (static_cast<pid_t>(-1) != service_manager_pid)
 #define has_cyclog (static_cast<pid_t>(-1) != cyclog_pid)
 #define has_system_control (static_cast<pid_t>(-1) != system_control_pid)
-#define stop_signalled (fasthalt_signalled || fastpoweroff_signalled || fastreboot_signalled)
+#define stop_signalled (fasthalt_signalled || fastpoweroff_signalled || fastpowercycle_signalled || fastreboot_signalled)
 
 static inline
 void
@@ -95,7 +97,9 @@ record_signal_system (
 ) {
 	switch (signo) {
 		case SIGCHLD:		child_signalled = true; break;
-		case SIGWINCH:		kbrequest_signalled = true; break;
+#if defined(KBREQ_SIGNAL)
+		case KBREQ_SIGNAL:	kbrequest_signalled = true; break;
+#endif
 #if defined(SAK_SIGNAL)
 		case SAK_SIGNAL:	sak_signalled = true; break;
 #endif
@@ -104,6 +108,9 @@ record_signal_system (
 #endif
 #if !defined(__LINUX__) && !defined(__linux__)
 		case POWEROFF_SIGNAL:	poweroff_signalled = true; break;
+#	if defined(POWERCYCLE_SIGNAL)
+		case POWERCYCLE_SIGNAL:	powercycle_signalled = true; break;
+#	endif
 		case HALT_SIGNAL:	halt_signalled = true; break;
 		case REBOOT_SIGNAL:	reboot_signalled = true; break;
 #endif
@@ -114,6 +121,9 @@ record_signal_system (
 		case SYSINIT_SIGNAL:	sysinit_signalled = true; break;
 		case FORCE_REBOOT_SIGNAL:	fastreboot_signalled = true; break;
 		case FORCE_POWEROFF_SIGNAL:	fastpoweroff_signalled = true; break;
+#	if defined(FORCE_POWERCYCLE_SIGNAL)
+		case FORCE_POWERCYCLE_SIGNAL:	fastpowercycle_signalled = true; break;
+#	endif
 #endif
 		default:
 #if defined(SIGRTMIN)
@@ -124,10 +134,14 @@ record_signal_system (
 				case 3:		halt_signalled = true; break;
 				case 4:		poweroff_signalled = true; break;
 				case 5:		reboot_signalled = true; break;
+				// 6 is kexec
+				case 7:		powercycle_signalled = true; break;
 				case 10:	sysinit_signalled = true; break;
 				case 13:	fasthalt_signalled = true; break;
 				case 14:	fastpoweroff_signalled = true; break;
 				case 15:	fastreboot_signalled = true; break;
+				// 16 is kexec
+				case 17:	fastpowercycle_signalled = true; break;
 				default:	unknown_signalled = true; break;
 			} else
 #endif
@@ -684,8 +698,10 @@ last_resort_io_defaults(
 			dev_console.reset(dup(prog, saved_stdio[STDIN_FILENO]));
 		} else {
 			set_non_blocking(dev_console.get(), false);
-#if defined(__LINUX__) || defined(__linux__)
-			ioctl(dev_console.get(), KDSIGACCEPT, SIGWINCH);
+#if defined(KBREQ_SIGNAL)
+#	if defined(__LINUX__) || defined(__linux__)
+			ioctl(dev_console.get(), KDSIGACCEPT, KBREQ_SIGNAL);
+#	endif
 #endif
 		}
 		// Populate saved standard output as /dev/console if it was initially closed.
@@ -738,6 +754,14 @@ end_system()
 	if (fastreboot_signalled) {
 		reboot(RB_AUTOBOOT);
 	}
+	if (fastpowercycle_signalled) {
+#if defined(RB_POWERCYCLE)
+		reboot(RB_POWERCYCLE);
+#else
+		reboot(RB_AUTOBOOT);
+#endif
+	}
+	reboot(RB_AUTOBOOT);
 	reboot(RB_AUTOBOOT);
 }
 
@@ -932,19 +956,27 @@ common_manager (
 	);
 	ReserveSignalsForKQueue kqueue_reservation(
 		SIGCHLD,
-		SIGWINCH, 
+#if defined(KBREQ_SIGNAL)
+		KBREQ_SIGNAL,
+#endif
 		SYSINIT_SIGNAL,
 		NORMAL_SIGNAL,
 		EMERGENCY_SIGNAL,
 		RESCUE_SIGNAL,
 		HALT_SIGNAL,
 		POWEROFF_SIGNAL,
+#if defined(POWERCYCLE_SIGNAL)
+		POWERCYCLE_SIGNAL,
+#endif
 		REBOOT_SIGNAL,
 #if defined(FORCE_HALT_SIGNAL)
 		FORCE_HALT_SIGNAL,
 #endif
 #if defined(FORCE_POWEROFF_SIGNAL)
 		FORCE_POWEROFF_SIGNAL,
+#endif
+#if defined(FORCE_POWERCYCLE_SIGNAL)
+		FORCE_POWERCYCLE_SIGNAL,
 #endif
 		FORCE_REBOOT_SIGNAL,
 		SIGTERM, 
@@ -1012,10 +1044,12 @@ common_manager (
 		return;
 	}
 
-	std::vector<struct kevent> p(24);
+	std::vector<struct kevent> p(26);
 	unsigned n(0);
 	if (is_system) {
-		set_event(&p[n++], SIGWINCH, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+#if defined(KBREQ_SIGNAL)
+		set_event(&p[n++], KBREQ_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+#endif
 		set_event(&p[n++], RESCUE_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 		set_event(&p[n++], EMERGENCY_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 #if defined(SAK_SIGNAL)
@@ -1037,6 +1071,9 @@ common_manager (
 	set_event(&p[n++], SYSINIT_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 	set_event(&p[n++], HALT_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 	set_event(&p[n++], POWEROFF_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+#if defined(POWERCYCLE_SIGNAL)
+	set_event(&p[n++], POWERCYCLE_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+#endif
 	set_event(&p[n++], REBOOT_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 	set_event(&p[n++], FORCE_REBOOT_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 #if defined(FORCE_HALT_SIGNAL)
@@ -1044,6 +1081,9 @@ common_manager (
 #endif
 #if defined(FORCE_POWEROFF_SIGNAL)
 	set_event(&p[n++], FORCE_POWEROFF_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+#endif
+#if defined(FORCE_POWERCYCLE_SIGNAL)
+	set_event(&p[n++], FORCE_POWERCYCLE_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 #endif
 	if (0 > kevent(queue.get(), p.data(), n, 0, 0, 0)) {
 		const int error(errno);
@@ -1113,6 +1153,11 @@ common_manager (
 			if (poweroff_signalled) {
 				subcommand = "start";
 				option = "poweroff";
+				poweroff_signalled = false;
+			} else
+			if (powercycle_signalled) {
+				subcommand = "start";
+				option = "powercycle";
 				poweroff_signalled = false;
 			} else
 			if (reboot_signalled) {

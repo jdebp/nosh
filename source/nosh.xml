@@ -19,14 +19,11 @@
 <refsection><title>Description</title>
 
 <para>
-<command>nosh</command> reads <replaceable>filename</replaceable>, constructing a sequence of arguments, and then
-attempts to chain load the program denoted by the first argument, passing it
-all of the arguments.
+<command>nosh</command> reads <replaceable>filename</replaceable>, constructing a sequence of arguments, and then attempts to chain load the program denoted by the first argument, passing it all of the arguments.
 </para>
 
 <para>
-<command>nosh</command> is intended for use as a minimal script processor for use in <code>#!</code>
-lines in executable script files.
+<command>nosh</command> is intended for use as a minimal script processor for use in <code>#!</code> lines in executable script files.
 </para>
 
 <para>
@@ -43,18 +40,15 @@ Look at <citerefentry><refentrytitle>execlineb</refentrytitle><manvolnum>1</manv
 </para>
 
 <para>
-It does do chain loading, with a wide range of useful built-in chain loading
-commands available.  See <citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry> for details.
+It does do chain loading, with a wide range of useful built-in chain loading commands available.
+See <citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry> for details.
 </para>
 
-</refsection><refsection><title>FILE LEXING</title>
+</refsection><refsection><title>File lexing</title>
 
 <para>
 Arguments are normally separated by one or more whitespace characters.
-Pairs of quotation mark characters will prevent whitespace from being treated
-specially, and the quoted sequence of characters, which can include newlines,
-will form part of one argument, concatenated with whatever quoted or unquoted
-sequences precede or follow it.
+Pairs of quotation mark characters will prevent whitespace from being treated specially, and the quoted sequence of characters, which can include newlines, will form part of one argument, concatenated with whatever quoted or unquoted sequences precede or follow it.
 </para>
 
 <para>
@@ -69,17 +63,14 @@ In a non-quotation mark delimited sequence of characters:
 A slash followed by a newline is discarded entirely.
 A slash followed by any other character is that character.  
 This allows one to provide literal slashes, hashes, and quotation marks.
-A hash at the start of a sequence is a line comment, that is discarded along
-with everything that follows it up to and including the end of the line.
+A hash at the start of a sequence is a line comment, that is discarded along with everything that follows it up to and including the end of the line.
 </para>
 
 <para>
-Inside a single-quotation mark delimited sequence of characters
-no characters are discarded or treated specially, except of course
-the single quotation mark that terminates the sequence.
+Inside a single-quotation mark delimited sequence of characters no characters are discarded or treated specially, except of course the single quotation mark that terminates the sequence.
 </para>
 
-<refsection><title>EXAMPLE</title>
+<refsection><title>Example</title>
 
 <programlisting>
 #!/bin/nosh
@@ -100,24 +91,23 @@ unquoted "#" that starts an argument introduces comments.
 So because the ''# does not start an argument this is not a comment.
 </programlisting>
 
-</refsection></refsection><refsection><title>SECURITY</title>
+</refsection></refsection><refsection><title>Security</title>
 
 <para>
 The <code>#!</code> mechanism in Unix is a security disaster.  
-Optional extra arguments (more than one on some operating systems) can be
-supplied in the trusted script and they cannot be reliably distinguished from
-arguments supplied by the untrusted user of the script. 
-There is also a race condition caused by the window of opportunity
-between when a script is executed and when the script interpreter gets around
-to opening the script file.
+Optional extra arguments (more than one on some operating systems) can be supplied in the trusted script and they cannot be reliably distinguished from arguments supplied by the untrusted user of the script. 
+There is also a race condition caused by the window of opportunity between when a script is executed and when the script interpreter gets around to opening the script file.
 </para>
 
 <para>
-<command>nosh</command> avoids the former problem by simply disallowing any
-optional extra arguments at all, meaning that the script filename is
-always argument 1.  
-It cannot do anything about the second problem, which has to be solved by the
-operating system kernel.
+<command>nosh</command> avoids the former problem by simply disallowing any optional extra arguments at all, meaning that the script filename is always argument 1.  
+It cannot do anything about the second problem, which has to be solved by the operating system kernel.
+</para>
+
+<para>
+Operating systems solve this by providing the <citerefentry><refentrytitle>fexecve</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function.
+The use of this function results in <replaceable>filename</replaceable> having the form <filename>/dev/fd/<replaceable>N</replaceable></filename> or <filename>/proc/self/fd/<replaceable>N</replaceable></filename>.
+<command>nosh</command> detects these circumstances and ensures that open file descriptor <replaceable>N</replaceable> is not leaked into the executed program (if that program is not a built-in command).
 </para>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

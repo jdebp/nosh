@@ -45,7 +45,7 @@ with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvol
 </para>
 
 <para>
-If the <arg>--clear</arg> command line option is used, <command>exec</command> will clear its environment before chaining.
+If the <arg choice='plain'>--clear</arg> command line option is used, <command>exec</command> will clear its environment before chaining.
 Otherwise, it leaves its process state unchanged.
 This option is for compatibility with the built-in <citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry> command of shells.
 Avoid its use.
@@ -53,9 +53,9 @@ Instead, use the built-in <citerefentry><refentrytitle>clearenv</refentrytitle><
 </para>
 
 <para>
-The <arg>--arg0</arg> command line option causes it to replace the first element of the argument list that it passes to <replaceable>next-prog</replaceable>, which is otherwise the name of the command in <replaceable>next-prog</replaceable>, with the supplied string.
-If the <arg>--login</arg> command line option is used, then the first element of the argument list has a dash (<code>-</code>) prepended, which is the convention for signalling shells that they are being invoked directly by <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-This happens after any substitution because of <arg>--arg0</arg>.
+The <arg choice='plain'>--arg0</arg> command line option causes it to replace the first element of the argument list that it passes to <replaceable>next-prog</replaceable>, which is otherwise the name of the command in <replaceable>next-prog</replaceable>, with the supplied string.
+If the <arg choice='plain'>--login</arg> command line option is used, then the first element of the argument list has a dash (<code>-</code>) prepended, which is the convention for signalling shells that they are being invoked directly by <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+This happens after any substitution because of <arg choice='plain'>--arg0</arg>.
 </para>
 
 </refsection><refsection><title>Built-in commands</title>

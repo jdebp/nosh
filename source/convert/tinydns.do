@@ -20,6 +20,9 @@ awk -F : '/^\./ { print $0 ":::si"; print $0 ":::lo"; next; } { print; }' << EOF
 # BEGIN http://jdebp.eu./FGA/dns-private-address-split-horizon.html#WhatToDo
 .0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa:127.53.0.1:a
 .1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa:127.53.0.1:a
+.f.7.2.0.0.2.ip6.arpa:127.53.0.1:a
+.e.f.9.a.2.0.0.2.ip6.arpa:127.53.0.1:a
+.e.2.0.0.2.ip6.arpa:127.53.0.1:a
 .D.F.ip6.arpa:127.53.0.1:a
 .8.E.F.ip6.arpa:127.53.0.1:a
 .9.E.F.ip6.arpa:127.53.0.1:a
@@ -53,7 +56,9 @@ awk -F : '/^\./ { print $0 ":::si"; print $0 ":::lo"; next; } { print; }' << EOF
 .168.192.in-addr.arpa:127.53.0.1:a
 .255.255.255.255.in-addr.arpa:127.53.0.1:a
 # END http://jdebp.eu./FGA/dns-private-address-split-horizon.html#WhatToDo
-=1.0.53.127.in-addr.arpa:127.53.0.1:::lo
+
+.:127.53.0.1:a
+=1.0.53.127.in-addr.arpa:127.53.0.1
 EOF
 }
 
@@ -64,20 +69,20 @@ all: data.cdb root
 data.cdb: data ; tinydns-data
 
 data: private public root
-	echo  > \$@.tmp '# Generated file; do not edit directly.'
+	@echo  > \$@.tmp '# data is a generated file; do not edit it directly.'
 	@echo >> \$@.tmp '%lo:127'
 	@echo >> \$@.tmp '%si:10'
 	@echo >> \$@.tmp '%si:192.168'
 	@echo >> \$@.tmp '# Put your data in the file named public.'
 	@echo >> \$@.tmp '# Run make when you are done.'
 	cat >> \$@.tmp public
-	@echo >> \$@.tmp '# Generated file; do not edit directly.'
+	@echo >> \$@.tmp '# data is a generated file; do not edit it directly.'
 	@echo >> \$@.tmp '# Change the file named private if you want these delegated somewhere.'
 	cat >> \$@.tmp private root
 	mv -f -- \$@.tmp \$@
 
 root: root.zone
-	@echo  > \$@.tmp '# Generated file; do not edit directly.'
+	@echo  > \$@.tmp '# root is a generated file; do not edit it directly.'
 	@echo >> \$@.tmp '# Delete root.zone to cause a re-fetch from ICANN.'
 	awk -F : '/^&/ { print \$\$1 ":" \$\$2 ":" \$\$3 ":::lo"; } /^\+/ { print \$\$1 ":" \$\$2 ":::lo"; }' root.zone | sort -t : -k 2 -k 1 >> \$@.tmp
 	mv -f -- \$@.tmp \$@

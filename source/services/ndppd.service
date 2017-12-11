@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=NDP Proxy Daemon
+After=local-syslog.target network-runtime.service
+Wants=network-runtime.service
+
+[Service]
+ExecStart=%p -v
+
+[Install]
+WantedBy=server.target

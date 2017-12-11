@@ -50,8 +50,8 @@ enable_disable (
 	FileDescriptorOwner source_dir_fd(open_dir_at(bundle_dir_fd, (source + "/").c_str()));
 	if (source_dir_fd.get() < 0) {
 		const int error(errno);
-		if (ENOENT != error)
-			std::fprintf(stderr, "%s: WARNING: %s: %s\n", prog, source_dir_name.c_str(), std::strerror(error));
+		if (ENOENT == error) return true;
+		std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, source_dir_name.c_str(), std::strerror(error));
 		return false;
 	}
 	const DirStar source_dir(source_dir_fd);
@@ -122,6 +122,8 @@ enable_disable (
 	if (!enable_disable(prog, make, path, bundle_dir_fd, "stopped-by", "conflicts"))
 		failed = true;
 	if (!enable_disable(prog, make, path, bundle_dir_fd, "stopped-by", "after"))
+		failed = true;
+	if (!enable_disable(prog, make, path, bundle_dir_fd, "requires", "required-by"))
 		failed = true;
 	const FileDescriptorOwner service_dir_fd(open_service_dir(bundle_dir_fd));
 	if (make) {

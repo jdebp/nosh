@@ -22,25 +22,12 @@
 <refsection><title>Description</title>
 
 <para>
-<command>appendpath</command> is a chain-loading utility that appends the value <replaceable>dir</replaceable> to the
-path environment variable <replaceable>var</replaceable>, and then chain loads to <replaceable>next-prog</replaceable> with the
-<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
-If the environment variable is set and not empty, it inserts a colon (<code>:</code>)
-between the old value of <replaceable>var</replaceable> and the appended <replaceable>dir</replaceable>.
+<command>appendpath</command> is a chain-loading utility that appends the value <replaceable>dir</replaceable> to the path environment variable <replaceable>var</replaceable>, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+If the environment variable is set and not empty, it inserts a colon (<code>:</code>) between the old value of <replaceable>var</replaceable> and the appended <replaceable>dir</replaceable>.
 </para>
 
 <para>
 <replaceable>next-prog</replaceable> may contain its own command line options, which <command>appendpath</command> will ignore.
-</para>
-
-</refsection><refsection><title>BUGS</title>
-
-<para>
-Although not strictly a bug in this program, it is worth noting that the
-GNU C library and the BSD C Library both have memory leaks in their <citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>3</manvolnum></citerefentry> functions,
-used by this program.
-You can work around these bugs by ensuring that <replaceable>next-prog</replaceable> is
-not a built-in command (see <citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
 </para>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

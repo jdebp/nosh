@@ -60,7 +60,7 @@ Dealing with these is the province of a job-control shell, which may not even ru
 </para>
 
 <para>
-If the <arg>--exclusive</arg> command line option is used, it will attempt to use the <code>TIOCEXCL</code> <citerefentry><refentrytitle>ioctl</refentrytitle><manvolnum>2</manvolnum></citerefentry> function to put the terminal device into "exclusive" mode.
+If the <arg choice='plain'>--exclusive</arg> command line option is used, it will attempt to use the <code>TIOCEXCL</code> <citerefentry><refentrytitle>ioctl</refentrytitle><manvolnum>2</manvolnum></citerefentry> function to put the terminal device into "exclusive" mode.
 </para>
 
 </refsection><refsection><title>SECURITY</title>
@@ -68,7 +68,7 @@ If the <arg>--exclusive</arg> command line option is used, it will attempt to us
 <refsection><title>Linux</title>
 
 <para>
-If <arg>--vhangup</arg> command line option is used, which tells it to call the <citerefentry><refentrytitle>vhangup</refentrytitle><manvolnum>2</manvolnum></citerefentry> system call, <command>open-controlling-tty</command> has to open the terminal device file twice, once so that it can disconnect/hangup existing processes, which of course disconnects itself at the same time, and once again to gain the controlling TTY afterwards.
+If <arg choice='plain'>--vhangup</arg> command line option is used, which tells it to call the <citerefentry><refentrytitle>vhangup</refentrytitle><manvolnum>2</manvolnum></citerefentry> system call, <command>open-controlling-tty</command> has to open the terminal device file twice, once so that it can disconnect/hangup existing processes, which of course disconnects itself at the same time, and once again to gain the controlling TTY afterwards.
 There is a race condition here, where the character device file could be unlinked or otherwise altered in between the two opens.
 </para>
 
@@ -76,7 +76,7 @@ There is a race condition here, where the character device file could be unlinke
 
 <para>
 <command>open-controlling-tty</command> opens the terminal device file once, because BSD has no <citerefentry><refentrytitle>vhangup</refentrytitle><manvolnum>2</manvolnum></citerefentry> system call.
-Instead, on BSD <command>open-controlling-tty</command> calls <citerefentry><refentrytitle>revoke</refentrytitle><manvolnum>2</manvolnum></citerefentry> before opening the terminal device file, if the <arg>--revoke</arg> command line option is used.
+Instead, on BSD <command>open-controlling-tty</command> calls <citerefentry><refentrytitle>revoke</refentrytitle><manvolnum>2</manvolnum></citerefentry> before opening the terminal device file, if the <arg choice='plain'>--revoke</arg> command line option is used.
 A similar race condition exists, except that it is between the call to <citerefentry><refentrytitle>revoke</refentrytitle><manvolnum>2</manvolnum></citerefentry> and the call to then <citerefentry><refentrytitle>open</refentrytitle><manvolnum>2</manvolnum></citerefentry> the terminal device file.
 Again, the character device file could be unlinked or otherwise altered in between the two.
 </para>

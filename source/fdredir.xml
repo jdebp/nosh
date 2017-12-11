@@ -22,12 +22,7 @@
 <refsection><title>Description</title>
 
 <para>
-<command>fdredir</command> is a chain-loading utility that opens the file
-<replaceable>name</replaceable> as the file descriptor
-<replaceable>fd</replaceable> (closing that descriptor if it is already open)
-and then chain loads to <replaceable>next-prog</replaceable> with the
-<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-function.  
+<command>fdredir</command> is a chain-loading utility that opens the file <replaceable>name</replaceable> as the file descriptor <replaceable>fd</replaceable> (closing that descriptor if it is already open) and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
 </para>
 
 <para>
@@ -44,12 +39,9 @@ Command line options determine the mode in which <replaceable>name</replaceable>
 <term><arg>--non-blocking</arg></term><listitem>
 
 <para>
-The file is opened in non-blocking mode (and blocking mode is restored once it
-has been opened).
-Non-blocking mode allows one to open serial devices without waiting for a carrier,
-to open FIFOs without waiting for the opposite end to be opened, and so forth.
-Blocking mode is restored because most shell-level utilities do not expect to
-inherit file descriptors in non-blocking mode.
+The file is opened in non-blocking mode (and blocking mode is restored once it has been opened).
+Non-blocking mode allows one to open serial devices without waiting for a carrier, to open FIFOs without waiting for the opposite end to be opened, and so forth.
+Blocking mode is restored because most shell-level utilities do not expect to inherit file descriptors in non-blocking mode.
 </para>
 
 </listitem>
@@ -59,9 +51,7 @@ inherit file descriptors in non-blocking mode.
 
 <para>
 Specify the (numeric) permissions to use when creating a file.
-These are of course subject to the process' file creation mask as set by
-<citerefentry><refentrytitle>umask</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-The default permissions are 0666.
+These are of course subject to the process' file creation mask as set by <citerefentry><refentrytitle>umask</refentrytitle><manvolnum>1</manvolnum></citerefentry>.  The default permissions are 0666.
 </para>
 
 </listitem>

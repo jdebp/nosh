@@ -165,7 +165,7 @@ system_control (
 			&no_pager_option
 		};
 		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", 
-				"halt|reboot|poweroff|"
+				"halt|reboot|poweroff|powercycle|"
 				"emergency|rescue|normal|init|sysinit|"
 				"start|stop|enable|disable|preset|reset|unload-when-stopped|"
 				"try-restart|hangup|"

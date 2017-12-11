@@ -10,7 +10,8 @@ Description=EMACS Made A Client-Server for %U
 RuntimeDirectory=%p
 EnvironmentDirectory=env
 Environment=SSH_AUTH_SOCK=%t/keyring/ssh
-ExecStart=%p --new-daemon
+# Until 2017-05-29 the option was --new-daemon, which was added on 2016-11-15.
+ExecStart=%p --fg-daemon
 
 [Install]
 WantedBy=normal.target

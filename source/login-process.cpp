@@ -11,7 +11,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <ctime>
 #include <cctype>
 #include <unistd.h>
-#if defined(__LINUX__) || defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
+#if defined(__LINUX__) || defined(__linux__)
 #include <sys/time.h>
 #include <utmpx.h>
 #endif

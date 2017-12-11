@@ -28,6 +28,7 @@ extern void line_banner ( const char * &, std::vector<const char *> &, ProcessEn
 extern void login_banner ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void login_process ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void login_prompt ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void login_update_utmpx ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void monitor_fsck_progress ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void open_controlling_tty ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void pty_get_tty ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
@@ -56,6 +57,8 @@ commands[] = {
 	{	"clear_console",		console_clear			},
 	{	"chvt",				console_multiplexor_control	},
 	{	"ttylogin-starter",		ttylogin_starter		},
+	{	"login-update-utmpx",		login_update_utmpx		},
+	{	"utx",				login_update_utmpx		},
 
 	// Chain-loading non-terminals
 	{	"detach-controlling-tty",	detach_controlling_tty		},

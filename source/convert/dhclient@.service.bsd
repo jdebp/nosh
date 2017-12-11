@@ -6,6 +6,7 @@
 Description=%p service for device %i
 Wants=%p-log.service
 After=%p-log.service wpa_supplicant@%i hostapd@%i
+PartOf=netif@%i
 
 [Service]
 EnvironmentDirectory=env
@@ -13,4 +14,4 @@ ExecStart=%p -d '%I'
 RestartSec=10
 
 [Install]
-WantedBy=static-networking.target
+WantedBy=netif@%i

@@ -40,38 +40,34 @@
 
 </para>
 <para>
-The <arg>--backlog</arg> option specifies the allowed backlog level (defaulting to 5) of outstanding not-yet-accepted connections to the socket.
+The <arg choice='plain'>--backlog</arg> option specifies the allowed backlog level (defaulting to 5) of outstanding not-yet-accepted connections to the socket.
 </para>
 
 <para>
-After binding the socket to <replaceable>path</replaceable>, <command>local-stream-socket-listen</command> changes the owner UID of the socket to that specified with the <arg>--uid</arg> command line argument (if supplied), changes the GID of the socket to that specified with the <arg>--gid</arg> command line argument (if supplied), and changes the permissions of the socket to those specified with the <arg>--mode</arg> command line argument (if supplied).
+After binding the socket to <replaceable>path</replaceable>, <command>local-stream-socket-listen</command> changes the owner UID of the socket to that specified with the <arg choice='plain'>--uid</arg> command line argument (if supplied), changes the GID of the socket to that specified with the <arg choice='plain'>--gid</arg> command line argument (if supplied), and changes the permissions of the socket to those specified with the <arg choice='plain'>--mode</arg> command line argument (if supplied).
 The normal conventions for numbers apply, so for octal permissions use a leading zero.
 Symbolic permissions and account names are not supported.
 </para>
 
 <para>
-The <arg>--pass-credentials</arg> option causes <command>local-stream-socket-listen</command> to request the <code>SO_PASSCRED</code> socket option.
-The <arg>--pass-security</arg> option causes it to request the <code>SO_PASSSEC</code> socket option.
+The <arg choice='plain'>--pass-credentials</arg> option causes <command>local-stream-socket-listen</command> to request the <code>SO_PASSCRED</code> socket option.
+The <arg choice='plain'>--pass-security</arg> option causes it to request the <code>SO_PASSSEC</code> socket option.
 </para>
 
 <para>
-The <arg>--upstart-compatibility</arg> option causes <command>local-stream-socket-listen</command> to set the <envar>UPSTART_FDS</envar> environment variable to 3, and the <envar>UPSTART_EVENTS</envar> environment variable to <literal>socket</literal>.
+The <arg choice='plain'>--upstart-compatibility</arg> option causes <command>local-stream-socket-listen</command> to set the <envar>UPSTART_FDS</envar> environment variable to 3, and the <envar>UPSTART_EVENTS</envar> environment variable to <literal>socket</literal>.
 This is for compatibility with daemons that expect to be run under <citerefentry><refentrytitle>upstart</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 <para>
-The <arg>--systemd-compatibility</arg> option is for compatibility with daemons that expect to be run under <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+The <arg choice='plain'>--systemd-compatibility</arg> option is for compatibility with daemons that expect to be run under <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 It causes <command>local-stream-socket-listen</command> to set the <envar>LISTEN_FDS</envar> environment variable to the number of listening file descriptors, and the <envar>LISTEN_PID</envar> environment variable to its own process ID.
 If the command is started up with the <envar>LISTEN_FDS</envar> and the <envar>LISTEN_PID</envar> environment variables already appropriately set, the number of listening file descriptors is taken from them and increased by one, otherwise the number of file descriptors is 1.
-Thus a list of listening file descriptors can be built up with multiple commands, as long as they all use the <arg>--systemd-compatibility</arg> option.
+Thus a list of listening file descriptors can be built up with multiple commands, as long as they all use the <arg choice='plain'>--systemd-compatibility</arg> option.
 </para>
 
 <para>
-For compatibility with daemons that expect to be run under 
-<citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry>, 
-inheriting the listening socket as their standard input, simply use
-<command>fdmove</command> <arg choice="plain">0</arg> <arg choice="plain">3</arg> 
-in <replaceable>next-prog</replaceable>.
+For compatibility with daemons that expect to be run under <citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry>, inheriting the listening socket as their standard input, simply use <command>fdmove</command> <arg choice="plain">0</arg> <arg choice="plain">3</arg> in <replaceable>next-prog</replaceable>.
 See <citerefentry><refentrytitle>fdmove</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 

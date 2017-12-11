@@ -1,3 +1,4 @@
 telinit	fastboot
 telinit	fasthalt
+telinit	fastpowercycle
 telinit	fastpoweroff

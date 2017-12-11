@@ -20,9 +20,13 @@ list_static_ndp() { for i in `get_var1 static_ndp_pairs` ; do printf "%s\n" "$i"
 list_static_ip4() { for i in `get_var1 static_routes` ; do printf "%s\n" "$i" ; done ; }
 list_static_ip6() { for i in `get_var1 ipv6_static_routes` ; do printf "%s\n" "$i" ; done ; }
 list_natd_interfaces() { read_rc natd_interface || true ; }
-get_ifconfig1() { read_rc ifconfig_"$1" || read_rc ifconfig_DEFAULT ; }
-get_ifconfig2() { read_rc ifconfig_"$1"_"$2" || read_rc ifconfig_DEFAULT_"$2" ; }
-get_ipv6_prefix1() { read_rc ipv6_prefix_"$1" || read_rc ipv6_prefix_DEFAULT ; }
+iface_escape() { printf "%s\n" "$@" | tr './:+-' '_____' ; } # cave! The - must come last.
+get_wlandebug() { read_rc wlandebug_"`iface_escape \"$1\"`" || read_rc wlandebug_DEFAULT ; }
+get_create_args() { read_rc create_args_"`iface_escape \"$1\"`" || read_rc create_args_DEFAULT ; }
+get_ifconfig1() { read_rc ifconfig_"`iface_escape \"$1\"`" || read_rc ifconfig_DEFAULT ; }
+get_ifconfig2() { read_rc ifconfig_"`iface_escape \"$1\"`"_"$2" || read_rc ifconfig_DEFAULT_"$2" ; }
+get_ipv6_prefix1() { read_rc ipv6_prefix_"`iface_escape \"$1\"`" || read_rc ipv6_prefix_DEFAULT ; }
+get_children() { read_rc "$2"lans_"`iface_escape \"$1\"`" ; }
 list_available_network_interfaces() {
 	case "`uname`" in
 	Linux)	/bin/ls /sys/class/net ;;
@@ -54,8 +58,8 @@ list_network_interfaces() {
 		case "$i" in
 			lo0|lo)			;;
 			epair[0-9]*[ab])	;;
-			epair[0-9]*)		echo "${i}a" "${i}b" ;;
-			*)			echo "$i" ;;
+			epair[0-9]*)		printf "%s " "${i}a" "${i}b" ;;
+			*)			printf "%s " "$i" ;;
 		esac
 	done
 }
@@ -183,11 +187,13 @@ get_link_opts() {
 	get_filtered_ifconfig2 "$1" lladr
 }
 get_inet4_opts() {
+	is_ip_interface "$1" || return 0
 	get_filtered_ifconfig2 "$1" inet
 	get_filtered_ifconfig2 "$1" inet4
 	get_filtered_ifconfig3 "$1" ipv4 inet
 }
 get_inet6_opts() {
+	is_ip_interface "$1" || return 0
 	get_filtered_ifconfig2 "$1" inet6
 	get_filtered_ifconfig3 "$1" ipv6 inet6
 	case "`uname`" in
@@ -215,17 +221,6 @@ get_inet6_aliases() {
 	get_ipv6_prefix "$1"
 }
 if_yes() { case "$1" in [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1) echo "$2" ;; esac ; }
-
-redo-ifchange rc.conf general-services "static_arp@.service" "static_ndp@.service" "static_ip4@.service" "static_ip6@.service" "natd@.service" "hostapd@.service" "dhclient@.service" "udhcpc@.service" "dhcpcd@.service" "wpa_supplicant@.service" "rfcomm_pppd@.service" "ppp@.service" "spppcontrol@.service" "ifscript@.service" "ifconfig@.service"
-
-r="/var/local/sv"
-e="--no-systemd-quirks --escape-instance --local-bundle --bundle-root"
-if dhclient="`read_rc dhclient_program`" && test -n "${dhclient}"
-then
-	dhclient="`basename \"${dhclient}\"`"
-else
-	dhclient="dhclient"
-fi
 
 show_enable() {
 	local i
@@ -302,6 +297,24 @@ make_ip6_route() {
 	ln -s -- "../../../sv/cyclog@network-interfaces" "$r/${service}/log"
 }
 
+make_netif() {
+	local service
+	service="netif@$1"
+	system-control convert-systemd-units $e "$r/" "./${service}.service"
+	install -d -m 0755 "$r/${service}/service/env"
+	if get_ifconfig1 "$1" | grep -q -E '\<NOAUTO\>'
+	then
+		system-control disable "${service}"
+	else
+		system-control preset "${service}"
+	fi
+	show_enable "${service}"
+	show_settings "${service}"
+	rm -f -- "$r/${service}/log"
+	ln -s -- "../../../sv/ifconfig-log" "$r/${service}/log"
+	system-control preset ifconfig-log
+}
+
 make_ifscript() {
 	local service
 	service="ifscript@$1"
@@ -322,9 +335,15 @@ make_ifscript() {
 
 make_ifconfig() {
 	local service
+	local m
+	local c
 	service="ifconfig@$1"
+	rm -f -- "$r/${service}/wants/*"
+	rm -f -- "$r/${service}/after/*"
+	rm -f -- "$r/${service}/before/*"
 	system-control convert-systemd-units $e "$r/" "./${service}.service"
 	install -d -m 0755 "$r/${service}/service/env"
+	system-control set-service-env "$r/${service}" create_args "${2:+$2 }`get_create_args "$1"`"
 	system-control set-service-env "$r/${service}" link_opts "`get_link_opts "$1"`"
 	system-control set-service-env "$r/${service}" inet4_opts "`get_inet4_opts "$1"`"
 	system-control set-service-env "$r/${service}" inet6_opts "`get_inet6_opts "$1"`"
@@ -337,6 +356,24 @@ make_ifconfig() {
 	else
 		system-control preset "${service}"
 	fi
+	for m in $3
+	do
+		rm -f -- "$r/${service}/wants/kmod@$m"
+		rm -f -- "$r/${service}/after/kmod@$m"
+		ln -s -- "../../../sv/kmod@$m" "$r/${service}/wants/"
+		ln -s -- "../../../sv/kmod@$m" "$r/${service}/after/"
+	done
+	for c in $4
+	do
+		rm -f -- "$r/${service}/wants/ifconfig@$c"
+		rm -f -- "$r/${service}/before/ifconfig@$c"
+		rm -f -- "$r/${service}/wants/ifscript@$c"
+		rm -f -- "$r/${service}/before/ifscript@$c"
+		ln -s -- "../../ifconfig@$c" "$r/${service}/wants/"
+		ln -s -- "../../ifconfig@$c" "$r/${service}/before/"
+		ln -s -- "../../ifscript@$c" "$r/${service}/wants/"
+		ln -s -- "../../ifscript@$c" "$r/${service}/before/"
+	done
 	show_enable "${service}"
 	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
@@ -405,7 +442,7 @@ make_udhcpc() {
 	install -d -m 0755 "$r/${service}/service/env"
 	if is_physical_interface "$1" &&
 	   is_ip_interface "$1" &&
-	   test 0 -lt "`expr \"${udhcpc}\" : udhcpc`" &&
+	   test 0 -lt "`expr \"${dhclient}\" : udhcpc`" &&
 	   get_ifconfig1 "$1" | grep -q -E '\<DHCP\>' &&
 	   ! get_ifconfig1 "$1" | grep -q -E '\<NOAUTO\>'
 	then
@@ -535,10 +572,53 @@ make_rfcomm_pppd() {
 	system-control preset rfcomm_pppd-log
 }
 
-find "$r/" -maxdepth 1 -type d \( -name 'static_arp@*' -o -name 'static_ndp@*' -o -name 'static_ip4@*' -o -name 'static_ip6@*' -o -name 'natd@*' -o -name 'hostapd@*' -o -name 'wpa_supplicant@*' -o -name 'dhclient@*' -o -name 'dhcpcd@*' -o -name 'ppp@*' -o -name 'spppcontrol@*' -o -name 'rfcomm_pppd@*' \) -print0 |
+# $1: interface name
+# $2: extra create_args
+# $3: kernel modules wants+after
+# $4: netif wants+after
+make_primary_services() {
+	make_netif "$1"
+	make_ifscript "$1"
+	make_ifconfig "$1" "$2" "$3"
+	make_natd "$1"
+	make_hostap "$1"
+	make_wpa "$1"
+	make_dhclient "$1"
+	make_udhcpc "$1"
+	make_dhcpcd "$1"
+}
+ 
+make_wlandebug() {
+	local service
+	service="wlandebug@$i"
+	system-control convert-systemd-units $e "$r/" "./${service}.service"
+	install -d -m 0755 -- "$r/${service}/service/env"
+	system-control preset "${service}"
+	system-control set-service-env "${service}" flags "`get_wlandebug \"$i\"`"
+	show_enable "${service}"
+	show_settings "${service}"
+	rm -f -- "$r/${service}/log"
+	ln -s -- "../../../sv/wlandebug-log" "$r/${service}/log"
+	system-control preset wlandebug-log
+}
+
+redo-ifchange rc.conf general-services "netif@.service" "static_arp@.service" "static_ndp@.service" "static_ip4@.service" "static_ip6@.service" "natd@.service" "hostapd@.service" "dhclient@.service" "udhcpc@.service" "dhcpcd@.service" "wpa_supplicant@.service" "rfcomm_pppd@.service" "ppp@.service" "spppcontrol@.service" "ifscript@.service" "ifconfig@.service" "wlandebug@.service"
+
+r="/var/local/sv"
+e="--no-systemd-quirks --escape-instance --local-bundle --bundle-root"
+if dhclient="`read_rc dhclient_program`" && test -n "${dhclient}"
+then
+	dhclient="`basename \"${dhclient}\"`"
+else
+	dhclient="dhclient"
+fi
+
+find "$r/" -maxdepth 1 -type d \( -name 'static_arp@*' -o -name 'static_ndp@*' -o -name 'static_ip4@*' -o -name 'static_ip6@*' -o -name 'netif@*' -o -name 'natd@*' -o -name 'hostapd@*' -o -name 'wpa_supplicant@*' -o -name 'dhclient@*' -o -name 'dhcpcd@*' -o -name 'ppp@*' -o -name 'spppcontrol@*' -o -name 'rfcomm_pppd@*' -o -name 'wlandebug@*' \) -print0 |
 xargs -0 system-control disable
 
-system-control disable ifconfig-log natd-log dhclient-log dhcpcd-log natd-log rfcomm_pppd-log ppp-log sppp-log
+find "$r/" -maxdepth 1 -type d \( -name 'ifconfig@*' -o -name 'ifscript@*' -o -name 'natd@*' -o -name 'hostapd@*' -o -name 'wpa_supplicant@*' -o -name 'dhclient@*' -o -name 'dhcpcd@*' -o -name 'ppp@*' -o -name 'spppcontrol@*' -o -name 'rfcomm_pppd@*' -o -name 'wlandebug@*' \) -exec rm -f -- {}/wanted-by/static-networking {}/wanted-by/workstation \;
+
+system-control disable ifconfig-log natd-log dhclient-log dhcpcd-log natd-log rfcomm_pppd-log ppp-log sppp-log wlandebug-log
 
 if rfcomm_pppd_server_enable="`read_rc rfcomm_pppd_server_enable`"
 then
@@ -603,6 +683,7 @@ make_ip6_route _llma 'ff02:: -prefixlen 16 ::1 -reject' >> "$3"
 make_ip6_route _6to4lla '2002:A9FE:: -prefixlen 32 ::1 -reject' >> "$3"
 make_ip6_route _6to4ilma '2002:7F00:: -prefixlen 24 ::1 -reject' >> "$3"
 make_ip6_route _6to4llma '2002:e000:: -prefixlen 20 ::1 -reject' >> "$3"
+make_ip6_route _6to4cna '2002:0000:: -prefixlen 24 ::1 -reject' >> "$3"
 make_ip4_route _lla '169.254.0.0 -prefixlen 16 127.0.0.1 -reject' >> "$3"
 make_ip4_route _ilma '127.0.0.0 -prefixlen 8 127.0.0.1 -reject' >> "$3"
 make_ip4_route _llma '224.0.0.0 -prefixlen 4 127.0.0.1 -reject' >> "$3"
@@ -630,14 +711,28 @@ fi
 for i in `list_network_interfaces`
 do
 	test -n "$i" || continue
-	make_ifscript "$i" >> "$3"
-	make_ifconfig "$i" >> "$3"
-	make_natd "$i" >> "$3"
-	make_hostap "$i" >> "$3"
-	make_wpa "$i" >> "$3"
-	make_dhclient "$i" >> "$3"
-	make_udhcpc "$i" >> "$3"
-	make_dhcpcd "$i" >> "$3"
+	if w="`get_children \"$i\" w`"
+	then
+		for j in $w
+		do
+			test -n "$j" || continue
+			make_primary_services "$j" "wlandev \"$i\"" "" "" >> "$3"
+			make_wlandebug "$j" >> "$3"
+		done
+	fi
+	if v="`get_children \"$i\" v`"
+	then
+		for j in $v
+		do
+			test -n "$j" || continue
+			if expr "$j" : '^[[:digit:]]*$' >/dev/null
+			then
+				j="$i.$j"
+			fi
+			make_primary_services "$j" "vlandev \"$i\"" "if_vlan" "" >> "$3"
+		done
+	fi
+	make_primary_services "$i" "" "" "${w:+$w }${v:+$v }" >> "$3"
 done
 
 for i in `get_var2 ppp profile`

@@ -15,7 +15,9 @@
 
 <refsynopsisdiv>
 <cmdsynopsis>
-<command>pty-run</command> <arg>-t</arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+<command>pty-run</command>
+<arg>-t</arg>
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -60,7 +62,7 @@ It has two modes:
 
 <listitem>
 <para>
-If the <arg>-t</arg> option was used, it behaves in "pass-through TTY" mode.
+If the <arg choice='plain'>-t</arg> option was used, it behaves in "pass-through TTY" mode.
 </para>
 
 <para>
@@ -72,7 +74,7 @@ When it receives a <code>SIGCONT</code>, it re-does it and sends a <code>SIGCONT
 
 <listitem>
 <para>
-In the default if the <arg>-t</arg> option is not used, it behaves in "pipe" mode.
+In the default if the <arg choice='plain'>-t</arg> option is not used, it behaves in "pipe" mode.
 </para>
 
 <para>

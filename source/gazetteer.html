@@ -17,7 +17,7 @@ Runtime directories
 
 <dl>
 
-<dt><code>/run</code></dt>
+<dt><code class='filename'>/run</code></dt>
 <dd>
 
 <p>
@@ -32,7 +32,7 @@ Thus its contents can potentially live from early bootstrap to shutdown, but do 
 </p></li>
 <li><p>
 It is owned by the superuser, and only the superuser has the access to create/delete files and subdirectories in it.
-This is not an equivalent to <code>/tmp</code>.
+This is not an equivalent to <code class='filename'>/tmp</code>.
 Other users do not have create/delete access, not even POSIX <i>restricted write access</i>.
 </p></li>
 <li><p>
@@ -51,19 +51,19 @@ Files to be found here include:
 </p>
 
 <dl>
-<dt><code>/run/utx.active</code></dt><dd>the part of the BSD login database that records currently-logged in users since the last bootstrap, created by the <code>utx</code> service</dd>
-<dt><code>/run/utmp</code></dt><dd>the part of the Linux login database that records currently-logged in users since the last bootstrap, created by the <code>linux-utmp</code> service</dd>
-<dt><code>/run/machine-id</code></dt><dd>the machine ID, usually a simple duplicate of <a href="#machine-id"><code>/etc/machine-id</code></a></dd>
-<dt><code>/run/dmesg.boot</code></dt><dd>a dump of the early kernel log for the current bootstrap, saved by the <code>dmesg</code> service and redundant with the log of the <code>klogd</code> service</dd>
-<dt><code>/run/log</code></dt><dd>the universally writable socket that the <code>local-syslog-read</code> service listens on</dd>
-<dt><code>/run/logpriv</code></dt><dd>the superuser-only writable socket that the <code>local-priv-syslog-read</code> service listens on</dd>
-<dt><code>/run/motd.dynamic</code></dt><dd>the "dynamic" part of the Message Of The Day, created by the <code>motd-dynamic</code> service</dd>
-<dt><code>/run/ld-elf.so.hints</code></dt><dd>the hints database for the dynamic link-loader, created by the <code>ldconfig</code> service</dd>
+<dt><code class='filename'>/run/utx.active</code></dt><dd>the part of the BSD login database that records currently-logged in users since the last bootstrap, created by the <code>utx</code> service</dd>
+<dt><code class='filename'>/run/utmp</code></dt><dd>the part of the Linux login database that records currently-logged in users since the last bootstrap, created by the <code>utx</code> service</dd>
+<dt id='tmpfs-machine-id'><code class='filename'>/run/machine-id</code></dt><dd>the machine ID, usually a simple duplicate of <a href="#machine-id"><code class='filename'>/etc/machine-id</code></a></dd>
+<dt><code class='filename'>/run/dmesg.boot</code></dt><dd>a dump of the early kernel log for the current bootstrap, saved by the <code>dmesg</code> service and redundant with the log of the <code>klogd</code> service</dd>
+<dt><code class='filename'>/run/log</code></dt><dd>the universally writable socket that the <code>local-syslog-read</code> service listens on</dd>
+<dt><code class='filename'>/run/logpriv</code></dt><dd>the superuser-only writable socket that the <code>local-priv-syslog-read</code> service listens on</dd>
+<dt><code class='filename'>/run/motd.dynamic</code></dt><dd>part of the "dynamically created" Message Of The Day, created by the <code>motd-dynamic</code> service</dd>
+<dt><code class='filename'>/run/ld-elf.so.hints</code></dt><dd>the hints database for the dynamic link-loader, created by the <code>ldconfig</code> service</dd>
 </dl>
 
 </dd>
 
-<dt><code>/run/service-manager</code></dt>
+<dt><code class='filename'>/run/service-manager</code></dt>
 <dd>
 
 <p>
@@ -72,12 +72,12 @@ This contains:
 </p>
 
 <dl>
-<dt><code>/run/service-manager/control</code></dt><dd>the conventional communications socket for the system-wide service manager, only accessible to the superuser and (if the system-wide Desktop Bus broker is running) the <code>messagebus</code> user</dd>
+<dt><code class='filename'>/run/service-manager/control</code></dt><dd>the conventional communications socket for the system-wide service manager, only accessible to the superuser and (if the system-wide Desktop Bus broker is running) the <code>messagebus</code> user</dd>
 </dl>
 
 </dd>
 
-<dt><code>/run/system-manager</code></dt>
+<dt><code class='filename'>/run/system-manager</code></dt>
 <dd>
 
 <p>
@@ -86,7 +86,7 @@ The runtime area for the <a href="system-manager.html"><code>system-manager</cod
 
 </dd>
 
-<dt><code>/run/system-manager/log</code></dt>
+<dt><code class='filename'>/run/system-manager/log</code></dt>
 <dd>
 
 <p>
@@ -97,26 +97,26 @@ If the system-wide service manager is run some other way, this log might be some
 
 </dd>
 
-<dt><code>/run/service-bundles</code></dt>
+<dt><code class='filename'>/run/service-bundles</code></dt>
 <dd>
 
 <p>
 Ephemeral service bundles for nonce services and targets whose definitions are not intended to last across system restarts.
-This has the same substructure as <a href="#service-bundles"><code>/etc/service-bundles/</code></a> with the addition of <a href="#early-supervise"><code>/run/service-bundles/early-supervise</code></a>.
+This has the same substructure as <a href="#service-bundles"><code class='filename'>/etc/service-bundles/</code></a> with the addition of <a href="#early-supervise"><code class='filename'>/run/service-bundles/early-supervise</code></a>.
 </p>
 
 </dd>
 
-<dt id="early-supervise"><code>/run/service-bundles/early-supervise</code></dt>
+<dt id="early-supervise"><code class='filename'>/run/service-bundles/early-supervise</code></dt>
 <dd>
 
 <p>
-This contains <code>supervise/</code> directories for <a href="anatomy-of-sysinit-service.html#etc">service bundles that live on <code>/etc</code></a> but that need to be run when the root volume is mounted read-only.
+This contains <code>supervise/</code> directories for <a href="anatomy-of-sysinit-service.html#etc">service bundles that live on <code class='filename'>/etc</code></a> but that need to be run when the root volume is mounted read-only.
 </p>
 
 </dd>
 
-<dt><code>/run/user</code></dt>
+<dt><code class='filename'>/run/user</code></dt>
 <dd>
 
 <p>
@@ -125,14 +125,14 @@ This is owned by the superuser, with only the superuser having access to create/
 </p>
 
 <p>
-For safety, this should be a mount point of a subordinate memory filesystem, configured via <code>/etc/fstab</code> and converted to a <code>/var/local/sv/mount@-run-user</code> service bundle.
-Otherwise, users can fill up the main <code>/run</code> filesystem and cause problems and mischief.
-An alternative strategy (the existence of which is why <code>/run/user</code> is not mounted as standard by the system manager) is for each individual user's runtime directory to be such a memory filesystem instead, insulating users even from one another.
+For safety, this should be a mount point of a subordinate memory filesystem, configured via <code class='filename'>/etc/fstab</code> and converted to a <code class='filename'>/var/local/sv/mount@-run-user</code> service bundle.
+Otherwise, users can fill up the main <code class='filename'>/run</code> filesystem and cause problems and mischief.
+An alternative strategy (the existence of which is why <code class='filename'>/run/user</code> is not mounted as standard by the system manager) is for each individual user's runtime directory to be such a memory filesystem instead, insulating users even from one another.
 </p>
 
 </dd>
 
-<dt id="user-runtime"><code>/run/user/jim</code></dt>
+<dt id="user-runtime"><code class='filename'>/run/user/jim</code></dt>
 <dd>
 
 <p>
@@ -142,7 +142,7 @@ Files to be found here include:
 </p>
 
 <dl>
-<dt id="user-bus-socket"><code>/run/user/jim/bus</code></dt><dd>
+<dt id="user-bus-socket"><code class='filename'>/run/user/jim/bus</code></dt><dd>
 the conventional socket for <code>jim</code>'s per-user Desktop Bus broker, managed by the <code>user-dbus@jim</code> service
 <p>
 The Desktop Bus people claim that the Desktop Bus "address" <code>unix:runtime=yes</code> points to this socket, and can be used as the value of the <code>DBUS_SESSION_BUS_ADDRESS</code> environment variable.
@@ -154,16 +154,18 @@ One has to use the address <code>unix:path=/run/user/${USER}/bus</code> instead.
 
 </dd>
 
-<dt><code>/run/user/1001</code></dt>
+<dt><code class='filename'>/run/user/:1001</code></dt>
 <dd>
 
 <p>
 A symbolic link to the per-user runtime directory for user ID 1001, such as <code>jim</code>.
+Note that the POSIX rules for account names (and indeed the structure of the account database itself on most systems) prohibit the occurrence of colon in an account name, whereas they permit digit characters.
+Thus we are ensured that no numeric user ID will ever clash with a valid account name.
 </p>
 
 </dd>
 
-<dt><code>/run/user/jim/service-manager</code></dt>
+<dt><code class='filename'>/run/user/jim/service-manager</code></dt>
 <dd>
 
 <p>
@@ -172,12 +174,12 @@ This contains:
 </p>
 
 <dl>
-<dt><code>/run/user/jim/service-manager/control</code></dt><dd>the conventional communications socket for <code>jim</code>'s per-user service manager, managed by the <code>user-services@jim</code> service</dd>
+<dt><code class='filename'>/run/user/jim/service-manager/control</code></dt><dd>the conventional communications socket for <code>jim</code>'s per-user service manager, managed by the <code>user-services@jim</code> service</dd>
 </dl>
 
 </dd>
 
-<dt><code>/run/user/jim/per-user-manager</code></dt>
+<dt><code class='filename'>/run/user/jim/per-user-manager</code></dt>
 <dd>
 
 <p>
@@ -186,7 +188,7 @@ The runtime area for <code>jim</code>'s <a href="per-user-manager.html"><code>pe
 
 </dd>
 
-<dt><code>/run/user/jim/per-user-manager/log</code></dt>
+<dt><code class='filename'>/run/user/jim/per-user-manager/log</code></dt>
 <dd>
 
 <p>
@@ -197,7 +199,7 @@ If <code>jim</code>'s per-user service manager is run some other way, this log m
 
 </dd>
 
-<dt><code>/run/dev</code></dt>
+<dt><code class='filename'>/run/dev</code></dt>
 <dd>
 
 <p>
@@ -207,10 +209,10 @@ User-space virtual terminals are subdirectories, such as:
 </p>
 
 <dl>
-<dt><code>/run/dev/head0</code></dt><dd>the multiplex virtual terminal intended for head #0, produced by the <code>console-multiplexor@head0</code> service</dd>
-<dt><code>/run/dev/vc1</code></dt><dd>the virtual terminal produced by the <code>terminal-emulator@vc1</code> service to whose TTY side the <code>ttylogin@vc1-tty</code> service attaches</dd>
-<dt><code>/run/dev/vc2</code></dt><dd>the virtual terminal produced by the <code>terminal-emulator@vc2</code> service to whose TTY side the <code>ttylogin@vc2-tty</code> service attaches</dd>
-<dt><code>/run/dev/vc3</code></dt><dd>the virtual terminal produced by the <code>terminal-emulator@vc3</code> service to whose TTY side the <code>ttylogin@vc3-tty</code> service attaches</dd>
+<dt><code class='filename'>/run/dev/head0</code></dt><dd>the multiplex virtual terminal intended for head #0, produced by the <code>console-multiplexor@head0</code> service</dd>
+<dt><code class='filename'>/run/dev/vc1</code></dt><dd>the virtual terminal produced by the <code>terminal-emulator@vc1</code> service to whose TTY side the <code>ttylogin@vc1-tty</code> service attaches</dd>
+<dt><code class='filename'>/run/dev/vc2</code></dt><dd>the virtual terminal produced by the <code>terminal-emulator@vc2</code> service to whose TTY side the <code>ttylogin@vc2-tty</code> service attaches</dd>
+<dt><code class='filename'>/run/dev/vc3</code></dt><dd>the virtual terminal produced by the <code>terminal-emulator@vc3</code> service to whose TTY side the <code>ttylogin@vc3-tty</code> service attaches</dd>
 </dl>
 
 <p>
@@ -221,7 +223,7 @@ The terminal emulator services run as this user.  (The TTY login services start 
 
 </dd>
   
-<dt><code>/run/dbus</code></dt>
+<dt><code class='filename'>/run/dbus</code></dt>
 <dd>
 
 <p>
@@ -230,7 +232,7 @@ This contains:
 </p>
 
 <dl>
-<dt><code>/run/dbus/system_bus_socket</code></dt><dd>the conventional communications socket for the system-wide Desktop Bus broker</dd>
+<dt><code class='filename'>/run/dbus/system_bus_socket</code></dt><dd>the conventional communications socket for the system-wide Desktop Bus broker</dd>
 </dl>
 
 </dd>
@@ -243,7 +245,7 @@ System directories
 
 <dl>
 
-<dt><code>/etc</code></dt>
+<dt><code class='filename'>/etc</code></dt>
 <dd>
 
 <p>
@@ -252,14 +254,21 @@ This directly contains files such as:
 </p>
 
 <dl>
-<dt id="machine-id"><code>/etc/machine-id</code></dt><dd>the machine ID, set up by the <code>machine-id</code> service (which runs <a href="setup-machine-id.html"><code>setup-machine-id</code></a>)</dd>
-<dt id="fstab"><code>/etc/fstab</code></dt><dd>a database table used by the external formats import subsystem <a href="fstab.html">to generate mount, swap, dump, and filesystem check service bundles</a></li></dd>
-<dt id="ttys"><code>/etc/ttys</code></dt><dd>a database table used by <a href="system-control.html"><code>system-control</code></a>'s <code>preset</code> subcommand and the external formats import subsystem <a href="ttys.html">to configure TTY login service bundles</a></li></dd>
+<dt id="machine-id"><code class='filename'>/etc/machine-id</code></dt><dd>the machine ID, set up by the <code>machine-id</code> service (which runs <a href="setup-machine-id.html"><code>setup-machine-id</code></a>)</dd>
+<dt id="hostid"><code class='filename'>/etc/hostid</code></dt><dd>an ID, set up by the <code>machine-id</code> service (which runs <a href="setup-machine-id.html"><code>setup-machine-id</code></a>): the machine ID, in an alternative form to <a href="#machine-id"><code class='filename'>/etc/machine-id</code></a>, on BSD systems; the 8-character host ID on GNU C library systems</dd>
+<dt id="default-rc.conf"><code class='filename'>/etc/default/rc.conf</code></dt><dd>a set of <i>variable=value</i> assignments incorporated by the external formats import subsystem into <a href="#rc.conf">an amalgamated <code>rc.conf</code> file</a></li></dd>
+<dt id="etc-rc.conf"><code class='filename'>/etc/rc.conf</code></dt><dd>a set of <i>variable=value</i> assignments incorporated by the external formats import subsystem into <a href="#rc.conf">an amalgamated <code>rc.conf</code> file</a></li></dd>
+<dt id="etc-rc.conf.local"><code class='filename'>/etc/rc.conf.local</code></dt><dd>a set of <i>variable=value</i> assignments incorporated by the external formats import subsystem into <a href="#rc.conf">an amalgamated <code>rc.conf</code> file</a></li></dd>
+<dt id="fstab"><code class='filename'>/etc/fstab</code></dt><dd>a database table used by the external formats import subsystem <a href="fstab.html">to generate mount, swap, dump, and filesystem check service bundles</a></li></dd>
+<dt id="ttys"><code class='filename'>/etc/ttys</code></dt><dd>a database table used by <a href="system-control.html"><code>system-control</code></a>'s <code>preset</code> subcommand and the external formats import subsystem <a href="ttys.html">to configure TTY login service bundles</a></li></dd>
+<dt id="vconsole.conf"><code class='filename'>/etc/vconsole.conf</code></dt><dd>a set of <i>variable=value</i> assignments converted into <a href="#rc.conf"><code>rc.conf</code></a> settings by <a href="rcconf-amalgamation.html">amalgamation</a></li></dd>
+<dt id="network-interfaces"><code class='filename'>/etc/network/interfaces</code></dt><dd>a Debian-style configuration file converted into <a href="#rc.conf"><code>rc.conf</code></a> settings by <a href="rcconf-amalgamation.html">amalgamation</a></li></dd>
+<dt id="hostname"><code class='filename'>/etc/hostname</code></dt><dd>the hostname converted into a <a href="#rc.conf"><code>rc.conf</code></a> setting by <a href="rcconf-amalgamation.html">amalgamation</a></li></dd>
 </dl>
 
 </dd>
 
-<dt id="service-bundles"><code>/etc/service-bundles</code></dt>
+<dt id="service-bundles"><code class='filename'>/etc/service-bundles</code></dt>
 <dd>
 
 <p>
@@ -268,27 +277,27 @@ Service bundles, split into services and targets.
 
 </dd>
 
-<dt><code>/etc/service-bundles/services</code></dt>
+<dt><code class='filename'>/etc/service-bundles/services</code></dt>
 <dd>
 
 <p>
 Service bundles that need to be accessible when only the root volume is mounted.
-These are usually <a href="anatomy-of-sysinit-service.html">sysinit services</a></li>, with their <code>supervise/</code> subdirectories symbolically linked to subdirectories in <a href="#early-supervise"><code>/run/service-bundles/early-supervise</code></a>.
+These are usually <a href="anatomy-of-sysinit-service.html">sysinit services</a></li>, with their <code>supervise/</code> subdirectories symbolically linked to subdirectories in <a href="#early-supervise"><code class='filename'>/run/service-bundles/early-supervise</code></a>.
 </p>
 
 </dd>
 
-<dt><code>/etc/service-bundles/targets</code></dt>
+<dt><code class='filename'>/etc/service-bundles/targets</code></dt>
 <dd>
 
 <p>
 Service bundles for all targets.
-These are usually <a href="anatomy-of-sysinit-service.html">sysinit services</a></li>, with their <code>supervise/</code> subdirectories symbolically linked to subdirectories in <a href="#early-supervise"><code>/run/service-bundles/early-supervise</code></a>.
+These are usually <a href="anatomy-of-sysinit-service.html">sysinit services</a></li>, with their <code>supervise/</code> subdirectories symbolically linked to subdirectories in <a href="#early-supervise"><code class='filename'>/run/service-bundles/early-supervise</code></a>.
 </p>
 
 </dd>
 
-<dt><code>/etc/system-control</code></dt>
+<dt><code class='filename'>/etc/system-control</code></dt>
 <dd>
 
 <p>
@@ -297,7 +306,7 @@ A control area.
 
 </dd>
 
-<dt id="convert"><code>/etc/system-control/convert</code></dt>
+<dt id="convert"><code class='filename'>/etc/system-control/convert</code></dt>
 <dd>
 
 <p>
@@ -306,26 +315,26 @@ This comprises, amongst other things:
 </p>
 
 <dl>
-<dt><code>/etc/system-control/convert/*.do</code></dt><dd>the redo scripts that drive the import process</dd>
-<dt><code>/etc/system-control/convert/all.do</code></dt><dd>the redo script that is the top level of the whole import process</dd>
-<dt id="rc.conf"><code>/etc/system-control/convert/rc.conf</code></dt>
+<dt><code class='filename'>/etc/system-control/convert/*.do</code></dt><dd>the redo scripts that drive the import process</dd>
+<dt><code class='filename'>/etc/system-control/convert/all.do</code></dt><dd>the redo script that is the top level of the whole import process</dd>
+<dt id="rc.conf"><code class='filename'>/etc/system-control/convert/rc.conf</code></dt>
 <dd>
 a <a href="rcconf-amalgamation.html">generated amalgamation of all <code>rc.conf</code> configuration files</a> and several other external sources of configuration information.
 Do not symbolically link any of the <code>rc.conf</code> configuration files to this!
 It is generated <em>from them</em> in the first place.
 This can be conveniently used with <a href="read-conf.html"><code>read-conf</code></a> when one needs to access configuration settings from these files.
 </dd>
-<dt><code>/etc/system-control/convert/host.conf</code></dt><dd>a host.conf file generated from <code>/etc/nsswitch.conf</code> which one can symbolically link to <code>/etc/host.conf</code></dd>
-<dt><code>/etc/system-control/convert/*.kbdmap</code></dt><dd>keyboard maps for <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a>, generated from the keyboard maps in <code>/usr/share/vt/keymaps</code> and symbolically linked into the <code>service/kbdmaps</code> subdirectory of any <code>console-fb-realizer@*</code> services</dd>
-<dt><code>/etc/system-control/convert/swap_capsctrl.kbd</code></dt><dd>a keyboard map snippet that is overlaid on top of the ones in <code>/usr/share/vt/keymaps/</code> in order to produce <code>.swapcaps</code> variants</dd>
-<dt><code>/etc/system-control/convert/soft_backspace.kbd</code></dt><dd>a keyboard map snippet that is overlaid on top of the ones in <code>/usr/share/vt/keymaps/</code> in order to ensure that the <code>backspace &#x232b;</code> key is soft-switchable by the terminal emulator and not hardwired to either <code>DEL</code> or <code>BS</code> as the operating system supplied keyboard maps have it</dd>
-<dt><code>/etc/system-control/convert/us_to_uk.kbd</code></dt><dd>a keyboard map snippet that is overlaid on top of the null map, which is U.S. International, in order to produce U.K. International, in the event that there are no <code>/usr/share/vt/keymaps/</code> keyboard maps</dd>
-<dt><code>/etc/system-control/convert/*.service</code><br><code>/etc/system-control/convert/*.target</code></dt><dd>service and target source files used for compiling service and target service bundles, for various import-generated system-wide and per-user services and targets</dd>
+<dt><code class='filename'>/etc/system-control/convert/host.conf</code></dt><dd>a host.conf file generated from <code class='filename'>/etc/nsswitch.conf</code> which one can symbolically link to <code class='filename'>/etc/host.conf</code></dd>
+<dt><code class='filename'>/etc/system-control/convert/*.kbdmap</code></dt><dd>keyboard maps for <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a>, generated from the keyboard maps in <code class='filename'>/usr/share/vt/keymaps</code> and symbolically linked into the <code>service/kbdmaps</code> subdirectory of any <code>console-fb-realizer@*</code> services</dd>
+<dt><code class='filename'>/etc/system-control/convert/swap_capsctrl.kbd</code></dt><dd>a keyboard map snippet that is overlaid on top of the ones in <code class='filename'>/usr/share/vt/keymaps/</code> in order to produce <code>.swapcaps</code> variants</dd>
+<dt><code class='filename'>/etc/system-control/convert/soft_backspace.kbd</code></dt><dd>a keyboard map snippet that is overlaid on top of the ones in <code class='filename'>/usr/share/vt/keymaps/</code> in order to ensure that the <code>backspace &#x232b;</code> key is soft-switchable by the terminal emulator and not hardwired to either <code>DEL</code> or <code>BS</code> as the operating system supplied keyboard maps have it</dd>
+<dt><code class='filename'>/etc/system-control/convert/us_to_uk.kbd</code></dt><dd>a keyboard map snippet that is overlaid on top of the null map, which is U.S. International, in order to produce U.K. International, in the event that there are no <code class='filename'>/usr/share/vt/keymaps/</code> keyboard maps</dd>
+<dt><code class='filename'>/etc/system-control/convert/*.service</code><br><code class='filename'>/etc/system-control/convert/*.target</code></dt><dd>service and target source files used for compiling service and target service bundles, for various import-generated system-wide and per-user services and targets</dd>
 </dl>
 
 </dd>
 
-<dt id="system-control-presets"><code>/etc/system-control/presets</code><br><code>/usr/share/system-control/presets</code><br><code>/usr/local/etc/system-control/presets</code></dt>
+<dt id="system-control-presets"><code class='filename'>/etc/system-control/presets</code><br><code class='filename'>/usr/share/system-control/presets</code><br><code class='filename'>/usr/local/etc/system-control/presets</code></dt>
 <dd>
 
 <p>
@@ -335,14 +344,14 @@ The (approximate) intention is the following split:
 </p>
 
 <dl>
-<dt><code>/etc/system-control/presets</code></code></dt><dd>administrator-supplied presets</dd>
-<dt><code>/usr/share/system-control/presets</code></dt><dd>operating-system-supplied presets</dd>
-<dt><code>/usr/local/etc/system-control/presets</code></dt><dd>non-operating-system third party presets</dd>
+<dt><code class='filename'>/etc/system-control/presets</code></code></dt><dd>administrator-supplied presets</dd>
+<dt><code class='filename'>/usr/share/system-control/presets</code></dt><dd>operating-system-supplied presets</dd>
+<dt><code class='filename'>/usr/local/etc/system-control/presets</code></dt><dd>non-operating-system third party presets</dd>
 </dl>
 
 </dd>
 
-<dt><code>/etc/systemd/system-preset</code><br><code>/lib/systemd/system-preset</code><br><code>/usr/lib/systemd/system-preset</code><br><code>/usr/local/lib/systemd/system-preset</code></dt>
+<dt><code class='filename'>/etc/systemd/system-preset</code><br><code class='filename'>/lib/systemd/system-preset</code><br><code class='filename'>/usr/lib/systemd/system-preset</code><br><code class='filename'>/usr/local/lib/systemd/system-preset</code></dt>
 <dd>
 
 <p>
@@ -351,7 +360,7 @@ Directories for common preset files, for system-wide services, that <a href="sys
 
 </dd>
 
-<dt><code>/etc/systemd/user-preset</code><br><code>/lib/systemd/user-preset</code><br><code>/usr/lib/systemd/user-preset</code><br><code>/usr/local/lib/systemd/user-preset</code></dt>
+<dt><code class='filename'>/etc/systemd/user-preset</code><br><code class='filename'>/lib/systemd/user-preset</code><br><code class='filename'>/usr/lib/systemd/user-preset</code><br><code class='filename'>/usr/local/lib/systemd/user-preset</code></dt>
 <dd>
 
 <p>
@@ -360,7 +369,7 @@ Directories for common preset files, for per-user services, that <a href="system
 
 </dd>
 
-<dt><code>/var/sv</code></dt>
+<dt><code class='filename'>/var/sv</code></dt>
 <dd>
 
 <p>
@@ -369,13 +378,13 @@ Various files of interest are:
 </p>
 
 <dl>
-<dt><code>/var/sv/dbus/service/system-wide.conf</code></dt><dd>the configuration file used by the system-wide Desktop Bus service, that incorporates <code>/usr/local/etc/dbus-1/system.conf</code> by reference</dd>
-<dt><code>/var/sv/console-fb-realizer@*/service/fonts/*.fnt</code></dt><dd>fonts for <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a></dd>
+<dt><code class='filename'>/var/sv/dbus/service/system-wide.conf</code></dt><dd>the configuration file used by the system-wide Desktop Bus service, that incorporates <code class='filename'>/usr/local/etc/dbus-1/system.conf</code> by reference</dd>
+<dt><code class='filename'>/var/sv/console-fb-realizer@*/service/fonts/*.fnt</code></dt><dd>fonts for <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a></dd>
 </dl>
 
 </dd>
 
-<dt><code>/var/local/sv</code></dt>
+<dt><code class='filename'>/var/local/sv</code></dt>
 <dd>
 
 <p>
@@ -384,12 +393,12 @@ Various files of interest are:
 </p>
 
 <dl>
-<dt id="per-user.conf"><code>/var/local/sv/user-dbus@jim/service/per-user.conf</code></dt><dd>the configuration file used by <code>jim</code>'s per-user Desktop Bus service, that incorporates <code>/usr/local/etc/dbus-1/session.conf</code> by reference</dd>
+<dt id="per-user.conf"><code class='filename'>/var/local/sv/user-dbus@jim/service/per-user.conf</code></dt><dd>the configuration file used by <code>jim</code>'s per-user Desktop Bus service, that incorporates <code class='filename'>/usr/local/etc/dbus-1/session.conf</code> by reference</dd>
 </dl>
 
 </dd>
 
-<dt><code>/var/log/sv</code></dt>
+<dt><code class='filename'>/var/log/sv</code></dt>
 <dd>
 
 <p>
@@ -399,7 +408,7 @@ Log directories for individual system-wide services, one subdirectory per loggin
 
 </dd>
 
-<dt><code>/var/log/user</code></dt>
+<dt><code class='filename'>/var/log/user</code></dt>
 <dd>
 
 <p>
@@ -409,7 +418,7 @@ This is owned by the superuser, with only the superuser having access to create/
 
 </dd>
 
-<dt><code>/var/log/user/jim</code></dt>
+<dt><code class='filename'>/var/log/user/jim</code></dt>
 <dd>
 
 <p>
@@ -432,7 +441,7 @@ User directories
 
 <p>
 Service bundles for <code>jim</code>'s per-user services and targets.
-This has the same substructure as <a href="#service-bundles"><code>/etc/service-bundles/</code></a>.
+This has the same substructure as <a href="#service-bundles"><code class='filename'>/etc/service-bundles/</code></a>.
 </p>
 
 <dt id="user-service-bundles"><code>~jim/.config/system-control/presets</code></dt>
@@ -440,7 +449,7 @@ This has the same substructure as <a href="#service-bundles"><code>/etc/service-
 
 <p>
 Presets for <code>jim</code>'s per-user services and targets.
-This has the same substructure as <a href="#system-control-presets"><code>/etc/system-control/presets/</code></a>.
+This has the same substructure as <a href="#system-control-presets"><code class='filename'>/etc/system-control/presets/</code></a>.
 </p>
 
 </dd>

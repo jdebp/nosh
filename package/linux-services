@@ -15,8 +15,8 @@ kmod@loop
 kmod@sg
 kmod@unix
 kmod@uvesafb
-linux-utmp
 mdadm
+ndppd
 nft
 pommed
 sudo

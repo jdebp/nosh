@@ -39,6 +39,8 @@ General process state:
 <li><p> <a href="envuidgid.html"><code>envuidgid</code></a> &mdash; set UID and GID environment variable values from the system account database </p></li>
 <li><p> <a href="fdmove.html"><code>fdmove</code></a> &mdash; copy/move file descriptors around </p></li>
 <li><p> <a href="fdredir.html"><code>fdredir</code></a> &mdash; open file descriptors for reading, writing, append, and so forth </p></li>
+<li><p> <a href="find-default-jvm.html"><code>find-default-jvm</code></a> &mdash; find the <code>JAVA_HOME</code> for the default JVM </p></li>
+<li><p> <a href="find-matching-jvm.html"><code>find-matching-jvm</code></a> &mdash; find the <code>JAVA_HOME</code> for a matching JVM </p></li>
 <li><p> <a href="foreground.html"><code>foreground</code></a> &mdash; run a child process synchronously, before continuing </p></li>
 <li><p> <a href="hardlimit.html"><code>hardlimit</code></a> &mdash; change hard resource limits </p></li>
 <li><p> <a href="local-reaper.html"><code>local-reaper</code></a> &mdash; set the local "Grim Reaper" status on/off </p></li>
@@ -149,6 +151,7 @@ Login services:
 <ul class="compact">
 <li><p> <a href="emergency-login.html"><code>emergency-login</code></a> &mdash; a minimal superuser login program that only uses the system account database, suitable for use in emergency mode when there is no remote authentication available, there are no non-root filesystems mounted, and the TTY "secure" flag needs to be ignored </p></li>
 <li><p> <a href="ttylogin-starter.html"><code>ttylogin-starter</code></a> &mdash; auto-start <code>ttylogin@</code> services (on demand on Linux) for kernel virtual terminals </p></li>
+<li><p> <a href="login-update-utmpx.html"><code>login-update-utmpx</code></a> &mdash; update the active terminal login database for bootstrap and shutdown </p></li>
 </ul>
 
 <p>

@@ -31,7 +31,7 @@
 It is not meant to be run as process #1, and the system will not operate correctly if it is mis-used as process #1.  
 To manage a system, use <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 The purpose of <command>per-user-manager</command> is to run per-user service management providing an overall control API for it that is similar to that of process #1.
-This permits per-user service manament to be addressed by <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> (when its <arg>--user</arg> command-line option is employed) control subcommands such as <command>halt</command>.
+This permits per-user service manament to be addressed by <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> (when its <arg choice='plain'>--user</arg> command-line option is employed) control subcommands such as <command>halt</command>.
 </para>
 
 <para>
@@ -214,7 +214,7 @@ Then exit.
 </para>
 <para>
 When the <code>exit</code> target is fully active, it is expected to send the <code>SIGRTMIN + 13</code> signal to the per-user manager process.
-In the packaged target definitions, they use the <arg>--force</arg> option to the <command>halt</command> subcommand of <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry> to do this.
+In the packaged target definitions, they use the <arg choice='plain'>--force</arg> option to the <command>halt</command> subcommand of <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry> to do this.
 Do not send these signals directly, as this does not shut down services in order.
 </para>
 </listitem>

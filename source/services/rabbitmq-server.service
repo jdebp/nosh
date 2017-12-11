@@ -8,7 +8,7 @@ After=epmd.service
 Wants=epmd.service
 
 [Service]
-WorkingDirectory=/var/lib/rabbitmq
+WorkingDirectory=%S/rabbitmq
 # FIXME: Is this really needed?
 systemdUserEnvironment=yes
 User=rabbitmq

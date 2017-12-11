@@ -82,6 +82,8 @@ extern void create_control_group ( const char * &, std::vector<const char *> &, 
 extern void move_to_control_group ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void delegate_control_group_to ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void set_control_group_knob ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void find_default_jvm ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void find_matching_jvm ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 
 extern const
 struct command 
@@ -145,6 +147,8 @@ commands[] = {
 	{	"move-to-control-group",		move_to_control_group		},
 	{	"delegate-control-group-to",		delegate_control_group_to	},
 	{	"set-control-group-knob",		set_control_group_knob		},
+	{	"find-default-jvm",		        find_default_jvm		},
+	{	"find-matching-jvm",		        find_matching_jvm		},
 
 	// Terminals
 	{	"pause",				pause				},

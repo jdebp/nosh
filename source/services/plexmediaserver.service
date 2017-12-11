@@ -10,7 +10,7 @@ Description=Plex Media Server for Linux
 systemdUserEnvironment=true
 # FIXME: Is this really needed?
 systemdWorkingDirectory=yes
-Environment="PLEX_MEDIA_SERVER_APPLICATION_SUPPORT_DIR=/var/lib/%p/Library/Application Support"
+Environment="PLEX_MEDIA_SERVER_APPLICATION_SUPPORT_DIR=%S/%p/Library/Application Support"
 Environment=PLEX_MEDIA_SERVER_HOME=/usr/lib/%p
 Environment=PLEX_MEDIA_SERVER_MAX_PLUGIN_PROCS=6
 Environment=PLEX_MEDIA_SERVER_TMPDIR=/tmp

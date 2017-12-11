@@ -6,10 +6,11 @@
 Description=IEEE 802.11 authenticator daemon for interface %i
 Wants=kmod@wlan_xauth.service kmod@wlan_wep.service kmod@wlan_tkip.service kmod@wlan_ccmp.service cyclog@%p.service
 After=kmod@wlan_xauth.service kmod@wlan_wep.service kmod@wlan_tkip.service kmod@wlan_ccmp.service cyclog@%p.service ifconfig@%i
+PartOf=netif@%i
 
 [Service]
 EnvironmentDirectory=env
 ExecStart=%p /etc/%p-'%I'.conf
 
 [Install]
-WantedBy=static-networking.target
+WantedBy=netif@%i

@@ -43,33 +43,33 @@
 </para>
 
 <para>
-If the <arg>--numeric-host</arg> command line option is used, then no name lookup is done on <replaceable>host</replaceable> and it must be (a human readable form of) an IP address.
-If the <arg>--numeric-service</arg> command line option is used, then no name lookup is done on <replaceable>service</replaceable> and it must be a port number.
+If the <arg choice='plain'>--numeric-host</arg> command line option is used, then no name lookup is done on <replaceable>host</replaceable> and it must be (a human readable form of) an IP address.
+If the <arg choice='plain'>--numeric-service</arg> command line option is used, then no name lookup is done on <replaceable>service</replaceable> and it must be a port number.
 Otherwise, <replaceable>host</replaceable> is looked up using the system name resolution facility, with the first IP address found being used, and <replaceable>port</replaceable> can be an alphanumeric service name.
 </para>
 
 <para>
-The <arg>--backlog</arg> option specifies the allowed backlog level (defaulting to 5) of outstanding not-yet-accepted connections to the socket.
-The <arg>--no-reuse-address</arg> sets a flag that prevents the kernel from re-using an IP address and port combination if there are still TCP connections for that address and port in the CLOSE_WAIT state,
+The <arg choice='plain'>--backlog</arg> option specifies the allowed backlog level (defaulting to 5) of outstanding not-yet-accepted connections to the socket.
+The <arg choice='plain'>--no-reuse-address</arg> sets a flag that prevents the kernel from re-using an IP address and port combination if there are still TCP connections for that address and port in the CLOSE_WAIT state,
 </para>
 
 <para>
-The <arg>--reuse-port</arg> sets a flag that allows the same IP address and port combination to be used by multiple TCP listeners, as long as they all use the flag.
-The <arg>--check-interfaces</arg> option prevents the use of any IPv4 addresses if there are no IPv4 addresses on any network interface, and the use of any IPv6 addresses if there are no IPv6 addresses.
+The <arg choice='plain'>--reuse-port</arg> option sets a flag that allows the same IP address and port combination to be used by multiple TCP listeners, as long as they all use the flag.
+The <arg choice='plain'>--check-interfaces</arg> option prevents the use of any IPv4 addresses if there are no IPv4 addresses on any network interface, and the use of any IPv6 addresses if there are no IPv6 addresses.
 This isn't particularly useful on a dynamically configured system where network interface IP addresses can come and go.
-Conversely, the <arg>--bind-to-any</arg> option is quite useful on such a system, as it allows binding to any IPV4 or IPV6 address, even one that is not on any network interface.
+Conversely, the <arg choice='plain'>--bind-to-any</arg> option is quite useful on such a system, as it allows binding to any IPV4 or IPV6 address, even one that is not on any network interface.
 </para>
 
 <para>
-The <arg>--upstart-compatibility</arg> option causes <command>tcp-socket-listen</command> to set the <envar>UPSTART_FDS</envar> environment variable to 3, and the <envar>UPSTART_EVENTS</envar> environment variable to <literal>socket</literal>.
+The <arg choice='plain'>--upstart-compatibility</arg> option causes <command>tcp-socket-listen</command> to set the <envar>UPSTART_FDS</envar> environment variable to 3, and the <envar>UPSTART_EVENTS</envar> environment variable to <literal>socket</literal>.
 This is for compatibility with daemons that expect to be run under <citerefentry><refentrytitle>upstart</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 <para>
-The <arg>--systemd-compatibility</arg> option is for compatibility with daemons that expect to be run under <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+The <arg choice='plain'>--systemd-compatibility</arg> option is for compatibility with daemons that expect to be run under <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 It causes <command>tcp-socket-listen</command> to set the <envar>LISTEN_FDS</envar> environment variable to the number of listening file descriptors, and the <envar>LISTEN_PID</envar> environment variable to its own process ID.
 If the command is started up with the <envar>LISTEN_FDS</envar> and the <envar>LISTEN_PID</envar> environment variables already appropriately set, the number of listening file descriptors is taken from them and increased by one, otherwise the number of file descriptors is 1.
-Thus a list of listening file descriptors can be built up with multiple commands, as long as they all use the <arg>--systemd-compatibility</arg> option.
+Thus a list of listening file descriptors can be built up with multiple commands, as long as they all use the <arg choice='plain'>--systemd-compatibility</arg> option.
 </para>
 
 <para>
@@ -78,9 +78,9 @@ See <citerefentry><refentrytitle>fdmove</refentrytitle><manvolnum>1</manvolnum><
 </para>
 
 <para>
-On systems that support such, the <arg>--combine4and6</arg> option allows a listener to communicate with both IPv4 and IPv6 clients.
+On systems that support such, the <arg choice='plain'>--combine4and6</arg> option allows a listener to communicate with both IPv4 and IPv6 clients.
 (<replaceable>host</replaceable> must denote an IPv6 address for this to work.)
-On other systems, and also the default if <arg>--combine4and6</arg> is not used, one must run an IPv4 listener for IPv4 clients and an IPv6 listener for IPv6 clients.
+On other systems, and also the default if <arg choice='plain'>--combine4and6</arg> is not used, one must run an IPv4 listener for IPv4 clients and an IPv6 listener for IPv6 clients.
 See RFCs 3493 and 4038 for more details.
 </para>
 

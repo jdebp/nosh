@@ -7,12 +7,11 @@ Description=Elasticsearch
 After=network.target
 
 [Service]
-# Installation needs to:
-# . Search for JAVA_HOME and put that into the envdir.
+JVMVersions=1.6 1.7 1.8
 EnvironmentDirectory=env
 User=%p
 LimitNOFILE=65536
-ExecStart="${ES_HOME:-/usr/share/%p}/bin/%p" +-Des.default.path.home="${ES_HOME:-/usr/share/%p}" ${LOG_DIR:+-Des.default.path.logs="${LOG_DIR}"} -Des.default.path.data="${DATA_DIR:-/var/lib/%p}" ${CONF_DIR:+-Des.default.path.conf="${CONF_DIR}"} ${CONF_FILE:+-Des.default.config="${CONF_FILE}"}
+ExecStart="${ES_HOME:-/usr/share/%p}/bin/%p" +-Des.default.path.home="${ES_HOME:-/usr/share/%p}" ${LOG_DIR:+-Des.default.path.logs="${LOG_DIR}"} -Des.default.path.data="${DATA_DIR:-%S/%p}" ${CONF_DIR:+-Des.default.path.conf="${CONF_DIR}"} ${CONF_FILE:+-Des.default.config="${CONF_FILE}"}
 
 [Install]
 WantedBy=server.target

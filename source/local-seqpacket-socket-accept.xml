@@ -97,8 +97,8 @@ The effective GID of the remote (client) process that connected.
 </variablelist>
 
 <para>
-If the <arg>--verbose</arg> option is used, <command>local-seqpacket-socket-accept</command> logs information about processes spawned and the current and maximum number of connections.
-The latter is set with the <arg>--connection-limit</arg> option, which defaults to 40.
+If the <arg choice='plain'>--verbose</arg> option is used, <command>local-seqpacket-socket-accept</command> logs information about processes spawned and the current and maximum number of connections.
+The latter is set with the <arg choice='plain'>--connection-limit</arg> option, which defaults to 40.
 If it is reached, <command>local-seqpacket-socket-accept</command> stops accepting new connections until one or more child processes exit.
 <command>local-seqpacket-socket-accept</command> always limits the number of connections, and has no notion of an "unlimited" number of connections.
 </para>

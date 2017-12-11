@@ -200,6 +200,17 @@ do
 	ln -s cyclog@"${service}" config/services{new}/cyclog@"${alias}"
 done
 (
+	cat package/common-target-aliases 
+	case "`uname`" in
+	Linux) cat package/linux-target-aliases ;;
+	OpenBSD) cat package/openbsd-target-aliases ;;
+	*BSD) cat package/bsd-target-aliases ;;
+	esac
+) | while read service alias
+do
+	ln -s "${service}" config/targets{new}/"${alias}"
+done
+(
 	cat package/common-etc-service-aliases 
 	case "`uname`" in
 	Linux)	cat package/linux-etc-service-aliases ;;

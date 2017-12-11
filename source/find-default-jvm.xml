@@ -1,0 +1,68 @@
+<refentry id="find-default-jvm">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>find-default-jvm</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>find-default-jvm</refname>
+<refpurpose>set the JAVA_HOME environmnent variable to denote the default JVM</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>find-default-jvm</command> 
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>find-default-jvm</command> is a chain-loading utility that sets the <envar>JAVA_HOME</envar> environment variable to denote the root directory for the default JVM, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+If the environment variable is already set, it simply chain loads and does not alter it.
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>find-default-jvm</command> will ignore.
+</para>
+
+<para>
+If the <filename>/usr/local/etc/jvms</filename> file exists, it is expected to be a (potentially commented) list of JVM programs, in descending priority order.
+The default JVM is the first in the list.
+The <envar>JAVA_HOME</envar> variable is set to the root of the JVM subtree, which is presumed to be the directory above the directory containing the named JVM program.
+</para>
+
+<para>
+If that file does not exist, then if the <filename>/usr/lib/jvm</filename> directory exists it is presumed to contain all of the JVM subtree root directories, either directly or as symbolic links.
+The <envar>JAVA_HOME</envar> variable is set to the one named <filename>default-java</filename> if that exists.
+</para>
+
+<para>
+Failing either of those, the <filename>/usr/local/bin/java</filename> and <filename>/usr/bin/java</filename> files are checked in order, and if found the <envar>JAVA_HOME</envar> variable is set to the root of the JVM subtree, which is presumed from those filenames as aforementioned.
+</para>
+
+<para>
+Finally, as a last resort, the JVM root is presumed to be <filename>/</filename> which implies the JVM program at <filename>/bin/java</filename>.
+</para>
+
+</refsection><refsection><title>See also</title>
+
+<variablelist>
+<varlistentry>
+<term>
+<citerefentry><refentrytitle>find-matching-jvm</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</term>
+<listitem><para>
+This addresses the more common use case of wanting to find JVMs that support particular versions of Java; but can potentially fail if there are no JVMs on the system even if the matching criteria are entirely open.
+</para></listitem>
+</varlistentry>
+</variablelist>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

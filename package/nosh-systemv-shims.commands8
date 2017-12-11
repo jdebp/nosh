@@ -5,6 +5,7 @@ haltsys
 init
 initctl-read
 normal
+powercycle
 poweroff
 reboot
 rescue

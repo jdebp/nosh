@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=Poweroff state target
+Description=Power off state target
 EarlySupervise=true
 After=shutdown.target unmount.target
 Wants=shutdown.target unmount.target

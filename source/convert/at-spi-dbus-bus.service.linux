@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=Assistive Technology Service Provider Accessibiliy Services Bus
+Description=Assistive Technology Service Provider Accessibility Services Bus
 
 [Service]
 Type=dbus

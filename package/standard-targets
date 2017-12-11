@@ -18,6 +18,7 @@ multi-user
 multi-user-pre
 name-services
 normal
+powercycle
 poweroff
 reboot
 reboot-after-install

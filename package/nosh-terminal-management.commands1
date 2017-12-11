@@ -12,6 +12,7 @@ emergency-login
 login-banner
 login-process
 login-prompt
+login-update-utmpx
 monitor-fsck-progress
 open-controlling-tty
 pty-get-tty

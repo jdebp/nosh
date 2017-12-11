@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=UDisks2 daemon
+After=local-syslog.target polkitd.service
+
+[Service]
+Type=dbus
+ExecStart=/usr/lib/%p/udisksd
+
+[Install]
+# TODO: This might be better as graphical.
+WantedBy=workstation.target

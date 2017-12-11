@@ -301,9 +301,61 @@ effective_user_name ()
 	return "nobody";
 }
 
+static const std::string slash("/");
+
+static inline
+std::string
+effective_user_state_dir()
+{
+	std::string r;
+	// Do not use cuserid() here.
+	// BSD libc defines L_cuserid as 17.
+	// But GNU libc is even worse and defines it as a mere 9.
+	if (struct passwd * p = getpwuid(geteuid())) {
+		if (p->pw_dir && *p->pw_dir)
+			r = std::string(p->pw_dir) + "/.config";
+		else
+			r = "/run/user/" + std::string(p->pw_name) + "/config";
+	}
+	endpwent();
+	return r + slash;
+}
+
+static inline
+std::string
+effective_user_cache_dir()
+{
+	std::string r("/run/user/");
+	// Do not use cuserid() here.
+	// BSD libc defines L_cuserid as 17.
+	// But GNU libc is even worse and defines it as a mere 9.
+	if (struct passwd * p = getpwuid(geteuid())) {
+		if (p->pw_dir && *p->pw_dir)
+			r = std::string(p->pw_dir) + "/.cache";
+		else
+			r = "/run/user/" + std::string(p->pw_name) + "/cache";
+	}
+	endpwent();
+	return r + slash;
+}
+
+static inline
+std::string
+effective_user_log_dir()
+{
+	std::string r("/var/log/user/");
+	// Do not use cuserid() here.
+	// BSD libc defines L_cuserid as 17.
+	// But GNU libc is even worse and defines it as a mere 9.
+	if (struct passwd * p = getpwuid(geteuid()))
+		r += p->pw_name;
+	endpwent();
+	return r + slash;
+}
+
 namespace {
 struct names {
-	names(const char * a) : arg_name(a), user(per_user_mode ? effective_user_name() : "root"), runtime_dir(per_user_mode ? effective_user_runtime_dir() : "/run/") { split_name(a, unit_dirname, unit_basename); escaped_unit_basename = systemd_name_escape(false, false, unit_basename); }
+	names(const char * a);
 	void set_prefix(const std::string & v, bool esc, bool alt, bool ext) { set(esc, alt, ext, escaped_prefix, prefix, v); }
 	void set_instance(const std::string & v, bool esc, bool alt, bool ext) { set(esc, alt, ext, escaped_instance, instance, v); }
 	void set_bundle(const std::string & r, const std::string & b) { bundle_basename = b; bundle_dirname = r + b; }
@@ -322,10 +374,13 @@ struct names {
 	const std::string & query_machine_id () const { return machine_id; }
 	const std::string & query_user () const { return user; }
 	const std::string & query_runtime_dir () const { return runtime_dir; }
+	const std::string & query_state_dir () const { return state_dir; }
+	const std::string & query_cache_dir () const { return cache_dir; }
+	const std::string & query_log_dir () const { return log_dir; }
 	std::string substitute ( const std::string & );
 	std::list<std::string> substitute ( const std::list<std::string> & );
 protected:
-	std::string arg_name, unit_dirname, unit_basename, escaped_unit_basename, prefix, escaped_prefix, instance, escaped_instance, bundle_basename, bundle_dirname, machine_id, user, runtime_dir;
+	std::string arg_name, unit_dirname, unit_basename, escaped_unit_basename, prefix, escaped_prefix, instance, escaped_instance, bundle_basename, bundle_dirname, machine_id, user, runtime_dir, state_dir, cache_dir, log_dir;
 	void set ( bool esc, bool alt, bool ext, std::string & escaped, std::string & normal, const std::string & value ) {
 		if (esc)
 			escaped = systemd_name_escape(alt, ext, normal = value);
@@ -333,6 +388,18 @@ protected:
 			normal = systemd_name_unescape(alt, ext, escaped = value);
 	}
 };
+}
+
+names::names(const char * a) : 
+	arg_name(a), 
+	user(per_user_mode ? effective_user_name() : "root"), 
+	runtime_dir(per_user_mode ? effective_user_runtime_dir() : "/run/"),
+	state_dir(per_user_mode ? effective_user_state_dir() : "/var/lib/"),
+	cache_dir(per_user_mode ? effective_user_cache_dir() : "/var/cache/"),
+	log_dir(per_user_mode ? effective_user_log_dir() : "/var/log/sv/") 
+{ 
+	split_name(a, unit_dirname, unit_basename); 
+	escaped_unit_basename = systemd_name_escape(false, false, unit_basename); 
 }
 
 std::string
@@ -362,6 +429,9 @@ names::substitute (
 			case 'N': r += query_unit_basename(); break;
 			case 'm': r += query_machine_id(); break;
 			case 't': r += query_runtime_dir(); break;
+			case 'S': r += query_state_dir(); break;
+			case 'C': r += query_cache_dir(); break;
+			case 'L': r += query_log_dir(); break;
 			case 'U': r += query_user(); break;
 			case '%': default:	r += '%'; r += c; break;
 		}
@@ -793,6 +863,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	value * socket_wants(socket_profile.use("unit", "wants"));
 	value * socket_requires(socket_profile.use("unit", "requires"));
 	value * socket_requisite(socket_profile.use("unit", "requisite"));
+	value * socket_partof(socket_profile.use("unit", "partof"));
 	value * socket_description(socket_profile.use("unit", "description"));
 	value * socket_defaultdependencies(socket_profile.use("unit", "defaultdependencies"));
 	value * socket_earlysupervise(socket_profile.use("unit", "earlysupervise"));	// This is an extension to systemd.
@@ -818,6 +889,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	value * systemdworkingdirectory(service_profile.use("service", "systemdworkingdirectory"));	// This is an extension to systemd.
 	value * systemduserenvironment(service_profile.use("service", "systemduserenvironment"));	// This is an extension to systemd.
 	value * systemdusergroups(service_profile.use("service", "systemdusergroups"));	// This is an extension to systemd.
+	value * machineenvironment(service_profile.use("service", "machineenvironment"));	// This is an extension to systemd.
 	value * execstart(service_profile.use("service", "execstart"));
 	value * execstartpre(service_profile.use("service", "execstartpre"));
 	value * execrestartpre(service_profile.use("service", "execrestartpre"));	// This is an extension to systemd.
@@ -861,7 +933,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	value * group(service_profile.use("service", "group"));
 	value * umask(service_profile.use("service", "umask"));
 	value * environment(service_profile.use("service", "environment"));
-	value * unsetenvironment(service_profile.use("service", "unsetenvironment"));	// This is an extension to systemd.
+	value * unsetenvironment(service_profile.use("service", "unsetenvironment"));
 	value * environmentfile(service_profile.use("service", "environmentfile"));
 	value * environmentdirectory(service_profile.use("service", "environmentdirectory"));	// This is an extension to systemd.
 	value * fullenvironmentdirectory(service_profile.use("service", "fullenvironmentdirectory"));	// This is an extension to systemd.
@@ -912,13 +984,20 @@ convert_systemd_units [[gnu::noreturn]] (
 	value * memorymax(service_profile.use("service", "memorymax"));
 	value * memoryswapmax(service_profile.use("service", "memoryswapmax"));
 	value * ioaccounting(service_profile.use("service", "ioaccounting"));
+	value * rdmaaccounting(service_profile.use("service", "rdmaaccounting"));	// This is an extension to systemd.
 	value * ioweight(service_profile.use("service", "ioweight"));
 	value * iodeviceweight(service_profile.use("service", "iodeviceweight"));
 	value * ioreadbandwidthmax(service_profile.use("service", "ioreadbandwidthmax"));
 	value * ioreadiopsmax(service_profile.use("service", "ioreadiopsmax"));
 	value * iowritebandwidthmax(service_profile.use("service", "iowritebandwidthmax"));
 	value * iowriteiopsmax(service_profile.use("service", "iowriteiopsmax"));
+	value * rdmahcahandlesmax(service_profile.use("service", "rdmahcahandlesmax"));	// This is an extension to systemd.
+	value * rdmahcaobjectsmax(service_profile.use("service", "rdmahcaobjectsmax"));	// This is an extension to systemd.
 #endif
+	value * jvmdefault(service_profile.use("service", "jvmdefault"));	// This is an extension to systemd.
+	value * jvmversions(service_profile.use("service", "jvmversions"));	// This is an extension to systemd.
+	value * jvmoperatingsystems(service_profile.use("service", "jvmoperatingsystems"));	// This is an extension to systemd.
+	value * jvmmanufacturers(service_profile.use("service", "jvmmanufacturers"));	// This is an extension to systemd.
 	value * oomscoreadjust(service_profile.use("service", "oomscoreadjust"));
 	value * cpuschedulingpolicy(service_profile.use("service", "cpuschedulingpolicy"));
 	value * cpuschedulingpriority(service_profile.use("service", "cpuschedulingpriority"));
@@ -930,6 +1009,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	value * service_wants(service_profile.use("unit", "wants"));
 	value * service_requires(service_profile.use("unit", "requires"));
 	value * service_requisite(service_profile.use("unit", "requisite"));
+	value * service_partof(service_profile.use("unit", "partof"));
 	value * service_description(service_profile.use("unit", "description"));
 	value * service_wantedby(service_profile.use("install", "wantedby"));
 	value * service_requiredby(service_profile.use("install", "requiredby"));
@@ -1013,8 +1093,8 @@ convert_systemd_units [[gnu::noreturn]] (
 				throw EXIT_FAILURE;
 			}
 			// This is something that we are going to pass to the "rm" command run as the superuser, remember.
-			const std::string::size_type slash(dir.find('/'));
-			if (std::string::npos != slash) {
+			const std::string::size_type slashpos(dir.find('/'));
+			if (std::string::npos != slashpos) {
 				std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, service_filename.c_str(), dir.c_str(), "Slash is not permitted in runtime directory names.");
 				throw EXIT_FAILURE;
 			}
@@ -1055,6 +1135,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	bool memory_accounting(is_bool_true(memoryaccounting, false));
 	bool tasks_accounting(is_bool_true(tasksaccounting, false));
 	bool io_accounting(is_bool_true(ioaccounting, false));
+	bool rdma_accounting(is_bool_true(rdmaaccounting, false));
 	if (cpuweight) {
 		control_group_knobs += "foreground set-control-group-knob cpu.weight " + quote(names.substitute(cpuweight->last_setting())) + " ;\n";
 		cpu_accounting = true;
@@ -1111,6 +1192,14 @@ convert_systemd_units [[gnu::noreturn]] (
 		control_group_knobs += "foreground set-control-group-knob --device-name-key --nested-key wios --infinity-is-max --multiplier-suffixes io.weight " + quote(names.substitute(iowriteiopsmax->last_setting())) + " ;\n";
 		io_accounting = true;
 	}
+	if (rdmahcahandlesmax) {
+		control_group_knobs += "foreground set-control-group-knob --device-name-key --nested-key hca_handle --infinity-is-max --multiplier-suffixes rdma.max " + quote(names.substitute(rdmahcahandlesmax->last_setting())) + " ;\n";
+		rdma_accounting = true;
+	}
+	if (rdmahcaobjectsmax) {
+		control_group_knobs += "foreground set-control-group-knob --device-name-key --nested-key hca_object --infinity-is-max --multiplier-suffixes rdma.max " + quote(names.substitute(rdmahcaobjectsmax->last_setting())) + " ;\n";
+		rdma_accounting = true;
+	}
 	const unsigned control_group_levels(1U + !!slice + !!is_instance);
 	if (cpu_accounting)
 		enable_control_group_controllers += set_controller_command(control_group_levels, "cpu", cpu_accounting);
@@ -1118,6 +1207,8 @@ convert_systemd_units [[gnu::noreturn]] (
 		enable_control_group_controllers += set_controller_command(control_group_levels, "memory", memory_accounting);
 	if (io_accounting)
 		enable_control_group_controllers += set_controller_command(control_group_levels, "io", io_accounting);
+	if (rdma_accounting)
+		enable_control_group_controllers += set_controller_command(control_group_levels, "rdma", rdma_accounting);
 	if (tasks_accounting)
 		enable_control_group_controllers += set_controller_command(control_group_levels, "pids", tasks_accounting);
 	std::string control_group_name("..");
@@ -1214,6 +1305,28 @@ convert_systemd_units [[gnu::noreturn]] (
 		priority += "\n";
 	}
 #endif
+	std::string jvm;
+	if (jvmversions || jvmoperatingsystems || jvmmanufacturers) {
+		jvm += "find-matching-jvm";
+		if (jvmversions) {
+			const std::list<std::string> list(split_list(names.substitute(jvmversions->last_setting())));
+			for (std::list<std::string>::const_iterator i(list.begin()); list.end() != i; ++i)
+				jvm += " --version " + quote(*i);
+		}
+		if (jvmoperatingsystems) {
+			const std::list<std::string> list(split_list(names.substitute(jvmoperatingsystems->last_setting())));
+			for (std::list<std::string>::const_iterator i(list.begin()); list.end() != i; ++i)
+				jvm += " --operating-system " + quote(*i);
+		}
+		if (jvmmanufacturers) {
+			const std::list<std::string> list(split_list(names.substitute(jvmmanufacturers->last_setting())));
+			for (std::list<std::string>::const_iterator i(list.begin()); list.end() != i; ++i)
+				jvm += " --manufacturer " + quote(*i);
+		}
+		jvm += "\n";
+	}
+	if (is_bool_true(jvmdefault, false))
+		jvm += "find-default-jvm\n";
 	if (oomscoreadjust)
 		// The -- is necessary because the adjustment could be a negative number, starting with a dash,
 		priority += "oom-kill-protect -- " + quote(names.substitute(oomscoreadjust->last_setting())) + "\n";
@@ -1350,6 +1463,7 @@ convert_systemd_units [[gnu::noreturn]] (
 		if (!h.empty()) hardlimit += "ulimit -H" + h + "\n";
 	}
 	std::string env;
+	if (is_bool_true(machineenvironment, false)) env += "machineenv\n";
 	if (environmentfile) {
 		for (value::settings::const_iterator i(environmentfile->all_settings().begin()); environmentfile->all_settings().end() != i; ++i) {
 			std::string val;
@@ -1596,6 +1710,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	if (chrootall) perilogue_setup_environment << chroot;
 	perilogue_setup_environment << chdir;
 	perilogue_setup_environment << redirect;
+	perilogue_setup_environment << jvm;
 
 	std::stringstream perilogue_drop_privileges;
 	if (setuidgidall) perilogue_drop_privileges << setuidgid;
@@ -1615,6 +1730,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	setup_environment << redirect;
 	if (merge_run_into_start && runtimedirectory)
 		setup_environment << createrundir;
+	setup_environment << jvm;
 
 	std::stringstream drop_privileges;
 	drop_privileges << setuidgid;
@@ -1987,16 +2103,18 @@ convert_systemd_units [[gnu::noreturn]] (
 	CREATE_LINKS(service_wants, "wants/");
 	CREATE_LINKS(socket_requires, "wants/");
 	CREATE_LINKS(service_requires, "wants/");
-	CREATE_LINKS(socket_requisite, "wants/");
-	CREATE_LINKS(service_requisite, "wants/");
+	CREATE_LINKS(socket_requisite, "needs/");
+	CREATE_LINKS(service_requisite, "needs/");
+	CREATE_LINKS(socket_stoppedby, "stopped-by/");
+	CREATE_LINKS(service_stoppedby, "stopped-by/");
 	CREATE_LINKS(socket_conflicts, "conflicts/");
 	CREATE_LINKS(service_conflicts, "conflicts/");
 	CREATE_LINKS(socket_wantedby, "wanted-by/");
 	CREATE_LINKS(service_wantedby, "wanted-by/");
 	CREATE_LINKS(socket_requiredby, "wanted-by/");
 	CREATE_LINKS(service_requiredby, "wanted-by/");
-	CREATE_LINKS(socket_stoppedby, "stopped-by/");
-	CREATE_LINKS(service_stoppedby, "stopped-by/");
+	CREATE_LINKS(socket_partof, "requires/");
+	CREATE_LINKS(service_partof, "requires/");
 	const bool defaultdependencies(
 			is_socket_activated ? is_bool_true(socket_defaultdependencies, service_defaultdependencies, true) :
 			is_bool_true(service_defaultdependencies, true)
@@ -2056,6 +2174,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	flag_file(prog, service_dirname, service_dir_fd, "remain", is_remain);
 	flag_file(prog, service_dirname, service_dir_fd, "use_hangup", is_use_hangup);
 	flag_file(prog, service_dirname, service_dir_fd, "no_kill_signal", !is_use_kill);
+	flag_file(prog, service_dirname, service_dir_fd, "down", true);
 
 	// Issue the final reports.
 

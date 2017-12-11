@@ -10,7 +10,7 @@ After=network.target
 # Installation needs to:
 # . Perform all of the *.jar lookup in the package base directory, /usr/local/share/%p, and populate CLASSPATH in the envdir.
 # . Set BIGTABLE_SUPPORT to -Xbootclasspath/p:alpn-boot*.jar and put that into the envdir.
-# . Search for JAVA_HOME and put that into the envdir.
+JVMVersions=1.6 1.7 1.8
 EnvironmentDirectory=env
 User=%p
 LimitNOFILE=65536

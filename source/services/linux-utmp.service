@@ -2,6 +2,8 @@
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
 
+# This has been superseded by utx.service .
+
 [Unit]
 Description=Enable Linux login accounting
 Before=multi-user-pre.target

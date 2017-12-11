@@ -42,7 +42,7 @@ If its standard output is not a terminal, it aborts without attempting to initia
 
 <para>
 It initializes the terminal by resetting the line discipline and then outputting the escape sequences appropriate to the terminal type.
-Unless the <arg>--no-newline</arg> option is set a newline is printed afterwards.
+Unless the <arg choice='plain'>--no-newline</arg> option is set a newline is printed afterwards.
 This program is thus much the same as the BSD <citerefentry><refentrytitle>reset</refentrytitle><manvolnum>1</manvolnum></citerefentry> command, except that it chain-loads to another command and has slightly different defaults.
 </para>
 
@@ -61,14 +61,14 @@ The <code>istrip</code> option is not set.
 
 <listitem>
 <para>
-The <code>tostop</code> option is set, unless the <arg>--no-tostop</arg> command-line option has been used.
+The <code>tostop</code> option is set, unless the <arg choice='plain'>--no-tostop</arg> command-line option has been used.
 Job control is the norm nowadays.
 </para>
 </listitem>
 
 <listitem>
 <para>
-The <code>iutf8</code> option is set, unless the <arg>--no-utf8</arg> command-line option has been used.
+The <code>iutf8</code> option is set, unless the <arg choice='plain'>--no-utf8</arg> command-line option has been used.
 UTF-8 is the norm nowadays, and <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> sends UTF-8 input sequences to virtual terminals.
 </para>
 </listitem>
@@ -78,7 +78,7 @@ UTF-8 is the norm nowadays, and <citerefentry><refentrytitle>console-terminal-em
 <para>
 <command>vc-reset-tty</command> writes escape sequences to soft (re-)initialize the terminal state, including tabstops, margins, windows, scrolling mode, and overstrike mode.
 Tabstops are reset to every 8th column.
-If the <arg>--hard-reset</arg> command line option is used, additional escape sequences are written to hard reset the terminal from an unknown state, including resetting the palette.
+If the <arg choice='plain'>--hard-reset</arg> command line option is used, additional escape sequences are written to hard reset the terminal from an unknown state, including resetting the palette.
 </para>
 
 <para>
@@ -88,7 +88,7 @@ If the standard output is not a virtual console, odd things may happen.
 </para>
 
 <para>
-If the <arg>--text-mode</arg> command line option is used, <command>vc-reset-tty</command> will use operating-system-specific <citerefentry><refentrytitle>ioctl</refentrytitle><manvolnum>2</manvolnum></citerefentry> calls to attempt to switch the virtual console to text mode.
+If the <arg choice='plain'>--text-mode</arg> command line option is used, <command>vc-reset-tty</command> will use operating-system-specific <citerefentry><refentrytitle>ioctl</refentrytitle><manvolnum>2</manvolnum></citerefentry> calls to attempt to switch the virtual console to text mode.
 This is only suitable for use with kernel virtual consoles.
 </para>
 </refsection><refsection><title>EXAMPLE</title>

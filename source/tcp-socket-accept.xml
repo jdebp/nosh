@@ -116,14 +116,14 @@ Guaranteed unset.
 </variablelist>
 
 <para>
-If the <arg>--verbose</arg> option is used, <command>tcp-socket-accept</command> logs information about processes spawned and the current and maximum number of connections.
-The latter is set with the <arg>--connection-limit</arg> option, which defaults to 40.
+If the <arg choice='plain'>--verbose</arg> option is used, <command>tcp-socket-accept</command> logs information about processes spawned and the current and maximum number of connections.
+The latter is set with the <arg choice='plain'>--connection-limit</arg> option, which defaults to 40.
 If it is reached, <command>tcp-socket-accept</command> stops accepting new connections until one or more child processes exit.
 <command>tcp-socket-accept</command> always limits the number of connections, and has no notion of an "unlimited" number of connections.
 </para>
 
 <para>
-The <arg>--no-keepalives</arg>, <arg>--no-kill-IP-options</arg>, and <arg>--no-delay</arg> command line options set options on the accepted sockets.
+The <arg choice='plain'>--no-keepalives</arg>, <arg choice='plain'>--no-kill-IP-options</arg>, and <arg choice='plain'>--no-delay</arg> command line options set options on the accepted sockets.
 The first disables the use of TCP keepalive probes (which are used by default to ensure that dead connections are noticed and eliminated); the second permits IP options (which are removed by default) so that clients can set source routes; and the third disables the "Nagle" delay algorithm used for slow clients.
 </para>
 

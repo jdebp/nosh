@@ -200,6 +200,27 @@ default_home() {
 
 list_jvms | nl -p >> "$3"
 
+l="/usr/local/etc/system-control/local-java-services"
+if ! test -e "${l}" 
+then
+	cat >>"${l}" <<-EOT
+	# Local services that need JAVA_HOME configured by external configuration import.
+	#
+	# Lines are of the form:
+	#   default_home service-name
+	#   specific_home service-name version-list type-list manufacturer-list
+	#
+	# Empty lists match everything.
+	# versions are 1.6, 1.7, 1.8, and so on.
+	# types are native and foreign.
+	# manufacturers are openjdk, gnu, sun, and oracle.
+
+	EOT
+fi
+
 specific_home "opentsdb" "1.6 1.7 1.8" "" "" >> "$3"
 specific_home "wso2server" "1.7 1.8" "" "" >> "$3"
 specific_home "elasticsearch" "1.6 1.7 1.8" "" "" >> "$3"
+
+redo-ifchange "${l}"
+. "${l}" >> "$3"

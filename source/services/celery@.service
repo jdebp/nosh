@@ -3,6 +3,7 @@
 ## **************************************************************************
 
 # As of version 3.1, by default Celery does not "backgroundize" and logs to standard error, and one stops it with SIGKILL.
+# See also https://github.com/celery/celery/issues/3459 .
 
 [Unit]
 Description=Celery distributed task queue for node %I

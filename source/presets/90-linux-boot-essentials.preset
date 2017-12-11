@@ -9,8 +9,8 @@
 # Ordinary services
 enable	update-binfmts.service
 enable	cyclog@update-binfmts.service
-enable	linux-utmp.service
-enable	cyclog@linux-utmp.service
+enable	utx.service
+enable	cyclog@utx.service
 
 # kernel module services
 enable	kmod@autofs.service

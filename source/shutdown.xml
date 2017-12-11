@@ -20,10 +20,16 @@
 <group choice="opt">
 <arg choice="plain">--halt</arg>
 <arg choice="plain">-H</arg>
+<arg choice="plain">-h</arg>
+</group>
+<group choice="opt">
+<arg choice="plain">--powercycle</arg>
+<arg choice="plain">-c</arg>
 </group>
 <group choice="opt">
 <arg choice="plain">--poweroff</arg>
 <arg choice="plain">-P</arg>
+<arg choice="plain">-p</arg>
 </group>
 <group choice="opt">
 <arg choice="plain">--reboot</arg>
@@ -33,8 +39,6 @@
 <arg choice="plain">--kick-off</arg>
 <arg choice="plain">-k</arg>
 </group>
-<arg choice="opt">-h</arg>
-<arg choice="opt">-p</arg>
 <arg choice="opt">--no-wall</arg>
 <group choice='req'>
 <arg choice="plain">-g <replaceable>period</replaceable></arg>
@@ -69,10 +73,10 @@ As a consequence, their <command>shutdown</command> commands had the following s
 With no options, the default action was to (attempt to) transition to "single-user" mode.
 </para></listitem>
 <listitem><para>
-The <arg choice='plain'>-r</arg> and <arg choice='plain'>-h</arg> options overrode that to select reboot or halt/poweroff.
-</para></listitem>
-<listitem><para>
-The <arg choice='plain'>-H</arg> and <group choice='plain'><arg choice='plain'>-p</arg><arg choice='plain'>-P</arg></group> options chose which of halt or poweroff was selected in the latter case, the default being determined by the capabilities of the operating system and platform (which might not support software power off).
+The <arg choice='plain'>-r</arg>, <arg choice='plain'>-h</arg>, and (in the old BSD system) <arg choice='plain'>-p</arg> options overrode that to select reboot, halt, or poweroff.
+</para>
+<para>
+In the upstart and System 5 systems the <arg choice='plain'>-h</arg> option was actually halt/poweroff, and would require the <arg choice='plain'>-H</arg> and <arg choice='plain'>-P</arg> options to further choose which of halt or poweroff was selected, the default being determined by the capabilities of the operating system and platform (which might not support software power off).
 </para></listitem>
 </itemizedlist>
 
@@ -99,10 +103,10 @@ As a consequence, poweroff is now the default action and the compatibility behav
 </para>
 <itemizedlist>
 <listitem><para>
-The <arg choice='plain'>-h</arg> and <arg choice='plain'>-P</arg> options are considered to be on by default, and thus have no effect.
+The <arg choice='plain'>-p</arg> and <arg choice='plain'>-P</arg> options are considered to be on by default, and thus have no effect.
 </para></listitem>
 <listitem><para>
-The <arg choice='plain'>-r</arg> and <arg choice='plain'>-H</arg> options select the non-default actions.
+The <arg choice='plain'>-r</arg>, <arg choice='plain'>-h</arg>, and <arg choice='plain'>-H</arg> options select the non-default actions.
 </para></listitem>
 </itemizedlist>
 
@@ -131,7 +135,7 @@ Service termination signals and intervals are not adjustable via the <command>sh
 <refsection><title>Primary behaviour</title>
 
 <para>
-<command>shutdown</command> waits for a period, sending warning messages to logged-on user terminals with <citerefentry><refentrytitle>wall</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and then chains to the <arg choice='req'>poweroff</arg>, <arg choice='req'>halt</arg>, or <arg choice='req'>reboot</arg> subcommands of <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> to instruct the system manager to enact a state change.
+<command>shutdown</command> waits for a period, sending warning messages to logged-on user terminals with <citerefentry><refentrytitle>wall</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and then chains to the <arg choice='req'>powercycle</arg>, <arg choice='req'>poweroff</arg>, <arg choice='req'>halt</arg>, or <arg choice='req'>reboot</arg> subcommands of <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> to instruct the system manager to enact a state change.
 </para>
 
 <para>

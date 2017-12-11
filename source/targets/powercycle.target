@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Power cycle state target
+EarlySupervise=true
+After=shutdown.target unmount.target
+Wants=shutdown.target unmount.target
+
+[Service]
+# Do not make this a one-shot target, because that creates a problem: a race condition where this target can stop itself from the starting state whilst system-control is still waiting for it to enter the running state,
+# In any case, executing the force powercycle is logically to be enacted after this service has become ready.
+ExecStart=system-control %p --force
+
+[Install]

@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=WLAN debug service for interface %I
+Wants=%p-log.service
+After=%p-log.service
+PartOf=netif@%i
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=%p -i "%I" ${flags}
+RemainAfterExit=true
+
+[Install]
+WantedBy=netif@%i

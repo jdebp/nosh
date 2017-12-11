@@ -8,8 +8,7 @@ Wants=mysql.service
 After=network.target mysql.service
 
 [Service]
-# Installation needs to:
-# . Search for JAVA_HOME and put that into the envdir.
+JVMVersions=1.6 1.7 1.8
 EnvironmentDirectory=env
 User=wso2
 ExecStart="${JAVA_HOME}/bin/java" ${CARBON_XBOOTCLASSPATH:+-Xbootclasspath/a:"${CARBON_XBOOTCLASSPATH}"} -Xms256m -Xmx1024m -XX:MaxPermSize=256m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath="${CARBON_HOME:-/usr/share/wso2}/repository/logs/heap-dump.hprof" ${JAVA_OPTS} -Dcom.sun.management.jmxremote ${CARBON_CLASSPATH:+-classpath "${CARBON_CLASSPATH}"} -Djava.endorsed.dirs="${JAVA_ENDORSED_DIRS:-${CARBON_HOME:-/usr/share/wso2}/lib/endorsed:${JAVA_HOME}/jre/lib/endorsed:${JAVA_HOME}/lib/endorsed}}" -Djava.io.tmpdir="${CARBON_HOME:-/usr/share/wso2}/tmp" -Dcarbon.registry.root=/ -Djava.command="${JAVA_HOME}/bin/java" -Dcarbon.home="${CARBON_HOME:-/usr/share/wso2}" -Dcarbon.repository="${CARBON_HOME:-/usr/share/wso2}/repository" -Djava.util.logging.config.file="${CARBON_HOME:-/usr/share/wso2}/repository/conf/etc/logging-bridge.properties" -Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.JavaUtilLog -Djava.security.egd=file:/dev/urandom -Dfile.encoding=UTF8 org.wso2.carbon.launcher.Main

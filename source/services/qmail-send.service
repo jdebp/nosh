@@ -6,7 +6,7 @@
 Description=Bernstein's qmail queue processing and delivery daemon
 
 [Service]
-ExecStart=prependpath PATH "/var/lib/qmail/bin" qmail-start "./Maildir/"
+ExecStart=prependpath PATH "%S/qmail/bin" qmail-start "./Maildir/"
 
 [Install]
 WantedBy=server.target

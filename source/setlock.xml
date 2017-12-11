@@ -42,13 +42,13 @@ or whether the descriptor is in blocking mode.
 </para>
 
 <para>
-Unless the <arg>--non-blocking</arg> command line option is used, <command>setlock</command> will wait
+Unless the <arg choice='plain'>--non-blocking</arg> command line option is used, <command>setlock</command> will wait
 to obtain the lock whilst another process holds it.  If that option
 is used, it will not wait, but instead will fail to acquire the lock.
 </para>
 
 <para>
-Unless the <arg>--ignore</arg> option is used, failure to acquire the lock, because it
+Unless the <arg choice='plain'>--ignore</arg> option is used, failure to acquire the lock, because it
 isn't a valid lock file, because someone else has the lock and non-blocking
 mode has been used, or for some other reason, will cause <command>setlock</command> to print
 an error message and exit with a failure status instead of chaining.

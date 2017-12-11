@@ -105,7 +105,7 @@ An attempt to set the hard limit below the soft limit, or to set a non-infinite 
 </para>
 
 <para>
-Special treatment is given to the <arg>-m</arg> option because it sets multiple limits at once.  
+Special treatment is given to the <arg choice='plain'>-m</arg> option because it sets multiple limits at once.  
 An attempt to set any one soft limit greater than the matching hard limit will be silently converted into an attempt to set the soft limit equal to the hard limit.
 </para>
 

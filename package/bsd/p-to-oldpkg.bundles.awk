@@ -7,7 +7,7 @@
 	gsub(":","_c",pwescaped);
 	gsub(";","_h",pwescaped);
 	gsub(",","_v",pwescaped);
-	gsub(".","_d",pwescaped);
+	gsub("\\.","_d",pwescaped);
 	gsub("\\+","_p",pwescaped);
 	if ("log_user" == $1) {
 		print "@newuser",pwescaped "-log::::::/usr/bin/false";

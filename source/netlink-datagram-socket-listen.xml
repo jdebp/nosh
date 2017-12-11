@@ -38,20 +38,20 @@
 </para>
 
 <para>
-The <arg>--pass-credentials</arg> option causes <command>netlink-datagram-socket-listen</command> to request the <code>SO_PASSCRED</code> socket option.
-The <arg>--pass-security</arg> option causes it to request the <code>SO_PASSSEC</code> socket option.
+The <arg choice='plain'>--pass-credentials</arg> option causes <command>netlink-datagram-socket-listen</command> to request the <code>SO_PASSCRED</code> socket option.
+The <arg choice='plain'>--pass-security</arg> option causes it to request the <code>SO_PASSSEC</code> socket option.
 </para>
 
 <para>
-The <arg>--upstart-compatibility</arg> option causes <command>netlink-datagram-socket-listen</command> to set the <envar>UPSTART_FDS</envar> environment variable to 3, and the <envar>UPSTART_EVENTS</envar> environment variable to <literal>socket</literal>.
+The <arg choice='plain'>--upstart-compatibility</arg> option causes <command>netlink-datagram-socket-listen</command> to set the <envar>UPSTART_FDS</envar> environment variable to 3, and the <envar>UPSTART_EVENTS</envar> environment variable to <literal>socket</literal>.
 This is for compatibility with daemons that expect to be run under <citerefentry><refentrytitle>upstart</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 <para>
-The <arg>--systemd-compatibility</arg> option is for compatibility with daemons that expect to be run under <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+The <arg choice='plain'>--systemd-compatibility</arg> option is for compatibility with daemons that expect to be run under <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 It causes <command>netlink-datagram-socket-listen</command> to set the <envar>LISTEN_FDS</envar> environment variable to the number of listening file descriptors, and the <envar>LISTEN_PID</envar> environment variable to its own process ID.
 If the command is started up with the <envar>LISTEN_FDS</envar> and the <envar>LISTEN_PID</envar> environment variables already appropriately set, the number of listening file descriptors is taken from them and increased by one, otherwise the number of file descriptors is 1.
-Thus a list of listening file descriptors can be built up with multiple commands, as long as they all use the <arg>--systemd-compatibility</arg> option.
+Thus a list of listening file descriptors can be built up with multiple commands, as long as they all use the <arg choice='plain'>--systemd-compatibility</arg> option.
 </para>
 
 <para>
@@ -63,7 +63,7 @@ See <citerefentry><refentrytitle>fdmove</refentrytitle><manvolnum>1</manvolnum><
 The netlink socket address family makes no distinction between the <code>SOCK_RAW</code> and the <code>SOCK_DGRAM</code> socket types.
 By default, a <code>SOCK_DGRAM</code> socket is opened.
 However, unfortunately, some netlink server programs do make such a distinction and require the use of <code>SOCK_RAW</code> for what is nominally a datagram socket.
-The <arg>--raw</arg> option causes <command>netlink-datagram-socket-listen</command> to open a <code>SOCK_RAW</code> socket, for the benefits of those programs.
+The <arg choice='plain'>--raw</arg> option causes <command>netlink-datagram-socket-listen</command> to open a <code>SOCK_RAW</code> socket, for the benefits of those programs.
 </para>
 
 </refsection><refsection><title>USAGE</title>

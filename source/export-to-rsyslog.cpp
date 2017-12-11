@@ -198,20 +198,20 @@ Cursor::emit ()
 	const std::time_t t(tai64_to_time(envs, convert(line_stamp, EXTERNAL_TAI64_LENGTH), leap));
 	const uint32_t nano(convert(line_stamp + EXTERNAL_TAI64_LENGTH, EXTERNAL_TAI64N_LENGTH - EXTERNAL_TAI64_LENGTH));
 	struct tm tm;
-	localtime_r(&t, &tm);
+	gmtime_r(&t, &tm);
 	if (leap) ++tm.tm_sec;
 	char timebuf[64];
 	const std::size_t timelen(std::strftime(timebuf, sizeof timebuf, "%FT%T", &tm));
 	std::ostringstream os;
 	os << std::setw(6) << std::setfill('0') << nano / 1000U << std::setfill(' ');
-	const std::string & milli(os.str());
+	const std::string & frac(os.str());
 	const struct iovec v[] = {
 		// \bug FIXME: We should not hardwire facility and severity.
 		{ const_cast<char *>("<29>"), 4 },
 		{ timebuf, timelen },
 		{ const_cast<char *>("."), 1 },
-		{ const_cast<char *>(milli.data()), milli.length() },
-		{ const_cast<char *>(" "), 1 },
+		{ const_cast<char *>(frac.data()), frac.length() },
+		{ const_cast<char *>("Z "), 2 },
 		{ const_cast<char *>(hostname.data()), hostname.length() },
 		{ const_cast<char *>(" "), 1 },
 		{ const_cast<char *>(appname.data()), appname.length() },

@@ -8,7 +8,7 @@ Before=sshd.service ttylogin-starter.service
 
 [Service]
 Type=oneshot
-ExecStart=find /var/lib/sudo/ -exec touch --date @0 {} ;
+ExecStart=find %S/sudo/ -exec touch --date @0 {} ;
 # This is a one-shot service that can be re-triggered by starting it again.
 #RemainAfterExit=1
 Restart=no

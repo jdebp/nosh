@@ -1,10 +1,36 @@
+nosh (1.36) unstable; urgency=medium
+
+  * The per-user dbus services are now renamed to dbus-daemon too.
+    This was an oversight in 1.35.
+  * More common services: jenkins, apacheds, udisks2
+  * More Linux services: ndppd
+  * There are now find-default-jvm and find-matching-jvm commands.
+  * convert-systemd-units now recognizes JVMDefault, JVMVersion, JVMOperatingSystem, and JVMManufacturer settings.
+  * convert-systemd-units now recognizes RDMAHCAHandlesMax and RDMAHCAObjectsMax settings.
+  * convert-systemd-units now recognizes a MachineEnvironment setting.
+  * unshare now has process ID and user ID namespace flags.
+  * setup-machine-id now correctly falls back to the old D-Bus files on FreeBSD.
+  * The compatibility shutdown command now sports a new -c/--powercycle option.
+  * The compatibility reboot, halt, and poweroff commands now sport a new -c/--powercycle option, for the benefits of cruel system administrators.
+  * There is a new compatibility fastpowercycle/powercycle command, with all of the same options for cruel system administrators.
+  * system-manager now treats SIGWINCH differently on non-Linux operating systems, treading it as a request to invoke a new powercycle service.
+    SIGRTMIN+6, unused in the systemd system, is the Linux equivalent.
+  * system-manager now treats SIGRTMIN+16 as the underlying actual powercycle request, which it translates to either RB_POWERCYCLE if it is present in the C library headers, or RB_AUTOBOOT if it is not.
+  * There is now a new system-control powercycle subcommand, which defaults to sending SIGWINCH/SIGRTMIN+6 or SIGRTMIN+16.
+  * The system-control init subcommand now sports a new c/C argument, by analogy to h/H.
+    This is of course thus reflected automatically in the compatibility telinit command and the initctl-read server.
+  * There is now a login-update-utmpx command.
+  * There is now a freebsd-shims package, which is not installed on FreeBSD.
+  * The linux-utmp service has been removed, as it is redundant with the utx service.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.COM>  Mon, 11 Dec 2017 06:37:18 +0000
+
 nosh (1.35) unstable; urgency=medium
 
   * External configuration import now handles /etc/network/interfaces .
   * A bug that resulted in the ldconfig service being disabled has been fixed.
   * There is now a nosh-logrotate-shims package for packages that erroneously think that they use logrotate.
-  * dbus is now dbus-daemon, allowing for dbus-broker to be substituted should
-    that become viable in the future.
+  * dbus is now dbus-daemon, allowing for dbus-broker to be substituted should that become viable in the future.
     dbus-broker is not in fact a functional Desktop Bus subsystem right now.
     Its developers have strongly tied it to an internal systemd mechanism.
   * More Linux services: sysstat

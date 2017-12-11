@@ -11,6 +11,7 @@ enable	static_arp@*.service
 enable	static_ndp@*.service
 enable	static_ip4@*.service
 enable	static_ip6@*.service
+enable	netif@*.service
 enable	ifconfig@*.service
 enable	ifscript@*.service
 enable	natd@*.service

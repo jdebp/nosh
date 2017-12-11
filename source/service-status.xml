@@ -49,6 +49,12 @@ This form includes the service's configured enable/disable state, information ab
 The <arg choice='plain'>--log-lines</arg> command passes <replaceable>lines</replaceable> to the <citerefentry><refentrytitle>tail</refentrytitle><manvolnum>1</manvolnum></citerefentry> command with its <arg choice='plain'>-n</arg> option.
 </para>
 
+<para>
+Ready-after-run services have their states reported slightly different to other services.
+Such a service that is in the "stopped" daemontools-encore state will be reported as "done" if its <filename>run</filename> program has been run at least once.
+Such a service that is in the "running" daemontools-encore state will be reported as "started" if its <filename>run</filename> program is still running and "ready" otherwise.
+</para>
+
 </refsection><refsection><title>COMPATIBILITY</title>
 
 <para>

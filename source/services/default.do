@@ -62,7 +62,7 @@ case "${base}" in
 cyclog@*)
 	escape="--alt-escape --escape-instance"
 	;;
-ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|brltty-log|dhclient-log|dhcpcd-log|udhcpc-log|mixer-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log|system-installer-log) 
+ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|brltty-log|dhclient-log|dhcpcd-log|udhcpc-log|mixer-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log|system-installer-log|wlandebug-log) 
 	escape="--alt-escape --escape-prefix"
 	;;
 *)
@@ -82,7 +82,7 @@ cyclog@*)
 	etc=
 	after=
 	;;
-ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|brltty-log|dhclient-log|dhcpcd-log|udhcpc-log|mixer-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log|system-installer-log) 
+ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|brltty-log|dhclient-log|dhcpcd-log|udhcpc-log|mixer-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log|system-installer-log|wlandebug-log)
 	log=
 	etc=
 	after=
@@ -170,7 +170,7 @@ cyclog@*)
 devd-log|sysinit-log)
 	ln -f -s -- /var/log/sv/"${base%-log}" services.new/"${base}"/main
 	;;
-ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|brltty-log|dhclient-log|dhcpcd-log|udhcpc-log|mixer-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log|system-installer-log)
+ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|brltty-log|dhclient-log|dhcpcd-log|udhcpc-log|mixer-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log|system-installer-log|wlandebug-log)
 	ln -f -s -- /var/log/sv/"${base%-log}" services.new/"${base}"/main
 	;;
 esac

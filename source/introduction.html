@@ -63,6 +63,11 @@ As an optimization, eliminating the startup and teardown cost of the runtime lib
 There is no repeated building of things, over and over again at bootstrap time, that can be built <em>once</em> and then stored in the filesystem to be re-used without further ado.
 </p> </li>
 <li> <p> 
+<strong> Service run time is not the place for package management tasks. </strong> 
+If, for example, a package needs a dedicated user account for a service, the right way to do this is to allocate <em>once</em> it at package installation and deallocate it at package deinstallation.
+The wrong way is making the service allocate the ID and recursively update the ownerships and ACLs of files and directories, over and over again with every run of the service.
+</p> </li>
+<li> <p> 
 <strong> The primary foreign configuration formats are systemd units and BSD databases. </strong> 
 The world is already, independently, doing the work of replacing Linux "System 5" <code>rc</code> scripts, and has been since 2011.
 Nowadays, "other people's stuff" comes with systemd units.

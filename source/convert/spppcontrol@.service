@@ -13,4 +13,4 @@ EnvironmentDirectory=env
 ExecStart=%p "%I" ${args}
 
 [Install]
-WantedBy=workstation.target
+WantedBy=static-networking.target

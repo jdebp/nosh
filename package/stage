@@ -58,12 +58,12 @@ Linux)	extra_packages="logrotate-shims" ;;
 *BSD)	extra_packages="" ;;
 esac
 
-for i in exec terminal-management service-management terminal-extras zsh-completion systemv-shims systemd-shims upstart-shims execline-shims core-shims debian-shims bsd-shims openbsd-shims ucspi-tcp-shims kbd-shims ${extra_packages} ;
+for i in exec terminal-management service-management terminal-extras zsh-completion systemv-shims systemd-shims upstart-shims execline-shims core-shims debian-shims bsd-shims openbsd-shims freebsd-shims ucspi-tcp-shims kbd-shims ${extra_packages} ;
 do
 	if test -s package/nosh-"$i".commands1 || test -s package/nosh-"$i".aliases1 ;
 	then
-		install -d -m 0755 "${dest}"/nosh-"${i}"/"${binprefix}"/bin 
-		install -d -m 0755 "${dest}"/nosh-"${i}"/"${manprefix}"/man/man1 
+		install -d -m 0755 -- "${dest}"/nosh-"${i}"/"${binprefix}"/bin 
+		install -d -m 0755 -- "${dest}"/nosh-"${i}"/"${manprefix}"/man/man1 
 	fi
 	while read j ;
 	do
@@ -73,8 +73,8 @@ do
 
 	if test -s package/nosh-"$i".commands8 || test -s package/nosh-"$i".aliases8 ;
 	then
-		install -d -m 0755 "${dest}"/nosh-"${i}"/"${binprefix}"/sbin 
-		install -d -m 0755 "${dest}"/nosh-"${i}"/"${manprefix}"/man/man8 
+		install -d -m 0755 -- "${dest}"/nosh-"${i}"/"${binprefix}"/sbin 
+		install -d -m 0755 -- "${dest}"/nosh-"${i}"/"${manprefix}"/man/man8 
 	fi
 	while read j ;
 	do
@@ -94,8 +94,14 @@ do
 		ln -f -s "$c".8 "${dest}"/nosh-"${i}"/"${manprefix}"/man/man8/"$a".8 
 	done < package/nosh-"$i".aliases8 ;
 done
-ln -f -- "${src}"/manual/tcpserver.1 "${dest}"/nosh-ucspi-tcp-shims/"${manprefix}"/man/man1/ 
-ln -f -- "${src}"/manual/recordio.1 "${dest}"/nosh-ucspi-tcp-shims/"${manprefix}"/man/man1/ 
+for i in tcpserver recordio
+do
+        ln -f -- "${src}"/manual/"${i}".1 "${dest}"/nosh-ucspi-tcp-shims/"${manprefix}"/man/man1/ 
+done
+for i in chroot false setsid true ulimit umask unshare
+do
+        ln -f -- "${src}"/manual/"${i}".1 "${dest}"/nosh-core-shims/"${manprefix}"/man/man1/ 
+done
 if test -n "${split_os}"
 then
 	case "`uname`" in
@@ -108,8 +114,8 @@ then
 	do
 		ln -f -- "${dest}"/nosh-exec/bin/exec "${dest}"/nosh-exec/bin/"$j"
 	done
-	install -d -m 0755 "${dest}"/nosh-service-management/sbin 
-	install -d -m 0755 "${dest}"/nosh-service-management/bin 
+	install -d -m 0755 -- "${dest}"/nosh-service-management/sbin 
+	install -d -m 0755 -- "${dest}"/nosh-service-management/bin 
 	(cd "${dest}"/nosh-service-management/"${binprefix}"/ && pax -r -w ${link_across_usr} -- bin/cyclog bin/system-control sbin/system-manager "${absdest}"/nosh-service-management/)
 	for j in service-manager service-dt-scanner
 	do
@@ -118,10 +124,10 @@ then
 	install -d -m 0755 "${dest}"/nosh-terminal-management/bin 
 	(cd "${dest}"/nosh-terminal-management/"${binprefix}"/ && pax -r -w ${link_across_usr} -- bin/vc-get-tty "${absdest}"/nosh-terminal-management/)
 fi
-install -d -m 0755 "${dest}"/nosh-run-system-manager/
+install -d -m 0755 -- "${dest}"/nosh-run-system-manager/
 case "`uname`" in
 Linux)	
-	install -d -m 0755 "${dest}"/nosh-run-system-manager/sbin 
+	install -d -m 0755 -- "${dest}"/nosh-run-system-manager/sbin 
 	ln -f -s system-manager "${dest}"/nosh-run-system-manager/sbin/init
 	;;
 *BSD)	;;
@@ -131,17 +137,17 @@ esac
 # more doco
 for i in guide ;
 do
-	install -d -m 0755 "${dest}"/nosh-"${i}"/"${docprefix}"/doc/nosh 
+	install -d -m 0755 -- "${dest}"/nosh-"${i}"/"${docprefix}"/doc/nosh 
 	( cd "${src}"/guide && pax -r -w -l -- * "${absdest}"/nosh-"${i}"/"${docprefix}"/doc/nosh/ )
 done
 
 ##########################################################
 # bundles
-install -d -m 0755 "${dest}"/nosh-bundles/var/sv 
-install -d -m 0755 "${dest}"/nosh-bundles/var/local/sv 
-install -d -m 0755 "${dest}"/nosh-bundles/etc/service-bundles/services 
-install -d -m 0755 "${dest}"/nosh-bundles/etc/service-bundles/generators 
-install -d -m 0755 "${dest}"/nosh-bundles/etc/service-bundles/targets 
+install -d -m 0755 -- "${dest}"/nosh-bundles/var/sv 
+install -d -m 0755 -- "${dest}"/nosh-bundles/var/local/sv 
+install -d -m 0755 -- "${dest}"/nosh-bundles/etc/service-bundles/services 
+install -d -m 0755 -- "${dest}"/nosh-bundles/etc/service-bundles/generators 
+install -d -m 0755 -- "${dest}"/nosh-bundles/etc/service-bundles/targets 
 (
 	cat package/common-services package/common-sockets package/common-ttys 
 	case "`uname`" in
@@ -150,18 +156,22 @@ install -d -m 0755 "${dest}"/nosh-bundles/etc/service-bundles/targets
 	NetBSD)	cat package/bsd-services package/bsd-sockets package/netbsd-ttys ;;
 	*BSD)	cat package/bsd-services package/bsd-sockets package/bsd-ttys ;;
 	esac
-) | while read j ;
+) | while read -r j ;
 do
 	(cd "${src}"/config/services && pax -r -w -l -- "$j" cyclog@"$j" "${absdest}"/nosh-bundles/var/sv/)
+	rm -f -- "${dest}"/nosh-bundles/var/sv/"$j"/service/down
+	rm -f -- "${dest}"/nosh-bundles/var/sv/cyclog@"$j"/service/down
 done
-while read j ;
+while read -r j ;
 do
 	(cd "${src}"/config/targets && pax -r -w -l -- "$j" "${absdest}"/nosh-bundles/etc/service-bundles/targets/)
+	rm -f -- "${dest}"/nosh-bundles/etc/service-bundles/targets/"$j"/service/down
 done < package/standard-targets
-while read j ;
+while read -r j ;
 do
-	(cd "${src}"/config/services && pax -r -w -l -- mount@"$j" "${absdest}"/nosh-bundles/etc/service-bundles/services/)
-	(cd "${src}"/config/services && pax -r -w -l -- fsck@"$j" "${absdest}"/nosh-bundles/etc/service-bundles/services/)
+	(cd "${src}"/config/services && pax -r -w -l -- mount@"$j" fsck@"$j" "${absdest}"/nosh-bundles/etc/service-bundles/services/)
+	rm -f -- "${dest}"/nosh-bundles/etc/service-bundles/services/mount@"$j"/service/down
+	rm -f -- "${dest}"/nosh-bundles/etc/service-bundles/services/fsck@"$j"/service/down
 done < package/common-mounts
 (
 	cat package/common-service-aliases 
@@ -170,9 +180,20 @@ done < package/common-mounts
 	OpenBSD) cat package/openbsd-service-aliases ;;
 	*BSD) cat package/bsd-service-aliases ;;
 	esac
-) | while read service j ;
+) | while read -r service j ;
 do
 	(cd "${src}"/config/services && pax -r -w -l -- "$j" cyclog@"$j" "${absdest}"/nosh-bundles/var/sv/)
+done
+(
+	cat package/common-target-aliases 
+	case "`uname`" in
+	Linux) cat package/linux-target-aliases ;;
+	OpenBSD) cat package/openbsd-target-aliases ;;
+	*BSD) cat package/bsd-target-aliases ;;
+	esac
+) | while read -r service j ;
+do
+	(cd "${src}"/config/targets && pax -r -w -l -- "$j" "${absdest}"/nosh-bundles/etc/service-bundles/targets/)
 done
 (
 	cat package/common-etc-service-aliases 
@@ -180,7 +201,7 @@ done
 	Linux)	cat package/linux-etc-service-aliases ;;
 	*BSD)	cat package/bsd-etc-service-aliases ;;
 	esac
-) | while read service j ;
+) | while read -r service j ;
 do
 	(cd "${src}"/config/services && pax -r -w -l -- "$j" "${absdest}"/nosh-bundles/etc/service-bundles/services/)
 done
@@ -195,9 +216,10 @@ ln -f -s "${docprefix}"/doc/nosh/COPYING "${dest}"/nosh-bundles/etc/service-bund
 	Linux)	cat package/linux-etc-services ;;
 	*BSD)	cat package/bsd-etc-services ;;
 	esac
-) | while read j ;
+) | while read -r j ;
 do
 	(cd "${src}"/config/services && pax -r -w -l -- "$j" "${absdest}"/nosh-bundles/etc/service-bundles/services/)
+	rm -f -- "${dest}"/nosh-bundles/etc/service-bundles/services/"$j"/service/down
 done
 
 ##########################################################
@@ -206,12 +228,12 @@ for j in issue.vc
 do
 	(cd "${src}"/config/vt && pax -r -w -l -- "$j" "${absdest}"/nosh-bundles/etc/)
 done
-install -d -m 0755 "${dest}"/nosh-bundles/"${etcprefix}"/etc/devd 
+install -d -m 0755 -- "${dest}"/nosh-bundles/"${etcprefix}"/etc/devd 
 ( cd "${src}"/config && pax -r -w -l -- devd "${absdest}"/nosh-bundles/"${etcprefix}"/etc/)
 
 ##########################################################
 # completion
-install -d -m 0755 "${dest}"/nosh-zsh-completion/"${zshprefix}"/functions/Completion/Unix
+install -d -m 0755 -- "${dest}"/nosh-zsh-completion/"${zshprefix}"/functions/Completion/Unix
 for j in _nosh
 do
 	(cd "${src}"/config/zsh && pax -r -w -l -- "$j" "${absdest}"/nosh-zsh-completion/"${zshprefix}"/functions/Completion/Unix)
@@ -219,11 +241,11 @@ done
 
 ##########################################################
 # Running under foreign service management
-install -d -m 0755 "${dest}"/nosh-run-via-openbsd-rc/"${etcprefix}"/etc/rc.d 
-install -d -m 0755 "${dest}"/nosh-run-via-mewburn-rc/"${etcprefix}"/etc/rc.d 
-install -d -m 0755 "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system 
-install -d -m 0755 "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/tmpfiles.d 
-install -d -m 0755 "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system-preset 
+install -d -m 0755 -- "${dest}"/nosh-run-via-openbsd-rc/"${etcprefix}"/etc/rc.d 
+install -d -m 0755 -- "${dest}"/nosh-run-via-mewburn-rc/"${etcprefix}"/etc/rc.d 
+install -d -m 0755 -- "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system 
+install -d -m 0755 -- "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/tmpfiles.d 
+install -d -m 0755 -- "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system-preset 
 while read j ;
 do
 	ln -f -- "${src}"/config/systemd/"$j" "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system/
@@ -242,7 +264,7 @@ do
 done < package/openbsd-rc-scripts ;
 for i in bundles run-via-systemd run-via-mewburn-rc run-via-openbsd-rc run-debian-desktop-base run-debian-server-base run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base
 do
-	install -d -m 0755 "${dest}"/nosh-"${i}"/"${prsprefix}"/system-control/presets 
+	install -d -m 0755 -- "${dest}"/nosh-"${i}"/"${prsprefix}"/system-control/presets 
 	(
 	test \! -r package/common-nosh-$i-presets || cat package/common-nosh-"$i"-presets
 	case "`uname`" in
@@ -257,7 +279,7 @@ done
 
 ##########################################################
 # Conversion tools
-install -d -m 0755 "${dest}"/nosh-bundles/etc/system-control/convert 
+install -d -m 0755 -- "${dest}"/nosh-bundles/etc/system-control/convert 
 while read j ;
 do
 	ln -f -- "${src}"/config/convert/"$j" "${dest}"/nosh-bundles/etc/system-control/convert/

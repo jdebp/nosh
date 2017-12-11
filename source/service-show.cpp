@@ -345,9 +345,11 @@ service_show [[gnu::noreturn]] (
 			continue;
 		}
 		const Relations wants(get_relations(bundle_dir_fd.get(), "wants"));
+		const Relations expects(get_relations(bundle_dir_fd.get(), "expects"));
 		const Relations before(get_relations(bundle_dir_fd.get(), "before"));
 		const Relations after(get_relations(bundle_dir_fd.get(), "after"));
 		const Relations conflicts(get_relations(bundle_dir_fd.get(), "conflicts"));
+		const Relations requires(get_relations(bundle_dir_fd.get(), "requires"));
 		const Relations required_by(get_relations(bundle_dir_fd.get(), "required-by"));
 		const Relations wanted_by(get_relations(bundle_dir_fd.get(), "wanted-by"));
 		const Relations stopped_by(get_relations(bundle_dir_fd.get(), "stopped-by"));
@@ -432,11 +434,13 @@ service_show [[gnu::noreturn]] (
 		write_boolean_value("RemainAfterExit", run_on_empty);
 		write_boolean_value("ReadyAfterRun", ready_after_run);
 		write_string_array("Wants", wants);
+		write_string_array("Wanted-By", wanted_by);
 		write_string_array("Before", before);
 		write_string_array("After", after);
-		write_string_array("Conflicts", conflicts);
+		write_string_array("Expects", expects);
+		write_string_array("Requires", requires);
 		write_string_array("Required-By", required_by);
-		write_string_array("Wanted-By", wanted_by);
+		write_string_array("Conflicts", conflicts);
 		write_string_array("Stopped-By", stopped_by);
 		write_string_value("LogService", log_service.c_str());
 		write_section_end();

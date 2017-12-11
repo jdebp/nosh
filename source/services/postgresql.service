@@ -7,7 +7,7 @@ Description=PostgreSQL database server
 
 [Service]
 User=postgres
-ExecStart=/usr/lib/postgresql/bin/postmaster -D /var/lib/postgres/data
+ExecStart=/usr/lib/postgresql/bin/postmaster -D %S/postgres/data
 Restart=no
 # The Linux OOM Killer tends to pick on PostgreSQL because the main process has so much shared memory shared with its worker children.
 # This is not desirable in PostgreSQL shops; so we tell Linux not to account for 5/8 of its memory score.

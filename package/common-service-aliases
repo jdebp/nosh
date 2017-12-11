@@ -39,13 +39,14 @@ nfsd		rpcnfsd
 samba		samba-ad-dc
 smbd		smb
 sppp-log	spppcontrol-log
-systemd-logind	org.freedesktop.login1
 tcsd		trousers
 timedated	org.freedesktop.timedate1
 udisks		org.freedesktop.UDisks
+udisks2		org.freedesktop.UDisks2
 unbound	local-unbound
 unbound	local_unbound
 upower		org.freedesktop.UPower
+utx	linux-utmp
 winbindd		winbind
 wpa_supplicant	fi.epitest.hostap.WPASupplicant
 wpa_supplicant	fi.w1.wpa_supplicant1

@@ -35,6 +35,11 @@ const char *
 basename_of (
 	const char * s
 ) ;
+extern 
+std::string
+dirname_of (
+	const std::string & s
+) ;
 extern
 void
 exec_terminal (

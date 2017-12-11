@@ -16,7 +16,7 @@
 </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection><title>NOTE</title>
+<refsection><title>Note</title>
 
 <para>
 Most shells have a built-in <command>false</command> command.
@@ -28,12 +28,11 @@ This command is more commonly used with <citerefentry><refentrytitle>exec</refen
 
 <para>
 <command>false</command> is a utility that simply exits with a non-zero exit status.
-It ignores <arg rep='repeat'>args</arg>
+It ignores <arg rep='repeat'>args</arg> but supports the standard <arg choice='plain'>--help</arg> and <arg choice='plain'>--usage</arg> options.
 </para>
 
 <para>
-<command>false</command> will exit with a zero exit status if the standard
-<arg>--help</arg> or <arg>--usage</arg> options are used.
+<command>false</command> will exit with a zero exit status if the standard <arg choice='plain'>--help</arg> or <arg choice='plain'>--usage</arg> options are used.
 </para>
 
 <para>
@@ -43,12 +42,8 @@ Do not rely upon <command>false</command> using any particular non-zero value.
 </refsection><refsection><title>Security</title>
 
 <para>
-Some other external implementations of <command>false</command> are shell
-scripts that wrap a shell's built-in <command>false</command> command.
-This is a security problem, as significant care must be taken to ensure that
-the shell correctly deals with people who symbolically link the script to other
-names (such as <filename>-i</filename>), who supply extra script arguments,
-and who set environment variables such as <envar>IFS</envar>.
+Some other external implementations of <command>false</command> are shell scripts that wrap a shell's built-in <command>false</command> or <command>exit</command> command.
+This is a security problem, as significant care must be taken to ensure that the shell correctly deals with people who symbolically link the script to other names (such as <filename>-i</filename>), who supply extra script arguments, and who set environment variables such as <envar>IFS</envar>.
 </para>
 
 <para>

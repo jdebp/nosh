@@ -14,12 +14,14 @@
 <refname>reboot</refname>
 <refname>halt</refname>
 <refname>haltsys</refname>
+<refname>powercycle</refname>
 <refname>poweroff</refname>
 <refname>emergency</refname>
 <refname>rescue</refname>
 <refname>normal</refname>
 <refname>fastboot</refname>
 <refname>fasthalt</refname>
+<refname>fastpowercycle</refname>
 <refname>fastpoweroff</refname>
 <refname>service</refname>
 <refname>rcctl</refname>
@@ -112,6 +114,7 @@ Invoked as one of the system control commands <command>emergency</command>, <com
 </group>
 <arg choice="opt">--halt</arg>
 <arg choice="opt">--reboot</arg>
+<arg choice="opt">--powercycle</arg>
 <arg choice="opt">--poweroff</arg>
 </cmdsynopsis>
 <cmdsynopsis>
@@ -122,6 +125,18 @@ Invoked as one of the system control commands <command>emergency</command>, <com
 </group>
 <arg choice="opt">--halt</arg>
 <arg choice="opt">--reboot</arg>
+<arg choice="opt">--powercycle</arg>
+<arg choice="opt">--poweroff</arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>powercycle</command>
+<group choice="opt">
+<arg choice="plain">-f</arg>
+<arg choice="plain">--force</arg>
+</group>
+<arg choice="opt">--halt</arg>
+<arg choice="opt">--reboot</arg>
+<arg choice="opt">--powercycle</arg>
 <arg choice="opt">--poweroff</arg>
 </cmdsynopsis>
 <cmdsynopsis>
@@ -132,23 +147,24 @@ Invoked as one of the system control commands <command>emergency</command>, <com
 </group>
 <arg choice="opt">--halt</arg>
 <arg choice="opt">--reboot</arg>
+<arg choice="opt">--powercycle</arg>
 <arg choice="opt">--poweroff</arg>
 </cmdsynopsis>
 
 <para>
-Invoked as one of the system control commands <command>reboot</command>, <command>halt</command>, or <command>poweroff</command> it will normally chain to <citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry> with the <arg>-r</arg>, <arg>-h</arg>, or <arg>-p</arg> command-line option respectively.
+Invoked as one of the system control commands <command>reboot</command>, <command>halt</command>, <command>powercycle</command>, or <command>poweroff</command> it will normally chain to <citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry> with the <arg choice='plain'>-r</arg>, <arg choice='plain'>-h</arg>, or <arg choice='plain'>-p</arg> command-line option respectively.
 <citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry> is then responsible for issuing the relevant commands to the system manager.
-The <arg>--halt</arg>, <arg>--reboot</arg>, and <arg>--poweroff</arg> command-line options force which option is sent to <citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry>, for the benefits of system administrators who enjoy giving computers self-contradictory instructions like <command>reboot</command> <arg choice="plain">--halt</arg>.
+The <arg choice='plain'>--halt</arg>, <arg choice='plain'>--reboot</arg>, <arg choice='plain'>--powercycle</arg>, and <arg choice='plain'>--poweroff</arg> command-line options force which option is sent to <citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry>, for the benefits of system administrators who enjoy giving computers self-contradictory instructions like <command>reboot</command> <arg choice="plain">--halt</arg>.
 </para>
 
 <para>
-The <arg>--force</arg> command-line option specifies that the shutdown process should bypass service changes and enact the finalization action immediately.
-When it is used the command will instead chain to the <arg choice="req">reboot</arg>, <arg choice="req">halt</arg>, and <arg choice="req">poweroff</arg> subcommands of <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>, passing the <arg>--force</arg> command-line option through.
+The <arg choice='plain'>--force</arg> command-line option specifies that the shutdown process should bypass service changes and enact the finalization action immediately.
+When it is used the command will instead chain to the <arg choice="req">reboot</arg>, <arg choice="req">halt</arg>, <arg choice="req">powercycle</arg>, and <arg choice="req">poweroff</arg> subcommands of <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>, passing the <arg choice='plain'>--force</arg> command-line option through.
 This will also bypass whatever actions <citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry> would have taken, including writing warning messages to users and writing login accounting database entries.
 </para>
 
 <para>
-Invoked as one of the system control commands <command>fastboot</command>, <command>fasthalt</command>, or <command>fastpoweroff</command>, it will act as if invoked as <command>reboot</command>, <command>halt</command>, or <command>poweroff</command> with the <arg>--force</arg> command-line option.
+Invoked as one of the system control commands <command>fastboot</command>, <command>fasthalt</command>, <command>fastpowercycle</command>, or <command>fastpoweroff</command>, it will act as if invoked as <command>reboot</command>, <command>halt</command>, <command>powercycle</command>, or <command>poweroff</command> with the <arg choice='plain'>--force</arg> command-line option.
 </para>
 
 <para>

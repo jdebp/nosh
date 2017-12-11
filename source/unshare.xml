@@ -20,6 +20,8 @@
 <arg>--network</arg>
 <arg>--uts</arg>
 <arg>--ipc</arg>
+<arg>--process</arg>
+<arg>--user</arg>
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -72,6 +74,16 @@ The namespaces un-shared are controlled by command-line options as follows:
 <varlistentry>
 <term><arg>--IPC</arg></term>
 <listitem><para>The process switches to a private namespace of IPC names.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><arg>--process</arg></term>
+<listitem><para>The process switches to a private namespace of process IDs.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><arg>--user</arg></term>
+<listitem><para>The process switches to a private namespace of user IDs.</para></listitem>
 </varlistentry>
 
 </variablelist>

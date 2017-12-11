@@ -11,6 +11,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cerrno>
 #include <cctype>
 #include "utils.h"
+#include "fdutils.h"
 
 /* Main function ************************************************************
 // **************************************************************************
@@ -32,6 +33,30 @@ convert (
 	return r;
 }
 
+#if defined(__LINUX__) || defined(__linux__)
+#	define FD_PREFIX "/proc/self/fd/"
+#else
+#	define FD_PREFIX "/dev/fd/"
+#endif
+
+static inline
+void
+undo_open_exec_fd_bodge(
+	const char * name
+) {
+	const std::size_t l(std::strlen(name));
+	if (l < sizeof FD_PREFIX) return;	// It must have at least 1 digit character after the prefix.
+	if (0 != std::strncmp(name, FD_PREFIX, sizeof FD_PREFIX - 1)) return;
+	name += sizeof FD_PREFIX - 1;
+	int fd(0);
+	while (const int c = *name) {
+		if (!std::isdigit(c)) return;
+		fd = fd * 10 + (c - '0');
+		++name;
+	}
+	set_close_on_exec(fd, true);
+}
+
 void
 nosh ( 
 	const char * & next_prog,
@@ -49,6 +74,7 @@ nosh (
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "No arguments in script.");
 		throw EXIT_FAILURE;
 	}
+	undo_open_exec_fd_bodge(args[1]);
 	args = new_args;
 	next_prog = arg0_of(args);
 }

@@ -1,0 +1,27 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%p continuous integration server
+After=network.target
+
+[Service]
+# Installation needs to:
+# . Put JENKINS_HOME into the envdir.
+# . Put JAVA_ARGS, JENKINS_WAR, and JENKINS_ARGS into the envdir.
+EnvironmentDirectory=env
+RuntimeDirectory=%p
+RuntimeDirectoryMode=0700
+# The Linux OOM Killer tends to pick on Jenkins rather than the builds that it spawns.
+# This is not desirable; so we tell Linux not to account for 1/8 of its memory score.
+OOMScoreAdjust=-125
+# From experience, modern Jenkins requires a 1.8 JVM.
+JVMVersions=1.8
+# http://github.com/jenkinsci/jenkins/commit/2fb288474e980d0e7ff9c4a3b768874835a3e92e
+LimitNOFILE=8192
+User=%p
+ExecStart=setenv JENKINS_HOME "${JENKINS_HOME:-%S/%p}" "${JAVA_HOME}/bin/java" ${JAVA_ARGS:--Djava.awt.headless=true} -jar "${JENKINS_WAR:-/usr/share/%p/%p.war}" ${JENKINS_ARGS:---webroot="%C/%p/war" --httpPort="${HTTP_PORT:-8080}"}
+
+[Install]
+WantedBy=server.target

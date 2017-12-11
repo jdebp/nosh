@@ -12,17 +12,18 @@
 
 <refsynopsisdiv>
 <cmdsynopsis>
-<command>fdmove</command> <arg>--copy</arg> <arg choice='req'><replaceable>to</replaceable></arg> <arg choice='req'><replaceable>from</replaceable></arg> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+<command>fdmove</command>
+<arg>--copy</arg>
+<arg choice='req'><replaceable>to</replaceable></arg>
+<arg choice='req'><replaceable>from</replaceable></arg>
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection><title>Description</title>
 
 <para>
-<command>fdmove</command> is a chain-loading utility that duplicates the (open) file descriptor 
-<replaceable>from</replaceable> to the descriptor <replaceable>to</replaceable>, closes <replaceable>from</replaceable> unless the <arg>--copy</arg> command
-line option is used,
-and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+<command>fdmove</command> is a chain-loading utility that duplicates the (open) file descriptor <replaceable>from</replaceable> to the descriptor <replaceable>to</replaceable>, closes <replaceable>from</replaceable> unless the <arg choice='plain'>--copy</arg> command line option is used, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
 </para>
 
 <para>
