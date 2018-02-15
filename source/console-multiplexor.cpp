@@ -361,6 +361,11 @@ console_multiplexor [[gnu::noreturn]] (
 		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dirname, "input", std::strerror(error));
 		throw EXIT_FAILURE;
 	}
+	if (0 > fchown(input.get(), -1, getegid())) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dirname, "input", std::strerror(error));
+		throw EXIT_FAILURE;
+	}
 	// We have to keep a client (write) end descriptor open to the input FIFO.
 	// Otherwise, the first console client process triggers POLLHUP when it closes its end.
 	// Opening the FIFO for read+write isn't standard, although it would work on Linux.
@@ -372,6 +377,11 @@ console_multiplexor [[gnu::noreturn]] (
 	}
 	FileDescriptorOwner buffer_fd(open_writecreate_at(dir_fd.get(), "display", 0640));
 	if (0 > buffer_fd.get()) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dirname, "display", std::strerror(error));
+		throw EXIT_FAILURE;
+	}
+	if (0 > fchown(buffer_fd.get(), -1, getegid())) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, dirname, "display", std::strerror(error));
 		throw EXIT_FAILURE;

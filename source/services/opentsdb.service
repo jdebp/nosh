@@ -14,12 +14,13 @@ JVMVersions=1.6 1.7 1.8
 EnvironmentDirectory=env
 User=%p
 LimitNOFILE=65536
+MachineEnvironment=true
 # Note that
 # -XX:OnOutOfMemoryError=/usr/local/share/%p/tools/%p_restart.py
 # is incorrectly designed for running under service management.
 # Not only does the service manager handle restart, so all that the java program need do is exit when it encounters this condition;
 # but the service does not run as the superuser and could not manage itself anyway.
-ExecStart="${JAVA_HOME}/bin/java" ${JAVA_OPTS} -Xmx6000 -classpath "${CLASSPATH}:${HBASE_CONF}" -enableassertions -enablesystemassertions ${BIGTABLE_SUPPORT} -DLOG_FILE_PREFIX=/var/log/%p/%m- net.%p.tools.TSDMain
+ExecStart="${JAVA_HOME}/bin/java" ${JAVA_OPTS} -Xmx6000 -classpath "${CLASSPATH}:${HBASE_CONF}" -enableassertions -enablesystemassertions ${BIGTABLE_SUPPORT} -DLOG_FILE_PREFIX=/var/log/%p/"${MACHINEID}"- net.%p.tools.TSDMain
 PermissionsStartOnly=yes
 ExecStartPre=install -d -m 0755 -o %p /var/log/%p
 

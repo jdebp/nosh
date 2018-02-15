@@ -509,6 +509,7 @@ The <command>isolate</command> subcommand exists for compatibility, and is equiv
 <arg choice='opt'>--prefix <replaceable>prefix</replaceable></arg> 
 <arg choice='opt'>--no-system</arg> 
 <arg choice='opt'>--no-rcconf</arg> 
+<arg choice='opt'>--rcconf-file <replaceable>filename</replaceable></arg> 
 <arg choice='opt'>--ttys</arg> 
 <arg choice='opt'>--dry-run</arg> 
 <arg rep='repeat'><replaceable>names</replaceable></arg>
@@ -543,8 +544,7 @@ Preset information can be taken from one of several sources:
 </para>
 <itemizedlist>
 <listitem><para>
-(unless the <arg choice="plain">--no-system</arg> command line option is set)
-systemd and system-manager preset information given in <filename>*.preset</filename> files.
+(unless the <arg choice="plain">--no-system</arg> command line option is set) systemd and system-manager preset information given in <filename>*.preset</filename> files.
 There are different sets of files for per-user and system-wide service management.
 </para>
 <itemizedlist>
@@ -586,7 +586,10 @@ As with systemd, earlier preset directories override later ones; the contents of
 Directives are matched against <replaceable>prefix</replaceable><replaceable>name</replaceable>.
 </para></listitem>
 <listitem><para>
-(unless the <arg choice="plain">--no-rcconf</arg> command line option is set) <filename>/etc/defaults/rc.conf</filename>, <filename>/etc/rc.conf</filename>, and <filename>/etc/rc.conf.local</filename> preset information, specifically the <envar><replaceable>name</replaceable>_enable</envar> variable, interpreting the values <code>true</code>, <code>1</code>, <code>yes</code>, and <code>on</code> as enable, and any other values (including specifically <code>false</code>, <code>0</code>, <code>no</code>, and <code>off</code>) as disable.
+(unless the <arg choice="plain">--no-rcconf</arg> command line option is set) <citerefentry><refentrytitle>rc.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> preset information, specifically the <envar><replaceable>name</replaceable>_enable</envar> variable, interpreting the values <code>true</code>, <code>1</code>, <code>yes</code>, and <code>on</code> as enable, and any other values (including specifically <code>false</code>, <code>0</code>, <code>no</code>, and <code>off</code>) as disable.
+<para>
+</para>
+By default the <filename>/etc/defaults/rc.conf</filename>, <filename>/etc/rc.conf</filename>, and <filename>/etc/rc.conf.local</filename> files are used, but the <arg choice="plain">--rcconf-file</arg> command line option overrides that list with the single replacement file <replaceable>filename</replaceable>.
 </para>
 <para>
 The variable names are matched against just <replaceable>name</replaceable> to allow one to use a main service name as <replaceable>name</replaceable> and combine it with a log service template <replaceable>prefix</replaceable> such as <code>cyclog@</code> or <code>s6-multilog@</code>, on the grounds that traditional <filename>/etc/defaults/rc.conf</filename>, <filename>/etc/rc.conf</filename>, and <filename>/etc/rc.conf.local</filename> contents do not make explicit provision for separate logging services.
@@ -1591,10 +1594,22 @@ This is so that they order relative to it if the target is brought in but do not
 <listitem><para>
 This target is not a collection.
 It is solely an ordering milestone, that is brought in only when the services that want to order before it are themselves brought in.
-It exists because some name/address services lookup clients cannot be caused via the client-server communications mechanism itself to block indefinitely until the server is ready; and so have to have an explicit ordering to order them before any respective servers.
+It exists because some name/address services lookup clients cannot be caused via the client-server communications mechanism itself to block indefinitely until the server is ready; and so have to have an explicit ordering to order them after any respective servers.
 One lists <filename>name-services</filename> in the <filename>after/</filename> list of a service or target to ensure that it is only brought up after such name/address lookup services are available.
 By not including it in their <filename>wants/</filename> lists, however, they do not themselves being it in if there are no name/address lookup services that require hard ordering.
 All services that are involved in providing local name/address lookup services should be listed in its <filename>after/</filename> and its <filename>wants/</filename> lists.
+</para></listitem>
+</varlistentry>
+
+<varlistentry><term><filename>databases</filename></term>
+<listitem><para>
+This "database servers" target is not a collection; its <filename>wants/</filename> list should be empty.
+It is solely an ordering milestone, that is brought in only when the services that want to order after it are themselves brought in.
+It exists because some database clients cannot be caused via the client-server communications mechanism itself to block indefinitely until the server is ready; and so have to have an explicit ordering to order them after any respective servers.
+One lists <filename>databases</filename> in the <filename>wants/</filename> and <filename>after/</filename> lists of a service or target.
+The former ensures that they themselves bring it in if there are database services that require hard ordering.
+The latter ensures that they are only brought up after such database services are available.
+All services that are involved in providing database services should list it in their <filename>before/</filename> lists.
 </para></listitem>
 </varlistentry>
 

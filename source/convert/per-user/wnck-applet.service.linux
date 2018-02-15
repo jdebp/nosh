@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=MATE Wncklet Factory for %u
+
+[Service]
+Type=dbus
+# The fact that the MATE Wncklet Factory server requires an X display at startup is a bug.
+EnvironmentDirectory=../../../common/env
+EnvironmentDirectory=env
+ExecStart=/usr/lib/mate-panel/%p
+Restart=no
+
+[Install]

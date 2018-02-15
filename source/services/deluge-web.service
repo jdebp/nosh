@@ -9,7 +9,6 @@ Description=Deluge BitTorrent client
 # FIXME: Is this really needed?
 systemdUserEnvironment=true
 User=deluge
-Group=deluge
 Umask=037
 ExecStart=%p
 

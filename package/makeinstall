@@ -11,6 +11,8 @@ then
 	exit 100
 fi
 
+export CDPATH=
+
 # Atomically update the release directories ./command, ./library, ./include, and so forth.
 # The build and release directories need not be on the same disc volume.
 # And the files released must not be potentially overwritable and truncatable by the compiler/linker during subsequent builds.
@@ -19,7 +21,8 @@ install -d -m 0755 command manual config guide guide/services
 
 # ##############################################################################
 # Build all of the ...{new} files in ./command and ./manual.
-cat package/commands1 package/commands8 | while read i
+cat package/commands1 package/commands8 |
+while read -r i
 do
 	rm -f -- command/"$i"{new}
 	if objdump -f build/"$i" >/dev/null 2>&1
@@ -31,56 +34,57 @@ do
 		install -m 0555 -p -- build/"$i" command/"$i"{new}
 	fi
 done
-cat package/aliases1 package/aliases8 | while read command alias
+cat package/aliases1 package/aliases8 |
+while read -r command alias
 do
 	rm -f -- command/"${alias}"{new}
 	ln -f -- command/"${command}"{new} command/"${alias}"{new}
 done
 # All of the commands that have their own manual pages
 cat package/commands1 package/extra-manpages1 | 
-while read i
+while read -r i
 do
 	rm -f -- manual/"$i".1{new}
 	install -m 0444 -p -- build/"$i".1 manual/"$i".1{new}
 done
 # All of the commands that have their own manual pages
 cat package/commands8 package/extra-manpages8 | 
-while read i
+while read -r i
 do
 	rm -f -- manual/"$i".8{new}
 	install -m 0444 -p -- build/"$i".8 manual/"$i".8{new}
 done
 # Aliased manual pages
 cat package/aliases1 | 
-while read command alias
+while read -r command alias
 do
 	grep -q -- "^${alias}\$" package/commands1 package/extra-manpages1 && continue
 	ln -f -s -- "${command}".1 manual/"${alias}".1{new}
 done
 # Aliased manual pages
 cat package/aliases8 | 
-while read command alias
+while read -r command alias
 do
 	grep -q -- "^${alias}\$" package/commands8 package/extra-manpages8 && continue
 	ln -f -s -- "${command}".8 manual/"${alias}".8{new}
 done
 # All of the commands that have their own guide pages
 cat package/guidepages package/commands1 package/extra-manpages1 package/commands8 package/extra-manpages8 | 
-while read i
+while read -r i
 do
 	rm -f -- guide/"$i".html{new}
 	install -m 0444 -p -- build/"$i".html guide/"$i".html{new}
 done
 # Aliased guide pages
 cat package/aliases1 | 
-while read command alias
+while read -r command alias
 do
 	grep -q -- "^${alias}\$" package/commands1 package/extra-manpages1 && continue
 	ln -f -s -- "${command}".html guide/"${alias}".html{new}
 done
 # Aliased guide pages
 cat package/aliases8 | 
-while read command alias
+while read -r command alias
 do
 	grep -q -- "^${alias}\$" package/commands8 package/extra-manpages8 && continue
 	ln -f -s -- "${command}".html guide/"${alias}".html{new}
@@ -97,52 +101,53 @@ done
 (
 	cat package/commands1 package/commands8 
 	awk '{print $2;}' package/aliases1 package/aliases8 
-) | while read i
+) |
+while read -r i
 do
 	mv -f -- command/"$i"{new} command/"$i"
 done
 # All of the commands that have their own manual pages
 cat package/commands1 package/extra-manpages1 | 
-while read i
+while read -r i
 do
 	mv -f -- manual/"$i".1{new} manual/"$i".1
 done
 # All of the commands that have their own manual pages
 cat package/commands8 package/extra-manpages8 | 
-while read i
+while read -r i
 do
 	mv -f -- manual/"$i".8{new} manual/"$i".8
 done
 # Aliased manual pages
 cat package/aliases1 | 
-while read command alias
+while read -r command alias
 do
 	grep -q -- "^${alias}\$" package/commands1 package/extra-manpages1 && continue
 	mv -f -- manual/"${alias}".1{new} manual/"${alias}".1
 done
 # Aliased manual pages
 cat package/aliases8 | 
-while read command alias
+while read -r command alias
 do
 	grep -q -- "^${alias}\$" package/commands8 package/extra-manpages8 && continue
 	mv -f -- manual/"${alias}".8{new} manual/"${alias}".8
 done
 # All of the commands that have their own guide pages
 cat package/guidepages package/commands1 package/extra-manpages1 package/commands8 package/extra-manpages8 | 
-while read i
+while read -r i
 do
 	mv -f -- guide/"$i".html{new} guide/"$i".html
 done
 # Aliased guide pages
 cat package/aliases1 | 
-while read command alias
+while read -r command alias
 do
 	grep -q -- "^${alias}\$" package/commands1 package/extra-manpages1 && continue
 	mv -f -- guide/"${alias}".html{new} guide/"${alias}".html
 done
 # Aliased guide pages
 cat package/aliases8 | 
-while read command alias
+while read -r command alias
 do
 	grep -q -- "^${alias}\$" package/commands8 package/extra-manpages8 && continue
 	mv -f -- guide/"${alias}".html{new} guide/"${alias}".html
@@ -157,11 +162,11 @@ done
 # Build all of the {new} directories in ./config.
 rm -rf -- config/targets{new} config/services{new}
 install -d -m 0755 config/targets{new} config/services{new}
-while read i
+while read -r i
 do
 	( cd build/targets/ && pax -r -w $i ../../config/targets{new}/ )
 done < package/standard-targets
-while read i
+while read -r i
 do
 	( cd build/services/ && pax -r -w mount@$i fsck@$i ../../config/services{new}/ )
 done < package/common-mounts
@@ -171,7 +176,8 @@ done < package/common-mounts
 	Linux)	cat package/linux-etc-services ;;
 	*BSD)	cat package/bsd-etc-services ;;
 	esac
-) | while read i
+) |
+while read -r i
 do
 	( cd build/services/ && pax -r -w $i ../../config/services{new}/ )
 done
@@ -183,7 +189,8 @@ done
 	NetBSD)	cat package/bsd-services package/bsd-sockets package/netbsd-ttys ;;
 	*BSD)	cat package/bsd-services package/bsd-sockets package/bsd-ttys ;;
 	esac
-) | while read i
+) |
+while read -r i
 do
 	( cd build/services/ && pax -r -w $i cyclog@$i ../../config/services{new}/ )
 done
@@ -194,7 +201,8 @@ done
 	OpenBSD) cat package/openbsd-service-aliases ;;
 	*BSD) cat package/bsd-service-aliases ;;
 	esac
-) | while read service alias
+) |
+while read -r service alias
 do
 	ln -s "${service}" config/services{new}/"${alias}"
 	ln -s cyclog@"${service}" config/services{new}/cyclog@"${alias}"
@@ -206,7 +214,8 @@ done
 	OpenBSD) cat package/openbsd-target-aliases ;;
 	*BSD) cat package/bsd-target-aliases ;;
 	esac
-) | while read service alias
+) |
+while read -r service alias
 do
 	ln -s "${service}" config/targets{new}/"${alias}"
 done
@@ -216,18 +225,26 @@ done
 	Linux)	cat package/linux-etc-service-aliases ;;
 	*BSD)	cat package/bsd-etc-service-aliases ;;
 	esac
-) | while read service alias
+) |
+while read -r service alias
 do
 	ln -s "${service}" config/services{new}/"${alias}"
 done
 
 # ##############################################################################
 # Build all of the {new} files in ./config.
-install -d -m 0755 config/presets config/systemd config/convert config/mewburn-rc.d config/openbsd-rc.d config/vt config/devd config/zsh config/service-generators
+install -d -m 0755 config/presets config/systemd config/convert config/convert/kbdmaps config/convert/per-user config/convert/per-user/dbus config/mewburn-rc.d config/openbsd-rc.d config/vt config/devd config/zsh config/service-generators
 cat package/systemd-services package/tmpfiles-snippets |
-while read i
+while read -r i
 do
 	rm -f -- config/systemd/"$i"{new}
+	install -m 0444 -p -- build/systemd/"$i" config/systemd/"$i"{new}
+done
+cat package/systemd-overrides |
+while read -r i
+do
+	rm -f -- config/systemd/"$i"{new}
+	install -d -m 0755 config/systemd/"`dirname "$i"`"
 	install -m 0444 -p -- build/systemd/"$i" config/systemd/"$i"{new}
 done
 (
@@ -242,17 +259,17 @@ do
 	rm -f -- config/presets/"$i"{new}
 	install -m 0444 -p -- build/presets/"$i" config/presets/"$i"{new}
 done
-while read i
+while read -r i
 do
 	rm -f -- config/mewburn-rc.d/"$i"{new}
 	install -m 0555 -p -- build/mewburn-rc.d/"$i" config/mewburn-rc.d/"$i"{new}
 done < package/mewburn-rc-scripts
-while read i
+while read -r i
 do
 	rm -f -- config/openbsd-rc.d/"$i"{new}
 	install -m 0555 -p -- build/openbsd-rc.d/"$i" config/openbsd-rc.d/"$i"{new}
 done < package/openbsd-rc-scripts
-while read i
+while read -r i
 do
 	rm -f -- config/convert/"$i"{new}
 	case "$i" in
@@ -281,7 +298,7 @@ do
 done 
 # Plug and Play manager rulesets
 cat package/devd-rules |
-while read i
+while read -r i
 do
 	rm -f -- config/devd/"$i".conf{new}
 	install -m 0444 -p -- build/devd/"$i".conf config/devd/"$i".conf{new}
@@ -289,12 +306,16 @@ done
 
 # ##############################################################################
 # Rename the ...{new} directories and files in ./config.
-(
-cat package/systemd-services package/tmpfiles-snippets
-) | while read i
+cat package/systemd-services package/tmpfiles-snippets |
+while read -r i
 do
 	mv -f -- config/systemd/"$i"{new} config/systemd/"$i"
 done 
+cat package/systemd-overrides |
+while read -r i
+do
+	mv -f -- config/systemd/"$i"{new} config/systemd/"$i"
+done
 (
 for i in bundles run-via-systemd run-via-mewburn-rc run-via-openbsd-rc run-debian-desktop-base run-debian-server-base run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base
 do
@@ -306,15 +327,15 @@ done
 do
 	mv -f -- config/presets/"$i"{new} config/presets/"$i"
 done 
-while read i
+while read -r i
 do
 	mv -f -- config/mewburn-rc.d/"$i"{new} config/mewburn-rc.d/"$i"
 done < package/mewburn-rc-scripts
-while read i
+while read -r i
 do
 	mv -f -- config/openbsd-rc.d/"$i"{new} config/openbsd-rc.d/"$i"
 done < package/openbsd-rc-scripts
-while read i
+while read -r i
 do
 	mv -f -- config/convert/"$i"{new} config/convert/"$i"
 done < package/conversion-tools
@@ -338,7 +359,7 @@ do
 done 
 # Plug and Play manager rulesets
 cat package/devd-rules |
-while read i
+while read -r i
 do
 	mv -f -- config/devd/"$i".conf{new} config/devd/"$i".conf
 done

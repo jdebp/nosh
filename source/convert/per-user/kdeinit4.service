@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=KDE init 4 for %u
+
+[Service]
+Type=dbus
+# The fact that the KDE Launcher server requires an X display at startup is a bug.
+EnvironmentDirectory=../../../common/env
+EnvironmentDirectory=env
+ExecStart=%p --no-fork --no-kded
+Restart=on-abort
+
+[Install]

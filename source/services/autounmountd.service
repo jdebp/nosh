@@ -4,7 +4,7 @@
 
 [Unit]
 Description=Repeatedly try to unmount automounted filesystems
-After=nfsclient.service
+After=nfsclient.service automountd.service
 
 [Service]
 EnvironmentDirectory=env

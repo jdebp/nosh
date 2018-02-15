@@ -79,7 +79,7 @@ is_swap_type (
 	const char * fstype
 ) {
 	return 
-		0 != std::strcmp(fstype, "swap")
+		0 == std::strcmp(fstype, "swap")
 	;
 }
 #endif

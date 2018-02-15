@@ -30,10 +30,16 @@ fan_in_logger() {
 target() {
 	:
 }
-log_user() {
+logfile_owning_user() {
 	:
 }
-non_log_user() {
+non_file_owning_user() {
+	:
+}
+user_vt_user() {
+	:
+}
+user_vt_group() {
 	:
 }
 user_tty() {

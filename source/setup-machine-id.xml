@@ -84,7 +84,7 @@ Thus, if the file <filename>/etc/machine-id</filename> is deleted but the system
 <command>setup-machine-id</command> can restore the existing machine ID from volatile storage.
 </para></listitem>
 <listitem><para>
-It will attempt to read the UUID from various older locations, such as the D-Bus machine ID files and (on BSD systems) the <filename>/etc/hostid</filename> file.
+It will attempt to read the UUID from various older locations, such as the D-Bus machine ID files and (on BSD systems) the <filename>/etc/hostid</filename> and <filename>/usr/local/etc/machine_id</filename> files.
 Thus, if the file <filename>/etc/machine-id</filename> has not yet been created but the system has machine IDs from older mechanisms, <command>setup-machine-id</command> will attempt to retain the machine IDs from those mechanisms.
 </para></listitem>
 <listitem><para>
@@ -127,7 +127,10 @@ BSD systems expect the machine ID to be stored in the <code>kern.hostuuid</code>
 
 </refsection>
 
-</refsection><refsection><title>Compatibility</title>
+</refsection>
+<refsection><title>Compatibility</title>
+
+<refsection><title>Machine IDs</title>
 
 <para>
 The <filename>/etc/machine-id</filename> file is compatible with systemd.
@@ -135,6 +138,14 @@ It is also compatible with D-Bus.
 D-Bus looks for files named <filename>/var/lib/dbus/machine-id</filename> or <filename>/var/db/dbus/machine-id</filename>, which can just be symbolic links to <filename>/etc/machine-id</filename>.
 (Symbolic links the other way around would break if <filename>/var</filename> or one of its subdirectories is not mounted, as can be the case at the point that <command>setup-machine-id</command> is run during system bootstrap.)
 </para>
+
+<para>
+On FreeBSD/TrueOS systems <command>setup-machine-id</command> will additionally write the machine ID to <filename>/usr/local/etc/machine-id</filename>, creating or truncating the file, for compatibility with some ports that look there rather than at <filename>/etc/machine-id</filename>.
+It will also write the machine ID as a human-readable-form UUID to <filename>/etc/hostid</filename> and <filename>/run/hostid</filename>.
+</para>
+
+</refsection>
+<refsection><title>Host IDs</title>
 
 <para>
 An older unique ID for machines is the host ID, as queried and set by the <citerefentry><refentrytitle>gethostid</refentrytitle><manvolnum>3</manvolnum></citerefentry> and <citerefentry><refentrytitle>sethostid</refentrytitle><manvolnum>3</manvolnum></citerefentry> library functions.
@@ -159,8 +170,14 @@ If <filename>/etc/hostid</filename> is unwritable, and if bind mounting is avail
 <listitem><para>
 The BSD C library expects the host ID to be stored in the <code>kern.hostid</code> variable (see <citerefentry><refentrytitle>sysctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>), so it is written there.
 </para></listitem>
+<listitem><para>
+The BSD C library expects the host ID to be stored in the <code>kern.hostid</code> variable (see <citerefentry><refentrytitle>sysctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>), so it is written there.
+</para></listitem>
 </itemizedlist>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection>
+
+</refsection>
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
 
 </refentry>

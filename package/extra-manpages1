@@ -40,6 +40,7 @@ login-prompt
 login-update-utmpx
 machineenv
 make-private-fs
+make-read-only-fs
 monitor-fsck-progress
 monitored-fsck
 move-to-control-group

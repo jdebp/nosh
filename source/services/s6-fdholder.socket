@@ -6,7 +6,7 @@
 Description=s6 fd holder socket
 
 [Socket]
-ListenStream=/run/%p
+ListenStream=%t/%p
 SocketMode=0666
 
 [Install]

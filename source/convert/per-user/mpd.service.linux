@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Music Player daemon run by %u
+
+[Service]
+RuntimeDirectory=%p
+ExecStart=%p --no-daemon --stderr --stdout --verbose ./%p.conf
+
+[Install]
+WantedBy=normal.target

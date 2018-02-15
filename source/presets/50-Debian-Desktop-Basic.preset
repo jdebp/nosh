@@ -3,7 +3,7 @@
 #
 # This is not a systemd preset.
 # It goes in a special nosh system-manager preset directory.
-# It is used by the nosh-run-trueos-desktop-basic package in order to enable the services themselves.
+# It is used by the nosh-run-debian-desktop-basic package in order to enable the services themselves.
 #
 
 #
@@ -35,6 +35,8 @@ disable	cyclog@org.cups.cupsd.service
 disable	org.cups.cupsd.service
 enable	cyclog@dbus-daemon.service
 enable	dbus-daemon.service
+enable	cyclog@dbus.service
+enable	dbus.service
 disable	cyclog@dbus-broker.service
 disable	dbus-broker.service
 disable	cyclog@hald.service

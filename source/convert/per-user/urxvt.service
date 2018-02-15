@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=RXVT (Unicode) as a server for %u
+
+[Service]
+LocalReaper=true
+RuntimeDirectory=%p
+RuntimeDirectoryMode=0700
+EnvironmentDirectory=env
+ExecStart=%pd
+
+[Install]
+WantedBy=normal.target

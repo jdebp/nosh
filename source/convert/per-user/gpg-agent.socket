@@ -1,0 +1,19 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=GnuPG cryptographic agent and passphrase cache sockets for %u
+
+[Socket]
+ListenStream=%t/gnupg/S.%p
+FileDescriptorName=std
+ListenStream=%t/gnupg/S.%p.extra
+FileDescriptorName=extra
+ListenStream=%t/gnupg/S.%p.browser
+FileDescriptorName=browser
+ListenStream=%t/gnupg/S.%p.ssh
+FileDescriptorName=ssh
+SocketMode=0600
+
+[Install]

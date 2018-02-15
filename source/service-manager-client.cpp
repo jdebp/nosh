@@ -12,6 +12,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sys/types.h>
 #include <unistd.h>
 #include "fdutils.h"
+#include "FileDescriptorOwner.h"
 #include "service-manager-client.h"
 #include "service-manager.h"
 
@@ -138,19 +139,17 @@ send_control_command (
 	int supervise_dir_fd,
 	char command
 ) {
-	const int control_fd(open_writeexisting_at(supervise_dir_fd, "control"));
-	if (0 > control_fd) return -1;
+	const FileDescriptorOwner control_fd(open_writeexisting_at(supervise_dir_fd, "control"));
+	if (0 > control_fd.get()) return -1;
 	while (true) {
-		const int n(write(control_fd, &command, 1));
+		const int n(write(control_fd.get(), &command, 1));
 		if (0 > n) {
 			const int error(errno);
 			if (EINTR == error) continue;
-			close(control_fd);
 			return -1;
 		}
 		break;
 	}
-	close(control_fd);
 	return 0;
 }
 

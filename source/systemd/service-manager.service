@@ -6,7 +6,8 @@
 Description=Service manager
 
 [Service]
-ExecStart=/bin/exec move-to-control-group systemd.slice service-manager
+SyslogIdentifier=%p
+ExecStart=/bin/exec move-to-control-group systemd.slice %p
 TimeoutSec=10
 # systemd's default file handle limit of 1024 is far too low for normal usage patterns.
 LimitNOFILE=16384

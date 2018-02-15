@@ -7,7 +7,7 @@ Description=syslog socket used by local clients to talk to syslog daemons on Fre
 Before=local-syslog.target
 
 [Socket]
-ListenDatagram=/run/log
+ListenDatagram=%t/log
 SocketMode=0666
 PassCredentials=yes
 PassSecurity=yes

@@ -7,7 +7,7 @@ Description=Clam anti-virus socket
 
 [Socket]
 Backlog=2
-MaxConnections=2
+#MaxConnections=2
 ListenStream=%t/%p/clamd.ctl
 SocketUser=%p
 SocketGroup=%p

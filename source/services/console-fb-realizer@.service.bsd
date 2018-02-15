@@ -12,10 +12,11 @@ PermissionsStartOnly=yes
 EnvironmentDirectory=env/
 SessionLeader=yes
 User=daemon
+Group=user-vt-realizer
 ExecStartPre=detach-kernel-usb-driver ${DETACHED_UGEN_DEVICES}
 ExecRestartPre=detach-kernel-usb-driver ${DETACHED_UGEN_DEVICES}
-ExecStartPre=sh -c 'for d in ${OWNED_DEVICES} ; do test -n "$d" && test -c "$d" && chown daemon:tty "$d" ; done'
-ExecRestartPre=sh -c 'for d in ${OWNED_DEVICES} ; do test -n "$d" && test -c "$d" && chown daemon:tty "$d" ; done'
+ExecStartPre=sh -c 'for d in ${OWNED_DEVICES} ; do test -n "$d" && test -c "$d" && chown :daemon "$d" ; done'
+ExecRestartPre=sh -c 'for d in ${OWNED_DEVICES} ; do test -n "$d" && test -c "$d" && chown :daemon "$d" ; done'
 ExecStart=vc-get-tty "${KERNEL_VT}" %p ${FONTS} ${FLAGS} --kernel-vt ${INPUTS} ${KBDMAP:+--keyboard-map "${KBDMAP}"} /run/dev/%I/
 
 [Install]

@@ -1,7 +1,15 @@
-# Common pre-upgrade for Debian
+# Maintainer script main for Debian
 case "$1" in
+	# The package is about to be installed over version $2 .
+	install)
+		pre_install_funcs
+		pre_install_extra "$@"
+		common
+		;;
+	# The package is about to be upgraded from version $2 to this version.
 	upgrade)
-		extra
-                common
+		pre_upgrade_funcs
+		pre_upgrade_extra "$@"
+		common
 		;;
 esac

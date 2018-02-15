@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=MATE Notification Area Factory for %u
+
+[Service]
+Type=dbus
+# The fact that the MATE Notification Area Factory server requires an X display at startup is a bug.
+EnvironmentDirectory=../../../common/env
+EnvironmentDirectory=env
+ExecStart=/usr/local/libexec/%p
+Restart=no
+
+[Install]

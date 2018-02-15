@@ -5,6 +5,7 @@
 [Unit]
 Description=Bernstein's proxy DNS server daemon, modified to use systemd LISTEN_FDS protocol
 After=network-interfaces.service entropy.service
+Before=name-services.target
 
 [Service]
 EnvironmentDirectory=env

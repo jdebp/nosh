@@ -1,0 +1,12 @@
+#
+# Enable RealtimeKit services
+#
+# This is not a systemd preset.
+# It goes in a special nosh system-manager preset directory.
+# It is used by the nosh-run-freedesktop-kits package in order to enable the services themselves.
+#
+
+enable	cyclog@console-kit-daemon.service
+enable	console-kit-daemon.service
+enable	cyclog@org.freedesktop.RealtimeKit.service
+enable	org.freedesktop.RealtimeKit.service

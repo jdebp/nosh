@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Standard format %p logging service for %I run by %u
+Before=%I
+
+[Service]
+WorkingDirectory=/var/log/user/
+ExecStart=%p "%u/%I/"
+
+[Install]

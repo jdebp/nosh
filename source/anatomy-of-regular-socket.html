@@ -36,7 +36,7 @@ ucspi-socket-rules-check
 
 <blockquote><pre>#!/bin/nosh
 #HTTP service over IPv4/IPv6 using Bernstein's publicfile
-httpd /home/publicfile/public</blockquote></pre>
+sh -c 'exec httpd ~publicfile/public'</blockquote></pre>
 
 <p>
 Like many of the pre-packaged services, these scripts are in fact automatically generated from a description file that is in the source package.

@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Accounts daemon
+
+[Service]
+Type=dbus
+EnvironmentDirectory=env
+ExecStart=/usr/lib/accountsservice/%p
+Environment=GVFS_DISABLE_FUSE=1
+Environment=GIO_USE_VFS=local
+Environment=GVFS_REMOTE_VOLUME_MONITOR_IGNORE=1
+
+[Install]

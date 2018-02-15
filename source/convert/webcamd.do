@@ -2,6 +2,7 @@
 ## **************************************************************************
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
+# vim: set filetype=sh:
 #
 # Special setup for ppp.
 # This is invoked by general-services.do .

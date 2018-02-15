@@ -46,6 +46,11 @@ Linux)
 esac
 
 case "`uname`" in
+Linux)	dbusprefix="/usr/lib/dbus-1.0" ;;
+#*BSD)	dbusprefix="/usr/local/lib/dbus-1.0" ;;	# No dpkg-divert on the BSDs.
+esac
+
+case "`uname`" in
 Linux)	zshprefix="/usr/share/zsh" ;;
 *BSD)	zshprefix="/usr/local/share/zsh/5.2" ;;
 esac
@@ -58,7 +63,7 @@ Linux)	extra_packages="logrotate-shims" ;;
 *BSD)	extra_packages="" ;;
 esac
 
-for i in exec terminal-management service-management terminal-extras zsh-completion systemv-shims systemd-shims upstart-shims execline-shims core-shims debian-shims bsd-shims openbsd-shims freebsd-shims ucspi-tcp-shims kbd-shims ${extra_packages} ;
+for i in exec terminal-management service-management terminal-extras zsh-completion service-command-shim systemv-shims systemd-shims upstart-shims execline-shims core-shims debian-shims bsd-shims openbsd-shims freebsd-shims ucspi-tcp-shims kbd-shims ${extra_packages} ;
 do
 	if test -s package/nosh-"$i".commands1 || test -s package/nosh-"$i".aliases1 ;
 	then
@@ -124,6 +129,11 @@ then
 	install -d -m 0755 "${dest}"/nosh-terminal-management/bin 
 	(cd "${dest}"/nosh-terminal-management/"${binprefix}"/ && pax -r -w ${link_across_usr} -- bin/vc-get-tty "${absdest}"/nosh-terminal-management/)
 fi
+if test -n "${dbusprefix}"
+then
+	install -d -m 0755 -- "${dest}"/nosh-service-management/"${dbusprefix}"
+	ln -f -s /usr/local/bin/dbus-daemon-launch-helper "${dest}"/nosh-service-management/"${dbusprefix}"/
+fi
 install -d -m 0755 -- "${dest}"/nosh-run-system-manager/
 case "`uname`" in
 Linux)	
@@ -156,18 +166,19 @@ install -d -m 0755 -- "${dest}"/nosh-bundles/etc/service-bundles/targets
 	NetBSD)	cat package/bsd-services package/bsd-sockets package/netbsd-ttys ;;
 	*BSD)	cat package/bsd-services package/bsd-sockets package/bsd-ttys ;;
 	esac
-) | while read -r j ;
+) |
+while read -r j
 do
 	(cd "${src}"/config/services && pax -r -w -l -- "$j" cyclog@"$j" "${absdest}"/nosh-bundles/var/sv/)
 	rm -f -- "${dest}"/nosh-bundles/var/sv/"$j"/service/down
 	rm -f -- "${dest}"/nosh-bundles/var/sv/cyclog@"$j"/service/down
 done
-while read -r j ;
+while read -r j
 do
 	(cd "${src}"/config/targets && pax -r -w -l -- "$j" "${absdest}"/nosh-bundles/etc/service-bundles/targets/)
 	rm -f -- "${dest}"/nosh-bundles/etc/service-bundles/targets/"$j"/service/down
 done < package/standard-targets
-while read -r j ;
+while read -r j
 do
 	(cd "${src}"/config/services && pax -r -w -l -- mount@"$j" fsck@"$j" "${absdest}"/nosh-bundles/etc/service-bundles/services/)
 	rm -f -- "${dest}"/nosh-bundles/etc/service-bundles/services/mount@"$j"/service/down
@@ -180,7 +191,8 @@ done < package/common-mounts
 	OpenBSD) cat package/openbsd-service-aliases ;;
 	*BSD) cat package/bsd-service-aliases ;;
 	esac
-) | while read -r service j ;
+) |
+while read -r service j
 do
 	(cd "${src}"/config/services && pax -r -w -l -- "$j" cyclog@"$j" "${absdest}"/nosh-bundles/var/sv/)
 done
@@ -191,7 +203,8 @@ done
 	OpenBSD) cat package/openbsd-target-aliases ;;
 	*BSD) cat package/bsd-target-aliases ;;
 	esac
-) | while read -r service j ;
+) |
+while read -r service j
 do
 	(cd "${src}"/config/targets && pax -r -w -l -- "$j" "${absdest}"/nosh-bundles/etc/service-bundles/targets/)
 done
@@ -201,7 +214,8 @@ done
 	Linux)	cat package/linux-etc-service-aliases ;;
 	*BSD)	cat package/bsd-etc-service-aliases ;;
 	esac
-) | while read -r service j ;
+) |
+while read -r service j
 do
 	(cd "${src}"/config/services && pax -r -w -l -- "$j" "${absdest}"/nosh-bundles/etc/service-bundles/services/)
 done
@@ -216,7 +230,8 @@ ln -f -s "${docprefix}"/doc/nosh/COPYING "${dest}"/nosh-bundles/etc/service-bund
 	Linux)	cat package/linux-etc-services ;;
 	*BSD)	cat package/bsd-etc-services ;;
 	esac
-) | while read -r j ;
+) |
+while read -r j
 do
 	(cd "${src}"/config/services && pax -r -w -l -- "$j" "${absdest}"/nosh-bundles/etc/service-bundles/services/)
 	rm -f -- "${dest}"/nosh-bundles/etc/service-bundles/services/"$j"/service/down
@@ -233,11 +248,14 @@ install -d -m 0755 -- "${dest}"/nosh-bundles/"${etcprefix}"/etc/devd
 
 ##########################################################
 # completion
-install -d -m 0755 -- "${dest}"/nosh-zsh-completion/"${zshprefix}"/functions/Completion/Unix
-for j in _nosh
-do
-	(cd "${src}"/config/zsh && pax -r -w -l -- "$j" "${absdest}"/nosh-zsh-completion/"${zshprefix}"/functions/Completion/Unix)
-done
+if test -n "${zshprefix}"
+then
+	install -d -m 0755 -- "${dest}"/nosh-zsh-completion/"${zshprefix}"/functions/Completion/Unix
+	for j in _nosh
+	do
+		(cd "${src}"/config/zsh && pax -r -w -l -- "$j" "${absdest}"/nosh-zsh-completion/"${zshprefix}"/functions/Completion/Unix)
+	done
+fi
 
 ##########################################################
 # Running under foreign service management
@@ -246,22 +264,24 @@ install -d -m 0755 -- "${dest}"/nosh-run-via-mewburn-rc/"${etcprefix}"/etc/rc.d
 install -d -m 0755 -- "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system 
 install -d -m 0755 -- "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/tmpfiles.d 
 install -d -m 0755 -- "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system-preset 
-while read j ;
+cat package/systemd-services package/systemd-overrides |
+while read  -r j
 do
-	ln -f -- "${src}"/config/systemd/"$j" "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system/
-done < package/systemd-services ;
-while read j ;
+	install -d -m 0755 "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system/"`dirname "$j"`"
+	ln -f -- "${src}"/config/systemd/"$j" "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system/"`dirname "$j"`"/
+done
+while read  -r j
 do
 	ln -f -- "${src}"/config/systemd/"$j" "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/tmpfiles.d/
-done < package/tmpfiles-snippets ;
-while read j ;
+done < package/tmpfiles-snippets
+while read  -r j
 do
 	ln -f -- "${src}"/config/mewburn-rc.d/"$j" "${dest}"/nosh-run-via-mewburn-rc/"${etcprefix}"/etc/rc.d/
-done < package/mewburn-rc-scripts ;
-while read j ;
+done < package/mewburn-rc-scripts
+while read  -r j
 do
 	ln -f -- "${src}"/config/openbsd-rc.d/"$j" "${dest}"/nosh-run-via-openbsd-rc/"${etcprefix}"/etc/rc.d/
-done < package/openbsd-rc-scripts ;
+done < package/openbsd-rc-scripts
 for i in bundles run-via-systemd run-via-mewburn-rc run-via-openbsd-rc run-debian-desktop-base run-debian-server-base run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base
 do
 	install -d -m 0755 -- "${dest}"/nosh-"${i}"/"${prsprefix}"/system-control/presets 
@@ -271,7 +291,7 @@ do
 	Linux)	test \! -r package/linux-nosh-$i-presets || cat package/linux-nosh-"$i"-presets ;;
 	*BSD)	test \! -r package/bsd-nosh-$i-presets || cat package/bsd-nosh-"$i"-presets ;;
 	esac
-	) | while read j ;
+	) | while read  -r j
 	do
 		ln -f -- "${src}"/config/presets/"$j" "${dest}"/nosh-"${i}"/"${prsprefix}"/system-control/presets/
 	done
@@ -279,9 +299,9 @@ done
 
 ##########################################################
 # Conversion tools
-install -d -m 0755 -- "${dest}"/nosh-bundles/etc/system-control/convert 
-while read j ;
+install -d -m 0755 -- "${dest}"/nosh-bundles/etc/system-control/convert "${dest}"/nosh-bundles/etc/system-control/convert/kbdmaps "${dest}"/nosh-bundles/etc/system-control/convert/per-user "${dest}"/nosh-bundles/etc/system-control/convert/per-user/dbus
+while read -r j
 do
-	ln -f -- "${src}"/config/convert/"$j" "${dest}"/nosh-bundles/etc/system-control/convert/
+	ln -f -- "${src}"/config/convert/"$j" "${dest}"/nosh-bundles/etc/system-control/convert/"$j"
 done < package/conversion-tools
 ln -f -s "${docprefix}"/doc/nosh/COPYING "${dest}"/nosh-bundles/etc/system-control/convert/

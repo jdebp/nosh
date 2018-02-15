@@ -6,6 +6,8 @@ then
 	exit 100
 fi
 
+export CDPATH=
+
 # Create and populate the build directory.
 install -d -m 0755 build
 ( cd source && ( 2>/dev/null pax -w -r -l -u -- * ../build/ || true ) )

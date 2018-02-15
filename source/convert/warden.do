@@ -2,6 +2,7 @@
 ## **************************************************************************
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
+# vim: set filetype=sh:
 #
 # Convert the PC-BSD/TrueOS Warden external configuration formats.
 # This is invoked by all.do .

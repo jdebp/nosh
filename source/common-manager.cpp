@@ -46,10 +46,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include "SignalManagement.h"
 #include "control_groups.h"
 
-static pid_t service_manager_pid(-1);
-static pid_t cyclog_pid(-1);
-static pid_t system_control_pid(-1);
-
 static inline
 std::string
 concat (
@@ -66,6 +62,18 @@ concat (
 /* State machine ************************************************************
 // **************************************************************************
 */
+
+static pid_t service_manager_pid(-1);
+static pid_t cyclog_pid(-1);
+static pid_t regular_system_control_pid(-1);
+static pid_t emergency_system_control_pid(-1);
+static pid_t kbreq_system_control_pid(-1);
+static inline bool has_service_manager() { return static_cast<pid_t>(-1) != service_manager_pid; }
+static inline bool has_cyclog() { return static_cast<pid_t>(-1) != cyclog_pid; }
+static inline bool has_regular_system_control() { return static_cast<pid_t>(-1) != regular_system_control_pid; }
+static inline bool has_emergency_system_control() { return static_cast<pid_t>(-1) != emergency_system_control_pid; }
+static inline bool has_kbreq_system_control() { return static_cast<pid_t>(-1) != kbreq_system_control_pid; }
+static inline bool has_any_system_control() { return has_regular_system_control() || has_emergency_system_control() || has_kbreq_system_control(); }
 
 static sig_atomic_t sysinit_signalled (false);
 static sig_atomic_t init_signalled (true);
@@ -85,10 +93,7 @@ static sig_atomic_t fastpoweroff_signalled (false);
 static sig_atomic_t fastpowercycle_signalled (false);
 static sig_atomic_t fastreboot_signalled (false);
 static sig_atomic_t unknown_signalled (false);
-#define has_service_manager (static_cast<pid_t>(-1) != service_manager_pid)
-#define has_cyclog (static_cast<pid_t>(-1) != cyclog_pid)
-#define has_system_control (static_cast<pid_t>(-1) != system_control_pid)
-#define stop_signalled (fasthalt_signalled || fastpoweroff_signalled || fastpowercycle_signalled || fastreboot_signalled)
+static inline bool stop_signalled() { return fasthalt_signalled || fastpoweroff_signalled || fastpowercycle_signalled || fastreboot_signalled; }
 
 static inline
 void
@@ -193,6 +198,32 @@ record_signal_user (
 }
 
 static void (*record_signal) ( int signo ) = 0;
+
+static inline
+void
+read_command (
+	bool is_system,
+	int fd
+) {
+	char command;
+	const int rc(read(fd, &command, sizeof command));
+	if (static_cast<int>(sizeof command) <= rc) {
+		switch (command) {
+			case 'R':	(is_system ? fastreboot_signalled : fasthalt_signalled) = true; break;
+			case 'r':	(is_system ? reboot_signalled : halt_signalled) = true; break;
+			case 'H':	fasthalt_signalled = true; break;
+			case 'h':	halt_signalled = true; break;
+			case 'C':	(is_system ? fastpowercycle_signalled : fasthalt_signalled) = true; break;
+			case 'c':	(is_system ? powercycle_signalled : halt_signalled) = true; break;
+			case 'P':	(is_system ? fastpoweroff_signalled : fasthalt_signalled) = true; break;
+			case 'p':	(is_system ? poweroff_signalled : halt_signalled) = true; break;
+			case 'S':	sysinit_signalled = true; break;
+			case 's':	(is_system ? rescue_signalled : unknown_signalled) = true; break;
+			case 'b':	(is_system ? emergency_signalled : unknown_signalled) = true; break;
+			case 'n':	normal_signalled = true; break;
+		}
+	}
+}
 
 static inline
 void
@@ -669,13 +700,18 @@ dup(
 
 static inline
 void
-mark_not_filled(
+dup2(
+	const char * prog,
 	FileDescriptorOwner filler_stdio[LISTEN_SOCKET_FILENO + 1], 
-	FileDescriptorOwner saved_stdio[LISTEN_SOCKET_FILENO + 1], 
+	const FileDescriptorOwner & new_file,
 	int fd
 ) {
-	if (0 <= filler_stdio[fd].release())
-		saved_stdio[fd].reset(-1);
+	const int d(dup2(new_file.get(), fd));
+	if (0 > d) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: ERROR: dup2(%i, %i): %s\n", prog, new_file.get(), fd, std::strerror(error));
+	} else
+		filler_stdio[fd].release();
 }
 
 static inline
@@ -684,7 +720,7 @@ last_resort_io_defaults(
 	const bool is_system,
 	const char * prog,
 	const FileDescriptorOwner & dev_null,
-	FileDescriptorOwner saved_stdio[LISTEN_SOCKET_FILENO + 1]
+	FileDescriptorOwner saved_stdio[STDERR_FILENO + 1]
 ) {
 	// Populate saved standard input as /dev/null if it was initially closed as we inherited it.
 	if (0 > saved_stdio[STDIN_FILENO].get())
@@ -761,7 +797,6 @@ end_system()
 		reboot(RB_AUTOBOOT);
 #endif
 	}
-	reboot(RB_AUTOBOOT);
 	reboot(RB_AUTOBOOT);
 }
 
@@ -867,6 +902,319 @@ change_to_system_manager_log_root (
 		chdir((effective_user_runtime_dir() + "per-user-manager/log").c_str());
 }
 
+static inline
+void
+reap_spawned_children (
+	const char * prog
+) {
+	if (child_signalled) {
+		child_signalled = false;
+		for (;;) {
+			int status;
+			pid_t c;
+			if (0 >= wait_nonblocking_for_anychild_exit(c, status)) break;
+			if (c == service_manager_pid) {
+				std::fprintf(stderr, "%s: WARNING: %s (pid %i) ended status %i\n", prog, "service-manager", c, status);
+				service_manager_pid = -1;
+			} else
+			if (c == cyclog_pid) {
+				std::fprintf(stderr, "%s: WARNING: %s (pid %i) ended status %i\n", prog, "cyclog", c, status);
+				cyclog_pid = -1;
+				// If cyclog abended, throttle respawns.
+				if (WIFSIGNALED(status) || (WIFEXITED(status) && 0 != WEXITSTATUS(status))) {
+					timespec t;
+					t.tv_sec = 0;
+					t.tv_nsec = 500000000; // 0.5 second
+					// If someone sends us a signal to do something, this will be interrupted.
+					nanosleep(&t, 0);
+				}
+			} else
+			if (c == regular_system_control_pid) {
+				std::fprintf(stderr, "%s: INFO: %s (pid %i) ended status %i\n", prog, "system-control", c, status);
+				regular_system_control_pid = -1;
+			}
+			if (c == emergency_system_control_pid) {
+				std::fprintf(stderr, "%s: INFO: %s (pid %i) ended status %i\n", prog, "system-control", c, status);
+				emergency_system_control_pid = -1;
+			}
+			if (c == kbreq_system_control_pid) {
+				std::fprintf(stderr, "%s: INFO: %s (pid %i) ended status %i\n", prog, "system-control", c, status);
+				kbreq_system_control_pid = -1;
+			}
+		}
+	}
+}
+
+static inline
+bool
+fork_system_control_as_needed (
+	const bool is_system,
+	const char * prog,
+	const char * & next_prog,
+	std::vector<const char *> & args
+) {
+	const bool verbose(true);
+	if (!has_emergency_system_control()) {
+		const char * subcommand(0), * option(0);
+		if (emergency_signalled) {
+			subcommand = "activate";
+			option = "emergency";
+			emergency_signalled = false;
+		} else
+			;
+		if (subcommand) {
+			emergency_system_control_pid = fork();
+			if (-1 == emergency_system_control_pid) {
+				const int error(errno);
+				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
+			} else if (0 == emergency_system_control_pid) {
+				default_all_signals();
+				alarm(60);
+				// Replace the original arguments with this.
+				args.clear();
+				args.insert(args.end(), "move-to-control-group");
+				args.insert(args.end(), "../system-control.slice");
+				args.insert(args.end(), "system-control");
+				args.insert(args.end(), subcommand);
+				if (verbose)
+					args.insert(args.end(), "--verbose");
+				if (!is_system)
+					args.insert(args.end(), "--user");
+				if (option)
+					args.insert(args.end(), option);
+				args.insert(args.end(), 0);
+				next_prog = arg0_of(args);
+				return true;
+			} else
+				std::fprintf(stderr, "%s: INFO: %s (pid %i) started (%s%s %s)\n", prog, "system-control", emergency_system_control_pid, subcommand, is_system ? "" : " --user", option ? option : "");
+		}
+	}
+	if (!has_kbreq_system_control()) {
+		const char * subcommand(0), * option(0);
+		if (power_signalled) {
+			subcommand = "activate";
+			option = "powerfail";
+			power_signalled = false;
+		} else
+		if (kbrequest_signalled) {
+			subcommand = "activate";
+			option = "kbrequest";
+			kbrequest_signalled = false;
+		} else
+		if (sak_signalled) {
+			subcommand = "activate";
+			option = "secure-attention-key";
+			sak_signalled = false;
+		} else
+			;
+		if (subcommand) {
+			kbreq_system_control_pid = fork();
+			if (-1 == kbreq_system_control_pid) {
+				const int error(errno);
+				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
+			} else if (0 == kbreq_system_control_pid) {
+				default_all_signals();
+				alarm(60);
+				// Replace the original arguments with this.
+				args.clear();
+				args.insert(args.end(), "move-to-control-group");
+				args.insert(args.end(), "../system-control.slice");
+				args.insert(args.end(), "system-control");
+				args.insert(args.end(), subcommand);
+				if (verbose)
+					args.insert(args.end(), "--verbose");
+				if (!is_system)
+					args.insert(args.end(), "--user");
+				if (option)
+					args.insert(args.end(), option);
+				args.insert(args.end(), 0);
+				next_prog = arg0_of(args);
+				return true;
+			} else
+				std::fprintf(stderr, "%s: INFO: %s (pid %i) started (%s%s %s)\n", prog, "system-control", kbreq_system_control_pid, subcommand, is_system ? "" : " --user", option ? option : "");
+		}
+	}
+	if (!has_regular_system_control()) {
+		const char * subcommand(0), * option(0);
+		if (sysinit_signalled) {
+			subcommand = "start";
+			option = "sysinit";
+			sysinit_signalled = false;
+		} else
+		if (normal_signalled) {
+			subcommand = "start";
+			option = "normal";
+			normal_signalled = false;
+		} else
+		if (rescue_signalled) {
+			subcommand = "start";
+			option = "rescue";
+			rescue_signalled = false;
+		} else
+		if (halt_signalled) {
+			subcommand = "start";
+			option = "halt";
+			halt_signalled = false;
+		} else
+		if (poweroff_signalled) {
+			subcommand = "start";
+			option = "poweroff";
+			poweroff_signalled = false;
+		} else
+		if (powercycle_signalled) {
+			subcommand = "start";
+			option = "powercycle";
+			poweroff_signalled = false;
+		} else
+		if (reboot_signalled) {
+			subcommand = "start";
+			option = "reboot";
+			reboot_signalled = false;
+		} else
+			;
+		if (subcommand) {
+			regular_system_control_pid = fork();
+			if (-1 == regular_system_control_pid) {
+				const int error(errno);
+				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
+			} else if (0 == regular_system_control_pid) {
+				default_all_signals();
+				alarm(480);
+				// Replace the original arguments with this.
+				args.clear();
+				args.insert(args.end(), "move-to-control-group");
+				args.insert(args.end(), "../system-control.slice");
+				args.insert(args.end(), "system-control");
+				args.insert(args.end(), subcommand);
+				if (verbose)
+					args.insert(args.end(), "--verbose");
+				if (!is_system)
+					args.insert(args.end(), "--user");
+				if (option)
+					args.insert(args.end(), option);
+				args.insert(args.end(), 0);
+				next_prog = arg0_of(args);
+				return true;
+			} else
+				std::fprintf(stderr, "%s: INFO: %s (pid %i) started (%s%s %s)\n", prog, "system-control", regular_system_control_pid, subcommand, is_system ? "" : " --user", option ? option : "");
+		}
+	}
+	if (!has_regular_system_control()) {
+		if (init_signalled) {
+			init_signalled = false;
+			regular_system_control_pid = fork();
+			if (-1 == regular_system_control_pid) {
+				const int error(errno);
+				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
+			} else if (0 == regular_system_control_pid) {
+				default_all_signals();
+				alarm(420);
+				// Retain the original arguments and insert the following in front of them.
+				if (!is_system)
+					args.insert(args.begin(), "--user");
+				args.insert(args.begin(), "init");
+				args.insert(args.begin(), "system-control");
+				args.insert(args.begin(), "../system-control.slice");
+				args.insert(args.begin(), "move-to-control-group");
+				next_prog = arg0_of(args);
+				return true;
+			} else
+				std::fprintf(stderr, "%s: INFO: %s (pid %i) started (%s%s %s)\n", prog, "system-control", regular_system_control_pid, "init", is_system ? "" : " --user", concat(args).c_str());
+		}
+	}
+	return false;
+}
+
+static inline
+bool
+fork_cyclog_as_needed (
+	const bool is_system,
+	const char * prog,
+	const char * & next_prog,
+	std::vector<const char *> & args,
+	const FileDescriptorOwner saved_stdio[STDERR_FILENO + 1],
+	const FileDescriptorOwner & read_log_pipe
+) {
+	if (!has_cyclog() && (!stop_signalled() || has_service_manager())) {
+		cyclog_pid = fork();
+		if (-1 == cyclog_pid) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
+		} else if (0 == cyclog_pid) {
+			change_to_system_manager_log_root(is_system);
+			if (is_system)
+				setsid();
+			default_all_signals();
+			args.clear();
+			args.insert(args.end(), "move-to-control-group");
+			if (is_system)
+				args.insert(args.end(), "../system-manager-log.slice");
+			else
+				args.insert(args.end(), "../per-user-manager-log.slice");
+			args.insert(args.end(), "cyclog");
+			args.insert(args.end(), "--max-file-size");
+			args.insert(args.end(), "262144");
+			args.insert(args.end(), "--max-total-size");
+			args.insert(args.end(), "1048576");
+			args.insert(args.end(), ".");
+			args.insert(args.end(), 0);
+			next_prog = arg0_of(args);
+			if (-1 != read_log_pipe.get())
+				dup2(read_log_pipe.get(), STDIN_FILENO);
+			dup2(saved_stdio[STDOUT_FILENO].get(), STDOUT_FILENO);
+			dup2(saved_stdio[STDERR_FILENO].get(), STDERR_FILENO);
+			close(LISTEN_SOCKET_FILENO);
+			return true;
+		} else
+			std::fprintf(stderr, "%s: INFO: %s (pid %i) started\n", prog, "cyclog", cyclog_pid);
+	}
+	return false;
+}
+
+static inline
+bool
+fork_service_manager_as_needed (
+	const bool is_system,
+	const char * prog,
+	const char * & next_prog,
+	std::vector<const char *> & args,
+	const FileDescriptorOwner & dev_null_fd,
+	const FileDescriptorOwner & service_manager_socket_fd,
+	const FileDescriptorOwner & write_log_pipe
+) {
+	if (!has_service_manager() && !stop_signalled()) {
+		service_manager_pid = fork();
+		if (-1 == service_manager_pid) {
+			const int error(errno);
+			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
+		} else if (0 == service_manager_pid) {
+#if defined(__LINUX__) || defined(__linux__)
+			// Linux's default file handle limit of 1024 is far too low for normal usage patterns.
+			const rlimit file_limit = { 16384U, 16384U };
+			setrlimit(RLIMIT_NOFILE, &file_limit);
+#endif
+			if (is_system)
+				setsid();
+			default_all_signals();
+			args.clear();
+			args.insert(args.end(), "move-to-control-group");
+			args.insert(args.end(), "../service-manager.slice/me.slice");
+			args.insert(args.end(), "service-manager");
+			args.insert(args.end(), 0);
+			next_prog = arg0_of(args);
+			dup2(dev_null_fd.get(), STDIN_FILENO);
+			if (-1 != write_log_pipe.get()) {
+				dup2(write_log_pipe.get(), STDOUT_FILENO);
+				dup2(write_log_pipe.get(), STDERR_FILENO);
+			}
+			dup2(service_manager_socket_fd.get(), LISTEN_SOCKET_FILENO);
+			return true;
+		} else
+			std::fprintf(stderr, "%s: INFO: %s (pid %i) started\n", prog, "service-manager", service_manager_pid);
+	}
+	return false;
+}
+
 /* Main program *************************************************************
 // **************************************************************************
 */
@@ -884,6 +1232,16 @@ common_manager (
 	const char * prog(basename_of(args[0]));
 	args.erase(args.begin());
 
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+	// FreeBSD initializes process #1 with a controlling terminal!
+	// The only way to get rid of it is to close all open file descriptors to it.
+	if (is_system) {
+		for (std::size_t i(0U); i < LISTEN_SOCKET_FILENO; ++i)
+			if (isatty(i)) 
+				close(i);
+	}
+#endif
+
 	// We must ensure that no new file descriptors are allocated in the standard+systemd file descriptors range, otherwise dup2() and automatic-close() in child processes go wrong later.
 	FileDescriptorOwner filler_stdio[LISTEN_SOCKET_FILENO + 1] = { -1, -1, -1, -1 };
 	for (
@@ -894,22 +1252,12 @@ common_manager (
 		filler_stdio[root.get()].reset(root.get());
 	}
 
-	// The system manager runs with standard I/O connected to a (console) TTY.
-	// A per-user manager runs with standard I/O connected to logger services and suchlike.
+	// The system manager begins with standard I/O connected to a (console) TTY.
+	// A per-user manager begins with standard I/O connected to logger services and suchlike.
 	// We want to save these, if they are open, for use as log destinations of last resort during shutdown.
-	FileDescriptorOwner saved_stdio[LISTEN_SOCKET_FILENO + 1] = { -1, -1, -1, -1 };
+	FileDescriptorOwner saved_stdio[STDERR_FILENO + 1] = { -1, -1, -1 };
 	for (std::size_t i(0U); i < sizeof saved_stdio/sizeof *saved_stdio; ++i) {
-#if defined(__FreeBSD__) || defined(__DragonFly__)
-		// The exception is anything open from the system manager to a TTY on FreeBSD.
-		// FreeBSD initializes process #1 with a controlling terminal!
-		// The only way to get rid of it is to close all open file descriptors to it.
-		if (is_system && 0 < isatty(i)) {
-			FileDescriptorOwner root(open_dir_at(AT_FDCWD, "/")); 
-			dup2(root.get(), i);
-			if (0 > filler_stdio[i].get())
-				filler_stdio[i].reset(i);
-		} else
-#endif
+		if (0 > filler_stdio[i].get())
 			saved_stdio[i].reset(dup(i));
 	}
 
@@ -917,10 +1265,8 @@ common_manager (
 	// We don't want our output cluttering a TTY and device files such as /dev/null and /dev/console do not exist yet.
 	FileDescriptorOwner read_log_pipe(-1), write_log_pipe(-1);
 	open_logging_pipe(prog, read_log_pipe, write_log_pipe);
-	mark_not_filled(filler_stdio, saved_stdio, STDOUT_FILENO);
-	dup2(write_log_pipe.get(), STDOUT_FILENO);
-	mark_not_filled(filler_stdio, saved_stdio, STDERR_FILENO);
-	dup2(write_log_pipe.get(), STDERR_FILENO);
+	dup2(prog, filler_stdio, write_log_pipe, STDOUT_FILENO);
+	dup2(prog, filler_stdio, write_log_pipe, STDERR_FILENO);
 
 	// Now we perform the process initialization that does thing like mounting /dev.
 	// Errors mounting things go down the pipe, from which nothing is reading as yet.
@@ -1009,12 +1355,14 @@ common_manager (
 
 	// Now we can use /dev/console, /dev/null, and the rest.
 	const FileDescriptorOwner dev_null_fd(open_null(prog));
-	mark_not_filled(filler_stdio, saved_stdio, STDIN_FILENO);
-	dup2(dev_null_fd.get(), STDIN_FILENO);
+	dup2(prog, filler_stdio, dev_null_fd, STDIN_FILENO);
 	last_resort_io_defaults(is_system, prog, dev_null_fd, saved_stdio);
 
+	const unsigned listen_fds(query_listen_fds(envs));
+	if (listen_fds)
+		envs.unset("LISTEN_FDNAMES");
+
 	const FileDescriptorOwner service_manager_socket_fd(listen_service_manager_socket(is_system, prog));
-	mark_not_filled(filler_stdio, saved_stdio, LISTEN_SOCKET_FILENO);
 
 #if defined(DEBUG)	// This is not an emergency mode.  Do not abuse as such.
 	if (is_system) {
@@ -1025,7 +1373,7 @@ common_manager (
 		} else if (0 == shell) {
 			setsid();
 			args.clear();
-			args.insert(args.end(), "/bin/sh");
+			args.insert(args.end(), "sh");
 			args.insert(args.end(), 0);
 			next_prog = arg0_of(args);
 			dup2(saved_stdin.get(), STDIN_FILENO);
@@ -1044,8 +1392,10 @@ common_manager (
 		return;
 	}
 
-	std::vector<struct kevent> p(26);
+	std::vector<struct kevent> p(26 + listen_fds);
 	unsigned n(0);
+	for (unsigned i(0U); i < listen_fds; ++i)
+		EV_SET(&p[n++], LISTEN_SOCKET_FILENO + i, EVFILT_READ, EV_ADD, 0, 0, 0);
 	if (is_system) {
 #if defined(KBREQ_SIGNAL)
 		set_event(&p[n++], KBREQ_SIGNAL, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
@@ -1090,231 +1440,46 @@ common_manager (
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
 	}
 
-	filler_stdio[LISTEN_SOCKET_FILENO].reset(-1);
+	// Remove any remaining standard I/O filler.
+	for (std::size_t i(0U); i < sizeof filler_stdio/sizeof *filler_stdio; ++i)
+		filler_stdio[i].reset(-1);
 
 	for (;;) {
-		if (child_signalled) {
-			for (;;) {
-				int status;
-				pid_t c;
-				if (0 >= wait_nonblocking_for_anychild_exit(c, status)) break;
-				if (c == service_manager_pid) {
-					std::fprintf(stderr, "%s: WARNING: %s (pid %i) ended status %i\n", prog, "service-manager", c, status);
-					service_manager_pid = -1;
-				} else
-				if (c == cyclog_pid) {
-					std::fprintf(stderr, "%s: WARNING: %s (pid %i) ended status %i\n", prog, "cyclog", c, status);
-					cyclog_pid = -1;
-					// If cyclog abended, throttle respawns.
-					if (WIFSIGNALED(status) || (WIFEXITED(status) && 0 != WEXITSTATUS(status))) {
-						timespec t;
-						t.tv_sec = 0;
-						t.tv_nsec = 500000000; // 0.5 second
-						// If someone sends us a signal to do something, this will be interrupted.
-						nanosleep(&t, 0);
-					}
-				} else
-				if (c == system_control_pid) {
-					std::fprintf(stderr, "%s: INFO: %s (pid %i) ended status %i\n", prog, "system-control", c, status);
-					system_control_pid = -1;
-				}
-			}
-			child_signalled = false;
-		}
+		reap_spawned_children(prog);
+
 		// Run system-control if a job is pending and system-control isn't already running.
-		if (!has_system_control) {
-			const char * subcommand(0), * option(0);
-			bool verbose(true);
-			if (sysinit_signalled) {
-				subcommand = "start";
-				option = "sysinit";
-				sysinit_signalled = false;
-			} else
-			if (normal_signalled) {
-				subcommand = "start";
-				option = "normal";
-				normal_signalled = false;
-			} else
-			if (rescue_signalled) {
-				subcommand = "start";
-				option = "rescue";
-				rescue_signalled = false;
-			} else
-			if (emergency_signalled) {
-				subcommand = "activate";
-				option = "emergency";
-				emergency_signalled = false;
-			} else
-			if (halt_signalled) {
-				subcommand = "start";
-				option = "halt";
-				halt_signalled = false;
-			} else
-			if (poweroff_signalled) {
-				subcommand = "start";
-				option = "poweroff";
-				poweroff_signalled = false;
-			} else
-			if (powercycle_signalled) {
-				subcommand = "start";
-				option = "powercycle";
-				poweroff_signalled = false;
-			} else
-			if (reboot_signalled) {
-				subcommand = "start";
-				option = "reboot";
-				reboot_signalled = false;
-			} else
-			if (power_signalled) {
-				subcommand = "activate";
-				option = "powerfail";
-				power_signalled = false;
-			} else
-			if (kbrequest_signalled) {
-				subcommand = "activate";
-				option = "kbrequest";
-				kbrequest_signalled = false;
-			} else
-			if (sak_signalled) {
-				subcommand = "activate";
-				option = "secure-attention-key";
-				sak_signalled = false;
-			}
-			if (subcommand) {
-				system_control_pid = fork();
-				if (-1 == system_control_pid) {
-					const int error(errno);
-					std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
-				} else if (0 == system_control_pid) {
-					default_all_signals();
-					alarm(300);
-					// Replace the original arguments with this.
-					args.clear();
-					args.insert(args.end(), "move-to-control-group");
-					args.insert(args.end(), "../system-control.slice");
-					args.insert(args.end(), "system-control");
-					args.insert(args.end(), subcommand);
-					if (verbose)
-						args.insert(args.end(), "--verbose");
-					if (!is_system)
-						args.insert(args.end(), "--user");
-					if (option)
-						args.insert(args.end(), option);
-					args.insert(args.end(), 0);
-					next_prog = arg0_of(args);
-					return;
-				} else
-					std::fprintf(stderr, "%s: INFO: %s (pid %i) started (%s%s %s)\n", prog, "system-control", system_control_pid, subcommand, is_system ? "" : " --user", option ? option : "");
-			}
-		}
-		if (!has_system_control) {
-			if (init_signalled) {
-				init_signalled = false;
-				system_control_pid = fork();
-				if (-1 == system_control_pid) {
-					const int error(errno);
-					std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
-				} else if (0 == system_control_pid) {
-					default_all_signals();
-					alarm(420);
-					// Retain the original arguments and insert the following in front of them.
-					if (!is_system)
-						args.insert(args.begin(), "--user");
-					args.insert(args.begin(), "init");
-					args.insert(args.begin(), "system-control");
-					args.insert(args.begin(), "../system-control.slice");
-					args.insert(args.begin(), "move-to-control-group");
-					next_prog = arg0_of(args);
-					return;
-				} else
-					std::fprintf(stderr, "%s: INFO: %s (pid %i) started (%s%s %s)\n", prog, "system-control", system_control_pid, "init", is_system ? "" : " --user", concat(args).c_str());
-			}
-		}
+		if (fork_system_control_as_needed(is_system, prog, next_prog, args)) return;
+
 		// Exit if stop has been signalled and both the service manager and logger have exited.
-		if (stop_signalled && !has_cyclog && !has_service_manager) break;
+		if (stop_signalled() && !has_cyclog() && !has_service_manager()) break;
+
 		// Kill the service manager if stop has been signalled.
-		if (has_service_manager && stop_signalled && !has_system_control) {
+		if (has_service_manager() && stop_signalled() && !has_any_system_control()) {
 			std::fprintf(stderr, "%s: DEBUG: %s\n", prog, "terminating service manager");
 			kill(service_manager_pid, SIGTERM);
 		}
+
 		// Restart the logger unless both stop has been signalled and the service manager has exited.
 		// If the service manager has not exited and stop has been signalled, we still need the logger to restart and keep draining the pipe.
-		if (!has_cyclog && (!stop_signalled || has_service_manager)) {
-			cyclog_pid = fork();
-			if (-1 == cyclog_pid) {
-				const int error(errno);
-				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
-			} else if (0 == cyclog_pid) {
-				change_to_system_manager_log_root(is_system);
-				if (is_system)
-					setsid();
-				default_all_signals();
-				args.clear();
-				args.insert(args.end(), "move-to-control-group");
-				if (is_system)
-					args.insert(args.end(), "../system-manager-log.slice");
-				else
-					args.insert(args.end(), "../per-user-manager-log.slice");
-				args.insert(args.end(), "cyclog");
-				args.insert(args.end(), "--max-file-size");
-				args.insert(args.end(), "262144");
-				args.insert(args.end(), "--max-total-size");
-				args.insert(args.end(), "1048576");
-				args.insert(args.end(), ".");
-				args.insert(args.end(), 0);
-				next_prog = arg0_of(args);
-				if (-1 != read_log_pipe.get())
-					dup2(read_log_pipe.get(), STDIN_FILENO);
-				dup2(saved_stdio[STDOUT_FILENO].get(), STDOUT_FILENO);
-				dup2(saved_stdio[STDERR_FILENO].get(), STDERR_FILENO);
-				close(LISTEN_SOCKET_FILENO);
-				return;
-			} else
-				std::fprintf(stderr, "%s: INFO: %s (pid %i) started\n", prog, "cyclog", cyclog_pid);
-		}
+		if (fork_cyclog_as_needed(is_system, prog, next_prog, args, saved_stdio, read_log_pipe)) return;
+
 		// If the service manager has exited and stop has been signalled, close the logging pipe so that the logger finally exits.
-		if (!has_service_manager && stop_signalled && -1 != read_log_pipe.get()) {
+		if (!has_service_manager() && stop_signalled() && -1 != read_log_pipe.get()) {
 			std::fprintf(stderr, "%s: DEBUG: %s\n", prog, "closing logger");
 			for (std::size_t i(0U); i < sizeof saved_stdio/sizeof *saved_stdio; ++i)
 				dup2(saved_stdio[i].get(), i);
 			read_log_pipe.reset(-1);
 			write_log_pipe.reset(-1);
 		}
+
 		// Restart the service manager unless stop has been signalled.
-		if (!has_service_manager && !stop_signalled) {
-			service_manager_pid = fork();
-			if (-1 == service_manager_pid) {
-				const int error(errno);
-				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
-			} else if (0 == service_manager_pid) {
-#if defined(__LINUX__) || defined(__linux__)
-				// Linux's default file handle limit of 1024 is far too low for normal usage patterns.
-				const rlimit file_limit = { 16384U, 16384U };
-				setrlimit(RLIMIT_NOFILE, &file_limit);
-#endif
-				if (is_system)
-					setsid();
-				default_all_signals();
-				args.clear();
-				args.insert(args.end(), "move-to-control-group");
-				args.insert(args.end(), "../service-manager.slice/me.slice");
-				args.insert(args.end(), "service-manager");
-				args.insert(args.end(), 0);
-				next_prog = arg0_of(args);
-				dup2(dev_null_fd.get(), STDIN_FILENO);
-				if (-1 != write_log_pipe.get()) {
-					dup2(write_log_pipe.get(), STDOUT_FILENO);
-					dup2(write_log_pipe.get(), STDERR_FILENO);
-				}
-				dup2(service_manager_socket_fd.get(), LISTEN_SOCKET_FILENO);
-				return;
-			} else
-				std::fprintf(stderr, "%s: INFO: %s (pid %i) started\n", prog, "service-manager", service_manager_pid);
-		}
+		if (fork_service_manager_as_needed(is_system, prog, next_prog, args, dev_null_fd, service_manager_socket_fd, write_log_pipe)) return;
+
 		if (unknown_signalled) {
 			std::fprintf(stderr, "%s: WARNING: %s\n", prog, "Unknown signal ignored.");
 			unknown_signalled = false;
 		}
+
 		const int rc(kevent(queue.get(), p.data(), 0, p.data(), p.size(), 0));
 		if (0 > rc) {
 			if (EINTR == errno) continue;
@@ -1323,8 +1488,17 @@ common_manager (
 			return;
 		}
 		for (size_t i(0); i < static_cast<std::size_t>(rc); ++i) {
-			if (EVFILT_SIGNAL == p[i].filter)
-				record_signal(p[i].ident);
+			switch (p[i].filter) {
+				case EVFILT_SIGNAL:	record_signal(p[i].ident); break;
+				case EVFILT_READ:
+				{
+					struct kevent e;
+					EV_SET(&e, p[i].ident, p[i].filter, EV_EOF | EV_CLEAR, 0, 0, 0);
+					kevent(queue.get(), &e, 1, 0, 0, 0);
+					read_command(is_system, p[i].ident); 
+					break;
+				}
+			}
 		}
 	}
 

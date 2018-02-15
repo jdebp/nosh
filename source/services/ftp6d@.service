@@ -10,7 +10,7 @@ Description=NOTE: Bernstein's ftpd does not properly support FTP over IPv6 witho
 EnvironmentUser=publicfile
 LimitNOFILE=20
 LimitData=500000
-ExecStart=line-banner --NVT "220 Features: a p ." ftpd /home/publicfile/public
+ExecStart=line-banner --NVT "220 Features: a p ." sh -c 'exec ftpd ~publicfile/public'
 
 [Install]
 WantedBy=server.target

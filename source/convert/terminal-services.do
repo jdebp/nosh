@@ -2,6 +2,7 @@
 ## **************************************************************************
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
+# vim: set filetype=sh:
 #
 # Convert the /etc/ttys external configuration format.
 # This is invoked by all.do .
@@ -54,18 +55,18 @@ then
 		*.ctrl)		continue;;	# unnecessary
 		*.capsctrl)	continue;;	# unnecessary
 		esac
-		redo-ifchange "$b".kbdmap
-		ln -f -s "`pwd`/$b".kbdmap "${svcdir}/service/kbdmaps/"
-		redo-ifchange "$b".capsctrl.kbdmap
-		ln -f -s "`pwd`/$b".capsctrl.kbdmap "${svcdir}/service/kbdmaps/"
+		redo-ifchange kbdmaps/"$b".kbdmap
+		ln -f -s "`pwd`/kbdmaps/$b".kbdmap "${svcdir}/service/kbdmaps/"
+		redo-ifchange kbdmaps/"$b".capsctrl.kbdmap
+		ln -f -s "`pwd`/kbdmaps/$b".capsctrl.kbdmap "${svcdir}/service/kbdmaps/"
 	done
 else
 	for b in us uk
 	do
-		redo-ifchange "$b".kbdmap
-		ln -f -s "`pwd`/$b".kbdmap "${svcdir}/service/kbdmaps/"
-		redo-ifchange "$b".capsctrl.kbdmap
-		ln -f -s "`pwd`/$b".capsctrl.kbdmap "${svcdir}/service/kbdmaps/"
+		redo-ifchange kbdmaps/"$b".kbdmap
+		ln -f -s "`pwd`/kbdmaps/$b".kbdmap "${svcdir}/service/kbdmaps/"
+		redo-ifchange kbdmaps/"$b".capsctrl.kbdmap
+		ln -f -s "`pwd`/kbdmaps/$b".capsctrl.kbdmap "${svcdir}/service/kbdmaps/"
 	done
 fi
 

@@ -10,6 +10,5 @@ poweroff
 reboot
 rescue
 runlevel
-service
 shutdown
 telinit

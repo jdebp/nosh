@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Assistive Technology Service Provider Accessibility Services Bus for %u
+
+[Service]
+Type=dbus
+EnvironmentDirectory=env
+ExecStart=/usr/libexec/at-spi-bus-launcher
+Restart=no
+
+[Install]

@@ -32,13 +32,18 @@ make_private_fs (
 	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
-	bool temp(false), devices(false);
+	bool temp(false), devices(false), homes(false);
+	std::list<std::string> hide_directories;
 	try {
 		popt::bool_definition temp_option('t', "temp", "Make a private /tmp also mounted as /var/tmp.", temp);
 		popt::bool_definition devices_option('d', "devices", "Make a private /dev with no non-API devices.", devices);
+		popt::bool_definition homes_option('h', "homes", "Make a private /home with no homes.", homes);
+		popt::string_list_definition hide_option('h', "hide", "directory", "Make this directory private.", hide_directories);
 		popt::definition * top_table[] = {
 			&temp_option,
-			&devices_option
+			&devices_option,
+			&homes_option,
+			&hide_option
 		};
 		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "prog");
 
@@ -80,7 +85,6 @@ make_private_fs (
 			if (0 > mkdir(name, 0777 | S_ISVTX)) {
 				const int error(errno);
 				umask(oldmode2);
-				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, std::strerror(error));
 				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, std::strerror(error));
 				throw EXIT_FAILURE;
 			}
@@ -218,5 +222,69 @@ make_private_fs (
 				throw EXIT_FAILURE;
 			}
 		}
+	}
+	if (homes || !hide_directories.empty()) {
+#if defined(__LINUX__) || defined(__linux__)
+		static struct homedir {
+			bool fatal;
+			const char * name;
+		} const homedirs[] = {
+			{ true, "/root" },
+			{ true, "/home" },
+		};
+
+		char name[4096];
+		std::strcpy(name, "/tmp/private-fs.XXXXXX");
+		// The top-level directory grants no group or world access, so that no unprivileged users from the outside can go poking around in it.
+		const mode_t oldmode1(umask(0077));
+		if (0 == mkdtemp(name)) {
+			const int error(errno);
+			umask(oldmode1);
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, std::strerror(error));
+			throw EXIT_FAILURE;
+		}
+		umask(oldmode1);
+
+		// An extra directory level is created underneath, which has -rwx------- permissions just like a real secure home directory.
+		const mode_t oldmode2(umask(0000));
+		std::strcat(name, "/tmp");
+		if (0 > mkdir(name, 0700)) {
+			const int error(errno);
+			umask(oldmode2);
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, std::strerror(error));
+			throw EXIT_FAILURE;
+		}
+		umask(oldmode2);
+
+		for (const struct homedir * i(homedirs); (homedirs + sizeof homedirs/sizeof *homedirs) != i; ++i) {
+			struct iovec iov[] = {
+				FSPATH,			{ const_cast<char *>(i->name), std::strlen(i->name) + 1 },
+				FROM,			{ name, std::strlen(name) + 1 },
+				FSTYPE,			MAKE_IOVEC(""),
+			};
+
+			if (0 > nmount(iov, sizeof iov/sizeof *iov, MS_BIND|MS_REC)) {
+				const int error(errno);
+				if (i->fatal) {
+					std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, i->name, std::strerror(error));
+					throw EXIT_FAILURE;
+				} else
+					std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, i->name, std::strerror(error));
+			}
+		}
+		for (std::list<std::string>::const_iterator e(hide_directories.end()), i(hide_directories.begin()); e != i; ++i) {
+			struct iovec iov[] = {
+				FSPATH,			{ const_cast<char *>(i->c_str()), i->length() + 1 },
+				FROM,			{ name, std::strlen(name) + 1 },
+				FSTYPE,			MAKE_IOVEC(""),
+			};
+
+			if (0 > nmount(iov, sizeof iov/sizeof *iov, MS_BIND|MS_REC)) {
+				const int error(errno);
+				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, i->c_str(), std::strerror(error));
+				throw EXIT_FAILURE;
+			}
+		}
+#endif
 	}
 }

@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description="Desktop" bus service for %u
+
+[Service]
+ExecStart=%p-launch -v --scope user --listen inherit
+Restart=always
+RestartSec=0.5
+
+[Install]
+WantedBy=normal.target

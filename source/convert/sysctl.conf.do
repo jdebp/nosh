@@ -2,6 +2,7 @@
 ## **************************************************************************
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
+# vim: set filetype=sh:
 #
 # Special setup for sysctl.conf.
 # This is invoked by all.do .
@@ -31,11 +32,12 @@ awk >> "$3" -F = '
 }
 /^ipv6_/ { 
 	n = substr($1,6); 
-	if ("ipv4mapping" != n && "privacy" != n && "cpe_wanif" != n && "gateway_enable" != n) next;
+	if ("ipv4mapping" != n && "privacy" != n && "cpe_wanif" != n && "gateway_enable" != n && "default_interface" != n) next;
 	if ("ipv4mapping" == n) n = "v6only" ; 
 	if ("privacy" == n) n = "use_tempaddr" ; 
 	if ("cpe_wanif" == n) n = "no_radr" ; 
 	if ("gateway_enable" == n) n = "forwarding" ; 
+	if ("default_interface" == n) { n = "use_defaultzone" ; v = "1" ; }
 	if ("yes" == $2 || "YES" == $2 || "true" == $2 || "1" == $2 || "on" == $2) v = "1"; else v = "0"; 
 	if ("v6only" == n) v = !v;
 	print "net.inet6.ip6."n"="v; 

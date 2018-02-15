@@ -7,7 +7,7 @@ Description=Bonjour control socket
 
 [Socket]
 Backlog=2
-ListenStream=/run/%p/socket
+ListenStream=%t/%p/socket
 
 [Install]
 WantedBy=workstation.target

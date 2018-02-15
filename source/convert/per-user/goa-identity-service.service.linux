@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=GNOME Online Accounts Indentity daemon for %u
+
+[Service]
+Type=dbus
+EnvironmentDirectory=env
+ExecStart=/usr/lib/gnome-online-accounts/%p
+Restart=no
+
+[Install]

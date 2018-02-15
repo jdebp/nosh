@@ -305,42 +305,6 @@ static const std::string slash("/");
 
 static inline
 std::string
-effective_user_state_dir()
-{
-	std::string r;
-	// Do not use cuserid() here.
-	// BSD libc defines L_cuserid as 17.
-	// But GNU libc is even worse and defines it as a mere 9.
-	if (struct passwd * p = getpwuid(geteuid())) {
-		if (p->pw_dir && *p->pw_dir)
-			r = std::string(p->pw_dir) + "/.config";
-		else
-			r = "/run/user/" + std::string(p->pw_name) + "/config";
-	}
-	endpwent();
-	return r + slash;
-}
-
-static inline
-std::string
-effective_user_cache_dir()
-{
-	std::string r("/run/user/");
-	// Do not use cuserid() here.
-	// BSD libc defines L_cuserid as 17.
-	// But GNU libc is even worse and defines it as a mere 9.
-	if (struct passwd * p = getpwuid(geteuid())) {
-		if (p->pw_dir && *p->pw_dir)
-			r = std::string(p->pw_dir) + "/.cache";
-		else
-			r = "/run/user/" + std::string(p->pw_name) + "/cache";
-	}
-	endpwent();
-	return r + slash;
-}
-
-static inline
-std::string
 effective_user_log_dir()
 {
 	std::string r("/var/log/user/");
@@ -360,7 +324,7 @@ struct names {
 	void set_instance(const std::string & v, bool esc, bool alt, bool ext) { set(esc, alt, ext, escaped_instance, instance, v); }
 	void set_bundle(const std::string & r, const std::string & b) { bundle_basename = b; bundle_dirname = r + b; }
 	void set_machine_id(const std::string & v) { machine_id = v; }
-	void set_user(const std::string & u) { user = u; if (per_user_mode) runtime_dir = "/run/user/" + u + "/"; }
+	void set_user(const std::string & u);
 	const std::string & query_arg_name () const { return arg_name; }
 	const std::string & query_unit_dirname () const { return unit_dirname; }
 	const std::string & query_unit_basename () const { return unit_basename; }
@@ -372,15 +336,17 @@ struct names {
 	const std::string & query_bundle_basename () const { return bundle_basename; }
 	const std::string & query_bundle_dirname () const { return bundle_dirname; }
 	const std::string & query_machine_id () const { return machine_id; }
-	const std::string & query_user () const { return user; }
-	const std::string & query_runtime_dir () const { return runtime_dir; }
+	const std::string & query_user_name () const { return user_name; }
+	const std::string & query_UID () const { return UID; }
+	const std::string & query_runtime_dir_by_name () const { return runtime_dir_by_name; }
+	const std::string & query_runtime_dir_by_UID () const { return runtime_dir_by_UID; }
 	const std::string & query_state_dir () const { return state_dir; }
 	const std::string & query_cache_dir () const { return cache_dir; }
 	const std::string & query_log_dir () const { return log_dir; }
 	std::string substitute ( const std::string & );
 	std::list<std::string> substitute ( const std::list<std::string> & );
 protected:
-	std::string arg_name, unit_dirname, unit_basename, escaped_unit_basename, prefix, escaped_prefix, instance, escaped_instance, bundle_basename, bundle_dirname, machine_id, user, runtime_dir, state_dir, cache_dir, log_dir;
+	std::string arg_name, unit_dirname, unit_basename, escaped_unit_basename, prefix, escaped_prefix, instance, escaped_instance, bundle_basename, bundle_dirname, machine_id, user_name, UID, runtime_dir_by_name, runtime_dir_by_UID, state_dir, cache_dir, log_dir;
 	void set ( bool esc, bool alt, bool ext, std::string & escaped, std::string & normal, const std::string & value ) {
 		if (esc)
 			escaped = systemd_name_escape(alt, ext, normal = value);
@@ -392,14 +358,35 @@ protected:
 
 names::names(const char * a) : 
 	arg_name(a), 
-	user(per_user_mode ? effective_user_name() : "root"), 
-	runtime_dir(per_user_mode ? effective_user_runtime_dir() : "/run/"),
-	state_dir(per_user_mode ? effective_user_state_dir() : "/var/lib/"),
-	cache_dir(per_user_mode ? effective_user_cache_dir() : "/var/cache/"),
-	log_dir(per_user_mode ? effective_user_log_dir() : "/var/log/sv/") 
+	user_name(per_user_mode ? effective_user_name() : "root"), 
+	UID("0"),
+	runtime_dir_by_name("/run"),
+	runtime_dir_by_UID("/run"),
+	state_dir("/var/lib/"),
+	cache_dir("/var/cache/"),
+	log_dir(per_user_mode ? effective_user_log_dir() : "/var/log/sv/")
 { 
 	split_name(a, unit_dirname, unit_basename); 
 	escaped_unit_basename = systemd_name_escape(false, false, unit_basename); 
+	if (per_user_mode) {
+		std::string home_dir;
+		get_user_dirs_for(user_name, UID, runtime_dir_by_name, runtime_dir_by_UID, home_dir);
+		cache_dir = home_dir + "/.cache";
+		state_dir = home_dir + "/.config";
+	}
+}
+
+void
+names::set_user(
+	const std::string & v
+) {
+	user_name = v;
+	if (per_user_mode) {
+		std::string home_dir;
+		get_user_dirs_for(user_name, UID, runtime_dir_by_name, runtime_dir_by_UID, home_dir);
+		cache_dir = home_dir + "/.cache";
+		state_dir = home_dir + "/.config";
+	}
 }
 
 std::string
@@ -428,11 +415,13 @@ names::substitute (
 			case 'n': r += query_escaped_unit_basename(); break;
 			case 'N': r += query_unit_basename(); break;
 			case 'm': r += query_machine_id(); break;
-			case 't': r += query_runtime_dir(); break;
+			case 't': r += query_runtime_dir_by_name(); break;
+			case 'T': r += query_runtime_dir_by_UID(); break;
 			case 'S': r += query_state_dir(); break;
 			case 'C': r += query_cache_dir(); break;
 			case 'L': r += query_log_dir(); break;
-			case 'U': r += query_user(); break;
+			case 'u': r += query_user_name(); break;
+			case 'U': r += query_UID(); break;
 			case '%': default:	r += '%'; r += c; break;
 		}
 	}
@@ -465,6 +454,56 @@ is_numeric (
 	return true;
 }
 #endif
+
+static
+bool
+is_string (
+	const value & v,
+	const std::string & s
+) {
+	const std::string r(tolower(v.last_setting()));
+	return s == r;
+}
+
+static
+bool
+is_string (
+	const value & v,
+	const std::string & s0,
+	const std::string & s1
+) {
+	const std::string r(tolower(v.last_setting()));
+	return s0 == r || s1 == r;
+}
+
+static
+bool
+is_string (
+	const value * v,
+	const std::string & s,
+	const bool def
+) {
+	return v ? is_string(*v, s) : def;
+}
+
+static
+bool
+is_string (
+	const value * v,
+	const std::string & s
+) {
+	return v && is_string(*v, s);
+}
+
+static
+bool
+is_string (
+	const value * v,
+	const char * s0,
+	const char * s1
+) {
+	return v && is_string(*v, s0, s1);
+}
 
 static
 bool
@@ -683,7 +722,7 @@ report_unused (
 			if (!v.used) {
 				for (value::settings::const_iterator i(v.all_settings().begin()); v.all_settings().end() != i; ++i) {
 				       const std::string & val(*i);
-			       	       std::fprintf(stderr, "%s: WARNING: %s: Unused setting: [%s] %s = %s\n", prog, name.c_str(), section.c_str(), var.c_str(), val.c_str());
+				       std::fprintf(stderr, "%s: WARNING: %s: Unused setting: [%s] %s = %s\n", prog, name.c_str(), section.c_str(), var.c_str(), val.c_str());
 				}
 			}
 		}
@@ -961,6 +1000,14 @@ convert_systemd_units [[gnu::noreturn]] (
 	value * privatetmp(service_profile.use("service", "privatetmp"));
 	value * privatedevices(service_profile.use("service", "privatedevices"));
 	value * privatenetwork(service_profile.use("service", "privatenetwork"));
+	value * protecthome(service_profile.use("service", "protecthome"));
+	value * protectsystem(service_profile.use("service", "protectsystem"));
+	value * protectcontrolgroups(service_profile.use("service", "protectcontrolgroups"));
+//	value * protectkernelmodules(service_profile.use("service", "protectkernelmodules"));
+	value * protectkerneltunables(service_profile.use("service", "protectkerneltunables"));
+	value * readwritedirectories(service_profile.use("service", "readwritedirectories"));
+	value * readonlypaths(service_profile.use("service", "readonlypaths"));
+	value * inaccessiblepaths(service_profile.use("service", "inaccessiblepaths"));
 	value * mountflags(service_profile.use("service", "mountflags"));
 	value * ioschedulingclass(service_profile.use("service", "ioschedulingclass"));
 	value * ioschedulingpriority(service_profile.use("service", "ioschedulingpriority"));
@@ -994,6 +1041,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	value * rdmahcahandlesmax(service_profile.use("service", "rdmahcahandlesmax"));	// This is an extension to systemd.
 	value * rdmahcaobjectsmax(service_profile.use("service", "rdmahcaobjectsmax"));	// This is an extension to systemd.
 #endif
+	value * cpuaffinity(service_profile.use("service", "cpuaffinity"));
 	value * jvmdefault(service_profile.use("service", "jvmdefault"));	// This is an extension to systemd.
 	value * jvmversions(service_profile.use("service", "jvmversions"));	// This is an extension to systemd.
 	value * jvmoperatingsystems(service_profile.use("service", "jvmoperatingsystems"));	// This is an extension to systemd.
@@ -1026,8 +1074,8 @@ convert_systemd_units [[gnu::noreturn]] (
 		std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, service_filename.c_str(), type->last_setting().c_str(), "Not a supported service type.");
 		throw EXIT_FAILURE;
 	}
-	const bool is_oneshot(type ? "oneshot" == tolower(type->last_setting()) : systemd_quirks && !execstart);
-	const bool is_dbus(type ? "dbus" == tolower(type->last_setting()) : systemd_quirks && busname);
+	const bool is_oneshot(is_string(type, "oneshot", systemd_quirks && !execstart));
+	const bool is_dbus(is_string(type, "dbus", systemd_quirks && busname));
 	if (is_dbus) {
 		if (!busname && systemd_quirks)
 			std::fprintf(stderr, "%s: WARNING: %s: %s\n", prog, service_filename.c_str(), "Ignoring that the BusName entry is missing.");
@@ -1081,7 +1129,7 @@ convert_systemd_units [[gnu::noreturn]] (
 		std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, service_filename.c_str(), killmode->last_setting().c_str(), "Unsupported service stop mechanism.");
 		throw EXIT_FAILURE;
 	}
-	const bool killsignal_is_term(killsignal && "sigterm" == tolower(killsignal->last_setting()));
+	const bool killsignal_is_term(is_string(killsignal, "sigterm"));
 	if (killsignal && !killsignal_is_term)
 		killsignal->used = false;
 	if (runtimedirectory) {
@@ -1112,7 +1160,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	const std::string service_dirname(names.query_bundle_dirname() + "/service");
 
 	mkdirat(AT_FDCWD, names.query_bundle_dirname().c_str(), 0755);
-	const FileDescriptorOwner bundle_dir_fd(open_dir_at(AT_FDCWD, (names.query_bundle_dirname() + "/").c_str()));
+	const FileDescriptorOwner bundle_dir_fd(open_dir_at(AT_FDCWD, (names.query_bundle_dirname() + slash).c_str()));
 	if (0 > bundle_dir_fd.get()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, names.query_bundle_dirname().c_str(), std::strerror(error));
@@ -1217,13 +1265,13 @@ convert_systemd_units [[gnu::noreturn]] (
 		create_control_group += "foreground create-control-group " + quote(control_group_name) + " ;\n";
 	}
 	if (is_instance) {
-		control_group_name += "/" + (names.query_escaped_prefix() + "@.") + (is_target ? "target" : "service");
+		control_group_name += slash + (names.query_escaped_prefix() + "@.") + (is_target ? "target" : "service");
 		create_control_group += "foreground create-control-group " + quote(control_group_name) + " ;\n";
 	}
-	control_group_name += "/" + (names.query_bundle_basename() + ".") + (is_target ? "target" : "service");
+	control_group_name += slash + (names.query_bundle_basename() + ".") + (is_target ? "target" : "service");
 	move_to_control_group += "move-to-control-group " + quote(control_group_name) + "\n";
 	if (is_bool_true(delegate, false))
-		control_group_knobs += "foreground delegate-control-group-to " + quote(names.query_user()) + " ;\n";
+		control_group_knobs += "foreground delegate-control-group-to " + quote(names.query_user_name()) + " ;\n";
 #else
 	static_cast<void>(is_instance);	// Silence a compiler warning.
 	if (jailid) jail += "jexec " + quote(names.substitute(jailid->last_setting())) + "\n";
@@ -1305,6 +1353,18 @@ convert_systemd_units [[gnu::noreturn]] (
 		priority += "\n";
 	}
 #endif
+	if (cpuaffinity) {
+#if defined(__LINUX__) || defined(__linux__)
+		priority += "taskset --cpu ";
+#else
+		priority += "cpuset -C -l ";
+#endif
+		for (value::settings::const_iterator b(cpuaffinity->all_settings().begin()), i(b), e(cpuaffinity->all_settings().end()); e != i; ++i) {
+			if (i != b) priority += ",";
+			priority += quote(names.substitute(*i));
+		}
+		priority += "\n";
+	}
 	std::string jvm;
 	if (jvmversions || jvmoperatingsystems || jvmmanufacturers) {
 		jvm += "find-matching-jvm";
@@ -1336,23 +1396,64 @@ convert_systemd_units [[gnu::noreturn]] (
 	const bool is_private_tmp(is_bool_true(privatetmp, false));
 	const bool is_private_network(is_bool_true(privatenetwork, false));
 	const bool is_private_devices(is_bool_true(privatedevices, false));
-	if (is_private_tmp||is_private_network||is_private_devices) {
+	const bool is_private_homes(is_bool_true(protecthome, false));
+	const bool is_private_mount(is_private_tmp||is_private_devices||is_private_homes||readonlypaths||readwritedirectories||inaccessiblepaths);
+	const bool is_private(is_private_mount||is_private_network);
+	const bool is_protect_os(is_bool_true(protectsystem, false));
+	const bool is_protect_etc(is_string(protectsystem, "full") || is_bool_true(protectsystem, false));
+	const bool is_protect_homes(is_string(protecthome, "read-only"));
+	const bool is_protect_sysctl(is_bool_true(protectkerneltunables, false));
+	const bool is_protect_cgroups(is_bool_true(protectcontrolgroups, false));
+	const bool is_protect_mount(is_protect_os||is_protect_etc||is_protect_homes||is_protect_sysctl||is_protect_cgroups);
+	if (mountflags||is_private||is_protect_mount) {
 		chroot += "unshare";
-		if (is_private_tmp||is_private_devices) chroot += " --mount";
+		if (mountflags||is_private_mount||is_protect_mount) chroot += " --mount";
 		if (is_private_network) chroot += " --network";
 		chroot += "\n";
-		if (is_private_tmp||is_private_devices) {
+		if (is_private_mount||is_protect_mount) {
 			chroot += "set-mount-object --recursive slave /\n";
-			chroot += "make-private-fs";
-			if (is_private_tmp) chroot += " --temp";
-			if (is_private_devices) chroot += " --devices";
-			chroot += "\n";
+			if (is_private_mount) {
+				chroot += "make-private-fs";
+				if (is_private_tmp) chroot += " --temp";
+				if (is_private_devices) chroot += " --devices";
+				if (is_private_homes) chroot += " --homes";
+				if (inaccessiblepaths) {
+					for (value::settings::const_iterator i(inaccessiblepaths->all_settings().begin()); inaccessiblepaths->all_settings().end() != i; ++i) {
+						const std::string dir(names.substitute(*i));
+						chroot += " --hide " + quote(dir);
+					}
+				}
+				chroot += "\n";
+			}
+			if (is_protect_mount) {
+				chroot += "make-read-only-fs";
+				if (is_protect_os) chroot += " --os";
+				if (is_protect_etc) chroot += " --etc";
+				if (is_protect_homes) chroot += " --homes";
+				if (is_protect_sysctl) chroot += " --sysctl";
+				if (is_protect_cgroups) chroot += " --cgroups";
+				if (readonlypaths) {
+					for (value::settings::const_iterator i(readonlypaths->all_settings().begin()); readonlypaths->all_settings().end() != i; ++i) {
+						const std::string dir(names.substitute(*i));
+						chroot += " --include " + quote(dir);
+					}
+				}
+				if (readwritedirectories) {
+					for (value::settings::const_iterator i(readwritedirectories->all_settings().begin()); readwritedirectories->all_settings().end() != i; ++i) {
+						const std::string dir(names.substitute(*i));
+						chroot += " --except " + quote(dir);
+					}
+				}
+				chroot += "\n";
+			}
 		}
+		/// \bug FIXME is_private_network needs to set up a lo0 device.
+		if (mountflags) 
+			chroot += "set-mount-object --recursive " + quote(mountflags->last_setting()) + " /\n";
+		else
+		if (is_private_mount||is_protect_mount)
+			chroot += "set-mount-object --recursive shared /\n";
 	}
-	if (mountflags) 
-		chroot += "set-mount-object --recursive " + quote(mountflags->last_setting()) + " /\n";
-	else if (is_private_tmp||is_private_devices)
-		chroot += "set-mount-object --recursive shared /\n";
 #endif
 	const bool chrootall(!is_bool_true(rootdirectorystartonly, false));
 	std::string setsid;
@@ -1362,17 +1463,22 @@ convert_systemd_units [[gnu::noreturn]] (
 	std::string envuidgid, setuidgid;
 	if (user) {
 		if (rootdirectory) {
-			envuidgid += "envuidgid " + quote(names.query_user()) + "\n";
+			envuidgid += "envuidgid";
+			if (group)
+				envuidgid += " --primary-group " + quote(names.substitute(group->last_setting()));
+			envuidgid += " -- " + quote(names.query_user_name()) + "\n";
 			setuidgid += "setuidgid-fromenv\n";
 		} else {
-			setuidgid += "setuidgid ";
+			setuidgid += "setuidgid";
+			if (group)
+				setuidgid += " --primary-group " + quote(names.substitute(group->last_setting()));
 			if (is_bool_true(systemdusergroups, systemd_quirks))
-				setuidgid += "--supplementary ";
-			setuidgid += quote(names.query_user()) + "\n";
+				setuidgid += " --supplementary";
+			setuidgid += " -- " + quote(names.query_user_name()) + "\n";
 		}
 	} else {
 		if (group)
-			setuidgid += "setgid " + quote(names.substitute(group->last_setting())) + "\n";
+			setuidgid += "setgid -- " + quote(names.substitute(group->last_setting())) + "\n";
 	}
 	if (is_bool_true(systemduserenvironment, systemd_quirks))
 		// This replicates systemd useless features.
@@ -1388,11 +1494,11 @@ convert_systemd_units [[gnu::noreturn]] (
 	if (runtimedirectory) {
 		std::string dirs, dirs_slash;
 		for (value::settings::const_iterator i(runtimedirectory->all_settings().begin()); runtimedirectory->all_settings().end() != i; ++i) {
-			const std::string dir(names.query_runtime_dir() + names.substitute(*i));
+			const std::string dir(names.query_runtime_dir_by_name() + slash + names.substitute(*i));
 			if (!dirs.empty()) dirs += ' ';
 			if (!dirs_slash.empty()) dirs_slash += ' ';
 			dirs += quote(dir);
-			dirs_slash += quote(dir) + "/";
+			dirs_slash += quote(dir) + slash;
 		}
 		createrundir += "foreground install -d";
 		if (runtimedirectorymode) createrundir += " -m " + quote(names.substitute(runtimedirectorymode->last_setting()));
@@ -1520,19 +1626,22 @@ convert_systemd_units [[gnu::noreturn]] (
 	const bool is_use_hangup(is_bool_true(sendsighup, false));
 	const bool is_use_kill(is_bool_true(sendsigkill, true));
 	std::string redirect, login_prompt, greeting_message, socket_redirect;
-	const bool stdin_socket(standardinput && "socket" == tolower(standardinput->last_setting()));
-	const bool stdin_tty(standardinput && ("tty" == tolower(standardinput->last_setting()) || "tty-force" == tolower(standardinput->last_setting())));
-	const bool stdout_socket(standardoutput && "socket" == tolower(standardoutput->last_setting()));
-	const bool stdout_tty(standardoutput && ("tty" == tolower(standardoutput->last_setting()) || "tty-force" == tolower(standardoutput->last_setting())));
-	const bool stdout_inherit(standardoutput && "inherit" == tolower(standardoutput->last_setting()));
-	const bool stderr_socket(standarderror && "socket" == tolower(standarderror->last_setting()));
-	const bool stderr_tty(standarderror && ("tty" == tolower(standarderror->last_setting()) || "tty-force" == tolower(standarderror->last_setting())));
-	const bool stderr_inherit(standarderror && "inherit" == tolower(standarderror->last_setting()));
-	const bool stderr_log(standarderror && "log" == tolower(standarderror->last_setting()));
+	const bool stdin_file(standardinput && "file:" == tolower(standardinput->last_setting()).substr(0,5));
+	const bool stdin_socket(is_string(standardinput, "socket"));
+	const bool stdin_tty(is_string(standardinput, "tty", "tty-force"));
+	const bool stdout_file(standardoutput && "file:" == tolower(standardoutput->last_setting()).substr(0,5));
+	const bool stdout_socket(is_string(standardoutput, "socket"));
+	const bool stdout_tty(is_string(standardoutput, "tty", "tty-force"));
+	const bool stdout_inherit(is_string(standardoutput, "inherit"));
+	const bool stderr_file(standarderror && "file:" == tolower(standarderror->last_setting()).substr(0,5));
+	const bool stderr_socket(is_string(standarderror, "socket"));
+	const bool stderr_tty(is_string(standarderror, "tty", "tty-force"));
+	const bool stderr_inherit(is_string(standarderror, "inherit"));
+	const bool stderr_log(is_string(standarderror, "log"));
 	// We "un-use" anything that isn't "inherit"/"tty"/"socket".
-	if (standardinput && (!stdin_socket && !stdin_tty)) standardinput->used = false;
-	if (standardoutput && (!stdout_inherit && !stdout_socket && !stdout_tty)) standardoutput->used = false;
-	if (standarderror && (!stderr_inherit && !stderr_socket && !stderr_tty && !stderr_log)) standarderror->used = false;
+	if (standardinput && (!stdin_file && !stdin_socket && !stdin_tty)) standardinput->used = false;
+	if (standardoutput && (!stdout_file && !stdout_inherit && !stdout_socket && !stdout_tty)) standardoutput->used = false;
+	if (standarderror && (!stderr_file && !stderr_inherit && !stderr_socket && !stderr_tty && !stderr_log)) standarderror->used = false;
 	if (is_socket_activated) {
 		if (is_socket_accept) {
 			// There is no non-UCSPI mode for per-connection services.
@@ -1574,7 +1683,7 @@ convert_systemd_units [[gnu::noreturn]] (
 				// In ideal mode, input/output/error are the terminal device.
 				// In quirks mode, we just force the same behaviour as ideal mode.
 				if (!systemd_quirks) {
-				   	if (stdout_inherit || stdout_tty)
+					if (stdout_inherit || stdout_tty)
 						std::fprintf(stderr, "%s: INFO: %s: Superfluous setting: [%s] %s\n", prog, service_filename.c_str(), "Service", "StandardOutput");
 					else if (standardoutput) 
 						std::fprintf(stderr, "%s: WARNING: %s: Forcing setting: [%s] %s = %s\n", prog, service_filename.c_str(), "Service", "StandardOutput", "tty");
@@ -1678,6 +1787,9 @@ convert_systemd_units [[gnu::noreturn]] (
 		if (utmpidentifier) utmpidentifier->used = false;
 #endif
 	}
+	if (stdin_file) redirect += "fdredir --read 0 " + quote(names.substitute(standardinput->last_setting().substr(5,std::string::npos))) + "\n";
+	if (stdout_file) redirect += "fdredir --write 1 " + quote(names.substitute(standardoutput->last_setting().substr(5,std::string::npos))) + "\n";
+	if (stderr_file) redirect += "fdredir --write 2 " + quote(names.substitute(standarderror->last_setting().substr(5,std::string::npos))) + "\n";
 	if (bannerfile)
 		greeting_message += "login-banner " + quote(names.substitute(bannerfile->last_setting())) + "\n";
 	if (bannerline)
@@ -1709,8 +1821,8 @@ convert_systemd_units [[gnu::noreturn]] (
 	perilogue_setup_environment << um;
 	if (chrootall) perilogue_setup_environment << chroot;
 	perilogue_setup_environment << chdir;
-	perilogue_setup_environment << redirect;
 	perilogue_setup_environment << jvm;
+	perilogue_setup_environment << redirect;
 
 	std::stringstream perilogue_drop_privileges;
 	if (setuidgidall) perilogue_drop_privileges << setuidgid;
@@ -1727,10 +1839,10 @@ convert_systemd_units [[gnu::noreturn]] (
 	setup_environment << um;
 	setup_environment << chroot;
 	setup_environment << chdir;
+	setup_environment << jvm;
 	setup_environment << redirect;
 	if (merge_run_into_start && runtimedirectory)
 		setup_environment << createrundir;
-	setup_environment << jvm;
 
 	std::stringstream drop_privileges;
 	drop_privileges << setuidgid;
@@ -1801,7 +1913,7 @@ convert_systemd_units [[gnu::noreturn]] (
 					if (!is_socket_accept) run_or_start << "--systemd-compatibility ";
 					if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
 #if defined(IPV6_V6ONLY)
-					if (bindipv6only && "both" == tolower(bindipv6only->last_setting())) run_or_start << "--combine4and6 ";
+					if (is_string(bindipv6only, "both")) run_or_start << "--combine4and6 ";
 #endif
 #if defined(SO_REUSEPORT)
 					if (is_bool_true(reuseport, false)) run_or_start << "--reuse-port ";
@@ -1828,7 +1940,7 @@ convert_systemd_units [[gnu::noreturn]] (
 					split_ip_socket_name(sockname, listenaddress, listenport);
 					run_or_start << "udp-socket-listen --systemd-compatibility ";
 #if defined(IPV6_V6ONLY)
-					if (bindipv6only && "both" == tolower(bindipv6only->last_setting())) run_or_start << "--combine4and6 ";
+					if (is_string(bindipv6only, "both")) run_or_start << "--combine4and6 ";
 #endif
 #if defined(SO_REUSEPORT)
 					if (is_bool_true(reuseport, false)) run_or_start << "--reuse-port ";
@@ -1858,7 +1970,7 @@ convert_systemd_units [[gnu::noreturn]] (
 					if (!is_socket_accept) run_or_start << "--systemd-compatibility ";
 					if (backlog) run_or_start << "--backlog " << quote(backlog->last_setting()) << " ";
 #if defined(IPV6_V6ONLY)
-					if (bindipv6only && "both" == tolower(bindipv6only->last_setting())) run_or_start << "--combine4and6 ";
+					if (is_string(bindipv6only, "both")) run_or_start << "--combine4and6 ";
 #endif
 #if defined(SO_REUSEPORT)
 					if (is_bool_true(reuseport, false)) run_or_start << "--reuse-port ";
@@ -1939,6 +2051,8 @@ convert_systemd_units [[gnu::noreturn]] (
 					}
 				}
 			}
+		} else {
+			if (maxconnections) maxconnections->used = false;
 		}
 		if (is_ucspirules) {
 			run_or_start << "ucspi-socket-rules-check";
@@ -2028,7 +2142,7 @@ convert_systemd_units [[gnu::noreturn]] (
 		}
 		restart_script << escape_newlines(s.str()) << "\n";
 	}
-	if (restart ? "always" == tolower(restart->last_setting()) : !systemd_quirks) {
+	if (is_string(restart, "always", !systemd_quirks)) {
 		restart_script << "exec true\t# ignore script arguments\n";
 	} else
 	if (!restart || "no" == tolower(restart->last_setting()) || "never" == tolower(restart->last_setting()) ) {
@@ -2036,12 +2150,12 @@ convert_systemd_units [[gnu::noreturn]] (
 	} else 
 	{
 		const bool 
-			on_true (restart &&  ("on-success" == tolower(restart->last_setting()))),
-			on_false(restart &&  ("on-failure" == tolower(restart->last_setting()))),
-			on_term (restart && (("on-failure" == tolower(restart->last_setting())) || ("on-abort" == tolower(restart->last_setting())))), 
-			on_abort(restart && (("on-failure" == tolower(restart->last_setting())) || ("on-abort" == tolower(restart->last_setting())) || ("on-abnormal" == tolower(restart->last_setting())))), 
-			on_crash(restart && (("on-failure" == tolower(restart->last_setting())) || ("on-abort" == tolower(restart->last_setting())) || ("on-abnormal" == tolower(restart->last_setting())))), 
-			on_kill (restart && (("on-failure" == tolower(restart->last_setting())) || ("on-abort" == tolower(restart->last_setting())) || ("on-abnormal" == tolower(restart->last_setting())))); 
+			on_true (is_string(restart, "on-success")),
+			on_false(is_string(restart, "on-failure")),
+			on_term (on_true), 
+			on_abort(is_string(restart, "on-failure") || is_string(restart, "on-abort") || is_string(restart, "on-abnormal")), 
+			on_crash(on_abort), 
+			on_kill (on_abort); 
 		restart_script << 
 			"case \"$1\" in\n"
 			"\te*)\n"
@@ -2128,10 +2242,7 @@ convert_systemd_units [[gnu::noreturn]] (
 			create_links(prog, envs, names.query_bundle_dirname(), per_user_mode, is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "sockets.target", "wanted-by/");
 		if (is_dbus) {
 			create_links(prog, envs, names.query_bundle_dirname(), per_user_mode, is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "dbus.socket", "after/");
-#if !defined(__LINUX__) && !defined(__linux__)
-			// Don't want D-Bus on Linux in case the D-Bus daemon is not managed by service-manager.
 			create_links(prog, envs, names.query_bundle_dirname(), per_user_mode, is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "dbus.socket", "wants/");
-#endif
 		}
 		if (!is_target) {
 			create_links(prog, envs, names.query_bundle_dirname(), per_user_mode, is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "basic.target", "after/");
@@ -2141,7 +2252,7 @@ convert_systemd_units [[gnu::noreturn]] (
 		}
 	}
 	if (earlysupervise) {
-		create_link(prog, names.query_bundle_dirname(), bundle_dir_fd, names.query_runtime_dir() + "service-bundles/early-supervise/" + names.query_bundle_basename(), "supervise");
+		create_link(prog, names.query_bundle_dirname(), bundle_dir_fd, names.query_runtime_dir_by_name() + "/service-bundles/early-supervise/" + names.query_bundle_basename(), "supervise");
 	}
 	if (listenstream) {
 		for (value::settings::const_iterator i(listenstream->all_settings().begin()); listenstream->all_settings().end() != i; ++i) {
@@ -2174,7 +2285,6 @@ convert_systemd_units [[gnu::noreturn]] (
 	flag_file(prog, service_dirname, service_dir_fd, "remain", is_remain);
 	flag_file(prog, service_dirname, service_dir_fd, "use_hangup", is_use_hangup);
 	flag_file(prog, service_dirname, service_dir_fd, "no_kill_signal", !is_use_kill);
-	flag_file(prog, service_dirname, service_dir_fd, "down", true);
 
 	// Issue the final reports.
 

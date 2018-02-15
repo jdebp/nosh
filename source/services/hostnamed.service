@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=systemd(-compatible) %p service
+Description=systemd-compatible %p service for non-systemd operating systems
 
 [Service]
 Type=dbus

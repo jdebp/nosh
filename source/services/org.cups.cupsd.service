@@ -3,18 +3,19 @@
 ## **************************************************************************
 
 [Unit]
-Description=Common Unix Printing Service
+Description=Common Unix Printing Service daemon
 # This is because CUPS needs to have a device re-scan done after it has started up.
 Before=udev-trigger-add@devices.service udev-trigger-add@subsystems.service
 Before=busybox-mdev-rescan.service
 Before=suckless-mdev-rescan.service
 
 [Service]
+RuntimeDirectory=cups
 # See Debian bug #747073 for the sad tale of why CUPS doesn't work in a dual-stack IPv6 world.
-ExecStart=cupsd -f
+ExecStart=cupsd -f -l
 # This works around a security hole in hplib where it opens sensitive files with predictable names in /tmp/ .
 # https://securityblog.redhat.com/2014/04/09/new-red-hat-enterprise-linux-7-security-feature-privatetmp/
 PrivateTmp=true
 
 [Install]
-WantedBy=workstation.target
+#WantedBy=workstation.target

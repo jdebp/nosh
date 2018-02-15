@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=DConf Editor for %u
+
+[Service]
+Type=dbus
+EnvironmentDirectory=env
+ExecStart=%p --gapplication-service
+
+[Install]

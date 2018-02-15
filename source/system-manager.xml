@@ -376,12 +376,7 @@ What the <code>kbrequest</code> and <code>secure-attention-key</code> targets do
 
 <listitem>
 <para>
-For traditional Linux and BSD semantics, <code>secure-attention-key</code> 
-should run the
-<citerefentry><refentrytitle>reboot</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-command (or some wrapper around it) and <code>kbrequest</code> should run the
-<citerefentry><refentrytitle>rescue</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-command.
+For traditional Linux and BSD semantics, <code>secure-attention-key</code> should run the <citerefentry><refentrytitle>reboot</refentrytitle><manvolnum>8</manvolnum></citerefentry> command (or some wrapper around it) and <code>kbrequest</code> should run the <citerefentry><refentrytitle>rescue</refentrytitle><manvolnum>8</manvolnum></citerefentry> or <citerefentry><refentrytitle>emergency</refentrytitle><manvolnum>8</manvolnum></citerefentry> command.
 </para>
 </listitem>
 
@@ -568,71 +563,40 @@ This is symbolically linked to <filename>/run/shm</filename> for compatibility w
 </refsection><refsection><title>The system clock</title>
 
 <para>
-When the system starts process #1, the operating system kernel's system clock
-will have been initialized from a hardware real-time clock.
-On an all-BSD/Linux system, that hardware real-time clock will be running in
-UTC, and the system clock will thus be initially set to a proper UTC value.
-On a more heterogenous system, the hardware real-time clock may be mistakenly
-running in a local time.
-This usually leads to some program or other, during the bootstrap process,
-having to determine the offset between RTC local time and UTC and correct the
-system clock.
-A consequence of this is that the system clock jumps by hours partway through
-the system bootstrap.
-In particular, system time leaps backwards for machines whose RTC local time is
-ahead of UTC, which is not something that POSIX programs are written to expect.
+When the system starts process #1, the operating system kernel's system clock will have been initialized from a hardware real-time clock.
+On an all-BSD/Linux system, that hardware real-time clock will be running in UTC, and the system clock will thus be initially set to a proper UTC value.
+On a more heterogenous system, the hardware real-time clock may be mistakenly running in a local time.
+This usually leads to some program or other, during the bootstrap process, having to determine the offset between RTC local time and UTC and correct the system clock.
+A consequence of this is that the system clock jumps by hours partway through the system bootstrap.
+In particular, system time leaps backwards for machines whose RTC local time is ahead of UTC, which is not something that POSIX programs are written to expect.
 </para>
 
 <para>
 Furthermore, the operating system tries to do silly things with FAT volumes.
-Instead of just taking file and directory timestamps to be UTC, the filesystem
-driver takes the timestamps to be local time, so needs to know how to convert
-FAT local time (as on disc) to UTC (as seen at the system call interface with
-<citerefentry><refentrytitle>stat</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-and so forth).
-Because this is done in-kernel, a simplistic and hence broken mechanism is used.
-A single offset between FAT local time and UTC is applied to all timestamps.
+Instead of just taking file and directory timestamps to be UTC, the filesystem driver takes the timestamps to be local time, so needs to know how to convert FAT local time (as on disc) to UTC (as seen at the system call interface with <citerefentry><refentrytitle>stat</refentrytitle><manvolnum>2</manvolnum></citerefentry> and so forth).
+Because this is done in-kernel, a simplistic and hence broken mechanism is used.  A single offset between FAT local time and UTC is applied to all timestamps.
 </para>
 
 <para>
-<citerefentry><refentrytitle>fsck</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-also needs to have the correct system time and the local time offset to hand.
-Otherwise, it miscalculates timestamps on FAT volumes, and compares the wrong
-system time against the superblock's "last checked" timestamps on EXT and other
-volumes.
-This means that the FAT local time offset must be provided to the kernel before any
-<citerefentry><refentrytitle>fsck</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-is run by the system bootstrap.
+<citerefentry><refentrytitle>fsck</refentrytitle><manvolnum>8</manvolnum></citerefentry> also needs to have the correct system time and the local time offset to hand.
+Otherwise, it miscalculates timestamps on FAT volumes, and compares the wrong system time against the superblock's "last checked" timestamps on EXT and other volumes.
+This means that the FAT local time offset must be provided to the kernel before any <citerefentry><refentrytitle>fsck</refentrytitle><manvolnum>8</manvolnum></citerefentry> is run by the system bootstrap.
 </para>
 
 <para>
-<command>system-manager</command> performs adjustments to the system clock and
-supplies the kernel with the one offset from FAT/RTC local time to UTC before
-the service manager or logger are started up, to ensure that time running
-backwards happens at a predictable point during the system bootstrap, and that
-it happens before any filesystem checks can run.
+<command>system-manager</command> performs adjustments to the system clock and supplies the kernel with the one offset from FAT/RTC local time to UTC before the service manager or logger are started up, to ensure that time running backwards happens at a predictable point during the system bootstrap, and that it happens before any filesystem checks can run.
 </para>
 
 <refsection><title>The Linux system clock</title>
 
 <para>
-When the hardware clock is mistakenly runing in local time, the system clock is
-initialized to the wrong value, since the kernel is always expecting to read UTC
-from the hardware clock at that point.
-The shifting back to UTC is done using a special once-only variant of the
-<citerefentry><refentrytitle>settimeofday</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-system call.
-The FAT time offset is set by the normal variant of
-<citerefentry><refentrytitle>settimeofday</refentrytitle><manvolnum>2</manvolnum></citerefentry>.
+When the hardware clock is mistakenly runing in local time, the system clock is initialized to the wrong value, since the kernel is always expecting to read UTC from the hardware clock at that point.
+The shifting back to UTC is done using a special once-only variant of the <citerefentry><refentrytitle>settimeofday</refentrytitle><manvolnum>2</manvolnum></citerefentry> system call.
+The FAT time offset is set by the normal variant of <citerefentry><refentrytitle>settimeofday</refentrytitle><manvolnum>2</manvolnum></citerefentry>.
 </para>
 
 <para>
-So as part of system initialization, <command>system-manager</command> calls the
-once-only special variant of
-<citerefentry><refentrytitle>settimeofday</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-to set the system time back to UTC and calls the normal variant of the same
-function to provide the RTC-local-time-to-UTC and FAT-local-time-to-UTC
-offsets.
+So as part of system initialization, <command>system-manager</command> calls the once-only special variant of <citerefentry><refentrytitle>settimeofday</refentrytitle><manvolnum>2</manvolnum></citerefentry> to set the system time back to UTC and calls the normal variant of the same function to provide the RTC-local-time-to-UTC and FAT-local-time-to-UTC offsets.
 </para>
 
 </refsection>
@@ -640,30 +604,13 @@ offsets.
 <refsection><title>The BSD system clock</title>
 
 <para>
-BSDs have a <code>machdep.adjkerntz</code> variable and a
-<code>machdep.wall_cmos_clock</code> variable (see
-<citerefentry><refentrytitle>sysctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>)
-that can be set by the kernel loader from
-<citerefentry><refentrytitle>loader.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
-These supply the offset between local time, as on FAT volumes and as in the
-hardware clock, and UTC.
-Since they can be set before the kernel first sets the system clock (with
-<citerefentry><refentrytitle>inittodr</refentrytitle><manvolnum>9</manvolnum></citerefentry>)
-and thus the local time offset can be applied from the get-go when first
-transferring from the hardware clock to the system clock, there is no
-requirement to step the system clock later in the bootstrap process.
-However, they are often not set in
-<citerefentry><refentrytitle>loader.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
-and the system clock is initialized incorrectly.
+BSDs have a <code>machdep.adjkerntz</code> variable and a <code>machdep.wall_cmos_clock</code> variable (see <citerefentry><refentrytitle>sysctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>) that can be set by the kernel loader from <citerefentry><refentrytitle>loader.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>.  These supply the offset between local time, as on FAT volumes and as in the hardware clock, and UTC.
+Since they can be set before the kernel first sets the system clock (with <citerefentry><refentrytitle>inittodr</refentrytitle><manvolnum>9</manvolnum></citerefentry>) and thus the local time offset can be applied from the get-go when first transferring from the hardware clock to the system clock, there is no requirement to step the system clock later in the bootstrap process.
+However, they are often not set in <citerefentry><refentrytitle>loader.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>, and the system clock is initialized incorrectly.
 </para>
 
 <para>
-So as part of system initialization, <command>system-manager</command>
-calculates <code>machdep.adjkerntz</code> and
-<code>machdep.wall_cmos_clock</code> (the latter from the existence of
-<filename>/etc/wall_cmos_clock</filename> and the former from the timezone
-database), updates them, and changes the system clock with
-<citerefentry><refentrytitle>settimeofday</refentrytitle><manvolnum>2</manvolnum></citerefentry>.
+So as part of system initialization, <command>system-manager</command> calculates <code>machdep.adjkerntz</code> and <code>machdep.wall_cmos_clock</code> (the latter from the existence of <filename>/etc/wall_cmos_clock</filename> and the former from the timezone database), updates them, and changes the system clock with <citerefentry><refentrytitle>settimeofday</refentrytitle><manvolnum>2</manvolnum></citerefentry>.
 </para>
 
 </refsection>
@@ -672,22 +619,11 @@ database), updates them, and changes the system clock with
 
 <para>
 The signal numbers should be uniform across BSD and Linux.
-They aren't because of the BSD 
-<citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-command, which sends signals directly to process #1, meaning that
-<command>system-manager</command> has to align with whatever signals
-it sends.
+They aren't because of the BSD <citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry> command, which sends signals directly to process #1, meaning that <command>system-manager</command> has to align with whatever signals it sends.
 </para>
 
 <para>
-Because <filename>/usr/lib</filename> and its ilk aren't necessarily present at mount
-time, the <command>system-manager</command> program image file is statically linked
-and also incorporates (copies of) the 
-<citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-and
-<citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-commands as built-in commands.
+Because <filename>/usr/lib</filename> and its ilk aren't necessarily present at mount time, the <command>system-manager</command> program image file is statically linked and also incorporates (copies of) the <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> commands as built-in commands.
 </para>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

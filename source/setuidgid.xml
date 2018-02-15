@@ -13,6 +13,7 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>setuidgid</command>
+<arg>--primary-group <replaceable>group</replaceable></arg>
 <arg>--supplementary</arg>
 <arg choice='req'><replaceable>account</replaceable></arg>
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
@@ -30,12 +31,17 @@
 </para>
 
 <para>
+If the <arg choice='plain'>--primary-group</arg> option is used, setuidgid will use <replaceable>group</replaceable> instead of the primary GID of <replaceable>account</replaceable> as the GID to set.
+</para>
+
+<para>
 If the <arg choice='plain'>--supplementary</arg> option is used, setuidgid will also set the supplementary GIDs for the groups to which account belongs, as listed in the groups database. 
 Without that option, it only sets the GID that is listed for account in the password database, ignoring the group database, and clears the list of supplementary groups entirely.
 </para>
 
 <para>
-In either case, the command will fail if the process is not running under the aegis of the superuser. Non-superusers are not permitted to alter the supplementary groups list.
+In either case, the command will fail if the process is not running under the aegis of the superuser. 
+Non-superusers are not permitted to alter the supplementary groups list.
 </para>
 
 <para>

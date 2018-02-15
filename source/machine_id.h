@@ -39,30 +39,16 @@ void
 write_non_volatile (
 	const char * prog
 ) ;
-bool
-read_volatile () ;
-void
-write_volatile (
-	const char * prog
-) ;
-bool
-read_host_uuid () ;
-void
-write_host_uuid (
-	const char * prog
-) ;
-void
-write_non_volatile_hostuuid (
-	const char * prog
-) ;
-void
-write_volatile_hostuuid (
-	const char * prog
-) ;
 bool 
 validate () ;
 bool
-read_fallbacks (const ProcessEnvironment &) ;
+read_fallbacks (
+	const ProcessEnvironment &
+) ;
+void
+write_fallbacks (
+	const char * prog
+) ;
 
 }
 

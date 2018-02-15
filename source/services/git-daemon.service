@@ -8,7 +8,7 @@ Description=listening git service
 [Service]
 EnvironmentDirectory=env
 User=git-daemon
-ExecStart=/usr/local/libexec/git-core/%p --systemd --reuseadd --verbose --base-path "${directory:-/home/publicfile/public}" --interpolated-path %CH ${flags}
+ExecStart=/usr/local/libexec/git-core/%p --systemd --reuseadd --verbose --base-path "${directory:-~publicfile/public}" --interpolated-path %CH ${flags}
 # git-daemon understands the LISTEN protocol, so does not need StandardInput=socket.
 
 [Install]

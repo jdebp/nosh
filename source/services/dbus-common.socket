@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=System-wide "Desktop" bus socket
+
+[Socket]
+SocketMode=0666
+Backlog=2
+#MaxConnections=2
+ListenStream=%t/dbus/system_bus_socket
+Accept=false
+
+[Install]
+WantedBy=dbus

@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Listening socket for the SunRPC port mapping daemon
+
+[Socket]
+ListenStream=%t/%p.sock
+# The program cannot itself cope with dual-stack listening sockets.
+BindIPv6Only=ipv6-only
+ListenStream=0.0.0.0:111
+ListenDatagram=0.0.0.0:111
+ListenStream=[::]:111
+ListenDatagram=[::]:111
+
+[Install]
+WantedBy=server.target

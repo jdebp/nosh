@@ -9,7 +9,8 @@ Before=multi-user-pre.target
 [Service]
 Type=oneshot
 Umask=0033
-ExecStart=fdredir --write 1 /run/motd.dynamic uname -srm
+StandardOutput=file:/run/motd.dynamic
+ExecStart=uname -srm
 # This is a one-shot service that can be re-triggered by starting it again.
 #RemainAfterExit=1
 Restart=no

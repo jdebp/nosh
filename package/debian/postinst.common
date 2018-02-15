@@ -1,7 +1,16 @@
-# Common post-install for Debian
+# Maintainer script main for Debian
 case "$1" in
+	# The package has been installed over version $2 .
 	configure)
-		extra
-                common
+		if test -z "$2"
+		then
+			post_install_funcs
+			post_install_extra "$@"
+			common
+		else
+			post_upgrade_funcs
+			post_upgrade_extra "$@"
+			common
+		fi
 		;;
 esac

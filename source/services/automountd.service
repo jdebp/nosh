@@ -5,7 +5,7 @@
 [Unit]
 Description=Mount automounted filesystems on demand from the kernel
 Wants=kmod@autofs
-After=kmod@autofs, nfsclient.service
+After=kmod@autofs nfsclient.service
 
 [Service]
 EnvironmentDirectory=env

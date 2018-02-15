@@ -1,0 +1,19 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=FreeBSD System V IPC umbrella service
+DefaultDependencies=no
+Wants=kmod@sysvmsg kmod@sysvsem kmod@sysvshm
+
+[Service]
+Type=oneshot
+EnvironmentDirectory=env
+# This only has meaningful behaviour at bootstrap, not later.
+RemainAfterExit=yes
+Restart=never
+
+[Install]
+StoppedBy=shutdown.target
+WantedBy=sysinit.target

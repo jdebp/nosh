@@ -6,7 +6,7 @@
 Description=Copy udev rules generated and dumped into /run whilst /etc was mounted read-only
 Description=Debian did away with this in September 2015.
 DefaultDependencies=false
-After=mount@- mount@-etc udev.service
+After=mount@- mount@-etc udev
 Before=shutdown.target
 
 [Service]

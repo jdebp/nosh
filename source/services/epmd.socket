@@ -7,7 +7,7 @@ Description=Erlang Port Mapper socket
 
 [Socket]
 Backlog=2
-MaxConnections=2
+#MaxConnections=2
 ListenStream=4369
 BindIPV6Only=both
 Accept=false

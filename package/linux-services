@@ -12,6 +12,9 @@ kernel-vt-kbdrate
 kmod
 kmod@ipv6
 kmod@loop
+kmod@lp
+kmod@parport_pc
+kmod@ppdev
 kmod@sg
 kmod@unix
 kmod@uvesafb
@@ -21,6 +24,9 @@ nft
 pommed
 sudo
 sysstat
+systemd-hostnamed
+systemd-localed
+systemd-logind
 ttylogin-starter
 update-binfmts
 wettsteinsyslogd

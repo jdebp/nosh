@@ -7,7 +7,7 @@ Description=Music Player socket
 
 [Socket]
 ListenStream=::0:6600
-ListenStream=/run/%p/socket
+ListenStream=%t/%p/socket
 Backlog=5
 KeepAlive=true
 PassCredentials=true

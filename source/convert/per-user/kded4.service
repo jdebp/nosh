@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=KDE daemon 4 for %u
+Wants=kdeinit4.service gam_server.service
+After=kdeinit4.service gam_server.service
+
+[Service]
+Type=dbus
+# The fact that the KDE Launcher server requires an X display at startup is a bug.
+EnvironmentDirectory=../../../common/env
+EnvironmentDirectory=env
+ExecStart=%p --nofork
+Restart=on-abort
+
+[Install]

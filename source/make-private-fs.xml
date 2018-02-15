@@ -18,6 +18,8 @@
 <command>make-private-fs</command>
 <arg>--temp</arg>
 <arg>--devices</arg>
+<arg>--homes</arg>
+<arg>--hide <replaceable>directory</replaceable></arg>
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -25,11 +27,7 @@
 <refsection><title>Description</title>
 
 <para>
-<command>make-private-fs</command> is a chain-loading utility that mounts
-private volumes in various parts of the filesystem namespace and pre-populates
-them, and then chain loads to <replaceable>next-prog</replaceable> with the
-<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-function.  
+<command>make-private-fs</command> is a chain-loading utility that mounts private volumes in various parts of the filesystem namespace and pre-populates them, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
 </para>
 
 <para>
@@ -43,7 +41,7 @@ The parts of the filesystem that are mounted and populated are controlled by com
 <variablelist>
 
 <varlistentry>
-<term><arg>--temp</arg></term>
+<term><arg choice='plain'>--temp</arg></term>
 <listitem>
 <para>
 Empty directories, held below a superuser-only-accessible parent, are mounted at <filename>/tmp</filename> and <filename>/var/tmp</filename>.
@@ -53,7 +51,7 @@ They have <code>rwx</code> permissions for the owner, group, and world; and they
 </varlistentry>
 
 <varlistentry>
-<term><arg>--devices</arg></term>
+<term><arg choice='plain'>--devices</arg></term>
 <listitem>
 <para>
 A <code>tmpfs</code> filesystem is mounted at <filename>/dev</filename>, without any real devices in it.
@@ -64,18 +62,37 @@ On BSD systems, a <code>fdescfs</code> filesystem is mounted at <filename>/dev/f
 </listitem>
 </varlistentry>
 
+<varlistentry>
+<term><arg choice='plain'>--homes</arg></term>
+<listitem>
+<para>
+This is causes empty directories, held below a superuser-only-accessible parent, to be mounted at various user home directories, or collections of user home directories.
+It is currently equivalent to <arg choice='plain'>--hide</arg> <filename>/home</filename> and <arg choice='plain'>--hide</arg> <filename>/root</filename>.
+Note that pseudo-user home directories such as <filename>/var/lib/rabbitmq</filename>, <filename>/var/lib/qmail</filename>, and <filename>/var/lib/mysql</filename> are not covered by this, as they are not considered to hold an individual real user's private files.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><arg choice='plain'>--hide</arg> <replaceable>directory</replaceable></term>
+<listitem>
+<para>
+Empty directories, held below a superuser-only-accessible parent, are mounted at <filename><replaceable>directory</replaceable></filename>.
+They have <code>rwx</code> permissions for the owner, and no permissions for anyone else.
+</para>
+</listitem>
+</varlistentry>
+
 </variablelist>
 
 <para>
-The command will fail if the process is not running under the aegis of the superuser, 
-because most of the internal operations necessary are not permitted to non-superusers. 
+The command will fail if the process is not running under the aegis of the superuser, because most of the internal operations necessary are not permitted to non-superusers. 
 </para>
 
 </refsection><refsection><title>Usage</title>
 
 <para>
-<command>make-private-fs</command> is usually run chain-loaded from
-<citerefentry><refentrytitle>unshare</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+<command>make-private-fs</command> is usually run chain-loaded from <citerefentry><refentrytitle>unshare</refentrytitle><manvolnum>1</manvolnum></citerefentry>.  
 Beware: Running it without unsharing first will affect the global mount namespace.
 </para>
 

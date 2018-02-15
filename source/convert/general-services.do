@@ -2,6 +2,7 @@
 ## **************************************************************************
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
+# vim: set filetype=sh:
 #
 # Convert the /etc/rc.conf{,.local} external configuration formats.
 # This is invoked by all.do .
@@ -42,7 +43,7 @@ do
 	jail_mount)		continue ;; # This is a jail configuration item, not a service.
 	kldxref)		continue ;; # This is not a service.
 	ldconfig)		continue ;; # This is handled by a special conversion.
-	linux)			continue ;;
+	linux)			continue ;; # This is handled by a special conversion.
 	mariadb)		continue ;; # This is handled by a special conversion.
 	mixer)			continue ;; # This is replaced by templatized services.
 	moused_nondefault)	continue ;; # This is not used for services.
@@ -54,6 +55,7 @@ do
 	sendmail*)		continue ;; # In the process of being dropped by the BSDs.
 	service_manager)	continue ;; # There should not be any variables for this.
 	service_manager_svscan)	continue ;; # There should not be any variables for this.
+	svr4)			continue ;; # This is handled by a special conversion.
 	syslog)			continue ;; # This is handled by a special conversion.
 	system_control_normal)	continue ;; # There should not be any variables for this.
 	sysvipc)		continue ;; # This is handled by a special conversion.
@@ -77,9 +79,9 @@ do
 	# Some services are early services, logged together, that don't have their own individual log services.
 	if ! test -d /etc/service-bundles/services/"$service"/
 	then
-		system-control preset --prefix "cyclog@" -- "$service"
+		system-control preset --rcconf-file rc.conf --prefix "cyclog@" -- "$service"
 	fi
-	system-control preset -- "$service"
+	system-control preset --rcconf-file rc.conf -- "$service"
 	if system-control is-enabled "$service"
 	then
 		echo >> "$3" on "$service"

@@ -31,8 +31,13 @@ load() {
 		then
 			ls -1 "${dir}/" | while read -r f
 			do
-				dd if="${dir}/${f}" of=/dev/random bs=4096
-				rm -- "${dir}/${f}"
+				if test -f "${dir}/${f}"
+				then
+					dd if="${dir}/${f}" of=/dev/random bs=4096
+					rm -- "${dir}/${f}"
+				else
+					echo 1>&2 "${dir}/${f}": Refusing to load random seed from non-regular file.
+				fi
 			done
 		fi
 		;;
@@ -41,7 +46,12 @@ load() {
 	[Nn][Oo]|'')
 		;;
 	*)
-		test -f "${file}" && dd if="${file}" of=/dev/random bs=4096
+		if test -f "${file}"
+		then
+			dd if="${file}" of=/dev/random bs=4096
+		else
+			echo 1>&2 "${file}": Refusing to load random seed from non-regular file.
+		fi
 		;;
 	esac
 }
@@ -52,7 +62,12 @@ save() {
 		;;
 	*)
 		umask 077
-		dd if=/dev/random of="${file}" bs=4096 count=1
+		if ! test -e "${file}" || test -f "${file}"
+		then
+			dd if=/dev/random of="${file}" bs=4096 count=1
+		else
+			echo 1>&2 "${file}": Refusing to save random seed to non-regular file.
+		fi
 		;;
 	esac
 }

@@ -12,6 +12,24 @@ try_restart() {
 		fi
 	done
 }
+add_user() { 
+	if ! getent passwd "$1" > /dev/null 
+	then
+		printf 1>&2 "Adding user: %s\n" "$1"
+		pw useradd "$1" -s /bin/false 
+	else
+		# printf 1>&2 "Using existing user: %s\n" "$1"
+		:
+	fi
+}
+add_group() { 
+	if ! getent group "$1" > /dev/null 
+	then
+		printf 1>&2 "Adding group: %s\n" "$1"
+		pw groupadd "$1" 
+	fi
+}
+add_log() { install -d -m 0755 -o "$1" /var/log/sv/"$2" ; }
 rename_user() {
 	if getent passwd "$1$3" > /dev/null 
 	then
@@ -19,7 +37,7 @@ rename_user() {
 		pw usermod "$1$3" -l "$2$3"
 	fi
 }
-rename_log_user() {
+rename_logfile_owning_user() {
 	local opwescaped="`old_escape "$1"`"
 	if ! getent passwd "${opwescaped}"-log > /dev/null 
 	then
@@ -34,7 +52,7 @@ rename_log_user() {
 	sleep 0.1	# To give the log service a chance to stop and try restarting
 	rename_user "${opwescaped}" "${npwescaped}" -log
 }
-rename_non_log_user() {
+rename_non_file_owning_user() {
 	local opwescaped="`old_escape "$1"`"
 	if ! getent passwd "${opwescaped}" > /dev/null 
 	then
@@ -50,7 +68,10 @@ rename_non_log_user() {
 service_with_dedicated_logger() {
 	if test -z "${nosh_run_package}"
 	else
-		rename_log_user "$1"
+		rename_logfile_owning_user "$1"
+		local pwescaped="`escape "$1"`"
+		add_user "$pwescaped"-log
+		add_log "$pwescaped"-log "$1"
 	then
 		try_restart "$1.service" "cyclog@$1.service"
 	fi
@@ -58,7 +79,10 @@ service_with_dedicated_logger() {
 login_service_with_dedicated_logger() {
 	if test -z "${nosh_run_package}"
 	else
-		rename_log_user "ttylogin@$1"
+		rename_logfile_owning_user "ttylogin@$1"
+		local pwescaped="`escape "ttylogin@$1"`"
+		add_user "$pwescaped"-log
+		add_log "$pwescaped"-log "ttylogin@$1"
 	then
 		try_restart "ttylogin@$1.service" "cyclog@ttylogin@$1.service"
 	fi
@@ -74,7 +98,10 @@ ktty_login_service_with_dedicated_logger() {
 socket_with_dedicated_logger() {
 	if test -z "${nosh_run_package}"
 	else
-		rename_log_user "$1"
+		rename_logfile_owning_user "$1"
+		local pwescaped="`escape "$1"`"
+		add_user "$pwescaped"-log
+		add_log "$pwescaped"-log "$1"
 	then
 		try_restart "$1.socket" "cyclog@$1.socket"
 	fi
@@ -93,7 +120,10 @@ service_only_no_run() {
 fan_in_logger() {
 	if test -z "${nosh_run_package}"
 	then
-		rename_log_user "$1"
+		rename_logfile_owning_user "$1"
+		local pwescaped="`escape "$1"`"
+		add_user "$pwescaped"-log
+		add_log "$pwescaped"-log "$1"
 	else
 		try_restart "$1-log.service"
 	fi
@@ -101,16 +131,34 @@ fan_in_logger() {
 target() {
 	:
 }
-log_user() {
+logfile_owning_user() {
 	if test -z "${nosh_run_package}"
 	then
-		rename_log_user "$1"
+		rename_logfile_owning_user "$1"
+		local pwescaped="`escape "$1"`"
+		add_user "$pwescaped"-log
 	fi
 }
-non_log_user() {
+non_file_owning_user() {
 	if test -z "${nosh_run_package}"
 	then
-		rename_non_log_user "$1"
+		rename_non_file_owning_user "$1"
+		local pwescaped="`escape "$1"`"
+		add_user "$pwescaped"
+	fi
+}
+user_vt_user() {
+	if test -z "${nosh_run_package}"
+	then
+		local pwescaped="`escape user-vt-"$1"`"
+		add_user "$pwescaped"
+	fi
+}
+user_vt_group() {
+	if test -z "${nosh_run_package}"
+	then
+		local pwescaped="`escape user-vt-"$1"`"
+		add_group "$pwescaped"
 	fi
 }
 user_tty() {

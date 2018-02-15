@@ -52,7 +52,7 @@ Files to be found here include:
 
 <dl>
 <dt><code class='filename'>/run/utx.active</code></dt><dd>the part of the BSD login database that records currently-logged in users since the last bootstrap, created by the <code>utx</code> service</dd>
-<dt><code class='filename'>/run/utmp</code></dt><dd>the part of the Linux login database that records currently-logged in users since the last bootstrap, created by the <code>utx</code> service</dd>
+<dt><code class='filename'>/run/utmp</code></dt><dd>the part of the Linux login database that records currently-logged in users since the last bootstrap, created by the <code>utx</code> service running <a href="login-update-utmpx.html"><code>login-update-utmpx</code></a> </dd>
 <dt id='tmpfs-machine-id'><code class='filename'>/run/machine-id</code></dt><dd>the machine ID, usually a simple duplicate of <a href="#machine-id"><code class='filename'>/etc/machine-id</code></a></dd>
 <dt><code class='filename'>/run/dmesg.boot</code></dt><dd>a dump of the early kernel log for the current bootstrap, saved by the <code>dmesg</code> service and redundant with the log of the <code>klogd</code> service</dd>
 <dt><code class='filename'>/run/log</code></dt><dd>the universally writable socket that the <code>local-syslog-read</code> service listens on</dd>
@@ -184,7 +184,13 @@ This contains:
 
 <p>
 The runtime area for <code>jim</code>'s <a href="per-user-manager.html"><code>per-user-manager</code></a>.
+This contains:
 </p>
+
+<dl>
+<dt><code class='filename'>/run/user/jim/per-user-manager/control</code></dt><dd>the conventional communications socket for <code>jim</code>'s per-user service manager, only accessible to <code>jim</code> </dd>
+</dl>
+
 
 </dd>
 

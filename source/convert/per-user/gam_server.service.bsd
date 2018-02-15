@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+# This uses a listening socket at /tmp/fam-%u/fam- but does not have a way for that to be passed in.
+
+[Unit]
+Description=gamin file alteration monitor daemon for %u
+
+[Service]
+ExecStart=/usr/local/libexec/%p
+Restart=on-abort
+
+[Install]
+WantedBy=workstation.target

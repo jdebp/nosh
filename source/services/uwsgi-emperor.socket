@@ -6,7 +6,7 @@
 Description=uWSGI "Emperor" socket
 
 [Socket]
-ListenStream=/run/uwsgi.socket
+ListenStream=%t/uwsgi.socket
 SocketMode=0660
 
 [Install]

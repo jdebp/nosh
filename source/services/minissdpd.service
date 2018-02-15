@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=SSDP tracker of UPnP devices
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=%p -d -i "${interface:-0.0.0.0}"
+
+[Install]
+WantedBy=server.target

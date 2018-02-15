@@ -37,6 +37,25 @@ do
 	fi
 done
 for I in \
+	tinydns \
+	;
+do
+	if system-control find "$I".service >/dev/null 2>&1
+	then
+		rm -f -- /etc/service-bundles/targets/server/wants/"$I"
+	fi
+done
+for I in \
+	dbus-broker \
+	dbus-daemon \
+	;
+do
+	if system-control find "$I".service >/dev/null 2>&1
+	then
+		rm -f -- /etc/service-bundles/targets/workstation/wants/"$I"
+	fi
+done
+for I in \
 	cyclog@cleanvar \
 	cleanvar \
 	;

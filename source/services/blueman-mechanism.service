@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Bluetooth daemon
+After=local-syslog.target
+
+[Service]
+Type=dbus
+ExecStart=/usr/lib/blueman/%p
+ProtectHome=true
+LimitNPROC=1
+
+[Install]
+WantedBy=workstation.target

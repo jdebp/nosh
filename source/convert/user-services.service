@@ -1,0 +1,22 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Per-user manager service for %I
+After=user-runtime@%I
+Requires=user-runtime@%I
+
+[Service]
+systemdUserEnvironment=true
+systemdUserGroups=true
+SessionLeader=yes
+User=%I
+Delegate=yes
+ExecStartPre=install -d -m 0755 -- %t/user/%i/per-user-manager
+ExecStart=per-user-manager
+ExecStopPost=rmdir -- %t/user/%i/per-user-manager
+Restart=always
+
+[Install]
+WantedBy=user@%I.target

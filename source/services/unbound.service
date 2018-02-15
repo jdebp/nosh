@@ -4,6 +4,7 @@
 
 [Unit]
 Description=%p proxy DNS server daemon
+Before=name-services.target
 
 [Service]
 PermissionsStartOnly=true

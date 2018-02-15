@@ -8,6 +8,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include <sstream>
 #include <sys/types.h>
 #include <pwd.h>
 #include <unistd.h>
@@ -49,4 +50,29 @@ login_user_runtime_dir(const ProcessEnvironment & envs)
 		endpwent();
 	}
 	return r + slash;
+}
+
+void
+get_user_dirs_for(
+	const std::string & user,
+	std::string & UID,
+	std::string & runtime_dir_by_name,	///< not slash terminated
+	std::string & runtime_dir_by_UID,	///< not slash terminated
+	std::string & home_dir			///< not slash terminated
+) {
+	const std::string r("/run/user/");
+	if (struct passwd * p = getpwnam(user.c_str())) {
+		runtime_dir_by_name = r + p->pw_name;
+		std::ostringstream uid;
+		uid << p->pw_uid;
+		UID = uid.str();
+		runtime_dir_by_UID = r + ":" + uid.str();
+		home_dir = p->pw_dir && *p->pw_dir ? p->pw_dir : "/nonexistent";
+	} else {
+		runtime_dir_by_name = r;
+		runtime_dir_by_UID = r + ":";
+		UID = "";
+		home_dir = "/nonexistent";
+	}
+	endpwent();
 }

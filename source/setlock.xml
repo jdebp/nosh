@@ -23,9 +23,7 @@
 <refsection><title>Description</title>
 
 <para>
-<command>setlock</command> is a chain-loading utility that opens the lock file named <replaceable>file</replaceable> 
-leaving an open file descriptor in the current process
-and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+<command>setlock</command> is a chain-loading utility that opens the lock file named <replaceable>file</replaceable> leaving an open file descriptor in the current process and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
 </para>
 
 <para>
@@ -35,33 +33,25 @@ and then chain loads to <replaceable>next-prog</replaceable> with the <citerefen
 <para>
 How the lockfile works is system dependent.
 The lock remains active whilst the file descriptor remains open in any process.
-Closing the file descriptor, by exiting the process or otherwise, is the only
-portable operation allowed.
-It is unspecified what access rights the file descriptor has for the lock file,
-or whether the descriptor is in blocking mode.
+Closing the file descriptor, by exiting the process or otherwise, is the only portable operation allowed.
+It is unspecified what access rights the file descriptor has for the lock file, or whether the descriptor is in blocking mode.
 </para>
 
 <para>
-Unless the <arg choice='plain'>--non-blocking</arg> command line option is used, <command>setlock</command> will wait
-to obtain the lock whilst another process holds it.  If that option
-is used, it will not wait, but instead will fail to acquire the lock.
+Unless the <arg choice='plain'>--non-blocking</arg> command line option is used, <command>setlock</command> will wait to obtain the lock whilst another process holds it.  
+If that option is used, it will not wait, but instead will fail to acquire the lock.
 </para>
 
 <para>
-Unless the <arg choice='plain'>--ignore</arg> option is used, failure to acquire the lock, because it
-isn't a valid lock file, because someone else has the lock and non-blocking
-mode has been used, or for some other reason, will cause <command>setlock</command> to print
-an error message and exit with a failure status instead of chaining.
-If that option is used, it will still exit on failure, but without printing
-an error message and with a success status.
+Unless the <arg choice='plain'>--ignore</arg> option is used, failure to acquire the lock, because it isn't a valid lock file, because someone else has the lock and non-blocking mode has been used, or for some other reason, will cause <command>setlock</command> to print an error message and exit with a failure status instead of chaining.
+If that option is used, it will still exit on failure, but without printing an error message and with a success status.
 </para>
 
 </refsection><refsection><title>UNRELIABLE IMPLEMENTATION DETAILS</title>
 
 <para>
-On BSD and Linux locking is based upon the <citerefentry><refentrytitle>flock</refentrytitle><manvolnum>1</manvolnum></citerefentry> system call.
-On such systems, explicitly unlocking the file with <citerefentry><refentrytitle>flock</refentrytitle><manvolnum>1</manvolnum></citerefentry> will also
-deactivate the lock.
+On BSD and Linux locking is based upon the <citerefentry><refentrytitle>flock</refentrytitle><manvolnum>2</manvolnum></citerefentry> system call.
+On such systems, explicitly unlocking the file with <citerefentry><refentrytitle>flock</refentrytitle><manvolnum>2</manvolnum></citerefentry> will also deactivate the lock.
 </para>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

@@ -1,4 +1,3 @@
 background-fsck	background_fsck
 kmod@fuse	fusefs
-kmod@svr4	svr4
 machine-id	hostid		

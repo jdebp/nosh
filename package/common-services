@@ -2,6 +2,7 @@ ModemManager
 NetworkManager
 NetworkManager-dispatcher
 VBoxService
+accounts-daemon
 anacron
 apache2
 apacheds
@@ -11,6 +12,7 @@ autobridge-log
 avahi-dnsconfd
 bcron-start
 bcron-update
+blueman-mechanism
 bluetooth
 bootparams
 brltty-log
@@ -22,12 +24,14 @@ chrony
 cleanX
 cleantmp
 cleanuucp
+clickhouse-server
 console-fb-realizer@head0
 console-kit-daemon
 console-multiplexor@head0
 convert_varrun
 cups-browsed
 darkice
+dbus
 dcron
 ddclient
 debian-cron
@@ -51,6 +55,8 @@ freshclam
 fscd
 fwknopd
 gdm
+gdm3
+gdomap
 genkdmconf
 geoclue
 gitlab-sidekiq
@@ -60,6 +66,7 @@ gssd
 hald
 hostapd
 hostnamed
+hue
 ifconfig-log
 jenkins
 kamailio
@@ -78,6 +85,7 @@ lm-sensors
 localed
 lxdm
 mailcatcher
+minissdpd
 miredo
 miredo-server
 mogilefsd
@@ -140,6 +148,7 @@ redis-server
 rfcomm_pppd-log
 rpcbind
 rtadvd
+rtkit-daemon
 s6-fdholder
 salt-api
 salt-master
@@ -158,7 +167,9 @@ slurmdbd
 slurmctld
 smartd
 smbd
+snort-log
 sppp-log
+speech-dispatcher
 sshdgenkeys
 stunnel
 swift@account

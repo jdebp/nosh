@@ -1,4 +1,9 @@
 #!/bin/sh -e
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+# vim: set filetype=sh:
+
 name="$1"
 base="`basename \"${name}\"`"
 
@@ -10,12 +15,19 @@ ifchange_follow() {
 		do
 			redo-ifchange "$i"
 			l="`readlink \"$i\"`" || break
-			i="`dirname \"$i\"`/$l" || break
+			case "$l" in
+			/*)	i="$l" ;;
+			*)	i="`dirname \"$i\"`/$l" || break ;;
+			esac
 		done
 	done
 }
 
 redo-ifchange system-control 
+
+# ###
+# Work out what files are going to be used and declare build dependencies from them.
+# ###
 
 case "${base}" in
 *@*) 
@@ -54,15 +66,15 @@ esac
 
 ifchange_follow "${unitfile}"
 
-install -d services.new
-
-rm -r -f services.new/"${base}"
+# ###
+# Decide the parameters for the conversion tool, and the location of the service and (if any) its logging service.
+# ###
 
 case "${base}" in
 cyclog@*)
 	escape="--alt-escape --escape-instance"
 	;;
-ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|brltty-log|dhclient-log|dhcpcd-log|udhcpc-log|mixer-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log|system-installer-log|wlandebug-log) 
+ppp-log|sppp-log|rfcomm_pppd-log|snort-log|natd-log|ataidle-log|autobridge-log|brltty-log|dhclient-log|dhcpcd-log|udhcpc-log|mixer-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log|system-installer-log|wlandebug-log) 
 	escape="--alt-escape --escape-prefix"
 	;;
 *)
@@ -77,12 +89,12 @@ Linux)	etc_services="../package/common-etc-services ../package/linux-etc-service
 esac
 
 case "${base}" in
-cyclog@*) 
+cyclog@*|dbus) 
 	log=
 	etc=
 	after=
 	;;
-ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|brltty-log|dhclient-log|dhcpcd-log|udhcpc-log|mixer-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log|system-installer-log|wlandebug-log)
+ppp-log|sppp-log|rfcomm_pppd-log|snort-log|natd-log|ataidle-log|autobridge-log|brltty-log|dhclient-log|dhcpcd-log|udhcpc-log|mixer-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log|system-installer-log|wlandebug-log)
 	log=
 	etc=
 	after=
@@ -103,7 +115,7 @@ mount@*|fsck@*|monitor-fsck-progress)
 	after=
 	;;
 devd)
-	log="../${base}-log"
+	log="../devd-log"
 	etc=--etc-bundle
 	after="log"
 	;;
@@ -122,14 +134,14 @@ busybox-mdev|busybox-mdev-rescan)
 	etc=--etc-bundle
 	after="log"
 	;;
-trueos-update-finish|trueos-install-finish|freebsd-update-finish|freebsd-install-finish)
-	log="../system-installer-log"
-	etc=
-	after="log"
-	;;
 suckless-mdev|suckless-mdev-rescan)
 	log="../suckless-mdev-log"
 	etc=--etc-bundle
+	after="log"
+	;;
+trueos-update-finish|trueos-install-finish|freebsd-update-finish|freebsd-install-finish)
+	log="../system-installer-log"
+	etc=
 	after="log"
 	;;
 *) 
@@ -147,11 +159,22 @@ suckless-mdev|suckless-mdev-rescan)
 	;;
 esac
 
+# ###
+# Compile the source into a bundle.
+# ###
+
+install -d services.new
+
+rm -r -f services.new/"${base}"
+
 ./system-control convert-systemd-units --no-systemd-quirks --no-generation-comment ${escape} ${etc} --bundle-root services.new/ "${unit}"
 
 test -n "${log}" && ln -s -f "${log}" services.new/"${base}"/log
 test -n "${after}" && ln -s -f "../${after}" services.new/"${base}"/after/
 
+# ###
+# Add in the environment directory and UCSPI ruleset infrastructure, if required.
+# ###
 if grep -q "envdir env" services.new/"${base}"/service/start services.new/"${base}"/service/run services.new/"${base}"/service/stop
 then
 	install -d -m 0755 services.new/"${base}"/service/env
@@ -163,6 +186,9 @@ then
 	install -d -m 0755 services.new/"${base}"/service/ip6 services.new/"${base}"/service/ip6/::1_128 services.new/"${base}"/service/ip6/::ffff:10.0.0.0_104 services.new/"${base}"/service/ip6/::ffff:127.0.0.0_104 services.new/"${base}"/service/ip6/::ffff:192.168.0.0_112
 fi
 
+# ###
+# Provide the "main/" courtesy link in logging services.
+# ###
 case "${base}" in
 cyclog@*) 
 	ln -f -s -- /var/log/sv/"${base#cyclog@}" services.new/"${base}"/main
@@ -170,11 +196,14 @@ cyclog@*)
 devd-log|sysinit-log)
 	ln -f -s -- /var/log/sv/"${base%-log}" services.new/"${base}"/main
 	;;
-ppp-log|sppp-log|rfcomm_pppd-log|natd-log|ataidle-log|autobridge-log|brltty-log|dhclient-log|dhcpcd-log|udhcpc-log|mixer-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log|system-installer-log|wlandebug-log)
+ppp-log|sppp-log|rfcomm_pppd-log|snort-log|natd-log|ataidle-log|autobridge-log|brltty-log|dhclient-log|dhcpcd-log|udhcpc-log|mixer-log|ifconfig-log|iovctl-log|uhidd-log|webcamd-log|system-installer-log|wlandebug-log)
 	ln -f -s -- /var/log/sv/"${base%-log}" services.new/"${base}"/main
 	;;
 esac
 
+# ###
+# Populate the bundles with extra relationships, files, and directories peculiar to the services.
+# ###
 case "${base}" in
 kmod@vboxvideo)
 	ln -f -s -- /etc/service-bundles/targets/virtualbox-guest services.new/"${base}"/wanted-by/
@@ -239,12 +268,15 @@ tinydns)
 axfrdns)
 	ln -s ../../tinydns/service/root services.new/"${base}"/service/
 	;;
-dbus-daemon|dbus)
+dbus-daemon)
 	redo-ifchange services/system-wide.conf
 	install -m 0644 -- services/system-wide.conf services.new/"${base}"/service/system-wide.conf
 	;;
 esac
 
+# ###
+# Add in any helpers and snippets.
+# ###
 if test -e "${name}".tmpfiles 
 then
 	redo-ifchange "${name}".tmpfiles 

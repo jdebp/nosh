@@ -66,7 +66,7 @@ console_multiplexor_control [[gnu::noreturn]] (
 	try {
 		popt::definition * top_table[] = {
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "commands...");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "S|N|P|number...");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);

@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=GNOME Settings daemon for %u
+
+[Service]
+Type=dbus
+EnvironmentDirectory=env
+ExecStart=/usr/local/libexec/%p
+Restart=on-failure
+
+[Install]

@@ -69,6 +69,8 @@ enable	cyclog@org.cups.cupsd.service
 enable	org.cups.cupsd.service
 enable	cyclog@dbus-daemon.service
 enable	dbus-daemon.service
+enable	cyclog@dbus.service
+enable	dbus.service
 disable	cyclog@dbus-broker.service
 disable	dbus-broker.service
 enable	cyclog@hald.service

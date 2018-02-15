@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description="Desktop" bus socket for %u
+
+[Socket]
+SocketMode=0700
+Backlog=2
+#MaxConnections=2
+ListenStream=%t/bus
+Accept=false
+
+[Install]
+WantedBy=sockets.target

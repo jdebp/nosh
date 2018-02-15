@@ -4,7 +4,7 @@
 
 .PHONY: build binary stage control clean
 
-BINARY_PACKAGES=exec terminal-management service-management terminal-extras zsh-completion systemv-shims systemd-shims upstart-shims execline-shims core-shims debian-shims bsd-shims openbsd-shims freebsd-shims ucspi-tcp-shims kbd-shims guide bundles run-system-manager run-via-mewburn-rc run-via-openbsd-rc run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base
+BINARY_PACKAGES=exec terminal-management service-management terminal-extras zsh-completion service-command-shim systemv-shims systemd-shims upstart-shims execline-shims core-shims debian-shims bsd-shims openbsd-shims freebsd-shims ucspi-tcp-shims kbd-shims guide bundles run-system-manager run-via-mewburn-rc run-via-openbsd-rc run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base
 
 # Target this in order to make the package contents.
 build:

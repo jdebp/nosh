@@ -1,0 +1,83 @@
+<title>Packages and ports</title>
+<link rel="Up" href="index.html" title="nosh Guide" />
+<h1>
+Packages and ports
+</h1>
+
+<p>
+Here are some tips for people wanting to make packages, or to add nosh service bundles to existing packages or ports.
+</p>
+
+<h2>
+Converting systemd units
+</h2>
+
+<p>
+One approach to adding a service bundle to an existing package or port is to <a href="converting-systemd-units.html">convert an existing systemd service or socket unit</a> that comes with the bundle as part of its build process.
+There are several things that the <a href="convert-systemd-units.html"><code>convert-systemd-units</code></a> command does not do:
+</p>
+
+<ul>
+
+<li>
+<p>
+Conversion will not create any environment directories, as used by <a href="envdir.html"><code>envdir</code></a> commands.
+If your package is intended to also install the environment directory, then you need to explicitly create it in your package's staging area yourself.
+</p>
+<p>
+The conventional location for an environment directory is <code>service/env</code> within the service bundle.
+</p>
+</li>
+
+<li>
+<p>
+Conversion will not create any rules directories, as used by <a href="ucspi-socket-rules-check.html"><code>ucspi-socket-rules-check</code></a> commands.
+If your package is intended to also install the rules directories, then you need to explicitly create them in your package's staging area yourself.
+</p>
+<p>
+The conventional locations for the rules directories are <code>service/ip4</code> and <code>service/ip6</code> within the service bundle.
+For administrator convenience, you may want to supply at least the <code>service/ip4/10.0.0.0_8</code>, <code>service/ip4/127.0.0.0_8</code>, <code>service/ip4/192.168.0.0_16</code>, <code>service/ip6/::1_128</code>, <code>service/ip6/::ffff:10.0.0.0_104</code>, <code>service/ip6/::ffff:127.0.0.0_104</code>, and <code>service/ip6/::ffff:192.168.0.0_112</code> directories in your package as well.
+</p>
+</li>
+
+<li>
+<p>
+Conventionally, <a href="log-service-plumbing.html">logging services</a> contain a <code>main</code> symbolic link in the root of the service bundle that points to the actual log directory.
+This symbolic link is not actually necessary to the operation of the service, but as a convenience to administrators wyou may like to supply it in your package, by explicitly creating it in your package's staging area.
+</p>
+</li>
+
+</ul>
+
+<h2>
+The problem of <code>down</code> files
+</h2>
+
+<p>
+When it comes to making pre-packaged service bundles, <code>down</code> files are a problem in two ways:
+</p>
+
+<ul>
+
+<li>
+<p> <strong> <code>down</code> files and <code>wants/</code> or <code>conflicts/</code> symbolic links (from a bootstrap target) must not be created by installation/upgrade. </strong>
+To do so would be to forcibly mark enabled services as disabled, or vice versa, every time that a package is installed, reinstalled, or upgraded.
+Do not include <code>down</code> files or <code>wants/</code> or <code>conflicts/</code> symbolic links from a bootstrap target (i.e. the symbolic links that are automatically created/removed as the inverses of the <code>wanted-by/</code> or <code>stopped-by/</code> symbolic links when enabling/disabling services) in the service bundle images in your packages.
+</p>
+</li>
+
+<li>
+<p> <strong> The mechanisms have opposite sense defaults when the files are not packaged. </strong>
+If a <code>down</code> file does not exist, then a service is considered enabled by <a href="service-dt-scanner.html"><code>service-dt-scanner</code></a>.
+If a <code>wants/</code> or <code>conflicts/</code> symbolic link does not exist pointing to it, then a service is disabled as far as <a href="system-control.html"><code>system-control</code></a> is concerned.
+Unfortunately, this is exactly the scenario that initially obtains when a packaged service bundle is first installed.
+</p>
+</li>
+
+</ul>
+
+<p>
+There are two approaches to dealing with this.
+One can arrange for the post-installation and post-upgrade scripts for one's package to explicitly preset all services at every install, reinstall, or upgrade; this matching the installing-package-enables-services philosophy of some operating systems.
+Or one can arrange for the post-installation and post-upgrade scripts for one's package to attempt to bring the mechanisms back into synch, usually by bringing the <code>down</code> file into synch with the <code>wants/</code> and <code>conflicts/</code> symbolic links rather than the converse.
+</p>

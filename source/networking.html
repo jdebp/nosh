@@ -56,9 +56,10 @@ This is the service that configures and deconfigures statically-assigned IPv4 an
 <dt><code>ppp@<i>name</i></code></dt>
 <dt><code>sppcontrol@<i>name</i></code></dt>
 <dt><code>rfcomm_pppd@<i>name</i></code></dt>
+<dt><code>snort@<i>name</i></code></dt>
 <dd>
 <p>
-These services have a long-running d&aelig;mon process; <code>natd</code>, <code>dhclient</code>, <code>udhcpc</code>, <code>dhcpcd</code>, <code>hostap</code>, <code>hostap</code>, <code>wpa</code>, <code>pppd</code>, <code>sppcontrol</code>, and <code>rfcomm_pppd</code> respectively.
+These services have a long-running d&aelig;mon process; <code>natd</code>, <code>dhclient</code>, <code>udhcpc</code>, <code>dhcpcd</code>, <code>hostap</code>, <code>hostap</code>, <code>wpa</code>, <code>pppd</code>, <code>sppcontrol</code>, <code>rfcomm_pppd</code>, and <code>snort</code> respectively.
 They are ordered to start after <code>ifconfig@<i>name</i></code> has started and to stop before it is stopped, but they are not ordered relative to one another.
 </p>
 <p>

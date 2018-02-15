@@ -9,7 +9,6 @@ Description=Celery task scheduler
 
 [Service]
 User=celery
-Group=celery
 ExecStart=celery beat ${app:+-A "${app}"} ${schedule:+--schedule "${schedule}"} ${interval:+--max-interval "${interval}"} ${options}
 
 [Install]

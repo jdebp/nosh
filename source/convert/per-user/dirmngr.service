@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=GnuPG network certificate management daemon for %u
+
+[Service]
+RuntimeDirectory=gnupg
+EnvironmentDirectory=env
+ExecStart=%p --supervised
+
+[Install]
+WantedBy=normal.target

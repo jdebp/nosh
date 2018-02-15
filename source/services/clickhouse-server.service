@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=ClickHouse server (analytic DBMS for big data)
+
+[Service]
+User=clickhouse
+RestartSec=30
+ExecStart=%p --config=/etc/%p/config.xml
+# ClickHouse's systemd unit picks a suspiciously round 500,000 here.
+# That disagrees, however, with its van Smoorenburg rc script, its doco, and the clickhouse.limits file.
+LimitNOFILE=262144
+
+[Install]
+WantedBy=server.target

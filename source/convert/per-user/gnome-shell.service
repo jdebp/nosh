@@ -1,0 +1,21 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=GNOME Shell for %u
+After=gnome-keyring.service gnome-settings-daemon.service
+Wants=gnome-keyring.service
+
+[Service]
+Type=dbus
+# The fact that the GNOME Shell server requires an X display at startup is a bug.
+EnvironmentDirectory=../../../common/env
+EnvironmentDirectory=env
+# Sometimes GNOME things try to bring up GNOME Shell when another window manager is already in place.
+# We don't want a thundering herd of restarts in such a case.
+Restart=never
+RestartSec=5
+ExecStart=%p
+
+[Install]

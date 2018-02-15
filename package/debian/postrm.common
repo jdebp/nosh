@@ -1,7 +1,26 @@
-# Common post-upgrade for Debian
+# Maintainer script main for Debian
 case "$1" in
+	# The package has been removed.
+	remove)
+		post_remove_funcs
+		post_remove_extra "$@"
+		common
+		;;
+	# The install/upgrade over version $2 of the package has been aborted.
+	abort-install|abort-upgrade)
+		if test -n "$2"
+		then
+			post_remove_funcs
+			post_remove_extra "$@"
+			common
+		fi
+		;;
+	# The package has been purged.
+	purge)
+		:
+		;;
+	# The package is about to be upgraded from this version to version $2 .
 	upgrade)
-		extra
-                common
+		:
 		;;
 esac

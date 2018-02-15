@@ -38,5 +38,7 @@ subreaper (
 #	endif
 	}
 	return errno = ENOSYS, -1;
+#else
+	return errno = ENOSYS, -1;
 #endif
 }

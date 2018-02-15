@@ -6,7 +6,7 @@
 Description=System 5 init compatibility socket
 
 [Socket]
-ListenFIFO=/run/initctl
+ListenFIFO=%t/initctl
 SocketMode=0600
 
 [Install]

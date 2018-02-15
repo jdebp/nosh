@@ -5,13 +5,17 @@ For copyright and licensing terms, see the file named COPYING.
 
 #include <vector>
 #include <unistd.h>
+#include <fcntl.h>
 #include <cstddef>
 #include <cstdlib>
 #include <csignal>
 #include <cstring>
 #include <cerrno>
 #include "utils.h"
+#include "fdutils.h"
+#include "runtime-dir.h"
 #include "common-manager.h"
+#include "FileDescriptorOwner.h"
 #include "popt.h"
 
 /* Utility functions ********************************************************
@@ -32,34 +36,51 @@ stripfast (
 // **************************************************************************
 */
 
-/// FIXME \bug This mechanism cannot work.
 static inline
-int
-query_user_manager_pid()
-{
-	return getsid(0);
+void
+send_signal_to_system_manager_process ( 
+	const char * prog,
+	int signo
+) {
+	if (0 > kill(1, signo)) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kill", std::strerror(error));
+		throw EXIT_FAILURE;
+	}
+}
+
+static inline
+void
+send_command_to_per_user_manager_process ( 
+	const char * prog,
+	char command
+) {
+	const std::string name(effective_user_runtime_dir() + "per-user-manager/control");
+	const FileDescriptorOwner control_fd(open_writeexisting_at(AT_FDCWD, name.c_str()));
+	if (0 > control_fd.get()) {
+		const int error(errno);
+		std::fprintf(stdout, "%s: %s: %s\n", prog, name.c_str(), std::strerror(error));
+		return;
+	}
+	const ssize_t n(write(control_fd.get(), &command, sizeof command));
+	if (0 > n) {
+		const int error(errno);
+		std::fprintf(stdout, "%s: %s: %s\n", prog, name.c_str(), std::strerror(error));
+		return;
+	}
 }
 
 static
 void
-send_signal_to_manager_process ( 
+instruct_manager_process ( 
 	const char * prog,
-	int signo
+	int signo,
+	char command
 ) {
-	if (per_user_mode) {
-		/// FIXME \bug This mechanism is broken.
-		if (0 > kill(query_user_manager_pid(), signo)) {
-			const int error(errno);
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kill", std::strerror(error));
-			throw EXIT_FAILURE;
-		}
-	} else {
-		if (0 > kill(1, signo)) {
-			const int error(errno);
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kill", std::strerror(error));
-			throw EXIT_FAILURE;
-		}
-	}
+	if (per_user_mode)
+		send_command_to_per_user_manager_process(prog, command);
+	else
+		send_signal_to_system_manager_process(prog, signo);
 }
 
 static inline
@@ -67,7 +88,7 @@ void
 emergency (
 	const char * prog
 ) {
-	send_signal_to_manager_process(prog, EMERGENCY_SIGNAL) ;
+	instruct_manager_process(prog, EMERGENCY_SIGNAL, 'b') ;
 }
 
 static inline
@@ -75,8 +96,8 @@ void
 rescue (
 	const char * prog
 ) {
-	send_signal_to_manager_process(prog, SYSINIT_SIGNAL);
-	send_signal_to_manager_process(prog, RESCUE_SIGNAL) ;
+	instruct_manager_process(prog, SYSINIT_SIGNAL, 'S');
+	instruct_manager_process(prog, RESCUE_SIGNAL, 's');
 }
 
 static inline
@@ -84,8 +105,8 @@ void
 normal (
 	const char * prog
 ) {
-	send_signal_to_manager_process(prog, SYSINIT_SIGNAL);
-	send_signal_to_manager_process(prog, NORMAL_SIGNAL) ;
+	instruct_manager_process(prog, SYSINIT_SIGNAL, 'S');
+	instruct_manager_process(prog, NORMAL_SIGNAL, 'n');
 }
 
 static inline
@@ -94,7 +115,7 @@ reboot (
 	const char * prog,
 	bool force
 ) {
-	send_signal_to_manager_process(prog, force ? FORCE_REBOOT_SIGNAL : REBOOT_SIGNAL) ;
+	instruct_manager_process(prog, force ? FORCE_REBOOT_SIGNAL : REBOOT_SIGNAL, force ? 'R' : 'r');
 } 
 
 static inline
@@ -104,7 +125,7 @@ halt (
 	bool force
 ) {
 #if defined(FORCE_HALT_SIGNAL)
-	send_signal_to_manager_process(prog, force ? FORCE_HALT_SIGNAL : HALT_SIGNAL) ;
+	instruct_manager_process(prog, force ? FORCE_HALT_SIGNAL : HALT_SIGNAL, force ? 'H' : 'h');
 #endif
 }
 
@@ -115,7 +136,7 @@ poweroff (
 	bool force
 ) {
 #if defined(FORCE_POWEROFF_SIGNAL)
-	send_signal_to_manager_process(prog, force ? FORCE_POWEROFF_SIGNAL : POWEROFF_SIGNAL) ;
+	instruct_manager_process(prog, force ? FORCE_POWEROFF_SIGNAL : POWEROFF_SIGNAL, force ? 'P' : 'p');
 #endif
 }
 
@@ -126,9 +147,9 @@ powercycle (
 	bool force
 ) {
 #if defined(FORCE_POWERCYCLE_SIGNAL)
-	send_signal_to_manager_process(prog, force ? FORCE_POWERCYCLE_SIGNAL : POWERCYCLE_SIGNAL) ;
+	instruct_manager_process(prog, force ? FORCE_POWERCYCLE_SIGNAL : POWERCYCLE_SIGNAL, force ? 'C' : 'c');
 #else
-	send_signal_to_manager_process(prog, force ? FORCE_REBOOT_SIGNAL : REBOOT_SIGNAL) ;
+	instruct_manager_process(prog, force ? FORCE_REBOOT_SIGNAL : REBOOT_SIGNAL, force ? 'R' : 'r');
 #endif
 }
 

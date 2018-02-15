@@ -2,6 +2,7 @@
 ## **************************************************************************
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
+# vim: set filetype=sh:
 #
 # This is called by a number of .do scripts that need to read "system" configuration settings.
 
@@ -217,6 +218,9 @@ convert_debian_console_settings() {
 		printf "keymap=\"%s\"\n" "${keymap}"
 	elif layout="`read_variable \"${confile}\" XKBLAYOUT`"
 	then
+		case "${layout}" in
+		gb*)	layout="uk" ;;
+		esac
 		variant="`read_variable \"${confile}\" XKBVARIANT || :`"
 		printf "keymap=\"%s\"\n" "${layout}${variant:+.${variant}}"
 	fi
@@ -381,6 +385,9 @@ convert_linux_defkbd_console_settings() {
 		printf "keymap=\"%s\"\n" "${keymap}"
 	elif layout="`read_variable \"${kbdfile}\" XKBLAYOUT`"
 	then
+		case "${layout}" in
+		gb*)	layout="uk" ;;
+		esac
 		variant="`read_variable \"${kbdfile}\" XKBVARIANT || :`"
 		printf "keymap=\"%s\"\n" "${layout}${variant:+.${variant}}"
 	fi
@@ -467,6 +474,9 @@ convert_longhand() {
 }
 
 convert_freenas() {
+	#####
+	# Stuff that can be overriden by explicit lines in rc.conf comes first.
+
 	convert_hostname
 	convert_debian_network_interfaces
 
@@ -476,7 +486,13 @@ convert_freenas() {
 	convert_linux_defkbd_console_settings
 	convert_systemd_console_settings
 
+	#####
+	# Now rc.conf itself.
+
 	convert_longhand
+
+	#####
+	# Now for stuff that always overrides rc.conf .
 
 	redo-ifchange "${freenas_db}"
 
@@ -577,6 +593,9 @@ convert_any() {
 	# Now rc.conf itself.
 
 	convert_longhand
+
+	#####
+	# Now for stuff that always overrides rc.conf .
 }
 
 if test -r "${freenas_db}"

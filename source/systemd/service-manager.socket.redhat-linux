@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Service manager local domain socket activation (RedHat flavour)
+After=systemd-tmpfiles-setup.service
+
+[Socket]
+ListenDatagram=%t/%p/control
+Accept=no
+SocketMode=0720
+SocketGroup=dbus
+
+[Install]
+WantedBy=sockets.target

@@ -44,16 +44,14 @@ Alternatively, <command>service-manager</command> can be started by <citerefentr
 
 <para>
 Each service comprises several files in the filesystem, contained in two directories.
-(<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-builds upon these two with further directories, to construct a service bundle, for the details
-of which see its manual page.)
+(<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> builds upon these two with further directories, to construct a service bundle, for the details of which see its manual page.)
 </para>
 
 <refsection><title>Service directories</title>
 
 <para>
-A <replaceable>service directory</replaceable> is the current directory in which a service process is
-run.  It contains:
+A <replaceable>service directory</replaceable> is the current directory in which a service process is run.  
+It contains:
 </para>
 
 <itemizedlist>
@@ -66,22 +64,19 @@ a <filename>run</filename> file, which is the executable file for the service pr
 
 <listitem>
 <para>
-a <filename>start</filename> file, which is the executable file to be run when a service is
-first brought up (but not when it is automatically restarted);
+a <filename>start</filename> file, which is the executable file to be run when a service is first brought up (but not when it is automatically restarted);
 </para>
 </listitem>
 
 <listitem>
 <para>
-a <filename>restart</filename> file, which is the executable file to be run when a service has
-ended (to determine whether it should automatically be restarted);
+a <filename>restart</filename> file, which is the executable file to be run when a service has ended (to determine whether it should automatically be restarted);
 </para>
 </listitem>
 
 <listitem>
 <para>
-a <filename>stop</filename> file, which is the executable file to be run when a service is
-finally taken down (but not when it is automatically restarted);
+a <filename>stop</filename> file, which is the executable file to be run when a service is finally taken down (but not when it is automatically restarted);
 </para>
 </listitem>
 
@@ -132,7 +127,7 @@ A <filename>remain</filename> file indicates to <citerefentry><refentrytitle>sys
 </listitem>
 <listitem>
 <para>
-A <filename>ready_after_run</filename> file indicates to <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> that a service should be considered "ready" after it has finished running, and either remained in the running state with no processes or transitioned to the stopped state with a prior run recorded in its status.
+A <filename>ready_after_run</filename> file indicates to <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> that a service should be considered "ready" after it has finished running, and has either remained in the running state with no processes or transitioned to the stopped state with a prior run recorded in its status.
 </para>
 </listitem>
 <listitem>
@@ -174,7 +169,7 @@ an <filename>ok</filename> FIFO that does nothing more than signify that the ser
 
 <listitem>
 <para>
-a <filename>control</filename> FIFO through which commands to control the individual service process are sent;
+a <filename>control</filename> FIFO through which commands to control the individual service process (for which see <citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>) are sent;
 </para>
 </listitem>
 
@@ -207,7 +202,64 @@ Bernstein's daemontools employs an 18-byte <filename>status</filename> file.
 daemontools has no notion of "starting", "failing", or "stopping" states for services, and its status file provides only simple binary "up" or "down" state information.
 Guenter's daemontools-encore employs a 19-byte <filename>status</filename> that includes extra state information for the aforementioned states.  
 <command>service-manager</command> employs an 87-byte <filename>status</filename> that adds exit status and timestamp information for the start, run, restart, and stop programs.
+The <filename>status</filename> file contents are:
 </para>
+
+<orderedlist>
+<listitem><para>12-byte TAI64N timestamp of last service status change event.</para></listitem>
+<listitem><para>4-byte current main process ID in host byte order, <literal>0</literal> meaning no process and <literal>-1</literal> meaning process #0.</para></listitem>
+<listitem><para>1-byte paused flag, if the daemon process is in the stopped state.</para></listitem>
+<listitem>
+	<para>1-byte pending command flag, which is an ASCII-encoded character:</para>
+	<variablelist spacing="compact">
+	<varlistentry><term><literal>d</literal></term><listitem><para>down</para></listitem></varlistentry>
+	<varlistentry><term><literal>u</literal></term><listitem><para>up</para></listitem></varlistentry>
+	<varlistentry><term><literal>o</literal></term><listitem><para>once</para></listitem></varlistentry>
+	<varlistentry><term><literal>O</literal></term><listitem><para>at most once</para></listitem></varlistentry>
+	</variablelist>
+</listitem>
+<listitem>
+	<para>1-byte daemontools-encore status (for details see later) which is a binary number:</para>
+	<variablelist spacing="compact">
+	<varlistentry><term><literal>0</literal></term><listitem><para>stopped</para></listitem></varlistentry>
+	<varlistentry><term><literal>1</literal></term><listitem><para>starting</para></listitem></varlistentry>
+	<varlistentry><term><literal>2</literal></term><listitem><para>started</para></listitem></varlistentry>
+	<varlistentry><term><literal>3</literal></term><listitem><para>running</para></listitem></varlistentry>
+	<varlistentry><term><literal>4</literal></term><listitem><para>stopping</para></listitem></varlistentry>
+	<varlistentry><term><literal>5</literal></term><listitem><para>failed</para></listitem></varlistentry>
+	</variablelist>
+</listitem>
+<listitem>
+<para>
+68 bytes comprising 4 groups of status information for the last <filename>start</filename>, <filename>run</filename>, <filename>restart</filename>, and <filename>stop</filename> programs to terminate:
+</para>
+<orderedlist>
+<listitem>
+	<para>1-byte code for termination status, which is a binary number:</para>
+	<variablelist>
+	<varlistentry>
+	<term><literal>0</literal></term>
+	<listitem><para>Not yet terminated, other fields should not be considered valid.</para></listitem>
+	</varlistentry>
+	<varlistentry>
+	<term><literal>1</literal></term>
+	<listitem><para>Terminated normally with an exit code.</para></listitem>
+	</varlistentry>
+	<varlistentry>
+	<term><literal>2</literal></term>
+	<listitem><para>Terminated by a signal.</para></listitem>
+	</varlistentry>
+	<varlistentry>
+	<term><literal>3</literal></term>
+	<listitem><para>Terminated by a signal, and core dumped.</para></listitem>
+	</varlistentry>
+	</variablelist>
+</listitem>
+<listitem><para>4-byte exit code or signal number, in host byte order.</para></listitem>
+<listitem><para>12-byte TAI64N timestamp.</para></listitem>
+</orderedlist>
+</listitem>
+</orderedlist>
 
 <para>
 Other tools may use further files in a supervise directory.
@@ -266,7 +318,7 @@ This state is not used.
 <varlistentry>
 <term>running</term>
 <listitem><para>
-The service's <filename>run</filename> program is currently executing.
+The service's <filename>run</filename> program is currently executing, or no program is currently executing in a run-on-empty service that was running the <filename>run</filename> program immedately prior.
 </para></listitem>
 </varlistentry>
 
@@ -289,7 +341,7 @@ The service's <filename>stop</filename> program is currently executing.
 </refsection>
 
 </refsection>
-<refsection><title>RESTART</title>
+<refsection><title>Restart</title>
 
 <para>
 Automatic restart is tailorable to individual services.

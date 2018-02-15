@@ -7,16 +7,21 @@ Description=Terminal emulator driving %I
 Before=ttylogin@%i-tty.service
 
 [Service]
-User=daemon
-Group=tty
+Umask=0002
+User=user-vt-emulator
+# The user-vt-emulator user is not a member of this group.
+# Running the emulator as this group grants the group's members realizer access to its I/O files.
+Group=user-vt-realizer
 PermissionsStartOnly=yes
 # This mechanism doesn't permit subdirectories.
 #RuntimeDirectory=dev/%I
 #RuntimeDirectoryMode=02755
-ExecStartPre=mkdir -m 02755 -p /run/dev /run/dev/%I
-# Not util we find out how to have ACLs in /run on FreeBSD.
-#ExecStartPre=setfacl -m u:daemon:rwx /run/dev/%I
-ExecStartPre=chown daemon:tty /run/dev/%I
+ExecStartPre=install -d -m 00755 /run/dev
+# Files in /run/dev/%I have group user-vt-emulator by default, not group user-vt-realizer.
+ExecStartPre=install -d -m 02775 -o user-vt-emulator -g user-vt-emulator /run/dev/%I
+# Not until we find out how to have ACLs in /run on FreeBSD.
+#ExecStartPre=install -d -m 02775 -o root -g user-vt-emulator /run/dev/%I
+#ExecStartPre=setfacl -m u:user-vt-emulator:rwx /run/dev/%I
 ExecStart=pty-get-tty console-terminal-emulator /run/dev/%I
 RestartSec=0
 

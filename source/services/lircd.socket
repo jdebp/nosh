@@ -7,8 +7,8 @@ Description=LIRC socket
 
 [Socket]
 Backlog=2
-MaxConnections=2
-ListenStream=/run/lirc/%p
+#MaxConnections=2
+ListenStream=%t/lirc/%p
 
 [Install]
 WantedBy=workstation.target

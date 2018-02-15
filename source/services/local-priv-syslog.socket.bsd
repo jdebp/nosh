@@ -7,7 +7,7 @@ Description=syslog socket used by local privileged clients to talk to syslog dae
 Before=local-syslog.target
 
 [Socket]
-ListenDatagram=/run/logpriv
+ListenDatagram=%t/logpriv
 SocketMode=0660
 PassCredentials=yes
 PassSecurity=yes

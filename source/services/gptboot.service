@@ -6,7 +6,6 @@
 Description=GPT non-ZFS post-boot cleanup
 DefaultDependencies=no
 After=local-fs.target
-After=local-fs.target
 
 [Service]
 Type=oneshot

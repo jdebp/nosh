@@ -14,6 +14,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <fcntl.h>
 #include "utils.h"
 #include "fdutils.h"
+#include "FileDescriptorOwner.h"
 #include "popt.h"
 
 /* Control character options ************************************************
@@ -117,45 +118,44 @@ service_control [[gnu::noreturn]] (
 
 	for (std::vector<const char *>::const_iterator i(args.begin()); i != args.end(); ++i) {
 		const char * name(*i);
-		int dir_fd(open_dir_at(AT_FDCWD, name));
-		if (0 > dir_fd) {
+		FileDescriptorOwner dir_fd(open_dir_at(AT_FDCWD, name));
+		if (0 > dir_fd.get()) {
 			const int error(errno);
 			std::fprintf(stdout, "%s: %s\n", name, std::strerror(error));
 			continue;
 		}
-		int ok_fd(open_writeexisting_at(dir_fd, "ok"));
-		if (0 > ok_fd) {
-			const int old_dir_fd(dir_fd);
-			dir_fd = open_dir_at(dir_fd, "supervise");
-			close(old_dir_fd);
-			if (0 > dir_fd) {
-				const int error(errno);
-				std::fprintf(stdout, "%s: %s: %s\n", name, "supervise", std::strerror(error));
-				continue;
-			}
-			ok_fd = open_writeexisting_at(dir_fd, "ok");
-			if (0 > ok_fd) {
-				const int error(errno);
-				close(dir_fd);
-				if (ENXIO == error)
-					std::fprintf(stdout, "%s: No supervisor is running\n", name);
-				else
-					std::fprintf(stdout, "%s: %s: %s\n", name, "supervise/ok", std::strerror(error));
-				continue;
+		{
+			FileDescriptorOwner ok_fd(open_writeexisting_at(dir_fd.get(), "ok"));
+			if (0 > ok_fd.get()) {
+				const FileDescriptorOwner old_dir_fd(dir_fd.release());
+				dir_fd.reset(open_dir_at(old_dir_fd.get(), "supervise"));
+				if (0 > dir_fd.get()) {
+					const int error(errno);
+					std::fprintf(stdout, "%s: %s: %s\n", name, "supervise", std::strerror(error));
+					continue;
+				}
+				ok_fd.reset(open_writeexisting_at(dir_fd.get(), "ok"));
+				if (0 > ok_fd.get()) {
+					const int error(errno);
+					if (ENXIO == error)
+						std::fprintf(stdout, "%s: No supervisor is running\n", name);
+					else
+						std::fprintf(stdout, "%s: %s: %s\n", name, "supervise/ok", std::strerror(error));
+					continue;
+				}
 			}
 		}
-		close(ok_fd), ok_fd = -1;
-		int control_fd(open_writeexisting_at(dir_fd, "control"));
-		close(dir_fd), dir_fd = -1;
-		if (0 > control_fd) {
+		const FileDescriptorOwner control_fd(open_writeexisting_at(dir_fd.get(), "control"));
+		if (0 > control_fd.get()) {
 			const int error(errno);
 			std::fprintf(stdout, "%s: %s: %s\n", name, "control", std::strerror(error));
 			continue;
 		}
+		dir_fd.reset(-1);
 		const char * p(controls.c_str());
 		std::size_t l(controls.length());
 		while (l) {
-			const ssize_t n(write(control_fd, p, l));
+			const ssize_t n(write(control_fd.get(), p, l));
 			if (0 > n) {
 				const int error(errno);
 				if (EINTR == error) continue;
@@ -166,7 +166,6 @@ service_control [[gnu::noreturn]] (
 			p += n;
 			l -= n;
 		}
-		close(control_fd), control_fd = -1;
 	}
 
 	throw EXIT_SUCCESS;

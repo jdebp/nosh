@@ -90,6 +90,7 @@ The alternative names are:
 <command>local-stream-socket-listen</command>, 
 <command>machineenv</command>, 
 <command>make-private-fs</command>,
+<command>make-read-only-fs</command>,
 <command>monitored-fsck</command>,
 <command>create-control-group</command>,
 <command>move-to-control-group</command>,

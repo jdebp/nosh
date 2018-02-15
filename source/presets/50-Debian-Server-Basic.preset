@@ -3,7 +3,7 @@
 #
 # This is not a systemd preset.
 # It goes in a special nosh system-manager preset directory.
-# It is used by the nosh-run-trueos-server-basic and nosh-run-trueos-desktop-basic packages in order to enable the services themselves.
+# It is used by the nosh-run-debian-server-basic and nosh-run-debian-desktop-basic packages in order to enable the services themselves.
 #
 
 #

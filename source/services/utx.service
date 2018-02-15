@@ -6,6 +6,12 @@
 Description=%p boot/shutdown record generator
 After=local-fs.target
 Before=multi-user-pre.target
+AfterMountsFor=/run
+WantsMountsFor=/run
+AfterMountsFor=/var
+WantsMountsFor=/var
+AfterMountsFor=/var/log
+WantsMountsFor=/var/log
 
 [Service]
 Type=oneshot

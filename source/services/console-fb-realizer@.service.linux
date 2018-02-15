@@ -4,7 +4,7 @@
 
 [Unit]
 Description=Virtual console realizer for %I
-After=console-multiplexor@%i.service
+After=console-multiplexor@%i.service udev-settle.service
 Wants=console-multiplexor@%i.service frame-buffer.target
 
 [Service]
@@ -12,6 +12,9 @@ PermissionsStartOnly=yes
 EnvironmentDirectory=env/
 SessionLeader=yes
 User=daemon
+Group=user-vt-realizer
+;
+;
 ExecStartPre=sh -c 'for d in ${OWNED_DEVICES} ; do test -n "$d" && test -c "$d" && setfacl -m u:daemon:rw "$d" ; done'
 ExecRestartPre=sh -c 'for d in ${OWNED_DEVICES} ; do test -n "$d" && test -c "$d" && setfacl -m u:daemon:rw "$d" ; done'
 ExecStart=%p ${FONTS} ${FLAGS} --kernel-vt-number "${KERNEL_VT}" ${INPUTS} ${KBDMAP:+--keyboard-map "${KBDMAP}"} /run/dev/%I/ "${FRAMEBUFFER}"

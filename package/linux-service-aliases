@@ -9,6 +9,8 @@ entropy	urandom
 motd-dynamic	motd
 org.cups.cups-lpd	lpd
 org.cups.cupsd	cups
+systemd-hostnamed  org.freedesktop.hostname1	
+systemd-localed  org.freedesktop.locale1	
 systemd-logind  org.freedesktop.login1	
 sshd	ssh
 sysctl	procps

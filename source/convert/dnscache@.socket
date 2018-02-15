@@ -11,9 +11,9 @@ BindIPv6Only=both
 ListenDatagram=%i:domain
 ListenStream=%i:domain
 Accept=false
-MaxConnections=16
+#MaxConnections=16
 NoDelay=false
 ReceiveBuffer=65536
 
 [Install]
-WantedBy=server.target
+WantedBy=workstation.target

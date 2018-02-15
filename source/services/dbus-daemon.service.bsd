@@ -21,4 +21,4 @@ ExecStartPre=sh -c 'test -r /var/db/dbus/machine-id || ln -s /etc/machine-id /va
 ExecStart=%p --config-file ./system-wide.conf --nofork --address=unix:path=/run/dbus/system_bus_socket
 
 [Install]
-WantedBy=workstation.target
+WantedBy=dbus

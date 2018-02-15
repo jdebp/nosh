@@ -1,0 +1,124 @@
+<refentry id="make-read-only-fs">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>make-read-only-fs</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>make-read-only-fs</refname>
+<refpurpose>populate various private-mount parts of the filesystem</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>make-read-only-fs</command>
+<arg>--os</arg>
+<arg>--etc</arg>
+<arg>--homes</arg>
+<arg>--sysctl</arg>
+<arg>--cgroups</arg>
+<arg>--include <replaceable>directory</replaceable></arg>
+<arg>--except <replaceable>directory</replaceable></arg>
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>make-read-only-fs</command> is a chain-loading utility that re-mounts volumes in various parts of the filesystem namespace as read-only, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>make-read-only-fs</command> will ignore.
+</para>
+
+<para>
+The parts of the filesystem that are re-mounted are controlled by command-line options as follows:
+</para>
+
+<variablelist>
+
+<varlistentry>
+<term><arg choice='plain'>--os</arg></term>
+<listitem>
+<para>
+<filename>/usr</filename> is re-mounted read-only.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><arg choice='plain'>--etc</arg></term>
+<listitem>
+<filename>/etc</filename> is re-mounted read-only.
+<para>
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><arg choice='plain'>--homes</arg></term>
+<listitem>
+<para>
+<filename>/etc</filename> is re-mounted read-only.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><arg choice='plain'>--sysctl</arg></term>
+<listitem>
+<para>
+<filename>/sys</filename>, <filename>/proc/sys</filename>, <filename>/proc/sysrq-trigger</filename>, <filename>/proc/latency_stats</filename>, <filename>/proc/acpi</filename>, <filename>/proc/timer_stats</filename>, <filename>/proc/fs</filename>, and <filename>/proc/irq</filename> are re-mounted read-only.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><arg choice='plain'>--cgroups</arg></term>
+<listitem>
+<para>
+<filename>/sys/fs/cgroup</filename> is re-mounted read-only.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><arg choice='plain'>--include</arg> <replaceable>directory</replaceable></term>
+<listitem>
+<para>
+<replaceable>directory</replaceable> is re-mounted read-only.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><arg choice='plain'>--except</arg> <replaceable>directory</replaceable></term>
+<listitem>
+<para>
+<replaceable>directory</replaceable> is re-mounted read-write.
+</para>
+</listitem>
+</varlistentry>
+
+</variablelist>
+
+<para>
+The command will fail if the process is not running under the aegis of the superuser, because most of the internal operations necessary are not permitted to non-superusers. 
+</para>
+
+</refsection><refsection><title>Usage</title>
+
+<para>
+<command>make-read-only-fs</command> is usually run chain-loaded from <citerefentry><refentrytitle>unshare</refentrytitle><manvolnum>1</manvolnum></citerefentry>.  
+Beware: Running it without unsharing first will affect the global mount namespace.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

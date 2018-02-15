@@ -11,8 +11,8 @@ Requires=user-runtime@%I
 SocketUser=%I
 SocketMode=0700
 Backlog=2
-MaxConnections=2
-ListenStream=/run/user/%I/bus
+#MaxConnections=2
+ListenStream=%t/user/%I/bus
 Accept=false
 
 [Install]

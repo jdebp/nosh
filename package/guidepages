@@ -26,6 +26,7 @@ mounting
 networking
 new-interfaces
 old-log-services
+packages-and-ports
 per-user-dbus-demand-start
 per-user-stuff
 per-user-system-services

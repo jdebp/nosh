@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Text-to-Speech server for %u
+
+[Service]
+RuntimeDirectory=%p
+RuntimeDirectoryMode=0750
+ExecStartPre=sh -c 'test -d %t/%p/.%p/ || ln -s . %t/%p/.%p'
+ExecStartPre=sh -c 'test -d %t/%p/log/ || ln -s /var/log/user/%u/%p %t/%p/log'
+ExecStart=%p --run-single --timeout "${timeout:-0}"
+
+[Install]
+WantedBy=workstation.target

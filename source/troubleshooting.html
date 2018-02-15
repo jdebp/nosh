@@ -9,7 +9,7 @@ A service is continually switching between the "running" and "failed" states, an
 </h2>
 
 <p>
-<a href="http://homepage.ntlworld.com./jonathan.deboynepollard/FGA/daemontools-service-not-staying-up.html">
+<a href="http://jdebp.eu./FGA/daemontools-service-not-staying-up.html">
 This service is failing to start properly; investigate its log and check its run script.</a>
 </p>
 
@@ -156,16 +156,64 @@ Unfortunately, this service is excessively fussy and easy to break.
 
 <ul>
 <li><p>
-Despite the fact that it is supposed to be capable of talking to multiple X displays, and so should start up in a "not connected to any displays" mode initially, it actually attempts to connect to an X display at startup.
+Despite the fact that the GNOME Terminal server is supposed to be capable of talking to multiple X displays, and so should start up in a "not connected to any displays" mode initially, it actually attempts to connect to an X display at startup.
 So not only must it have the <code>DISPLAY</code> environment variable <a href="per-user-user-services.html#environment">set in its per-service environment</a>, that must denote a currently active X display that will accept cookie-less connections from the GNOME Terminal service.
 </p><p>
 This is just an outright bug.
-</p></li>
+</p><p>
+You can transfer the environment variables from another, already running, interactive session in another terminal emulator:
+</p>
+<pre>system-control --user set-service-env org.gnome.Terminal DISPLAY "$DISPLAY"
+system-control --user set-service-env org.gnome.Terminal XAUTHORITY "$XAUTHORITY"</pre>
+</li>
 <li><p>
 The GNOME Terminal server requires that a UTF-8 locale be configured in its <code>LANG</code> environment variable, and refuses to start if it is not.
 It cannot be just the <code>C</code> locale.
+This is configured in the environment of the service definition itself, in the usual way:
+</p>
+<pre>system-control --user set-service-env org.gnome.Terminal LANG en_GB.UTF-8</pre>
+</p><p>
+An important proviso is that the named locale must exist as a locale definition on the system; the GNOME Terminal server requiring this, too.
+Some systems have a <code>C.UTF-8</code> locale definition (including those that have adopted <a href="https://sourceware.org/glibc/wiki/Proposals/C.UTF-8">the GNU C library project</a>); some do not.
 </p></li>
 <li><p>
-GNOME Terminal simply does not like some X servers, including the one in FreeBSD/TrueOS 11.
+The GNOME Terminal client must be able to talk to the correct Desktop Bus broker for the user, and so the <code>gnome-terminal</code> command will fail if invoked under the aegis of another user account, via <code>su</code>, <code>sudo</code>, or similar.
+This is because it uses the effective user ID that it is run under to construct the conventional location of <a href="gazetteer.html#user-runtime">the per-user runtime directory</a>, and it (of course) accesses that runtime directory with the access rights of that effective user ID.
+</p></li>
+<li><p>
+The GNOME Terminal client requires that the Desktop Bus broker for the user be running in the first place.
+This is of course the <a href="per-user-user-services.html">per-user user service</a> named <code>dbus</code>, which must be enabled:</p>
+<pre>system-control --user enable dbus</pre>
+<p>
+The <a href="per-user-system-services.html">system-level service that runs per-user service management</a> in the first place must also be running.
+</p></li>
+<li><p>
+The GNOME Terminal server requires the ability to talk to a whole bunch of <em>other</em> per-user Desktop Bus servers.
+These must be enabled so that the per-user Desktop Bus broker can trigger the per-user service manager <a href="per-user-dbus-demand-start.html">to auto-start them on demand</a>.
+</p><p>
+The services will include the GVFS D&aelig;mon, GVFS HAL Monitor, GVFS Photo Volume Monitor (sic! For a terminal emulator.), GNOME Configuration D&aelig;mon, and Assistive Technology Service Provider Accessibility Services Bus.
+You can usually see which ones GNOME Terminal server is attempting to auto-start by inspecting the log of the <code>dbus</code> service:
+</p>
+<pre>system-control --user status --log-lines 40 dbus</pre>
 </p></li>
 </ul>
+
+<!--
+<h2 style="border-bottom: 1px solid grey">
+One cannot halt, reboot, or power off in emergency mode
+</h2>
+
+<p>
+Deliberately, the <code>emergency-login@console</code> service does not conflict with the <code>shutdown</code> target.
+(If it were to do so, one could not bring up emergency login after a failed shutdown using the "kbrequest" mechanism.)
+</p>
+
+<p>
+Furthermore, the <a href="startup-and-shutdown.html">shutdown process</a> involves the service manager attempting to bring down all remaining running services.
+But interactive shell programs generally outright ignore the <code>SIGTERM</code> signal.
+</p>
+
+<p>
+So if you issue a <a href="shutdown.html"><code>shutdown</code></a> or (say) a <a href="system-control.html"><code>system-control&nbsp;poweroff</code></a> command in the emergency login session, <em>you must also exit the emergency login session</em> before the system and service managers will finish the final part of the shutdown process.
+</p>
+-->

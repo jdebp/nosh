@@ -134,12 +134,17 @@ enable_disable (
 			failed = true;
 		}
 	} else {
-		const FileDescriptorOwner fd(open_writecreate_at(service_dir_fd.get(), "down", 0600));
+		FileDescriptorOwner fd(open_read_at(service_dir_fd.get(), "down"));
 		if (0 > fd.get()) {
-			const int error(errno);
-			std::fprintf(stderr, "%s: ERROR: %s: %s/%s: %s\n", prog, arg.c_str(), path.c_str(), "down", std::strerror(error));
-			failed = true;
-		}
+			if (ENOENT == errno)
+				fd.reset(open_writecreate_at(service_dir_fd.get(), "down", 0400));
+			if (0 > fd.get()) {
+				const int error(errno);
+				std::fprintf(stderr, "%s: ERROR: %s: %s/%s: %s\n", prog, arg.c_str(), path.c_str(), "down", std::strerror(error));
+				failed = true;
+			}
+		} else
+			fchmod(fd.get(), 0400);
 	}
 	return !failed;
 }
@@ -167,33 +172,68 @@ checkyesno (
 
 static
 const char *
-rcconf_files[] = {
+default_rcconf_files[] = {
 	"/etc/rc.conf.local",
 	"/etc/rc.conf",
 	"/etc/defaults/rc.conf",
 };
+
+static
+const char * const *
+rcconf_filev = default_rcconf_files;
+static
+std::size_t
+rcconf_filec = sizeof default_rcconf_files/sizeof *default_rcconf_files;
+
+static inline
+bool
+scan_rcconf_file (
+	bool & wants,	///< always set to a value
+	const char * prog,
+	const std::string & wanted,
+	const std::string & rcconf_file
+) {
+	FILE * f(std::fopen(rcconf_file.c_str(), "r"));
+	if (!f) return false;
+	std::vector<std::string> env_strings(read_file(prog, rcconf_file.c_str(), f));
+	for (std::vector<std::string>::const_iterator j(env_strings.begin()); j != env_strings.end(); ++j) {
+		const std::string & s(*j);
+		const std::string::size_type p(s.find('='));
+		const std::string var(s.substr(0, p));
+		if (var == wanted) {
+			const std::string val(p == std::string::npos ? std::string() : s.substr(p + 1, std::string::npos));
+			wants = checkyesno(val);
+			return true;
+		}
+	}
+	return false;
+}
 
 static inline
 bool	/// \returns setting \retval true explicit \retval false defaulted
 query_rcconf_preset (
 	bool & wants,	///< always set to a value
 	const char * prog,
+	const ProcessEnvironment & envs,
 	const std::string & name
 ) {
 	const std::string wanted(name + "_enable");
-	for (size_t i(0); i < sizeof rcconf_files/sizeof *rcconf_files; ++i) {
-		const std::string rcconf_file(rcconf_files[i]);
-		FILE * f(std::fopen(rcconf_file.c_str(), "r"));
-		if (!f) continue;
-		std::vector<std::string> env_strings(read_file(prog, rcconf_file.c_str(), f));
-		for (std::vector<std::string>::const_iterator j(env_strings.begin()); j != env_strings.end(); ++j) {
-			const std::string & s(*j);
-			const std::string::size_type p(s.find('='));
-			const std::string var(s.substr(0, p));
-			if (var != wanted) continue;
-			const std::string val(p == std::string::npos ? std::string() : s.substr(p + 1, std::string::npos));
-			wants = checkyesno(val);
-			return true;
+	if (per_user_mode) {
+		const std::string h(effective_user_home_dir(envs));
+		const std::string r(effective_user_runtime_dir());
+		const std::string
+		user_rcconf_files[2] = {
+			h + "/.config/rc.conf",
+			r + "rc.conf"
+		};
+		for (const std::string * q(user_rcconf_files); q < user_rcconf_files + sizeof user_rcconf_files/sizeof *user_rcconf_files; ++q)
+			if (scan_rcconf_file(wants, prog, wanted, *q))
+				return true;
+	} else {
+		for (size_t i(0); i < rcconf_filec; ++i) {
+			const std::string rcconf_file(rcconf_filev[i]);
+			if (scan_rcconf_file(wants, prog, wanted, rcconf_file))
+				return true;
 		}
 	}
 	wants = false;
@@ -529,7 +569,7 @@ determine_preset (
 	if (system && query_systemd_preset(wants, envs, prefix + name, suffix))
 		return wants;
 	// The newer BSD rc.conf takes precedence over the older Sixth Edition ttys .
-	if (rcconf && query_rcconf_preset(wants, prog, name))
+	if (rcconf && query_rcconf_preset(wants, prog, envs, name))
 		return wants;
 	if (ttys && query_ttys_preset(wants, name))
 		return wants;
@@ -634,6 +674,7 @@ preset [[gnu::noreturn]] (
 ) {
 	const char * prog(basename_of(args[0]));
 	const char * prefix("");
+	const char * rcconf(0);
 	bool no_rcconf(false), no_system(false), ttys(false), fstab(false), dry_run(false);
 	try {
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
@@ -643,10 +684,12 @@ preset [[gnu::noreturn]] (
 		popt::bool_definition fstab_option('\0', "fstab", "Process /etc/fstab presets.", fstab);
 		popt::bool_definition dry_run_option('n', "dry-run", "Don't actually enact the enable/disable.", dry_run);
 		popt::string_definition prefix_option('p', "prefix", "string", "Prefix each name with this (template) name.", prefix);
+		popt::string_definition rcconf_file_option('\0', "rcconf-file", "filename", "Use this file as rc.conf.", rcconf);
 		popt::definition * main_table[] = {
 			&user_option,
 			&no_system_option,
 			&no_rcconf_option,
+			&rcconf_file_option,
 			&ttys_option,
 			&fstab_option,
 			&dry_run_option,
@@ -660,6 +703,10 @@ preset [[gnu::noreturn]] (
 		args = new_args;
 		next_prog = arg0_of(args);
 		if (p.stopped()) throw EXIT_SUCCESS;
+		if (rcconf) {
+			rcconf_filev = &rcconf;
+			rcconf_filec = 1U;
+		}
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
 		throw EXIT_FAILURE;

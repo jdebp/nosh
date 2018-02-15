@@ -24,6 +24,7 @@ local-stream-socket-listen
 local-stream-socket-accept
 machineenv
 make-private-fs
+make-read-only-fs
 monitored-fsck
 move-to-control-group
 netlink-datagram-socket-listen

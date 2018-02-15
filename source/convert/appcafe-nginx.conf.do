@@ -2,6 +2,7 @@
 ## **************************************************************************
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
+# vim: set filetype=sh:
 #
 # Convert the TrueOS appcafe-nginx external configuration formats.
 # This is invoked by appcafe.do .

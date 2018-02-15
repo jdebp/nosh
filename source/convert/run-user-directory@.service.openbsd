@@ -4,10 +4,10 @@
 
 [Unit]
 Description=Per-user runtime directory for %I
-#AfterMountsFor=/run
-#WantsMountsFor=/run
-#AfterMountsFor=/run/user
-#WantsMountsFor=/run/user
+AfterMountsFor=/run
+WantsMountsFor=/run
+AfterMountsFor=/run/user
+WantsMountsFor=/run/user
 Before=user-runtime@%I
 
 [Service]

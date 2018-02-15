@@ -1,4 +1,8 @@
 #!/bin/sh -e
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+# vim: set filetype=sh:
 case "`uname`" in
 Linux)	ext=linux ;;
 *BSD)	ext=bsd ;;

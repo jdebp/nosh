@@ -5,6 +5,7 @@
 [Unit]
 Description=Bernstein's content DNS server daemon, modified to use systemd LISTEN_FDS protocol
 After=network-interfaces.service
+Before=name-services.target
 
 [Service]
 EnvironmentDirectory=env
@@ -14,4 +15,4 @@ ExecStart=%p
 RestartSec=0.2
 
 [Install]
-WantedBy=server.target
+WantedBy=workstation.target

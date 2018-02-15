@@ -11,7 +11,7 @@ EnvironmentDirectory=env
 EnvironmentUser=publicfile
 LimitNOFILE=20
 LimitDATA=5000000
-ExecStart=${localhost:+setenv ${PROTO:-TCP}LOCALHOST "${localhost}"} gopherd /home/publicfile/public
+ExecStart=${localhost:+setenv ${PROTO:-TCP}LOCALHOST "${localhost}"} sh -c 'exec gopherd ~publicfile/public'
 
 [Install]
 WantedBy=server.target

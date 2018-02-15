@@ -99,7 +99,6 @@ struct logger {
 	void flush();
 	void rotate();
 	void put (char c);
-	void end ();
 
 protected:
 	const char * dir_name;
@@ -258,7 +257,7 @@ void logger::rotate() {
 	cap_total_size();
 	if (0 > current_fd) {
 		for (;;) {
-			current_fd = open_writecreate_at(dir_fd, "current", 0744);
+			current_fd = open_readwritecreate_at(dir_fd, "current", 0744);
 			if (0 <= current_fd) break;
 			pause("opening", "current");
 		}
@@ -271,7 +270,13 @@ void logger::rotate() {
 			}
 			pause("seeking to end of","current");
 		}
-		bol = true;
+		if (current_size > 0) {
+			char last;
+			const int rc(pread(current_fd, &last, sizeof last, current_size - 1));
+			if (rc > 0) {
+				bol = '\n' == last;
+			}
+		}
 	}
 }
 
@@ -309,11 +314,6 @@ void logger::start () {
 	rotate();
 	if (need_rotate())
 		rotate();
-}
-
-void logger::end () {
-	if (!bol) 
-		put('\n');
 }
 
 /* Main function ************************************************************
@@ -406,7 +406,7 @@ cyclog [[gnu::noreturn]] (
 	}
 
 	char buf[4096];
-	bool done(false), pending(false);
+	bool pending(false);
 	struct timespec zero = { 0, 0 };
 	for (;;) {
 		const int rc(kevent(queue, 0, 0, p, sizeof p/sizeof *p, pending ? &zero : 0));
@@ -432,7 +432,7 @@ cyclog [[gnu::noreturn]] (
 					}
 				} else if (0 == rd)
 					goto terminated;
-				pending = done = true;
+				pending = true;
 				for (ssize_t j(0); j < rd; ++j) {
 					const char c(buf[j]);
 					for (logger * l(logger::first); l; l = l->next) 
@@ -450,10 +450,8 @@ cyclog [[gnu::noreturn]] (
 						goto terminated;
 					case SIGALRM:
 						std::fprintf(stderr, "%s: INFO: %s\n", prog, "Forced log rotation.");
-						for (logger * l(logger::first); l; l = l->next) {
-							l->end();
+						for (logger * l(logger::first); l; l = l->next)
 							l->rotate();
-						}
 						break;
 					case SIGTSTP:
 						std::fprintf(stderr, "%s: INFO: %s\n", prog, "Paused.");
@@ -465,10 +463,6 @@ cyclog [[gnu::noreturn]] (
 		}
 	}
 terminated:
-	if (done) {
-		for (logger * l(logger::first); l; l = l->next) 
-			l->end();
-	}
 	while (logger * l = logger::first)
 		delete l;
 	throw EXIT_SUCCESS;

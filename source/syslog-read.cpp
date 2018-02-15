@@ -105,7 +105,7 @@ syslog_read [[gnu::noreturn]] (
 		throw EXIT_FAILURE;
 	}
 
-	const unsigned listen_fds(query_listen_fds(envs));
+	const unsigned listen_fds(query_listen_fds_or_daemontools(envs));
 	if (1U > listen_fds) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "LISTEN_FDS", std::strerror(error));

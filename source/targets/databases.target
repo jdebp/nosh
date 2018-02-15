@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Target to indicate that database servers are up
+EarlySupervise=true
+
+[Service]
+User=nobody
+
+[Install]
+StoppedBy=shutdown.target

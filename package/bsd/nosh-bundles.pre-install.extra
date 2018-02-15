@@ -46,6 +46,13 @@ relocate_var_sv() {
         fi
 }
 
+discontinue_alias() {
+	for I
+	do
+		test \! -L "/var/sv/$I" || rm -f -- "/var/sv/$I"
+	done
+}
+
 discontinue() {
         local e
         for I
@@ -105,6 +112,7 @@ relocate_var_sv cyclog@gnucron cyclog@debian-cron
 relocate_var_sv dbus dbus-daemon
 rename_log dbus dbus-daemon	# Must run before relocate_var_sv.
 relocate_var_sv cyclog@dbus cyclog@dbus-daemon
+discontinue_alias cyclog@dbus dbus
 relocate_var_sv clamd clamav
 rename_log clamd clamav	# Must run before relocate_var_sv.
 relocate_var_sv cyclog@clamd cyclog@clamav

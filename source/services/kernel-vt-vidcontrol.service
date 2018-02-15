@@ -14,7 +14,8 @@ Wants=local-fs.target
 [Service]
 Type=oneshot
 EnvironmentDirectory=env
-ExecStart=fdredir --read 0 /dev/ttyv0 vidcontrol ${font8x16:+-f 8x16 "${font8x16}"} ${font8x14:+-f 8x14 "${font8x14}"} ${font8x8:+-f 8x8 "${font8x8}"} ${blanktime:+-t "${blanktime}"} ${scrnmap:+-l "${scrnmap}"} ${cursor:+-c "${cursor}"} ${allscreens_flags}
+StandardInput=file:/dev/ttyv0
+ExecStart=vidcontrol ${font8x16:+-f 8x16 "${font8x16}"} ${font8x14:+-f 8x14 "${font8x14}"} ${font8x8:+-f 8x8 "${font8x8}"} ${blanktime:+-t "${blanktime}"} ${scrnmap:+-l "${scrnmap}"} ${cursor:+-c "${cursor}"} ${allscreens_flags}
 # This is a one-shot service that can be re-triggered by starting it again.
 #RemainAfterExit=1
 Restart=no

@@ -30,8 +30,7 @@
 
 <para>
 This command currently has no effect on BSD.
-Be careful, therefore, of the effect that this will have on
-<citerefentry><refentrytitle>make-private-fs</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Be careful, therefore, of the effect that this will have on <citerefentry><refentrytitle>make-private-fs</refentrytitle><manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>make-read-only-fs</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 </refsection>

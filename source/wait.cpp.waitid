@@ -50,6 +50,8 @@ wait_for_anychild (
 ) {
 	for (;;) {
 		siginfo_t si;
+		// The Windows NT Linux subsystem needs this; actual Linux does not, despite the manual.
+		si.si_pid = si.si_signo = 0;
 		const int rc(waitid(P_ALL, -1, &si, flags));
 		if (0 > rc) {
 			if (EINTR != errno) return -1;

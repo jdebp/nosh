@@ -91,23 +91,39 @@ If <replaceable>directory</replaceable> is <filename>/run/dev/vc1</filename>, fo
 <listitem><para>
 The input FIFO, through which realizer processes send keyboard and mouse events.
 Events are in a uniform packet format, which the terminal emulator converts into appropriate escape sequences.
+This has its group ID explicitly set to the effective GID of the emulator process.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term><replaceable>directory</replaceable><filename>/display</filename></term>
 <listitem><para>
 The UTF-32, 24-bit colour, display buffer.
+This has its group ID explicitly set to the effective GID of the emulator process.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term><replaceable>directory</replaceable><filename>/vcsa</filename></term>
 <listitem><para>
-An 8-bit character set, 3-bit colour, display buffer that is compatible with
-the Linux vcsa devices for kernel virtual terminals.
+An 8-bit character set, 3-bit colour, display buffer that is compatible with the Linux vcsa devices for kernel virtual terminals.
 This is provided for compatibility with screen reader softwares.
+This has its group ID explicitly set to the effective GID of the emulator process.
 </para></listitem>
 </varlistentry>
 </variablelist>
+
+</refsection>
+
+<refsection><title>Security</title>
+
+<para>
+<command>console-fb-realizer</command> requires no superuser privileges and is designed to be run entirely under the aegis of a dedicated unprivileged user account.
+It only requires write and search access to <replaceable>directory</replaceable> and need not have owner access to it.
+</para>
+
+<para>
+Usually <replaceable>directory</replaceable> will be set-group-ID to a group different to the effective group ID of the emulator process.
+Changing the groups of <replaceable>directory</replaceable><filename>/input</filename>, <replaceable>directory</replaceable><filename>/display</filename>, and <replaceable>directory</replaceable><filename>/vcsa</filename> to the effective group ID of the emulator process thus distinguishes group access to those files, allowing one to add ordinary users to that group in order to give them direct realizer access to the emulated terminal.
+</para>
 
 </refsection>
 

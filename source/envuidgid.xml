@@ -16,6 +16,7 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>envuidgid</command> 
+<arg>--primary-group <replaceable>group</replaceable></arg>
 <arg>--supplementary</arg>
 <arg choice='req'><replaceable>account</replaceable></arg> 
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
@@ -26,6 +27,10 @@
 
 <para>
 <command>envuidgid</command> is a chain-loading utility that sets the <envar>UID</envar> and <envar>GID</envar> environment variables to the values for <replaceable>account</replaceable> in the system account database and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+If the <arg choice='plain'>--primary-group</arg> option is used, setuidgid will use <replaceable>group</replaceable> instead of the primary GID of <replaceable>account</replaceable> as the <envar>GID</envar> value.
 </para>
 
 <para>

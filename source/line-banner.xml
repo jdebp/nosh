@@ -54,7 +54,7 @@ softlimit -o 20 -d 50000
 tcp-socket-listen -b 2 0 80
 tcp-socket-accept -v -c 2 -x cdb.tcp -l 0 --no-delay
 line-banner --NVT "220 Features: a p ."
-ftpd /home/publicfile/public
+sh -c 'exec ftpd ~publicfile/public'
 </programlisting>
 
 <para>
@@ -69,7 +69,7 @@ softlimit -o 20 -d 50000 \
 tcp-socket-listen -b 2 0 80 \
 tcp-socket-accept -v -c 2 -x cdb.tcp -l 0 --no-delay \
 line-banner --NVT '220 Features: a p .' \
-ftpd /home/publicfile/public
+ftpd ~publicfile/public
 </programlisting>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

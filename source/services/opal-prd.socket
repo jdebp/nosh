@@ -11,8 +11,8 @@ Description=OpenPower Abstraction Layer processor recovery diagnostics control s
 
 [Socket]
 Backlog=2
-ListenStream=/run/%p-control
-MaxConnections=16
+ListenStream=%t/%p-control
+#MaxConnections=16
 Accept=no
 
 [Install]

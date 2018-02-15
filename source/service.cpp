@@ -82,7 +82,7 @@ invoke_rcd (
 		popt::definition * top_table[] = {
 			&quiet_option
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "service-name command");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "service-name start|stop|force-stop|force-reload|restart");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -163,7 +163,7 @@ update_rcd (
 		popt::definition * top_table[] = {
 			&force_option
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "service-name command");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "service-name enable|disable|remove|defaults");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);

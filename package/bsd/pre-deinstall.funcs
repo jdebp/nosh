@@ -7,6 +7,13 @@ del_user() {
 		pw userdel "$1" 
 	fi
 }
+del_group() { 
+	if getent group "$1" > /dev/null 
+	then
+		printf 1>&2 "Removing group: %s\n" "$1"
+		pw groupdel "$1" 
+	fi
+}
 shut_down() {
 	for i
 	do
@@ -87,12 +94,23 @@ target() {
 	fi
 }
 # Don't delete the log service users because the log files still exist.
-log_user() {
+logfile_owning_user() {
 	:
 }
-non_log_user() {
-	local pwescaped="`escape "$1"`"
-	del_user "$pwescaped"
+non_file_owning_user() {
+	if test -z "${nosh_run_package}"
+	then
+                local pwescaped="`escape "$1"`"
+                del_user "$pwescaped"
+        else
+                :
+        fi
+}
+user_vt_user() {
+	:
+}
+user_vt_group() {
+        :
 }
 user_tty() {
 	:

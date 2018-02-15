@@ -10,7 +10,6 @@ After=network.target
 [Service]
 LimitNOFILE=65535
 User=git
-Group=git
 ExecStart=%p web
 
 [Install]

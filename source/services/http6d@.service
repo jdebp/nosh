@@ -10,7 +10,7 @@ Description=NOTE: Bernstein's publicfile supports HTTP over both IPv4 and IPv6 w
 EnvironmentUser=publicfile
 LimitNOFILE=20
 LimitDATA=5000000
-ExecStart=httpd /home/publicfile/public
+ExecStart=sh -c 'exec httpd ~publicfile/public'
 
 [Install]
 WantedBy=server.target

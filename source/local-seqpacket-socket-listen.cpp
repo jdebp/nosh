@@ -49,8 +49,8 @@ local_seqpacket_socket_listen (
 		popt::signed_number_definition uid_option('u', "uid", "number", "Specify the UID for the bound socket filename.", uid, 0);
 		popt::signed_number_definition gid_option('g', "gid", "number", "Specify the GID for the bound socket filename.", gid, 0);
 		popt::signed_number_definition mode_option('m', "mode", "number", "Specify the permissions for the bound socket filename.", mode, 0);
-		popt::string_definition user_option('\0', "user", "number", "Specify the user for the FIFO filename.", user);
-		popt::string_definition group_option('\0', "group", "number", "Specify the group for the FIFO filename.", group);
+		popt::string_definition user_option('\0', "user", "name", "Specify the user for the FIFO filename.", user);
+		popt::string_definition group_option('\0', "group", "name", "Specify the group for the FIFO filename.", group);
 		popt::definition * top_table[] = {
 			&upstart_compatibility_option,
 			&systemd_compatibility_option,
@@ -110,11 +110,14 @@ local_seqpacket_socket_listen (
 	if (0 > s) {
 exit_error:
 		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s\n", prog, std::strerror(error));
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, listenpath, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	unlink(listenpath);
-	if (0 > bind(s, reinterpret_cast<sockaddr *>(&addr), sizeof addr)) goto exit_error;
+	if (0 > bind(s, reinterpret_cast<sockaddr *>(&addr), sizeof addr)) {
+		if (EADDRINUSE != errno) goto exit_error;
+		unlink(listenpath);
+		if (0 > bind(s, reinterpret_cast<sockaddr *>(&addr), sizeof addr)) goto exit_error;
+	}
 	if (has_uid || has_gid) {
 		if (0 > chown(listenpath, uid, gid)) goto exit_error;
 	} else

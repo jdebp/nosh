@@ -37,7 +37,7 @@ start_up() {
 		fi
 	done
 }
-rename_log_user() {
+rename_logfile_owning_user() {
 	local opwescaped="`old_escape "$1"`"
 	if ! getent passwd "${opwescaped}"-log > /dev/null 
 	then
@@ -50,7 +50,7 @@ rename_log_user() {
 	fi
 	rename_user "${opwescaped}" "${npwescaped}" -log
 }
-rename_non_log_user() {
+rename_non_file_owning_user() {
 	local opwescaped="`old_escape "$1"`"
 	if ! getent passwd "${opwescaped}" > /dev/null 
 	then
@@ -66,7 +66,7 @@ rename_non_log_user() {
 service_with_dedicated_logger() {
 	if test -z "${nosh_run_package}"
 	then
-		rename_log_user "$1"
+		rename_logfile_owning_user "$1"
 		local pwescaped="`escape "$1"`"
 		add_user "$pwescaped"-log
 		add_log "$pwescaped"-log "$1"
@@ -79,7 +79,7 @@ service_with_dedicated_logger() {
 login_service_with_dedicated_logger() {
 	if test -z "${nosh_run_package}"
 	then
-		rename_log_user "ttylogin@$1"
+		rename_logfile_owning_user "ttylogin@$1"
 		local pwescaped="`escape "ttylogin@$1"`"
 		add_user "$pwescaped"-log
 		add_log "$pwescaped"-log "ttylogin@$1"
@@ -100,7 +100,7 @@ ktty_login_service_with_dedicated_logger() {
 socket_with_dedicated_logger() {
 	if test -z "${nosh_run_package}"
 	then
-		rename_log_user "$1"
+		rename_logfile_owning_user "$1"
 		local pwescaped="`escape "$1"`"
 		add_user "$pwescaped"-log
 		add_log "$pwescaped"-log "$1"
@@ -130,7 +130,7 @@ service_only_no_run() {
 fan_in_logger() {
 	if test -z "${nosh_run_package}"
 	then
-		rename_log_user "$1"
+		rename_logfile_owning_user "$1"
 		local pwescaped="`escape "$1"`"
 		add_user "$pwescaped"-log
 		add_log "$pwescaped"-log "$1"
@@ -147,20 +147,34 @@ target() {
 		system-control preset "$1.target"
 	fi
 }
-log_user() {
+logfile_owning_user() {
 	if test -z "${nosh_run_package}"
 	then
-		rename_log_user "$1"
+		rename_logfile_owning_user "$1"
 		local pwescaped="`escape "$1"`"
 		add_user "$pwescaped"-log
 	fi
 }
-non_log_user() {
+non_file_owning_user() {
 	if test -z "${nosh_run_package}"
 	then
-		rename_non_log_user "$1"
+		rename_non_file_owning_user "$1"
 		local pwescaped="`escape "$1"`"
 		add_user "$pwescaped"
+	fi
+}
+user_vt_user() {
+	if test -z "${nosh_run_package}"
+	then
+		local pwescaped="`escape user-vt-"$1"`"
+		add_user "$pwescaped"
+	fi
+}
+user_vt_group() {
+	if test -z "${nosh_run_package}"
+	then
+		local pwescaped="`escape user-vt-"$1"`"
+		add_group "$pwescaped"
 	fi
 }
 user_tty() { 

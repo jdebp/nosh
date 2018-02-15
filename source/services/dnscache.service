@@ -5,6 +5,7 @@
 [Unit]
 Description=Bernstein's proxy DNS server daemon
 After=network-interfaces.service entropy
+Before=name-services.target
 
 [Service]
 EnvironmentDirectory=env

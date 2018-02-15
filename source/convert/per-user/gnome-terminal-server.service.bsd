@@ -1,0 +1,22 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=GNOME Terminal for %u
+
+[Service]
+Type=dbus
+# The fact that the GNOME Terminal server requires an X display at startup is a bug.
+EnvironmentDirectory=../../../common/env
+EnvironmentDirectory=env
+ExecStart=/usr/local/libexec/%p
+Restart=no
+# GNOME Terminal uses 8 file descriptors per terminal.
+# It tries to raise the current RLIMIT_NOFILE up to its maximum, and restore it when spawning subshells.
+# This goes badly wrong on FreeBSD because of kern.maxfilesperproc.
+# This bodge tries to ensure that the RLIMIT_NOFILE maximum is less than kern.maxfilesperproc.
+# This doesn't fix things, because kern.maxfilesperproc can vary at any time, but it makes it rarer.
+LimitNOFILE=hard
+
+[Install]

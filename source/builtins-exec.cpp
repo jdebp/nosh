@@ -65,6 +65,7 @@ extern void ucspi_socket_rules_check ( const char * &, std::vector<const char *>
 extern void pause ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void unshare ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void make_private_fs ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void make_read_only_fs ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void set_mount_object ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void fifo_listen ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void export_to_rsyslog ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
@@ -126,6 +127,7 @@ commands[] = {
 	{	"unshare",				unshare				},
 	{	"set-mount-object",			set_mount_object		},
 	{	"make-private-fs",			make_private_fs			},
+	{	"make-read-only-fs",			make_read_only_fs		},
 	{	"fifo-listen",				fifo_listen			},
 	{	"tcpserver",				tcpserver			},
 	{	"tcp-socket-listen",			tcp_socket_listen		},

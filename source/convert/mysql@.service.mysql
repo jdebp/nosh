@@ -9,6 +9,7 @@ Description=%p (MySQL) database server for %i
 # The mysqld_safe script obscures the fact that it forks a separate logging daemon process.
 After=mysql-log@%i
 Wants=mysql-log@%i
+Before=databases.target
 Conflicts=mariadb@%i
 
 [Service]

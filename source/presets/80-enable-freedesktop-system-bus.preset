@@ -6,7 +6,9 @@
 # It is used by the nosh-run-freedesktop-system-bus package in order to enable the services themselves.
 #
 
-enable	dbus-daemon.service
 enable	cyclog@dbus-daemon.service
+enable	dbus-daemon.service
+enable	cyclog@dbus.service
+enable	dbus.service
 disable	cyclog@dbus-broker.service
 disable	dbus-broker.service

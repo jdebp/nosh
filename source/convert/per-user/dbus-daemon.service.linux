@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description="Desktop" bus service for %u
+
+[Service]
+# The --address=systemd: option is the closest to our UCSPI-LOCAL.
+# --systemd-activation bypasses the launch helper, which we do not want.
+ExecStart=%p --session --nofork --nopidfile --address=systemd:
+# dbus-daemon is not suitable to be a local reaper, because it does not reap unknown children.
+Restart=always
+RestartSec=0.5
+
+[Install]
+WantedBy=normal.target

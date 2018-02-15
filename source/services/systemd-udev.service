@@ -11,7 +11,8 @@ Conflicts=busybox-mdev vdev suckless-mdev
 
 [Service]
 RuntimeDirectory=%p
-ExecStart=/lib/systemd/%pd --debug
+EnvironmentDirectory=env
+ExecStart=/lib/systemd/%pd --debug ${children_max:+--children-max "${children_max}"}
 RestartSec=5
 # The nutty default of systemd-udevd is to log to the kernel log buffer.
 # This despite it being integrated into systemd where capturing standard error is a norm.

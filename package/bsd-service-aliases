@@ -1,7 +1,11 @@
 automount	autofs
 bsd-serial-init	serial
+cleantmp	cleartmp
 entropy	random
+entropy	random_seed
+hostnamed	org.freedesktop.hostname1
 ipf	ipfilter
+localed		org.freedesktop.locale1
 kdc	kerberos5_server
 kmod@dummynet	dummynet
 kmod@ipdivert	natd

@@ -6,7 +6,7 @@
 Description=syslog socket used when attaching syslog daemons to the systemd journal
 
 [Socket]
-ListenDatagram=/run/systemd/journal/syslog
+ListenDatagram=%t/systemd/journal/syslog
 SocketMode=0666
 PassCredentials=yes
 PassSecurity=yes

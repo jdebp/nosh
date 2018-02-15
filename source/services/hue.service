@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Hue HTTP content server
+
+[Service]
+User=%p
+WorkingDirectory=/var/lib/%p
+ExecStart=./build/env/bin/%p runcherrypyserver
+PrivateTmp=true
+Environment=PYTHON_EGG_CACHE=/tmp/.%p-python-eggs
+
+[Install]
+WantedBy=server.target

@@ -14,7 +14,8 @@ Wants=local-fs.target
 [Service]
 Type=oneshot
 EnvironmentDirectory=env
-ExecStart=fdredir --read 0 /dev/ttyv0 kbdcontrol ${keyboard:+-k "${keyboard}"} ${keymap:+-l "${keymap}"} ${keyrate:+-r "${keyrate}"} ${keybell:+-b "${keybell}"} ${allscreens_kbdflags}
+StandardInput=file:/dev/ttyv0
+ExecStart=kbdcontrol ${keyboard:+-k "${keyboard}"} ${keymap:+-l "${keymap}"} ${keyrate:+-r "${keyrate}"} ${keybell:+-b "${keybell}"} ${allscreens_kbdflags}
 # This is a one-shot service that can be re-triggered by starting it again.
 #RemainAfterExit=1
 Restart=no

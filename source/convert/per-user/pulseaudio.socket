@@ -1,0 +1,20 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=PulseAudio socket for %u
+
+[Socket]
+SocketMode=0700
+Backlog=5
+#MaxConnections=2
+# Stupidly, pulseaudio does not use the XDG_RUNTIME_DIR environment variable when its "native unix" module is constructing the default listening socket name.
+# As a consequence, it does not recognize %t/pulse/native as the same name as getsockname() returns for the open listening socket file descriptor, and it then tries to bind() it twice; causing it to fail with EADDRINUSE.
+#ListenStream=%t/pulse/native
+# So we have to hardwire the runtime directory name to the broken systemd UID form.
+ListenStream=/run/user/%U/pulse/native
+Accept=false
+
+[Install]
+WantedBy=sockets.target

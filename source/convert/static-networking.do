@@ -2,6 +2,7 @@
 ## **************************************************************************
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
+# vim: set filetype=sh:
 #
 # Special setup for static networking services
 # This is invoked by general-services.do .
@@ -15,6 +16,8 @@ get_var3() { read_rc "$1"_"$2"_"$3" || read_rc "$1"_"$3" || true ; }
 get_var4() { read_rc "$1"_"$2"_"$3" || read_rc "$1"_"$4" || true ; }
 car() { echo "$1" ; }
 cdr() { shift ; echo "$@" ; }
+if_yes() { case "$1" in [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1) echo "$2" ;; esac ; }
+if_no_or_empty() { case "$1" in [Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Oo][Ff][Ff]|0|'') echo "$2" ;; esac ; }
 list_static_arp() { for i in `get_var1 static_arp_pairs` ; do printf "%s\n" "$i" ; done ; }
 list_static_ndp() { for i in `get_var1 static_ndp_pairs` ; do printf "%s\n" "$i" ; done ; }
 list_static_ip4() { for i in `get_var1 static_routes` ; do printf "%s\n" "$i" ; done ; }
@@ -132,7 +135,7 @@ filter_ifconfig() {
 				;;
 			*)
 				test -z "$o" || printf "%s " "$i"
-			       	;;
+				;;
 		esac
 	done
 	test -z "$o" || printf "\n"
@@ -144,22 +147,31 @@ get_filtered_ifconfig2() {
 	if ! c="`get_ifconfig1 "$1"`"
 	then
 		case "$1" in
-		lo0)	c="inet 127.0.0.1 inet6 -ifdisabled" ;;
-		*)	c="inet6 -ifdisabled" ;;
+		lo0)	c="inet 127.0.0.1" ;;
+		*)	c="" ;;
 		esac
 	fi
 
 	filter_ifconfig "$2" $c
 }
 get_filtered_ifconfig3() {
-	local i
 	local c
+	local a
 
 	if ! c="`get_ifconfig2 "$1" "$2"`"
 	then
 		case "$2:$1" in
 		aliases:lo0)	c="inet 127.0.0.1/8" ;;
-		*)		c="" ;;
+		ipv6:*) 
+			if a="`read_rc \"$2\"_activate_all_interfaces`" && 
+			   test _"NO" = _"`if_no_or_empty "$a" NO`"
+			then
+				c="inet6 ifdisabled" 
+			else
+				c="inet6 -ifdisabled" 
+			fi
+			;;
+		*)	c="" ;;
 		esac
 	fi
 
@@ -193,9 +205,11 @@ get_inet4_opts() {
 	get_filtered_ifconfig3 "$1" ipv4 inet
 }
 get_inet6_opts() {
+	local n
+	local r
+	local i
+
 	is_ip_interface "$1" || return 0
-	get_filtered_ifconfig2 "$1" inet6
-	get_filtered_ifconfig3 "$1" ipv6 inet6
 	case "`uname`" in
 	*BSD)	
 		if is_ipv6_default_interface "$1"
@@ -204,9 +218,22 @@ get_inet6_opts() {
 		else
 			printf -- "%s " -defaultif
 		fi
+		if n="`read_rc ipv6_cpe_wanif`"
+		then
+			r='no_radr'
+			for i in ${n}
+			do
+				test _"$i" != _"$1" || r='-no_radr accept_rtadv'
+			done
+		else
+			r=""
+		fi
+		printf -- "%s " $r
 		;;
 	*)	;;
 	esac
+	get_filtered_ifconfig2 "$1" inet6
+	get_filtered_ifconfig3 "$1" ipv6 inet6
 }
 get_link_aliases() {
 	get_filtered_ifconfig3 "$1" aliases link
@@ -220,7 +247,6 @@ get_inet6_aliases() {
 	get_filtered_ifconfig3 "$1" aliases inet6
 	get_ipv6_prefix "$1"
 }
-if_yes() { case "$1" in [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1) echo "$2" ;; esac ; }
 
 show_enable() {
 	local i
@@ -572,6 +598,24 @@ make_rfcomm_pppd() {
 	system-control preset rfcomm_pppd-log
 }
 
+make_snort() {
+	local service
+	service="snort@$1"
+	system-control convert-systemd-units $e "$r/" "./${service}.service"
+	install -d -m 0755 "$r/${service}/service/env"
+	if test _"${snort_enable}" = _"YES"
+	then
+		system-control preset "${service}"
+	else
+		system-control disable "${service}"
+	fi
+	show_enable "${service}"
+	show_settings "${service}"
+	rm -f -- "$r/${service}/log"
+	ln -s -- "../../../sv/snort-log" "$r/${service}/log"
+	system-control preset snort-log
+}
+
 # $1: interface name
 # $2: extra create_args
 # $3: kernel modules wants+after
@@ -602,7 +646,7 @@ make_wlandebug() {
 	system-control preset wlandebug-log
 }
 
-redo-ifchange rc.conf general-services "netif@.service" "static_arp@.service" "static_ndp@.service" "static_ip4@.service" "static_ip6@.service" "natd@.service" "hostapd@.service" "dhclient@.service" "udhcpc@.service" "dhcpcd@.service" "wpa_supplicant@.service" "rfcomm_pppd@.service" "ppp@.service" "spppcontrol@.service" "ifscript@.service" "ifconfig@.service" "wlandebug@.service"
+redo-ifchange rc.conf general-services "netif@.service" "static_arp@.service" "static_ndp@.service" "static_ip4@.service" "static_ip6@.service" "natd@.service" "hostapd@.service" "dhclient@.service" "udhcpc@.service" "dhcpcd@.service" "wpa_supplicant@.service" "rfcomm_pppd@.service" "ppp@.service" "spppcontrol@.service" "ifscript@.service" "ifconfig@.service" "snort@.service" "wlandebug@.service"
 
 r="/var/local/sv"
 e="--no-systemd-quirks --escape-instance --local-bundle --bundle-root"
@@ -613,12 +657,12 @@ else
 	dhclient="dhclient"
 fi
 
-find "$r/" -maxdepth 1 -type d \( -name 'static_arp@*' -o -name 'static_ndp@*' -o -name 'static_ip4@*' -o -name 'static_ip6@*' -o -name 'netif@*' -o -name 'natd@*' -o -name 'hostapd@*' -o -name 'wpa_supplicant@*' -o -name 'dhclient@*' -o -name 'dhcpcd@*' -o -name 'ppp@*' -o -name 'spppcontrol@*' -o -name 'rfcomm_pppd@*' -o -name 'wlandebug@*' \) -print0 |
+find "$r/" -maxdepth 1 -type d \( -name 'static_arp@*' -o -name 'static_ndp@*' -o -name 'static_ip4@*' -o -name 'static_ip6@*' -o -name 'netif@*' -o -name 'natd@*' -o -name 'hostapd@*' -o -name 'wpa_supplicant@*' -o -name 'dhclient@*' -o -name 'dhcpcd@*' -o -name 'ppp@*' -o -name 'spppcontrol@*' -o -name 'rfcomm_pppd@*' -o -name 'snort@*' -o -name 'wlandebug@*' \) -print0 |
 xargs -0 system-control disable
 
-find "$r/" -maxdepth 1 -type d \( -name 'ifconfig@*' -o -name 'ifscript@*' -o -name 'natd@*' -o -name 'hostapd@*' -o -name 'wpa_supplicant@*' -o -name 'dhclient@*' -o -name 'dhcpcd@*' -o -name 'ppp@*' -o -name 'spppcontrol@*' -o -name 'rfcomm_pppd@*' -o -name 'wlandebug@*' \) -exec rm -f -- {}/wanted-by/static-networking {}/wanted-by/workstation \;
+find "$r/" -maxdepth 1 -type d \( -name 'ifconfig@*' -o -name 'ifscript@*' -o -name 'natd@*' -o -name 'hostapd@*' -o -name 'wpa_supplicant@*' -o -name 'dhclient@*' -o -name 'dhcpcd@*' -o -name 'ppp@*' -o -name 'spppcontrol@*' -o -name 'rfcomm_pppd@*' -o -name 'snort@*' -o -name 'wlandebug@*' \) -exec rm -f -- {}/wanted-by/static-networking {}/wanted-by/workstation \;
 
-system-control disable ifconfig-log natd-log dhclient-log dhcpcd-log natd-log rfcomm_pppd-log ppp-log sppp-log wlandebug-log
+system-control disable ifconfig-log natd-log dhclient-log dhcpcd-log snort-log rfcomm_pppd-log ppp-log sppp-log wlandebug-log
 
 if rfcomm_pppd_server_enable="`read_rc rfcomm_pppd_server_enable`"
 then
@@ -627,6 +671,10 @@ fi
 if ppp_server_enable="`read_rc ppp_server_enable`"
 then
 	ppp_server_enable="`if_yes \"${ppp_server_enable}\" YES`"
+fi
+if snort_enable="`read_rc snort_enable`"
+then
+	snort_enable="`if_yes \"${snort_enable}\" YES`"
 fi
 
 list_static_arp |
@@ -751,4 +799,10 @@ for i in `get_var2 rfcomm_pppd_server profile`
 do
 	test -z "$i" && continue
 	make_rfcomm_pppd "$i" >> "$3"
+done
+
+for i in `get_var2 snort interfaces`
+do
+	test -z "$i" && continue
+	make_snort "$i" >> "$3"
 done

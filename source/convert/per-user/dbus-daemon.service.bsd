@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description="Desktop" bus service for %u
+
+[Service]
+# BSD dbus doesn't support --nopidfile, even though that would be nice here.
+# BSD dbus doesn't support --address=systemd: even though that would be the closest to our UCSPI-LOCAL.
+# BSD dbus doesn't support --address=unix:runtime=yes even though that would be a reasonable fallback that we could bodge.
+ExecStart=%p --config-file ./per-user.conf --nofork --address="unix:path=%t/bus"
+# dbus-daemon is not suitable to be a local reaper, because it does not reap unknown children.
+Restart=always
+RestartSec=0.5
+
+[Install]
+WantedBy=normal.target

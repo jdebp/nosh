@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=GnuPG network certificate management socket for %u
+
+[Socket]
+ListenStream=%t/gnupg/S.%p
+SocketMode=0600
+
+[Install]

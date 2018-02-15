@@ -2,7 +2,7 @@ Source: nosh
 Section: admin
 Priority: optional
 Maintainer: Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@ntlworld.com>
-Build-Depends: redo, libkqueue-dev, xmlto, pax
+Build-Depends: redo, xmlto, pax, libncursesw5-dev, uuid-dev, libssl-dev
 
 Package: nosh-guide
 Architecture: amd64
@@ -90,10 +90,10 @@ Architecture: amd64
 Depends: ${shlibs:Depends}, nosh-service-management
 Suggests: 
 Recommends: 
-Will-Conflict: sysvinit-utils
+Will-Conflict: sysvinit-utils (<< 2.88dsf-59), upstart-sysv, systemd-sysv, init-system-helpers (>= 1.48)
 Description: BSD and System 5 shim service and system management utilities
  This package provides shims for old-style BSD and System 5 system management commands.
-  * service, chkconfig
+  * chkconfig
   * init, shutdown, telinit, halt, haltsys, poweroff, reboot, runlevel
   * emergency, normal, rescue
  .
@@ -102,6 +102,7 @@ Description: BSD and System 5 shim service and system management utilities
  For rcctl, use the nosh-openbsd-shims package.
  For utx, use the nosh-freebsd-shims package.
  For fastboot, fasthalt, and fastpoweroff, use the nosh-bsd-shims package.
+ For invoke-rc.d and update-rc.d, use the nosh-debian-shims package.
 
 Package: nosh-systemd-shims
 Architecture: amd64
@@ -120,6 +121,7 @@ Architecture: amd64
 Depends: nosh-service-management
 Suggests: 
 Recommends: 
+Conflicts: upstart
 Description: upstart shim service and system management utilities
  This package provides shims for upstart service and system management commands.
   * initctl, start, stop, enable, disable
@@ -151,22 +153,35 @@ Description: core utility shims
  .
  The shims simply invoke nosh built-in commands.
 
-Package: nosh-debian-shims
+Package: nosh-service-command-shim
 Architecture: amd64
-Depends: nosh-service-management
+Depends: ${shlibs:Depends}, nosh-service-management, nosh-systemv-shims
 Suggests: 
 Recommends: 
-Conflicts: nosh-run-via-systemd, upstart, sysvinit-core, systemd-sysv
-Provides: sysv-rc
+Will-Conflict: sysvinit-utils (<< 2.88dsf-59), upstart-sysv, systemd-sysv, init-system-helpers (>= 1.48)
+Conflicts: nosh-systemv-shims (<= 1.36)
+Description: Shim for the old BSD and System 5 service command
+ This package provides a shim for the old-style BSD and System 5 service command.
+ It simply invoke native service management commands.
+
+Package: nosh-debian-shims
+Architecture: amd64
+Depends: nosh-service-management, nosh-service-command-shim, nosh-systemv-shims
+Suggests: 
+Recommends: 
+Will-Conflict: sysvinit-core (<< 2.88dsf-59.9), file-rc, openrc, sysv-rc, init-system-helpers (>= 1.48)
+Provides: sysv-rc, file-rc, openrc
 Description: Debian shim service and system management utilities
  This package provides shims for Debian service and system management commands.
   * invoke-rc.d, update-rc.d
  .
  The shims simply invoke native service management commands.
+ .
+ It satisfies any packages that depend from sysv-rc, file-rc, or openrc in order to obtain these commands.
 
 Package: nosh-openbsd-shims
 Architecture: amd64
-Depends: nosh-service-management, nosh-systemv-shims (>= 1.28)
+Depends: nosh-service-management, nosh-systemv-shims (>= 1.28), nosh-service-command-shim
 Conflicts: nosh-systemv-shims (<= 1.27)
 Suggests: 
 Recommends: 
@@ -190,7 +205,7 @@ Description: FreeBSD shim service and system management utilities
 
 Package: nosh-bsd-shims
 Architecture: amd64
-Depends: nosh-service-management
+Depends: nosh-service-management, nosh-systemv-shims
 Conflicts: fastboot
 Suggests: 
 Recommends: 
@@ -234,11 +249,11 @@ Recommends:
 Provides: logrotate
 Description: Shim for the logrotate package
  This package is an empty package that resolves a package dependency from packages like mgetty and rabbitmq-server.
- These packages force a dependency upon the logrotate even though their service bundles use cyclog and logrotate is nowhere involved.
+ These packages force a dependency upon logrotate even though their service bundles use cyclog and logrotate is nowhere involved.
 
 Package: nosh-bundles
 Architecture: amd64
-Depends: nosh-exec (>=1.34), nosh-service-management (>=1.34), nosh-terminal-management (>=1.22), adduser
+Depends: nosh-exec (>=1.37), nosh-service-management (>=1.37), nosh-terminal-management (>=1.22), adduser
 Suggests: 
 Recommends: 
 Conflicts: nosh-standard-targets, nosh-sysinit-services, nosh-bsd-services, nosh-bsd-sockets, nosh-regular-sockets, nosh-regular-services
@@ -292,7 +307,7 @@ Description: Run old-style kernel virtual terminals
 
 Package: nosh-run-user-vt
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.33), nosh-terminal-management, nosh-bundles
+Depends: nosh-exec, nosh-service-management (>=1.33), nosh-terminal-management, nosh-bundles (>=1.37)
 Suggests: 
 Recommends: nosh-kbd-shims
 Description: Run new-style application-mode virtual terminals
@@ -314,7 +329,7 @@ Description: Run the nosh service manager and daemontools service scanner via sy
 
 Package: nosh-run-virtualbox-guest
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles
+Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, virtualbox-guest-utils
 Suggests: 
 Recommends: 
 Description: Run VirtualBox guest additions
@@ -332,15 +347,17 @@ Package: nosh-run-freedesktop-kits
 Architecture: amd64
 Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, nosh-run-freedesktop-system-bus
 Suggests: 
-Recommends: network-manager, modemmanager, packagekit, policykit-1, consolekit
+Recommends: network-manager, modemmanager, packagekit, policykit-1, consolekit, rtkit
 Description: Run the various "kit" programs from freedesktop.org
  This package runs the various "kit" programs from freedesktop.org:
+  * Accounts
   * NetworkManager
   * ModemManager
   * ColourManager
   * PolicyKit
   * PackageKit
   * ConsoleKit
+  * RealtimeKit
   * UDisks
   * UDisks2
   * UPower

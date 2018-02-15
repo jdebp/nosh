@@ -5,15 +5,17 @@
 [Unit]
 Description=Dump kernel boot log (obsoleted by klogd-read).
 DefaultDependencies=false
+Before=shutdown.target
 
 [Service]
 Type=oneshot
 Umask=0022
-ExecStart=fdredir --write 1 /run/dmesg.boot %p
+StandardOutput=file:/run/dmesg.boot
+ExecStart=%p
 # This only has appropriate behaviour at bootstrap, not later.
 RemainAfterExit=yes
 Restart=never
 
 [Install]
-# This never shuts down.
+StoppedBy=shutdown.target
 WantedBy=sysinit.target

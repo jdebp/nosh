@@ -38,6 +38,11 @@ For copyright and licensing terms, see the file named COPYING.
 #include "listen.h"
 #include "service-manager.h"
 #include "FileDescriptorOwner.h"
+#if defined(__LINUX__) || defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
+#	define	HAS_FIFO_EXTENSION 1
+#else
+#	define	HAS_FIFO_EXTENSION 0
+#endif
 
 static const char * prog(0);
 #if !defined(__LINUX__) && !defined(__linux__)
@@ -75,7 +80,10 @@ struct service : public index {
 	void set_unload() { unload_after_stop = true; }
 	bool unloadable() const { return unload_after_stop && (NONE == activity) && !has_processes(); }
 
-	int in, out, err, pipe_fds[2], lock_fd, ok_fd, control_fd, control_client_fd, status_fd, service_dir_fd;
+	int in, out, err, pipe_fds[2], lock_fd, ok_fd, control_fd, status_fd, service_dir_fd;
+#if !HAS_FIFO_EXTENSION
+	int control_client_fd;
+#endif
 	char name[NAME_MAX + 1];
 	bool run_on_empty;
 protected:
@@ -157,9 +165,11 @@ service::service(const struct stat & s, ProcessEnvironment & e) :
 	lock_fd(-1),
 	ok_fd(-1),
 	control_fd(-1),
-	control_client_fd(-1),
 	status_fd(-1),
 	service_dir_fd(-1),
+#if !HAS_FIFO_EXTENSION
+	control_client_fd(-1),
+#endif
 	run_on_empty(false),
 	pending_command('\0'), 
 	paused(false), 
@@ -183,12 +193,17 @@ service::~service()
 	close(pipe_fds[0]);
 	close(pipe_fds[1]);
 	close(status_fd);
+#if !HAS_FIFO_EXTENSION
 	close(control_client_fd);
+#endif
 	close(control_fd);
 	close(ok_fd);
 	close(lock_fd);
 	close(service_dir_fd);
-	pipe_fds[0] = pipe_fds[1] = service_dir_fd = status_fd = control_client_fd = control_fd = ok_fd = lock_fd = -1;
+#if !HAS_FIFO_EXTENSION
+	control_client_fd = -1;
+#endif
+	pipe_fds[0] = pipe_fds[1] = service_dir_fd = status_fd = control_fd = ok_fd = lock_fd = -1;
 }
 
 void 
@@ -825,14 +840,20 @@ load (
 		//
 		// We are allowed to open the read end of a FIFO in non-blocking mode without having to wait for a writer.
 		mkfifoat(supervise_dir_fd, "control", 0600);
+#if HAS_FIFO_EXTENSION
+		FileDescriptorOwner control_fd(open_readwriteexisting_at(supervise_dir_fd, "control"));
+#else
 		FileDescriptorOwner control_fd(open_read_at(supervise_dir_fd, "control"));
+#endif
 		if (0 > control_fd.get()) return;
+#if !HAS_FIFO_EXTENSION
 		//
 		// We have to keep a client (write) end descriptor open to the control FIFO.
 		// Otherwise, the first control client process triggers POLLHUP when it closes its end.
 		// Opening the FIFO for read+write isn't standard, although it would work on Linux.
 		FileDescriptorOwner control_client_fd(open_writeexisting_at(supervise_dir_fd, "control"));
 		if (0 > control_client_fd.get()) return;
+#endif
 		//
 		// Unlike daemontools, but like daemontools-encore, we keep the status file open continually.
 		// This permits the supervise directory to be read-only.
@@ -860,7 +881,9 @@ load (
 		s.lock_fd = lock_fd.release();
 		s.ok_fd = ok_fd.release();
 		s.control_fd = control_fd.release();
+#if !HAS_FIFO_EXTENSION
 		s.control_client_fd = control_client_fd.release();
+#endif
 		s.status_fd = status_fd.release();
 		s.service_dir_fd = service_dir_fd2.release();
 		std::strncpy(s.name, name, sizeof s.name);
@@ -1066,7 +1089,7 @@ input_ready_event (
 			service & s(*i->second);
 
 			char command;
-			const int rc(read(s.control_fd, &command, 1));
+			const int rc(read(s.control_fd, &command, sizeof command));
 			if (0 <= rc) {
 				s.enact_control_message(original_signals, command);
 				if ('x' == command && s.unloadable()) {
@@ -1185,7 +1208,7 @@ service_manager [[gnu::noreturn]] (
 	sigset_t original_signals;
 	sigprocmask(SIG_SETMASK, 0, &original_signals);
 
-	const unsigned listen_fds(query_listen_fds(envs));
+	const unsigned listen_fds(query_listen_fds_or_daemontools(envs));
 	if (1U > listen_fds) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "LISTEN_FDS", std::strerror(error));

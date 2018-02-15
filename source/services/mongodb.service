@@ -11,7 +11,7 @@ Description=MongoDB database server daemon
 # See RedHat bug #1047858.
 PrivateTmp=false
 NUMAInterleave=all
-User=mongodb
+User=%p
 ExecStart=mongod
 # http://docs.mongodb.org/manual/reference/ulimit/#recommended-settings
 LimitNOFILE=64000

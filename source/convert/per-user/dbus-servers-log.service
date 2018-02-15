@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Per-user "Desktop" bus servers' log service for %u
+
+[Service]
+WorkingDirectory=/var/log/user/
+ExecStart=cyclog "%u/dbus-servers/"
+
+[Install]

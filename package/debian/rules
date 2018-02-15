@@ -2,7 +2,7 @@
 
 .PHONY: build binary install clean stage control
 
-BINARY_PACKAGES=guide exec terminal-management service-management terminal-extras zsh-completion systemv-shims systemd-shims upstart-shims execline-shims core-shims debian-shims bsd-shims openbsd-shims freebsd-shims ucspi-tcp-shims kbd-shims logrotate-shims bundles run-system-manager run-via-systemd run-debian-desktop-base run-debian-server-base run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog
+BINARY_PACKAGES=guide exec terminal-management service-management terminal-extras zsh-completion service-command-shim systemv-shims systemd-shims upstart-shims execline-shims core-shims debian-shims bsd-shims openbsd-shims freebsd-shims ucspi-tcp-shims kbd-shims logrotate-shims bundles run-system-manager run-via-systemd run-debian-desktop-base run-debian-server-base run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog
 
 # The Debian package builder targets this in order to make the package contents.
 build:
@@ -32,54 +32,9 @@ stage:
 	package/stage debian/tmp debian
 
 control:
-	#debian/gencontrol nosh-"$$i" debian/nosh-"$$i" || exit 1 ;
 	${RM} debian/files
 	for i in ${BINARY_PACKAGES} ; \
 	do \
 		echo 1>&2 "Building control file for nosh-$$i." ; \
-		install -d -m 0755 debian/nosh-"$$i"/DEBIAN || exit 1 ; \
-		${RM} debian/substvars ; \
-		case "$$i" in \
-		exec|terminal-management) \
-			dpkg-shlibdeps debian/nosh-"$$i"/usr/local/bin/* || exit 1 ; \
-			;; \
-		service-management) \
-			dpkg-shlibdeps debian/nosh-"$$i"/usr/local/bin/* || exit 1 ; \
-			dpkg-shlibdeps debian/nosh-"$$i"/usr/local/sbin/* || exit 1 ; \
-			;; \
-		systemv-shims) \
-			dpkg-shlibdeps debian/nosh-"$$i"/usr/local/sbin/* || exit 1 ; \
-			;; \
-		esac ; \
-		dpkg-gencontrol -pnosh-"$$i" -Pdebian/nosh-"$$i" || exit 1 ; \
-		for j in preinst postinst prerm postrm ; \
-		do \
-			if test -e debian/nosh-"$$i"."$$j" ; \
-			then \
-				cp -p debian/nosh-"$$i"."$$j" debian/nosh-"$$i"/DEBIAN/"$$j" || exit 1 ; \
-			elif test -r debian/nosh-"$$i".p ; \
-			then \
-				if test -r debian/"$$j".funcs ; \
-				then \
-					install -m 0755 /dev/null debian/nosh-"$$i"/DEBIAN/"$$j" || exit 1 ; \
-					( \
-						printf "#!/bin/sh -e\ncommon() {\n\t:\n" ; \
-						sed -e 's/^/	/' debian/nosh-"$$i".p || exit 1 ; \
-						printf "}\n" ; \
-						cat debian/"$$j".funcs || exit 1 ; \
-						if >/dev/null expr "$$i" : "run-" ; \
-						then \
-							echo "nosh_run_package=YES" ; \
-						fi ; \
-						printf 'extra() {\n\t:\n' ; \
-						if test -r debian/nosh-"$$i"."$$j".extra ; \
-						then \
-							sed -e 's/^/	/' debian/nosh-"$$i"."$$j".extra || exit 1 ; \
-						fi ; \
-						printf "}\n" ; \
-						cat debian/"$$j".common || exit 1 ; \
-					) >> debian/nosh-"$$i"/DEBIAN/"$$j" || exit 1 ; \
-				fi ; \
-			fi ; \
-		done ; \
+		debian/gencontrol nosh-"$$i" debian/nosh-"$$i" || exit 1 ; \
 	done

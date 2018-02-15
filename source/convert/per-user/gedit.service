@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=GNOME Editor for %u
+
+[Service]
+Type=dbus
+EnvironmentDirectory=env
+ExecStart=%p --gapplication-service
+Restart=on-abort
+
+[Install]

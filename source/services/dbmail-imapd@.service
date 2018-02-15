@@ -4,6 +4,7 @@
 
 [Unit]
 Description=DBmail IMAP daemon
+After=mysql.service postgresql.service
 
 [Service]
 EnvironmentDirectory=env

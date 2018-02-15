@@ -3,7 +3,6 @@ Description=Caddy HTTP/2 web server
 
 [Service]
 User=www-data
-Group=www-data
 LimitNOFILE=65536
 LimitNPROC=64
 ExecStart=%p -log stdout -agree=true -conf=/etc/%p/Caddyfile -root=/var/tmp

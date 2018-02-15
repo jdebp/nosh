@@ -86,14 +86,11 @@ setup_machine_id [[gnu::noreturn]] (
 		std::fprintf(stdout, "POSIX Host ID: %08lx\n", static_cast<unsigned long>(hostid));
 	}
 	umask(0033);
-	write_volatile(prog);
+	write_fallbacks(prog);
 	write_volatile_hostid(prog, hostid);
-	write_volatile_hostuuid(prog);
-	write_host_uuid(prog);
 	if (rewrite)
 		write_non_volatile(prog);
 	write_non_volatile_hostid(prog, hostid);
-	write_non_volatile_hostuuid(prog);
 
 	throw EXIT_SUCCESS;
 }

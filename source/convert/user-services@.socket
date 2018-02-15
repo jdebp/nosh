@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Per-user manager socket for %I
+After=user-runtime@%I
+Requires=user-runtime@%I
+
+[Socket]
+SocketUser=%I
+SocketMode=0700
+ListenFIFO=%t/user/%i/per-user-manager/control
+Accept=false
+
+[Install]
+WantedBy=user@%I.target

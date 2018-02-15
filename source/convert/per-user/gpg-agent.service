@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=GnuPG cryptographic agent and passphrase cache daemon for %u
+
+[Service]
+RuntimeDirectory=gnupg
+# GPG Agent ignores the runtime directory if the mode allows group/other access.
+RuntimeDirectoryMode=0700
+EnvironmentDirectory=env
+ExecStart=%p --supervised
+Restart=on-abort
+
+[Install]
+WantedBy=normal.target

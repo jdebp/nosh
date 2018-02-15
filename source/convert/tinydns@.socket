@@ -10,9 +10,9 @@ Backlog=2
 BindIPv6Only=both
 ListenDatagram=%i:domain
 Accept=false
-MaxConnections=16
+#MaxConnections=16
 NoDelay=false
 ReceiveBuffer=65536
 
 [Install]
-WantedBy=server.target
+WantedBy=workstation.target

@@ -9,6 +9,7 @@ Before=openvpn-client@%i
 [Service]
 User=%p
 WorkingDirectory=root
+UMask=0077
 ExecStart=%p 
 ExecStopPost=install -m 0600 /dev/null secret.up
 RestartSec=20

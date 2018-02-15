@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=KDE Notify service for %u
+
+[Service]
+Type=dbus
+# The fact that the KDE Notify server requires an X display at startup is a bug.
+EnvironmentDirectory=../../../common/env
+EnvironmentDirectory=env
+ExecStart=%p
+Restart=on-abort
+
+[Install]

@@ -26,6 +26,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "popt.h"
 #include "service-manager-client.h"
 #include "service-manager.h"
+#include "curses-const-fix.h"	// Must come after curses.h .
 
 /* Time *********************************************************************
 // **************************************************************************
@@ -52,9 +53,7 @@ convert(
 enum { COLOR_DEFAULT = 9 };
 
 static
-#if !defined(__OpenBSD__)
-const
-#endif
+NCURSES_CONST
 char 
 	setaf[] = "setaf",
 	op[] = "op";
@@ -92,12 +91,7 @@ put (
 	const char * s,
 	const int colour
 ) {
-#if defined(__OpenBSD__)
-	// OpenBSD requires a const incorrectness bodge.
-	tputs(tparm(const_cast<char *>(s), colour), 1, putchar);
-#else
-	tputs(tparm(s, colour), 1, putchar);
-#endif
+	tputs(tparm(const_cast<NCURSES_CONST char *>(s), colour), 1, putchar);
 }
 
 static inline

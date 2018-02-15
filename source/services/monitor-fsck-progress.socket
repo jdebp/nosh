@@ -8,5 +8,5 @@ Description=local socket used for %p
 [Socket]
 Backlog=2
 SocketMode=0644
-ListenStream=/run/fsck.progress
+ListenStream=%t/fsck.progress
 Accept=false

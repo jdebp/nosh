@@ -54,6 +54,16 @@ See <citerefentry><refentrytitle>fdmove</refentrytitle><manvolnum>1</manvolnum><
 </para>
 
 </refsection>
+<refsection><title>Portability</title>
+
+<para>
+The POSIX standard does not specify that FIFOs can be opened in read-write mode, only specifying that they can be opened in either write-only or read-only modes.
+Some operating systems, however, provide the ability to open FIFOs in read-write mode as an extension.
+Doing so has the advantage of not terminating the listening server whenever individual clients disconnect.
+<command>fifo-listen</command> attempts to open the FIFO in read-write mode on such operating systems, using read-only mode on the others.
+</para>
+
+</refsection>
 <refsection><title>Security</title>
 
 <para>

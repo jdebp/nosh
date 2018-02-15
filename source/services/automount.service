@@ -5,11 +5,13 @@
 [Unit]
 Description=Tell the kernel where the autofs mounts are
 Wants=kmod@autofs
-After=kmod@autofs
+After=kmod@autofs automountd.service autounmountd.service
 
 [Service]
 Type=oneshot
 EnvironmentDirectory=env
+# BSD automount assumes that it is running in the root directory.
+WorkingDirectory=/
 ExecStart=%p ${flags}
 ExecStopPost=umount -A -t autofs
 # This is a pseudo-daemon that does not have a running process.

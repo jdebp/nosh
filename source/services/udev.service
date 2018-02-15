@@ -11,6 +11,7 @@ Conflicts=busybox-mdev vdev suckless-mdev systemd-udev
 
 [Service]
 RuntimeDirectory=%p
+EnvironmentDirectory=env
 ExecStart=%pd
 RestartSec=5
 # The nutty default of udevd is to log to the kernel log buffer.

@@ -43,7 +43,7 @@ Similarly <arg choice='plain'>--keep-shell</arg> stops the clearing of <envar>SH
 
 <para>
 As of version 1.34 this program no longer employs the GNU C library nor the BSD C library for environment variable handling.
-The previously documented workaround for those libraries' have memory leaks in their <citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>3</manvolnum></citerefentry> and <citerefentry><refentrytitle>clearenv</refentrytitle><manvolnum>3</manvolnum></citerefentry> functions, is therefore no longer necessary.
+The previously documented workaround for those libraries' having memory leaks in their <citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>3</manvolnum></citerefentry> and <citerefentry><refentrytitle>clearenv</refentrytitle><manvolnum>3</manvolnum></citerefentry> functions, is therefore no longer necessary.
 </para>
 
 </refsection><refsection><title>See also</title>

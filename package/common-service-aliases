@@ -6,8 +6,10 @@ ModemManager	org.freedesktop.ModemManager1
 NetworkManager	org.freedesktop.NetworkManager
 NetworkManager	org.freedesktop.NetworkManager1
 NetworkManager-dispatcher	org.freedesktop.nm_dispatcher
+accounts-daemon	org.freedesktop.Accounts
 avahi-daemon	avahi_daemon
 avahi-daemon	org.freedesktop.Avahi
+blueman-mechanism	org.blueman.Mechanism
 bluetooth	org.bluez
 bluetooth	dbus-org.bluez
 bootparams	bootparamd
@@ -18,13 +20,10 @@ cleanuucp	cleanvar
 colord		org.freedesktop.ColorManager
 colord-sane	org.freedesktop.colord-sane
 console-kit-daemon	org.freedesktop.ConsoleKit
-dbus-daemon     dbus
 geoclue		org.freedesktop.GeoClue2
 git-daemon	git_daemon
 hald		wrg.freedesktop.Hal
-hostnamed	org.freedesktop.hostname1
 kmod@vboxvideo	virtualbox-guest-x11
-localed		org.freedesktop.locale1
 nmbd		nmb
 ntpd		ntp
 org.cups.cupsd	cupsd
@@ -33,6 +32,7 @@ polkitd		org.freedesktop.PolicyKit1
 powerd++	powerdxx
 rc-local	rc.local
 redis-server    redis
+rtkit-daemon	org.freedesktop.RealtimeKit1
 gssd		rpcgssd
 mountd		rpcmountd
 nfsd		rpcnfsd

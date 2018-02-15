@@ -23,6 +23,20 @@ enable	wpa_supplicant@*.service
 disable	ppp@*.service
 disable	spppcontrol@*.service
 disable	rfcomm_pppd@*.service
+disable	wlandebug@*.service
+enable	snort@*.service
+enable	ifconfig-log
+disable	natd-log
+enable	dhclient-log
+enable	dhcpcd-log
+enable	udhcpc-log
+disable	hostap-log
+enable	wpa_supplicant-log
+disable	rfcomm_ppp-log
+disable	sppp-log
+disable	ppp-log
+enable	snort-log
+disable	wlandebug-log
 
 # Sysinit services
 

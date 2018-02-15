@@ -2,6 +2,7 @@
 ## **************************************************************************
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
+# vim: set filetype=sh:
 #
 # Convert the loaded kernel modules list external configuration formats.
 # This is invoked by all.do .
@@ -87,6 +88,7 @@ do
 	# Note that the way that we are setting up prefixes allows variables such as ntfs_enable in /etc/rc.conf{,.local} .
 	case "$n" in
 	autofs)		;;	## log-less on BSD too?
+	# None of these have attached cyclog services, as they are /etc services.
 	fuse)		;;
 	geom_uzip)	;;
 	linux)		;;
@@ -94,6 +96,7 @@ do
 	sysvmsg)	;;
 	sysvsem)	;;
 	sysvshm)	;;
+	# Everything else has an accompanying log service.
 	*)
 		system-control preset --prefix "cyclog@kmod@" -- "$n"
 		;;

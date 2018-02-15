@@ -12,5 +12,6 @@ struct ProcessEnvironment;
 
 extern std::string login_user_runtime_dir(const ProcessEnvironment &);
 extern std::string effective_user_runtime_dir();
+extern void get_user_dirs_for(const std::string &, std::string &, std::string &, std::string &, std::string &);
 
 #endif

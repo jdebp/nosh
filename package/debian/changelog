@@ -1,3 +1,24 @@
+nosh (1.37) unstable; urgency=medium
+
+  * per-user-manager now accepts an optional listening FIFO open file descriptor, which it will use to listen for user-wide state change commands.
+    system-control --user halt/normal/sysinit/&c. now send commands to this FIFO rather than sending signals to the wrong process.
+  * The user-services@ service bundles now use fifo-listen and create the per-user-manager/ subdirectory.
+  * The JAVA_HOME mechanism in the conversion subsystem is now unused by any service bundle.
+  * setup-machine-id now writes /usr/local/etc/machine-id on FreeBSD/TrueOS systems.
+  * static-networking configuration import now also sets up snort services.
+  * There is now a Packages and Ports chapter in the Guide.
+  * static-networking configuration import now handles ipv6_cpe_wanif and ipv6_activate_all_interfaces.
+  * Added make-read-only-fs.
+    It does not do much yet.
+  * convert-systemd-units now recognizes CPUAffinity, ProtectHome, ProtectSystem, ReadWriteDirectories, ReadOnlyPaths, and InaccessiblePaths settings.
+  * More common services: clickhouse-server, hue, udhcpc-log, minissdpd, rtkit-daemon, accounts-daemon, gdm3, speech-dispatcher, gdomap, blueman-mechanism
+  * More BSD services: sysvipc
+  * The user virtual terminal multiplexor and terminal emulator services now run under the aegides of their own dedicated user accounts, rather than daemon.
+  * There is now a user-vt-realizer group to which users can be added to grant them realizer access to system-wide user virtual terminals.
+  * Building now works even if one has a CDPATH.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.com>  Thu, 15 Feb 2018 10:47:07 +0000
+
 nosh (1.36) unstable; urgency=medium
 
   * The per-user dbus services are now renamed to dbus-daemon too.
