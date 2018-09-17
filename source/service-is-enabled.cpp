@@ -28,7 +28,12 @@ service_is_enabled [[gnu::noreturn]] (
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
-		popt::top_table_definition main_option(0, 0, "Main options", "directory");
+		bool quiet(false);
+		popt::bool_definition quiet_option('q', "quiet", "Compatibility option; ignored.", quiet);
+		popt::definition * main_table[] = {
+			&quiet_option,
+		};
+		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "{directory}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);

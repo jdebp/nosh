@@ -8,6 +8,7 @@ appcafe-nginx
 appcafe-php-fpm
 appcafe-ssl-keygen
 atalkd
+atrun
 auditd
 auditdistd
 automount

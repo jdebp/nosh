@@ -16,7 +16,7 @@ For copyright and licensing terms, see the file named COPYING.
 /* Waiting for child processes **********************************************
 // **************************************************************************
 // 
-// This form of the library uses the new waitid() function.
+// This form of the library uses the "new" SVR4 waitid() function.
 // That separates process group IDs from process IDs.
 // It also makes WEXITED explicit.
 */

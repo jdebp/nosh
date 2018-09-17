@@ -7,6 +7,7 @@ Description=Terminal emulator driving %I
 Before=ttylogin@%i-tty.service
 
 [Service]
+EnvironmentDirectory=env
 Umask=0002
 User=user-vt-emulator
 # The user-vt-emulator user is not a member of this group.
@@ -22,7 +23,7 @@ ExecStartPre=install -d -m 02775 -o user-vt-emulator -g user-vt-emulator /run/de
 # Not until we find out how to have ACLs in /run on FreeBSD.
 #ExecStartPre=install -d -m 02775 -o root -g user-vt-emulator /run/dev/%I
 #ExecStartPre=setfacl -m u:user-vt-emulator:rwx /run/dev/%I
-ExecStart=pty-get-tty console-terminal-emulator /run/dev/%I
+ExecStart=pty-get-tty console-terminal-emulator ${flags} /run/dev/%I
 RestartSec=0
 
 [Install]

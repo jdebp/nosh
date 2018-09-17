@@ -1,0 +1,59 @@
+<refentry id="setgid-fromenv">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>setgid-fromenv</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv><refname>setgid-fromenv</refname><refpurpose>set process GID(s) then chain</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>setgid-fromenv</command> <arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>setgid-fromenv</command> is a chain-loading utility that sets the process real+effective GID and supplementary GID list; and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>setgid-fromenv</command> will ignore.
+</para>
+
+<para>
+The real+effective GID are set to the values given in the <envar>GID</envar> environment variable.
+If the <envar>GIDLIST</envar> environment variable exists, it is taken to be a list of GIDs which <command>setgid-fromenv</command> sets as the process list of supplementary GIDs.
+Otherwise, if it does not exist, the supplementary GIDs list is set to just the primary GID.
+</para>
+
+<para>
+One can set up these environment variables with the <citerefentry><refentrytitle>envgid</refentrytitle><manvolnum>1</manvolnum></citerefentry> command.
+</para>
+
+<para>
+If it fails setting the group IDs, it does not chain and exits with status code 111.
+</para>
+
+</refsection><refsection><title>See also</title>
+
+<itemizedlist>
+<listitem><para>
+<citerefentry><refentrytitle>getuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>envuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>setuidgid-fromenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+</itemizedlist>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

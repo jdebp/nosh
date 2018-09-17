@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=TinySSH per-connection service
+Conflicts=sshd.socket
+
+[Service]
+LocalReaper=true
+EnvironmentDirectory=env
+RuntimeDirectory=%p
+RuntimeDirectoryMode=0755
+ExecStart=%p -v keys/
+
+[Install]
+WantedBy=server.target

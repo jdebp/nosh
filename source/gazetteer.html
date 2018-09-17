@@ -188,7 +188,7 @@ This contains:
 </p>
 
 <dl>
-<dt><code class='filename'>/run/user/jim/per-user-manager/control</code></dt><dd>the conventional communications socket for <code>jim</code>'s per-user service manager, only accessible to <code>jim</code> </dd>
+<dt><code class='filename'>/run/user/jim/per-user-manager/control</code></dt><dd>the conventional communications socket for <code>jim</code>'s per-user manager, only accessible to <code>jim</code> </dd>
 </dl>
 
 
@@ -198,7 +198,7 @@ This contains:
 <dd>
 
 <p>
-A log directory that holds the log output of <code>jim</code>'s per-user service manager, <code>jim</code>'s per-user service manager, and any <a href="system-control.html"><code>system-control</code></a> commands spawned to enact user management state changes.
+A log directory that holds the log output of <code>jim</code>'s per-user manager, <code>jim</code>'s per-user service manager, and any <a href="system-control.html"><code>system-control</code></a> commands spawned to enact user management state changes.
 It is <code>jim</code>'s <a href="per-user-manager.html"><code>per-user-manager</code></a> that sets this up and spawns the logger d&aelig;mon that writes to it.
 If <code>jim</code>'s per-user service manager is run some other way, this log might be somewhere else.
 </p>
@@ -215,7 +215,8 @@ User-space virtual terminals are subdirectories, such as:
 </p>
 
 <dl>
-<dt><code class='filename'>/run/dev/head0</code></dt><dd>the multiplex virtual terminal intended for head #0, produced by the <code>console-multiplexor@head0</code> service</dd>
+<dt><code class='filename'>/run/dev/head0</code></dt><dd>the virtual terminal intended for <a href="services/head0.html">head #0</a> with a CJK input method layered on top, produced by the <code>console-input-method@head0</code> service</dd>
+<dt><code class='filename'>/run/dev/head0mux</code></dt><dd>the multiplex virtual terminal intended for <a href="services/head0.html">head #0</a>, produced by the <code>console-multiplexor@head0</code> service</dd>
 <dt><code class='filename'>/run/dev/vc1</code></dt><dd>the virtual terminal produced by the <code>terminal-emulator@vc1</code> service to whose TTY side the <code>ttylogin@vc1-tty</code> service attaches</dd>
 <dt><code class='filename'>/run/dev/vc2</code></dt><dd>the virtual terminal produced by the <code>terminal-emulator@vc2</code> service to whose TTY side the <code>ttylogin@vc2-tty</code> service attaches</dd>
 <dt><code class='filename'>/run/dev/vc3</code></dt><dd>the virtual terminal produced by the <code>terminal-emulator@vc3</code> service to whose TTY side the <code>ttylogin@vc3-tty</code> service attaches</dd>
@@ -331,11 +332,18 @@ It is generated <em>from them</em> in the first place.
 This can be conveniently used with <a href="read-conf.html"><code>read-conf</code></a> when one needs to access configuration settings from these files.
 </dd>
 <dt><code class='filename'>/etc/system-control/convert/host.conf</code></dt><dd>a host.conf file generated from <code class='filename'>/etc/nsswitch.conf</code> which one can symbolically link to <code class='filename'>/etc/host.conf</code></dd>
-<dt><code class='filename'>/etc/system-control/convert/*.kbdmap</code></dt><dd>keyboard maps for <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a>, generated from the keyboard maps in <code class='filename'>/usr/share/vt/keymaps</code> and symbolically linked into the <code>service/kbdmaps</code> subdirectory of any <code>console-fb-realizer@*</code> services</dd>
-<dt><code class='filename'>/etc/system-control/convert/swap_capsctrl.kbd</code></dt><dd>a keyboard map snippet that is overlaid on top of the ones in <code class='filename'>/usr/share/vt/keymaps/</code> in order to produce <code>.swapcaps</code> variants</dd>
-<dt><code class='filename'>/etc/system-control/convert/soft_backspace.kbd</code></dt><dd>a keyboard map snippet that is overlaid on top of the ones in <code class='filename'>/usr/share/vt/keymaps/</code> in order to ensure that the <code>backspace &#x232b;</code> key is soft-switchable by the terminal emulator and not hardwired to either <code>DEL</code> or <code>BS</code> as the operating system supplied keyboard maps have it</dd>
-<dt><code class='filename'>/etc/system-control/convert/us_to_uk.kbd</code></dt><dd>a keyboard map snippet that is overlaid on top of the null map, which is U.S. International, in order to produce U.K. International, in the event that there are no <code class='filename'>/usr/share/vt/keymaps/</code> keyboard maps</dd>
+<dt id="kbdmaps"><code class='filename'>/etc/system-control/convert/kbdmaps/*</code></dt><dd>keyboard maps for <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a>, symbolically linked into the <code>service/kbdmaps</code> subdirectory of any <code>console-fb-realizer@*</code> services</dd>
+<dt><code class='filename'>/etc/system-control/convert/swap_capsctrl.kbd</code></dt><dd>a keyboard map snippet that is <a href="terminal-resources.html#FreeBSDOverlays">overlaid on top of others in order to produce <code>.capsctrl</code> variants</a></dd>
+<dt id="soft_backspace.kbd"><code class='filename'>/etc/system-control/convert/soft_backspace.kbd</code></dt><dd>a keyboard map snippet that is <a href="terminal-resources.html#FreeBSDOverlays">overlaid on top of others in order to ensure that the <code>backspace &#x232b;</code> key is soft-switchable</a> by the terminal emulator</dd>
+<dt id="soft_enter.kbd"><code class='filename'>/etc/system-control/convert/soft_enter.kbd</code></dt><dd>a keyboard map snippet that is <a href="terminal-resources.html#FreeBSDOverlays">overlaid on top of others in order to ensure that the <code>enter</code> key is soft-switchable</a> by the terminal emulator</dd>
+<dt id="soft_return.kbd"><code class='filename'>/etc/system-control/convert/soft_return.kbd</code></dt><dd>a keyboard map snippet that is <a href="terminal-resources.html#FreeBSDOverlays">overlaid on top of others in order to ensure that the <code>return &#x2ba0;</code> key is not hardwired</a></dd>
+<dt id="default_to_uk.kbd"><code class='filename'>/etc/system-control/convert/default_to_uk.kbd</code></dt><dd>a keyboard map snippet that is <a href="terminal-resources.html#FreeBSDOverlays">overlaid on top of U.S. International in order to produce U.K. International</a>, in the event that there are no <code class='filename'>/usr/share/vt/keymaps/</code> keyboard maps</dd>
+<dt id="jp_to_jp.104.kbd"><code class='filename'>/etc/system-control/convert/jp_to_jp.104.kbd</code></dt><dd>a keyboard map snippet that is <a href="terminal-resources.html#FreeBSDOverlays">overlaid on top of <code class='filename'>/usr/share/vt/keymaps/jp.kbd</code> in order to fix a bug that maps 2 keys to the same thing and effectively wastes 1 key</a></dd>
+<dt id="jp_to_jp.109.kbd"><code class='filename'>/etc/system-control/convert/jp_to_jp.109.kbd</code></dt><dd>a keyboard map snippet that is <a href="terminal-resources.html#FreeBSDOverlays">overlaid on top of <code class='filename'>/usr/share/vt/keymaps/jp.kbd</code> in order to fix a bug that prevents FEP input methods from working</a></dd>
 <dt><code class='filename'>/etc/system-control/convert/*.service</code><br><code class='filename'>/etc/system-control/convert/*.target</code></dt><dd>service and target source files used for compiling service and target service bundles, for various import-generated system-wide and per-user services and targets</dd>
+<dt><code class='filename'>/etc/system-control/convert/dbus/*.service</code></dt><dd>service source files used for compiling service bundles for system-wide Desktop Bus services, generated from the system-wide Desktop Bus service definitions in <code class='filename'>/usr/share/dbus-1/system-services</code> </dd>
+<dt><code class='filename'>/etc/system-control/convert/per-user/*.do</code></dt><dd>the redo scripts that drive per-user external configuration import, linked into each user's <a href="#user-convert"><code class='filename'>~jim/.config/system-control/convert</code></a> </dd>
+<dt><code class='filename'>/etc/system-control/convert/per-user/dbus/*.service</code></dt><dd>service source files used for compiling service bundles for per-user (a.k.a. "session") Desktop Bus services, generated from the per-user Desktop Bus service definitions in <code class='filename'>/usr/share/dbus-1/services</code> and linked into each user's <a href="#user-convert"><code class='filename'>~jim/.config/system-control/convert</code></a> </dd>
 </dl>
 
 </dd>
@@ -350,7 +358,7 @@ The (approximate) intention is the following split:
 </p>
 
 <dl>
-<dt><code class='filename'>/etc/system-control/presets</code></code></dt><dd>administrator-supplied presets</dd>
+<dt><code class='filename'>/etc/system-control/presets</code></dt><dd>administrator-supplied presets</dd>
 <dt><code class='filename'>/usr/share/system-control/presets</code></dt><dd>operating-system-supplied presets</dd>
 <dt><code class='filename'>/usr/local/etc/system-control/presets</code></dt><dd>non-operating-system third party presets</dd>
 </dl>
@@ -372,6 +380,21 @@ Directories for common preset files, for system-wide services, that <a href="sys
 <p>
 Directories for common preset files, for per-user services, that <a href="system-control.html"><code>system-control</code></a>'s <code>preset</code> subcommand and systemd's <code>systemctl preset</code> both search.
 </p>
+
+</dd>
+
+<dt id="cin-data-tables"><code class='filename'>/usr/local/etc/cin-data-tables</code></dt>
+<dd>
+
+<p>
+Data tables for <a href="terminal-resources.html#FEP">input methods</a>.
+</p>
+
+<dl>
+<dt id="hiragana.cin"><code class='filename'>/usr/local/etc/cin-data-tables/hiragana</code></dt><dd>conversion from ASCII to Hiragana using just Nihon-shiki and Kunrei-shiki</dd>
+<dt id="katakana.cin"><code class='filename'>/usr/local/etc/cin-data-tables/katakana</code></dt><dd>conversion from ASCII to Katakana and symbols using a grab-bag combination of Nihon-shiki, Kunrei-shiki, Hebon-shiki, Hyoojun-shiki, old ANSI and BS standards, and unofficial but common stuff</dd>
+<dt id="romaji-x11.cin"><code class='filename'>/usr/local/etc/cin-data-tables/romaji-x11</code></dt><dd>conversion from ASCII to Romaji using a subset of the common X11 compose-key sequences, excluding anything already typeable with an ISO 9995 keyboard's common secondary group</dd>
+</dl>
 
 </dd>
 
@@ -424,7 +447,7 @@ This is owned by the superuser, with only the superuser having access to create/
 
 </dd>
 
-<dt><code class='filename'>/var/log/user/jim</code></dt>
+<dt id="per-user-log"><code class='filename'>/var/log/user/jim</code></dt>
 <dd>
 
 <p>
@@ -442,15 +465,7 @@ User directories
 
 <dl>
 
-<dt id="user-service-bundles"><code>~jim/.config/service-bundles</code></dt>
-<dd>
-
-<p>
-Service bundles for <code>jim</code>'s per-user services and targets.
-This has the same substructure as <a href="#service-bundles"><code class='filename'>/etc/service-bundles/</code></a>.
-</p>
-
-<dt id="user-service-bundles"><code>~jim/.config/system-control/presets</code></dt>
+<dt id="user-service-presets"><code>~jim/.config/system-control/presets</code></dt>
 <dd>
 
 <p>
@@ -459,6 +474,32 @@ This has the same substructure as <a href="#system-control-presets"><code class=
 </p>
 
 </dd>
+
+<dt id="user-convert"><code>~jim/.config/system-control/convert</code></dt>
+<dd>
+
+<p>
+Per-user external configuration import for <code>jim</code>'s per-user services and targets.
+This has the same substructure as <a href="#convert"><code class='filename'>/etc/system-control/convert/per-user/</code></a> and is initialized from it by the system-wide external configuration import.
+</p>
+
+</dd>
+
+<dt id="user-service-bundles"><code>~jim/.config/service-bundles</code></dt>
+<dd>
+
+<p>
+Service bundles for <code>jim</code>'s per-user services and targets.
+This has the same substructure as <a href="#service-bundles"><code class='filename'>/etc/service-bundles/</code></a>.
+</p>
+
+<dt id="user-common-env"><code>~jim/.config/service-bundles/common/env</code></dt>
+<dd>
+
+<p>
+Common environment for many of <code>jim</code>'s per-user services.
+This allows one to set environment variables like <code>DBUS_SESSION_BUS_ADDRESS</code> globally across all of said services.
+</p>
 
 <dt><code>~jim/.config/service-bundles/services/mpd/service/mpd.conf</code></dt>
 <dd>
@@ -470,11 +511,21 @@ This is symbolically linked from <code>~jim/.config/mpd/mpd.conf</code> so that 
 
 </dd>
 
+<dt><code>~jim/.config/uschedule/</code></dt>
+<dd>
+
+<p>
+Where external configuration import sets up <code>jim</code>'s command and job area for <a href="convert/uschedule.html">Uwe Ohse's uschedule</a>.
+This is symbolically linked from <code>~jim/.uschedule</code> for compatibility.
+</p>
+
+</dd>
+
 <dt id="user-dbus-definitions"><code>~jim/.local/share/dbus-1/services</code></dt>
 <dd>
 
 <p>
-Where external configuration import sets up override Desktop Bus server definitions.
+Where per-user external configuration import sets up override Desktop Bus server definitions.
 These overrides use the per-user service manager to start services that start the various Desktop Bus server programs, instead of the broker spawning them directly.
 They also work around a Desktop Bus broker code bug that requires <code>User=</code> even in per-user files like these, otherwise it does not run <a href="dbus-daemon-launch-helper.html"><code>dbus-daemon-launch-helper</code></a>.
 They include:

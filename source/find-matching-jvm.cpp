@@ -154,7 +154,9 @@ JVMDetails::parse(
 	) {
 		foreign = false;
 		if (!JVMVersion::parse(r, r, vmajor, vminor)) return false;
-		if (begins_with(r, "-openjdk-", r)) {
+		if ("-openjdk" == r			// Arch convention lacks ISA suffix
+		||  begins_with(r, "-openjdk-", r)	// Debian convention with ISA suffix
+		) {
 			m = "openjdk";
 		} else
 		if (begins_with(r, "-gcj-", r)) {
@@ -163,8 +165,14 @@ JVMDetails::parse(
 		if (begins_with(r, "-sun-", r)) {
 			m = "sun";
 		} else
-		if (begins_with(r, "-oracle-", r)) {
+		if ("-jdk" == r	// Arch convention lacks ISA suffix and manufacturer name
+		||  "-jre" == r	// Arch convention lacks ISA suffix and manufacturer name
+		||  begins_with(r, "-oracle-", r)	// Debian convention with ISA suffix
+		) {
 			m = "oracle";
+		} else
+		if ("-j9" == r) {			// Arch convention lacks ISA suffix
+			m = "ibm";
 		} else
 			return false;
 		return true;
@@ -244,7 +252,7 @@ find_matching_jvm (
 			&operatingsystem_option,
 			&manufacturer_option,
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "prog");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{prog}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -254,7 +262,7 @@ find_matching_jvm (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	if (args.empty()) {
@@ -323,15 +331,19 @@ find_matching_jvm (
 					if ('.' == entry->d_name[0]) continue;
 
 					const std::string name(entry->d_name);
+					std::string subdir;
 
-					if (0 > faccessat(d2.get(), (name + "/bin/java").c_str(), F_OK, AT_EACCESS)) continue;
+					if (0 > faccessat(d2.get(), (name + subdir + "/bin/java").c_str(), F_OK, AT_EACCESS)) {
+						subdir = "/jre";
+						if (0 > faccessat(d2.get(), (name + subdir + "/bin/java").c_str(), F_OK, AT_EACCESS)) continue;
+					}
 
 					unsigned vmajor, vminor;
 					bool foreign;
 					std::string m;
 					if (!JVMDetails::parse(name, vmajor, vminor, foreign, m)) continue;
 
-					const JVMDetails one("/usr/lib/jvm/" + name, vmajor, vminor, foreign, m);
+					const JVMDetails one("/usr/lib/jvm/" + name + subdir, vmajor, vminor, foreign, m);
 					JVMDetailsList::iterator p(std::upper_bound(details.begin(), details.end(), one));
 					details.insert(p, one);
 				}

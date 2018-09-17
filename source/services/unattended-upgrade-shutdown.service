@@ -1,0 +1,19 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=APT unattended upgrade at shutdown
+Before=shutdown.target
+RequiresMountsFor=/var/log /var/lib /boot
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+#ExecStartPre=on_ac_power
+EnvironmentDirectory=env
+Environment=UNATTENDED_UPGRADES_FORCE_INSTALL_ON_SHUTDOWN=1
+ExecStart=unattended-upgrade
+
+[Install]
+WantedBy=shutdown.target

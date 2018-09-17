@@ -4,7 +4,8 @@
 
 [Unit]
 Description=Convert /var/run into a symbolic link to /run .
-After=mount@-var
+WantsMountsFor=/var
+AfterMountsFor=/var
 Before=devd ldconfig
 
 [Service]

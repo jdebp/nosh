@@ -67,7 +67,7 @@ On BSD systems, a <code>fdescfs</code> filesystem is mounted at <filename>/dev/f
 <listitem>
 <para>
 This is causes empty directories, held below a superuser-only-accessible parent, to be mounted at various user home directories, or collections of user home directories.
-It is currently equivalent to <arg choice='plain'>--hide</arg> <filename>/home</filename> and <arg choice='plain'>--hide</arg> <filename>/root</filename>.
+It is currently equivalent to <arg choice='plain'>--hide</arg> <filename>/home</filename>, <arg choice='plain'>--hide</arg> <filename>/run/user</filename>, and <arg choice='plain'>--hide</arg> <filename>/root</filename>.
 Note that pseudo-user home directories such as <filename>/var/lib/rabbitmq</filename>, <filename>/var/lib/qmail</filename>, and <filename>/var/lib/mysql</filename> are not covered by this, as they are not considered to hold an individual real user's private files.
 </para>
 </listitem>

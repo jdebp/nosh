@@ -3,7 +3,6 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-#define __STDC_FORMAT_MACROS
 #define _XOPEN_SOURCE_EXTENDED
 #include <map>
 #include <set>
@@ -40,7 +39,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 #include "ttyutils.h"
-#include "kbdmap_utils.h"
 #else
 #include <sys/uio.h>
 #include <sys/mouse.h>
@@ -53,7 +51,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usb_ioctl.h>
 #include "ttyutils.h"
-#include "kbdmap_utils.h"
 #endif
 #include <unistd.h>
 #include <fcntl.h>
@@ -70,27 +67,15 @@ For copyright and licensing terms, see the file named COPYING.
 #include "GraphicsInterface.h"
 #include "vtfont.h"
 #include "kbdmap.h"
+#include "kbdmap_utils.h"
+#include "kbdmap_default.h"
 #include "Monospace16x16Font.h"
 #include "CompositeFont.h"
+#include "TUIDisplayCompositor.h"
+#include "VirtualTerminalBackEnd.h"
 #include "UnicodeClassification.h"
 #include "SignalManagement.h"
 #include <term.h>
-
-extern inline
-void
-append_event (
-	std::vector<struct kevent> & p,
-	uintptr_t ident,
-	short filter,
-	unsigned short flags,
-	unsigned int fflags,
-	intptr_t data,
-	void *udata
-) {
-	struct kevent ev;
-	set_event(&ev, ident, filter, flags, fflags, data, udata);
-	p.push_back(ev);
-}
 
 /* Signal handling **********************************************************
 // **************************************************************************
@@ -287,7 +272,6 @@ void fontspec_definition::action(popt::processor &, const char * text)
 */
 
 namespace {
-typedef kbdmap_entry KeyboardMap[KBDMAP_ROWS][KBDMAP_COLS];
 }
 
 static inline
@@ -303,6 +287,7 @@ LoadKeyMap (
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
+	wipe(map);
 	kbdmap_entry * p(&map[0][0]), * const e(p + sizeof map/sizeof *p);
 	while (!std::feof(f)) {
 		if (p >= e) break;
@@ -333,28 +318,6 @@ LoadKeyMap (
 	}
 }
 
-/* Character cell comparison ************************************************
-// **************************************************************************
-*/
-
-static inline
-bool
-operator != (
-	const CharacterCell::colour_type & a,
-	const CharacterCell::colour_type & b
-) {
-	return a.alpha != b.alpha || a.red != b.red || a.green != b.green || a.blue != b.blue;
-}
-
-static inline
-bool
-operator != (
-	const CharacterCell & a,
-	const CharacterCell & b
-) {
-	return a.character != b.character || a.attributes != b.attributes || a.foreground != b.foreground || a.background != b.background;
-}
-
 /* Keyboard shift state *****************************************************
 // **************************************************************************
 */
@@ -367,6 +330,7 @@ public:
 	KeyboardModifierState(bool);
 
 	uint8_t modifiers() const;
+	uint8_t nolevel_modifiers() const;
 	uint8_t nolevel_nogroup_noctrl_modifiers() const;
 	void event(uint16_t, uint8_t, uint32_t);
 	void unlatch();
@@ -514,6 +478,16 @@ KeyboardModifierState::modifiers() const
 }
 
 uint8_t 
+KeyboardModifierState::nolevel_modifiers() const
+{
+	return 
+		(control() ? INPUT_MODIFIER_CONTROL : 0) |
+		(alt()||level3_lock()||level3() ? INPUT_MODIFIER_LEVEL3 : 0) |
+		(group2() ? INPUT_MODIFIER_GROUP2 : 0) |
+		(super() ? INPUT_MODIFIER_SUPER : 0) ;
+}
+
+uint8_t 
 KeyboardModifierState::nolevel_nogroup_noctrl_modifiers() const
 {
 	return 
@@ -539,7 +513,8 @@ inline
 std::size_t 
 KeyboardModifierState::numable_index() const
 {
-	return (num_lock() ^ level2() ? 1U : 0U) + (control() ? 2U : 0) + (level3_lock() || level3() ? 4U : 0) + (group2() ? 8U : 0);
+	const bool lock(num_lock() || level2_lock());
+	return (lock ^ level2() ? 1U : 0U) + (control() ? 2U : 0) + (level3_lock() || level3() ? 4U : 0) + (group2() ? 8U : 0);
 }
 
 inline
@@ -607,170 +582,6 @@ KeyboardModifierState::query_kbdmap_parameter (
 	}
 }
 
-/* Window compositing and change buffering **********************************
-// **************************************************************************
-*/
-
-namespace {
-
-class Compositor
-{
-public:
-	typedef unsigned short coordinate;
-
-	Compositor(coordinate h, coordinate w);
-	~Compositor();
-	coordinate query_h() const { return h; }
-	coordinate query_w() const { return w; }
-	void repaint_new_to_cur();
-	void poke(coordinate y, coordinate x, const CharacterCell & c);
-	void move_cursor(coordinate y, coordinate x);
-	bool change_pointer_row(coordinate row);
-	bool change_pointer_col(coordinate col);
-	bool is_marked(coordinate y, coordinate x);
-	bool is_pointer(coordinate y, coordinate x);
-	void set_cursor_state(int v);
-	void set_pointer_state(int v);
-
-protected:
-	class DirtiableCell : public CharacterCell {
-	public:
-		DirtiableCell() : CharacterCell(), t(true) {}
-		bool touched() const { return t; }
-		void untouch() { t = false; }
-		void touch() { t = true; }
-		DirtiableCell & operator = ( const CharacterCell & c );
-	protected:
-		bool t;
-	};
-
-	coordinate cursor_row, cursor_col;
-	coordinate pointer_row, pointer_col;
-	int cursor_state;
-	int pointer_state;
-	const coordinate h, w;
-	std::vector<DirtiableCell> cur_cells;
-	std::vector<CharacterCell> new_cells;
-
-	DirtiableCell & cur_at(coordinate y, coordinate x) { return cur_cells[static_cast<std::size_t>(y) * w + x]; }
-	CharacterCell & new_at(coordinate y, coordinate x) { return new_cells[static_cast<std::size_t>(y) * w + x]; }
-};
-
-}
-
-Compositor::Compositor(coordinate init_h, coordinate init_w) :
-	cursor_row(0U),
-	cursor_col(0U),
-	pointer_row(0U),
-	pointer_col(0U),
-	cursor_state(-1),
-	pointer_state(-1),
-	h(init_h),
-	w(init_w),
-	cur_cells(static_cast<std::size_t>(h) * w),
-	new_cells(static_cast<std::size_t>(h) * w)
-{
-}
-
-Compositor::DirtiableCell & 
-Compositor::DirtiableCell::operator = ( const CharacterCell & c ) 
-{ 
-	if (c != *this) {
-		CharacterCell::operator =(c); 
-		t = true; 
-	}
-	return *this; 
-}
-
-Compositor::~Compositor()
-{
-}
-
-inline
-void
-Compositor::repaint_new_to_cur()
-{
-	for (unsigned row(0); row < h; ++row)
-		for (unsigned col(0); col < w; ++col)
-			cur_at(row, col) = new_at(row, col);
-}
-
-inline
-void
-Compositor::poke(coordinate y, coordinate x, const CharacterCell & c)
-{
-	if (y < h && x < w) new_at(y, x) = c;
-}
-
-void 
-Compositor::move_cursor(coordinate row, coordinate col) 
-{
-	if (cursor_row != row || cursor_col != col) {
-		cur_at(cursor_row, cursor_col).touch();
-		cursor_row = row;
-		cursor_col = col;
-		cur_at(cursor_row, cursor_col).touch();
-	}
-}
-
-bool 
-Compositor::change_pointer_row(coordinate row) 
-{
-	if (row < h && pointer_row != row) {
-		cur_at(pointer_row, pointer_col).touch();
-		pointer_row = row;
-		cur_at(pointer_row, pointer_col).touch();
-		return true;
-	}
-	return false;
-}
-
-bool 
-Compositor::change_pointer_col(coordinate col) 
-{
-	if (col < w && pointer_col != col) {
-		cur_at(pointer_row, pointer_col).touch();
-		pointer_col = col;
-		cur_at(pointer_row, pointer_col).touch();
-		return true;
-	}
-	return false;
-}
-
-void 
-Compositor::set_cursor_state(int v) 
-{ 
-	if (cursor_state != v) {
-		cursor_state = v; 
-		cur_at(cursor_row, cursor_col).touch();
-	}
-}
-
-void 
-Compositor::set_pointer_state(int v) 
-{ 
-	if (pointer_state != v) {
-		pointer_state = v; 
-		cur_at(pointer_row, pointer_col).touch();
-	}
-}
-
-/// This is a fairly minimal function for testing whether a particular cell position is within the current cursor, so that it can be displayed marked.
-/// \todo TODO: When we gain mark/copy functionality, the cursor will be the entire marked region rather than just one cell.
-inline
-bool
-Compositor::is_marked(coordinate row, coordinate col)
-{
-	return cursor_row == row && cursor_col == col;
-}
-
-inline
-bool
-Compositor::is_pointer(coordinate row, coordinate col)
-{
-	return pointer_row == row && pointer_col == col;
-}
-
 /* Colour manipulation ******************************************************
 // **************************************************************************
 */
@@ -821,231 +632,24 @@ bright (
 	bright(c.blue);
 }
 
-/* A virtual terminal back-end **********************************************
-// **************************************************************************
-*/
-
-namespace {
-class VirtualTerminal 
-{
-public:
-	typedef unsigned short coordinate;
-	VirtualTerminal(FILE * buffer_file, int input_fd);
-	~VirtualTerminal();
-
-	int query_buffer_fd() const { return fileno(buffer_file.operator FILE *()); }
-	coordinate query_h() const { return h; }
-#if 0
-	coordinate query_w() const { return w; }
-#endif
-	coordinate query_screen_y() const { return screen_y; }
-	coordinate query_screen_x() const { return screen_x; }
-	coordinate query_visible_y() const { return visible_y; }
-	coordinate query_visible_x() const { return visible_x; }
-	coordinate query_visible_h() const { return visible_h; }
-	coordinate query_visible_w() const { return visible_w; }
-	coordinate query_cursor_y() const { return cursor_y; }
-	coordinate query_cursor_x() const { return cursor_x; }
-	int query_cursor_state() const { return cursor_state; }
-	int query_pointer_state() const { return pointer_state; }
-	void reload();
-	void set_position(coordinate y, coordinate x);
-	void set_visible_area(coordinate h, coordinate w);
-	CharacterCell & at(coordinate y, coordinate x) { return cells[static_cast<std::size_t>(y) * w + x]; }
-	void WriteInputMessage(uint32_t);
-
-protected:
-	VirtualTerminal(const VirtualTerminal & c);
-	enum { CELL_LENGTH = 16U, HEADER_LENGTH = 16U };
-
-	void move_cursor(coordinate y, coordinate x);
-	void resize(coordinate, coordinate);
-	void keep_visible_area_in_buffer();
-	void keep_visible_area_around_cursor();
-
-	char display_stdio_buffer[128U * 1024U];
-	FileStar buffer_file;
-	FileDescriptorOwner input_fd;
-	unsigned short cursor_y, cursor_x, visible_y, visible_x, visible_h, visible_w, h, w, screen_y, screen_x;
-	int cursor_state;
-	int pointer_state;
-	std::vector<CharacterCell> cells;
-};
-}
-
-VirtualTerminal::VirtualTerminal(
-	FILE * b, 
-	int d
-) :
-	buffer_file(b),
-	input_fd(d),
-	cursor_y(0U),
-	cursor_x(0U),
-	visible_y(0U),
-	visible_x(0U),
-	visible_h(0U),
-	visible_w(0U),
-	h(0U),
-	w(0U),
-	screen_y(0U),
-	screen_x(0U),
-	cursor_state(-1),
-	cells()
-{
-	std::setvbuf(buffer_file, display_stdio_buffer, _IOFBF, sizeof display_stdio_buffer);
-}
-
-VirtualTerminal::~VirtualTerminal()
-{
-}
-
-void 
-VirtualTerminal::move_cursor(
-	coordinate y, 
-	coordinate x
-) { 
-	if (y >= h) y = h - 1;
-	if (x >= w) x = w - 1;
-	cursor_y = y; 
-	cursor_x = x; 
-}
-
-void 
-VirtualTerminal::resize(
-	coordinate new_h, 
-	coordinate new_w
-) {
-	if (h == new_h && w == new_w) return;
-	h = new_h;
-	w = new_w;
-	const std::size_t s(static_cast<std::size_t>(h) * w);
-	if (cells.size() == s) return;
-	cells.resize(s);
-}
-
-inline
-void 
-VirtualTerminal::set_position(
-	coordinate new_y, 
-	coordinate new_x
-) {
-	screen_y = new_y;
-	screen_x = new_x;
-}
-
-inline
-void 
-VirtualTerminal::keep_visible_area_in_buffer()
-{
-	if (visible_y + visible_h > h) visible_y = h - visible_h;
-	if (visible_x + visible_w > w) visible_x = w - visible_w;
-}
-
-inline
-void 
-VirtualTerminal::keep_visible_area_around_cursor()
-{
-	// When programs repaint the screen the cursor is instantaneously all over the place, leading to the window scrolling all over the shop.
-	// But some programs, like vim, make the cursor invisible during the repaint in order to reduce cursor flicker.
-	// We take advantage of this by only scrolling the screen to include the cursor position if the cursor is actually visible.
-	if (cursor_state > 0) {
-		// The window includes the cursor position.
-		if (visible_y > cursor_y) visible_y = cursor_y; else if (visible_y + visible_h <= cursor_y) visible_y = cursor_y - visible_h + 1;
-		if (visible_x > cursor_x) visible_x = cursor_x; else if (visible_x + visible_w <= cursor_x) visible_x = cursor_x - visible_w + 1;
-	}
-}
-
-void 
-VirtualTerminal::set_visible_area(
-	coordinate new_h, 
-	coordinate new_w
-) {
-	if (new_h > h) { visible_h = h; } else { visible_h = new_h; }
-	if (new_w > w) { visible_w = w; } else { visible_w = new_w; }
-	keep_visible_area_in_buffer();
-	keep_visible_area_around_cursor();
-}
-
-/// \brief Pull the display buffer from file into the memory buffer, but don't output anything.
-inline
-void
-VirtualTerminal::reload () 
-{
-#if defined(__LINUX__) || defined(__linux__)
-	std::fflush(buffer_file);
-#endif
-	std::clearerr(buffer_file);
-	std::fseek(buffer_file, 4, SEEK_SET);
-	uint16_t header1[4] = { 0, 0, 0, 0 };
-	std::fread(header1, sizeof header1, 1U, buffer_file);
-	uint8_t header2[4] = { 0, 0, 0, 0 };
-	std::fread(header2, sizeof header2, 1U, buffer_file);
-
-	// Don't fseek() if we can avoid it; it causes duplicate VERY LARGE reads to re-fill the stdio buffer.
-	if (HEADER_LENGTH != ftello(buffer_file))
-		std::fseek(buffer_file, HEADER_LENGTH, SEEK_SET);
-
-	resize(header1[1], header1[0]);
-	move_cursor(header1[3], header1[2]);
-	const unsigned ctype(header2[0]), cattr(header2[1]), pattr(header2[2]);
-	if (CursorSprite::VISIBLE != (cattr & CursorSprite::VISIBLE))
-		cursor_state = 0;
-	else if (CursorSprite::UNDERLINE == ctype)
-		cursor_state = 1;
-	else if (CursorSprite::BAR == ctype)
-		cursor_state = 2;
-	else if (CursorSprite::BOX == ctype)
-		cursor_state = 3;
-	else if (CursorSprite::BLOCK == ctype)
-		cursor_state = 4;
-	else
-		cursor_state = 5;
-	if (PointerSprite::VISIBLE != (pattr & PointerSprite::VISIBLE))
-		pointer_state = 0;
-	else 
-		pointer_state = 1;
-
-	for (unsigned row(0); row < h; ++row) {
-		for (unsigned col(0); col < w; ++col) {
-			unsigned char b[CELL_LENGTH] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-			std::fread(b, sizeof b, 1U, buffer_file);
-			uint32_t wc;
-			std::memcpy(&wc, &b[8], 4);
-			const CharacterCell::attribute_type a(b[12]);
-			const CharacterCell::colour_type fg(b[0], b[1], b[2], b[3]);
-			const CharacterCell::colour_type bg(b[4], b[5], b[6], b[7]);
-			CharacterCell cc(wc, a, fg, bg);
-			at(row, col) = cc;
-		}
-	}
-}
-
-void 
-VirtualTerminal::WriteInputMessage(uint32_t m)
-{
-	write(input_fd.get(), &m, sizeof m);
-}
-
 /* Realizing a virtual terminal onto a set of physical devices **************
 // **************************************************************************
 */
 
 namespace {
-class Realizer :
-	public Compositor
+class Realizer
 {
 public:
+	typedef unsigned short coordinate;
+	Realizer(FramebufferIO & f, unsigned, bool wrong_way_up, bool, bool, bool, GraphicsInterface & g, Monospace16x16Font & mf, VirtualTerminalBackEnd & vt, TUIDisplayCompositor & c);
 	~Realizer();
-	Realizer(FramebufferIO & f, bool, bool, GraphicsInterface & g, Monospace16x16Font & mf, VirtualTerminal & vt);
 
 	enum { AXIS_W, AXIS_X, AXIS_Y, AXIS_Z, H_SCROLL, V_SCROLL };
 
-	bool display_update_needed() const { return update_needed; }
-	void display_updated() { update_needed = false; }
 	void set_display_update_needed() { update_needed = true; }
+	void handle_non_kevents(bool);
+	void invalidate_all() { c.touch_all(); }
 
-	void paint_changed_cells_onto_framebuffer() { do_paint(false); }
-	void paint_all_cells_onto_framebuffer() { do_paint(true); }
 	static coordinate pixel_to_column(unsigned long x) { return x / CHARACTER_PIXEL_WIDTH; }
 	static coordinate pixel_to_row(unsigned long y) { return y / CHARACTER_PIXEL_HEIGHT; }
 
@@ -1059,17 +663,10 @@ public:
 	void handle_extended_key (const uint32_t k, const uint8_t modifiers) ;
 	void handle_function_key (const uint32_t k, const uint8_t modifiers) ;
 
-	void transfer_cursor_pos ();
-	void transfer_cursor_state() { set_cursor_state(vt.query_cursor_state()); }
-	void transfer_pointer_state() { set_pointer_state(vt.query_pointer_state()); }
-	void paint_backdrop ();
-	void position (unsigned quadrant);
-	void compose ();
-
 protected:
 	typedef GraphicsInterface::GlyphBitmapHandle GlyphBitmapHandle;
 	struct GlyphCacheEntry {
-		GlyphCacheEntry(GlyphBitmapHandle ha, uint32_t c, CharacterCell::attribute_type a) : handle(ha), character(c), attributes(a) {}
+		GlyphCacheEntry(GlyphBitmapHandle ha, uint32_t ch, CharacterCell::attribute_type a) : handle(ha), character(ch), attributes(a) {}
 		GraphicsInterface::GlyphBitmapHandle handle;
 		uint32_t character;
 		CharacterCell::attribute_type attributes;
@@ -1082,8 +679,11 @@ protected:
 	typedef std::vector<uint32_t> DeadKeysList;
 	DeadKeysList dead_keys;
 
+	unsigned int quadrant;	///< 0, 1, 2, or 3
+	const bool wrong_way_up;	///< causes coordinate transforms between c and vt
 	const bool faint_as_colour;
 	const bool bold_as_colour;
+	const bool has_pointer;
 	FramebufferIO & fb;
 	GraphicsInterface & gdi;
 	Monospace16x16Font & font;
@@ -1097,7 +697,10 @@ protected:
 	const CharacterCell::colour_type mouse_fg;
 
 	bool update_needed;
-	void do_paint(bool changed);
+	void paint_backdrop ();
+	void position ();
+	void compose ();
+	void paint_changed_cells_onto_framebuffer();
 
 	GlyphBitmapHandle GetCursorGlyphBitmap() const;
 	GlyphBitmapHandle GetCachedGlyphBitmap(uint32_t character, CharacterCell::attribute_type attributes);
@@ -1111,7 +714,9 @@ protected:
 
 	void ClearDeadKeys() { dead_keys.clear(); }
 
-	VirtualTerminal & vt;
+	coordinate screen_y, screen_x;
+	VirtualTerminalBackEnd & vt;
+	TUIDisplayCompositor & c;
 };
 
 static const CharacterCell::colour_type overscan_fg(0,255,255,255), overscan_bg(0,0,0,0);
@@ -1121,15 +726,21 @@ static const CharacterCell overscan_blank(' ', 0U, overscan_fg, overscan_bg);
 
 Realizer::Realizer(
 	FramebufferIO & f,
+	unsigned q,
+	bool wwu,
 	bool fc,
 	bool bc,
+	bool hp,
 	GraphicsInterface & g,
 	Monospace16x16Font & mf,
-	VirtualTerminal & t
+	VirtualTerminalBackEnd & t,
+	TUIDisplayCompositor & comp
 ) : 
-	Compositor(pixel_to_row(f.query_yres()), pixel_to_column(f.query_xres())),
+	quadrant(q),
+	wrong_way_up(wwu),
 	faint_as_colour(fc),
 	bold_as_colour(bc),
+	has_pointer(hp),
 	fb(f),
 	gdi(g),
 	font(mf),
@@ -1143,7 +754,10 @@ Realizer::Realizer(
 	update_needed(true),
 	pointer_xpixel(0),
 	pointer_ypixel(0),
-	vt(t)
+	screen_y(0U),
+	screen_x(0U),
+	vt(t),
+	c(comp)
 {
 	mouse_glyph_handle->Plot( 0, 0xFFFF);
 	mouse_glyph_handle->Plot( 1, 0xC003);
@@ -1201,8 +815,14 @@ inline
 void
 Realizer::ApplyAttributesToGlyphBitmap(GlyphBitmapHandle handle, CharacterCell::attribute_type attributes)
 {
-	if (attributes & CharacterCell::UNDERLINE) {
-		handle->Plot(15, 0xFFFF);
+	switch (attributes & CharacterCell::UNDERLINES) {
+		case 0U:		 break;
+		case CharacterCell::SIMPLE_UNDERLINE:	handle->Plot(15, 0xFFFF); break;
+		case CharacterCell::DOUBLE_UNDERLINE:	handle->Plot(14, 0xFFFF); handle->Plot(15, 0xFFFF); break;
+		default:
+		case CharacterCell::CURLY_UNDERLINE:	handle->Plot(14, 0x6666); handle->Plot(15, 0x9999); break;
+		case CharacterCell::DOTTED_UNDERLINE:	handle->Plot(15, 0xAAAA); break;
+		case CharacterCell::DASHED_UNDERLINE:	handle->Plot(15, 0xCCCC); break;
 	}
 	if (attributes & CharacterCell::STRIKETHROUGH) {
 		handle->Plot(7, 0xFFFF);
@@ -1242,12 +862,13 @@ Realizer::PlotGreek(GlyphBitmapHandle handle, uint32_t character)
 Realizer::GlyphBitmapHandle 
 Realizer::GetCursorGlyphBitmap() const
 {
-	switch (cursor_state) {
-		default:	return star_glyph_handle;
-		case 1U:	return underline_glyph_handle;
-		case 2U:	return bar_glyph_handle;
-		case 3U:	return box_glyph_handle;
-		case 4U:	return block_glyph_handle;
+	switch (c.query_cursor_glyph()) {
+		case CursorSprite::UNDERLINE:	return underline_glyph_handle;
+		case CursorSprite::BAR:		return bar_glyph_handle;
+		case CursorSprite::BOX:		return box_glyph_handle;
+		case CursorSprite::BLOCK:	return block_glyph_handle;
+		case CursorSprite::STAR:	return star_glyph_handle;
+		default:			return star_glyph_handle;
 	}
 }
 
@@ -1279,16 +900,16 @@ Realizer::GetCachedGlyphBitmap(uint32_t character, CharacterCell::attribute_type
 
 inline
 void
-Realizer::do_paint(bool force)
+Realizer::paint_changed_cells_onto_framebuffer()
 {
 	const GraphicsInterface::ScreenBitmapHandle screen(gdi.GetScreenBitmap());
 
-	for (unsigned row(0); row < h; ++row) {
-		for (unsigned col(0); col < w; ++col) {
-			DirtiableCell & c(cur_at(row, col));
-			if (!force && !c.touched()) continue;
-			CharacterCell::attribute_type font_attributes(c.attributes);
-			CharacterCell::colour_type fg(c.foreground), bg(c.background);
+	for (unsigned row(0); row < c.query_h(); ++row) {
+		for (unsigned col(0); col < c.query_w(); ++col) {
+			TUIDisplayCompositor::DirtiableCell & cell(c.cur_at(row, col));
+			if (!cell.touched()) continue;
+			CharacterCell::attribute_type font_attributes(cell.attributes);
+			CharacterCell::colour_type fg(cell.foreground), bg(cell.background);
 			if (faint_as_colour) {
 				if (CharacterCell::FAINT & font_attributes) {
 					dim(fg);
@@ -1303,7 +924,7 @@ Realizer::do_paint(bool force)
 					font_attributes &= ~CharacterCell::BOLD;
 				}
 			}
-			if (is_marked(row, col) && cursor_state > 0) {
+			if (c.is_marked(true, row, col) && (CursorSprite::VISIBLE & c.query_cursor_attributes())) {
 				const GlyphBitmapHandle cursor_handle(GetCursorGlyphBitmap());
 				if (CharacterCell::INVISIBLE & font_attributes) {
 					// Being invisible leaves just the cursor glyph.
@@ -1314,27 +935,26 @@ Realizer::do_paint(bool force)
 					CharacterCell::colour_type bgs[2] = { bg, bg };
 					invert(fgs[1]);
 					invert(bgs[1]);
-					const GlyphBitmapHandle handle(GetCachedGlyphBitmap(c.character, font_attributes));
-					gdi.BitBLTMask(screen, handle, cursor_handle, row * CHARACTER_PIXEL_HEIGHT, col * CHARACTER_PIXEL_WIDTH, fgs, bgs);
+					const GlyphBitmapHandle glyph_handle(GetCachedGlyphBitmap(cell.character, font_attributes));
+					gdi.BitBLTMask(screen, glyph_handle, cursor_handle, row * CHARACTER_PIXEL_HEIGHT, col * CHARACTER_PIXEL_WIDTH, fgs, bgs);
 				}
 			} else {
 				if (CharacterCell::INVISIBLE & font_attributes) {
 					// Being invisible is always the same glyph, so we don't cache it.
-					const GlyphBitmapHandle handle(gdi.MakeGlyphBitmap());
-					PlotGreek(handle, 0x20);
-					ApplyAttributesToGlyphBitmap(handle, font_attributes);
-					gdi.BitBLT(screen, handle, row * CHARACTER_PIXEL_HEIGHT, col * CHARACTER_PIXEL_WIDTH, fg, bg);
-					gdi.DeleteGlyphBitmap(handle);
+					const GlyphBitmapHandle glyph_handle(gdi.MakeGlyphBitmap());
+					PlotGreek(glyph_handle, 0x20);
+					ApplyAttributesToGlyphBitmap(glyph_handle, font_attributes);
+					gdi.BitBLT(screen, glyph_handle, row * CHARACTER_PIXEL_HEIGHT, col * CHARACTER_PIXEL_WIDTH, fg, bg);
+					gdi.DeleteGlyphBitmap(glyph_handle);
 				} else {
-					const GlyphBitmapHandle handle(GetCachedGlyphBitmap(c.character, font_attributes));
-					gdi.BitBLT(screen, handle, row * CHARACTER_PIXEL_HEIGHT, col * CHARACTER_PIXEL_WIDTH, fg, bg);
+					const GlyphBitmapHandle glyph_handle(GetCachedGlyphBitmap(cell.character, font_attributes));
+					gdi.BitBLT(screen, glyph_handle, row * CHARACTER_PIXEL_HEIGHT, col * CHARACTER_PIXEL_WIDTH, fg, bg);
 				}
 			}
-			if (is_pointer(row, col) && pointer_state > 0) {
-				CharacterCell::colour_type mfg(mouse_fg);
-				gdi.BitBLTAlpha(screen, mouse_glyph_handle, row * CHARACTER_PIXEL_HEIGHT, col * CHARACTER_PIXEL_WIDTH, mfg);
+			if (c.is_pointer(row, col) && (PointerSprite::VISIBLE & c.query_pointer_attributes())) {
+				gdi.BitBLTAlpha(screen, mouse_glyph_handle, row * CHARACTER_PIXEL_HEIGHT, col * CHARACTER_PIXEL_WIDTH, mouse_fg);
 			}
-			c.untouch();
+			cell.untouch();
 		}
 	}
 }
@@ -1343,22 +963,20 @@ inline
 void
 Realizer::paint_backdrop () 
 {
-	for (unsigned short row(0U); row < query_h(); ++row)
-		for (unsigned short col(0U); col < query_w(); ++col)
-			poke(row, col, overscan_blank);
+	for (unsigned short row(0U); row < c.query_h(); ++row)
+		for (unsigned short col(0U); col < c.query_w(); ++col)
+			c.poke(row, col, overscan_blank);
 }
 
 /// \brief Clip and position the visible portion of the terminal's display buffer.
 inline
 void
 Realizer::position (
-	unsigned quadrant	///< 0, 1, 2, or 3
 ) {
 	// Glue the terminal window to the edges of the display screen buffer.
-	const unsigned short screen_y(!(quadrant & 0x02) && vt.query_h() < query_h() ? query_h() - vt.query_h() : 0);
-	const unsigned short screen_x((1U == quadrant || 2U == quadrant) && vt.query_visible_w() < query_w() ? query_w() - vt.query_visible_w() : 0);
-	vt.set_position(screen_y, screen_x);
-	vt.set_visible_area(query_h() - screen_y, query_w() - screen_x);
+	screen_y = !(quadrant & 0x02) && vt.query_h() < c.query_h() ? c.query_h() - vt.query_h() : 0;
+	screen_x = (1U == quadrant || 2U == quadrant) && vt.query_w() < c.query_w() ? c.query_w() - vt.query_w() : 0;
+	vt.set_visible_area(c.query_h() - screen_y, c.query_w() - screen_x);
 }
 
 /// \brief Render the terminal's display buffer onto the display's screen buffer.
@@ -1366,16 +984,37 @@ inline
 void
 Realizer::compose () 
 {
-	for (unsigned short row(0U); row < vt.query_visible_h(); ++row)
+	for (unsigned short row(0U); row < vt.query_visible_h(); ++row) {
+		const unsigned short source_row(vt.query_visible_y() + row);
+		const unsigned short dest_row(screen_y + (wrong_way_up ? vt.query_visible_h() - row - 1U : row));
 		for (unsigned short col(0U); col < vt.query_visible_w(); ++col)
-			poke(row + vt.query_screen_y(), col + vt.query_screen_x(), vt.at(vt.query_visible_y() + row, vt.query_visible_x() + col));
+			c.poke(dest_row, col + screen_x, vt.at(source_row, vt.query_visible_x() + col));
+	}
 }
 
 inline
 void
-Realizer::transfer_cursor_pos () 
-{
-	move_cursor(vt.query_cursor_y() - vt.query_visible_y() + vt.query_screen_y(), vt.query_cursor_x() - vt.query_visible_x() + vt.query_screen_x());
+Realizer::handle_non_kevents (
+	bool active
+) {
+	if (update_needed) {
+		update_needed = false;
+		paint_backdrop();
+		position();
+		compose();
+		const unsigned a(vt.query_cursor_attributes());
+		// If the cursor is invisible, we are not guaranteed that the VirtualTerminal has kept the visible area around it.
+		if (CursorSprite::VISIBLE & a) {
+			const unsigned short cursor_y(screen_y + (wrong_way_up ? vt.query_visible_h() - vt.query_cursor_y() - 1U : vt.query_cursor_y()) - vt.query_visible_y());
+			c.move_cursor(true, cursor_y, vt.query_cursor_x() - vt.query_visible_x() + screen_x);
+		}
+		c.set_cursor_state(true, a, vt.query_cursor_glyph());
+		if (has_pointer)
+			c.set_pointer_attributes(vt.query_pointer_attributes());
+		c.repaint_new_to_cur();
+		if (active)
+			paint_changed_cells_onto_framebuffer();
+	}
 }
 
 inline
@@ -1384,7 +1023,7 @@ Realizer::set_pointer_x(
 	uint8_t modifiers
 ) {
 	const coordinate col(pixel_to_column(pointer_xpixel));
-	if (change_pointer_col(col)) {
+	if (c.change_pointer_col(col)) {
 		vt.WriteInputMessage(MessageForMouseColumn(col, modifiers));
 		update_needed = true;
 	}
@@ -1395,8 +1034,10 @@ void
 Realizer::set_pointer_y(
 	uint8_t modifiers
 ) {
-	const coordinate row(pixel_to_row(pointer_ypixel));
-	if (change_pointer_row(row)) {
+	coordinate row(pixel_to_row(pointer_ypixel));
+	if (c.change_pointer_row(row)) {
+		if (wrong_way_up)
+			row = c.query_h() - row - 1U;
 		vt.WriteInputMessage(MessageForMouseRow(row, modifiers));
 		update_needed = true;
 	}
@@ -2629,17 +2270,17 @@ lower_combining_class (
 
 void 
 Realizer::handle_character_input(
-	uint32_t c
+	uint32_t ch
 ) {
-	if (UnicodeCategorization::IsMarkEnclosing(c)
-	||  UnicodeCategorization::IsMarkNonSpacing(c)
+	if (UnicodeCategorization::IsMarkEnclosing(ch)
+	||  UnicodeCategorization::IsMarkNonSpacing(ch)
 	) {
 		// Per ISO 9995-3 there are certain pairs of dead keys that make other dead keys.
 		// Per DIN 2137, this happens on the fly as the keys are typed, so we only need to test combining against the preceding key.
-		if (dead_keys.empty() || !combine_dead_keys(dead_keys.back(), c))
-			dead_keys.push_back(c);
+		if (dead_keys.empty() || !combine_dead_keys(dead_keys.back(), ch))
+			dead_keys.push_back(ch);
 	} else
-	if (0x200C == c) {
+	if (0x200C == ch) {
 		// Per DIN 2137, Zero-Width Non-Joiner means emit the dead-key sequence as-is.
 		// We must not sort into Unicode combination class order.
 		// ZWNJ is essentially a pass-through mechanism for combiners.
@@ -2650,7 +2291,7 @@ Realizer::handle_character_input(
 		// Per ISO 9995-3 there are certain C+B=R combinations that apply in addition to the Unicode composition rules.
 		// These can be done first, because they never start with a precomposed character.
 		for (DeadKeysList::iterator i(dead_keys.begin()); i != dead_keys.end(); )
-			if (combine_peculiar_non_combiners(*i, c))
+			if (combine_peculiar_non_combiners(*i, ch))
 				i = dead_keys.erase(i);
 			else
 				++i;
@@ -2658,7 +2299,7 @@ Realizer::handle_character_input(
 		// As explained in the manual at length (q.v.), we don't do full Unicode Normalization.
 		std::stable_sort(dead_keys.begin(), dead_keys.end(), lower_combining_class);
 		for (DeadKeysList::iterator i(dead_keys.begin()); i != dead_keys.end(); )
-			if (combine_unicode(*i, c))
+			if (combine_unicode(*i, ch))
 				i = dead_keys.erase(i);
 			else
 				++i;
@@ -2673,10 +2314,10 @@ Realizer::handle_character_input(
 				vt.WriteInputMessage(MessageForUCS3(*i));
 		}
 		// This is the final composed key.
-		vt.WriteInputMessage(MessageForUCS3(c));
+		vt.WriteInputMessage(MessageForUCS3(ch));
 	} else
 	{
-		vt.WriteInputMessage(MessageForUCS3(c));
+		vt.WriteInputMessage(MessageForUCS3(ch));
 	}
 }
 
@@ -2820,6 +2461,14 @@ HIDBase::handle_keyboard (
 			if (v < 1U) break;
 			const uint32_t k((cmd & 0x00FFFF00) >> 8U);
 			r.handle_extended_key(k, modifiers());
+			unlatch();
+			break;
+		}
+		case KBDMAP_ACTION_EXTENDED1:
+		{
+			if (v < 1U) break;
+			const uint32_t k((cmd & 0x00FFFF00) >> 8U);
+			r.handle_extended_key(k, nolevel_modifiers());
 			unlatch();
 			break;
 		}
@@ -3549,191 +3198,6 @@ USBHIDBase::set_LEDs(
 // **************************************************************************
 */
 
-/// The Linux evdev keycode maps to a row+column in the current keyboard map, which contains an action for that row+column.
-static inline
-uint16_t
-linux_evdev_keycode_to_keymap_index (
-	const uint16_t k
-) {
-	switch (k) {
-		default:	break;
-		case KEY_ESC:		return KBDMAP_INDEX_ESC;
-		case KEY_1:		return KBDMAP_INDEX_1;
-		case KEY_2:		return KBDMAP_INDEX_2;
-		case KEY_3:		return KBDMAP_INDEX_3;
-		case KEY_4:		return KBDMAP_INDEX_4;
-		case KEY_5:		return KBDMAP_INDEX_5;
-		case KEY_6:		return KBDMAP_INDEX_6;
-		case KEY_7:		return KBDMAP_INDEX_7;
-		case KEY_8:		return KBDMAP_INDEX_8;
-		case KEY_9:		return KBDMAP_INDEX_9;
-		case KEY_0:		return KBDMAP_INDEX_0;
-		case KEY_MINUS:		return KBDMAP_INDEX_MINUS;
-		case KEY_EQUAL:		return KBDMAP_INDEX_EQUALS;
-		case KEY_BACKSPACE:	return KBDMAP_INDEX_BACKSPACE;
-		case KEY_TAB:		return KBDMAP_INDEX_TAB;
-		case KEY_Q:		return KBDMAP_INDEX_Q;
-		case KEY_W:		return KBDMAP_INDEX_W;
-		case KEY_E:		return KBDMAP_INDEX_E;
-		case KEY_R:		return KBDMAP_INDEX_R;
-		case KEY_T:		return KBDMAP_INDEX_T;
-		case KEY_Y:		return KBDMAP_INDEX_Y;
-		case KEY_U:		return KBDMAP_INDEX_U;
-		case KEY_I:		return KBDMAP_INDEX_I;
-		case KEY_O:		return KBDMAP_INDEX_O;
-		case KEY_P:		return KBDMAP_INDEX_P;
-		case KEY_LEFTBRACE:	return KBDMAP_INDEX_LEFTBRACE;
-		case KEY_RIGHTBRACE:	return KBDMAP_INDEX_RIGHTBRACE;
-		case KEY_ENTER:		return KBDMAP_INDEX_RETURN;
-		case KEY_A:		return KBDMAP_INDEX_A;
-		case KEY_S:		return KBDMAP_INDEX_S;
-		case KEY_D:		return KBDMAP_INDEX_D;
-		case KEY_F:		return KBDMAP_INDEX_F;
-		case KEY_G:		return KBDMAP_INDEX_G;
-		case KEY_H:		return KBDMAP_INDEX_H;
-		case KEY_J:		return KBDMAP_INDEX_J;
-		case KEY_K:		return KBDMAP_INDEX_K;
-		case KEY_L:		return KBDMAP_INDEX_L;
-		case KEY_SEMICOLON:	return KBDMAP_INDEX_SEMICOLON;
-		case KEY_APOSTROPHE:	return KBDMAP_INDEX_APOSTROPHE;
-		case KEY_GRAVE:		return KBDMAP_INDEX_GRAVE;
-		case KEY_LINEFEED:	break;	/// FIXME: \todo What does this map to?  Is this even a key in any real system?
-		case KEY_BACKSLASH:	return KBDMAP_INDEX_EUROPE1;
-		case KEY_Z:		return KBDMAP_INDEX_Z;
-		case KEY_X:		return KBDMAP_INDEX_X;
-		case KEY_C:		return KBDMAP_INDEX_C;
-		case KEY_V:		return KBDMAP_INDEX_V;
-		case KEY_B:		return KBDMAP_INDEX_B;
-		case KEY_N:		return KBDMAP_INDEX_N;
-		case KEY_M:		return KBDMAP_INDEX_M;
-		case KEY_COMMA:		return KBDMAP_INDEX_COMMA;
-		case KEY_DOT:		return KBDMAP_INDEX_DOT;
-		case KEY_SLASH:		return KBDMAP_INDEX_SLASH;
-		case KEY_102ND:		return KBDMAP_INDEX_EUROPE2;
-		case KEY_YEN:		return KBDMAP_INDEX_YEN;
-		case KEY_LEFTSHIFT:	return KBDMAP_INDEX_SHIFT1;
-		case KEY_RIGHTSHIFT:	return KBDMAP_INDEX_SHIFT2;
-		case KEY_RIGHTALT:	return KBDMAP_INDEX_OPTION;
-		case KEY_LEFTCTRL:	return KBDMAP_INDEX_CONTROL1;
-		case KEY_RIGHTCTRL:	return KBDMAP_INDEX_CONTROL2;
-		case KEY_LEFTMETA:	return KBDMAP_INDEX_SUPER1;
-		case KEY_RIGHTMETA:	return KBDMAP_INDEX_SUPER2;
-		case KEY_LEFTALT:	return KBDMAP_INDEX_ALT;
-		case KEY_CAPSLOCK:	return KBDMAP_INDEX_CAPSLOCK;
-		case KEY_SCROLLLOCK:	return KBDMAP_INDEX_SCROLLLOCK;
-		case KEY_NUMLOCK:	return KBDMAP_INDEX_NUMLOCK;
-		case KEY_RO:		return KBDMAP_INDEX_ROMAJI;
-		case KEY_KATAKANAHIRAGANA:	return KBDMAP_INDEX_KATAHIRA;
-		case KEY_ZENKAKUHANKAKU:return KBDMAP_INDEX_HALF_FULL_WIDTH;
-		case KEY_HIRAGANA:	return KBDMAP_INDEX_HIRAGANA;
-		case KEY_KATAKANA:	return KBDMAP_INDEX_KATAKANA;
-		case KEY_HENKAN:	return KBDMAP_INDEX_HENKAN;
-		case KEY_MUHENKAN:	return KBDMAP_INDEX_MUHENKAN;
-		case KEY_HANGEUL:	return KBDMAP_INDEX_HANGUL_ENGLISH;
-		case KEY_HANJA:		return KBDMAP_INDEX_HANJA;
-		case KEY_COMPOSE:	return KBDMAP_INDEX_COMPOSE;
-		case KEY_SPACE:		return KBDMAP_INDEX_SPACE;
-		case KEY_F1:		return KBDMAP_INDEX_F1;
-		case KEY_F2:		return KBDMAP_INDEX_F2;
-		case KEY_F3:		return KBDMAP_INDEX_F3;
-		case KEY_F4:		return KBDMAP_INDEX_F4;
-		case KEY_F5:		return KBDMAP_INDEX_F5;
-		case KEY_F6:		return KBDMAP_INDEX_F6;
-		case KEY_F7:		return KBDMAP_INDEX_F7;
-		case KEY_F8:		return KBDMAP_INDEX_F8;
-		case KEY_F9:		return KBDMAP_INDEX_F9;
-		case KEY_F10:		return KBDMAP_INDEX_F10;
-		case KEY_F11:		return KBDMAP_INDEX_F11;
-		case KEY_F12:		return KBDMAP_INDEX_F12;
-		case KEY_F13:		return KBDMAP_INDEX_F13;
-		case KEY_F14:		return KBDMAP_INDEX_F14;
-		case KEY_F15:		return KBDMAP_INDEX_F15;
-		case KEY_F16:		return KBDMAP_INDEX_F16;
-		case KEY_F17:		return KBDMAP_INDEX_F17;
-		case KEY_F18:		return KBDMAP_INDEX_F18;
-		case KEY_F19:		return KBDMAP_INDEX_F19;
-		case KEY_F20:		return KBDMAP_INDEX_F20;
-		case KEY_F21:		return KBDMAP_INDEX_F21;
-		case KEY_F22:		return KBDMAP_INDEX_F22;
-		case KEY_F23:		return KBDMAP_INDEX_F23;
-		case KEY_F24:		return KBDMAP_INDEX_F24;
-		case KEY_HOME:		return KBDMAP_INDEX_HOME;
-		case KEY_UP:		return KBDMAP_INDEX_UP_ARROW;
-		case KEY_PAGEUP:	return KBDMAP_INDEX_PAGE_UP;
-		case KEY_LEFT:		return KBDMAP_INDEX_LEFT_ARROW;
-		case KEY_RIGHT:		return KBDMAP_INDEX_RIGHT_ARROW;
-		case KEY_END:		return KBDMAP_INDEX_END;
-		case KEY_DOWN:		return KBDMAP_INDEX_DOWN_ARROW;
-		case KEY_PAGEDOWN:	return KBDMAP_INDEX_PAGE_DOWN;
-		case KEY_INSERT:	return KBDMAP_INDEX_INSERT;
-		case KEY_DELETE:	return KBDMAP_INDEX_DELETE;
-		case KEY_KPASTERISK:	return KBDMAP_INDEX_KP_ASTERISK;
-		case KEY_KP7:		return KBDMAP_INDEX_KP_7;
-		case KEY_KP8:		return KBDMAP_INDEX_KP_8;
-		case KEY_KP9:		return KBDMAP_INDEX_KP_9;
-		case KEY_KPMINUS:	return KBDMAP_INDEX_KP_MINUS;
-		case KEY_KP4:		return KBDMAP_INDEX_KP_4;
-		case KEY_KP5:		return KBDMAP_INDEX_KP_5;
-		case KEY_KP6:		return KBDMAP_INDEX_KP_6;
-		case KEY_KPPLUS:	return KBDMAP_INDEX_KP_PLUS;
-		case KEY_KP1:		return KBDMAP_INDEX_KP_1;
-		case KEY_KP2:		return KBDMAP_INDEX_KP_2;
-		case KEY_KP3:		return KBDMAP_INDEX_KP_3;
-		case KEY_KP0:		return KBDMAP_INDEX_KP_0;
-		case KEY_KPDOT:		return KBDMAP_INDEX_KP_DECIMAL;
-		case KEY_KPENTER:	return KBDMAP_INDEX_KP_ENTER;
-		case KEY_KPSLASH:	return KBDMAP_INDEX_KP_SLASH;
-		case KEY_KPJPCOMMA:	return KBDMAP_INDEX_KP_JPCOMMA;
-		case KEY_KPCOMMA:	return KBDMAP_INDEX_KP_THOUSANDS;
-		case KEY_KPEQUAL:	return KBDMAP_INDEX_KP_EQUALS;
-		case KEY_KPPLUSMINUS:	return KBDMAP_INDEX_KP_SIGN;
-		case KEY_KPLEFTPAREN:	return KBDMAP_INDEX_KP_LBRACKET;
-		case KEY_KPRIGHTPAREN:	return KBDMAP_INDEX_KP_RBRACKET;
-		case KEY_PAUSE:		return KBDMAP_INDEX_PAUSE;
-		case KEY_SYSRQ:		return KBDMAP_INDEX_ATTENTION;
-		case KEY_STOP:		return KBDMAP_INDEX_STOP;
-		case KEY_AGAIN:		return KBDMAP_INDEX_AGAIN;
-		case KEY_PROPS:		return KBDMAP_INDEX_PROPERTIES;
-		case KEY_UNDO:		return KBDMAP_INDEX_UNDO;
-		case KEY_REDO:		return KBDMAP_INDEX_REDO;
-		case KEY_COPY:		return KBDMAP_INDEX_COPY;
-		case KEY_OPEN:		return KBDMAP_INDEX_OPEN;
-		case KEY_PASTE:		return KBDMAP_INDEX_PASTE;
-		case KEY_FIND:		return KBDMAP_INDEX_FIND;
-		case KEY_CUT:		return KBDMAP_INDEX_CUT;
-		case KEY_HELP:		return KBDMAP_INDEX_HELP;
-		case KEY_MUTE:		return KBDMAP_INDEX_MUTE;
-		case KEY_VOLUMEDOWN:	return KBDMAP_INDEX_VOLUME_DOWN;
-		case KEY_VOLUMEUP:	return KBDMAP_INDEX_VOLUME_UP;
-		case KEY_CALC:		return KBDMAP_INDEX_CALCULATOR;
-		case KEY_FILE:		return KBDMAP_INDEX_FILE_MANAGER;
-		case KEY_WWW:		return KBDMAP_INDEX_WWW;
-		case KEY_HOMEPAGE:	return KBDMAP_INDEX_HOME_PAGE;
-		case KEY_REFRESH:	return KBDMAP_INDEX_REFRESH;
-		case KEY_MAIL:		return KBDMAP_INDEX_MAIL;
-		case KEY_BOOKMARKS:	return KBDMAP_INDEX_BOOKMARKS;
-		case KEY_COMPUTER:	return KBDMAP_INDEX_COMPUTER;
-		case KEY_BACK:		return KBDMAP_INDEX_BACK;
-		case KEY_FORWARD:	return KBDMAP_INDEX_FORWARD;
-		case KEY_SCREENLOCK:	return KBDMAP_INDEX_LOCK;
-		case KEY_MSDOS:		return KBDMAP_INDEX_CLI;
-		case KEY_NEXTSONG:	return KBDMAP_INDEX_NEXT_TRACK;
-		case KEY_PREVIOUSSONG:	return KBDMAP_INDEX_PREV_TRACK;
-		case KEY_PLAYPAUSE:	return KBDMAP_INDEX_PLAY_PAUSE;
-		case KEY_STOPCD:	return KBDMAP_INDEX_STOP_PLAYING;
-		case KEY_RECORD:	return KBDMAP_INDEX_RECORD;
-		case KEY_REWIND:	return KBDMAP_INDEX_REWIND;
-		case KEY_FASTFORWARD:	return KBDMAP_INDEX_FAST_FORWARD;
-		case KEY_EJECTCD:	return KBDMAP_INDEX_EJECT;
-		case KEY_NEW:		return KBDMAP_INDEX_NEW;
-		case KEY_EXIT:		return KBDMAP_INDEX_EXIT;
-		case KEY_POWER:		return KBDMAP_INDEX_POWER;
-		case KEY_SLEEP:		return KBDMAP_INDEX_SLEEP;
-		case KEY_WAKEUP:	return KBDMAP_INDEX_WAKE;
-	}
-	return 0xFFFF;
-}
-
 namespace {
 
 class HID :
@@ -3745,7 +3209,7 @@ public:
 
 	void set_input_fd(int fd) { input.reset(fd); }
 	int query_input_fd() const { return input.get(); }
-	bool grab_exclusive();
+	bool set_exclusive(bool);
 	void set_LEDs();
 	void handle_input_events(Realizer &);
 protected:
@@ -3771,6 +3235,8 @@ public:
 	void permit_switch_from();
 	void release();
 	bool is_active();
+	bool activate();
+	bool wait_until_active();
 	void set_LEDs();
 	void handle_input_events(Realizer &);
 protected:
@@ -3841,9 +3307,10 @@ HID::HID(
 
 inline
 bool 
-HID::grab_exclusive(
+HID::set_exclusive(
+	bool v
 ) {
-	return 0 <= ioctl(input.get(), EVIOCGRAB, true);
+	return 0 <= ioctl(input.get(), EVIOCGRAB, v);
 }
 
 inline
@@ -4105,6 +3572,25 @@ KernelVT::is_active()
 	return s.v_active == vtnr;
 }
 
+bool
+KernelVT::activate()
+{
+	if (-1 == device.get()) return true;
+	while (0 > ioctl(device.get(), VT_ACTIVATE, vtnr)) {
+		if (EINTR != errno) return false;
+	}
+	return true;
+}
+
+bool
+KernelVT::wait_until_active()
+{
+	if (-1 == device.get()) return true;
+	while (0 > ioctl(device.get(), VT_WAITACTIVE, vtnr)) {
+		if (EINTR != errno) return false;
+	}
+	return true;
+}
 void 
 KernelVT::acknowledge_switch_to()
 {
@@ -4189,7 +3675,7 @@ PS2Mouse::handle_input_events(
 			}
 		}
 		stdbuttons = newstdbuttons;
-		std::memmove(buffer, buffer + MOUSE_PS2_PACKETSIZE, sizeof buffer - MOUSE_PS2_PACKETSIZE * sizeof *buffer),
+		std::memmove(buffer, buffer + MOUSE_PS2_PACKETSIZE, sizeof buffer - MOUSE_PS2_PACKETSIZE * sizeof *buffer);
 		offset -= MOUSE_PS2_PACKETSIZE * sizeof *buffer;
 	}
 }
@@ -4284,6 +3770,8 @@ public:
 
 	void reset(int);
 	bool is_active();
+	bool activate();
+	bool wait_until_active();
 	void acknowledge_switch_to();
 	void permit_switch_from();
 protected:
@@ -4629,6 +4117,30 @@ KernelVT::is_active()
 	if (0 > ioctl(device.get(), VT_GETINDEX, &index)) return false;
 	return active == index;
 }
+
+bool
+KernelVT::activate()
+{
+	if (-1 == device.get()) return true;
+	int index;
+	if (0 > ioctl(device.get(), VT_GETINDEX, &index)) return false;
+	while (0 > ioctl(device.get(), VT_ACTIVATE, index)) {
+		if (EINTR != errno) return false;
+	}
+	return true;
+}
+
+bool
+KernelVT::wait_until_active()
+{
+	if (-1 == device.get()) return true;
+	int index;
+	if (0 > ioctl(device.get(), VT_GETINDEX, &index)) return false;
+	while (0 > ioctl(device.get(), VT_WAITACTIVE, index)) {
+		if (EINTR != errno) return false;
+	}
+	return true;
+}
 #endif
 
 void 
@@ -4867,6 +4379,7 @@ console_fb_realizer [[gnu::noreturn]] (
 	bool limit_80_columns(false);
 	std::list<std::string> input_filenames;
 	std::list< std::pair<std::string,std::string> > ugen_input_filenames;
+	bool wrong_way_up(false);
 	bool bold_as_colour(false);
 	bool initial_numlock(false);
 	FontSpecList fonts;
@@ -4877,13 +4390,15 @@ console_fb_realizer [[gnu::noreturn]] (
 		bool has_kernel_vt(false);
 #endif
 		popt::bool_definition bold_as_colour_option('\0', "bold-as-colour", "Forcibly render boldface as a colour brightness change.", bold_as_colour);
-		popt::string_list_definition input_option('\0', "input", "device", "Use the this input device.", input_filenames);
 #if defined(__LINUX__) || defined(__linux__)
 		popt::unsigned_number_definition kernel_vt_number_option('\0', "kernel-vt-number", "number", "Use the given kernel virtual terminal.", kernel_vt_number, 10);
 #elif defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
 		popt::bool_definition limit_80_columns_option('\0', "80-columns", "Limit to no wider than 80 columns.", limit_80_columns);
 		popt::bool_definition kernel_vt_option('\0', "kernel-vt", "Use a kernel virtual terminal device.", has_kernel_vt);
-		popt::string_pair_list_definition ugen_input_option('\0', "ugen-input", "device", "Use the this ugen input device.", ugen_input_filenames);
+#endif
+		popt::string_list_definition input_option('\0', "input", "device", "Use the this input device.", input_filenames);
+#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
+		popt::string_pair_list_definition ugen_input_option('\0', "ugen-input", "control function", "Use the this ugen input control and function device pair.", ugen_input_filenames);
 #endif
 #if defined(__LINUX__) || defined(__linux__)
 		popt::string_definition ps2mouse_option('\0', "ps2mouse", "device", "Use this ps2mouse input device.", ps2mouse_filename);
@@ -4894,6 +4409,7 @@ console_fb_realizer [[gnu::noreturn]] (
 		popt::bool_definition initial_numlock_option('\0', "initial-numlock", "Turn NumLock on, initially.", initial_numlock);
 		popt::string_definition keyboard_map_option('\0', "keyboard-map", "filename", "Use this keyboard map.", keyboard_map_filename);
 		popt::unsigned_number_definition quadrant_option('\0', "quadrant", "number", "Position the terminal in quadrant 0, 1, 2, or 3.", quadrant, 0);
+		popt::bool_definition wrong_way_up_option('\0', "wrong-way-up", "Display from bottom to top.", wrong_way_up);
 		fontspec_definition vtfont_option('\0', "vtfont", "filename", "Use this font as a medium+bold upright vt font.", fonts, -1, CombinedFont::Font::UPRIGHT);
 		fontspec_definition vtfont_faint_r_option('\0', "vtfont-faint-r", "filename", "Use this font as a light+demibold upright vt font.", fonts, -2, CombinedFont::Font::UPRIGHT);
 		fontspec_definition vtfont_faint_o_option('\0', "vtfont-faint-o", "filename", "Use this font as a light+demibold oblique vt font.", fonts, -2, CombinedFont::Font::OBLIQUE);
@@ -4932,6 +4448,7 @@ console_fb_realizer [[gnu::noreturn]] (
 			&initial_numlock_option,
 			&keyboard_map_option,
 			&quadrant_option,
+			&wrong_way_up_option,
 			&vtfont_option,
 			&vtfont_faint_r_option,
 			&vtfont_faint_o_option,
@@ -4952,7 +4469,7 @@ console_fb_realizer [[gnu::noreturn]] (
 			&font_bold_o_option,
 			&font_bold_i_option,
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "virtual-terminal framebuffer");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{virtual-terminal} {framebuffer}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -4962,6 +4479,8 @@ console_fb_realizer [[gnu::noreturn]] (
 #if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
 		if (has_kernel_vt)
 			kernel_vt_filename = envs.query("TTY");
+#else
+		static_cast<void>(envs);	// Silence a compiler warning.
 #endif
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
@@ -5072,11 +4591,13 @@ console_fb_realizer [[gnu::noreturn]] (
 		}
 	}
 	vt_dir_fd.release();
-	VirtualTerminal vt(buffer_file.release(), input_fd.release());
-	append_event(ip, vt.query_buffer_fd(), EVFILT_VNODE, EV_ADD|EV_CLEAR, NOTE_WRITE, 0, 0);
 
 	if (keyboard_map_filename)
 		LoadKeyMap(prog, keyboard_map, keyboard_map_filename);
+	else {
+		set_default(keyboard_map);
+		overlay_group2_latch(keyboard_map);
+	}
 
 	// Now open devices.
 
@@ -5114,7 +4635,7 @@ console_fb_realizer [[gnu::noreturn]] (
 			throw EXIT_FAILURE;
 		}
 		input.set_input_fd(fd1.release());
-		if (!input.grab_exclusive()) {
+		if (!input.set_exclusive(true)) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, input_filename.c_str(), std::strerror(error));
 			throw EXIT_FAILURE;
@@ -5229,7 +4750,31 @@ console_fb_realizer [[gnu::noreturn]] (
 		append_event(ip, sysmou.query_input_fd(), EVFILT_READ, EV_ADD|EV_DISABLE, 0, 0, 0);
 	}
 #endif
+	const bool has_pointer(!inputs.empty()
+#if defined(__LINUX__) || defined(__linux__)
+	|| ps2mouse_filename
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
+	|| sysmouse_filename || !ugen_input_filenames.empty()
+#endif
+	);
 
+#if defined(__LINUX__) || defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
+	// FreeBSD's checks on mmap()ing the framebuffer fail unless the relevant virtual terminal is the currently active one.
+	// Linux has similar problems.
+	if (0 <= kvt.query_input_fd()) {
+		if (!kvt.activate()
+		||  !kvt.wait_until_active()
+		) {
+			const int error(errno);
+#if defined(__LINUX__) || defined(__linux__)
+			std::fprintf(stderr, "%s: FATAL: tty%lu: %s\n", prog, kernel_vt_number, std::strerror(error));
+#else
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, kernel_vt_filename, std::strerror(error));
+#endif
+			throw EXIT_FAILURE;
+		}
+	}
+#endif
 	fb.set_graphics_mode(prog, fb_filename);
 
 	void * const base(mmap(0, fb.query_size(), PROT_READ|PROT_WRITE, MAP_SHARED, fb.get(), 0));
@@ -5239,68 +4784,80 @@ console_fb_realizer [[gnu::noreturn]] (
 		throw EXIT_FAILURE;
 	}
 
+	VirtualTerminalBackEnd vt(vt_dirname, buffer_file.release(), input_fd.release());
+	append_event(ip, vt.query_buffer_fd(), EVFILT_VNODE, EV_ADD|EV_ENABLE|EV_CLEAR, NOTE_WRITE, 0, 0);
+	append_event(ip, vt.query_input_fd(), EVFILT_WRITE, EV_ADD|EV_DISABLE, 0, 0, 0);
+	TUIDisplayCompositor c(Realizer::pixel_to_row(fb.query_yres()), Realizer::pixel_to_column(fb.query_xres()));
 	GraphicsInterface gdi(base, fb.query_size(), fb.query_yres(), fb.query_xres(), fb.query_stride(), fb.query_depth());
-	Realizer realizer(fb, !font.has_faint(), bold_as_colour, gdi, font, vt);
+	Realizer realizer(fb, quadrant, wrong_way_up, !font.has_faint(), bold_as_colour, has_pointer, gdi, font, vt, c);
 
 #if defined(__LINUX__) || defined(__linux__)
-	usr2_signalled = kvt.is_active();
+	if (0 <= kvt.query_input_fd()) {
+		if (kvt.is_active())
+			usr2_signalled = true;
+		else
+			usr1_signalled = true;
+	} else
+		usr2_signalled = true;
 #elif defined(__FreeBSD__) || defined(__DragonFly__)
-	usr2_signalled = kvt.is_active();
+	if (0 <= kvt.query_input_fd())
+		usr2_signalled = kvt.is_active();
+	else
+		usr2_signalled = true;
 #elif defined(__OpenBSD__)
 	usr2_signalled = true;
 #endif
 
 	bool active(false);
-	bool reload_vt(true);
 
 	const struct timespec immediate_timeout = { 0, 0 };
 
-	vt.reload();
 	while (true) {
 		if (terminate_signalled||interrupt_signalled||hangup_signalled) 
 			break;
 		if (usr1_signalled)  {
 			usr1_signalled = false;
 			if (active) {
-#if defined(__LINUX__) || defined(__linux__)
-				if (kernel_vt_number > 0UL)
+#if defined(__LINUX__) || defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
+				if (0 <= kvt.query_input_fd())
 					append_event(ip, kvt.query_input_fd(), EVFILT_READ, EV_DISABLE, 0, 0, 0);
-				if (ps2mouse_filename)
+#endif
+#if defined(__LINUX__) || defined(__linux__)
+				if (0 <= ps2mou.query_input_fd())
 					append_event(ip, ps2mou.query_input_fd(), EVFILT_READ, EV_DISABLE, 0, 0, 0);
 #elif defined(__FreeBSD__) || defined(__DragonFly__)
-				if (kernel_vt_filename)
-					append_event(ip, kvt.query_input_fd(), EVFILT_READ, EV_DISABLE, 0, 0, 0);
-				if (atkeyboard_filename)
+				if (0 <= atkbd.query_input_fd())
 					append_event(ip, atkbd.query_input_fd(), EVFILT_READ, EV_DISABLE, 0, 0, 0);
-				if (sysmouse_filename)
+				if (0 <= sysmou.query_input_fd())
 					append_event(ip, sysmou.query_input_fd(), EVFILT_READ, EV_DISABLE, 0, 0, 0);
 #endif
-				for (HIDList::const_iterator i(inputs.begin()); inputs.end() != i; ++i) {
-					const HID & input(**i);
+				for (HIDList::iterator i(inputs.begin()); inputs.end() != i; ++i) {
+					HID & input(**i);
 					append_event(ip, input.query_input_fd(), EVFILT_READ, EV_DISABLE, 0, 0, 0);
+#if defined(__LINUX__) || defined(__linux__)
+					input.set_exclusive(false);
+#endif
 				}
 				active = false;
 			}
-#if defined(__LINUX__) || defined(__linux__)
-			kvt.permit_switch_from();
-#elif defined(__FreeBSD__) || defined (__DragonFly__)
-			kvt.permit_switch_from();
+#if defined(__LINUX__) || defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
+			if (0 <= kvt.query_input_fd())
+				kvt.permit_switch_from();
 #endif
 		}
 		if (usr2_signalled) {
 			usr2_signalled = false;
 			if (!active) {
-				realizer.paint_all_cells_onto_framebuffer();
-#if defined(__LINUX__) || defined(__linux__)
-				if (kvt.query_dirty_LEDs()) {
-					kvt.set_LEDs();
-					kvt.clean_LEDs();
+#if defined(__LINUX__) || defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
+				if (0 <= kvt.query_input_fd()) {
+					if (kvt.query_dirty_LEDs()) {
+						kvt.set_LEDs();
+						kvt.clean_LEDs();
+					}
+					append_event(ip, kvt.query_input_fd(), EVFILT_READ, EV_ENABLE, 0, 0, 0);
 				}
-#elif defined(__FreeBSD__) || defined (__DragonFly__)
-				if (kvt.query_dirty_LEDs()) {
-					kvt.set_LEDs();
-					kvt.clean_LEDs();
-				}
+#endif
+#if defined(__FreeBSD__) || defined (__DragonFly__)
 				if (atkbd.query_dirty_LEDs()) {
 					atkbd.set_LEDs();
 					atkbd.clean_LEDs();
@@ -5314,52 +4871,34 @@ console_fb_realizer [[gnu::noreturn]] (
 					}
 				}
 #if defined(__LINUX__) || defined(__linux__)
-				if (kernel_vt_number > 0UL)
-					append_event(ip, kvt.query_input_fd(), EVFILT_READ, EV_ENABLE, 0, 0, 0);
-				if (ps2mouse_filename)
+				if (0 <= ps2mou.query_input_fd())
 					append_event(ip, ps2mou.query_input_fd(), EVFILT_READ, EV_ENABLE, 0, 0, 0);
 #elif defined(__FreeBSD__) || defined(__DragonFly__)
-				if (kernel_vt_filename)
-					append_event(ip, kvt.query_input_fd(), EVFILT_READ, EV_ENABLE, 0, 0, 0);
-				if (atkeyboard_filename)
+				if (0 <= atkbd.query_input_fd())
 					append_event(ip, atkbd.query_input_fd(), EVFILT_READ, EV_ENABLE, 0, 0, 0);
-				if (sysmouse_filename)
+				if (0 <= sysmou.query_input_fd())
 					append_event(ip, sysmou.query_input_fd(), EVFILT_READ, EV_ENABLE, 0, 0, 0);
 #endif
-				for (HIDList::const_iterator i(inputs.begin()); inputs.end() != i; ++i) {
-					const HID & input(**i);
+				for (HIDList::iterator i(inputs.begin()); inputs.end() != i; ++i) {
+					HID & input(**i);
 					append_event(ip, input.query_input_fd(), EVFILT_READ, EV_ENABLE, 0, 0, 0);
+#if defined(__LINUX__) || defined(__linux__)
+					input.set_exclusive(true);
+#endif
 				}
+				realizer.set_display_update_needed();
+				realizer.invalidate_all();
 				active = true;
 			}
-#if defined(__LINUX__) || defined(__linux__)
-			kvt.acknowledge_switch_to();
-#elif defined(__FreeBSD__) || defined (__DragonFly__)
-			kvt.acknowledge_switch_to();
+#if defined(__LINUX__) || defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
+			if (0 <= kvt.query_input_fd())
+				kvt.acknowledge_switch_to();
 #endif
 		}
-		if (realizer.display_update_needed()) {
-			realizer.display_updated();
-			realizer.paint_backdrop();
-			realizer.position(quadrant);
-			realizer.compose();
-			realizer.transfer_cursor_pos();
-			realizer.transfer_cursor_state();
-			if (!inputs.empty()
-#if defined(__LINUX__) || defined(__linux__)
-			|| ps2mouse_filename
-#elif defined(__FreeBSD__) || defined(__DragonFly__)
-			|| sysmouse_filename || !ugen_input_filenames.empty()
-#endif
-			)
-				realizer.transfer_pointer_state();
-			realizer.repaint_new_to_cur();
-			if (active)
-				realizer.paint_changed_cells_onto_framebuffer();
-		}
+		realizer.handle_non_kevents(active);
 
 		struct kevent p[512];
-		const int rc(kevent(queue.get(), ip.data(), ip.size(), p, sizeof p/sizeof *p, reload_vt ? &immediate_timeout : 0));
+		const int rc(kevent(queue.get(), ip.data(), ip.size(), p, sizeof p/sizeof *p, vt.query_reload_needed() ? &immediate_timeout : 0));
 		ip.clear();
 
 		if (0 > rc) {
@@ -5376,10 +4915,9 @@ console_fb_realizer [[gnu::noreturn]] (
 		}
 
 		if (0 == rc) {
-			if (reload_vt) {
+			if (vt.query_reload_needed()) {
 				vt.reload();
 				realizer.set_display_update_needed();
-				reload_vt = false;
 			}
 			continue;
 		}
@@ -5388,32 +4926,54 @@ console_fb_realizer [[gnu::noreturn]] (
 			const struct kevent & e(p[i]);
 			switch (e.filter) {
 				case EVFILT_VNODE:
-					if (vt.query_buffer_fd() == static_cast<int>(e.ident)) 
-						reload_vt = true;
+					if (0 <= static_cast<int>(e.ident)) {
+						if (vt.query_buffer_fd() == static_cast<int>(e.ident)) 
+							vt.set_reload_needed();
+					}
 					break;
 				case EVFILT_SIGNAL:
 					handle_signal(e.ident);
 					break;
 				case EVFILT_READ:
-#if defined(__LINUX__) || defined(__linux__)
-					if (kvt.query_input_fd() == static_cast<int>(e.ident)) 
-						kvt.handle_input_events(realizer);
-					if (ps2mou.query_input_fd() == static_cast<int>(e.ident)) 
-						ps2mou.handle_input_events(realizer);
-#elif defined(__FreeBSD__) || defined (__DragonFly__)
-					if (kvt.query_input_fd() == static_cast<int>(e.ident)) 
-						kvt.handle_input_events(realizer);
-					if (atkbd.query_input_fd() == static_cast<int>(e.ident)) 
-						atkbd.handle_input_events(realizer);
-					if (sysmou.query_input_fd() == static_cast<int>(e.ident)) 
-						sysmou.handle_input_events(realizer);
+					if (0 <= static_cast<int>(e.ident)) {
+#if defined(__LINUX__) || defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
+						if (kvt.query_input_fd() == static_cast<int>(e.ident)) 
+							kvt.handle_input_events(realizer);
 #endif
-					for (HIDList::iterator j(inputs.begin()); inputs.end() != j; ++j) {
-						HID & input(**j);
-						if (input.query_input_fd() == static_cast<int>(e.ident)) 
-							input.handle_input_events(realizer);
+#if defined(__LINUX__) || defined(__linux__)
+						if (ps2mou.query_input_fd() == static_cast<int>(e.ident)) 
+							ps2mou.handle_input_events(realizer);
+#elif defined(__FreeBSD__) || defined (__DragonFly__)
+						if (atkbd.query_input_fd() == static_cast<int>(e.ident)) 
+							atkbd.handle_input_events(realizer);
+						if (sysmou.query_input_fd() == static_cast<int>(e.ident)) 
+							sysmou.handle_input_events(realizer);
+#endif
+						for (HIDList::iterator j(inputs.begin()); inputs.end() != j; ++j) {
+							HID & input(**j);
+							if (input.query_input_fd() == static_cast<int>(e.ident)) 
+								input.handle_input_events(realizer);
+						}
 					}
 					break;
+				case EVFILT_WRITE:
+					if (0 <= static_cast<int>(e.ident)) {
+						if (vt.query_input_fd() == static_cast<int>(e.ident))
+							vt.FlushMessages();
+					}
+					break;
+			}
+		}
+
+		if (vt.MessageAvailable()) {
+			if (!vt.query_polling_for_write()) {
+				append_event(ip, vt.query_input_fd(), EVFILT_WRITE, EV_ENABLE, 0, 0, 0);
+				vt.set_polling_for_write(true);
+			}
+		} else {
+			if (vt.query_polling_for_write()) {
+				append_event(ip, vt.query_input_fd(), EVFILT_WRITE, EV_DISABLE, 0, 0, 0);
+				vt.set_polling_for_write(false);
 			}
 		}
 

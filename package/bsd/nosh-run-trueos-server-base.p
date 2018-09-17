@@ -1,3 +1,4 @@
+# vim: set filetype=sh:
 # service list
 # common targets, services, and sockets
 service_with_dedicated_logger "motd-dynamic"

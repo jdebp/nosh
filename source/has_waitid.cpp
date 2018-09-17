@@ -5,13 +5,14 @@ For copyright and licensing terms, see the file named COPYING.
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <cstdlib>
 
 int
 main ()
 {
 #if defined(WEXITED)
-	return 0;
+	return EXIT_SUCCESS;
 #else
-	return 1;
+	return EXIT_FAILURE;
 #endif
 }

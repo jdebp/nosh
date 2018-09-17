@@ -1,4 +1,5 @@
 # shell function library for FreeBSD/TrueOS
+# vim: set filetype=sh:
 old_escape() { system-control escape --alt-escape --no-ext-escape -- "$@" ; }
 escape() { system-control escape --alt-escape -- "$@" ; }
 service_with_dedicated_logger() {
@@ -18,6 +19,9 @@ ktty_login_service_with_dedicated_logger() {
 socket_with_dedicated_logger() {
 	:
 }
+timer_with_dedicated_logger() {
+	:
+}
 service_only() {
 	:
 }
@@ -33,6 +37,9 @@ target() {
 logfile_owning_user() {
 	:
 }
+file_owning_user() {
+	:
+}
 non_file_owning_user() {
 	:
 }
@@ -44,4 +51,7 @@ user_vt_group() {
 }
 user_tty() {
 	:
+}
+directory() {
+        :
 }

@@ -2,6 +2,7 @@
 ## **************************************************************************
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
+# vim: set filetype=sh:
 case "`uname`" in
 Linux)	
 	# A far superior mechanism would be to read /etc/os-release with read-conf.

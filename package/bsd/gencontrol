@@ -103,16 +103,11 @@ new_pkg() {
 			test -d "$j" && find "$j" -type f
 		done | while read k
 		do
-			# The nonsense with sleeps and sync stops the FreeBSD 10 kernel from panicking.
-#			sleep 0.14
-#			sync
 			echo -n "  " "\"/$k\":" 
 			echo -n " {" "uname:root;" "gname:wheel;"
 			echo -n " sum:`sha256 -q $k`;"
 			echo -n " perm:`stat -f '%Lp' \"$k\"`;"
 			echo " }"
-#			sleep 0.14
-#			sync
 		done
 		echo "}"
 	) > ${dir}/+MANIFEST

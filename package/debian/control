@@ -21,9 +21,9 @@ Description: Minimal non-shell script processor and various chain-load utilities
  nosh is a minimal script processor for use in the #! lines of scripts.
  .
  Included here are various commands for altering process state:
-  * appendpath, chdir, chroot, clearenv, envdir, envuidgid, fdmove, fdredir
-  * prependpath, read-conf, setenv, setsid, setuidgid, setuidgid-fromenv,
-  * softlimit, ulimit, umask, unsetenv
+  * appendpath, chdir, chroot, clearenv, envdir, envuidgid, fdmove, fdredir, getuidgid
+  * machineenv, prependpath, read-conf, setenv, setgid-fromenv, setlogin, setsid, setuidgid,
+  * setuidgid-fromenv, softlimit, ulimit, umask, unsetenv, userenv, userenv-fromenv
  .
  Also present are commands useful for daemon implementations:
   * false, line-banner, true, recordio, setlock,
@@ -52,6 +52,16 @@ Description: Service and system management utilities
  It also provides compatibility commands for those familiar with daemontools and daemontools-encore.
   * svc, svok, svscan, svshow, svstat, svup
  The shims simply invoke native service management commands.
+
+Package: nosh-service-management-extras
+Architecture: amd64
+Depends: ${shlibs:Depends}, libc-bin (>=2.13-1)
+Breaks: nosh-bundles (<= 1.30)
+Suggests:
+Recommends: nosh-service-management
+Description: Extra service and system management utilities
+ This package provides extra tools for use with service management, including:
+  * chkservice
 
 Package: nosh-terminal-management
 Architecture: amd64
@@ -150,6 +160,7 @@ Description: core utility shims
  This package provides shims for core utility commands.
   * true, false, chroot, ulimit, umask
   * unshare, setsid
+  * printenv
  .
  The shims simply invoke nosh built-in commands.
 
@@ -221,7 +232,7 @@ Architecture: amd64
 Depends: nosh-exec
 Suggests: 
 Recommends: 
-Conflicts: ucspi-tcp, nosh-exec (<=1.32)
+Conflicts: ucspi-tcp, nosh-exec (<= 1.32)
 Description: Bernstein UCSPI-TCP shim service utilities
  This package provides shims for UCSPI-TCP service commands.
   * tcpserver, recordio
@@ -251,9 +262,29 @@ Description: Shim for the logrotate package
  This package is an empty package that resolves a package dependency from packages like mgetty and rabbitmq-server.
  These packages force a dependency upon logrotate even though their service bundles use cyclog and logrotate is nowhere involved.
 
+Package: nosh-bcron-as-cron-shims
+Architecture: amd64
+Depends: bcron
+Suggests: 
+Recommends: 
+Provides: 
+Description: Shim for the bcron package
+ This package provides shims that map cron commands onto bcron commands.
+
+Package: nosh-desktop-bus-shims
+Architecture: amd64
+Depends: nosh-exec (>= 1.38)
+Suggests: 
+Recommends: 
+Description: Replacements for Desktop Bus utilities
+ This package provides shims for Desktop Bus utilities.
+  * dbus-daemon-launch-helper
+ .
+ The shims replace the Desktop Bus utilities with improved tooling that works more universally.
+
 Package: nosh-bundles
 Architecture: amd64
-Depends: nosh-exec (>=1.37), nosh-service-management (>=1.37), nosh-terminal-management (>=1.22), adduser
+Depends: nosh-exec (>=1.38), nosh-service-management (>=1.38), nosh-terminal-management (>=1.22), adduser
 Suggests: 
 Recommends: 
 Conflicts: nosh-standard-targets, nosh-sysinit-services, nosh-bsd-services, nosh-bsd-sockets, nosh-regular-sockets, nosh-regular-services
@@ -262,6 +293,26 @@ Description: Service bundles
   * the standard targets (normal, workstation, server, multi-user, and so on);
   * the system initialization services; and
   * regular services.
+
+Package: nosh-debian-crontab-no-anacron
+Architecture: amd64
+Depends: 
+Suggests: 
+Recommends: 
+Provides: 
+Conflicts: anacron, nosh-debian-crontab-anacron
+Description: Debian common crontab (not-anacron version)
+ This package provides the standard /etc/crontab for Debian, including the parts that anacron would otherwise do.
+
+Package: nosh-debian-crontab-anacron
+Architecture: amd64
+Depends: 
+Suggests: 
+Recommends: 
+Provides: 
+Conflicts: nosh-debian-crontab
+Description: Debian common crontab (anacron version)
+ This package provides the standard /etc/crontab for Debian, sans the parts that anacron takes over responsibility for doing.
 
 Package: nosh-run-system-manager
 Architecture: amd64
@@ -339,7 +390,7 @@ Package: nosh-run-freedesktop-system-bus
 Architecture: amd64
 Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles
 Suggests: 
-Recommends: dbus
+Recommends: dbus, nosh-desktop-bus-shims
 Description: Run the system-wide message bus from freedesktop.org
  This package runs the system-wide message bus from freedesktop.org.
 
@@ -450,4 +501,14 @@ Recommends:
 Conflicts: systemd-sysv
 Description: Run the klog service.
  This package causes the klogd service to run.
+
+Package: nosh-run-bcron
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, bcron, nosh-debian-crontab-no-anacron | nosh-debian-crontab-anacron
+Provides: bcron-run
+Suggests: 
+Recommends: 
+Conflicts: bcron-run
+Description: Run the bcron services.
+ This package causes the bcron services to run.
 

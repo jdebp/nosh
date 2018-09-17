@@ -66,9 +66,10 @@ The terminal types for virtual consoles on Linux are fixed as <code>linux</code>
 
 <listitem>
 <para>
-The terminal types for virtual consoles on FreeBSD are fixed as <code>xterm</code>.
-In theory, the console driver on FreeBSD could emulate either <code>xterm</code> or <code>cons25</code>.
-But in practice <code>cons25</code> has been obsolete ever since the move (in FreeBSD 9.0) to enable UTF-8 on the console, which completely replaced the driver's escape sequence handler.
+The terminal types for virtual consoles on FreeBSD are fixed as <code>cons25</code>.
+In FreeBSD 9.0 the old <code>cons25</code> was replaced with the teken library, replacing the kernel terminal emulator's escape sequence handler and enabling UTF-8 support.
+Unfortunately, the FreeBSD termcap library was not updated with <code>teken</code> to match (although the terminfo library used by other operating systems was).
+Also unfortunately, other operating systems lack FreeBSD's <code>xterm-clear</code> and teken does not correctly duplicate the functionality of <code>xterm</code>.
 </para>
 </listitem>
 

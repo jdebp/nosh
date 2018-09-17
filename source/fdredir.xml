@@ -47,7 +47,7 @@ Blocking mode is restored because most shell-level utilities do not expect to in
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><arg>--permissions</arg></term><listitem>
+<term><arg>--mode</arg></term><listitem>
 
 <para>
 Specify the (numeric) permissions to use when creating a file.

@@ -19,8 +19,8 @@ split_list (
 	std::string * current = 0;
 	enum { UNQUOTED, DOUBLE, SINGLE } quote(UNQUOTED);
 	bool slash(false);
-	for (std::string::size_type p(0); s.length() != p; ++p) {
-		const char c(s[p]);
+	for (std::string::const_iterator p(s.begin()), e(s.end()); e != p; ++p) {
+		const char c(*p);
 		if (UNQUOTED == quote && !slash) {
 			if (std::isspace(c)) {
 				current = 0;

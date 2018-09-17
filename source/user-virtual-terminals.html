@@ -1,14 +1,14 @@
 <title>user-space virtual terminals</title>
 <link rel="Up" href="terminals.html" title="Terminals" />
 <link rel="Prev" href="kernel-virtual-terminals.html" title="kernel virtual terminals" />
-<link rel="Next" href="real-terminal-login.html" title="real terminal login" />
+<link rel="Next" href="terminal resources.html" title="terminal resources" />
 <h1>
 user-space virtual terminals
 </h1>
 
 <p>
 As an augmentation to, or a complete replacement for, kernel virtual terminals, this package also allows you to set up user-space virtual terminals.
-A user-space virtual terminal comprises four things:
+A user-space virtual terminal comprises at minimum four things:
 </p>
 <ul>
 <li><p>a pseudo-terminal</p></li>
@@ -16,10 +16,17 @@ A user-space virtual terminal comprises four things:
 <li><p>a console-terminal-emulator process, that conects the pseudo-terminal to a display buffer and an input FIFO</p></li>
 <li><p>one or more realizer processes, that connect the display buffer and input FIFO to real I/O devices of some kind</p></li>
 </ul>
+<p>
+To them can optionally be added:
+</p>
+<ul>
+<li><p>a front-end processor process for running a set of input methods</p></li>
+<li><p>a multiplexor process for mapping one display buffer and input FIFO onto many</p></li>
+</ul>
 
 <p>
 In a plain system, the TUI login service, the terminal emulator process, and the realizer process all run as ordinary services.
-This package comes with service bundles for running three user-space virtual terminal emulators (<code>vc1</code>, <code>vc2</code>, and <code>vc3</code>), multiplexed onto a single realizer (<code>head0</code>) through a multiplexor.
+This package comes with service bundles for running <a href="services/head0.html">three user-space virtual terminal emulators (<code>vc1</code>, <code>vc2</code>, and <code>vc3</code>), multiplexed onto a single realizer (<code>head0</code>)</a> through a multiplexor and an input method.
 </p>
 
 <p>
@@ -45,7 +52,7 @@ This duplicates the function of the old-style kernel terminal emulator code, but
 
 <p>
 It is explicitly <em>not</em> an emulator for any model of real terminal.
-Its function is to correctly cope with the outputs of programs that are using (according to operating system) the <code>linux</code>, <code>wsvt25</code>, or <code>xterm</code> entries in the termcap/terminfo databases; those being the entries that are used for kernel terminal emulators.
+Its function is to correctly cope with the outputs of programs that are using (according to operating system) the <code>linux</code>, <code>cons25</code>, <code>pcvt25</code>, <code>pccon</code>, or <code>teken</code> entries in the termcap/terminfo databases; those being the entries that are used for kernel terminal emulators.
 In other words, one should be able to switch from a kernel virtual terminal to a user-space virtual terminal without changing the terminal type used in the ttylogin service.
 </p>
 
@@ -56,6 +63,58 @@ A <code>console-terminal-emulator@1.service</code> must be ordered before its co
 
 <p>
 Terminal emulator services do not require superuser privileges at any stage; and for best security should be run under the aegis of an unprivileged account dedicated to the service(s).
+</p>
+
+<h2>
+multiplexors
+</h2>
+
+<p>
+A multiplexor service runs <a href="console-multiplexor.html"><code>console-multiplexor</code></a>.
+This provides a simple screen-switching service that presents one virtual terminal display buffer and input FIFO that is switched amongst one or more other terminal display buffers and input FIFOs.
+This again duplicates the function of the old-style kernel terminal emulator code, but as an application-mode process outwith the kernel.
+</p>
+
+<p>
+Realizers recognize special input gestures (usually keyboard chords, specified in a keyboard map of some kind) for switching screens, which they turn into distinct screen switch messages that are sent to the input FIFO.
+That input FIFO is the one provided by the mutiplexor, which strips these messages out of the input stream (so that the actual terminal emulators "downstream" never see them) and acts upon them, switching amongst the downstream virtual terminals as commanded.
+</p>
+
+<p>
+The <a href="console-multiplexor-control.html"><code>console-multiplexor-control</code></a> command, also available under the name <code>chvt</code>, generates the same messages.
+A user with sufficient access to the input FIFO, the security concerns of which you can find discussed in the user manual, can programmatically switch a multiplexor between multiple inputs.
+</p>
+
+<p>
+Unlike the kernel virtual terminal system, this system is not limited to just this kind of simple multiplexor.
+One could create more complex multiplexors to provide, say, a multiple pane interface that displayed multiple downstream virtual terminals simultaneously.
+Because the system is composable, this does not require any change to the terminal emulator programs.
+</p>
+
+<h2>
+input method front-end processors
+</h2>
+
+<p>
+An input method front-end processor service runs <a href="console-input-method.html"><code>console-input-method</code></a>.
+This overlays a pre-editing user interface on top of a virtual terminal, presenting itself as another virtual terminal with its own display buffer and input FIFO.
+</p>
+
+<p>
+When inactive, it operates in simple pass-through mode.
+Active, it injects its user interface near to the underlying display buffer's cursor and intercepts the input messages originating from a realizer, not passing them "downstream" but rather passing downstream the input that the user has pre-edited in its user interface.
+</p>
+
+<p>
+Front-end processing is driven by files containing data tables, determining how character composition is actually performed by the pre-editing.
+The front-end processor can be loaded with several data tables, switching between them on the fly, allowing input to be composed in several CJKV and romaji (i.e. American/European) modes.
+The data files themselves are in a format that has been around for years, and that is common to several input method softwares.
+It is a fairly simple exercise to add and to use one's own data files for custom input methods; and <a href="terminal-resources.html#FEP">a fairly sizeable library of existing methods already exists in the world at large</a>.
+</p>
+
+<p>
+The <a href="console-multiplexor-control.html"><code>console-input-method-control</code></a> command generates various special input method key messages.
+A user with sufficient access to the input FIFO, the security concerns of which you can find discussed in the user manual, can programmatically switch input method modes and toggle the input method on and off.
 </p>
 
 <h2>
@@ -83,7 +142,12 @@ The exact security model depends from the kind of realizer, and there are many p
 <ul>
 <li><p>
 <a href="console-ncurses-realizer.html"><code>console-ncurses-realizer</code></a> &mdash; 
-a realizer that uses wide character ncurses (ncursesw) to render one user-space virtual terminal on the console that the realizer itself is attached to.
+a realizer that uses wide character ncurses (ncursesw) to render one user-space virtual terminal on the terminal that the realizer itself is attached to.
+This realizer needs no additional privileged access to anything apart from the files of the user-space virtual terminal.
+</p></li>
+<li><p>
+<a href="console-termio-realizer.html"><code>console-termio-realizer</code></a> &mdash; 
+a realizer that uses straight terminal I/O, hardwiring DEC VT, SCO Console, ISO, and ECMA control sequences, to render one user-space virtual terminal on the terminal that the realizer itself is attached to.
 This realizer needs no additional privileged access to anything apart from the files of the user-space virtual terminal.
 </p></li>
 <li><p>

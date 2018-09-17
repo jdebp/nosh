@@ -5,16 +5,15 @@
 # vim: set filetype=sh:
 case "`uname`" in
 Linux)
-	redo-ifchange exec /etc/os-release
-	# These get us *only* the operating system variables, safely.
-	read_os() { ./exec clearenv read-conf /etc/os-release "`which printenv`" "$1" ; }
-
-	case "`read_os ID`:`read_os VERSION_ID`" in
+	redo-ifchange os_version
+	read -r os_version < os_version
+	case "${os_version}" in
 	arch:*) 	ext=arch-linux ;;
 	debian:[78]) 	ext=debian7-linux ;;
 	debian:*) 	ext=linux ;;
 	centos:*)	ext=linux ;;
 	rhel:*) 	ext=linux ;;
+	gentoo:*) 	ext=linux ;;
 	*)      	ext=who ;;
 	esac
 	;;

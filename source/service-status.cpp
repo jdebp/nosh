@@ -38,11 +38,10 @@ convert(
 	const ProcessEnvironment & envs,
 	const uint64_t & s
 ) {
-	bool leap;
-	const std::time_t t(tai64_to_time(envs,s, leap));
+	const TimeTAndLeap z(tai64_to_time(envs, s));
 	struct tm tm;
-	localtime_r(&t, &tm);
-	if (leap) ++tm.tm_sec;
+	localtime_r(&z.time, &tm);
+	if (z.leap) ++tm.tm_sec;
 	return tm;
 }
 
@@ -173,17 +172,6 @@ state_of (
 	}
 }
 
-static inline
-bool
-has_exited_run (
-	const unsigned int b,
-	const char status[STATUS_BLOCK_SIZE]
-) {
-	if (b < STATUS_BLOCK_SIZE) return false;
-	const char * const ran_exit_status(status + EXIT_STATUSES_OFFSET + EXIT_STATUS_SIZE * 1);
-	return 0 != ran_exit_status[0];
-}
-
 static
 const char * const
 status_event[4] = {
@@ -308,7 +296,7 @@ display (
 				}
 			}
 		} else {
-			const bool is_up(b < ENCORE_STATUS_BLOCK_SIZE ? p : encore_status_stopped != status[ENCORE_STATUS_OFFSET]);
+			const bool is_up(b < ENCORE_STATUS_BLOCK_SIZE ? p : encore_status_stopped != status[ENCORE_STATUS_OFFSET] || (ready_after_run && exited_run));
 			if (*want || *paused || is_up != initially_up)
 				std::fputs("; ", stdout);
 			if (*want || *paused)
@@ -365,7 +353,7 @@ service_status (
 			&colours_option,
 			&log_lines_option
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "directories...");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{directories...}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -390,7 +378,7 @@ service_status (
 
 	timespec now;
 	clock_gettime(CLOCK_REALTIME, &now);
-	const uint64_t z(time_to_tai64(envs, now.tv_sec, false));
+	const uint64_t z(time_to_tai64(envs, TimeTAndLeap(now.tv_sec, false)));
 
 	reset_colour(!colours);
 

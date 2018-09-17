@@ -1,0 +1,32 @@
+# This is an overlay keymap that just contains 
+# the differences between the default built-in keyboard map
+# and DIN keyboards.
+#
+#                                                        option
+# scan                       cntrl         option option cntrl lock
+# code  base   shift  cntrl  shift  option shift  cntrl  shift state
+# ------------------------------------------------------------------
+  003   '2'    '"'    nop    nop    0xb2   0xb2   nop    nop     O
+  004   '3'    0xa7   nop    nop    0xb3   0xb3   nop    nop     O
+  007   '6'    '&'    nop    nop    '6'    '&'    nop    nop     O
+  008   '7'    '/'    nop    nop    '{'    '{'    nop    nop     O
+  009   '8'    '('    esc    esc    '['    '['    esc    esc     O
+  010   '9'    ')'    gs     gs     ']'    ']'    gs     gs      O
+  011   '0'    '='    nop    nop    '}'    '}'    nop    nop     O
+  012   0xdf   '?'    fs     fs     '\'    '\'    fs     fs      O
+  013   dacu   dgra   nop    nop    0xb3   0xb4   nop    nop     O
+  016   'q'    'Q'    dc1    dc1    '@'    '@'    nul    nul     C
+  018   'e'    'E'    enq    enq    0x20ac 'E'    enq    enq     C
+  021   'z'    'Z'    sub    sub    'z'    'Z'    sub    sub     C
+  026   0xfc   0xdc   nop    nop    0xfc   0xdc   esc    nop     C
+  027   '+'    '*'    nop    nop    '~'    '~'    nop    nop     O
+  039   0xf6   0xd6   nop    nop    0xf6   0xd6   nop    nop     C
+  040   0xe4   0xc4   nop    nop    0xe4   0xc4   nop    nop     C
+  041   dcir   0xb0   rs     rs     '^'    0xb0   rs     rs      O
+  043   '#'    '''    nop    nop    '#'    '''    nop    nop     O
+  044   'y'    'Y'    em     em     'y'    'Y'    em     em      C
+  046   'c'    'C'    etx    etx    0xa2   'C'    etx    etx     C
+  051   ','    ';'    nop    nop    ','    ';'    nop    nop     O
+  052   '.'    ':'    nop    nop    '.'    ':'    nop    nop     O
+  053   '-'    '_'    us     us     '-'    '_'    us     us      O
+  086   '<'    '>'    nop    nop    '|'    0xa6   nop    nop     O

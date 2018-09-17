@@ -1,0 +1,241 @@
+# shell post-install function library for Debian
+# vim: set filetype=sh:
+old_escape() { system-control escape --alt-escape --no-ext-escape -- "$@" ; }
+escape() { system-control escape --alt-escape -- "$@" ; }
+add_user() { 
+	if ! getent passwd "$1" > /dev/null 
+	then
+                if test -n "$2"
+                then
+                        printf 1>&2 "Adding user: %s with home directory: %s\n" "$1" "$2"
+                else
+                        printf 1>&2 "Adding user: %s\n" "$1"
+                fi
+		useradd --shell /bin/true "$1" ${2+--home-dir "$2"} || true
+	else
+		# printf 1>&2 "Using existing user: %s\n" "$1"
+		:
+	fi
+}
+del_user() { 
+	if getent passwd "$1" > /dev/null 
+	then
+		printf 1>&2 "Removing user: %s\n" "$1"
+		userdel "$1" ; 
+	fi
+}
+add_group() { 
+	if ! getent group "$1" > /dev/null 
+	then
+		printf 1>&2 "Adding group: %s\n" "$1"
+		groupadd "$1" 
+	fi
+}
+add_log() { 
+	install -d -m 0750 /var/log/sv/"$2"
+	setfacl -m g:adm:rx /var/log/sv/"$2" || true
+	setfacl -m u:"$1":rwx /var/log/sv/"$2" || true
+}
+rename_user() {
+	if getent passwd "$1$3" > /dev/null 
+	then
+		printf 1>&2 "Renaming user: %s to %s\n" "$1$3" "$2$3"
+		usermod -l "$2$3" "$1$3"
+	fi
+}
+start_up() {
+	for i
+	do
+		if system-control is-enabled "$i" 2>/dev/null && 
+		 ! system-control is-active "$i" 2>/dev/null
+		then
+			printf 1>&2 "Start: %s\n" "$i"
+			system-control reset "$i"
+		fi
+	done
+}
+rename_logfile_owning_user() {
+	local opwescaped="`old_escape "$1"`"
+	if ! getent passwd "${opwescaped}"-log > /dev/null 
+	then
+		return
+	fi
+	local npwescaped="`escape "$1"`"
+	if test _"${opwescaped}" = _"${npwescaped}"
+	then
+		return
+	fi
+	rename_user "${opwescaped}" "${npwescaped}" -log
+}
+rename_non_logfile_owning_user() {
+	local opwescaped="`old_escape "$1"`"
+	if ! getent passwd "${opwescaped}" > /dev/null 
+	then
+		return
+	fi
+	local npwescaped="`escape "$1"`"
+	if test _"${opwescaped}" = _"${npwescaped}"
+	then
+		return
+	fi
+	rename_user "${opwescaped}" "${npwescaped}" ""
+}
+service_with_dedicated_logger() {
+	if test -z "${nosh_run_package}"
+	then
+		rename_logfile_owning_user "$1"
+		local pwescaped="`escape "$1"`"
+		add_user "$pwescaped"-log
+		add_log "$pwescaped"-log "$1"
+	else
+		system-control preset "$1.service"
+		system-control preset --prefix cyclog@ "$1.service"
+		start_up "cyclog@$1.service" "$1.service"
+	fi
+}
+login_service_with_dedicated_logger() {
+	if test -z "${nosh_run_package}"
+	then
+		rename_logfile_owning_user "ttylogin@$1"
+		local pwescaped="`escape "ttylogin@$1"`"
+		add_user "$pwescaped"-log
+		add_log "$pwescaped"-log "ttylogin@$1"
+	else
+		system-control preset --ttys --prefix ttylogin@ "$1.service"
+		system-control preset --ttys --prefix cyclog@ttylogin@ "$1.service"
+		start_up "cyclog@ttylogin@$1.service" "ttylogin@$1.service"
+	fi
+}
+ktty_login_service_with_dedicated_logger() {
+	case "`uname`" in
+	OpenBSD)	ktty=ttyC; break ;;
+	Linux)		ktty=tty; break ;;
+	*)		ktty=ttyv; break ;;
+	esac
+	login_service_with_dedicated_logger "${ktty}$1"
+}
+socket_with_dedicated_logger() {
+	if test -z "${nosh_run_package}"
+	then
+		rename_logfile_owning_user "$1"
+		local pwescaped="`escape "$1"`"
+		add_user "$pwescaped"-log
+		add_log "$pwescaped"-log "$1"
+	else
+		system-control preset "$1.socket"
+		system-control preset --prefix cyclog@ "$1.service"
+		start_up "cyclog@$1.socket" "$1.socket"
+	fi
+}
+timer_with_dedicated_logger() {
+	if test -z "${nosh_run_package}"
+	then
+		rename_logfile_owning_user "$1"
+		local pwescaped="`escape "$1"`"
+		add_user "$pwescaped"-log
+		add_log "$pwescaped"-log "$1"
+	else
+		system-control preset "$1.timer"
+		system-control preset --prefix cyclog@ "$1.service"
+		start_up "cyclog@$1.timer" "$1.timer"
+	fi
+}
+service_only() {
+	if test -z "${nosh_run_package}"
+	then
+		:
+	else
+		system-control preset "$1.service"
+		start_up "$1.service"
+	fi
+}
+service_only_no_run() {
+	if test -z "${nosh_run_package}"
+	then
+		:
+	else
+		system-control preset "$1.service"
+	fi
+}
+socket_only() {
+	if test -z "${nosh_run_package}"
+	then
+		:
+	else
+		system-control preset "$1.socket"
+		start_up "$1.socket"
+	fi
+}
+fan_in_logger() {
+	if test -z "${nosh_run_package}"
+	then
+		rename_logfile_owning_user "$1"
+		local pwescaped="`escape "$1"`"
+		add_user "$pwescaped"-log
+		add_log "$pwescaped"-log "$1"
+	else
+		system-control preset "$1-log.service"
+		start_up "$1-log.service"
+	fi
+}
+target() {
+	if test -z "${nosh_run_package}"
+	then
+                :
+	else
+		system-control preset "$1.target"
+	fi
+}
+logfile_owning_user() {
+	if test -z "${nosh_run_package}"
+	then
+		rename_logfile_owning_user "$1"
+		local pwescaped="`escape "$1"`"
+		add_user "$pwescaped"-log
+	fi
+}
+file_owning_user() {
+	if test -z "${nosh_run_package}"
+	then
+		rename_non_logfile_owning_user "$1"
+		local pwescaped="`escape "$1"`"
+		add_user "$pwescaped" "$2"
+	fi
+}
+non_file_owning_user() {
+	if test -z "${nosh_run_package}"
+	then
+		rename_non_logfile_owning_user "$1" ""
+		local pwescaped="`escape "$1"`"
+		add_user "$pwescaped"
+	fi
+}
+user_vt_user() {
+	if test -z "${nosh_run_package}"
+	then
+		local pwescaped="`escape user-vt-"$1"`"
+		add_user "$pwescaped"
+	fi
+}
+user_vt_group() {
+	if test -z "${nosh_run_package}"
+	then
+		local pwescaped="`escape user-vt-"$1"`"
+		add_group "$pwescaped"
+	fi
+}
+user_tty() { 
+	if test -z "${nosh_run_package}"
+	then
+		if ! grep -q "^$1\>" /etc/ttys 
+		then
+			 printf >> /etc/ttys "%s\t\"%s\"\t%s\t%s\t%s\n" "$1" "/bin/exec foreground pause ; false" "xterm" "on" "secure"
+		fi
+	fi
+}
+directory() {
+	if test -z "${nosh_run_package}"
+	then
+		install -d -o "$1" -m "$3" -- "$2"
+	fi
+}

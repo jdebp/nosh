@@ -1,4 +1,8 @@
 #!/bin/sh -e
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+# vim: set filetype=sh:
 main="`basename "$1"`"
 objects="main-exec.o builtins-${main}.o"
 libraries="builtins.a manager.a utils.a"

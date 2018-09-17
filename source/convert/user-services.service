@@ -1,6 +1,7 @@
 ## **************************************************************************
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
+# 2018-03-04: This line causes a rebuild using the new userenv tooling.
 
 [Unit]
 Description=Per-user manager service for %I

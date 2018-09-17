@@ -101,6 +101,9 @@ The previously documented workaround for those libraries' having memory leaks in
 <citerefentry><refentrytitle>read-conf</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 </para></listitem>
 <listitem><para>
+<citerefentry><refentrytitle>printenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
 The <command>set-service-env</command> and <command>print-service-env</command> subcommands of <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 </para></listitem>
 </itemizedlist>

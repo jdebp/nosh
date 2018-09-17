@@ -29,7 +29,7 @@ get_mount_where [[gnu::noreturn]] (
 	try {
 		popt::definition * top_table[] = {
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "what");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{what}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -83,7 +83,7 @@ get_mount_what [[gnu::noreturn]] (
 	try {
 		popt::definition * top_table[] = {
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "where");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{where}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);

@@ -1,0 +1,138 @@
+<refentry id="console-input-method-control">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>console-input-method-control</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>console-input-method-control</refname>
+<refpurpose>control a (user-space) virtual terminal input method</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>console-input-method-control</command>
+<group choice='opt' rep='repeat'>
+<arg choice='req'><replaceable>command</replaceable></arg>
+<arg choice='req'><replaceable>command</replaceable>@<replaceable>vtname</replaceable></arg>
+</group>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>console-input-method-control</command> controls a user-space virtual terminal that is driven by <citerefentry><refentrytitle>console-input-method</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+<para>
+<replaceable>vtname</replaceable> is the (optional) name of the virtual terminal.
+It can be a directory relative to <filename>/run/dev</filename> for a user-space virtual terminal input-method.
+If omitted, it defaults to <filename>head0</filename>.
+</para>
+
+<para>
+<replaceable>command</replaceable> is one of:
+</para>
+
+<variablelist>
+
+<varlistentry>
+<term><code>.</code></term>
+<listitem><para>
+Generate an "IM Switch" input event.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><code>K</code></term>
+<listitem><para>
+Generate a "Katakana" input event.
+(Strictly speaking, PC keyboard maps do not use this event, but use a "Katakana/Hiragana/Romaji" event with level 2 shift.)
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><code>L</code></term>
+<listitem><para>
+Generate a "Hiragana" input event.
+(Strictly speaking, PC keyboard maps do not use this event, but use a "Katakana/Hiragana/Romaji" event with level 1 shift.)
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><code>R</code></term>
+<listitem><para>
+Generate a "Romaji" input event.
+(Strictly speaking, PC keyboard maps do not use this event, but use a "Katakana/Hiragana/Romaji" event with level 3 shift.)
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><code>G</code></term>
+<listitem><para>
+Generate a "Hangeul" input event.
+(Strictly speaking, PC keyboard maps do not use this event.)
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><code>Y</code></term>
+<listitem><para>
+Generate a "Han/Yeong" input event.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><code>Z</code></term>
+<listitem><para>
+Generate a "Hanja" input event.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><code>N</code></term>
+<listitem><para>
+Generate a "Muhenkan" input event.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><code>C</code></term>
+<listitem><para>
+Generate a "Henkan" input event.
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+</refsection>
+
+<refsection><title>Security</title>
+
+<para>
+Input method control is done by injecting switch command events into the input stream.
+Permission to inject things into the input stream is implicitly permission to generate arbitrary keyboard and mouse input to a session.
+Usually the only accounts with such privileges are the superuser and the accounts used to run the daemons that form the user-space virtual terminal subsystem.
+</para>
+
+<para>
+Input method switching under programmatic control with a tool such as this can unexpectedly switch users away from password prompts and the like.
+Be careful about granting users the privilege of performing these actions.
+For best results, only the user physically at the user station(s) where the virtual terminal is being realized should be able to generate input method commands, with actual keyboard actions.
+</para>
+
+<para>
+(The kernel virtual terminal system shares these caveats and risks.
+They are simply rarely discussed.)
+</para>
+
+</refsection>
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

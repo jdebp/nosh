@@ -136,7 +136,7 @@ vc_reset_tty (
 			&hard_reset_option,
 			&set_text_mode_option
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "prog");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{prog}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -146,7 +146,7 @@ vc_reset_tty (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	if (!isatty(STDOUT_FILENO)) {

@@ -1,0 +1,154 @@
+<refentry id="console-termio-realizer">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>console-termio-realizer</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>console-termio-realizer</refname>
+<refpurpose>realize a user-space virtual terminal on another terminal with straight terminal I/O</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>console-termio-realizer</command>
+<arg choice='opt'>--display-only</arg>
+<arg choice='opt'>--wrong-way-up</arg>
+<arg choice='opt'>--bold-as-colour</arg>
+<arg choice='opt'>--faint-as-colour</arg>
+<arg choice='opt'>--permit-fake-truecolour</arg>
+<arg choice='opt'>--cursor-keypad-application-mode</arg>
+<arg choice='opt'>--calculator-keypad-application-mode</arg>
+<arg choice='req'><replaceable>vcname</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>console-termio-realizer</command> is the I/O back-end for a (user-space) virtual terminal, that realizes the virtual terminal on another terminal.
+It expects that other terminal to be already connected to its standard input and standard output, and its type to be specified in the <envar>TERM</envar> environment variable.
+It only uses its standard error for diagnostic messages.
+</para>
+
+<para>
+It opens the character/attribute buffer file <filename><replaceable>vcname</replaceable>/display</filename> and the input FIFO <filename><replaceable>vcname</replaceable>/input</filename>.
+These are the "master side" interfaces of the user-space virtual terminal, as detailed in <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+<para>
+It then enters a loop where it simultaneously:
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+(unless the <arg choice='plain'>--display-only</arg> option is used) writes all data received from its standard input to the input FIFO; and
+</para>
+</listitem>
+
+<listitem>
+<para>
+writes the contents of the character/attribute buffer file to its standard output.
+</para>
+</listitem>
+
+</itemizedlist>
+
+<para>
+Various workarounds for deficiencies in the realizing terminal are available.
+The <arg choice='plain'>--bold-as-colour</arg> and <arg choice='plain'>--faint-as-colour</arg> command-line options accomodate terminals that do not yet implement the <code>bold</code> and <code>faint</code> SGR attributes that were standardized by ECMA-48 in 1976.
+The <arg choice='plain'>--permit-fake-truecolour</arg> command-line option permits the use of ISO 8613-6 Direct colour control sequences even on terminals which are known to fake this by mapping 24-bit RGB colours to entries in their 8-bit colour palettes.
+</para>
+
+<para>
+The <arg choice='plain'>--wrong-way-up</arg> command-line option causes the display to be realized the wrong way up, swapping the direction of increasing line numbers.
+This is an oft-requested terminal feature, albeit by people who have never actually experienced it.
+</para>
+
+<para>
+The <arg choice='plain'>--cursor-keypad-application-mode</arg> and <arg choice='plain'>--calculator-keypad-application-mode</arg> instruct <command>console-termio-realizer</command> to switch, respectively, the cursor keypad and the calculator keypad of the realizing terminal into their "application" modes.
+Otherwise it switches them into their "normal" modes.
+</para>
+
+<refsection><title>I/O protocol</title>
+
+<para>
+<command>console-termio-realizer</command> has a slightly more powerful rendering mechanism than <citerefentry><refentrytitle>console-ncurses-realizer</refentrytitle><manvolnum>1</manvolnum></citerefentry>, because it does not use (wide character) ncurses.
+It instead uses straight terminal I/O, with ECMA and ISO standard output control sequences, DEC VT input and output control sequences, and SCO Console input control sequences.
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+It can recognize DEC VT modifier parameters to function, numeric keypad, and cursor/editing keypad key control sequences; and recognize modifier key combinations that ncurses has no concept of.
+This presumes that the terminal is actually capable of sending such modifiers.
+</para>
+</listitem>
+
+<listitem>
+<para>
+If the terminal distinguishes between calculator keypad keys (in application mode) and editing/cursor keypad keys, this too is recognized.
+</para>
+</listitem>
+
+<listitem>
+<para>
+It will attempt to use the correct ECMA-48 control sequencs for underline and italics.
+</para>
+</listitem>
+
+<listitem>
+<para>
+If the terminal supports them, it uses ISO 8613-6 SGR indexed and direct colour extensions for 8-bit palette look-up or 24-bit RGB.
+</para>
+</listitem>
+</itemizedlist>
+
+<para>
+The disadvantage of not using ncurses is that <command>console-termio-realizer</command> will not interoperate with terminals that do not adhere to the ISO and ECMA standards, and to the DEC VT and SCO Console conventions.
+However, such terminals whilst possible to regularly encounter in the 1960s and 1970s are exceedingly rare nowadays.
+</para>
+</refsection>
+
+</refsection>
+
+<para>
+What the terminal supports is determined from the terminal type specified in the <envar>TERM</envar> environment variable.
+Terminal types are, per the NCurses and Terminfo documentation, assumed to comprise "families" that share a common name as a prefix (e.g. <code>gnome</code> and <code>gnome-256color</code>)
+<command>console-termio-realizer</command> mainly only looks at these families, not the trailing "subfamily" denotations (with a couple of exceptions such as checking for "256color").
+</para>
+
+<refsection><title>Security</title>
+
+<para>
+<command>console-termio-realizer</command> only requires sufficient privileges to access the file and the FIFO.
+Superuser privileges are not necessary.
+The recommended configuration is that the file and the FIFO are (respectively) readable and writable by a dedicated unprivileged user or group.
+</para>
+
+<para>
+It does not attempt to create the file or FIFO if they do not exist, because this would create them with the wrong owner and group, and thus requires no write access to their containing directory.
+</para>
+
+</refsection>
+
+<refsection><title>Bugs</title>
+
+<para>
+If you run <command>console-termio-realizer</command> outputting to the very same user space virtual terminal whose display it is rendering (and input it is generating), you will get a loop.
+Because of the modular nature of user space virtual terminals, it is not possible for <command>console-termio-realizer</command> to detect this.
+Don't do it.
+</para>
+
+</refsection>
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

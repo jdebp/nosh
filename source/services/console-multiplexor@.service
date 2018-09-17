@@ -17,11 +17,11 @@ PermissionsStartOnly=yes
 #RuntimeDirectoryMode=02755
 ExecStartPre=install -d -m 00755 /run/dev
 # Files in /run/dev/%I have group user-vt-multiplexor by default, not group user-vt-realizer.
-ExecStartPre=install -d -m 02775 -o user-vt-multiplexor -g user-vt-multiplexor /run/dev/%I
+ExecStartPre=install -d -m 02775 -o user-vt-multiplexor -g user-vt-multiplexor /run/dev/%Imux
 # Not until we find out how to have ACLs in /run on FreeBSD.
-#ExecStartPre=install -d -m 02775 -o root -g user-vt-multiplexor /run/dev/%I
-#ExecStartPre=setfacl -m u:user-vt-multiplexor:rwx /run/dev/%I
-ExecStart=sh -c 'exec %p /run/dev/%I vc[0-9]*'
+#ExecStartPre=install -d -m 02775 -o root -g user-vt-multiplexor /run/dev/%Imux
+#ExecStartPre=setfacl -m u:user-vt-multiplexor:rwx /run/dev/%Imux
+ExecStart=sh -c 'exec %p /run/dev/%Imux vc[0-9]*'
 
 [Install]
 WantedBy=multi-user.target

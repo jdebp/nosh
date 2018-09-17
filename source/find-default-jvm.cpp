@@ -33,7 +33,7 @@ find_default_jvm (
 	try {
 		popt::definition * top_table[] = {
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "prog");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{prog}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -43,7 +43,7 @@ find_default_jvm (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	if (args.empty()) {
@@ -75,6 +75,14 @@ find_default_jvm (
 	if (0 <= d.get()) {
 		if (0 <= faccessat(d.get(), "default-java/", F_OK, AT_EACCESS)) {
 			if (!envs.set("JAVA_HOME", "/usr/lib/jvm/default-java")) {
+				const int error(errno);
+				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "JAVA_HOME", std::strerror(error));
+				throw EXIT_FAILURE;
+			}
+			return;
+		}
+		if (0 <= faccessat(d.get(), "default-runtime/", F_OK, AT_EACCESS)) {
+			if (!envs.set("JAVA_HOME", "/usr/lib/jvm/default-runtime")) {
 				const int error(errno);
 				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "JAVA_HOME", std::strerror(error));
 				throw EXIT_FAILURE;

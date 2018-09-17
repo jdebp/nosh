@@ -31,7 +31,7 @@ cat (
 		popt::definition * main_table[] = {
 			&user_option
 		};
-		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "service(s)...");
+		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "{service(s)...}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -41,7 +41,7 @@ cat (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	if (args.empty()) {

@@ -23,8 +23,6 @@ ifchange_follow() {
 	done
 }
 
-redo-ifchange system-control 
-
 # ###
 # Work out what files are going to be used and declare build dependencies from them.
 # ###
@@ -32,10 +30,23 @@ redo-ifchange system-control
 case "${base}" in
 *@*) 
 	template="${name%%@*}"
-	if test -e "${template}"@.service
+	if test -e "${template}"@.socket
 	then
+		unit="${name}".socket
+		ifchange_follow "${template}"@.socket
+		ifchange_follow "${template}".service
+	elif test -e "${template}"@.timer
+	then
+		redo-ifcreate "${template}"@.socket
+		unit="${name}".timer
+		ifchange_follow "${template}"@.timer
+		ifchange_follow "${template}".service
+	elif test -e "${template}"@.service
+	then
+		redo-ifcreate "${template}"@.socket
+		redo-ifcreate "${template}"@.timer
 		unit="${name}".service
-		unitfile="${template}"@.service
+		ifchange_follow "${template}"@.service
 	else
 		echo 1>&2 "$0: ${name}: Don't know what to use to build this."
 		exit 1
@@ -45,6 +56,7 @@ case "${base}" in
 	if test -e "${name}".socket
 	then
 		unit="${name}".socket
+		ifchange_follow "${name}".socket
 		if test -e "${name}"@.service
 		then
 			ifchange_follow "${name}"@.service
@@ -52,19 +64,24 @@ case "${base}" in
 			redo-ifcreate "${name}"@.service
 			ifchange_follow "${name}".service
 		fi
+	elif test -e "${name}".timer
+	then
+		redo-ifcreate "${name}".socket
+		unit="${name}".timer
+		ifchange_follow "${name}".timer
+		ifchange_follow "${name}".service
 	elif test -e "${name}".service
 	then
 		redo-ifcreate "${name}".socket
+		redo-ifcreate "${name}".timer
 		unit="${name}".service
+		ifchange_follow "${name}".service
 	else
 		echo 1>&2 "$0: ${name}: Don't know what to use to build this."
 		exit 1
 	fi
-	unitfile="${unit}"
 	;;
 esac
-
-ifchange_follow "${unitfile}"
 
 # ###
 # Decide the parameters for the conversion tool, and the location of the service and (if any) its logging service.
@@ -167,6 +184,8 @@ install -d services.new
 
 rm -r -f services.new/"${base}"
 
+redo-ifchange system-control 
+
 ./system-control convert-systemd-units --no-systemd-quirks --no-generation-comment ${escape} ${etc} --bundle-root services.new/ "${unit}"
 
 test -n "${log}" && ln -s -f "${log}" services.new/"${base}"/log
@@ -229,12 +248,6 @@ cyclog@VBoxService|cyclog@kmod@vboxadd|cyclog@kmod@vboxsf|cyclog@kmod@vboxguest|
 cyclog@kmod@vboxdrv|cyclog@kmod@vboxnetadp|cyclog@kmod@vboxnetflt|cyclog@kmod@vboxpci)
 	rm -f -- services.new/"${base}"/wanted-by/workstation
 	ln -f -s -- /etc/service-bundles/targets/virtualbox-host services.new/"${base}"/wanted-by/
-	;;
-console-multiplexor@head0)
-	for i in 1 2 3
-	do 
-		ln -s -f /run/dev/vc"$i" services.new/"${base}"/service/
-	done
 	;;
 http[46]d|ftp[46]d)
 	install -m 0644 /dev/null services.new/"${base}"/service/ip4/10.0.0.0_8/allow

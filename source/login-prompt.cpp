@@ -31,7 +31,7 @@ login_prompt (
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
-		popt::top_table_definition main_option(0, NULL, "Main options", "prog");
+		popt::top_table_definition main_option(0, NULL, "Main options", "{prog}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -41,7 +41,7 @@ login_prompt (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	write(STDOUT_FILENO, "Press ENTER to log on:", sizeof "Press ENTER to log on:" - 1);

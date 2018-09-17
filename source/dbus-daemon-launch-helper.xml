@@ -1,7 +1,7 @@
 <refentry id="set-dynamic-hostname">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
-<refentrytitle>dbus-daemon-lanch-helper</refentrytitle>
+<refentrytitle>dbus-daemon-launch-helper</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class="manual">user commands</refmiscinfo>
 <refmiscinfo class="source">nosh</refmiscinfo>

@@ -1,0 +1,23 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Network Time Synchronization
+Conflicts=ntpd.service openntpd.service chrony.service VBoxService.service
+Before=time-sync.target
+Wants=time-sync.target
+RequiresMountsFor=/var/lib/systemd/clock
+
+[Service]
+ExecStart=/lib/systemd/%p
+EnvironmentDirectory=env
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=full
+ProtectHome=yes
+ProtectControlGroups=yes
+ProtectKernelTunables=yes
+
+[Install]
+WantedBy=workstation.target

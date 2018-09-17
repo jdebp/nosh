@@ -26,8 +26,7 @@ See the manual for each individual shell for its built-in command.
 </refsection><refsection><title>Description</title>
 
 <para>
-<command>unsetenv</command> is a chain-loading utility that unsets the environment variable <replaceable>var</replaceable>
-and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+<command>unsetenv</command> is a chain-loading utility that unsets the environment variable <replaceable>var</replaceable> and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
 </para>
 
 <para>

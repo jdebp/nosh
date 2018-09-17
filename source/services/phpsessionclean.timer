@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Invoke %p every 30 minutes
+
+[Timer]
+#OnCalendar=*-*-* *:09,39:00
+#OnBootSec=30m
+OnActiveSec=30m
+OnUnitActiveSec=30m
+
+[Install]
+WantedBy=workstation.target

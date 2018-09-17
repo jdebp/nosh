@@ -9,5 +9,6 @@ Description=DConf Editor for %u
 Type=dbus
 EnvironmentDirectory=env
 ExecStart=%p --gapplication-service
+Restart=on-abort
 
 [Install]

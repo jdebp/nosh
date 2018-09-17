@@ -11,7 +11,7 @@
 redo-ifchange rc.conf
 
 # This gets us *only* the configuration variables, safely.
-read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
+read_rc() { clearenv read-conf rc.conf printenv "$1" ; }
 
 firstboot_sentinel() { read_rc "firstboot_sentinel" || echo "/firstboot" ; }
 

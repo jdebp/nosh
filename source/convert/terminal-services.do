@@ -22,53 +22,40 @@
 
 set_if_unset() { if test -z "`system-control print-service-env \"$1\" \"$2\"`" ; then system-control set-service-env "$1" "$2" "$3" ; echo "$1: Defaulted $2 to $3." ; fi ; }
 
-case "`uname`" in
-Linux)
-	set_if_unset console-fb-realizer@head0 KERNEL_VT "1"
-	set_if_unset console-fb-realizer@head0 FRAMEBUFFER "/dev/fb0"
-	set_if_unset console-fb-realizer@head0 KBDMAP kbdmaps/us.kbdmap
-	set_if_unset console-fb-realizer@head0 INPUTS "--ps2mouse /dev/input/mice"
-	set_if_unset console-fb-realizer@head0 OWNED_DEVICES "/dev/input/event0 /dev/input/mice /dev/tty1 /dev/fb0"
-	;;
-*BSD)
-	set_if_unset console-fb-realizer@head0 KERNEL_VT "ttyv0"
-	set_if_unset console-fb-realizer@head0 KBDMAP kbdmaps/us.kbdmap
-	set_if_unset console-fb-realizer@head0 INPUTS "--sysmouse /dev/sysmouse"
-	set_if_unset console-fb-realizer@head0 OWNED_DEVICES "/dev/uhid0 /dev/sysmouse /dev/ttyv0"
-	set_if_unset console-fb-realizer@head0 DETACHED_UGEN_DEVICES ""
-	;;
-esac
+list_heads() {
+	seq 0 0 | sed -e 's:^:head:'
+}
 
 keymaps="/usr/share/vt/keymaps/"
-svcdir="`system-control find console-fb-realizer@head0`"
-if test -d "${keymaps}"
-then
-	redo-ifchange "${keymaps}"
-	find "${keymaps}" -name '*.kbd' |
-	while read -r k
-	do
-		b="`basename \"$k\" .kbd`"
-		case "$b" in
-		*.pc98.*)	continue;;	# blacklisted
-		*.pc98)		continue;;	# blacklisted
-		*.caps)		continue;;	# unnecessary
-		*.ctrl)		continue;;	# unnecessary
-		*.capsctrl)	continue;;	# unnecessary
-		esac
-		redo-ifchange kbdmaps/"$b".kbdmap
-		ln -f -s "`pwd`/kbdmaps/$b".kbdmap "${svcdir}/service/kbdmaps/"
-		redo-ifchange kbdmaps/"$b".capsctrl.kbdmap
-		ln -f -s "`pwd`/kbdmaps/$b".capsctrl.kbdmap "${svcdir}/service/kbdmaps/"
-	done
-else
-	for b in us uk
-	do
-		redo-ifchange kbdmaps/"$b".kbdmap
-		ln -f -s "`pwd`/kbdmaps/$b".kbdmap "${svcdir}/service/kbdmaps/"
-		redo-ifchange kbdmaps/"$b".capsctrl.kbdmap
-		ln -f -s "`pwd`/kbdmaps/$b".capsctrl.kbdmap "${svcdir}/service/kbdmaps/"
-	done
-fi
+
+list_keyboard_maps() {
+	if test -d "${keymaps}"
+	then
+		redo-ifchange "${keymaps}"
+		find "${keymaps}" -name '*.kbd' |
+		while read -r k
+		do
+			b="`basename \"$k\" .kbd`"
+			case "$b" in
+			*.pc98.*)	continue;;	# blacklisted
+			*.pc98)		continue;;	# blacklisted
+			*.caps)		continue;;	# unnecessary
+			*.ctrl)		continue;;	# unnecessary
+			*.capsctrl)	continue;;	# unnecessary
+			hu.102)		b="hu";;
+			*.10[1-9].*)	continue;;	# unnecessary
+			*.10[1-9])	continue;;	# unnecessary
+			esac
+			printf "%s\n" "$b"
+		done
+	else
+		redo-ifcreate "${keymaps}"
+		for b in us uk jp de
+		do
+			printf "%s\n" "$b"
+		done
+	fi
+}
 
 list_user_virtual_terminals() {
 	seq 1 3 | sed -e 's:^:vc:' -e 's:$:-tty:'
@@ -82,36 +69,36 @@ list_kernel_virtual_terminals() {
 	OpenBSD)
 		for i in C D E F G H I J
 		do 
-			for j in 0 1 2 3 4 5 6 7 8 9 a b ; do echo tty$i$j ; done 
+			printf "tty$i%s\n" 0 1 2 3 4 5 6 7 8 9 a b
 		done
 		;;
 	*BSD)
-		for i in 0 1 2 3 4 5 6 7 8 9 a b c d e f ; do echo ttyv$i ; done 
+		printf "ttyv%s\n" 0 1 2 3 4 5 6 7 8 9 a b c d e f
 		;;
 	esac
 }
 
 list_real_terminals() {
 	case "`uname`" in
-	# Linux is technically /dev/ttyS[0-9]* , but no-one has that many real terminal devices nowadays.
 	Linux) 
+		# Linux is technically /dev/ttyS[0-9]* , but no-one has that many real terminal devices nowadays.
 		seq 0 99 | sed -e 's:^:ttyS:'
 		seq 0 99 | sed -e 's:^:ttyACM:'
+		# These are special serial devices in several virtual machines.
+		printf "%s\n" hvc0 xvc0 hvsi0 sclp_line0 ttysclp0 '3270!tty1'
 		;;
 	OpenBSD)
-		for i in 0 1 2 3 3 ; do echo ttyU$i ; done
+		printf "ttyU%s\n" 0 1 2 3
 		for i in 0 1 2 3 4 5 6 7
 		do 
-			for j in 0 1 2 3 4 5 6 7 8 9 a b c d e f ; do echo tty$i$j ; done
+			printf "tty$i%s\n" 0 1 2 3 4 5 6 7 8 9 a b c d e f
 		done
 		;;
 	*BSD)
-		for i in 0 1 2 3 4 5 6 7 8 9 a b c d e f ; do echo ttyu$i ; done 
+		printf "ttyu%s\n" 0 1 2 3 4 5 6 7 8 9 a b c d e f
 		;;
 	esac
 }
-
-redo-ifchange "/dev"
 
 # These files/directories not existing is not an error; but is a reason to rebuild when they appear.
 for i in /etc/ttys /dev
@@ -123,6 +110,12 @@ do
 		redo-ifcreate "$i"
 	fi
 done
+
+case "`uname`" in
+FreeBSD)
+	redo-ifchange termcap/termcap.db
+	;;
+esac
 
 list_kernel_virtual_terminals | 
 while read -r n
@@ -193,4 +186,62 @@ do
 			echo >> "$3" no "$n"
 		fi
 	fi
+done
+
+list_keyboard_maps |
+while read -r b
+do
+	cc="${b%%.*}"
+	option="${b#${cc}}"
+	for keys in 104 105 106 107 109
+	do
+		redo-ifchange kbdmaps/"${cc}"."${keys}""${option}"
+		redo-ifchange kbdmaps/"${cc}"."${keys}""${option}".capsctrl
+	done
+done
+
+list_heads |
+while read -r n
+do
+	case "`uname`" in
+	Linux)
+		set_if_unset console-fb-realizer@"$n" KERNEL_VT "1"
+		set_if_unset console-fb-realizer@"$n" FRAMEBUFFER "/dev/fb0"
+		set_if_unset console-fb-realizer@"$n" KBDMAP kbdmaps/us.104
+		set_if_unset console-fb-realizer@"$n" INPUTS "--ps2mouse /dev/input/mice"
+		set_if_unset console-fb-realizer@"$n" OWNED_DEVICES "/dev/input/event0 /dev/input/mice /dev/tty1 /dev/fb0"
+		;;
+	*BSD)
+		set_if_unset console-fb-realizer@"$n" KERNEL_VT "ttyv0"
+		set_if_unset console-fb-realizer@"$n" KBDMAP kbdmaps/us.104
+		set_if_unset console-fb-realizer@"$n" INPUTS "--sysmouse /dev/sysmouse"
+		set_if_unset console-fb-realizer@"$n" OWNED_DEVICES "/dev/uhid0 /dev/sysmouse /dev/ttyv0"
+		set_if_unset console-fb-realizer@"$n" DETACHED_UGEN_DEVICES ""
+		;;
+	esac
+
+	set_if_unset console-input-method@"$n" lower /run/dev/"$n"mux
+
+	svcdir="`system-control find console-multiplexor@\"$n\"`"
+        if ! test -e "${svcdir}/service/provisioned"
+        then
+                for vc in vc1 vc2 vc3
+                do
+                        ln -f -s "/run/dev/${vc}" "${svcdir}/service/"
+                done
+                touch -- "${svcdir}/service/provisioned"
+        fi
+
+	svcdir="`system-control find console-fb-realizer@\"$n\"`"
+	list_keyboard_maps |
+	while read -r b
+	do
+		cc="${b%%.*}"
+		option="${b#${cc}}"
+		for keys in 104 105 106 107 109
+		do
+			ln -f -s "`pwd`/kbdmaps/${cc}"."${keys}""${option}" "${svcdir}/service/kbdmaps/"
+			ln -f -s "`pwd`/kbdmaps/${cc}"."${keys}""${option}".capsctrl "${svcdir}/service/kbdmaps/"
+		done
+	done
 done

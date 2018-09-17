@@ -1,0 +1,52 @@
+<refentry id="setlogin">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>setlogin</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>setlogin</refname>
+<refpurpose>set session login name then chain</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>setlogin</command>
+<arg choice='req'><replaceable>account</replaceable></arg>
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>setlogin</command> is a chain-loading utility that (on the BSDs) sets the current session's login name to <replaceable>account</replaceable>, or (on Linux) sets the current process's login UID to the value for <replaceable>account</replaceable> in the system account database, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>setlogin</command> will ignore.
+</para>
+
+<para>
+This name is what is reported by the the <citerefentry><refentrytitle>logname</refentrytitle><manvolnum>1</manvolnum></citerefentry> command.  
+On the BSDs, the name is session-wide, so setting it in one process will affect all processes in the same session.
+On Linux, the login UID is inherited by child processes and is not session-wide.
+For consistent cross-platforms results, therefore, invoke <command>setlogin</command> in the session leader process of a new session before it creates further processes in the session.
+</para>
+
+<para>
+The command will fail if the process is not running under the aegis of the superuser. 
+Non-superusers are not permitted to alter the login name/UID.
+</para>
+
+<para>
+If it cannot find an account named <replaceable>account</replaceable> in the database, or fails setting the name or ID, it does not chain and exits with status code 111.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

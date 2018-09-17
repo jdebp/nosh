@@ -32,10 +32,20 @@ create_links (
 	const std::string & subdir
 ) ;
 void
+create_mount_links (
+	const char * prog,
+	const std::string & bund,
+	const bool mounts_are_relative,
+	const bool prevent_root_link,
+	const FileDescriptorOwner & bundle_dir_fd,
+	const std::string & names,
+	const std::string & subdir
+) ;
+void
 make_mount_interdependencies (
 	const char * prog,
 	const std::string & name,
-	const bool etc_bundle,
+	const bool mounts_are_relative,
 	const bool prevent_root_link,
 	const FileDescriptorOwner & bundle_dir_fd,
 	std::string where

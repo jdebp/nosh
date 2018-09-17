@@ -1,0 +1,14 @@
+#
+# Enable bcron services
+#
+# This is not a systemd preset.
+# It goes in a special nosh system-manager preset directory.
+# It is used by the nosh-run-freedesktop-kits package in order to enable the services themselves.
+#
+
+enable	cyclog@bcron-spool.service
+enable	bcron-spool.service
+enable	cyclog@bcron-start.service
+enable	bcron-start.service
+enable	cyclog@bcron-update.service
+enable	bcron-update.service

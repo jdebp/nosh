@@ -28,7 +28,7 @@ create_control_group [[gnu::noreturn]] (
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
-		popt::top_table_definition main_option(0, 0, "Main options", "cgroup");
+		popt::top_table_definition main_option(0, 0, "Main options", "{cgroup}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -38,7 +38,7 @@ create_control_group [[gnu::noreturn]] (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	if (args.empty()) {

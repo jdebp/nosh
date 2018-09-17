@@ -21,7 +21,7 @@ nmount (
 	int flags
 ) {
 	std::string path, type, from, data;
-	// NULL data is different from empty data in Linux mount() for at least cgroup2 filesystem.
+	// NULL data is different from empty data in Linux mount() for at least the cgroup2 filesystem.
 	bool hasdata(false);
 
 	for (unsigned int u(0U); u + 1U < ioc; u += 2U) {
@@ -38,10 +38,10 @@ nmount (
 		{
 			hasdata = true;
 			if (!data.empty())
-				data = data + ",";
-			data = data + var;
+				data += ",";
+			data += var;
 			if (iov[u + 1U].iov_base && iov[u + 1U].iov_len)
-				data = data + "=" + convert(iov[u + 1U]);
+				data += "=" + convert(iov[u + 1U]);
 		}
 	}
 
@@ -80,10 +80,10 @@ nmount (
 		else 
 		{
 			if (!data.empty())
-				data = data + ",";
-			data = data + var;
+				data += ",";
+			data += var;
 			if (iov[u + 1U].iov_base && iov[u + 1U].iov_len)
-				data = data + "=" + convert(iov[u + 1U]);
+				data += "=" + convert(iov[u + 1U]);
 		}
 	}
 

@@ -46,7 +46,7 @@ process (
 			if (bol) {
 				timespec now;
 				clock_gettime(CLOCK_REALTIME, &now);
-				const uint64_t secs(time_to_tai64(envs, now.tv_sec, false));
+				const uint64_t secs(time_to_tai64(envs, TimeTAndLeap(now.tv_sec, false)));
 				const uint32_t nano(now.tv_nsec);
 				std::fprintf(stdout, "@%016" PRIx64 "%08" PRIx32 " ", secs, nano);
 				bol = false;
@@ -72,7 +72,7 @@ tai64n [[gnu::noreturn]] (
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
-		popt::top_table_definition main_option(0, 0, "Main options", "file(s)");
+		popt::top_table_definition main_option(0, 0, "Main options", "[file(s)...]");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);

@@ -90,7 +90,7 @@ The remote (client) IP address of the accepted socket, in human-readable form.
 <envar>TCPREMOTEPORT</envar>
 </term><listitem>
 <para>
-The remote (server) port number of the accepted socket.
+The remote (client) port number of the accepted socket.
 </para>
 </listitem>
 </varlistentry>

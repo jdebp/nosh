@@ -9,6 +9,6 @@ Description=Zeitgeist full-text search indexer for %u
 Type=dbus
 EnvironmentDirectory=env
 ExecStart=/usr/local/libexec/%p
-RestartSec=30
+Restart=on-abort
 
 [Install]

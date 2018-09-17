@@ -1,0 +1,20 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=One-off ALSA state save daemon at startup/shutdown
+Conflicts=alsa-state.service
+
+[Service]
+Type=oneshot
+RuntimeDirectory=alsa
+ExecStart=alsactl -E HOME=%t/alsa restore
+ExecStopPost=alsactl -E HOME=%t/alsa store
+LimitNPROC=1
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
+Restart=no
+
+[Install]
+WantedBy=workstation.target

@@ -1,0 +1,36 @@
+#!/bin/sh -e
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+# vim: set filetype=sh:
+#
+# Xsession.d script to patch the session's environment variables into the common environment used to launch per-user Desktop Bus services.
+# This file is sourced by Xsession(5), not executed.
+
+common="${XDG_CONFIG_HOME:-${HOME}/.config}/service-bundles/common"
+
+if	test -d "${common}" &&
+	>/dev/null 2>&1 which system-control
+	# The beauty of the filesystem being the API is that we do not have to use the is-service-manager-client test here.
+then
+	# Bear in mind that the per-user service manager is chained from userenv, and the per-user Desktop Bus broker is further chained from userenv with all of the options on.
+	# So we do not need to patch anything that userenv will have already set up.
+#	system-control --user set-service-env "${common}" DBUS_SESSION_BUS_ADDRESS "${DBUS_SESSION_BUS_ADDRESS}"
+	system-control --user set-service-env "${common}" DESKTOP_SESSION "${DESKTOP_SESSION}"
+	system-control --user set-service-env "${common}" DISPLAY "${DISPLAY}"
+	system-control --user set-service-env "${common}" WAYLAND_DISPLAY "${WAYLAND_DISPLAY}"
+	system-control --user set-service-env "${common}" WAYLAND_SOCKET "${WAYLAND_SOCKET}"
+	system-control --user set-service-env "${common}" GDM_LANG "${GDM_LANG}"
+	system-control --user set-service-env "${common}" GNOME_SHELL_SESSION_MODE "${GNOME_SHELL_SESSION_MODE}"
+	system-control --user set-service-env "${common}" GPG_AGENT_INFO "${GPG_AGENT_INFO}"
+	system-control --user set-service-env "${common}" GTK_MODULES "${GTK_MODULES}"
+	system-control --user set-service-env "${common}" QT_ACCESSIBILITY "${QT_ACCESSIBILITY}"
+	system-control --user set-service-env "${common}" QT_LINUX_ACCESSIBILITY_ALWAYS_ON "${QT_LINUX_ACCESSIBILITY_ALWAYS_ON}"
+	system-control --user set-service-env "${common}" WINDOWPATH "${WINDOWPATH}"
+	system-control --user set-service-env "${common}" XAUTHORITY "${XAUTHORITY}"
+	system-control --user set-service-env "${common}" XDG_SESSION_DESKTOP "${XDG_SESSION_DESKTOP}"
+	system-control --user set-service-env "${common}" XDG_SESSION_COOKIE "${XDG_SESSION_COOKIE}"
+	system-control --user set-service-env "${common}" XDG_SESSION_TYPE "${XDG_SESSION_TYPE}"
+	system-control --user set-service-env "${common}" XDG_VTNR "${XDG_VTNR}"
+	1>&2 system-control --user print-service-env "${common}"
+fi

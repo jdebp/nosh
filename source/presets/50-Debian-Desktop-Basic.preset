@@ -15,6 +15,10 @@
 # Normal services
 enable	cyclog@anacron.service
 enable	anacron.service
+disable	cyclog@apt-daily-update.service
+disable	apt-daily-update.service
+disable	cyclog@apt-daily-upgrade.service
+disable	apt-daily-upgrade.service
 enable	cyclog@avahi-daemon.service
 enable	avahi-daemon.service
 enable	cyclog@avahi_daemon.service

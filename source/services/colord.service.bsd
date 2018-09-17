@@ -9,7 +9,7 @@ After=local-syslog.target
 [Service]
 Type=dbus
 User=colord
-ExecStart=/usr/local/libexec/%p/%p
+ExecStart=/usr/local/libexec/%p
 
 [Install]
 WantedBy=workstation.target

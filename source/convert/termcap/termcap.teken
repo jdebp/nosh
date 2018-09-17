@@ -1,0 +1,31 @@
+# The Teken library itself
+#
+# Teken is 256-colour capable as standard.
+#
+teken-lib:\
+	:am:bs:NP:mi:ms:pt:AX:eo:bw:ut:km:xm:\
+	:pa#32767:Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm:op=\E[39;49m:\
+	:k1=\EOP:k2=\EOQ:k3=\EOR:k4=\EOS:\
+	:k5=\E[15~:k6=\E[17~:k7=\E[18~:k8=\E[19~:k9=\E[20~:k;=\E[21~:F1=\E[23~:F2=\E[24~:\
+	:K2=\E[E:kb=^H:kh=\E[H:ku=\E[A:kd=\E[B:kl=\E[D:kr=\E[C:kN=\E[6~:kP=\E[5~:@7=\E[F:@8=^M:kI=\E[2~:kD=\E3~:kB=\E[Z:\
+	:IC=\E[%d@:DC=\E[%dP:SF=\E[%dS:SR=\E[%dT:AL=\E[%dL:DL=\E[%dM:DO=\E[%dB:LE=\E[%dD:RI=\E[%dC:UP=\E[%dA:\
+	:sc=\E7:rc=\E8:al=\E[L:cd=\E[J:ce=\E[K:cl=\E[H\E[J:cm=\E[%i%d;%dH:dc=\E[P:dl=\E[M:do=\E[B:bt=\E[Z:ho=\E[H:\
+	:ic=\E[@:cb=\E[1K:mb=\E[5m:md=\E[1m:mr=\E[7m:me=\E[m:\
+	:bl=^G:nd=\E[C:rs=\Ec:so=\E[7m:se=\E[27m:up=\E[A:cr=^M:ta=^I:le=^H:sf=\E[S:sr=\E[T:nw=\E[E:ec=\E[%dX:\
+	:cv=\E[%i%dd:ch=\E[%i%d`:ve=\E[?25h:vi=\E[?25l:vs@:
+
+# nosh virtual terminal in FreeBSD console mode
+#
+# The extra function keys are not part of the Teken library, but are the original SCO console defaults that FreeBSD still has.
+# The Teken library overlays its own F1 to F12 on top of the SCO console defaults.
+# We are overlaying the other way around, so we do not include the SCO console's F1 to F12 here.
+#
+# omitted SCO console function keys, because they make it too long:
+#	:FT=\E[y:FU=\E[z:FV=\E[@:FW=\E[[:FX=\E[\\:FY=\E[]:FZ=\E[\136:Fa=\E[_:Fb=\E[`:Fc=\E[{:\
+#	:
+#
+teken|teken-256color:\
+	:co#80:li#25:it#8:\
+	:F3=\E[Y:F4=\E[Z:F5=\E[a:F6=\E[b:F7=\E[c:F8=\E[d:F9=\E[e:FA=\E[f:FB=\E[g:FC=\E[h:FD=\E[i:FE=\E[j:FF=\E[k:\
+	:FG=\E[l:FH=\E[m:FI=\E[n:FJ=\E[o:FK=\E[p:FL=\E[q:FM=\E[r:FN=\E[s:FO=\E[t:FP=\E[u:FQ=\E[v:FR=\E[w:FS=\E[x:\
+	:tc=teken-lib:

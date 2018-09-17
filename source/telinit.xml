@@ -44,7 +44,11 @@ Avoid using them if possible.
 </para>
 
 <para>
-It is preferable, although not ideal, to have systemd and upstart habits and use the <citerefentry><refentrytitle>systemctl</refentrytitle><manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>initctl</refentrytitle><manvolnum>1</manvolnum></citerefentry> compatibility commands instead.
+It is preferable, although not ideal, to have systemd, upstart, or Solaris/Illumos habits and use the <citerefentry><refentrytitle>systemctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>initctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and <citerefentry><refentrytitle>svcadm</refentrytitle><manvolnum>1</manvolnum></citerefentry> compatibility commands instead.
+</para>
+
+<para>
+Or one can just use the <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> command directly.
 </para>
 
 <refsection><title>Compatibility system control commands</title>
@@ -152,7 +156,7 @@ Invoked as one of the system control commands <command>emergency</command>, <com
 </cmdsynopsis>
 
 <para>
-Invoked as one of the system control commands <command>reboot</command>, <command>halt</command>, <command>powercycle</command>, or <command>poweroff</command> it will normally chain to <citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry> with the <arg choice='plain'>-r</arg>, <arg choice='plain'>-h</arg>, or <arg choice='plain'>-p</arg> command-line option respectively.
+Invoked as one of the system control commands <command>reboot</command>, <command>halt</command>, <command>powercycle</command>, or <command>poweroff</command> it will normally chain to <citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry> with the <arg choice='plain'>-r</arg>, <arg choice='plain'>-h</arg>, <arg choice='plain'>-c</arg>, or <arg choice='plain'>-p</arg> command-line option respectively.
 <citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry> is then responsible for issuing the relevant commands to the system manager.
 The <arg choice='plain'>--halt</arg>, <arg choice='plain'>--reboot</arg>, <arg choice='plain'>--powercycle</arg>, and <arg choice='plain'>--poweroff</arg> command-line options force which option is sent to <citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry>, for the benefits of system administrators who enjoy giving computers self-contradictory instructions like <command>reboot</command> <arg choice="plain">--halt</arg>.
 </para>

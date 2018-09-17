@@ -1,3 +1,4 @@
+# vim: set filetype=sh:
 # service list
 service_with_dedicated_logger "VBoxService"
 service_with_dedicated_logger "kmod@vboxguest"

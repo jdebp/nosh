@@ -74,6 +74,9 @@ The previously documented workaround for those libraries' having memory leaks in
 <listitem><para>
 <citerefentry><refentrytitle>read-conf</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 </para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>printenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
 </itemizedlist>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

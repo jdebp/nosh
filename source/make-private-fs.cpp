@@ -45,7 +45,7 @@ make_private_fs (
 			&homes_option,
 			&hide_option
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "prog");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{prog}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -55,11 +55,16 @@ make_private_fs (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
-	if (temp) {
 #if defined(__LINUX__) || defined(__linux__)
+	const int bind_mount_flags(MS_BIND|MS_REC);
+#else
+	const int bind_mount_flags(0);
+#endif
+
+	if (temp) {
 		static const char * tempdirs[] = {
 			"/tmp",
 			"/var/tmp",
@@ -93,16 +98,19 @@ make_private_fs (
 			struct iovec iov[] = {
 				FSPATH,			{ const_cast<char *>(*i), std::strlen(*i) + 1 },
 				FROM,			{ name, std::strlen(name) + 1 },
+#if defined(__LINUX__) || defined(__linux__)
 				FSTYPE,			MAKE_IOVEC(""),
+#else
+				FSTYPE,			MAKE_IOVEC("nullfs"),
+#endif
 			};
 
-			if (0 > nmount(iov, sizeof iov/sizeof *iov, MS_BIND|MS_REC)) {
+			if (0 > nmount(iov, sizeof iov/sizeof *iov, bind_mount_flags)) {
 				const int error(errno);
 				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, std::strerror(error));
 				throw EXIT_FAILURE;
 			}
 		}
-#endif
 	}
 	if (devices) {
 #if defined(__LINUX__) || defined(__linux__)
@@ -121,7 +129,6 @@ make_private_fs (
 			// Yes, we're hardwiring the GID of the "tty" group to what it conventionally is in Linux distributions.
 			// It's this, or have the whole nsswitch mechanism loaded into process #1 just to read /etc/groups.
 			MAKE_IOVEC("gid"),	MAKE_IOVEC("5"),
-		//	MAKE_IOVEC("newinstance"),	MAKE_IOVEC(""),
 		};
 #else
 		static const struct iovec dev[] = {
@@ -224,13 +231,17 @@ make_private_fs (
 		}
 	}
 	if (homes || !hide_directories.empty()) {
-#if defined(__LINUX__) || defined(__linux__)
 		static struct homedir {
 			bool fatal;
 			const char * name;
 		} const homedirs[] = {
 			{ true, "/root" },
+#if defined(__LINUX__) || defined(__linux__)
 			{ true, "/home" },
+#else
+			{ true, "/usr/home" },
+#endif
+			{ false, "/run/user" },
 		};
 
 		char name[4096];
@@ -260,10 +271,14 @@ make_private_fs (
 			struct iovec iov[] = {
 				FSPATH,			{ const_cast<char *>(i->name), std::strlen(i->name) + 1 },
 				FROM,			{ name, std::strlen(name) + 1 },
+#if defined(__LINUX__) || defined(__linux__)
 				FSTYPE,			MAKE_IOVEC(""),
+#else
+				FSTYPE,			MAKE_IOVEC("nullfs"),
+#endif
 			};
 
-			if (0 > nmount(iov, sizeof iov/sizeof *iov, MS_BIND|MS_REC)) {
+			if (0 > nmount(iov, sizeof iov/sizeof *iov, bind_mount_flags)) {
 				const int error(errno);
 				if (i->fatal) {
 					std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, i->name, std::strerror(error));
@@ -276,15 +291,18 @@ make_private_fs (
 			struct iovec iov[] = {
 				FSPATH,			{ const_cast<char *>(i->c_str()), i->length() + 1 },
 				FROM,			{ name, std::strlen(name) + 1 },
+#if defined(__LINUX__) || defined(__linux__)
 				FSTYPE,			MAKE_IOVEC(""),
+#else
+				FSTYPE,			MAKE_IOVEC("nullfs"),
+#endif
 			};
 
-			if (0 > nmount(iov, sizeof iov/sizeof *iov, MS_BIND|MS_REC)) {
+			if (0 > nmount(iov, sizeof iov/sizeof *iov, bind_mount_flags)) {
 				const int error(errno);
 				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, i->c_str(), std::strerror(error));
 				throw EXIT_FAILURE;
 			}
 		}
-#endif
 	}
 }

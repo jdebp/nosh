@@ -16,7 +16,7 @@ For copyright and licensing terms, see the file named COPYING.
 /* Waiting for child processes **********************************************
 // **************************************************************************
 // 
-// This form of the library uses the old waitpid() function.
+// This form of the library uses the (very) old waitpid() function.
 // That conflates process group IDs and process IDs, which is problematic when we might be dealing with process #1.
 // WEXITED is implicit, furthermore.
 */

@@ -4,6 +4,10 @@
 ## **************************************************************************
 # vim:set filetype=sh:
 #
+# This prototype is copied into every (real) user's system-control/convert directory.
+#
+# This is run by the per-user external configuration import subsystem.
+# It is used to compile all of the service bundles from source.
 
 eu="--etc-bundle --user"
 e="--no-systemd-quirks --escape-instance --bundle-root"
@@ -24,7 +28,27 @@ redo_ifchange_follow() {
 	done
 }
 
-user_simple_alias() {
+make_raw_service_bundle() {
+	system-control convert-systemd-units $eu $e "$hs/" "./$1$2"
+	install -d -m 0755 -- "$hs/$1/service/env"
+}
+
+link_logger_service_to_log_directory() {
+	rm -f -- "$hs/$2/main"
+	ln -s -- "/var/log/user/$i/$1" "$hs/$2/main"
+}
+
+make_target_aliases() {
+	local t="$1"
+	shift
+	for s
+	do
+		rm -f -- "$ht/$s"
+		ln -s -- "$t" "$ht/$s"
+	done
+}
+
+make_service_aliases() {
 	local t="$1"
 	shift
 	for s
@@ -34,7 +58,7 @@ user_simple_alias() {
 	done
 }
 
-user_dbus_definition() {
+make_local_dbus_user_service_definitions() {
 	for s
 	do
 		if ! test -e "$hd/dbus-1/services/$s.service"
@@ -45,15 +69,10 @@ user_dbus_definition() {
 	done
 }
 
-user_dbus_alias() {
-	local t="$1"
+make_service_bundle_aliases_and_local_dbus_user_service_definitions() {
+	make_service_aliases "$@"
 	shift
-	for s
-	do
-		rm -f -- "$hs/$s"
-		ln -s -- "$t" "$hs/$s"
-	done
-	user_dbus_definition "$@"
+	make_local_dbus_user_service_definitions "$@"
 }
 
 user_display() {
@@ -63,15 +82,11 @@ user_display() {
 	fi
 }
 
-user_dbus() {
-	if ! test -e "$hs/$1/service/env/DBUS_SESSION_BUS_ADDRESS"
-	then
-#		system-control set-service-env "$hs/$1" DBUS_SESSION_BUS_ADDRESS "unix:runtime=yes"
-		system-control set-service-env "$hs/$1" DBUS_SESSION_BUS_ADDRESS "unix:path=/run/user/$i/bus"
-	fi
+allow_dbus_bus_activation() {
+	rm -f -- "$1/service/down"
 }
 
-user_link_to_log() {
+link_service_to_logger_service() {
 	rm -f -- "$hs/$1/log"
 	ln -s -- "../$2" "$hs/$1/log"
 	rm -f -- "$hs/$1/wants/log" "$hs/$1/after/log"
@@ -79,105 +94,88 @@ user_link_to_log() {
 	ln -s -- "../log" "$hs/$1/after/log"
 }
 
-user_socket_dbus_service() {
-	redo_ifchange_follow "$1.socket" "$1.service"
-	system-control convert-systemd-units $eu $e "$hs/" "./$1.socket"
-	install -d -m 0755 -- "$hs/$1/service/env"
-	user_link_to_log "$1" "dbus-servers-log"
-	userenv system-control --user preset "$1.socket"
-}
-
 user_simple_dbus_service() {
 	redo_ifchange_follow "$1.service"
-	system-control convert-systemd-units $eu $e "$hs/" "./$1.service"
-	install -d -m 0755 -- "$hs/$1/service/env"
-	user_link_to_log "$1" "dbus-servers-log"
-	user_dbus "$1"
-	user_dbus_alias "$@"
-	userenv system-control --user preset "$1.service"
+	make_raw_service_bundle "$1" ".service"
+	link_service_to_logger_service "$1" "dbus-servers-log"
+	make_service_bundle_aliases_and_local_dbus_user_service_definitions "$@"
+	system-control --user preset "$1.service"
+	allow_dbus_bus_activation "${hs}/$1"
 }
 
 user_simple_dbus_service_with_dedicated_logger() {
 	redo_ifchange_follow "$1.service" "cyclog@.service"
-	system-control convert-systemd-units $eu $e "$hs/" "./$1.service"
-	install -d -m 0755 -- "$hs/$1/service/env"
-	system-control convert-systemd-units $eu $e "$hs/" "./cyclog@$1.service"
-	install -d -m 0755 -- "$hs/cyclog@$1/service/env"
-	rm -f -- "$hs/cyclog@$1/main"
-	ln -s -- "/var/log/user/$i/$1" "$hs/cyclog@$1/main"
-	user_link_to_log "$1" "cyclog@$1"
-	user_dbus "$1"
-	user_dbus_alias "$@"
-	userenv system-control --user preset "$1.service"
-	userenv system-control --user preset --prefix "cyclog@" "$1.service"
+	make_raw_service_bundle "$1" ".service"
+	make_raw_service_bundle "cyclog@$1" ".service"
+	link_logger_service_to_log_directory "$1" "cyclog@$1"
+	link_service_to_logger_service "$1" "cyclog@$1"
+	make_service_bundle_aliases_and_local_dbus_user_service_definitions "$@"
+	system-control --user preset "$1.service"
+	system-control --user preset --prefix "cyclog@" "$1.service"
+	allow_dbus_bus_activation "${hs}/$1"
 }
 
 user_socket_dbus_service_with_dedicated_logger() {
 	redo_ifchange_follow "$1.socket" "$1.service" "cyclog@.service"
-	system-control convert-systemd-units $eu $e "$hs/" "./$1.socket"
-	install -d -m 0755 -- "$hs/$1/service/env"
-	system-control convert-systemd-units $eu $e "$hs/" "./cyclog@$1.service"
-	install -d -m 0755 -- "$hs/cyclog@$1/service/env"
-	rm -f -- "$hs/cyclog@$1/main"
-	ln -s -- "/var/log/user/$i/$1" "$hs/cyclog@$1/main"
-	user_link_to_log "$1" "cyclog@$1"
-	user_dbus "$1"
-	user_dbus_alias "$@"
-	userenv system-control --user preset "$1.socket"
-	userenv system-control --user preset --prefix "cyclog@" "$1.service"
+	make_raw_service_bundle "$1" ".socket"
+	make_raw_service_bundle "cyclog@$1" ".service"
+	link_logger_service_to_log_directory "$1" "cyclog@$1"
+	link_service_to_logger_service "$1" "cyclog@$1"
+	make_service_bundle_aliases_and_local_dbus_user_service_definitions "$@"
+	system-control --user preset "$1.socket"
+	system-control --user preset --prefix "cyclog@" "$1.service"
+	allow_dbus_bus_activation "${hs}/$1"
 }
 
 user_simple_service() {
 	redo_ifchange_follow "$1.service"
-	system-control convert-systemd-units $eu $e "$hs/" "./$1.service"
-	install -d -m 0755 -- "$hs/$1/service/env"
-	user_link_to_log "$1" "simple-servers-log"
-	user_simple_alias "$@"
-	userenv system-control --user preset "$1.service"
+	make_raw_service_bundle "$1" ".service"
+	link_service_to_logger_service "$1" "simple-servers-log"
+	make_service_aliases "$@"
+	system-control --user preset "$1.service"
 }
 
 user_simple_socket() {
 	redo_ifchange_follow "$1.socket" "$1.service"
-	system-control convert-systemd-units $eu $e "$hs/" "./$1.socket"
-	install -d -m 0755 -- "$hs/$1/service/env"
-	user_link_to_log "$1" "socket-servers-log"
-	user_simple_alias "$@"
-	userenv system-control --user preset "$1.socket"
+	make_raw_service_bundle "$1" ".socket"
+	link_service_to_logger_service "$1" "socket-servers-log"
+	make_service_aliases "$@"
+	system-control --user preset "$1.socket"
+}
+
+user_dbus_socket() {
+	redo_ifchange_follow "$1.socket" "$1.service"
+	make_raw_service_bundle "$1" ".socket"
+	link_service_to_logger_service "$1" "dbus-servers-log"
+	system-control --user preset "$1.socket"
 }
 
 user_socket_with_dedicated_logger() {
 	redo_ifchange_follow "$1.socket" "$1.service" "cyclog@.service"
-	system-control convert-systemd-units $eu $e "$hs/" "./$1.socket"
-	install -d -m 0755 -- "$hs/$1/service/env"
-	system-control convert-systemd-units $eu $e "$hs/" "./cyclog@$1.service"
-	install -d -m 0755 -- "$hs/cyclog@$1/service/env"
-	rm -f -- "$hs/cyclog@$1/main"
-	ln -s -- "/var/log/user/$i/$1" "$hs/cyclog@$1/main"
-	user_link_to_log "$1" "cyclog@$1"
-	userenv system-control --user preset "$1.socket"
-	userenv system-control --user preset --prefix "cyclog@" "$1.service"
+	make_raw_service_bundle "$1" ".socket"
+	make_raw_service_bundle "cyclog@$1" ".service"
+	link_logger_service_to_log_directory "$1" "cyclog@$1"
+	link_service_to_logger_service "$1" "cyclog@$1"
+	system-control --user preset "$1.socket"
+	system-control --user preset --prefix "cyclog@" "$1.service"
 }
 
 user_service_with_dedicated_logger() {
 	redo_ifchange_follow "$1.service" "cyclog@.service"
-	system-control convert-systemd-units $eu $e "$hs/" "./$1.service"
-	install -d -m 0755 -- "$hs/$1/service/env"
-	system-control convert-systemd-units $eu $e "$hs/" "./cyclog@$1.service"
-	install -d -m 0755 -- "$hs/cyclog@$1/service/env"
-	rm -f -- "$hs/cyclog@$1/main"
-	ln -s -- "/var/log/user/$i/$1" "$hs/cyclog@$1/main"
-	user_link_to_log "$1" "cyclog@$1"
-	userenv system-control --user preset "$1.service"
-	userenv system-control --user preset --prefix "cyclog@" "$1.service"
+	make_raw_service_bundle "$1" ".service"
+	make_raw_service_bundle "cyclog@$1" ".service"
+	link_logger_service_to_log_directory "$1" "cyclog@$1"
+	link_service_to_logger_service "$1" "cyclog@$1"
+	make_service_aliases "$@"
+	system-control --user preset "$1.service"
+	system-control --user preset --prefix "cyclog@" "$1.service"
 }
 
 user_fan_in_logger() {
 	redo_ifchange_follow "$1-log.service"
-	system-control convert-systemd-units $eu $e "$hs/" "./$1-log.service"
-	install -d -m 0755 -- "$hs/$1-log/service/env"
-	rm -f -- "$hs/$1-log/main"
-	ln -s -- "/var/log/user/$i/$1" "$hs/$1-log/main"
-	userenv system-control --user preset "$1-log.service"
+	make_raw_service_bundle "$1-log" ".service"
+	link_logger_service_to_log_directory "$1" "$1-log"
+	system-control --user preset "$1-log.service"
 }
 
 user_target() {
@@ -201,7 +199,7 @@ relocate_user_service() {
         fi
 }
 
-user_log() {
+make_user_log_directories() {
 	for d
 	do
 		install -d -m 0750 "/var/log/user/$i/$d"
@@ -227,8 +225,6 @@ then
 	exec false
 fi
 
-setfacl -m "u:$i:rwx" "/var/log/user/$i/dbus" || setfacl -m "user:$i:rwxpD::allow" "/var/log/user/$i/dbus" || :
-
 hd="$h/.local/share"
 hh="$h/.cache"
 hc="$h/.config"
@@ -243,50 +239,43 @@ install -d -m 0755 -- "$hs"
 install -d -m 0755 -- "$hc/service-bundles/common"
 install -d -m 0755 -- "$hc/service-bundles/common/env"
 
-for t in halt reboot poweroff
-do
-	rm -f -- "$ht/$t"
-	ln -s -- "exit" "$ht/$t"
-done
+# system-wide external configuration import has already made the exit service bundle for us.
+make_target_aliases "exit" halt reboot poweroff
 
 install -d -m 0755 -- "$hd/dbus-1"
 install -d -m 0755 -- "$hd/dbus-1/services"
 
+# startup used to be called intrat.
 test -d "$ht/startup" || test \! -d "$ht/intrat" || mv -f -- "$ht/intrat" "$ht/startup"
 
 user_target "intrat"
-for t in sysinit basic
-do
-	rm -f -- "$ht/$t"
-	ln -s -- "intrat" "$ht/$t"
-done
+make_target_aliases "intrat" sysinit basic
 
 user_target "startup"
-for t in normal multi-user emergency rescue workstation server
-do
-	rm -f -- "$ht/$t"
-	ln -s -- "startup" "$ht/$t"
-done
+make_target_aliases "startup" normal multi-user emergency rescue workstation server
 
 user_target "shutdown"
 user_target "sockets"
 
-user_log "dbus-servers" "socket-servers" "simple-servers"
+make_user_log_directories "dbus-servers" "socket-servers" "simple-servers"
 user_fan_in_logger "dbus-servers"
 user_fan_in_logger "socket-servers"
 user_fan_in_logger "simple-servers"
-userenv system-control --user enable "dbus-servers-log"
-userenv system-control --user enable "socket-servers-log"
-userenv system-control --user enable "simple-servers-log"
+system-control --user enable "dbus-servers-log"
+system-control --user enable "socket-servers-log"
+system-control --user enable "simple-servers-log"
 
 relocate_user_service "dbus" "dbus-daemon"
 test -h "$hs/dbus" || ln -s "dbus-daemon" "$hs/dbus"
 relocate_user_log "dbus" "dbus-daemon"
 test -h "/var/log/user/$i/dbus" || ln -s "dbus-daemon" "/var/log/user/$i/dbus"
 
-user_socket_dbus_service "dbus-daemon"
+user_dbus_socket "dbus-daemon"
 redo_ifchange_follow "per-user.conf"
 test -r "$hs/dbus-daemon/service/per-user.conf" || install -m 0644 -- "per-user.conf" "$hs/dbus/service/per-user.conf"
+
+relocate_user_service "org.gnome.Weather.Application" "gnome-weather-application"
+relocate_user_service "org.gnome.Maps" "gnome-maps"
 
 user_simple_dbus_service "at-spi-dbus-bus" "org.a11y.Bus"
 user_simple_dbus_service "clock-applet" "org.mate.panel.applet.ClockAppletFactory"
@@ -296,12 +285,15 @@ user_simple_dbus_service "dunst" "org.knopwob.dunst"
 user_simple_dbus_service "evolution-addressbook-factory" "org.gnome.evolution.dataserver.AddressBook9"
 user_simple_dbus_service "evolution-calendar-factory" "org.gnome.evolution.dataserver.Calendar7"
 user_simple_dbus_service "evolution-source-registry" "org.gnome.evolution.dataserver.Sources5"
+user_simple_dbus_service "evolution-user-prompter" "org.gnome.evolution.dataserver.UserPrompter0"
 user_simple_dbus_service "gconfd" "org.gnome.GConf"
 user_simple_dbus_service "gedit" "org.gnome.gedit"
 user_simple_dbus_service "gnome-keyring-daemon" "org.gnome.keyring" "org.freedesktop.secrets"
+user_simple_dbus_service "gnome-maps" "org.gnome.Maps"
 user_simple_dbus_service "gnome-settings-daemon" "org.gnome.SettingsDaemon.XSettings"
 user_simple_dbus_service "gnome-shell" "org.gnome.Shell"
 user_simple_dbus_service "gnome-terminal-server" "org.gnome.Terminal"
+user_simple_dbus_service "gnome-weather-application" "org.gnome.Weather.Application"
 user_simple_dbus_service "goa-daemon" "org.gnome.OnlineAccounts"
 user_simple_dbus_service "goa-identity-service" "org.gnome.Identity"
 user_simple_dbus_service "gvfs-afc-volume-monitor" "org.gtk.Private.AfcVolumeMonitor" "org.gtk.vfs.AfcVolumeMonitor"
@@ -320,8 +312,6 @@ user_simple_dbus_service "mate-notification-daemon" "org.freedesktop.mate.Notifi
 user_simple_dbus_service "mate-screensaver" "org.mate.ScreenSaver"
 user_simple_dbus_service "notification-area-applet" "org.mate.panel.applet.NotificationAreaAppletFactory"
 user_simple_dbus_service "obex" "org.bluez.obex" "dbus-org.bluez.obex"
-user_simple_dbus_service "org.gnome.Maps"
-user_simple_dbus_service "org.gnome.Weather.Application"
 user_simple_dbus_service "telepathy-mission-control-5" "org.freedesktop.Telepathy.AccountManager"
 user_simple_dbus_service "wnck-applet" "org.mate.panel.applet.WnckletFactory"
 user_simple_dbus_service "xdg-desktop-portal-gtk" "org.freedesktop.implo.portal.desktop.gtk"
@@ -362,24 +352,33 @@ do
 	printf "dbus/%s\n" "$i" >> "$3"
 done
 
-user_dbus_definition "org.gnome.Maps"
-user_dbus_definition "org.gnome.Weather.Application"
-userenv system-control --user preset "zeitgeist-fts"
-
-user_display "org.gnome.Weather.Application"	# The fact that the GNOME Weather server requires an X display at startup is a bug.
-user_display "org.gnome.Maps"	# The fact that the GNOME Maps server requires an X display at startup is a bug.
+system-control --user preset "zeitgeist-fts"
 
 test -e "$hc/service-bundles/common/env/DISPLAY" || system-control set-service-env "$hc/service-bundles/common" DISPLAY ":0"
+# We do not need to set a common DBUS_SESSION_BUS_ADDRESS because userenv in the service definitions will do that for us.
 
 user_simple_socket "dirmngr"
 user_simple_socket "gpg-agent"
 user_simple_socket "urxvt" "urxvtd"
+user_simple_socket "watchman"
 
 user_simple_service "emacs"
 user_simple_service "gam_server"
 user_simple_service "speech-dispatcher"
 
-user_log "mpd"
+make_user_log_directories "uscheduled"
+user_socket_with_dedicated_logger "uscheduled" "uschedule"
+if test -d "$h/.uschedule" &&
+   test ! -e "$hc/uschedule"
+then
+	mv -f -- "$h/.uschedule" "$hc/uschedule"
+else
+	install -d -m 0700 -- "$hc/uschedule"
+fi
+test -e "$h/.uschedule" || ln -s -- ".config/uschedule" "$h/.uschedule"
+install -d -m 0700 -- "$hc/uschedule/commands"
+
+make_user_log_directories "mpd"
 user_socket_with_dedicated_logger "mpd"
 redo_ifchange_follow "mpd.conf"
 test -r "$hs/mpd/service/mpd.conf" || install -m 0644 -- "mpd.conf" "$hs/mpd/service/mpd.conf"
@@ -391,9 +390,5 @@ test -r "$hd/mpd/database" || install -m 0755 -- /dev/null "$hd/mpd/database"
 install -d -m 0755 -- "$hh/mpd"
 test -r "$hh/mpd/state" || install -m 0755 -- /dev/null "$hh/mpd/state"
 
-user_log "pulseaudio"
+make_user_log_directories "pulseaudio"
 user_socket_dbus_service_with_dedicated_logger "pulseaudio" "org.pulseaudio.Server"
-
-install -m 0444 -- /dev/null "$hc/service-bundles/do-not-generate"
-
-redo_ifchange_follow "$hc/service-bundles"

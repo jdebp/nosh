@@ -1,0 +1,92 @@
+%ename Common romaji X11 compositions
+%keep_key_case
+%chardef begin
+# This intentionally excludes everything that can already be typed with the standard combining characters on an ISO 9995 keyboard.
+AE	Æ
+DH	Ð
+ae	æ
+dh	ð
+IJ	Ĳ
+Ij	Ĳ
+ij	ĳ
+OE	Œ
+oe	œ
+((	[
+))	]
+AT	@
+(-	{
+-(	{
+)-	}
+-)	}
+/^	|
+^/	|
+oc	©
+Oc	©
+oC	©
+OC	©
+co	©
+Co	©
+cO	©
+CO	©
+or	®
+Or	®
+oR	®
+OR	®
+ro	®
+rO	®
+Ro	®
+RO	®
+...	…
+.-	·
+!^	¦
+!!	¡
+p!	¶
+P!	¶
++-	±
+-+	±
+??	¿
+ss	ß
+ff	ﬀ
+fi	ﬁ
+fl	ﬂ
+Fi	ﬃ
+Fl	ﬄ
+*0	°
+<<	«
+>>	»
+<'	‘
+'<	‘
+>'	’
+'>	’
+<"	“
+"<	“
+>"	”
+">	”
+,"	„
+",	„
+ %o	‰
+ %0	‰
+E=	€
+L=	₤
+L-	£
+CE	₠
+C/	₡
+Cr	₢
+c|	¢
+fs	ſ
+ #q    	♩
+ #e    	♪
+ #E    	♫
+ #S    	♬
+ #b     ♭
+ #f     ♮
+ ## 	♯
+s!	§
+S!	§
+No	№
+?!	⸘
+!?	‽
+<_	≤
+>_	≥
+=_	≡
+%chardef end

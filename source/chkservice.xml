@@ -1,0 +1,66 @@
+<refentry id="chkservice">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>chkservice</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">administrator commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>chkservice</refname>
+<refpurpose>display the status of<!-- and control--> service bundles</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>chkservice</command>
+<arg>--user</arg>
+<arg rep='repeat'><replaceable>names</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>chkservice</command> displays a full-screen TUI that lists the statuses of service bundles<!-- and allows the user to start/stop/reset/enable/disable them-->.
+</para>
+
+<para>
+It operates in one of two modes, controlled by the <arg choice="req">--user</arg> command line option:
+</para>
+
+<itemizedlist>
+<listitem>
+<para>
+In "system" mode it operates on system-wide state and services.  
+It potentially communicates with a Service Manager process, such as <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> via a local domain socket at <filename>/run/service-manager/control</filename> and via the control/status API of the individual services.
+</para>
+</listitem>
+<listitem>
+<para>
+In "user" mode it operates on per-user state and services.  
+It potentially communicates with a Service Manager process, such as <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> via a local domain socket at <filename>/run/user/<replaceable>$USER</replaceable>/service-manager/control</filename> and via the control/status API of the individual services.
+</para>
+</listitem>
+</itemizedlist>
+
+</refsection>
+
+<refsection><title>Example</title>
+
+<variablelist>
+<varlistentry>
+<term><command>chkservice</command> <filename>/var/sv/*</filename> <filename>/var/local/sv/*</filename> <filename>/etc/service-bundles/*/*</filename> </term>
+<listitem><para>
+Show all of the system services in some conventional places.
+</para></listitem>
+</varlistentry>
+</variablelist>
+
+</refsection>
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

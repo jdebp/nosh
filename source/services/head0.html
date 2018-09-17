@@ -1,0 +1,64 @@
+<title>The head0 user-space virtual terminal</title>
+<link rel="Up" href="../index.html" title="nosh Guide" />
+<h1>
+The <code>head0</code> user-space virtual terminal
+</h1>
+
+<p>
+One <a href="../user-virtual-terminals.html">user-space virtual terminal</a> is supplied as a pre-packaged suite of connected service bundles:
+</p>
+
+<ul>
+<li><p>a suite of <code>ttylogin@vc<i>N</i></code> service bundles providing <a href="../virtual-terminal-login.html">TUI login services</a></p></li>
+<li><p>a suite of <code>terminal-emulator@vc<i>N</i></code> service bundles running <a href="../console-terminal-emulator.html"></code>console-terminal-emulator</code></a> to provide terminal emulation to the TUI login sessions and presenting themselves as <code>/run/dev/vc<i>N</i></code></p></li>
+<li><p>a <code>console-multiplexor@head0</code> service bundle running <a href="../console-multiplexor.html"></code>console-multiplexor</code></a> to multiplex among the lower <code>vc<i>N</i></code> terminals and presenting itself as <code>/run/dev/head0mux</code></p></li>
+<li><p>a <code>console-input-method@head0</code> service bundle running <a href="../console-input-method.html"></code>console-input-method</code></a> to layer an input method on top of the multiplexor and presenting itself as <code>/run/dev/head0</code></p></li>
+<li><p>a <code>console-fb-realizer@head0</code> service bundle running <a href="../console-fb-realizer.html"></code>console-fb-realizer</code></a> to realize the overall combination at <code>/run/dev/head0</code> onto some I/O devices</p></li>
+</ul>
+
+<h2>
+Configuration
+</h2>
+
+<p>
+The <code>console-multiplexor@head0</code> service bundle expects to find symbolic links matching the shell wildcard <code>vc[0-9]*</code> in its service directory, pointing to the virtual terminals that it is multiplexing amongst.
+Reconfiguring what terminals are multiplexed is therefore a matter of adding, removing, or changing a symbolic link in that link farm and restarting the multiplexor service, which can be done on the fly without affecting the applications running in the TUI login sessions.
+</p>
+
+<p>
+The <code>console-input-method@head0</code> service bundle is configured with several environment variables:
+</p>
+<dl>
+<dt><code>lower</code></dt>
+<dd><p>the name of the virtual terminal supplied by <code>console-multiplexor@head0</code>, which is initially configured as <code>/run/dev/head0mux</code></p></dd>
+<dt><code>chinese1</code></dt>
+<dd><p>the optional name of the CIN file to use for the 1st Hanzi/Kanji/Hanja conversion mode</p></dd>
+<dt><code>chinese2</code></dt>
+<dd><p>the optional name of the CIN file to use for the 2nd Hanzi/Kanji/Hanja conversion mode</p></dd>
+<dt><code>kana</code></dt>
+<dd><p>the optional names of the two CIN files to use for the Hiragana and Katakana conversion modes</p></dd>
+<dt><code>hangeul</code></dt>
+<dd><p>the optional names of the CIN file to use for the Hangeul conversion mode</p></dd>
+<dt><code>romaji</code></dt>
+<dd><p>the optional names of the CIN file to use for the Romaji conversion mode</p></dd>
+</dl>
+
+<p>
+The <code>console-fb-realizer@head0</code> service bundle is configured with several environment variables:
+</p>
+<dl>
+<dt><code>KERNEL_VT</code></dt>
+<dd><p>the number (Linux) or device file name (BSDs) of the old-style kernel virtual terminal that is used for I/O device sharing</p></dd>
+<dt><code>OWNED_DEVICES</code></dt>
+<dd><p>the optional names of devices that the <code>user-vt-realizer</code> group is granted rw access to at service startup and restart</p></dd>
+<dt><code>DETACHED_UGEN_DEVICES</code></dt>
+<dd><p>the optional names of devices, that are expected to be generic USB (a.k.a. <code>ugen</code>) devices, that the kernel HID device drivers are told to detach from at service startup and restart</p></dd>
+<dt><code>FONTS</code></dt>
+<dd><p>the optional command-line options and arguments specifying font files to load</p></dd>
+<dt><code>INPUTS</code></dt>
+<dd><p>the optional command-line options and arguments specifying HIDs to use</p></dd>
+<dt><code>KBDMAP</code></dt>
+<dd><p>the optional name of the keyboard map file to load</p></dd>
+<dt><code>FRAMEBUFFER</code></dt>
+<dd><p>the names of the framebuffer device file to use (Linux only)</p></dd>
+</dl>

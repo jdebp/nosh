@@ -1,0 +1,24 @@
+# This is an overlay keymap that just contains 
+# the differences between the default built-in keyboard map
+# and JIS non-109-key keyboards.
+#
+#                                                        option
+# scan                       cntrl         option option cntrl lock
+# code  base   shift  cntrl  shift  option shift  cntrl  shift state
+# ------------------------------------------------------------------
+  003   '2'    '"'    nop    nop    '2'    '"'    nop    nop     O
+  007   '6'    '&'    nop    nop    '6'    '&'    nop    nop     O
+  008   '7'    '''    nop    nop    '7'    '''    nop    nop     O
+  009   '8'    '('    nop    nop    '8'    '('    nop    nop     O
+  010   '9'    ')'    nop    nop    '9'    ')'    nop    nop     O
+  011   '0'    '~'    nop    nop    '0'    '~'    nop    nop     O
+  012   '-'    '='    nop    nop    '-'    '='    nop    nop     O
+  013   '^'    '~'    rs     rs     '^'    '~'    rs     rs      O
+  026   '@'    '`'    nul    nul    '@'    '`'    nul    nul     O
+  027   '['    '{'    esc    esc    '['    '{'    esc    esc     O
+  039   ';'    '+'    nop    nop    ';'    '+'    nop    nop     O
+  040   ':'    '*'    nop    nop    ':'    '*'    nop    nop     O
+  041   0xa5   '|'    fs     us     0xa5   '|'    fs     us      O
+  043   ']'    '}'    gs     gs     ']'    '}'    gs     gs      O
+  115   '\'    '_'    fs     us     '\'    '_'    fs     us      O
+  125   imsw   imsw   imsw   imsw   imsw   imsw   imsw   imsw    O

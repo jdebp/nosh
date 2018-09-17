@@ -7,7 +7,8 @@ Description=HTTP service over IP4/IP6 using Bernstein's publicfile
 Description=NOTE: Bernstein's publicfile supports HTTP over both IPv4 and IPv6 without patches.
 
 [Service]
-EnvironmentUser=publicfile
+User=publicfile
+EnvironmentUserOnly=true
 LimitNOFILE=20
 LimitDATA=5000000
 ExecStart=sh -c 'exec httpd ~publicfile/public'

@@ -9,5 +9,6 @@ Description=ibus daemon for %u
 Type=dbus
 EnvironmentDirectory=env
 ExecStart=%p --xim
+Restart=on-abort
 
 [Install]

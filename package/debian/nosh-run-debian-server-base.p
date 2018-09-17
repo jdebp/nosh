@@ -1,3 +1,4 @@
+# vim: set filetype=sh:
 # service list
 # common targets, services, and sockets
 service_with_dedicated_logger "cleantmp"
@@ -19,6 +20,8 @@ service_only "machine-id"
 service_with_dedicated_logger "kmod@ipv6"
 service_with_dedicated_logger "kmod@loop"
 service_with_dedicated_logger "kmod@unix"
+#Not on a server
+#service_with_dedicated_logger "unattended-upgrade-shutdown"
 service_with_dedicated_logger "update-binfmts"
 socket_with_dedicated_logger "acpid"
 service_only "linux-lockfiles"

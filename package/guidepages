@@ -5,6 +5,7 @@ anatomy-of-system-target
 beyond-cyclog
 chain-loading-cheatsheet
 commands
+convert/uschedule
 converting-jails
 converting-systemd-units
 creating-bundles
@@ -41,9 +42,11 @@ services/linux-lockfiles
 services/polkitd
 services/uhidd
 services/urxvtd
+services/head0
 startup-and-shutdown
 svscan-startup
 terminals
+terminal-resources
 timestamps
 troubleshooting
 ttys

@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Invoke %p daily
+After=apt-daily-update.timer
+
+[Timer]
+OnBootSec=1d 20m
+OnActiveSec=1d 20m
+OnUnitActiveSec=1d
+
+[Install]
+WantedBy=workstation.target

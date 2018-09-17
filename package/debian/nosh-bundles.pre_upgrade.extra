@@ -1,0 +1,112 @@
+# Extra pre-upgrade for nosh-bundles
+# vim: set filetype=sh:
+
+# Convert from the old 1.16 and earlier directory structure.
+install -d -m 0755 -- /etc/service-bundles
+if test \! -L /etc/system-manager/targets && test -d /etc/system-manager/targets && test \! -e /etc/service-bundles/targets
+then
+	mv -i -- /etc/system-manager/targets /etc/service-bundles/
+	ln -s -f -- ../service-bundles/targets /etc/system-manager
+fi
+if test \! -L /etc/sv && test -d /etc/sv && test \! -e /etc/service-bundles/services
+then
+	mv -i -- /etc/sv /etc/service-bundles/services
+	ln -s -f -- service-bundles/services /etc/sv
+fi
+for d in / /usr/local/
+do
+	install -d -m 0755 -- "${d}"etc/system-control
+	if test \! -L "${d}"etc/system-manager/presets && test -d "${d}"etc/system-manager/presets
+	then
+		mv -i -- "${d}"etc/system-manager/presets "${d}"etc/system-control/
+		ln -s -f -- ../system-control/presets "${d}"etc/system-manager
+	fi
+done
+
+discontinue_alias() {
+	for I
+	do
+		test \! -L "/var/sv/$I" || rm -f -- "/var/sv/$I"
+	done
+}
+
+relocate_var_sv() {
+        local e
+	e=1
+        if test -d "/var/sv/$1" && test \! -d "/var/sv/$2"
+        then
+                if system-control is-enabled "/var/sv/$1"
+		then
+			e=0
+			system-control disable "/var/sv/$1"
+		fi
+		printf 1>&2 "Renaming service bundle directory: %s to %s\n" "$1" "$2"
+                mv -i -- "/var/sv/$1" "/var/sv/$2"
+                test $e -ne 0 || system-control enable "/var/sv/$2"
+        fi
+}
+
+discontinue() {
+        local e
+        for I
+        do
+                if e="`system-control find \"$I\" 2>/dev/null`"
+                then
+                        if system-control is-enabled "$e"
+                        then
+                                system-control disable "$e"
+                        fi
+                        if system-control is-loaded "$e"
+                        then
+                                system-control unload-when-stopped "$e"
+                                system-control stop "$e"
+                        fi
+                fi
+        done
+}
+
+# This relies upon stopping and starting the service under its old name.
+# Always invoke this before renaming the log service bundle, therefore.
+rename_log() {
+	local e
+	e=1
+	if getent passwd "$1"-log > /dev/null &&
+	!  getent passwd "$2"-log > /dev/null
+	then
+		printf 1>&2 "Renaming user: %s to %s\n" "$1"-log "$2"-log
+		if system-control is-loaded cyclog@"$1" &&
+		   system-control is-active cyclog@"$1"
+		then
+			e=0
+			system-control stop cyclog@"$1"
+		fi
+		usermod -l "$2"-log "$1"-log
+		test $e -ne 0 || system-control start cyclog@"$1"
+	fi
+        if test -d "/var/log/sv/$1" && test \! -d "/var/log/sv/$2"
+        then
+		printf 1>&2 "Renaming log directory: %s to %s\n" "$1" "$2"
+                mv -i -- "/var/log/sv/$1" "/var/log/sv/$2"
+        fi
+}
+
+# These services have been discontinued.
+discontinue \
+	/var/sv/openvpn@server \
+	/var/sv/openvpn@client \
+	stty-sane@console \
+	make-utx-log \
+	linux-utmp \
+	;
+
+# These services have been relocated.
+relocate_var_sv gnucron debian-cron
+rename_log gnucron debian-cron	# Must run before relocate_var_sv.
+relocate_var_sv cyclog@gnucron cyclog@debian-cron
+relocate_var_sv dbus dbus-daemon
+rename_log dbus dbus-daemon	# Must run before relocate_var_sv.
+relocate_var_sv cyclog@dbus cyclog@dbus-daemon
+discontinue_alias cyclog@dbus dbus
+relocate_var_sv clamd clamav
+rename_log clamd clamav	# Must run before relocate_var_sv.
+relocate_var_sv cyclog@clamd cyclog@clamav

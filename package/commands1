@@ -5,3 +5,4 @@ getty
 ptybandage
 ptyrun
 dbus-daemon-launch-helper
+chkservice

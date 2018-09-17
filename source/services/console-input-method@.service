@@ -1,0 +1,31 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Virtual console input method layered over %I
+After=console-multiplexor@%i.service
+Wants=console-multiplexor@%i.service
+
+[Service]
+Umask=0002
+RestartSec=1
+User=user-vt-input-method
+# The user-vt-input-method user is not a member of this group.
+# Running the input-method as this group grants the group's members realizer access to its I/O files.
+Group=user-vt-realizer
+EnvironmentDirectory=env
+PermissionsStartOnly=yes
+# This mechanism doesn't permit subdirectories.
+#RuntimeDirectory=dev/%I
+#RuntimeDirectoryMode=02755
+ExecStartPre=install -d -m 00755 /run/dev
+# Files in /run/dev/%I have group user-vt-input-method by default, not group user-vt-realizer.
+ExecStartPre=install -d -m 02775 -o user-vt-input-method -g user-vt-input-method /run/dev/%I
+# Not until we find out how to have ACLs in /run on FreeBSD.
+#ExecStartPre=install -d -m 02775 -o root -g user-vt-input-method /run/dev/%I
+#ExecStartPre=setfacl -m u:user-vt-input-method:rwx /run/dev/%I
+ExecStart=%p ${chinese1:+--chinese1} ${chinese2:+--chinese2} ${kana:+--kana} ${hangeul:+--hangeul} ${romaji:+--romaji} %I "${lower:-/run/dev/%Imux}" ${chinese1} ${chinese2} ${kana} ${hangeul} ${romaji}
+
+[Install]
+WantedBy=multi-user.target

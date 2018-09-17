@@ -1,0 +1,11 @@
+# This is an overlay keymap that fixes the jp layout for non-109-key keyboards.
+#
+# The FreeBSD jp keymap erroneously maps the Grave key to esc.
+# On non-109-key keyboards we want that for what the unavailable Yen key does.
+#
+#                                                        option
+# scan                       cntrl         option option cntrl lock
+# code  base   shift  cntrl  shift  option shift  cntrl  shift state
+# ------------------------------------------------------------------
+  041   0xa5   '|'    fs     us     0xa5   '|'    fs     us      O
+  125   imsw   imsw   imsw   imsw   imsw   imsw   imsw   imsw    O

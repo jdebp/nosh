@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Facebook Watchman daemon control socket for %u
+
+[Socket]
+ListenStream=%t/%p/state/sock
+SocketMode=0600
+
+[Install]

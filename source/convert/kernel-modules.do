@@ -9,7 +9,7 @@
 #
 
 # This is the BSD system, with settings in /etc/rc.conf{,.local}
-read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" || true ; }
+read_rc() { clearenv read-conf rc.conf printenv "$1" || true ; }
 list_modules() { 
 	( 
 		read_rc kld_list || true

@@ -4,6 +4,10 @@
 ## **************************************************************************
 # vim:set filetype=sh:
 #
+# This prototype is copied into every (real) user's system-control/convert directory.
+#
+# This is run by the per-user external configuration import subsystem.
+# It is used to determine the user name.
 
 case "`uname`" in
 FreeBSD)	redo-ifchange /etc/pwd.db ;;

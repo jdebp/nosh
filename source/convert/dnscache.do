@@ -12,7 +12,7 @@ set_if_unset() { if test -z "`system-control print-service-env \"$1\" \"$2\"`" ;
 dir_not_empty() { test -n "`/bin/ls -A \"$1\"`" ; }
 
 # These get us *only* the configuration variables, safely.
-read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
+read_rc() { clearenv read-conf rc.conf printenv "$1" ; }
 list_network_addresses() { ( read_rc network_addresses || echo 127.0.0.1 ) | fmt -w 1 ; }
 
 redo-ifchange rc.conf general-services "dnscache@.socket" "dnscache.service"
@@ -67,6 +67,18 @@ list_graft_points() {
 	;
 	do
 		echo "${d}.in-addr.arpa"
+	done
+	for d in \
+		localhost \
+		test \
+		invalid \
+		example \
+		example.org \
+		example.net \
+		example.com \
+	;
+	do
+		echo "${d}"
 	done
 }
 

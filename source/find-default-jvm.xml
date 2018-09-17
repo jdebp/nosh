@@ -39,7 +39,7 @@ The <envar>JAVA_HOME</envar> variable is set to the root of the JVM subtree, whi
 
 <para>
 If that file does not exist, then if the <filename>/usr/lib/jvm</filename> directory exists it is presumed to contain all of the JVM subtree root directories, either directly or as symbolic links.
-The <envar>JAVA_HOME</envar> variable is set to the one named <filename>default-java</filename> if that exists.
+The <envar>JAVA_HOME</envar> variable is set to the one named <filename>default-java</filename> if that exists, or failing that the one named <filename>default-runtime</filename> if that exists.
 </para>
 
 <para>

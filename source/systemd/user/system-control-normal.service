@@ -1,0 +1,19 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=System control starting the normal target
+After=service-manager.socket
+After=service-manager.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/system-control --user start --verbose normal
+ExecStop=/bin/system-control --user start --verbose shutdown
+LimitCPU=300
+TimeoutSec=600
+
+[Install]
+WantedBy=default.target

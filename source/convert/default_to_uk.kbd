@@ -1,0 +1,25 @@
+# This is an overlay keymap that just contains 
+# the differences between the default built-in keyboard map
+# and U.K. keyboards.
+#
+# Note that the standard for the Euro symbol is to be Level 3 + 'E'.
+# The common U.K. practice, in contrast, is to use Level 3 + '4'.
+#
+#                                                        option
+# scan                       cntrl         option option cntrl lock
+# code  base   shift  cntrl  shift  option shift  cntrl  shift state
+# ------------------------------------------------------------------
+  002   '1'    '!'    nop    nop    '`'    '`'    nop    nop     O
+  003   '2'    '"'    nul    nul    '@'    '@'    nul    nul     O
+  004   '3'    0xa3   nop    nop    '#'    '#'    nop    nop     O
+  005   '4'    '$'    nop    nop    0x20ac nop    nop    nop     O
+  007   '6'    '^'    rs     rs     '^'    '^'    rs     rs      O
+  008   '7'    '&'    nop    nop    '['    '['    esc    esc     O
+  010   '9'    '('    nop    nop    ']'    ']'    gs     gs      O
+  011   '0'    ')'    nop    nop    '{'    '{'    nop    nop     O
+  012   '-'    '_'    us     us     '|'    '|'    us     us      O
+  013   '='    '+'    nop    nop    '}'    '}'    nop    nop     O
+  040   '''    '@'    nul    nul    '''    '@'    nul    nul     O
+  041   '`'    0xac   nop    nop    '|'    '|'    nop    nop     O
+  043   '#'    '~'    nop    nop    '#'    '~'    nop    nop     O
+  086   '\'    '|'    fs     fs     '\'    '|'    fs     fs      O

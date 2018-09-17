@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Persistent continual ALSA state save daemon
+Conflicts=alsa-restore.service
+
+[Service]
+RuntimeDirectory=alsa
+ExecStart=alsactl -E HOME=%t/alsa rdaemon
+LimitNPROC=1
+CPUSchedulingPolicy=idle
+CPUSchedulingPriority=19
+
+[Install]
+WantedBy=workstation.target

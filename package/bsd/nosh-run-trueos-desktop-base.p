@@ -1,3 +1,4 @@
+# vim: set filetype=sh:
 # service list
 # common targets, services, and sockets
 service_with_dedicated_logger "motd-dynamic"
@@ -5,7 +6,6 @@ service_with_dedicated_logger "network-interfaces"
 service_with_dedicated_logger "network-runtime"
 service_with_dedicated_logger "nisdomain"
 service_with_dedicated_logger "entropy"
-service_with_dedicated_logger "anacron"
 service_with_dedicated_logger "hald"
 service_with_dedicated_logger "moused"
 service_with_dedicated_logger "ntpd"
@@ -20,6 +20,7 @@ service_with_dedicated_logger "volmand"
 service_with_dedicated_logger "dbus-daemon"
 socket_with_dedicated_logger "avahi-daemon"
 socket_with_dedicated_logger "org.cups.cups-lpd"
+timer_with_dedicated_logger "anacron"
 fan_in_logger "sysinit"
 service_only "dmesg"
 service_only_no_run "emergency-login@console"

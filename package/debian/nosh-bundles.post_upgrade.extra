@@ -1,0 +1,98 @@
+# Extra post-upgrade for nosh-bundles
+# vim: set filetype=sh:
+
+# Remove erroneous log directories.
+for I in \
+	dmraid \
+	kmod@efivarfs \
+	kmod@autofs \
+	kmod@fuse \
+	linux-lockfiles \
+	lvm \
+	;
+do
+	i="`escape "$I"`"
+	test -d /var/log/sv/"$I"/ && rmdir /var/log/sv/"$I"
+	del_user "$i"-log
+done
+# Adjust to new relationships.
+for I in \
+	dbus-broker \
+	dbus-daemon \
+	;
+do
+	if system-control find "$I".service >/dev/null 2>&1
+	then
+		rm -f -- /etc/service-bundles/targets/workstation/wants/"$I"
+		rm -f -- /var/sv/"$I"/wanted-by/workstation
+	fi
+done
+for I in \
+	static-networking \
+	stty-sane@console \
+	;
+do
+	if system-control find "$I".service >/dev/null 2>&1
+	then
+		system-control disable "$I".service || true
+		system-control disable cyclog@"$I".service || true
+	fi
+done
+for I in \
+	appcafe \
+	extra-shared-libraries \
+	name-services \
+	jails \
+	uhidd \
+	warden \
+	sockets \
+	remote-fs \
+	remote-fs-pre \
+	;
+do
+	if system-control find "$I".target >/dev/null 2>&1
+	then
+		system-control disable "$I".target
+		rm -f -- /etc/service-bundles/targets/"$I"/wanted-by/sysinit
+		rm -f -- /etc/service-bundles/targets/sysinit/wants/"$I"
+	fi
+done
+for I in \
+	avahi-daemon \
+	gpsd \
+	initctld \
+	lircd \
+	;
+do
+	if system-control find "$I".service >/dev/null 2>&1
+	then
+		system-control disable "$I".service
+		rm -f -- /var/sv/"$I"/wanted-by/server
+	fi
+done
+# adjust to new log users
+for i in \
+	natd \
+	sppp \
+	sysinit \
+	;
+do
+	if test -d /var/log/sv/$i/
+	then
+		setfacl -m u:"$i"-log:rwx /var/log/sv/$i/
+		chown -- root: /var/log/sv/$i/
+		for j in /var/log/sv/$i/lock /var/log/sv/$i/current /var/log/sv/$i/@*
+		do
+			test \! -e "$j" || chown -- "$i"-log "$j"
+		done
+	fi
+done
+# Re-apply presets to services that are cut-out by a special preset in the run-via-systemd package.
+system-control preset sysinit.target dbus.socket local-syslog.target
+system-control preset static-networking.target
+system-control preset remote-fs.target remote-fs-pre.target
+system-control preset udev.socket udev-finish.service udev-log.service udev-settle.service udev-trigger-add@devices.service udev-trigger-add@subsystems.service
+system-control preset busybox-mdev.socket busybox-mdev-log.service busybox-mdev-rescan.service
+system-control preset suckless-mdev.socket suckless-mdev-log.service suckless-mdev-rescan.service
+system-control preset vdev.socket vdev-log.service
+

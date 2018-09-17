@@ -9,5 +9,6 @@ Description=Portal service (GTK+/GNOME implementation) for %u
 Type=dbus
 EnvironmentDirectory=env
 ExecStart=%l/%p
+Restart=on-abort
 
 [Install]

@@ -1,4 +1,5 @@
 # shell function library for FreeBSD/TrueOS
+# vim: set filetype=sh:
 escape() { system-control escape --alt-escape -- "$@" ; }
 del_user() { 
 	if getent passwd "$1" > /dev/null 
@@ -61,6 +62,14 @@ socket_with_dedicated_logger() {
 		shut_down "$1.socket" "cyclog@$1.service"
 	fi
 }
+timer_with_dedicated_logger() {
+	if test -z "${nosh_run_package}"
+	then
+		:
+	else
+		shut_down "$1.timer" "cyclog@$1.service"
+	fi
+}
 service_only() {
 	if test -z "${nosh_run_package}"
 	then
@@ -97,6 +106,10 @@ target() {
 logfile_owning_user() {
 	:
 }
+# Don't delete the file owning users because the files still exist.
+file_owning_user() {
+	:
+}
 non_file_owning_user() {
 	if test -z "${nosh_run_package}"
 	then
@@ -114,4 +127,7 @@ user_vt_group() {
 }
 user_tty() {
 	:
+}
+directory() {
+        :
 }

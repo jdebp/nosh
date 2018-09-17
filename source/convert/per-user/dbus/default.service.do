@@ -2,7 +2,10 @@
 ## **************************************************************************
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
+# vim:set filetype=sh:
 #
+# This is run by the system-wide external configuration import subsystem.
+# It is used to auto-generate source files for service bundles, from D-Bus per-user (a.k.a. session) service definition files.
 
 name="$1""$2"
 busname="`basename \"$1\"`"
@@ -50,6 +53,7 @@ do
 
 	[Service]
 	Type=dbus
+	EnvironmentDirectory=../../../common/env
 	EnvironmentDirectory=env
 	Restart=on-abort
 	ExecStart=${e}

@@ -35,20 +35,26 @@ bool per_user_mode(false);
 
 static 
 const char * const 
-target_bundle_prefixes[3] = {
+target_bundle_prefixes[6] = {
 	"/run/service-bundles/targets/", 
+	"/usr/local/etc/service-bundles/targets/", 
 	"/etc/service-bundles/targets/", 
+	"/usr/local/share/service-bundles/targets/", 
+	"/usr/share/service-bundles/targets/", 
 	"/var/service-bundles/targets/"
 }, * const
-service_bundle_prefixes[8] = {
+service_bundle_prefixes[11] = {
 	"/run/service-bundles/services/", 
-	"/run/sv/", 
+	"/usr/local/etc/service-bundles/services/", 
 	"/etc/service-bundles/services/", 
-	"/etc/sv/", 
+	"/usr/local/share/service-bundles/services/", 
+	"/var/local/service-bundles/services/", 
 	"/var/local/sv/",
+	"/usr/share/service-bundles/services/", 
+	"/var/service-bundles/services/", 
 	"/var/sv/",
 	"/var/svc.d/",	// Wayne Marshall compatibility
-	"/service/"
+	"/service/"	// Daniel J. Bernstein compatibility
 };
 
 int
@@ -78,6 +84,9 @@ open_bundle_directory (
 	if (ends_in(a, ".socket", name)) {
 		scan_for_service = true;
 	} else
+	if (ends_in(a, ".timer", name)) {
+		scan_for_service = true;
+	} else
 	{
 		name = a;
 		scan_for_target = scan_for_service = true;
@@ -90,8 +99,8 @@ open_bundle_directory (
 			suffix = ".target";
 			const std::string
 			user_target_bundle_prefixes[2] = {
+				r + "/service-bundles/targets/",
 				h + "/.config/service-bundles/targets/",
-				r + "/service-bundles/targets/"
 			};
 			for ( const std::string * q(user_target_bundle_prefixes); q < user_target_bundle_prefixes + sizeof user_target_bundle_prefixes/sizeof *user_target_bundle_prefixes; ++q) {
 				path = *q;
@@ -103,8 +112,8 @@ open_bundle_directory (
 			suffix = ".service";
 			const std::string
 			user_service_bundle_prefixes[2] = {
-				h + "/.config/service-bundles/services/", 
 				r + "/service-bundles/services/", 
+				h + "/.config/service-bundles/services/", 
 			};
 			for ( const std::string * q(user_service_bundle_prefixes); q < user_service_bundle_prefixes + sizeof user_service_bundle_prefixes/sizeof *user_service_bundle_prefixes; ++q) {
 				path = *q;
@@ -165,6 +174,7 @@ system_control (
 			&no_pager_option
 		};
 		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", 
+				"{"
 				"halt|reboot|poweroff|powercycle|"
 				"emergency|rescue|normal|init|sysinit|"
 				"start|stop|enable|disable|preset|reset|unload-when-stopped|"
@@ -176,7 +186,8 @@ system_control (
 				"nagios-check-service|load-kernel-module|unload-kernel-module|"
 				"is-service-manager-client|"
 				"version"
-				" args..."
+				"}"
+				" [arg(s)...]"
 		);
 
 		std::vector<const char *> new_args;
@@ -187,7 +198,7 @@ system_control (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	if (args.empty()) {

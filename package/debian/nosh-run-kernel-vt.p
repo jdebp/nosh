@@ -1,3 +1,4 @@
+# vim: set filetype=sh:
 ktty_login_service_with_dedicated_logger "1"
 ktty_login_service_with_dedicated_logger "2"
 ktty_login_service_with_dedicated_logger "3"

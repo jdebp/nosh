@@ -1,0 +1,58 @@
+# shell post-remove function library for Debian
+# vim: set filetype=sh:
+service_with_dedicated_logger() {
+	:
+}
+login_service_with_dedicated_logger() {
+	:
+}
+ktty_login_service_with_dedicated_logger() {
+	case "`uname`" in
+	OpenBSD)	ktty=ttyC; break ;;
+	Linux)		ktty=tty; break ;;
+	*)		ktty=ttyv; break ;;
+	esac
+	login_service_with_dedicated_logger "${ktty}$1"
+}
+socket_with_dedicated_logger() {
+	:
+}
+timer_with_dedicated_logger() {
+	:
+}
+service_only() {
+	:
+}
+service_only_no_run() {
+	:
+}
+socket_only() {
+	:
+}
+fan_in_logger() {
+	:
+}
+target() {
+	:
+}
+logfile_owning_user() {
+	:
+}
+file_owning_user() {
+	:
+}
+non_file_owning_user() {
+	:
+}
+user_vt_user() {
+	:
+}
+user_vt_group() {
+	:
+}
+user_tty() {
+	:
+}
+directory() {
+        :
+}

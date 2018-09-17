@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Clean PHP session files on the BSDs
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/php/sessionclean
+ProtectHome=true
+ProtectSystem=true
+PrivateTmp=true
+PrivateNetwork=true
+
+[Install]

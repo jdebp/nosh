@@ -4,6 +4,9 @@
 
 [Unit]
 Description=Chrony NTP daemon
+Conflicts=ntpd.service systemd-timesyncd.service openntpd.service VBoxService.service
+Before=time-sync.target
+Wants=time-sync.target
 
 [Service]
 ExecStart=%pd -d

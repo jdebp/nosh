@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Apply %p tunings
+
+[Service]
+Type=oneshot
+ExecStart=%p --auto-tune
+# This is a one-shot service that can be re-triggered by starting it again.
+#RemainAfterExit=1
+Restart=no
+
+[Install]
+WantedBy=workstation.target

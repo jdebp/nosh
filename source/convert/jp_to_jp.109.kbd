@@ -1,0 +1,11 @@
+# This is an overlay keymap that fixes the jp layout for 109-key keyboards.
+#
+# The FreeBSD jp keymap erroneously maps the Grave key to esc.
+# On 109-key keyboards we want that as IM Switch.
+# The FreeBSD jp keymap maps the Yen key correctly.
+#
+#                                                        option
+# scan                       cntrl         option option cntrl lock
+# code  base   shift  cntrl  shift  option shift  cntrl  shift state
+# ------------------------------------------------------------------
+  041   imsw   imsw   imsw   imsw   imsw   imsw   imsw   imsw    O

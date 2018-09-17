@@ -1,4 +1,4 @@
-#compdef init telinit svcadm systemctl initctl rcctl system-control system-manager per-user-manager service-manager svstat service-status svc service-control start stop reset preset console-terminal-emulator console-convert-kbdmap console-clear resizecons console-resize console-multiplexor console-fb-realizer console-ncurses-realizer svscan service-dt-scanner svok service-is-ok svup service-is-up svshow service-show emergency rescue normal reboot halt haltsys poweroff shutdown clearenv setenv unsetenv
+#compdef init telinit svcadm systemctl initctl rcctl system-control system-manager per-user-manager service-manager svstat service-status svc service-control start stop reset preset console-terminal-emulator console-convert-kbdmap console-clear resizecons console-resize console-multiplexor console-input-method console-fb-realizer console-ncurses-realizer console-termio-realizer svscan service-dt-scanner svok service-is-ok svup service-is-up svshow service-show emergency rescue normal reboot halt haltsys poweroff shutdown clearenv setenv unsetenv userenv userenv-fromenv machineenv envguidgid setuidgid envgid setlogin
 ## **************************************************************************
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
@@ -126,11 +126,13 @@ svscan|service-dt-scanner)
 	_arguments -A '-*' $common '1:scan directory:_directories' -- ;;
 console-multiplexor)
 	_arguments -A '-*' $common '1:composite virtual console directory:_directories' '*:source virtual console directory:_directories' -- ;;
+console-input-method)
+	_arguments -A '-*' $common '1:composite virtual console directory:_directories' '2:source virtual console directory:_directories' -- ;;
 console-terminal-emulator)
 	_arguments -A '-*' $common '1:virtual console directory:_directories' -- ;;
 console-fb-realizer)
 	_arguments -A '-*' $common '1:virtual console directory:_directories' '2:framebuffer device:_files' -- ;;
-console-ncurses-realizer)
+console-ncurses-realizer|console-termio-realizer)
 	_arguments -A '-*' $common '1:virtual console directory:_directories' -- ;;
 console-convert-kbdmap)
 	_arguments -A '-*' $common '*:BSD kbd map files:_directories' -- ;;
@@ -140,6 +142,10 @@ setenv)
 	_arguments -A '-*' $common '1:variable:' '2:value:' -- ;;
 unsetenv)
 	_arguments -A '-*' $common '1:variable:' -- ;;
+setuidgid|envuidgid|setlogin)
+	_arguments -A '-*' $common '1:account:' -- ;;
+setgid|envgid)
+	_arguments -A '-*' $common '1:group:' -- ;;
 *)
 	_arguments -A '-*' $common -- ;;
 esac

@@ -10,8 +10,8 @@ freenas_db="/data/freenas-v1.db"
 default_rc="/etc/defaults/rc.conf"
 
 # This gets us *only* the variables, safely.
-read_variable() { clearenv read-conf "$1" "`which printenv`" "$2" ; }
-read_optional_variable() { read_variable "$1" "$2" || echo "$3" ; }
+read_variable() { clearenv read-conf "$1" printenv "$2" ; }
+read_optional_variable() { clearenv setenv "$2" "$3" read-conf "$1" printenv "$2" ; }
 
 case "`uname`" in
 Linux)		extended_regexp="-r" ;;
@@ -530,7 +530,8 @@ convert_linux() {
 	local m
 	local os_version
 	
-	os_version="`read_variable \"$1\" ID`:`read_optional_variable \"$1\" VERSION_ID '*'`"
+	os_version="`read_optional_variable \"$1\" ID linux`:`read_optional_variable \"$1\" VERSION_ID '*'`"
+	printf "os_version=\"%s\"\n" "${os_version}"
 
 	#####
 	# Stuff that can be overriden by explicit lines in rc.conf comes first.

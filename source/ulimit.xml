@@ -8,7 +8,10 @@
 <xi:include href="version.xml" />
 </refmeta>
 
-<refnamediv><refname>ulimit</refname><refpurpose>change resource limit then chain</refpurpose></refnamediv>
+<refnamediv>
+<refname>ulimit</refname>
+<refpurpose>change resource limit then chain</refpurpose>
+</refnamediv>
 
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -20,12 +23,13 @@
 </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection><title>NOTE</title>
+<refsection><title>Note</title>
 
 <para>
 Most shells have a built-in <command>ulimit</command> command that does not chain and that has additional interactive functionality.  
 See the manual for each individual shell for its built-in command.
 This command is more commonly used with <citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Whilst it is built in to them, it is an external command as far as shells are concerned.
 </para>
 
 </refsection><refsection><title>Description</title>
@@ -117,7 +121,7 @@ The following limit options are available:
 </variablelist>
 
 <para>
-See <citerefentry><refentrytitle>setrlimit</refentrytitle><manvolnum>1</manvolnum></citerefentry> for an explanation of the effects of these limits.
+See <citerefentry><refentrytitle>setrlimit</refentrytitle><manvolnum>2</manvolnum></citerefentry> for an explanation of the effects of these limits and the privileges that are sometimes required.
 </para>
 
 <para>

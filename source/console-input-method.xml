@@ -1,0 +1,433 @@
+<refentry id="console-input-method">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>console-input-method</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>console-input-method</refname>
+<refpurpose>provide a pre-edit front-end processor for CJKV (and other) input methods on a user-space virtual terminal</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>console-input-method</command>
+<arg choice='opt'>--chinese1</arg>
+<arg choice='opt'>--chinese2</arg>
+<arg choice='opt'>--kana</arg>
+<arg choice='opt'>--hangeul</arg>
+<arg choice='opt'>--romaji</arg>
+<arg choice='req'><filename><replaceable>uvcname</replaceable></filename></arg>
+<arg choice='req'><filename><replaceable>lvcname</replaceable></filename></arg>
+<arg choice='opt'><filename><replaceable>chinese1</replaceable></filename></arg>
+<arg choice='opt'><filename><replaceable>chinese2</replaceable></filename></arg>
+<arg choice='opt'><filename><replaceable>hiragana</replaceable></filename> <filename><replaceable>katakana</replaceable></filename></arg>
+<arg choice='opt'><filename><replaceable>hangeul</replaceable></filename></arg>
+<arg choice='opt'><filename><replaceable>romaji</replaceable></filename></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>console-input-method</command> layers an input method over a (user-space) virtual terminal, allowing the input of CJK and other characters, presenting itself as an "upper" (user-space) virtual terminal where a pre-edit front-end is overlain on top of the original "lower" virtual terminal.
+</para>
+
+<para>
+It opens the character/attribute buffer file <filename><replaceable>lvcname</replaceable>/display</filename> and the input FIFO <filename><replaceable>lvcname</replaceable>/input</filename>.
+These are the "master side" interfaces of the user-space virtual terminal being overlain, the "lower" virtual terminal, as detailed in <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+It does not attempt to create these if they do not exist.
+</para>
+
+<para>
+It opens the character/attribute buffer file <filename><replaceable>uvcname</replaceable>/display</filename> and the input FIFO <filename><replaceable>uvcname</replaceable>/input</filename>.
+These are the "master side" interfaces of the resultant user-space virtual terminal after combining the input method, the "upper" virtual terminal.
+It will create these if they do not exist.
+They have their group IDs explicitly set to the effective GID of the input method process.
+</para>
+
+<para>
+It then enters a loop where it simultaneously:
+</para>
+
+<itemizedlist>
+
+<listitem>
+<para>
+writes all data received from the upper input FIFO to the lower input FIFO, or composes "pre-edited" input that is passed down to the lower input FIFO;
+and
+</para>
+</listitem>
+
+<listitem>
+<para>
+renders the contents of the character/attribute buffer file for the lower virtual terminal on the upper virtual terminal's display buffer, merging in the display for the input method when it is active.
+</para>
+</listitem>
+
+</itemizedlist>
+
+<refsection><title>Input event handling</title>
+
+<para>
+When inactive, the input method passes all input events from the upper input FIFO to the lower input FIFO, filtering out and activating the input method upon receipt of the Henkan, Muhenkan, Katakana/Hiragana/Romaji, Han/Yeong, Hanja, Katakana, Hiragama, Romaji, Hangeul, and Zenkaku/Hankaku keys.
+What these keys are depends from the realizer and whatever keyboard maps it is using; but conventionally the Henkan, Muhenkan, Katakana/Hiragana/Romaji, and Kanji keys are from the 106/109-key PC keyboard, the Hanja and Han/Yeong keys are from the 103/107-key PC keyboard, and the Hiragama, Katakana, Romaji, Hangeul, and Zenkaku/Hankaku keys (per the USB specification) are from non-PC keyboards.
+</para>
+
+<para>
+Note that the key that is <emphasis>apparently</emphasis> a Zenkaku/Hankak/Kanji key on the 106/109-key PC keyboard is in fact just the "Grave" key from the 101/104-key PC keyboard.
+To use the input method, a realizer must map that (or another) to the "IM Switch" key input event.
+The IM Switch key input event does not have a direct correspondence to a PC keyboard key nor a USB-specified key, but exists as an additional internal key event to map the choice of toggle key in a keyboard map.
+Thus the input method is relieved of the need to know about the current keyboard map(s) used by realizer(s), and altering what key toggles the input method on and off is a matter of changing keyboard maps without reconfiguring or restarting the input method itself.
+</para>
+
+<para>
+When active, the input method user interface filters out all input events from the input stream generated by whatever realizer is attached to the "upper" virtual terminal, except for the session switch events used by <citerefentry><refentrytitle>console-multiplexor</refentrytitle><manvolnum>1</manvolnum></citerefentry>; and the "lower" virtual terminal only sees input events from the pre-edited input.
+</para>
+
+</refsection>
+
+<refsection><title>Input method configuration</title>
+
+<para>
+The input method is entirely table-driven, controlled by data files containing tables of mappings from the original ASCII composition element sequences to the unconverted and converted characters to display.
+These files are CIN files, compatible with OpenVanilla, the Chinese Open Desktop, xcin, gcin, hime, OkidoKey.app, and MacOS.
+<command>console-input-method</command> only uses some of the contents of CIN files; namely the <code>%keep_key_case</code>, <code>%keyname</code>, and <code>%chardef</code> directives and their accompanying data.
+It also only accepts UTF-8 encoded CIN files.
+</para>
+
+<para>
+The input method operates in one of five modes: chinese, katakana, hiragana, hangeul, and romaji.
+The chinese and romaji modes have two and three sub-modes, respectively.
+Each mode is driven by a data table, either a default table that provides a null mapping that does no translation, or one read from a CIN file.
+The CIN files for these modes (and sub-modes) are named by the <arg choice='plain'><filename><replaceable>chinese1</replaceable></filename></arg>, <arg choice='plain'><filename><replaceable>chinese2</replaceable></filename></arg>, <arg choice='plain'><filename><replaceable>katakana</replaceable></filename></arg>, <arg choice='plain'><filename><replaceable>hiragana</replaceable></filename></arg>, <arg choice='plain'><filename><replaceable>hangeul</replaceable></filename></arg>, and <arg choice='plain'><filename><replaceable>romaji</replaceable></filename></arg> command-line arguments.
+The <arg choice='plain'><filename><replaceable>romaji</replaceable></filename></arg> table filename command-line argument applies to all romaji sub-modes.
+For each file to be supplied as a command-line argument, the corresponding <arg choice='plain'>--chinese1</arg>, <arg choice='plain'>--chinese2</arg>, <arg choice='plain'>--kana</arg>, <arg choice='plain'>--hangeul</arg>, and <arg choice='plain'>--romaji</arg> command-line options must also be used, otherwise a default table is used in the relevant place(s) and no command-line argument naming a file is expected.
+The <arg choice='plain'><filename><replaceable>hiragana</replaceable></filename></arg> and <arg choice='plain'><filename><replaceable>hangeul</replaceable></filename></arg> data table filename command-line arguments are enabled with a single command-line flag.
+</para>
+
+<para>
+These names are placeholders, and do not impose requirements upon what data table is used in what mode.
+The "chinese" modes here are an umbrella name intended for data tables for the Hanja, Kanji, and Hanzi modes of Korean, Japanese, and Chinese input.
+There are two "chinese" modes available, permitting the availability of (for example) both simplified and traditional Hanzi.
+The "romaji" mode is appropriate for non-CJKV input methods from Chinese Open Desktop/OpenVanilla/et al., such as Esperanto or Old English.
+In "romaji" mode, the conversions provided by the data table are augmented by four hardwired conversions that can be added: to all-lowercase, all-uppercase, title-case, and original raw ASCII.
+The original raw ASCII can contain spaces, the other conversions eliminate any spaces.
+</para>
+
+<para>
+So, for examples, one could specify (using CIN filenames from the Chinese Open Desktop):
+</para>
+<itemizedlist>
+<listitem><para>
+only needing Pinyin Chinese by using
+<arg choice='plain'>--chinese1</arg>
+<arg choice='plain'><filename>pinyin.cin</filename></arg>, 
+</para></listitem>
+<listitem><para>
+only needing Japanese by using
+<arg choice='plain'>--chinese1</arg>
+<arg choice='plain'>--kana</arg>
+<arg choice='plain'><filename>nippon.cin</filename></arg>
+<arg choice='plain'><filename>katakana.cin</filename></arg>
+<arg choice='plain'><filename>hiragana.cin</filename></arg>
+</para></listitem>
+<listitem><para>
+needing Korean and Esperanto by using
+<arg choice='plain'>--chinese1</arg>
+<arg choice='plain'>--hangeul</arg>
+<arg choice='plain'>--romaji</arg>
+<arg choice='plain'><filename>hanja.cin</filename></arg>
+<arg choice='plain'><filename>hangeul.cin</filename></arg>
+<arg choice='plain'><filename>esperanto.cin</filename></arg>
+</para></listitem>
+</itemizedlist>
+
+</refsection>
+
+<refsection><title>Pre-editing</title>
+
+<para>
+The pre-editing user interface comprises an editing field where the data to send are constructed, and a list of conversion choices.
+It is placed at the curent cursor position of the "lower" virtual terminal, subject to the caveats that it is repositioned if it would otherwise extend off-screen (and such repositioning is possible), and that it is not moved if the cursor is made invisible (as some full-screen applications make it whilst they are redrawing their user interfaces, thus preventing it from briefly flickering all over the screen).
+</para>
+
+<para>
+The conversion list is generated on the fly as the original ASCII sequence is entered.
+At the end of the conversion list, single-headed or double-headed arrows indicate whether scrolling in each direction is possible.
+When the list of conversions is empty, as it initially is, the arrows are replaced by a character denoting which of the conversion modes is the currently active one.
+</para>
+
+<para>
+The editing field displays converted characters up to the current cursor position, or just before it if a convertable sequence has only been partly entered, and unconverted characters from that point onwards.
+Unconverted characters are displayed using the "key names" specified in the active data table, which are (for examples) Hangeul Jamo or column indicators for some Chinese input methods.
+Converted characters are displayed using the conversions from the same table.
+</para>
+
+<refsection><title>Using a JIS 106/109-key PC keyboard</title>
+
+<para>
+With a 106/109-key PC keyboard and an appropriate keyboard map, the user interface can be driven with its language keys, mapped to the following input key events:
+</para>
+<variablelist>
+<varlistentry>
+<term>Katakana/Hiragana/Romaji</term>
+<listitem><para>
+This key's function depends from the shift level.
+Level 1 sets hiragana conversion mode, level 2 sets katakana conversion mode, and level 3 sets romaji conversion mode and cycles through the three romaji sub-modes (all lower case, all upper case, and title case).
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>IM Switch</term>
+<listitem><para>
+Toggle the user interface on and off.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Henkan</term>
+<listitem><para>
+Set chinese conversion mode, cycling through both chinese sub-modes.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Muhenkan</term>
+<listitem><para>
+This key does nothing.
+The input method converts directly from ASCII to kanji and does not have an intermediate "no conversion" mode.
+</para></listitem>
+</varlistentry>
+</variablelist>
+
+</refsection>
+
+<refsection><title>Using a Korean 103/107-key PC keyboard</title>
+
+<para>
+With a Korean 103/107-key PC keyboard and an appropriate keyboard map, the user interface can be mostly driven with its language keys, mapped to the following input events:
+</para>
+<variablelist>
+<varlistentry>
+<term>Hanja</term>
+<listitem><para>
+Set chinese conversion mode, cycling through both chinese sub-modes.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Han/Yeong</term>
+<listitem><para>
+This key cycles around the conversion modes, cyling through the three romaji sub-modes (all lower case, all upper case, and title case) one at a time.
+</para></listitem>
+</varlistentry>
+</variablelist>
+
+<para>
+The 103/107-key PC keyboard does not have a handy key to map to turning the user interface on and off.
+The aforegiven keys will of course turn it on; turning it off is done the way that one has to do it with non-JIS non-Korean keyboards.
+</para>
+
+</refsection>
+
+<refsection><title>Using other PC keyboards</title>
+
+<para>
+For 101/104-key, 102/105-key, and 104/107-key PC keyboards, much of the same functionality is available via control keys.
+</para>
+<variablelist>
+<varlistentry>
+<term>Control+@</term>
+<listitem><para>
+Turn the user interface off.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Control+G</term>
+<listitem><para>
+Set hangeul conversion mode.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Control+L</term>
+<listitem><para>
+(per IMLIB in OSF/1)
+Set hiragana conversion mode.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Control+K</term>
+<listitem><para>
+(per IMLIB in OSF/1)
+Set katakana conversion mode.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Control+R</term>
+<listitem><para>
+Set romaji conversion mode and cycle through the three romaji sub-modes (all lower case, all upper case, and title case).
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Control+Z</term>
+<listitem><para>
+Set chinese conversion mode, cycling through both chinese sub-modes.
+</para></listitem>
+</varlistentry>
+</variablelist>
+
+</refsection>
+
+<refsection><title>Using a non-PC Japanese wordprocessing keyboard</title>
+
+<para>
+With a non-PC Japanese wordprocessing keyboard and an appropriate keyboard map, the user interface can be driven with its language keys, mapped to the following input key events:
+</para>
+<variablelist>
+<varlistentry>
+<term>Hiragana</term>
+<listitem><para>
+Set hiragana conversion mode.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Katakana</term>
+<listitem><para>
+Set katakana conversion mode.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Zenkaku/Hankaku</term>
+<listitem><para>
+This key does nothing, for two reasons.
+First, all characters are the same width in the user-space console subsystem anyway and there is no meaning to selecting half/full width.
+Second, it is a logically distinct input event from the IM Switch key.
+</para></listitem>
+</varlistentry>
+</variablelist>
+
+</refsection>
+
+<refsection><title>Common to all keyboards</title>
+
+<para>
+Other keys are:
+</para>
+<variablelist>
+<varlistentry>
+<term>Return</term>
+<term>Enter</term>
+<term>Execute</term>
+<listitem><para>
+(i.e. the keys on the main and numeric keypads, and any "execute" consumer key)
+Accept whatever is in the data-to-send edit field in its current state and send the appropriate input messages to the "lower" virtual terminal.
+The pre-edit and conversion list are then reset to empty.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Cursor Down</term>
+<term>Cursor Up</term>
+<listitem><para>
+Scroll up and down the current list of conversions.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Cursor Left</term>
+<term>Cursor Right</term>
+<listitem><para>
+Move the cursor back and forth across the editing field; unconverting and reconverting as it moves.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Home</term>
+<term>Control+A</term>
+<listitem><para>
+(per emacs)
+Move the cursor to the beginning of the editing field; unconverting everything.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>End</term>
+<term>Control+E</term>
+<listitem><para>
+(per emacs)
+Move the cursor to the end of the editing field; re-converting everything.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Delete</term>
+<term>Del</term>
+<listitem><para>
+(i.e. the keys on the editing and numeric keypads)
+Delete the character at the cursor position.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Backspace</term>
+<term>BS</term>
+<listitem><para>
+(i.e. the keys on the main and, if present, numeric keypads)
+Delete the character before the cursor position and reconvert.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Space</term>
+<listitem><para>
+Mark a division for the converter.
+The table-based conversion will not convert sequences with spaces in the middle, so this is a way to limit conversion to shorter sequences.
+Spaces employed this way are not added to the converted character string.
+Spaces in unconverted data, or resulting from the original raw ASCII conversion in romaji mode, will be sent as-is, however.
+</para></listitem>
+</varlistentry>
+</variablelist>
+
+</refsection>
+
+<para>
+<command>console-input-method</command> has no knowledge of the actual keys on input devices that realizers map to these input messages, or to the input messages for the actual raw ASCII to be converted.
+By the point that user input has reached it, it has already passed through keyboard maps.
+</para>
+
+<para>
+This means that the spellings that one types can vary according to keyboard map, which in turn means that (say) "sake" or "pinyin" are typed according to the actual keyboard map in use by a realizer, rather than according to a fixed physical keyboard layout.
+Put another way: the ASCII spelling of a character displayed on screen is invariant no matter what the keyboard map used by the realizer, but how one physically types that spelling can vary according to QWERTY, AZERTY, Dvorak, et al. layouts.
+</para>
+
+<para>
+That is the case for input methods that are based upon spelling character names or pronunciations.
+Conversely, input methods that are, rather, columnar usually require that the realizer be employing a QWERTY layout, as that is what their columnar conversions assume (with, for example, the "Q", "A", and "Z" keys being in the same column on the keyboard).
+</para>
+
+<para>
+All conversion is direct from ASCII; in particular Japanese conversion is ASCII-to-kanji not ASCII-to-kana followed by kana-to-kanji.
+This is why the Space key merely acts as (an optional) conversion divider, Henkan has a slightly different action, and Muhenkan has no action at all; as there is no intermediate kana stage needing a "conversion" key to progress beyond.
+</para>
+
+<para>
+All of the mechanism of conversion, furthermore, is entirely encoded in the data table files.
+Those are where everything goes, from pseudonyms for symbols to consonant gemination being converted into "little tsu".
+There is no special conversion knowledge in <command>console-input-method</command> itself.
+</para>
+
+</refsection>
+
+</refsection>
+
+<refsection><title>Security</title>
+
+<para>
+<command>console-input-method</command> requires no superuser privileges and is designed to be run entirely under the aegis of a dedicated unprivileged user account.
+It only requires write and search access to <filename><replaceable>uvcname</replaceable>/</filename> and need not have owner access to it.
+</para>
+
+<para>
+Usually <filename><replaceable>uvcname</replaceable>/</filename> will be set-group-ID to a group different to the effective group ID of the input-method process.
+Changing the groups of <filename><replaceable>uvcname</replaceable>/input</filename>, <filename><replaceable>uvcname</replaceable>/display</filename> to the effective group ID of the input-method process thus distinguishes group access to those files, allowing one to add ordinary users to that group in order to give them direct realizer access to the upper terminal.
+</para>
+
+</refsection>
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

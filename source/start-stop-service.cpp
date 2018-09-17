@@ -342,7 +342,7 @@ add_bundle_searching_path (
 	int want
 ) {
 	std::string path, name, suffix;
-	const int bundle_dir_fd(open_bundle_directory (envs, "", arg, path, name, suffix));
+	const int bundle_dir_fd(open_bundle_directory(envs, "", arg, path, name, suffix));
 	if (0 > bundle_dir_fd) return 0;
 	return add_bundle(bundles, bundle_dir_fd, path, name, want);
 }
@@ -876,7 +876,7 @@ activate [[gnu::noreturn]] (
 			&verbose_option,
 			&pretending_option
 		};
-		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "service(s)...");
+		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "[service(s)...]");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -886,7 +886,7 @@ activate [[gnu::noreturn]] (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	start_stop_common(next_prog, args, envs, prog, START, !colours);
@@ -911,7 +911,7 @@ deactivate [[gnu::noreturn]] (
 			&verbose_option,
 			&pretending_option
 		};
-		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "service(s)...");
+		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "[service(s)...]");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -921,7 +921,7 @@ deactivate [[gnu::noreturn]] (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	start_stop_common(next_prog, args, envs, prog, STOP, !colours);
@@ -946,7 +946,7 @@ isolate [[gnu::noreturn]] (
 			&verbose_option,
 			&pretending_option
 		};
-		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "service(s)...");
+		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "[service(s)...]");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -956,7 +956,7 @@ isolate [[gnu::noreturn]] (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	start_stop_common(next_prog, args, envs, prog, START, !colours);
@@ -981,7 +981,7 @@ reset [[gnu::noreturn]] (
 			&verbose_option,
 			&pretending_option
 		};
-		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "service(s)...");
+		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "[service(s)...]");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -991,7 +991,7 @@ reset [[gnu::noreturn]] (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	start_stop_common(next_prog, args, envs, prog, DEFAULT, !colours);

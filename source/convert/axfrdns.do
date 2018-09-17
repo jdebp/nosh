@@ -11,7 +11,7 @@
 set_if_unset() { if test -z "`system-control print-service-env \"$1\" \"$2\"`" ; then system-control set-service-env "$1" "$2" "$3" ; echo "$s: Defaulted $2 to $3." ; fi ; }
 
 # These get us *only* the configuration variables, safely.
-read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
+read_rc() { clearenv read-conf rc.conf printenv "$1" ; }
 list_network_addresses() { ( read_rc network_addresses || echo 127.53.0.1 ) | fmt -w 1 ; }
 
 redo-ifchange rc.conf general-services "axfrdns@.socket" "axfrdns@.service"

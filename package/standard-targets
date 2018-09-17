@@ -34,6 +34,7 @@ static-networking
 swapauto
 swaplate
 sysinit
+timers
 uhidd
 unmount
 update

@@ -4,6 +4,9 @@
 
 [Unit]
 Description=NTP daemon
+Conflicts=systemd-timesyncd.service openntpd.service chrony.service VBoxService.service
+Before=time-sync.target
+Wants=time-sync.target
 
 [Service]
 EnvironmentDirectory=env

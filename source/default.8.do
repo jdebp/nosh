@@ -1,6 +1,11 @@
 #!/bin/sh -e
-mkdir -p tmp
-src="`basename "$1"`.xml"
-man="`basename "$1"`.8"
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+# vim: set filetype=sh:
+nam="`basename "$1"`"
+src="${nam}.xml"
+man="${nam}.8"
+install -d "tmp/${nam}"
 redo-ifchange "${src}" exec "version.xml"
-exec ./exec setlock tmp/index.html.lock sh -c "xmlto --skip-validation -o tmp man \"${src}\" && mv \"tmp/${man}\" \"$3\""
+exec ./exec setlock "tmp/${nam}/index.html.lock" sh -c "xmlto --skip-validation -o \"tmp/${nam}\" man \"${src}\" && mv \"tmp/${nam}/${man}\" \"$3\""

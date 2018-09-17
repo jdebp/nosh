@@ -8,6 +8,9 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstdlib>
 #include <cerrno>
 #include <cstring>
+#if defined(__LINUX__) || defined(__linux__)
+#include <sys/prctl.h>
+#endif
 #if defined(__FreeBSD__) || defined(__DragonFly__)
 #include <sys/procctl.h>
 #endif
@@ -38,7 +41,7 @@ oom_kill_protect (
 		popt::definition * top_table[] = {
 			&oknoaccess_option
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "level prog");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{level} {prog}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -48,7 +51,7 @@ oom_kill_protect (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	if (args.empty()) {
@@ -90,6 +93,13 @@ oom_kill_protect (
 			throw EXIT_FAILURE;
 		}
 	}
+#if defined(PR_SET_DUMPABLE) && defined(PR_GET_DUMPABLE)
+	// The files in /proc/self/ are not owned by the process's UID if the process is not "dumpable".
+	// Processes are made not dumpable for the several reasons set out in the prctl() manual.
+	// Temporarily restore dumpability so that we have owner and thus write access to our own OOM score control knob.
+	const int old_dumpable_flag(prctl(PR_GET_DUMPABLE, 0, 0, 0, 0));
+	prctl(PR_SET_DUMPABLE, 1 /*SUID_DUMP_USER*/, 0, 0, 0);
+#endif
 	FileStar procfile(std::fopen(oom_score_filename, "w"));
 	if (!procfile) {
 		const int error(errno);
@@ -107,6 +117,9 @@ oom_kill_protect (
 			throw EXIT_FAILURE;
 		}
 	}
+#if defined(PR_SET_DUMPABLE) && defined(PR_GET_DUMPABLE)
+	prctl(PR_SET_DUMPABLE, old_dumpable_flag, 0, 0, 0);
+#endif
 #elif defined(__FreeBSD__) || defined(__DragonFly__)
 	bool protect(false);
 	if (end != arg && !*end)

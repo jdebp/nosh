@@ -1,3 +1,4 @@
+# vim: set filetype=sh:
 # service list
 # kernel TTYs
 ktty_login_service_with_dedicated_logger "0"

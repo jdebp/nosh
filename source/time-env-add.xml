@@ -1,0 +1,341 @@
+<refentry id="time-env-add">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>time-env-add</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>time-env-add</refname>
+<refpurpose>modify a timestamp in an environment variable</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>time-env-add</command>
+<arg choice='opt'>--systemd-compatibility</arg>
+<arg choice='opt'>--gnu-compatibility</arg>
+<arg choice='req'><replaceable>var</replaceable></arg>
+<arg choice='req'><replaceable>offset</replaceable></arg>
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>time-env-add</command> looks up the value of the <envar><replaceable>var</replaceable></envar> environment variable, parses it to yield a TAI64N time, adds <replaceable>offset</replaceable> to that time, sets the environment variable to the revised time, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>time-env-add</command> will ignore.
+</para>
+
+</refsection>
+
+<refsection><title>Offsets</title>
+
+<para>
+The format of <arg choice='plain'><replaceable>offset</replaceable></arg> is series of actions, optionally separated by whitespace.
+Each action, in turn, comprises a decimal number (at least 1 digit long) followed by a units specifier.
+The unit specfiers are:
+</para>
+
+<variablelist>
+<varlistentry>
+<term><code>ns</code></term>
+<term><code>nsec</code></term>
+<listitem><para>
+nanoseconds
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>&#x03bc;s</code></term>
+<term><code>us</code></term>
+<term><code>usec</code></term>
+<listitem><para>
+microseconds
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>ms</code></term>
+<term><code>msec</code></term>
+<listitem><para>
+milliseconds
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>s</code></term>
+<term><code>sec</code></term>
+<term><code>second</code></term>
+<term><code>seconds</code></term>
+<listitem><para>
+seconds
+</para><para>
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>m</code></term>
+<term><code>min</code></term>
+<term><code>minute</code></term>
+<term><code>minutes</code></term>
+<listitem><para>
+minutes
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>h</code></term>
+<term><code>hr</code></term>
+<term><code>hour</code></term>
+<term><code>hours</code></term>
+<listitem><para>
+hours
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>d</code></term>
+<term><code>day</code></term>
+<term><code>days</code></term>
+<listitem><para>
+days
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>w</code></term>
+<term><code>wk</code></term>
+<term><code>week</code></term>
+<term><code>weeks</code></term>
+<listitem><para>
+weeks
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>fortnight</code></term>
+<term><code>fortnights</code></term>
+<listitem><para>
+fortnights (2 weeks)
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>M</code></term>
+<term><code>mon</code></term>
+<term><code>month</code></term>
+<term><code>months</code></term>
+<listitem><para>
+months
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>y</code></term>
+<term><code>yr</code></term>
+<term><code>year</code></term>
+<term><code>years</code></term>
+<listitem><para>
+years
+</para></listitem>
+</varlistentry>
+</variablelist>
+
+<para>
+In the default mode, each action is applied in turn to the TAI64N time.
+Actions fall into two categories, broadly characterized as simple arithmetic on TAI64N seconds and use of a broken-down calendar local time for calculations.
+</para>
+
+<itemizedlist>
+<listitem><para>
+An action whose unit is a second or subdivision of a second operates in terms of TAI seconds (as opposed to UTC seconds) and is able to yield a result TAI64N time that is a leap second.
+Its operation does not involve local calendar time at all.
+Thus (for example) a timer mechanism that uses <command>time-env-add</command> to run every 10 seconds will run every 10 physical seconds, even across a leap second.
+In other words, in either "posix" or "right" timezones:
+</para>
+<itemizedlist>
+<listitem><para>
+2016-12-31 23:59:50 +0000 plus ten seconds is 2016-12-31 23:59:60 +0000.
+</para></listitem>
+<listitem><para>
+2016-12-31 23:59:50 +0000 plus twenty seconds is 2017-01-01 00:00:09 +0000.
+</para></listitem>
+</itemizedlist>
+</listitem>
+<listitem><para>
+An action whose unit is a minute or larger operates in terms of the current timezone's local calendar time.
+It can only yield a result TAI64N time that is a leap second if the current timezone is a "right" timezone; "posix" timezones will never yield the TAI64N timestamps for leap seconds, the GNU and BSD C libraries yielding an adjoining UTC second instead.
+</para><para>
+Moreover, the action will account for whatever the library knows about the local calendar, including UTC offset changes, month lengths, and leap days.
+Thus (for example) a mechanism that uses <command>time-env-add</command> and the action <arg choice='plain'>1month</arg> to calculate the 1st days of successive months will yield the same time on the 1st day of every month.
+In other words:
+</para>
+<itemizedlist>
+<listitem><para>
+2040-01-01 00:00:00 +0000 plus one month is 2040-02-01 00:00:00 +0000.
+</para></listitem>
+<listitem><para>
+2040-02-01 00:00:00 +0000 plus one month is 2040-03-01 00:00:00 +0000.
+</para></listitem>
+<listitem><para>
+2040-03-01 00:00:00 +0000 plus one month is 2040-04-01 00:00:00 +0000.
+</para></listitem>
+<listitem><para>
+2040-04-01 00:00:00 +0000 plus one month is 2040-05-01 00:00:00 +0000.
+</para></listitem>
+</itemizedlist>
+<para>
+Similarly, a <arg choice='plain'>1minute</arg> action will yield the same point in every minute, even when those points are not uniformly spaced.
+In other words, in a "right" timezone:
+</para>
+<itemizedlist>
+<listitem><para>
+2016-12-31 23:59:50 +0000 plus one minute is 2017-01-01 00:00:50 +0000, actually 61 TAI seconds later.
+</para></listitem>
+<listitem><para>
+2016-12-31 23:59:50 +0000 plus two minutes is 2017-01-01 00:01:50 +0000, actually 121 TAI seconds later.
+</para></listitem>
+</itemizedlist>
+</listitem>
+</itemizedlist>
+
+<refsection><title>Compatibility modes</title>
+
+<para>
+The <arg choice='plain'>--systemd-compatibility</arg> command-line option invokes a mode that is more compatible with systemd's timer behaviour (following the actual behaviour wherever this differs from the systemd documentation).
+</para>
+
+<itemizedlist>
+<listitem><para>
+All actions with units of a second or smaller operate in terms of the current timezone's local calendar time.
+Thus leap second times can only result in "right" timezones, and will never result, for any action, in "posix" timezones.
+</para><para>
+In a "posix" timezone, a timer mechanism using seconds as units thus will not run at uniform intervals.
+For example, in contrast with the default mode behaviour:
+</para>
+<itemizedlist>
+<listitem><para>
+2016-12-31 23:59:50 +0000 plus ten systemd seconds is 2017-01-01 00:00:00 +0000, actually 11 TAI seconds later.
+</para></listitem>
+<listitem><para>
+2016-12-31 23:59:50 +0000 plus twenty systemd seconds is 2017-01-01 00:00:10 +0000, actually 21 TAI seconds later.
+</para></listitem>
+</itemizedlist>
+</listitem>
+<listitem><para>
+Renormalization only occurs at the end of applying all actions in total.
+This is the conventional behaviour of systemd timers and of the GNU implementation of the <citerefentry><refentrytitle>date</refentrytitle><manvolnum>1</manvolnum></citerefentry> command.
+It is, however, not intuitive for human beings who are not programmers.
+</para></listitem>
+<listitem><para>
+Actions with units of a minute or larger use systemd unit sizes rather than calendar units.
+These unit sizes are fixed multiples of a second.
+In "right" timezones this yields intervals of uniform length, but calendar arithmetic that appears odd to humans.
+In "posix" timezones this yields normal-appearing calendar arithmetic (except for calculations involving months and years, which still appear odd), but intervals that are actually non-uniform in length.
+</para>
+<itemizedlist>
+<listitem><para>
+One minute is always exactly 60 seconds.
+Thus in a "right" timezone, in contrast with the default mode behaviour:
+</para>
+<itemizedlist>
+<listitem><para>
+2016-12-31 23:59:50 +0000 plus one systemd minute is 2017-01-01 00:00:49 +0000, actually 60 TAI seconds later.
+</para></listitem>
+<listitem><para>
+2016-12-31 23:59:50 +0000 plus two systemd minutes is 2017-01-01 00:01:49 +0000, actually 120 TAI seconds later.
+</para></listitem>
+</itemizedlist>
+</listitem>
+<listitem><para>
+One hour is always exactly 3600 seconds.
+</para></listitem>
+<listitem><para>
+One day is always exactly 86400 seconds.
+</para></listitem>
+<listitem><para>
+One week is always exactly 604800 seconds.
+</para></listitem>
+<listitem><para>
+One fortnight is always exactly 1209600 seconds.
+</para></listitem>
+<listitem><para>
+One month is always exactly 2629800 seconds, irrespective of actual month length.
+The systemd documentation incorrectly says 30.44 days, but the actual unit used amounts to 30.4375 days, which is 30 days, 10 hours, and 30 minutes.
+Thus, in stark contrast to the default mode behaviour:
+</para>
+<itemizedlist>
+<listitem><para>
+2040-01-01 00:00:00 +0000 plus one systemd month is 2040-01-31 10:30:00 +0000.
+</para></listitem>
+<listitem><para>
+2040-02-01 00:00:00 +0000 plus one systemd month is 2040-03-02 10:30:00 +0000.
+</para></listitem>
+<listitem><para>
+2040-03-01 00:00:00 +0000 plus one systemd month is 2040-03-31 10:30:00 +0000.
+</para></listitem>
+<listitem><para>
+2040-04-01 00:00:00 +0000 plus one systemd month is 2040-05-01 10:30:00 +0000.
+</para></listitem>
+</itemizedlist>
+</listitem>
+<listitem><para>
+One year is always exactly 31557600 seconds, irrespective of leap days.
+This is exactly 12 systemd months, but is not a whole number multiple of days.
+Thus, in stark contrast to the default mode behaviour:
+</para>
+<itemizedlist>
+<listitem><para>
+2019-02-28 00:00:00 +0000 plus one systemd year is 2020-02-27 06:00:00 +0000.
+</para></listitem>
+<listitem><para>
+2020-02-27 06:00:00 +0000 plus one systemd year is 2021-02-27 12:00:00 +0000.
+</para></listitem>
+<listitem><para>
+2021-02-27 12:00:00 +0000 plus one systemd year is 2022-02-27 18:00:00 +0000.
+</para></listitem>
+<listitem><para>
+2022-02-28 18:00:00 +0000 plus one systemd year is 2023-02-28 00:00:00 +0000.
+</para></listitem>
+</itemizedlist>
+</listitem>
+</itemizedlist>
+</listitem>
+</itemizedlist>
+
+<para>
+The <arg choice='plain'>--gnu-compatibility</arg> command-line option invokes a mode that is a subset of the systemd compatibility mode, that is compatible with the GNU implementation of the <citerefentry><refentrytitle>date</refentrytitle><manvolnum>1</manvolnum></citerefentry> command.  
+This mode is mostly the same as systemd compatibility mode, except that it does not use systemd's definitions of the minute and larger units but instead uses the calendar units.
+Thus in a "right" timezone, in agreement with the default mode behaviour and in contrast with the systemd mode behaviour:
+</para>
+<itemizedlist>
+<listitem><para>
+2016-12-31 23:59:50 +0000 plus ten GNU seconds is 2016-12-31 23:59:60 +0000.
+</para></listitem>
+<listitem><para>
+2016-12-31 23:59:50 +0000 plus twenty GNU seconds is 2017-01-01 00:00:09 +0000.
+</para></listitem>
+<listitem><para>
+2016-12-31 23:59:50 +0000 plus one GNU minute is 2017-01-01 00:00:50 +0000.
+</para></listitem>
+<listitem><para>
+2016-12-31 23:59:50 +0000 plus two GNU minutes is 2017-01-01 00:01:50 +0000.
+</para></listitem>
+</itemizedlist>
+<para>
+But in a "posix" timezone seconds intervals are as non-uniform as they are for systemd, in contrast with the default mode behaviour:
+</para>
+<itemizedlist>
+<listitem><para>
+2016-12-31 23:59:50 +0000 plus ten GNU seconds is 2017-01-01 00:00:00 +0000, actually 11 TAI seconds later.
+</para></listitem>
+<listitem><para>
+2016-12-31 23:59:50 +0000 plus twenty GNU seconds is 2017-01-01 00:00:10 +0000, actually 21 TAI seconds later.
+</para></listitem>
+</itemizedlist>
+
+</refsection>
+
+</refsection>
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

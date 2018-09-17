@@ -236,7 +236,7 @@ void logger::rotate() {
 	if (0 <= current_fd) {
 		timespec now;
 		clock_gettime(CLOCK_REALTIME, &now);
-		const uint64_t secs(time_to_tai64(envs, now.tv_sec, false));
+		const uint64_t secs(time_to_tai64(envs, TimeTAndLeap(now.tv_sec, false)));
 		const uint32_t nano(now.tv_nsec);
 
 		char * name_u(0);
@@ -297,7 +297,7 @@ void logger::put (char c) {
 	if (bol) {
 		timespec now;
 		clock_gettime(CLOCK_REALTIME, &now);
-		const uint64_t secs(time_to_tai64(envs, now.tv_sec, false));
+		const uint64_t secs(time_to_tai64(envs, TimeTAndLeap(now.tv_sec, false)));
 		const uint32_t nano(now.tv_nsec);
 		char stamp[27];
 		snprintf(stamp, sizeof stamp, "@%016" PRIx64 "%08" PRIx32 " ", secs, nano);
@@ -337,7 +337,7 @@ cyclog [[gnu::noreturn]] (
 			&max_file_size_option,
 			&margin_option
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "log(s)");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{log(s)...}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);

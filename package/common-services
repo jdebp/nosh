@@ -1,13 +1,12 @@
+LCDd
 ModemManager
 NetworkManager
 NetworkManager-dispatcher
 VBoxService
 accounts-daemon
-anacron
 apache2
 apacheds
 ataidle-log
-atd
 autobridge-log
 avahi-dnsconfd
 bcron-start
@@ -25,7 +24,9 @@ cleanX
 cleantmp
 cleanuucp
 clickhouse-server
+colord
 console-fb-realizer@head0
+console-input-method@head0
 console-kit-daemon
 console-multiplexor@head0
 convert_varrun
@@ -193,6 +194,7 @@ terminal-emulator@vc2
 terminal-emulator@vc3
 timedated
 tinydns
+tinysshd-makekey
 tor
 udhcpc-log
 udisks

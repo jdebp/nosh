@@ -10,6 +10,8 @@ enable	terminal-emulator@*.service
 enable	cyclog@terminal-emulator@*.service
 enable	console-fb-realizer@*.service
 enable	cyclog@console-fb-realizer@*.service
+enable	console-input-method@*.service
+enable	cyclog@console-input-method@*.service
 enable	console-multiplexor@*.service
 enable	cyclog@console-multiplexor@*.service
 

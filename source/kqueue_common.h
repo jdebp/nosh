@@ -9,6 +9,7 @@ For copyright and licensing terms, see the file named COPYING.
 #else
 #include <sys/event.h>
 #endif
+#include <vector>
 
 /// \brief An inline function that replicates EV_SET.
 /// This does not evaluate its arguments more than once.
@@ -25,4 +26,20 @@ set_event (
 	void *udata
 ) {
 	EV_SET(ev, ident, filter, flags, fflags, data, udata);
+}
+
+extern inline
+void
+append_event (
+	std::vector<struct kevent> & p,
+	uintptr_t ident,
+	short filter,
+	unsigned short flags,
+	unsigned int fflags,
+	intptr_t data,
+	void *udata
+) {
+	struct kevent ev;
+	set_event(&ev, ident, filter, flags, fflags, data, udata);
+	p.push_back(ev);
 }

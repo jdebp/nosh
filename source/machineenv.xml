@@ -65,7 +65,7 @@ The previously documented workaround for those libraries' having memory leaks in
 
 <itemizedlist>
 <listitem><para>
-<citerefentry><refentrytitle>userenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+<citerefentry><refentrytitle>userenv-fromenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 </para></listitem>
 <listitem><para>
 <citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>

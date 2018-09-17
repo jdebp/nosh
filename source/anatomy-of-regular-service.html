@@ -7,7 +7,7 @@ Anatomy of a typical service
 </h1>
 
 <p>
-The atd service in the regular services collection is an example of a typical and commonly used regular service.
+The atd service in the services collection is an example of a typical and commonly used regular service.
 Its <code>start</code>, <code>stop</code>, and <code>restart</code> programs are fairly trivial and straightforward.
 They just chain to the <a href="true.html"><code>true</code> command</a>, which is effectively a no-operation for <code>start</code> and <code>stop</code> and which indicates in <code>restart</code> that the service should always be automatically restarted should it terminate.
 The meat of the service is its <code>run</code> program.

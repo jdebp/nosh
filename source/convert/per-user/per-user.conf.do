@@ -3,16 +3,18 @@
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
 # vim:set filetype=sh:
+#
+# This is run at binary package compile time to decide which service source file to use.
+
 case "`uname`" in
 Linux)
-	redo-ifchange /etc/os-release
-	# These get us *only* the operating system variables, safely.
-	read_os() { /bin/exec clearenv read-conf /etc/os-release "`which printenv`" "$1" ; }
-
-	case "`read_os ID`:`read_os VERSION_ID`" in
+	redo-ifchange os_version
+	read -r os_version < os_version
+	case "${os_version}" in
 	arch:*) 	ext=linux ;;
 	debian:[78]) 	ext=debian7-linux ;;
 	debian:*) 	ext=linux ;;
+	gentoo:*) 	ext=linux ;;
 	centos:*) 	ext=linux ;;
 	rhel:*) 	ext=linux ;;
 	*)      	ext=who ;;

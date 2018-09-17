@@ -8,8 +8,9 @@ After=network-interfaces.service
 Before=name-services.target
 
 [Service]
+User=tinydns-d
+EnvironmentUserOnly=true
 EnvironmentDirectory=env
-EnvironmentUser=tinydns-d
 LimitDATA=3000000
 ExecStart=%p
 RestartSec=0.2

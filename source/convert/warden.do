@@ -62,8 +62,8 @@ do
 	jail_service="warden-jail@${JAILNAME}"
 	jailed_service="warden-jailed@${JAILNAME}"
 
-	system-control convert-systemd-services $e "$r/" ./"${jail_service}.service"
-	system-control convert-systemd-services $e "$r/" ./"${jailed_service}.service"
+	system-control convert-systemd-units $e "$r/" ./"${jail_service}.service"
+	system-control convert-systemd-units $e "$r/" ./"${jailed_service}.service"
 
 	mkdir -p -m 0755 "$r/${jail_service}/service/env"
 	mkdir -p -m 0755 "$r/${jailed_service}/service/env"

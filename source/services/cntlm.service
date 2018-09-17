@@ -1,0 +1,15 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=NTLM Authenticating HTTP Proxy
+
+[Service]
+User=%p
+RuntimeDirectory=%p
+RuntimeDirectoryMode=0755
+ExecStart=%p -f ${flags}
+
+[Install]
+WantedBy=workstation.target

@@ -184,7 +184,7 @@ reboot_poweroff_halt_command [[gnu::noreturn]] (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	if (!args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, args.front(), "Unexpected argument.");
@@ -233,7 +233,7 @@ emergency_rescue_normal_command [[gnu::noreturn]] (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	if (!args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, args.front(), "Unexpected argument.");
@@ -299,7 +299,7 @@ init (
 			&fastboot_option,
 			&z_option
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "runlevel(s)...");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "[runlevel(s)...]");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -312,7 +312,7 @@ init (
 		if (update_mode && action < UPDATE) action = UPDATE;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	for (std::vector<const char *>::const_iterator i(args.begin()); args.end() != i; ++i) {

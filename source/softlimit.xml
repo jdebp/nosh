@@ -91,7 +91,7 @@ The following limit options are available:
 </variablelist>
 
 <para>
-See <citerefentry><refentrytitle>setrlimit</refentrytitle><manvolnum>1</manvolnum></citerefentry> for an explanation of these limits.
+See <citerefentry><refentrytitle>setrlimit</refentrytitle><manvolnum>2</manvolnum></citerefentry> for an explanation of the effects of these limits and the privileges that are sometimes required.
 </para>
 
 <para>
@@ -111,7 +111,7 @@ An attempt to set any one soft limit greater than the matching hard limit will b
 
 <para>
 For limits that are set as bytes: the <replaceable>bytes</replaceable> value can be suffixed with the SI abbreviations <code>k</code>, <code>M</code>, <code>G</code>, or <code>T</code> denoting the relevant power of 10; or alternatively can be suffixed with the IEEE/IEC abbreviations <code>Ki</code>, <code>Mi</code>, <code>Gi</code>, and <code>Ti</code> denoting the relevant power of 2.
-For limits that are set as seconds: the <replaceable>seconds</replaceable> value can be suffixed with the SI or IEEE/IEC abbreviations; or alternatively with <code>m</code>/<code>minute</code>/<code>minutes</code>, <code>h</code>/<code>hour</code>/<code>hours</code>, <code>d</code>/<code>day</code>/<code>days</code>, or <code>w</code>/<code>week</code>/<code>weeks</code> denoting minutes, hours, days, or weeks respectvely.
+For limits that are set as seconds: the <replaceable>seconds</replaceable> value can be suffixed with the SI or IEEE/IEC abbreviations; or alternatively with <code>m</code>/<code>minute</code>/<code>minutes</code>, <code>h</code>/<code>hour</code>/<code>hours</code>, <code>d</code>/<code>day</code>/<code>days</code>, or <code>w</code>/<code>week</code>/<code>weeks</code> denoting minutes, hours, days, or weeks respectively.
 All suffixes are case-sensitive.
 </para>
 

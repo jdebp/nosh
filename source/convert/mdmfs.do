@@ -9,7 +9,7 @@
 #
 
 # This gets us *only* the configuration variables, safely.
-read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
+read_rc() { clearenv read-conf rc.conf printenv "$1" ; }
 get_var() { read_rc "$1" || true ; }
 if_yes() { case "$1" in [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1) echo "$2" ;; esac ; }
 

@@ -17,12 +17,12 @@
 
 <para>
 A command named <command>init</command> is part of the AT&#x0026;T System 5 Interface Definition.
-It is specified solely as a control utility.
+It is specified <emphasis>solely</emphasis> as a control utility, not as the program run by process #1.
 The name of the program run by process #1 is not part of the SVID, and it is not required to be the same program as the <command>init</command> command.
 </para>
 
 <para>
-It is recommended that if you wish to retain System 5 habits you get into the habit of using <command>telinit</command> <arg choice='plain'><replaceable>runlevel</replaceable></arg> instead of <command>init</command> <arg choice='plain'><replaceable>runlevel</replaceable></arg>.
+	It is recommended that if you wish to retain System 5 habits <emphasis>at all</emphasis> you get into the habit of using <command>telinit</command> <arg choice='plain'><replaceable>runlevel</replaceable></arg> instead of <command>init</command> <arg choice='plain'><replaceable>runlevel</replaceable></arg>.
 This is because the latter will sometimes end up invoking <filename>/sbin/init</filename> and sometimes end up invoking <filename>/usr/local/sbin/init</filename>.
 </para>
 
@@ -30,20 +30,21 @@ This is because the latter will sometimes end up invoking <filename>/sbin/init</
 
 <para>
 The nosh toolset's <filename>/usr/local/sbin/init</filename> is a System 5 compatibility shim that is an alias for <citerefentry><refentrytitle>telinit</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+It is not the program run by process #1, and it <emphasis>is</emphasis> the SVID <command>init</command> command.
 </para>
 
 </refsection>
 <refsection><title><filename>/sbin/init</filename></title>
 
 <para>
-<filename>/sbin/init</filename> is not a System 5 compatibility shim, and what program it invokes varies widely.
+<filename>/sbin/init</filename> is not always a System 5 compatibility shim, and what program it invokes varies widely.
 </para>
 
 <refsection><title>On the BSDs</title>
 
 <para>
-<filename>/sbin/init</filename> is the original BSD <command>init</command>.
-It has limited System 5 compatibility compared to <command>telinit</command>.
+<filename>/sbin/init</filename> is the original BSD <citerefentry><refentrytitle>init</refentrytitle><manvolnum>8</manvolnum></citerefentry>, the program run by process #1 when not using the nosh toolset's system manager.
+It can also be run other than process #1, to be used as the SVID <command>init</command> command to an extent; but it has limited System 5 compatibility compared to <command>telinit</command>.
 </para>
 
 </refsection>
@@ -56,10 +57,11 @@ On Debian-family Linux operating systems, the (not universally implemented acros
 </para>
 
 <para>
-Several toolsets <emphasis>do not</emphasis> provide System 5 compatibility when <command>/sbin/init</command> is run other than as process #1.
+Several toolsets <emphasis>do not</emphasis> provide System 5 compatibility when <command>/sbin/init</command> is run other than as process #1, and this <emphasis>is not</emphasis> the SVID <command>init</command> command.
 Upstart, for example, starts up a "session init" in this situation.
 Similarly, in the nosh toolset case, <filename>/sbin/init</filename> becomes <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> as process #1 and <citerefentry><refentrytitle>per-user-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> otherwise.
-Neither is designed to provide System 5 compatibility <command>init</command> functionality.
+systemd, as built on some Linux operating systems, does not provide a <command>telinit</command> shim in <command>/usr/lib/systemd/systemd</command> (systemd's <command>telinit</command> shim being rather in its <command>systemctl</command> program).
+None of these is designed to provide System 5 compatibility <command>init</command> functionality.
 </para>
 
 </refsection>

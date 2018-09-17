@@ -1,0 +1,10 @@
+# This is an overlay keymap that sets the enter key to be 
+# the DEC VT calculator keypad enter key, that generates
+# control sequences sometimes.
+#
+#                                                        option
+# scan                       cntrl         option option cntrl lock
+# code  base   shift  cntrl  shift  option shift  cntrl  shift state
+# ------------------------------------------------------------------
+  028   enter  enter  enter  enter  enter  enter  enter  enter   N
+

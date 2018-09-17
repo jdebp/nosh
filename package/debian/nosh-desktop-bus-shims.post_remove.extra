@@ -1,0 +1,4 @@
+# Extra post-remove for nosh-desktop-bus-shims
+# vim: set filetype=sh:
+
+dpkg-divert --package nosh-desktop-bus-shims --remove --rename /usr/lib/dbus-1.0/dbus-daemon-launch-helper

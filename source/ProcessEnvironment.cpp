@@ -84,6 +84,27 @@ ProcessEnvironment::query(const char * var) const
 	return i->second.c_str();
 }
 
+ProcessEnvironment::const_iterator
+ProcessEnvironment::find(const std::string & var)
+{
+	make_copy();
+	return m.find(var);
+}
+
+ProcessEnvironment::const_iterator
+ProcessEnvironment::begin()
+{
+	make_copy();
+	return m.begin();
+}
+
+ProcessEnvironment::const_iterator
+ProcessEnvironment::end()
+{
+	make_copy();
+	return m.end();
+}
+
 void 
 ProcessEnvironment::make_copy()
 {

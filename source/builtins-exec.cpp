@@ -24,6 +24,7 @@ extern void setenv ( const char * &, std::vector<const char *> &, ProcessEnviron
 extern void unsetenv ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void envdir ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void clearenv ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void printenv ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void udp_socket_listen ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void udp_socket_connect ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void tcp_socket_listen ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
@@ -33,10 +34,15 @@ extern void tcp_socket_connect ( const char * &, std::vector<const char *> &, Pr
 extern void ulimit ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void softlimit ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void hardlimit ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void setlogin ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void envgid ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void envuidgid ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void getuidgid ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void setuidgid ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void setuidgid_fromenv ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void setgid_fromenv ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void userenv ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void userenv_fromenv ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void machineenv ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void line_banner ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void fdmove ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
@@ -85,6 +91,12 @@ extern void delegate_control_group_to ( const char * &, std::vector<const char *
 extern void set_control_group_knob ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void find_default_jvm ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void find_matching_jvm ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void time_print_tai64n ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void time_env_set ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void time_env_set_if_earlier ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void time_env_unset_if_later ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void time_env_add ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void time_pause_until ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 
 extern const
 struct command 
@@ -103,14 +115,20 @@ commands[] = {
 	{	"unsetenv",				unsetenv			},
 	{	"envdir",				envdir				},
 	{	"clearenv",				clearenv			},
+	{	"printenv",				printenv			},
 	{	"userenv",				userenv				},
+	{	"userenv-fromenv",			userenv_fromenv			},
 	{	"machineenv",				machineenv			},
 	{	"ulimit",				ulimit				},
 	{	"hardlimit",				hardlimit			},
 	{	"softlimit",				softlimit			},
+	{	"setlogin",				setlogin			},
+	{	"envgid",				envgid				},
 	{	"envuidgid",				envuidgid			},
+	{	"getuidgid",				getuidgid			},
 	{	"setuidgid",				setuidgid			},
 	{	"setuidgid-fromenv",			setuidgid_fromenv		},
+	{	"setgid-fromenv",			setgid_fromenv			},
 	{	"line-banner",				line_banner			},
 	{	"fdmove",				fdmove				},
 	{	"fdredir",				fdredir				},
@@ -151,6 +169,14 @@ commands[] = {
 	{	"set-control-group-knob",		set_control_group_knob		},
 	{	"find-default-jvm",		        find_default_jvm		},
 	{	"find-matching-jvm",		        find_matching_jvm		},
+	{	"tcp-socket-accept",			tcp_socket_accept		},
+	{	"local-stream-socket-accept",		local_stream_socket_accept	},
+	{	"local-seqpacket-socket-accept",	local_seqpacket_socket_accept	},
+	{	"time-env-set",				time_env_set			},
+	{	"time-env-set-if-earlier",		time_env_set_if_earlier		},
+	{	"time-env-unset-if-later",		time_env_unset_if_later 	},
+	{	"time-env-add",				time_env_add			},
+	{	"time-pause-until",			time_pause_until		},
 
 	// Terminals
 	{	"pause",				pause				},
@@ -158,20 +184,27 @@ commands[] = {
 	{	"tai64nlocal",				tai64nlocal			},
 	{	"set-dynamic-hostname",			set_dynamic_hostname		},
 	{	"setup-machine-id",			setup_machine_id		},
+#if !defined(__LINUX__) && !defined(__linux__)
+	{	"export-to-rsyslog",			export_to_rsyslog		},
+	{	"follow-log-directories",		follow_log_directories		},
+	{	"syslog-read",				syslog_read			},
+	{	"klog-read",				klog_read			},
+	{	"cyclog",				cyclog				},
+#endif
+	{	"time-print-tai64n",			time_print_tai64n		},
 };
 const std::size_t num_commands = sizeof commands/sizeof *commands;
 
 extern const
 struct command 
 personalities[] = {
+#if defined(__LINUX__) || defined(__linux__)
 	// These are not internal commands so that the output of ps looks prettier for long-running service processes that employ them.
-	{	"tcp-socket-accept",			tcp_socket_accept		},
-	{	"local-stream-socket-accept",		local_stream_socket_accept	},
-	{	"local-seqpacket-socket-accept",	local_seqpacket_socket_accept	},
 	{	"export-to-rsyslog",			export_to_rsyslog		},
 	{	"follow-log-directories",		follow_log_directories		},
 	{	"syslog-read",				syslog_read			},
 	{	"klog-read",				klog_read			},
 	{	"cyclog",				cyclog				},
+#endif
 };
 const std::size_t num_personalities = sizeof personalities/sizeof *personalities;

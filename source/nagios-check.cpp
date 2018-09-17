@@ -67,23 +67,6 @@ set (
 }
 
 static inline
-bool
-has_main_pid (
-	const char status[ENCORE_STATUS_BLOCK_SIZE]
-) {
-	return status[THIS_PID_OFFSET + 0U] || status[THIS_PID_OFFSET + 1U] || status[THIS_PID_OFFSET + 2U] || status[THIS_PID_OFFSET + 3U];
-}
-
-static inline
-bool
-has_exited_run (
-	const char status[STATUS_BLOCK_SIZE]
-) {
-	const char * const ran_exit_status(status + EXIT_STATUSES_OFFSET + EXIT_STATUS_SIZE * 1);
-	return 0 != ran_exit_status[0];
-}
-
-static inline
 void
 check ( 
 	const ProcessEnvironment & envs,
@@ -101,7 +84,7 @@ check (
 ) {
 	timespec now;
 	clock_gettime(CLOCK_REALTIME, &now);
-	const uint64_t z(time_to_tai64(envs, now.tv_sec, false));
+	const uint64_t z(time_to_tai64(envs, TimeTAndLeap(now.tv_sec, false)));
 
 	const FileDescriptorOwner supervise_dir_fd(open_supervise_dir(bundle_dir_fd));
 	if (0 > supervise_dir_fd.get()) {
@@ -174,10 +157,8 @@ check (
 		switch (status[ENCORE_STATUS_OFFSET]) {
 			case encore_status_stopped:
 				if (ready_after_run) {
-					if (STATUS_BLOCK_SIZE <= b) {
-						if (has_exited_run(status))
-							break;
-					}
+					if (has_exited_run(b, status))
+						break;
 				}
 				if (initially_up) {
 					stopped.push_back(name);
@@ -249,7 +230,7 @@ nagios_check [[gnu::noreturn]] (
 			&min_seconds_option,
 			&critical_if_below_min_option
 		};
-		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "service(s)...");
+		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "{service(s)...}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);

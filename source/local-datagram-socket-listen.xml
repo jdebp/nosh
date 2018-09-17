@@ -79,7 +79,7 @@ An attacker who could change what file is denoted by <replaceable>path</replacea
 To avoid these security holes, ensure that none of the directories in the path to <replaceable>path</replaceable> (not just the final one) are writable by untrusted users or groups; and ensure that untrusted programs cannot supply <replaceable>path</replaceable>.
 </para>
 
-</refsection><refsection><title>USAGE</title>
+</refsection><refsection><title>Usage</title>
 
 <para>
 <command>local-datagram-socket-listen</command> can be used as a simple daemon monitored by
@@ -92,10 +92,26 @@ and
 </para>
 
 <para>
-To change the process' UID and GID after opening the socket,
-simply chain through
-<citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+To change the process' UID and GID after opening the socket, simply chain through <citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
+
+</refsection>
+
+<refsection><title>See also</title>
+<variablelist>
+	<varlistentry>
+		<term><citerefentry><refentrytitle>tcp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+		<term><citerefentry><refentrytitle>udp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+		<term><citerefentry><refentrytitle>local-stream-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+		<term><citerefentry><refentrytitle>local-seqpacket-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+		<term><citerefentry><refentrytitle>netlink-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+		<listitem>
+			<para>
+				listeners for other protocols
+			</para>
+		</listitem>
+	</varlistentry>
+</variablelist>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
 

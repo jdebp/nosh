@@ -1,3 +1,45 @@
+nosh (1.38) unstable; urgency=medium
+
+  * More Linux services: connman, ofono, dundee, cntlm, minidlna, powertop, alsa-state, alsa-restore, unattended-upgrade-shutdown, apt-daily-update, apt-daily-upgrade
+  * More common services: LCDd, phpsessionclean, tinysshd
+  * More common per-user services: watchman
+  * atd is now a Linux-only service, and the BSDs now have an atrun service.
+  * New packages: nosh-run-bcron, nosh-bcron-as-cron-shims, nosh-debian-crontab, nosh-debian-crontab-anacron
+  * make-readonly-fs is now implemented.
+  * nosh-run-via-systemd now includes some per-user systemd service units for running a per-user service-manager.
+  * system-wide and per-user configuration import now both automatically generate dbus service bundles.
+  * per-user external configuration import now relies upon a central os_version file at build time.
+  * per-user external configuration import now generates service bundles that import global environment variables from a $HOME/config/service-bundles/common pseudo-bundle.
+  * system-wide external configuration import now adds an os_version setting to the amalgamated rc.conf .
+  * There are now a setgid-fromenv and an envgid command.
+  * userenv is now split into two parts, provided by the new getuidgid and userenv-fromenv commands.
+    Via the latter it now has --no-set-user and --no-set-shell options.
+  * convert-systemd-units now uses getuidgid, envgid, setgid-fromenv, and userenv-fromenv.
+    It uses more of the capabilities of userenv/userenv-fromenv for per-user Desktop Bus service bundles.
+    The EnvironmentUser setting has been replaced by the User and EnvironmentUserOnly settings.
+  * convert-systemd-units now supports RuntimeDirectoryGroup, RuntimeDirectoryPreserve, WantsMountsFor, AfterMountsFor, and RequiresMountsFor.
+  * A spelling error in the names of the UNIXREMOTEEUID and UNIXREMOTEEGID UCSPI-UNIX environment variables has been fixed.
+  * There is now a printenv built-in, a core shim, that makes parsing the likes of rc.conf and os-release from shell scripts slightly simpler.
+  * The basic ncurses TUI is now a utility class used by two programs.
+  * Better support for extended/function keys in user-space virtual terminals:
+    * console-convert-kbdmap now has varied actions for fkey49 to fkey61.
+    * console-fb-realizer implements shiftless extended key actions.
+    * console-terminal emulator now supports "application mode" for the calculator keypad and cursor keypad, and sends both application and normal mode control sequences for these keypads as commanded.
+  * console-fb-realizer now installs a functional default keyboard map, rather than an empty one, when no keyboard map is specified to be loaded.
+  * There is now a console-termios-realizer, which does not use Wide NCurses.
+  * There is now a setlogin command.
+  * login-banner now supports a \N escape sequence.
+  * Front-end processing for CJKV and other input methods is now provided:
+    * There is now a console-input-method command.
+    * The head0 user-space virtual terminal service bundles now have an input method plumbed in.
+    * A handful of input method data files are supplied with the toolset.
+    * The Guide now documents input methods.
+    * There is now a console-minput-method-control command.
+  * The Guide now documents some choices of keyboard maps, fonts, and input methods for user-space virtual terminals.
+  * The Guide now documents how head #0 is set up.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.com>  Mon, 17 Sep 2018 08:15:46 +0100
+
 nosh (1.37) unstable; urgency=medium
 
   * per-user-manager now accepts an optional listening FIFO open file descriptor, which it will use to listen for user-wide state change commands.

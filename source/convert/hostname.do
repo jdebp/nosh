@@ -9,7 +9,7 @@
 #
 
 # This gets us *only* the configuration variables, safely.
-read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
+read_rc() { clearenv read-conf rc.conf printenv "$1" ; }
 get_var1() { read_rc "$1" || true ; }
 
 redo-ifchange general-services

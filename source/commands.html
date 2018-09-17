@@ -36,12 +36,14 @@ General process state:
 <li><p> <a href="clearenv.html"><code>clearenv</code></a> &mdash; clear the environment, selectively or totally </p></li>
 <li><p> <a href="delegate-control-group-to.html"><code>delegate-control-group-to</code></a> &mdash; delegate the current control group to an(other) account, preparatory to becoming that user with <code>setuidgid</code> or similar </p></li>
 <li><p> <a href="envdir.html"><code>envdir</code></a> &mdash; process a daemontools-style envdir to set/unset environment variables </p></li>
-<li><p> <a href="envuidgid.html"><code>envuidgid</code></a> &mdash; set UID and GID environment variable values from the system account database </p></li>
+<li><p> <a href="envgid.html"><code>envgid</code></a> &mdash; set <code>GID</code> and <code>GIDLIST</code> environment variable values from the system account database </p></li>
+<li><p> <a href="envuidgid.html"><code>envuidgid</code></a> &mdash; set <code>UID</code>, <code>GID</code>, and <code>GIDLIST</code> environment variable values from the system account database </p></li>
 <li><p> <a href="fdmove.html"><code>fdmove</code></a> &mdash; copy/move file descriptors around </p></li>
 <li><p> <a href="fdredir.html"><code>fdredir</code></a> &mdash; open file descriptors for reading, writing, append, and so forth </p></li>
 <li><p> <a href="find-default-jvm.html"><code>find-default-jvm</code></a> &mdash; find the <code>JAVA_HOME</code> for the default JVM </p></li>
 <li><p> <a href="find-matching-jvm.html"><code>find-matching-jvm</code></a> &mdash; find the <code>JAVA_HOME</code> for a matching JVM </p></li>
 <li><p> <a href="foreground.html"><code>foreground</code></a> &mdash; run a child process synchronously, before continuing </p></li>
+<li><p> <a href="getuidgid.html"><code>getuidgid</code></a> &mdash; set the <code>UID</code>, <code>GID</code>, and <code>GIDLIST</code> environment variables from the effective UID+GID and supplementary groups of the process </p></li>
 <li><p> <a href="hardlimit.html"><code>hardlimit</code></a> &mdash; change hard resource limits </p></li>
 <li><p> <a href="local-reaper.html"><code>local-reaper</code></a> &mdash; set the local "Grim Reaper" status on/off </p></li>
 <li><p> <a href="machineenv.html"><code>machineenv</code></a> &mdash; initialize "machine" environment variables such as <code>HOSTNAME</code>, <code>MACHINEID</code>, and <code>DOMAINNAME</code> </p></li>
@@ -55,17 +57,24 @@ General process state:
 <li><p> <a href="set-control-group-knob.html"><code>set-control-group-knob</code></a> &mdash; change a knob in the current control group </p></li>
 <li><p> <a href="set-mount-object.html"><code>set-mount-object</code></a> &mdash; set the state of a mount object, in the process' mount namespace </p></li>
 <li><p> <a href="setenv.html"><code>setenv</code></a> &mdash; set an environment variable </p></li>
+<li><p> <a href="setgid-fromenv.html"><code>setgid-fromenv</code></a> &mdash; set GID and supplementary groups from environment variables </p></li>
 <li><p> <a href="setlock.html"><code>setlock</code></a> &mdash; obtain an open file descriptor for a lock file </p></li>
+<li><p> <a href="setlogin.html"><code>setlogin</code></a> &mdash; set the account name/user ID of the current login session, if permitted </p></li>
 <li><p> <a href="setpgrp.html"><code>setpgrp</code></a> &mdash; become a process group leader, if permitted </p></li>
 <li><p> <a href="setsid.html"><code>setsid</code></a> &mdash; become a session leader, if permitted </p></li>
-<li><p> <a href="setuidgid-fromenv.html"><code>setuidgid-fromenv</code></a> &mdash; set UIG, GID, and supplementary groups from environment variables </p></li>
-<li><p> <a href="setuidgid.html"><code>setuidgid</code></a> &mdash; set UIG, GID, and supplementary groups from the system account database </p></li>
+<li><p> <a href="setuidgid-fromenv.html"><code>setuidgid-fromenv</code></a> &mdash; set UID, GID, and supplementary groups from environment variables </p></li>
+<li><p> <a href="setuidgid.html"><code>setuidgid</code></a> &mdash; set UID, GID, and supplementary groups from the system account database </p></li>
 <li><p> <a href="softlimit.html"><code>softlimit</code></a> &mdash; change soft resource limits </p></li>
+<li><p> <a href="time-env-add.html"><code>time-env-add</code></a> &mdash; add an offset to a TAI64N time held in an environment variable</p></li>
+<li><p> <a href="time-env-set.html"><code>time-env-set</code></a> &mdash; set a TAI64N time held in an environment variable</p></li>
+<li><p> <a href="time-env-set-if-earlier.html"><code>time-env-set-if-earlier</code></a> &mdash; overwrite a TAI64N time held in an environment variable with another value if it is earlier</p></li>
+<li><p> <a href="time-env-unset-if-later.html"><code>time-env-unset-if-later</code></a> &mdash; unset an environment variable if the TAI64N time held there is later than another value</p></li>
 <li><p> <a href="ulimit.html"><code>ulimit</code></a> &mdash; change soft or hard resource limits </p></li>
 <li><p> <a href="umask.html"><code>umask</code></a> &mdash; change the umask </p></li>
 <li><p> <a href="unsetenv.html"><code>unsetenv</code></a> &mdash; unset an environment variable </p></li>
 <li><p> <a href="unshare.html"><code>unshare</code></a> &mdash; unhare Linux namespaces </p></li>
-<li><p> <a href="userenv.html"><code>userenv</code></a> &mdash; initialize "login" environment variables such as <code>HOME</code>, <code>SHELL</code>, <code>USER</code>, and <code>LOGNAME</code> </p></li>
+<li><p> <a href="userenv.html"><code>userenv</code></a> &mdash; initialize "login" environment variables such as <code>HOME</code>, <code>SHELL</code>, <code>USER</code>, and <code>LOGNAME</code> based upon the effectuve UID+GID and supplementary groups of the process </p></li>
+<li><p> <a href="userenv-fromenv.html"><code>userenv-fromenv</code></a> &mdash; initialize "login" environment variables such as <code>HOME</code>, <code>SHELL</code>, <code>USER</code>, and <code>LOGNAME</code> based upon the values of the <code>UID</code>, <code>GID</code>, and <code>GIDLIST</code> environment variables</p></li>
 </ul>
 
 <p>
@@ -139,6 +148,9 @@ User space virtual terminal services and terminal tools:
 <li><p> <a href="console-convert-kbdmap.html"><code>console-convert-kbdmap</code></a> &mdash; create a full ISO 9995-3 keyboard map from a BSD <code>kbdmap</code> file </p></li>
 <li><p> <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a> &mdash; "realize" a user-space virtual terminal onto a physical "head", i.e a keyboard input event device and a framebuffer display device, with specified fonts and keyboard maps </p></li>
 <li><p> <a href="console-ncurses-realizer.html"><code>console-ncurses-realizer</code></a> &mdash; "realize" a user-space virtual terminal onto another terminal using Wide NCurses </p></li>
+<li><p> <a href="console-termio-realizer.html"><code>console-termio-realizer</code></a> &mdash; "realize" a user-space virtual terminal onto another terminal using straight terminal I/O </p></li>
+<li><p> <a href="console-input-method.html"><code>console-input-method</code></a> &mdash; layer an input method over a user-space virtual terminal, providing CJK and other input </p></li>
+<li><p> <a href="console-input-method-control.html"><code>console-input-method-control</code></a> &mdash; control input method user-space virtual terminals </p></li>
 <li><p> <a href="console-multiplexor.html"><code>console-multiplexor</code></a> &mdash; multiplex several user-space virtual terminals into one, using the conventional <code>alt</code>-plus-function-key hotkeys </p></li>
 <li><p> <a href="console-multiplexor-control.html"><code>console-multiplexor-control</code></a> &mdash; control multiplexed user-space virtual terminals </p></li>
 <li><p> <a href="console-resize.html"><code>console-resize</code></a> (a.k.a. <code>resizecons</code>) &mdash; resize a terminal's display using DEC VT control sequences, which can properly pass over remote connections and don't need superuser privileges </p></li>
@@ -165,8 +177,11 @@ Others:
 <li><p> <a href="set-dynamic-hostname.html"><code>set-dynamic-hostname</code></a> &mdash; initialize the system hostname </p></li>
 <li><p> <a href="setup-machine-id.html"><code>setup-machine-id</code></a> &mdash; initialize the system machine ID and (BSD) host ID </p></li>
 <li><p> <a href="false.html"><code>false</code></a> &mdash; do nothing, and exit with a failure code </p></li>
+<li><p> <a href="time-pause-until.html"><code>time-pause-until</code></a> &mdash; wait until a specified TAI64N time has passed</p></li>
+<li><p> <a href="time-print-tai64n.html"><code>time-print-tai64n</code></a> &mdash; print a specified time in TAI64N form</p></li>
 <li><p> <a href="true.html"><code>true</code></a> &mdash; do nothing, and exit with a success code </p></li>
 <li><p> <a href="pause.html"><code>pause</code></a> &mdash; do nothing forever, until signalled </p></li>
+<li><p> <a href="printenv.html"><code>printenv</code></a> &mdash; print the values of specified environment variable, or the whole environment </p></li>
 </ul>
 
 <h2 class="Ruled" id="Managers">Service and system management</h2>

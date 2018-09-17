@@ -1,0 +1,13 @@
+# Extra pre-deinstall for nosh-run-via-systemd
+# vim: set filetype=sh:
+
+# Stop and disable systemd service/path/socket units.
+systemctl disable --no-reload system-control-normal.service
+systemctl stop system-control-normal.service
+systemctl disable --no-reload service-manager-svscan.path
+systemctl stop service-manager-svscan.path service-manager-svscan.service
+systemctl disable --no-reload service-manager.socket
+systemctl stop service-manager.socket service-manager.service
+systemctl daemon-reload
+
+true

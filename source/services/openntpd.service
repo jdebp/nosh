@@ -4,6 +4,9 @@
 
 [Unit]
 Description=OpenBSD NTP daemon
+Conflicts=ntpd.service systemd-timesyncd.service chrony.service VBoxService.service
+Before=time-sync.target
+Wants=time-sync.target
 
 [Service]
 Type=forking

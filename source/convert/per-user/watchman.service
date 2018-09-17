@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Facebook Watchman server for %u
+
+[Service]
+LocalReaper=true
+RuntimeDirectory=%p
+RuntimeDirectoryMode=0700
+EnvironmentDirectory=env
+ExecStart=%p --foreground --inetd
+StandardInput=socket
+
+[Install]
+WantedBy=normal.target

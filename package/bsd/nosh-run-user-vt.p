@@ -1,3 +1,4 @@
+# vim: set filetype=sh:
 # service list
 # user-mode TTYs
 user_tty "vc1-tty"
@@ -11,5 +12,6 @@ login_service_with_dedicated_logger "vc1-tty"
 login_service_with_dedicated_logger "vc2-tty"
 login_service_with_dedicated_logger "vc3-tty"
 # TTY ancillaries
+service_with_dedicated_logger "console-input-method@head0"
 service_with_dedicated_logger "console-multiplexor@head0"
 service_with_dedicated_logger "console-fb-realizer@head0"

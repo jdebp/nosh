@@ -77,7 +77,7 @@ The PID of the remote (client) process that connected.
 </varlistentry>
 
 <varlistentry>
-<term><envar>UNIXREMOTEUID</envar></term>
+<term><envar>UNIXREMOTEEUID</envar></term>
 <listitem>
 <para>
 The effective UID of the remote (client) process that connected.
@@ -86,7 +86,7 @@ The effective UID of the remote (client) process that connected.
 </varlistentry>
 
 <varlistentry>
-<term><envar>UNIXREMOTEGID</envar></term>
+<term><envar>UNIXREMOTEEGID</envar></term>
 <listitem>
 <para>
 The effective GID of the remote (client) process that connected.

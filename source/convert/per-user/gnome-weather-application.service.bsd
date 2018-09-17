@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=GNOME weather application for %u
+
+[Service]
+Type=dbus
+# The fact that the GNOME Weather Application server requires an X display at startup is a bug.
+EnvironmentDirectory=../../../common/env
+EnvironmentDirectory=env
+ExecStart=/usr/local/share/org.gnome.Weather/org.gnome.Weather.Application --gapplication-service
+Restart=on-abort
+
+[Install]

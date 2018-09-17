@@ -44,6 +44,7 @@ do
 	if system-control find "$I".service >/dev/null 2>&1
 	then
 		rm -f -- /etc/service-bundles/targets/workstation/wants/"$I"
+		rm -f -- /var/sv/"$I"/wanted-by/workstation
 	fi
 done
 for I in \

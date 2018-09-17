@@ -1,3 +1,4 @@
+# vim: set filetype=sh:
 fan_in_logger "udev"
 socket_only "udev"
 service_only "udev-finish"

@@ -12,26 +12,27 @@ For copyright and licensing terms, see the file named COPYING.
 
 #include <iostream>	// for debugging
 
-enum {
-	ALPHA_FOR_DEFAULT	= 0,
-	ALPHA_FOR_EXPLICIT	= 1,
-};
-
 /* Constructor and destructor ***********************************************
 // **************************************************************************
 */
 
-static const CharacterCell::colour_type default_foreground(ALPHA_FOR_DEFAULT,128U,128U,128U), default_background(ALPHA_FOR_DEFAULT,0U,0U,0U);
+static const CharacterCell::colour_type erased_foreground(ALPHA_FOR_ERASED,0xC0,0xC0,0xC0), erased_background(ALPHA_FOR_ERASED,0U,0U,0U);
+static const CharacterCell::colour_type default_foreground(ALPHA_FOR_DEFAULT,0xC0,0xC0,0xC0), default_background(ALPHA_FOR_DEFAULT,0U,0U,0U);
 
-SoftTerm::SoftTerm(SoftTerm::ScreenBuffer & s, SoftTerm::KeyboardBuffer & k, SoftTerm::MouseBuffer & m) :
+SoftTerm::SoftTerm(
+	SoftTerm::ScreenBuffer & s,
+	SoftTerm::KeyboardBuffer & k,
+	SoftTerm::MouseBuffer & m,
+	SoftTerm::coordinate w,
+	SoftTerm::coordinate h
+) :
+	utf8_decoder(*this),
+	ecma48_decoder(*this, false /* no control strings */, false /* no Interix shift state */, false /* no RXVT final $ in CSI bodge */),
 	screen(s),
 	keyboard(k),
 	mouse(m),
-	argc(0U),
-	seen_arg_digit(false),
-	first_private_parameter('\0'),
-	last_intermediate('\0'),
-	state(NORMAL),
+	scroll_margin(w,h),
+	display_margin(w,h),
 	scrolling(true),
 	overstrike(true),
 	no_clear_screen_on_column_change(false),
@@ -59,18 +60,6 @@ SoftTerm::~SoftTerm()
 	Resize(80U, 25U);
 	Home();
 	ClearDisplay();
-}
-
-SoftTerm::xy::xy() : 
-	x(0U), 
-	y(0U) 
-{
-}
-
-SoftTerm::wh::wh() : 
-	w(80U), 
-	h(25U) 
-{
 }
 
 SoftTerm::mode::mode() : 
@@ -132,30 +121,6 @@ OneIfZero (
 	return 0U == v ? 1U : v;
 }
 
-void 
-SoftTerm::ResetControlSequence()
-{
-	argc = 0U;
-	seen_arg_digit = false;
-	args[argc] = 0;
-	first_private_parameter = '\0';
-	last_intermediate = '\0';
-}
-
-void 
-SoftTerm::FinishArg(unsigned int d)
-{
-	if (!seen_arg_digit)
-		args[argc] = d;
-	if (argc >= sizeof args/sizeof *args - 1)
-		for (size_t i(1U); i < argc; ++i)
-			args[i - 1U] = args[i];
-	else
-		++argc;
-	seen_arg_digit = false;
-	args[argc] = 0;
-}
-
 SoftTerm::coordinate 
 SoftTerm::SumArgs()
 {
@@ -172,7 +137,7 @@ SoftTerm::SumArgs()
 CharacterCell 
 SoftTerm::ErasureCell(uint32_t c)
 {
-	return CharacterCell(c, attributes, foreground, active_modes.background_colour_erase ? background : default_background);
+	return CharacterCell(c, attributes, active_modes.background_colour_erase ? foreground : erased_foreground, active_modes.background_colour_erase ? background : erased_background);
 }
 
 void 
@@ -820,47 +785,6 @@ SoftTerm::CursorRight(
 // **************************************************************************
 */
 
-static 
-CharacterCell::colour_type
-Map16Colour (
-	uint8_t c
-) {
-	c %= 16U;
-	if (7U == c) {
-		// Dark white is brighter than bright black.
-		return CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,0xBF,0xBF,0xBF);
-	} else if (4U == c) {
-		// Everyone fusses about dark blue, and no choice is perfect.
-		// This choice is Web Indigo.
-		return CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,0x4F,0x00,0x7F);
-	} else {
-		if (8U == c) c = 7U;	// Substitute original dark white for bright black, which otherwise would work out the same as dark black.
-		const uint8_t h((c & 8U)? 255U : 127U), b(c & 4U), g(c & 2U), r(c & 1U);
-		return CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,r ? h : 0U,g ? h : 0U,b ? h : 0U);
-	}
-}
-
-static 
-CharacterCell::colour_type
-Map256Colour (
-	uint8_t c
-) {
-	if (c < 16U) {
-		return Map16Colour(c);
-	} else if (c < 232U) {
-		c -= 16U;
-		uint8_t b(c % 6U), g((c / 6U) % 6U), r(c / 36U);
-		if (r >= 4U) r += r - 3U;
-		if (g >= 4U) g += g - 3U;
-		if (b >= 4U) b += b - 3U;
-		return CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,r * 32U,g * 32U,b * 32U);
-	} else {
-		c -= 232U;
-		if (c >= 16U) c += c - 15U;
-		return CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,c * 8U,c * 8U,c * 8U);
-	}
-}
-
 void 
 SoftTerm::SetAttributes()
 {
@@ -874,11 +798,11 @@ SoftTerm::SetAttributes()
 			i += 3U;
 		} else
 		if (i + 5U <= argc && 38U == args[i + 0U] && 2U == args[i + 1U]) {
-			foreground = CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,args[i + 2U] % 256U,args[i + 3U] % 256U,args[i + 4U] % 256U);
+			foreground = CharacterCell::colour_type(ALPHA_FOR_COLOURED,args[i + 2U] % 256U,args[i + 3U] % 256U,args[i + 4U] % 256U);
 			i += 5U;
 		} else
 		if (i + 5U <= argc && 48U == args[i + 0U] && 2U == args[i + 1U]) {
-			background = CharacterCell::colour_type(ALPHA_FOR_EXPLICIT,args[i + 2U] % 256U,args[i + 3U] % 256U,args[i + 4U] % 256U);
+			background = CharacterCell::colour_type(ALPHA_FOR_COLOURED,args[i + 2U] % 256U,args[i + 3U] % 256U,args[i + 4U] % 256U);
 			i += 5U;
 		} else
 			SetAttribute (args[i++]);
@@ -918,14 +842,14 @@ SoftTerm::SetAttribute(unsigned int a)
 		case 1U:	attributes |= CharacterCell::BOLD; break;
 		case 2U:	attributes |= CharacterCell::FAINT; break;
 		case 3U:	attributes |= CharacterCell::ITALIC; break;
-		case 4U:	attributes |= CharacterCell::UNDERLINE; break;
+		case 4U:	attributes = (attributes & ~CharacterCell::UNDERLINES) | CharacterCell::SIMPLE_UNDERLINE; break;
 		case 5U:	attributes |= CharacterCell::BLINK; break;
 		case 7U:	attributes |= CharacterCell::INVERSE; break;
 		case 8U:	attributes |= CharacterCell::INVISIBLE; break;
 		case 9U:	attributes |= CharacterCell::STRIKETHROUGH; break;
 		case 22U:	attributes &= ~(CharacterCell::BOLD|CharacterCell::FAINT); break;
 		case 23U:	attributes &= ~CharacterCell::ITALIC; break;
-		case 24U:	attributes &= ~CharacterCell::UNDERLINE; break;
+		case 24U:	attributes &= ~CharacterCell::UNDERLINES; break;
 		case 25U:	attributes &= ~CharacterCell::BLINK; break;
 		case 27U:	attributes &= ~CharacterCell::INVERSE; break;
 		case 28U:	attributes &= ~CharacterCell::INVISIBLE; break;
@@ -980,10 +904,8 @@ SoftTerm::SetLinesPerPage()
 	if (argc) {
 		const coordinate n(args[argc - 1U]);
 		// The DEC VT minimum is 80 columns; we are more liberal since we are not constrained by CRT hardware.
-		if (n >= 2U) {
-			const coordinate columns(display_origin.x + display_margin.w);
-			Resize(columns, n);
-		}
+		if (n >= 2U)
+			Resize(0U, n);
 	}
 }
 
@@ -995,26 +917,22 @@ SoftTerm::SetColumnsPerPage()
 		// The DEC VT minimum is 24 rows; we are more liberal since we are not constrained by CRT hardware.
 		// xterm is not strictly compatible here, as it gives quite different meanings to values of n less than 24.
 		// A true DEC VT520 rounds up to the lowest possible size, which is 24.
-		if (n >= 2U) {
-			const coordinate rows(display_origin.y + display_margin.h);
-			Resize(n, rows);
-		}
+		if (n >= 2U)
+			Resize(n, 0U);
 	}
 }
 
 void 
 SoftTerm::SetScrollbackBuffer(bool f)
 {
-	const coordinate columns(display_origin.x + display_margin.w);
-
 	/// FIXME \bug This does not really work properly.
 	if (f) {
-		Resize(columns, display_margin.h + 25U);
+		Resize(0U, display_margin.h + 25U);
 		ResetMargins();
 		display_origin.y = 25U;
 	} else {
 		display_origin.y = 0U;
-		Resize(columns, display_margin.h);
+		Resize(0U, display_margin.h);
 	}
 }
 
@@ -1022,7 +940,7 @@ void
 SoftTerm::SetMode(unsigned int a, bool f)
 {
 	switch (a) {
-		case 4U:	overstrike = !f; break;
+/* IRM */	case 4U:	overstrike = !f; break;
 
 		// ############## Intentionally unimplemented standard modes
 		case 2U:	// KAM (keyboard action)
@@ -1032,7 +950,7 @@ SoftTerm::SetMode(unsigned int a, bool f)
 		case 7U:	// VEM (line editing)
 		case 10U:	// HEM (character editing)
 		case 12U:	// SRM (local echoplex)
-		case 18U:	// TSM (tabulation)
+		case 18U:	// TSM (tabulation stop)
 			// We don't provide this variability.
 			break;
 		case 19U:	// EBM (editing boundary)
@@ -1041,6 +959,7 @@ SoftTerm::SetMode(unsigned int a, bool f)
 			break;
 
 		// ############## As yet unimplemented or simply unknown standard modes
+		case 3U:	// CRM (control representation)
 		default:
 			std::clog << "Unknown mode : " << a << "\n";
 			break;
@@ -1051,10 +970,10 @@ void
 SoftTerm::SetPrivateMode(unsigned int a, bool f)
 {
 	switch (a) {
-		case 3U:	// DECCOLM
+/* DECCKM */	case 1U:	keyboard.SetCursorApplicationMode(f); break;
+/* DECCOLM */	case 3U:
 		{
-			const coordinate rows(display_origin.y + display_margin.h);
-			Resize(f ? 132U : 80U, rows);
+			Resize(f ? 132U : 80U, 0U);
 			if (!no_clear_screen_on_column_change) {
 				Home();
 				ClearDisplay();
@@ -1062,8 +981,8 @@ SoftTerm::SetPrivateMode(unsigned int a, bool f)
 			ResetMargins();
 			break;
 		}
-		case 6U:	active_modes.origin = f; break;			// DECOM
-		case 7U:	active_modes.automatic_right_margin = f; break;	// DECAWM
+/* DECOM */	case 6U:	active_modes.origin = f; break;
+/* DECAWM */	case 7U:	active_modes.automatic_right_margin = f; break;
 		case 12U:
 			if (f) 
 				cursor_attributes |= CursorSprite::BLINK;
@@ -1071,18 +990,19 @@ SoftTerm::SetPrivateMode(unsigned int a, bool f)
 				cursor_attributes &= ~CursorSprite::BLINK;
 			UpdateCursorType();
 			break;
-		case 25U:	// DECTCEM
+/* DECTCEM */		case 25U:
 			if (f) 
 				cursor_attributes |= CursorSprite::VISIBLE;
 			else
 				cursor_attributes &= ~CursorSprite::VISIBLE;
 			UpdateCursorType();
 			break;
-		case 67U:	keyboard.SetBackspaceIsBS(f); break	;	// DECBKM
-		case 69U:	active_modes.left_right_margins = f; break;	// DECLRMM
-		case 95U:	no_clear_screen_on_column_change = f; break;	// DECNCSM
-		case 112U:	SetScrollbackBuffer(f); break;			// DECRPL
-		case 117U:	active_modes.background_colour_erase = f; break;	// DECECM
+/* DECNKM */	case 66U:	keyboard.SetCalculatorApplicationMode(f); break;
+/* DECBKM */	case 67U:	keyboard.SetBackspaceIsBS(f); break;
+/* DECLRMM */	case 69U:	active_modes.left_right_margins = f; break;
+/* DECNCSM */	case 95U:	no_clear_screen_on_column_change = f; break;
+/* DECRPL */	case 112U:	SetScrollbackBuffer(f); break;
+/* DECECM */	case 117U:	active_modes.background_colour_erase = f; break;
 		case 1000U:	mouse.SetSendXTermMouseClicks(f); mouse.SetSendXTermMouseButtonMotions(false); mouse.SetSendXTermMouseNoButtonMotions(false); break;
 		case 1002U:	mouse.SetSendXTermMouseClicks(f); mouse.SetSendXTermMouseButtonMotions(f); mouse.SetSendXTermMouseNoButtonMotions(false); break;
 		case 1003U:	mouse.SetSendXTermMouseClicks(f); mouse.SetSendXTermMouseButtonMotions(f); mouse.SetSendXTermMouseNoButtonMotions(f); break;
@@ -1095,25 +1015,40 @@ SoftTerm::SetPrivateMode(unsigned int a, bool f)
 		case 2004U:	keyboard.SetSendPasteEvent(f); break	;
 
 		// ############## Intentionally unimplemented private modes
-		case 1U:	// DECCKM (application cursor keys)
-		case 8U:	// DECARM (autorepeat mode)
-		case 66U:	// DECNKM (ancillary keypad numeric mode)
-		case 68U:	// DECKBUM (main keypad data processing mode)
+		case 8U:	// DECARM (autorepeat)
+		case 68U:	// DECKBUM (main keypad data processing, i.e. group 2 lock)
 			// The terminal emulator is entirely decoupled from the physical keyboard; making these meaningless.
 			break;
 		case 1004U:	// xterm GUI focus event reports
 			// The terminal emulator is entirely decoupled from the realizer; making these meaningless.
 			break;
-		case 4U:	break;	// DECSCLM (slow scroll) is not useful.
+		case 2U:	break;	// DECANM (ANSI) has no meaning as we are never in VT52 mode.
+		case 4U:	break;	// DECSCLM (slow a.k.a. smooth scroll) is not useful.
 		case 9U:	break;	// This is an old ambiguous to decode mouse protocol, since superseded.
+		case 11U:	break;	// DECLTM (line transmission) has no meaning.
+		case 18U:	break;	// DECPFF (print Form Feed) has no meaning as we have no printer.
+		case 19U:	break;	// DECPEXT (print extent) has no meaning as we have no printer.
 		case 1001U:	break;	// This is a mouse grabber, tricky and largely unused in the wild.
 		case 1005U:	break;	// This is an old ambiguous to decode mouse protocol, since superseded.
 		case 1015U:	break;	// This is an old mouse protocol, since superseded.
 
+		// ############## Only partly implemented private modes
+		case 1049U:	/// \bug FIXME This should combine 1047/47 and 1048 in one.
+		case 1048U:	// Save/restore cursor position, equivalent to DECSC/DECRC
+				f ? SaveCursor() : RestoreCursor();
+				f ? SaveAttributes() : RestoreAttributes();
+				f ? SaveModes() : RestoreModes();
+				break;
+
 		// ############## As yet unimplemented or simply unknown private modes
 		case 5U:	// DECSCNM (light background/whole screen reverse video) is not implemented.
+		case 10U:	// DECEDM (edit)
+		case 13U:	// DECSCFDN (space compression/field delimiting)
+		case 16U:	// DECEKEM (edit key execution)
 #if 0 /// TODO:
 		case 1007U:	/// \todo Wheel mouse events when the alternate screen buffer is on
+		case 47U:	/// \todo Switch alternate screen buffer
+		case 1047U:	/// \todo Switch alternate screen buffer
 #endif
 		default:
 			std::clog << "Unknown private mode : " << a << "\n";
@@ -1558,17 +1493,17 @@ void
 SoftTerm::SelectLocatorEvent(unsigned int a)
 {
 	switch (a) {
-		case 0:
+		case 0U:
 			mouse.SetSendDECLocatorPressEvent(false);
 			mouse.SetSendDECLocatorReleaseEvent(false);
 			break;
-		case 1:
-		case 2:
-			mouse.SetSendDECLocatorPressEvent(1 == a);
+		case 1U:
+		case 2U:
+			mouse.SetSendDECLocatorPressEvent(1U == a);
 			break;
-		case 3:
-		case 4:
-			mouse.SetSendDECLocatorReleaseEvent(3 == a);
+		case 3U:
+		case 4U:
+			mouse.SetSendDECLocatorReleaseEvent(3U == a);
 			break;
 		default:
 			std::clog << "Unknown locator event selected : " << a << "\n";
@@ -1576,106 +1511,17 @@ SoftTerm::SelectLocatorEvent(unsigned int a)
 	}
 }
 
-/* Control sequence character classification ********************************
-// **************************************************************************
-*/
-
-inline
-bool 
-SoftTerm::IsControl(uint32_t character)
-{
-	return (character < 0x20) || (character >= 0x80 && character < 0xA0) || (DEL == character);
-}
-
-inline
-bool 
-SoftTerm::IsParameter(uint32_t character)
-{
-	return character >= 0x30 && character < 0x40;
-}
-
-inline
-bool 
-SoftTerm::IsIntermediate(uint32_t character)
-{
-	return character >= 0x20 && character < 0x30;
-}
-
 /* Top-level output functions ***********************************************
 // **************************************************************************
 */
 
 void 
-SoftTerm::Write(uint32_t character, bool decoder_error, bool overlong)
-{
-	switch (state) {
-		case NORMAL:
-			if (decoder_error || overlong)
-				Print(true, character);
-			else if (IsControl(character))
-				ProcessControlCharacter(character);
-			else
-				Print(false, character); 
-			break;
-		case ESCAPE1:
-			if (decoder_error)
-				state = NORMAL;
-			else if (overlong) {
-				state = NORMAL;
-				Print(true, character);
-			} else if (IsControl(character))
-				ProcessControlCharacter(character);
-			else
-				Escape1(character);
-			break;
-		case ESCAPE2:
-			if (decoder_error)
-				state = NORMAL;
-			else if (overlong) {
-				state = NORMAL;
-				Print(true, character);
-			} else if (IsControl(character))
-				ProcessControlCharacter(character);
-			else
-				Escape2(character);
-			break;
-		case CONTROL1:
-		case CONTROL2:
-			if (decoder_error)
-				state = NORMAL;
-			else if (overlong) {
-				state = NORMAL;
-				Print(true, character);
-			} else if (IsControl(character))
-				ProcessControlCharacter(character);
-			else
-				ControlSequence(character);
-			break;
-	}
-}
-
-void 
-SoftTerm::ProcessControlCharacter(uint32_t character)
-{
-	switch (character) {
-		case NUL:	break;
-		case BEL:	/* TODO: bell */ break;
-		case CR:	CarriageReturn(); break;
-		case NEL:	CarriageReturnNoUpdate(); CursorDown(1U, true, scrolling); break;
-		case IND: case LF: case VT: case FF:
-				CursorDown(1U, true, scrolling); break;
-		case RI:	CursorUp(1U, true, scrolling); break;
-		case TAB:	HorizontalTab(1U, true); break;
-		case BS:	CursorLeft(1U, true, false); break;
-		case DEL:	DeleteCharacters(1U); break;
-		case HTS:	SetHorizontalTabstop(); break;
-		case ESC:	last_intermediate = '\0'; state = ESCAPE1; break;
-		case CSI:	state = CONTROL1; ResetControlSequence(); break;
-		case CAN:	state = NORMAL; break;
-		case SS2: case SS3: case DCS: case SOS: case ST: case OSC: case PM: case APC:
-				break;	// explicitly unsupported control characters
-		default:	break;
-	}
+SoftTerm::ProcessDecodedUTF8(
+	uint32_t character,
+	bool decoder_error,
+	bool overlong
+) {
+	ecma48_decoder.Process(character, decoder_error, overlong);
 }
 
 void
@@ -1713,98 +1559,84 @@ SoftTerm::ResetToInitialState()
 }
 
 void 
-SoftTerm::Escape1(uint32_t character)
+SoftTerm::ControlCharacter(uint_fast32_t character)
 {
-	if (character >= 0x40 && character <= 0x5f) {
-		state = NORMAL;		// Do this first, so that it can be overridden.
-		// This is known as "7-bit code extension" and is defined for the entire range.
-		ProcessControlCharacter(character + 0x40); 
-	} else if (IsIntermediate(character)) {
-		last_intermediate = static_cast<char>(character);
-		state = ESCAPE2;
-	} else switch (character) {
-		default:	state = NORMAL; break;
-/* DECBI */	case '6':	CursorLeft(1U, true, true); state = NORMAL; break;
-/* DECSC */	case '7':	SaveCursor(); SaveAttributes(); SaveModes(); state = NORMAL; break;
-/* DECRC */	case '8':	RestoreCursor(); RestoreAttributes(); RestoreModes(); state = NORMAL; break;
-/* DECFI */	case '9':	CursorRight(1U, true, true); state = NORMAL; break;
-/* RIS */	case 'c':	ResetToInitialState(); state = NORMAL; break;
-		case '=':	// DECKPAM (keypad sends application-mode sequences)
-		case '>':	// DECKPNM (keypad sends numeric-mode sequences)
-			// The terminal emulator is entirely decoupled from the physical keyboard; making these meaningless.
-			state = NORMAL; 
+	switch (character) {
+		case NUL:	break;
+		case BEL:	/* TODO: bell */ break;
+		case CR:	CarriageReturn(); break;
+		case NEL:	CarriageReturnNoUpdate(); CursorDown(1U, true, scrolling); break;
+		case IND: case LF: case VT: case FF:
+				CursorDown(1U, true, scrolling); break;
+		case RI:	CursorUp(1U, true, scrolling); break;
+		case TAB:	HorizontalTab(1U, true); break;
+		case BS:	CursorLeft(1U, true, false); break;
+		case DEL:	DeleteCharacters(1U); break;
+		case HTS:	SetHorizontalTabstop(); break;
+		// These are wholly dealt with by the ECMA-48 decoder.
+		case ESC: case CSI: case SS2: case SS3: case CAN: case DCS: case OSC: case PM: case APC: case SOS: case ST:
+				break;
+		default:	break;
+	}
+}
+
+void 
+SoftTerm::EscapeSequence(uint_fast32_t character)
+{
+	switch (last_intermediate) {
+		default:	break;
+		case NUL:
+			switch (character) {
+				default:	break;
+/* DECGON */			case '1':	break;	// We are never in VT105 mode.
+/* DECGOFF */			case '2':	break;	// We are never in VT105 mode.
+/* DECVTS */			case '3':	break;	// We are never in LA120 mode.
+/* DECCAVT */			case '4':	break;	// We are never in LA120 mode.
+/* DECXMT */			case '5':	break;	// Unimplemented.
+/* DECBI */			case '6':	CursorLeft(1U, true, true); break;
+/* DECSC */			case '7':	SaveCursor(); SaveAttributes(); SaveModes(); break;
+/* DECRC */			case '8':	RestoreCursor(); RestoreAttributes(); RestoreModes(); break;
+/* DECFI */			case '9':	CursorRight(1U, true, true); break;
+/* DECANSI */			case '<':	break;	// We are never in VT52 mode.
+/* DECKPAM */			case '=':	keyboard.SetCalculatorApplicationMode(true); break;
+/* DECKPNM */			case '>':	keyboard.SetCalculatorApplicationMode(false); break;
+/* DMI */			case '`':	break;	// Not applicable.
+/* INT */			case 'a':	break;	// Not applicable.
+/* EMI */			case 'b':	break;	// Not applicable.
+/* RIS */			case 'c':	ResetToInitialState(); break;
+/* NAPLPS */			case 'k':	break;	// We do not employ ISO 2022 graphic sets.
+/* NAPLPS */			case 'l':	break;	// We do not employ ISO 2022 graphic sets.
+/* NAPLPS */			case 'm':	break;	// We do not employ ISO 2022 graphic sets.
+/* LS1 */			case 'n':	break;	// We do not employ ISO 2022 graphic sets.
+/* LS2 */			case 'o':	break;	// We do not employ ISO 2022 graphic sets.
+/* LS3R */			case '|':	break;	// We do not employ ISO 2022 graphic sets.
+/* LS2R */			case '}':	break;	// We do not employ ISO 2022 graphic sets.
+/* LS1R */			case '~':	break;	// We do not employ ISO 2022 graphic sets.
+			}
+			break;
+		case ' ':
+			switch (character) {
+				default:	break;
+/* S7C1T */				case 'F':	keyboard.Set8BitControl1(false); break;
+/* S8C1T */				case 'G':	keyboard.Set8BitControl1(true); break;
+			}
+			break;
+		case '#':
+			switch (character) {
+				default:	break;
+/* DECALN */				case '8':	ResetMargins(); Home(); ClearDisplay('E'); break;
+			}
 			break;
 	}
 }
 
 void 
-SoftTerm::Escape2(uint32_t character)
-{
-	if (IsIntermediate(character)) {
-		last_intermediate = static_cast<char>(character);
-	} else {
-		switch (last_intermediate) {
-			default:	break;
-			case ' ':
-				switch (character) {
-					default:	break;
-/* S7C1T */				case 'F':	keyboard.Set8BitControl1(false); break;
-/* S8C1T */				case 'G':	keyboard.Set8BitControl1(true); break;
-				}
-				break;
-			case '#':
-				switch (character) {
-					default:	break;
-/* DECALN */				case '8':	ResetMargins(); Home(); ClearDisplay('E'); break;
-				}
-				break;
-		}
-		state = NORMAL;
-	}
-}
-
-void 
-SoftTerm::ControlSequence(uint32_t character)
-{
-	if (!IsParameter(character))
-		state = CONTROL2;
-	else if (CONTROL1 != state) {
-		std::clog << "Out of sequence CSI parameter character : " << character << "\n";
-		state = NORMAL; 
-	} else switch (character) {
-		// Accumulate digits in arguments.
-		case '0': case '1': case '2': case '3': case '4':
-		case '5': case '6': case '7': case '8': case '9':
-			seen_arg_digit = true;
-			args[argc] = args[argc] > 999U ? 9999U : args[argc] * 10U + (character - '0');
-			return;
-		// ECMA-48 defines colon as a sub-argument delimiter.
-		// No-one uses it; not even ISO 8613-3 SGR 38/48 sequences.
-		case ':':
-			seen_arg_digit = false;
-			args[argc] = 0U;
-			return;
-		// Arguments may be semi-colon separated.
-		case ';':
-			FinishArg(0U); 
-			return;
-		// Everything else up to U+002F is a private parameter character, per ECMA-48 5.4.1.
-		// DEC VTs make use of '<', '=', '>', and '?'.
-		default:
-			if ('\x00' == first_private_parameter)
-				first_private_parameter = static_cast<char>(character);
-			return;
-	}
-
-	// We only reach this point in the CONTROL2 state.
-	if (IsIntermediate(character)) {
-		last_intermediate = static_cast<char>(character);
-		return;
-	}
-
+SoftTerm::ControlSequence(
+	uint_fast32_t character
+) {
 	// Finish the final argument, using the relevant defaults.
-	if ('\0' == last_intermediate) {
-		if ('\0' == first_private_parameter) switch (character) {
+	if (NUL == last_intermediate) {
+		if (NUL == first_private_parameter) switch (character) {
 			case 'c':
 			case 'g':
 			case 'm':
@@ -1859,8 +1691,8 @@ SoftTerm::ControlSequence(uint32_t character)
 		FinishArg(1U); 
 
 	// Enact the action.
-	if ('\0' == last_intermediate) {
-		if ('\0' == first_private_parameter) switch (character) {
+	if (NUL == last_intermediate) {
+		if (NUL == first_private_parameter) switch (character) {
 // ---- ECMA-defined final characters ----
 /* ICH */		case '@':	InsertCharacters(OneIfZero(SumArgs())); break;
 /* CUU */		case 'A':	CursorUp(OneIfZero(SumArgs()), false, false); break;
@@ -1910,11 +1742,19 @@ SoftTerm::ControlSequence(uint32_t character)
 /* DSR */		case 'n':	SendDeviceStatusReports(); break;
 /* DAQ */		case 'o':	break; // Define Area Qualification has no applicability as this is not a block mode terminal.
 // ---- ECMA private-use final characters begin here. ----
+/* DECSTR */		case 'p':	break; // Soft Terminal Reset is not implemented.
+/* DECLL */		case 'q':	break; // Load LEDs has no applicability as there are no LEDs.
 /* DECSTBM */		case 'r':	SetTopBottomMargins(); break;
 			case 's':	SCOSCorDESCSLRM(); break;
 /* DECSLPP */		case 't':	SetLinesPerPage(); break;
-/* SCORC */		case 'u':	RestoreCursor(); RestoreAttributes(); RestoreModes(); break;
-/* SCOSGR */		case 'x':	SetSCOAttributes(); break;
+/* SCORC */		case 'u':	RestoreCursor(); RestoreAttributes(); RestoreModes(); break;	// Not DECSHST as on LA100.
+/* DECSVST */		case 'v':	break; // Set multiple vertical tab stops at once is not implemented.
+/* DECSHORP */		case 'w':	break; // Set Horizontal Pitch has no applicability as this is not a LA100.
+/* SCOSGR */		case 'x':	SetSCOAttributes(); break;	// not DECREQTPARM
+/* DECTST */		case 'y':	break; // Confidence Test has no applicability as this is not a hardware terminal.
+/* DECSVERP */		case 'z':	break; // Set Vertical Pitch has no applicability as this is not a LA100.
+/* DECTTC */		case '|':	break; // Transmit Termination Character is not implemented
+/* DECPRO */		case '}':	break; // Define Protected Field is not implemented
 			default:	
 				std::clog << "Unknown CSI terminator " << character << "\n";
 				break;
@@ -1960,6 +1800,13 @@ SoftTerm::ControlSequence(uint32_t character)
 /* DECSCUSR */	case 'q':	SetCursorStyle(); break;
 /* SL */	case '@':	ScrollLeft(OneIfZero(SumArgs())); break;
 /* SR */	case 'A':	ScrollRight(OneIfZero(SumArgs())); break;
+/* GSM */	case 'B':	break;	// Graphic Size Modification has no meaning.
+/* GSS */	case 'C':	break;	// Graphic Size Selection has no meaning.
+/* FNT */	case 'D':	break;	// Font Selection has no meaning.
+/* TSS */	case 'E':	break;	// Thin Space Selection has no meaning.
+/* JFY */	case 'F':	break;	// Justify has no meaning.
+/* SPI */	case 'G':	break;	// Spacing Increment has no meaning.
+/* QUAD */	case 'H':	break;	// Quadding is not implemented.
 		default:	
 			std::clog << "Unknown CSI " << last_intermediate << ' ' << character << "\n";
 			break;
@@ -1980,13 +1827,20 @@ SoftTerm::ControlSequence(uint32_t character)
 			break;
 	} else
 		std::clog << "Unknown CSI " << last_intermediate << ' ' << character << "\n";
-	state = NORMAL; 
 }
 
 void 
-SoftTerm::Print(
+SoftTerm::ControlString(
+	uint_fast32_t /*character*/
+) {
+	std::clog << "Unexpected control string\n";
+}
+
+void 
+SoftTerm::PrintableCharacter(
 	bool error,
-	uint32_t character
+	unsigned short shift_level,
+	uint_fast32_t character
 ) {
 	if (advance_pending) {
  		if (WillWrap()) Advance();
@@ -2002,7 +1856,7 @@ SoftTerm::Print(
 	} else {
 		const coordinate columns(display_origin.x + display_margin.w);
 		const ScreenBuffer::coordinate s(columns * active_cursor.y + active_cursor.x);
-		const CharacterCell::attribute_type a(attributes ^ (error ? CharacterCell::INVERSE : 0));
+		const CharacterCell::attribute_type a(attributes ^ (error || 1U != shift_level ? CharacterCell::INVERSE : 0));
 		if (UnicodeCategorization::IsMarkEnclosing(character)) {
 			screen.WriteNCells(s, 1U, CharacterCell(character, a, foreground, background));
 		} else {

@@ -17,6 +17,7 @@
 <cmdsynopsis>
 <command>console-ncurses-realizer</command>
 <arg choice='opt'>--display-only</arg>
+<arg choice='opt'>--wrong-way-up</arg>
 <arg choice='req'><replaceable>vcname</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -26,6 +27,7 @@
 <para>
 <command>console-ncurses-realizer</command> is the I/O back-end for a (user-space) virtual terminal, that realizes the virtual terminal on another terminal.
 It uses wide-character ncurses (sometimes a.k.a. ncursesw) to do so, and thus expects that terminal to be already connected to its standard input and standard output.
+It only uses its standard error for diagnostic messages.
 </para>
 
 <para>
@@ -52,6 +54,11 @@ writes the contents of the character/attribute buffer file to its standard outpu
 </listitem>
 
 </itemizedlist>
+
+<para>
+The <arg choice='plain'>--wrong-way-up</arg> command-line option causes the display to be realized the wrong way up, swapping the direction of increasing line numbers.
+This is an oft-requested terminal feature, albeit by people who have never actually experienced it.
+</para>
 
 </refsection>
 

@@ -9,5 +9,6 @@ Description=Zeitgeist activity monitor for %u
 Type=dbus
 EnvironmentDirectory=env
 ExecStart=%p
+Restart=on-abort
 
 [Install]

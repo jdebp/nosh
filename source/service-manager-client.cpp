@@ -284,7 +284,16 @@ wait_ok (
 	}
 }
 
-static inline
+bool
+has_exited_run (
+	const unsigned int b,
+	const char status[STATUS_BLOCK_SIZE]
+) {
+	if (b < STATUS_BLOCK_SIZE) return false;
+	const char * const ran_exit_status(status + EXIT_STATUSES_OFFSET + EXIT_STATUS_SIZE * 1);
+	return 0 != ran_exit_status[0];
+}
+
 bool
 has_main_pid (
 	const char status[ENCORE_STATUS_BLOCK_SIZE]

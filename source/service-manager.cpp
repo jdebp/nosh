@@ -34,6 +34,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "utils.h"
 #include "fdutils.h"
 #include "ProcessEnvironment.h"
+#include "popt.h"
 #include "pack.h"
 #include "listen.h"
 #include "service-manager.h"
@@ -210,7 +211,7 @@ void
 service::stamp_time (
 	const timespec & now
 ) {
-	const uint64_t s(time_to_tai64(envs, now.tv_sec, false));
+	const uint64_t s(time_to_tai64(envs, TimeTAndLeap(now.tv_sec, false)));
 	const uint32_t n(now.tv_nsec);
 	const uint32_t p(has_processes() ? *processes.begin() : 0);
 	pack_bigendian(status +  0, s, 8);
@@ -259,7 +260,7 @@ service::stamp_process_status (
 		status[offset] = WCOREDUMP(wait_status) ? 3 : 2;
 		pack_bigendian(status + offset + 1U, signo, 4);
 	}
-	const uint64_t s(time_to_tai64(envs, now.tv_sec, false));
+	const uint64_t s(time_to_tai64(envs, TimeTAndLeap(now.tv_sec, false)));
 	const uint32_t n(now.tv_nsec);
 	pack_bigendian(status + offset +  5U, s, 8);
 	pack_bigendian(status + offset + 13U, n, 4);
@@ -1191,11 +1192,29 @@ stop_and_unload_all (
 
 void
 service_manager [[gnu::noreturn]] (
-	const char * & /*next_prog*/,
+	const char * & next_prog,
 	std::vector<const char *> & args,
 	ProcessEnvironment & envs
 ) {
 	prog = basename_of(args[0]);
+	try {
+		popt::top_table_definition main_option(0, 0, "Main options", "");
+
+		std::vector<const char *> new_args;
+		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
+		p.process(true /* strictly options before arguments */);
+		args = new_args;
+		next_prog = arg0_of(args);
+		if (p.stopped()) throw EXIT_SUCCESS;
+	} catch (const popt::error & e) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
+		throw static_cast<int>(EXIT_USAGE);
+	}
+
+	if (!args.empty()) {
+		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Unexpected argument.");
+		throw static_cast<int>(EXIT_USAGE);
+	}
 
 	const int dev_null_fd(openat(AT_FDCWD, "/dev/null", O_NOCTTY|O_CLOEXEC|O_RDWR|O_NONBLOCK));
 	if (0 > dev_null_fd) {
@@ -1300,7 +1319,9 @@ service_manager [[gnu::noreturn]] (
 #endif
 
 	bool in_shutdown(false);
+#if !defined(__LINUX__) && !defined(__linux__)
 	const timespec zero_timeout = { 0, 0 };
+#endif
 	for (;;) {
 		try {
 			if (in_shutdown) {

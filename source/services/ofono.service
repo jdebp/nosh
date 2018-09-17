@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Mobile telephony
+
+[Service]
+Type=dbus
+RuntimeDirectory=%p
+ExecStart=%pd --nodetach
+
+[Install]
+#WantedBy=workstation.target

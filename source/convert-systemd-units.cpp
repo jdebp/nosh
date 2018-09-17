@@ -15,6 +15,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sstream>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/resource.h>
 #include <sys/socket.h>	// Necessary for the SO_REUSEPORT macro.
 #include <netinet/in.h>	// Necessary for the IPV6_V6ONLY macro.
 #include <unistd.h>
@@ -183,36 +184,50 @@ escape_newlines (
 	return r;
 }
 
-static
-std::string
-quote (
-	const std::string & s
+static inline std::string quote ( const std::string & s ) { return quote_for_nosh(s); }
+
+static inline
+bool
+remove_last_component (
+	std::string & dirname,
+	std::string & basename
 ) {
-	std::string r;
-	bool quote(s.empty());
-	for (std::string::const_iterator p(s.begin()); s.end() != p; ++p) {
-		const char c(*p);
-		if (!std::isalnum(c) && '/' != c && '-' != c && '_' != c && '.' != c) {
-			quote = true;
-			if ('\"' == c || '\\' == c)
-				r += '\\';
-		}
-		r += c;
+	const std::string::size_type slash(dirname.rfind('/'));
+	if (std::string::npos != slash) {
+		basename = std::string(dirname, slash + 1, std::string::npos);
+		dirname = std::string(dirname, 0, 0 == slash ? 1 : slash);
+		return true;
+	} else {
+		basename = dirname;
+		dirname = std::string();
+		return false;
 	}
-	if (quote) r = "\"" + r + "\"";
-	return r;
+}
+
+static
+bool
+has_dot_or_dotdot_anywhere (
+	std::string dirname
+) {
+	std::string basename;
+	for (;;) {
+		const bool more(remove_last_component(dirname, basename));
+		if ("." == basename || ".." == basename) return true;
+		if (!more) return false;
+	}
 }
 
 /// \brief Convert from nosh and systemd quoting and escaping rules to the ones for sh.
-/// sh metacharacters other than $ and # are also disabled by escaping them.
+/// sh metacharacters other than $ (if dollar is true) and # (always) are also disabled by escaping them.
 static
 std::string
 escape_metacharacters (
-	const std::string & s
+	const std::string & s,
+	bool dollar
 ) {
 	std::string r;
 	enum { NORMAL, DQUOT, SQUOT } state(NORMAL);
-	for (std::string::const_iterator p(s.begin()); s.end() != p; ++p) {
+	for (std::string::const_iterator p(s.begin()), e(s.end()); e != p; ++p) {
 		char c(*p);
 		switch (state) {
 			case NORMAL:
@@ -223,6 +238,8 @@ escape_metacharacters (
 				else if ('\"' == c) state = DQUOT;
 				else if (';' == c || '|' == c || '&' == c)
 					r += '\\';
+				else if (!dollar && '$' == c)
+					r += '\\';
 				break;
 			case DQUOT:
 				if ('\\' == c && p + 1 != s.end()) {
@@ -231,12 +248,14 @@ escape_metacharacters (
 					c = *++p;
 					if ('`' == c || '\\' == c || '\"' == c)
 						r += '\\'; 
+					else if (!dollar && '$' == c)
+						r += '\\';
 				} else if ('\"' == c) state = NORMAL;
 				break;
 			case SQUOT:
 				if ('\\' == c && p + 1 != s.end()) {
 					// nosh and systemd escaping within single quotes differs from that of sh.
-					// In the sh rules \ is never an escape character and There is no way to quote ' .
+					// In the sh rules \ is never an escape character and there is no way to quote ' .
 					c = *++p;
 					if ('\'' == c)
 						r += "'\\'"; 
@@ -262,7 +281,7 @@ shell_expand (
 	const std::string & s
 ) {
 	enum { NORMAL, DQUOT, SQUOT } state(NORMAL);
-	for (std::string::const_iterator p(s.begin()); s.end() != p; ++p) {
+	for (std::string::const_iterator p(s.begin()), e(s.end()); e != p; ++p) {
 		const char c(*p);
 		switch (state) {
 			case NORMAL:
@@ -270,13 +289,13 @@ shell_expand (
 				else if ('\'' == c) state = SQUOT;
 				else if ('\"' == c) state = DQUOT;
 				else if ('$' == c)
-					return "sh -c " + quote("exec " + escape_metacharacters(s));
+					return "sh -c " + quote("exec " + escape_metacharacters(s, true));
 				break;
 			case DQUOT:
 				if ('\\' == c && p != s.end()) ++p;
 				else if ('\"' == c) state = NORMAL;
 				else if ('$' == c)
-					return "sh -c " + quote("exec " + escape_metacharacters(s));
+					return "sh -c " + quote("exec " + escape_metacharacters(s, true));
 				break;
 			case SQUOT:
 				if ('\\' == c && p != s.end()) ++p;
@@ -720,8 +739,8 @@ report_unused (
 			const std::string & var(i1->first);
 			const value & v(i1->second);
 			if (!v.used) {
-				for (value::settings::const_iterator i(v.all_settings().begin()); v.all_settings().end() != i; ++i) {
-				       const std::string & val(*i);
+				for (value::settings::const_iterator i2(v.all_settings().begin()), e2(v.all_settings().end()); e2 != i2; ++i2) {
+				       const std::string & val(*i2);
 				       std::fprintf(stderr, "%s: WARNING: %s: Unused setting: [%s] %s = %s\n", prog, name.c_str(), section.c_str(), var.c_str(), val.c_str());
 				}
 			}
@@ -767,7 +786,7 @@ convert_systemd_units [[gnu::noreturn]] (
 			&no_systemd_quirks_option,
 			&no_generation_comment_option
 		};
-		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "unit");
+		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "{unit}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -793,13 +812,15 @@ convert_systemd_units [[gnu::noreturn]] (
 	args.erase(args.begin());
 	if (!args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Unrecognized argument(s).");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
-	bool is_socket_activated(false), is_target(false), merge_run_into_start(false);
+	bool is_socket_activated(false), is_timer_activated(false), is_target(false), merge_run_into_start(false);
 
 	std::string socket_filename;
 	profile socket_profile;
+	std::string timer_filename;
+	profile timer_profile;
 	std::string service_filename;
 	profile service_profile;
 
@@ -810,6 +831,9 @@ convert_systemd_units [[gnu::noreturn]] (
 		} else
 		if (ends_in(names.query_unit_basename(), ".socket", bundle_basename)) {
 			is_socket_activated = true;
+		} else
+		if (ends_in(names.query_unit_basename(), ".timer", bundle_basename)) {
+			is_timer_activated = true;
 		} else
 		if (ends_in(names.query_unit_basename(), ".service", bundle_basename)) {
 		} else
@@ -852,7 +876,31 @@ convert_systemd_units [[gnu::noreturn]] (
 		FileStar service_file(find(service_unit_name, service_filename));
 				
 		load(prog, service_profile, service_file, service_unit_name, service_filename);
-	} else {
+	} else 
+	if (is_timer_activated) {
+		std::string timer_unit_name(names.query_arg_name());
+		FileStar timer_file(find(timer_unit_name, timer_filename));
+
+		if (!timer_file && ENOENT == errno) {
+			std::string::size_type atc(names.query_bundle_basename().find('@'));
+			if (names.query_bundle_basename().npos != atc) {
+				names.set_prefix(names.query_bundle_basename().substr(0, atc), escape_prefix, alt_escape, ext_escape);
+				++atc;
+				names.set_instance(names.query_bundle_basename().substr(atc, names.query_bundle_basename().npos), escape_instance, alt_escape, ext_escape);
+				is_instance = true;
+				timer_unit_name = names.query_unit_dirname() + names.query_escaped_prefix() + "@.timer";
+				timer_file = find(timer_unit_name, timer_filename);
+			}
+		}
+
+		load(prog, timer_profile, timer_file, timer_unit_name, timer_filename);
+
+		const std::string service_unit_name(names.query_unit_dirname() + names.query_escaped_prefix() + ".service");
+		FileStar service_file(find(service_unit_name, service_filename));
+				
+		load(prog, service_profile, service_file, service_unit_name, service_filename);
+	} else 
+	{
 		std::string service_unit_name(names.query_arg_name());
 		FileStar service_file(find(service_unit_name, service_filename));
 
@@ -870,6 +918,29 @@ convert_systemd_units [[gnu::noreturn]] (
 				
 		load(prog, service_profile, service_file, service_unit_name, service_filename);
 	}
+
+	value * onactivesec(timer_profile.use("timer", "onactivesec"));
+	value * onbootsec(timer_profile.use("timer", "onbootsec"));
+	value * onstartupsec(timer_profile.use("timer", "onstartupsec"));
+	value * onunitactivesec(timer_profile.use("timer", "onunitactivesec"));
+	value * onunitinactivesec(timer_profile.use("timer", "onunitinactivesec"));
+	value * oncalendar(timer_profile.use("timer", "oncalendar"));
+	value * timer_description(timer_profile.use("unit", "description"));
+	value * timer_defaultdependencies(timer_profile.use("unit", "defaultdependencies"));
+	value * timer_earlysupervise(timer_profile.use("unit", "earlysupervise"));	// This is an extension to systemd.
+	value * timer_before(timer_profile.use("unit", "before"));
+	value * timer_after(timer_profile.use("unit", "after"));
+	value * timer_conflicts(timer_profile.use("unit", "conflicts"));
+	value * timer_wants(timer_profile.use("unit", "wants"));
+	value * timer_requires(timer_profile.use("unit", "requires"));
+	value * timer_requisite(timer_profile.use("unit", "requisite"));
+	value * timer_partof(timer_profile.use("unit", "partof"));
+	value * timer_wantedby(timer_profile.use("install", "wantedby"));
+	value * timer_requiredby(timer_profile.use("install", "requiredby"));
+	value * timer_stoppedby(timer_profile.use("install", "stoppedby"));	// This is an extension to systemd.
+	value * timer_requiresmountsfor(timer_profile.use("unit", "requiresmountsfor"));
+	value * timer_wantsmountsfor(timer_profile.use("unit", "wantsmountsfor"));	// This is an extension to systemd.
+	value * timer_aftermountsfor(timer_profile.use("unit", "aftermountsfor"));	// This is an extension to systemd.
 
 	value * listenstream(socket_profile.use("socket", "listenstream"));
 	value * listenfifo(socket_profile.use("socket", "listenfifo"));
@@ -896,6 +967,9 @@ convert_systemd_units [[gnu::noreturn]] (
 	value * receivebuffer(socket_profile.use("socket", "receivebuffer"));
 	value * netlinkraw(socket_profile.use("socket", "netlinkraw"));	// This is an extension to systemd.
 	value * sslshim(socket_profile.use("socket", "sslshim"));	// This is an extension to systemd.
+	value * socket_description(socket_profile.use("unit", "description"));
+	value * socket_defaultdependencies(socket_profile.use("unit", "defaultdependencies"));
+	value * socket_earlysupervise(socket_profile.use("unit", "earlysupervise"));	// This is an extension to systemd.
 	value * socket_before(socket_profile.use("unit", "before"));
 	value * socket_after(socket_profile.use("unit", "after"));
 	value * socket_conflicts(socket_profile.use("unit", "conflicts"));
@@ -903,12 +977,12 @@ convert_systemd_units [[gnu::noreturn]] (
 	value * socket_requires(socket_profile.use("unit", "requires"));
 	value * socket_requisite(socket_profile.use("unit", "requisite"));
 	value * socket_partof(socket_profile.use("unit", "partof"));
-	value * socket_description(socket_profile.use("unit", "description"));
-	value * socket_defaultdependencies(socket_profile.use("unit", "defaultdependencies"));
-	value * socket_earlysupervise(socket_profile.use("unit", "earlysupervise"));	// This is an extension to systemd.
 	value * socket_wantedby(socket_profile.use("install", "wantedby"));
 	value * socket_requiredby(socket_profile.use("install", "requiredby"));
 	value * socket_stoppedby(socket_profile.use("install", "stoppedby"));	// This is an extension to systemd.
+	value * socket_requiresmountsfor(socket_profile.use("unit", "requiresmountsfor"));
+	value * socket_wantsmountsfor(socket_profile.use("unit", "wantsmountsfor"));	// This is an extension to systemd.
+	value * socket_aftermountsfor(socket_profile.use("unit", "aftermountsfor"));	// This is an extension to systemd.
 	value * socket_ucspirules(socket_profile.use("socket", "ucspirules"));	// This is an extension to systemd.
 	value * socket_logucspirules(socket_profile.use("socket", "logucspirules"));	// This is an extension to systemd.
 
@@ -923,8 +997,10 @@ convert_systemd_units [[gnu::noreturn]] (
 	value * jailid(service_profile.use("service", "jailid"));	// This is an extension to systemd.
 #endif
 	value * runtimedirectory(service_profile.use("service", "runtimedirectory"));
-	value * runtimedirectoryowner(service_profile.use("service", "runtimedirectoryowner"));
+	value * runtimedirectoryowner(service_profile.use("service", "runtimedirectoryowner"));	// This is an extension to systemd.
+	value * runtimedirectorygroup(service_profile.use("service", "runtimedirectorygroup"));	// This is an extension to systemd.
 	value * runtimedirectorymode(service_profile.use("service", "runtimedirectorymode"));
+	value * runtimedirectorypreserve(service_profile.use("service", "runtimedirectorypreserve"));
 	value * systemdworkingdirectory(service_profile.use("service", "systemdworkingdirectory"));	// This is an extension to systemd.
 	value * systemduserenvironment(service_profile.use("service", "systemduserenvironment"));	// This is an extension to systemd.
 	value * systemdusergroups(service_profile.use("service", "systemdusergroups"));	// This is an extension to systemd.
@@ -976,7 +1052,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	value * environmentfile(service_profile.use("service", "environmentfile"));
 	value * environmentdirectory(service_profile.use("service", "environmentdirectory"));	// This is an extension to systemd.
 	value * fullenvironmentdirectory(service_profile.use("service", "fullenvironmentdirectory"));	// This is an extension to systemd.
-	value * environmentuser(service_profile.use("service", "environmentuser"));	// This is an extension to systemd.
+	value * environmentuseronly(service_profile.use("service", "environmentuseronly"));	// This is an extension to systemd.
 	value * environmentappendpath(service_profile.use("service", "environmentappendpath"));	// This is an extension to systemd.
 #if defined(__LINUX__) || defined(__linux__)
 	value * utmpidentifier(service_profile.use("service", "utmpidentifier"));
@@ -1049,19 +1125,22 @@ convert_systemd_units [[gnu::noreturn]] (
 	value * oomscoreadjust(service_profile.use("service", "oomscoreadjust"));
 	value * cpuschedulingpolicy(service_profile.use("service", "cpuschedulingpolicy"));
 	value * cpuschedulingpriority(service_profile.use("service", "cpuschedulingpriority"));
+	value * service_description(service_profile.use("unit", "description"));
 	value * service_defaultdependencies(service_profile.use("unit", "defaultdependencies"));
 	value * service_earlysupervise(service_profile.use("unit", "earlysupervise"));	// This is an extension to systemd.
-	value * service_after(service_profile.use("unit", "after"));
 	value * service_before(service_profile.use("unit", "before"));
+	value * service_after(service_profile.use("unit", "after"));
 	value * service_conflicts(service_profile.use("unit", "conflicts"));
 	value * service_wants(service_profile.use("unit", "wants"));
 	value * service_requires(service_profile.use("unit", "requires"));
 	value * service_requisite(service_profile.use("unit", "requisite"));
 	value * service_partof(service_profile.use("unit", "partof"));
-	value * service_description(service_profile.use("unit", "description"));
 	value * service_wantedby(service_profile.use("install", "wantedby"));
 	value * service_requiredby(service_profile.use("install", "requiredby"));
 	value * service_stoppedby(service_profile.use("install", "stoppedby"));	// This is an extension to systemd.
+	value * service_requiresmountsfor(service_profile.use("unit", "requiresmountsfor"));
+	value * service_wantsmountsfor(service_profile.use("unit", "wantsmountsfor"));	// This is an extension to systemd.
+	value * service_aftermountsfor(service_profile.use("unit", "aftermountsfor"));	// This is an extension to systemd.
 	value * service_ucspirules(service_profile.use("service", "ucspirules"));	// This is an extension to systemd.
 	value * service_logucspirules(service_profile.use("service", "logucspirules"));	// This is an extension to systemd.
 
@@ -1086,13 +1165,12 @@ convert_systemd_units [[gnu::noreturn]] (
 	const bool is_remain(is_bool_true(remainafterexit, is_target));
 	if (!is_remain) {
 		if (is_oneshot) {
-			if (restart ? "no" != tolower(restart->last_setting()) && "never" != tolower(restart->last_setting()) : !systemd_quirks)
+			if (restart ? "no" != tolower(restart->last_setting()) && "never" != tolower(restart->last_setting()) : !systemd_quirks || is_timer_activated)
 				std::fprintf(stderr, "%s: WARNING: %s: restart=%s: %s\n", prog, service_filename.c_str(), restart ? restart->last_setting().c_str() : "always", "Single-shot service may never reach ready");
-		} else {
-			if (!execstart) {
-				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, service_filename.c_str(), "Missing mandatory ExecStart entry.");
-				throw EXIT_FAILURE;
-			}
+		} else
+		if (!execstart) {
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, service_filename.c_str(), "Missing mandatory ExecStart entry.");
+			throw EXIT_FAILURE;
 		}
 	}
 	if (is_socket_activated) {
@@ -1133,7 +1211,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	if (killsignal && !killsignal_is_term)
 		killsignal->used = false;
 	if (runtimedirectory) {
-		for (value::settings::const_iterator i(runtimedirectory->all_settings().begin()); runtimedirectory->all_settings().end() != i; ++i) {
+		for (value::settings::const_iterator i(runtimedirectory->all_settings().begin()), e(runtimedirectory->all_settings().end()); e != i; ++i) {
 			const std::string dir(names.substitute(*i));
 			// Yes, this is more draconian than systemd.
 			if (dir.length() < 1 || '.' == dir[0]) {
@@ -1370,17 +1448,17 @@ convert_systemd_units [[gnu::noreturn]] (
 		jvm += "find-matching-jvm";
 		if (jvmversions) {
 			const std::list<std::string> list(split_list(names.substitute(jvmversions->last_setting())));
-			for (std::list<std::string>::const_iterator i(list.begin()); list.end() != i; ++i)
+			for (std::list<std::string>::const_iterator i(list.begin()), e(list.end()); e != i; ++i)
 				jvm += " --version " + quote(*i);
 		}
 		if (jvmoperatingsystems) {
 			const std::list<std::string> list(split_list(names.substitute(jvmoperatingsystems->last_setting())));
-			for (std::list<std::string>::const_iterator i(list.begin()); list.end() != i; ++i)
+			for (std::list<std::string>::const_iterator i(list.begin()), e(list.end()); e != i; ++i)
 				jvm += " --operating-system " + quote(*i);
 		}
 		if (jvmmanufacturers) {
 			const std::list<std::string> list(split_list(names.substitute(jvmmanufacturers->last_setting())));
-			for (std::list<std::string>::const_iterator i(list.begin()); list.end() != i; ++i)
+			for (std::list<std::string>::const_iterator i(list.begin()), e(list.end()); e != i; ++i)
 				jvm += " --manufacturer " + quote(*i);
 		}
 		jvm += "\n";
@@ -1390,8 +1468,6 @@ convert_systemd_units [[gnu::noreturn]] (
 	if (oomscoreadjust)
 		// The -- is necessary because the adjustment could be a negative number, starting with a dash,
 		priority += "oom-kill-protect -- " + quote(names.substitute(oomscoreadjust->last_setting())) + "\n";
-	std::string chroot;
-	if (rootdirectory) chroot += "chroot " + quote(names.substitute(rootdirectory->last_setting())) + "\n";
 #if defined(__LINUX__) || defined(__linux__)
 	const bool is_private_tmp(is_bool_true(privatetmp, false));
 	const bool is_private_network(is_bool_true(privatenetwork, false));
@@ -1399,60 +1475,61 @@ convert_systemd_units [[gnu::noreturn]] (
 	const bool is_private_homes(is_bool_true(protecthome, false));
 	const bool is_private_mount(is_private_tmp||is_private_devices||is_private_homes||readonlypaths||readwritedirectories||inaccessiblepaths);
 	const bool is_private(is_private_mount||is_private_network);
-	const bool is_protect_os(is_bool_true(protectsystem, false));
-	const bool is_protect_etc(is_string(protectsystem, "full") || is_bool_true(protectsystem, false));
+	const bool is_protect_os(is_string(protectsystem, "strict") || is_string(protectsystem, "full") || is_bool_true(protectsystem, false));
+	const bool is_protect_etc(is_string(protectsystem, "strict") || is_string(protectsystem, "full"));
 	const bool is_protect_homes(is_string(protecthome, "read-only"));
 	const bool is_protect_sysctl(is_bool_true(protectkerneltunables, false));
 	const bool is_protect_cgroups(is_bool_true(protectcontrolgroups, false));
 	const bool is_protect_mount(is_protect_os||is_protect_etc||is_protect_homes||is_protect_sysctl||is_protect_cgroups);
+	std::string mount_namespace_commands;
 	if (mountflags||is_private||is_protect_mount) {
-		chroot += "unshare";
-		if (mountflags||is_private_mount||is_protect_mount) chroot += " --mount";
-		if (is_private_network) chroot += " --network";
-		chroot += "\n";
+		mount_namespace_commands += "unshare";
+		if (mountflags||is_private_mount||is_protect_mount) mount_namespace_commands += " --mount";
+		if (is_private_network) mount_namespace_commands += " --network";
+		mount_namespace_commands += "\n";
 		if (is_private_mount||is_protect_mount) {
-			chroot += "set-mount-object --recursive slave /\n";
+			mount_namespace_commands += "set-mount-object --recursive slave /\n";
 			if (is_private_mount) {
-				chroot += "make-private-fs";
-				if (is_private_tmp) chroot += " --temp";
-				if (is_private_devices) chroot += " --devices";
-				if (is_private_homes) chroot += " --homes";
+				mount_namespace_commands += "make-private-fs";
+				if (is_private_tmp) mount_namespace_commands += " --temp";
+				if (is_private_devices) mount_namespace_commands += " --devices";
+				if (is_private_homes) mount_namespace_commands += " --homes";
 				if (inaccessiblepaths) {
-					for (value::settings::const_iterator i(inaccessiblepaths->all_settings().begin()); inaccessiblepaths->all_settings().end() != i; ++i) {
+					for (value::settings::const_iterator i(inaccessiblepaths->all_settings().begin()), e(inaccessiblepaths->all_settings().end()); e != i; ++i) {
 						const std::string dir(names.substitute(*i));
-						chroot += " --hide " + quote(dir);
+						mount_namespace_commands += " --hide " + quote(dir);
 					}
 				}
-				chroot += "\n";
+				mount_namespace_commands += "\n";
 			}
 			if (is_protect_mount) {
-				chroot += "make-read-only-fs";
-				if (is_protect_os) chroot += " --os";
-				if (is_protect_etc) chroot += " --etc";
-				if (is_protect_homes) chroot += " --homes";
-				if (is_protect_sysctl) chroot += " --sysctl";
-				if (is_protect_cgroups) chroot += " --cgroups";
+				mount_namespace_commands += "make-read-only-fs";
+				if (is_protect_os) mount_namespace_commands += " --os";
+				if (is_protect_etc) mount_namespace_commands += " --etc";
+				if (is_protect_homes) mount_namespace_commands += " --homes";
+				if (is_protect_sysctl) mount_namespace_commands += " --sysctl";
+				if (is_protect_cgroups) mount_namespace_commands += " --cgroups";
 				if (readonlypaths) {
-					for (value::settings::const_iterator i(readonlypaths->all_settings().begin()); readonlypaths->all_settings().end() != i; ++i) {
+					for (value::settings::const_iterator i(readonlypaths->all_settings().begin()), e(readonlypaths->all_settings().end()); e != i; ++i) {
 						const std::string dir(names.substitute(*i));
-						chroot += " --include " + quote(dir);
+						mount_namespace_commands += " --include " + quote(dir);
 					}
 				}
 				if (readwritedirectories) {
-					for (value::settings::const_iterator i(readwritedirectories->all_settings().begin()); readwritedirectories->all_settings().end() != i; ++i) {
+					for (value::settings::const_iterator i(readwritedirectories->all_settings().begin()), e(readwritedirectories->all_settings().end()); e != i; ++i) {
 						const std::string dir(names.substitute(*i));
-						chroot += " --except " + quote(dir);
+						mount_namespace_commands += " --except " + quote(dir);
 					}
 				}
-				chroot += "\n";
+				mount_namespace_commands += "\n";
 			}
 		}
 		/// \bug FIXME is_private_network needs to set up a lo0 device.
 		if (mountflags) 
-			chroot += "set-mount-object --recursive " + quote(mountflags->last_setting()) + " /\n";
+			mount_namespace_commands += "set-mount-object --recursive " + quote(mountflags->last_setting()) + " /\n";
 		else
 		if (is_private_mount||is_protect_mount)
-			chroot += "set-mount-object --recursive shared /\n";
+			mount_namespace_commands += "set-mount-object --recursive shared /\n";
 	}
 #endif
 	const bool chrootall(!is_bool_true(rootdirectorystartonly, false));
@@ -1460,14 +1537,20 @@ convert_systemd_units [[gnu::noreturn]] (
 	if (is_bool_true(sessionleader, false)) setsid += "setsid\n";
 	if (is_bool_true(processgroupleader, false)) setsid += "setpgrp\n";
 	if (localreaper) setsid += "local-reaper " + quote(names.substitute(localreaper->last_setting())) + "\n";
+	std::string chroot;
+	if (rootdirectory) chroot += "chroot " + quote(names.substitute(rootdirectory->last_setting())) + "\n";
 	std::string envuidgid, setuidgid;
+	const bool no_setuidgid(is_bool_true(environmentuseronly, false));
 	if (user) {
-		if (rootdirectory) {
+		if (no_setuidgid || rootdirectory) {
 			envuidgid += "envuidgid";
 			if (group)
 				envuidgid += " --primary-group " + quote(names.substitute(group->last_setting()));
+			if (is_bool_true(systemdusergroups, systemd_quirks))
+				envuidgid += " --supplementary";
 			envuidgid += " -- " + quote(names.query_user_name()) + "\n";
-			setuidgid += "setuidgid-fromenv\n";
+			if (!no_setuidgid)
+				setuidgid += "setuidgid-fromenv\n";
 		} else {
 			setuidgid += "setuidgid";
 			if (group)
@@ -1476,13 +1559,12 @@ convert_systemd_units [[gnu::noreturn]] (
 				setuidgid += " --supplementary";
 			setuidgid += " -- " + quote(names.query_user_name()) + "\n";
 		}
-	} else {
-		if (group)
-			setuidgid += "setgid -- " + quote(names.substitute(group->last_setting())) + "\n";
+		setsid += "setlogin -- " + quote(names.query_user_name()) + "\n";
+	} else if (group) {
+		envuidgid += "envgid -- " + quote(names.substitute(group->last_setting())) + "\n";
+		if (!no_setuidgid)
+			setuidgid += "setgid-fromenv\n";
 	}
-	if (is_bool_true(systemduserenvironment, systemd_quirks))
-		// This replicates systemd useless features.
-		setuidgid += "userenv\n";
 	const bool setuidgidall(!is_bool_true(permissionsstartonly, false));
 	// systemd always runs services in / by default; daemontools runs them in the service directory.
 	std::string chdir;
@@ -1493,27 +1575,36 @@ convert_systemd_units [[gnu::noreturn]] (
 	std::string createrundir, removerundir;
 	if (runtimedirectory) {
 		std::string dirs, dirs_slash;
-		for (value::settings::const_iterator i(runtimedirectory->all_settings().begin()); runtimedirectory->all_settings().end() != i; ++i) {
-			const std::string dir(names.query_runtime_dir_by_name() + slash + names.substitute(*i));
-			if (!dirs.empty()) dirs += ' ';
-			if (!dirs_slash.empty()) dirs_slash += ' ';
-			dirs += quote(dir);
-			dirs_slash += quote(dir) + slash;
+		for (value::settings::const_iterator i(runtimedirectory->all_settings().begin()), e(runtimedirectory->all_settings().end()); e != i; ++i) {
+			const std::list<std::string> list(split_list(names.substitute(*i)));
+			for (std::list<std::string>::const_iterator j(list.begin()), je(list.end()); je != j; ++j) {
+				if (j->empty()) {
+					std::fprintf(stderr, "%s: ERROR: %s: %s: Empty runtime directory\n", prog, service_filename.c_str(), i->c_str());
+					continue;
+				}
+				if ('/' == j->front() || has_dot_or_dotdot_anywhere(*j)) {
+					std::fprintf(stderr, "%s: ERROR: %s: %s: Disallowed runtime directory\n", prog, service_filename.c_str(), j->c_str());
+					continue;
+				}
+				const std::string dir(names.query_runtime_dir_by_name() + slash + *j);
+				if (!dirs.empty()) dirs += ' ';
+				if (!dirs_slash.empty()) dirs_slash += ' ';
+				dirs += quote(dir);
+				dirs_slash += quote(dir);
+				if ('/' != dir.back()) dirs_slash += slash;
+			}
 		}
 		createrundir += "foreground install -d";
 		if (runtimedirectorymode) createrundir += " -m " + quote(names.substitute(runtimedirectorymode->last_setting()));
-		if (user || runtimedirectoryowner) {
-			createrundir += " -o ";
-			if (runtimedirectoryowner)
-				createrundir += quote(names.substitute(runtimedirectoryowner->last_setting()));
-			else
-				createrundir += quote(names.substitute(user->last_setting()));
-		}
-		if (group)
-			createrundir += " -g " + quote(names.substitute(group->last_setting()));
+		if (user || runtimedirectoryowner)
+			createrundir += " -o " + quote(names.substitute((runtimedirectoryowner ? runtimedirectoryowner : user)->last_setting()));
+		if (group || runtimedirectorygroup)
+			createrundir += " -g " + quote(names.substitute((runtimedirectorygroup ? runtimedirectorygroup : group)->last_setting()));
 		createrundir += " -- " + dirs + " ;\n";
-		// The trailing slash is a(nother) safety measure, to help ensure that this is a directory that we are removing, uncondintally, as the superuser.
-		removerundir += "foreground rm -r -f -- " + dirs_slash + " ;\n";
+		if (!is_bool_true(runtimedirectorypreserve, false)) {
+			// The trailing slash is a(nother) safety measure, to help ensure that this is a directory that we are removing, uncondintally, as the superuser.
+			removerundir += "foreground rm -r -f -- " + dirs_slash + " ;\n";
+		}
 	}
 	std::string hardlimit, softlimit;
 	if (limitnofile||limitcpu||limitcore||limitnproc||limitfsize||limitas||limitrss||limitdata||limitstack||limitmemory||limitmemlock) {
@@ -1570,8 +1661,29 @@ convert_systemd_units [[gnu::noreturn]] (
 	}
 	std::string env;
 	if (is_bool_true(machineenvironment, false)) env += "machineenv\n";
+	if (is_bool_true(systemduserenvironment, systemd_quirks) || (per_user_mode && is_dbus)) {
+		if (user) {
+			env += "envuidgid";
+			if (group)
+				env += " --primary-group " + quote(names.substitute(group->last_setting()));
+			if (is_bool_true(systemdusergroups, systemd_quirks))
+				env += " --supplementary";
+			env += " -- " + quote(names.query_user_name()) + "\n";
+		} else {
+			env += "getuidgid\n";
+			if (group)
+				env += "envgid -- " + quote(names.substitute(group->last_setting())) + "\n";
+		}
+		env += "userenv-fromenv";
+		// Do not replicate systemd useless features unless required.
+		if (!is_bool_true(systemduserenvironment, systemd_quirks))
+			env += " --no-set-user --no-set-shell";
+		if (per_user_mode && is_dbus)
+			env += " --set-path --set-tools --set-term --set-timezone --set-locale --set-dbus --set-xdg --set-other";
+		env += "\n";
+	}
 	if (environmentfile) {
-		for (value::settings::const_iterator i(environmentfile->all_settings().begin()); environmentfile->all_settings().end() != i; ++i) {
+		for (value::settings::const_iterator i(environmentfile->all_settings().begin()), e(environmentfile->all_settings().end()); e != i; ++i) {
 			std::string val;
 			const bool minus(strip_leading_minus(*i, val));
 			env += "read-conf " + ((minus ? "--oknofile " : "") + quote(names.substitute(val))) + "\n";
@@ -1579,17 +1691,16 @@ convert_systemd_units [[gnu::noreturn]] (
 	}
 	if (environmentdirectory) {
 		const std::string opt(is_bool_true(fullenvironmentdirectory, false) ? "--full " : "");
-		for (value::settings::const_iterator i(environmentdirectory->all_settings().begin()); environmentdirectory->all_settings().end() != i; ++i) {
+		for (value::settings::const_iterator i(environmentdirectory->all_settings().begin()), e(environmentdirectory->all_settings().end()); e != i; ++i) {
 			const std::string & val(*i);
 			env += "envdir " + opt + quote(names.substitute(val)) + "\n";
 		}
 	}
-	if (environmentuser) env += "envuidgid " + quote(names.substitute(environmentuser->last_setting())) + "\n";
 	if (environment) {
-		for (value::settings::const_iterator i(environment->all_settings().begin()); environment->all_settings().end() != i; ++i) {
+		for (value::settings::const_iterator i(environment->all_settings().begin()), e(environment->all_settings().end()); e != i; ++i) {
 			const std::string & datum(*i);
 			const std::list<std::string> list(names.substitute(split_list(datum)));
-			for (std::list<std::string>::const_iterator j(list.begin()); list.end() != j; ++j) {
+			for (std::list<std::string>::const_iterator j(list.begin()), je(list.end()); je != j; ++j) {
 				const std::string & s(*j);
 				const std::string::size_type eq(s.find('='));
 				const std::string var(s.substr(0, eq));
@@ -1599,20 +1710,20 @@ convert_systemd_units [[gnu::noreturn]] (
 		}
 	}
 	if (unsetenvironment) {
-		for (value::settings::const_iterator i(unsetenvironment->all_settings().begin()); unsetenvironment->all_settings().end() != i; ++i) {
+		for (value::settings::const_iterator i(unsetenvironment->all_settings().begin()), e(unsetenvironment->all_settings().end()); e != i; ++i) {
 			const std::string & datum(*i);
 			const std::list<std::string> list(names.substitute(split_list(datum)));
-			for (std::list<std::string>::const_iterator j(list.begin()); list.end() != j; ++j) {
+			for (std::list<std::string>::const_iterator j(list.begin()), je(list.end()); je != j; ++j) {
 				const std::string & var(*j);
 				env += "unsetenv " + quote(var) + "\n";
 			}
 		}
 	}
 	if (environmentappendpath) {
-		for (value::settings::const_iterator i(environmentappendpath->all_settings().begin()); environmentappendpath->all_settings().end() != i; ++i) {
+		for (value::settings::const_iterator i(environmentappendpath->all_settings().begin()), e(environmentappendpath->all_settings().end()); e != i; ++i) {
 			const std::string & datum(*i);
 			const std::list<std::string> list(names.substitute(split_list(datum)));
-			for (std::list<std::string>::const_iterator j(list.begin()); list.end() != j; ++j) {
+			for (std::list<std::string>::const_iterator j(list.begin()), je(list.end()); je != j; ++j) {
 				const std::string & s(*j);
 				const std::string::size_type eq(s.find('='));
 				const std::string var(s.substr(0, eq));
@@ -1793,7 +1904,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	if (bannerfile)
 		greeting_message += "login-banner " + quote(names.substitute(bannerfile->last_setting())) + "\n";
 	if (bannerline)
-		for (value::settings::const_iterator i(bannerline->all_settings().begin()); bannerline->all_settings().end() != i; ++i) {
+		for (value::settings::const_iterator i(bannerline->all_settings().begin()), e(bannerline->all_settings().end()); e != i; ++i) {
 			const std::string & val(*i);
 			greeting_message += "line-banner " + quote(names.substitute(val)) + "\n";
 		}
@@ -1814,12 +1925,17 @@ convert_systemd_units [[gnu::noreturn]] (
 	perilogue_setup_environment << move_to_control_group;
 	perilogue_setup_environment << enable_control_group_controllers;
 	perilogue_setup_environment << priority;
-	if (setuidgidall) perilogue_setup_environment << envuidgid;
 	perilogue_setup_environment << env;
+	if (setuidgidall) perilogue_setup_environment << envuidgid;
 	perilogue_setup_environment << hardlimit;
 	perilogue_setup_environment << softlimit;
 	perilogue_setup_environment << um;
-	if (chrootall) perilogue_setup_environment << chroot;
+	if (chrootall) {
+		perilogue_setup_environment << chroot;
+#if defined(__LINUX__) || defined(__linux__)
+		perilogue_setup_environment << mount_namespace_commands;
+#endif
+	}
 	perilogue_setup_environment << chdir;
 	perilogue_setup_environment << jvm;
 	perilogue_setup_environment << redirect;
@@ -1831,13 +1947,16 @@ convert_systemd_units [[gnu::noreturn]] (
 	setup_environment << jail;
 	setup_environment << move_to_control_group;
 	setup_environment << priority;
-	setup_environment << envuidgid;
 	setup_environment << env;
+	setup_environment << envuidgid;
 	setup_environment << setsid;
 	setup_environment << hardlimit;
 	setup_environment << softlimit;
 	setup_environment << um;
 	setup_environment << chroot;
+#if defined(__LINUX__) || defined(__linux__)
+	setup_environment << mount_namespace_commands;
+#endif
 	setup_environment << chdir;
 	setup_environment << jvm;
 	setup_environment << redirect;
@@ -1852,7 +1971,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	execute_command << greeting_message;
 	if (merge_run_into_start) {
 		if (execstartpre) {
-			for (value::settings::const_iterator i(execstartpre->all_settings().begin()); execstartpre->all_settings().end() != i; ++i ) {
+			for (value::settings::const_iterator i(execstartpre->all_settings().begin()), e(execstartpre->all_settings().end()); e != i; ++i ) {
 				execute_command << "foreground "; 
 				execute_command << names.substitute(shell_expand(strip_leading_minus(*i)));
 				execute_command << " ;\n"; 
@@ -1860,7 +1979,7 @@ convert_systemd_units [[gnu::noreturn]] (
 		}
 	}
 	if (execstart) {
-		for (value::settings::const_iterator i(execstart->all_settings().begin()); execstart->all_settings().end() != i; ) {
+		for (value::settings::const_iterator i(execstart->all_settings().begin()), e(execstart->all_settings().end()); e != i; ) {
 			std::list<std::string>::const_iterator j(i++);
 			if (execstart->all_settings().begin() != j) execute_command << " ;\n"; 
 			if (execstart->all_settings().end() != i) execute_command << "foreground "; 
@@ -1870,23 +1989,24 @@ convert_systemd_units [[gnu::noreturn]] (
 	} else
 		execute_command << (is_remain || is_oneshot ? "true" : "pause") << "\n";
 
+	const std::string activating_filename(is_socket_activated ? socket_filename : is_timer_activated ? timer_filename : service_filename);
 	std::ostream & run_or_start(merge_run_into_start ? start : run);
 	start << "#!/bin/nosh\n";
 	if (generation_comment)
-		start << multi_line_comment("Start file generated from " + (is_socket_activated ? socket_filename : service_filename));
+		start << multi_line_comment("Start file generated from " + activating_filename);
 	run << "#!/bin/nosh\n";
 	if (generation_comment)
-		run << multi_line_comment("Run file generated from " + (is_socket_activated ? socket_filename : service_filename));
+		run << multi_line_comment("Run file generated from " + activating_filename);
 	if (is_socket_activated) {
 		if (socket_description) {
-			for (value::settings::const_iterator i(socket_description->all_settings().begin()); socket_description->all_settings().end() != i; ++i) {
+			for (value::settings::const_iterator i(socket_description->all_settings().begin()), e(socket_description->all_settings().end()); e != i; ++i) {
 				const std::string & val(*i);
 				run_or_start << multi_line_comment(names.substitute(val));
 			}
 		}
 		if (filedescriptorname) {
 			std::string socknames;
-			for (value::settings::const_iterator i(filedescriptorname->all_settings().begin()); filedescriptorname->all_settings().end() != i; ++i) {
+			for (value::settings::const_iterator i(filedescriptorname->all_settings().begin()), e(filedescriptorname->all_settings().end()); e != i; ++i) {
 				if (filedescriptorname->all_settings().begin() != i)
 					socknames += ":";
 				socknames += names.substitute(*i);
@@ -1894,7 +2014,7 @@ convert_systemd_units [[gnu::noreturn]] (
 			run_or_start << "setenv LISTEN_FDNAMES " << quote(socknames) << "\n";
 		}
 		if (listenstream) {
-			for (value::settings::const_iterator i(listenstream->all_settings().begin()); listenstream->all_settings().end() != i; ++i) {
+			for (value::settings::const_iterator i(listenstream->all_settings().begin()), e(listenstream->all_settings().end()); e != i; ++i) {
 				const std::string sockname(names.substitute(*i));
 				if (is_local_socket_name(sockname)) {
 					run_or_start << "local-stream-socket-listen ";
@@ -1924,7 +2044,7 @@ convert_systemd_units [[gnu::noreturn]] (
 			}
 		}
 		if (listendatagram) {
-			for (value::settings::const_iterator i(listendatagram->all_settings().begin()); listendatagram->all_settings().end() != i; ++i) {
+			for (value::settings::const_iterator i(listendatagram->all_settings().begin()), e(listendatagram->all_settings().end()); e != i; ++i) {
 				const std::string sockname(names.substitute(*i));
 				if (is_local_socket_name(sockname)) {
 					run_or_start << "local-datagram-socket-listen --systemd-compatibility ";
@@ -1951,7 +2071,7 @@ convert_systemd_units [[gnu::noreturn]] (
 			}
 		}
 		if (listensequentialpacket) {
-			for (value::settings::const_iterator i(listensequentialpacket->all_settings().begin()); listensequentialpacket->all_settings().end() != i; ++i) {
+			for (value::settings::const_iterator i(listensequentialpacket->all_settings().begin()), e(listensequentialpacket->all_settings().end()); e != i; ++i) {
 				const std::string sockname(names.substitute(*i));
 				if (is_local_socket_name(sockname)) {
 					run_or_start << "local-seqpacket-socket-listen ";
@@ -1981,7 +2101,7 @@ convert_systemd_units [[gnu::noreturn]] (
 			}
 		}
 		if (listenfifo) {
-			for (value::settings::const_iterator i(listenfifo->all_settings().begin()); listenfifo->all_settings().end() != i; ++i) {
+			for (value::settings::const_iterator i(listenfifo->all_settings().begin()), e(listenfifo->all_settings().end()); e != i; ++i) {
 				const std::string fifoname(names.substitute(*i));
 				run_or_start << "fifo-listen --systemd-compatibility ";
 #if 0 // This does not apply to FIFOs and we want it to generate a diagnostic when present and unused.
@@ -2003,7 +2123,7 @@ convert_systemd_units [[gnu::noreturn]] (
 			}
 		}
 		if (listennetlink) {
-			for (value::settings::const_iterator i(listennetlink->all_settings().begin()); listennetlink->all_settings().end() != i; ++i) {
+			for (value::settings::const_iterator i(listennetlink->all_settings().begin()), e(listennetlink->all_settings().end()); e != i; ++i) {
 				const std::string sockname(names.substitute(*i));
 				std::string protocol, multicast_group;
 				split_netlink_socket_name(sockname, protocol, multicast_group);
@@ -2019,37 +2139,38 @@ convert_systemd_units [[gnu::noreturn]] (
 		run_or_start << setup_environment.str();
 		run_or_start << drop_privileges.str();
 		if (is_socket_accept) {
+			std::string prefix("af-unknown");
+			bool local(false);
 			if (listenstream) {
-				for (value::settings::const_iterator i(listenstream->all_settings().begin()); listenstream->all_settings().end() != i; ++i) {
+				for (value::settings::const_iterator i(listenstream->all_settings().begin()), e(listenstream->all_settings().end()); e != i; ++i) {
 					const std::string sockname(names.substitute(*i));
 					if (is_local_socket_name(sockname)) {
-						run_or_start << "local-stream-socket-accept ";
-						if (maxconnections) run_or_start << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
-						run_or_start << "\n";
+						prefix = "local-stream-";
+						local = true;
 					} else {
-						run_or_start << "tcp-socket-accept ";
-						if (maxconnections) run_or_start << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
-						if (is_bool_true(keepalive, false)) run_or_start << "--keepalives ";
-						if (is_bool_true(nodelay, false)) run_or_start << "--no-delay ";
-						run_or_start << "\n";
+						prefix = "tcp-";
 					}
 				}
 			}
 			if (listensequentialpacket) {
-				for (value::settings::const_iterator i(listensequentialpacket->all_settings().begin()); listensequentialpacket->all_settings().end() != i; ++i) {
+				for (value::settings::const_iterator i(listensequentialpacket->all_settings().begin()), e(listensequentialpacket->all_settings().end()); e != i; ++i) {
 					const std::string sockname(names.substitute(*i));
 					if (is_local_socket_name(sockname)) {
-						run_or_start << "local-seqpacket-socket-accept ";
-						if (maxconnections) run_or_start << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
-						run_or_start << "\n";
+						prefix = "local-seqpacket-";
+						local = true;
 					} else {
-						run_or_start << "ip-seqpacket-socket-accept ";
-						if (maxconnections) run_or_start << "--connection-limit " << quote(maxconnections->last_setting()) << " ";
-						if (is_bool_true(keepalive, false)) run_or_start << "--keepalives ";
-						if (is_bool_true(nodelay, false)) run_or_start << "--no-delay ";
-						run_or_start << "\n";
+						prefix = "ip-";
 					}
 				}
+			}
+			if (listenstream || listensequentialpacket) {
+				run_or_start << prefix << "socket-accept";
+				if (maxconnections) run_or_start << " --connection-limit " << quote(maxconnections->last_setting());
+				if (!local) {
+					if (is_bool_true(keepalive, false)) run_or_start << " --keepalives";
+					if (is_bool_true(nodelay, false)) run_or_start << " --no-delay";
+				}
+				run_or_start << "\n";
 			}
 		} else {
 			if (maxconnections) maxconnections->used = false;
@@ -2074,16 +2195,111 @@ convert_systemd_units [[gnu::noreturn]] (
 		if (generation_comment)
 			service << multi_line_comment("Service file generated from " + service_filename);
 		if (service_description) {
-			for (value::settings::const_iterator i(service_description->all_settings().begin()); service_description->all_settings().end() != i; ++i) {
+			for (value::settings::const_iterator i(service_description->all_settings().begin()), e(service_description->all_settings().end()); e != i; ++i) {
 				const std::string & val(*i);
 				service << multi_line_comment(names.substitute(val));
 			}
 		}
 		service << socket_redirect;
 		service << execute_command.str();
-	} else {
+	} else
+	if (is_timer_activated) {
+		const char * flags(systemd_quirks ? "--systemd-compatibility --gnu-compatibility " : "");
+		if (timer_description) {
+			for (value::settings::const_iterator i(timer_description->all_settings().begin()), e(timer_description->all_settings().end()); e != i; ++i) {
+				const std::string & val(*i);
+				run_or_start << multi_line_comment(names.substitute(val));
+			}
+		}
+		start << "foreground touch stamp-on-start ;\n";
+		run_or_start << "unsetenv wake_time\n";
+		if (onbootsec) {
+			for (value::settings::const_iterator i(onbootsec->all_settings().begin()), e(onbootsec->all_settings().end()); e != i; ++i) {
+				const std::string & v(*i);
+				run_or_start <<
+					"time-env-set since_boot boot\n"
+					"time-env-add " << flags << "-- since_boot " << quote(v) << "\n"
+					"time-env-unset-if-later since_boot now\n"
+					"time-env-set-if-earlier wake_time $since_boot\n"
+				;
+			}
+		}
+		if (onstartupsec) {
+			for (value::settings::const_iterator i(onstartupsec->all_settings().begin()), e(onstartupsec->all_settings().end()); e != i; ++i) {
+				const std::string & v(*i);
+				run_or_start <<
+					"time-env-set since_startup startup\n"
+					"time-env-add " << flags << "-- since_startup " << quote(v) << "\n"
+					"time-env-unset-if-later since_startup now\n"
+					"time-env-set-if-earlier wake_time $since_startup\n"
+				;
+			}
+		}
+		if (onactivesec) {
+			for (value::settings::const_iterator i(onactivesec->all_settings().begin()), e(onactivesec->all_settings().end()); e != i; ++i) {
+				const std::string & v(*i);
+				run_or_start <<
+					"time-env-set since_start >stamp-on-start\n"
+					"time-env-add " << flags << "-- since_start " << quote(v) << "\n"
+					"time-env-unset-if-later since_start now\n"
+					"time-env-set-if-earlier wake_time $since_start\n"
+				;
+			}
+		}
+		if (onunitactivesec) {
+			for (value::settings::const_iterator i(onunitactivesec->all_settings().begin()), e(onunitactivesec->all_settings().end()); e != i; ++i) {
+				const std::string & v(*i);
+				run_or_start <<
+					"time-env-set since_service >stamp-on-service\n"
+					"time-env-add " << flags << "-- since_service " << quote(v) << "\n"
+					"time-env-unset-if-later since_service now\n"
+					"time-env-set-if-earlier wake_time $since_service\n"
+				;
+			}
+		}
+		if (onunitinactivesec) {
+			for (value::settings::const_iterator i(onunitinactivesec->all_settings().begin()), e(onunitinactivesec->all_settings().end()); e != i; ++i) {
+				const std::string & v(*i);
+				run_or_start <<
+					"time-env-set since_restart >stamp-on-restart\n"
+					"time-env-add " << flags << "-- since_restart " << quote(v) << "\n"
+					"time-env-unset-if-later since_restart now\n"
+					"time-env-set-if-earlier wake_time $since_restart\n"
+				;
+			}
+		}
+		if (oncalendar) {
+			run_or_start <<
+				"time-env-set calendar_time now\n"
+				"time-env-next-matching calendar_time -- " << quote(oncalendar->last_setting()) << "\n"
+				"time-env-set-if-earlier wake_time $calendar_time\n"
+			;
+		}
+		run_or_start <<
+			setup_environment.str() <<
+			drop_privileges.str() <<
+			"time-pause-until $wake_time\n"
+			"foreground touch stamp-on-service ;\n"
+			"./service\n"
+		;
+
+		std::ofstream service;
+		open(prog, service, service_dirname + "/service");
+
+		service << "#!/bin/nosh\n";
+		if (generation_comment)
+			service << multi_line_comment("Service file generated from " + service_filename);
 		if (service_description) {
-			for (value::settings::const_iterator i(service_description->all_settings().begin()); service_description->all_settings().end() != i; ++i) {
+			for (value::settings::const_iterator i(service_description->all_settings().begin()), e(service_description->all_settings().end()); e != i; ++i) {
+				const std::string & val(*i);
+				service << multi_line_comment(names.substitute(val));
+			}
+		}
+		service << execute_command.str();
+	} else
+	{
+		if (service_description) {
+			for (value::settings::const_iterator i(service_description->all_settings().begin()), e(service_description->all_settings().end()); e != i; ++i) {
 				const std::string & val(*i);
 				run_or_start << multi_line_comment(names.substitute(val));
 			}
@@ -2101,7 +2317,7 @@ convert_systemd_units [[gnu::noreturn]] (
 			start << createrundir;
 			start << perilogue_drop_privileges.str();
 			if (execstartpre) {
-				for (value::settings::const_iterator i(execstartpre->all_settings().begin()); execstartpre->all_settings().end() != i; ) {
+				for (value::settings::const_iterator i(execstartpre->all_settings().begin()), e(execstartpre->all_settings().end()); e != i; ) {
 					std::list<std::string>::const_iterator j(i++);
 					if (execstartpre->all_settings().begin() != j) start << " ;\n"; 
 					if (execstartpre->all_settings().end() != i) start << "foreground "; 
@@ -2119,6 +2335,9 @@ convert_systemd_units [[gnu::noreturn]] (
 	restart_script << "#!/bin/sh\n";
 	if (generation_comment)
 		restart_script << multi_line_comment("Restart file generated from " + service_filename);
+	if (is_timer_activated) {
+		restart_script << "touch stamp-on-restart\n";
+	}
 	if (restartsec) {
 		const std::string seconds(restartsec->last_setting());
 		// Optimize away explicit zero-length sleeps.
@@ -2133,16 +2352,16 @@ convert_systemd_units [[gnu::noreturn]] (
 		s << "/bin/exec\n";
 		s << perilogue_setup_environment.str();
 		s << perilogue_drop_privileges.str();
-		for (value::settings::const_iterator i(execrestartpre->all_settings().begin()); execrestartpre->all_settings().end() != i; ) {
+		for (value::settings::const_iterator i(execrestartpre->all_settings().begin()), e(execrestartpre->all_settings().end()); e != i; ) {
 			std::list<std::string>::const_iterator j(i++);
-			if (execrestartpre->all_settings().begin() != j) s << " \\;\n"; 
+			if (execrestartpre->all_settings().begin() != j) s << " ;\n"; 
 			if (execrestartpre->all_settings().end() != i) s << "foreground "; 
 			const std::string & val(*j);
-			s << names.substitute(escape_metacharacters(strip_leading_minus(val)));
+			s << names.substitute(shell_expand(strip_leading_minus(val)));
 		}
-		restart_script << escape_newlines(s.str()) << "\n";
+		restart_script << escape_newlines(escape_metacharacters(s.str(), false)) << "\n";
 	}
-	if (is_string(restart, "always", !systemd_quirks)) {
+	if (is_string(restart, "always", !systemd_quirks || is_timer_activated)) {
 		restart_script << "exec true\t# ignore script arguments\n";
 	} else
 	if (!restart || "no" == tolower(restart->last_setting()) || "never" == tolower(restart->last_setting()) ) {
@@ -2184,13 +2403,13 @@ convert_systemd_units [[gnu::noreturn]] (
 
 	stop << "#!/bin/nosh\n";
 	if (generation_comment)
-		stop << multi_line_comment("Stop file generated from " + (is_socket_activated ? socket_filename : service_filename));
+		stop << multi_line_comment("Stop file generated from " + activating_filename);
 	if (execstoppost || runtimedirectory) {
 		stop << perilogue_setup_environment.str();
 		stop << removerundir;
 		stop << perilogue_drop_privileges.str();
 		if (execstoppost) {
-			for (value::settings::const_iterator i(execstoppost->all_settings().begin()); execstoppost->all_settings().end() != i; ) {
+			for (value::settings::const_iterator i(execstoppost->all_settings().begin()), e(execstoppost->all_settings().end()); e != i; ) {
 				std::list<std::string>::const_iterator j(i++);
 				if (execstoppost->all_settings().begin() != j) stop << " ;\n"; 
 				if (execstoppost->all_settings().end() != i) stop << "foreground "; 
@@ -2206,40 +2425,104 @@ convert_systemd_units [[gnu::noreturn]] (
 	// Set the dependency and installation information.
 	const bool services_are_relative(per_user_mode || (!etc_bundle && !local_bundle));
 	const bool targets_are_relative(per_user_mode || etc_bundle);
+	const bool mounts_are_relative(!per_user_mode && etc_bundle);
+	const bool read_only_bundle_fs(!per_user_mode && etc_bundle);
 
 #define CREATE_LINKS(l,s) (l ? create_links (prog,envs,names.query_bundle_dirname(),per_user_mode,is_target,services_are_relative,targets_are_relative,bundle_dir_fd,names.substitute((l)->last_setting()),(s)) : static_cast<void>(0))
 
 	CREATE_LINKS(socket_after, "after/");
+	CREATE_LINKS(timer_after, "after/");
 	CREATE_LINKS(service_after, "after/");
 	CREATE_LINKS(socket_before, "before/");
+	CREATE_LINKS(timer_before, "before/");
 	CREATE_LINKS(service_before, "before/");
 	CREATE_LINKS(socket_wants, "wants/");
+	CREATE_LINKS(timer_wants, "wants/");
 	CREATE_LINKS(service_wants, "wants/");
 	CREATE_LINKS(socket_requires, "wants/");
+	CREATE_LINKS(timer_requires, "wants/");
 	CREATE_LINKS(service_requires, "wants/");
 	CREATE_LINKS(socket_requisite, "needs/");
+	CREATE_LINKS(timer_requisite, "needs/");
 	CREATE_LINKS(service_requisite, "needs/");
 	CREATE_LINKS(socket_stoppedby, "stopped-by/");
+	CREATE_LINKS(timer_stoppedby, "stopped-by/");
 	CREATE_LINKS(service_stoppedby, "stopped-by/");
 	CREATE_LINKS(socket_conflicts, "conflicts/");
+	CREATE_LINKS(timer_conflicts, "conflicts/");
 	CREATE_LINKS(service_conflicts, "conflicts/");
 	CREATE_LINKS(socket_wantedby, "wanted-by/");
+	CREATE_LINKS(timer_wantedby, "wanted-by/");
 	CREATE_LINKS(service_wantedby, "wanted-by/");
 	CREATE_LINKS(socket_requiredby, "wanted-by/");
+	CREATE_LINKS(timer_requiredby, "wanted-by/");
 	CREATE_LINKS(service_requiredby, "wanted-by/");
 	CREATE_LINKS(socket_partof, "requires/");
+	CREATE_LINKS(timer_partof, "requires/");
 	CREATE_LINKS(service_partof, "requires/");
+	if (socket_wantsmountsfor)
+		for (value::settings::const_iterator i(socket_wantsmountsfor->all_settings().begin()), e(socket_wantsmountsfor->all_settings().end()); e != i; ++i) {
+			const std::string v(names.substitute(*i));
+			create_mount_links (prog, names.query_bundle_dirname(), mounts_are_relative, true, bundle_dir_fd, v, "wants/");
+		}
+	if (timer_wantsmountsfor)
+		for (value::settings::const_iterator i(timer_wantsmountsfor->all_settings().begin()), e(timer_wantsmountsfor->all_settings().end()); e != i; ++i) {
+			const std::string v(names.substitute(*i));
+			create_mount_links (prog, names.query_bundle_dirname(), mounts_are_relative, true, bundle_dir_fd, v, "wants/");
+		}
+	if (service_wantsmountsfor)
+		for (value::settings::const_iterator i(service_wantsmountsfor->all_settings().begin()), e(service_wantsmountsfor->all_settings().end()); e != i; ++i) {
+			const std::string v(names.substitute(*i));
+			create_mount_links (prog, names.query_bundle_dirname(), mounts_are_relative, true, bundle_dir_fd, v, "wants/");
+		}
+	if (socket_aftermountsfor)
+		for (value::settings::const_iterator i(socket_aftermountsfor->all_settings().begin()), e(socket_aftermountsfor->all_settings().end()); e != i; ++i) {
+			const std::string v(names.substitute(*i));
+			create_mount_links (prog, names.query_bundle_dirname(), mounts_are_relative, true, bundle_dir_fd, v, "after/");
+		}
+	if (timer_aftermountsfor)
+		for (value::settings::const_iterator i(timer_aftermountsfor->all_settings().begin()), e(timer_aftermountsfor->all_settings().end()); e != i; ++i) {
+			const std::string v(names.substitute(*i));
+			create_mount_links (prog, names.query_bundle_dirname(), mounts_are_relative, true, bundle_dir_fd, v, "after/");
+		}
+	if (service_aftermountsfor)
+		for (value::settings::const_iterator i(service_aftermountsfor->all_settings().begin()), e(service_aftermountsfor->all_settings().end()); e != i; ++i) {
+			const std::string v(names.substitute(*i));
+			create_mount_links (prog, names.query_bundle_dirname(), mounts_are_relative, true, bundle_dir_fd, v, "after/");
+		}
+	if (socket_requiresmountsfor)
+		for (value::settings::const_iterator i(socket_requiresmountsfor->all_settings().begin()), e(socket_requiresmountsfor->all_settings().end()); e != i; ++i) {
+			const std::string v(names.substitute(*i));
+			create_mount_links (prog, names.query_bundle_dirname(), mounts_are_relative, true, bundle_dir_fd, v, "wants/");
+			create_mount_links (prog, names.query_bundle_dirname(), mounts_are_relative, true, bundle_dir_fd, v, "after/");
+		}
+	if (timer_requiresmountsfor)
+		for (value::settings::const_iterator i(timer_requiresmountsfor->all_settings().begin()), e(timer_requiresmountsfor->all_settings().end()); e != i; ++i) {
+			const std::string v(names.substitute(*i));
+			create_mount_links (prog, names.query_bundle_dirname(), mounts_are_relative, true, bundle_dir_fd, v, "wants/");
+			create_mount_links (prog, names.query_bundle_dirname(), mounts_are_relative, true, bundle_dir_fd, v, "after/");
+		}
+	if (service_requiresmountsfor)
+		for (value::settings::const_iterator i(service_requiresmountsfor->all_settings().begin()), e(service_requiresmountsfor->all_settings().end()); e != i; ++i) {
+			const std::string v(names.substitute(*i));
+			create_mount_links (prog, names.query_bundle_dirname(), mounts_are_relative, true, bundle_dir_fd, v, "wants/");
+			create_mount_links (prog, names.query_bundle_dirname(), mounts_are_relative, true, bundle_dir_fd, v, "after/");
+		}
 	const bool defaultdependencies(
 			is_socket_activated ? is_bool_true(socket_defaultdependencies, service_defaultdependencies, true) :
+			is_timer_activated ? is_bool_true(timer_defaultdependencies, service_defaultdependencies, true) :
 			is_bool_true(service_defaultdependencies, true)
 	);
 	const bool earlysupervise(
-			is_socket_activated ? is_bool_true(socket_earlysupervise, service_earlysupervise, !per_user_mode && etc_bundle) :
-			is_bool_true(service_earlysupervise, !per_user_mode && etc_bundle)
+			is_socket_activated ? is_bool_true(socket_earlysupervise, service_earlysupervise, read_only_bundle_fs) :
+			is_timer_activated ? is_bool_true(timer_earlysupervise, service_earlysupervise, read_only_bundle_fs) :
+			is_bool_true(service_earlysupervise, read_only_bundle_fs)
 	);
 	if (defaultdependencies) {
 		if (is_socket_activated)
 			create_links(prog, envs, names.query_bundle_dirname(), per_user_mode, is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "sockets.target", "wanted-by/");
+		if (is_timer_activated)
+			create_links(prog, envs, names.query_bundle_dirname(), per_user_mode, is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "timers.target", "wanted-by/");
 		if (is_dbus) {
 			create_links(prog, envs, names.query_bundle_dirname(), per_user_mode, is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "dbus.socket", "after/");
 			create_links(prog, envs, names.query_bundle_dirname(), per_user_mode, is_target, services_are_relative, targets_are_relative, bundle_dir_fd, "dbus.socket", "wants/");
@@ -2255,28 +2538,28 @@ convert_systemd_units [[gnu::noreturn]] (
 		create_link(prog, names.query_bundle_dirname(), bundle_dir_fd, names.query_runtime_dir_by_name() + "/service-bundles/early-supervise/" + names.query_bundle_basename(), "supervise");
 	}
 	if (listenstream) {
-		for (value::settings::const_iterator i(listenstream->all_settings().begin()); listenstream->all_settings().end() != i; ++i) {
+		for (value::settings::const_iterator i(listenstream->all_settings().begin()), e(listenstream->all_settings().end()); e != i; ++i) {
 			const std::string sockname(names.substitute(*i));
 			if (is_local_socket_name(sockname))
 				make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, sockname);
 		}
 	}
 	if (listendatagram) {
-		for (value::settings::const_iterator i(listendatagram->all_settings().begin()); listendatagram->all_settings().end() != i; ++i) {
+		for (value::settings::const_iterator i(listendatagram->all_settings().begin()), e(listendatagram->all_settings().end()); e != i; ++i) {
 			const std::string sockname(names.substitute(*i));
 			if (is_local_socket_name(sockname))
 				make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, sockname);
 		}
 	}
 	if (listensequentialpacket) {
-		for (value::settings::const_iterator i(listensequentialpacket->all_settings().begin()); listensequentialpacket->all_settings().end() != i; ++i) {
+		for (value::settings::const_iterator i(listensequentialpacket->all_settings().begin()), e(listensequentialpacket->all_settings().end()); e != i; ++i) {
 			const std::string sockname(names.substitute(*i));
 			if (is_local_socket_name(sockname))
 				make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, sockname);
 		}
 	}
 	if (listenfifo) {
-		for (value::settings::const_iterator i(listenfifo->all_settings().begin()); listenfifo->all_settings().end() != i; ++i) {
+		for (value::settings::const_iterator i(listenfifo->all_settings().begin()), e(listenfifo->all_settings().end()); e != i; ++i) {
 			const std::string fifoname(names.substitute(*i));
 			make_mount_interdependencies(prog, names.query_bundle_dirname(), etc_bundle, true, bundle_dir_fd, fifoname);
 		}
@@ -2289,6 +2572,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	// Issue the final reports.
 
 	report_unused(prog, socket_profile, socket_filename);
+	report_unused(prog, timer_profile, timer_filename);
 	report_unused(prog, service_profile, service_filename);
 
 	throw EXIT_SUCCESS;

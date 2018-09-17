@@ -91,7 +91,7 @@ local_seqpacket_socket_accept (
 			&verbose_option,
 			&connection_limit_option
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "prog");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{prog}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -101,7 +101,7 @@ local_seqpacket_socket_accept (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	if (args.empty()) {
@@ -240,31 +240,31 @@ exit_error:
 #error "Don't know how to do SO_PEERCRED on your platform."
 #endif
 					socklen_t ul = sizeof u;
-					if (0 == getsockopt(s, SOL_SOCKET, SO_PEERCRED, &u, &ul)) goto exit_error;
+					if (0 > getsockopt(STDIN_FILENO, SOL_SOCKET, SO_PEERCRED, &u, &ul)) goto exit_error;
 					char buf[64];
 					snprintf(buf, sizeof buf, "%u", u.pid);
 					envs.set("UNIXREMOTEPID", buf);
 					snprintf(buf, sizeof buf, "%u", u.gid);
-					envs.set("UNIXREMOTEGID", buf);
+					envs.set("UNIXREMOTEEGID", buf);
 					snprintf(buf, sizeof buf, "%u", u.uid);
-					envs.set("UNIXREMOTEUID", buf);
+					envs.set("UNIXREMOTEEUID", buf);
 #else
 					envs.set("UNIXREMOTEPID", 0);
-					envs.set("UNIXREMOTEGID", 0);
-					envs.set("UNIXREMOTEUID", 0);
+					envs.set("UNIXREMOTEEGID", 0);
+					envs.set("UNIXREMOTEEUID", 0);
 #endif
 					break;
 				}
 				default:
 					envs.set("UNIXREMOTEPATH", 0);
 					envs.set("UNIXREMOTEPID", 0);
-					envs.set("UNIXREMOTEGID", 0);
-					envs.set("UNIXREMOTEUID", 0);
+					envs.set("UNIXREMOTEEGID", 0);
+					envs.set("UNIXREMOTEEUID", 0);
 					break;
 			}
 
 			if (verbose)
-				std::fprintf(stderr, "%s: %u %s %s %s %s %s\n", prog, getpid(), q(envs, "UNIXLOCALPATH"), q(envs, "UNIXREMOTEPATH"), q(envs, "UNIXREMOTEPID"), q(envs, "UNIXREMOTEUID"), q(envs, "UNIXREMOTEGID"));
+				std::fprintf(stderr, "%s: %u %s %s %s %s %s\n", prog, getpid(), q(envs, "UNIXLOCALPATH"), q(envs, "UNIXREMOTEPATH"), q(envs, "UNIXREMOTEPID"), q(envs, "UNIXREMOTEEUID"), q(envs, "UNIXREMOTEEGID"));
 
 			return;
 		}

@@ -1,0 +1,140 @@
+<refentry id="time-print-tai64n">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>time-print-tai64n</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>time-print-tai64n</refname>
+<refpurpose>print external TAI64N timestamps</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>time-print-tai64n</command>
+<arg choice='opt'>-n</arg>
+<arg choice='req'><replaceable>timestamp</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>time-print-tai64n</command> parses <arg choice='plain'><replaceable>timestamp</replaceable></arg> to yield a TAI64N time.
+It prints the result as a <code>@</code> character prefix, a TAI64N timestamp in external form (16 hexadecimal digits of seconds and 8 hexadecimal digits of nanoseconds), a space, and (if the <arg choice='plain'>-n</arg> command-line option is not used) a newline.
+</para>
+
+</refsection>
+
+<refsection><title>Timestamps</title>
+
+<para>
+The format of <arg choice='plain'><replaceable>timestamp</replaceable></arg> is a rough superset of <ulink url="http://code.dogmap.org/runwhen/stamp-fmt/">the timestamp format from Paul Jarc's <citerefentry><refentrytitle>runwhen</refentrytitle><manvolnum>1</manvolnum></citerefentry> program</ulink>, omtting all of the relative offset forms (which have no applicability):
+</para>
+<variablelist>
+<varlistentry>
+<term><code>@<replaceable>hexdigits</replaceable></code></term>
+<listitem><para>
+<replaceable>hexdigits</replaceable> is a 16-character TAI64 or a 24-character TAI64N timestamp in their external forms.
+For the former, the nanoseconds count is understood to be zero.
+The output of the <command>time-print-tai64n</command> command may contain trailing whitespace; this must not, however.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>i<replaceable>iso8601</replaceable></code></term>
+<listitem><para>
+<replaceable>iso8601</replaceable> is date, time, and timezone in ISO 8601 form.
+As extensions to the standard form, a space can be substituted for the <code>T</code> character between the date and time, and a space character can be placed between the time and the timezone.
+The timezone, per the standard, is always in the offset from UTC numeric form and is not optional.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>D<replaceable>date</replaceable></code></term>
+<listitem><para>
+<replaceable>date</replaceable> is a date that is either in the ISO 8601 form, or in the current locale's form (i.e. as understood by the <citerefentry><refentrytitle>strptime</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function with the <code>%x</code> format specifier).
+The time is taken to be 00:00:00, local time, on that day.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>T<replaceable>time</replaceable></code></term>
+<listitem><para>
+<replaceable>time</replaceable> is a time that is either in the ISO 8601 form, or in the current locale's form (i.e. as understood by the <citerefentry><refentrytitle>strptime</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function with the <code>%X</code> format specifier).
+The date is taken to be today, and the time to be local time.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>$<replaceable>var</replaceable></code></term>
+<listitem><para>
+<replaceable>var</replaceable> is the name of an environment variable, whose value is looked up and processed as a timestamp.
+If the environment variable does not exist, the resultant timestamp is null.
+</para><para>
+It is possible to create loops where each environment variable's value is a <code>$<replaceable>var</replaceable></code> timestamp referencing the next environment variable in the loop.
+This is an error.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>&#x003c;<replaceable>filename</replaceable></code></term>
+<listitem><para>
+The last access timestamp of the file <filename><replaceable>filename</replaceable></filename>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>&#x003e;<replaceable>filename</replaceable></code></term>
+<listitem><para>
+The last modification timestamp of the file <filename><replaceable>filename</replaceable></filename>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>0<replaceable>filename</replaceable></code></term>
+<listitem><para>
+The creation timestamp of the file <filename><replaceable>filename</replaceable></filename>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>now</code></term>
+<listitem><para>
+The current time from the <code>CLOCK_REALTIME</code> clock read using the <citerefentry><refentrytitle>clock_gettime</refentrytitle><manvolnum>1</manvolnum></citerefentry> library function.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>today</code></term>
+<listitem><para>
+The current time from the <code>CLOCK_REALTIME</code> clock read using the <citerefentry><refentrytitle>clock_gettime</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function, forced to the contemporary or immediately preceding 00:00:00 local time.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>zero</code></term>
+<listitem><para>
+The TAI64 zero point, a long way in the past.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>null</code></term>
+<listitem><para>
+A null timestamp.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>boot</code></term>
+<term><code>startup</code></term>
+<listitem><para>
+The time that the current invocation of the operating system was bootstrapped, calculated as the value of the real-time system clock less the value of the <code>CLOCK_UPTIME</code> (or <code>CLOCK_BOOTTIME</code>) clock read using the <citerefentry><refentrytitle>clock_gettime</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function.
+</para></listitem>
+</varlistentry>
+</variablelist>
+
+<para>
+<command>time-print-tai64n</command> attempts to generate correct TAI64N times when reading the real-time clock.
+On a Linux system where it detects an Olson "right" timezone currently in use, it knows that the real-time clock is TAI seconds since the Epoch and performs a simple conversion.
+On other Linux systems, and on BSDs, it assumes that the real-time clock is UTC seconds since the Epoch and attempts to correct for (known) UTC leap seconds in order to determine TAI.
+</para>
+
+</refsection>
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

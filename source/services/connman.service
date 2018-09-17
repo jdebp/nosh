@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Intel Connection Manager
+
+[Service]
+Type=dbus
+RuntimeDirectory=%p
+ExecStart=%p --nodaemon
+ProtectHome=true
+ProtectSystem=full
+
+[Install]
+#WantedBy=workstation.target

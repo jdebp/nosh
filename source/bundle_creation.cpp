@@ -50,7 +50,7 @@ create_links (
 ) {
 	const std::list<std::string> list(split_list(names));
 	const std::string home(effective_user_home_dir(envs));
-	for (std::list<std::string>::const_iterator i(list.begin()); list.end() != i; ++i) {
+	for (std::list<std::string>::const_iterator i(list.begin()), e(list.end()); e != i; ++i) {
 		const std::string & name(*i);
 		std::string base, link, target;
 		if (ends_in(name, ".target", base)) {
@@ -69,6 +69,7 @@ create_links (
 		} else
 		if (ends_in(name, ".service", base)
 		||  ends_in(name, ".socket", base)
+		||  ends_in(name, ".timer", base)
 		) {
 			if (services_are_relative) {
 				if (is_target)
@@ -107,15 +108,43 @@ remove_last_component (
 }
 
 void
+create_mount_links (
+	const char * prog,
+	const std::string & bund,
+	const bool mounts_are_relative,
+	const bool prevent_root_link,
+	const FileDescriptorOwner & bundle_dir_fd,
+	const std::string & names,
+	const std::string & subdir
+) {
+	const std::list<std::string> list(split_list(names));
+	const char * const etc_mount(mounts_are_relative ? "../../mount@" : "/etc/service-bundles/services/mount@");
+	for (std::list<std::string>::const_iterator i(list.begin()), e(list.end()); e != i; ++i) {
+		std::string where(*i);
+		if (where.empty() || '/' != where.back())
+			where += '/';
+		while (remove_last_component(where)) {
+			const bool to_root(is_root(where.c_str()));
+			if (prevent_root_link && to_root) break;
+			const std::string param(systemd_name_escape(false, false, where));
+			const std::string target(etc_mount + param);
+			const std::string link(subdir + "mount@" + param);
+			create_link(prog, bund, bundle_dir_fd, target, link);
+			if (to_root) break;
+		}
+	}
+}
+
+void
 make_mount_interdependencies (
 	const char * prog,
 	const std::string & name,
-	const bool etc_bundle,
+	const bool mounts_are_relative,
 	const bool prevent_root_link,
 	const FileDescriptorOwner & bundle_dir_fd,
 	std::string where
 ) {
-	const char * const etc_mount(etc_bundle ? "../../mount@" : "/etc/service-bundles/services/mount@");
+	const char * const etc_mount(mounts_are_relative ? "../../mount@" : "/etc/service-bundles/services/mount@");
 	while (remove_last_component(where)) {
 		const bool to_root(is_root(where.c_str()));
 		if (prevent_root_link && to_root) break;

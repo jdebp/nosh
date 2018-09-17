@@ -72,6 +72,7 @@ The alternative names are:
 <command>cyclog</command>, 
 <command>delegate-control-group-to</command>,
 <command>envdir</command>, 
+<command>envgid</command>, 
 <command>envuidgid</command>, 
 <command>export-to-rsyslog</command>,
 <command>false</command>, 
@@ -80,6 +81,7 @@ The alternative names are:
 <command>fifo-listen</command>, 
 <command>follow-log-directories</command>,
 <command>foreground</command>, 
+<command>getuidgid</command>, 
 <command>hardlimit</command>, 
 <command>klog-read</command>
 <command>line-banner</command>, 
@@ -101,12 +103,14 @@ The alternative names are:
 <command>pipe</command>, 
 <command>plug-and-play-event-handler</command>
 <command>prependpath</command>, 
+<command>printenv</command>, 
 <command>read-conf</command>,
 <command>recordio</command>, 
 <command>set-control-group-knob</command>,
 <command>set-dynamic-hostname</command>,
 <command>set-mount-object</command>
 <command>setenv</command>, 
+<command>setgid-fromenv</command>, 
 <command>setlock</command>,
 <command>setpgrp</command>, 
 <command>setsid</command>,
@@ -130,8 +134,9 @@ The alternative names are:
 <command>umask</command>, 
 <command>unsetenv</command>,
 <command>unshare</command>,
+<command>userenv</command>,
 and
-<command>userenv</command>.
+<command>userenv-fromenv</command>.
 See their individual manual pages for details.
 </para>
 

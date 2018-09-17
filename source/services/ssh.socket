@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=SSH socket
+
+[Socket]
+UCSPIRules=true
+LogUCSPIRules=yes
+ListenStream=22
+BindIPv6Only=both
+Accept=true
+
+[Install]
+WantedBy=server.target

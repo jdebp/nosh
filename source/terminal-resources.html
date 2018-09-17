@@ -1,0 +1,156 @@
+<title>terminal resources</title>
+<link rel="Up" href="terminals.html" title="Terminals" />
+<link rel="Next" href="real-terminal-login.html" title="real terminal login" />
+<link rel="Prev" href="user-virtual-terminals.html" title="user-space virtual terminals" />
+<h1>
+terminal resources
+</h1>
+
+<p>
+The virtual terminal subsystem requires various resources.
+</p>
+
+<h2>
+keyboard maps
+</h2>
+
+<p>
+On systems with <code>/usr/share/vt/keymaps/</code> (such as FreeBSD), <a href="external-formats.html">the external formats conversion subsystem</a> takes the old-style SCO/FreeBSD kernel virtual terminal keyboard maps from there and generates a range of keyboard map files suitable for <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a> by passing them through <a href="console-convert-kbdmap.html"><code>console-convert-kbdmap</code></a>.
+The original maps are converted with some modifications supplied by overlay map files:
+</p>
+<dl id="FreeBSDOverlays">
+<dt><a href="gazetteer.html#soft_backspace.kbd"><code>soft_backspace.kbd</code></a></dt>
+<dd><p>
+The DEC VT backspace &#x232b; key is actually programmable with the DECBKM control sequence.
+The FreeBSD keyboard maps hardwire the mapping from the backspace &#x232b; keycode to the <code>DEL</code> and <code>BS</code> control characters, and if used as they stand would prevent the key from being soft-switchable.
+This overlay replaces that with a mapping to the <code>bspace</code> action, letting <code>console-terminal-emulator</code> handle the mapping to control characters in concert with the DECBKM setting.
+</p></dd>
+<dt><a href="gazetteer.html#soft_enter.kbd"><code>soft_enter.kbd</code></a> and <a href="gazetteer.html#soft_return.kbf"><code>soft_return.kbd</code></a></dt>
+<dd><p>
+Likewise, these replace hardwired FreeBSD mappings, from the return &#x2ba0; and enter keys to the <code>CR</code> and <code>LF</code> control characters, with the <code>return</code> and <code>enter</code> actions.
+The DEC VT enter key is actually programmable with the DECNKM control sequence.
+The <code>enter</code> action lets <code>console-terminal-emulator</code> handle the mapping to control characters in concert with the DECNKM setting.
+The <code>return</code> action ensures that the return key can be distinguished from a <code>CR</code> or <code>LF</code> control character in input messages.
+</p></dd>
+<dt>
+<a href="gazetteer.html#jp_to_jp.104.kbd"><code>jp_to_jp.104.kbd</code></a>
+<a href="gazetteer.html#jp_to_jp.109.kbd"><code>jp_to_jp.109.kbd</code></a>
+</dt>
+<dd>
+<p>
+The FreeBSD keyboard maps usually apply to all of the Model M/Windows keyboards invariantly.
+Overlays such as this are per-country per-keycount fixes for various things.
+</p>
+<p>
+The FreeBSD <code>jp.kbd</code> keyboard map maps the "Grave" key (engraved with Zenkaku/Henkaku/Kanji on the JIS 109-key keyboard) to the <code>ESC</code> control character.
+</p>
+<ul>
+<li><p>
+<code>jp_to_jp.109.kbd</code> fixes it for 109-key keyboards to instead map the "Grave" key to the "IM Switch" input event that activates and deactivates the input method front-end processor.
+</p></li>
+<li><p>
+<code>jp_to_jp.104.kbd</code> fixes it for other keycount keyboards to instead map the "Grave" key to what the "International3" key does on 109-key keyboards.
+</p></li>
+</ul>
+</dd>
+</dl>
+
+<p>
+On systems where there is no <code>/usr/share/vt/keymaps/</code>, <a href="external-formats.html">the external formats conversion subsystem</a> generates a (narrower) range of keyboard map files by overlaying the default null map, U.S. International, built into <a href="console-convert-kbdmap.html"><code>console-convert-kbdmap</code></a> with map files that provide just the differences between U.S. International and other layouts rather than entire maps as come with FreeBSD.
+For example:
+<a href="gazetteer.html#default_to_uk.kbd"><code>default_to_uk.kbd</code></a> is the difference between U.S. International and U.K. International.
+</p>
+
+<p>
+The generated keyboard maps are placed in <a href="gazetteer.html#kbdmaps"><code>/etc/system-control/convert/kbdmaps/</code></a> and can be linked to the service directories of, or simply used directly by, <code>console-fb-realizer@*</code> services.
+Their names follow a regular pattern comprising the ISO country code, the PC Windows keyboard variant (i.e. 104, 105, 106, 107, or 109), and any options such as <code>.capsctrl</code> for maps generated with the <a href="gazetteer.html#swap_capsctrl.kbd"><code>swap_capsctrl.kbd</code></a> overlay that swaps the capitals lock &#x21ec; and control &#x2388; keys.
+</p>
+
+<h2>
+fonts
+</h2>
+
+<p>
+Fonts suitable for <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a> have to be in the "vt" format of FreeBSD.
+BDF fonts can be converted to this format with <a href="https://www.freebsd.org/cgi/man.cgi?query=vtfontcvt&apropos=0&sektion=8">FreeBSD's <code>vtfontcvt</code> tool</a>, as long as they are (arbitrarily) limited to 8 or 16 pixel-wide bounding rectangles.
+(This unfortunately prevents FreeBSD's <code>vtfontcvt</code> from being able to convert <a href="https://wiki.ubuntu.com/UbuntuFontFamily">Ubuntu Monospace</a>, which has varying-sized bounding rectangles for individual characters.)
+</p>
+
+<p>
+Useful monospace fonts that can be obtained and converted to "vt" format (sometimes by converting to BDF format first, using tools like <a href="http://jengelh.medozas.de./projects/hxtools/">Jan Engelhardt's fnt2bdf</a>):
+</p>
+<ul>
+<li><p>
+vgarom-8x16 is a "vt" font that comes in the box with FreeBSD, purportedly taken from VGA ROM firmware of a PC compatible.
+It only has a small glyph repertoire.
+</p></li>
+<li><p>
+Ed Maste also produced <a href="https://github.com/emaste/fontstuff">a small repository of "vt" fonts</a> for FreeBSD's "vt" subsystem.
+</p></li>
+<li><p>
+<a href="http://web.mit.edu/ghudson/dev/nokrb/third/intlfonts/Japanese/k16-1990.bdf">k16-1990.bdf</a> is a square 16&times;16 pixels JISX0208.1990 font with many CJK glyphs.
+</p></li>
+<li><p>
+<a href="https://www.cl.cam.ac.uk/~mgk25/ucs-fonts.html">Markus Kuhn's -misc-fixed- fonts</a>, especially 9x15 and 9x15B, have a fairly wide coverage of the BMP.
+They come in BDF form.
+</p></li>
+<li><p>
+<a href="http://www.inp.nsk.su./~bolkhov/files/fonts/univga/">Dmitry Yu. Bolkhovityanov's Unicode VGA</a> is based upon the vga.bdf in XDosEmu.
+It covers much of the BMP, but none of the supplementary Unicode planes.
+</p></li>
+<li><p>
+<a href="https://github.com/hchargois/gohufont">Hugo Chargois's GoHuFont</a> is partly based upon Markus Kuhn's, and comes in BDF form.
+</p></li>
+<li><p>
+<a href="http://people.mpi-inf.mpg.de/~uwe/misc/uw-ttyp0/">Uwe Waldmann's UW ttyp0</a> covers only some of the BMP.
+It comes in BDF form.
+</p></li>
+<li><p>
+<a href="http://unifoundry.com/unifont.html">GNU Unifont</a> has extensive glyph coverage of Unicode.
+It is in a "hex" file format that needs first to be converted to BDF.
+</p></li>
+<li><p>
+<a href="http://pelulamu.net/unscii/">Ville-Matias Heikkil&auml;'s unscii-16</a> font takes inspiration from personal and home computer 8&times;8 and 8&times;16 fonts, and is available in the same "hex" file format as GNU Unifont.
+</p></li>
+<li><p>
+<a href="ftp://ftp.columbia.edu/kermit/pcfonts/fntcol16.zip">Joseph Gil's fntcol16.zip package</a> is a collection of VGA firmware and MS/PC-DOS fonts.
+The fonts are in an idiosyncratic format that first must be converted to BDF and mapped to the relevant Unicode code points.
+</p></li>
+</ul>
+
+<h2 id="FEP">
+input methods
+</h2>
+
+<p>
+<a href="console-input-method.html"><code>console-input-method</code></a> is table-driven.
+The tables that it uses are the same CIN data files as are used by xcin, gcin (<a href="https://github.com/pkg-ime/gcin/tree/master/data">GitHub</a>), jscin (<a href="https://github.com/google/jscin/tree/master/src/tables">GitHub</a>), hime (<a href="https://github.com/hime-ime/hime/tree/master/data">GitHub</a>), PIME (<a href="https://github.com/EasyIME/PIME/tree/master/python/cinbase/cin">GitHub</a>), OpenVanilla (<a href="https://github.com/openvanilla/openvanilla/tree/master/DataTables">GitHub</a>), Chinese Open Desktop (<a href="https://github.com/chinese-opendesktop/cin-tables">GitHub</a>), OkidoKey.app (<a href="https://github.com/ethanliu/OkidoKeyCharsets/tree/master/DataTables">GitHub</a>), and MacOS.
+</p>
+
+<p>
+The CIN file collections supplied with each software do not exactly overlap, and some are more up-to-date than others, but taken as a whole they range from Esperanto input helpers through Pinyin and Katakana to Hanja.
+The nosh toolset does not provide yet another collection to augment the mess.
+Rather, one should pull the CIN files from these collections.
+There are three exceptions:
+</p>
+<dl>
+<dt><a href="gazetteer.html#hiragana.cin"><code>hiragana</code></a></dt>
+<dd><p>
+This data table provides an input method for Hiragana, encoding everything explicitly in the data table itself, including gemination of consonants for sokuon.
+It incorporates only Nihon-shiki and Kunrei-shiki, and is case-insensitive.
+</p></dd>
+<dt><a href="gazetteer.html#katakana.cin"><code>katakana</code></a></dt>
+<dd><p>
+This data table provides an input method for Katakana and symbols, encoding everything explicitly in the data table itself, including gemination of consonants for sokuon and gemination of vowels for ch&omacr;onpu.
+It is a grab-bag mixture of Nihon-shiki, Kunrei-shiki, Hebon-shiki, Hyoojun-shiki, old ANSI/BS standards, and unofficial but common stuff (such as an "l" prefix for little kana).
+It also incorporates ASCII spellings for punctuation and symbols, such as "hakko" for various sorts of brackets, and is case-insensitive.
+</p></dd>
+<dt><a href="gazetteer.html#romaji-x11.cin"><code>romaji-x11</code></a></dt>
+<dd><p>
+This data table incorporates a subset of the Xlib compose key sequences, not duplicating Xlib sequences that are available in other ways on user-space virtual terminals.
+(For examples:
+Many of the combining diacritics are already a standard part of the keyboard map, in the common secondary group, because of ISO 9995-3.
+Hangeul and Kana are already directly available via other input methods dedicated to them.)
+It is suitable for use as a "romaji" input method alongside CJKV input methods.
+</p></dd>
+</dl>

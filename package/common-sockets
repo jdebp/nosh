@@ -36,6 +36,7 @@ sendmail-smtp-relay
 sendmail-smtp-submission
 sshd
 svnserve
+tinysshd
 udp-rsyslogd
 udp-syslogd
 udp-syslog-read

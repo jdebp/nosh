@@ -1,5 +1,5 @@
 #!/bin/sh -e
-# See http://skarnet.org./software/compile.html
+# See http://jdebp.eu./FGA/slashpackage.html
 if [ \! -d package ] || [ \! -d source ]
 then
 	echo "You are not in the right directory." 1>&2
@@ -17,7 +17,7 @@ export CDPATH=
 # The build and release directories need not be on the same disc volume.
 # And the files released must not be potentially overwritable and truncatable by the compiler/linker during subsequent builds.
 # But released files can be links to other released files, of course.
-install -d -m 0755 command manual config guide guide/services
+install -d -m 0755 command manual config guide guide/services guide/convert
 
 # ##############################################################################
 # Build all of the ...{new} files in ./command and ./manual.
@@ -182,12 +182,12 @@ do
 	( cd build/services/ && pax -r -w $i ../../config/services{new}/ )
 done
 (
-	cat package/common-services package/common-sockets package/common-ttys 
+	cat package/common-services package/common-sockets package/common-timers package/common-ttys 
 	case "`uname`" in
-	Linux)	cat package/linux-services package/linux-sockets package/linux-ttys ;;
-	OpenBSD)	cat package/bsd-services package/bsd-sockets package/openbsd-ttys ;;
-	NetBSD)	cat package/bsd-services package/bsd-sockets package/netbsd-ttys ;;
-	*BSD)	cat package/bsd-services package/bsd-sockets package/bsd-ttys ;;
+	Linux)	cat package/linux-services package/linux-sockets package/linux-timers package/linux-ttys ;;
+	OpenBSD)	cat package/bsd-services package/bsd-sockets package/openbsd-timers package/openbsd-ttys ;;
+	NetBSD)	cat package/bsd-services package/bsd-sockets package/netbsd-timers package/netbsd-ttys ;;
+	*BSD)	cat package/bsd-services package/bsd-sockets package/bsd-timers package/bsd-ttys ;;
 	esac
 ) |
 while read -r i
@@ -233,22 +233,34 @@ done
 
 # ##############################################################################
 # Build all of the {new} files in ./config.
-install -d -m 0755 config/presets config/systemd config/convert config/convert/kbdmaps config/convert/per-user config/convert/per-user/dbus config/mewburn-rc.d config/openbsd-rc.d config/vt config/devd config/zsh config/service-generators
-cat package/systemd-services package/tmpfiles-snippets |
+install -d -m 0755 config/presets config/systemd config/systemd/tmpfiles config/systemd/system config/systemd/user config/convert config/convert/kbdmaps config/convert/dbus config/convert/per-user config/convert/per-user/dbus config/convert/termcap config/mewburn-rc.d config/openbsd-rc.d config/vt config/devd config/zsh config/service-generators config/etc config/cin-data-tables
+cat package/tmpfiles-snippets |
 while read -r i
 do
-	rm -f -- config/systemd/"$i"{new}
-	install -m 0444 -p -- build/systemd/"$i" config/systemd/"$i"{new}
+	rm -f -- config/systemd/tmpfiles/"$i"{new}
+	install -m 0444 -p -- build/systemd/tmpfiles/"$i" config/systemd/tmpfiles/"$i"{new}
 done
-cat package/systemd-overrides |
+cat package/systemd-system-services |
 while read -r i
 do
-	rm -f -- config/systemd/"$i"{new}
-	install -d -m 0755 config/systemd/"`dirname "$i"`"
-	install -m 0444 -p -- build/systemd/"$i" config/systemd/"$i"{new}
+	rm -f -- config/systemd/system/"$i"{new}
+	install -m 0444 -p -- build/systemd/system/"$i" config/systemd/system/"$i"{new}
+done
+cat package/systemd-system-overrides |
+while read -r i
+do
+	rm -f -- config/systemd/system/"$i"{new}
+	install -d -m 0755 config/systemd/system/"`dirname "$i"`"
+	install -m 0444 -p -- build/systemd/system/"$i" config/systemd/system/"$i"{new}
+done
+cat package/systemd-user-services |
+while read -r i
+do
+	rm -f -- config/systemd/user/"$i"{new}
+	install -m 0444 -p -- build/systemd/user/"$i" config/systemd/user/"$i"{new}
 done
 (
-	for i in bundles run-via-systemd run-via-mewburn-rc run-via-openbsd-rc run-debian-desktop-base run-debian-server-base run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base
+	for i in bundles run-via-systemd run-via-mewburn-rc run-via-openbsd-rc run-debian-desktop-base run-debian-server-base run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base run-bcron
 	do
 		test \! -r package/common-nosh-"$i"-presets || cat package/common-nosh-"$i"-presets 
 		test \! -r package/linux-nosh-"$i"-presets || cat package/linux-nosh-"$i"-presets 
@@ -296,6 +308,16 @@ do
 	rm -f -- config/service-generators/"$i"{new}
 	install -m 0444 -p -- build/services/"$i" config/service-generators/"$i"{new}
 done 
+for i in no-anacron anacron
+do
+	rm -f -- config/etc/crontab.debian."$i"{new}
+	install -m 0444 -p -- build/bcron/crontab.debian."$i" config/etc/crontab.debian."$i"{new}
+done 
+while read -r i
+do
+	rm -f -- config/cin-data-tables/"$i"{new}
+	install -m 0444 -p -- build/cin-data-tables/"$i" config/cin-data-tables/"$i"{new}
+done < package/cin-data-tables
 # Plug and Play manager rulesets
 cat package/devd-rules |
 while read -r i
@@ -306,18 +328,28 @@ done
 
 # ##############################################################################
 # Rename the ...{new} directories and files in ./config.
-cat package/systemd-services package/tmpfiles-snippets |
+cat package/tmpfiles-snippets |
 while read -r i
 do
-	mv -f -- config/systemd/"$i"{new} config/systemd/"$i"
+	mv -f -- config/systemd/tmpfiles/"$i"{new} config/systemd/tmpfiles/"$i"
 done 
-cat package/systemd-overrides |
+cat package/systemd-system-services |
 while read -r i
 do
-	mv -f -- config/systemd/"$i"{new} config/systemd/"$i"
+	mv -f -- config/systemd/system/"$i"{new} config/systemd/system/"$i"
+done 
+cat package/systemd-system-overrides |
+while read -r i
+do
+	mv -f -- config/systemd/system/"$i"{new} config/systemd/system/"$i"
 done
+cat package/systemd-user-services |
+while read -r i
+do
+	mv -f -- config/systemd/user/"$i"{new} config/systemd/user/"$i"
+done 
 (
-for i in bundles run-via-systemd run-via-mewburn-rc run-via-openbsd-rc run-debian-desktop-base run-debian-server-base run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base
+for i in bundles run-via-systemd run-via-mewburn-rc run-via-openbsd-rc run-debian-desktop-base run-debian-server-base run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base run-bcron
 do
 	test \! -r package/common-nosh-$i-presets || cat package/common-nosh-"$i"-presets 
 	test \! -r package/linux-nosh-$i-presets || cat package/linux-nosh-"$i"-presets 
@@ -357,6 +389,14 @@ for i in cyclog@.service kmod@.service
 do
 	mv -f -- config/service-generators/"$i"{new} config/service-generators/"$i"
 done 
+for i in no-anacron anacron
+do
+	mv -f -- config/etc/crontab.debian."$i"{new} config/etc/crontab.debian."$i"
+done 
+while read -r i
+do
+	mv -f -- config/cin-data-tables/"$i"{new} config/cin-data-tables/"$i"
+done < package/cin-data-tables
 # Plug and Play manager rulesets
 cat package/devd-rules |
 while read -r i

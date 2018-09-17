@@ -39,7 +39,7 @@ envuidgid (
 			&supplementary_option,
 			&primary_group_option
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "account prog");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{account} {prog}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -49,7 +49,7 @@ envuidgid (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	if (args.empty()) {
@@ -86,7 +86,7 @@ exit_error:
 		n = groups.size();
 		if (0 > getgrouplist(account, gid, groups.data(), &n)) goto exit_error;
 		std::string gidlist;
-		for (std::vector<gid_t>::const_iterator i(groups.begin()); groups.end() != i; ++i) {
+		for (std::vector<gid_t>::const_iterator i(groups.begin()), e(groups.end()); e != i; ++i) {
 			char gid_value[64];
 			snprintf(gid_value, sizeof gid_value, "%u", *i);
 			if (!gidlist.empty()) gidlist += ",";

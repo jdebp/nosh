@@ -6,8 +6,14 @@
 Description=Populate the /%I directory tree from standard mtree info.
 DefaultDependencies=false
 Before=local-fs.target
-# We need the mount(s) for /usr/sbin/mtree in particular.
-After=local-fs-pre.target mdmfs@-%i mount@-%i mount@-usr mount@-usr-sbin mount@-etc mount@-etc-mtree
+WantsMountsFor=/%I
+AfterMountsFor=/%I
+# We need the mount(s) for /usr/sbin/mtree and /etc/mtree/BSD.%i.dist in particular.
+WantsMountsFor=/usr/sbin/
+WantsMountsFor=/etc/mtree/
+AfterMountsFor=/usr/sbin/
+AfterMountsFor=/etc/mtree/
+After=local-fs-pre.target mdmfs@-%i
 
 [Service]
 Type=oneshot

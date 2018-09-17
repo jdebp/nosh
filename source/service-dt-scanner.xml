@@ -46,10 +46,10 @@ It is not expected to be up continually for the lifetime of the system.
 It re-scans <replaceable>directory</replaceable> whenever <citerefentry><refentrytitle>kevent</refentrytitle><manvolnum>2</manvolnum></citerefentry> raises a <citerefentry><refentrytitle>NOTE_WRITE</refentrytitle><manvolnum>2</manvolnum></citerefentry> or a <citerefentry><refentrytitle>NOTE_EXTEND</refentrytitle><manvolnum>2</manvolnum></citerefentry> event for that directory.
 </para>
 
-<refsection><title>SCAN DIRECTORY</title>
+<refsection><title>Scan directory</title>
 
 <para>
-Conventionally, <replaceable>directory</replaceable> is <filename>/service</filename>.  Every subdirectory, or symbolic link to a directory, therein whose name does not start with a dot is a bundle directory.
+Every subdirectory, or symbolic link to a directory, in <replaceable>directory</replaceable> whose name does not start with a dot is a bundle directory.
 A subdirectory, or symbolic link to a directory, beneath each of those bundle directories that is named <filename>log</filename> is also a bundle directory.
 The parent bundle directory denotes the "main" service, whose output is fed through a pipe to the input of the "log" service.
 (See <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> for bundle directories.)
@@ -71,10 +71,14 @@ Like daemontools and daemontools-encore, <command>service-dt-scanner</command> l
 This means that the service directory needs to be read-write when services are enabled and disabled.
 </para>
 
-</refsection></refsection><refsection><title>COMPATIBILITY</title>
+</refsection></refsection><refsection><title>Compatibility</title>
 
 <para>
 For daemontools and daemontools-encore compatibility, this command is also available as <command>svscan</command>.
+</para>
+
+<para>
+The daemontools, daemontools-encore, and runit convention is that <replaceable>directory</replaceable> is <filename>/service</filename>.
 </para>
 
 <para>
@@ -95,7 +99,7 @@ Service management is the remit of <citerefentry><refentrytitle>service-manager<
 
 </refsection>
 <!--
-<refsection><title>BUGS</title>
+<refsection><title>Bugs</title>
 
 <para>
 The Linux <citerefentry><refentrytitle>kevent</refentrytitle><manvolnum>3</manvolnum></citerefentry> mechanism does not correctly report last modification timestamp changes that result from entries being created or deleted in a directory.  

@@ -9,7 +9,7 @@
 #
 
 # These get us *only* the configuration variables, safely.
-read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
+read_rc() { clearenv read-conf rc.conf printenv "$1" ; }
 get_var() { read_rc openvpn_"$1"_"$2" || read_rc openvpn_"$2" || true ; }
 
 list_instances() {

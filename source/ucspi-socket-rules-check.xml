@@ -60,25 +60,19 @@ If <envar>PROTO</envar> has the value <code>UNIX</code>:
 
 <listitem>
 <para>
-If a directory named <filename>uid/<replaceable>$UNIXREMOTEUID</replaceable></filename> exists
-then access is granted according to the directory contents
-(continuing to search if access is neither granted nor denied by the directory).
+If a directory named <filename>uid/<replaceable>$UNIXREMOTEEUID</replaceable></filename> exists then access is granted according to the directory contents (continuing to search if access is neither granted nor denied by the directory).
 </para>
 </listitem>
 
 <listitem>
 <para>
-If a directory named <filename>gid/<replaceable>$UNIXREMOTEGID</replaceable></filename> exists
-then access is granted according to the directory contents
-(continuing to search if access is neither granted nor denied by the directory).
+If a directory named <filename>gid/<replaceable>$UNIXREMOTEEGID</replaceable></filename> exists then access is granted according to the directory contents (continuing to search if access is neither granted nor denied by the directory).
 </para>
 </listitem>
 
 <listitem>
 <para>
-If a directory named <filename>uid/default</filename> exists
-then access is granted according to the directory contents
-(continuing to search if access is neither granted nor denied by the directory).
+If a directory named <filename>uid/default</filename> exists then access is granted according to the directory contents (continuing to search if access is neither granted nor denied by the directory).
 </para>
 </listitem>
 

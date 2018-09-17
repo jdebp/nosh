@@ -1,5 +1,5 @@
 #!/bin/sh -e
-# See http://skarnet.org./software/compile.html
+# See http://jdebp.eu./FGA/slashpackage.html
 if [ \! -d package ] || [ \! -d source ] 
 then
 	echo "You are not in the right directory." 1>&2 
@@ -33,9 +33,17 @@ prsprefix="/usr/local/etc"
 case "`uname`" in
 Linux)	
 	# These get us *only* the operating system variables, safely.
-	read_os() { "${src}"/command/clearenv read-conf /etc/os-release "`which printenv`" "$1" ; }
+        if test -r /etc/os-release
+        then
+                read_os() { "${src}"/command/clearenv setenv "$1" "$2" read-conf /etc/os-release printenv "$1" ; }
+        elif test -r /usr/lib/os-release
+        then
+                read_os() { "${src}"/command/clearenv setenv "$1" "$2" read-conf /usr/lib/os-release printenv "$1" ; }
+        else
+                read_os() { printf "%s\n" "$2" ; }
+        fi
 
-	case "`read_os ID`:`read_os VERSION_ID`" in
+	case "`read_os ID linux`:`read_os VERSION_ID`" in
 	arch:*) 	split_os="" ;;
 	centos:*)	split_os="" ;;
 	rhel:*) 	split_os="" ;;
@@ -63,50 +71,52 @@ Linux)	extra_packages="logrotate-shims" ;;
 *BSD)	extra_packages="" ;;
 esac
 
-for i in exec terminal-management service-management terminal-extras zsh-completion service-command-shim systemv-shims systemd-shims upstart-shims execline-shims core-shims debian-shims bsd-shims openbsd-shims freebsd-shims ucspi-tcp-shims kbd-shims ${extra_packages} ;
+for i in exec terminal-management service-management terminal-extras service-management-extras zsh-completion service-command-shim systemv-shims systemd-shims upstart-shims execline-shims core-shims debian-shims bsd-shims openbsd-shims freebsd-shims ucspi-tcp-shims kbd-shims bcron-as-cron-shims desktop-bus-shims ${extra_packages} ;
 do
-	if test -s package/nosh-"$i".commands1 || test -s package/nosh-"$i".aliases1 ;
+	install -d -m 0755 -- "${dest}"/nosh-"${i}"/
+
+	if test -s package/nosh-"$i".commands1 || test -s package/nosh-"$i".aliases1
 	then
 		install -d -m 0755 -- "${dest}"/nosh-"${i}"/"${binprefix}"/bin 
 		install -d -m 0755 -- "${dest}"/nosh-"${i}"/"${manprefix}"/man/man1 
 	fi
-	while read j ;
+	while read -r j
 	do
 		ln -f -- "${src}"/command/"$j" "${dest}"/nosh-"${i}"/"${binprefix}"/bin/ 
 		ln -f -- "${src}"/manual/"$j".1 "${dest}"/nosh-"${i}"/"${manprefix}"/man/man1/ 
-	done < package/nosh-"$i".commands1 ;
+	done < package/nosh-"$i".commands1
 
-	if test -s package/nosh-"$i".commands8 || test -s package/nosh-"$i".aliases8 ;
+	if test -s package/nosh-"$i".commands8 || test -s package/nosh-"$i".aliases8
 	then
 		install -d -m 0755 -- "${dest}"/nosh-"${i}"/"${binprefix}"/sbin 
 		install -d -m 0755 -- "${dest}"/nosh-"${i}"/"${manprefix}"/man/man8 
 	fi
-	while read j ;
+	while read -r j
 	do
 		ln -f -- "${src}"/command/"$j" "${dest}"/nosh-"${i}"/"${binprefix}"/sbin/ 
 		ln -f -- "${src}"/manual/"$j".8 "${dest}"/nosh-"${i}"/"${manprefix}"/man/man8/ 
-	done < package/nosh-"$i".commands8 ;
+	done < package/nosh-"$i".commands8
 
-	while read c a ;
+	while read -r c a
 	do
 		ln -f -s "$c" "${dest}"/nosh-"${i}"/"${binprefix}"/bin/"$a" 
 		ln -f -s "$c".1 "${dest}"/nosh-"${i}"/"${manprefix}"/man/man1/"$a".1 
-	done < package/nosh-"$i".aliases1 ;
+	done < package/nosh-"$i".aliases1
 
-	while read c a ;
+	while read -r c a
 	do
 		ln -f -s "$c" "${dest}"/nosh-"${i}"/"${binprefix}"/sbin/"$a" 
 		ln -f -s "$c".8 "${dest}"/nosh-"${i}"/"${manprefix}"/man/man8/"$a".8 
-	done < package/nosh-"$i".aliases8 ;
+	done < package/nosh-"$i".aliases8
 done
-for i in tcpserver recordio
+while read -r c a
 do
-        ln -f -- "${src}"/manual/"${i}".1 "${dest}"/nosh-ucspi-tcp-shims/"${manprefix}"/man/man1/ 
-done
-for i in chroot false setsid true ulimit umask unshare
+        ln -f -- "${src}"/manual/"${a}".1 "${dest}"/nosh-ucspi-tcp-shims/"${manprefix}"/man/man1/ 
+done < package/nosh-ucspi-tcp-shims.aliases1 ;
+while read -r c a
 do
-        ln -f -- "${src}"/manual/"${i}".1 "${dest}"/nosh-core-shims/"${manprefix}"/man/man1/ 
-done
+        ln -f -- "${src}"/manual/"${a}".1 "${dest}"/nosh-core-shims/"${manprefix}"/man/man1/ 
+done < package/nosh-core-shims.aliases1 ;
 if test -n "${split_os}"
 then
 	case "`uname`" in
@@ -131,14 +141,26 @@ then
 fi
 if test -n "${dbusprefix}"
 then
-	install -d -m 0755 -- "${dest}"/nosh-service-management/"${dbusprefix}"
-	ln -f -s /usr/local/bin/dbus-daemon-launch-helper "${dest}"/nosh-service-management/"${dbusprefix}"/
+	install -d -m 0755 -- "${dest}"/nosh-desktop-bus-shims/"${dbusprefix}"
+	ln -f -s /usr/local/bin/dbus-daemon-launch-helper "${dest}"/nosh-desktop-bus-shims/"${dbusprefix}"/
 fi
 install -d -m 0755 -- "${dest}"/nosh-run-system-manager/
 case "`uname`" in
 Linux)	
 	install -d -m 0755 -- "${dest}"/nosh-run-system-manager/sbin 
 	ln -f -s system-manager "${dest}"/nosh-run-system-manager/sbin/init
+	if test _"${binprefix}" != _"/usr"
+	then
+		install -d -m 0755 -- "${dest}"/nosh-bcron-as-cron-shims/usr/bin
+		ln -f -s bcrontab "${dest}"/nosh-bcron-as-cron-shims/usr/bin/crontab
+	fi
+	if test _"${manprefix}" != _"/usr"
+	then
+		install -d -m 0755 -- "${dest}"/nosh-bcron-as-cron-shims/usr/share/man/man1
+		install -d -m 0755 -- "${dest}"/nosh-bcron-as-cron-shims/usr/share/man/man5
+		ln -f -s bcrontab.1.gz "${dest}"/nosh-bcron-as-cron-shims/usr/share/man/man1/crontab.1.gz
+		ln -f -s bcrontab.5.gz "${dest}"/nosh-bcron-as-cron-shims/usr/share/man/man5/crontab.5.gz
+	fi
 	;;
 *BSD)	;;
 esac
@@ -159,12 +181,12 @@ install -d -m 0755 -- "${dest}"/nosh-bundles/etc/service-bundles/services
 install -d -m 0755 -- "${dest}"/nosh-bundles/etc/service-bundles/generators 
 install -d -m 0755 -- "${dest}"/nosh-bundles/etc/service-bundles/targets 
 (
-	cat package/common-services package/common-sockets package/common-ttys 
+	cat package/common-services package/common-sockets package/common-timers package/common-ttys 
 	case "`uname`" in
-	Linux)	cat package/linux-services package/linux-sockets package/linux-ttys ;;
-	OpenBSD)	cat package/bsd-services package/bsd-sockets package/openbsd-ttys ;;
-	NetBSD)	cat package/bsd-services package/bsd-sockets package/netbsd-ttys ;;
-	*BSD)	cat package/bsd-services package/bsd-sockets package/bsd-ttys ;;
+	Linux)	cat package/linux-services package/linux-sockets package/linux-timers package/linux-ttys ;;
+	OpenBSD)	cat package/bsd-services package/bsd-sockets package/openbsd-timers package/openbsd-ttys ;;
+	NetBSD)	cat package/bsd-services package/bsd-sockets package/netbsd-timers package/netbsd-ttys ;;
+	*BSD)	cat package/bsd-services package/bsd-sockets package/bsd-timers package/bsd-ttys ;;
 	esac
 ) |
 while read -r j
@@ -243,8 +265,18 @@ for j in issue.vc
 do
 	(cd "${src}"/config/vt && pax -r -w -l -- "$j" "${absdest}"/nosh-bundles/etc/)
 done
-install -d -m 0755 -- "${dest}"/nosh-bundles/"${etcprefix}"/etc/devd 
+for i in anacron no-anacron
+do
+	for j in hourly daily weekly monthly d
+	do
+		install -d -m 0755 -- "${dest}"/nosh-debian-crontab-"$i"/etc/cron."$j"
+	done
+	(cd "${src}"/config/etc && pax -r -w -l -- crontab.debian."$i" "${absdest}"/nosh-debian-crontab-"$i"/etc/)
+	mv -f -- "${dest}"/nosh-debian-crontab-"$i"/etc/crontab.debian."$i" "${dest}"/nosh-debian-crontab-"$i"/etc/crontab
+done
+install -d -m 0755 -- "${dest}"/nosh-bundles/"${etcprefix}"/etc/
 ( cd "${src}"/config && pax -r -w -l -- devd "${absdest}"/nosh-bundles/"${etcprefix}"/etc/)
+( cd "${src}"/config && pax -r -w -l -- cin-data-tables "${absdest}"/nosh-bundles/"${etcprefix}"/etc/)
 
 ##########################################################
 # completion
@@ -262,18 +294,26 @@ fi
 install -d -m 0755 -- "${dest}"/nosh-run-via-openbsd-rc/"${etcprefix}"/etc/rc.d 
 install -d -m 0755 -- "${dest}"/nosh-run-via-mewburn-rc/"${etcprefix}"/etc/rc.d 
 install -d -m 0755 -- "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system 
+install -d -m 0755 -- "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/user 
 install -d -m 0755 -- "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/tmpfiles.d 
 install -d -m 0755 -- "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system-preset 
-cat package/systemd-services package/systemd-overrides |
+while read  -r j
+do
+	ln -f -- "${src}"/config/systemd/system/"$j" "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system/
+done < package/systemd-system-services
 while read  -r j
 do
 	install -d -m 0755 "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system/"`dirname "$j"`"
-	ln -f -- "${src}"/config/systemd/"$j" "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system/"`dirname "$j"`"/
-done
+	ln -f -- "${src}"/config/systemd/system/"$j" "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system/"`dirname "$j"`"/
+done < package/systemd-system-overrides 
 while read  -r j
 do
-	ln -f -- "${src}"/config/systemd/"$j" "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/tmpfiles.d/
+	ln -f -- "${src}"/config/systemd/tmpfiles/"$j" "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/tmpfiles.d/
 done < package/tmpfiles-snippets
+while read  -r j
+do
+	ln -f -- "${src}"/config/systemd/user/"$j" "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/user/
+done < package/systemd-user-services
 while read  -r j
 do
 	ln -f -- "${src}"/config/mewburn-rc.d/"$j" "${dest}"/nosh-run-via-mewburn-rc/"${etcprefix}"/etc/rc.d/
@@ -282,7 +322,7 @@ while read  -r j
 do
 	ln -f -- "${src}"/config/openbsd-rc.d/"$j" "${dest}"/nosh-run-via-openbsd-rc/"${etcprefix}"/etc/rc.d/
 done < package/openbsd-rc-scripts
-for i in bundles run-via-systemd run-via-mewburn-rc run-via-openbsd-rc run-debian-desktop-base run-debian-server-base run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base
+for i in bundles run-via-systemd run-via-mewburn-rc run-via-openbsd-rc run-debian-desktop-base run-debian-server-base run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base run-bcron
 do
 	install -d -m 0755 -- "${dest}"/nosh-"${i}"/"${prsprefix}"/system-control/presets 
 	(
@@ -299,7 +339,7 @@ done
 
 ##########################################################
 # Conversion tools
-install -d -m 0755 -- "${dest}"/nosh-bundles/etc/system-control/convert "${dest}"/nosh-bundles/etc/system-control/convert/kbdmaps "${dest}"/nosh-bundles/etc/system-control/convert/per-user "${dest}"/nosh-bundles/etc/system-control/convert/per-user/dbus
+install -d -m 0755 -- "${dest}"/nosh-bundles/etc/system-control/convert "${dest}"/nosh-bundles/etc/system-control/convert/kbdmaps "${dest}"/nosh-bundles/etc/system-control/convert/dbus "${dest}"/nosh-bundles/etc/system-control/convert/per-user "${dest}"/nosh-bundles/etc/system-control/convert/per-user/dbus "${dest}"/nosh-bundles/etc/system-control/convert/termcap
 while read -r j
 do
 	ln -f -- "${src}"/config/convert/"$j" "${dest}"/nosh-bundles/etc/system-control/convert/"$j"

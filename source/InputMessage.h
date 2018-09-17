@@ -11,7 +11,7 @@ For copyright and licensing terms, see the file named COPYING.
 enum {
 	INPUT_MSG_MASK		= 0xFF000000,
 	INPUT_MSG_UCS3		= 0x01000000,
-	// Don'[t clash with 0x03000000 being modifiers in keyboard maps.
+	// Don't clash with 0x03000000 being modifiers in keyboard maps.
 	INPUT_MSG_SKEY		= 0x02000000,
 	INPUT_MSG_XPOS		= 0x04000000,
 	INPUT_MSG_YPOS		= 0x05000000,
@@ -22,7 +22,8 @@ enum {
 	INPUT_MSG_CKEY		= 0x0C000000,
 	INPUT_MSG_EKEY		= 0x0E000000,
 	INPUT_MSG_FKEY		= 0x0F000000,
-	// Don'[t clash with 0x1F000000 being unmodifiable function keys in keyboard maps.
+	// Don't clash with 0x1E000000 being unshifted extended keys in keyboard maps.
+	// Don't clash with 0x1F000000 being unmodifiable function keys in keyboard maps.
 };
 
 // modifiers as encoded in DEC VT control sequences (plus 1)
@@ -57,16 +58,23 @@ enum {
  	EXTENDED_KEY_ALTERNATE_ERASE	= 0x0099,
 
 	// CJK keypad
- 	EXTENDED_KEY_KATAHIRA		= 0x0088,
- 	EXTENDED_KEY_HALF_FULL_WIDTH	= 0x0094,
- 	EXTENDED_KEY_HIRAGANA		= 0x0093,
- 	EXTENDED_KEY_KATAKANA		= 0x0092,
+	//
+	// 0x0087, USB HID usage for the International1 key on the 104/107-key and 106/109-key PC keyboards, is not an extended key message
+ 	EXTENDED_KEY_KATAKANA_HIRAGANA	= 0x0088,
+ 	EXTENDED_KEY_ROMAJI		= 0x0E88,	// non-USB
+	// 0x0089, USB HID usage for the International3 key on the 106/109-key PC keyboard, is not an extended key message
  	EXTENDED_KEY_HENKAN		= 0x008A,
  	EXTENDED_KEY_MUHENKAN		= 0x008B,
- 	EXTENDED_KEY_HANGUL_ENGLISH	= 0x0090,
+	// 0x008C, USB HID usage for the JP . key, is not an extended key message
+ 	EXTENDED_KEY_HAN_YEONG		= 0x0090,
+ 	EXTENDED_KEY_HANGEUL		= 0x0E90,	// non-USB
  	EXTENDED_KEY_HANJA		= 0x0091,
+ 	EXTENDED_KEY_KATAKANA		= 0x0092,
+ 	EXTENDED_KEY_HIRAGANA		= 0x0093,
+ 	EXTENDED_KEY_ZENKAKU_HANKAKU	= 0x0094,
+ 	EXTENDED_KEY_IM_TOGGLE		= 0x0E94,	// non-USB
 
-	// Editing keypad
+	// Cursor+Editing keypad
  	EXTENDED_KEY_INSERT		= 0x0049,	// insert/replace toggle
  	EXTENDED_KEY_INS_CHAR		= 0x0E49,	// non-USB
  	EXTENDED_KEY_INS_LINE		= 0x0F49,	// non-USB
@@ -319,14 +327,14 @@ enum {
 };
 
 extern inline uint32_t MessageForUCS3(uint32_t c) { return INPUT_MSG_UCS3 | (c & ~INPUT_MSG_MASK); }
-extern inline uint32_t MessageForSystemKey(uint16_t k, uint8_t m) { return INPUT_MSG_SKEY | (uint32_t(k) << 8U) | uint32_t(m & 0xFF); }
-extern inline uint32_t MessageForConsumerKey(uint16_t k, uint8_t m) { return INPUT_MSG_CKEY | (uint32_t(k) << 8U) | uint32_t(m & 0xFF); }
-extern inline uint32_t MessageForExtendedKey(uint16_t k, uint8_t m) { return INPUT_MSG_EKEY | (uint32_t(k) << 8U) | uint32_t(m & 0xFF); }
-extern inline uint32_t MessageForFunctionKey(uint8_t k, uint8_t m) { return INPUT_MSG_FKEY | (uint32_t(k & 0xFF) << 8U) | uint32_t(m & 0xFF); }
-extern inline uint32_t MessageForSession(uint16_t n, uint8_t m) { return INPUT_MSG_SESSION | (uint32_t(n) << 8U) | uint32_t(m & 0xFF); }
-extern inline uint32_t MessageForMouseColumn(uint16_t n, uint8_t m) { return INPUT_MSG_XPOS | (uint32_t(n) << 8U) | uint32_t(m & 0xFF); }
-extern inline uint32_t MessageForMouseRow(uint16_t n, uint8_t m) { return INPUT_MSG_YPOS | (uint32_t(n) << 8U) | uint32_t(m & 0xFF); }
-extern inline uint32_t MessageForMouseWheel(uint8_t n, uint8_t v, uint8_t m) { return INPUT_MSG_WHEEL | (uint32_t(n) << 16U) | (uint32_t(v) << 8U) | uint32_t(m & 0xFF); }
-extern inline uint32_t MessageForMouseButton(uint8_t n, uint8_t v, uint8_t m) { return INPUT_MSG_BUTTON | (uint32_t(n) << 16U) | (uint32_t(v) << 8U) | uint32_t(m & 0xFF); }
+extern inline uint32_t MessageForSystemKey(uint16_t k, uint8_t m) { return INPUT_MSG_SKEY | (uint32_t(k & 0xFFFF) << 8U) | uint32_t(m & 0xFF); }
+extern inline uint32_t MessageForConsumerKey(uint16_t k, uint8_t m) { return INPUT_MSG_CKEY | (uint32_t(k & 0xFFFF) << 8U) | uint32_t(m & 0xFF); }
+extern inline uint32_t MessageForExtendedKey(uint16_t k, uint8_t m) { return INPUT_MSG_EKEY | (uint32_t(k & 0xFFFF) << 8U) | uint32_t(m & 0xFF); }
+extern inline uint32_t MessageForFunctionKey(uint8_t k, uint8_t m) { return INPUT_MSG_FKEY | (uint32_t(k & 0xFFFF) << 8U) | uint32_t(m & 0xFF); }
+extern inline uint32_t MessageForSession(uint16_t n, uint8_t m) { return INPUT_MSG_SESSION | (uint32_t(n & 0xFFFF) << 8U) | uint32_t(m & 0xFF); }
+extern inline uint32_t MessageForMouseColumn(uint16_t n, uint8_t m) { return INPUT_MSG_XPOS | (uint32_t(n & 0xFFFF) << 8U) | uint32_t(m & 0xFF); }
+extern inline uint32_t MessageForMouseRow(uint16_t n, uint8_t m) { return INPUT_MSG_YPOS | (uint32_t(n & 0xFFFF) << 8U) | uint32_t(m & 0xFF); }
+extern inline uint32_t MessageForMouseWheel(uint8_t n, uint8_t v, uint8_t m) { return INPUT_MSG_WHEEL | (uint32_t(n & 0xFF) << 16U) | (uint32_t(v & 0xFF) << 8U) | uint32_t(m & 0xFF); }
+extern inline uint32_t MessageForMouseButton(uint8_t n, uint8_t v, uint8_t m) { return INPUT_MSG_BUTTON | (uint32_t(n & 0xFF) << 16U) | (uint32_t(v & 0xFF) << 8U) | uint32_t(m & 0xFF); }
 
 #endif

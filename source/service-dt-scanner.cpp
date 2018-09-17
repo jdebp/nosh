@@ -158,7 +158,7 @@ service_dt_scanner [[gnu::noreturn]] (
 		popt::definition * top_table[] = {
 			&input_activation_option
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "directory");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{directory}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -168,12 +168,12 @@ service_dt_scanner [[gnu::noreturn]] (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	if (1 != args.size()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "One directory name is required.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	const char * const scan_directory(args[0]);
 

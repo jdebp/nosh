@@ -1,0 +1,284 @@
+<refentry id="userenv-fromenv">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>userenv-fromenv</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>userenv-fromenv</refname>
+<refpurpose>set the "user" environment variables from a given UID</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>userenv-fromenv</command> 
+<arg>--no-set-user</arg> 
+<arg>--no-set-shell</arg> 
+<arg>--set-path</arg> 
+<arg>--set-tools</arg> 
+<arg>--set-term</arg> 
+<arg>--set-locale</arg> 
+<arg>--set-xdg</arg> 
+<arg>--set-dbus</arg> 
+<arg>--set-timezone</arg> 
+<arg>--set-other</arg> 
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>userenv-fromenv</command> is a chain-loading utility that sets environment variables and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>userenv-fromenv</command> will ignore.
+</para>
+
+<para>
+<command>userenv-fromenv</command> takes the value given in the <envar>UID</envar> environment variable as a user ID to look up in the user account database.
+That variable can be set by commands such as <citerefentry><refentrytitle>getuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry> or <citerefentry><refentrytitle>envuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+From the contents of that account database record, it sets these environment variables.
+</para>
+
+<refsection><title>User account database variables</title>
+
+<para>
+The following environment variables are set unless the <arg choice='plain'>--no-set-user</arg> command-line option is used:
+</para>
+<variablelist>
+
+<varlistentry>
+<term><envar>HOME</envar></term>
+<listitem><para>Set to the pathname of the user's home directory, as given in the system account database, falling back if the field is blank to unset.</para></listitem>
+</varlistentry><varlistentry>
+<term><envar>USER</envar></term>
+<term><envar>LOGNAME</envar></term>
+<listitem><para>Set to the user's name, as given in the system account database, falling back if the field is blank to unset.</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+<para>
+The following environment variables are set unless the <arg choice='plain'>--no-set-shell</arg> command-line option is used:
+</para>
+<variablelist>
+
+<varlistentry>
+<term><envar>SHELL</envar></term>
+<listitem><para>
+Set to the pathname of the user's shell program, as given in the system account database, falling back if the field is blank to the system's default "B" shell name that is hardwired into the C library.
+(This fallback is in line with the behaviour of <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+</refsection><refsection><title>Path variables</title>
+
+<para>
+The following environment variables are set from the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database if the <arg choice='plain'>--set-path</arg> command-line option is used:
+</para>
+<variablelist>
+
+<varlistentry>
+<term><envar>PATH</envar></term>
+<listitem><para>Set to the value of the <code>path</code> capability, defaulting if there is no capability to the system's default path that is hardwired into the C library.</para></listitem>
+</varlistentry><varlistentry>
+<term><envar>MANPATH</envar></term>
+<listitem><para>Set to the value of the <code>manpath</code> capability, defaulting to unset if there is no capability.</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+</refsection><refsection><title>Tools variables</title>
+
+<para>
+The following environment variables are set from the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database if the <arg choice='plain'>--set-tools</arg> command-line option is used:
+</para>
+<variablelist>
+
+<varlistentry>
+<term><envar>EDITOR</envar></term>
+<listitem><para>Set to the value of the <code>editor</code> capability, defaulting if there is no capability to <command>ex</command>. 
+(POSIX gives two choices of universally available line editor.  
+This is the one that is not <citerefentry><refentrytitle>ed</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)</para></listitem>
+</varlistentry><varlistentry>
+<term><envar>VISUAL</envar></term>
+<listitem><para>Set to the value of the <code>visual</code> capability, defaulting if there is no capability to <command>vi</command>.
+(POSIX gives one choice of universally available full-screen editor.)
+</para></listitem>
+</varlistentry><varlistentry>
+<term><envar>PAGER</envar></term>
+<listitem><para>Set to the value of the <code>pager</code> capability, defaulting if there is no capability to <command>more</command>.</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+</refsection><refsection><title>Terminal variables</title>
+
+<para>
+The following environment variables are set from the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database if the <arg choice='plain'>--set-term</arg> command-line option is used:
+</para>
+<variablelist>
+
+<varlistentry>
+<term><envar>TERM</envar></term>
+<listitem><para>
+Set to the value of the <code>term</code> capability, defaulting to unset if there is no capability.
+Generally, this is inappropriate, as the <envar>TERM</envar> variable will have been set for the login session by the TTY login system.
+Moreover: The <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database usually does not have a <code>term</code> capability configured, which ends up <emphasis>unsetting</emphasis> the environment variable instead of leaving it as it was.
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+</refsection><refsection><title>Locale variables</title>
+
+<para>
+The following environment variables are set from the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database if the <arg choice='plain'>--set-locale</arg> command-line option is used:
+</para>
+<variablelist>
+
+<varlistentry>
+<term><envar>LANG</envar></term>
+<listitem><para>Set to the value of the <code>lang</code> capability, defaulting to <code>POSIX</code> if there is no capability.</para></listitem>
+</varlistentry><varlistentry>
+<term><envar>MM_CHARSET</envar></term>
+<listitem><para>Set to the value of the <code>charset</code> capability, defaulting to <code>UTF-8</code> if there is no capability.</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+</refsection><refsection><title>Timezone variables</title>
+
+<para>
+The following environment variables are set from the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database if the <arg choice='plain'>--set-timezone</arg> command-line option is used:
+</para>
+<variablelist>
+
+<varlistentry>
+<term><envar>TZ</envar></term>
+<listitem><para>Set to the value of the <code>timezone</code> capability, defaulting to <code>UTC</code> if there is no capability.</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+</refsection><refsection><title>XDG variables</title>
+
+<para>
+The following environment variables are set if the <arg choice='plain'>--set-xdg</arg> command-line option is used:
+</para>
+<variablelist>
+
+<varlistentry>
+<term><envar>XDG_RUNTIME_DIR</envar></term>
+<listitem><para>Set to <filename>/run/user/<replaceable>username</replaceable>/</filename>.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><envar>XDG_CONFIG_DIRS</envar></term>
+<listitem><para>Set to <filename>/usr/local/etc/xdg</filename> on the BSDs, unset (so applications use the default of <filename>/etc/xdg</filename>) on other operating systems.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><envar>XDG_CONFIG_HOME</envar></term>
+<listitem><para>Unset, so that applications use the default of <filename><replaceable>$HOME</replaceable>/.config</filename>.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><envar>XDG_DATA_DIRS</envar></term>
+<listitem><para>
+Set to <filename>/usr/local/share</filename>:<filename>/usr/share</filename>:<filename>/share</filename>.
+The addition of <filename>/share</filename> comes from TrueOS Desktop.
+Note that TrueOS Desktop orders the directories the other way around, giving operating system data files priority over "site local" ones.
+This ordering, on the other hand, is the ordering that is used in the XDG Desktop Specification.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><envar>XDG_DATA_HOME</envar></term>
+<listitem><para>Unset, so that applications use the default of <filename><replaceable>$HOME</replaceable>/.local/share</filename>.</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+</refsection><refsection><title>Desktop Bus variables</title>
+
+<para>
+The following environment variables are set if the <arg choice='plain'>--set-dbus</arg> command-line option is used:
+</para>
+<variablelist>
+
+<varlistentry>
+<term><envar>DBUS_SESSION_BUS_ADDRESS</envar></term>
+<listitem><para>
+Set to <filename>unix:path=/run/user/<replaceable>username</replaceable>/bus</filename>.
+(In practice, <filename>unix:runtime=yes</filename> is not actually supported yet by most operating systems.)
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+</refsection><refsection><title>Other variables</title>
+
+<para>
+If the <arg choice='plain'>--set-other</arg> command-line option is used, all environment variables are set from the <code>setenv</code> capability in the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database.
+Both the system and user databases are processed.
+In line with the behaviour of <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>, any conflicting environment variables set here will be overridden by the variables taken from other capabilities and from the user account database, with the exceptions of the tools, XDG, and Desktop Bus variables, which will conversely be overriden by any settings here.
+This ordering is because the tools, XDG, and Desktop Bus variables are an extension, setting variables for which people will have been using <code>setenv</code>.
+</para>
+
+</refsection>
+
+</refsection><refsection><title>bugs and compatibility</title>
+
+<para>
+As of version 1.34 this program no longer employs the GNU C library nor the BSD C library for environment variable handling.
+The previously documented workaround for those libraries' have memory leaks in their <citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>3</manvolnum></citerefentry> and <citerefentry><refentrytitle>clearenv</refentrytitle><manvolnum>3</manvolnum></citerefentry> functions, is therefore no longer necessary.
+</para>
+
+<para>
+The FreeBSD <citerefentry><refentrytitle>login_getpath</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function has a bug that makes it impossible to specify paths containing space characters.
+This command implements the OpenBSD mechanism of allowing space characters, in the <code>path</code> and <code>manpath</code> capabilities, to be escaped with a backslash.
+</para>
+
+<para>
+The FreeBSD <citerefentry><refentrytitle>login_getcaplist</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function has several bugs, one of which makes it impossible to specify paths containing comma characters.
+This command implements the OpenBSD mechanism of allowing comma characters, in the <code>setenv</code> capability, to be escaped with a backslash.
+</para>
+
+<para>
+In both cases, the backslash must be <emphasis>itself</emphasis> escaped again in the actual capability file text, as this is <emphasis>two</emphasis> levels of escaping.
+First the comma/space is escaped to make an escape sequence in the unencoded capability string, then the capability string is encoded with a second level of escaping in order to store it as text in the capability file.
+</para>
+
+<para>
+Unlike the OpenBSD behaviour, this command does not restrict the expansion of <code>~</code> and <code>$</code> to certain places in the aforementioned environment list and path strings.
+To include literal tildes and dollar characters <emphasis>anywhere</emphasis> in environment lists and paths, those characters too <emphasis>must always</emphasis> be (double) escaped with a backslash.
+</para>
+
+</refsection><refsection><title>See also</title>
+
+<itemizedlist>
+<listitem><para>
+<citerefentry><refentrytitle>userenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>machineenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>envuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>clearenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+</itemizedlist>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

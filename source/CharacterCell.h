@@ -34,7 +34,7 @@ struct CharacterCell {
 		colour_type() : alpha(), red(), green(), blue() {}
 		uint8_t alpha, red, green, blue;
 	};
-	typedef uint8_t attribute_type;
+	typedef uint16_t attribute_type;
 
 	CharacterCell(uint32_t c, attribute_type a, colour_type f, colour_type b) : character(c), attributes(a), foreground(f), background(b) {}
 	CharacterCell() : character(), attributes(), foreground(), background() {}
@@ -46,13 +46,44 @@ struct CharacterCell {
 	enum {
 		BOLD = 1U << 0U,
 		ITALIC = 1U << 1U,
-		UNDERLINE = 1U << 2U,
 		BLINK = 1U << 3U,
 		INVERSE = 1U << 4U,
 		STRIKETHROUGH = 1U << 5U,
 		INVISIBLE = 1U << 6U,
 		FAINT = 1U << 7U,
+		UNDERLINES = 7U << 8U,
+			SIMPLE_UNDERLINE = 1U << 8U,
+			DOUBLE_UNDERLINE = 2U << 8U,
+			CURLY_UNDERLINE = 3U << 8U,
+			DOTTED_UNDERLINE = 4U << 8U,
+			DASHED_UNDERLINE = 5U << 8U,
 	};
+};
+
+inline
+bool
+operator != (
+	const CharacterCell::colour_type & a,
+	const CharacterCell::colour_type & b
+) {
+	return a.alpha != b.alpha || a.red != b.red || a.green != b.green || a.blue != b.blue;
+}
+
+extern
+CharacterCell::colour_type
+Map16Colour (
+	uint8_t c
+) ;
+extern
+CharacterCell::colour_type
+Map256Colour (
+	uint8_t c
+) ;
+
+enum {
+	ALPHA_FOR_ERASED	= 0,
+	ALPHA_FOR_DEFAULT	= 1,
+	ALPHA_FOR_COLOURED	= 2,
 };
 
 #endif

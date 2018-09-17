@@ -81,3 +81,42 @@ There are two approaches to dealing with this.
 One can arrange for the post-installation and post-upgrade scripts for one's package to explicitly preset all services at every install, reinstall, or upgrade; this matching the installing-package-enables-services philosophy of some operating systems.
 Or one can arrange for the post-installation and post-upgrade scripts for one's package to attempt to bring the mechanisms back into synch, usually by bringing the <code>down</code> file into synch with the <code>wants/</code> and <code>conflicts/</code> symbolic links rather than the converse.
 </p>
+
+<h2>
+Porting the toolset to other operating systems
+</h2>
+
+<p>
+The toolset is packaged as multiple binary packages built from a single source package.
+</p>
+
+<p>
+For operating systems outwith the core ones that have binary packages built for them by the author, the source package requires patching.
+This is in two general areas:
+</p>
+
+<ul>
+<li><p>
+In <code>package/stage</code> patch the operating system's choices of directory layout in the section marked as distributor-patchable stuff.
+</p></li>
+<li><p>
+In the following files patch to select an appropriate variant of various Desktop Bus configurations, according to whatever choices of non-<code>PATH</code> directories and user account names are made by the packages on the operating system.
+</p>
+<ul>
+<li><code>source/convert/per-user/per-user.conf.do</code>
+<li><code>source/convert/per-user/gconfd.service.do</code>
+<li><code>source/convert/per-user/at-spi-dbus-bus.service.do</code>
+<li><code>source/services/dbus-daemon.service.do</code>
+<li><code>source/services/dbus-broker.service.do</code>
+<li><code>source/services/system-wide.conf.do</code>
+<li><code>source/systemd/service-manager.socket.do</code>
+</ul>
+</li>
+<li><p>
+In the following files patch to select appropriate pathnames, according to whatever choices are made by the packages on the operating system.
+</p>
+<ul>
+<li><code>source/convert/rc.conf.do</code> (in particular <code>entropy_file</code>)
+</ul>
+</li>
+</ul>

@@ -30,7 +30,7 @@ namespace popt {
 		processor(const char * n, definition & d, std::vector<const char *> & f);
 		virtual ~processor() {}
 		virtual const char * next_arg() = 0;
-		void process(bool strictly_options_before_arguments) {
+		void process(bool strictly_options_before_arguments, bool single_dash_long_options = false) {
 			while (const char * arg = next_arg()) {
 				if (is_stopped) break;
 				if (0 == slash && ('-' == arg[0]
@@ -48,12 +48,12 @@ namespace popt {
 						slash = EOF;
 					else if (!def.execute(*this, arg + 2))
 						throw error(arg, "unrecognized option");
-				} else if (!def.execute(*this, arg + 1)) {
+				} else if (!single_dash_long_options || !def.execute(*this, arg + 1)) {
 					for ( const char * p(arg + 1); *p; ++p ) {
 						if (def.execute(*this, *p, p + 1))
 							break;
 						if (!def.execute(*this, *p))
-							throw error(arg, "unrecognized option");
+							throw error(arg, "unrecognized option(s)");
 					}
 				}
 			}
@@ -81,13 +81,13 @@ namespace popt {
 	struct table_definition : public definition {
 	public:
 		table_definition(unsigned c, definition * const * v, const char * d) : definition(), count(c), array(v), description(d) {}
-		virtual bool execute(processor &, char c);
-		virtual bool execute(processor &, char c, const char * s);
-		virtual bool execute(processor &, const char * s);
 		virtual void long_usage();
 		virtual void help();
 		virtual ~table_definition();
 	protected:
+		virtual bool execute(processor &, char c);
+		virtual bool execute(processor &, char c, const char * s);
+		virtual bool execute(processor &, const char * s);
 		void gather_combining_shorts(std::string &);
 		unsigned count;
 		definition *  const *array;
@@ -96,14 +96,14 @@ namespace popt {
 	struct top_table_definition : public table_definition {
 	public:
 		top_table_definition(unsigned c, definition * const * v, const char * d, const char * a) : table_definition(c, v, d), arguments_description(a) {}
-		virtual bool execute(processor &, char c);
-		virtual bool execute(processor &, const char * s);
 		virtual ~top_table_definition();
 	protected:
 		void do_usage(processor &);
 		void do_help(processor &);
 		const char * arguments_description;
 		using table_definition::execute;
+		virtual bool execute(processor &, char c);
+		virtual bool execute(processor &, const char * s);
 	};
 	struct named_definition : public definition {
 	public:
@@ -123,6 +123,7 @@ namespace popt {
 	public:
 		simple_named_definition(char s, const char * l, const char * d) : named_definition(s, l, 0, d) {}
 		virtual ~simple_named_definition() = 0;
+	protected:
 		virtual void action(processor &) = 0;
 		virtual bool execute(processor & proc, char c);
 		virtual bool execute(processor &, char c, const char * s);
@@ -132,6 +133,7 @@ namespace popt {
 	public:
 		compound_named_definition(char s, const char * l, const char * a, const char * d) : named_definition(s, l, a, d) {}
 		virtual ~compound_named_definition() = 0;
+	protected:
 		virtual void action(processor &, const char *) = 0;
 		virtual bool execute(processor & proc, char c);
 		virtual bool execute(processor &, char c, const char * s);
@@ -140,34 +142,34 @@ namespace popt {
 	struct string_definition : public compound_named_definition {
 	public:
 		string_definition(char s, const char * l, const char * a, const char * d, const char * & v) : compound_named_definition(s, l, a, d), value(v) {}
-		virtual void action(processor &, const char *);
 		virtual ~string_definition();
 	protected:
+		virtual void action(processor &, const char *);
 		const char * & value;
 	};
 	struct string_list_definition : public compound_named_definition {
 	public:
 		typedef std::list<std::string> list_type;
 		string_list_definition(char s, const char * l, const char * a, const char * d, list_type & v) : compound_named_definition(s, l, a, d), value_list(v) {}
-		virtual void action(processor &, const char *);
 		virtual ~string_list_definition();
 	protected:
+		virtual void action(processor &, const char *);
 		list_type & value_list;
 	};
 	struct bool_definition : public simple_named_definition {
 	public:
 		bool_definition(char s, const char * l, const char * d, bool & v) : simple_named_definition(s, l, d), value(v) {}
-		virtual void action(processor &);
 		virtual ~bool_definition();
 	protected:
+		virtual void action(processor &);
 		bool & value;
 	};
 	struct number_definition : public compound_named_definition {
 	public:
 		number_definition(char s, const char * l, const char * a, const char * d, int b) : compound_named_definition(s, l, a, d), base(b), set(false) {}
 		bool is_set() const { return set; }
-		virtual void action(processor &, const char *) = 0;
 	protected:
+		virtual void action(processor &, const char *) = 0;
 		int base;
 		bool set;
 	};
@@ -175,22 +177,23 @@ namespace popt {
 	public:
 		unsigned_number_definition(char s, const char * l, const char * a, const char * d, unsigned long & v, int b) : number_definition(s, l, a, d, b), value(v) {}
 		virtual ~unsigned_number_definition();
-		virtual void action(processor &, const char *);
 	protected:
+		virtual void action(processor &, const char *);
 		unsigned long & value;
 	};
 	struct signed_number_definition : public number_definition {
 	public:
 		signed_number_definition(char s, const char * l, const char * a, const char * d, signed long & v, int b) : number_definition(s, l, a, d, b), value(v) {}
 		virtual ~signed_number_definition();
-		virtual void action(processor &, const char *);
 	protected:
+		virtual void action(processor &, const char *);
 		signed long & value;
 	};
 	struct compound_2arg_named_definition : public named_definition {
 	public:
 		compound_2arg_named_definition(char s, const char * l, const char * a, const char * d) : named_definition(s, l, a, d) {}
 		virtual ~compound_2arg_named_definition() = 0;
+	protected:
 		virtual void action(processor &, const char *, const char *) = 0;
 		virtual bool execute(processor & proc, char c);
 		virtual bool execute(processor &, char c, const char * s);
@@ -199,9 +202,9 @@ namespace popt {
 	struct string_pair_definition : public compound_2arg_named_definition {
 	public:
 		string_pair_definition(char s, const char * l, const char * a, const char * d, const char * & v1, const char * & v2) : compound_2arg_named_definition(s, l, a, d), value1(v1), value2(v2) {}
-		virtual void action(processor &, const char *, const char *);
 		virtual ~string_pair_definition();
 	protected:
+		virtual void action(processor &, const char *, const char *);
 		const char * & value1, * & value2;
 	};
 	struct string_pair_list_definition : public compound_2arg_named_definition {
@@ -209,9 +212,9 @@ namespace popt {
 		typedef std::pair<std::string,std::string> pair_type;
 		typedef std::list<pair_type> list_type;
 		string_pair_list_definition(char s, const char * l, const char * a, const char * d, list_type & v) : compound_2arg_named_definition(s, l, a, d), value_list(v) {}
-		virtual void action(processor &, const char *, const char *);
 		virtual ~string_pair_list_definition();
 	protected:
+		virtual void action(processor &, const char *, const char *);
 		list_type & value_list;
 	};
 }

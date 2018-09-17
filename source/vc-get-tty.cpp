@@ -33,9 +33,9 @@ default_term()
 #if defined(__LINUX__) || defined(__linux__)
 	return "linux";
 #elif defined(__FreeBSD__) || defined(__DragonFly__)
-	// This isn't quite correct, but it isn't worth fixing.
-	// cons25 has fallen into desuetude and the new (as of 2010) emulator is xterm.
-	return "xterm";
+	// As of 2010 the FreeBSD console itself is "teken", and this type is in terminfo as of 2017.
+	// There is a termcap definition for teken supplied in the external configuration import subsystem.
+	return "teken";
 #elif defined(__NetBSD__)
 	// This is the case for consoles configured as "vt100".
 	return "pcvtXX";
@@ -108,7 +108,7 @@ vc_get_tty (
 			&full_hostname_option,
 			&term_option
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "virtual-console-id prog");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{virtual-console-id} {prog}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -118,7 +118,7 @@ vc_get_tty (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	if (args.empty()) {

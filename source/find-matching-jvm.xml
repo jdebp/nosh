@@ -71,7 +71,7 @@ Currently, the only "foreign" JVMs are JVMs ported from Linux to the BSDs.
 </term>
 <listitem>
 <para>
-<replaceable>m</replaceable> is one of <code>openjdk</code>, <code>sun</code>, <code>oracle</code>, or <code>gnu</code> denoting the various (widely known) JVM manufacturers.
+<replaceable>m</replaceable> is one of <code>openjdk</code>, <code>sun</code>, <code>oracle</code>, <code>ibm</code>, or <code>gnu</code> denoting the various (widely known) JVM manufacturers.
 </para>
 </listitem>
 </varlistentry>
@@ -84,7 +84,7 @@ The <envar>JAVA_HOME</envar> variable is set to the root of the JVM subtree, whi
 
 <para>
 If that file does not exist, then if the <filename>/usr/lib/jvm</filename> directory exists it is presumed to contain all of the JVM subtree root directories, either directly or as symbolic links.
-The <filename>default-java</filename> entry is ignored; all other entries are sorted into descending version order.
+The <filename>default-java</filename> entry, any entries whose names cannot be parsed into version and manufacturer, and any entry that is not a directory or a symbolic link to a directory, are ignored; all other entries are sorted into descending version order.
 The <envar>JAVA_HOME</envar> variable is set to the first matching JVM subtree.
 </para>
 

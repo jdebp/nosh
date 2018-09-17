@@ -18,7 +18,7 @@ else
 fi
 
 # This gets us *only* the configuration variables, safely.
-read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
+read_rc() { clearenv read-conf rc.conf printenv "$1" ; }
 
 read_conf() {
 	read_rc appcafe_nginx_"$1" && return 0

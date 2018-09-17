@@ -1,4 +1,8 @@
 #!/bin/sh -e
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+# vim: set filetype=sh:
 if test _"`uname`" = _"Interix"
 then
 	ar="wlib.exe"

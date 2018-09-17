@@ -19,9 +19,10 @@ uint16_t
 usb_ident_to_keymap_index (
 	const uint32_t ident
 ) ;
+#else
 extern
 uint16_t
-linux_keycode_to_keymap_index (
+linux_evdev_keycode_to_keymap_index (
 	const uint16_t k
 ) ;
 #endif

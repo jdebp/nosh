@@ -10,7 +10,7 @@
 
 <refnamediv>
 <refname>console-multiplexor-control</refname>
-<refpurpose>control a user-space virtual terminal multiplexor</refpurpose>
+<refpurpose>control a (user-space) virtual terminal multiplexor</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>
@@ -33,11 +33,13 @@
 <refsection><title>Description</title>
 
 <para>
-<command>console-multiplexor-control</command> controls a (user-space) virtual terminal that is driven by <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+<command>console-multiplexor-control</command> controls a user-space virtual terminal that is driven by <citerefentry><refentrytitle>console-multiplexor</refentrytitle><manvolnum>1</manvolnum></citerefentry>, or the multiplexed set of kernel virtual terminals.
 </para>
 
 <para>
-<replaceable>vtname</replaceable> is the (optional) name of the virtual terminal, relative to <filename>/run/dev</filename>.
+<replaceable>vtname</replaceable> is the (optional) name of the virtual terminal.
+It can be a directory relative to <filename>/run/dev</filename> for a user-space virtual terminal multiplexor, or a character special file relative to <filename>/dev</filename> for the kernel virtual terminals.
+If omitted, it defaults to <filename>head0</filename>.
 </para>
 
 <para>
@@ -49,28 +51,28 @@
 <varlistentry>
 <term><code>S</code></term>
 <listitem><para>
-Switch to the first session.
+Switch to the first session, as if the "select task" USB consumer key were pressed.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><code>N</code></term>
 <listitem><para>
-Switch to the next session.
+Switch to the next session, as if the "next task" USB consumer key were pressed.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><code>P</code></term>
 <listitem><para>
-Switch to the previous session.
+Switch to the previous session, as if the "previous task" USB consumer key were pressed.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><replaceable>number</replaceable></term>
 <listitem><para>
-Switch to the session numbered <replaceable>number</replaceable>.
+Switch to the session numbered <replaceable>number</replaceable>, as if its session selection key were pressed.
 Sessions are numbered starting from zero.
 </para></listitem>
 </varlistentry>

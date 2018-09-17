@@ -12,3 +12,4 @@ KeepAlive=true
 PassCredentials=true
 
 [Install]
+WantedBy=normal.target

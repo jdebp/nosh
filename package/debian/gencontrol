@@ -1,0 +1,97 @@
+#!/bin/sh -e
+if test \! -d package || test \! -d debian
+then
+	echo "You are not in the right directory." 1>&2
+	exit 100
+fi
+if [ $# -lt 2 ]
+then
+	echo "usage: $0 name staging-dir" 1>&2
+	exit 100
+fi
+name="$1"
+dest="$2"
+
+install -d -m 0755 "${dest}"/DEBIAN
+
+rm -f -- debian/substvars
+case "${name}" in
+nosh-exec|nosh-terminal-management)
+	dpkg-shlibdeps "${dest}"/usr/local/bin/*
+	;;
+nosh-service-management)
+	dpkg-shlibdeps "${dest}"/usr/local/bin/*
+	dpkg-shlibdeps "${dest}"/usr/local/sbin/*
+	;;
+nosh-service-command-shim)
+	;;
+esac
+dpkg-gencontrol -p"${name}" -P"${dest}"
+
+maintenance_script() {
+	local j="$1"
+	shift
+
+	install -m 0755 /dev/null "${dest}"/DEBIAN/"$j"
+	(
+		printf "#!/bin/sh -e\n# %s maintenance script for %s\n\n" "$j" "${name}"
+
+		# per-action lists of worker functions
+		for s
+		do
+			printf '%s_funcs() {\n' "$s"
+			if	test -r debian/"$s".funcs &&
+				test -s debian/"$s".funcs
+			then
+				sed -e 's/^/	/' debian/"$s".funcs
+			else
+				printf '\t:\n'
+			fi
+			printf "}\n"
+			printf '%s_extra() {\n' "$s"
+			if	test -r debian/"${name}"."$s".extra &&
+				test -s debian/"${name}"."$s".extra
+			then
+				sed -e 's/^/	/' debian/"${name}"."$s".extra
+			else
+				printf '\t:\n'
+			fi
+			printf "}\n"
+		done
+
+		# common service/user list of worker function invocations
+		printf "common() {\n"
+		if	test -r debian/"${name}".p &&
+			test -s debian/"${name}".p
+		then
+			sed -e 's/^/	/' debian/"${name}".p
+		else
+			printf '\t:\n'
+		fi
+		printf "}\n\n"
+
+		# common main driver
+		if >/dev/null expr "${name}" : "nosh-run-"
+		then
+			echo "nosh_run_package=YES"
+		fi
+		cat debian/"$j".common
+	) >> "${dest}"/DEBIAN/"$j"
+}
+
+maintenance_script "preinst" "pre_install" "pre_upgrade"
+maintenance_script "postinst" "post_install" "post_upgrade"
+maintenance_script "prerm" "pre_remove"
+maintenance_script "postrm" "post_remove"
+
+install -d -m 0755 "${dest}"/usr/local/share/doc/"${name}"
+cat > "${dest}"/usr/local/share/doc/"${name}"/copyright << EOF
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Name: ${name}
+
+Files: *
+Copyright: 2012,2013,2014,2015,2016,2017,2018 Jonathan de Boyne Pollard
+License: ISC, BSD-2-clause, FreeBSD, Expat
+EOF
+
+true

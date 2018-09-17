@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Bluetooth DUN
+
+[Service]
+Type=dbus
+RuntimeDirectory=%p
+ExecStart=%p --nodetach
+
+[Install]
+#WantedBy=workstation.target

@@ -6,7 +6,7 @@ then
 fi
 
 # Create and populate the bsd directory.
-mkdir -p bsd
+install -d -m 0755 bsd
 (
 	cd package/bsd
 	ls -1 .

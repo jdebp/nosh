@@ -26,7 +26,7 @@
 <arg>--upstart-compatibility</arg>
 <arg>--systemd-compatibility</arg> 
 <arg choice='req'><replaceable>host</replaceable></arg> 
-<arg choice='req'><replaceable>port</replaceable></arg> 
+<arg choice='req'><replaceable>service</replaceable></arg> 
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -34,7 +34,7 @@
 <refsection><title>Description</title>
 
 <para>
-<command>udp-socket-listen</command> is a chain-loading utility that opens a UDP socket bound to <replaceable>host</replaceable> and <replaceable>port</replaceable>, sets the socket to file descriptor 3+<replaceable>n</replaceable> (where <replaceable>n</replaceable> is the number of already-opened listening file descriptors), closing whatever that descriptor was, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
+<command>udp-socket-listen</command> is a chain-loading utility that opens a UDP socket bound to <replaceable>host</replaceable> and <replaceable>service</replaceable>, sets the socket to file descriptor 3+<replaceable>n</replaceable> (where <replaceable>n</replaceable> is the number of already-opened listening file descriptors), closing whatever that descriptor was, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
 </para>
 
 <para>
@@ -44,7 +44,7 @@
 <para>
 If the <arg choice='plain'>--numeric-host</arg> command line option is used, then no name lookup is done on <replaceable>host</replaceable> and it must be (a human readable form of) an IP address.
 If the <arg choice='plain'>--numeric-service</arg> command line option is used, then no name lookup is done on <replaceable>service</replaceable> and it must be a port number.
-Otherwise, <replaceable>host</replaceable> is looked up using the system name resolution facility, with the first IP address found being used, and <replaceable>port</replaceable> can be an alphanumeric service name.
+Otherwise, <replaceable>host</replaceable> is looked up using the system name resolution facility, with the first IP address found being used, and <replaceable>service</replaceable> can be an alphanumeric service name.
 </para>
 
 <para>
@@ -78,14 +78,14 @@ On other systems, and also the default if <arg choice='plain'>--combine4and6</ar
 See RFCs 3493 and 4038 for more details.
 </para>
 
-</refsection><refsection><title>PROTOCOLS</title>
+</refsection><refsection><title>Protocols</title>
 
 <para>
 <command>udp-socket-listen</command> is fully IPv6 capable, albeit that by the nature of IP versions it is not possible on some operating system kernels to handle both IPv4 and IPv6 with a single socket.
 To listen on an IPv4 address and an IPv6 address on such kernels, one must have two <command>udp-socket-listen</command> processes.
 </para>
 
-</refsection><refsection><title>USAGE</title>
+</refsection><refsection><title>Usage</title>
 
 <para>
 <command>udp-socket-listen</command> can be used as a simple daemon monitored by
@@ -98,10 +98,26 @@ and
 </para>
 
 <para>
-To change the process' UID and GID after opening the socket,
-simply chain through
-<citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+To change the process' UID and GID after opening the socket, simply chain through <citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
+
+</refsection>
+
+<refsection><title>See also</title>
+<variablelist>
+	<varlistentry>
+		<term><citerefentry><refentrytitle>tcp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+		<term><citerefentry><refentrytitle>local-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+		<term><citerefentry><refentrytitle>local-stream-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+		<term><citerefentry><refentrytitle>local-seqpacket-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+		<term><citerefentry><refentrytitle>netlink-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+		<listitem>
+			<para>
+				listeners for other protocols
+			</para>
+		</listitem>
+	</varlistentry>
+</variablelist>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
 

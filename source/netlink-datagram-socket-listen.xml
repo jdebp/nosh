@@ -66,7 +66,7 @@ However, unfortunately, some netlink server programs do make such a distinction 
 The <arg choice='plain'>--raw</arg> option causes <command>netlink-datagram-socket-listen</command> to open a <code>SOCK_RAW</code> socket, for the benefits of those programs.
 </para>
 
-</refsection><refsection><title>USAGE</title>
+</refsection><refsection><title>Usage</title>
 
 <para>
 <command>netlink-datagram-socket-listen</command> can be used as a simple daemon monitored by <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
@@ -76,6 +76,24 @@ The <arg choice='plain'>--raw</arg> option causes <command>netlink-datagram-sock
 <para>
 To change the process' UID and GID after opening the socket, simply chain through <citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
+
+</refsection>
+
+<refsection><title>See also</title>
+<variablelist>
+	<varlistentry>
+		<term><citerefentry><refentrytitle>tcp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+		<term><citerefentry><refentrytitle>udp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+		<term><citerefentry><refentrytitle>local-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+		<term><citerefentry><refentrytitle>local-stream-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+		<term><citerefentry><refentrytitle>local-seqpacket-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+		<listitem>
+			<para>
+				listeners for other protocols
+			</para>
+		</listitem>
+	</varlistentry>
+</variablelist>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
 

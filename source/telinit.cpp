@@ -70,7 +70,7 @@ reboot_poweroff_halt_command (
 		else if (halt) prog = "halt";
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	if (!args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, args.front(), "Unexpected argument.");
@@ -162,7 +162,7 @@ shutdown (
 			&kick_off_option,
 			&grace_period_option
 		};
-		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "time [message]");
+		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "{time} [message]");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -172,7 +172,7 @@ shutdown (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	time_t now(std::time(0)), when(now);
@@ -366,7 +366,7 @@ runlevel [[gnu::noreturn]] (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	if (!args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, args.front(), "Unexpected argument.");

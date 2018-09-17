@@ -7,7 +7,8 @@ Description=FTP service over IP6 using Bernstein's publicfile
 Description=NOTE: Bernstein's ftpd does not properly support FTP over IPv6 without patches.
 
 [Service]
-EnvironmentUser=publicfile
+User=publicfile
+EnvironmentUserOnly=true
 LimitNOFILE=20
 LimitData=500000
 ExecStart=line-banner --NVT "220 Features: a p ." sh -c 'exec ftpd ~publicfile/public'

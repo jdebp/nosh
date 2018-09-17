@@ -180,6 +180,18 @@ bool
 is_bool_false (
 	const std::string & r
 ) ;
+std::string
+quote_for_nosh (
+	const std::string & s
+) ;
+std::string
+quote_for_sh (
+	const std::string & s
+) ;
+std::string
+quote_for_sh (
+	const std::string & s
+) ;
 extern
 std::string 
 systemd_name_unescape ( 
@@ -209,17 +221,20 @@ std::string
 multi_line_comment (
 	const std::string & s
 ) ;
-time_t
+struct TimeTAndLeap {
+	TimeTAndLeap(uint64_t t, bool l) : time(t), leap(l) {}
+	std::time_t time;
+	bool leap;
+};
+TimeTAndLeap
 tai64_to_time (
 	const ProcessEnvironment & envs,
-	const uint64_t s,
-	bool & leap
+	const uint64_t s
 ) ;
 uint64_t
 time_to_tai64 (
 	const ProcessEnvironment & envs,
-	const std::time_t s,
-	bool leap
+	const TimeTAndLeap & s
 ) ;
 extern
 int
@@ -234,8 +249,14 @@ setprocname (
 extern
 void
 setprocargv (
-	size_t argc,
-	const char * argv[]
+	std::size_t argc,
+	const char * const argv[]
+) ;
+extern
+void
+setprocenvv (
+	std::size_t envc,
+	const char * const envv[]
 ) ;
 extern
 const char *

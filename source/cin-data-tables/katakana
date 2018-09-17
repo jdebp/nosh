@@ -1,0 +1,1525 @@
+# This is Waapuro Roomaji, a massive hodge-podge of all three different major romanization systems with some extra slang computing romanizations and other stuff thrown in.
+#
+# "little" kana are spelled with an initial "l", so "little a" is "la"; this matches Microsoft input methods.
+# Open Chinese Desktop uses "_" instead.
+# Obsolete letters are spelled with an initial "x", hence "xwi" and "xwe" for traditional "wi" and "we".
+# Non-"x" spellings yield the common modern replacements.
+#
+# For spelling "little tsu" directly both "ltsu" and "xtsu" are available (the latter for compatibility, an exception to the "x" meaning obsolete convention).
+# "little tsu" is also, and mainly, spelled by gemination, so "ppo" spells the two kana ッポ ("little tsu" + "po").
+#
+# Elongated vowels are spelled by gemination, too.
+# "oo" is always the case; never "oh" nor "ou".
+#
+# Spellings are not case sensitive.
+# This does not need to distinguish hiragana from katakana with ASCII case; as hiragana is a separate input method and thereby already distinguished.
+# The keyboard engravings make it look upper case, though; to preserve the feeling of the old upper-case-means-katakana convention.
+#
+%ename Katakana
+%jname カタカナ
+%cname 日文片假
+%selkey 1234567890
+%keyname begin
+a A
+b B
+c C
+d D
+e E
+f F
+g G
+h H
+i I
+j J
+k K
+l L
+m M
+n N
+o O
+p P
+q Q
+r R
+s S
+t T
+u U
+v V
+w W
+x X
+y Y
+z Z
+- -
+/ /
+%keyname end
+%chardef begin
+
+###############################################################################
+# ISO 3602 Strict a.k.a. Nihon-shiki, the "Japanese System"
+###############################################################################
+
+##############################################
+# gojuuon and gojuuon with dakuten/handakuten
+##############################################
+#
+############
+# vowel row
+############
+la	ァ
+a	ア
+aa	アー
+li	ィ
+i	イ
+ii	イー
+lu	ゥ
+u	ウ
+uu	ウー
+le	ェ
+e	エ
+ee	エー
+lo	ォ
+o	オ
+oo	オー
+############
+# "k"/"g" rows
+############
+ka	カ
+kaa	カー
+kka	ッカ
+kkaa	ッカー
+ga	ガ
+gaa	ガー
+gga	ッガ
+ggaa	ッガー
+ki	キ
+kii	キー
+kki	ッキ
+kkii	ッキー
+gi	ギ
+gii	ギー
+ggi	ッギ
+ggii	ッギー
+ku	ク
+kuu	クー
+kku	ック
+kkuu	ックー
+gu	グ
+guu	グー
+ggu	ッグ
+gguu	ッグー
+ke	ケ
+kee	ケー
+kke	ッケ
+kkee	ッケー
+ge	ゲ
+gee	ゲー
+gge	ッゲ
+ggee	ッゲー
+ko	コ
+koo	コー
+kko	ッコ
+kkoo	ッコー
+go	ゴ
+goo	ゴー
+ggo	ッゴ
+ggoo	ッゴー
+############
+# "s"/"z" rows
+############
+sa	サ
+saa	サー
+ssa	ッサ
+ssaa	ッサー
+za	ザ
+zaa	ザー
+zza	ッザ
+zzaa	ッザー
+si	シ
+sii	シー
+ssi	ッシ
+ssii	ッシー
+zi	ジ
+zii	ジー
+zzi	ッジ
+zzii	ッジー
+su	ス
+suu	スー
+ssu	ッス
+ssuu	ッスー
+zu	ズ
+zuu	ズー
+zzu	ッズ
+zzuu	ッズー
+se	セ
+see	セー
+sse	ッセ
+ssee	ッセー
+ze	ゼ
+zee	ゼー
+zze	ッゼ
+zzee	ッゼー
+so	ソ
+soo	ソー
+sso	ッソ
+ssoo	ッソー
+zo	ゾ
+zoo	ゾー
+zzo	ッゾ
+zzoo	ッゾー
+############
+# "t"/"d" rows
+############
+ta	タ
+taa	ター
+tta	ッタ
+ttaa	ッター
+da	ダ
+daa	ダー
+dda	ッダ
+ddaa	ッダー
+ti	チ
+tii	チー
+tti	ッチ
+ttii	ッチー
+di	ヂ
+dii	ヂー
+ddi	ッヂ
+ddii	ッヂー
+tu	ツ
+tuu	ツー
+ttu	ッツ
+ttuu	ッツー
+du	ヅ
+duu	ヅー
+ddu	ッヅ
+dduu	ッヅー
+te	テ
+tee	テー
+tte	ッテ
+ttee	ッテー
+de	デ
+dee	デー
+dde	ッデ
+ddee	ッデー
+to	ト
+too	トー
+tto	ット
+ttoo	ットー
+do	ド
+doo	ドー
+ddo	ッド
+ddoo	ッドー
+############
+# moraic "tu"
+############
+ltu	ッ
+xtu	ッ
+############
+# "n" row
+############
+na	ナ
+naa	ナー
+ni	ニ
+nii	ニー
+nu	ヌ
+nuu	ヌー
+ne	ネ
+nee	ネー
+no	ノ
+noo	ノー
+############
+# "h"/"b"/"p" rows
+############
+ha	ハ
+haa	ハー
+hha	ッハ
+hhaa	ッハー
+ba	バ
+baa	バー
+bba	ッバ
+bbaa	ッバー
+pa	パ
+paa	パー
+ppa	ッパ
+ppaa	ッパー
+hi	ヒ
+hii	ヒー
+hhi	ッヒ
+hhii	ッヒー
+bi	ビ
+bii	ビー
+bbi	ッビ
+bbii	ッビー
+pi	ピ
+pii	ピー
+ppi	ッピ
+ppii	ッピー
+hu	フ
+huu	フー
+hhu	ッフ
+hhuu	ッフー
+bu	ブ
+buu	ブー
+bbu	ッブ
+bbuu	ッブー
+pu	プ
+puu	プー
+ppu	ップ
+ppuu	ップー
+he	ヘ
+hee	ヘー
+hhe	ッヘ
+hhee	ッヘー
+be	ベ
+bee	ベー
+bbe	ッベ
+bbee	ッベー
+pe	ペ
+pee	ペー
+ppe	ッペ
+ppee	ッペー
+ho	ホ
+hoo	ホー
+hho	ッホ
+hhoo	ッホー
+bo	ボ
+boo	ボー
+bbo	ッボ
+bboo	ッボー
+po	ポ
+poo	ポー
+ppo	ッポ
+ppoo	ッポー
+############
+# "m" row
+############
+ma	マ
+maa	マー
+mma	ッマ
+mmaa	ッマー
+mi	ミ
+mii	ミー
+mmi	ッミ
+mmii	ッミー
+mu	ム
+muu	ムー
+mmu	ッム
+mmuu	ッムー
+me	メ
+mee	メー
+mme	ッメ
+mmee	ッメー
+mo	モ
+moo	モー
+mmo	ッモ
+mmoo	ッモー
+############
+# "y" row
+############
+lya	ャ
+ya	ヤ
+yaa	ヤー
+lyu	ュ
+yu	ユ
+yuu	ユー
+lyo	ョ
+yo	ヨ
+yoo	ヨー
+############
+# "r" row
+############
+ra	ラ
+raa	ラー
+ri	リ
+rii	リー
+ru	ル
+ruu	ルー
+re	レ
+ree	レー
+ro	ロ
+roo	ロー
+############
+# "w" row
+############
+# (partly marked obsolete with "x" here)
+lwa	ヮ
+wa	ワ
+waa	ワー
+xwi	ヰ
+xwii	ヰー
+xwe	ヱ
+xwee	ヱー
+wo	ヲ
+woo	ヲー
+############
+# "kw"/"gw" row
+############
+# (marked obsolete with "x" here)
+xkwa	クヮ
+xgwa	グヮ
+############
+# moraic "n"
+############
+n	ン
+n'	ン
+nh	ンー
+
+##############################################
+# yooon and yooon with dakuten/handakuten
+##############################################
+#
+############
+# "k"/"g" rows
+############
+kya	キャ
+kyaa	キャー
+kkya	ッキャ
+kkyaa	ッキャー
+gya	ギャ
+gyaa	ギャー
+ggya	ッギャ
+ggyaa	ッギャー
+kyu	キュ
+kyuu	キュー
+kkyu	ッキュ
+kkyuu	ッキュー
+gyu	ギュ
+gyuu	ギュー
+ggyu	ッギュ
+ggyuu	ッギュー
+kyo	キョ
+kyoo	キョー
+kkyo	ッキョ
+kkyoo	ッキョー
+gyo	ギョ
+gyoo	ギョー
+ggyo	ッギョ
+ggyoo	ッギョー
+############
+# "s"/"z" rows
+############
+sya	シャ
+syaa	シャー
+ssya	ッシャ
+ssyaa	ッシャー
+zya	ジャ
+zyaa	ジャー
+zzya	ッジャ
+zzyaa	ッジャー
+syu	シュ
+syuu	シュー
+ssyu	ッシュ
+ssyuu	ッシュー
+zyu	ジュ
+zyuu	ジュー
+zzyu	ッジュ
+zzyuu	ッジュー
+syo	ショ
+syoo	ショー
+ssyo	ッショ
+ssyoo	ッショー
+zyo	ジョ
+zyoo	ジョー
+zzyo	ッジョ
+zzyoo	ッジョー
+############
+# "t"/"d" rows
+############
+tya	チャ
+tyaa	チャー
+ttya	ッチャ
+ttyaa	ッチャー
+dya	ヂャ
+dya	ヂャー
+ddya	ッヂャ
+ddya	ッヂャー
+tyu	チュ
+tyuu	チュー
+ttyu	ッチュ
+ttyuu	ッチュー
+dyu	ヂュ
+dyu	ヂュー
+ddyu	ッヂュ
+ddyu	ッヂュー
+tyo	チョ
+tyoo	チョー
+ttyo	ッチョ
+ttyoo	ッチョー
+dyo	ヂョ
+dyo	ヂョー
+ddyo	ッヂョ
+ddyo	ッヂョー
+############
+# "n" row
+############
+nya	ニャ
+nyaa	ニャー
+nyu	ニュ
+nyuu	ニュー
+nyo	ニョ
+nyoo	ニョー
+############
+# "h"/"b"/"p" rows
+############
+hya	ヒャ
+hyaa	ヒャー
+hhya	ッヒャ
+hhyaa	ッヒャー
+bya	ビャ
+byaa	ビャー
+bbya	ッビャ
+bbyaa	ッビャー
+pya	ピャ
+pyaa	ピャー
+ppya	ッピャ
+ppyaa	ッピャー
+hyu	ヒュ
+hyuu	ヒュー
+hhyu	ッヒュ
+hhyuu	ッヒュー
+byu	ビュ
+byuu	ビュー
+bbyu	ッビュ
+bbyuu	ッビュー
+pyu	ピュ
+pyuu	ピュー
+ppyu	ッピュ
+ppyuu	ッピュー
+hyo	ヒョ
+hyoo	ヒョー
+hhyo	ッヒョ
+hhyoo	ッヒョー
+byo	ビョ
+byoo	ビョー
+bbyo	ッビョ
+bbyoo	ッビョー
+pyo	ピョ
+pyoo	ピョー
+ppyo	ッピョ
+ppyoo	ッピョー
+############
+# "m" row
+############
+mya	ミャ
+myaa	ミャー
+mmya	ッミャ
+mmyaa	ッミャー
+myu	ミュ
+myuu	ミュー
+mmyu	ッミュ
+mmyuu	ッミュー
+myo	ミョ
+myoo	ミョー
+mmyo	ッミョ
+mmyoo	ッミョー
+############
+# "r" row
+############
+rya	リャ
+ryaa	リャー
+ryu	リュ
+ryuu	リュー
+ryo	リョ
+ryoo	リョー
+
+###############################################################################
+# Kunrei-shiki, the "Official System"
+###############################################################################
+# These are merely the few differences from Nihon-shiki.
+
+##############################################
+# gojuuon and gojuuon with dakuten/handakuten
+##############################################
+#
+############
+# "t"/"d" rows
+############
+zi	ヂ
+zii	ヂー
+zzi	ッヂ
+zzii	ッヂー
+zu	ヅ
+zuu	ヅー
+zzu	ッヅ
+zzuu	ッヅー
+############
+# "w" row
+############
+o	ヲ
+oo	ヲー
+
+##############################################
+# yooon and yooon with dakuten/handakuten
+##############################################
+#
+############
+# "t"/"d" rows
+############
+zya	ヂャ
+zya	ヂャー
+zzya	ッヂャ
+zzya	ッヂャー
+zyu	ヂュ
+zyu	ヂュー
+zzyu	ッヂュ
+zzyu	ッヂュー
+zyo	ヂョ
+zyo	ヂョー
+zzyo	ッヂョ
+zzyo	ッヂョー
+
+###############################################################################
+# Hyoojun-shiki derived from Hebon-shiki (Hepburn), the "Standard System"
+###############################################################################
+# Includes BS 4812, ANSI Z39.11, and 1st draft ISO.
+
+##############################################
+# rows given in the 1974 publication
+##############################################
+# (duplicates of Nihon commented out)
+#
+############
+# vowel row
+############
+#a	ア
+#aa	アー
+#i	イ
+#ii	イー
+#u	ウ
+#uu	ウー
+#e	エ
+#ee	エー
+#o	オ
+#oo	オー
+############
+# "k" row
+############
+#ka	カ
+#kaa	カー
+#kka	ッカ
+#kkaa	ッカー
+#ki	キ
+#kii	キー
+#kki	ッキ
+#kkii	ッキー
+#ku	ク
+#kuu	クー
+#kku	ック
+#kkuu	ックー
+#ke	ケ
+#kee	ケー
+#kke	ッケ
+#kkee	ッケー
+#ko	コ
+#koo	コー
+#kko	ッコ
+#kkoo	ッコー
+#kya	キャ
+#kyaa	キャー
+#kkya	ッキャ
+#kkyaa	ッキャー
+#kyu	キュ
+#kyuu	キュー
+#kkyu	ッキュ
+#kkyuu	ッキュー
+#kyo	キョ
+#kyoo	キョー
+#kkyo	ッキョ
+#kkyoo	ッキョー
+kye	キェ
+kyee	キェー
+kkye	ッキェ
+kkyee	ッキェー
+############
+# "s" row
+############
+#sa	サ
+#saa	サー
+#ssa	ッサ
+#ssaa	ッサー
+si	スィ
+sii	スィー
+ssi	ッスィ
+ssii	ッスィー
+#su	ス
+#suu	スー
+#ssu	ッス
+#ssuu	ッスー
+#se	セ
+#see	セー
+#sse	ッセ
+#ssee	ッセー
+#so	ソ
+#soo	ソー
+#sso	ッソ
+#ssoo	ッソー
+# "sya", "syu", and "syo" are instead "sh_" in this system.
+############
+# "sh" row
+############
+sha	シャ
+shaa	シャー
+ssha	ッシャ
+sshaa	ッシャー
+shi	シ
+shii	シー
+sshi	ッシ
+sshii	ッシー
+shu	シュ
+shuu	シュー
+sshu	ッシュ
+sshuu	ッシュー
+she	シェ
+shee	シェー
+sshe	ッシェ
+sshee	ッシェー
+sho	ショ
+shoo	ショー
+ssho	ッショ
+sshoo	ッショー
+############
+# "t" row
+############
+#ta	タ
+#taa	ター
+#tta	ッタ
+#ttaa	ッター
+ti	ティ
+tii	ティー
+tti	ッティ
+ttii	ッティー
+tu	トゥ
+tuu	トゥー
+ttu	ットゥ
+ttuu	ットゥー
+#te	テ
+#tee	テー
+#tte	ッテ
+#ttee	ッテー
+#to	ト
+#too	トー
+#tto	ット
+#ttoo	ットー
+# "tya", "tyu", and "tyo" are instead "ch_" in this system.
+# ("tsyu" from "lyu" is not in the 1974 Hyoojun but is in ANSI/BS)
+tyu	テュ
+tyuu	テュー
+ttyu	ッテュ
+ttyuu	ッテュー
+############
+# "ch" row
+############
+cha	チャ
+chaa	チャー
+tcha	ッチャ
+tchaa	ッチャー
+chi	チ
+chii	チー
+tchi	ッチ
+tchii	ッチー
+chu	チュ
+chuu	チュー
+tchu	ッチュ
+tchuu	ッチュー
+che	チェ
+chee	チェー
+tche	ッチェ
+tchee	ッチェー
+cho	チョ
+choo	チョー
+tcho	ッチョ
+tchoo	ッチョー
+############
+# moraic "tsu"
+############
+ltsu	ッ
+xtsu	ッ
+############
+# "ts" row
+############
+tsa	ツァ
+tsaa	ツァー
+ttsa	ッツァ
+ttsaa	ッツァー
+tsi	ツィ
+tsii	ツィー
+ttsi	ッツィ
+ttsii	ッツィー
+tsu	ツ
+tsuu	ツー
+ttsu	ッツ
+ttsuu	ッツー
+tse	ツェ
+tsee	ツェー
+ttse	ッツェ
+ttsee	ッツェー
+tso	ツォ
+tsoo	ツォー
+ttso	ッツォ
+ttsoo	ッツォー
+# ("tsyu" is not in the 1974 Hyoojun but is in ANSI/BS)
+tsyu	ツュ
+tsyuu	ツュー
+ttsyu	ッツュ
+ttsyuu	ッツュー
+############
+# "n" row
+############
+#na	ナ
+#naa	ナー
+#ni	ニ
+#nii	ニー
+#nu	ヌ
+#nuu	ヌー
+#ne	ネ
+#nee	ネー
+#no	ノ
+#noo	ノー
+#nya	ニャ
+#nyaa	ニャー
+#nyu	ニュ
+#nyuu	ニュー
+#nyo	ニョ
+#nyoo	ニョー
+nye	ニェ
+nyee	ニェー
+############
+# "h" row
+############
+#ha	ハ
+#haa	ハー
+#hha	ッハ
+#hhaa	ッハー
+#hi	ヒ
+#hii	ヒー
+#hhi	ッヒ
+#hhii	ッヒー
+# ("hu" is not in ANSI/BS but is in the 1974 Hyoojun)
+hu	ホゥ
+huu	ホゥー
+hhu	ッホゥ
+hhuu	ッホゥー
+#he	ヘ
+#hee	ヘー
+#hhe	ッヘ
+#hhee	ッヘー
+#ho	ホ
+#hoo	ホー
+#hho	ッホ
+#hhoo	ッホー
+#hya	ヒャ
+#hyaa	ヒャー
+#hhya	ッヒャ
+#hhyaa	ッヒャー
+#hyu	ヒュ
+#hyuu	ヒュー
+#hhyu	ッヒュ
+#hhyuu	ッヒュー
+#hyo	ヒョ
+#hyoo	ヒョー
+#hhyo	ッヒョ
+#hhyoo	ッヒョー
+# ("hye" is not in the 1974 Hyoojun but is in ANSI/BS)
+hye	ヒェ
+hyee	ヒェー
+hhye	ッヒェ
+hhyee	ッヒェー
+############
+# "f" row
+############
+fa	ファ
+faa	ファー
+ffa	ッファ
+ffaa	ッファー
+fi	フィ
+fii	フィー
+ffi	ッフィ
+ffii	ッフィー
+fu	フ
+fuu	フー
+ffu	ッフ
+ffuu	ッフー
+fe	フェ
+fee	フェー
+ffe	ッフェ
+ffee	ッフェー
+fo	フォ
+foo	フォー
+ffo	ッフォ
+ffoo	ッフォー
+# ("fya", "fyu", "fye", and "fyo" are not in the 1974 Hyoojun but are in ANSI/BS)
+fya	フャ
+fyaa	フャー
+fyu	フュ
+fyuu	フュー
+fyo	フョ
+fyoo	フョー
+fye	フィェ
+fyee	フィェー
+############
+# "m" row
+############
+#ma	マ
+#maa	マー
+#mma	ッマ
+#mmaa	ッマー
+#mi	ミ
+#mii	ミー
+#mmi	ッミ
+#mmii	ッミー
+#mu	ム
+#muu	ムー
+#mmu	ッム
+#mmuu	ッムー
+#me	メ
+#mee	メー
+#mme	ッメ
+#mmee	ッメー
+#mo	モ
+#moo	モー
+#mmo	ッモ
+#mmoo	ッモー
+#mya	ミャ
+#myaa	ミャー
+#mmya	ッミャ
+#mmyaa	ッミャー
+#myu	ミュ
+#myuu	ミュー
+#mmyu	ッミュ
+#mmyuu	ッミュー
+#myo	ミョ
+#myoo	ミョー
+#mmyo	ッミョ
+#mmyoo	ッミョー
+# ("fye" is not in the 1974 Hyoojun but is in ANSI/BS)
+mye	ミェ
+myee	ミェー
+############
+# "y" row
+############
+#ya	ヤ
+#yaa	ヤー
+# ("yi" is not in ANSI/BS but is in the 1974 Hyoojun)
+yi	イィ
+yii	イィー
+#yu	ユ
+#yuu	ユー
+# ("ye" is not in ANSI/BS but is in the 1974 Hyoojun)
+ye	イェ
+yee	イェー
+#yo	ヨ
+#yoo	ヨー
+############
+# "r" row
+############
+#ra	ラ
+#raa	ラー
+#ri	リ
+#rii	リー
+#ru	ル
+#ruu	ルー
+#re	レ
+#ree	レー
+#ro	ロ
+#roo	ロー
+#rya	リャ
+#ryaa	リャー
+#ryu	リュ
+#ryuu	リュー
+#ryo	リョ
+#ryoo	リョー
+# ("rye" is not in the 1974 Hyoojun but is in ANSI/BS)
+rye	リェ
+ryee	リェー
+############
+# "w" row 1 (from Nihon)
+############
+# (mostly marked obsolete with "x" here)
+# ("wu" is actually in the 1974 Hyoojun but is given under ANSI/BS for consistency.)
+#wa	ワ
+#waa	ワー
+#xwi	ヰ
+#xwii	ヰー
+#xwe	ヱ
+#xwee	ヱー
+#o	ヲ
+#oo	ヲー
+############
+# "g" row
+############
+#ga	ガ
+#gaa	ガー
+#gga	ッガ
+#ggaa	ッガー
+#gi	ギ
+#gii	ギー
+#ggi	ッギ
+#ggii	ッギー
+#gu	グ
+#guu	グー
+#ggu	ッグ
+#gguu	ッグー
+#ge	ゲ
+#gee	ゲー
+#gge	ッゲ
+#ggee	ッゲー
+#go	ゴ
+#goo	ゴー
+#ggo	ッゴ
+#ggoo	ッゴー
+#gya	ギャ
+#gyaa	ギャー
+#ggya	ッギャ
+#ggyaa	ッギャー
+#gyu	ギュ
+#gyuu	ギュー
+#ggyu	ッギュ
+#ggyuu	ッギュー
+# ("gye" is not in the 1974 Hyoojun but is in ANSI/BS)
+gye	ギェ
+gyee	ギェー
+ggye	ッギェ
+ggyee	ッギェー
+#gyo	ギョ
+#gyoo	ギョー
+#ggyo	ッギョ
+#ggyoo	ッギョー
+# ("geo" and "geyo" are not in the 1974 Hyoojun but are in ANSI/BS)
+geo	ギォ
+geoo	ギォー
+ggeo	ッギォ
+ggeoo	ッギォー
+geyo	ギョ
+geyoo	ギョー
+ggeyo	ッギョ
+ggeyoo	ッギョー
+############
+# "z" row
+############
+#za	ザ
+#zaa	ザー
+#zza	ッザ
+#zzaa	ッザー
+zi	ズィ
+zii	ズィー
+zzi	ッズィ
+zzii	ッズィー
+#zu	ズ
+#zuu	ズー
+#zzu	ッズ
+#zzuu	ッズー
+#ze	ゼ
+#zee	ゼー
+#zze	ッゼ
+#zzee	ッゼー
+#zo	ゾ
+#zoo	ゾー
+#zzo	ッゾ
+#zzoo	ッゾー
+# "zya", "zyu", and "zyo" are instead "j_" in this system.
+############
+# "j" row 1 (from "sh")
+############
+ja	ジャ
+jaa	ジャー
+jja	ッジャ
+jjaa	ッジャー
+ji	ジ
+jii	ジー
+jji	ッジ
+jjii	ッジー
+ju	ジュ
+juu	ジュー
+jju	ッジュ
+jjuu	ッジュー
+je	ジェ
+jee	ジェー
+jje	ッジェ
+jjee	ッジェー
+jo	ジョ
+joo	ジョー
+jjo	ッジョ
+jjoo	ッジョー
+############
+# "j" row 2 (from "d")
+############
+ja	ヂャ
+ja	ヂャー
+jja	ッヂャ
+jja	ッヂャー
+ji	ヂ
+jii	ヂー
+jji	ッヂ
+jjii	ッヂー
+ju	ヂュ
+ju	ヂュー
+jju	ッヂュ
+jju	ッヂュー
+jo	ヂョ
+jo	ヂョー
+jjo	ッヂョ
+jjo	ッヂョー
+############
+# "d" row
+############
+#da	ダ
+#daa	ダー
+#dda	ッダ
+#ddaa	ッダー
+di	ディ
+dii	ディー
+ddi	ッディ
+ddii	ッディー
+du	ドゥ
+duu	ドゥー
+ddu	ッドゥ
+dduu	ッドゥー
+#de	デ
+#dee	デー
+#dde	ッデ
+#ddee	ッデー
+#do	ド
+#doo	ドー
+#ddo	ッド
+#ddoo	ッドー
+# "dya", "dyu", and "dyo" are instead "j_" in this system.
+# ("dyu" from "lyu" is not in the 1974 Hyoojun but is in ANSI/BS)
+dyu	デュ
+dyuu	デュー
+ddyu	ッデュ
+ddyuu	ッデュー
+############
+# "b" row
+############
+#ba	バ
+#baa	バー
+#bba	ッバ
+#bbaa	ッバー
+#bi	ビ
+#bii	ビー
+#bbi	ッビ
+#bbii	ッビー
+#bu	ブ
+#buu	ブー
+#bbu	ッブ
+#bbuu	ッブー
+#be	ベ
+#bee	ベー
+#bbe	ッベ
+#bbee	ッベー
+#bo	ボ
+#boo	ボー
+#bbo	ッボ
+#bboo	ッボー
+#bya	ビャ
+#byaa	ビャー
+#bbya	ッビャ
+#bbyaa	ッビャー
+#byu	ビュ
+#byuu	ビュー
+#bbyu	ッビュ
+#bbyuu	ッビュー
+#byo	ビョ
+#byoo	ビョー
+#bbyo	ッビョ
+#bbyoo	ッビョー
+# ("bye" is not in the 1974 Hyoojun but is in ANSI/BS)
+bye	ビェ
+byee	ビェー
+bbye	ッビェ
+bbyee	ッビェー
+############
+# "p" row
+############
+#pa	パ
+#paa	パー
+#ppa	ッパ
+#ppaa	ッパー
+#pi	ピ
+#pii	ピー
+#ppi	ッピ
+#ppii	ッピー
+#pu	プ
+#puu	プー
+#ppu	ップ
+#ppuu	ップー
+#pe	ペ
+#pee	ペー
+#ppe	ッペ
+#ppee	ッペー
+#po	ポ
+#poo	ポー
+#ppo	ッポ
+#ppoo	ッポー
+#pya	ピャ
+#pyaa	ピャー
+#ppya	ッピャ
+#ppyaa	ッピャー
+#pyu	ピュ
+#pyuu	ピュー
+#ppyu	ッピュ
+#ppyuu	ッピュー
+#pyo	ピョ
+#pyoo	ピョー
+#ppyo	ッピョ
+#ppyoo	ッピョー
+# ("pye" is not in the 1974 Hyoojun but is in ANSI/BS)
+pye	ピェ
+pyee	ピェー
+ppye	ッピェ
+ppyee	ッピェー
+############
+# "l" row
+############
+la	ら゜
+li	り゜
+lu	る゜
+le	れ゜
+lo	ろ゜
+############
+# "v" row 1 (from Nihon)
+############
+# (marked obsolete with "x" here because derived by voicing obsolete "w" row katakana)
+# ("vu" is actually in the 1974 Hyoojun but is given under ANSI/BS for consistency.)
+xva	ヷ
+xvaa	ヷー
+xvi	ヸ
+xvii	ヸー
+xve	ヹ
+xvee	ヹー
+xvo	ヺ
+xvoo	ヺー
+############
+# moraic "n"
+############
+n-	ン
+
+##############################################
+# other rows implied by ANSI/BS
+##############################################
+#
+############
+# "kw" row 1 (from little vowels)
+############
+kwa	ファ
+kwaa	ファー
+kwi	フィ
+kwii	フィー
+kwe	フェ
+kwee	フェー
+kwo	フォ
+kwoo	フォー
+############
+# "kw" row 2 (from "little wa")
+############
+kwa	フヮ
+kwaa	フヮー
+############
+# "gw" row 1 (from little vowels)
+############
+gwa	グァ
+gwaa	グァー
+gwi	グィ
+gwii	グィー
+gwe	グェ
+gwee	グェー
+gwo	グォ
+gwoo	グォー
+############
+# "gw" row 2 (from "little wa")
+############
+gwa	グヮ
+gwaa	グヮー
+############
+# "w" row 2 (from "u")
+############
+# ("wu", which is fairly common nowadays, is actually in the 1974 Hyoojun in row 1 and not in ANSI/BS, but is presented here for consistency.)
+wa	ウァ
+waa	ウァー
+wi	ウィ
+wii	ウィー
+wu	ウゥ
+wuu	ウゥー
+we	ウェ
+wee	ウェー
+wo	ウォ
+woo	ウォー
+wyu	ウュ
+wyuu	ウュー
+############
+# "v" row 2 (from "voiced u")
+############
+# (also suggested by Japanese MEXT)
+# ("vu" is actually in the 1974 Hyoojun in row 1 and not in ANSI/BS, but is presented here for consistency.)
+va	ヴァ
+vaa	ヴァー
+vi	ヴィ
+vii	ヴィー
+vu	ヴ
+vuu	ヴー
+ve	ヴェ
+vee	ヴェー
+vo	ヴォ
+voo	ヴォー
+vya	ヴャ
+vyaa	ヴャー
+vyu	ヴュ
+vyuu	ヴュー
+vyo	ヴョ
+vyoo	ヴョー
+vye	ヴィェ
+vyee	ヴィェー
+############
+# "v" row 2 (from "voiced u" and Nihon)
+############
+# (marked obsolete with "x" here because derived from obsolete "w" row katakana)
+xvi	ヴヰ
+xvii	ヴヰー
+xvo	ヴヲ
+xvoo	ヴヲー
+
+###############################################################################
+# older versions of Hebon-shiki differences from Hyoojun-shiki
+###############################################################################
+#
+############
+# moraic "n"
+############
+m	ン
+############
+# "j" row 1
+############
+# (older second edition of Hebon-shiki, still needed for some common words so not marked obsolete)
+dzu	ヅ
+dzuu	ヅー
+ddzu	ッヅ
+ddzuu	ッヅー
+# (third edition, same as Kunrei-shiki)
+#zu	ヅ
+#zuu	ヅー
+#zzu	ッヅ
+#zzuu	ッヅー
+############
+# "w" row 1 (in traditional Hepburn was the same as Nihon)
+############
+#wo	ヲ
+#woo	ヲー
+
+###############################################################################
+# non-standardized stuff
+###############################################################################
+
+##############################################
+# common conventional or slang extensions
+##############################################
+#
+# "voiced u" followed by "little u" makes a more logical and consistent "vu".
+# (suggested by Japanese MEXT, which does not use ANSI/BS "voiced u" standalone for "vu")
+vu	ヴゥ
+vuu	ヴゥー
+# "y" is another spelling for elongated "ii" on the "t" and "d" rows, as in "paa"+"ty" for English "party".
+ty	ティー
+tty	ッティー
+dy	ディー
+ddy	ッディー
+# "hu"("fu") followed by "little u" makes a more logical and consistent "fu".
+# (when not using ISO/ANSI/BS "hu"("fu") standalone for "fu")
+fu	フゥ
+fuu	フゥー
+
+##############################################
+# punctuation
+##############################################
+#
+-	ー
+/	·
+
+##############################################
+# symbols and shorthands
+##############################################
+#
+batu	×
+chesu	♕
+chesu	♘
+chesu	♙
+chesu	♛
+chesu	♝
+chesu	♞
+denwa	℡
+futoogoo	≠
+heihoome-toru	㎡
+hisi	◆
+hoshi	※
+hoshi	⁂
+hoshi	☄
+hoshi	★
+hoshi	☆
+hoshi	✪
+hoshi	✮
+hoshi	✰
+hoshi	✱
+hoshi	❈
+hoshi	＊
+kakko	(
+kakko	)
+kakko	“
+kakko	”
+kakko	『
+kakko	』
+kakko	【
+kakko	】
+kakko	〝
+kakko	〟
+kakko	＜
+kakko	＞
+kakko	｛
+kakko	｝
+kaku	∟
+kaku	∠
+kaku	⊥
+kao	☹
+kao	☺
+kao	☺
+kao	☺
+kao	☻
+kigoo	¶
+kigoo	ё
+kigoo	℃
+kigoo	№
+kigoo	Ⅷ
+kigoo	√
+kigoo	≒
+kigoo	★
+kigoo	♂
+kigoo	♪
+kigoo	　
+kigoo	【
+kigoo	】
+kigoo	ゝ
+kigoo	㈱
+kigoo	㍉
+kigoo	㍻
+kigoo	㎡
+kigoo	￡
+kurobosi	★
+maru	①
+maru	⑳
+maru	◉
+maru	○
+maru	◎
+maru	●
+maru	◔
+maru	☮
+maru	☯
+maru	❍
+maru	。
+maru	〇
+maru	゜
+maru	上
+maru	左
+mesu	♀
+mugenn	∞
+nami	～
+nazenaraba	∵
+omega	Ω
+ongaku	♩
+ongaku	♪
+ongaku	♫
+ongaku	♬
+ongaku	♭
+ongaku	♮
+ongaku	♯
+osu	♂
+pondo	￡
+rippoome-toru	㎥
+sankaku	∴
+sankaku	∵
+sankaku	▲
+sankaku	△
+sankaku	▹
+sankaku	▼
+sankaku	▽
+sankaku	▿
+sankaku	◂
+sankaku	◥
+seiza	♈
+seiza	♉
+seiza	♊
+seiza	♋
+seiza	♌
+seiza	♍
+seiza	♎
+seiza	♏
+seiza	♐
+seiza	♑
+seiza	♒
+seiza	♓
+sekibunn	∫
+sessi/do	℃
+shikaku	■
+shikaku	□
+shikaku	▩
+shikaku	◆
+shikaku	◇
+shikaku	◩
+shikaku	☑
+shikaku	❐
+shikaku	❖
+sirobosi	☆
+suuji	Ⅷ
+suuji	ⅳ
+suuji	①
+suuji	②
+suuji	③
+suuji	⑳
+te	☛
+te	☜
+te	☝
+te	☟
+te	✌
+te	✍
+ten	¨
+ten	‥
+ten	…
+ten	∴
+ten	∵
+ten	　
+ten	　
+ten	　
+ten	　
+ten	゛
+ten	゜
+ten	・
+tenki	☀
+tenki	☁
+tenki	☂
+tenki	☃
+tenki	☼
+tenten	…
+toranpu	♠
+toranpu	♡
+toranpu	♢
+toranpu	♣
+toranpu	♤
+toranpu	♥
+toranpu	♦
+toranpu	♧
+waru	÷
+yajirushi	←
+yajirushi	↑
+yajirushi	→
+yajirushi	↓
+yajirushi	↪
+yajirushi	↻
+yajirushi	⇒
+yajirushi	⇔
+yajirushi	☈
+yajirushi	☞
+yajirushi	➔
+yajirushi	➤
+yajirushi	➱
+yajirushi	➷
+yajirusi	→
+yueni	∴
+yuubin	〒
+yuubin	〠
+yuubin	〶
+
+%chardef end

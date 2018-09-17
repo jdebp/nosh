@@ -107,6 +107,7 @@ commands[] = {
 	{	"isolate",			isolate			},
 	{	"reset",			reset			},
 	{	"enable",			enable			},
+	{	"reenable",			enable			},
 	{	"disable",			disable			},
 	{	"preset",			preset			},
 	{	"find",				find			},

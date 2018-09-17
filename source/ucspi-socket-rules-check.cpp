@@ -128,7 +128,7 @@ ucspi_socket_rules_check (
 		popt::definition * top_table[] = {
 			&verbose_option
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "prog");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{prog}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -138,7 +138,7 @@ ucspi_socket_rules_check (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	if (args.empty()) {
@@ -152,14 +152,14 @@ ucspi_socket_rules_check (
 		throw EXIT_FAILURE;
 	}
 	if (0 == std::strcmp(proto, "UNIX")) {
-		const char * uid(envs.query("UNIXREMOTEUID"));
+		const char * uid(envs.query("UNIXREMOTEEUID"));
 		if (!uid) {
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "UNIXREMOTEUID", "Missing environment variable.");
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "UNIXREMOTEEUID", "Missing environment variable.");
 			throw EXIT_FAILURE;
 		}
-		const char * gid(envs.query("UNIXREMOTEGID"));
+		const char * gid(envs.query("UNIXREMOTEEGID"));
 		if (!gid) {
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "UNIXREMOTEGID", "Missing environment variable.");
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "UNIXREMOTEEGID", "Missing environment variable.");
 			throw EXIT_FAILURE;
 		}
 		if (allowed(prog, uid, "uid/" + std::string(uid) + "/")) return;

@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Timers milestone for systemd compatibility
+
+[Service]
+User=nobody
+
+[Install]
+StoppedBy=shutdown.target

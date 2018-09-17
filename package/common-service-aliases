@@ -9,6 +9,7 @@ NetworkManager-dispatcher	org.freedesktop.nm_dispatcher
 accounts-daemon	org.freedesktop.Accounts
 avahi-daemon	avahi_daemon
 avahi-daemon	org.freedesktop.Avahi
+bcron-start     bcron-sched
 blueman-mechanism	org.blueman.Mechanism
 bluetooth	org.bluez
 bluetooth	dbus-org.bluez
@@ -18,7 +19,6 @@ clamav          clamav-daemon
 cleantmp	clear_tmp
 cleanuucp	cleanvar
 colord		org.freedesktop.ColorManager
-colord-sane	org.freedesktop.colord-sane
 console-kit-daemon	org.freedesktop.ConsoleKit
 geoclue		org.freedesktop.GeoClue2
 git-daemon	git_daemon

@@ -6,8 +6,10 @@ For copyright and licensing terms, see the file named COPYING.
 #include <ctime>
 #include <stdint.h>
 #include <cstring>
+#include <fcntl.h>
+#include <unistd.h>
 #include "utils.h"
-#if defined(__LINUX__) || defined(__linux__)
+#if defined(__LINUX__) || defined(__linux__) || defined(__OpenBSD__)
 #include "ProcessEnvironment.h"
 #endif
 
@@ -59,7 +61,7 @@ struct leapsec {
 	{ 0x40000000586846a4ULL, 37,  true },	// 2016-12-31 23:59:60
 };
 
-#if defined(__LINUX__) || defined(__linux__)
+#if defined(__LINUX__) || defined(__linux__) || defined(__OpenBSD__)
 
 static int checked(-1);
 
@@ -85,6 +87,8 @@ ends_with (
 	return pl <= sl && 0 == memcmp(s + sl - pl, p, pl);
 }
 
+static const char zoneinfo[] = "/usr/share/zoneinfo/";
+
 static inline
 bool
 time_t_is_tai(const ProcessEnvironment & envs)
@@ -101,6 +105,21 @@ time_t_is_tai(const ProcessEnvironment & envs)
 			if (ends_with(tzdir, "/posix")) checked = 0;
 		}
 	}
+	if (0 > checked) {
+		const int max(pathconf(zoneinfo, _PC_PATH_MAX));
+		if (0 <= max) {
+			std::vector<char> p(max + 1, char());
+			const ssize_t n(readlinkat(AT_FDCWD, "/etc/localtime", p.data(), max));
+			if (0 <= n) {
+				p[n] = '\0';
+				if (begins_with(p.data(), zoneinfo)) {
+					const char *tz(p.data() + sizeof zoneinfo - 1U);
+					if (begins_with(tz, "right/")) checked = 1;
+					if (begins_with(tz, "posix/")) checked = 0;
+				}
+			}
+		}
+	}
 	return checked > 0;
 }
 
@@ -115,39 +134,37 @@ time_t_is_tai(const ProcessEnvironment &)
 
 #endif
 
-time_t
+TimeTAndLeap
 tai64_to_time (
 	const ProcessEnvironment & envs,
-	const uint64_t s,
-	bool & leap
+	const uint64_t tai64
 ) {
-	leap = false;
+	const uint64_t tai_since_posix_epoch(tai64 - 0x4000000000000000ULL);
 	if (time_t_is_tai(envs))
-		return static_cast<time_t>(s - 0x4000000000000000ULL - 10UL);
+		return TimeTAndLeap(tai_since_posix_epoch - 10UL, false);
 	for (std::size_t i(sizeof leap_seconds_table/sizeof *leap_seconds_table); i > 0U; ) {
 		const struct leapsec & l(leap_seconds_table[--i]);
-		if (l.start == s) {
-			leap = l.leap;
-			return static_cast<time_t>(s - 0x4000000000000000ULL - l.offset);
-		}
-		if (l.start < s) return static_cast<time_t>(s - 0x4000000000000000ULL - l.offset);
+		if (l.start == tai64)
+			return TimeTAndLeap(tai_since_posix_epoch - l.offset, l.leap);
+		if (l.start < tai64)
+			return TimeTAndLeap(tai_since_posix_epoch - l.offset, false);
 	}
-	return static_cast<time_t>(s - 0x4000000000000000ULL);
+	return TimeTAndLeap(tai_since_posix_epoch, false);
 }
 
 uint64_t
 time_to_tai64 (
 	const ProcessEnvironment & envs,
-	const std::time_t s,
-	bool leap
+	const TimeTAndLeap & s
 ) {
-	const uint64_t z(0x4000000000000000ULL + s);
+	const uint64_t time_t_since_tai_epoch(0x4000000000000000ULL + s.time);
 	if (time_t_is_tai(envs))
-		return z + 10UL;
-	for (std::size_t i(sizeof leap_seconds_table/sizeof *leap_seconds_table); i-- > 0U; ) {
-		const struct leapsec & l(leap_seconds_table[i]);
-		const uint64_t tai64(z + l.offset + (leap ? 1U : 0U));
-		if (l.start < tai64) return tai64;
+		return time_t_since_tai_epoch + 10UL;
+	for (std::size_t i(sizeof leap_seconds_table/sizeof *leap_seconds_table); i > 0U; ) {
+		const struct leapsec & l(leap_seconds_table[--i]);
+		const uint64_t tai(time_t_since_tai_epoch + l.offset);
+		if (l.start < tai) return tai;
+		if (s.leap && l.start == tai) return tai;
 	}
-	return z;
+	return time_t_since_tai_epoch;
 }

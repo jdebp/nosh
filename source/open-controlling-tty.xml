@@ -48,6 +48,11 @@ It opens this terminal, hangs up (or otherwise disassociates) any existing proce
 </para>
 
 <para>
+The standard file descriptors are duplicated from an open file descriptor to the terminal, which is opened in read+write mode.
+There is one underlying common file description.
+</para>
+
+<para>
 <command>open-controlling-tty</command> does not call <citerefentry><refentrytitle>setsid</refentrytitle><manvolnum>2</manvolnum></citerefentry> to become a session leader.
 On some operating systems it it necessary to already be a session leader in order to set a controlling terminal.
 On those operating systems, it is thus necessary to chain to <command>open-controlling-tty</command> from <citerefentry><refentrytitle>setsid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.

@@ -9,13 +9,18 @@ For copyright and licensing terms, see the file named COPYING.
 #include <stdint.h>
 #include <cstddef>
 #include "CharacterCell.h"
+#include "ControlCharacters.h"
+#include "UTF8Decoder.h"
+#include "ECMA48Decoder.h"
 
-class SoftTerm 
+class SoftTerm :
+	public UTF8Decoder::UCS32CharacterSink,
+	public ECMA48Decoder::ECMA48ControlSequenceSink
 {
 public:
 	class ScreenBuffer {
 	public:
-		typedef unsigned short coordinate;
+		typedef uint16_t coordinate;
 		virtual void WriteNCells(coordinate s, coordinate n, const CharacterCell & c) = 0;
 		virtual void CopyNCells(coordinate d, coordinate s, coordinate n) = 0;
 		virtual void ScrollUp(coordinate s, coordinate e, coordinate n, const CharacterCell & c) = 0;
@@ -23,17 +28,19 @@ public:
 		virtual void SetCursorPos(coordinate x, coordinate y) = 0;
 		virtual void SetCursorType(CursorSprite::glyph_type, CursorSprite::attribute_type) = 0;
 		virtual void SetPointerType(PointerSprite::attribute_type) = 0;
-		virtual void SetSize(coordinate w, coordinate h) = 0;
+		virtual void SetSize(const coordinate & w, const coordinate & h) = 0;
 	};
 	class KeyboardBuffer {
 	public:
-		typedef unsigned short coordinate;
+		typedef uint16_t coordinate;
 		virtual void WriteLatin1Characters(std::size_t, const char *) = 0;
 		virtual void WriteControl1Character(uint8_t) = 0;
 		virtual void Set8BitControl1(bool) = 0;
 		virtual void SetBackspaceIsBS(bool) = 0;
 		virtual void SetDeleteIsDEL(bool) = 0;
 		virtual void SetSendPasteEvent(bool) = 0;
+		virtual void SetCursorApplicationMode(bool) = 0;
+		virtual void SetCalculatorApplicationMode(bool) = 0;
 		virtual void ReportSize(coordinate w, coordinate h) = 0;
 	};
 	class MouseBuffer {
@@ -48,28 +55,25 @@ public:
 		virtual void RequestDECLocatorReport() = 0;
 	};
 	typedef uint8_t coordinate;
-	SoftTerm(ScreenBuffer & s, KeyboardBuffer & k, MouseBuffer & m);
+	SoftTerm(ScreenBuffer & s, KeyboardBuffer & k, MouseBuffer & m, coordinate w, coordinate h);
 	~SoftTerm();
-	void Write(uint32_t character, bool decoder_error, bool overlong);
+	void Process(uint_fast8_t character) { utf8_decoder.Process(character); }
 protected:
+	UTF8Decoder utf8_decoder;
+	ECMA48Decoder ecma48_decoder;
 	ScreenBuffer & screen;
 	KeyboardBuffer & keyboard;
 	MouseBuffer & mouse;
 	struct xy {
 		coordinate x, y;
-		xy();
+		xy() : x(0U), y(0U) {}
 	} active_cursor, saved_cursor, scroll_origin, display_origin;
 	struct wh {
 		coordinate w, h;
-		wh();
+		wh(coordinate wp, coordinate hp) : w(wp), h(hp) {}
 	} scroll_margin, display_margin;
-	std::size_t argc;
-	unsigned int args[16];
-	bool seen_arg_digit;
-	char first_private_parameter, last_intermediate;
 	bool h_tab_pins[256];
 	bool v_tab_pins[256];
-	enum { NORMAL, ESCAPE1, ESCAPE2, CONTROL1, CONTROL2 } state;
 	bool scrolling, overstrike;
 	struct mode {
 		bool automatic_right_margin, background_colour_erase, origin, left_right_margins;
@@ -84,33 +88,6 @@ protected:
 	CursorSprite::attribute_type cursor_attributes;
 	bool send_DECLocator, send_XTermMouse;
 
-	enum {
-		NUL = '\0',
-		BEL = '\a',
-		CR = '\r',
-		LF = '\n',
-		VT = '\v',
-		TAB = '\t',
-		FF = '\f',
-		BS = '\b',
-		CAN = 0x18,
-		ESC = 0x1b,
-		DEL = 0x7f,
-		IND = 0x84,
-		NEL = 0x85,
-		HTS = 0x88,
-		RI = 0x8d,
-		SS2 = 0x8e,
-		SS3 = 0x8f,
-		DCS = 0x90,
-		SOS = 0x98,
-		CSI = 0x9b,
-		ST = 0x9c,
-		OSC = 0x9d,
-		PM = 0x9e,
-		APC = 0x9f,
-	};
-
 	void ResetToInitialState();
 	void SoftReset();
 
@@ -122,17 +99,13 @@ protected:
 	void SetLeftRightMargins();
 	void ResetMargins();
 
-	bool IsControl(uint32_t);
-	bool IsIntermediate(uint32_t);
-	bool IsParameter(uint32_t);
-	void Print(bool, uint32_t);
-	void Escape1(uint32_t);
-	void Escape2(uint32_t);
-	void ControlSequence(uint32_t);
-	void ProcessControlCharacter(uint32_t character);
+	virtual void ProcessDecodedUTF8(uint32_t character, bool decoder_error, bool overlong);
+	virtual void PrintableCharacter(bool, unsigned short, uint_fast32_t);
+	virtual void ControlCharacter(uint_fast32_t);
+	virtual void EscapeSequence(uint_fast32_t);
+	virtual void ControlSequence(uint_fast32_t);
+	virtual void ControlString(uint_fast32_t);
 
-	void ResetControlSequence();
-	void FinishArg(unsigned int d);
 	coordinate SumArgs();
 
 	void SetHorizontalTabstop();

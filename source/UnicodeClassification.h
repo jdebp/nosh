@@ -23,6 +23,10 @@ bool
 IsOtherFormat(uint32_t character);
 
 extern
+bool 
+IsWideOrFull(uint32_t character);
+
+extern
 unsigned int 
 CombiningClass(uint32_t character);
 

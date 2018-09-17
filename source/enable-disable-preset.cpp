@@ -28,7 +28,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include "FileDescriptorOwner.h"
 #include "DirStar.h"
 #include "terminal_database.h"
-#include "runtime-dir.h"
 #include "home-dir.h"
 
 /* Common Internals *********************************************************
@@ -220,11 +219,9 @@ query_rcconf_preset (
 	const std::string wanted(name + "_enable");
 	if (per_user_mode) {
 		const std::string h(effective_user_home_dir(envs));
-		const std::string r(effective_user_runtime_dir());
 		const std::string
 		user_rcconf_files[2] = {
 			h + "/.config/rc.conf",
-			r + "rc.conf"
 		};
 		for (const std::string * q(user_rcconf_files); q < user_rcconf_files + sizeof user_rcconf_files/sizeof *user_rcconf_files; ++q)
 			if (scan_rcconf_file(wants, prog, wanted, *q))
@@ -349,6 +346,9 @@ matches (
 		if (ends_in(pattern, ".socket", base))
 			return wildmat(base, name);
 		else
+		if (ends_in(pattern, ".timer", base))
+			return wildmat(base, name);
+		else
 			return wildmat(pattern, name);
 	} else {
 		if (ends_in(pattern, suffix, base))
@@ -427,13 +427,14 @@ scan_preset_files (
 static
 const char *
 preset_directories[] = {
+	"/usr/local/etc/system-control/presets/",
 	"/etc/system-control/presets/",
 	"/etc/systemd/system-preset/",
-	"/usr/local/etc/system-control/presets/",
-	"/usr/share/system-control/presets/",
-	"/lib/systemd/system-preset/",
-	"/usr/lib/systemd/system-preset/",
+	"/usr/local/share/system-control/presets/",
 	"/usr/local/lib/systemd/system-preset/",
+	"/usr/share/system-control/presets/",
+	"/usr/lib/systemd/system-preset/",
+	"/lib/systemd/system-preset/",
 };
 
 static inline
@@ -448,18 +449,17 @@ query_systemd_preset (
 	std::string earliest;
 	if (per_user_mode) {
 		const std::string h(effective_user_home_dir(envs));
-		const std::string r(effective_user_runtime_dir());
 		const std::string
 		user_preset_directories[9] = {
+			"/usr/local/etc/system-control/user-presets/",
 			"/etc/system-control/user-presets/",
 			"/etc/systemd/user-preset/",
 			h + "/.config/system-control/presets/",
-			r + "/system-control/presets/",
-			"/usr/local/etc/system-control/user-presets/",
-			"/usr/share/system-control/user-presets/",
-			"/lib/systemd/user-preset/",
-			"/usr/lib/systemd/user-preset/",
+			"/usr/local/share/system-control/user-presets/",
 			"/usr/local/lib/systemd/user-preset/",
+			"/usr/share/system-control/user-presets/",
+			"/usr/lib/systemd/user-preset/",
+			"/lib/systemd/user-preset/",
 		};
 		for (const std::string * q(user_preset_directories); q < user_preset_directories + sizeof user_preset_directories/sizeof *user_preset_directories; ++q)
 			scan_preset_files (earliest, *q, name, suffix, wants);
@@ -590,11 +590,14 @@ enable [[gnu::noreturn]] (
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
+		bool quiet(false);
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
+		popt::bool_definition quiet_option('q', "quiet", "Compatibility option; ignored.", quiet);
 		popt::definition * main_table[] = {
-			&user_option
+			&user_option,
+			&quiet_option,
 		};
-		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "service(s)...");
+		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "{service(s)...}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -604,7 +607,7 @@ enable [[gnu::noreturn]] (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	bool failed(false);
@@ -632,11 +635,14 @@ disable [[gnu::noreturn]] (
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
+		bool quiet(false);
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
+		popt::bool_definition quiet_option('q', "quiet", "Compatibility option; ignored.", quiet);
 		popt::definition * main_table[] = {
-			&user_option
+			&user_option,
+			&quiet_option,
 		};
-		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "service(s)...");
+		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "{service(s)...}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -646,7 +652,7 @@ disable [[gnu::noreturn]] (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	bool failed(false);
@@ -695,7 +701,7 @@ preset [[gnu::noreturn]] (
 			&dry_run_option,
 			&prefix_option
 		};
-		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "service(s)...");
+		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "{service(s)...}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -709,7 +715,7 @@ preset [[gnu::noreturn]] (
 		}
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	bool failed(false);

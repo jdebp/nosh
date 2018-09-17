@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Multi-platform LCD display driver
+
+[Service]
+# Do not run this as the superuser; use an unprivileged user account and filesystem ACLs to grant that account
+# * write-only non-owner access to the relevant device file(s), and
+# * read-only non-owner access to its configuration file.
+User=%p
+ExecStart=%p -f -s 0 ${configfile:+-c "${configfile}"} ${flags}
+ProtectHome=true
+ProtectSystem=true
+
+[Install]
+WantedBy=server.target

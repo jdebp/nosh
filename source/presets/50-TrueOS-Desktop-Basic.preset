@@ -11,9 +11,6 @@
 #
 
 # etc services
-enable	automount.service
-enable	automountd.service
-enable	autounmountd.service
 enable	kmod@geom_uzip.service
 # These three are duplicated in 90-bsd-boot-essentials.
 enable	devd.service
@@ -21,6 +18,12 @@ enable	devd-log.service
 enable	ldconfig.service
 
 # Normal services
+enable	cyclog@automount.service
+enable	automount.service
+enable	cyclog@automountd.service
+enable	automountd.service
+enable	cyclog@autounmountd.service
+enable	autounmountd.service
 enable	cyclog@kmod@acpi_video.service
 enable	kmod@acpi_video.service
 enable	cyclog@kmod@cuse4bsd.service

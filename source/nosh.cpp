@@ -66,7 +66,7 @@ nosh (
 	const char * prog(basename_of(args[0]));
 	if (2 != args.size()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Incorrect number of arguments.");
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	arg_strings = read_file(prog, args[1]);
 	std::vector<const char *> new_args(convert(arg_strings));

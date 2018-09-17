@@ -1,0 +1,141 @@
+# shell pre-deinstall function library for Debian
+# vim: set filetype=sh:
+escape() { system-control escape --alt-escape -- "$@" ; }
+del_user() { 
+	if getent passwd "$1" > /dev/null 
+	then
+		printf 1>&2 "Removing user: %s\n" "$1"
+		userdel "$1" 
+	fi
+}
+del_group() { 
+	if getent group "$1" > /dev/null 
+	then
+		printf 1>&2 "Removing group: %s\n" "$1"
+		groupdel "$1" 
+	fi
+}
+shut_down() {
+	for i
+	do
+		system-control disable "$i"
+		if system-control is-loaded "$i"
+		then
+			system-control unload-when-stopped "$i"
+			if system-control is-active "$i"
+			then
+				printf 1>&2 "Stop: %s\n" "$i"
+				system-control stop "$i"
+			fi
+		fi
+	done
+}
+service_with_dedicated_logger() {
+	if test -z "${nosh_run_package}"
+	then
+		:
+	else
+		shut_down "$1.service" "cyclog@$1.service"
+	fi
+}
+login_service_with_dedicated_logger() {
+	if test -z "${nosh_run_package}"
+	then
+		:
+	else
+		shut_down "ttylogin@$1.service" "cyclog@ttylogin@$1.service"
+	fi
+}
+ktty_login_service_with_dedicated_logger() {
+	case "`uname`" in
+	OpenBSD)	ktty=ttyC; break ;;
+	Linux)		ktty=tty; break ;;
+	*)		ktty=ttyv; break ;;
+	esac
+	login_service_with_dedicated_logger "${ktty}$1"
+}
+socket_with_dedicated_logger() {
+	if test -z "${nosh_run_package}"
+	then
+		:
+	else
+		shut_down "$1.socket" "cyclog@$1.service"
+	fi
+}
+timer_with_dedicated_logger() {
+	if test -z "${nosh_run_package}"
+	then
+		:
+	else
+		shut_down "$1.timer" "cyclog@$1.service"
+	fi
+}
+service_only() {
+	if test -z "${nosh_run_package}"
+	then
+		:
+	else
+		shut_down "$1.service"
+	fi
+}
+service_only_no_run() {
+	if test -z "${nosh_run_package}"
+	then
+		:
+	else
+		shut_down "$1.service"
+	fi
+}
+socket_only() {
+	if test -z "${nosh_run_package}"
+	then
+		:
+	else
+		shut_down "$1.socket"
+	fi
+}
+fan_in_logger() {
+	if test -z "${nosh_run_package}"
+	then
+		:
+	else
+		shut_down "$1-log.service"
+	fi
+}
+target() {
+	if test -z "${nosh_run_package}"
+	then
+		:
+	else
+		shut_down "$1.target"
+	fi
+}
+# Don't delete the log service users because the log files still exist.
+logfile_owning_user() {
+	:
+}
+# Don't delete the file owning users because the files still exist.
+file_owning_user() {
+	:
+}
+non_file_owning_user() {
+	if test -z "${nosh_run_package}"
+	then
+                local pwescaped="`escape "$1"`"
+                del_user "$pwescaped"
+        else
+                :
+        fi
+}
+user_vt_user() {
+	:
+}
+user_vt_group() {
+        :
+}
+user_tty() {
+	:
+}
+directory() {
+        :
+}

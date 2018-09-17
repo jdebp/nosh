@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Daily APT download
+After=static-networking.target
+
+# This has been a thorn in the side of the systemd people since 2014.
+# It isn't a oneshot, because it is ready as soon as the program is started.
+# It isn't a simple, because it runs to completion and then exits rather than remaining running.
+[Service]
+Type=oneshot
+#ExecStartPre=on_ac_power
+ExecStart=/usr/lib/apt/apt-helper wait-online
+ExecStart=/usr/lib/apt/apt.systemd.daily update
+
+[Install]

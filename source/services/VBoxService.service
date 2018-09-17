@@ -4,7 +4,10 @@
 
 [Unit]
 Description=VirtualBox guest additions daemon
-# This daemon uses Desktop Bus.
+Conflicts=ntpd.service systemd-timesyncd.service openntpd.service chrony.service
+Before=time-sync.target
+Wants=time-sync.target
+# This daemon secretly uses Desktop Bus.
 After=dbus
 
 [Service]

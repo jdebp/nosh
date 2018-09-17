@@ -14,6 +14,12 @@ per-user-manager
 system-control
 tai64n
 tai64nlocal
+time-env-add
+time-env-set
+time-env-set-if-earlier
+time-env-unset-if-later
+time-pause-until
+time-print-tai64n
 unload-kernel-module
 dbus-daemon-launch-helper
 svc

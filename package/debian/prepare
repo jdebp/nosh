@@ -6,7 +6,7 @@ then
 fi
 
 # Create and populate the debian directory.
-mkdir -p -m 0755 debian
+install -d -m 0755 debian
 (
 	cd package/debian
 	ls -1 .

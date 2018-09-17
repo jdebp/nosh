@@ -19,7 +19,7 @@
 <arg choice='opt'>--kernel-vt</arg>
 <arg choice='opt'>--kernel-vt-number <replaceable>number</replaceable></arg>
 <arg choice='opt'>--input <replaceable>filename</replaceable></arg>
-<arg choice='opt'>--ugen-input <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--ugen-input <replaceable>control-filename</replaceable> <replaceable>function-filename</replaceable></arg>
 <arg choice='opt'>--atkeyboard <replaceable>filename</replaceable></arg>
 <arg choice='opt'>--sysmouse <replaceable>filename</replaceable></arg>
 <arg choice='opt'>--keyboard-map <replaceable>filename</replaceable></arg>
@@ -43,8 +43,10 @@
 <arg choice='opt'>--vtfont-normal-i <replaceable>filename</replaceable></arg>
 <arg choice='opt'>--vtfont <replaceable>filename</replaceable></arg>
 <arg choice='opt'>--quadrant <replaceable>number</replaceable></arg>
+<arg choice='opt'>--wrong-way-up</arg>
 <arg choice='opt'>--bold-as-colour</arg>
 <arg choice='opt'>--80-columns</arg>
+<arg choice='opt'>--initial-numlock</arg>
 <arg choice='req'><replaceable>vcname</replaceable></arg>
 <arg choice='opt'><replaceable>fbname</replaceable></arg>
 </cmdsynopsis>
@@ -94,6 +96,11 @@ When it is larger than the display, the realizer will align the virtual terminal
 It will render the parts of the framebuffer outwith the virtual terminal display area as black.
 </para>
 
+<para>
+The <arg choice='plain'>--wrong-way-up</arg> command-line option causes the display to be realized the wrong way up, swapping the direction of increasing line numbers.
+This is an oft-requested terminal feature, albeit by people who have never actually experienced it.
+</para>
+
 </refsection>
 
 <refsection><title>Specifying I/O devices</title>
@@ -117,7 +124,7 @@ Any combination of mouse, tablet, and keyboard input events in a single USB devi
 </varlistentry>
 
 <varlistentry>
-<term><arg choice='plain'>--gen-input <replaceable>control-filename</replaceable> <replaceable>function-filename</replaceable></arg></term>
+<term><arg choice='plain'>--ugen-input <replaceable>control-filename</replaceable> <replaceable>function-filename</replaceable></arg></term>
 <listitem><para>
 This command-line option option designates a slightly less superior choice of input device on the BSDs.
 <replaceable>control-filename</replaceable> and <replaceable>function-filename</replaceable> must be the the device file names of Generic USB control and function devices, using the <citerefentry><refentrytitle>ugen</refentrytitle><manvolnum>4</manvolnum></citerefentry> protocol, such as <filename>/dev/usb/0.2.0</filename> and <filename>/dev/usb/0.2.1</filename> for example.
@@ -228,7 +235,7 @@ For a tutorial on how to employ these in concert, see the Nosh Guide.
 <para>
 Virtual terminal display buffers have faint, boldface, italic, strikethrough, and underline attributes for character cells.
 Only faint, boldface, and italic involve font support, mapping to four font weights (light, medium, demibold, and bold) and three slants (upright, italic, and oblique).
-Strikethrough and underline attributes are rendered not through font selection but by overwriting the non-strikethrough non-underline glphys with appropriate horizontal lines.
+Strikethrough and underline attributes are rendered not through font selection but by overwriting the non-strikethrough non-underline glyphs with appropriate horizontal lines.
 If faint and demibold weights are unavailable, the faint attribute is emulated by shading the foreground and background colours towards black.
 If bold weight is unavailable, the bold attribute is rendered by overlaying a glyph with a shifted copy of itself.
 (The <arg choice='plain'>--bold-as-colour</arg> command-line option will as an alternative always render boldface by tinting foreground colours towards white, but this is of limited use with applications that employ 256-colour or true-colour terminal controls, as many do nowadays.)
@@ -309,26 +316,161 @@ This does not, of course, affect the operation of the terminal emulator or the p
 The keyboard input event device provides a sequence of keycode numbers, with attached press/release flags.
 These are translated to keyboard actions through use of a loadable keyboard map.
 Unfortunately, Linux and the BSDs do not agree on a single set of keycode numbers, and cannot share one another's keyboard layout definitions.
-So the realizer first translates the non-portable Linux and BSD keycodes into a common set.
+So the realizer first translates the non-portable Linux and BSD keycodes, and USB HID keyboard usages, into a common codeset.
 It is this common set that is actually used in key maps.
 </para>
 
 <para>
 The map is stored in the file <replaceable>kbdmapname</replaceable> in machine-readable form.
-FreeBSD/TrueOS keymaps can be compiled from the BSD <citerefentry><refentrytitle>kbdmap</refentrytitle><manvolnum>5</manvolnum></citerefentry> human-readable form to this machine-readable form with the <citerefentry><refentrytitle>console-convert-kbdmap</refentrytitle><manvolnum>1</manvolnum></citerefentry> command.
+FreeBSD/TrueOS keymaps can be compiled from the BSD/SCO <citerefentry><refentrytitle>kbdmap</refentrytitle><manvolnum>5</manvolnum></citerefentry> human-readable form to this machine-readable form with the <citerefentry><refentrytitle>console-convert-kbdmap</refentrytitle><manvolnum>1</manvolnum></citerefentry> command.
 </para>
 
-<refsection><title>Map files</title>
+<refsection><title>Map file logical keyboard matrix</title>
 
 <para>
-In machine-readable form, a map is a simple succession of map entries, representing 17 "rows" of 16 "columns" per row, in row-major order.
-Each map entry comprises twenty-four big-endian 32-bit integers.
+In machine-readable form, a map is a simple 2-dimensional array of 96-octet map entries, representing 17 "rows" of 16 "columns" per row, in row-major order.
+This is the "matrix" of a logical keyboard denoted by the aforeentioned common codeset.
+</para>
+
+<para>
+These rows are, in order:
+</para>
+<variablelist>
+<varlistentry>
+<term>ISO 9995 "E" row</term>
+<listitem><para>
+An unused position, positions E01 to E12, the additional key from the 106/109-key PC keyboard at E13, one more unused position, then position E14.
+The language-variant key sometimes found at position E00 is grouped with other similar keys in the third row, where the IBM PC/AT keyboard numbering actually placed it.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>ISO 9995 "D" row</term>
+<listitem><para>
+Positions D00 to D12, two unused positions, then position D14.
+The key sometimes found at position D13 is grouped with other similar keys in the third row, where most IBM PC/AT layouts actually place it.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>ISO 9995 "C" row</term>
+<listitem><para>
+An unused position, positions C01 to C11, the key usually found in position E00 (grave or kanji/zenkaku/hankaku), the key usually found in position C12 (on 102/105-key, 103/106-key, 104/107-key, and 106/109-key PC keyboards) or D13 (on 101/104-key PC keyboards), then two more unused positions.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>ISO 9995 "B" row</term>
+<listitem><para>
+</para></listitem>
+An unused position, the additional "Europe 2" key from the 102/105-key and 104/107-key PC keyboards at B00, positions B01 to B10, the additional key from the 104/107-key and 106/109-key PC keyboards at B11, and three more unused positions.
+</varlistentry>
+<varlistentry>
+<term>Modifiers</term>
+1st Level 2 shift, 2nd Level 2 shift, Level 3 shift, an unused position, 1st Control, 2nd Control, 1st Super, 2nd Super, 1st Alt, three unused positions, Caps Lock, Scroll Lock, Num Lock, and an unused position.
+<listitem><para>
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>ISO 9995 "A" row</term>
+<listitem><para>
+An unused position, the "Katakana/Hiragana/Romaji" key from the 106/109-key PC keyboard, the "Zenkaku/Hankaku" key (from USB but not a PC keyboard key, and not to be confused with the PC keyboard key at E00), the "Hiragana" key (from USB but not a PC keyboard key), the "Katakana" key (from USB but not a PC keyboard key), the "Henkan" (XFER) key from the 106/109-key PC keyboard, the "Muhenkan" (NFER) key from the 106/109-key PC keyboard, an unused position, the "Han/Yeong" key from the 103/106-key PC keyboard, the "Hanja" key from the 103/106-key PC keyboard, three unused positions, Alternate Erase, Compose, and Space.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Cursor/Editing keypad</term>
+<listitem><para>
+Home, Up Arrow, Page Up, Left Arrow, Right Arrow, End, Down Arrow, Page Down, Insert, Delete, and 6 unused positions.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Calculator keypad 1</term>
+<listitem><para>
+Asterisk, 7, 8, 9, Minus, 4, 5, 6, Plus, 1, 2, 3, 0, Decimal Point, Enter, and Divide.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Calculator keypad 2</term>
+<listitem><para>
+Thousands Separator from the Apple Pro JIS and 107-key PC keyboards, JP Comma, Equals from the Apple Pro JIS keyboard, AS/400 Equals, Sign Change, Open Bracket, Close Bracket, Open Brace, Close Brace, and 7 unused positions.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Function row 1</term>
+<listitem><para>
+The Escape key, then F01 to F15.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Function row 2</term>
+<listitem><para>
+F16 to F31.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Function row 3</term>
+<listitem><para>
+F32 to F47.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Function row 4</term>
+<listitem><para>
+F47 to F63.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>System Commands keypad</term>
+<listitem><para>
+An unused position, Power, Sleep, Wake, Debug, and 11 more unused positions.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Application Commands keypad 1</term>
+<listitem><para>
+Pause, Next/Prev Task, Attention, Application, Break, Print Screen, 7 unused posititions, Mute, Volume Down, and Volume Up.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Application Commands keypad 2</term>
+<listitem><para>
+An unused position, Execute, Help, Menu, Select, Cancel, Clear, Prior, Return, Separator, Out, Oper, Clear/again, Ex Sel, and 2 more unused positions.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Application Commands keypad 3</term>
+<listitem><para>
+An unused position, Stop, Again, Properties, Undo, Redo, Copy, Open, Paste, Find, Cut, and 5 more unused positions.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Consumer keypad 1</term>
+<listitem><para>
+Calculator, File Manager, WWW, Home, Refresh, Mail, Bookmarks, Computer, Back, Forward, Lock, CLI, Next Track, Prev Track, Play/Pause, and Stop Playing.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>Consumer keypad 2</term>
+<listitem><para>
+Record, Rewind, Fast Forward, Eject, New, Exit, and 10 unused positions.
+</para></listitem>
+</varlistentry>
+</variablelist>
+
+</refsection>
+
+<refsection><title>Map file entries</title>
+
+<para>
+Each 96-octet map entry comprises twenty-four big-endian 32-bit integers.
 </para>
 
 <para>
 A map entry describes two things: a set of possible actions to be taken when the key is pressed and released, and how to select which action based upon the momentary keyboard modifier state.
+A selection class determines how the set of modifiers is reduced to a four-bit action index (giving sixteen possible combinations) by combining modifiers with one another.
+</para>
+
+<para>
 Keyboard modifiers comprise (in ISO 9995-1 terminology) modifiers for level 2, level 3, and group 2; for caps, num, and shift locks; and for super, alt, and control.
-What keys act as these modifiers is of course determined by the keyboard layout: but often the level 2 modifiers are the shift keys; the level 3 modifier is the "Option" (Apple keyboards) or "AltGr" (IBM PC/AT keyboards) key; and super is the "Command"/'Apple" (Apple keyboards), "Meta" (Sun keyboards), or "Windows" (Microsoft keyboards) key.
+What keys act as these modifiers is of course determined by the keyboard layout: but often the level 2 modifiers are the shift keys; the level 3 modifier is the "Option"/"Closed Apple" (Apple keyboards) or "AltGr" (IBM PC/AT keyboards) key; and super is the "Command"/"Open Apple" (Apple keyboards), "Meta" (Sun keyboards), or "Windows" (Microsoft keyboards) key.
+The initial state of all locks is off, except for the numeric lock when the <arg choice="plain">--initial-numlock</arg> option is used.
 </para>
 
 <para>
@@ -375,8 +517,16 @@ This is generally used for function block keys that obey shift lock but not caps
 
 <para>
 The next seven 32-bit numbers are reserved, and should be set to zero.
-The actions, chosen according to the selection class, are the remaining sixteen 32-bit numbers.
+The remaining sixteen 32-bit numbers are the actions, chosen according to the selection class.
 These denote the actions for various combinations of modifiers: none, level2, control, control+level2, level3, level2+level3, control+level3, control+level2+level3, group2, group2+level2, group2+control, group2+control+level2, group2+level3, group2+level2+level3, group2+control+level3, and group2+control+level2+level3, with inversions and replacements as aforementioned.
+</para>
+
+</refsection>
+
+<refsection><title>Map file actions</title>
+
+<para>
+An individual action in a map entry is a big-endian 32-bit integer, which comprises three or four sub-fields.
 </para>
 
 <para>
@@ -387,7 +537,7 @@ They are two distinct and separate protocols, however.)
 
 <variablelist>
 <varlistentry>
-<term><code>0x00xxxxxx</code></term>
+<term><code>0x00<replaceable>xxxxxx</replaceable></code></term>
 <listitem><para>
 No-operation,
 Take no action.
@@ -395,18 +545,19 @@ This is used for keys that have no action in the key map.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><code>0x01nnnnnn</code></term>
+<term><code>0x01<replaceable>nnnnnn</replaceable></code></term>
 <listitem><para>
 UCS-3 key.
-On press or autorepeat, a unicode character message for the code point <code>nnnnnn</code> is sent to the input FIFO.
+On press or autorepeat, a unicode character message for the code point <code>U+00<replaceable>nnnnnn</replaceable></code> is sent to the input FIFO.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><code>0x03nnnncc</code></term>
+<term><code>0x03<replaceable>nnnn</replaceable><replaceable>cc</replaceable></code></term>
 <listitem><para>
 Modifier key.
 Modifiers do not autorepeat.
-On press or release, the modifier key <code>nnnn</code> is enacted against the current keyboard modifier state according to the <code>cc</code> command.
+On press or release, the modifier key <code><replaceable>nnnn</replaceable></code> is enacted against the current keyboard modifier state according to the <code><replaceable>cc</replaceable></code> command.
+Commands are:
 </para>
 <variablelist>
 <varlistentry>
@@ -435,45 +586,79 @@ it back off.
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><code>0x0Annnnxx</code></term>
+<term><code>0x0A<replaceable>nnnn</replaceable><replaceable>zz</replaceable></code></term>
 <listitem><para>
 Session selection key.
-On press or autorepeat, a session selection message for the session number <code>nnnn</code> is sent to the input FIFO.
+On press or autorepeat, a session selection message for the session number <code><replaceable>nnnn</replaceable></code> is sent to the input FIFO.
+<code><replaceable>zz</replaceable></code> is ignored and should be set to zero for upwards compatibility.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><code>0x0Cnnnnxx</code></term>
+<term><code>0x0C<replaceable>nnnn</replaceable><replaceable>zz</replaceable></code></term>
 <listitem><para>
 Consumer key.
-On press or autorepeat, a consumer key message for the consumer key number <code>nnnn</code> is sent to the input FIFO.
+On press or autorepeat, a consumer key message for the consumer key number <code><replaceable>nnnn</replaceable></code> is sent to the input FIFO.
+<code><replaceable>zz</replaceable></code> is ignored and should be set to zero for upwards compatibility.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><code>0x0Ennnnxx</code></term>
+<term><code>0x0E<replaceable>nnnn</replaceable><replaceable>zz</replaceable></code></term>
 <listitem><para>
 Extended key.
-On press or autorepeat, an extended key message for the extended key number <code>nnnn</code> is sent to the input FIFO.
+On press or autorepeat, an extended key message for the extended key number <code><replaceable>nnnn</replaceable></code> is sent to the input FIFO.
+<code><replaceable>zz</replaceable></code> is ignored and should be set to zero for upwards compatibility.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><code>0x0Fnnnnxx</code></term>
+<term><code>0x0E<replaceable>nnnn</replaceable><replaceable>zz</replaceable></code></term>
+<listitem><para>
+Unshiftable extended key.
+On press or autorepeat, an extended key message for the extended key number <code><replaceable>nnnn</replaceable></code> is sent to the input FIFO.
+<code><replaceable>zz</replaceable></code> is ignored and should be set to zero for upwards compatibility.
+The accompanying keyboard modifier state does not incorporate the level 2 modifier, which will never be seen by the terminal emulator or processes connected to the terminal.
+This is used for keyboard layouts where shift inverts the sense of numlock on calculator keys, and that shift is not considered to further modify the key or be visible to applications.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><code>0x0F<replaceable>nnnn</replaceable><replaceable>zz</replaceable></code></term>
 <listitem><para>
 Function key.
-On press or autorepeat, a function key message for the function key number <code>nnnn</code> is sent.
+On press or autorepeat, a function key message for the function key number <code><replaceable>nnnn</replaceable></code> is sent.
+<code><replaceable>zz</replaceable></code> is ignored and should be set to zero for upwards compatibility.
 This is used for keyboard layouts where the function key block has a large number of actual keys.
 The terminal emulator, and processes connected to the terminal, will see function keys with modifiers.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><code>0x1Fnnnnxx</code></term>
+<term><code>0x1F<replaceable>nnnn</replaceable><replaceable>zz</replaceable></code></term>
 <listitem><para>
 Unmodifiable function key.
-On press or autorepeat, a function key message for the function key number <code>nnnn</code> is sent.
+On press or autorepeat, a function key message for the function key number <code><replaceable>nnnn</replaceable></code> is sent.
+<code><replaceable>zz</replaceable></code> is ignored and should be set to zero for upwards compatibility.
 The accompanying keyboard modifier state does not incorporate the level or group modifiers, which will never be seen by the terminal emulator or processes connected to the terminal.
 This is used for keyboard layouts where the function key block has a small number of actual keys and the level+group modifiers are used "locally" (within the realizer) to simulate a larger key block.
 </para></listitem>
 </varlistentry>
 </variablelist>
+
+</refsection>
+
+<refsection><title>Function keys</title>
+
+<para>
+It is (of course) the keyboard map that handles function key mapping.
+The function key entries in the matrix represent physical function keys, not composed keys created by combining modifiers with function keys.
+Those are, after all, represented by the individual actions in each function key's entry.
+</para>
+
+<para>
+A keyboard map defines what input messages a combination of modifiers and a function key generates.
+It will usually be a function key (if the map maps physical function keys straight to terminal emulator function keys, passing the modifier state through to the terminal emulator), an unmodified function key (if the map uses modifiers to extend the function key set, and thus does not pass the modifier state that it has already consumed through to the terminal emulator), or an extended key.
+</para>
+
+<para>
+See <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> for why usually keyboard maps map function keys 1 to 5 to the cursor keypad extended keys PAD_F1 to PAD_F5, and not to the F1 to F5 function keys.
+</para>
 
 </refsection>
 
@@ -548,7 +733,6 @@ The control modifier always produces <code>DC3</code> (U+0013).
 F1 on the U.S. International IBM PC/AT keyboard, QWERTY layout.
 It ignores level 3, varying according to the level 2, alt, and control modifiers to produce either PAD_F1, F13, F25, and F37 or session switch commands
 for sessions 1, 13, 25, and 37.
-See <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> for why the base, unmodified, key is the PAD_F1 key, not the F1 key.
 </para></listitem>
 </varlistentry>
 </variablelist>

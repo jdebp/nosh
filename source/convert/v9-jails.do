@@ -9,8 +9,8 @@
 #
 
 # These get us *only* the configuration variables, safely.
-read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
-dump_rc() { clearenv read-conf rc.conf "`which printenv`" ; }
+read_rc() { clearenv read-conf rc.conf printenv "$1" ; }
+dump_rc() { clearenv read-conf rc.conf printenv ; }
 list_jails() { read_rc jail_list || true ; }
 get_config() { read_rc jail_"$1"_"$2" || read_rc jail_"$2" || true ; }
 

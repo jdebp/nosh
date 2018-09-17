@@ -8,7 +8,7 @@ Description=Bluetooth OBEX for %u
 [Service]
 Type=dbus
 EnvironmentDirectory=env
-ExecStart=/usr/lib/bluetooth/%pd
+ExecStart=/usr/lib/bluetooth/%pd -n
 Restart=no
 
 [Install]

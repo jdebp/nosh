@@ -246,23 +246,59 @@ The search algorithm is as follows:
 <listitem><para>
 A <arg choice='plain'><replaceable>name</replaceable></arg> that ends in <filename>.target</filename> is searched for (sans the <filename>.target</filename> suffix) in the standard locations for target bundles:
 </para>
+<itemizedlist>
+<listitem><para>
+System-wide target directories:
+</para>
 <orderedlist>
 <listitem><para><filename>/run/service-bundles/targets/</filename></para></listitem>
+<listitem><para><filename>/usr/local/etc/service-bundles/targets/</filename></para></listitem>
 <listitem><para><filename>/etc/service-bundles/targets/</filename></para></listitem>
+<listitem><para><filename>/usr/local/share/service-bundles/targets/</filename></para></listitem>
+<listitem><para><filename>/usr/share/service-bundles/targets/</filename></para></listitem>
 <listitem><para><filename>/var/service-bundles/targets/</filename></para></listitem>
 </orderedlist>
 </listitem>
 <listitem><para>
+Per-user target directories:
+</para>
+<orderedlist>
+<listitem><para><filename><envar>$XDG_RUNTIME_DIR</envar>/service-bundles/targets/</filename></para></listitem>
+<listitem><para><filename><envar>$HOME</envar>/.config/service-bundles/targets/</filename></para></listitem>
+</orderedlist>
+</listitem>
+</itemizedlist>
+</listitem>
+<listitem><para>
 A <arg choice='plain'><replaceable>name</replaceable></arg> that ends in <filename>.service</filename> or <filename>.socket</filename> is searched for (sans those suffixes) in the standard locations for service bundles:
+</para>
+<itemizedlist>
+<listitem><para>
+System-wide service directories:
 </para>
 <orderedlist>
 <listitem><para><filename>/run/service-bundles/services/</filename></para></listitem>
+<listitem><para><filename>/usr/local/etc/service-bundles/services/</filename></para></listitem>
 <listitem><para><filename>/etc/service-bundles/services/</filename></para></listitem>
+<listitem><para><filename>/usr/local/share/service-bundles/services/</filename></para></listitem>
+<listitem><para><filename>/var/local/service-bundles/services/</filename></para></listitem>
 <listitem><para><filename>/var/local/sv/</filename></para></listitem>
+<listitem><para><filename>/usr/share/service-bundles/services/</filename></para></listitem>
+<listitem><para><filename>/var/service-bundles/services/</filename></para></listitem>
 <listitem><para><filename>/var/sv/</filename></para></listitem>
 <listitem><para><filename>/var/svc.d/</filename></para></listitem>
 <listitem><para><filename>/service/</filename></para></listitem>
 </orderedlist>
+</listitem>
+<listitem><para>
+Per-user service directories:
+</para>
+<orderedlist>
+<listitem><para><filename><envar>$XDG_RUNTIME_DIR</envar>/service-bundles/services/</filename></para></listitem>
+<listitem><para><filename><envar>$HOME</envar>/.config/service-bundles/services/</filename></para></listitem>
+</orderedlist>
+</listitem>
+</itemizedlist>
 </listitem>
 <listitem><para>
 Any other <arg choice='plain'><replaceable>name</replaceable></arg> is searched for (as-is) in the standard locations for service and for target bundles.
@@ -552,27 +588,29 @@ There are different sets of files for per-user and system-wide service managemen
 System-wide preset files are located in the following directories:
 </para>
 <orderedlist>
+<listitem><para><filename>/usr/local/etc/system-control/presets/</filename></para></listitem>
 <listitem><para><filename>/etc/system-control/presets/</filename></para></listitem>
 <listitem><para><filename>/etc/systemd/system-preset/</filename></para></listitem>
-<listitem><para><filename>/usr/local/etc/system-control/presets/</filename></para></listitem>
-<listitem><para><filename>/usr/share/system-control/presets/</filename></para></listitem>
-<listitem><para><filename>/lib/systemd/system-preset/</filename></para></listitem>
-<listitem><para><filename>/usr/lib/systemd/system-preset/</filename></para></listitem>
+<listitem><para><filename>/usr/local/share/system-control/presets/</filename></para></listitem>
 <listitem><para><filename>/usr/local/lib/systemd/system-preset/</filename></para></listitem>
+<listitem><para><filename>/usr/share/system-control/presets/</filename></para></listitem>
+<listitem><para><filename>/usr/lib/systemd/system-preset/</filename></para></listitem>
+<listitem><para><filename>/lib/systemd/system-preset/</filename></para></listitem>
 </orderedlist>
 </listitem>
 <listitem><para>
 Per-user preset files are located in the following directories:
 </para>
 <orderedlist>
+<listitem><para><filename>/usr/local/etc/system-control/user-presets/</filename></para></listitem>
 <listitem><para><filename>/etc/system-control/user-presets/</filename></para></listitem>
 <listitem><para><filename>/etc/systemd/user-preset/</filename></para></listitem>
-<listitem><para><filename>$<envar>HOME</envar>/.config/system-control/presets/</filename></para></listitem>
-<listitem><para><filename>/usr/local/etc/system-control/user-presets/</filename></para></listitem>
-<listitem><para><filename>/usr/share/system-control/user-presets/</filename></para></listitem>
-<listitem><para><filename>/lib/systemd/user-preset/</filename></para></listitem>
-<listitem><para><filename>/usr/lib/systemd/user-preset/</filename></para></listitem>
+<listitem><para><filename><envar>$HOME</envar>/.config/system-control/presets/</filename></para></listitem>
+<listitem><para><filename>/usr/local/share/system-control/user-presets/</filename></para></listitem>
 <listitem><para><filename>/usr/local/lib/systemd/user-preset/</filename></para></listitem>
+<listitem><para><filename>/usr/share/system-control/user-presets/</filename></para></listitem>
+<listitem><para><filename>/usr/lib/systemd/user-preset/</filename></para></listitem>
+<listitem><para><filename>/lib/systemd/user-preset/</filename></para></listitem>
 </orderedlist>
 </listitem>
 </itemizedlist>
@@ -589,7 +627,8 @@ Directives are matched against <replaceable>prefix</replaceable><replaceable>nam
 (unless the <arg choice="plain">--no-rcconf</arg> command line option is set) <citerefentry><refentrytitle>rc.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> preset information, specifically the <envar><replaceable>name</replaceable>_enable</envar> variable, interpreting the values <code>true</code>, <code>1</code>, <code>yes</code>, and <code>on</code> as enable, and any other values (including specifically <code>false</code>, <code>0</code>, <code>no</code>, and <code>off</code>) as disable.
 <para>
 </para>
-By default the <filename>/etc/defaults/rc.conf</filename>, <filename>/etc/rc.conf</filename>, and <filename>/etc/rc.conf.local</filename> files are used, but the <arg choice="plain">--rcconf-file</arg> command line option overrides that list with the single replacement file <replaceable>filename</replaceable>.
+By default in system-wide mode the <filename>/etc/defaults/rc.conf</filename>, <filename>/etc/rc.conf</filename>, and <filename>/etc/rc.conf.local</filename> files are used, but the <arg choice="plain">--rcconf-file</arg> command line option overrides that list with the single replacement file <replaceable>filename</replaceable>.
+The default for per-user mode is the <filename><envar>$HOME</envar>/.config/rc.conf</filename> file.
 </para>
 <para>
 The variable names are matched against just <replaceable>name</replaceable> to allow one to use a main service name as <replaceable>name</replaceable> and combine it with a log service template <replaceable>prefix</replaceable> such as <code>cyclog@</code> or <code>s6-multilog@</code>, on the grounds that traditional <filename>/etc/defaults/rc.conf</filename>, <filename>/etc/rc.conf</filename>, and <filename>/etc/rc.conf.local</filename> contents do not make explicit provision for separate logging services.
@@ -973,7 +1012,7 @@ Set this on a service that is configured via an <filename>envdir</filename> envi
 The <code>FullEnvironmentDirectory=</code> setting specifies that the <arg choice='plain'>--full</arg> command line option to <citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry> be applied when reading the environment directory.
 </para></listitem>
 <listitem><para>
-The <code>EnvironmentUser=</code> setting specifies an account to be recorded in the environment by <citerefentry><refentrytitle>envuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+The <code>EnvironmentUserOnly=</code> setting (defaulting to <code>false</code>) if <code>true</code> causes the generated bundle to call <citerefentry><refentrytitle>envuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry> but not <citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 Set this on a service where the main daemon program changes its own process UID and GID, but expects to be told via environment variables what UID and GID to run as.
 </para></listitem>
 <listitem><para>
@@ -1023,6 +1062,15 @@ The <code>JVMDefault=</code> setting (defaulting to <code>false</code>) if <code
 <listitem><para>
 The <code>StandardError=log</code> setting prevents <code>StandardInput=tty</code> from redirecting standard error.
 </para></listitem>
+<listitem><para>
+The <code>RuntimeDirectoryOwner=<replaceable>user</replaceable></code> and <code>RuntimeDirectoryGroup=<replaceable>group</replaceable></code> settings specify the owning user and group of the runtime directory.
+</para></listitem>
+<listitem><para>
+The <code>AfterMountsFor=<replaceable>directories</replaceable></code> setting defines an <filename>after</filename> relationship to the <filename>mount@</filename> services for each <replaceable>directory</replaceable> and its parents up to but not including the root directory, stored in the generated bundle.
+</para></listitem>
+<listitem><para>
+The <code>WantsMountsFor=<replaceable>directories</replaceable></code> setting defines an <filename>wants</filename> relationship to the <filename>mount@</filename> services for each <replaceable>directory</replaceable> and its parents up to but not including the root directory, stored in the generated bundle.
+</para></listitem>
 </itemizedlist>
 
 </refsection>
@@ -1040,6 +1088,7 @@ The <code>StandardError=log</code> setting prevents <code>StandardInput=tty</cod
 <command>system-control</command>
 <arg choice="req">write-volume-service-bundle</arg>
 <arg>--etc-bundle</arg> 
+<arg>--want-fsck</arg> 
 <arg>--bundle-root <replaceable>root</replaceable></arg> 
 <arg choice="req"><replaceable>fstype</replaceable></arg> 
 <arg choice="req"><replaceable>source</replaceable></arg> 
@@ -1107,12 +1156,17 @@ The <command>write-volume-service-bundles</command> subcommand writes service bu
 <listitem>
 <para>
 It always creates a <filename>mount@<replaceable>directory</replaceable></filename> bundle that at service startup mounts <replaceable>source</replaceable> there with the options <replaceable>options</replaceable> (if any) and at service shutdown unmounts it.
+(The <filename>auto</filename>, <filename>noauto</filename>, <filename>nofail</filename>, and <filename>_netdev</filename> options have no meaning to the actual mount process and are not passed through to the mount options used in the service bundle.)
 </para>
 <para>
 The bundle is created as <filename>wanted-by/</filename> the system <code>local-fs.target</code> or the system <code>remote-fs.target</code>, depending from the filesystem type <replaceable>fstype</replaceable> and whether the <replaceable>options</replaceable> contains <code>_netdev</code>.
 This so that it is started during autoboot when it is enabled.
 The list of types that are considered to be "remote" is a superset of the old Debian list from <filename>mountall.sh</filename>, with a few additions from the BSDs.
 The <code>_netdev</code> option overrides this list and forces a bundle to be unconditionally considered "remote".
+</para>
+<para>
+If it detects a FUSE mount, it makes the bundle <filename>wants/</filename> and <filename>after/</filename> a bundle to load the FUSE kernel module.
+Similarly, if the <replaceable>fstype</replaceable> is <filename>efivarfs</filename>, it makes the bundle <filename>wants/</filename> and <filename>after/</filename> a bundle to load that kernel module.
 </para>
 <para>
 "API" filesystems (see <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>) and the root filesystem are specially handled:
@@ -1128,8 +1182,23 @@ The root is required to remain mounted beyond service management termination, an
 </listitem>
 <listitem>
 <para>
+It creates a <filename>fsck@<replaceable>directory</replaceable></filename> bundle if one is wanted.
 Any <filename>fsck@<replaceable>directory</replaceable></filename> bundle that is created is ordered <filename>before/</filename> the respective <filename>mount@<replaceable>directory</replaceable></filename> bundle, and is <filename>wanted-by/</filename> it.
-So when the bundle is enabled <command>fsck</command> is run (on <replaceable>source</replaceable>) before the volume is actually mounted.
+So when the bundle is enabled <citerefentry><refentrytitle>fsck</refentrytitle><manvolnum>1</manvolnum></citerefentry> is run (on <replaceable>source</replaceable>) before the volume is actually mounted.
+</para>
+</listitem>
+<listitem>
+<para>
+It creates a <filename>gbde@<replaceable>source</replaceable></filename> bundle if <replaceable>source</replaceable> ends in <filename>.bde</filename>, removing that suffix to generate the bundle.
+Any <filename>gbde@<replaceable>directory</replaceable></filename> bundle that is created is ordered <filename>before/</filename> the respective <filename>fsck@<replaceable>directory</replaceable></filename> and <filename>mount@<replaceable>directory</replaceable></filename> bundle, and is <filename>wanted-by/</filename> them.
+So when the bundle is enabled <citerefentry><refentrytitle>gbde</refentrytitle><manvolnum>1</manvolnum></citerefentry> is run (to attach <filename><replaceable>source</replaceable></filename> to <filename><replaceable>source</replaceable>.bde</filename>) before the volume is actually checked and mounted.
+</para>
+</listitem>
+<listitem>
+<para>
+It creates a <filename>geli@<replaceable>source</replaceable></filename> bundle if <replaceable>source</replaceable> ends in <filename>.eli</filename>, removing that suffixe to generate the bundle.
+Any <filename>geli@<replaceable>directory</replaceable></filename> bundle that is created is ordered <filename>before/</filename> the respective <filename>fsck@<replaceable>directory</replaceable></filename> and <filename>mount@<replaceable>directory</replaceable></filename> bundle, and is <filename>wanted-by/</filename> them.
+So when the bundle is enabled <citerefentry><refentrytitle>geli</refentrytitle><manvolnum>1</manvolnum></citerefentry> is run (to attach <filename><replaceable>source</replaceable></filename> to <filename><replaceable>source</replaceable>.eli</filename>) before the volume is actually checked and mounted.
 </para>
 </listitem>
 </itemizedlist>
@@ -1138,7 +1207,7 @@ So when the bundle is enabled <command>fsck</command> is run (on <replaceable>so
 The bundles generated by these subcommands are written in the current directory (or in the <arg choice='plain'><replaceable>root</replaceable></arg> directory).
 They are not enabled by the conversion process, but can be started and enabled as they stand, with the <command>start</command> and <command>preset</command> subcommands, just like any other service bundle.
 With <command>preset</command> the <arg choice='plain'>--fstab</arg> option is appropriate of course.
-(It is <command>preset</command> that handles the <code>noauto</code> option; which this subcommand ignores and silently removes from the option list that it writes into the service bundle.)
+(It is <command>preset</command> that handles the <code>noauto</code> option.)
 </para>
 
 <para>

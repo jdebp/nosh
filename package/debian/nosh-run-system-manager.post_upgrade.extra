@@ -1,0 +1,12 @@
+# Extra post-upgrade for nosh-run-system-manager
+# vim: set filetype=sh:
+
+if test -z "$2"		# No prior version installed/left configured.
+then
+	for i in - -usr -var -home 
+	do
+		/bin/rm -f -r /etc/service-bundles/services/fsck@$i/
+		/bin/rm -f -r /etc/service-bundles/services/mount@$i/
+	done
+fi
+redo -C /etc/system-control/convert all

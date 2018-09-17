@@ -128,12 +128,11 @@ process (
 						}
 					} else
 					{
-						bool leap;
-						const std::time_t t(tai64_to_time(envs, convert(s, s_pos), leap));
+						const TimeTAndLeap z(tai64_to_time(envs, convert(s, s_pos)));
 						const uint32_t nano(convert(n, n_pos));
 						struct tm tm;
-						if (localtime_r(&t, &tm)) {
-							if (leap) ++tm.tm_sec;
+						if (localtime_r(&z.time, &tm)) {
+							if (z.leap) ++tm.tm_sec;
 							char fmt[64];
 							const int l(std::strftime(fmt, sizeof fmt, non_standard ? "%x %X" : "%F %T", &tm));
 							std::fwrite(fmt, l, 1, stdout);
@@ -171,7 +170,7 @@ tai64nlocal [[gnu::noreturn]] (
 		popt::definition * top_table[] = {
 			&non_standard_option
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "file(s)");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "[file(s)...]");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);

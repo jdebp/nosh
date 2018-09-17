@@ -1,0 +1,69 @@
+<refentry id="time-env-set">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>time-env-set</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>time-env-set</refname>
+<refpurpose>set environment variables to external TAI64N timestamps</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>time-env-set</command>
+<arg choice='req'><replaceable>var</replaceable></arg>
+<arg choice='req'><replaceable>timestamp</replaceable></arg>
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>time-env-set-if-earlier</command>
+<arg choice='req'><replaceable>var</replaceable></arg>
+<arg choice='req'><replaceable>timestamp</replaceable></arg>
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>time-env-unset-if-later</command>
+<arg choice='req'><replaceable>var</replaceable></arg>
+<arg choice='req'><replaceable>timestamp</replaceable></arg>
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>time-env-set</command>, <command>time-env-set-if-earlier</command>, and <command>time-env-unset-if-later</command> parse <arg choice='plain'><replaceable>timestamp</replaceable></arg> to yield a TAI64N time.
+They then set or unset the environment variable <envar><replaceable>var</replaceable></envar>, and then chain load to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<itemizedlist>
+<listitem><para>
+<command>time-env-set</command> sets the variable to the timestamp for that time.
+</para></listitem>
+<listitem><para>
+<command>time-env-set-if-earlier</command> sets the variable to the timestamp for that time if, after parsing the variable's existing value as a timestamp, the <replaceable>timestamp</replaceable> time is earlier than the existing value or the existing value is null.
+</para></listitem>
+<listitem><para>
+<command>time-env-unset-if-later</command> unsets the variable if, after parsing the variables existing value as a timestamp, the <replaceable>timestamp</replaceable> time is null or is later than the existing value.
+</para></listitem>
+</itemizedlist>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which these commands will ignore.
+</para>
+
+<para>
+The format of <arg choice='plain'><replaceable>timestamp</replaceable></arg> is as explained in the manual for <citerefentry><refentrytitle>time-print-tai64n</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+The environment variable value, when set, is always set to the <code>@<replaceable>hexdigits</replaceable></code> 24-character TAI64N external form.
+</para>
+
+</refsection>
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

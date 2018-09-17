@@ -10,6 +10,7 @@ EnvironmentDirectory=env
 LimitMEMORY=70000000
 User=cron
 ExecStart=%p
+RestartSec=60
 
 [Install]
 WantedBy=server.target

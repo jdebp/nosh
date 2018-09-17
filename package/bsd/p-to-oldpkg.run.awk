@@ -1,10 +1,13 @@
 {
 	two=$2;
 	gsub("^\"|\"$","",two);
-	if ("log_user" == $1) {
+	if ("logfile_owning_user" == $1) {
 		;
 	} else
-	if ("non_log_user" == $1) {
+	if ("file_owning_user" == $1) {
+		;
+	} else
+	if ("non_file_owning_user" == $1) {
 		;
 	} else
 	if ("service_with_dedicated_logger" == $1) {
@@ -55,6 +58,18 @@
 		print "@unexec","system-control","stop",two ".socket";
 		print "@unexec","system-control","stop","cyclog@" two ".socket";
 	} else
+	if ("timer_with_dedicated_logger" == $1) {
+		print "@exec","system-control","preset",two ".socket";
+		print "@exec","system-control","preset","--prefix","cyclog@",two ".socket";
+		print "@exec","system-control","reset",two ".socket";
+		print "@exec","system-control","reset","cyclog@" two ".socket";
+		print "@unexec","system-control","disable",two ".socket";
+		print "@unexec","system-control","disable","cyclog@" two ".socket";
+		print "@unexec","system-control","unload-when-stopped",two ".socket";
+		print "@unexec","system-control","unload-when-stopped","cyclog@" two ".socket";
+		print "@unexec","system-control","stop",two ".socket";
+		print "@unexec","system-control","stop","cyclog@" two ".socket";
+	} else
 	if ("fan_in_logger" == $1) {
 		print "@exec","system-control","preset",two "-log.service";
 		print "@exec","system-control","reset",two "-log.service";
@@ -80,6 +95,9 @@
 		print "@unexec","system-control","disable",two ".target";
 	} else
 	if ("user_tty" == $1) {
+		;
+	} else
+	if ("directory" == $1) {
 		;
 	} else
 		;

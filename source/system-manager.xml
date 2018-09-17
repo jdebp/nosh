@@ -212,8 +212,8 @@ Most orphaned processes in the system are re-parented to this sub-process, or fu
 
 <listitem>
 <para>
-As system events occur, it spawns (ephemeral) instances of <citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-If control groups are available, they are is run in their own dedicated <filename>service-control.slice</filename> subordinate control group below the system-manager's original own.
+As system events occur, it spawns (ephemeral) instances of <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+If control groups are available, they are is run in their own dedicated <filename>system-control.slice</filename> subordinate control group below the system-manager's original own.
 These calculate the details of service and target dependencices for system state changes, and pass instructions to the global service manager for bringing services up and down.
 Only one instance is spawned at a time.
 </para>

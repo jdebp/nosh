@@ -84,7 +84,8 @@ write_escape (
 	const char * line,
 	const std::time_t & now,
 	const unsigned long users,
-	const std::string & pretty_name,
+	const std::string & pretty_sysname,
+	const std::string & pretty_nodename,
 	const char * domainname,
 	int c
 ) {
@@ -92,8 +93,9 @@ write_escape (
 		case '\\':
 		default:	std::fputc('\\', stdout); std::fputc(c, stdout); break;
 		case EOF:	std::fputc('\\', stdout); break;
-		case 'S':	std::fputs(pretty_name.c_str(), stdout); break;
+		case 'S':	std::fputs(pretty_sysname.c_str(), stdout); break;
 		case 's':	std::fputs(uts.sysname, stdout); break;
+		case 'N':	std::fputs(pretty_nodename.c_str(), stdout); break;
 		case 'n':	std::fputs(uts.nodename, stdout); break;
 		case 'r':	std::fputs(uts.release, stdout); break;
 		case 'v':	std::fputs(uts.version, stdout); break;
@@ -123,6 +125,7 @@ write_escape (
 */
 
 static const char release_filename[] = "/etc/os-release";
+static const char machineinfo_filename[] = "/etc/machine-info";
 
 void
 login_banner ( 
@@ -133,7 +136,7 @@ login_banner (
 	const char * prog(basename_of(args[0]));
 	try {
 		popt::definition * top_table[] = { };
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "template-file prog");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{template-file} {prog}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -143,7 +146,7 @@ login_banner (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	if (args.empty()) {
@@ -172,7 +175,8 @@ login_banner (
 			domainname = domainname_buf;
 #endif
 	}
-	std::string pretty_name(uts.sysname);
+	std::string pretty_sysname(uts.sysname);
+	std::string pretty_nodename(uts.nodename);
 
 	FileStar os_release(std::fopen(release_filename, "r"));
 	if (!os_release) {
@@ -188,12 +192,34 @@ login_banner (
 				const std::string var(s.substr(0, p));
 				const std::string val(p == std::string::npos ? std::string() : s.substr(p + 1, std::string::npos));
 				if ("PRETTY_NAME" == var)
-					pretty_name = val;
+					pretty_sysname = val;
 			}
 		} catch (const char * r) {
 			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, release_filename, r);
 		}
 		os_release = 0;
+	}
+
+	FileStar machine_info(std::fopen(machineinfo_filename, "r"));
+	if (!machine_info) {
+		const int error(errno);
+		if (ENOENT != error)
+			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, machineinfo_filename, std::strerror(error));
+	} else {
+		try {
+			std::vector<std::string> env_strings(read_file(machine_info));
+			for (std::vector<std::string>::const_iterator i(env_strings.begin()); i != env_strings.end(); ++i) {
+				const std::string & s(*i);
+				const std::string::size_type p(s.find('='));
+				const std::string var(s.substr(0, p));
+				const std::string val(p == std::string::npos ? std::string() : s.substr(p + 1, std::string::npos));
+				if ("PRETTY_HOSTNAME" == var)
+					pretty_nodename = val;
+			}
+		} catch (const char * r) {
+			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, machineinfo_filename, r);
+		}
+		machine_info = 0;
 	}
 
 	FileStar file(std::fopen(issue_filename, "r"));
@@ -205,7 +231,7 @@ login_banner (
 	for (int c(std::fgetc(file)); EOF != c; c = std::fgetc(file)) {
 		if ('\\' == c) {
 			c = std::fgetc(file);
-			write_escape(uts, line, now, users, pretty_name, domainname, c);
+			write_escape(uts, line, now, users, pretty_sysname, pretty_nodename, domainname, c);
 		} else
 			std::fputc(c, stdout);
 	}

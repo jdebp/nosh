@@ -9,7 +9,7 @@
 #
 
 # These get us *only* the configuration variables, safely.
-read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
+read_rc() { clearenv read-conf rc.conf printenv "$1" ; }
 
 redo-ifchange rc.conf general-services
 
@@ -201,23 +201,34 @@ default_home() {
 
 list_jvms | nl -p >> "$3"
 
-l="/usr/local/etc/system-control/local-java-services"
-if ! test -e "${l}" 
+if ! test -d /usr/local/etc
 then
-	cat >>"${l}" <<-EOT
-	# Local services that need JAVA_HOME configured by external configuration import.
-	#
-	# Lines are of the form:
-	#   default_home service-name
-	#   specific_home service-name version-list type-list manufacturer-list
-	#
-	# Empty lists match everything.
-	# versions are 1.6, 1.7, 1.8, and so on.
-	# types are native and foreign.
-	# manufacturers are openjdk, gnu, sun, and oracle.
+	redo-ifcreate /usr/local/etc
+elif ! test -d /usr/local/etc/system-control
+then
+	redo-ifchange /usr/local/etc
+	redo-ifcreate /usr/local/etc/system-control
+else
+	redo-ifchange /usr/local/etc /usr/local/etc/system-control
 
-	EOT
+	l="/usr/local/etc/system-control/local-java-services"
+	if ! test -e "${l}" 
+	then
+		cat >>"${l}" <<-EOT
+		# Local services that need JAVA_HOME configured by external configuration import.
+		#
+		# Lines are of the form:
+		#   default_home service-name
+		#   specific_home service-name version-list type-list manufacturer-list
+		#
+		# Empty lists match everything.
+		# versions are 1.6, 1.7, 1.8, and so on.
+		# types are native and foreign.
+		# manufacturers are openjdk, gnu, sun, and oracle.
+
+		EOT
+	fi
+
+	redo-ifchange "${l}"
+	. "${l}" >> "$3"
 fi
-
-redo-ifchange "${l}"
-. "${l}" >> "$3"

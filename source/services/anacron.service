@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=anacron scheduling service
+Description=Schedule %p jobs
 
 # This has been a thorn in the side of the systemd people since 2014.
 # It isn't a oneshot, because it is ready as soon as the program is started.
@@ -11,8 +11,5 @@ Description=anacron scheduling service
 [Service]
 #ExecStartPre=on_ac_power
 ExecStart=%p -d -s
-RemainAfterExit=true
-Restart=never
 
 [Install]
-WantedBy=workstation.target

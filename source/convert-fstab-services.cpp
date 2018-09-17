@@ -28,25 +28,7 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-static
-std::string
-quote (
-	const std::string & s
-) {
-	std::string r;
-	bool quote(s.empty());
-	for (std::string::const_iterator p(s.begin()); s.end() != p; ++p) {
-		const char c(*p);
-		if (!std::isalnum(c) && '/' != c && '-' != c && '_' != c && '.' != c) {
-			quote = true;
-			if ('\"' == c || '\\' == c)
-				r += '\\';
-		}
-		r += c;
-	}
-	if (quote) r = "\"" + r + "\"";
-	return r;
-}
+static inline std::string quote ( const std::string & s ) { return quote_for_nosh(s); }
 
 static inline
 std::string
@@ -695,6 +677,46 @@ create_dump_bundle (
 		<< "dumpon\noff\n";
 }
 
+static inline
+void
+create_regular_bundles (
+	const char * prog,
+	const ProcessEnvironment & envs,
+	const char * what,
+	const char * where,
+	const char * vfstype,
+	const bool overwrite,
+	const bool etc_bundle,
+	const FileDescriptorOwner & bundle_root_fd,
+	const char * bundle_root,
+	const bool netdev,
+	const bool want_fsck,
+	const std::list<std::string> & options_list
+) {
+	const std::string fsck_bundle_dirname("fsck@" + systemd_name_escape(false, false, where));
+	const std::string mount_bundle_dirname("mount@" + systemd_name_escape(false, false, where));
+	const bool local(!netdev && is_local_type(vfstype));
+	const bool preenable(is_preenable_type(vfstype));
+	std::string gbde, geli, fuse;
+	const bool is_fuse(begins_with(basename_of(what), "fuse", fuse) && fuse.length() > 1 && std::isdigit(fuse[0]));
+	const bool is_gbde(ends_in(what, ".bde", gbde));
+	const bool is_geli(ends_in(what, ".eli", geli));
+
+	std::list<std::string> modules;
+	if (is_fuse)
+		modules.push_back("fuse");
+	if (0 == std::strcmp(vfstype, "efivarfs"))
+		modules.push_back(vfstype);
+
+	if (is_gbde)
+		create_gbde_bundle(prog, envs, what, local, overwrite, etc_bundle, bundle_root_fd, bundle_root, gbde, &fsck_bundle_dirname, mount_bundle_dirname);
+	if (is_geli)
+		create_geli_bundle(prog, envs, what, local, overwrite, etc_bundle, bundle_root_fd, bundle_root, geli, &fsck_bundle_dirname, mount_bundle_dirname, false, options_list);
+	if (want_fsck)
+		create_fsck_bundle(prog, envs, what, preenable, local, overwrite, is_fuse, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd, bundle_root, fsck_bundle_dirname, mount_bundle_dirname);
+	create_mount_bundle(prog, envs, what, where, vfstype, options_list, local, overwrite, modules, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd, bundle_root, mount_bundle_dirname);
+}
+
 /* System control subcommands ***********************************************
 // **************************************************************************
 */
@@ -727,7 +749,7 @@ convert_fstab_services [[gnu::noreturn]] (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 	if (!args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, args.front(), "Unexpected argument.");
@@ -760,6 +782,7 @@ convert_fstab_services [[gnu::noreturn]] (
 		delete_fstab_option(options_list, "_netdev");
 		delete_fstab_option(options_list, "noauto");
 		delete_fstab_option(options_list, "nofail");
+		delete_fstab_option(options_list, "auto");
 
 #if defined(__LINUX__) || defined(__linux__)
 		const bool is_vfs_swap(!netdev && is_swap_type(entry->fs_vfstype));
@@ -774,28 +797,8 @@ convert_fstab_services [[gnu::noreturn]] (
 		||  (!is_vfs_swap && 0 == std::strcmp(type, "??"))
 #endif
 		) {
-			const std::string fsck_bundle_dirname("fsck@" + systemd_name_escape(false, false, where));
-			const std::string mount_bundle_dirname("mount@" + systemd_name_escape(false, false, where));
-			const bool local(!netdev && is_local_type(entry->fs_vfstype));
-			const bool preenable(is_preenable_type(entry->fs_vfstype));
-			std::string gbde, geli, fuse;
-			const bool is_fuse(begins_with(basename_of(what), "fuse", fuse) && fuse.length() > 1 && std::isdigit(fuse[0]));
-			const bool is_gbde(ends_in(what, ".bde", gbde));
-			const bool is_geli(ends_in(what, ".eli", geli));
-			std::list<std::string> modules;
-
-			if (is_fuse)
-				modules.push_back("fuse");
-			if (0 == std::strcmp(entry->fs_vfstype, "efivarfs"))
-				modules.push_back(entry->fs_vfstype);
-
-			if (is_gbde)
-				create_gbde_bundle(prog, envs, what, local, overwrite, etc_bundle, bundle_root_fd, bundle_root, gbde, &fsck_bundle_dirname, mount_bundle_dirname);
-			if (is_geli)
-				create_geli_bundle(prog, envs, what, local, overwrite, etc_bundle, bundle_root_fd, bundle_root, geli, &fsck_bundle_dirname, mount_bundle_dirname, false, options_list);
-			if (entry->fs_passno > 0)
-				create_fsck_bundle(prog, envs, what, preenable, local, overwrite, is_fuse, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd, bundle_root, fsck_bundle_dirname, mount_bundle_dirname);
-			create_mount_bundle(prog, envs, what, where, entry->fs_vfstype, options_list, local, overwrite, modules, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd, bundle_root, mount_bundle_dirname);
+			const bool want_fsck(entry->fs_passno > 0);
+			create_regular_bundles(prog, envs, what, where, entry->fs_vfstype, overwrite, etc_bundle, bundle_root_fd, bundle_root, netdev, want_fsck, options_list);
 		} else
 		if (0 == std::strcmp(type, "sw")
 #if defined(__LINUX__) || defined(__linux__)
@@ -832,17 +835,19 @@ write_volume_service_bundles [[gnu::noreturn]] (
 	const char * mntops(0);
 	bool overwrite(false), etc_bundle(false), want_fsck(false);
 	try {
-		popt::bool_definition overwrite_option('o', "overwrite", "Update/overwrite an existing service bundle.", overwrite);
+		popt::bool_definition overwrite_option('o', "overwrite", "Update/overwrite existing service bundles.", overwrite);
 		popt::string_definition bundle_option('\0', "bundle-root", "directory", "Root directory for bundles.", bundle_root);
 		popt::string_definition mntops_option('\0', "mount-options", "list", "Mount options.", mntops);
 		popt::bool_definition etc_bundle_option('\0', "etc-bundle", "Consider this service to live away from the normal service bundle group.", etc_bundle);
+		popt::bool_definition want_fsck_option('\0', "want-fsck", "Create an fsck service bundle as well.", want_fsck);
 		popt::definition * main_table[] = {
 			&overwrite_option,
 			&bundle_option,
 			&mntops_option,
-			&etc_bundle_option
+			&etc_bundle_option,
+			&want_fsck_option,
 		};
-		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "fstype source directory");
+		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "{fstype} {source} {directory}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -890,32 +895,13 @@ write_volume_service_bundles [[gnu::noreturn]] (
 	}
 
 	std::list<std::string> options_list(split_fstab_options(mntops));
-
-	const std::string fsck_bundle_dirname("fsck@" + systemd_name_escape(false, false, where));
-	const std::string mount_bundle_dirname("mount@" + systemd_name_escape(false, false, where));
-	const bool local(!has_option(options_list, "_netdev") && is_local_type(vfstype));
-	const bool preenable(is_preenable_type(vfstype));
-	std::string gbde, geli, fuse;
-	const bool is_fuse(begins_with(basename_of(what), "fuse", fuse) && fuse.length() > 1 && std::isdigit(fuse[0]));
-	const bool is_gbde(ends_in(what, ".bde", gbde));
-	const bool is_geli(ends_in(what, ".eli", geli));
-	std::list<std::string> modules;
+	const bool netdev(has_option(options_list, "_netdev"));
 	delete_fstab_option(options_list, "_netdev");
 	delete_fstab_option(options_list, "noauto");
 	delete_fstab_option(options_list, "nofail");
+	delete_fstab_option(options_list, "auto");
 
-	if (is_fuse)
-		modules.push_back("fuse");
-	if (0 == std::strcmp(vfstype, "efivarfs"))
-		modules.push_back(vfstype);
-
-	if (is_gbde)
-		create_gbde_bundle(prog, envs, what, local, overwrite, etc_bundle, bundle_root_fd, bundle_root, gbde, &fsck_bundle_dirname, mount_bundle_dirname);
-	if (is_geli)
-		create_geli_bundle(prog, envs, what, local, overwrite, etc_bundle, bundle_root_fd, bundle_root, geli, &fsck_bundle_dirname, mount_bundle_dirname, false, options_list);
-	if (want_fsck)
-		create_fsck_bundle(prog, envs, what, preenable, local, overwrite, is_fuse, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd, bundle_root, fsck_bundle_dirname, mount_bundle_dirname);
-	create_mount_bundle(prog, envs, what, where, vfstype, options_list, local, overwrite, modules, is_gbde ? &gbde : 0, is_geli ? &geli : 0, etc_bundle, bundle_root_fd, bundle_root, mount_bundle_dirname);
+	create_regular_bundles(prog, envs, what, where, vfstype, overwrite, etc_bundle, bundle_root_fd, bundle_root, netdev, want_fsck, options_list);
 
 	throw EXIT_SUCCESS;
 }

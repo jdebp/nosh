@@ -66,7 +66,7 @@ console_multiplexor_control [[gnu::noreturn]] (
 	try {
 		popt::definition * top_table[] = {
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "S|N|P|number...");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{S|N|P|number...}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -83,10 +83,17 @@ console_multiplexor_control [[gnu::noreturn]] (
 		throw static_cast<int>(EXIT_USAGE);
 	}
 
-	FileDescriptorOwner dev_fd(open_dir_at(AT_FDCWD, "/run/dev"));
-	if (0 > dev_fd.get()) {
+	FileDescriptorOwner run_dev_fd(open_dir_at(AT_FDCWD, "/run/dev"));
+	if (0 > run_dev_fd.get()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "/run/dev", std::strerror(error));
+		throw EXIT_FAILURE;
+	}
+
+	FileDescriptorOwner dev_fd(open_dir_at(AT_FDCWD, "/dev"));
+	if (0 > dev_fd.get()) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "/dev", std::strerror(error));
 		throw EXIT_FAILURE;
 	}
 
@@ -104,7 +111,7 @@ console_multiplexor_control [[gnu::noreturn]] (
 			command = tolower(std::string(dirname));
 		}
 
-		FileDescriptorOwner vt_fd(open_dir_at(dev_fd.get(), vcname.c_str()));
+		FileDescriptorOwner vt_fd(open_dir_at(run_dev_fd.get(), vcname.c_str()));
 		uint32_t s;
 		if (0 <= vt_fd.get()) {
 			const FileDescriptorOwner input_fd(open_writeexisting_at(vt_fd.get(), "input"));
@@ -129,23 +136,40 @@ console_multiplexor_control [[gnu::noreturn]] (
 				throw EXIT_FAILURE;
 			}
 		} else {
-			if (ENOTDIR != errno) {
+			if (ENOTDIR == errno) {
+				vt_fd.reset(open_readwriteexisting_at(run_dev_fd.get(), vcname.c_str()));
+			} else
+			if (ENOENT == errno) {
+				vt_fd.reset(open_readwriteexisting_at(dev_fd.get(), vcname.c_str()));
+			} else
+			{
 				const int error(errno);
 				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, vcname.c_str(), std::strerror(error));
 				throw EXIT_FAILURE;
 			}
-			vt_fd.reset(open_readwriteexisting_at(dev_fd.get(), vcname.c_str()));
 			if (0 > vt_fd.get()) {
 				const int error(errno);
 				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, vcname.c_str(), std::strerror(error));
 				throw EXIT_FAILURE;
 			}
-			if ("n" == command || "next" == command)
+			if ("n" == command || "next" == command) {
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+				int index;
+				if (0 <= ioctl(vt_fd.get(), VT_GETINDEX, &index))
+					ioctl(vt_fd.get(), VT_ACTIVATE, index + 1);
+#else
 				;	/// \bug FIXME: Implement next action
-			else
-			if ("p" == command || "prev" == command)
+#endif
+			} else
+			if ("p" == command || "prev" == command) {
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+				int index;
+				if (0 <= ioctl(vt_fd.get(), VT_GETINDEX, &index))
+					ioctl(vt_fd.get(), VT_ACTIVATE, index - 1);
+#else
 				;	/// \bug FIXME: Implement previous action
-			else
+#endif
+			} else
 			if ("s" == command || "sel" == command)
 				ioctl(vt_fd.get(), VT_ACTIVATE, 1);
 			else

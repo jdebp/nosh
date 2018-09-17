@@ -8,8 +8,9 @@ After=network-interfaces.service entropy
 Before=name-services.target
 
 [Service]
+User=dnscache-d
+EnvironmentUserOnly=true
 EnvironmentDirectory=env
-EnvironmentUser=dnscache-d
 LimitDATA=3000000
 LimitNOFILE=250
 # The entropy service, which we are ordered after, ensures that /dev/urandom is re-seeded by the time that this starts up.

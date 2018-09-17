@@ -1,0 +1,53 @@
+<refentry id="time-pause-until">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>time-pause-until</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>time-pause-until</refname>
+<refpurpose>wait until a given time</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>time-pause-until</command>
+<arg choice='req'><replaceable>timestamp</replaceable></arg>
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>time-pause-until</command> parses <arg><replaceable>timestamp</replaceable></arg> to yield a TAI64N time.
+It sleeps until that time has passed, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>time-pause-until</command> will ignore.
+</para>
+
+<para>
+The format of <arg choice='plain'><replaceable>timestamp</replaceable></arg> is as explained in the manual for <citerefentry><refentrytitle>time-print-tai64n</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+If the timestamp is null
+<command>time-pause-until</command> sleeps forever; otherwise it sleeps for 1 day, 1 hour, 10 minutes, 1 minute, or the time remaining, whichever is the shorter, recalculating how long it has to sleep for whenever it wakes up.
+This sleep pattern allows the system clock to be adjusted by the <citerefentry><refentrytitle>adjtimex</refentrytitle><manvolnum>3</manvolnum></citerefentry> function, adjusting the sleep length to match the revised period to the target time.
+</para>
+
+<para>
+This is not quite perfect and can overshoot, but the imperfection is covered by the definition that <command>time-pause-until</command> sleeps until after the target time has passed, not until the exact point of the target time.
+If <citerefentry><refentrytitle>adjtimex</refentrytitle><manvolnum>3</manvolnum></citerefentry> is used to slew the system clock, it will not overshoot by very much.
+If the system clock is stepped, however, it can overshoot by a significant amount depending from the size of the step.
+This is a basic problem with stepping the system clock; inherent in the fact that the operating system does not provide an absolute time sleep mechanism, only a mechanism for sleeping for relative time periods.
+</para>
+
+</refsection>
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

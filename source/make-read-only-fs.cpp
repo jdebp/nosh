@@ -25,6 +25,70 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
+static
+void
+mount_or_remount_readonly (
+	const char * prog,
+	const char * where
+) {
+	const FileDescriptorOwner fd(open_dir_at(AT_FDCWD, where));
+	if (0 > fd.get()) {
+		const int error(errno);
+		if (ENOENT != error) {
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, where, std::strerror(error));
+			throw EXIT_FAILURE;
+		} else
+			return;
+	}
+
+	struct iovec remount_iov[] = {
+		FSPATH,			{ const_cast<char *>(where), std::strlen(where) + 1 },
+		FSTYPE,			MAKE_IOVEC(""),
+	};
+#if defined(__LINUX__) || defined(__linux__)
+	const int remount_flags(MS_REMOUNT|MS_RDONLY);
+#else
+	const int remount_flags(MNT_UPDATE|MNT_RDONLY);
+#endif
+
+	if (0 > nmount(remount_iov, sizeof remount_iov/sizeof *remount_iov, remount_flags)) {
+		const int error(errno);
+		if (EINVAL != error && EBUSY != error) {
+			std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, "nmount", where, std::strerror(error));
+			throw EXIT_FAILURE;
+		}
+	}
+
+	struct iovec bind_mount_iov[] = {
+		FSPATH,			{ const_cast<char *>(where), std::strlen(where) + 1 },
+		FROM,			{ const_cast<char *>(where), std::strlen(where) + 1 },
+#if defined(__LINUX__) || defined(__linux__)
+		FSTYPE,			MAKE_IOVEC(""),
+#else
+		FSTYPE,			MAKE_IOVEC("nullfs"),
+#endif
+	};
+#if defined(__LINUX__) || defined(__linux__)
+	const int bind_mount_flags(MS_BIND|MS_REC|MS_RDONLY);
+#else
+	const int bind_mount_flags(MNT_RDONLY);
+#endif
+
+	if (0 > nmount(bind_mount_iov, sizeof bind_mount_iov/sizeof *bind_mount_iov, bind_mount_flags)) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, "nmount", where, std::strerror(error));
+		throw EXIT_FAILURE;
+	}
+#if defined(__LINUX__) || defined(__linux__)
+	const int bind_remount_flags(MS_REMOUNT|MS_BIND|MS_RDONLY);
+	if (0 > nmount(remount_iov, sizeof remount_iov/sizeof *remount_iov, bind_remount_flags)) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, "nmount", where, std::strerror(error));
+		throw EXIT_FAILURE;
+	}
+#endif
+}
+
 void
 make_read_only_fs ( 
 	const char * & next_prog,
@@ -52,7 +116,7 @@ make_read_only_fs (
 			&include_option,
 			&except_option
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "prog");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{prog}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -62,36 +126,63 @@ make_read_only_fs (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
-	if (os) {
-#if defined(__LINUX__) || defined(__linux__)
+	if (etc) {
+		mount_or_remount_readonly(prog, "/etc");
+#if !defined(__LINUX__) && !defined(__linux__)
+		mount_or_remount_readonly(prog, "/usr/local/etc");
 #endif
 	}
-	if (etc) {
+	if (os) {
+		mount_or_remount_readonly(prog, "/usr");
+		mount_or_remount_readonly(prog, "/boot");
 #if defined(__LINUX__) || defined(__linux__)
+		mount_or_remount_readonly(prog, "/efi");
 #else
+		mount_or_remount_readonly(prog, "/lib");
+		mount_or_remount_readonly(prog, "/libexec");
+		mount_or_remount_readonly(prog, "/bin");
+		mount_or_remount_readonly(prog, "/sbin");
 #endif
 	}
 	if (homes) {
+		mount_or_remount_readonly(prog, "/root");
 #if defined(__LINUX__) || defined(__linux__)
+		mount_or_remount_readonly(prog, "/home");
+		mount_or_remount_readonly(prog, "/run/user");
+#else
+		mount_or_remount_readonly(prog, "/usr/home");
 #endif
 	}
 	if (sysctl) {
 #if defined(__LINUX__) || defined(__linux__)
+		mount_or_remount_readonly(prog, "/proc/sys");
+		mount_or_remount_readonly(prog, "/proc/acpi");
+		mount_or_remount_readonly(prog, "/proc/apm");
+		mount_or_remount_readonly(prog, "/proc/asound");
+		mount_or_remount_readonly(prog, "/proc/bus");
+		mount_or_remount_readonly(prog, "/proc/fs");
+		mount_or_remount_readonly(prog, "/proc/irq");
+		mount_or_remount_readonly(prog, "/sys");
+		mount_or_remount_readonly(prog, "/sys/fs/pstore");
+		mount_or_remount_readonly(prog, "/sys/kernel/debug");
+		mount_or_remount_readonly(prog, "/sys/kernel/tracing");
+#elif defined(__FreeBSD__)
+		mount_or_remount_readonly(prog, "/compat/linux/proc/sys");
+		mount_or_remount_readonly(prog, "/compat/linux/sys");
 #endif
 	}
 	if (cgroups) {
 #if defined(__LINUX__) || defined(__linux__)
+		mount_or_remount_readonly(prog, "/sys/fs/cgroup");
 #endif
 	}
 	for (std::list<std::string>::const_iterator e(include_directories.end()), i(include_directories.begin()); e != i; ++i) {
-#if defined(__LINUX__) || defined(__linux__)
-#endif
+		mount_or_remount_readonly(prog, e->c_str());
 	}
 	for (std::list<std::string>::const_iterator e(except_directories.end()), i(except_directories.begin()); e != i; ++i) {
-#if defined(__LINUX__) || defined(__linux__)
-#endif
+		mount_or_remount_readonly(prog, e->c_str());
 	}
 }

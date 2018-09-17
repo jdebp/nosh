@@ -6,17 +6,23 @@
 Description=populate a memory disc that has been mounted at %I
 DefaultDependencies=no
 Before=local-fs.target
+WantsMountsFor=/%I
+AfterMountsFor=/%I
 # We need the mount for /usr/local/bin/setuidgid in particular.
-After=local-fs-pre.target mdmfs@%i mount@%i mount@-usr mount@-usr-sbin mount@-usr-bin mount@-usr-local mount@-usr-local-bin
+WantsMountsFor=/usr/sbin/
+WantsMountsFor=/usr/local/bin/
+AfterMountsFor=/usr/sbin/
+AfterMountsFor=/usr/local/bin/
+After=local-fs-pre.target mdmfs@%i
 
 [Service]
 Type=oneshot
 EnvironmentDirectory=env
 RemainAfterExit=true
-ExecStart=sh -c 'test -n "${perms}" && exec chmod "${perms}" "%I/"'
-ExecStart=sh -c 'test -n "${owner}" && exec chown "${owner}" "%I/"'
-ExecStart=sh -c 'test -n "${files}" && exec setuidgid "${owner}" cp -p -R ${files} "%I/"'
-ExecStart=sh -c 'test -n "${command}" && exec setuidgid "${owner}" sh -c "${command}"'
+ExecStart=sh -c 'test -n "${perms}" && exec chmod -- "${perms}" "%I/"'
+ExecStart=sh -c 'test -n "${owner}" && exec chown -- "${owner}" "%I/"'
+ExecStart=sh -c 'test -n "${files}" && exec setuidgid -- "${owner}" cp -p -R -- ${files} "%I/"'
+ExecStart=sh -c 'test -n "${command}" && exec setuidgid -- "${owner}" sh -c "${command}"'
 
 [Install]
 WantedBy=sysinit.target

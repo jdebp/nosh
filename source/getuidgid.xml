@@ -1,0 +1,46 @@
+<refentry id="getuidgid">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>getuidgid</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>getuidgid</refname>
+<refpurpose>set the "user" environment variables from the current UID and GID</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>getuidgid</command> 
+<arg choice='req'><replaceable>next-prog</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>getuidgid</command> is a chain-loading utility that retrieves the current process's effective UID and GID and supplementary group ID list, placing them into environment variables (<envar>UID</envar>, <envar>GID</envar>, and <envar>GIDLIST</envar>), and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
+
+<para>
+<replaceable>next-prog</replaceable> may contain its own command line options, which <command>getuidgid</command> will ignore.
+</para>
+
+</refsection><refsection><title>See also</title>
+
+<itemizedlist>
+<listitem><para>
+<citerefentry><refentrytitle>envuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>setuidgid-fromenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+</itemizedlist>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

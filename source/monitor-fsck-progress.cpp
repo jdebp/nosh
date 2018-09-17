@@ -15,17 +15,16 @@ For copyright and licensing terms, see the file named COPYING.
 #include <stdint.h>
 #include <inttypes.h>
 #include <sys/types.h>
-#include <sys/ioctl.h>
+#include "BaseTUI.h"
 #if defined(__LINUX__) || defined(__linux__)
-#include "kqueue_linux.h"
 #include <ncursesw/curses.h>
 #else
-#include <sys/event.h>
 #include <curses.h>
 #endif
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include "kqueue_common.h"
 #include "popt.h"
 #include "utils.h"
 #include "ttyutils.h"
@@ -33,48 +32,9 @@ For copyright and licensing terms, see the file named COPYING.
 #include "FileDescriptorOwner.h"
 #include "SignalManagement.h"
 
-/* Helper functions *********************************************************
+/* Clients ******************************************************************
 // **************************************************************************
 */
-
-static sig_atomic_t halt_signalled(false), window_resized(false);
-
-static
-void
-handle_signal (
-	int signo
-) {
-	switch (signo) {
-		case SIGWINCH:	window_resized = true; break;
-		case SIGINT:	halt_signalled = true; break;
-		case SIGTERM:	halt_signalled = true; break;
-		case SIGHUP:	halt_signalled = true; break;
-	}
-}
-
-enum {
-	DEFAULT_COLOURS = 0,
-	TITLE_COLOURS,
-	STATUS_COLOURS,
-	LINE_COLOURS,
-	PROGRESS_COLOURS
-};
-
-static inline
-void
-initialize_colours()
-{
-	start_color();
-	init_pair(PROGRESS_COLOURS, COLOR_BLACK, COLOR_GREEN);
-	init_pair(LINE_COLOURS, COLOR_BLACK, COLOR_YELLOW);
-	init_pair(TITLE_COLOURS, COLOR_BLUE, COLOR_WHITE);
-	init_pair(STATUS_COLOURS, COLOR_WHITE, COLOR_BLUE);
-#if defined(NCURSES_VERSION)
-	assume_default_colors(COLOR_WHITE, COLOR_BLACK);
-#else
-	init_pair(DEFAULT_COLOURS, COLOR_WHITE, COLOR_BLACK);
-#endif
-}
 
 namespace {
 	struct ConnectedClient {
@@ -114,7 +74,7 @@ ConnectedClient::left() const
 {
 	std::string r(pass + " ");
 	if (max) {
-		const long double percent(count * 100.0 / max);
+		const long double percent(count * 100.0L / max);
 		char buf[10];
 		snprintf(buf, sizeof buf, "%3.0Lf", percent);
 		r += buf;
@@ -142,32 +102,116 @@ ConnectedClient::parse(
 	name = ltrim(s);
 }
 
+/* Full-screen TUI **********************************************************
+// **************************************************************************
+*/
+
+enum {
+	DEFAULT_COLOURS = 0,
+	TITLE_COLOURS,
+	STATUS_COLOURS,
+	LINE_COLOURS,
+	PROGRESS_COLOURS
+};
+
 static const char title[] = "nosh package parallel fsck monitor";
 static const char in_progress[] = "fsck in progress";
 static const char no_fscks[] = "no fscks";
 
-static inline
+namespace {
+struct TUI : public BaseTUI {
+	TUI(const char * p, ProcessEnvironment & e, ClientTable & m);
+
+	bool quit_flagged() const { return pending_quit_event; }
+	void handle_non_kevents ();
+	void invalidate() { redraw_needed = true; }
+protected:
+	const char * prog;
+	const ProcessEnvironment & envs;
+	ClientTable & clients;
+	bool redraw_needed, pending_quit_event;
+
+	void setup_colours();
+	virtual void redraw();
+	virtual void unicode_keypress(wint_t);
+	virtual void ncurses_keypress(wint_t);
+
+	void set_colour_pair(unsigned);
+};
+
+struct { short fg, bg; }
+default_colours[13] = {
+	{	COLOR_WHITE,	COLOR_BLACK	},	// default
+	{	COLOR_BLUE,	COLOR_WHITE	},	// title
+	{	COLOR_WHITE,	COLOR_BLUE	},	// status
+	{	COLOR_BLACK,	COLOR_YELLOW	},	// line
+	{	COLOR_BLACK,	COLOR_GREEN	},	// progress
+};
+}
+
+TUI::TUI(
+	const char * p,
+	ProcessEnvironment & e,
+	ClientTable & m
+) :
+	prog(p),
+	envs(e),
+	clients(m),
+	redraw_needed(true),
+	pending_quit_event(false)
+{
+	setup_colours();
+}
+
 void
-repaint (
-	WINDOW * window,
-	ClientTable & clients
+TUI::handle_non_kevents (
+) {
+	if (redraw_needed) {
+		redraw_needed = false;
+		redraw();
+		set_update();
+	}
+	BaseTUI::handle_non_kevents();
+}
+
+void
+TUI::setup_colours(
+) {
+	setup_default_colours(COLOR_GREEN, COLOR_BLACK);
+	for (std::size_t i(0); i < sizeof default_colours/sizeof *default_colours; ++i)
+		init_pair(1 + i, default_colours[i].fg, default_colours[i].bg);
+}
+
+inline
+void
+TUI::set_colour_pair(
+	unsigned i
+) {
+	wcolor_set(window, i, 0);
+}
+
+void
+TUI::redraw (
 ) {
 	const int width(getmaxx(window));
+
 	attr_t a;
 	short c;
 	wattr_get(window, &a, &c, 0);
-	wcolor_set(window, DEFAULT_COLOURS, 0);
+
+	set_colour_pair(DEFAULT_COLOURS);
 	werase(window);
-	wcolor_set(window, TITLE_COLOURS, 0);
+	set_colour_pair(TITLE_COLOURS);
 	mvwhline(window, 0, 0, ' ', width);
 	mvwprintw(window, 0, (width - sizeof title + 1) / 2, "%s", title);
-	wcolor_set(window, STATUS_COLOURS, 0);
+	set_colour_pair(STATUS_COLOURS);
 	mvwhline(window, 1, 0, ' ', width);
 	const std::size_t sl(clients.empty() ? sizeof no_fscks : sizeof in_progress);
 	const char * status(clients.empty() ? no_fscks : in_progress);
 	mvwprintw(window, 1, (width - sl + 1) / 2, "%s", status);
 	mvwhline(window, 2, 0, '=', width);
-	wcolor_set(window, LINE_COLOURS, 0);
+
+	set_colour_pair(LINE_COLOURS);
 	int row(3);
 	wmove(window, row, 0);
 	for (ClientTable::const_iterator i(clients.begin()); i != clients.end(); ++i) {
@@ -187,6 +231,18 @@ repaint (
 	wrefresh(window);
 }
 
+void
+TUI::unicode_keypress(
+	wint_t /*c*/
+) {
+}
+
+void
+TUI::ncurses_keypress(
+	wint_t /*k*/
+) {
+}
+
 /* Main function ************************************************************
 // **************************************************************************
 */
@@ -200,7 +256,7 @@ monitor_fsck_progress [[gnu::noreturn]] (
 	const char * prog(basename_of(args[0]));
 	try {
 		popt::definition * top_table[] = {};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "prog");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{prog}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -210,7 +266,7 @@ monitor_fsck_progress [[gnu::noreturn]] (
 		if (p.stopped()) throw EXIT_SUCCESS;
 	} catch (const popt::error & e) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
-		throw EXIT_FAILURE;
+		throw static_cast<int>(EXIT_USAGE);
 	}
 
 	if (!args.empty()) {
@@ -235,14 +291,14 @@ monitor_fsck_progress [[gnu::noreturn]] (
 	ReserveSignalsForKQueue kqueue_reservation(SIGINT, SIGTERM, SIGHUP, SIGWINCH, 0);
 	PreventDefaultForFatalSignals ignored_signals(SIGINT, SIGTERM, SIGHUP, 0);
 
+	std::vector<struct kevent> p(listen_fds + 4);
 	{
-		std::vector<struct kevent> p(listen_fds + 4);
-		EV_SET(&p[0], SIGINT, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
-		EV_SET(&p[1], SIGTERM, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
-		EV_SET(&p[2], SIGHUP, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
-		EV_SET(&p[3], SIGWINCH, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
+		set_event(&p[0], SIGINT, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
+		set_event(&p[1], SIGTERM, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
+		set_event(&p[2], SIGHUP, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
+		set_event(&p[3], SIGWINCH, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
 		for (unsigned i(0U); i < listen_fds; ++i)
-			EV_SET(&p[4 + i], LISTEN_SOCKET_FILENO + i, EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
+			set_event(&p[4 + i], LISTEN_SOCKET_FILENO + i, EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
 		if (0 > kevent(queue.get(), p.data(), p.size(), 0, 0, 0)) {
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
@@ -252,56 +308,46 @@ monitor_fsck_progress [[gnu::noreturn]] (
 
 	ClientTable clients;
 
-	WINDOW * window(initscr());
-	initialize_colours();
+	TUI ui(prog, envs, clients);
 
-	try {
-		std::vector<struct kevent> p(listen_fds + 4 + 1024);
-		for (;;) {
-			if (halt_signalled) {
-				throw EXIT_SUCCESS;
-			}
-			if (window_resized) {
-				window_resized = false;
-				struct winsize size;
-				if (tcgetwinsz_nointr(STDOUT_FILENO, size) == 0) {
-					resize_term(size.ws_row, size.ws_col);
-					// We need to repaint the parts of stdscr that have just been exposed.
-					clearok(window, 1);
-					repaint(window, clients);
-				}
-			}
-			const int rc(kevent(queue.get(), 0, 0, p.data(), p.size(), 0));
-			if (0 > rc) {
-				if (EINTR == errno) continue;
-exit_error:
-				const int error(errno);
-				std::fprintf(stderr, "%s: FATAL: %s\n", prog, std::strerror(error));
-				throw EXIT_FAILURE;
-			}
-			for (size_t i(0); i < static_cast<std::size_t>(rc); ++i) 
-			{
-				const struct kevent & e(p[i]);
-				if (EVFILT_SIGNAL == e.filter) {
-					handle_signal (e.ident);
-					continue;
-				} else
-				if (EVFILT_READ != e.filter) {
-					continue;
-				}
+	while (!ui.quit_flagged()) {
+		ui.handle_non_kevents();
+
+		const int rc(kevent(queue.get(), 0, 0, p.data(), p.size(), 0));
+
+		if (0 > rc) {
+			if (ui.resize_needed()) continue;
+			const int error(errno);
+			if (EINTR == error) continue;
+#if defined(__LINUX__) || defined(__linux__)
+			if (EINVAL == error) continue;	// This works around a Linux bug when an inotify queue overflows.
+			if (0 == error) continue;	// This works around another Linux bug.
+#endif
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "poll", std::strerror(error));
+			throw EXIT_FAILURE;
+		}
+
+		for (size_t i(0); i < static_cast<size_t>(rc); ++i) {
+			const struct kevent & e(p[i]);
+			if (EVFILT_SIGNAL == e.filter)
+				ui.handle_signal(e.ident);
+			if (EVFILT_READ == e.filter) {
 				const int fd(static_cast<int>(e.ident));
-				const bool hangup(EV_EOF & e.flags);
+				if (STDIN_FILENO == fd) {
+					ui.handle_stdin(e.data);
+				} else
 				if (static_cast<unsigned>(fd) < LISTEN_SOCKET_FILENO + listen_fds && static_cast<unsigned>(fd) >= LISTEN_SOCKET_FILENO) {
 					sockaddr_storage remoteaddr;
 					socklen_t remoteaddrsz = sizeof remoteaddr;
 					const int s(accept(fd, reinterpret_cast<sockaddr *>(&remoteaddr), &remoteaddrsz));
-					if (0 > s) goto exit_error;
-
-					if (clients.empty())
-						wrefresh(window);
+					if (0 > s) {
+						const int error(errno);
+						std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "accept", std::strerror(error));
+						throw EXIT_FAILURE;
+					}
 
 					struct kevent o;
-					EV_SET(&o, s, EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
+					set_event(&o, s, EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
 					if (0 > kevent(queue.get(), &o, 1, 0, 0, 0)) {
 						const int error(errno);
 						std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
@@ -309,7 +355,10 @@ exit_error:
 					}
 
 					clients[s];
-				} else {
+				} else
+				{
+					const bool hangup(EV_EOF & e.flags);
+
 					ConnectedClient & client(clients[fd]);
 					char buf[8U * 1024U];
 					const ssize_t c(read(fd, buf, sizeof buf));
@@ -337,19 +386,12 @@ exit_error:
 						}
 						close(fd);
 						clients.erase(fd);
-
-						if (clients.empty()) {
-							repaint(window, clients);
-							endwin();
-						}
 					}
-					if (!clients.empty())
-						repaint(window, clients);
 				}
+				ui.invalidate();
 			}
-		} 
-	} catch (...) {
-		if (!clients.empty()) endwin();
-		throw;
+		}
 	}
+
+	throw EXIT_SUCCESS;
 }

@@ -14,6 +14,9 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstring>
 #include <sys/uio.h>
 #include <sys/stat.h>
+#if defined(__LINUX__) || defined(__linux__)
+#include <sys/sysmacros.h>
+#endif
 #include <unistd.h>
 #include "utils.h"
 #include "fdutils.h"
@@ -34,7 +37,7 @@ static
 bool
 read_first_line_number (
 	std::istream & i,
-	uint_least64_t v
+	uint_least64_t & v
 ) {
 	if (i.fail()) return false;
 	v = 0;
@@ -88,7 +91,7 @@ set_control_group_knob [[gnu::noreturn]] (
 			&percent_of_option,
 			&nested_key_option
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "knob value");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{knob} {value}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);

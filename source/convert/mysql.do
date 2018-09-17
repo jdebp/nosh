@@ -9,7 +9,7 @@
 #
 
 # These get us *only* the configuration variables, safely.
-read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
+read_rc() { clearenv read-conf rc.conf printenv "$1" ; }
 get_var() { read_rc mysql_"$1"_"$2" || read_rc mysql_"$2" || true ; }
 
 print_instance_options() { my_print_defaults --defaults-group-suffix="$1" safe_mysqld mysqld_safe server "mysqld$1" ; }

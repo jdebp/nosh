@@ -5,9 +5,12 @@ clearenv
 console-clear
 console-convert-kbdmap
 console-fb-realizer
+console-input-method
+console-input-method-control
 console-multiplexor
 console-multiplexor-control
 console-ncurses-realizer
+console-termio-realizer
 console-resize
 create-control-group
 cyclog
@@ -16,6 +19,7 @@ detach-controlling-tty
 detach-kernel-usb-driver
 emergency-login
 envdir
+envgid
 envuidgid
 export-to-rsyslog
 false
@@ -26,6 +30,7 @@ find-default-jvm
 find-matching-jvm
 follow-log-directories
 foreground
+getuidgid
 klog-read
 line-banner
 local-datagram-socket-listen
@@ -53,6 +58,7 @@ per-user-manager
 pipe
 plug-and-play-event-handler
 prependpath
+printenv
 pty-get-tty
 pty-run
 read-conf
@@ -69,7 +75,9 @@ set-control-group-knob
 set-dynamic-hostname
 set-mount-object
 setenv
+setgid-fromenv
 setlock
+setlogin
 setpgrp
 setsid
 setuidgid
@@ -83,6 +91,10 @@ tcp-socket-accept
 tcp-socket-connect
 tcp-socket-listen
 tcpserver
+time-env-add
+time-env-set
+time-pause-until
+time-print-tai64n
 true
 ttylogin-starter
 ucspi-socket-rules-check
@@ -93,5 +105,6 @@ umask
 unsetenv
 unshare
 userenv
+userenv-fromenv
 vc-get-tty
 vc-reset-tty

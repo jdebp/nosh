@@ -1,0 +1,96 @@
+<refentry id="printenv">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>printenv</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv><refname>printenv</refname><refpurpose>print the whole environment, or the values of specific environment varables</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>printenv</command> 
+<arg>--print0</arg> 
+<arg>--envdir</arg> 
+<arg>--conf</arg> 
+<arg>--full</arg> 
+<arg choice='opt' rep='repeat'><replaceable>var</replaceable></arg> 
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Note</title>
+
+<para>
+C-shells have a built-in <command>printenv</command> command that has no options.
+See the manual for each individual shell for its built-in command.
+</para>
+
+</refsection>
+<refsection><title>Description</title>
+
+<para>
+<command>printenv</command> either prints to standard output the entire environment, or the specific environment variable(s) <replaceable>var</replaceable>.
+If there is no environment variable by the name of any particular <replaceable>var</replaceable> in the environment, that argument is ignored.
+(Note that an environment variable that does not exist is distinct from an environment variable that does exist but that simply has an empty string for its value.)
+</para>
+
+<para>
+If printing the entire environment, both the environment variable names and values are printed, separated by an equals sign.
+If printing specific environment variables, normally only the values are printed; unless the <arg choice='plain'>--full</arg> option is specified to have the environment names printed in this case as well.
+</para>
+
+<para>
+A process's environment variables are NUL-terminated, and may contain any other character in their names and values.
+If the <arg choice='plain'>--print0</arg> option is specified, this is exactly how they are printed out, as NUL-terminated records.
+This form of output is suitable for input to utilities such as <citerefentry><refentrytitle>xargs</refentrytitle><manvolnum>1</manvolnum></citerefentry> with its <arg choice='plain'>-0</arg> option.
+</para>
+
+<para>
+If the <arg choice='plain'>--envdir</arg> option is specified (but the <arg choice='plain'>--print0</arg> option is not), the output is the same as the <arg choice='plain'>--print0</arg> output except that NUL and LF characters are interchanged.
+Each environment variable (name and value) is always a single LF-terminated line, with interior NULs representing any LFs in the name and value.
+This form of output is suitable for utilities such as <citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry> to read from a file.
+</para>
+
+<para>
+If the <arg choice='plain'>--conf</arg> option is specified (but the <arg choice='plain'>--print0</arg> and <arg choice='plain'>--envdir</arg> options are not), the output is converted into a quoted and escaped form.
+Environment variable names and values that contain anything other than <code>/</code> and characters in the POSIX Portable Filename Character Set (i.e. anything other than alphanumeric characters and the characters <code>/</code>, <code>-</code>, <code>_</code>, and <code>.</code>) are quoted, using quotation marks and backslashes to escape any quotation marks and other special characters, and the output is LF-terminated.
+An environment variable (name and value) may potentially be more than a single LF-terminated line.
+This form of output (for which one will usually use the <arg choice='plain'>--full</arg> option as well, to have the output in the form of a POSIX shell variable assignment) is suitable for utilities such as <citerefentry><refentrytitle>read-conf</refentrytitle><manvolnum>1</manvolnum></citerefentry> to read from a file, or a POSIX-conformant shell interpreter to read as shell language input.
+It can be used to add settings to files like <filename>/etc/rc.conf</filename> (and its relatives), <code>/etc/locale.conf</code>, and <filename>/etc/os-version</filename>.
+</para>
+
+<para>
+Normally however, without any of these output options in effect, the names and values of environment variables are printed as-is, and the output is LF-terminated.
+This form of output is ambiguous when environment variable names or values contain LF characters, with a single environment variable potentially not always being one LF-terminated line of output.
+It is suitable for utilities such as a POSIX-conformant shell interpreter to employ in <emphasis>command substitution</emphasis> or to read via <command>read</command> <arg choice='plain'>-r</arg>; but in general the other forms are the machine-parseable ones, and this form is for human beings rather than machines.
+</para>
+
+</refsection><refsection><title>See also</title>
+
+<itemizedlist>
+<listitem><para>
+<citerefentry><refentrytitle>appendpath</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>prependpath</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>unsetenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>read-conf</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+</itemizedlist>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

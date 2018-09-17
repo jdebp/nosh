@@ -4,6 +4,7 @@ clearenv
 create-control-group
 delegate-control-group-to
 envdir
+envgid
 envuidgid
 exec
 export-to-rsyslog
@@ -13,6 +14,7 @@ fifo-listen
 find-default-jvm
 find-matching-jvm
 follow-log-directories
+getuidgid
 hardlimit
 klog-read
 line-banner
@@ -39,7 +41,9 @@ set-control-group-knob
 set-dynamic-hostname
 set-mount-object
 setenv
+setgid-fromenv
 setlock
+setlogin
 setpgrp
 setuidgid
 setuidgid-fromenv
@@ -54,3 +58,4 @@ udp-socket-listen
 udp-socket-connect
 unsetenv
 userenv
+userenv-fromenv

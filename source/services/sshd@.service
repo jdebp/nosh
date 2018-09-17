@@ -4,6 +4,7 @@
 
 [Unit]
 Description=SSH per-connection service
+Conflicts=tinysshd.socket
 Requires=sshdgenkeys.service
 After=sshdgenkeys.service
 
@@ -13,6 +14,8 @@ EnvironmentDirectory=env
 RuntimeDirectory=%p
 RuntimeDirectoryMode=0755
 ExecStart=%p -D -e -i
+# This is a bodge because OpenSSH erroneously calls setlogin() before setsid() .
+SessionLeader=yes
 
 [Install]
 WantedBy=server.target

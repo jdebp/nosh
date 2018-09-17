@@ -15,9 +15,12 @@ For copyright and licensing terms, see the file named COPYING.
 
 extern void console_convert_kbdmap ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void console_fb_realizer ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void console_input_method ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void console_input_method_control ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void console_multiplexor ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void console_multiplexor_control ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void console_ncurses_realizer ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void console_termio_realizer ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void console_resize ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void console_clear ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void console_terminal_emulator ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
@@ -44,9 +47,12 @@ commands[] = {
 	// Terminals
 	{	"console-convert-kbdmap",	console_convert_kbdmap		},
 	{	"console-fb-realizer",		console_fb_realizer		},
+	{	"console-input-method",		console_input_method		},
+	{	"console-input-method-control",	console_input_method_control	},
 	{	"console-multiplexor",		console_multiplexor		},
 	{	"console-multiplexor-control",	console_multiplexor_control	},
 	{	"console-ncurses-realizer",	console_ncurses_realizer	},
+	{	"console-termio-realizer",	console_termio_realizer		},
 	{	"console-resize",		console_resize			},
 	{	"console-clear",		console_clear			},
 	{	"console-terminal-emulator",	console_terminal_emulator	},

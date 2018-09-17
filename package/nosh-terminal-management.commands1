@@ -1,9 +1,12 @@
 console-clear
 console-convert-kbdmap
 console-fb-realizer
+console-input-method
+console-input-method-control
 console-multiplexor
 console-multiplexor-control
 console-ncurses-realizer
+console-termio-realizer
 console-resize
 console-terminal-emulator
 detach-controlling-tty

@@ -137,6 +137,7 @@ exec_terminal (
 			prog = basename_of(next_program);
 			setprocname(prog);
 			setprocargv(args.size(), args.data());
+			setprocenvv(envs.size(), envs.data());
 			c->func(next_program, args, envs);
 		} else {
 			args.push_back(0);

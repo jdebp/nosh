@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Control FIFO for Uwe Ohse's %p for %u
+
+[Socket]
+SocketMode=0700
+ListenFIFO=%t/%p/trigger
+Accept=false
+
+[Install]
+WantedBy=normal.target

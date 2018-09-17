@@ -1,5 +1,5 @@
 #!/bin/sh -e
-# See http://skarnet.org./software/compile.html
+# See http://jdebp.eu./FGA/slashpackage.html
 if [ \! -d package ] || [ \! -d source ]
 then
 	echo "You are not in the right directory." 1>&2

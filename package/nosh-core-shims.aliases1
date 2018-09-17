@@ -5,3 +5,4 @@ exec	true
 exec	ulimit
 exec	umask
 exec	unshare
+exec	printenv

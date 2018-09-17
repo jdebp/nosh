@@ -11,6 +11,7 @@ Type=dbus
 ExecStart=/usr/lib/blueman/%p
 ProtectHome=true
 LimitNPROC=1
+Restart=on-abort
 
 [Install]
 WantedBy=workstation.target

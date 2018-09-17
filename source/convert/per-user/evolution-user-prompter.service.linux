@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Evolution user prompter for %u
+
+[Service]
+Type=dbus
+EnvironmentDirectory=env
+ExecStart=/usr/lib/evolution/%p
+Restart=on-abort
+
+[Install]

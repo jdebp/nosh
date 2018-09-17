@@ -1,0 +1,20 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Dovecot socket(s)
+
+[Socket]
+UCSPIRules=false
+# Dovecot cannot handle dual-stack sockets, so we have to have a separate socket per IP version.
+ListenStream=143
+ListenStream=[::]:143
+ListenStream=993
+ListenStream=[::]:993
+BindIPv6Only=ipv6-only
+KeepAlive=true
+Accept=false
+
+[Install]
+WantedBy=server.target

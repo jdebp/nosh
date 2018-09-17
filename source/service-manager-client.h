@@ -161,6 +161,15 @@ open_supervise_dir (
 	const int bundle_dir_fd
 ) ;
 bool
+has_exited_run (
+	const unsigned int b,
+	const char status[]
+) ;
+bool
+has_main_pid (
+	const char status[]
+) ;
+bool
 is_initially_up (
 	const int service_dir_fd
 ) ;

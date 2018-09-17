@@ -35,14 +35,14 @@ Normally, the <replaceable>next-prog</replaceable> will be (or will eventually c
 </para>
 
 <para>
+<command>login-banner</command> derives information about the number of users logged on from the <filename>utmp</filename> file.
 The location of the <filename>utmp</filename> file is derived at compile time from a system header when the utility is built from source.
 To override it at runtime, use the <code>--utmp-filename</code> option.
 </para>
 
 <para>
-<command>login-banner</command> derives information about the number of users logged on from the <filename>utmp</filename> file.
-It determins the name of the controlling TTY from the value of the <code>TTY</code> environment variable, if present.
-This will be the case if <command>login-banner</command> has been invoked within a chain that has run <citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, or an equivalent <citerefentry><refentrytitle>getty</refentrytitle><manvolnum>1</manvolnum></citerefentry> program.
+It determines the name of the controlling TTY from the value of the <code>TTY</code> environment variable, if present.
+This will be the case if <command>login-banner</command> has been invoked within a chain that has run <citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> or <citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, or an equivalent <citerefentry><refentrytitle>getty</refentrytitle><manvolnum>1</manvolnum></citerefentry> program that sets that variable.
 If absent, the <citerefentry><refentrytitle>ttyname</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function is called.
 </para>
 
@@ -84,6 +84,14 @@ This defaults to the same as <code>\s</code>.
 <term><code>\n</code></term>
 <listitem><para>
 The "node" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> function.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><code>\N</code></term>
+<listitem><para>
+The "pretty node" name, from the <filename>/etc/machine-info</filename> file, if available.
+This defaults to the same as <code>\n</code>.
 </para></listitem>
 </varlistentry>
 

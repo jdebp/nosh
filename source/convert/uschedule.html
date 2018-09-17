@@ -1,0 +1,34 @@
+<title>Uwe Ohse's uschedule</title>
+<link rel="Up" href="../index.html" title="nosh Guide" />
+<h1>
+Uwe Ohse's uschedule
+</h1>
+
+<p>
+To use the per-user <code>uschedule</code> service bundle, one must have <a href="http://jdebp.eu./Softwares/uschedule/">a modified version of Uwe Ohse's uschedule</a>:
+</p>
+
+<ul>
+<li><p>
+whose <code>uschedule</code> program expects to find the trigger FIFO at <code>/run/user/:<i>user-id</i>/uschedule/trigger</code> (under the <a href="../gazetteer.html#user-runtime">user runtime directory</a>); and
+</p></li>
+<li><p>
+whose <code>uscheduled</code> program understands the <code>LISTEN_FDS</code> mechanism for recieving an already-open file descriptor for that FIFO.
+</p></li>
+</ul>
+
+<p>
+The filesystem layout is different to that explained in the uschedule package's doco.
+The <a href="../external-formats.html">external configuration conversion subsystem</a> places the command and job definitions in <code class="filename">$HOME/.config/uschedule/</code>.
+For compatibility, it sets up <code class="filename">$HOME/.uschedule</code> as a symbolic link pointing there.
+</p>
+
+<p>
+There is no need for the <code>uscheduleconf</code> program here, as main and log service bundles are set up by the external configuration conversion subsystem.
+Since they are run by the per-user service manager, which does not run as the superuser, all of the accompanying security warnings in the uschedule package's doco are moot.
+</p>
+
+<p>
+They also live in <a href="../gazetteer.html#user-service-bundles">the normal place for per-user service bundles</a> and place their log files in <a href="../gazetteer.html#per-user-log">the normal per-user log area</a>.
+There are no service bundles in <code class="filename">$HOME/.config/uschedule/</code>.
+</p>

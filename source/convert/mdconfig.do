@@ -9,8 +9,8 @@
 #
 
 # This gets us *only* the configuration variables, safely.
-dump_rc() { clearenv read-conf rc.conf "`which printenv`" ; }
-read_rc() { clearenv read-conf rc.conf "`which printenv`" "$1" ; }
+dump_rc() { clearenv read-conf rc.conf printenv ; }
+read_rc() { clearenv read-conf rc.conf printenv "$1" ; }
 get_var1() { read_rc "$1" || true ; }
 get_var2() { read_rc mdconfig_"$1"_"$2" || read_rc mdconfig_"$2" || true ; }
 
@@ -41,7 +41,7 @@ xargs -0 -r system-control disable --
 # The md device list is determined by the list of mdconfig_md* rc.conf variables.
 dump_rc |
 grep -E 'mdconfig_md[[:digit:]]+=' |
-while read mdline
+while read -r mdline
 do
 	md="`expr \"${mdline}\" : 'mdconfig_\(md[0-9][0-9]*\)='`"
 	test -n "${md}" || continue
@@ -150,6 +150,19 @@ do
 
 	if mnt="`system-control get-mount-where -- \"/dev/${md}\"`"
 	then
+		case "${kind}" in
+		swap|malloc)
+			directory="${mnt}"
+			while test "${directory}" != '/'
+			do
+				dir="`echo \"${directory}\" | tr '/' '-'`"
+				rm -f -- "$r/${newfs_service}/before/mount@${dir}"
+				ln -s -- "../../mount@${dir}" "$r/${newfs_service}/before/"
+				directory="`dirname \"${directory}\"`"
+			done
+			;;
+		esac
+
 		populate_service="populate_md@`echo ${mnt}|sed -e 's:/:-:g'`"
 
 		system-control convert-systemd-units $e "$r/" "./${populate_service}.service"

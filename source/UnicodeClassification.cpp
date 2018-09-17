@@ -141,11 +141,17 @@ Cf[] = {
 	{ 0x000000AD, 0x000000AD }, { 0x00000600, 0x00000605 }, { 0x0000061C, 0x0000061C }, { 0x000006DD, 0x000006DD },
 	{ 0x0000070F, 0x0000070F }, { 0x0000180E, 0x0000180E }, { 0x0000200B, 0x0000200F }, { 0x0000202A, 0x0000202E }, 
 	{ 0x00002060, 0x00002064 }, { 0x00002066, 0x0000206F }, { 0x0000FEFF, 0x0000FEFF }, { 0x0000FFF9, 0x0000FFFB },
-	{ 0x000110BD, 0x000110BD }, { 0x0001BCA0, 0x0001BCA3 }, { 0x0001D173, 0x0001D17A }, { 0x000E0001, 0x000E007F }
+	{ 0x000110BD, 0x000110BD }, { 0x0001BCA0, 0x0001BCA3 }, { 0x0001D173, 0x0001D17A }, { 0x000E0001, 0x000E007F },
+},
+WF[] = {
+	{ 0x00001100, 0x0000115F }, { 0x00002329, 0x0000232A }, { 0x00002E80, 0x0000303E }, { 0x00003040, 0x0000A4CF },
+	{ 0X0000AC00, 0X0000D7A3 }, { 0X0000F900, 0X0000FAFF }, { 0X0000FE10, 0X0000FE19 }, { 0X0000FE30, 0X0000FE6F },
+	{ 0X0000FF00, 0X0000FF60 }, { 0X0000FFE0, 0X0000FFE6 }, { 0X00020000, 0X0002FFFD }, { 0X00030000, 0X0003FFFD },
 };
 static const ClosedRange * const Mn_end(Mn + sizeof Mn/sizeof *Mn);
 static const ClosedRange * const Me_end(Me + sizeof Me/sizeof *Me);
 static const ClosedRange * const Cf_end(Cf + sizeof Cf/sizeof *Cf);
+static const ClosedRange * const WF_end(WF + sizeof WF/sizeof *WF);
 static const 
 ClosedRangeWithRank
 CC[] = {
@@ -503,6 +509,12 @@ bool
 IsOtherFormat(uint32_t character)
 {
 	return Contains(Cf, Cf_end, character);
+}
+
+bool 
+IsWideOrFull(uint32_t character)
+{
+	return Contains(WF, WF_end, character);
 }
 
 bool 

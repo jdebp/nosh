@@ -31,7 +31,8 @@ With that option, the failure will be ignored and <replaceable>next-prog</replac
 <command>read-conf</command> implements a very limited subset of the <citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry> lexical syntax for shell script files.
 The configuration files that it reads are usually shell script files that consist solely of simple variable assignments.
 Variable, command, brace, and parameter substitution are generally not used and are not supported by <command>read-conf</command>.
-(This limited syntax is actually a requirement for the likes of <code>/etc/rc.conf</code> on OpenBSD, where it is mandated that system configuration files be parseable by things that are not shell script interpreters.)
+(This limited syntax is actually a requirement for the likes of <filename>/etc/rc.conf</filename> on OpenBSD, where it is mandated that system configuration files be parseable by things that are not shell script interpreters.
+<filename>/etc/os-release</filename> and <filename>/etc/machine-info</filename> on Linux operating systems have a similar requirement not to perform substitutions.)
 </para>
 
 <para>
@@ -109,6 +110,9 @@ The previously documented workaround for those libraries' having memory leaks in
 </para></listitem>
 <listitem><para>
 <citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>printenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 </para></listitem>
 </itemizedlist>
 

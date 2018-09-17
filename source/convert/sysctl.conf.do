@@ -9,7 +9,7 @@
 #
 
 # This gets us *only* the configuration variables, safely.
-dump_rc() { clearenv read-conf rc.conf "`which printenv`" ; }
+dump_rc() { clearenv read-conf rc.conf printenv ; }
 
 redo-ifchange rc.conf
 

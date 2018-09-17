@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Uwe Ohse's %p for %u
+
+[Service]
+RuntimeDirectory=%p
+RuntimeDirectoryMode=0700
+EnvironmentDirectory=env
+ExecStart=%p
+
+[Install]

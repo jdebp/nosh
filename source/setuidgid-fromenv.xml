@@ -33,8 +33,23 @@ Otherwise, if it does not exist, the supplementary GIDs list is set to just the 
 </para>
 
 <para>
+One can set up these environment variables with the <citerefentry><refentrytitle>envuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry> or <citerefentry><refentrytitle>getuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry> commands.
+</para>
+
+<para>
 If it fails setting the group or user IDs, it does not chain and exits with status code 111.
 </para>
+
+</refsection><refsection><title>See also</title>
+
+<itemizedlist>
+<listitem><para>
+<citerefentry><refentrytitle>envgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>setgid-fromenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+</itemizedlist>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
 

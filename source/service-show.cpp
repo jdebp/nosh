@@ -317,7 +317,7 @@ service_show [[gnu::noreturn]] (
 		popt::definition * top_table[] = {
 			&json_option
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "directory");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{directory}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -410,9 +410,8 @@ service_show [[gnu::noreturn]] (
 				write_string_value("DaemontoolsEncoreState", state_of(status[ENCORE_STATUS_OFFSET]));
 			write_numeric_int_value("MainPID", p);
 			write_numeric_uint64_value("Timestamp", s);
-			bool leap;
-			const uint64_t z(tai64_to_time(envs, s, leap));
-			write_numeric_uint64_value("UTCTimestamp", z);
+			const TimeTAndLeap z(tai64_to_time(envs, s));
+			write_numeric_uint64_value("UTCTimestamp", z.time);
 			const char * const want('u' == want_flag ? "up" : 'O' == want_flag ? "once at most" : 'o' == want_flag ? "once" : 'd' == want_flag ? "down" : "nothing");
 			write_string_value("Want", want);
 			write_boolean_value("Paused", status[PAUSE_FLAG_OFFSET]);
@@ -424,9 +423,8 @@ service_show [[gnu::noreturn]] (
 					write_numeric_int_value(status_event[j] + std::string("ExitStatusCode"), code);
 					write_numeric_int_value(status_event[j] + std::string("ExitStatusNumber"), number);
 					write_numeric_uint64_value(status_event[j] + std::string("Timestamp"), stamp);
-					bool s_leap;
-					const uint64_t zulu(tai64_to_time(envs, stamp, s_leap));
-					write_numeric_uint64_value(status_event[j] + std::string("UTCTimestamp"), zulu);
+					const TimeTAndLeap zulu(tai64_to_time(envs, stamp));
+					write_numeric_uint64_value(status_event[j] + std::string("UTCTimestamp"), zulu.time);
 				}
 			}
 		}
