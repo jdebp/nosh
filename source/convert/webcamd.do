@@ -4,8 +4,8 @@
 ## **************************************************************************
 # vim: set filetype=sh:
 #
-# Special setup for ppp.
-# This is invoked by general-services.do .
+# Special setup for webcamd.
+# This is invoked by all.do .
 #
 
 # These get us *only* the configuration variables, safely.

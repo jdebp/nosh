@@ -1,0 +1,505 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
+<refentry id="TerminalCapabilities">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>TerminalCapabilities</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class="manual">C++ library</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>TerminalCapabilities</refname>
+<refpurpose>terminal capabilities class</refpurpose>
+</refnamediv>
+
+<refsection><title>Description</title>
+
+<para>
+The <code>TerminalCapabilities</code> class decodes the process environment, passed as a <code>ProcessEnvironment</code> object, into a suite of terminal capabilities.
+These capabilities are used by, for example, the <code>ECMA48Output</code> and <code>ECMA48Decode</code> classes, and their users, to determine how to behave.
+</para>
+
+<refsection><title>Environment variables</title>
+
+<para>
+The <envar>TERM</envar> environment variable is its primary source of information.
+Its value is expected to follow the <citerefentry><refentrytitle>terminfo</refentrytitle><manvolnum>5</manvolnum></citerefentry> and <citerefentry><refentrytitle>termcap</refentrytitle><manvolnum>5</manvolnum></citerefentry> convention (laid out in <citerefentry><refentrytitle>term</refentrytitle><manvolnum>7</manvolnum></citerefentry>) of a root name followed by zero or more hyphen-separated feature suffixes (such as, for example, <code>teken-256color</code>).
+The <code>TerminalCapabilities</code> class only cares about the root name, which it takes to denote a family of terminal types (e.g. <code>putty</code>), and whether there is a <code>-256color</code> suffix in the value.
+Other feature suffixes are ignored.
+</para>
+
+<para>
+The class also uses the values of a few other environment variables, mainly to disambiguate the cases where the <envar>TERM</envar> environment variable has been misconfigured as <code>xterm</code> (which it is far too often):
+</para>
+<variablelist>
+
+<varlistentry>
+<term>
+<envar>COLORTERM</envar>
+</term>
+<listitem>
+<para>
+The existence of this variable signifies extra colour capabilities of some sort.
+If it has the value <code>truecolor</code> or the value <code>24bit</code> then the terminal is taken to understand ISO 8613-6 Direct colour SGR 38 and SGR 48 control sequences.
+Otherwise it indicates that the terminal understands the additional 8 (de facto) standard colours (from AIXTerm) set by SGR 90&#x2013;97 and SGR 100&#x2013;107.
+</para>
+<para>
+For the terminal type families <code>linux</code> and <code>teken</code> it signifies that the terminal is a user-space virtual terminal rather than a kernel virtual terminal.
+User-space virtual terminals support features extra to what KVTs support; including DEC Locator reports, extended DECSUSR, the HPA and CTC control sequences, the full suite of C1 control characters and their 7-bit aliases, DECFNK reports that contain modifier information, and the invisible attribute.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<envar>XTERM_VERSION</envar>
+</term>
+<listitem>
+<para>
+Set by the XTerm program in the child processes that it spawns for terminal sessions, this indicates the version number of XTerm.
+It is used to attempt to determine when a user or a programmer has incorrectly used <code>xterm</code> when the terminal emulator program is not in fact XTerm, and disable the use of some features that genuine XTerm has that other programs incorrectly ascribed the <code>xterm</code> terminal type have not.
+These include extended DECSCUSR, DEC Locator, XTerm-style SGR mouse reports, the HPA and CTC control sequences, and the NEL control character.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<envar>VTE_VERSION</envar>
+</term>
+<listitem>
+<para>
+Set by the VTE library in the child processes that terminal emulators using that library spawn for terminal sessions, this indicates the version number of VTE.
+From the version number of VTE it can be determined whether it is possible to use DECSCUSR and ISO 8613-6 SGR sequences using sub-parameters.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<envar>KONSOLE_PROFILE_NAME</envar>
+</term>
+<listitem>
+<para>
+Set by the Konsole program in the child processes that it spawns for terminal sessions, this indicates the Konsole profile in use.
+Its value is ignored.
+Its existence indicates that it is possible to use XTerm-style SGR mouse reports.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<envar>TERM_PROGRAM</envar>
+</term>
+<listitem>
+<para>
+Set by the iTerm.app program in the child processes that it spawns for terminal sessions, this indicates the name of the terminal program (a convention that only that terminal emulator program actually adheres to).
+If it has the value <code>iTerm.app</code>, then if the terminal type is <code>xterm</code> it is considered to be <code>iterm</code>.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<envar>ROXTERM_ID</envar>
+</term>
+<listitem>
+<para>
+Set by the ROXTerm program in the child processes that it spawns for terminal sessions, this is an internal identifier of the terminal emulator.
+Its value is ignored.
+Its existence indicates that it is possible to use ISO 8613-6 Direct colour SGR control sequences and DECSCUSR.
+</para>
+</listitem>
+</varlistentry>
+
+</variablelist>
+
+</refsection>
+
+<refsection><title>Capabilities</title>
+
+<para>
+Terminals are expected to support a popular subset of ECMA-48 and the private control sequences of DEC VT 52x terminals.
+The capabilities determine variations from this.
+Some standard control sequences are unimplemented, incompletely implemented, or cause the wrong thing in some terminal emulators.
+For example: The ECMA control sequence decoders in the Interix terminal emulator and in Konsole do not simply discard CSI control sequences that they do not implement, but instead print parts of them as character output.
+</para>
+
+<variablelist>
+
+<varlistentry>
+<term>
+<code>pending_wrap</code>
+</term>
+<listitem>
+<para>
+The <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> manual describes a mechanism where the automatic line wrap at the right margin is held pending until the next printing character is processed, in order to allow full-screen TUI programs to write right up to the lower-right-hand corner.
+This mechanism is formally documented almost nowhere else, but is implemented in almost all terminal types.
+The few exceptions are the <code>dumb</code>, <code>cygwin</code>, and <code>interix</code> terminal type families.
+</para>
+<para>
+Writing in the lower-right-hand corner is not the only situation where applications must be aware of the effect of pending right margin wrap.
+In the pending state, the terminal cursor is in a different position to where an application would have expected it to wrap to, and relative cursor motions, including BackSpace and Next Line, need to account for this.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>colour_level</code>
+</term>
+<listitem>
+<para>
+There are four different mechanisms for specifying colour: the original 8 SGR foreground and background colour sequences standardized by ECMA-48, an additional 8 SGR sequences (originally from AIXTerm) for a total of 16 (de facto and de jure) standard colours, ISO 8613-6 Indexed colour (which conventionally has the 16 standard colours as the first 16 entries in the colour palette), and ISO 8613-6 Direct RGB colour.
+Compounding this is that there are, because of a historical misreporting of ISO 8613-6, two forms for the two ISO 8613-6 mechanism.
+</para>
+<itemizedlist>
+<listitem><para>
+The <code>dumb</code> terminal type family is taken to not have any colour support at all.
+</para></listitem>
+<listitem><para>
+Where the <envar>COLORTERM</envar> environment variable exists, the terminal is taken to support at least the two mechanisms for the 16 standard colours.
+</para></listitem>
+<listitem><para>
+Where either the <envar>COLORTERM</envar> or the <envar>TERM</envar> environment variable value contains the string "256", the terminal is taken to support at least ISO 8613-6 Indexed colour (with the historic error).
+The former comes from a convention of specifying the terminal type without the "-256color" feature suffix in the <envar>TERM</envar> environment variable and the "real" terminal type in the <envar>COLORTERM</envar> environment variable.
+This was to cope with databases to which the "-256color" name variants had not yet spread, back when they were a new idea, and is largely obsolete nowadays.
+It is the latter that should nowadays be used.
+</para></listitem>
+<listitem><para>
+Where the <envar>COLORTERM</envar> environment variable value is the string "truecolor" or "24bit", the terminal is taken to support at least ISO 8613-6 Direct colour (with the historic error).
+</para></listitem>
+<listitem><para>
+The <envar>COLORTERM</envar> environment variable is largely obsolete nowadays as a mechanism for specifying ISO 8613-6 Indexed colour support, and most terminal type families are simply assumed to support it.
+It is nowadays pretty much base level functionality for GUI terminal emulators, with most also supporting Direct colour (even without the historic error in the cases of recent versions of the VTE library and iTerm).
+Thus even not employing the "-256color" suffix in the value of the <envar>TERM</envar> environment variable implies Indexed colour support.
+</para></listitem>
+<listitem><para>
+Base level functionality for the <code>linux</code> terminal type family is both Indexed and Direct colour support, since Linux version 4.8.
+Although Linux does not actually implement 24-bit colour, it instead faking it by mapping RGB to its Indexed color palette (oftentimes not particularly well).
+</para></listitem>
+<listitem><para>
+Base level functionality for the <code>teken</code> terminal type family is Indexed colour support; unless it is <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>, which supports Direct colour as well.
+</para></listitem>
+<listitem><para>
+Base level functionality for the <code>interix</code>, <code>pcvt</code>, and <code>cons</code> terminal type families is only the original standard 8 colours being supported.
+</para></listitem>
+</itemizedlist>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>cursor_shape_command</code>
+</term>
+<listitem>
+<para>
+Emulating DEC VTs being the de facto standard of modern (character mode) terminal emulators, the de facto standard way to alter the cursor shape has been the DECSCUSR control sequence since the time of the DEC VT510/VT520/VT525.
+Being independently developed at around the same time, the Linux kernel's built-in terminal emulator has a quite different and idiosyncratic control sequence (LINUXSCUSR).
+XTerm extended the DECSCUSR control sequence with more possible cursor shapes.
+</para>
+<itemizedlist>
+<listitem><para>
+The <code>linux</code> terminal type family is taken to understand only the LINUXSCUSR control sequence, except for <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para></listitem>
+<listitem><para>
+The <code>linux</code> and <code>teken</code> terminal type families when they are <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>, genuine XTerm, and the <code>rxvt</code> and <code>teraterm</code> terminal type families are taken to understand extended DECSCUSR.
+</para></listitem>
+<listitem><para>
+The <code>putty</code>, <code>tmux</code>, and <code>screen</code> terminal type families, ROXTerm, and newer versions of the VTE library are taken to understand standard DECSCUSR.
+</para></listitem>
+</itemizedlist>
+<para>
+Unfortunately, DECSCUSR is one of the control sequences that several terminals not only do not support but actively decode wrongly, treating parts of it as printable output.
+So applications cannot just emit it and leave it to be ignored where not implemented.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>use_DECPrivateMode</code>
+</term>
+<listitem>
+<para>
+The <code>interix</code> terminal type family does not correctly handle CSI sequences containing private characters, emitting parts of them as printable output.
+In particular, this means that it does not implement any DEC Private modes at all.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>use_DECLocator</code>
+</term>
+<listitem>
+<para>
+Only genuine XTerm and <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> understand DECELR and DECSLE.
+(Other terminal types actually process the control sequences incorrectly.)
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>has_XTerm1006Mouse</code>
+</term>
+<listitem>
+<para>
+The <code>dumb</code> terminal type family, the <code>rxvt</code> terminal type family, and erroneously labelled <code>xterm</code> family terminals that are not XTerm, not the VTE library, and not Konsole, are not capable of generating XTerm-style SGR-form mouse reports.
+(Other forms of XTerm-style mouse report are not ECMA control sequences, are problematic to decode, and have been deprecated in favour of the SGR form since the 2000s.)
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>use_DECSTR</code>
+</term>
+<listitem>
+<para>
+Only genuine XTerm and <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> understand DECSTR.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>use_DECST8C</code>
+</term>
+<listitem>
+<para>
+Only <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> understands DECST8C.
+(So too does a Windows NT utility named ansicon, outwith the worlds of Linux and the BSDs.)
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>use_NEL</code>
+</term>
+<listitem>
+<para>
+The <code>dumb</code> and <code>interix</code> terminal type families, and erroneously labelled <code>xterm</code> family terminals that are not genuine XTerm, do not implement the ECMA-48 standard Next Line control character.
+Applications must fall back to Carriage Return followed by Line Feed.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>use_RI</code>
+</term>
+<listitem>
+<para>
+The <code>dumb</code> and <code>interix</code> terminal type families do not implement the ECMA-48 standard Reverse Index control character.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>use_IND</code>
+</term>
+<listitem>
+<para>
+The <code>dumb</code> and <code>interix</code> terminal type families do not implement the ECMA-48 standard Index control character.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>use_CTC</code>
+</term>
+<listitem>
+<para>
+Only genuine XTerm and <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> are capable of the Cursor Tabulation Control control sequence.
+For others, applications have to fall back on a combination of the TBC control sequence and the HTS control charcter.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>use_HPA</code>
+</term>
+<listitem>
+<para>
+Only genuine XTerm and <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> are capable of the Horizontal Position Absolute control sequence.
+For others, applications have to fall back on the CHA control sequence.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>use_DECSNLS</code>
+</term>
+<listitem>
+<para>
+Only genuine XTerm and <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> are capable of the DEC Set Number of Lines control sequence.
+For others, applications have to fall back on the DECSLPP control sequence and deal with the fact that DECSLPP 0 to DECSLPP 24 may be DTTerm extensions rather than number of lines.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>use_DECSCPP</code>
+</term>
+<listitem>
+<para>
+ROXTerm and the VTE library actively wrongly decode the DEC Set Columns Per Page control sequence, treating parts of it as printable output.
+For those, applications have to fall back on the DECSLPP 8 control sequence if they can.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>use_DECSLRM</code>
+</term>
+<listitem>
+<para>
+ROXTerm and the VTE library actively wrongly decode the DEC Set Left and Right Margins control sequence, treating parts of it as printable output.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>has_DTTerm_DECSLPP_extensions</code>
+</term>
+<listitem>
+<para>
+The <code>dtterm</code>, <code>xterm</code>, <code>teraterm</code>, and <code>rxvt</code> terminal type families, Konsole, and VTE library terminal emulators are all capable of extensions pioneered by DTTerm that repurpose DECSLPP 0 to DECSLPP 24.
+DECSLPP 8 in particular sets both height and width in one control sequence.
+For those terminal types, DECSLPP 8 or DECSNLS (if supported) are the only ways to set heights less than 25.
+For other terminal types, DECSLPP can set all heights and widths have to be set with DECSCPP (if supported).
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>reset_sets_tabs</code>
+</term>
+<listitem>
+<para>
+Only <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> understands DECST8C.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>linux_editing_keypad</code>
+</term>
+<listitem>
+<para>
+The <code>linux</code> terminal type family, because of a long-standing bug, swaps the DECFNK codes for the Home and End keys on the editing keypad with those for the Find and Select keys.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>interix_function_keys</code>
+</term>
+<listitem>
+<para>
+The <code>interix</code> terminal type family reports function keys as Start of Selected Area followed by a character.
+To decode function keys from an Interix terminal emulator an ECMA decoder has to (mis)treat the SSA character as another single-character shift, like SS2 and SS3.
+It is effectively "Single Shift level A".
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>sco_function_keys</code>
+</term>
+<listitem>
+<para>
+The <code>pcvt</code>, <code>cons</code>, and <code>teken</code> terminal type families generate the function key sequences that were generated by the SCO Unix Multiscreen virtual terminal.
+(In the case of the <code>teken</code> family, this is part of an admixture of DECFNK and SCO control sequences.)
+These SCO function key control sequences overlap with the DECFNK sequences for the cursor keypad and with the function key sequences generated by the <code>rxvt</code> terminal type family.
+Applications must only decode them as function keys when a terminal type that generates these sequences is in effect.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>rxvt_function_keys</code>
+</term>
+<listitem>
+<para>
+The <code>rxvt</code> terminal type family generates erroneous ECMA control sequences for function keys, where "<code>&#x0024;</code>" is a final character instead of an intermediate character as the standard says.
+Applications must tweak their ECMA control sequence decoders to (mis)handle this character.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>has_invisible</code>
+</term>
+<listitem>
+<para>
+The <code>dumb</code>, <code>linux</code>, and <code>teken</code> terminal type families do not implement the ECMA-48 standard invisible attribute, with the exception to the latter twain that <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> implements it.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<code>has_reverse_off</code>
+</term>
+<listitem>
+<para>
+The <code>dumb</code> and <code>interix</code> terminal type families do not implement the ECMA-48 standard reverse video off SGR control sequence.
+</para>
+</listitem>
+</varlistentry>
+
+</variablelist>
+
+</refsection>
+
+</refsection>
+
+<refsection><title>See also</title>
+
+<variablelist>
+<varlistentry>
+<term>
+<citerefentry><refentrytitle><envar>TERM</envar></refentrytitle><manvolnum>7</manvolnum></citerefentry>
+</term>
+<listitem>
+<para>
+the <envar>TERM</envar> and other environment variables that signify terminal type
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</refsection>
+<refsection><title>Author</title>
+Documentation by
+<author>
+<personname><firstname>Jonathan</firstname><surname>de Boyne Pollard</surname></personname>
+</author>
+</refsection>
+
+</refentry>

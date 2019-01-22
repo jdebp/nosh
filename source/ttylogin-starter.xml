@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="ttylogin-starter">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -16,8 +22,6 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>ttylogin-starter</command>
-<arg>--tty <replaceable>filename</replaceable></arg>
-<arg>--class <replaceable>directory</replaceable></arg>
 <arg>--verbose</arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -58,10 +62,6 @@ Each time that <citerefentry><refentrytitle>poll</refentrytitle><manvolnum>2</ma
 
 <para>
 If the services do not exist, it makes no attempt to create them.
-</para>
-
-<para>
-Alternative sysfs class names and "0th" TTY names, which combine to produce the aforementioned filename, can be specified with the <arg choice='plain'>--class</arg> and <arg choice='plain'>--tty</arg> command options, respectively.
 </para>
 
 </refsection>

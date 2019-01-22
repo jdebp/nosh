@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="tcp-socket-accept">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -71,8 +77,7 @@ The local (server) port number of the accepted socket.
 <envar>TCPLOCALHOST</envar>
 </term><listitem>
 <para>
-The value of <replaceable>hostname</replaceable> set by the
-<arg>--localname</arg> option; guaranteed unset if that option is not used.
+The value of <replaceable>hostname</replaceable> set by the <arg>--localname</arg> option; guaranteed unset if that option is not used.
 </para>
 </listitem>
 </varlistentry>

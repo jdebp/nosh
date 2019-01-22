@@ -86,6 +86,10 @@ do
 	org.freedesktop.systemd[0-9]*)	continue ;;	# blacklisted
 	org.freedesktop.network[0-9]*)	continue ;;	# blacklisted
 	org.freedesktop.resolve[0-9]*)	continue ;;	# blacklisted
+	org.freedesktop.import[0-9]*)	continue ;;	# blacklisted
+	org.freedesktop.machine[0-9]*)	continue ;;	# blacklisted
+	org.freedesktop.portable[0-9]*)	continue ;;	# blacklisted
+	org.freedesktop.timesnc[0-9]*)	continue ;;	# blacklisted
 	esac
 	redo-ifchange -- "dbus/$i.service"
 	printf "dbus/%s\n" "$i" >> "$3"

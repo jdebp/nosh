@@ -1,0 +1,68 @@
+#compdef chvt clear_console resizecons setterm -P console-(terminal-emulator|convert-kbdmap|clear|resize|multiplexor(|-control)|input-method(|-control)|*-realizer|decode-ecma48|flat-table-viewer|control-sequence) 
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+#
+# Z Shell command-line completion
+
+function _multiplexor_controls()
+{
+	local -a multiplexorcontrols
+	multiplexorcontrols=(
+	'S:first session'
+	'N:next session'
+	'P:previous session'
+	'<number>:session number'
+	)
+	_describe -t multiplexorcontrol 'multiplexor controls' multiplexorcontrols
+}
+
+function _input_method_controls()
+{
+	local -a inputmethodcontrols
+	inputmethodcontrols=(
+	'.:IM switch on/off'
+	'K:katakana key'
+	'L:hiragana key'
+	'R:romaji key'
+	'G:hangeul key'
+	'Y:han/yeong key'
+	'Z:hanja key'
+	'N:muhenkan key'
+	'C:henkan key'
+	)
+	_describe -t inputmethodcontrol 'input method controls' inputmethodcontrols
+}
+
+function _console_terminal_emulator()
+{
+	local lstate state
+	local -a common
+	common=(-s '--help[Display option help]' '--usage[Display option usage]')
+	local next='*:::next prog:_normal'
+
+	case "${service}" in
+		console-multiplexor)
+			_arguments -A '-*' $common '1:composite virtual terminal directory:_directories' '*:source virtual terminal directory:_directories' -- ;;
+		console-input-method)
+			_arguments -A '-*' $common '1:composite virtual terminal directory:_directories' '2:source virtual terminal directory:_directories' -- ;;
+		console-terminal-emulator|console-(ncurses|termio)-realizer)
+			_arguments -A '-*' $common '1:virtual terminal directory:_directories' -- ;;
+		console-decode-ecma48|tai64n(|local))
+			_arguments -A '-*' $common '*:input file:_files' -- ;;
+		console-fb-realizer)
+			_arguments -A '-*' $common '1:virtual terminal directory:_directories' '2:framebuffer device:_files' -- ;;
+		console-convert-kbdmap)
+			_arguments -A '-*' $common '*:BSD kbd map files:_directories' -- ;;
+		console-input-method-control)
+			_arguments -A '-*' $common '*:control:_input_method_controls' -- ;;
+		console-multiplexor-control|chvt)
+			_arguments -A '-*' $common '*:control:_multiplexor_controls' -- ;;
+		console-resize|resizecons)
+			_arguments -A '-*' $common '1:size:' -- ;;
+		*)
+			_arguments -A '-*' $common -- ;;
+	esac
+}
+
+_console_terminal_emulator "$@"

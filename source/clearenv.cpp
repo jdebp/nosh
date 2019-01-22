@@ -88,6 +88,9 @@ clearenv (
 	char * user(0);
 	char * logname(0);
 	char * term(0);
+	char * colorterm(0);
+	char * xterm_version(0);
+	char * vte_version(0);
 	char * tty(0);
 	char * lang(0);
 	char * lc_all(0);
@@ -111,6 +114,9 @@ clearenv (
 		shell = save(envs, "SHELL");
 	if (keep_term) {
 		term = save(envs, "TERM");
+		colorterm = save(envs, "COLORTERM");
+		xterm_version = save(envs, "XTERM_VERSION");
+		vte_version = save(envs, "VTE_VERSION");
 		tty = save(envs, "TTY");
 	}
 	if (keep_locale) {
@@ -137,6 +143,9 @@ clearenv (
 	restore(envs, "LOGNAME", logname);
 	restore(envs, "SHELL", shell);
 	restore(envs, "TERM", term);
+	restore(envs, "COLORTERM", colorterm);
+	restore(envs, "XTERM_VERSION", xterm_version);
+	restore(envs, "VTE_VERSION", vte_version);
 	restore(envs, "TTY", tty);
 	restore(envs, "LANG", lang);
 	restore(envs, "LC_ALL", lc_all);

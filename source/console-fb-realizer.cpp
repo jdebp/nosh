@@ -646,14 +646,15 @@ public:
 
 	enum { AXIS_W, AXIS_X, AXIS_Y, AXIS_Z, H_SCROLL, V_SCROLL };
 
-	void set_display_update_needed() { update_needed = true; }
-	void handle_non_kevents(bool);
+	void set_refresh_needed() { refresh_needed = true; }
+	void handle_update_event();
+	void handle_refresh_event();
 	void invalidate_all() { c.touch_all(); }
 
 	static coordinate pixel_to_column(unsigned long x) { return x / CHARACTER_PIXEL_WIDTH; }
 	static coordinate pixel_to_row(unsigned long y) { return y / CHARACTER_PIXEL_HEIGHT; }
 
-	void handle_character_input(uint32_t);
+	void handle_character_input(uint32_t, bool);
 	void handle_mouse_abspos(uint8_t, const uint16_t axis, const unsigned long position, const unsigned long maximum);
 	void handle_mouse_relpos(uint8_t, const uint16_t axis, int32_t amount);
 	void handle_mouse_button(uint8_t, const uint16_t button, const bool value);
@@ -696,10 +697,10 @@ protected:
 	const GlyphBitmapHandle star_glyph_handle;
 	const CharacterCell::colour_type mouse_fg;
 
-	bool update_needed;
-	void paint_backdrop ();
-	void position ();
-	void compose ();
+	bool refresh_needed, update_needed;
+	void erase_new_to_backdrop ();
+	void position_vt_visible_area ();
+	void compose_new_from_vt ();
 	void paint_changed_cells_onto_framebuffer();
 
 	GlyphBitmapHandle GetCursorGlyphBitmap() const;
@@ -751,6 +752,7 @@ Realizer::Realizer(
 	block_glyph_handle(gdi.MakeGlyphBitmap()),
 	star_glyph_handle(gdi.MakeGlyphBitmap()),
 	mouse_fg(31,0xFF,0xFF,0xFF),
+	refresh_needed(true),
 	update_needed(true),
 	pointer_xpixel(0),
 	pointer_ypixel(0),
@@ -961,7 +963,7 @@ Realizer::paint_changed_cells_onto_framebuffer()
 
 inline
 void
-Realizer::paint_backdrop () 
+Realizer::erase_new_to_backdrop () 
 {
 	for (unsigned short row(0U); row < c.query_h(); ++row)
 		for (unsigned short col(0U); col < c.query_w(); ++col)
@@ -971,18 +973,19 @@ Realizer::paint_backdrop ()
 /// \brief Clip and position the visible portion of the terminal's display buffer.
 inline
 void
-Realizer::position (
+Realizer::position_vt_visible_area (
 ) {
 	// Glue the terminal window to the edges of the display screen buffer.
 	screen_y = !(quadrant & 0x02) && vt.query_h() < c.query_h() ? c.query_h() - vt.query_h() : 0;
 	screen_x = (1U == quadrant || 2U == quadrant) && vt.query_w() < c.query_w() ? c.query_w() - vt.query_w() : 0;
+	// Tell the VirtualTerminal the size of the visible window; it will position it itself according to cursor placement.
 	vt.set_visible_area(c.query_h() - screen_y, c.query_w() - screen_x);
 }
 
-/// \brief Render the terminal's display buffer onto the display's screen buffer.
+/// \brief Render the terminal's display buffer and cursor/pointer states onto the TUI compositor.
 inline
 void
-Realizer::compose () 
+Realizer::compose_new_from_vt () 
 {
 	for (unsigned short row(0U); row < vt.query_visible_h(); ++row) {
 		const unsigned short source_row(vt.query_visible_y() + row);
@@ -990,30 +993,38 @@ Realizer::compose ()
 		for (unsigned short col(0U); col < vt.query_visible_w(); ++col)
 			c.poke(dest_row, col + screen_x, vt.at(source_row, vt.query_visible_x() + col));
 	}
+	const CursorSprite::attribute_type a(vt.query_cursor_attributes());
+	// If the cursor is invisible, we are not guaranteed that the VirtualTerminal has kept the visible area around it.
+	if (CursorSprite::VISIBLE & a) {
+		const unsigned short cursor_y(screen_y + (wrong_way_up ? vt.query_visible_h() - vt.query_cursor_y() - 1U : vt.query_cursor_y()) - vt.query_visible_y());
+		c.move_cursor(true, cursor_y, vt.query_cursor_x() - vt.query_visible_x() + screen_x);
+	}
+	c.set_cursor_state(true, a, vt.query_cursor_glyph());
+	if (has_pointer)
+		c.set_pointer_attributes(vt.query_pointer_attributes());
 }
 
 inline
 void
-Realizer::handle_non_kevents (
-	bool active
+Realizer::handle_refresh_event (
+) {
+	if (refresh_needed) {
+		refresh_needed = false;
+		erase_new_to_backdrop();
+		position_vt_visible_area();
+		compose_new_from_vt();
+		update_needed = true;
+	}
+}
+
+inline
+void
+Realizer::handle_update_event (
 ) {
 	if (update_needed) {
 		update_needed = false;
-		paint_backdrop();
-		position();
-		compose();
-		const unsigned a(vt.query_cursor_attributes());
-		// If the cursor is invisible, we are not guaranteed that the VirtualTerminal has kept the visible area around it.
-		if (CursorSprite::VISIBLE & a) {
-			const unsigned short cursor_y(screen_y + (wrong_way_up ? vt.query_visible_h() - vt.query_cursor_y() - 1U : vt.query_cursor_y()) - vt.query_visible_y());
-			c.move_cursor(true, cursor_y, vt.query_cursor_x() - vt.query_visible_x() + screen_x);
-		}
-		c.set_cursor_state(true, a, vt.query_cursor_glyph());
-		if (has_pointer)
-			c.set_pointer_attributes(vt.query_pointer_attributes());
 		c.repaint_new_to_cur();
-		if (active)
-			paint_changed_cells_onto_framebuffer();
+		paint_changed_cells_onto_framebuffer();
 	}
 }
 
@@ -2270,7 +2281,8 @@ lower_combining_class (
 
 void 
 Realizer::handle_character_input(
-	uint32_t ch
+	uint32_t ch,
+	bool accelerator
 ) {
 	if (UnicodeCategorization::IsMarkEnclosing(ch)
 	||  UnicodeCategorization::IsMarkNonSpacing(ch)
@@ -2285,7 +2297,7 @@ Realizer::handle_character_input(
 		// We must not sort into Unicode combination class order.
 		// ZWNJ is essentially a pass-through mechanism for combiners.
 		for (DeadKeysList::iterator i(dead_keys.begin()); i != dead_keys.end(); i = dead_keys.erase(i))
-			vt.WriteInputMessage(MessageForUCS3(*i));
+			vt.WriteInputMessage((accelerator ? MessageForAcceleratorKey : MessageForUCS3)(*i));
 	} else
 	if (!dead_keys.empty()) {
 		// Per ISO 9995-3 there are certain C+B=R combinations that apply in addition to the Unicode composition rules.
@@ -2309,15 +2321,15 @@ Realizer::handle_character_input(
 		for (DeadKeysList::iterator i(dead_keys.begin()); i != dead_keys.end(); i = dead_keys.erase(i)) {
 			uint32_t s(' ');
 			if (combine_peculiar_non_combiners(*i, s))
-				vt.WriteInputMessage(MessageForUCS3(s));
+				vt.WriteInputMessage((accelerator ? MessageForAcceleratorKey : MessageForUCS3)(s));
 			else
-				vt.WriteInputMessage(MessageForUCS3(*i));
+				vt.WriteInputMessage((accelerator ? MessageForAcceleratorKey : MessageForUCS3)(*i));
 		}
 		// This is the final composed key.
-		vt.WriteInputMessage(MessageForUCS3(ch));
+		vt.WriteInputMessage((accelerator ? MessageForAcceleratorKey : MessageForUCS3)(ch));
 	} else
 	{
-		vt.WriteInputMessage(MessageForUCS3(ch));
+		vt.WriteInputMessage((accelerator ? MessageForAcceleratorKey : MessageForUCS3)(ch));
 	}
 }
 
@@ -2421,7 +2433,7 @@ HIDBase::handle_keyboard (
 		case KBDMAP_ACTION_UCS3:
 		{
 			if (v < 1U) break;
-			r.handle_character_input(cmd);
+			r.handle_character_input(cmd, alt());
 			unlatch();
 			break;
 		}
@@ -4886,7 +4898,7 @@ console_fb_realizer [[gnu::noreturn]] (
 					input.set_exclusive(true);
 #endif
 				}
-				realizer.set_display_update_needed();
+				realizer.set_refresh_needed();
 				realizer.invalidate_all();
 				active = true;
 			}
@@ -4895,7 +4907,9 @@ console_fb_realizer [[gnu::noreturn]] (
 				kvt.acknowledge_switch_to();
 #endif
 		}
-		realizer.handle_non_kevents(active);
+		realizer.handle_refresh_event();
+		if (active)
+			realizer.handle_update_event();
 
 		struct kevent p[512];
 		const int rc(kevent(queue.get(), ip.data(), ip.size(), p, sizeof p/sizeof *p, vt.query_reload_needed() ? &immediate_timeout : 0));
@@ -4917,7 +4931,7 @@ console_fb_realizer [[gnu::noreturn]] (
 		if (0 == rc) {
 			if (vt.query_reload_needed()) {
 				vt.reload();
-				realizer.set_display_update_needed();
+				realizer.set_refresh_needed();
 			}
 			continue;
 		}

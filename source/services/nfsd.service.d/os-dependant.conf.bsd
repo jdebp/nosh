@@ -1,0 +1,11 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Requires=kmod@nfsd
+Wants=kmod@nfsd
+Conflicts=nfsserver.service
+
+[Service]
+ExecStart=%p ${flags} ${old}

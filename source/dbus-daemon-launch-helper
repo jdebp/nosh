@@ -25,7 +25,7 @@ then
 	exec false
 fi
 
-if	>/dev/null 2>&1 which system-control &&
+if	>/dev/null 2>&1 command -v system-control &&
 	2>/dev/null system-control ${opts} is-service-manager-client
 then
 	for dbus_service
@@ -34,7 +34,7 @@ then
 		echo "${dbus_service#dbus-}"
 	done | 
 	xargs -- system-control ${opts} -- reset --verbose --
-elif	>/dev/null 2>&1 which initctl &&
+elif	>/dev/null 2>&1 command -v initctl &&
 	2>/dev/null initctl ${opts} is-service-manager-client
 then
 	for dbus_service
@@ -43,7 +43,7 @@ then
 		echo "${dbus_service#dbus-}"
 	done | 
 	xargs -- initctl ${opts} -- reset --verbose --
-elif	>/dev/null 2>&1 which systemctl &&
+elif	>/dev/null 2>&1 command -v systemctl &&
 	2>/dev/null systemctl ${opts} is-service-manager-client
 then
 	for dbus_service
@@ -52,7 +52,7 @@ then
 		echo "${dbus_service#dbus-}"
 	done | 
 	xargs -- systemctl ${opts} -- reset --verbose --
-elif	>/dev/null 2>&1 which initctl &&
+elif	>/dev/null 2>&1 command -v initctl &&
 	2>/dev/null initctl ${opts} version | grep -F -q upstart
 then
 	for dbus_service
@@ -61,8 +61,8 @@ then
 		echo "${dbus_service#dbus-}"
 	done | 
 	## Vanilla upstart initctl does not have "reset".
-	xargs -- initctl start ${opts} ## FIXME: Does vanilla upstart initctl support "--" here?
-elif	>/dev/null 2>&1 which systemctl &&
+	xargs -- initctl -- start ${opts} --
+elif	>/dev/null 2>&1 command -v systemctl &&
 	test -S "${run}"/systemd/private
 then
 	for dbus_service
@@ -74,8 +74,8 @@ then
 			systemctl start ${opts} -- "${dbus_service#dbus-}"
 		fi
 	done
-elif	>/dev/null 2>&1 which service &&
-	>/dev/null 2>&1 which chkconfig
+elif	>/dev/null 2>&1 command -v service &&
+	>/dev/null 2>&1 command -v chkconfig
 then
 	for dbus_service
 	do

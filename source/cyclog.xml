@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="cyclog">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -38,7 +44,7 @@ It keeps a file descriptor open to each log directory for its lifetime, and acce
 Log directories can thus be renamed as it is running, and it will continue to use the original directory, wherever it is renamed to.
 </para>
 
-<refsection><title>Log directory</title>
+<refsection id="LOGDIRECTORY" xreflabel="LOGDIRECTORY"><title>Log directory</title>
 
 <para>
 A log directory is compatible with the log directories employed by daemontools' and daemontools-encore's <citerefentry><refentrytitle>multilog</refentrytitle><manvolnum>1</manvolnum></citerefentry>, s6's <citerefentry><refentrytitle>s6-log</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and runit's <citerefentry><refentrytitle>svlog</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
@@ -71,13 +77,15 @@ a <filename>current</filename> file where incoming log data are currently being 
 <para>
 An active <filename>current</filename> file, or an old log file or a <filename>current</filename> file that was not written to disc by <command>cyclog</command> properly shutting down, has permissions 0644.
 A <filename>current</filename> file or an old log file where <command>cyclog</command> properly shut down has permissions 0744.
-(See the Compatibility section.)
+(See the <link linkend="COMPATIBILITY">Compatibility</link> section.)
 </para>
 
 <para>
 <command>cyclog</command> shuts down when either it sees EOF on its standard input, or it receives one of the "good" termination signals (<code>SIGTERM</code>, <code>SIGPIPE</code>, <code>SIGINT</code>, or <code>SIGHUP</code>).
 At shut down, <command>cyclog</command> writes all pending data that it has already read from standard input, flushes <filename>current</filename> to disc, and changes <filename>current</filename>'s permissions.
-At start up, it changes <filename>current</filename>'s permissions and carries on.
+At start up, it checks <filename>current</filename>'s permissions, creating the file with permissions 0744 if it does not already exist.
+If they indicate proper shutdown, as they will also do if the file was created because it did not exist, it carries on.
+If they indicate that the file was not properly written at shutdown, it performs <link linkend="ROTATION">automatic log rotation</link> to prevent appending to a potentially corrupt file (that may be sparse or contain ranges of zeroed blocks).
 </para>
 
 </refsection><refsection><title>Reliable piped input</title>
@@ -91,11 +99,14 @@ In the normal case, the standard input of <command>cyclog</command> will be a pi
 Thus no log data are lost, even if <command>cyclog</command> is shut down and restarted.
 </para>
 
-</refsection><refsection><title>Automatic log rotation</title>
+</refsection>
+<refsection id="ROTATION" xreflabel="ROTATION"><title>Automatic log rotation</title>
 
 <para>
-<command>cyclog</command> performs automatic log rotation when it writes a linefeed within <replaceable>margin</replaceable> bytes of the maximum size (<replaceable>max-file-size</replaceable>) of the <filename>current</filename> file, when it is about to exceed that size, or when it receives a <code>SIGALRM</code>.  
-It flushes <filename>current</filename> to disc, changes its permissions and renames it to a timestamped name, and then creates a new <filename>current</filename> file.
+<command>cyclog</command> performs automatic log rotation when it writes a linefeed within <replaceable>margin</replaceable> bytes of the maximum size (<replaceable>max-file-size</replaceable>) of the <filename>current</filename> file, when it is about to exceed that size, when it receives a <code>SIGALRM</code>, or when it finds an improperly written to disc <filename>current</filename> file at startup.  
+When recovering from an improperly finalized <filename>current</filename>, it simply renames it to a timestamped <filename>.u</filename> name.
+Otherwise, it renames it to a timestamped <filename>.u</filename> name, flushes it to disc, changes its permissions, and then renames it to a timestamped <filename>.s</filename> name.
+In both cases, it then creates a new <filename>current</filename> file.
 The TAI64N timestamp of an old log file is the timestamp of when <command>cyclog</command> rotated <filename>current</filename> to that file.
 </para>
 
@@ -135,7 +146,9 @@ On a Linux system where it detects an Olson "right" timezone currently in use, i
 On other Linux systems, and on BSDs, it assumes that the system clock is UTC seconds since the Epoch and attempts to correct for (known) UTC leap seconds in order to determine TAI.
 </para>
 
-</refsection></refsection><refsection><title>Compatibility</title>
+</refsection>
+</refsection>
+<refsection id="COMPATIBILITY" xreflabel="COMPATIBILITY"><title>Compatibility</title>
 
 <para>
 A <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> utility was part of daemontools version 0.53.
@@ -149,15 +162,15 @@ As such, it does not implement a script syntax, does not have pattern matching, 
 </para>
 
 <para>
-The version 0.53 <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> used permissions 0644 and 0444 to flag files that had not been written to disc.
+The daemontools version 0.53 <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> used permissions 0644 and 0444 to flag files that had not been written to disc.
 <command>cyclog</command> adopts the convention employed by the later <citerefentry><refentrytitle>multilog</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and thence <citerefentry><refentrytitle>s6-log</refentrytitle><manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>svlog</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 This convention changed to using the owner execute permission bit rather than the owner write permission bit as the flag.
-<command>cyclog</command> does not make use of the execute permission bit itself, but it sets and clears it as appropriate for interoperability with those tools.
+<command>cyclog</command> sets and clears the execution bit as appropriate for interoperability with those tools, and <link linkend="LOGDIRECTORY">uses it itself for the same purpose</link>.
 <citerefentry><refentrytitle>multilog</refentrytitle><manvolnum>1</manvolnum></citerefentry> altered the convention in order to cope with scenarios where it would end up trying to open a read-only file for writing.
 </para>
 
 <para>
-The version 0.53 <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> used the TAI64 timestamp of when a log file was started as its timestamp.
+The daemontools version 0.53 <citerefentry><refentrytitle>cyclog</refentrytitle><manvolnum>1</manvolnum></citerefentry> used the TAI64 timestamp of when a log file was started as its timestamp.
 Again <command>cyclog</command> adopts the convention employed by later tools.
 </para>
 
@@ -166,7 +179,7 @@ daemontools' and daemontools-encore's <citerefentry><refentrytitle>multilog</ref
 </para>
 
 <para>
-See the timestamps section of the Nosh Guide for detailed information on the differences from daemontools, daemontools-encore, and other toolsets in how <command>cyclog</command> handles TAI.
+See <ulink url="timestamps.html">the timestamps section of the <citetitle>nosh Guide</citetitle></ulink> for detailed information on the differences from daemontools, daemontools-encore, and other toolsets in how <command>cyclog</command> handles TAI.
 </para>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

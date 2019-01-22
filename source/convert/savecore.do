@@ -5,7 +5,7 @@
 # vim: set filetype=sh:
 #
 # Special setup for savecore.
-# This is invoked by general-services.do .
+# This is invoked by all.do .
 #
 
 set_if_unset() { if test -z "`system-control print-service-env \"$1\" \"$2\"`" ; then system-control set-service-env "$1" "$2" "$3" ; echo "$s: Defaulted $2 to $3." ; fi ; }

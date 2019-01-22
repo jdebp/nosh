@@ -71,13 +71,13 @@ enable_disable (
 			}
 			break;
 		}
-#if defined(_DIRENT_HAVE_D_TYPE)
-		if (DT_DIR != entry->d_type && DT_LNK != entry->d_type) continue;
-#endif
 #if defined(_DIRENT_HAVE_D_NAMLEN)
 		if (1 > entry->d_namlen) continue;
 #endif
 		if ('.' == entry->d_name[0]) continue;
+#if defined(_DIRENT_HAVE_D_TYPE)
+		if (DT_DIR != entry->d_type && DT_LNK != entry->d_type) continue;
+#endif
 
 		const FileDescriptorOwner target_dir_fd(open_dir_at(source_dir.fd(), entry->d_name));
 		if (0 > target_dir_fd.get()) {
@@ -405,13 +405,13 @@ scan_preset_files (
 	for (;;) {
 		const dirent * entry(readdir(preset_dir));
 		if (!entry) break;
-#if defined(_DIRENT_HAVE_D_TYPE)
-		if (DT_REG != entry->d_type && DT_LNK != entry->d_type) continue;
-#endif
 #if defined(_DIRENT_HAVE_D_NAMLEN)
 		if (1 > entry->d_namlen) continue;
 #endif
 		if ('.' == entry->d_name[0]) continue;
+#if defined(_DIRENT_HAVE_D_TYPE)
+		if (DT_REG != entry->d_type && DT_LNK != entry->d_type) continue;
+#endif
 		const std::string d_name(entry->d_name);
 		if (!earliest.empty() && earliest <= d_name) continue;
 		const std::string p(preset_dir_name + d_name);

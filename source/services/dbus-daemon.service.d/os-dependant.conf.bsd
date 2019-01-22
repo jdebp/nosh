@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=System-wide "Desktop" bus service on the BSDs
+
+[Service]
+# ACLs don't work on BSD tmpfs; so we have to bodge group access and hope that only this group needs this.
+#ExecStartPre=sh -c "setfacl -m 'u:messagebus:rw' \"%t/service-manager/control\" || setfacl -m 'user:messagebus:rws::allow' \"%t/service-manager/control\""
+ExecStartPre=chgrp -v -- messagebus "%t/service-manager/control"
+ExecStartPre=chmod -v -- g=rw "%t/service-manager/control"
+# BSD dbus doesn't support --nopidfile even though that would be nice here.
+# BSD dbus doesn't support --address=systemd: even though that would be the closest to our UCSPI-LOCAL.
+# BSD dbus doesn't support --address=unix:runtime=yes even though that would be a reasonable fallback that we could bodge.
+ExecStart=%p --config-file ./system-wide.conf --nofork --address=unix:path=/run/dbus/system_bus_socket

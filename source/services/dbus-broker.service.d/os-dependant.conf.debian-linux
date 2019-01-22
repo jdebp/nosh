@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=System-wide "Desktop" bus service on Debian Linux
+
+[Service]
+ExecStartPre=setfacl -m 'u:messagebus:rw' "%t/service-manager/control"
+# Tell Linux not to account for 4/5 of its memory score.
+OOMScoreAdjust=-800
+# All servers are run through the launch helper, and so there shouldn't be a need for lots of child processes and threads.
+TasksMax=20

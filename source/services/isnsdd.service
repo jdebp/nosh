@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=iSNS discovery daemon
+
+[Service]
+ExecStart=%p --foreground
+
+[Install]
+WantedBy=server.target

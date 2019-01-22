@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="system-manager">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -10,6 +16,7 @@
 
 <refnamediv>
 <refname>system-manager</refname>
+<refname>init</refname>
 <refpurpose>manage the system as process #1</refpurpose>
 </refnamediv>
 
@@ -58,7 +65,7 @@ It does not have open file handles to the service control FIFOs, and its operati
 
 <listitem>
 <para>
-Process #1 is has no hand in calculating the details of system state changes.
+Process #1 has no hand in calculating the details of system state changes.
 That's done by a separate program running as another process.
 </para>
 </listitem>
@@ -560,7 +567,9 @@ This is symbolically linked to <filename>/run/shm</filename> for compatibility w
 
 </refsection>
 
-</refsection><refsection><title>The system clock</title>
+</refsection>
+<refsection id="SystemClock" xreflabel="SystemClock">
+<title>The system clock</title>
 
 <para>
 When the system starts process #1, the operating system kernel's system clock will have been initialized from a hardware real-time clock.
@@ -573,8 +582,9 @@ In particular, system time leaps backwards for machines whose RTC local time is 
 
 <para>
 Furthermore, the operating system tries to do silly things with FAT volumes.
-Instead of just taking file and directory timestamps to be UTC, the filesystem driver takes the timestamps to be local time, so needs to know how to convert FAT local time (as on disc) to UTC (as seen at the system call interface with <citerefentry><refentrytitle>stat</refentrytitle><manvolnum>2</manvolnum></citerefentry> and so forth).
-Because this is done in-kernel, a simplistic and hence broken mechanism is used.  A single offset between FAT local time and UTC is applied to all timestamps.
+Instead of just taking file and directory timestamps to be UTC, the filesystem driver by default takes the timestamps to be local time, so needs to know how to convert FAT local time (as on disc) to UTC (as seen at the system call interface with <citerefentry><refentrytitle>stat</refentrytitle><manvolnum>2</manvolnum></citerefentry> and so forth).
+Because this is done in-kernel, a simplistic and hence broken mechanism is used.
+A single offset between FAT local time and UTC is applied to all timestamps (either system-wide or per-volume).
 </para>
 
 <para>

@@ -43,6 +43,10 @@ exit_scan:
 			if (errno) goto exit_scan;
 			break;
 		}
+#if defined(_DIRENT_HAVE_D_NAMLEN)
+		if (1 > entry->d_namlen) continue;
+#endif
+		if ('.' == entry->d_name[0]) continue;
 #if defined(_DIRENT_HAVE_D_TYPE)
 		if (DT_REG != entry->d_type && DT_LNK != entry->d_type) {
 			if (DT_DIR != entry->d_type)
@@ -50,10 +54,6 @@ exit_scan:
 			continue;
 		}
 #endif
-#if defined(_DIRENT_HAVE_D_NAMLEN)
-		if (1 > entry->d_namlen) continue;
-#endif
-		if ('.' == entry->d_name[0]) continue;
 
 		const FileDescriptorOwner var_file_fd(open_read_at(scan_dir_fd, entry->d_name));
 		if (0 > var_file_fd.get()) {

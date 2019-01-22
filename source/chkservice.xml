@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="chkservice">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -17,6 +23,9 @@
 <cmdsynopsis>
 <command>chkservice</command>
 <arg>--user</arg>
+<arg choice='opt'>--cursor-keypad-application-mode</arg>
+<arg choice='opt'>--calculator-keypad-application-mode</arg>
+<arg choice='opt'>--no-alternate-screen-buffer</arg>
 <arg rep='repeat'><replaceable>names</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -45,6 +54,16 @@ It potentially communicates with a Service Manager process, such as <citerefentr
 </para>
 </listitem>
 </itemizedlist>
+
+<para>
+The <arg choice='plain'>--cursor-keypad-application-mode</arg> and <arg choice='plain'>--calculator-keypad-application-mode</arg> command-line options instruct <command>chkservice</command> to switch, respectively, the cursor keypad and the calculator keypad of the realizing terminal into their "application" modes.
+Otherwise it switches them into their "normal" modes.
+"application" mode is generally not useful to <command>chkservice</command>, since it makes cursor and calculator keys indistinguishable from accelerator keys.
+The <arg choice='plain'>--no-alternate-screen-buffer</arg> command-line option instructs <command>chkservice</command> to not switch to the alternative screen buffer.
+This has two uses.
+First, it allows one to retain visibility of displayed information after the program has exited (although <citerefentry><refentrytitle>setterm</refentrytitle><manvolnum>1</manvolnum></citerefentry> provides access to the alternative screen buffer).
+Second, it works around problems with some (yet more!) broken terminal emulators that attempt to be and fail at being like XTerm, which forcibly change cursor and editing keys into application mode when the alternative screen buffer is active.
+</para>
 
 </refsection>
 

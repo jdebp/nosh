@@ -20,31 +20,77 @@ For copyright and licensing terms, see the file named COPYING.
 #include <netinet/in.h>	// Necessary for the IPV6_V6ONLY macro.
 #include <unistd.h>
 #include <pwd.h>
+#include <grp.h>
 #include "utils.h"
 #include "runtime-dir.h"
 #include "fdutils.h"
 #include "service-manager-client.h"
 #include "popt.h"
 #include "FileStar.h"
+#include "DirStar.h"
 #include "FileDescriptorOwner.h"
 #include "bundle_creation.h"
 #include "machine_id.h"
 
-static 
-const char * systemd_prefixes[] = {
-	"/run/", "/etc/", "/lib/", "/usr/lib/", "/usr/local/lib/"
+/* Unit names ***************************************************************
+// **************************************************************************
+*/
+
+namespace {
+
+const std::string slash("/");
+
+struct names {
+	names(const char * a);
+	void set_prefix(const std::string & v, bool esc, bool alt, bool ext) { set(esc, alt, ext, escaped_prefix, prefix, v); }
+	void set_instance(const std::string & v, bool esc, bool alt, bool ext) { set(esc, alt, ext, escaped_instance, instance, v); }
+	void set_bundle(const std::string & r, const std::string & b) { bundle_basename = b; bundle_dirname = r + b; }
+	void set_machine_id(const std::string & v) { machine_id = v; }
+	void set_user(const std::string & u);
+	const std::string & query_unit_dirname () const { return unit_dirname; }
+	const std::string & query_unit_basename () const { return unit_basename; }
+	const std::string & query_escaped_unit_basename () const { return escaped_unit_basename; }
+	const std::string & query_prefix () const { return prefix; }
+	const std::string & query_escaped_prefix () const { return escaped_prefix; }
+	const std::string & query_instance () const { return instance; }
+	const std::string & query_escaped_instance () const { return escaped_instance; }
+	const std::string & query_bundle_basename () const { return bundle_basename; }
+	const std::string & query_bundle_dirname () const { return bundle_dirname; }
+	const std::string & query_machine_id () const { return machine_id; }
+	const std::string & query_user_name () const { return user_name; }
+	const std::string & query_UID () const { return UID; }
+	const std::string & query_group_name () const { return group_name; }
+	const std::string & query_GID () const { return GID; }
+	const std::string & query_runtime_dir_by_name () const { return runtime_dir_by_name; }
+	const std::string & query_runtime_dir_by_UID () const { return runtime_dir_by_UID; }
+	const std::string & query_vartmp_dir () const { return vartmp_dir; }
+	const std::string & query_tmp_dir () const { return tmp_dir; }
+	const std::string & query_config_dir () const { return config_dir; }
+	const std::string & query_state_dir () const { return state_dir; }
+	const std::string & query_cache_dir () const { return cache_dir; }
+	const std::string & query_log_dir () const { return log_dir; }
+	std::string substitute ( const std::string & );
+	std::list<std::string> substitute ( const std::list<std::string> & );
+protected:
+	std::string unit_dirname, unit_basename, escaped_unit_basename, prefix, escaped_prefix, instance, escaped_instance, bundle_dirname, bundle_basename, machine_id, user_name, UID, group_name, GID, runtime_dir_by_name, runtime_dir_by_UID, state_dir, cache_dir, tmp_dir, vartmp_dir, config_dir, log_dir;
+	void set ( bool esc, bool alt, bool ext, std::string & escaped, std::string & normal, const std::string & value ) {
+		if (esc)
+			escaped = systemd_name_escape(alt, ext, normal = value);
+		else
+			normal = systemd_name_unescape(alt, ext, escaped = value);
+	}
 };
 
-static inline
+inline
 void
 split_name (
 	const char * s,
 	std::string & dirname,
 	std::string & basename
 ) {
-	if (const char * slash = std::strrchr(s, '/')) {
-		basename = slash + 1;
-		dirname = std::string(s, slash + 1);
+	if (const char * slashpos = std::strrchr(s, '/')) {
+		basename = slashpos + 1;
+		dirname = std::string(s, slashpos + 1);
 #if defined(__OS2__) || defined(__WIN32__) || defined(__NT__)
 	} else if (const char * bslash = std::strrchr(s, '\\')) {
 		basename = bslash + 1;
@@ -59,55 +105,170 @@ split_name (
 	}
 }
 
-static inline
-FILE *
-find (
-	const std::string & name,
-	std::string & path
-) {
-	if (std::string::npos != name.find('/')) {
-		path = name;
-		FILE * f = std::fopen(path.c_str(), "r");
-		if (f) return f;
-	} else {
-		int error(ENOENT);	// the most interesting error encountered
-		for ( const char ** p(systemd_prefixes); p < systemd_prefixes + sizeof systemd_prefixes/sizeof *systemd_prefixes; ++p) {
-			path = ((std::string(*p) + "systemd/") + (per_user_mode ? "user/" : "system/")) + name;
-			FILE * f = std::fopen(path.c_str(), "r");
-			if (f) return f;
-			if (ENOENT == errno) 
-				errno = error;	// Restore a more interesting error.
-			else
-				error = errno;	// Save this interesting error.
+inline
+std::string
+effective_user_name ()
+{
+	if (struct passwd * p = getpwuid(geteuid()))
+		if (p->pw_name) {
+			const std::string n(p->pw_name);
+			endpwent();
+			return n;
 		}
-	}
-	return NULL;
+	endpwent();
+	return "nobody";
 }
 
-static
-bool
-is_regular (
-	const char * prog,
-	const std::string & name,
-	FILE * file
-) {
-	struct stat s;
-	if (0 > fstat(fileno(file), &s)) {
-		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name.c_str(), std::strerror(error));
-		return false;
-	}
-	if (!S_ISREG(s.st_mode)) {
-		std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, name.c_str(), "Not a regular file.");
-		return false;
-	}
-	return true;
+inline
+std::string
+effective_group_name ()
+{
+	if (struct group * g = getgrgid(getegid()))
+		if (g->gr_name) {
+			const std::string n(g->gr_name);
+			endgrent();
+			return n;
+		}
+	endgrent();
+	return "nobody";
 }
+
+inline
+std::string
+effective_user_log_dir()
+{
+	std::string r("/var/log/user/");
+	// Do not use cuserid() here.
+	// BSD libc defines L_cuserid as 17.
+	// But GNU libc is even worse and defines it as a mere 9.
+	if (struct passwd * p = getpwuid(geteuid()))
+		r += p->pw_name;
+	endpwent();
+	return r + slash;
+}
+
+inline
+std::string
+leading_slashify (
+	const std::string & s
+) {
+	return slash == s.substr(0, 1) ? s : slash + s;
+}
+
+}
+
+#if defined(__LINUX__) || defined(__linux__)
+#	define GROUP_0_NAME	"root"
+#else
+#	define GROUP_0_NAME	"wheel"
+#endif
+
+names::names(const char * a) : 
+	user_name(per_user_mode ? effective_user_name() : "root"),
+	UID("0"),
+	group_name(per_user_mode ? effective_group_name() : GROUP_0_NAME),
+	GID("0"),
+	runtime_dir_by_name("/run"),
+	runtime_dir_by_UID("/run"),
+	state_dir("/var/lib/"),
+	cache_dir("/var/cache/"),
+	tmp_dir("/tmp/"),
+	vartmp_dir("/var/tmp/"),
+	config_dir("/etc/"),
+	log_dir(per_user_mode ? effective_user_log_dir() : "/var/log/sv/")
+{ 
+	split_name(a, unit_dirname, unit_basename); 
+	escaped_unit_basename = systemd_name_escape(false, false, unit_basename); 
+	if (per_user_mode) {
+		std::string home_dir;
+		get_user_dirs_for(user_name, UID, GID, runtime_dir_by_name, runtime_dir_by_UID, home_dir);
+		cache_dir = home_dir + "/.cache";
+		state_dir = home_dir + "/.config";
+		config_dir = home_dir + "/.config";
+	}
+}
+
+void
+names::set_user(
+	const std::string & v
+) {
+	user_name = v;
+	if (per_user_mode) {
+		std::string home_dir;
+		get_user_dirs_for(user_name, UID, GID, runtime_dir_by_name, runtime_dir_by_UID, home_dir);
+		cache_dir = home_dir + "/.cache";
+		state_dir = home_dir + "/.config";
+	}
+}
+
+std::string
+names::substitute (
+	const std::string & s
+) {
+	std::string r;
+	for (std::string::const_iterator e(s.end()), q(s.begin()); e != q; ++q) {
+		char c(*q);
+		if ('%' != c) {
+			r += c;
+			continue;
+		}
+		++q;
+		if (e == q) {
+			r += c;
+			--q;
+			continue;
+		}
+		switch (c = *q) {
+			case 'p': r += query_escaped_prefix(); break;
+			case 'P': r += query_prefix(); break;
+			case 'i': r += query_escaped_instance(); break;
+			case 'I': r += query_instance(); break;
+			case 'f': r += leading_slashify(query_instance()); break;
+			case 'n': r += query_escaped_unit_basename(); break;
+			case 'N': r += query_unit_basename(); break;
+			case 'm': r += query_machine_id(); break;
+			case 't': r += query_runtime_dir_by_name(); break;
+			case 'r': r += query_runtime_dir_by_UID(); break;
+			case 'V': r += query_vartmp_dir(); break;
+			case 'T': r += query_tmp_dir(); break;
+			case 'E': r += query_config_dir(); break;
+			case 'S': r += query_state_dir(); break;
+			case 'C': r += query_cache_dir(); break;
+			case 'L': r += query_log_dir(); break;
+			case 'g': r += query_group_name(); break;
+			case 'G': r += query_GID(); break;
+			case 'u': r += query_user_name(); break;
+			case 'U': r += query_UID(); break;
+			case '%': default:	r += '%'; r += c; break;
+		}
+	}
+	return r;
+}
+
+std::list<std::string> 
+names::substitute ( 
+	const std::list<std::string> & l
+) {
+	std::list<std::string> r;
+	for (std::list<std::string>::const_iterator i(l.begin()); l.end() != i; ++i)
+		r.push_back(substitute(*i));
+	return r;
+}
+
+/* Profile file loader ******************************************************
+// **************************************************************************
+*/
+
+namespace {
 
 struct value {
 	typedef std::list<std::string> settings;
+
 	value() : used(false), d() {}
+#if 0	// This code is unused for now.
 	value(const std::string & v) : used(false), d() { d.push_back(v); }
+#endif
+
 	void append(const std::string & v) { d.push_back(v); }
 	std::string last_setting() const { return d.empty() ? std::string() : d.back(); }
 	const settings & all_settings() const { return d; }
@@ -145,7 +306,274 @@ struct profile {
 	FirstLevel m0;
 };
 
-static
+const char * systemd_prefixes[] = {
+	// Administrator-supplied units have the highest precedence.
+	"/etc/",
+#if defined(__LINUX__) || defined(__linux__)
+	"/usr/local/lib/",
+#else
+	"/usr/local/etc/",
+#endif
+	// Generated units come next.
+	"/run/",
+	// Followed by packaged units.
+#if !defined(__LINUX__) && !defined(__linux__)
+	"/usr/local/lib/",
+	"/usr/local/share/",
+	"/usr/share/",
+#endif
+	"/usr/lib/",
+	"/lib/",
+	// Followed by whatever is in the local directory, as an extension to the systemd search behaviour.
+	"",
+};
+
+inline
+FILE *
+find (
+	std::string & path,
+	const std::string & base
+) {
+	if (!path.empty())
+		return std::fopen((path + base).c_str(), "r");
+	int error(ENOENT);	// the most interesting error encountered
+	for ( const char ** p(systemd_prefixes); p < systemd_prefixes + sizeof systemd_prefixes/sizeof *systemd_prefixes; ++p) {
+		path = (std::string(*p) + "systemd/") + (per_user_mode ? "user/" : "system/");
+		FILE * f = std::fopen((path + base).c_str(), "r");
+		if (f) return f;
+		if (ENOENT == errno) 
+			errno = error;	// Restore a more interesting error.
+		else
+			error = errno;	// Save this interesting error.
+	}
+	path = "";
+	return NULL;
+}
+
+inline
+bool
+ends_with (
+	const char * s,
+	const char * p
+) {
+	const std::size_t sl(std::strlen(s));
+	const std::size_t pl(std::strlen(p));
+	return pl <= sl && 0 == memcmp(s + sl - pl, p, pl);
+}
+
+inline
+bool
+bracketed (
+	const std::string & s
+) {
+	return s.length() > 1 && '[' == s[0] && ']' == s[s.length() - 1];
+}
+
+inline
+bool
+is_section_heading (
+	std::string line,	///< line, already left trimmed by the caller
+	std::string & section	///< overwritten only if we successfully parse the heading
+) {
+	line = rtrim(line);
+	if (!bracketed(line)) return false;
+	section = tolower(line.substr(1, line.length() - 2));
+	return true;
+}
+
+inline
+void
+load (
+	profile & p,
+	FILE * file
+) {
+	for (std::string line, section; read_line(file, line); ) {
+		line = ltrim(line);
+		if (line.length() < 1) continue;
+		if ('#' == line[0] || ';' == line[0]) continue;
+		if (is_section_heading(line, section)) continue;
+		const std::string::size_type eq(line.find('='));
+		const std::string var(line.substr(0, eq));
+		const std::string val(eq == std::string::npos ? std::string() : line.substr(eq + 1, std::string::npos));
+		p.append(section, tolower(var), val);
+	}
+}
+
+inline
+bool
+is_regular (
+	const char * prog,
+	const std::string & name,
+	FILE * file
+) {
+	struct stat s;
+	if (0 > fstat(fileno(file), &s)) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name.c_str(), std::strerror(error));
+		return false;
+	}
+	if (!S_ISREG(s.st_mode)) {
+		std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, name.c_str(), "Not a regular file.");
+		return false;
+	}
+	return true;
+}
+
+inline
+void
+load (
+	const char * prog,
+	profile & p,
+	FILE * file,
+	const std::string & file_name
+) {
+	if (!is_regular(prog, file_name, file))
+		throw EXIT_FAILURE;
+	load(p, file);
+}
+
+inline
+void
+load (
+	const char * prog,
+	profile & p,
+	std::list<std::string> & source_filenames,
+	const std::string & path_name,
+	const std::string & base_name
+) {
+	const std::string snippet_dir_name(path_name + base_name);
+	FileDescriptorOwner snippet_dir_fd(open_dir_at(AT_FDCWD, snippet_dir_name.c_str()));
+	if (0 > snippet_dir_fd.get()) {
+		const int error(errno);
+		if (ENOENT == error) return;
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, snippet_dir_name.c_str(), std::strerror(error));
+		throw EXIT_FAILURE;
+	}
+	const DirStar snippet_dir(snippet_dir_fd);
+	if (!snippet_dir) {
+abort_scan:
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, snippet_dir_name.c_str(), std::strerror(error));
+		throw EXIT_FAILURE;
+	}
+	for (;;) {
+		errno = 0;
+		const dirent * entry(readdir(snippet_dir));
+		if (!entry) {
+			if (errno) goto abort_scan;
+			break;
+		}
+#if defined(_DIRENT_HAVE_D_NAMLEN)
+		if (1 > entry->d_namlen) continue;
+#endif
+		if ('.' == entry->d_name[0]) continue;
+		if (!ends_with(entry->d_name, ".conf")) continue;
+#if defined(_DIRENT_HAVE_D_TYPE)
+		if (DT_REG != entry->d_type && DT_LNK != entry->d_type) {
+			std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, snippet_dir_name.c_str(), entry->d_name, "Not a regular file.");
+			throw EXIT_FAILURE;
+		}
+#endif
+
+		FileDescriptorOwner snippet_file_fd(open_read_at(snippet_dir.fd(), entry->d_name));
+		if (0 > snippet_file_fd.get()) {
+bad_file:
+			const int error(errno);
+			std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, snippet_dir_name.c_str(), entry->d_name, std::strerror(error));
+			throw EXIT_FAILURE;
+		}
+		struct stat s;
+		if (0 > fstat(snippet_file_fd.get(), &s)) goto bad_file;
+		if (!S_ISREG(s.st_mode)) {
+			std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, snippet_dir_name.c_str(), entry->d_name, "Not a regular file.");
+			throw EXIT_FAILURE;
+		}
+
+		FileStar snippet_file(fdopen(snippet_file_fd.get(), "r"));
+		if (!snippet_file) goto bad_file;
+		snippet_file_fd.release();
+
+		const std::string snippet_file_name(snippet_dir_name + "/" + entry->d_name);
+		source_filenames.push_back(snippet_file_name);
+		load(prog, p, snippet_file, snippet_file_name);
+	}
+}
+
+void
+load (
+	const char * prog,
+	profile & p,
+	FILE * file,
+	std::list<std::string> & source_filenames,
+	std::string & filename,
+	const std::string & unit_path,
+	const std::string & unit_base,
+	const std::string & prefix,
+	const std::string & instance,
+	const std::string & suffix
+) {
+	filename = unit_path + unit_base;
+	if (!file) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, filename.c_str(), std::strerror(error));
+		throw EXIT_FAILURE;
+	}
+	source_filenames.push_back(filename);
+	load(prog, p, file, filename);
+	load(prog, p, source_filenames, unit_path, unit_base + ".d");
+	if (!instance.empty())
+		load(prog, p, source_filenames, unit_path, prefix + "@" + instance + suffix + ".d");
+}
+
+void
+report_unused (
+	const char * prog,
+	profile & p,
+	const std::string & name
+) {
+	for (profile::FirstLevel::const_iterator i0(p.m0.begin()); p.m0.end() != i0; ++i0) {
+		const std::string & section(i0->first);
+		const profile::SecondLevel & m1(i0->second);
+		for (profile::SecondLevel::const_iterator i1(m1.begin()); m1.end() != i1; ++i1) {
+			const std::string & var(i1->first);
+			const value & v(i1->second);
+			if (!v.used) {
+				for (value::settings::const_iterator i2(v.all_settings().begin()), e2(v.all_settings().end()); e2 != i2; ++i2) {
+				       const std::string & val(*i2);
+				       std::fprintf(stderr, "%s: WARNING: %s: Unused setting: [%s] %s = %s\n", prog, name.c_str(), section.c_str(), var.c_str(), val.c_str());
+				}
+			}
+		}
+	}
+}
+
+}
+
+/* Settings processing utility functions ************************************
+// **************************************************************************
+*/
+
+namespace {
+
+std::string
+english_list (
+	const std::list<std::string> & items
+) {
+	std::string r;
+	for (std::list<std::string>::const_iterator b(items.begin()), p(b), e(items.end()), l(e), c(e); p != e; l = c) {
+		c = p++;
+		if (c != b) {
+			if (p == e) {
+				if (l != b) r += ", ";
+				r += "and ";
+			} else
+				r += ", ";
+		}
+		r += *c;
+	}
+	return r;
+}
+
 bool
 strip_leading_minus (
 	const std::string & s,
@@ -160,7 +588,6 @@ strip_leading_minus (
 	}
 }
 
-static
 std::string
 strip_leading_minus (
 	const std::string & s
@@ -169,7 +596,6 @@ strip_leading_minus (
 	return s.substr(1, std::string::npos);
 }
 
-static
 std::string
 escape_newlines (
 	const std::string & s
@@ -184,18 +610,18 @@ escape_newlines (
 	return r;
 }
 
-static inline std::string quote ( const std::string & s ) { return quote_for_nosh(s); }
+inline std::string quote ( const std::string & s ) { return quote_for_nosh(s); }
 
-static inline
+inline
 bool
 remove_last_component (
 	std::string & dirname,
 	std::string & basename
 ) {
-	const std::string::size_type slash(dirname.rfind('/'));
-	if (std::string::npos != slash) {
-		basename = std::string(dirname, slash + 1, std::string::npos);
-		dirname = std::string(dirname, 0, 0 == slash ? 1 : slash);
+	const std::string::size_type slashpos(dirname.rfind('/'));
+	if (std::string::npos != slashpos) {
+		basename = std::string(dirname, slashpos + 1, std::string::npos);
+		dirname = std::string(dirname, 0, 0 == slashpos ? 1 : slashpos);
 		return true;
 	} else {
 		basename = dirname;
@@ -204,7 +630,6 @@ remove_last_component (
 	}
 }
 
-static
 bool
 has_dot_or_dotdot_anywhere (
 	std::string dirname
@@ -219,7 +644,6 @@ has_dot_or_dotdot_anywhere (
 
 /// \brief Convert from nosh and systemd quoting and escaping rules to the ones for sh.
 /// sh metacharacters other than $ (if dollar is true) and # (always) are also disabled by escaping them.
-static
 std::string
 escape_metacharacters (
 	const std::string & s,
@@ -267,15 +691,7 @@ escape_metacharacters (
 	return r;
 }
 
-static inline
-std::string
-leading_slashify (
-	const std::string & s
-) {
-	return "/" == s.substr(0, 1) ? s : "/" + s;
-}
-
-static inline
+inline
 std::string
 shell_expand (
 	const std::string & s
@@ -306,157 +722,6 @@ shell_expand (
 	return s;
 }
 
-static inline
-std::string
-effective_user_name ()
-{
-	if (struct passwd * p = getpwuid(geteuid()))
-		if (p->pw_name) {
-			const std::string n(p->pw_name);
-			endpwent();
-			return n;
-		}
-	endpwent();
-	return "nobody";
-}
-
-static const std::string slash("/");
-
-static inline
-std::string
-effective_user_log_dir()
-{
-	std::string r("/var/log/user/");
-	// Do not use cuserid() here.
-	// BSD libc defines L_cuserid as 17.
-	// But GNU libc is even worse and defines it as a mere 9.
-	if (struct passwd * p = getpwuid(geteuid()))
-		r += p->pw_name;
-	endpwent();
-	return r + slash;
-}
-
-namespace {
-struct names {
-	names(const char * a);
-	void set_prefix(const std::string & v, bool esc, bool alt, bool ext) { set(esc, alt, ext, escaped_prefix, prefix, v); }
-	void set_instance(const std::string & v, bool esc, bool alt, bool ext) { set(esc, alt, ext, escaped_instance, instance, v); }
-	void set_bundle(const std::string & r, const std::string & b) { bundle_basename = b; bundle_dirname = r + b; }
-	void set_machine_id(const std::string & v) { machine_id = v; }
-	void set_user(const std::string & u);
-	const std::string & query_arg_name () const { return arg_name; }
-	const std::string & query_unit_dirname () const { return unit_dirname; }
-	const std::string & query_unit_basename () const { return unit_basename; }
-	const std::string & query_escaped_unit_basename () const { return escaped_unit_basename; }
-	const std::string & query_prefix () const { return prefix; }
-	const std::string & query_escaped_prefix () const { return escaped_prefix; }
-	const std::string & query_instance () const { return instance; }
-	const std::string & query_escaped_instance () const { return escaped_instance; }
-	const std::string & query_bundle_basename () const { return bundle_basename; }
-	const std::string & query_bundle_dirname () const { return bundle_dirname; }
-	const std::string & query_machine_id () const { return machine_id; }
-	const std::string & query_user_name () const { return user_name; }
-	const std::string & query_UID () const { return UID; }
-	const std::string & query_runtime_dir_by_name () const { return runtime_dir_by_name; }
-	const std::string & query_runtime_dir_by_UID () const { return runtime_dir_by_UID; }
-	const std::string & query_state_dir () const { return state_dir; }
-	const std::string & query_cache_dir () const { return cache_dir; }
-	const std::string & query_log_dir () const { return log_dir; }
-	std::string substitute ( const std::string & );
-	std::list<std::string> substitute ( const std::list<std::string> & );
-protected:
-	std::string arg_name, unit_dirname, unit_basename, escaped_unit_basename, prefix, escaped_prefix, instance, escaped_instance, bundle_basename, bundle_dirname, machine_id, user_name, UID, runtime_dir_by_name, runtime_dir_by_UID, state_dir, cache_dir, log_dir;
-	void set ( bool esc, bool alt, bool ext, std::string & escaped, std::string & normal, const std::string & value ) {
-		if (esc)
-			escaped = systemd_name_escape(alt, ext, normal = value);
-		else
-			normal = systemd_name_unescape(alt, ext, escaped = value);
-	}
-};
-}
-
-names::names(const char * a) : 
-	arg_name(a), 
-	user_name(per_user_mode ? effective_user_name() : "root"), 
-	UID("0"),
-	runtime_dir_by_name("/run"),
-	runtime_dir_by_UID("/run"),
-	state_dir("/var/lib/"),
-	cache_dir("/var/cache/"),
-	log_dir(per_user_mode ? effective_user_log_dir() : "/var/log/sv/")
-{ 
-	split_name(a, unit_dirname, unit_basename); 
-	escaped_unit_basename = systemd_name_escape(false, false, unit_basename); 
-	if (per_user_mode) {
-		std::string home_dir;
-		get_user_dirs_for(user_name, UID, runtime_dir_by_name, runtime_dir_by_UID, home_dir);
-		cache_dir = home_dir + "/.cache";
-		state_dir = home_dir + "/.config";
-	}
-}
-
-void
-names::set_user(
-	const std::string & v
-) {
-	user_name = v;
-	if (per_user_mode) {
-		std::string home_dir;
-		get_user_dirs_for(user_name, UID, runtime_dir_by_name, runtime_dir_by_UID, home_dir);
-		cache_dir = home_dir + "/.cache";
-		state_dir = home_dir + "/.config";
-	}
-}
-
-std::string
-names::substitute (
-	const std::string & s
-) {
-	std::string r;
-	for (std::string::const_iterator e(s.end()), q(s.begin()); e != q; ++q) {
-		char c(*q);
-		if ('%' != c) {
-			r += c;
-			continue;
-		}
-		++q;
-		if (e == q) {
-			r += c;
-			--q;
-			continue;
-		}
-		switch (c = *q) {
-			case 'p': r += query_escaped_prefix(); break;
-			case 'P': r += query_prefix(); break;
-			case 'i': r += query_escaped_instance(); break;
-			case 'I': r += query_instance(); break;
-			case 'f': r += leading_slashify(query_instance()); break;
-			case 'n': r += query_escaped_unit_basename(); break;
-			case 'N': r += query_unit_basename(); break;
-			case 'm': r += query_machine_id(); break;
-			case 't': r += query_runtime_dir_by_name(); break;
-			case 'T': r += query_runtime_dir_by_UID(); break;
-			case 'S': r += query_state_dir(); break;
-			case 'C': r += query_cache_dir(); break;
-			case 'L': r += query_log_dir(); break;
-			case 'u': r += query_user_name(); break;
-			case 'U': r += query_UID(); break;
-			case '%': default:	r += '%'; r += c; break;
-		}
-	}
-	return r;
-}
-
-std::list<std::string> 
-names::substitute ( 
-	const std::list<std::string> & l
-) {
-	std::list<std::string> r;
-	for (std::list<std::string>::const_iterator i(l.begin()); l.end() != i; ++i)
-		r.push_back(substitute(*i));
-	return r;
-}
-
 #if 0 // This code is unused, for now.
 static
 bool
@@ -474,7 +739,6 @@ is_numeric (
 }
 #endif
 
-static
 bool
 is_string (
 	const value & v,
@@ -484,7 +748,6 @@ is_string (
 	return s == r;
 }
 
-static
 bool
 is_string (
 	const value & v,
@@ -495,7 +758,6 @@ is_string (
 	return s0 == r || s1 == r;
 }
 
-static
 bool
 is_string (
 	const value * v,
@@ -505,7 +767,6 @@ is_string (
 	return v ? is_string(*v, s) : def;
 }
 
-static
 bool
 is_string (
 	const value * v,
@@ -514,7 +775,6 @@ is_string (
 	return v && is_string(*v, s);
 }
 
-static
 bool
 is_string (
 	const value * v,
@@ -524,16 +784,14 @@ is_string (
 	return v && is_string(*v, s0, s1);
 }
 
-static
 bool
 is_bool_true (
 	const value & v
 ) {
 	const std::string r(tolower(v.last_setting()));
-	return is_bool_true(r) || "1" == r;
+	return ::is_bool_true(r) || "1" == r;
 }
 
-static
 bool
 is_bool_true (
 	const value * v,
@@ -543,7 +801,6 @@ is_bool_true (
 	return def;
 }
 
-static
 bool
 is_bool_true (
 	const value * v,
@@ -555,7 +812,6 @@ is_bool_true (
 	return def;
 }
 
-static
 bool
 is_local_socket_name (
 	const std::string & s
@@ -563,7 +819,7 @@ is_local_socket_name (
 	return s.length() > 0 && '/' == s[0];
 }
 
-static inline
+inline
 void
 split_limit (
 	const std::string & t,
@@ -595,15 +851,6 @@ split_limit (
 	}
 }
 
-static inline
-bool
-bracketed (
-	const std::string & s
-) {
-	return s.length() > 1 && '[' == s[0] && ']' == s[s.length() - 1];
-}
-
-static
 void
 split_ip_socket_name (
 	const std::string & s, 
@@ -622,7 +869,6 @@ split_ip_socket_name (
 	}
 }
 
-static
 void
 split_netlink_socket_name (
 	const std::string & s, 
@@ -640,7 +886,7 @@ split_netlink_socket_name (
 }
 
 #if defined(__LINUX__) || defined(__linux__)
-static inline
+inline
 std::string
 set_controller_command (
 	unsigned levels,
@@ -660,56 +906,6 @@ set_controller_command (
 }
 #endif
 
-static inline
-bool
-is_section_heading (
-	std::string line,	///< line, already left trimmed by the caller
-	std::string & section	///< overwritten only if we successfully parse the heading
-) {
-	line = rtrim(line);
-	if (!bracketed(line)) return false;
-	section = tolower(line.substr(1, line.length() - 2));
-	return true;
-}
-
-static inline
-void
-load (
-	profile & p,
-	FILE * file
-) {
-	for (std::string line, section; read_line(file, line); ) {
-		line = ltrim(line);
-		if (line.length() < 1) continue;
-		if ('#' == line[0] || ';' == line[0]) continue;
-		if (is_section_heading(line, section)) continue;
-		const std::string::size_type eq(line.find('='));
-		const std::string var(line.substr(0, eq));
-		const std::string val(eq == std::string::npos ? std::string() : line.substr(eq + 1, std::string::npos));
-		p.append(section, tolower(var), val);
-	}
-}
-
-static
-void
-load (
-	const char * prog,
-	profile & p,
-	FILE * file,
-	const std::string & unit_name,
-	const std::string & file_name
-) {
-	if (!file) {
-		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, unit_name.c_str(), std::strerror(error));
-		throw EXIT_FAILURE;
-	}
-	if (!is_regular(prog, file_name, file))
-		throw EXIT_FAILURE;
-	load(p, file);
-}
-
-static
 void
 open (
 	const char * prog,
@@ -725,27 +921,6 @@ open (
 	chmod(name.c_str(), 0755);
 }
 
-static
-void
-report_unused (
-	const char * prog,
-	profile & p,
-	const std::string & name
-) {
-	for (profile::FirstLevel::const_iterator i0(p.m0.begin()); p.m0.end() != i0; ++i0) {
-		const std::string & section(i0->first);
-		const profile::SecondLevel & m1(i0->second);
-		for (profile::SecondLevel::const_iterator i1(m1.begin()); m1.end() != i1; ++i1) {
-			const std::string & var(i1->first);
-			const value & v(i1->second);
-			if (!v.used) {
-				for (value::settings::const_iterator i2(v.all_settings().begin()), e2(v.all_settings().end()); e2 != i2; ++i2) {
-				       const std::string & val(*i2);
-				       std::fprintf(stderr, "%s: WARNING: %s: Unused setting: [%s] %s = %s\n", prog, name.c_str(), section.c_str(), var.c_str(), val.c_str());
-				}
-			}
-		}
-	}
 }
 
 /* Main function ************************************************************
@@ -793,7 +968,7 @@ convert_systemd_units [[gnu::noreturn]] (
 		p.process(true /* strictly options before arguments */);
 		args = new_args;
 		if (p.stopped()) throw EXIT_SUCCESS;
-		if (bundle_root_str) bundle_root = bundle_root_str + std::string("/");
+		if (bundle_root_str) bundle_root = bundle_root_str + slash;
 		ext_escape = !no_ext_escape;
 		systemd_quirks = !no_systemd_quirks;
 		generation_comment = !no_generation_comment;
@@ -817,13 +992,6 @@ convert_systemd_units [[gnu::noreturn]] (
 
 	bool is_socket_activated(false), is_timer_activated(false), is_target(false), merge_run_into_start(false);
 
-	std::string socket_filename;
-	profile socket_profile;
-	std::string timer_filename;
-	profile timer_profile;
-	std::string service_filename;
-	profile service_profile;
-
 	{
 		std::string bundle_basename;
 		if (ends_in(names.query_unit_basename(), ".target", bundle_basename)) {
@@ -843,81 +1011,108 @@ convert_systemd_units [[gnu::noreturn]] (
 		names.set_bundle(bundle_root, bundle_basename);
 	}
 
-	names.set_prefix(names.query_bundle_basename(), escape_prefix, alt_escape, ext_escape);
-
 	machine_id::erase();
 	if (!machine_id::read_non_volatile() && !machine_id::read_fallbacks(envs))
 	       machine_id::create();
 	names.set_machine_id(machine_id::human_readable_form_compact());
 
+	std::string socket_filename;
+	profile socket_profile;
+	std::string timer_filename;
+	profile timer_profile;
+	std::string service_filename;
+	profile service_profile;
+	std::list<std::string> source_filenames;
 	bool is_instance(false), is_socket_accept(false);
-	if (is_socket_activated) {
-		std::string socket_unit_name(names.query_arg_name());
-		FileStar socket_file(find(socket_unit_name, socket_filename));
 
-		if (!socket_file && ENOENT == errno) {
-			std::string::size_type atc(names.query_bundle_basename().find('@'));
-			if (names.query_bundle_basename().npos != atc) {
-				names.set_prefix(names.query_bundle_basename().substr(0, atc), escape_prefix, alt_escape, ext_escape);
-				++atc;
-				names.set_instance(names.query_bundle_basename().substr(atc, names.query_bundle_basename().npos), escape_instance, alt_escape, ext_escape);
+	if (is_socket_activated) {
+		const std::string suffix(".socket");
+		std::string prefix(names.query_bundle_basename()), instance;
+
+		std::string socket_unit_path(names.query_unit_dirname());
+		std::string socket_unit_base(prefix  + suffix);
+		FileStar socket_file(find(socket_unit_path, socket_unit_base));
+		if (!socket_file) {
+			std::string::size_type atc(prefix.find('@'));
+			if (ENOENT == errno && std::string::npos != atc) {
+				instance = prefix.substr(atc + 1, std::string::npos);
+				prefix = prefix.substr(0, atc);
+				names.set_instance(instance, escape_instance, alt_escape, ext_escape);
 				is_instance = true;
-				socket_unit_name = names.query_unit_dirname() + names.query_escaped_prefix() + "@.socket";
-				socket_file = find(socket_unit_name, socket_filename);
+
+				socket_unit_path = names.query_unit_dirname();
+				socket_unit_base = prefix + "@" + suffix;
+				socket_file = find(socket_unit_path, socket_unit_base);
 			}
 		}
+		load(prog, socket_profile, socket_file, source_filenames, socket_filename, socket_unit_path, socket_unit_base, prefix, instance, suffix);
 
-		load(prog, socket_profile, socket_file, socket_unit_name, socket_filename);
+		names.set_prefix(prefix, escape_prefix, alt_escape, ext_escape);
 
 		value * accept(socket_profile.use("socket", "accept"));
 		is_socket_accept = is_bool_true(accept, false);
 
-		const std::string service_unit_name(names.query_unit_dirname() + names.query_escaped_prefix() + (is_socket_accept ? "@" : "") + ".service");
-		FileStar service_file(find(service_unit_name, service_filename));
-				
-		load(prog, service_profile, service_file, service_unit_name, service_filename);
+		std::string service_unit_path(names.query_unit_dirname());
+		std::string service_unit_base(prefix + std::string(is_socket_accept ? "@" : "") + ".service");
+		instance = "";
+		FileStar service_file(find(service_unit_path, service_unit_base));
+		load(prog, service_profile, service_file, source_filenames, service_filename, service_unit_path, service_unit_base, prefix, instance, ".service");
 	} else 
 	if (is_timer_activated) {
-		std::string timer_unit_name(names.query_arg_name());
-		FileStar timer_file(find(timer_unit_name, timer_filename));
+		const std::string suffix(".timer");
+		std::string prefix(names.query_bundle_basename()), instance;
 
-		if (!timer_file && ENOENT == errno) {
-			std::string::size_type atc(names.query_bundle_basename().find('@'));
-			if (names.query_bundle_basename().npos != atc) {
-				names.set_prefix(names.query_bundle_basename().substr(0, atc), escape_prefix, alt_escape, ext_escape);
-				++atc;
-				names.set_instance(names.query_bundle_basename().substr(atc, names.query_bundle_basename().npos), escape_instance, alt_escape, ext_escape);
+		std::string timer_unit_path(names.query_unit_dirname());
+		std::string timer_unit_base(prefix + suffix);
+		FileStar timer_file(find(timer_unit_path, timer_unit_base));
+		if (!timer_file) {
+			std::string::size_type atc(prefix.find('@'));
+			if (ENOENT == errno && std::string::npos != atc) {
+				instance = prefix.substr(atc + 1, std::string::npos);
+				prefix = prefix.substr(0, atc);
+				names.set_instance(instance, escape_instance, alt_escape, ext_escape);
 				is_instance = true;
-				timer_unit_name = names.query_unit_dirname() + names.query_escaped_prefix() + "@.timer";
-				timer_file = find(timer_unit_name, timer_filename);
+
+				timer_unit_path = names.query_unit_dirname();
+				timer_unit_base = prefix + "@.timer";
+				timer_file = find(timer_unit_path, timer_unit_base);
 			}
 		}
+		load(prog, timer_profile, timer_file, source_filenames, timer_filename, timer_unit_path, timer_unit_base, prefix, instance, suffix);
 
-		load(prog, timer_profile, timer_file, timer_unit_name, timer_filename);
+		names.set_prefix(prefix, escape_prefix, alt_escape, ext_escape);
 
-		const std::string service_unit_name(names.query_unit_dirname() + names.query_escaped_prefix() + ".service");
-		FileStar service_file(find(service_unit_name, service_filename));
-				
-		load(prog, service_profile, service_file, service_unit_name, service_filename);
+		std::string service_unit_path(names.query_unit_dirname());
+		std::string service_unit_base(prefix + ".service");
+		instance = "";
+		FileStar service_file(find(service_unit_path, service_unit_base));
+		load(prog, service_profile, service_file, source_filenames, service_filename, service_unit_path, service_unit_base, prefix, instance, ".service");
 	} else 
 	{
-		std::string service_unit_name(names.query_arg_name());
-		FileStar service_file(find(service_unit_name, service_filename));
+		const std::string suffix(is_target ? ".target" : ".service");
+		std::string prefix(names.query_bundle_basename()), instance;
 
-		if (!service_file && ENOENT == errno) {
-			std::string::size_type atc(names.query_bundle_basename().find('@'));
-			if (names.query_bundle_basename().npos != atc) {
-				names.set_prefix(names.query_bundle_basename().substr(0, atc), escape_prefix, alt_escape, ext_escape);
-				++atc;
-				names.set_instance(names.query_bundle_basename().substr(atc, names.query_bundle_basename().npos), escape_instance, alt_escape, ext_escape);
+		std::string service_unit_path(names.query_unit_dirname());
+		std::string service_unit_base(prefix + suffix);
+		FileStar service_file(find(service_unit_path, service_unit_base));
+		if (!service_file) {
+			std::string::size_type atc(prefix.find('@'));
+			if (ENOENT == errno && std::string::npos != atc) {
+				instance = prefix.substr(atc + 1, std::string::npos);
+				prefix = prefix.substr(0, atc);
+				names.set_instance(instance, escape_instance, alt_escape, ext_escape);
 				is_instance = true;
-				service_unit_name = (names.query_unit_dirname() + names.query_escaped_prefix() + "@.") + (is_target ? "target" : "service");
-				service_file = find(service_unit_name, service_filename);
+
+				service_unit_path = names.query_unit_dirname();
+				service_unit_base = prefix + "@" + suffix;
+				service_file = find(service_unit_path, service_unit_base);
 			}
 		}
-				
-		load(prog, service_profile, service_file, service_unit_name, service_filename);
+		load(prog, service_profile, service_file, source_filenames, service_filename, service_unit_path, service_unit_base, prefix, instance, suffix);
+
+		names.set_prefix(prefix, escape_prefix, alt_escape, ext_escape);
 	}
+	const std::string source_filename_list(english_list(source_filenames));
 
 	value * onactivesec(timer_profile.use("timer", "onactivesec"));
 	value * onbootsec(timer_profile.use("timer", "onbootsec"));
@@ -1060,7 +1255,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	value * ttypath(service_profile.use("service", "ttypath"));
 	value * ttyfromenv(service_profile.use("service", "ttyfromenv"));	// This is an extension to systemd.
 	value * ttyreset(service_profile.use("service", "ttyreset"));
-	value * ttyprompt(service_profile.use("service", "ttyprompt"));	// This is an extension to systemd.
+	value * ttyprompt(service_profile.use("service", "ttyprompt"));		// This is an extension to systemd.
 	value * bannerfile(service_profile.use("service", "bannerfile"));	// This is an extension to systemd.
 	value * bannerline(service_profile.use("service", "bannerline"));	// This is an extension to systemd.
 	value * ttyvhangup(service_profile.use("service", "ttyvhangup"));
@@ -1105,6 +1300,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	value * memorylow(service_profile.use("service", "memorylow"));
 	value * memoryhigh(service_profile.use("service", "memoryhigh"));
 	value * memorymax(service_profile.use("service", "memorymax"));
+	value * memorymin(service_profile.use("service", "memorymin"));
 	value * memoryswapmax(service_profile.use("service", "memoryswapmax"));
 	value * ioaccounting(service_profile.use("service", "ioaccounting"));
 	value * rdmaaccounting(service_profile.use("service", "rdmaaccounting"));	// This is an extension to systemd.
@@ -1149,7 +1345,7 @@ convert_systemd_units [[gnu::noreturn]] (
 
 	// Actively prevent certain unsupported combinations.
 
-	if (type && "simple" != tolower(type->last_setting()) && "forking" != tolower(type->last_setting()) && "oneshot" != tolower(type->last_setting()) && "dbus" != tolower(type->last_setting())) {
+	if (type && "simple" != tolower(type->last_setting()) && "exec" != tolower(type->last_setting()) && "forking" != tolower(type->last_setting()) && "oneshot" != tolower(type->last_setting()) && "dbus" != tolower(type->last_setting())) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s: %s\n", prog, service_filename.c_str(), type->last_setting().c_str(), "Not a supported service type.");
 		throw EXIT_FAILURE;
 	}
@@ -1287,6 +1483,11 @@ convert_systemd_units [[gnu::noreturn]] (
 	if (memorymax) {
 		/// FIXME: memmax?
 		control_group_knobs += "foreground set-control-group-knob --infinity-is-max --multiplier-suffixes memory.max " + quote(names.substitute(memorymax->last_setting())) + " ;\n";
+		memory_accounting = true;
+	}
+	if (memorymin) {
+		/// FIXME: memmin?
+		control_group_knobs += "foreground set-control-group-knob --infinity-is-max --multiplier-suffixes memory.min " + quote(names.substitute(memorymin->last_setting())) + " ;\n";
 		memory_accounting = true;
 	}
 	if (memoryswapmax) {
@@ -1559,7 +1760,7 @@ convert_systemd_units [[gnu::noreturn]] (
 				setuidgid += " --supplementary";
 			setuidgid += " -- " + quote(names.query_user_name()) + "\n";
 		}
-		setsid += "setlogin -- " + quote(names.query_user_name()) + "\n";
+		if (is_bool_true(sessionleader, false)) setsid += "setlogin -- " + quote(names.query_user_name()) + "\n";
 	} else if (group) {
 		envuidgid += "envgid -- " + quote(names.substitute(group->last_setting())) + "\n";
 		if (!no_setuidgid)
@@ -1642,7 +1843,13 @@ convert_systemd_units [[gnu::noreturn]] (
 	) {
 		std::string s, h;
 #if defined(RLIMIT_NICE)
-		if (limitnice) split_limit(limitnice->last_setting(),"e",s,h);
+		if (limitnice) {
+			const std::string n(limitnice->last_setting());
+			if (!n.empty() && ('+' == n[0] || '-' == n[0]))
+				priority += "nice -n " + quote(n) + "\n";
+			else
+				split_limit(n,"e",s,h);
+		}
 #endif
 #if defined(RLIMIT_SIGPENDING)
 		if (limitsigpending) split_limit(limitsigpending->last_setting(),"i",s,h);
@@ -1741,18 +1948,20 @@ convert_systemd_units [[gnu::noreturn]] (
 	const bool stdin_socket(is_string(standardinput, "socket"));
 	const bool stdin_tty(is_string(standardinput, "tty", "tty-force"));
 	const bool stdout_file(standardoutput && "file:" == tolower(standardoutput->last_setting()).substr(0,5));
+	const bool stdout_append(standardoutput && "append:" == tolower(standardoutput->last_setting()).substr(0,7));
 	const bool stdout_socket(is_string(standardoutput, "socket"));
 	const bool stdout_tty(is_string(standardoutput, "tty", "tty-force"));
 	const bool stdout_inherit(is_string(standardoutput, "inherit"));
 	const bool stderr_file(standarderror && "file:" == tolower(standarderror->last_setting()).substr(0,5));
+	const bool stderr_append(standarderror && "append:" == tolower(standarderror->last_setting()).substr(0,7));
 	const bool stderr_socket(is_string(standarderror, "socket"));
 	const bool stderr_tty(is_string(standarderror, "tty", "tty-force"));
 	const bool stderr_inherit(is_string(standarderror, "inherit"));
 	const bool stderr_log(is_string(standarderror, "log"));
 	// We "un-use" anything that isn't "inherit"/"tty"/"socket".
 	if (standardinput && (!stdin_file && !stdin_socket && !stdin_tty)) standardinput->used = false;
-	if (standardoutput && (!stdout_file && !stdout_inherit && !stdout_socket && !stdout_tty)) standardoutput->used = false;
-	if (standarderror && (!stderr_file && !stderr_inherit && !stderr_socket && !stderr_tty && !stderr_log)) standarderror->used = false;
+	if (standardoutput && (!stdout_file && !stdout_append && !stdout_inherit && !stdout_socket && !stdout_tty)) standardoutput->used = false;
+	if (standarderror && (!stderr_file && !stderr_append && !stderr_inherit && !stderr_socket && !stderr_tty && !stderr_log)) standarderror->used = false;
 	if (is_socket_activated) {
 		if (is_socket_accept) {
 			// There is no non-UCSPI mode for per-connection services.
@@ -1884,7 +2093,7 @@ convert_systemd_units [[gnu::noreturn]] (
 #endif
 		redirect += "\n";
 		if (stderr_log) redirect += "fdmove 2 4\n";
-		if (is_bool_true(ttyreset, false)) login_prompt += "vc-reset-tty\n";
+		if (is_bool_true(ttyreset, false)) login_prompt += "vc-reset-tty --hard-reset\n";
 		if (is_bool_true(ttyprompt, false)) login_prompt += "login-prompt\n";
 #if defined(__LINUX__) || defined(__linux__)
 		if (utmpidentifier)
@@ -1900,7 +2109,9 @@ convert_systemd_units [[gnu::noreturn]] (
 	}
 	if (stdin_file) redirect += "fdredir --read 0 " + quote(names.substitute(standardinput->last_setting().substr(5,std::string::npos))) + "\n";
 	if (stdout_file) redirect += "fdredir --write 1 " + quote(names.substitute(standardoutput->last_setting().substr(5,std::string::npos))) + "\n";
+	if (stdout_append) redirect += "fdredir --append 1 " + quote(names.substitute(standardoutput->last_setting().substr(5,std::string::npos))) + "\n";
 	if (stderr_file) redirect += "fdredir --write 2 " + quote(names.substitute(standarderror->last_setting().substr(5,std::string::npos))) + "\n";
+	if (stderr_append) redirect += "fdredir --append 2 " + quote(names.substitute(standarderror->last_setting().substr(5,std::string::npos))) + "\n";
 	if (bannerfile)
 		greeting_message += "login-banner " + quote(names.substitute(bannerfile->last_setting())) + "\n";
 	if (bannerline)
@@ -1989,14 +2200,13 @@ convert_systemd_units [[gnu::noreturn]] (
 	} else
 		execute_command << (is_remain || is_oneshot ? "true" : "pause") << "\n";
 
-	const std::string activating_filename(is_socket_activated ? socket_filename : is_timer_activated ? timer_filename : service_filename);
 	std::ostream & run_or_start(merge_run_into_start ? start : run);
 	start << "#!/bin/nosh\n";
 	if (generation_comment)
-		start << multi_line_comment("Start file generated from " + activating_filename);
+		start << multi_line_comment("Start file generated from " + source_filename_list);
 	run << "#!/bin/nosh\n";
 	if (generation_comment)
-		run << multi_line_comment("Run file generated from " + activating_filename);
+		run << multi_line_comment("Run file generated from " + source_filename_list);
 	if (is_socket_activated) {
 		if (socket_description) {
 			for (value::settings::const_iterator i(socket_description->all_settings().begin()), e(socket_description->all_settings().end()); e != i; ++i) {
@@ -2403,7 +2613,7 @@ convert_systemd_units [[gnu::noreturn]] (
 
 	stop << "#!/bin/nosh\n";
 	if (generation_comment)
-		stop << multi_line_comment("Stop file generated from " + activating_filename);
+		stop << multi_line_comment("Stop file generated from " + source_filename_list);
 	if (execstoppost || runtimedirectory) {
 		stop << perilogue_setup_environment.str();
 		stop << removerundir;

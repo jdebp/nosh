@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="time-env-set">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -10,6 +16,8 @@
 
 <refnamediv>
 <refname>time-env-set</refname>
+<refname>time-env-set-if-earlier</refname>
+<refname>time-env-set-if-later</refname>
 <refpurpose>set environment variables to external TAI64N timestamps</refpurpose>
 </refnamediv>
 

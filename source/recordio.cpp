@@ -12,6 +12,7 @@ For copyright and licensing terms, see the file named COPYING.
 #if defined(__LINUX__) || defined(__linux__)
 #include "kqueue_linux.h"
 #else
+#include <sys/types.h>
 #include <sys/event.h>
 #endif
 #include <unistd.h>

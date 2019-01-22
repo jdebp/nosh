@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="tai64nlocal">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -45,7 +51,7 @@ It uses the <citerefentry><refentrytitle>read</refentrytitle><manvolnum>2</manvo
 To duplicate the GNU and BSD C/C++ runtime libraries' behaviours, it explicitly flushes the output's buffer whenever it is about to read more input and that input is the beginning of a new line.
 </para>
 
-</refsection><refsection><title>COMPATIBILITY</title>
+</refsection><refsection><title>Compatibility</title>
 
 <para>
 The daemontools and daemontools-encore <citerefentry><refentrytitle>tai64nlocal</refentrytitle><manvolnum>1</manvolnum></citerefentry> both have a bug that causes them to crash if the input contains a line beginning with an <code>@</code> character but not having a properly encoded TAI64N timestamp, or having a TAI64N timestamp outwith the range acceptable to the <citerefentry><refentrytitle>localtime</refentrytitle><manvolnum>1</manvolnum></citerefentry> library function.
@@ -53,7 +59,7 @@ The daemontools and daemontools-encore <citerefentry><refentrytitle>tai64nlocal<
 </para>
 
 <para>
-See the timestamps section of the Nosh Guide for detailed information on the differences from daemontools, daemontools-encore, and other toolsets in how <command>tai64nlocal</command> handles TAI.
+See <ulink url="timestamps.html">the timestamps section of the <citetitle>nosh Guide</citetitle></ulink> for detailed information on the differences from daemontools, daemontools-encore, and other toolsets in how <command>tai64nlocal</command> handles TAI.
 </para>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

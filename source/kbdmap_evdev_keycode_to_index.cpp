@@ -56,7 +56,7 @@ linux_evdev_keycode_to_keymap_index (
 		case KEY_SEMICOLON:	return KBDMAP_INDEX_SEMICOLON;
 		case KEY_APOSTROPHE:	return KBDMAP_INDEX_APOSTROPHE;
 		case KEY_GRAVE:		return KBDMAP_INDEX_GRAVE;
-		case KEY_LINEFEED:	break;	/// FIXME: \todo What does this map to?  Is this even a key in any real system?
+		case KEY_LINEFEED:	break;	// This is not a key in any real system.
 		case KEY_BACKSLASH:	return KBDMAP_INDEX_EUROPE1;
 		case KEY_Z:		return KBDMAP_INDEX_Z;
 		case KEY_X:		return KBDMAP_INDEX_X;

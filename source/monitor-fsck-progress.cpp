@@ -15,13 +15,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <stdint.h>
 #include <inttypes.h>
 #include <sys/types.h>
-#include "BaseTUI.h"
-#if defined(__LINUX__) || defined(__linux__)
-#include <ncursesw/curses.h>
-#else
-#include <curses.h>
-#endif
-#include <sys/wait.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include "kqueue_common.h"
@@ -30,6 +23,13 @@ For copyright and licensing terms, see the file named COPYING.
 #include "ttyutils.h"
 #include "listen.h"
 #include "FileDescriptorOwner.h"
+#include "CharacterCell.h"
+#include "InputMessage.h"
+#include "TerminalCapabilities.h"
+#include "TUIDisplayCompositor.h"
+#include "TUIOutputBase.h"
+#include "TUIInputBase.h"
+#include "TUIVIO.h"
 #include "SignalManagement.h"
 
 /* Clients ******************************************************************
@@ -106,140 +106,192 @@ ConnectedClient::parse(
 // **************************************************************************
 */
 
-enum {
-	DEFAULT_COLOURS = 0,
-	TITLE_COLOURS,
-	STATUS_COLOURS,
-	LINE_COLOURS,
-	PROGRESS_COLOURS
-};
-
-static const char title[] = "nosh package parallel fsck monitor";
+static const char title_text[] = "nosh package parallel fsck monitor";
 static const char in_progress[] = "fsck in progress";
 static const char no_fscks[] = "no fscks";
 
 namespace {
-struct TUI : public BaseTUI {
-	TUI(const char * p, ProcessEnvironment & e, ClientTable & m);
+
+inline ColourPair C(uint_fast8_t f, uint_fast8_t b) { return ColourPair(Map256Colour(f), Map256Colour(b)); }
+
+struct TUI :
+	public TerminalCapabilities,
+	public TUIOutputBase,
+	public TUIInputBase
+{
+	TUI(ProcessEnvironment & e, ClientTable & m, TUIDisplayCompositor & c);
 
 	bool quit_flagged() const { return pending_quit_event; }
-	void handle_non_kevents ();
-	void invalidate() { redraw_needed = true; }
+	bool exit_signalled() const { return terminate_signalled||interrupt_signalled||hangup_signalled; }
+	void handle_signal (int);
+	void handle_stdin (int);
+
 protected:
-	const char * prog;
-	const ProcessEnvironment & envs;
+	sig_atomic_t terminate_signalled, interrupt_signalled, hangup_signalled, usr1_signalled, usr2_signalled;
 	ClientTable & clients;
-	bool redraw_needed, pending_quit_event;
+	TUIVIO vio;
+	bool pending_quit_event;
+	const ColourPair normal, title, status, line, progress;
 
-	void setup_colours();
-	virtual void redraw();
-	virtual void unicode_keypress(wint_t);
-	virtual void ncurses_keypress(wint_t);
+	virtual void redraw_new();
 
-	void set_colour_pair(unsigned);
+	virtual void ExtendedKey(uint_fast16_t k, uint_fast8_t m);
+	virtual void FunctionKey(uint_fast16_t k, uint_fast8_t m);
+	virtual void UCS3(uint_fast32_t character);
+	virtual void Accelerator(uint_fast32_t character);
+	virtual void MouseMove(uint_fast16_t, uint_fast16_t, uint8_t);
+	virtual void MouseWheel(uint_fast8_t n, int_fast8_t v, uint_fast8_t m);
+	virtual void MouseButton(uint_fast8_t n, uint_fast8_t v, uint_fast8_t m);
+
+private:
+	char stdin_buffer[1U * 1024U];
 };
 
-struct { short fg, bg; }
-default_colours[13] = {
-	{	COLOR_WHITE,	COLOR_BLACK	},	// default
-	{	COLOR_BLUE,	COLOR_WHITE	},	// title
-	{	COLOR_WHITE,	COLOR_BLUE	},	// status
-	{	COLOR_BLACK,	COLOR_YELLOW	},	// line
-	{	COLOR_BLACK,	COLOR_GREEN	},	// progress
-};
 }
 
 TUI::TUI(
-	const char * p,
 	ProcessEnvironment & e,
-	ClientTable & m
+	ClientTable & m,
+	TUIDisplayCompositor & comp
 ) :
-	prog(p),
-	envs(e),
+	TerminalCapabilities(e),
+	TUIOutputBase(*this, stdout, false, false, false, false, false, comp),
+	TUIInputBase(static_cast<const TerminalCapabilities &>(*this), stdin),
+	terminate_signalled(false),
+	interrupt_signalled(false),
+	hangup_signalled(false),
+	usr1_signalled(false),
+	usr2_signalled(false),
 	clients(m),
-	redraw_needed(true),
-	pending_quit_event(false)
+	vio(comp),
+	pending_quit_event(false),
+	normal(C(COLOUR_WHITE, COLOUR_BLACK)),
+	title(C(COLOUR_BLUE, COLOUR_WHITE)),
+	status(C(COLOUR_WHITE, COLOUR_BLUE)),
+	line(C(COLOUR_BLACK, COLOUR_YELLOW)),
+	progress(C(COLOUR_BLACK, COLOUR_GREEN))
 {
-	setup_colours();
 }
 
 void
-TUI::handle_non_kevents (
+TUI::handle_stdin (
+	int n		///< number of characters available; can be <= 0 erroneously
 ) {
-	if (redraw_needed) {
-		redraw_needed = false;
-		redraw();
-		set_update();
+	for (;;) {
+		int l(read(STDIN_FILENO, stdin_buffer, sizeof stdin_buffer));
+		if (0 >= l) break;
+		HandleInput(stdin_buffer, l);
+		if (l >= n) break;
+		n -= l;
 	}
-	BaseTUI::handle_non_kevents();
+	BreakInput();
 }
 
 void
-TUI::setup_colours(
+TUI::handle_signal (
+	int signo
 ) {
-	setup_default_colours(COLOR_GREEN, COLOR_BLACK);
-	for (std::size_t i(0); i < sizeof default_colours/sizeof *default_colours; ++i)
-		init_pair(1 + i, default_colours[i].fg, default_colours[i].bg);
+	switch (signo) {
+		case SIGWINCH:	set_resized(); break;
+		case SIGTERM:	terminate_signalled = true; break;
+		case SIGINT:	interrupt_signalled = true; break;
+		case SIGHUP:	hangup_signalled = true; break;
+		case SIGUSR1:	usr1_signalled = true; break;
+		case SIGUSR2:	usr2_signalled = true; break;
+		case SIGTSTP:	/* exit_full_screen_mode(); raise(SIGSTOP); */ break;
+		case SIGCONT:	enter_full_screen_mode(); invalidate_cur(); set_update_needed(); break;
+	}
 }
 
-inline
 void
-TUI::set_colour_pair(
-	unsigned i
+TUI::redraw_new (
 ) {
-	wcolor_set(window, i, 0);
-}
+	erase_new_to_backdrop();
 
-void
-TUI::redraw (
-) {
-	const int width(getmaxx(window));
-
-	attr_t a;
-	short c;
-	wattr_get(window, &a, &c, 0);
-
-	set_colour_pair(DEFAULT_COLOURS);
-	werase(window);
-	set_colour_pair(TITLE_COLOURS);
-	mvwhline(window, 0, 0, ' ', width);
-	mvwprintw(window, 0, (width - sizeof title + 1) / 2, "%s", title);
-	set_colour_pair(STATUS_COLOURS);
-	mvwhline(window, 1, 0, ' ', width);
+	vio.WriteNCells(0, 0, 0U, title, ' ', c.query_w());
+	vio.WriteCellStr(0, (c.query_w() - sizeof title_text + 1) / 2, 0U, title, title_text, sizeof title_text - 1);
+	vio.WriteNCells(1, 0, 0U, status, ' ', c.query_w());
 	const std::size_t sl(clients.empty() ? sizeof no_fscks : sizeof in_progress);
-	const char * status(clients.empty() ? no_fscks : in_progress);
-	mvwprintw(window, 1, (width - sl + 1) / 2, "%s", status);
-	mvwhline(window, 2, 0, '=', width);
+	const char * st(clients.empty() ? no_fscks : in_progress);
+	vio.WriteCellStr(1, (c.query_w() - sl + 1) / 2, 0U, status, st, sl - 1);
+	vio.WriteNCells(2, 0, 0U, status, '=', c.query_w());
 
-	set_colour_pair(LINE_COLOURS);
-	int row(3);
-	wmove(window, row, 0);
-	for (ClientTable::const_iterator i(clients.begin()); i != clients.end(); ++i) {
+	long row(3);
+	for (ClientTable::const_iterator i(clients.begin()); i != clients.end(); ++i, ++row) {
+		if (row < 0) continue;
+		if (row >= c.query_h()) break;
 		const ConnectedClient & client(i->second);
 		const std::string l(client.left()), r(client.right());
-		mvwhline(window, row, 0, ' ', width);
-		if (static_cast<std::string::size_type>(width) >= r.length())
-			mvwprintw(window, row, width - r.length(), "%s", r.c_str());
-		mvwprintw(window, row, 0, "%s %s", l.c_str(), client.name.c_str());
+		vio.WriteNCells(row, 0, 0U, line, ' ', c.query_w());
+		long col(0);
+		vio.PrintFormatted(row, col, 0U, line, "%s %s ", l.c_str(), client.name.c_str());
+		if (col + r.length() < c.query_w())
+			col = c.query_w() - r.length();
+		vio.WriteCellStr(row, col, 0U, line, r.c_str(), r.length());
 		if (client.max) {
-			const int n(client.count * width / client.max);
-			mvwchgat(window, row, 0, n, a, PROGRESS_COLOURS, 0);
+			const unsigned n(client.count * c.query_w() / client.max);
+			vio.WriteNAttrs(row, 0, 0U, progress, n);
 		}
-		++row;
-		wmove(window, row, 0);
 	}
-	wrefresh(window);
+	c.move_cursor(false /* no software cursor */, 0U, 0U);
+	c.set_cursor_state(false /* no software cursor */, CursorSprite::BLINK, CursorSprite::BOX);
 }
 
 void
-TUI::unicode_keypress(
-	wint_t /*c*/
+TUI::ExtendedKey(
+	uint_fast16_t /*k*/,
+	uint_fast8_t /*m*/
 ) {
 }
 
 void
-TUI::ncurses_keypress(
-	wint_t /*k*/
+TUI::FunctionKey(
+	uint_fast16_t /*k*/,
+	uint_fast8_t /*m*/
+) {
+}
+
+void
+TUI::UCS3(
+	uint_fast32_t character
+) {
+	switch (character) {
+		case '<':
+			ExtendedKey(EXTENDED_KEY_LEFT_ARROW, 0U);
+			break;
+		case '>':
+			ExtendedKey(EXTENDED_KEY_RIGHT_ARROW, 0U);
+			break;
+	}
+}
+
+void
+TUI::Accelerator(
+	uint_fast32_t /*character*/
+) {
+}
+
+void 
+TUI::MouseMove(
+	uint_fast16_t /*row*/,
+	uint_fast16_t /*col*/,
+	uint8_t /*modifiers*/
+) {
+}
+
+void 
+TUI::MouseWheel(
+	uint_fast8_t /*wheel*/,
+	int_fast8_t /*value*/,
+	uint_fast8_t /*modifiers*/
+) {
+}
+
+void 
+TUI::MouseButton(
+	uint_fast8_t /*button*/,
+	uint_fast8_t /*value*/,
+	uint_fast8_t /*modifiers*/
 ) {
 }
 
@@ -287,108 +339,109 @@ monitor_fsck_progress [[gnu::noreturn]] (
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kqueue", std::strerror(error));
 		throw EXIT_FAILURE;
 	}
+	std::vector<struct kevent> ip;
 
-	ReserveSignalsForKQueue kqueue_reservation(SIGINT, SIGTERM, SIGHUP, SIGWINCH, 0);
-	PreventDefaultForFatalSignals ignored_signals(SIGINT, SIGTERM, SIGHUP, 0);
-
-	std::vector<struct kevent> p(listen_fds + 4);
-	{
-		set_event(&p[0], SIGINT, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
-		set_event(&p[1], SIGTERM, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
-		set_event(&p[2], SIGHUP, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
-		set_event(&p[3], SIGWINCH, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
-		for (unsigned i(0U); i < listen_fds; ++i)
-			set_event(&p[4 + i], LISTEN_SOCKET_FILENO + i, EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
-		if (0 > kevent(queue.get(), p.data(), p.size(), 0, 0, 0)) {
-			const int error(errno);
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
-			throw EXIT_FAILURE;
-		}
-	}
+	append_event(ip, STDIN_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
+	ReserveSignalsForKQueue kqueue_reservation(SIGTERM, SIGINT, SIGHUP, SIGPIPE, SIGUSR1, SIGUSR2, SIGWINCH, SIGTSTP, SIGCONT, 0);
+	PreventDefaultForFatalSignals ignored_signals(SIGTERM, SIGINT, SIGHUP, SIGPIPE, SIGUSR1, SIGUSR2, 0);
+	append_event(ip, SIGWINCH, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	append_event(ip, SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	append_event(ip, SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	append_event(ip, SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	append_event(ip, SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	append_event(ip, SIGTSTP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	append_event(ip, SIGCONT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	for (unsigned i(0U); i < listen_fds; ++i)
+		append_event(ip, LISTEN_SOCKET_FILENO + i, EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
 
 	ClientTable clients;
 
-	TUI ui(prog, envs, clients);
+	TUIDisplayCompositor compositor(24, 80);
+	TUI ui(envs, clients, compositor);
 
-	while (!ui.quit_flagged()) {
-		ui.handle_non_kevents();
+	std::vector<struct kevent> p(listen_fds + 4);
+	while (true) {
+		if (ui.exit_signalled() || ui.quit_flagged())
+			break;
+		ui.handle_resize_event();
+		ui.handle_refresh_event();
+		ui.handle_update_event();
 
-		const int rc(kevent(queue.get(), 0, 0, p.data(), p.size(), 0));
+		const int rc(kevent(queue.get(), ip.data(), ip.size(), p.data(), p.size(), 0));
+		ip.clear();
 
 		if (0 > rc) {
-			if (ui.resize_needed()) continue;
 			const int error(errno);
 			if (EINTR == error) continue;
 #if defined(__LINUX__) || defined(__linux__)
 			if (EINVAL == error) continue;	// This works around a Linux bug when an inotify queue overflows.
 			if (0 == error) continue;	// This works around another Linux bug.
 #endif
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "poll", std::strerror(error));
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
 			throw EXIT_FAILURE;
 		}
 
-		for (size_t i(0); i < static_cast<size_t>(rc); ++i) {
+		for (std::size_t i(0); i < static_cast<std::size_t>(rc); ++i) {
 			const struct kevent & e(p[i]);
-			if (EVFILT_SIGNAL == e.filter)
-				ui.handle_signal(e.ident);
-			if (EVFILT_READ == e.filter) {
-				const int fd(static_cast<int>(e.ident));
-				if (STDIN_FILENO == fd) {
-					ui.handle_stdin(e.data);
-				} else
-				if (static_cast<unsigned>(fd) < LISTEN_SOCKET_FILENO + listen_fds && static_cast<unsigned>(fd) >= LISTEN_SOCKET_FILENO) {
-					sockaddr_storage remoteaddr;
-					socklen_t remoteaddrsz = sizeof remoteaddr;
-					const int s(accept(fd, reinterpret_cast<sockaddr *>(&remoteaddr), &remoteaddrsz));
-					if (0 > s) {
-						const int error(errno);
-						std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "accept", std::strerror(error));
-						throw EXIT_FAILURE;
-					}
-
-					struct kevent o;
-					set_event(&o, s, EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
-					if (0 > kevent(queue.get(), &o, 1, 0, 0, 0)) {
-						const int error(errno);
-						std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
-						throw EXIT_FAILURE;
-					}
-
-					clients[s];
-				} else
+			switch (e.filter) {
+				case EVFILT_SIGNAL:
+					ui.handle_signal(e.ident);
+					break;
+				case EVFILT_READ:
 				{
-					const bool hangup(EV_EOF & e.flags);
-
-					ConnectedClient & client(clients[fd]);
-					char buf[8U * 1024U];
-					const ssize_t c(read(fd, buf, sizeof buf));
-					if (c > 0)
-						client.lines += std::string(buf, buf + c);
-					if (hangup && !c && !client.lines.empty())
-						client.lines += '\n';
-					std::string line;
-					for (;;) {
-						if (client.lines.empty()) break;
-						const std::string::size_type n(client.lines.find('\n'));
-						if (std::string::npos == n) break;
-						line = client.lines.substr(0, n);
-						client.lines = client.lines.substr(n + 1, std::string::npos);
-					}
-					if (!line.empty())
-						client.parse(line);
-					if (hangup && !c) {
-						struct kevent o;
-						EV_SET(&o, fd, EVFILT_READ, EV_DELETE|EV_DISABLE, 0, 0, 0);
-						if (0 > kevent(queue.get(), &o, 1, 0, 0, 0)) {
+					const int fd(static_cast<int>(e.ident));
+					if (STDIN_FILENO == fd) {
+						ui.handle_stdin(e.data);
+					} else
+					if (static_cast<unsigned>(fd) < LISTEN_SOCKET_FILENO + listen_fds && static_cast<unsigned>(fd) >= LISTEN_SOCKET_FILENO) {
+						sockaddr_storage remoteaddr;
+						socklen_t remoteaddrsz = sizeof remoteaddr;
+						const int s(accept(fd, reinterpret_cast<sockaddr *>(&remoteaddr), &remoteaddrsz));
+						if (0 > s) {
 							const int error(errno);
-							std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
+							std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "accept", std::strerror(error));
 							throw EXIT_FAILURE;
 						}
-						close(fd);
-						clients.erase(fd);
+
+						append_event(ip, s, EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
+						clients[s];
+					} else
+					{
+						if (EV_ERROR & e.flags) break;
+						const bool hangup(EV_EOF & e.flags);
+
+						ConnectedClient & client(clients[fd]);
+						char buf[8U * 1024U];
+						const ssize_t c(read(fd, buf, sizeof buf));
+						if (c > 0)
+							client.lines += std::string(buf, buf + c);
+						if (hangup && !c && !client.lines.empty())
+							client.lines += '\n';
+						std::string line;
+						for (;;) {
+							if (client.lines.empty()) break;
+							const std::string::size_type n(client.lines.find('\n'));
+							if (std::string::npos == n) break;
+							line = client.lines.substr(0, n);
+							client.lines = client.lines.substr(n + 1, std::string::npos);
+						}
+						if (!line.empty())
+							client.parse(line);
+						if (hangup && !c) {
+							struct kevent o;
+							EV_SET(&o, fd, EVFILT_READ, EV_DELETE|EV_DISABLE, 0, 0, 0);
+							if (0 > kevent(queue.get(), &o, 1, 0, 0, 0)) {
+								const int error(errno);
+								std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
+								throw EXIT_FAILURE;
+							}
+							close(fd);
+							clients.erase(fd);
+						}
 					}
+					ui.set_refresh_needed();
+					break;
 				}
-				ui.invalidate();
 			}
 		}
 	}

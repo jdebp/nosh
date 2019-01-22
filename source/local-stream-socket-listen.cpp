@@ -87,13 +87,6 @@ local_stream_socket_listen (
 	args.erase(args.begin());
 	next_prog = arg0_of(args);
 
-	// FIXME: Can we even get a SIGPIPE from listen()?
-	sigset_t original_signals;
-	sigprocmask(SIG_SETMASK, 0, &original_signals);
-	sigset_t masked_signals(original_signals);
-	sigaddset(&masked_signals, SIGPIPE);
-	sigprocmask(SIG_SETMASK, &masked_signals, 0);
-
 	sockaddr_un addr;
 	addr.sun_family = AF_LOCAL;
 	const size_t listenpath_len(std::strlen(listenpath));
@@ -173,6 +166,4 @@ exit_error:
 		snprintf(buf, sizeof buf, "%u", getpid());
 		envs.set("LISTEN_PID", buf);
 	}
-
-	sigprocmask(SIG_SETMASK, &original_signals, 0);
 }

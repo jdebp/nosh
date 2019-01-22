@@ -250,8 +250,8 @@ UnicodeBuffer::MakeCA(char c[CELL_LENGTH], const CharacterCell & cell)
 	c[6] = cell.background.green;
 	c[7] = cell.background.blue;
 	std::memcpy(&c[8], &cell.character, 4);
-	c[12] = cell.attributes;
-	c[13] = 0;
+	c[12] = (cell.attributes >> 0) & 0xFF;
+	c[13] = (cell.attributes >> 8) & 0xFF;
 	c[14] = 0;
 	c[15] = 0;
 }
@@ -407,13 +407,14 @@ protected:
 	void WriteCSI();
 	void WriteSS3();
 	void WriteUnicodeCharacter(uint32_t c);
+	void WriteDELOrDECFNK(uint8_t m);
 	void WriteBackspaceOrDEL(uint8_t m);
 	void WriteReturnEnter(uint8_t m);
 	void WriteCSISequence(unsigned m, char c);
 	void WriteSS3Character(char c);
 	void WriteBrokenSS3Sequence(unsigned m, char c);
 	void SetPasting(bool p);
-	void WriteUCS3Character(uint32_t c, bool p);
+	void WriteUCS3Character(uint32_t c, bool p, bool a);
 	void WriteDECFNK(unsigned n, unsigned m);
 	void WriteLinuxConsoleFNK(unsigned m, char c);
 	void WriteSCOConsoleFNK(char c);
@@ -595,7 +596,7 @@ ECMA48KeyboardEncoder::WriteControl1Character(uint8_t c)
 	if (send_8bit_controls)
 		WriteUnicodeCharacter(c);
 	else {
-		WriteUnicodeCharacter('\x1b');
+		WriteUnicodeCharacter(ESC);
 		WriteUnicodeCharacter(c - 0x40);
 	}
 }
@@ -679,6 +680,15 @@ ECMA48KeyboardEncoder::SetSendDECLocatorReleaseEvent(bool b)
 }
 
 void
+ECMA48KeyboardEncoder::WriteDELOrDECFNK(uint8_t m)
+{
+	if (delete_is_del && 0 == m)
+		WriteRawCharacters("\x7F"); 	// We can bypass UTF-8 encoding as we guarantee ASCII.
+	else
+		WriteDECFNK(3U,m);
+}
+
+void
 ECMA48KeyboardEncoder::WriteBackspaceOrDEL(uint8_t m)
 {
 	WriteRawCharacters(backspace_is_bs ^ !!(INPUT_MODIFIER_CONTROL & m) ? "\x08" : "\x7F"); 	// We can bypass UTF-8 encoding as we guarantee ASCII.
@@ -694,14 +704,14 @@ inline
 void 
 ECMA48KeyboardEncoder::WriteCSI() 
 { 
-	WriteControl1Character('\x9b'); 
+	WriteControl1Character(CSI); 
 }
 
 inline 
 void 
 ECMA48KeyboardEncoder::WriteSS3() 
 { 
-	WriteControl1Character('\x8f'); 
+	WriteControl1Character(SS3); 
 }
 
 void 
@@ -811,7 +821,7 @@ ECMA48KeyboardEncoder::WriteFunctionKeyDECVT(uint16_t k, uint8_t m)
 void 
 ECMA48KeyboardEncoder::WriteFunctionKeySCOConsole(uint16_t k, uint8_t /*m*/)
 {
-	static const char other[9] = "@[<]^_'{";
+	static const char other[9] = "@[\\]^_`{";
 	if (15U > k)
 		WriteSCOConsoleFNK(k - 1U + 'M');
 	else
@@ -1023,7 +1033,7 @@ ECMA48KeyboardEncoder::WriteExtendedKeyDECVT(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_INS_CHAR:		// This is not a DEC VT key, but we make it equivalent to:
 		case EXTENDED_KEY_INSERT:		WriteDECFNK(2U,m); break;
 		case EXTENDED_KEY_DEL_CHAR:		// This is not a DEC VT key, but we make it equivalent to:
-		case EXTENDED_KEY_DELETE:		WriteDECFNK(3U,m); break;
+		case EXTENDED_KEY_DELETE:		WriteDELOrDECFNK(m); break;
 		case EXTENDED_KEY_SELECT:		WriteDECFNK(4U,m); break;
 		case EXTENDED_KEY_PREVIOUS:		// This is not a DEC VT key, but we make it equivalent to:
 		case EXTENDED_KEY_PAGE_UP:		WriteDECFNK(5U,m); break;
@@ -1087,7 +1097,7 @@ ECMA48KeyboardEncoder::WriteExtendedKeyXTermPC(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_INS_CHAR:		// This is not a DEC VT key, but we make it equivalent to:
 		case EXTENDED_KEY_INSERT:		WriteDECFNK(2U,m); break;
 		case EXTENDED_KEY_DEL_CHAR:		// This is not a DEC VT key, but we make it equivalent to:
-		case EXTENDED_KEY_DELETE:		WriteDECFNK(3U,m); break;
+		case EXTENDED_KEY_DELETE:		WriteDELOrDECFNK(m); break;
 		case EXTENDED_KEY_SELECT:		WriteDECFNK(4U,m); break;
 		case EXTENDED_KEY_PREVIOUS:		// This is not a DEC VT key, but we make it equivalent to:
 		case EXTENDED_KEY_PAGE_UP:		WriteDECFNK(5U,m); break;
@@ -1152,7 +1162,7 @@ ECMA48KeyboardEncoder::WriteExtendedKeyTeken(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_PAD_INSERT:		// this, which teken does not distinguish from:
 		case EXTENDED_KEY_INSERT:		WriteDECFNK(2U,m); break;
 		case EXTENDED_KEY_DEL_CHAR:		// This is not a teken key, but we make it equivalent to:
-		case EXTENDED_KEY_DELETE:		WriteDECFNK(3U,m); break;
+		case EXTENDED_KEY_DELETE:		WriteDELOrDECFNK(m); break;
 		case EXTENDED_KEY_SELECT:		WriteDECFNK(4U,m); break;
 		case EXTENDED_KEY_PREVIOUS:		// This is not a teken key, but we make it equivalent to:
 		case EXTENDED_KEY_PAD_PAGE_UP:		// this, which teken does not distinguish from:
@@ -1279,7 +1289,7 @@ ECMA48KeyboardEncoder::WriteExtendedKeyLinuxConsole(uint16_t k, uint8_t m)
 		case EXTENDED_KEY_PAD_INSERT:		WriteDECFNK(2U,m); break;
 		case EXTENDED_KEY_DEL_CHAR:		// This is not a Linux console key, but we make it equivalent to:
 		case EXTENDED_KEY_DELETE:		// this, which the Linux console does not distinguish from:
-		case EXTENDED_KEY_PAD_DELETE:		WriteDECFNK(3U,m); break;
+		case EXTENDED_KEY_PAD_DELETE:		WriteDELOrDECFNK(m); break;
 		case EXTENDED_KEY_END:			// The Linux console does not distinguish this from:
 		case EXTENDED_KEY_PAD_END:		// this, which the Linux console erroneously makes the same as:
 		case EXTENDED_KEY_SELECT:		WriteDECFNK(4U,m); break;
@@ -1378,30 +1388,33 @@ ECMA48KeyboardEncoder::WriteWheelMotion(uint8_t w, int8_t o, uint8_t m)
 {
 	SetPasting(false);
 	// The horizontal wheel (#1) is an extension to the xterm protocol.
+	// Each direction on a wheel is a different button.
+	// XTerm reports use buttons 3 and upwards, because actual mice buttons were numbered from 0 to 2.
+	// DEC Locator reports use buttons 4 and upwards, because the original DEC Locator specification defined 4 actual mouse buttons.
 	while (0 != o) {
 		if (0 > o) {
 			++o;
 			const int button(4 + 2 * w);
 			mouse_buttons[button] = true;
 			WriteXTermMouse(button, m);
-			WriteDECLocatorReport(button);
+			WriteDECLocatorReport(button + 1);
 			mouse_buttons[button] = false;
 #if 0	// vim cannot cope with button up wheel events.
 			WriteXTermMouse(button, m);
 #endif
-			WriteDECLocatorReport(button);
+			WriteDECLocatorReport(button + 1);
 		}
 		if (0 < o) {
 			--o;
 			const int button(3 + 2 * w);
 			mouse_buttons[button] = true;
 			WriteXTermMouse(button, m);
-			WriteDECLocatorReport(button);
+			WriteDECLocatorReport(button + 1);
 			mouse_buttons[button] = false;
 #if 0	// vim cannot cope with button up wheel events.
 			WriteXTermMouse(button, m);
 #endif
-			WriteDECLocatorReport(button);
+			WriteDECLocatorReport(button + 1);
 		}
 	}
 }
@@ -1530,9 +1543,11 @@ ECMA48KeyboardEncoder::RequestDECLocatorReport()
 }
 
 void 
-ECMA48KeyboardEncoder::WriteUCS3Character(uint32_t c, bool pasted)
+ECMA48KeyboardEncoder::WriteUCS3Character(uint32_t c, bool pasted, bool accelerator)
 {
 	SetPasting(pasted);
+	if (accelerator)
+		WriteUnicodeCharacter(ESC);
 	WriteUnicodeCharacter(c);
 	// Interrupt after any pasted character that could otherwise begin a DECFNK sequence.
 	if (0x1B == c || 0x9B == c)
@@ -1543,8 +1558,9 @@ void
 ECMA48KeyboardEncoder::HandleMessage(uint32_t b)
 {
 	switch (b & INPUT_MSG_MASK) {
-		case INPUT_MSG_UCS3:	WriteUCS3Character(b & ~INPUT_MSG_MASK, false); break;
-		case INPUT_MSG_PUCS3:	WriteUCS3Character(b & ~INPUT_MSG_MASK, true); break;
+		case INPUT_MSG_UCS3:	WriteUCS3Character(b & ~INPUT_MSG_MASK, false, false); break;
+		case INPUT_MSG_PUCS3:	WriteUCS3Character(b & ~INPUT_MSG_MASK, true, false); break;
+		case INPUT_MSG_AUCS3:	WriteUCS3Character(b & ~INPUT_MSG_MASK, false, true); break;
 		case INPUT_MSG_EKEY:	WriteExtendedKey((b >> 8U) & 0xFFFF, b & 0xFF); break;
 		case INPUT_MSG_FKEY:	WriteFunctionKey((b >> 8U) & 0xFFFF, b & 0xFF); break;
 		case INPUT_MSG_XPOS:	SetMouseX((b >> 8U) & 0xFFFF, b & 0xFF); break;

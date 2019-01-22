@@ -1,0 +1,9 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=log FIFO used by the Linux kernel
+
+[Socket]
+ListenFIFO=/dev/kmsg

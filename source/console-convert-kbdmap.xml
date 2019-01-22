@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="console-convert-kbdmap">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -144,9 +150,9 @@ The ISO 9995-3 common group 2 that is underlaid beneath all BSD/SCO kbdmaps actu
 </variablelist>
 </listitem>
 <listitem><para>
-BSD/SCO kbdmaps hardwire the BS and DEL control characters for the backspace key.
-However, <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> supplies a soft-settable backspace action that can be programmed using the DECBKM control sequence (DEC private mode 67).
-To allow specifying this from BSD/SCO kbdmaps, the convertor adds a "bspace" extension to the BSD/SCO kbdmap keyword set.
+BSD/SCO kbdmaps hardwire the BS and DEL control characters for the backspace key, and hardwire the DEL control character for the delete key(s).
+However, <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> supplies a soft-settable backspace action that can be programmed using the DECBKM control sequence (DEC private mode 67) and a soft-settable delete action that can be programmed using DEC private mode 1037.
+To allow specifying these from BSD/SCO kbdmaps, the convertor adds a "bspace" and a "delete" extension to the BSD/SCO kbdmap keyword set.
 </para></listitem>
 <listitem><para>
 BSD/SCO kbdmaps hardwire the CR and LF control characters for the return and enter keys.

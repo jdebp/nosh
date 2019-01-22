@@ -56,6 +56,7 @@ void
 get_user_dirs_for(
 	const std::string & user,
 	std::string & UID,
+	std::string & GID,
 	std::string & runtime_dir_by_name,	///< not slash terminated
 	std::string & runtime_dir_by_UID,	///< not slash terminated
 	std::string & home_dir			///< not slash terminated
@@ -63,15 +64,18 @@ get_user_dirs_for(
 	const std::string r("/run/user/");
 	if (struct passwd * p = getpwnam(user.c_str())) {
 		runtime_dir_by_name = r + p->pw_name;
-		std::ostringstream uid;
+		std::ostringstream uid, gid;
 		uid << p->pw_uid;
 		UID = uid.str();
+		gid << p->pw_gid;
+		GID = gid.str();
 		runtime_dir_by_UID = r + ":" + uid.str();
 		home_dir = p->pw_dir && *p->pw_dir ? p->pw_dir : "/nonexistent";
 	} else {
 		runtime_dir_by_name = r;
 		runtime_dir_by_UID = r + ":";
 		UID = "";
+		GID = "";
 		home_dir = "/nonexistent";
 	}
 	endpwent();

@@ -23,6 +23,7 @@ extern void service ( const char * & , std::vector<const char *> &, ProcessEnvir
 extern void chkconfig ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
 extern void invoke_rcd ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
 extern void update_rcd ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void rc_update ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
 extern void initctl_read ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
 extern void foreground ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
 
@@ -51,6 +52,8 @@ commands[] = {
 	{	"chkconfig",		chkconfig				},
 	{	"invoke-rc.d",		invoke_rcd				},
 	{	"update-rc.d",		update_rcd				},
+	{	"rc-update",		rc_update				},
+	{	"rc-service",		service					},
 	{	"rcctl",		rcctl					},
 	{	"initctl-read",		initctl_read				},
 

@@ -5,10 +5,10 @@
 # vim: set filetype=sh:
 #
 # Special setup for pefs mount services
-# This is invoked by general-services.do .
+# This is invoked by all.do .
 #
 
-redo-ifchange rc.conf general-services
+redo-ifchange general-services
 
 r="/var/local/sv"
 e="--no-systemd-quirks --escape-instance --bundle-root"

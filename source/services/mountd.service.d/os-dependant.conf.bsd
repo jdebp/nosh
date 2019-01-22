@@ -1,0 +1,9 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Wants=nfsd.service rpcbind.service
+
+[Service]
+ExecStart=%p ${flags} ${weak_authentication} ${old} /etc/exports ${exports}

@@ -73,8 +73,8 @@ foreground_background_common (
 	args = 0 < pid ? rhs : lhs;
 	next_prog = arg0_of(args);
 	if (do_wait && (0 < pid)) {
-		int status;
-		wait_blocking_for_exit_of(pid, status);
+		int status, code;
+		wait_blocking_for_exit_of(pid, status, code);
 	}
 }
 

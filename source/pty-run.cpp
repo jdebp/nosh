@@ -12,7 +12,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sys/types.h>
 #include "kqueue_common.h"
 #include <sys/ioctl.h>
-#include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
 #include "popt.h"
@@ -128,17 +127,18 @@ pty_run (
 	char inb[1024], outb[1024];
 	size_t inl(0), outl(0);
 	bool ine(false), oute(false);
-	int status(0);
+	int status(WAIT_STATUS_RUNNING), code(0);
 	termios original_attr;
 
 	program_continued = true;
 
-	while (!WIFEXITED(status) || !oute || outl) {
+	while (WAIT_STATUS_RUNNING == status || WAIT_STATUS_PAUSED == status || !oute || outl) {
 		if (terminate_signalled||interrupt_signalled||hangup_signalled) {
-			if (!WIFEXITED(status)) {
+			if (WAIT_STATUS_RUNNING == status || WAIT_STATUS_PAUSED == status) {
 				if (terminate_signalled) kill(child, SIGTERM);
 				if (interrupt_signalled) kill(child, SIGINT);
 				if (hangup_signalled) kill(child, SIGHUP);
+				if (WAIT_STATUS_PAUSED == status) kill(child, SIGCONT);
 			}
 			break;
 		}
@@ -146,9 +146,9 @@ pty_run (
 			child_signalled = false;
 			for (;;) {
 				pid_t c;
-				if (0 >= wait_nonblocking_for_anychild_stopexit(c, status)) break;
+				if (0 >= wait_nonblocking_for_anychild_stopexit(c, status, code)) break;
 				if (c != child) continue;
-				if (WIFSTOPPED(status)) {
+				if (WAIT_STATUS_PAUSED == status) {
 					if (!pass_through) {
 						kill(c, SIGCONT);
 					}
@@ -187,8 +187,8 @@ pty_run (
 			if (EINTR == errno) continue;
 			if (pass_through)
 				tcsetattr_nointr(STDIN_FILENO, TCSADRAIN, original_attr);
-			if (!WIFEXITED(status))
-				wait_blocking_for_exit_of(child, status);
+			if (WAIT_STATUS_RUNNING == status || WAIT_STATUS_PAUSED == status)
+				wait_blocking_for_exit_of(child, status, code);
 			const int error(errno);
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
 			throw EXIT_FAILURE;
@@ -254,7 +254,7 @@ pty_run (
 
 	if (pass_through)
 		tcsetattr_nointr(STDIN_FILENO, TCSADRAIN, original_attr);
-	if (!WIFEXITED(status))
-		wait_blocking_for_exit_of(child, status);
-	throw WIFEXITED(status) ? WEXITSTATUS(status) : static_cast<int>(EXIT_TEMPORARY_FAILURE);
+	if (WAIT_STATUS_RUNNING == status || WAIT_STATUS_PAUSED == status)
+		wait_blocking_for_exit_of(child, status, code);
+	throw WAIT_STATUS_EXITED == status ? code : static_cast<int>(EXIT_TEMPORARY_FAILURE);
 }

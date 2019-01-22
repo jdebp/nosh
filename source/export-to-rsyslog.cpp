@@ -351,13 +351,13 @@ exit_scan:
 			if (errno) goto exit_scan;
 			break;
 		}
-#if defined(_DIRENT_HAVE_D_TYPE)
-		if (DT_DIR != entry->d_type && DT_LNK != entry->d_type) continue;
-#endif
 #if defined(_DIRENT_HAVE_D_NAMLEN)
 		if (1 > entry->d_namlen) continue;
 #endif
 		if ('.' == entry->d_name[0]) continue;
+#if defined(_DIRENT_HAVE_D_TYPE)
+		if (DT_DIR != entry->d_type && DT_LNK != entry->d_type) continue;
+#endif
 
 		const FileDescriptorOwner cursor_dir_fd(open_dir_at(scan_dir_fd.get(), entry->d_name));
 		if (0 > cursor_dir_fd.get()) {
@@ -455,13 +455,13 @@ exit_scan:
 				if (errno) goto exit_scan;
 				break;
 			}
-#if defined(_DIRENT_HAVE_D_TYPE)
-			if (DT_REG != entry->d_type && DT_LNK != entry->d_type) continue;
-#endif
 #if defined(_DIRENT_HAVE_D_NAMLEN)
 			if (1 > entry->d_namlen) continue;
 #endif
 			if ('.' == entry->d_name[0]) continue;
+#if defined(_DIRENT_HAVE_D_TYPE)
+			if (DT_REG != entry->d_type && DT_LNK != entry->d_type) continue;
+#endif
 
 			if (is_current(*entry) || is_lock(*entry)) continue;
 

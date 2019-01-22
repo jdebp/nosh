@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description="policy kit" daemon
+After=local-syslog.target
+
+[Service]
+Type=dbus
+RuntimeDirectory=PolicyKit
+RuntimeDirectoryMode=0770
+RuntimeDirectoryOwner=polkitd
+
+[Install]
+WantedBy=workstation.target

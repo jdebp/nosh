@@ -17,7 +17,7 @@ Map16Colour (
 	} else if (4U == c) {
 		// Everyone fusses about dark blue, and no choice is perfect.
 		// This choice is Web Indigo.
-		return CharacterCell::colour_type(ALPHA_FOR_COLOURED,0x4F,0x00,0x7F);
+		return CharacterCell::colour_type(ALPHA_FOR_COLOURED,0x4B,0x00,0x82);
 	} else {
 		if (8U == c) c = 7U;	// Substitute original dark white for bright black, which otherwise would work out the same as dark black.
 		const uint8_t h((c & 8U)? 255U : 127U), b(c & 4U), g(c & 2U), r(c & 1U);

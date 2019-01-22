@@ -11,8 +11,6 @@ For copyright and licensing terms, see the file named COPYING.
 ECMA48Decoder::ECMA48ControlSequenceSink::ECMA48ControlSequenceSink() :
 	argc(0U),
 	seen_arg_digit(false),
-	first_private_parameter(NUL),
-	last_intermediate(NUL),
 	slen(0U)
 {
 	args[argc] = 0;
@@ -38,22 +36,26 @@ ECMA48Decoder::ECMA48ControlSequenceSink::ResetControlSeqOrStr()
 	argc = 0U;
 	seen_arg_digit = false;
 	args[argc] = 0U;
-	first_private_parameter = NUL;
-	last_intermediate = NUL;
 	slen = 0U;
 }
 
 ECMA48Decoder::ECMA48Decoder(
 	ECMA48ControlSequenceSink & s,
 	bool cs,
+	bool can,
+	bool e7,
 	bool is,
 	bool rx
 ) :
 	sink(s),
 	state(NORMAL),
 	control_strings(cs),
+	allow_cancel(can),
+	allow_7bit_extension(e7),
 	interix_shift(is),
-	rxvt_function_keys(rx)
+	rxvt_function_keys(rx),
+	first_private_parameter(NUL),
+	last_intermediate(NUL)
 {
 	sink.ResetControlSeqOrStr();
 }
@@ -102,6 +104,14 @@ ECMA48Decoder::AbortSequence(
 	state = NORMAL;
 }
 
+void 
+ECMA48Decoder::ResetControlSeqOrStr()
+{
+	first_private_parameter = NUL;
+	last_intermediate = NUL;
+	sink.ResetControlSeqOrStr(); 
+}
+
 inline
 void 
 ECMA48Decoder::ControlCharacter(uint_fast32_t character)
@@ -132,20 +142,29 @@ ECMA48Decoder::ControlCharacter(uint_fast32_t character)
 			}
 			[[clang::fallthrough]];
 		default:	sink.ControlCharacter(character); break;
+	// The sink might never see any of these control characters.
+		case CAN:	if (allow_cancel) state = NORMAL; else sink.ControlCharacter(character); break;
 	// The sink will never see any of these control characters.
-		case ESC:	state = ESCAPE1; sink.last_intermediate = NUL; break;
-		case CSI:	state = CONTROL1; sink.ResetControlSeqOrStr(); break;
+		case ESC:	state = ESCAPE1; last_intermediate = NUL; break;
+		case CSI:	state = CONTROL1; ResetControlSeqOrStr(); break;
 		case SS2:	state = SHIFT2; break;
 		case SS3:	state = SHIFT3; break;
-		case CAN:	state = NORMAL; break;
 	// The sink will never see any of these control characters, even if control strings are not being recognized.
-		case DCS:	if (control_strings) { state = DSTRING; sink.ResetControlSeqOrStr(); } break;
-		case OSC:	if (control_strings) { state = OSTRING; sink.ResetControlSeqOrStr(); } break;
-		case PM:	if (control_strings) { state = PSTRING; sink.ResetControlSeqOrStr(); } break;
-		case APC:	if (control_strings) { state = ASTRING; sink.ResetControlSeqOrStr(); } break;
-		case SOS:	if (control_strings) { state = SSTRING; sink.ResetControlSeqOrStr(); } break;
+		case DCS:	if (control_strings) { state = DSTRING; ResetControlSeqOrStr(); } break;
+		case OSC:	if (control_strings) { state = OSTRING; ResetControlSeqOrStr(); } break;
+		case PM:	if (control_strings) { state = PSTRING; ResetControlSeqOrStr(); } break;
+		case APC:	if (control_strings) { state = ASTRING; ResetControlSeqOrStr(); } break;
+		case SOS:	if (control_strings) { state = SSTRING; ResetControlSeqOrStr(); } break;
 		case ST:	if (control_strings) { state = NORMAL; } break;
 	}
+}
+
+static inline
+bool
+IsAlways7BitExtension (
+	uint_fast32_t character
+) {
+	return (CSI - 0x40) == character;
 }
 
 inline
@@ -156,21 +175,21 @@ ECMA48Decoder::Escape1(uint_fast32_t character)
 		ControlCharacter(character);
 	else
 	if (IsIntermediate(character)) {
-		sink.last_intermediate = static_cast<char>(character);
+		last_intermediate = static_cast<char>(character);
 		state = ESCAPE2;
 	} else
 	if (IsParameter(character)) {
 		// ECMA-48 does not define this.
 		state = ESCAPE2;
 	} else
-	if (character >= 0x40 && character <= 0x5f) {
+	if (allow_7bit_extension ? character >= 0x40 && character <= 0x5f : IsAlways7BitExtension(character)) {
 		// Do this first, so that it can be overridden by the control character processing.
 		state = NORMAL;
 		// This is known as "7-bit code extension" and is defined for the entire range.
 		ControlCharacter(character + 0x40); 
 	} else
 	{
-		sink.EscapeSequence(character);
+		sink.EscapeSequence(character, last_intermediate);
 		state = NORMAL;
 	}
 }
@@ -183,13 +202,13 @@ ECMA48Decoder::Escape2(uint_fast32_t character)
 		ControlCharacter(character);
 	else
 	if (IsIntermediate(character))
-		sink.last_intermediate = static_cast<char>(character);
+		last_intermediate = static_cast<char>(character);
 	else
 	if (IsParameter(character)) {
 		// ECMA-48 does not define this.
 	} else
 	{
-		sink.EscapeSequence(character);
+		sink.EscapeSequence(character, last_intermediate);
 		state = NORMAL;
 	}
 }
@@ -226,17 +245,17 @@ ECMA48Decoder::ControlSequence(uint_fast32_t character)
 			// Everything else up to U+002F is a private parameter character, per ECMA-48 5.4.1.
 			// DEC VTs make use of '<', '=', '>', and '?'.
 			default:
-				if (NUL == sink.first_private_parameter)
-					sink.first_private_parameter = static_cast<char>(character);
+				if (NUL == first_private_parameter)
+					first_private_parameter = static_cast<char>(character);
 				break;
 		}
 	} else
 	if (IsIntermediate(character) && !(rxvt_function_keys && 0x24 == character)) {
-		sink.last_intermediate = static_cast<char>(character);
+		last_intermediate = static_cast<char>(character);
 		state = CONTROL2;
 	} else
 	{
-		sink.ControlSequence(character);
+		sink.ControlSequence(character, last_intermediate, first_private_parameter);
 		state = NORMAL; 
 	}
 }
@@ -278,23 +297,30 @@ ECMA48Decoder::Process(
 		case SHIFT2:
 		case SHIFT3:
 		case SHIFTA:
-			if (decoder_error || overlong)
+			if (decoder_error || overlong) {
 				sink.PrintableCharacter(decoder_error, 0U, character);
-			else if (IsControl(character))
+				state = NORMAL;
+			} else
+			if (IsControl(character))
 				ControlCharacter(character);
-			else switch (state) {
-				case NORMAL:	sink.PrintableCharacter(false, 1U, character); break;
-				case SHIFT2:	sink.PrintableCharacter(false, 2U, character); break;
-				case SHIFT3:	sink.PrintableCharacter(false, 3U, character); break;
-				case SHIFTA:	sink.PrintableCharacter(false, 10U, character); break;
+			else 
+			{
+				switch (state) {
+					case NORMAL:	sink.PrintableCharacter(false, 1U, character); break;
+					case SHIFT2:	sink.PrintableCharacter(false, 2U, character); break;
+					case SHIFT3:	sink.PrintableCharacter(false, 3U, character); break;
+					case SHIFTA:	sink.PrintableCharacter(false, 10U, character); break;
+				}
+				state = NORMAL;
 			}
 			break;
 		case ESCAPE1:
 			if (decoder_error)
 				state = NORMAL;
-			else if (overlong) {
-				state = NORMAL;
+			else
+			if (overlong) {
 				sink.PrintableCharacter(false, 0U, character);
+				state = NORMAL;
 			} else
 				Escape1(character);
 			break;
@@ -302,8 +328,8 @@ ECMA48Decoder::Process(
 			if (decoder_error)
 				state = NORMAL;
 			else if (overlong) {
-				state = NORMAL;
 				sink.PrintableCharacter(false, 0U, character);
+				state = NORMAL;
 			} else
 				Escape2(character);
 			break;
@@ -311,9 +337,10 @@ ECMA48Decoder::Process(
 		case CONTROL2:
 			if (decoder_error)
 				state = NORMAL;
-			else if (overlong) {
-				state = NORMAL;
+			else
+			if (overlong) {
 				sink.PrintableCharacter(false, 0U, character);
+				state = NORMAL;
 			} else
 				ControlSequence(character);
 			break;
@@ -324,9 +351,10 @@ ECMA48Decoder::Process(
 		case SSTRING:
 			if (decoder_error)
 				state = NORMAL;
-			else if (overlong) {
-				state = NORMAL;
+			else
+			if (overlong) {
 				sink.PrintableCharacter(false, 0U, character);
+				state = NORMAL;
 			} else
 				ControlString(character);
 			break;

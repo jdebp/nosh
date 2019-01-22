@@ -98,6 +98,7 @@ vc_get_tty (
 	ProcessEnvironment & envs
 ) {
 	bool full_hostname(false);
+	bool user_space_virtual_terminal(false);
 	const char * term = default_term();
 
 	const char * prog(basename_of(args[0]));
@@ -141,13 +142,16 @@ vc_get_tty (
 		else {
 			tty_str = "/var/dev/";
 			tty_str += tty_base;
-			if (0 == stat(tty_str.c_str(), &buf)) 
+			if (0 == stat(tty_str.c_str(), &buf)) {
+				user_space_virtual_terminal = true;
 				tty = tty_str.c_str();
-			else {
+			} else {
 				tty_str = "/run/dev/";
 				tty_str += tty_base;
-				if (0 == stat(tty_str.c_str(), &buf)) 
+				if (0 == stat(tty_str.c_str(), &buf)) {
+					user_space_virtual_terminal = true;
 					tty = tty_str.c_str();
+				}
 			}
 		}
 	}
@@ -175,4 +179,6 @@ vc_get_tty (
 	envs.set("HOST", hostname.data());
 
 	envs.set("TERM", term);
+	if (user_space_virtual_terminal)
+		envs.set("COLORTERM", "truecolor");
 }

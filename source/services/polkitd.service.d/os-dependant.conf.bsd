@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+After=extra-shared-libraries.target
+
+[Service]
+# policykit 0.8
+#ExecStart=/usr/local/libexec/%p
+# polkit 0.110
+ExecStart=/usr/local/lib/polkit-1/%p

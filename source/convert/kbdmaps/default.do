@@ -82,5 +82,5 @@ else
 		fi
 	fi
 fi
-redo-ifchange soft_backspace.kbd soft_enter.kbd soft_return.kbd ${capsctrl} ${countrydiff} ${keycountdiff}
-console-convert-kbdmap "${src}" soft_backspace.kbd soft_enter.kbd soft_return.kbd ${capsctrl} ${countrydiff} ${keycountdiff} > "$3"
+redo-ifchange soft_backspace.kbd soft_delete.kbd soft_enter.kbd soft_return.kbd ${capsctrl} ${countrydiff} ${keycountdiff}
+console-convert-kbdmap "${src}" soft_backspace.kbd soft_delete.kbd soft_enter.kbd soft_return.kbd ${capsctrl} ${countrydiff} ${keycountdiff} > "$3"

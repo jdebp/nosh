@@ -54,14 +54,14 @@ exit_scan:
 			if (errno) goto exit_scan;
 			break;
 		}
-#if defined(_DIRENT_HAVE_D_TYPE)
-		if (DT_DIR != entry->d_type && DT_LNK != entry->d_type) continue;
-#endif
 #if defined(_DIRENT_HAVE_D_NAMLEN)
 		if (1 > entry->d_namlen) continue;
 		if (sizeof(service_manager_rpc_message::name) > entry->d_namlen) continue;
 #endif
 		if ('.' == entry->d_name[0]) continue;
+#if defined(_DIRENT_HAVE_D_TYPE)
+		if (DT_DIR != entry->d_type && DT_LNK != entry->d_type) continue;
+#endif
 
 		const int bundle_dir_fd(open_dir_at(scan_dir.fd(), entry->d_name));
 		if (0 <= bundle_dir_fd) {

@@ -1,9 +1,9 @@
 #!/bin/sh -e
 exec \
 /bin/exec \
-vc-get-tty "$1" -- \
+vc-get-tty -- "$1" \
 open-controlling-tty \
-vc-reset-tty \
+\
 login-prompt \
 login-banner /etc/issue \
 login

@@ -3,6 +3,7 @@ ModemManager
 NetworkManager
 NetworkManager-dispatcher
 VBoxService
+VBoxBalloonCtrl
 accounts-daemon
 apache2
 apacheds
@@ -68,6 +69,8 @@ hald
 hostapd
 hostnamed
 hue
+isnsd
+isnsdd
 ifconfig-log
 jenkins
 kamailio
@@ -199,6 +202,7 @@ tor
 udhcpc-log
 udisks
 udisks2
+usbmux
 unbound
 upower
 utx

@@ -5,7 +5,7 @@
 # vim: set filetype=sh:
 #
 # Special setup for static networking services
-# This is invoked by general-services.do .
+# This is invoked by all.do .
 #
 
 # These get us *only* the configuration variables, safely.
@@ -710,7 +710,7 @@ then
 		[Nn][Oo]|'')
 			;;
 		*)
-			make_ip4 "_default" "default ${d}" >> "$3"
+			make_ip4_route "_default" "default ${d}" >> "$3"
 			;;
 	esac
 fi

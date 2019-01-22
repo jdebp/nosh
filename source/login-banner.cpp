@@ -124,8 +124,10 @@ write_escape (
 // **************************************************************************
 */
 
-static const char release_filename[] = "/etc/os-release";
-static const char machineinfo_filename[] = "/etc/machine-info";
+static const char etc_release_filename[] = "/etc/os-release";
+static const char lib_release_filename[] = "/usr/lib/os-release";
+static const char etc_machineinfo_filename[] = "/etc/machine-info";
+static const char run_machineinfo_filename[] = "/run/machine-info";
 
 void
 login_banner ( 
@@ -178,12 +180,18 @@ login_banner (
 	std::string pretty_sysname(uts.sysname);
 	std::string pretty_nodename(uts.nodename);
 
-	FileStar os_release(std::fopen(release_filename, "r"));
+	const char * release_filename("");
+	FileStar os_release(std::fopen(release_filename = etc_release_filename, "r"));
+	if (!os_release) {
+		if (ENOENT == errno)
+			os_release = std::fopen(release_filename = lib_release_filename, "r");
+	}
 	if (!os_release) {
 		const int error(errno);
 		if (ENOENT != error)
 			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, release_filename, std::strerror(error));
-	} else {
+	}
+	if (os_release) {
 		try {
 			std::vector<std::string> env_strings(read_file(os_release));
 			for (std::vector<std::string>::const_iterator i(env_strings.begin()); i != env_strings.end(); ++i) {
@@ -200,12 +208,18 @@ login_banner (
 		os_release = 0;
 	}
 
-	FileStar machine_info(std::fopen(machineinfo_filename, "r"));
+	const char * machineinfo_filename("");
+	FileStar machine_info(std::fopen(machineinfo_filename = etc_machineinfo_filename, "r"));
+	if (!machine_info) {
+		if (ENOENT == errno)
+			machine_info = std::fopen(machineinfo_filename = run_machineinfo_filename, "r");
+	}
 	if (!machine_info) {
 		const int error(errno);
 		if (ENOENT != error)
 			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, machineinfo_filename, std::strerror(error));
-	} else {
+	}
+	if (machine_info) {
 		try {
 			std::vector<std::string> env_strings(read_file(machine_info));
 			for (std::vector<std::string>::const_iterator i(env_strings.begin()); i != env_strings.end(); ++i) {

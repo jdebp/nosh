@@ -32,53 +32,142 @@ case "${base}" in
 	template="${name%%@*}"
 	if test -e "${template}"@.socket
 	then
-		unit="${name}".socket
-		ifchange_follow "${template}"@.socket
-		ifchange_follow "${template}".service
+		suffix=.socket
+		unit="${name}${suffix}"
+		service_unit="${template}".service
 	elif test -e "${template}"@.timer
 	then
 		redo-ifcreate "${template}"@.socket
-		unit="${name}".timer
-		ifchange_follow "${template}"@.timer
-		ifchange_follow "${template}".service
+		suffix=.timer
+		unit="${name}${suffix}"
+		service_unit="${template}".service
 	elif test -e "${template}"@.service
 	then
 		redo-ifcreate "${template}"@.socket
 		redo-ifcreate "${template}"@.timer
-		unit="${name}".service
-		ifchange_follow "${template}"@.service
+		suffix=.service
+		unit="${name}${suffix}"
 	else
 		echo 1>&2 "$0: ${name}: Don't know what to use to build this."
 		exit 1
+	fi
+	# The activating template unit is always a dependency.
+	ifchange_follow "${template}"@"${suffix}"
+	# Check for drop-ins in the service unit.
+	if test -n "${service_unit}"
+	then
+		if test -d "${service_unit}".d
+		then
+			for d in "${service_unit}.d/"*".conf.do"
+			do
+				test ! "${d}" = "${service_unit}"'.d/*.conf.do' || continue
+				redo-ifchange "${d%.do}"
+			done
+			for s in "${service_unit}.d/"*".conf"
+			do
+				test ! -e "${s}.do" || continue
+				ifchange_follow "${s}"
+			done
+		else
+			redo-ifcreate "${service_unit}".d
+		fi
+		ifchange_follow "${service_unit}"
+	fi
+	# Check for drop-ins in the activating template unit.
+	if test -d "${template}"@"${suffix}".d
+	then
+		for d in "${template}"@"${suffix}.d/"*".conf.do"
+		do
+			test ! "${d}" = "${template}"@"${suffix}"'.d/*.conf.do' || continue
+			redo-ifchange "${d%.do}"
+		done
+		for s in "${template}"@"${suffix}.d/"*".conf"
+		do
+			test ! -e "${s}.do" || continue
+			ifchange_follow "${s}"
+		done
+	else
+		redo-ifcreate "${template}"@"${suffix}".d
+	fi
+	# Check for drop-ins in the activating instance unit.
+	if test -d "${unit}".d
+	then
+		for d in "${unit}.d/"*".conf.do"
+		do
+			test ! "${d}" = "${unit}"'.d/*.conf.do' || continue
+			redo-ifchange "${d%.do}"
+		done
+		for s in "${unit}.d/"*".conf"
+		do
+			test ! -e "${s}.do" || continue
+			ifchange_follow "${s}"
+		done
+	else
+		redo-ifcreate "${unit}".d
 	fi
 	;;
 *)
 	if test -e "${name}".socket
 	then
 		unit="${name}".socket
-		ifchange_follow "${name}".socket
 		if test -e "${name}"@.service
 		then
-			ifchange_follow "${name}"@.service
+			service_unit="${name}"@.service
 		else
 			redo-ifcreate "${name}"@.service
-			ifchange_follow "${name}".service
+			service_unit="${name}".service
 		fi
 	elif test -e "${name}".timer
 	then
 		redo-ifcreate "${name}".socket
 		unit="${name}".timer
-		ifchange_follow "${name}".timer
-		ifchange_follow "${name}".service
+		service_unit="${name}".service
 	elif test -e "${name}".service
 	then
 		redo-ifcreate "${name}".socket
 		redo-ifcreate "${name}".timer
 		unit="${name}".service
-		ifchange_follow "${name}".service
 	else
 		echo 1>&2 "$0: ${name}: Don't know what to use to build this."
 		exit 1
+	fi
+	# The activating unit is always a dependency.
+	ifchange_follow "${unit}"
+	# Check for drop-ins in the service unit.
+	if test -n "${service_unit}"
+	then
+		if test -d "${service_unit}".d
+		then
+			for d in "${service_unit}.d/"*".conf.do"
+			do
+				test ! "${d}" = "${service_unit}"'.d/*.conf.do' || continue
+				redo-ifchange "${d%.do}"
+			done
+			for s in "${service_unit}.d/"*".conf"
+			do
+				test ! -e "${s}.do" || continue
+				ifchange_follow "${s}"
+			done
+		else
+			redo-ifcreate "${service_unit}".d
+		fi
+		ifchange_follow "${service_unit}"
+	fi
+	# Check for drop-ins in the activating unit.
+	if test -d "${unit}".d
+	then
+		for d in "${unit}.d/"*".conf.do"
+		do
+			test ! "${d}" = "${unit}"'.d/*.conf.do' || continue
+			redo-ifchange "${d%.do}"
+		done
+		for s in "${unit}.d/"*".conf"
+		do
+			test ! -e "${s}.do" || continue
+			ifchange_follow "${s}"
+		done
+	else
+		redo-ifcreate "${unit}".d
 	fi
 	;;
 esac
@@ -180,11 +269,11 @@ esac
 # Compile the source into a bundle.
 # ###
 
-install -d services.new
+install -d -m 0755 services.new
 
 rm -r -f services.new/"${base}"
 
-redo-ifchange system-control 
+redo-ifchange system-control
 
 ./system-control convert-systemd-units --no-systemd-quirks --no-generation-comment ${escape} ${etc} --bundle-root services.new/ "${unit}"
 
@@ -194,6 +283,7 @@ test -n "${after}" && ln -s -f "../${after}" services.new/"${base}"/after/
 # ###
 # Add in the environment directory and UCSPI ruleset infrastructure, if required.
 # ###
+
 if grep -q "envdir env" services.new/"${base}"/service/start services.new/"${base}"/service/run services.new/"${base}"/service/stop
 then
 	install -d -m 0755 services.new/"${base}"/service/env
@@ -208,6 +298,7 @@ fi
 # ###
 # Provide the "main/" courtesy link in logging services.
 # ###
+
 case "${base}" in
 cyclog@*) 
 	ln -f -s -- /var/log/sv/"${base#cyclog@}" services.new/"${base}"/main
@@ -223,6 +314,7 @@ esac
 # ###
 # Populate the bundles with extra relationships, files, and directories peculiar to the services.
 # ###
+
 case "${base}" in
 kmod@vboxvideo)
 	ln -f -s -- /etc/service-bundles/targets/virtualbox-guest services.new/"${base}"/wanted-by/
@@ -241,7 +333,7 @@ cyclog@ttylogin@*)
 	rm -f -- services.new/"${base}"/wanted-by/workstation
 	ln -s -f -- ../../"${base#cyclog@}" services.new/"${base}"/wanted-by/
 	;;
-cyclog@VBoxService|cyclog@kmod@vboxadd|cyclog@kmod@vboxsf|cyclog@kmod@vboxguest|cyclog@kmod@vboxvideo)
+cyclog@VBoxService|cyclog@VBoxBalloonCtrl|cyclog@kmod@vboxadd|cyclog@kmod@vboxsf|cyclog@kmod@vboxguest|cyclog@kmod@vboxvideo)
 	rm -f -- services.new/"${base}"/wanted-by/workstation
 	ln -f -s -- /etc/service-bundles/targets/virtualbox-guest services.new/"${base}"/wanted-by/
 	;;
@@ -290,6 +382,7 @@ esac
 # ###
 # Add in any helpers and snippets.
 # ###
+
 if test -e "${name}".tmpfiles 
 then
 	redo-ifchange "${name}".tmpfiles 
@@ -300,6 +393,10 @@ then
 	redo-ifchange "${name}".helper
 	cp -p "${name}".helper services.new/"${base}"/service/helper
 fi
+
+# ###
+# Finalize
+# ###
 
 rm -r -f -- "$3"
 mv -- services.new/"${base}" "$3"

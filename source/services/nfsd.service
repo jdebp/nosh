@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=NFS daemon (NFSv4 enabled)
+Wants=rpcbind.service mountd.service nfsuserd.service
+Conflicts=nfsserver.service
+After=gssd.service
+
+[Service]
+EnvironmentDirectory=env
+Restart=never
+
+[Install]
+WantedBy=server.target

@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Service]
+User=_tss
+RuntimeDirectoryOwner=_tss
+PermissionsStartOnly=yes
+ExecStartPre=install -d -m 0700 -o _tss -g _tss /usr/local/var/lib/tpm
+ExecStartPre=chmod 0600 /usr/local/etc/%p.conf
+ExecStartPre=chown _tss:_tss /usr/local/etc/%p.conf
+ExecStart=%p -f -c /usr/local/etc/%p.conf

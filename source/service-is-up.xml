@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="service-is-up">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -8,7 +14,11 @@
 <xi:include href="version.xml" />
 </refmeta>
 
-<refnamediv><refname>service-is-up</refname><refname>svup</refname><refpurpose>daemontools compatibility service state checker</refpurpose></refnamediv>
+<refnamediv>
+<refname>service-is-up</refname>
+<refname>svup</refname>
+<refpurpose>daemontools compatibility service state checker</refpurpose>
+</refnamediv>
 
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -55,7 +65,7 @@ the <filename>ok</filename> FIFO cannot be opened in client mode.
 For more on service and supervise directories, see <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
-</refsection><refsection><title>COMPATIBILITY</title>
+</refsection><refsection><title>Compatibility</title>
 
 <para>
 For daemontools-encore compatibility, this command is also

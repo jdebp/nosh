@@ -1,5 +1,7 @@
 console-clear
+console-control-sequence
 console-convert-kbdmap
+console-decode-ecma48
 console-fb-realizer
 console-input-method
 console-input-method-control
@@ -16,7 +18,6 @@ login-banner
 login-process
 login-prompt
 login-update-utmpx
-monitor-fsck-progress
 open-controlling-tty
 pty-get-tty
 pty-run

@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="clearenv">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -36,10 +42,10 @@ and then chain loads to <replaceable>next-prog</replaceable> with the <citerefen
 <para>
 When the <arg choice='plain'>--keep-path</arg> command line option is used, <command>clearenv</command> will not clear the <envar>PATH</envar> and <envar>LD_LIBRARY_PATH</envar> environment variables.
 When the <arg choice='plain'>--keep-locale</arg> option is used, it will not clear the environment variables used by the GNU C Library for locale settings, namely <envar>LANG</envar>, <envar>LC_ALL</envar>, <envar>LC_COLLATE</envar>. <envar>LC_CTYPE</envar>, <envar>LC_MESSAGES</envar>, <envar>LC_MONETARY</envar>, <envar>LC_NUMERIC</envar>, and <envar>LC_TIME</envar>.
-Similarly <arg choice='plain'>--keep-shell</arg> stops the clearing of <envar>SHELL</envar>; <arg choice='plain'>--keep-term</arg> stops the clearing of <envar>TERM</envar> and <envar>TTY</envar>; and <arg choice='plain'>--keep-user</arg> stops the clearing of <envar>HOME</envar>, <envar>USER</envar>, and <envar>LOGNAME</envar>.
+Similarly <arg choice='plain'>--keep-shell</arg> stops the clearing of <envar>SHELL</envar>; <arg choice='plain'>--keep-term</arg> stops the clearing of <citerefentry><refentrytitle><envar>TERM</envar></refentrytitle><manvolnum>7</manvolnum></citerefentry>, <envar>COLORTERM</envar>, <envar>XTERM_VERSION</envar>, <envar>VTE_VERSION</envar>, and <envar>TTY</envar>; and <arg choice='plain'>--keep-user</arg> stops the clearing of <envar>HOME</envar>, <envar>USER</envar>, and <envar>LOGNAME</envar>.
 </para>
 
-</refsection><refsection><title>BUGS</title>
+</refsection><refsection><title>Bugs</title>
 
 <para>
 As of version 1.34 this program no longer employs the GNU C library nor the BSD C library for environment variable handling.

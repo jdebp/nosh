@@ -234,14 +234,14 @@ get_relations (
 		if (relation_dir) for (;;) {
 			const dirent * entry(readdir(relation_dir));
 			if (!entry) break;
-#if defined(_DIRENT_HAVE_D_TYPE)
-			if (DT_LNK != entry->d_type)
-				continue;
-#endif
 #if defined(_DIRENT_HAVE_D_NAMLEN)
 			if (1 > entry->d_namlen) continue;
 #endif
 			if ('.' == entry->d_name[0]) continue;
+#if defined(_DIRENT_HAVE_D_TYPE)
+			if (DT_LNK != entry->d_type)
+				continue;
+#endif
 
 			struct stat s;
 			if (0 > fstatat(relation_dir.fd(), entry->d_name, &s, AT_SYMLINK_NOFOLLOW)) continue;

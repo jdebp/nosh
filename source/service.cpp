@@ -182,7 +182,6 @@ update_rcd (
 	}
 	const char * service(args.front());
 	args.erase(args.begin());
-
 	if (args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing command name.");
 		throw static_cast<int>(EXIT_USAGE);
@@ -287,8 +286,69 @@ chkconfig (
 		args.clear();
 		args.insert(args.end(), "system-control");
 		args.insert(args.end(), command);
-		next_prog = arg0_of(args);
 	}
+	args.insert(args.end(), service);
+	next_prog = arg0_of(args);
+}
+
+void
+rc_update ( 
+	const char * & next_prog,
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
+) {
+	const char * prog(basename_of(args[0]));
+	try {
+		popt::definition * top_table[] = {
+		};
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{add|del} {service-name}");
+
+		std::vector<const char *> new_args;
+		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
+		p.process(true /* strictly options before arguments */);
+		args = new_args;
+		next_prog = arg0_of(args);
+		if (p.stopped()) throw EXIT_SUCCESS;
+	} catch (const popt::error & e) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
+		throw static_cast<int>(EXIT_USAGE);
+	}
+
+	if (args.empty()) {
+		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing command name.");
+		throw static_cast<int>(EXIT_USAGE);
+	}
+	const char * command(args.front());
+	args.erase(args.begin());
+	if (args.empty()) {
+		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing service name.");
+		throw static_cast<int>(EXIT_USAGE);
+	}
+	const char * service(args.front());
+	args.erase(args.begin());
+	if (!args.empty()) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, command, "Unrecognized extra arguments.");
+		throw EXIT_FAILURE;
+	}
+
+	if (0 == std::strcmp("add", command)) {
+		if (!args.empty())
+			std::fprintf(stderr, "%s: WARNING: %s: %s %s\n", prog, service, command, "does not support run-levels.");
+		command = "preset";
+	} else
+	if (0 == std::strcmp("del", command)) {
+		if (!args.empty())
+			std::fprintf(stderr, "%s: WARNING: %s: %s %s\n", prog, service, command, "does not support run-levels.");
+		command = "disable";
+	} else
+	{
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, command, "Unsupported subcommand.");
+		throw EXIT_FAILURE;
+	}
+
+	args.clear();
+	args.insert(args.end(), "system-control");
+	args.insert(args.end(), command);
 	args.insert(args.end(), service);
 	next_prog = arg0_of(args);
 }

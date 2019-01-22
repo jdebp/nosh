@@ -50,6 +50,7 @@ nft	nftables
 ofono	org.ofono
 org.cups.cups-lpd	lpd
 org.cups.cupsd	cups
+rngd	rng-tools
 sshd	ssh
 sysctl	procps
 systemd-hostnamed  org.freedesktop.hostname1	

@@ -5,6 +5,28 @@
 [Unit]
 Description=A no-operation service for Debian
 Description=This is a way of masking out stuff that Debian package maintainer scripts try to enable/disable; but that is wholly inappropriate.
+# Used for:
+#       bootlogs	-- dmesg.service, which is obsolete itself, but to /var/log
+#       bootmisc.sh	-- utx.service
+#       checkfs.sh	-- fsck all is not the way we do things
+#       checkroot-bootclean.sh	-- moot, cleans /run and /tmp
+#       checkroot.sh	-- fsck@-.service
+#       hwclock.sh	-- adjkerntz
+#       hwclockfirst.sh	-- 
+#       killprocs	-- 
+#       motd		-- External configuration import handles this.
+#       mountall-bootclean.sh	-- moot, cleans /run and /tmp
+#       mountall.sh	-- mount all is not the way we do things
+#       mountdevsubfs.sh	-- API PTS filesystem mounted as standard by the system manager
+#       mountkernfs.sh	-- API proc/sys/run/local filesystems mounted as standard by the system manager
+#       mountnfs-bootclean.sh	-- moot, cleans /run and /tmp
+#       mountnfs.sh	-- 
+#       rmnologin	-- moot, removes /run/nologin
+#       screen-cleanup	-- tmpfiles
+#       umountfs	-- unmount all is not the way we do things
+#       umountnfs.sh	-- 
+#       umountroot	-- mount@-.service
+#       x11-common	-- 
 
 [Service]
 # This intentionally runs pause.

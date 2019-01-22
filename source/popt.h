@@ -164,14 +164,29 @@ namespace popt {
 		virtual void action(processor &);
 		bool & value;
 	};
-	struct number_definition : public compound_named_definition {
+	struct integral_definition : public compound_named_definition {
 	public:
-		number_definition(char s, const char * l, const char * a, const char * d, int b) : compound_named_definition(s, l, a, d), base(b), set(false) {}
+		integral_definition(char s, const char * l, const char * a, const char * d) : compound_named_definition(s, l, a, d), set(false) {}
+		virtual ~integral_definition() = 0;
 		bool is_set() const { return set; }
+	protected:
+		bool set;
+	};
+	struct bool_string_definition : public integral_definition {
+	public:
+		bool_string_definition(char s, const char * l, const char * d, bool & v) : integral_definition(s, l, a, d), value(v) {}
+		virtual ~bool_string_definition();
+	protected:
+                static const char a[];
+		virtual void action(processor &, const char *);
+		bool & value;
+	};
+	struct number_definition : public integral_definition {
+	public:
+		number_definition(char s, const char * l, const char * a, const char * d, int b) : integral_definition(s, l, a, d), base(b) {}
 	protected:
 		virtual void action(processor &, const char *) = 0;
 		int base;
-		bool set;
 	};
 	struct unsigned_number_definition : public number_definition {
 	public:
@@ -218,4 +233,5 @@ namespace popt {
 		list_type & value_list;
 	};
 }
+
 #endif

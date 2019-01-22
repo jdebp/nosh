@@ -102,19 +102,21 @@ protected:
 	virtual void ProcessDecodedUTF8(uint32_t character, bool decoder_error, bool overlong);
 	virtual void PrintableCharacter(bool, unsigned short, uint_fast32_t);
 	virtual void ControlCharacter(uint_fast32_t);
-	virtual void EscapeSequence(uint_fast32_t);
-	virtual void ControlSequence(uint_fast32_t);
+	virtual void EscapeSequence(uint_fast32_t, char);
+	virtual void ControlSequence(uint_fast32_t, char, char);
 	virtual void ControlString(uint_fast32_t);
 
 	coordinate SumArgs();
 
 	void SetHorizontalTabstop();
+	void SetRegularHorizontalTabstops(coordinate n);
 	void ClearAllHorizontalTabstops();
 	void ClearAllVerticalTabstops();
 	void HorizontalTab(coordinate n, bool);
 	void BackwardsHorizontalTab(coordinate n, bool);
 	void VerticalTab(coordinate n, bool);
-	void TabControl();
+	void DECCursorTabulationControl();
+	void CursorTabulationControl();
 	void TabClear();
 
 	bool IsVerticalTabstopAt(coordinate p) { return v_tab_pins[p % (sizeof v_tab_pins/sizeof *v_tab_pins)]; }
@@ -149,6 +151,7 @@ protected:
 	void SaveModes();
 	void RestoreModes();
 	void SetLinesPerPage();
+	void SetLinesPerPageOrDTTerm();
 	void SetColumnsPerPage();
 	void SetScrollbackBuffer(bool);
 

@@ -63,13 +63,13 @@ reap (
 	unsigned long connection_limit
 ) {
 	for (;;) {
-		int status;
+		int status, code;
 		pid_t c;
-		if (0 >= wait_nonblocking_for_anychild_exit(c, status)) break;
+		if (0 >= wait_nonblocking_for_anychild_exit(c, status, code)) break;
 		if (connections) {
 			--connections;
 			if (verbose)
-				std::fprintf(stderr, "%s: %u ended status %i %lu/%lu\n", prog, c, status, connections, connection_limit);
+				std::fprintf(stderr, "%s: %u ended status %i code %i %lu/%lu\n", prog, c, status, code, connections, connection_limit);
 		}
 	}
 }

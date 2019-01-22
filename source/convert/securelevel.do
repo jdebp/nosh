@@ -5,7 +5,7 @@
 # vim: set filetype=sh:
 #
 # Special setup for axfrdns.
-# This is invoked by general-services.do .
+# This is invoked by all.do .
 #
 
 # This gets us *only* the configuration variables, safely.

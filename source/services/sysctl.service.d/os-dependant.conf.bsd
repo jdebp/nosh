@@ -1,0 +1,6 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Service]
+ExecStart=sh -c 'for f in /etc/sysctl.conf /etc/sysctl.conf.local /etc/system-control/convert/sysctl.conf ; do [ -r $f ] && sysctl -i -f $f ; done'

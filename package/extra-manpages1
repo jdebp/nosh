@@ -1,15 +1,18 @@
 appendpath
 chdir
+chkservice
 chroot
 clearenv
 console-clear
+console-control-sequence
 console-convert-kbdmap
+console-decode-ecma48
 console-fb-realizer
+console-flat-table-viewer
 console-input-method
 console-input-method-control
 console-multiplexor
 console-multiplexor-control
-console-ncurses-realizer
 console-termio-realizer
 console-resize
 create-control-group
@@ -38,6 +41,7 @@ local-reaper
 local-seqpacket-socket-accept
 local-seqpacket-socket-listen
 local-stream-socket-accept
+local-stream-socket-connect
 local-stream-socket-listen
 login-banner
 login-process

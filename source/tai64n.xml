@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="tai64n">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -54,14 +60,14 @@ It uses the <citerefentry><refentrytitle>read</refentrytitle><manvolnum>2</manvo
 To duplicate the GNU and BSD C/C++ runtime libraries' behaviours, it explicitly flushes the output's buffer whenever it is about to read more input and that input is the beginning of a new line.
 </para>
 
-</refsection><refsection><title>COMPATIBILITY</title>
+</refsection><refsection><title>Compatibility</title>
 
 <para>
 daemontools' and daemontools-encore's <citerefentry><refentrytitle>tai64n</refentrytitle><manvolnum>1</manvolnum></citerefentry> uses a timer with only microsecond resolution, and for the same events will thus produce different timestamps to <command>tai64n</command>.
 </para>
 
 <para>
-See the timestamps section of the Nosh Guide for detailed information on the differences from daemontools, daemontools-encore, and other toolsets in how <command>tai64nlocal</command> handles TAI.
+See <ulink url="timestamps.html">the timestamps section of the <citetitle>nosh Guide</citetitle></ulink> for detailed information on the differences from daemontools, daemontools-encore, and other toolsets in how <command>tai64nlocal</command> handles TAI.
 </para>
 
 </refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>

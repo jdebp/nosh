@@ -1,0 +1,12 @@
+# Extra pre-deinstall for nosh-run-via-open-rc
+# vim: set filetype=sh:
+
+# Stop and disable OpenRC services.
+rc-service system-control-normal stop
+rc-service service-manager-svscan stop
+rc-service service-manager stop
+rc-update del service-manager
+rc-update del service-manager-svscan
+rc-update del system-control-normal
+
+true

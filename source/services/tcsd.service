@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=TPM access server for Trousers TCGSS
+After=tpmd.service
+Before=named.service hastd.service kerberos.service
+
+[Service]
+RuntimeDirectory=tpm
+RuntimeDirectory=ima
+RuntimeDirectoryMode=0700
+
+[Install]
+WantedBy=workstation.target

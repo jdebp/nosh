@@ -8,6 +8,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstring>
 #include <cstdlib>
 #if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
+#include <sys/types.h>
 #include <login_cap.h>
 #endif
 #include <unistd.h>
@@ -23,14 +24,14 @@ const char * login_getcapstr(login_cap_t * d, const char * cap, const char * def
 }
 #endif
 
+#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
+
 #if !defined(LOGIN_DEFROOTCLASS)
 #define LOGIN_DEFROOTCLASS "root"
 #endif
 #if !defined(LOGIN_DEFCLASS)
 #define LOGIN_DEFCLASS "default"
 #endif
-
-#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
 
 // FreeBSD's login_getpwclass() has a security hole when the class is "me".
 // And OpenBSD does not have the function at all.

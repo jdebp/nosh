@@ -5,14 +5,14 @@
 # vim: set filetype=sh:
 #
 # Special setup for hostname.
-# This is invoked by general-services.do .
+# This is invoked by all.do .
 #
 
 # This gets us *only* the configuration variables, safely.
 read_rc() { clearenv read-conf rc.conf printenv "$1" ; }
 get_var1() { read_rc "$1" || true ; }
 
-redo-ifchange general-services
+redo-ifchange general-services rc.conf
 
 if s="`system-control find hostname`"
 then

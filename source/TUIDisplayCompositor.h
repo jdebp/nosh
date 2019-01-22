@@ -9,7 +9,13 @@ For copyright and licensing terms, see the file named COPYING.
 #include <vector>
 #include "CharacterCell.h"
 
-/// \brief Window composition and change buffering for a TUI
+/// \brief Output composition and change buffering for a TUI
+///
+/// This implements a "new" array and a "cur" array.
+/// The output is composed into the "new" array and then transposed into the "cur" array.
+/// Entries in the "cur" array have an additional "touched" flag to indicate that they were changed during transposition.
+/// Actually outputting the "cur" array is the job of another class; this class knows nothing about I/O.
+/// Layered on top of this are VIO and other access methods.
 class TUIDisplayCompositor
 {
 public:

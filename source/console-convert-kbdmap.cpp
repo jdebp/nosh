@@ -130,6 +130,7 @@ bsd_actions[]= {
 	{ {	LOCK(KBDMAP_MODIFIER_SCROLL),		LOCK(KBDMAP_MODIFIER_SCROLL),		}, "slock"		},
 	{ {	EXTE(EXTENDED_KEY_BACKTAB),		EXTE(EXTENDED_KEY_BACKTAB),		}, "btab"		},
 	{ {	EXTE(EXTENDED_KEY_BACKSPACE),		EXTE(EXTENDED_KEY_BACKSPACE),		}, "bspace"		},	// This is an extension to the BSD format that allows use of the DEC VT switchable backspace mechanism.
+	{ {	EXTE(EXTENDED_KEY_DELETE),		EXTE(EXTENDED_KEY_DELETE),		}, "delete"		},	// This is an extension to the BSD format that allows use of the XTerm switchable delete mechanism.
 	{ {	EXTE(EXTENDED_KEY_RETURN_OR_ENTER),	EXTE(EXTENDED_KEY_RETURN_OR_ENTER),	}, "return"		},	// This is an extension to the BSD format that allows use of the DEC VT return key.
 	{ {	EXTN(EXTENDED_KEY_PAD_ENTER),		EXTE(EXTENDED_KEY_PAD_ENTER),		}, "enter"		},	// This is an extension to the BSD format that allows use of the DEC VT enter key.
 	{ {	EXTE(EXTENDED_KEY_IM_TOGGLE),		EXTE(EXTENDED_KEY_IM_TOGGLE),		}, "imsw"		},	// This is an extension to the BSD format that allows an IM toggle key.

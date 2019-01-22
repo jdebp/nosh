@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%p service to add randomness from hardware RNG device to /dev/random
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=%p -f -r /dev/hwrng
+RestartSec=10
+
+[Install]
+WantedBy=workstation.target

@@ -20,6 +20,7 @@ typedef kbdmap_entry KeyboardMap[KBDMAP_ROWS][KBDMAP_COLS];
 enum {
 	KBDMAP_ACTION_MASK	= 0xFF000000,
 	KBDMAP_ACTION_UCS3	= 0x01000000,
+	// Don't clash with 0x11000000 being accelerator UCS3 in input messages.
 	KBDMAP_ACTION_SYSTEM	= 0x02000000,
 	KBDMAP_ACTION_MODIFIER	= 0x03000000,
 	// Don't clash with 0x04000000 being X mouse positions in input messages.
@@ -106,13 +107,13 @@ enum {
 	KBDMAP_INDEX_J			= 0x0207,
 	KBDMAP_INDEX_K			= 0x0208,
 	KBDMAP_INDEX_L			= 0x0209,
-	KBDMAP_INDEX_SEMICOLON		= 0x020A,
-	KBDMAP_INDEX_APOSTROPHE		= 0x020B,
-	KBDMAP_INDEX_GRAVE		= 0x020C,	// U.K. `¬| Jp. Kanji/Zenkaku/Hankaku
-	KBDMAP_INDEX_EUROPE1		= 0x020D,	// U.S. \|, U.K. #~
+	KBDMAP_INDEX_SEMICOLON		= 0x020A,	// C10; Brazilian C, Other :;
+	KBDMAP_INDEX_APOSTROPHE		= 0x020B,	// C11
+	KBDMAP_INDEX_GRAVE		= 0x020C,	// E00; U.K. `¬| Jp. Kanji/Zenkaku/Hankaku
+	KBDMAP_INDEX_EUROPE1		= 0x020D,	// C12/D13; U.S. \|, U.K. #~
 
 	// ISO 9995 "B" row
-	KBDMAP_INDEX_EUROPE2		= 0x0301,	// U.K. \|, Brazilian \|, Other <>
+	KBDMAP_INDEX_EUROPE2		= 0x0301,	// B00; U.K. \|, Brazilian \|, Other <>
 	KBDMAP_INDEX_Z			= 0x0302,
 	KBDMAP_INDEX_X			= 0x0303,
 	KBDMAP_INDEX_C			= 0x0304,
@@ -122,8 +123,8 @@ enum {
 	KBDMAP_INDEX_M			= 0x0308,
 	KBDMAP_INDEX_COMMA		= 0x0309,
 	KBDMAP_INDEX_DOT		= 0x030A,
-	KBDMAP_INDEX_SLASH1		= 0x030B,	// Brazilian ;:, Other /?
-	KBDMAP_INDEX_SLASH2		= 0x030C,	// Brazilian /?, Japanese "_ | \ Z"
+	KBDMAP_INDEX_SLASH1		= 0x030B,	// B10; Brazilian ;:, Other /?
+	KBDMAP_INDEX_SLASH2		= 0x030C,	// B11; Brazilian /?, Japanese "_ | \ Z"
 
 	// Modifier row
 	KBDMAP_INDEX_SHIFT1		= 0x0400,
@@ -229,11 +230,10 @@ enum {
 
 	// Application Commands keypad part 1
 	KBDMAP_INDEX_PAUSE		= 0x0E00,
-	KBDMAP_INDEX_NEXTPREV_TASK	= 0x0E01,
+	KBDMAP_INDEX_PRINT_SCREEN	= 0x0E01,
 	KBDMAP_INDEX_ATTENTION		= 0x0E02,
 	KBDMAP_INDEX_APPLICATION	= 0x0E03,
 	KBDMAP_INDEX_BREAK		= 0x0E04,
-	KBDMAP_INDEX_PRINT_SCREEN	= 0x0E05,
 	KBDMAP_INDEX_MUTE		= 0x0E0D,
 	KBDMAP_INDEX_VOLUME_UP		= 0x0E0E,
 	KBDMAP_INDEX_VOLUME_DOWN	= 0x0E0F,

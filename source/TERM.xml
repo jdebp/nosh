@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
+<refentry id="TERM">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>TERM</refentrytitle>
+<manvolnum>7</manvolnum>
+<refmiscinfo class="manual">miscellany</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>TERM</refname>
+<refname>COLORTERM</refname>
+<refname>XTERM_VERSION</refname>
+<refname>VTE_VERSION</refname>
+<refpurpose>terminal type environment variables</refpurpose>
+</refnamediv>
+
+<refsection><title>Description</title>
+
+<para>
+The <envar>TERM</envar> environment variable tells programs what type of terminal they are talking to on the terminal device attached to their standard inputs, outputs, and errors.
+(Note that this makes no distinction amongst the standard files, which must all be terminal devices of the same type if they are terminal devices; and makes no provision for other types of terminal open as devices on other file descriptors.)
+The <envar>COLORTERM</envar>, <envar>XTERM_VERSION</envar>, and <envar>VTE_VERSION</envar> environment variables are non-standard additions to <envar>TERM</envar>.
+</para>
+
+<refsection><title>Meaning</title>
+
+<para>
+Some applications take the value of the <envar>TERM</envar> environment variable as a key used to look up records in the
+<citerefentry><refentrytitle>terminfo</refentrytitle><manvolnum>5</manvolnum></citerefentry> or <citerefentry><refentrytitle>termcap</refentrytitle><manvolnum>5</manvolnum></citerefentry> databases.
+These records describe the "capabilities" of a terminal of the named type.
+Unfortunately, these databases have some long-standing problems:
+</para>
+<itemizedlist>
+<listitem><para>
+The model of a "cursor addressing mode" that is switched on and off and a keypad that has "local" and "xmit" modes does not match the nowadays widespread architectures of DEC VTs and of the GUI terminal emulators that emulate them, where rather terminals have "alternate screen buffers", calculator and cursor keypads that have "application" and "normal" modes (neither of which are "local"), and the display is always cursor-addressible.
+</para></listitem>
+<listitem><para>
+The keyboard input model involves matching fixed strings, which does not work well with DEC VT and compatible terminals where the control sequences for various keys can vary according to the current modifier states.
+</para></listitem>
+<listitem><para>
+termcap/terminfo do not include capabilities for informing applications that the terminals support ISO 8613-6 Indexed colour or ISO 8613-6 Direct colour (i.e. setting colour from a pallette of usually 256 entries, or setting colour by directly specifying RGB values) and have no direct matches for the ECMA-48 invisible or strikethrough character attributes.
+</para></listitem>
+<listitem><para>
+termcap/terminfo have capabilities that are largely meaningless on modern terminals and terminal emulators, such as the ability to switch between "near letter quality" and "draft" modes, which applied to (only some) dot-matrix printers and paper terminals.
+</para></listitem>
+</itemizedlist>
+
+<para>
+Some applications use the <citerefentry><refentrytitle>ncurses</refentrytitle><manvolnum>3</manvolnum></citerefentry> library that is built upon termcap/terminfo, and which adds some further problems of its own.  For example:
+</para>
+<itemizedlist>
+<listitem><para>
+The ncurses colour model has the notion of "colour pairs" which existed in some terminals that are rare to nonexistent nowadays, and there is a limited repertoire of such pairs.
+The colour model of the DEC VTs and compatibles does not comprise colour pairs, but rather has separately settable foreground and background colours that can include every possible pairing.
+</para></listitem>
+</itemizedlist>
+
+<para>
+Because of these, some applications take to employing their own systems that have different models (that are more like the prevalent ECMA-48 and DEC VT model) or just outright ignoring the value of the <envar>TERM</envar> environment variable and hard-coding terminal escape sequences and control sequences.
+Hard-coding, however, undermines conventions such as the one that specifying the terminal type "dumb" causes applications to generate no escape sequences or control sequences, and limit themselves to just the C0 control characters.
+<citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry> describes how some tools in the nosh toolset, which do not use ncurses/termcap/terminfo, react to these environment variables.
+</para>
+
+<para>
+The <envar>XTERM_VERSION</envar> and <envar>VTE_VERSION</envar> environment variable values are the value of the XTerm version or the version of the VTE library that the terminal emulator is employing, respectively.
+The <envar>COLORTERM</envar> environment variable convention arose in part because of the problems that termcap/terminfo have fully and correctly describing colour capabilities.
+If it has the value <code>truecolor</code> or the value <code>24bit</code>, then the terminal type supports ISO 8613-6 Direct colour SGR control sequences.
+Other values are not really reliable, as its semantics for those cases have never been fully and formally specified.
+</para>
+
+</refsection>
+
+<refsection><title>Remote applications</title>
+
+<para>
+The <envar>TERM</envar> environment variable is replicated to the remote system via an SSH login because it is part of the protocol to transfer the terminal type.
+(The same is true for other protocols, such as TELNET.)
+For reliable operation of applications on that system using the local terminal for their I/O, by way of the SSH connection, the <envar>COLORTERM</envar>, <envar>XTERM_VERSION</envar>, and <envar>VTE_VERSION</envar> environment variables should be replicated as well.
+</para>
+
+<para>
+Utilities in the nosh toolset, and NeoVIM, also make use of the <envar>KONSOLE_PROFILE_NAME</envar>, <envar>TERM_PROGRAM</envar>, and <envar>ROXTERM_ID</envar> environment variables to attempt to heuristically work around several common misconfigurations.
+It is convenient to replicate them, too, therefore.
+</para>
+
+</refsection>
+
+<refsection><title>Mis-configuration</title>
+
+<para>
+It is an error to specify <code>xterm</code> or <code>xterm-256color</code> as the value of the <envar>TERM</envar> environment variable when the terminal emulator is not actually XTerm.
+The XTerm terminal emulator provides a wide range of functionality, from sixel graphics through Tektronix mode to DTTerm extensions to the DECSLPP control sequence.
+No other terminal emulator is precisely functionally equivalent to XTerm.
+Even considering the small subset of terminal functionality that termcap/terminfo records encode, the <code>xterm</code>/<code>xterm-256color</code> records encode capabilities that are not correct matches to the behaviours and capabilities of other terminal emulators.
+</para>
+
+<para>
+Terminal emulator documentation claiming XTerm compatibility is invariably wrong.
+Authors claiming that they have implemented XTerm compatibility far too often turn out not to even have fully and correctly implemented the feature subset covered by the terminfo/termcap records for XTerm.
+</para>
+
+<para>
+The termcap/terminfo databases actually have proper, fully-fledged, records that are specifically created for the terminal emulators that are commonly mis-labelled "xterm":
+</para>
+<variablelist>
+<varlistentry><term>anything based upon libvte (e.g. GNOME/MATE/XFCE Terminal, EvilVTE, LilyTerm, et al.)</term><listitem><para><code>vte</code> or <ulink url="https://www.invisible-island.net/ncurses/terminfo.src.html#tic-vte-256color"><code>vte-256color</code></ulink> (or their respective aliases <code>gnome</code> and <code>gnome-256color</code>)</para></listitem></varlistentry>
+<varlistentry><term>FreeBSD kernel virtual terminal</term><listitem><para><ulink url="https://www.invisible-island.net/ncurses/terminfo.src.html#tic-teken"><code>teken</code></ulink> or (a termcap extension provided by the nosh toolset, because <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> provides ISO 8613-6 colour SGR capability) <code>teken-256color</code></para></listitem></varlistentry>
+<varlistentry><term>Linux kernel virtual terminal</term><listitem><para><code>linux</code> or <code>linux-256color</code></para></listitem></varlistentry>
+<varlistentry><term>tmux</term><listitem><para><code>tmux</code> or <code>tmux-256color</code></para></listitem></varlistentry>
+<varlistentry><term>GNU Screen</term><listitem><para><code>screen</code> or <code>screen-256color</code></para></listitem></varlistentry>
+<varlistentry><term>PuTTY</term><listitem><para><code>putty</code> or <code>putty-256color</code></para></listitem></varlistentry>
+<varlistentry><term>Unicode rxvt</term><listitem><para><code>rxvt-unicode</code> or <code>rxvt-unicode-256color</code></para></listitem></varlistentry>
+<varlistentry><term>Terminal.app</term><listitem><para><code>nsterm</code> or <ulink url="https://www.invisible-island.net/ncurses/terminfo.src.html#tic-nsterm-256color"><code>nsterm-256color</code></ulink></para></listitem></varlistentry>
+<varlistentry><term>iTerm.app</term><listitem><para><ulink url="https://www.invisible-island.net/ncurses/terminfo.src.html#tic-iterm"><code>iterm</code></ulink></para></listitem></varlistentry>
+</variablelist>
+
+</refsection>
+
+<refsection><title>Configuration</title>
+
+<para>
+These environment variables are inherited just like any other, and any program can alter what their values are for itself or for the child processes that it spawns.
+Because TUI login sessions initially have terminal devices as their standard inputs, outputs, and errors, the first process in a TUI login session sets up these environment variables for that terminal.
+Non-login terminal sessions, as sometimes run by terminal emulators, also have terminal devices as standard I/O, and again these environment variables are set up in the first process of the session.
+</para>
+
+<para>
+How these environment variables are configured to match a given terminal or terminal emulator varies greatly:
+</para>
+
+<variablelist>
+
+<varlistentry>
+<term>
+terminal emulators such as <citerefentry><refentrytitle>xterm</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>gnome-terminal</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and <citerefentry><refentrytitle>tmux</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</term>
+<listitem>
+<para>
+In this kind of terminal emulator, it is the terminal emulator program that spawns the initial child process that runs in the terminal session.
+Thus the terminal emulator program itself generally sets the value of these environment variables.
+In some terminal emulator programs, what it is set to is configurable by a settings dialogue in the GUI.
+Others hardwire it, sometimes unfortunately hardwiring the wrong thing.
+</para>
+<para>
+Programs like GNU Screen, <citerefentry><refentrytitle>mosh-server</refentrytitle><manvolnum>1</manvolnum></citerefentry> , and <citerefentry><refentrytitle>tmux</refentrytitle><manvolnum>1</manvolnum></citerefentry> are in fact terminal emulators, with their own distinct types reflected in these environment variables.
+They emulate their particular type of terminal on the master side of the pseudo-terminal, and a client program renders the state of that terminal onto a third-party terminal.
+The terminal type seen by the child processes in the terminal sessions in these environment variables is not that seen by the rendering process for its terminal.
+</para>
+<para>
+Various terminal emulators will also set the <envar>COLORTERM</envar>, <envar>XTERM_VERSION</envar>, and <envar>VTE_VERSION</envar> environment variables, in addition to setting <envar>TERM</envar>.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+TUI login on AT&#x0026;T Unix System 5 Release 4 and its derivatives
+</term>
+<listitem>
+<para>
+In AT&#x0026;T Unix System 5 Release 4 and its derivatives that use the Service Access Facility (including OpenSolaris and OpenIndiana) these environment variables are set up for terminal sessions by <citerefentry><refentrytitle>ttymon</refentrytitle><manvolnum>8</manvolnum></citerefentry>, using configuration information administered using the <citerefentry><refentrytitle>ttyadm</refentrytitle><manvolnum>8</manvolnum></citerefentry> utility.
+</para>
+<para>
+By default, only the <envar>TERM</envar> environnment variable is set.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+nosh TUI login
+</term>
+<listitem>
+<para>
+Like AT&#x0026;T Unix System 5 Release 4, nosh TUI login on kernel virtual terminals no longer uses <command>getty</command> at all.
+</para>
+<para>
+The nosh pre-supplied TUI login service bundles for kernel virtual terminal and user-space virtual terminal login services employ <citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+This sets the <envar>TERM</envar> environment variable to a value that matches the type of the kernel virtual terminal, since user space virtual terminals aim to be an enhanced version of that same terminal type.
+</para>
+<para>
+<command>vc-get-tty</command> always sets the <envar>TERM</envar> environment variable, and for user-space virtual terminals additionally sets the <envar>COLORTERM</envar> environment variable.
+In this way, programs can distinguish a basic kernel virtual terminal from a user-space virtual terminal, and make use of the several enhancements that the latter has (such as extended DECSCUSR) that the former has not.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<command>getty</command>-based TUI login services
+</term>
+<listitem>
+<para>
+<citerefentry><refentrytitle>getty</refentrytitle><manvolnum>1</manvolnum></citerefentry> (and its various clones) sets the <envar>TERM</envar> environment variable.
+How it sets it varies, because there are multiple different <command>getty</command> programs and multiple different systems that (still) employ it:
+</para>
+<itemizedlist>
+<listitem>
+<para>
+BSD <command>getty</command> sets the <envar>TERM</envar> environment variable from its command-line argument, which does not specify it directly but specifies an entry in the <citerefentry><refentrytitle>gettytab</refentrytitle><manvolnum>5</manvolnum></citerefentry> database.
+The <filename>gettytab</filename> record pointed to in turn specifies the <envar>TERM</envar> environment variable's value.
+The command line is in turn specified by the system administrator by a record in the <citerefentry><refentrytitle>ttys</refentrytitle><manvolnum>5</manvolnum></citerefentry> database, <filename>/etc/ttys</filename>.
+</para>
+</listitem>
+<listitem>
+<para>
+With van Smoorenburg <command>init</command>, <command>getty</command> sets the <envar>TERM</envar> environment variable from its command-line argument (defaulting to <code>linux</code>, <code>vt100</code>, or <code>hurd</code> according to the specific <command>getty</command> program employed).
+The command line is in turn specified by the system administrator by a record in the <filename>/etc/inittab</filename> file.
+</para>
+</listitem>
+<listitem>
+<para>
+With systemd, <command>getty</command> likewise sets the <envar>TERM</envar> environment variable from its command-line argument.
+The defaults are never used, because the systemd services that invoke <command>getty</command>, on kernel virtual terminals and on real terminals, always supply <command>getty</command> with a terminal type to set.
+They supply it from the <envar>TERM</envar> environment variable of the systemd process itself, which initializes its own <envar>TERM</envar> environment variable to either <code>linux</code> or <code>vt220</code> according to what it find the <filename>/dev/console</filename> device actually pointing to (a kernel virtual terminal or a real terminal, respectively; see <citerefentry><refentrytitle>linux-console</refentrytitle><manvolnum>4</manvolnum></citerefentry>).
+</para>
+</listitem>
+<listitem>
+<para>
+Only the nosh pre-supplied TUI login service bundles for real serial terminal login services employ <command>getty</command>.
+They do not explicitly specify a terminal type when invoking it, and it thus depends entirely from the specific <command>getty</command> program in use what the <envar>TERM</envar> is set to and how that is determined.
+</para>
+</listitem>
+</itemizedlist>
+<para>
+Only the <envar>TERM</envar> environnment variable is set.
+</para>
+</listitem>
+</varlistentry>
+
+</variablelist>
+
+</refsection>
+
+</refsection>
+<refsection id="STANDARDS" xreflabel="STANDARDS"><title>Standards conformance</title>
+
+<para>
+The <envar>TERM</envar> environment variable is defined by the Single Unix Specification (per "Environment Variables").
+It leaves its actual format and values unspecified.
+</para>
+
+</refsection>
+<refsection><title>See also</title>
+
+<variablelist>
+<varlistentry>
+<term>
+<citerefentry><refentrytitle>term</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+</term>
+<listitem>
+<para>
+ncurses/terminfo explanation of the values taken by the <envar>TERM</envar> environment variable and how ncurses/terminfo interprets them.
+(Note that what it says about AT&#x0026;T Unix System 5 Unices is wrong.)
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</refsection>
+<refsection><title>Author</title>
+Documentation by
+<author>
+<personname><firstname>Jonathan</firstname><surname>de Boyne Pollard</surname></personname>
+</author>
+</refsection>
+
+</refentry>

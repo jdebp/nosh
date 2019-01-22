@@ -16,9 +16,11 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstring>
 #include <clocale>
 #include <cerrno>
-#include <new>
-#include <memory>
 #include <sys/stat.h>
+#if defined(__LINUX__) || defined(__linux__)
+#define _BSD_SOURCE 1
+#include <sys/resource.h>
+#endif
 #include <unistd.h>
 #include "kqueue_common.h"
 #include "utils.h"
@@ -27,16 +29,15 @@ For copyright and licensing terms, see the file named COPYING.
 #include "service-manager.h"
 #include "unpack.h"
 #include "popt.h"
-#include "BaseTUI.h"
 #include "FileDescriptorOwner.h"
+#include "CharacterCell.h"
+#include "InputMessage.h"
+#include "TerminalCapabilities.h"
+#include "TUIDisplayCompositor.h"
+#include "TUIOutputBase.h"
+#include "TUIInputBase.h"
+#include "TUIVIO.h"
 #include "SignalManagement.h"
-#if defined(__LINUX__) || defined(__linux__)
-#include <ncursesw/curses.h>	// for colours
-#define _BSD_SOURCE 1
-#include <sys/resource.h>
-#else
-#include <curses.h>	// for colours
-#endif
 
 /* Time *********************************************************************
 // **************************************************************************
@@ -60,6 +61,7 @@ convert(
 */
 
 namespace {
+
 struct index : public std::pair<dev_t, ino_t> {
 	index(const struct stat & s) : pair(s.st_dev, s.st_ino) {}
 	std::size_t hash() const { return static_cast<std::size_t>(first) + static_cast<std::size_t>(second); }
@@ -91,7 +93,7 @@ struct bundle {
 	uint32_t nanoseconds;
 
 	void load_data();
-	int colour_of_state () const;
+	const ColourPair & colour_of_state () const;
 	const char * name_of_state () const;
 	bool valid_status() const { return UNKNOWN != state && UNLOADED != state && NOTAPI != state && FIFO_ERROR != state && STATUS_ERROR != state && LOADING != state; }
 protected:
@@ -99,25 +101,28 @@ protected:
 	static state_type state_of(bool ready_after_run, uint32_t main_pid, bool exited_run, char c) ;
 };
 
-static
-struct { unsigned colour; const char * name; }
+inline ColourPair C(uint_fast8_t f, uint_fast8_t b) { return ColourPair(Map256Colour(f), Map256Colour(b)); }
+
+static const
+struct { ColourPair colour; const char * name; }
 state_table[] = {
 	// The indices here must match bundle::state_type above.
-	{ 12, "unknown" },
-	{ 12, "no API" },
-	{ 11, "!ok" },
-	{ 11, "!status" },
-	{ 12, "unloaded" },
-	{ 10, "loading" },
-	{  4, "stopped" },
-	{  5, "starting" },
-	{  7, "started" },
-	{  8, "ready" },
-	{  8, "running" },
-	{  6, "stopping" },
-	{  8, "done" },
-	{  9, "restart" },
+	{  C(COLOUR_CYAN,	COLOUR_BLACK),	"unknown"	},
+	{  C(COLOUR_CYAN,	COLOUR_BLACK),	"no API"	},
+	{  C(COLOUR_RED,	COLOUR_BLACK),	"!ok"	},
+	{  C(COLOUR_RED,	COLOUR_BLACK),	"!status"	},
+	{  C(COLOUR_CYAN,	COLOUR_BLACK),	"unloaded"	},
+	{  C(COLOUR_CYAN,	COLOUR_BLUE),	"loading"	},
+	{  C(COLOUR_WHITE,	COLOUR_BLUE),	"stopped"	},
+	{  C(COLOUR_YELLOW,	COLOUR_BLUE),	"starting"	},
+	{  C(COLOUR_MAGENTA,	COLOUR_BLUE),	"started"	},
+	{  C(COLOUR_GREEN,	COLOUR_BLUE),	"ready"	},
+	{  C(COLOUR_GREEN,	COLOUR_BLUE),	"running"	},
+	{  C(COLOUR_YELLOW,	COLOUR_BLUE),	"stopping"	},
+	{  C(COLOUR_GREEN,	COLOUR_BLUE),	"done"	},
+	{  C(COLOUR_RED,	COLOUR_BLUE),	"restart"	},
 };
+
 }
 
 inline
@@ -209,7 +214,7 @@ template <> struct hash<struct index> {
 }
 
 inline
-int
+const ColourPair &
 bundle::colour_of_state (
 ) const {
 	return state_table[state].colour;
@@ -259,175 +264,133 @@ bundle_info_map::add_bundle (
 */
 
 namespace {
-struct TUI : public BaseTUI {
-	TUI(const char * p, ProcessEnvironment & e, bundle_info_map & m);
+
+struct TUI :
+	public TerminalCapabilities,
+	public TUIOutputBase,
+	public TUIInputBase
+{
+	TUI(const ProcessEnvironment & e, bundle_info_map & m, TUIDisplayCompositor & comp, bool, bool, bool);
+	~TUI();
 
 	bool quit_flagged() const { return pending_quit_event; }
-	void handle_non_kevents ();
+	bool exit_signalled() const { return terminate_signalled||interrupt_signalled||hangup_signalled; }
+	void handle_signal (int);
+	void handle_stdin (int);
+	void handle_sort_needed ();
+
 protected:
-	const char * prog;
 	const ProcessEnvironment & envs;
+	sig_atomic_t terminate_signalled, interrupt_signalled, hangup_signalled, usr1_signalled, usr2_signalled;
 	bundle_info_map & bundle_map;
 	bundle_pointer_list bundles;
+	TUIVIO vio;
 	std::size_t current_row;
-	bool sort_needed, redraw_needed, pending_quit_event;
+	bool sort_needed, pending_quit_event;
 	unsigned sort_mode;
+	TUIDisplayCompositor::coordinate window_y, window_x;
+	const ColourPair normal, name, exception, config, control;
 
-	void setup_colours();
-	virtual void redraw();
-	virtual void unicode_keypress(wint_t);
-	virtual void ncurses_keypress(wint_t);
+	virtual void redraw_new();
+
+	virtual void ExtendedKey(uint_fast16_t k, uint_fast8_t m);
+	virtual void FunctionKey(uint_fast16_t k, uint_fast8_t m);
+	virtual void UCS3(uint_fast32_t character);
+	virtual void Accelerator(uint_fast32_t character);
+	virtual void MouseMove(uint_fast16_t, uint_fast16_t, uint8_t);
+	virtual void MouseWheel(uint_fast8_t n, int_fast8_t v, uint_fast8_t m);
+	virtual void MouseButton(uint_fast8_t n, uint_fast8_t v, uint_fast8_t m);
 
 	void sort_bundles();
 	bool less_than (const bundle & a, const bundle & b);
-	void invalidate() { redraw_needed = true; }
-	void write_one_line(const bundle & sb, const uint64_t z);
-	void write_timestamp(const uint64_t s);
-	void set_colour_pair(unsigned);
-	void set_normal_colour();
-	void set_exception_colour();
-	void set_config_colour();
-	void set_control_colour();
+
+	void write_one_line(const TUIDisplayCompositor::coordinate & row, long col, const CharacterCell::attribute_type &, const bundle & sb, const uint64_t z);
+	void write_timestamp(const TUIDisplayCompositor::coordinate & row, long & col, const CharacterCell::attribute_type &, const ColourPair &, const uint64_t s);
+
+private:
+	char stdin_buffer[1U * 1024U];
 };
 
-struct { short fg, bg; }
-default_colours[13] = {
-	{	COLOR_WHITE,	COLOR_BLACK	},	// normal
-	{	COLOR_RED,	COLOR_BLACK	},	// exception
-	{	COLOR_CYAN,	COLOR_BLACK	},	// config
-	{	COLOR_BLACK,	COLOR_GREEN	},	// control
-	{	COLOR_WHITE,	COLOR_BLUE	},	// stopped
-	{	COLOR_YELLOW,	COLOR_BLUE	},	// starting
-	{	COLOR_YELLOW,	COLOR_BLUE	},	// stopping
-	{	COLOR_MAGENTA,	COLOR_BLUE	},	// started
-	{	COLOR_GREEN,	COLOR_BLUE	},	// ready, running, and done
-	{	COLOR_RED,	COLOR_BLUE	},	// restart
-	{	COLOR_CYAN,	COLOR_BLUE	},	// loading
-	{	COLOR_RED,	COLOR_BLACK	},	// !ok, !status
-	{	COLOR_CYAN,	COLOR_BLACK	},	// unknown, no API, unloaded
-};
 }
 
 TUI::TUI(
-	const char * p,
-	ProcessEnvironment & e,
-	bundle_info_map & m
+	const ProcessEnvironment & e,
+	bundle_info_map & m,
+	TUIDisplayCompositor & comp,
+	bool cursor_application_mode,
+	bool calculator_application_mode,
+	bool alternate_screen_buffer
 ) :
-	prog(p),
+	TerminalCapabilities(e),
+	TUIOutputBase(*this, stdout, false, false, cursor_application_mode, calculator_application_mode, alternate_screen_buffer, comp),
+	TUIInputBase(static_cast<const TerminalCapabilities &>(*this), stdin),
 	envs(e),
+	terminate_signalled(false),
+	interrupt_signalled(false),
+	hangup_signalled(false),
+	usr1_signalled(false),
+	usr2_signalled(false),
 	bundle_map(m),
+	vio(comp),
 	current_row(0),
 	sort_needed(true),
-	redraw_needed(true),
 	pending_quit_event(false),
-	sort_mode(4U)
+	sort_mode(4U),
+	window_y(0U),
+	window_x(0U),
+	normal(C(COLOUR_WHITE, COLOUR_BLACK)),
+	name(C(COLOUR_YELLOW, COLOUR_BLACK)),
+	exception(C(COLOUR_RED, COLOUR_BLACK)),
+	config(C(COLOUR_CYAN, COLOUR_BLACK)),
+	control(C(COLOUR_GREEN, COLOUR_BLACK))
 {
-	setup_colours();
 }
 
-void
-TUI::handle_non_kevents (
+TUI::~TUI(
 ) {
-	if (sort_needed) {
-		sort_needed = false;
-		sort_bundles();
-		redraw_needed = true;
-	}
-	if (redraw_needed) {
-		redraw_needed = false;
-		redraw();
-		set_update();
-	}
-	BaseTUI::handle_non_kevents();
-}
-
-void
-TUI::setup_colours(
-) {
-	setup_default_colours(COLOR_GREEN, COLOR_BLACK);
-	for (std::size_t i(0); i < sizeof default_colours/sizeof *default_colours; ++i)
-		init_pair(1 + i, default_colours[i].fg, default_colours[i].bg);
-}
-
-inline
-void
-TUI::set_colour_pair(
-	unsigned i
-) {
-	wcolor_set(window, i, 0);
-}
-
-inline
-void
-TUI::set_normal_colour(
-) {
-	set_colour_pair(1 + 0);
-}
-
-inline
-void
-TUI::set_exception_colour(
-) {
-	set_colour_pair(1 + 1);
-}
-
-inline
-void
-TUI::set_config_colour(
-) {
-	set_colour_pair(1 + 2);
-}
-
-inline
-void
-TUI::set_control_colour(
-) {
-	set_colour_pair(1 + 3);
 }
 
 inline
 void
 TUI::write_timestamp (
+	const TUIDisplayCompositor::coordinate & row,
+	long & col,
+	const CharacterCell::attribute_type & attr,
+	const ColourPair & colour,
 	const uint64_t s
 ) {
 	char buf[64];
 	const struct tm t(convert(envs, s));
-	const size_t len(std::strftime(buf, sizeof buf, " %F %T %z", &t));
-	waddnstr(window, buf, len);
+	const std::size_t len(std::strftime(buf, sizeof buf, " %F %T %z", &t));
+	vio.Print(row, col, attr, colour, buf, len);
 }
 
 inline
 void
 TUI::write_one_line (
+	const TUIDisplayCompositor::coordinate & row,
+	long col,
+	const CharacterCell::attribute_type & attr,
 	const bundle & sb,
 	const uint64_t z
 ) {
-	set_colour_pair(1 + sb.colour_of_state());
-	wprintw(window, "%-8s", sb.name_of_state());
-	set_normal_colour();
-	waddch(window, ' ');
-	set_config_colour();
-	wprintw(window, "%-8s", sb.initially_up ? "enabled" : "disabled");
-	set_normal_colour();
-	waddch(window, ' ');
-	set_control_colour();
-	wprintw(window, "%c%c", sb.valid_status() && sb.want_flag ? sb.want_flag : ' ', sb.valid_status() && sb.paused ? 'p' : ' ');
-	set_normal_colour();
+	vio.PrintFormatted(row, col, attr, sb.colour_of_state(), "%-8s", sb.name_of_state());
+	vio.Print(row, col, attr, normal, ' ');
+	vio.PrintFormatted(row, col, attr, config, "%-8s", sb.initially_up ? "enabled" : "disabled");
+	vio.Print(row, col, attr, normal, ' ');
+	vio.PrintFormatted(row, col, attr, control, "%c%c", sb.valid_status() && sb.want_flag ? sb.want_flag : '_', sb.valid_status() && sb.paused ? 'p' : '_');
 	if (sb.valid_status()) {
 		if (-1 != sb.pid)
-			wprintw(window, " %7u", sb.pid);
+			vio.PrintFormatted(row, col, attr, normal, " %7u", sb.pid);
 		else
-			wprintw(window, " %7s", "");
-		if (z < sb.seconds)
-			set_exception_colour();
-		write_timestamp(sb.seconds);
-		if (z < sb.seconds)
-			set_normal_colour();
-		wprintw(window, " %s\t%s", sb.name.c_str(), sb.path.c_str());
+			vio.PrintFormatted(row, col, attr, normal, " %7s", "");
+		write_timestamp(row, col, attr, z < sb.seconds ? exception : normal, sb.seconds);
 	} else {
-		wprintw(window, " %7s %25s %s\t%s", "", "", sb.name.c_str(), sb.path.c_str());
+		vio.PrintFormatted(row, col, attr, normal, " %7s %25s", "", "");
 	}
-	waddch(window, '\n');
+	vio.Print(row, col, attr, normal, ' ');
+	vio.PrintFormatted(row, col, attr, name, "%s", sb.name.c_str());
+	vio.PrintFormatted(row, col, attr, normal, "\t%s\n", sb.path.c_str());
 }
 
 bool
@@ -485,6 +448,7 @@ TUI::less_than (
 	return false;
 }
 
+inline
 void
 TUI::sort_bundles(
 ) {
@@ -504,92 +468,244 @@ done:		;
 }
 
 void
-TUI::redraw (
+TUI::handle_sort_needed (
+) {
+	if (sort_needed) {
+		sort_needed = false;
+		sort_bundles();
+		set_refresh_needed();
+	}
+}
+
+void
+TUI::handle_stdin (
+	int n		///< number of characters available; can be <= 0 erroneously
+) {
+	for (;;) {
+		int l(read(STDIN_FILENO, stdin_buffer, sizeof stdin_buffer));
+		if (0 >= l) break;
+		HandleInput(stdin_buffer, l);
+		if (l >= n) break;
+		n -= l;
+	}
+	BreakInput();
+}
+
+void
+TUI::handle_signal (
+	int signo
+) {
+	switch (signo) {
+		case SIGWINCH:	set_resized(); break;
+		case SIGTERM:	terminate_signalled = true; break;
+		case SIGINT:	interrupt_signalled = true; break;
+		case SIGHUP:	hangup_signalled = true; break;
+		case SIGUSR1:	usr1_signalled = true; break;
+		case SIGUSR2:	usr2_signalled = true; break;
+		case SIGTSTP:	exit_full_screen_mode(); raise(SIGSTOP); break;
+		case SIGCONT:	enter_full_screen_mode(); invalidate_cur(); set_update_needed(); break;
+	}
+}
+
+void
+TUI::redraw_new (
 ) {
 	timespec now;
 	clock_gettime(CLOCK_REALTIME, &now);
 	const uint64_t z(time_to_tai64(envs, TimeTAndLeap(now.tv_sec, false)));
 
-	werase(window);
-	wmove(window, 0, 0);
-	wresize(window, bundles.size(), 4096);
-	std::size_t row(0);
-	for (bundle_pointer_list::const_iterator b(bundles.begin()), e(bundles.end()), i(b); e != i; ++i) {
-		wattrset(window, row == current_row ? A_REVERSE : A_NORMAL);
-		wcolor_set(window, 0, 0);
-		wclrtoeol(window);
-		write_one_line(**i, z);
-		++row;
-	}
-	wattrset(window, A_NORMAL);
-	wcolor_set(window, 0, 0);
+	TUIDisplayCompositor::coordinate cursor_y(current_row), cursor_x;
 	switch (sort_mode) {
 		default:
-		case 0U:	wmove(window, current_row, 0); break;
-		case 1U:	wmove(window, current_row, 0); break;
-		case 2U:	wmove(window, current_row, 21); break;
-		case 3U:	wmove(window, current_row, 29); break;
-		case 4U:	wmove(window, current_row, 55); break;
+		case 0U:	cursor_x = 0; break;
+		case 1U:	cursor_x = 0; break;
+		case 2U:	cursor_x = 21; break;
+		case 3U:	cursor_x = 29; break;
+		case 4U:	cursor_x = 55; break;
 	}
+	// The window includes the cursor position.
+	if (window_y > cursor_y) window_y = cursor_y; else if (window_y + c.query_h() <= cursor_y) window_y = cursor_y - c.query_h() + 1;
+	if (window_x > cursor_x) window_x = cursor_x; else if (window_x + c.query_w() <= cursor_x) window_x = cursor_x - c.query_w() + 1;
+
+	erase_new_to_backdrop();
+
+	TUIDisplayCompositor::coordinate row(0U);
+	for (bundle_pointer_list::const_iterator b(bundles.begin()), e(bundles.end()), i(b); e != i; ++i, ++row) {
+		if (row < window_y) continue;
+		if (row >= c.query_h() + window_y) break;
+		const CharacterCell::attribute_type attr(row == current_row ? CharacterCell::INVERSE : 0U);
+		write_one_line(row - window_y, -window_x, attr, **i, z);
+	}
+
+	c.move_cursor(false /* no software cursor */, cursor_y - window_y, cursor_x - window_x);
+	c.set_cursor_state(false /* no software cursor */, CursorSprite::VISIBLE|CursorSprite::BLINK, CursorSprite::BOX);
 }
 
 void
-TUI::unicode_keypress(
-	wint_t c
-) {
-	switch (c) {
-		case '\x03':
-		case '\x1c':
-		case 'Q': case 'q':
-			pending_quit_event = true;
-			break;
-		case '<':
-			if (sort_mode > 0U) { --sort_mode; sort_needed = true; }
-			break;
-		case '>':
-			if (sort_mode < 4U) { ++sort_mode; sort_needed = true; }
-			break;
-	}
-}
-
-void
-TUI::ncurses_keypress(
-	wint_t k
+TUI::ExtendedKey(
+	uint_fast16_t k,
+	uint_fast8_t m
 ) {
 	switch (k) {
-		case KEY_DOWN:
-			if (current_row + 1 < bundles.size()) { ++current_row; invalidate(); }
+		case EXTENDED_KEY_LEFT_ARROW:
+		case EXTENDED_KEY_PAD_LEFT:
+			if (sort_mode > 0U) { --sort_mode; sort_needed = true; }
 			break;
-		case KEY_UP:
-			if (current_row > 0) { --current_row; invalidate(); }
+		case EXTENDED_KEY_RIGHT_ARROW:
+		case EXTENDED_KEY_PAD_RIGHT:
+			if (sort_mode < 4U) { ++sort_mode; sort_needed = true; }
 			break;
-		case KEY_HOME:
-			if (current_row != 0) { current_row = 0; invalidate(); }
+		case EXTENDED_KEY_DOWN_ARROW:
+		case EXTENDED_KEY_PAD_DOWN:
+			if (current_row + 1 < bundles.size()) { ++current_row; set_refresh_needed(); }
 			break;
-		case KEY_END:
-			if (bundles.size() && current_row + 1 != bundles.size()) { current_row = bundles.size() - 1; invalidate(); }
+		case EXTENDED_KEY_UP_ARROW:
+		case EXTENDED_KEY_PAD_UP:
+			if (current_row > 0) { --current_row; set_refresh_needed(); }
 			break;
-		case KEY_NPAGE:
-			if (bundles.size() && current_row + 1 != bundles.size()) {
-				unsigned n(page_rows());
+		case EXTENDED_KEY_END:
+		case EXTENDED_KEY_PAD_END:
+			if (std::size_t s = bundles.size()) {
+				if (current_row + 1 != s) { current_row = s - 1; set_refresh_needed(); }
+				break;
+			} else 
+				[[clang::fallthrough]];
+		case EXTENDED_KEY_HOME:
+		case EXTENDED_KEY_PAD_HOME:
+			if (current_row != 0) { current_row = 0; set_refresh_needed(); }
+			break;
+		case EXTENDED_KEY_PAGE_DOWN:
+		case EXTENDED_KEY_PAD_PAGE_DOWN:
+			if (bundles.size() && current_row + 1 < bundles.size()) {
+				unsigned n(c.query_h());
 				if (current_row + n < bundles.size())
 					current_row += n;
 				else
 					current_row = bundles.size() - 1;
-				invalidate();
+				set_refresh_needed();
 			}
 			break;
-		case KEY_PPAGE:
-			if (current_row != 0) {
-				unsigned n(page_rows());
+		case EXTENDED_KEY_PAGE_UP:
+		case EXTENDED_KEY_PAD_PAGE_UP:
+			if (current_row > 0) {
+				unsigned n(c.query_h());
 				if (current_row > n)
 					current_row -= n;
 				else
 					current_row = 0;
-				invalidate();
+				set_refresh_needed();
 			}
 			break;
 	}
+}
+
+void
+TUI::FunctionKey(
+	uint_fast16_t /*k*/,
+	uint_fast8_t /*m*/
+) {
+}
+
+void
+TUI::UCS3(
+	uint_fast32_t character
+) {
+	switch (character) {
+		case EM:	// Control+Y
+		case SUB:	// Control+Z
+			killpg(0, SIGTSTP);
+			break;
+		case ETX:	// Control+C
+		case EOT:	// Control+D
+		case FS:	// Control+\ .
+		case 'Q': case 'q':
+			pending_quit_event = true;
+			break;
+		case 'W': case 'w': case 'J': case'j':
+			ExtendedKey(EXTENDED_KEY_UP_ARROW, 0U);
+			break;
+		case 'S': case 's': case 'K': case 'k':
+			ExtendedKey(EXTENDED_KEY_DOWN_ARROW, 0U);
+			break;
+		case 'A': case 'a': case 'H': case'h':
+			ExtendedKey(EXTENDED_KEY_LEFT_ARROW, 0U);
+			break;
+		case 'D': case 'd': case 'L': case 'l':
+			ExtendedKey(EXTENDED_KEY_RIGHT_ARROW, 0U);
+			break;
+		case SOH:	// Control+A
+			ExtendedKey(EXTENDED_KEY_HOME, 0U);
+			break;
+		case ENQ:	// Control+E
+			ExtendedKey(EXTENDED_KEY_END, 0U);
+			break;
+		case STX:	// Control+B
+		case CAN:	// Control+P
+			ExtendedKey(EXTENDED_KEY_PAGE_UP, 0U);
+			break;
+		case ACK:	// Control+F
+		case SO:	// Control+N
+			ExtendedKey(EXTENDED_KEY_PAGE_DOWN, 0U);
+			break;
+	}
+}
+
+void
+TUI::Accelerator(
+	uint_fast32_t character
+) {
+	switch (character) {
+		case 'W': case 'w':
+		case 'Q': case 'q':
+			pending_quit_event = true;
+			break;
+	}
+}
+
+void 
+TUI::MouseMove(
+	uint_fast16_t /*row*/,
+	uint_fast16_t /*col*/,
+	uint8_t /*modifiers*/
+) {
+}
+
+void 
+TUI::MouseWheel(
+	uint_fast8_t wheel,
+	int_fast8_t value,
+	uint_fast8_t /*modifiers*/
+) {
+	switch (wheel) {
+		case 0U:
+			while (value < 0) {
+				ExtendedKey(EXTENDED_KEY_UP_ARROW, 0U);
+				++value;
+			}
+			while (0 < value) {
+				ExtendedKey(EXTENDED_KEY_DOWN_ARROW, 0U);
+				--value;
+			}
+			break;
+		case 1U:
+			while (value < 0) {
+				ExtendedKey(EXTENDED_KEY_LEFT_ARROW, 0U);
+				++value;
+			}
+			while (0 < value) {
+				ExtendedKey(EXTENDED_KEY_RIGHT_ARROW, 0U);
+				--value;
+			}
+			break;
+	}
+}
+
+void 
+TUI::MouseButton(
+	uint_fast8_t /*button*/,
+	uint_fast8_t /*value*/,
+	uint_fast8_t /*modifiers*/
+) {
 }
 
 /* System control subcommands ***********************************************
@@ -603,10 +719,19 @@ chkservice [[gnu::noreturn]] (
 	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
+	bool cursor_application_mode(false);
+	bool calculator_application_mode(false);
+	bool no_alternate_screen_buffer(false);
 	try {
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
+		popt::bool_definition cursor_application_mode_option('\0', "cursor-keypad-application-mode", "Set the cursor keypad to application mode instead of normal mode.", cursor_application_mode);
+		popt::bool_definition calculator_application_mode_option('\0', "calculator-keypad-application-mode", "Set the calculator keypad to application mode instead of normal mode.", calculator_application_mode);
+		popt::bool_definition no_alternate_screen_buffer_option('\0', "no-alternate-screen-buffer", "Prevent switching to the XTerm alternate screen buffer.", no_alternate_screen_buffer);
 		popt::definition * main_table[] = {
-			&user_option
+			&user_option,
+			&cursor_application_mode_option,
+			&calculator_application_mode_option,
+			&no_alternate_screen_buffer_option,
 		};
 		popt::top_table_definition main_option(sizeof main_table/sizeof *main_table, main_table, "Main options", "{service(s)...}");
 
@@ -665,55 +790,58 @@ chkservice [[gnu::noreturn]] (
 	for (bundle_info_map::iterator i(bundle_map.begin()), e(bundle_map.end()); e != i; ++i)
 		i->second.load_data();
 
-	// Without this, ncursesw operates in 8-bit compatibility mode.
-	std::setlocale(LC_ALL, "");
-
-	ReserveSignalsForKQueue kqueue_reservation(SIGWINCH, 0);
-
-	const int queue(kqueue());
-	if (0 > queue) {
+	const FileDescriptorOwner queue(kqueue());
+	if (0 > queue.get()) {
 		const int error(errno);
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kqueue", std::strerror(error));
 		throw EXIT_FAILURE;
 	}
+	std::vector<struct kevent> ip;
 
-	struct kevent p[3];
-	{
-		std::size_t index(0U);
-		set_event(&p[index++], SIGWINCH, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-		set_event(&p[index++], STDIN_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
-		if (0 > kevent(queue, p, index, 0, 0, 0)) {
+	append_event(ip, STDIN_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
+	ReserveSignalsForKQueue kqueue_reservation(SIGTERM, SIGINT, SIGHUP, SIGPIPE, SIGUSR1, SIGUSR2, SIGWINCH, SIGTSTP, SIGCONT, 0);
+	PreventDefaultForFatalSignals ignored_signals(SIGTERM, SIGINT, SIGHUP, SIGPIPE, SIGUSR1, SIGUSR2, 0);
+	append_event(ip, SIGWINCH, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	append_event(ip, SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	append_event(ip, SIGINT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	append_event(ip, SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	append_event(ip, SIGPIPE, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	append_event(ip, SIGTSTP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	append_event(ip, SIGCONT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+
+	TUIDisplayCompositor compositor(24, 80);
+	TUI ui(envs, bundle_map, compositor, cursor_application_mode, calculator_application_mode, !no_alternate_screen_buffer);
+
+	while (true) {
+		if (ui.exit_signalled() || ui.quit_flagged())
+			break;
+		ui.handle_sort_needed();
+		ui.handle_resize_event();
+		ui.handle_refresh_event();
+		ui.handle_update_event();
+
+		struct kevent p[128];
+		const int rc(kevent(queue.get(), ip.data(), ip.size(), p, sizeof p/sizeof *p, 0));
+		ip.clear();
+
+		if (0 > rc) {
 			const int error(errno);
+			if (EINTR == error) continue;
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "kevent", std::strerror(error));
 			throw EXIT_FAILURE;
 		}
-	}
 
-	TUI ui(prog, envs, bundle_map);
-
-	while (!ui.quit_flagged()) {
-		ui.handle_non_kevents();
-
-		const int rc(kevent(queue, p, 0, p, sizeof p/sizeof *p, 0));
-
-		if (0 > rc) {
-			if (ui.resize_needed()) continue;
-			const int error(errno);
-			if (EINTR == error) continue;
-#if defined(__LINUX__) || defined(__linux__)
-			if (EINVAL == error) continue;	// This works around a Linux bug when an inotify queue overflows.
-			if (0 == error) continue;	// This works around another Linux bug.
-#endif
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "poll", std::strerror(error));
-			throw EXIT_FAILURE;
-		}
-
-		for (size_t i(0); i < static_cast<size_t>(rc); ++i) {
+		for (std::size_t i(0); i < static_cast<std::size_t>(rc); ++i) {
 			const struct kevent & e(p[i]);
-			if (EVFILT_SIGNAL == e.filter)
-				ui.handle_signal(e.ident);
-			if (EVFILT_READ == e.filter && STDIN_FILENO == e.ident)
-				ui.handle_stdin(e.data);
+			switch (e.filter) {
+				case EVFILT_SIGNAL:
+					ui.handle_signal(e.ident);
+					break;
+				case EVFILT_READ:
+					if (STDIN_FILENO == e.ident)
+						ui.handle_stdin(e.data);
+					break;
+			}
 		}
 	}
 

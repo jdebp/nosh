@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="fifo-listen">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -68,7 +74,7 @@ Doing so has the advantage of not terminating the listening server whenever indi
 
 <para>
 <command>fifo-listen</command> will successfully open, change ownership of, and change permissions of <replaceable>path</replaceable> even if it is not a FIFO.
-This is to allow its use with non-FIFO files such as <filename>/proc/kmsg</filename> and <filename>/dev/klog</filename>.
+This is to allow its use with non-FIFO files such as <filename>/dev/kmsg</filename>, <filename>/proc/kmsg</filename>i, and <filename>/dev/klog</filename>.
 </para>
 
 </refsection>

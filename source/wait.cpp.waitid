@@ -22,22 +22,20 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 static inline
-int
+void
 make_status (
-	const siginfo_t & si
+	const siginfo_t & si,
+	int & status,
+	int & code
 ) {
 	switch (si.si_code) {
-		case CLD_EXITED:	return W_EXITCODE(si.si_status, 0);
-		case CLD_KILLED:	return W_EXITCODE(0, si.si_status);
-		case CLD_DUMPED:	
-		{
-			const int s(W_EXITCODE(0, si.si_status));
-			return WCOREDUMP(s);	// This macro is utterly ridiculous in the GNU C library.
-		}
-		case CLD_STOPPED:	return W_STOPCODE(si.si_status);
-		case CLD_TRAPPED:	return W_STOPCODE(si.si_status);
+		case CLD_EXITED:	status = WAIT_STATUS_EXITED; code = si.si_status; break;
+		case CLD_KILLED:	status = WAIT_STATUS_SIGNALLED; code = si.si_status; break;
+		case CLD_DUMPED:	status = WAIT_STATUS_SIGNALLED_CORE; code = si.si_status; break;
+		case CLD_STOPPED:	status = WAIT_STATUS_PAUSED; code = si.si_status; break;
+		case CLD_TRAPPED:	status = WAIT_STATUS_PAUSED; code = si.si_status; break;
 		default:
-		case CLD_CONTINUED:	return WCONTINUED;
+		case CLD_CONTINUED:	status = WAIT_STATUS_RUNNING; code = 0; break;
 	}
 }
 
@@ -46,6 +44,7 @@ int	/// \retval -1 error \retval 0 no child \retval >0 found child
 wait_for_anychild (
 	pid_t & child,
 	int & status,
+	int & code,
 	int flags
 ) {
 	for (;;) {
@@ -58,8 +57,9 @@ wait_for_anychild (
 		} else 
 		if (0 == si.si_pid || 0 == si.si_signo) 
 			return 0;
-		else {
-			status = make_status(si);
+		else
+		{
+			make_status(si, status, code);
 			child = si.si_pid;
 			return 1;
 		}
@@ -69,33 +69,37 @@ wait_for_anychild (
 int	/// \retval -1 error \retval 0 no child \retval >0 found child
 wait_nonblocking_for_anychild_stopcontexit (
 	pid_t & child,
-	int & status
+	int & status,
+	int & code
 ) {
-	return wait_for_anychild(child, status, WNOHANG|WSTOPPED|WCONTINUED|WEXITED);
+	return wait_for_anychild(child, status, code, WNOHANG|WSTOPPED|WCONTINUED|WEXITED);
 }
 
 int	/// \retval -1 error \retval 0 no child \retval >0 found child
 wait_nonblocking_for_anychild_stopexit (
 	pid_t & child,
-	int & status
+	int & status,
+	int & code
 ) {
-	return wait_for_anychild(child, status, WNOHANG|WSTOPPED|WEXITED);
+	return wait_for_anychild(child, status, code, WNOHANG|WSTOPPED|WEXITED);
 }
 
 int	/// \retval -1 error \retval 0 no child \retval >0 found child
 wait_nonblocking_for_anychild_exit (
 	pid_t & child,
-	int & status
+	int & status,
+	int & code
 ) {
-	return wait_for_anychild(child, status, WNOHANG|WEXITED);
+	return wait_for_anychild(child, status, code, WNOHANG|WEXITED);
 }
 
 int	/// \retval -1 error \retval 0 no child \retval >0 found child
 wait_blocking_for_anychild_exit (
 	pid_t & child,
-	int & status
+	int & status,
+	int & code
 ) {
-	return wait_for_anychild(child, status, WEXITED);
+	return wait_for_anychild(child, status, code, WEXITED);
 }
 
 static inline
@@ -103,6 +107,7 @@ int	/// \retval -1 error \retval 0 no child \retval >0 found child
 wait_for_event_of (
 	const pid_t child,
 	int & status,
+	int & code,
 	int flags
 ) {
 	for (;;) {
@@ -113,8 +118,9 @@ wait_for_event_of (
 		} else 
 		if (0 == si.si_pid || 0 == si.si_signo) 
 			return 0;
-		else {
-			status = make_status(si);
+		else
+		{
+			make_status(si, status, code);
 			return 1;
 		}
 	}
@@ -123,23 +129,26 @@ wait_for_event_of (
 int	/// \retval -1 error \retval 0 no child \retval >0 found child
 wait_nonblocking_for_stopcontexit_of (
 	const pid_t child,
-	int & status
+	int & status,
+	int & code
 ) {
-	return wait_for_event_of(child, status, WNOHANG|WSTOPPED|WCONTINUED|WEXITED);
+	return wait_for_event_of(child, status, code, WNOHANG|WSTOPPED|WCONTINUED|WEXITED);
 }
 
 int	/// \retval -1 error \retval 0 no child \retval >0 found child
 wait_nonblocking_for_stopexit_of (
 	const pid_t child,
-	int & status
+	int & status,
+	int & code
 ) {
-	return wait_for_event_of(child, status, WNOHANG|WSTOPPED|WEXITED);
+	return wait_for_event_of(child, status, code, WNOHANG|WSTOPPED|WEXITED);
 }
 
 int	/// \retval -1 error \retval 0 no child \retval >0 found child
 wait_blocking_for_exit_of (
 	const pid_t child,
-	int & status
+	int & status,
+	int & code
 ) {
-	return wait_for_event_of(child, status, WEXITED);
+	return wait_for_event_of(child, status, code, WEXITED);
 }

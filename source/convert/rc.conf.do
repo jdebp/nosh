@@ -422,7 +422,7 @@ convert_longhand() {
 		redo-ifcreate "${default_rc}"
 		printf '# no %s file.\n' "${default_rc}"
 	fi
-	if type sysrc >/dev/null 2>&1 
+	if command -v sysrc >/dev/null
 	then 
 		for i in `sysrc -n rc_conf_files`
 		do
@@ -508,19 +508,19 @@ convert_freenas() {
 
 find_dhcp_client() {
 	local m
-	if m="`which dhclient 2>&1`"
+	if m="`command -v dhclient 2>&1`"
 	then
 		printf "dhclient_program=%s\n" "${m}"
-	elif m="`which dhclient3 2>&1`"
+	elif m="`command -v dhclient3 2>&1`"
 	then
 		printf "dhclient_program=%s\n" "${m}"
-	elif m="`which udhcpc 2>&1`"
+	elif m="`command -v udhcpc 2>&1`"
 	then
 		printf "dhclient_program=%s\n" "${m}"
-	elif m="`which dhcpcd 2>&1`"
+	elif m="`command -v dhcpcd 2>&1`"
 	then
 		printf "dhclient_program=%s\n" "${m}"
-	elif m="`which dhcpcd5 2>&1`"
+	elif m="`command -v dhcpcd5 2>&1`"
 	then
 		printf "dhclient_program=%s\n" "${m}"
 	fi

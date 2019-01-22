@@ -1,0 +1,16 @@
+#!/sbin/openrc-run
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+name="service_manager_svscan"
+rcvar="service_manager_svscan_enable"
+command="/usr/local/bin/service-dt-scanner"
+command_args="/service/"
+command_background=yes
+
+depend()
+{
+	need localmount
+	need service-manager
+}

@@ -11,7 +11,7 @@ Wants=time-sync.target
 After=dbus
 
 [Service]
-ExecStart=VBoxService -f
+ExecStart=%p -f
 RestartSec=5
 
 [Install]

@@ -14,33 +14,32 @@ For copyright and licensing terms, see the file named COPYING.
 #include "utils.h"
 #include "popt.h"
 
+static std::string columns_arg;
+
 /* Main function ************************************************************
 // **************************************************************************
 */
 
 void
-console_resize [[gnu::noreturn]] ( 
-	const char * & /*next_prog*/,
+console_resize ( 
+	const char * & next_prog,
 	std::vector<const char *> & args,
 	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
 	bool lines_only(false);
-	bool c17bit(false);
-	bool c18bit(false);
-	bool vt420(false);
+	bool c1_7bit(false);
+	bool c1_8bit(false);
 	try {
 		popt::bool_definition lines_only_option('l', "lines", "Only change the number of lines.", lines_only);
-		popt::bool_definition c17bit_option('7', "7bit", "Use 7-bit C1 characters.", c17bit);
-		popt::bool_definition c18bit_option('8', "8bit", "Use 8-bit C1 characters instead of UTF-8.", c18bit);
-		popt::bool_definition vt420_option('4', "vt420", "Use DECSCPP instead of DECSNLS.", vt420);
+		popt::bool_definition c1_7bit_option('7', "7bit", "Use 7-bit C1 characters.", c1_7bit);
+		popt::bool_definition c1_8bit_option('8', "8bit", "Use 8-bit C1 characters instead of UTF-8.", c1_8bit);
 		popt::definition * top_table[] = {
 			&lines_only_option,
-			&c17bit_option,
-			&c18bit_option,
-			&vt420_option,
+			&c1_7bit_option,
+			&c1_8bit_option
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "[COLSx]{ROWS}");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "[COLS×]{ROWS}");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
@@ -55,42 +54,36 @@ console_resize [[gnu::noreturn]] (
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing size.");
 		throw static_cast<int>(EXIT_USAGE);
 	}
-	const char * size(args.front());
+	const char * p(args.front());
 	args.erase(args.begin());
 	if (!args.empty()) {
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, args.front(), "Unexpected argument.");
 		throw static_cast<int>(EXIT_USAGE);
 	}
-	unsigned long columns(0UL), rows(0UL);
+	// We don't duplicate the numerical argument checking that console-control-sequence will do.
+	// Rather, we just split the string at the × character.
 	if (!lines_only) {
-		const char *p(size);
-		columns = std::strtoul(p, const_cast<char **>(&p), 10);
-		if (p == size || ('x' != *p && 'X' != *p && 0xD7 != static_cast<unsigned char>(*p))) {
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, size, "Not a number followed by ×.");
+		const char *times(std::strrchr(p, static_cast<char>(0xD7)));
+		if (!times) {
+			times = std::strrchr(p, 'X');
+			if (!times)
+				times = std::strrchr(p, 'x');
+		}
+		if (!times) {
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, p, "Missing ×.");
 			throw static_cast<int>(EXIT_USAGE);
 		}
-		size = ++p;
+		columns_arg = std::string(p, times);
+		p = ++times;
 	}
-	{
-		const char *p(size);
-		rows = std::strtoul(p, const_cast<char **>(&p), 10);
-		if (p == size ||  *p) {
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, size, "Not a number or trailing junk.");
-			throw static_cast<int>(EXIT_USAGE);
-		}
-	}
-	const char * const csi(c17bit ? "\x1B[" : c18bit ? "\x9B" : "\xC2\x9B");
-	if (!lines_only)
-		std::cout << csi << columns << "$|";	// DECSCPP
-	if (vt420)
-		std::cout << csi << rows << 't';	// DECSLPP
-	else
-		std::cout << csi << rows << "*|";	// DECSNLS
-	std::cout << csi << "0;0r";			// DECSTBM
+	args.insert(args.end(), "console-control-sequence");
+	if (c1_7bit) args.insert(args.end(), "--7bit");
+	if (c1_8bit) args.insert(args.end(), "--8bit");
 	if (!lines_only) {
-		std::cout << csi << "?69h";		// DECSLRMM true
-		std::cout << csi << "0;0s";		// DECSLRM
-		std::cout << csi << "?69l";		// DECSLRMM false
+		args.insert(args.end(), "--columns");
+		args.insert(args.end(), columns_arg.c_str());
 	}
-	throw EXIT_SUCCESS;
+	args.insert(args.end(), "--rows");
+	args.insert(args.end(), p);
+	next_prog = arg0_of(args);
 }

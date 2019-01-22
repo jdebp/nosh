@@ -2,7 +2,7 @@
 
 .PHONY: build binary install clean stage control
 
-BINARY_PACKAGES=guide exec terminal-management service-management terminal-extras service-management-extras zsh-completion service-command-shim systemv-shims systemd-shims upstart-shims execline-shims core-shims debian-shims bsd-shims openbsd-shims freebsd-shims ucspi-tcp-shims kbd-shims logrotate-shims bcron-as-cron-shims desktop-bus-shims bundles debian-crontab-no-anacron debian-crontab-anacron run-system-manager run-via-systemd run-debian-desktop-base run-debian-server-base run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-bcron
+BINARY_PACKAGES=guide exec terminal-management service-management terminal-extras service-management-extras zsh-completion service-command-shim systemv-shims systemd-shims upstart-shims execline-shims core-shims linux-shims debian-shims openrc-shims bsd-shims openbsd-shims freebsd-shims ucspi-tcp-shims kbd-shims logrotate-shims bcron-as-cron-shims desktop-bus-shims bundles debian-crontab-no-anacron debian-crontab-anacron run-system-manager run-via-open-rc run-via-systemd run-debian-desktop-base run-debian-server-base run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-bcron
 
 # The Debian package builder targets this in order to make the package contents.
 build:

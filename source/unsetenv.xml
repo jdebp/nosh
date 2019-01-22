@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="unsetenv">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -43,7 +49,7 @@ If <replaceable>var</replaceable> contains an equals
 character, counter-intuitive things will happen to the environment.
 </para>
 
-</refsection><refsection><title>BUGS</title>
+</refsection><refsection><title>Bugs</title>
 
 <para>
 As of version 1.34 this program no longer employs the GNU C library nor the BSD C library for environment variable handling.

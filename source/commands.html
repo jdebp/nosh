@@ -72,7 +72,7 @@ General process state:
 <li><p> <a href="ulimit.html"><code>ulimit</code></a> &mdash; change soft or hard resource limits </p></li>
 <li><p> <a href="umask.html"><code>umask</code></a> &mdash; change the umask </p></li>
 <li><p> <a href="unsetenv.html"><code>unsetenv</code></a> &mdash; unset an environment variable </p></li>
-<li><p> <a href="unshare.html"><code>unshare</code></a> &mdash; unhare Linux namespaces </p></li>
+<li><p> <a href="unshare.html"><code>unshare</code></a> &mdash; unshare Linux namespaces </p></li>
 <li><p> <a href="userenv.html"><code>userenv</code></a> &mdash; initialize "login" environment variables such as <code>HOME</code>, <code>SHELL</code>, <code>USER</code>, and <code>LOGNAME</code> based upon the effectuve UID+GID and supplementary groups of the process </p></li>
 <li><p> <a href="userenv-fromenv.html"><code>userenv-fromenv</code></a> &mdash; initialize "login" environment variables such as <code>HOME</code>, <code>SHELL</code>, <code>USER</code>, and <code>LOGNAME</code> based upon the values of the <code>UID</code>, <code>GID</code>, and <code>GIDLIST</code> environment variables</p></li>
 </ul>
@@ -103,6 +103,7 @@ Interacting with <a href="../../FGA/UCSPI.html">UCSPI</a> servers:
 <li><p> <a href="local-seqpacket-socket-accept.html"><code>local-seqpacket-socket-accept</code></a> &mdash; accept connections on an AF_LOCAL sequential packet socket, with concurrency control </p></li>
 <li><p> <a href="local-seqpacket-socket-listen.html"><code>local-seqpacket-socket-listen</code></a> &mdash; open a listening AF_LOCAL sequantial packet socket </p></li>
 <li><p> <a href="local-stream-socket-accept.html"><code>local-stream-socket-accept</code></a> &mdash; accept connections on an AF_LOCAL stream socket, with concurrency control </p></li>
+<li><p> <a href="local-stream-socket-connect.html"><code>local-stream-socket-connect</code></a> &mdash; connect to an AF_LOCAL stream server </p></li>
 <li><p> <a href="local-stream-socket-listen.html"><code>local-stream-socket-listen</code></a> &mdash; open a listening AF_LOCAL stream socket </p></li>
 <li><p> <a href="netlink-datagram-socket-listen.html"><code>netlink-datagram-socket-listen</code></a> &mdash; open a listening AF_NETLINK datagram socket </p></li>
 <li><p> <a href="recordio.html"><code>recordio</code></a> &mdash; a UCSPI filter that records all I/O traffic to file </p></li>
@@ -146,6 +147,8 @@ User space virtual terminal services and terminal tools:
 <ul class="compact">
 <li><p> <a href="console-clear.html"><code>console-clear</code></a> (a.k.a. <code>clear_console</code>) &mdash; clear a terminal's display, and its scroll back buffer if it has one (a replacement for the Bourne Again shell's external command of the same name) that uses (de facto) standard control sequences (supported by xterm, PuTTY, the Linux kernel terminal emulator, and <code>console-terminal-emulator</code>) rather than kernel-specific virtual terminal mechanisms (Logout causes terminal hangup and <code>console-terminal-emulator</code> to clear the display buffer, making this largely unnecessary with user space virtual terminals.) </p></li>
 <li><p> <a href="console-convert-kbdmap.html"><code>console-convert-kbdmap</code></a> &mdash; create a full ISO 9995-3 keyboard map from a BSD <code>kbdmap</code> file </p></li>
+<li><p> <a href="console-control-sequence.html"><code>console-control-sequence</code></a> &mdash; emit various standard and conventional control sequences </p></li>
+<li><p> <a href="console-decode-ecma48.html"><code>console-decode-ecma48</code></a> &mdash; decode ECMA 48 sequences into human-readable form </p></li>
 <li><p> <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a> &mdash; "realize" a user-space virtual terminal onto a physical "head", i.e a keyboard input event device and a framebuffer display device, with specified fonts and keyboard maps </p></li>
 <li><p> <a href="console-ncurses-realizer.html"><code>console-ncurses-realizer</code></a> &mdash; "realize" a user-space virtual terminal onto another terminal using Wide NCurses </p></li>
 <li><p> <a href="console-termio-realizer.html"><code>console-termio-realizer</code></a> &mdash; "realize" a user-space virtual terminal onto another terminal using straight terminal I/O </p></li>
@@ -172,6 +175,7 @@ Others:
 </p>
 
 <ul class="compact">
+<li><p> <a href="console-flat-table-viewer.html"><code>console-flat-table-viewer</code></a> &mdash; view tables from variable-length-record flat file databases </p></li>
 <li><p> <a href="monitor-fsck-progress.html"><code>monitor-fsck-progress</code></a> &mdash; a UCSPI "accepting" server that expects instances of <code>fsck</code> to connect to it as clients, and that displays fancy progress information on the console it is attached to </p></li>
 <li><p> <a href="plug-and-play-event-handler.html"><code>plug-and-play-event-handler</code></a> &mdash; a UCSPI server to read Plug and Play events and invoke a Plug and Play manager utility, one at a time and in order, for each event </p></li>
 <li><p> <a href="set-dynamic-hostname.html"><code>set-dynamic-hostname</code></a> &mdash; initialize the system hostname </p></li>
@@ -205,11 +209,10 @@ Its subcommands include:
 <li> <code>system-control start</code> &mdash; start a service </p></li>
 <li> <code>system-control stop</code> &mdash; stop a service </p></li>
 <li> <code>system-control preset</code> &mdash; set the enable/disable state according to native (as well as systemd-compatible) preset information supplied by packages or the system administrator </p></li>
-<li> <code>system-control reset</code> &mdash; start/stop a service to make it match its enable/disable state </p></li>
+<li> <code>system-control reset</code> &mdash; reset to the autostart status: start an enabled service, stop a disabled one </p></li>
 <li> <code>system-control is-active</code> &mdash; determine whether a service is in the "running" state </p></li>
 <li> <code>system-control is-loaded</code> &mdash; determine whether a service is loaded by the service manager </p></li>
 <li> <code>system-control is-enabled</code> &mdash; determine whether a service is enabled </p></li>
-<li> <code>system-control reset</code> &mdash; reset to the autostart status: start an enabled service, stop a disabled one </p></li>
 <li> <code>system-control condrestart</code> &mdash; restart a service, if and only if it is currently running </p></li>
 <li> <code>system-control hangup</code> &mdash; send session hangup to a service's main process </p></li>
 <li> <code>system-control status</code> &mdash; display the status of a service, including the last few lines of its log (if readable via <code>./log/main/current</code>) and whether it is enabled </p></li>
@@ -325,11 +328,13 @@ The System 5, Debian, BSD, Solaris, and upstart compatibility commands are:
 <ul class="compact">
 <li><p> <code>on</code> &mdash; enable a service </p></li>
 <li><p> <code>off</code> &mdash; disable a service </p></li>
-<li><p> <code>defaults</code> &mdash; preset a service </p></li>
+<li><p> <code>reset</code> &mdash; preset a service </p></li>
 </ul>
 </li>
 <li><p> <a href="update-rc.d.html"><code>update-rc.d</code></a> &mdash; preset/disable a service, providing a simple Debian workalike that consults native and systemd-compatible preset information rather than Debian-only "policy" mechanisms </p></li>
 <li><p> <a href="invoke-rc.d.html"><code>invoke-rc.d</code></a> &mdash; reset/stop a service, providing a simple Debian workalike that simply relies upon the already-determined preset status </p></li>
+<li><p> <a href="rc-update.html"><code>rc-update</code></a> &mdash; preset/disable a service, providing a simple OpenRC workalike that consults native and systemd-compatible preset information </p></li>
+<li><p> <a href="rc-service.html"><code>rc-service</code></a> &mdash; start/stop a service, providing a simple OpenRC workalike </p></li>
 <li><p> <a href="initctl.html"><code>initctl</code></a> &mdash; a simple alias for <code>system-control</code>; supporting <code>start</code>, <code>stop</code>, <code>status</code>, and suchlike subcommands; and as a bonus adding extra non-upstart things like <code>initctl show</code> and <code>initctl preset</code> because of that </p></li>
 <li><p> <a href="svcadm.html"><code>svcadm</code></a> &mdash; a simple alias for <code>system-control</code>, for Solaris compatibility </p></li>
 </ul>

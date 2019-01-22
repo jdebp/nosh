@@ -50,13 +50,13 @@ reap (
 	unsigned long max_children
 ) {
 	for (;;) {
-		int status;
+		int status, code;
 		pid_t c;
-		if (0 >= wait_nonblocking_for_anychild_exit(c, status)) break;
+		if (0 >= wait_nonblocking_for_anychild_exit(c, status, code)) break;
 		if (children) {
 			--children;
 			if (verbose)
-				std::fprintf(stderr, "%s: %u ended status %i %lu/%lu\n", prog, c, status, children, max_children);
+				std::fprintf(stderr, "%s: %u ended status %i code %i %lu/%lu\n", prog, c, status, code, children, max_children);
 		}
 	}
 }

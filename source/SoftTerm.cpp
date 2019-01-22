@@ -27,7 +27,7 @@ SoftTerm::SoftTerm(
 	SoftTerm::coordinate h
 ) :
 	utf8_decoder(*this),
-	ecma48_decoder(*this, false /* no control strings */, false /* no Interix shift state */, false /* no RXVT final $ in CSI bodge */),
+	ecma48_decoder(*this, false /* no control strings */, true /* permit cancel */, true /* permit 7-bit extensions*/, false /* no Interix shift state */, false /* no RXVT final $ in CSI bodge */),
 	screen(s),
 	keyboard(k),
 	mouse(m),
@@ -46,7 +46,7 @@ SoftTerm::SoftTerm(
 	send_XTermMouse(false)
 {
 	Resize(display_origin.x + display_margin.w, display_origin.y + display_margin.h);
-	ClearAllHorizontalTabstops();
+	SetRegularHorizontalTabstops(8U);
 	ClearAllVerticalTabstops();
 	UpdateCursorType();
 	Home();
@@ -401,17 +401,27 @@ SoftTerm::ScrollRight(coordinate n)
 */
 
 void 
-SoftTerm::TabControl()
+SoftTerm::CursorTabulationControl()
 {
 	for (std::size_t i(0U); i < argc; ++i) {
 		switch (args[i]) {
 			case 0:	SetHorizontalTabstopAt(active_cursor.x, true); break;
 			case 1:	SetVerticalTabstopAt(active_cursor.y, true); break;
 			case 2:	SetHorizontalTabstopAt(active_cursor.x, false); break;
-			case 3:	SetVerticalTabstopAt(active_cursor.x, false); break;
+			case 3:	SetVerticalTabstopAt(active_cursor.y, false); break;
 			case 4: // Effectively the same as ...
 			case 5:	ClearAllHorizontalTabstops(); break;
 			case 6:	ClearAllVerticalTabstops(); break;
+		}
+	}
+}
+
+void 
+SoftTerm::DECCursorTabulationControl()
+{
+	for (std::size_t i(0U); i < argc; ++i) {
+		switch (args[i]) {
+/* DECST8C */		case 5: SetRegularHorizontalTabstops(8U); break;
 		}
 	}
 }
@@ -489,6 +499,14 @@ void
 SoftTerm::SetHorizontalTabstop() 
 {
 	SetHorizontalTabstopAt(active_cursor.x, true);
+}
+
+void
+SoftTerm::SetRegularHorizontalTabstops(
+	coordinate n
+) {
+	for (unsigned short p(0U); p < 256U; ++p)
+		SetHorizontalTabstopAt(p, 0U == (p % n));
 }
 
 void 
@@ -690,9 +708,11 @@ SoftTerm::CursorUp(
 		}
 		UpdateCursorPos();
 	}
-	if (apply_margins && active_cursor.y < top_margin) {
-		active_cursor.y = top_margin;
-		UpdateCursorPos();
+	if (active_cursor.y < top_margin) {
+		if (apply_margins) {
+			active_cursor.y = top_margin;
+			UpdateCursorPos();
+		}
 	} else if (n > 0U && scroll_at_top)
 		ScrollDown(n);
 }
@@ -718,9 +738,11 @@ SoftTerm::CursorDown(
 		}
 		UpdateCursorPos();
 	}
-	if (apply_margins && active_cursor.y > bottom_margin) {
-		active_cursor.y = bottom_margin;
-		UpdateCursorPos();
+	if (active_cursor.y > bottom_margin) {
+		if (apply_margins) {
+			active_cursor.y = bottom_margin;
+			UpdateCursorPos();
+		}
 	} else if (n > 0U && scroll_at_bottom)
 		ScrollUp(n);
 }
@@ -746,9 +768,11 @@ SoftTerm::CursorLeft(
 		}
 		UpdateCursorPos();
 	}
-	if (apply_margins && active_cursor.x < left_margin) {
-		active_cursor.x = left_margin;
-		UpdateCursorPos();
+	if (active_cursor.x < left_margin) {
+		if (apply_margins) {
+			active_cursor.x = left_margin;
+			UpdateCursorPos();
+		}
 	} else if (n > 0U && scroll_at_left)
 		ScrollRight(n);
 }
@@ -774,9 +798,11 @@ SoftTerm::CursorRight(
 		}
 		UpdateCursorPos();
 	}
-	if (apply_margins && active_cursor.x > right_margin) {
-		active_cursor.x = right_margin;
-		UpdateCursorPos();
+	if (active_cursor.x > right_margin) {
+		if (apply_margins) {
+			active_cursor.x = right_margin;
+			UpdateCursorPos();
+		}
 	} else if (n > 0U && scroll_at_right)
 		ScrollLeft(n);
 }
@@ -892,18 +918,27 @@ SoftTerm::RestoreAttributes()
 }
 
 void 
-SoftTerm::SetLinesPerPage()
+SoftTerm::SetLinesPerPageOrDTTerm()
 {
 	// This is a bodge to accommodate progreams such as NeoVIM that hardwire this xterm control sequence.
+	// xterm is not strictly compatible here, as it gives quite different meanings to values of n less than 24.
+	// This is an extension that began with dtterm.
+	// A true DEC VT520 rounds up to the lowest possible size, which is 24.
 	if (3 == argc && 8U == args[0]) {
 		const coordinate rows(args[1]);
 		const coordinate columns(args[2]);
 		if (columns >= 2U && rows >= 2U)
 			Resize(columns, rows);
 	} else
+		SetLinesPerPage();
+}
+
+void 
+SoftTerm::SetLinesPerPage()
+{
 	if (argc) {
 		const coordinate n(args[argc - 1U]);
-		// The DEC VT minimum is 80 columns; we are more liberal since we are not constrained by CRT hardware.
+		// The DEC VT minimum is 24 rows; we are more liberal since we are not constrained by CRT hardware.
 		if (n >= 2U)
 			Resize(0U, n);
 	}
@@ -914,9 +949,7 @@ SoftTerm::SetColumnsPerPage()
 {
 	if (argc) {
 		const coordinate n(args[argc - 1U]);
-		// The DEC VT minimum is 24 rows; we are more liberal since we are not constrained by CRT hardware.
-		// xterm is not strictly compatible here, as it gives quite different meanings to values of n less than 24.
-		// A true DEC VT520 rounds up to the lowest possible size, which is 24.
+		// The DEC VT minimum is 80 columns; we are more liberal since we are not constrained by CRT hardware.
 		if (n >= 2U)
 			Resize(n, 0U);
 	}
@@ -990,7 +1023,7 @@ SoftTerm::SetPrivateMode(unsigned int a, bool f)
 				cursor_attributes &= ~CursorSprite::BLINK;
 			UpdateCursorType();
 			break;
-/* DECTCEM */		case 25U:
+/* DECTCEM */	case 25U:
 			if (f) 
 				cursor_attributes |= CursorSprite::VISIBLE;
 			else
@@ -1002,7 +1035,7 @@ SoftTerm::SetPrivateMode(unsigned int a, bool f)
 /* DECLRMM */	case 69U:	active_modes.left_right_margins = f; break;
 /* DECNCSM */	case 95U:	no_clear_screen_on_column_change = f; break;
 /* DECRPL */	case 112U:	SetScrollbackBuffer(f); break;
-/* DECECM */	case 117U:	active_modes.background_colour_erase = f; break;
+/* DECECM */	case 117U:	active_modes.background_colour_erase = !f; break;
 		case 1000U:	mouse.SetSendXTermMouseClicks(f); mouse.SetSendXTermMouseButtonMotions(false); mouse.SetSendXTermMouseNoButtonMotions(false); break;
 		case 1002U:	mouse.SetSendXTermMouseClicks(f); mouse.SetSendXTermMouseButtonMotions(f); mouse.SetSendXTermMouseNoButtonMotions(false); break;
 		case 1003U:	mouse.SetSendXTermMouseClicks(f); mouse.SetSendXTermMouseButtonMotions(f); mouse.SetSendXTermMouseNoButtonMotions(f); break;
@@ -1528,13 +1561,17 @@ void
 SoftTerm::SoftReset()
 {
 	advance_pending = false;
-	saved_cursor = display_origin;
 	ResetMargins(); 
+	SetRegularHorizontalTabstops(8U);
 	cursor_attributes = CursorSprite::VISIBLE|CursorSprite::BLINK;
 	cursor_type = CursorSprite::BLOCK; 
 	UpdateCursorType();
 	SGR0();
-	active_modes = mode();
+	keyboard.SetCursorApplicationMode(false); 	
+	keyboard.SetCalculatorApplicationMode(false); 	
+	keyboard.SetBackspaceIsBS(false);
+	saved_modes = active_modes = mode();
+	saved_cursor = display_origin;
 	scrolling = true;
 	overstrike = true;
 }
@@ -1545,15 +1582,19 @@ SoftTerm::ResetToInitialState()
 	Resize(80U, 25U);
 	Home(); 
 	ClearDisplay(); 
+	no_clear_screen_on_column_change = false;
+	// Per the VT420 programmers' reference, if one ignores serial comms RIS does only a few things more than DECSTR.
 	ResetMargins(); 
+	SetRegularHorizontalTabstops(8U);
 	cursor_attributes = CursorSprite::VISIBLE|CursorSprite::BLINK;
 	cursor_type = CursorSprite::BLOCK; 
 	UpdateCursorType();
 	SGR0();
+	keyboard.SetCursorApplicationMode(false); 	
+	keyboard.SetCalculatorApplicationMode(false); 	
 	keyboard.SetBackspaceIsBS(false);
 	saved_modes = active_modes = mode();
 	saved_cursor = active_cursor;
-	no_clear_screen_on_column_change = false;
 	scrolling = true;
 	overstrike = true;
 }
@@ -1581,7 +1622,7 @@ SoftTerm::ControlCharacter(uint_fast32_t character)
 }
 
 void 
-SoftTerm::EscapeSequence(uint_fast32_t character)
+SoftTerm::EscapeSequence(uint_fast32_t character, char last_intermediate)
 {
 	switch (last_intermediate) {
 		default:	break;
@@ -1617,14 +1658,14 @@ SoftTerm::EscapeSequence(uint_fast32_t character)
 		case ' ':
 			switch (character) {
 				default:	break;
-/* S7C1T */				case 'F':	keyboard.Set8BitControl1(false); break;
-/* S8C1T */				case 'G':	keyboard.Set8BitControl1(true); break;
+/* S7C1T */			case 'F':	keyboard.Set8BitControl1(false); break;
+/* S8C1T */			case 'G':	keyboard.Set8BitControl1(true); break;
 			}
 			break;
 		case '#':
 			switch (character) {
 				default:	break;
-/* DECALN */				case '8':	ResetMargins(); Home(); ClearDisplay('E'); break;
+/* DECALN */			case '8':	ResetMargins(); Home(); ClearDisplay('E'); break;
 			}
 			break;
 	}
@@ -1632,7 +1673,9 @@ SoftTerm::EscapeSequence(uint_fast32_t character)
 
 void 
 SoftTerm::ControlSequence(
-	uint_fast32_t character
+	uint_fast32_t character,
+	char last_intermediate,
+	char first_private_parameter
 ) {
 	// Finish the final argument, using the relevant defaults.
 	if (NUL == last_intermediate) {
@@ -1717,7 +1760,7 @@ SoftTerm::ControlSequence(
 			case 'T':	ScrollDown(OneIfZero(SumArgs())); break;	/// FIXME \bug SD is a window pan, not a buffer scroll.
 /* NP */		case 'U':	break; // Next Page has no applicability as there are no pages.
 /* PP */		case 'V':	break; // Previous Page has no applicability as there are no pages.
-/* CTC */		case 'W':	TabControl(); break;
+/* CTC */		case 'W':	CursorTabulationControl(); break;
 /* ECH */		case 'X':	EraseCharacters(OneIfZero(SumArgs())); break;
 /* CVT */		case 'Y':	VerticalTab(OneIfZero(SumArgs()), true); break;
 /* CBT */		case 'Z':	BackwardsHorizontalTab(OneIfZero(SumArgs()), true); break;
@@ -1746,7 +1789,7 @@ SoftTerm::ControlSequence(
 /* DECLL */		case 'q':	break; // Load LEDs has no applicability as there are no LEDs.
 /* DECSTBM */		case 'r':	SetTopBottomMargins(); break;
 			case 's':	SCOSCorDESCSLRM(); break;
-/* DECSLPP */		case 't':	SetLinesPerPage(); break;
+/* DECSLPP */		case 't':	SetLinesPerPageOrDTTerm(); break;
 /* SCORC */		case 'u':	RestoreCursor(); RestoreAttributes(); RestoreModes(); break;	// Not DECSHST as on LA100.
 /* DECSVST */		case 'v':	break; // Set multiple vertical tab stops at once is not implemented.
 /* DECSHORP */		case 'w':	break; // Set Horizontal Pitch has no applicability as this is not a LA100.
@@ -1764,6 +1807,7 @@ SoftTerm::ControlSequence(
 /* DECSM */		case 'h':	SetPrivateModes(true); break;
 /* DECRM */		case 'l':	SetPrivateModes(false); break;
 /* DECDSR */		case 'n':	SendPrivateDeviceStatusReports(); break;
+/* DECCTC */		case 'W':	DECCursorTabulationControl(); break;
 			default:	
 				std::clog << "Unknown DEC Private CSI " << first_private_parameter << ' ' << character << "\n";
 				break;

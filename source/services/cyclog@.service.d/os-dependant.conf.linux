@@ -1,0 +1,9 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Service]
+TasksMax=1
+CPUAccounting=true
+IOAccounting=true
+MemoryAccounting=true

@@ -22,6 +22,15 @@ while read -r i
 do 
 	echo "$i.8" "$i.html"
 done
+for section in 3 4 7
+do
+	echo ../package/extra-manpages${section}
+	cat ../package/extra-manpages${section} | 
+	while read -r i
+	do 
+		echo "$i.${section}" "$i.html"
+	done
+done
 
 cat ../package/commands1 ../package/commands8
 

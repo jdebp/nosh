@@ -103,7 +103,7 @@ bsd_keycode_to_keymap_index (
 		case 0x59:	return KBDMAP_INDEX_KP_ENTER;
 		case 0x5A:	return KBDMAP_INDEX_CONTROL2;
 		case 0x5B:	return KBDMAP_INDEX_KP_SLASH;
-		case 0x5C:	return KBDMAP_INDEX_NEXTPREV_TASK;	// Print Screen/Shift-Numpad-Asterisk
+		case 0x5C:	return KBDMAP_INDEX_PRINT_SCREEN;	// Print Screen/Shift-Numpad-Asterisk
 		case 0x5D:	return KBDMAP_INDEX_OPTION;
 		case 0x5E:	return KBDMAP_INDEX_HOME;
 		case 0x5F:	return KBDMAP_INDEX_UP_ARROW;
@@ -120,9 +120,9 @@ bsd_keycode_to_keymap_index (
 		case 0x6A:	return KBDMAP_INDEX_SUPER2;
 		case 0x6B:	return KBDMAP_INDEX_APPLICATION;
 		case 0x6C:	return KBDMAP_INDEX_BREAK;		// Ctrl-Pause/Ctrl-ScrollLock
-		case 0x6D:	return KBDMAP_INDEX_POWER;		// Ctrl-Pause/Ctrl-ScrollLock
-		case 0x6E:	return KBDMAP_INDEX_SLEEP;		// Ctrl-Pause/Ctrl-ScrollLock
-		case 0x6F:	return KBDMAP_INDEX_WAKE;		// Ctrl-Pause/Ctrl-ScrollLock
+		case 0x6D:	return KBDMAP_INDEX_POWER;
+		case 0x6E:	return KBDMAP_INDEX_SLEEP;
+		case 0x6F:	return KBDMAP_INDEX_WAKE;
 		// FreeBSD's atkbdc driver does not generate codes beyond this point.
 		case 0x70:	return KBDMAP_INDEX_KATAKANA_HIRAGANA;	// Intl2
 		case 0x73:	return KBDMAP_INDEX_SLASH2;		// Intl1 (per FreeBSD jp and br keymaps)

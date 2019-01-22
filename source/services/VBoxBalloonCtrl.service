@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=VirtualBox watchdog daemon
+
+[Service]
+execstart=%p -f ${balloon_interval:+--balloon-interval "${balloon_interval}"} ${balloon_increment:+--balloon-inc "${balloon_increment}"} ${balloon_decrement:+--balloon-dec "${balloon_decrement}"} ${balloon_lowerlimit:+--balloon-lower-limit "${balloon_lowerlimit}"} ${balloon_safetymargin:+--balloon-safety-margin "${balloon_safetymargin}"} ${rotate:+-r "${rotate}"} ${logsize:+-s "${logsize}"} ${loginterval:+-i "${loginterval}"}
+RestartSec=5
+
+[Install]
+WantedBy=virtualbox-guest.target

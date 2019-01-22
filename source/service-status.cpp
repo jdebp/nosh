@@ -17,8 +17,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <curses.h>
-#include <term.h>
 #include "utils.h"
 #include "fdutils.h"
 #include "FileDescriptorOwner.h"
@@ -26,7 +24,9 @@ For copyright and licensing terms, see the file named COPYING.
 #include "popt.h"
 #include "service-manager-client.h"
 #include "service-manager.h"
-#include "curses-const-fix.h"	// Must come after curses.h .
+#include "CharacterCell.h"
+#include "ECMA48Output.h"
+#include "TerminalCapabilities.h"
 
 /* Time *********************************************************************
 // **************************************************************************
@@ -49,13 +49,7 @@ convert(
 // **************************************************************************
 */
 
-enum { COLOR_DEFAULT = 9 };
-
-static
-NCURSES_CONST
-char 
-	setaf[] = "setaf",
-	op[] = "op";
+enum { COLOUR_DEFAULT = -1 };
 
 static inline
 int
@@ -68,81 +62,78 @@ colour_of_state (
 	switch (c) {
 		case encore_status_stopped:
 			if (ready_after_run)
-				return exited_run ? COLOR_GREEN : COLOR_WHITE;
+				return exited_run ? COLOUR_GREEN : COLOUR_WHITE;
 			else
-				return COLOR_WHITE;
-		case encore_status_starting:	return COLOR_YELLOW;
-		case encore_status_started:	return COLOR_MAGENTA;
+				return COLOUR_WHITE;
+		case encore_status_starting:	return COLOUR_YELLOW;
+		case encore_status_started:	return COLOUR_MAGENTA;
 		case encore_status_running:
 			if (ready_after_run)
-				return main_pid ? COLOR_YELLOW : COLOR_GREEN;
+				return main_pid ? COLOUR_YELLOW : COLOUR_GREEN;
 			else
-				return COLOR_GREEN;
-		case encore_status_stopping:	return COLOR_YELLOW;
-		case encore_status_failed:	return COLOR_RED;
-		default:			return COLOR_DEFAULT;
+				return COLOUR_GREEN;
+		case encore_status_stopping:	return COLOUR_YELLOW;
+		case encore_status_failed:	return COLOUR_RED;
+		default:			return COLOUR_DEFAULT;
 	}
 }
 
 static inline
 void
-put (
-	const char * s,
-	const int colour
+set_italics (
+	ECMA48Output & o,
+	bool v
 ) {
-	tputs(tparm(const_cast<NCURSES_CONST char *>(s), colour), 1, putchar);
+	o.SGRAttribute(v ? 3U : 23U);
+}
+
+static inline
+void
+set_underline (
+	ECMA48Output & o,
+	bool v
+) {
+	o.SGRAttribute(v ? 4U : 24U);
 }
 
 static inline
 void
 set_exception_colour (
-	bool no_colours
+	ECMA48Output & o
 ) {
-	if (no_colours) return;
-	const char * s(tigetstr(setaf));
-	if (!s || reinterpret_cast<const char *>(-1) == s) return;
-	put(s, COLOR_BLUE);
+	o.SGRColour(true, Map256Colour(COLOUR_BLUE));
 }
 
 static inline
 void
 set_colour_of_state (
-	bool no_colours,
+	ECMA48Output & o,
 	bool ready_after_run,
 	uint32_t main_pid,
 	bool exited_run,
 	char c
 ) {
-	if (no_colours) return;
-	const char * s(tigetstr(setaf));
-	if (!s || reinterpret_cast<const char *>(-1) == s) return;
-	put(s, colour_of_state(ready_after_run, main_pid, exited_run, c));
+	const int colour(colour_of_state(ready_after_run, main_pid, exited_run, c));
+	if (0 > colour)
+		o.SGRColour(true);
+	else
+		o.SGRColour(true, Map256Colour(colour));
 }
 
 static inline
 void
 set_config_colour (
-	bool no_colours
+	ECMA48Output & o
 ) {
-	if (no_colours) return;
-	const char * s(tigetstr(setaf));
-	if (!s || reinterpret_cast<const char *>(-1) == s) return;
-	put(s, COLOR_CYAN);
+	o.SGRColour(true, Map256Colour(COLOUR_CYAN));
 }
 
 static inline
 void
 reset_colour (
-	bool no_colours
+	ECMA48Output & o
 ) {
-	if (no_colours) return;
-	const char * s(tigetstr(op));
-	if (!s || reinterpret_cast<const char *>(-1) == s) {
-		s = tigetstr(setaf);
-		if (!s) return;
-		put(s, COLOR_DEFAULT);
-	} else
-		tputs(s, 1, putchar);
+	o.SGRColour(true);
 }
 
 static inline
@@ -185,6 +176,8 @@ static inline
 void
 write_timestamp (
 	const ProcessEnvironment & envs,
+	ECMA48Output & o,
+	const bool attributes,
 	const char * preposition,
 	const uint64_t z,
 	const uint64_t s
@@ -193,7 +186,9 @@ write_timestamp (
 	const struct tm t(convert(envs, s));
 	const size_t len(std::strftime(buf, sizeof buf, "%F %T %z", &t));
 	std::fprintf(stdout, " %s ", preposition);
+	if (attributes) set_underline(o, true);
 	std::fwrite(buf, len, 1U, stdout);
+	if (attributes) set_underline(o, false);
 	std::fputc(';', stdout);
 	uint64_t secs(z - s);
 	uint64_t mins(secs / 60U);
@@ -216,8 +211,9 @@ void
 display (
 	const ProcessEnvironment & envs,
 	const char * name,
+	ECMA48Output & o,
+	const bool attributes,
 	const bool long_form,
-	const bool colours,
 	const bool is_ok,
 	const bool initially_up,
 	const bool run_on_empty,
@@ -235,15 +231,15 @@ display (
 	std::fprintf(stdout, "%s: ", name);
 	if (long_form) std::fprintf(stdout, "\n\tState   : ");
 	if (!is_ok) {
-		set_exception_colour(!colours);
+		set_exception_colour(o);
 		std::fprintf(stdout, "No supervisor is running");
-		reset_colour(!colours);
+		reset_colour(o);
 		std::fputc('\n', stdout);
 	} else
 	if (b < DAEMONTOOLS_STATUS_BLOCK_SIZE) {
-		set_exception_colour(!colours);
+		set_exception_colour(o);
 		std::fprintf(stdout, "loading");
-		reset_colour(!colours);
+		reset_colour(o);
 		std::fputc('\n', stdout);
 	} else {
 		char & want_flag(status[WANT_FLAG_OFFSET]);
@@ -257,17 +253,17 @@ display (
 		}
 		const char state(b >= ENCORE_STATUS_BLOCK_SIZE ? status[ENCORE_STATUS_OFFSET] : p ? encore_status_running : encore_status_stopped);
 		const bool exited_run(has_exited_run(b, status));
-		set_colour_of_state(!colours, ready_after_run, p, exited_run, state);
+		set_colour_of_state(o, ready_after_run, p, exited_run, state);
 		if (b < ENCORE_STATUS_BLOCK_SIZE) {
 			std::fprintf(stdout, "%s", p ? "up" : "down");
 		} else {
 			std::fprintf(stdout, "%s", state_of(ready_after_run, p, exited_run, state));
 		}
-		reset_colour(!colours);
+		reset_colour(o);
 		if (p && !long_form)
 			std::fprintf(stdout, " (pid %u)", p);
 		if (z >= s) 
-			write_timestamp(envs, "since", z, s);
+			write_timestamp(envs, o, attributes, "since", z, s);
 		const char * const paused(status[PAUSE_FLAG_OFFSET] ? "paused" : "");
 		const char * const want('u' == want_flag ? "want up" : 'O' == want_flag ? "once at most" : 'o' == want_flag ? "once" : 'd' == want_flag ? "want down" : "");
 		if (long_form) {
@@ -292,7 +288,7 @@ display (
 						std::fputs(" (core dumped)", stdout);
 
 					const uint64_t stamp(unpack_bigendian(status + (EXIT_STATUSES_OFFSET + i * EXIT_STATUS_SIZE + 5U), 8));
-					write_timestamp(envs, "at", z, stamp);
+					write_timestamp(envs, o, attributes, "at", z, stamp);
 				}
 			}
 		} else {
@@ -304,13 +300,13 @@ display (
 			if (is_up != initially_up) {
 				if (*want || *paused)
 					std::fputs(", ", stdout);
-				set_config_colour(!colours);
+				set_config_colour(o);
 				std::fputs("initially ", stdout);
 				if (initially_up)
 					std::fputs(b < ENCORE_STATUS_BLOCK_SIZE ? "up" : "started", stdout);
 				else
 					std::fputs(b < ENCORE_STATUS_BLOCK_SIZE ? "down" : "stopped", stdout);
-				reset_colour(!colours);
+				reset_colour(o);
 			}
 			std::fputc('.', stdout);
 		}
@@ -340,6 +336,8 @@ service_status (
 	ProcessEnvironment & envs
 ) {
 	const char * prog(basename_of(args[0]));
+	TerminalCapabilities caps(envs);
+	ECMA48Output o(caps, stdout, true /* C1 is 7-bit aliased */);
 
 	bool long_form(0 != std::strcmp(prog, "svstat"));
 	bool colours(isatty(STDOUT_FILENO));
@@ -370,31 +368,36 @@ service_status (
 		throw static_cast<int>(EXIT_USAGE);
 	}
 
-	if (colours) {
-		int err;
-		if (OK != setupterm(0, STDOUT_FILENO, &err))
-			colours = false;
-	}
+	if (!colours)
+		caps.colour_level = caps.NO_COLOURS;
 
 	timespec now;
 	clock_gettime(CLOCK_REALTIME, &now);
 	const uint64_t z(time_to_tai64(envs, TimeTAndLeap(now.tv_sec, false)));
 
-	reset_colour(!colours);
+	reset_colour(o);
 
 	for (std::vector<const char *>::const_iterator i(args.begin()); i != args.end(); ++i) {
 		const char * name(*i);
 		const FileDescriptorOwner bundle_dir_fd(open_dir_at(AT_FDCWD, name));
 		if (0 > bundle_dir_fd.get()) {
 			const int error(errno);
-			std::fprintf(stdout, "%s: %s\n", name, std::strerror(error));
+			std::fprintf(stdout, "%s: ", name);
+			if (colours) set_italics(o, true);
+			std::fprintf(stdout, "%s", std::strerror(error));
+			if (colours) set_italics(o, false);
+			std::fputc('\n', stdout);
 			continue;
 		}
 
 		const FileDescriptorOwner supervise_dir_fd(open_supervise_dir(bundle_dir_fd.get()));
 		if (0 > supervise_dir_fd.get()) {
 			const int error(errno);
-			std::fprintf(stdout, "%s: %s: %s\n", name, "supervise", std::strerror(error));
+			std::fprintf(stdout, "%s: %s: ", name, "supervise");
+			if (colours) set_italics(o, true);
+			std::fprintf(stdout, "%s", std::strerror(error));
+			if (colours) set_italics(o, false);
+			std::fputc('\n', stdout);
 			continue;
 		}
 
@@ -411,19 +414,27 @@ service_status (
 		if (0 > ok_fd.get()) {
 			const int error(errno);
 			if (ENXIO != error) {
-				std::fprintf(stdout, "%s: %s: %s\n", name, "supervise/ok", std::strerror(error));
+				std::fprintf(stdout, "%s: %s: ", name, "supervise/ok");
+				if (colours) set_italics(o, true);
+				std::fprintf(stdout, "%s", std::strerror(error));
+				if (colours) set_italics(o, false);
+				std::fputc('\n', stdout);
 				continue;
 			}
-			display(envs, name, long_form, colours, false, initially_up, run_on_empty, ready_after_run, use_hangup, use_kill, z, 0U, status);
+			display(envs, name, o, colours, long_form, false, initially_up, run_on_empty, ready_after_run, use_hangup, use_kill, z, 0U, status);
 		} else {
 			const FileDescriptorOwner status_fd(open_read_at(supervise_dir_fd.get(), "status"));
 			if (0 > status_fd.get()) {
 				const int error(errno);
-				std::fprintf(stdout, "%s: %s: %s\n", name, "status", std::strerror(error));
-				display(envs, name, long_form, colours, true, initially_up, run_on_empty, ready_after_run, use_hangup, use_kill, z, 0U, status);
+				std::fprintf(stdout, "%s: %s: ", name, "status");
+				if (colours) set_italics(o, true);
+				std::fprintf(stdout, "%s", std::strerror(error));
+				if (colours) set_italics(o, false);
+				std::fputc('\n', stdout);
+				display(envs, name, o, colours, long_form, true, initially_up, run_on_empty, ready_after_run, use_hangup, use_kill, z, 0U, status);
 			} else {
 				const int b(read(status_fd.get(), status, sizeof status));
-				display(envs, name, long_form, colours, true, initially_up, run_on_empty, ready_after_run, use_hangup, use_kill, z, static_cast<unsigned int>(b), status);
+				display(envs, name, o, colours, long_form, true, initially_up, run_on_empty, ready_after_run, use_hangup, use_kill, z, static_cast<unsigned int>(b), status);
 			}
 		}
 
@@ -459,9 +470,9 @@ service_status (
 					return;
 				}
 				for (;;) {
-					int child_status;
+					int child_status, child_code;
 					pid_t c;
-					if (0 >= wait_blocking_for_anychild_exit(c, child_status)) break;
+					if (0 >= wait_blocking_for_anychild_exit(c, child_status, child_code)) break;
 				}
 			}
 		}

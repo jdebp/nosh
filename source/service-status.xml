@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="service-status">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -39,7 +45,7 @@ For more on service and supervise directories, see <citerefentry><refentrytitle>
 </para>
 
 <para>
-If the standard output is a terminal, <command>service-status</command> uses whatever it can find via the terminfo library to display various parts of the output in different colours, highlighting different service states in different colours for example.
+If the standard output is a terminal, <command>service-status</command> uses <citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry> and an <code>ECMA48Output</code> instance to display various parts of the output in different colours, highlighting different service states in different colours for example.
 The <arg choice='plain'>--colour</arg> command line option tells it to do this unconditionally, even if its standard output is not a terminal.
 </para>
 
@@ -55,7 +61,7 @@ Such a service that is in the "stopped" daemontools-encore state will be reporte
 Such a service that is in the "running" daemontools-encore state will be reported as "started" if its <filename>run</filename> program is still running and "ready" otherwise.
 </para>
 
-</refsection><refsection><title>COMPATIBILITY</title>
+</refsection><refsection><title>Compatibility</title>
 
 <para>
 For daemontools and daemontools-encore compatibility, this command is also available as <command>svstat</command>.

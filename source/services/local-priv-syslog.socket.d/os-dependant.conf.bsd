@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=syslog socket used by local privileged clients to talk to syslog daemons on FreeBSD/TrueOS
+
+[Socket]
+ListenDatagram=%t/logpriv
+
+[Install]
+WantedBy=workstation.target

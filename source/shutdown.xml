@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="shutdown">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -54,84 +60,6 @@
 <command>shutdown</command> shuts down the system, optionally waiting for a period and sending warnings to the terminals of logged-in users before calling <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
-<refsection><title>Differences from older shutdown tools</title>
-
-<para>
-The upstart, old BSD, XENIX, UnixWare, and systemd <command>shutdown</command> commands all have different patterns (from one another) of intervals between warning messages being emitted.
-</para>
-
-<para>
-The first two require that the time to shutdown always be specified, aborting if it is not; the other three default to 1 minute from now in the absence of any specification.
-</para>
-
-<para>
-The upstart, old BSD, and System 5 systems incorporate the notion of shutting down to "single-user" mode, even though (on the BSDs at least) that was not strictly speaking possible as the switch to "multi-user" mode made a one-way change to the kernel secure level.
-As a consequence, their <command>shutdown</command> commands had the following semantics:
-</para>
-<itemizedlist>
-<listitem><para>
-With no options, the default action was to (attempt to) transition to "single-user" mode.
-</para></listitem>
-<listitem><para>
-The <arg choice='plain'>-r</arg>, <arg choice='plain'>-h</arg>, and (in the old BSD system) <arg choice='plain'>-p</arg> options overrode that to select reboot, halt, or poweroff.
-</para>
-<para>
-In the upstart and System 5 systems the <arg choice='plain'>-h</arg> option was actually halt/poweroff, and would require the <arg choice='plain'>-H</arg> and <arg choice='plain'>-P</arg> options to further choose which of halt or poweroff was selected, the default being determined by the capabilities of the operating system and platform (which might not support software power off).
-</para></listitem>
-</itemizedlist>
-
-<para>
-Their <command>shutdown</command> also wrote flag files, directly enacted system state changes, bypassed filesystem unmounts and cache flushes, and triggered kernel dumps.
-</para>
-
-</refsection>
-<refsection><title>Compatibility behaviour</title>
-
-<para>
-In this <command>shutdown</command>, the intervals between warning messages roughly follow the pattern used by the XENIX and UnixWare <command>shutdown</command> commands.
-</para>
-
-<para>
-Both the XENIX and UnixWare and the upstart, old BSD, and systemd ways of specifying when to shut down are supported.
-In order to avoid embarrassment resulting from unexpected defaults, explicitly specifying when shutdown should occur is mandatory.
-</para>
-
-<para>
-There is no "single-user" mode now.
-Its replacements are the <filename>emergency</filename> and <filename>rescue</filename> targets, described in <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>, which are startup targets that are not reachable via shutdown procedures.
-As a consequence, poweroff is now the default action and the compatibility behaviour is as follows:
-</para>
-<itemizedlist>
-<listitem><para>
-The <arg choice='plain'>-p</arg> and <arg choice='plain'>-P</arg> options are considered to be on by default, and thus have no effect.
-</para></listitem>
-<listitem><para>
-The <arg choice='plain'>-r</arg>, <arg choice='plain'>-h</arg>, and <arg choice='plain'>-H</arg> options select the non-default actions.
-</para></listitem>
-</itemizedlist>
-
-<para>
-The <arg choice='plain'>-d</arg>, <arg choice='plain'>-n</arg>, <arg choice='plain'>-f</arg>, <arg choice='plain'>-F</arg>, and <arg choice='plain'>-t</arg> options from the old toolsets are all errors.
-The <arg choice='plain'>-o</arg> option from the old toolsets is ignored.
-Because:
-</para>
-<itemizedlist>
-<listitem><para>
-Flag files, written to a potentially corrupt or dirty volume, are no longer the way to invoke filesystem checks.
-</para></listitem>
-<listitem><para>
-All system state changes are enacted by process #1, usually running <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-None are enacted directly.
-</para></listitem>
-<listitem><para>
-It is not permitted to bypass the filesystem cache flush, which is an integral part of the actions taken by <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> at shutdown.
-</para></listitem>
-<listitem><para>
-Service termination signals and intervals are not adjustable via the <command>shutdown</command> command.
-</para></listitem>
-</itemizedlist>
-
-</refsection>
 <refsection><title>Primary behaviour</title>
 
 <para>
@@ -224,6 +152,84 @@ This must be now or in the future.
 The final state change request can be disabled with the <arg choice='plain'>--kick-off</arg> option.
 Its name derives from the notion that one can perform a partial switch to (the old) "single-user" mode which only logs out interactive users, kicking them off the system, although this mechanism has been superseded now that "single-user" mode no longer exists.
 </para>
+
+</refsection>
+<refsection><title>Differences from older shutdown tools</title>
+
+<para>
+The upstart, old BSD, XENIX, UnixWare, and systemd <command>shutdown</command> commands all have different patterns (from one another) of intervals between warning messages being emitted.
+</para>
+
+<para>
+The first two require that the time to shutdown always be specified, aborting if it is not; the other three default to 1 minute from now in the absence of any specification.
+</para>
+
+<para>
+The upstart, old BSD, and System 5 systems incorporate the notion of shutting down to "single-user" mode, even though (on the BSDs at least) that was not strictly speaking possible as the switch to "multi-user" mode made a one-way change to the kernel secure level.
+As a consequence, their <command>shutdown</command> commands had the following semantics:
+</para>
+<itemizedlist>
+<listitem><para>
+With no options, the default action was to (attempt to) transition to "single-user" mode.
+</para></listitem>
+<listitem><para>
+The <arg choice='plain'>-r</arg>, <arg choice='plain'>-h</arg>, and (in the old BSD system) <arg choice='plain'>-p</arg> options overrode that to select reboot, halt, or poweroff.
+</para>
+<para>
+In the upstart and System 5 systems the <arg choice='plain'>-h</arg> option was actually halt/poweroff, and would require the <arg choice='plain'>-H</arg> and <arg choice='plain'>-P</arg> options to further choose which of halt or poweroff was selected, the default being determined by the capabilities of the operating system and platform (which might not support software power off).
+</para></listitem>
+</itemizedlist>
+
+<para>
+Their <command>shutdown</command> also wrote flag files, directly enacted system state changes, bypassed filesystem unmounts and cache flushes, and triggered kernel dumps.
+</para>
+
+</refsection>
+<refsection><title>Compatibility behaviour</title>
+
+<para>
+In this <command>shutdown</command>, the intervals between warning messages roughly follow the pattern used by the XENIX and UnixWare <command>shutdown</command> commands.
+</para>
+
+<para>
+Both the XENIX and UnixWare and the upstart, old BSD, and systemd ways of specifying when to shut down are supported.
+In order to avoid embarrassment resulting from unexpected defaults, explicitly specifying when shutdown should occur is mandatory.
+</para>
+
+<para>
+There is no "single-user" mode now.
+Its replacements are the <filename>emergency</filename> and <filename>rescue</filename> targets, described in <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>, which are startup targets that are not reachable via shutdown procedures.
+As a consequence, poweroff is now the default action and the compatibility behaviour is as follows:
+</para>
+<itemizedlist>
+<listitem><para>
+The <arg choice='plain'>-p</arg> and <arg choice='plain'>-P</arg> options are considered to be on by default, and thus have no effect.
+</para></listitem>
+<listitem><para>
+The <arg choice='plain'>-r</arg>, <arg choice='plain'>-h</arg>, and <arg choice='plain'>-H</arg> options select the non-default actions.
+</para></listitem>
+</itemizedlist>
+
+<para>
+The <arg choice='plain'>-d</arg>, <arg choice='plain'>-n</arg>, <arg choice='plain'>-f</arg>, <arg choice='plain'>-F</arg>, and <arg choice='plain'>-t</arg> options from the old toolsets are all errors.
+The <arg choice='plain'>-o</arg> option from the old toolsets is ignored.
+Because:
+</para>
+<itemizedlist>
+<listitem><para>
+Flag files, written to a potentially corrupt or dirty volume, are no longer the way to invoke filesystem checks.
+</para></listitem>
+<listitem><para>
+All system state changes are enacted by process #1, usually running <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+None are enacted directly.
+</para></listitem>
+<listitem><para>
+It is not permitted to bypass the filesystem cache flush, which is an integral part of the actions taken by <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> at shutdown.
+</para></listitem>
+<listitem><para>
+Service termination signals and intervals are not adjustable via the <command>shutdown</command> command.
+</para></listitem>
+</itemizedlist>
 
 </refsection>
 </refsection>

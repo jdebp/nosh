@@ -8,4 +8,4 @@ directory "cron" "/var/spool/cron/crontabs" "0700"
 service_with_dedicated_logger "bcron-start"
 service_with_dedicated_logger "bcron-update"
 socket_with_dedicated_logger "bcron-spool"
-# Linux-specific
+# BSD-specific

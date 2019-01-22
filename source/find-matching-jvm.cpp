@@ -322,13 +322,13 @@ find_matching_jvm (
 				for (;;) {
 					const dirent * entry(readdir(ds));
 					if (!entry) break;
-#if defined(_DIRENT_HAVE_D_TYPE)
-					if (DT_DIR != entry->d_type && DT_LNK != entry->d_type) continue;
-#endif
 #if defined(_DIRENT_HAVE_D_NAMLEN)
 					if (1 > entry->d_namlen) continue;
 #endif
 					if ('.' == entry->d_name[0]) continue;
+#if defined(_DIRENT_HAVE_D_TYPE)
+					if (DT_DIR != entry->d_type && DT_LNK != entry->d_type) continue;
+#endif
 
 					const std::string name(entry->d_name);
 					std::string subdir;

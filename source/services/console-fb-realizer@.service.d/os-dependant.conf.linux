@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+After=udev-settle.service
+
+[Service]
+User=daemon
+ExecStartPre=sh -c 'for d in ${OWNED_DEVICES} ; do if test -n "$d" && test -c "$d" ; then setfacl -m g:user-vt-realizer:rw "$d" ; fi ; done'
+ExecRestartPre=sh -c 'for d in ${OWNED_DEVICES} ; do if test -n "$d" && test -c "$d" ; then setfacl -m g:user-vt-realizer:rw "$d" ; fi ; done'
+ExecStart=%p ${FONTS} ${FLAGS} --kernel-vt-number "${KERNEL_VT}" ${INPUTS} ${KBDMAP:+--keyboard-map "${KBDMAP}"} /run/dev/%I/ "${FRAMEBUFFER}"

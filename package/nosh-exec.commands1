@@ -1,6 +1,7 @@
 appendpath
 chdir
 clearenv
+console-flat-table-viewer
 create-control-group
 delegate-control-group-to
 envdir
@@ -23,10 +24,12 @@ local-reaper
 local-seqpacket-socket-accept
 local-seqpacket-socket-listen
 local-stream-socket-listen
+local-stream-socket-connect
 local-stream-socket-accept
 machineenv
 make-private-fs
 make-read-only-fs
+monitor-fsck-progress
 monitored-fsck
 move-to-control-group
 netlink-datagram-socket-listen

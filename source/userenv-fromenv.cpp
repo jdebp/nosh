@@ -4,7 +4,6 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 #include <vector>
-#include <sstream>
 #include <cstdio>
 #include <cstdlib>
 #include <cerrno>

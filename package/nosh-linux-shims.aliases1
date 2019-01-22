@@ -1,0 +1,3 @@
+exec	unshare
+exec	setsid
+console-control-sequence	setterm

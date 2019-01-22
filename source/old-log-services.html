@@ -44,7 +44,7 @@ Kernel logging
 
 <p>
 Plumbed together with <a href="fifo-listen.html"><code>fifo-listen</code></a>, <code>klog-read</code> forms the <code>klog</code> service.
-This service listens to the operating system kernel's log device (<code>/proc/kmsg</code> on Linux, <code>/dev/klog</code> on the BSDs) and writes out all that it receives.
+This service listens to the operating system kernel's log device (<code>/dev/kmsg</code> on Linux, <code>/dev/klog</code> on the BSDs) and writes out all that it receives.
 It feeds an ordinary log service, so kernel logs end up in a normal, automatically rotated, strictly size capped, set of log files like any other.
 </p>
 

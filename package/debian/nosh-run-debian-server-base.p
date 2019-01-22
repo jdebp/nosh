@@ -2,10 +2,12 @@
 # service list
 # common targets, services, and sockets
 service_with_dedicated_logger "cleantmp"
-service_with_dedicated_logger "ntpd"
-service_with_dedicated_logger "ntpdate"
-service_with_dedicated_logger "openntpd"
-service_with_dedicated_logger "motd-dynamic"
+#There are multiple choices now.
+#service_with_dedicated_logger "ntpd"
+#service_with_dedicated_logger "ntpdate"
+#service_with_dedicated_logger "openntpd"
+#Obsolete now
+#service_with_dedicated_logger "motd-dynamic"
 service_with_dedicated_logger "network-interfaces"
 service_with_dedicated_logger "network-runtime"
 service_with_dedicated_logger "nisdomain"

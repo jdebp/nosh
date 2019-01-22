@@ -1,0 +1,28 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Standard login on %I
+After=multi-user-pre.target
+
+[Service]
+SessionLeader=true
+StandardInput=tty
+ExecStart=login
+RestartSec=0
+# This isn't appropriate for modern service management systems, and doesn't even do anything on BSDs.
+#UtmpIdentifier=%I
+BannerFile=/etc/issue.vc
+TTYPath=%I
+# Always-on terminals such as KVTs and remote/local real terminals need this.
+# This is overriden for user-space virtual terminals.
+TTYReset=yes
+# Open file descriptors from old login sessions need to be revoked, on KVTs and remote/local real terminals.
+# This is overriden for user-space virtual terminals.
+TTYVHangup=yes
+# Some job control shells ignore SIGTERM and need an explicit SIGHUP.
+SendSIGHUP=on
+
+[Install]
+WantedBy=multi-user.target

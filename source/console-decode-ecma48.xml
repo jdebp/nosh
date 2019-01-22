@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
+<refentry id="console-decode-ecma48">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>console-decode-ecma48</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>console-decode-ecma48</refname>
+<refpurpose>filter to decode ECMA-48 sequences</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>console-decode-ecma48</command>
+<arg choice='opt'>--input</arg>
+<arg choice='opt'>--no-cancel</arg>
+<arg choice='opt'>--no-7bit</arg>
+<arg rep='repeat'><replaceable>files</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>console-decode-ecma48</command> reads a sequence of characters, which it treats as UTF-8 encoded ECMA 48 sequences.
+For each control sequence, it prints a human-readable decoded form.
+</para>
+
+<para>
+It understands several of the DEC private control sequences, including those for function key inputs.
+It also understands the function key control sequences for Interix, SCO console, and rxvt terminals.
+</para>
+
+<para>
+The <arg choice='plain'>--input</arg> command-line option causes it to disambiguate certain ambiguous control sequences as function key inputs rather than as output actions.
+For example, the parameters to CUP (CSI <code>H</code>) have different meanings as input (repeat count and modifiers) to those as output (row and column position).
+</para>
+
+<para>
+Malformed escape and control sequences, interrupted by CSI or ESC or cancelled by CAN, are discarded and not decoded; just as most terminals will ignore them.
+The <arg choice='plain'>--no-cancel</arg> command-line option disables cancellation by CAN, allowing that character to be passed through as a control character.
+</para>
+
+<para>
+The <arg choice='plain'>--no-7bit</arg> command-line option disables all ECMA-48 7-bit code extensions except for CSI.
+The escape sequences that would be 7-bit code extensions are instead treated as accelerators.
+</para>
+
+<para>
+If no <replaceable>files</replaceable> are supplied, <command>console-decode-ecma48</command> reads from its standard input until EOF.
+Otherwise it processes each named file in turn.
+In both cases it writes to its standard output.
+</para>
+
+<para>
+<command>console-decode-ecma48</command> uses the C/C++ runtime library for output, and therefore has the normal C/C++ stream buffering semantics.
+It uses the <citerefentry><refentrytitle>read</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function for input, however.
+To duplicate the GNU and BSD C/C++ runtime libraries' behaviours, it explicitly flushes the output's buffer whenever it is about to read more input and that input is the beginning of a new line.
+</para>
+
+</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

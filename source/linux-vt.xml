@@ -1,0 +1,167 @@
+<!--
+.... Copyright (c) 2018 Jonathan de Boyne Pollard.
+.... Licensed under the licence of the Linux Man-Pages Project manual pages.
+.-->
+
+<refentry id="vt">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>vt</refentrytitle>
+<manvolnum>4</manvolnum>
+<refmiscinfo class="manual">devices</refmiscinfo>
+<refmiscinfo class="source">Linux</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>linux-vt</refname>
+<refpurpose>kernel virtual terminal devices</refpurpose>
+</refnamediv>
+
+<refsection><title>Description</title>
+
+<para>
+The kernel provides virtual terminal devices as <filename>/dev/tty<replaceable>N</replaceable></filename> where <replaceable>N</replaceable> is from <filename>0</filename> to <filename>63</filename>.
+These are character devices with major number 4 and minor number from 0 to 63.
+Each is a fully functional terminal device, with a line discipline.
+It does not support serial device control.
+</para>
+
+<para>
+There are 63 kernel virtual terminals, numbered from 1 to 63.
+The file numbered 0 acts as an alias for whichever virtual terminal device is currently active.
+Initially, virtual terminal 1 is active.
+</para>
+
+<para>
+The kernel creates the internal data structures for each virtual terminal on the fly, as each <filename>/dev/tty<replaceable>N</replaceable></filename> device is first opened.
+If nothing opens the relevant device file, therefore, the kernel does not allocate any resources for the virtual terminal.
+</para>
+
+<para>
+The virtual terminals are managed by a terminal emulator program that (unless configured out) is built into the kernel itself.
+The emulator program does not run as a distinct process, and uses internal interfaces to the framebuffer and event I/O devices.
+Applications can take over individual virtual terminals, disconnecting the kernel's built-in terminal emulator from the I/O devices and thereby letting applications handle all I/O with those devices when that virtual terminal is the active one.
+</para>
+
+<para>
+The type of the terminal emulated does not closely match any other terminal, although there are borrowings from DEC VTs, ECMA-48, and the Xenix console.
+Only 256 colours are supported, direct colour being emulated by mapping to the nearest indexed colour; and the DEC VT control sequence conventions for the <code>Home</code> and <code>End</code> keys are swapped with the <code>Find</code> and <code>Select</code> keys.
+</para>
+
+<refsection><title>Hot keys</title>
+
+<para>
+The user sitting at the keyboard and display can change which is the currently active kernel virtual terminal using hot-key keychords.
+What the keychords are is programmable by uploading different keyboard maps to the kernel's terminal emulator.
+By default when no keyboard map has been loaded and conventionally in most keyboard maps, the chord <code>Alt</code>+<code>F<replaceable>N</replaceable></code> requests a switch to virtual terminal <replaceable>N</replaceable>.
+</para>
+
+<para>
+Applications that take over a virtual terminal and do their own HID and display handling, such as <citerefentry><refentrytitle>xorg</refentrytitle><manvolnum>8</manvolnum></citerefentry>, have their own hot keys that are not necessarily the same and that are not managed by the kernel.
+Conventionally but not universally in such applications, the chord <code>Control</code>+<code>Alt</code>+<code>F<replaceable>N</replaceable></code> requests a switch to virtual terminal <replaceable>N</replaceable>.
+For convenience, these same chords are conventionally mapped to virtual terminal switch requests in the keyboard map of the kernel's virtual terminal emulator, too.
+</para>
+
+<para>
+Such applications can also block hot-key virtual terminal switches, which require their co&#x00f6;peration.
+</para>
+
+<para>
+The kernel can be configured with a hot-key sequence in the virtual terminal subsystem (the "Magic SysRq" keys, also mis-named "SAK") that issues a <code>SIGKILL</code> signal to all processes that have an open file descriptor to the currently active virtual terminal device.
+</para>
+
+</refsection>
+</refsection>
+<refsection><title>See also</title>
+
+<variablelist>
+<varlistentry>
+<term><citerefentry><refentrytitle>console_codes</refentrytitle><manvolnum>4</manvolnum></citerefentry></term>
+<listitem>
+<para>
+This describes the input and output control and escape sequences recognized and produced by the kernel's terminal emulator.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><citerefentry><refentrytitle>console_ioctl</refentrytitle><manvolnum>4</manvolnum></citerefentry></term>
+<listitem>
+<para>
+This describes the <code>ioctl()</code> controls that are peculiar to kernel virtual terminal devices.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><citerefentry><refentrytitle>chvt</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+<listitem>
+<para>
+a utility that can be used to switch amongst kernel virtual terminals under script control
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><citerefentry><refentrytitle>fgetty</refentrytitle><manvolnum>8</manvolnum></citerefentry></term>
+<term><citerefentry><refentrytitle>agetty</refentrytitle><manvolnum>8</manvolnum></citerefentry></term>
+<term><citerefentry><refentrytitle>mingetty</refentrytitle><manvolnum>8</manvolnum></citerefentry></term>
+<listitem>
+<para>
+the family of programs that are usually responsible for first opening kernel virtual terminal device files
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><citerefentry><refentrytitle>linux-console</refentrytitle><manvolnum>4</manvolnum></citerefentry></term>
+<listitem>
+<para>
+the <filename>/dev/console</filename> device, which may or may not map to a virtual terminal
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</refsection>
+<refsection><title>Files</title>
+
+<variablelist>
+<varlistentry>
+<term><filename>/sys/class/tty/tty0/active</filename></term>
+<listitem>
+<para>
+The contents of this pseudo-file are the currently active virtual terminal name.
+A file descriptor open to this file can be polled, and will set <code>POLLPRI</code> when the active device name changes.
+<code>POLLPRI</code> remains set until the contents of the file are (re-)read.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><filename>/dev/vcs<replaceable>N</replaceable></filename></term>
+<term><filename>/dev/vcsa<replaceable>N</replaceable></filename></term>
+<listitem>
+<para>
+The contents of these pseudo-files comprise the character display buffers of virtual terminal <replaceable>N</replaceable>, as explained in <citerefentry><refentrytitle>vcs</refentrytitle><manvolnum>4</manvolnum></citerefentry>.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</refsection>
+<refsection><title>History</title>
+
+<para>
+A multiple virtual terminal subsystem, with the same hot-key keychords and many of the same control sequences and <code>ioctl()</code>s, first appeared in Xenix in 1985.
+It was named Multiscreen.
+</para>
+
+<para>
+Until Linux version 1.1.54, the list of kernel virtual terminals was fixed (with a length given by the <code>NR_CONSOLES</code> constant in the source code) and data structures were not allocated on demand.
+</para>
+
+</refsection>
+<refsection><title>Author</title>
+Documentation by
+<author>
+<personname><firstname>Jonathan</firstname><surname>de Boyne Pollard</surname></personname>
+</author>
+</refsection>
+
+</refentry>

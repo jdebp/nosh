@@ -5,7 +5,7 @@
 # vim: set filetype=sh:
 #
 # Special setup for dnscache.
-# This is invoked by general-services.do .
+# This is invoked by all.do .
 #
 
 set_if_unset() { if test -z "`system-control print-service-env \"$1\" \"$2\"`" ; then system-control set-service-env "$1" "$2" "$3" ; echo "$s: Defaulted $2 to $3." ; fi ; }
@@ -21,6 +21,7 @@ list_graft_points() {
 	# http://jdebp.eu./FGA/dns-private-address-split-horizon.html#WhatToDo
 	for d in \
 		0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0 \
+		1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0 \
 		E.F.9.A.2.0.0.2 \
 		F.7.2.0.0.2 \
 		E.2.0.0.2 \
@@ -92,6 +93,7 @@ then
 
 	system-control print-service-env dnscache >> "$3"
 
+	# We do not use an on-disc seed file any more.
 	test \! -e "${s}/service/seed" || chmod 0 "${s}/service/seed" 
 #	if ! test -r "${s}/service/seed"
 #	then
@@ -132,6 +134,7 @@ do
 	install -d -m 0755 "${s}/service/root"
 	install -d -m 0755 "${s}/service/root/ip"
 	install -d -m 0755 "${s}/service/root/servers"
+	# We do not use an on-disc seed file any more.
 	test \! -e "${s}/service/seed" || chmod 0 "${s}/service/seed" 
 #	if ! test -r "${s}/service/seed"
 #	then

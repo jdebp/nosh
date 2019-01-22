@@ -1,0 +1,121 @@
+<!--
+.... Copyright (c) 2018 Jonathan de Boyne Pollard.
+.... Licensed under the licence of the Linux Man-Pages Project manual pages.
+.-->
+
+<refentry id="console">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>console</refentrytitle>
+<manvolnum>4</manvolnum>
+<refmiscinfo class="manual">devices</refmiscinfo>
+<refmiscinfo class="source">Linux</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>linux-console</refname>
+<refpurpose>system console device</refpurpose>
+</refnamediv>
+
+<refsection><title>Description</title>
+
+<para>
+The <filename>/dev/console</filename> device provides access to the Linux console.
+What the console actually is can vary, and is configurable via the <code>console=</code> parameter on the kernel command line, supplied to it by the bootstrap kernel loader.
+The kernel maintains a list of console devices.
+The <filename>/dev/console</filename> device maps to the last device in the list.
+(Thus application output via <filename>/dev/console</filename> differs from kernel console message output, which goes to all devices listed.)
+</para>
+
+<para>
+The <code>console=</code> parameter lists one or more serial port devices (see <citerefentry><refentrytitle>ttyS</refentrytitle><manvolnum>4</manvolnum></citerefentry>), parallel port devices (see <citerefentry><refentrytitle>lp</refentrytitle><manvolnum>4</manvolnum></citerefentry>), or kernel virtual terminal devices (see <citerefentry><refentrytitle>linux-vt</refentrytitle><manvolnum>4</manvolnum></citerefentry>).
+The default list in the absence of a parameter is usually <filename>tty0</filename>, the currently active kernel virtual terminal; although if the kernel virtual terminal subsystem is configured out it will be something else, with the kernel picking the console device.
+</para>
+
+<para>
+<filename>/dev/console</filename> is a fully functional terminal device, with a line discipline.
+Its input and output are routed via the underlying device by the kernel.
+It does not support serial device control.
+For that, one must open the actual device underpinning the console.
+Nor does it support <code>ioctl()</code>s peculiar to kernel virtual terminal devices.
+</para>
+
+<para>
+Process 1 commences execution with its standard input, output, and error file descriptors open to the console device, which the kernel expects to be available by the name <filename>/dev/console</filename> at that point.
+The initial root filesystem (initramfs, initrd, or physical on-disc filesystem) should thus have an explicit <filename>/dev/console</filename> character device file with the correct major and minor numbers, as no <filename>/dev</filename> filesystem is mounted by default at this point (although this is modifiable via a kernel configuration option).
+</para>
+
+<para>
+The system console is a character device with major number 5 and minor number 1.
+(Compare minor number 2 for <citerefentry><refentrytitle>ptmx</refentrytitle><manvolnum>4</manvolnum></citerefentry> and minor number 0 for <citerefentry><refentrytitle>tty</refentrytitle><manvolnum>4</manvolnum></citerefentry>.) 
+Thus a <filename>devtmpfs</filename> filesystem automatically gains a node named <filename>console</filename> that denotes this device.
+</para>
+
+<refsection><title>In containers</title>
+
+<para>
+The <filename>/dev/console</filename> device file available within a container may differ.
+What it is is determined by the applications software that created the container and populated its <filename>/dev</filename> directory.
+Some container systems have the convention of it being a bind-mounted pseudo-terminal slave side device, for example.
+Specifics are beyond the scope of this manual page, which only addresses the kernel-provided device file.
+See your container software's documentation.
+</para>
+
+</refsection>
+</refsection>
+<refsection><title>Files</title>
+
+<variablelist>
+<varlistentry>
+<term><filename>/sys/class/tty/console/active</filename></term>
+<listitem>
+<para>
+The list of devices specified for the console.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</refsection>
+<refsection id="STANDARDS" xreflabel="STANDARDS"><title>Standards conformance</title>
+
+<para>
+The <filename>/dev/console</filename> device filename for the system console is required in order to conform with the Single Unix Specification (per "Directory Structure and Devices").
+This explicitly permits it to be a link to another device.
+Linux does not implement it as a link, however.
+</para>
+
+</refsection>
+<refsection><title>See also</title>
+
+<variablelist>
+<varlistentry>
+<term><citerefentry><refentrytitle>syslog</refentrytitle><manvolnum>3</manvolnum></citerefentry></term>
+<listitem>
+<para>
+Opening <filename>/dev/console</filename> and writing messages there is an optional functionality of the syslog library.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</refsection>
+<refsection><title>History</title>
+
+<para>
+The <filename>/dev/console</filename> device has always been in Linux.
+</para>
+
+<para>
+Until Linux version 2.1.71, it was a symbolic link to another device file that was managed outwith the kernel, rather than a fully-fledged character device in its own right.
+</para>
+
+</refsection>
+<refsection><title>Author</title>
+Documentation by
+<author>
+<personname><firstname>Jonathan</firstname><surname>de Boyne Pollard</surname></personname>
+</author>
+</refsection>
+
+</refentry>

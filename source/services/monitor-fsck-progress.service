@@ -8,6 +8,7 @@ DefaultDependencies=off
 Before=local-fs-pre.target
 
 [Service]
+SessionLeader=true
 User=daemon
 ExecStart=monitor-fsck-progress
 # monitor-fsck-progress understands the LISTEN protocol, so does not need StandardInput=socket.

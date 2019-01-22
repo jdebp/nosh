@@ -12,7 +12,7 @@ nss="/etc/`basename "$1"`"
 
 redo-ifchange "$nss" general-services
 
-if ! which pc-nssconf >/dev/null
+if ! command -v pc-nssconf >/dev/null
 then
 	redo-ifcreate /usr/local/bin/pc-nssconf /usr/bin/pc-nssconf
 	exec true

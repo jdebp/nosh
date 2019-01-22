@@ -11,7 +11,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cctype>
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <iomanip>
 #include <stdint.h>
 #if !defined(_GNU_SOURCE)

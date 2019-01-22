@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=iSNS server daemon control sockets
+
+[Socket]
+ListenStream=%t/isnsctl
+ListenStream=3205
+PassCredentials=true
+
+[Install]
+WantedBy=server.target

@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Clean PHP session files on Linux operating systems
+
+[Service]
+ExecStart=/usr/lib/php/sessionclean
+ProtectHome=true
+ProtectSystem=true
+PrivateTmp=true
+PrivateNetwork=true

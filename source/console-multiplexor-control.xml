@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="console-multiplexor-control">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -10,6 +16,7 @@
 
 <refnamediv>
 <refname>console-multiplexor-control</refname>
+<refname>chvt</refname>
 <refpurpose>control a (user-space) virtual terminal multiplexor</refpurpose>
 </refnamediv>
 

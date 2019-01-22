@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
+<refentry id="console-flat-table-viewer">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>console-flat-table-viewer</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">administrator commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>console-flat-table-viewer</refname>
+<refpurpose>TUI viewer for flat file tables of several kinds</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>console-flat-table-viewer</command>
+<arg choice='opt'>--format <replaceable>format</replaceable></arg>
+<arg choice='opt'>--header-colour <replaceable>colour</replaceable></arg>
+<arg choice='opt'>--body-colour <replaceable>colour</replaceable></arg>
+<arg choice='opt'>--header-count <replaceable>number</replaceable></arg>
+<arg choice='opt'>--cursor-keypad-application-mode</arg>
+<arg choice='opt'>--calculator-keypad-application-mode</arg>
+<arg choice='opt'>--no-alternate-screen-buffer</arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>console-flat-table-viewer</command> is a simple TUI viewer for several common kinds of flat file tables.
+A flat file database contains no indexes; does not have a relational, hierarchical, or networked structure; and contains exactly one table in one file.
+Its only access method is sequential.
+</para>
+
+<para>
+This tool deals in flat file tables whose records are variable length, with fields and records separated from one another by specific characters.
+The particular kind of table is selectable via <replaceable>format</replaceable>:
+</para>
+
+<variablelist>
+<varlistentry>
+<term>
+<arg choice='plain'>ascii</arg>
+</term>
+<listitem><para>
+Original ASCII style using the original ASCII characters.
+</para><para>
+Fields are separated by US (U+001C), records by RS (U+001D).
+GS (U+001E) is treated as a record separator.
+FS (U+001F) clears the table and starts afresh.
+</para><para>
+There are no comments, and field data are displayed as they are.
+</para><para>
+Empty fields are allowed; multiple consecutive field separators denoting a series of empty fields.
+Empty records are also allowed; multiple consecutive record separators denoting a series of empty records.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>colon</arg>
+</term>
+<listitem><para>
+UNIX colon-separated format, as used by many files such as <citerefentry><refentrytitle><filename>/etc/master.passwd</filename></refentrytitle><manvolnum>5</manvolnum></citerefentry>, the old obsolete <citerefentry><refentrytitle><filename>/etc/inittab</filename></refentrytitle><manvolnum>5</manvolnum></citerefentry>, and <citerefentry><refentrytitle><filename>/etc/pf.os</filename></refentrytitle><manvolnum>5</manvolnum></citerefentry>.
+</para><para>
+Fields are separated by colon, records by LF (U+000A).
+There are no file or group separators, and all other characters are field data.
+Field data are displayed as they are.
+</para><para>
+A <code>#</code> where a field would begin is a line-comment that extends to the end of the record.
+The capability for these files to have comments comes from the BSD C library.
+The GNU C library generally does not support comments in these tables.
+</para><para>
+Empty records are not allowed; blank records and records comprising solely a comment being discarded and discounted.
+But empty fields are allowed; multiple consecutive field separators denoting a series of empty fields.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>space</arg>
+</term>
+<listitem><para>
+UNIX whitespace-separated format, as used by many files such as <citerefentry><refentrytitle><filename>/etc/fstab</filename></refentrytitle><manvolnum>5</manvolnum></citerefentry> (as well as <filename>/etc/services</filename>, <filename>/etc/crontab</filename>, <filename>/etc/phones</filename>, <filename>/etc/ttys</filename>, <filename>/etc/hosts</filename>, <filename>/etc/protocols</filename>, and <filename>/proc/mounts</filename> for some other examples).
+This is the default format.
+</para><para>
+Fields are separated by TAB (U+0009) or SPC (U+0020), records by LF (U+000A).
+FF (U+000C) clears the table and starts afresh.
+There are no group separators, and all other characters are field data.
+This includes, in particular, CR (U+000D) which is <emphasis>not</emphasis> a separator character.
+</para><para>
+On the BSDs, field data are decoded with <citerefentry><refentrytitle><filename>unvis</filename></refentrytitle><manvolnum>3</manvolnum></citerefentry> before display, per the convention for such files.
+A <code>#</code> where a field would begin is a line-comment that extends to the end of the record.
+</para><para>
+Empty fields are not allowed and are simply discarded and discounted.
+Empty records are similarly not allowed; blank records and records comprising solely a comment being discarded and discounted.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>tabbed</arg>
+</term>
+<listitem><para>
+Strict TAB-separated format.
+</para><para>
+Fields are separated by TAB (U+0009) alone, records by LF (U+000A).
+FF (U+000C) clears the table and starts afresh.
+There are no group separators, and all other characters are field data.
+This includes, in particular, CR (U+000D) and SPC (U+0020) which are <emphasis>not</emphasis> separator characters.
+</para><para>
+On the BSDs, field data are decoded with <citerefentry><refentrytitle><filename>unvis</filename></refentrytitle><manvolnum>3</manvolnum></citerefentry> before display.
+A <code>#</code> where a field would begin is a line-comment that extends to the end of the record.
+</para><para>
+Empty records are not allowed; blank records and records comprising solely a comment being discarded and discounted.
+But empty fields are allowed; multiple consecutive field separators denoting a series of empty fields.
+</para></listitem>
+</varlistentry>
+</variablelist>
+
+<para>
+The table data are read from the command's standard input, and the display is updated progressively as the input is read.
+The existence of file separators in several of these formats thus permits a "live" form of display, where a command (that generates output data in these forms) can run indefinitely with its output piped to <command>console-flat-table-viewer</command>, generating file separators at the end of every table-ful.
+A file separator causes <command>console-flat-table-viewer</command> to clear all table data so far and start afresh.
+</para>
+
+<para>
+<command>console-flat-table-viewer</command> is not a text file viewer.
+It displays the decoded contents of tables as tables, with the fields and records presented in a rectangular grid.
+Comments are discarded.
+With the exceptions of control characters in the C0 and C1 ranges, which are displayed as blanks, it displays field data in their decoded form.
+</para>
+
+<para>
+</para>
+
+<refsection><title>User interface</title>
+
+<para>
+<command>console-flat-table-viewer</command> opens its controlling terminal via <filename>/dev/tty</filename> and uses that for its user interface, both input and output.
+If its standard input is also its controlling terminal, odd behaviour may result, determined by how the operating system kernel decides to route input.
+(This is not a sensible usage of the program; so simply do not do this.)
+</para>
+
+<para>
+Although its behaviour is controlled by the <citerefentry><refentrytitle><envar>TERM</envar></refentrytitle><manvolnum>7</manvolnum></citerefentry> environment variable, it does not use <citerefentry><refentrytitle>terminfo</refentrytitle><manvolnum>3</manvolnum></citerefentry> or <citerefentry><refentrytitle>termcap</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
+It instead uses <citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
+The terminal type determines a few terminal capabilities (such as whether the terminal can actually handle DEC private mode control sequences at all, and its degree of ISO 8613-6 support), but most processing adheres to the ECMA-48 and ISO 8613-6 de jure standard control sequences and the DEC VT, DTTerm, and AIXTerm de facto standard ones.
+</para>
+
+<para>
+The user interface responds to actual arrow keys, HJKL navigation in the style of <citerefentry><refentrytitle><envar>vi</envar></refentrytitle><manvolnum>1</manvolnum></citerefentry>, and WASD navigation.
+(The command only knows about characters and escape/control sequences coming from the terminal.
+Thus the latter two are not particularly ergonomic on several countries' standard keyboard layouts.)
+Various common control characters with conventional special meanings may be used to quit, although the simplest way of quitting is simply <code>q</code>.
+</para>
+
+<para>
+Colours may be changed with the <arg choice='plain'>--heading-colour</arg> and <arg choice='plain'>--body-colour</arg> command-line options.
+The 16 standard colours can be specified by RGBCMYK names such as <arg choice='plain'>bright red</arg>, <arg choice='plain'>white</arg>, and <arg choice='plain'>yellow</arg>.
+Colour 7 is <arg choice='plain'>white</arg> or <arg choice='plain'>bright grey</arg>.
+Colour 8 is <arg choice='plain'>grey</arg> or <arg choice='plain'>bright black</arg>.
+Indexed colours can be specified by their index numbers, such as <arg choice='plain'>188</arg>.
+Note that hexadecimal and octal numbers are permitted, so care must be taken with leading zeroes.
+Direct RGB colours can be specified by <code>#</code> followed by the RGB value in hexadecimal, such as <arg choice='plain'>#00B0E815</arg>.
+</para>
+
+<para>
+Column sizes are automatically chosen to encompass the widest field in that column from any record.
+They may be manually resized with the <code>+</code> and <code>-</code> keys.
+</para>
+
+<para>
+The <arg choice='plain'>--header-count</arg> command-line option specifies that the first <replaceable>number</replaceable> records should be considered to be column headings.
+Header rows are displayed in a fixed position on the screen and are unaffected by vertical scrolling.
+(Adding a row of headings to otherwise headerless data is a straightforward exercise in the use of <citerefentry><refentrytitle><envar>printf</envar></refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
+</para>
+
+<para>
+The <arg choice='plain'>--cursor-keypad-application-mode</arg> and <arg choice='plain'>--calculator-keypad-application-mode</arg> command-line options instruct <command>console-flat-table-viewer</command> to switch, respectively, the cursor keypad and the calculator keypad of the realizing terminal into their "application" modes.
+Otherwise it switches them into their "normal" modes.
+"application" mode is generally not useful to <command>console-flat-table-viewer</command>, since it makes cursor and calculator keys indistinguishable from accelerator keys.
+The <arg choice='plain'>--no-alternate-screen-buffer</arg> command-line option instructs <command>console-flat-table-viewer</command> to not switch to the alternative screen buffer.
+This works around problems with some (yet more!) broken terminal emulators that attempt to be and fail at being like XTerm, which forcibly change cursor and editing keys into application mode when the alternative screen buffer is active.
+</para>
+
+</refsection>
+
+</refsection>
+
+<refsection><title>Compatibility</title>
+
+<para>
+The user interface is event driven, reacting to control input and data input as they occur.
+On Linux, regular files are not pollable, whereas one <emphasis>can</emphasis> pass the file descriptors of regular files to <citerefentry><refentrytitle>kevent</refentrytitle><manvolnum>2</manvolnum></citerefentry> on the BSDs.
+So on Linux in order to make its standard input something that is pollable, <command>console-flat-table-viewer</command> spawns a sub-process running <citerefentry><refentrytitle>cat</refentrytitle><manvolnum>1</manvolnum></citerefentry> reading from the original standard input and writing into a pipe, when it finds that its standard input was not a character device, socket, or pipe.
+</para>
+
+</refsection>
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

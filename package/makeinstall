@@ -40,60 +40,65 @@ do
 	rm -f -- command/"${alias}"{new}
 	ln -f -- command/"${command}"{new} command/"${alias}"{new}
 done
-# All of the commands that have their own manual pages
-cat package/commands1 package/extra-manpages1 | 
-while read -r i
-do
-	rm -f -- manual/"$i".1{new}
-	install -m 0444 -p -- build/"$i".1 manual/"$i".1{new}
-done
-# All of the commands that have their own manual pages
-cat package/commands8 package/extra-manpages8 | 
-while read -r i
-do
-	rm -f -- manual/"$i".8{new}
-	install -m 0444 -p -- build/"$i".8 manual/"$i".8{new}
-done
-# Aliased manual pages
-cat package/aliases1 | 
-while read -r command alias
-do
-	grep -q -- "^${alias}\$" package/commands1 package/extra-manpages1 && continue
-	ln -f -s -- "${command}".1 manual/"${alias}".1{new}
-done
-# Aliased manual pages
-cat package/aliases8 | 
-while read -r command alias
-do
-	grep -q -- "^${alias}\$" package/commands8 package/extra-manpages8 && continue
-	ln -f -s -- "${command}".8 manual/"${alias}".8{new}
-done
-# All of the commands that have their own guide pages
-cat package/guidepages package/commands1 package/extra-manpages1 package/commands8 package/extra-manpages8 | 
+# Main guide pages
+cat package/guidepages | 
 while read -r i
 do
 	rm -f -- guide/"$i".html{new}
 	install -m 0444 -p -- build/"$i".html guide/"$i".html{new}
 done
-# Aliased guide pages
-cat package/aliases1 | 
-while read -r command alias
-do
-	grep -q -- "^${alias}\$" package/commands1 package/extra-manpages1 && continue
-	ln -f -s -- "${command}".html guide/"${alias}".html{new}
-done
-# Aliased guide pages
-cat package/aliases8 | 
-while read -r command alias
-do
-	grep -q -- "^${alias}\$" package/commands8 package/extra-manpages8 && continue
-	ln -f -s -- "${command}".html guide/"${alias}".html{new}
-done
-# Other guide pages
 for i in COPYING
 do
 	rm -f -- guide/"$i"{new}
 	install -m 0444 -p -- build/"$i" guide/"$i"{new}
+done
+# All of the commands that have their own manual and guide pages
+for section in 1 8
+do
+	cat package/commands${section} package/extra-manpages${section} | 
+	while read -r i
+	do
+		rm -f -- manual/"$i".${section}{new}
+		install -m 0444 -p -- build/"$i".${section} manual/"$i".${section}{new}
+	done
+	cat package/commands${section} package/extra-manpages${section} | 
+	while read -r i
+	do
+		rm -f -- guide/"$i".html{new}
+		install -m 0444 -p -- build/"$i".html guide/"$i".html{new}
+	done
+done
+# Aliased manual and guide pages
+for section in 1 7 8
+do
+	cat package/aliases${section} | 
+	while read -r command alias
+	do
+		grep -q -- "^${alias}\$" package/commands${section} package/extra-manpages${section} && continue
+		ln -f -s -- "${command}".${section} manual/"${alias}".${section}{new}
+	done
+	cat package/aliases${section} | 
+	while read -r command alias
+	do
+		grep -q -- "^${alias}\$" package/commands${section} package/extra-manpages${section} && continue
+		ln -f -s -- "${command}".html guide/"${alias}".html{new}
+	done
+done
+# Other manual and guide pages
+for section in 3 4 7
+do
+	cat package/extra-manpages${section} | 
+	while read -r i
+	do
+		rm -f -- manual/"$i".${section}{new}
+		install -m 0444 -p -- build/"$i".${section} manual/"$i".${section}{new}
+	done
+	cat package/extra-manpages${section} | 
+	while read -r i
+	do
+		rm -f -- guide/"$i".html{new}
+		install -m 0444 -p -- build/"$i".html guide/"$i".html{new}
+	done
 done
 
 # ##############################################################################
@@ -106,56 +111,59 @@ while read -r i
 do
 	mv -f -- command/"$i"{new} command/"$i"
 done
-# All of the commands that have their own manual pages
-cat package/commands1 package/extra-manpages1 | 
-while read -r i
-do
-	mv -f -- manual/"$i".1{new} manual/"$i".1
-done
-# All of the commands that have their own manual pages
-cat package/commands8 package/extra-manpages8 | 
-while read -r i
-do
-	mv -f -- manual/"$i".8{new} manual/"$i".8
-done
-# Aliased manual pages
-cat package/aliases1 | 
-while read -r command alias
-do
-	grep -q -- "^${alias}\$" package/commands1 package/extra-manpages1 && continue
-	mv -f -- manual/"${alias}".1{new} manual/"${alias}".1
-done
-# Aliased manual pages
-cat package/aliases8 | 
-while read -r command alias
-do
-	grep -q -- "^${alias}\$" package/commands8 package/extra-manpages8 && continue
-	mv -f -- manual/"${alias}".8{new} manual/"${alias}".8
-done
-# All of the commands that have their own guide pages
-cat package/guidepages package/commands1 package/extra-manpages1 package/commands8 package/extra-manpages8 | 
+# Main guide pages
+cat package/guidepages |
 while read -r i
 do
 	mv -f -- guide/"$i".html{new} guide/"$i".html
 done
-# Aliased guide pages
-cat package/aliases1 | 
-while read -r command alias
-do
-	grep -q -- "^${alias}\$" package/commands1 package/extra-manpages1 && continue
-	mv -f -- guide/"${alias}".html{new} guide/"${alias}".html
-done
-# Aliased guide pages
-cat package/aliases8 | 
-while read -r command alias
-do
-	grep -q -- "^${alias}\$" package/commands8 package/extra-manpages8 && continue
-	mv -f -- guide/"${alias}".html{new} guide/"${alias}".html
-done
-# Other guide pages
 for i in COPYING
 do
 	mv -f -- guide/"$i"{new} guide/"$i"
+done
+# All of the commands that have their own manual and guide pages
+for section in 1 8
+do
+	cat package/commands${section} package/extra-manpages${section} | 
+	while read -r i
+	do
+		mv -f -- manual/"$i".${section}{new} manual/"$i".${section}
+	done
+	cat package/commands${section} package/extra-manpages${section} | 
+	while read -r i
+	do
+		mv -f -- guide/"$i".html{new} guide/"$i".html
+	done
+done
+# Aliased manual and guide pages
+for section in 1 7 8
+do
+	cat package/aliases${section} | 
+	while read -r command alias
+	do
+		grep -q -- "^${alias}\$" package/commands${section} package/extra-manpages${section} && continue
+		mv -f -- manual/"${alias}".${section}{new} manual/"${alias}".${section}
+	done
+	cat package/aliases${section} | 
+	while read -r command alias
+	do
+		grep -q -- "^${alias}\$" package/commands${section} package/extra-manpages${section} && continue
+		mv -f -- guide/"${alias}".html{new} guide/"${alias}".html
+	done
+done
+# Other manual and guide pages
+for section in 3 4 7
+do
+	cat package/extra-manpages${section} | 
+	while read -r i
+	do
+		mv -f -- manual/"$i".${section}{new} manual/"$i".${section}
+	done
+	cat package/extra-manpages${section} | 
+	while read -r i
+	do
+		mv -f -- guide/"$i".html{new} guide/"$i".html
+	done
 done
 
 # ##############################################################################
@@ -233,7 +241,7 @@ done
 
 # ##############################################################################
 # Build all of the {new} files in ./config.
-install -d -m 0755 config/presets config/systemd config/systemd/tmpfiles config/systemd/system config/systemd/user config/convert config/convert/kbdmaps config/convert/dbus config/convert/per-user config/convert/per-user/dbus config/convert/termcap config/mewburn-rc.d config/openbsd-rc.d config/vt config/devd config/zsh config/service-generators config/etc config/cin-data-tables
+install -d -m 0755 config/presets config/systemd config/systemd/tmpfiles config/systemd/system config/systemd/user config/convert config/convert/kbdmaps config/convert/dbus config/convert/per-user config/convert/per-user/dbus config/convert/termcap config/mewburn-rc.d config/open-rc.d config/openbsd-rc.d config/vt config/devd config/zsh config/service-generators config/etc config/cin-data-tables
 cat package/tmpfiles-snippets |
 while read -r i
 do
@@ -260,7 +268,7 @@ do
 	install -m 0444 -p -- build/systemd/user/"$i" config/systemd/user/"$i"{new}
 done
 (
-	for i in bundles run-via-systemd run-via-mewburn-rc run-via-openbsd-rc run-debian-desktop-base run-debian-server-base run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base run-bcron
+	for i in bundles run-via-systemd run-via-mewburn-rc run-via-open-rc run-via-openbsd-rc run-debian-desktop-base run-debian-server-base run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base run-bcron
 	do
 		test \! -r package/common-nosh-"$i"-presets || cat package/common-nosh-"$i"-presets 
 		test \! -r package/linux-nosh-"$i"-presets || cat package/linux-nosh-"$i"-presets 
@@ -276,6 +284,11 @@ do
 	rm -f -- config/mewburn-rc.d/"$i"{new}
 	install -m 0555 -p -- build/mewburn-rc.d/"$i" config/mewburn-rc.d/"$i"{new}
 done < package/mewburn-rc-scripts
+while read -r i
+do
+	rm -f -- config/open-rc.d/"$i"{new}
+	install -m 0555 -p -- build/open-rc.d/"$i" config/open-rc.d/"$i"{new}
+done < package/open-rc-scripts
 while read -r i
 do
 	rm -f -- config/openbsd-rc.d/"$i"{new}
@@ -298,10 +311,10 @@ do
 	rm -f -- config/vt/"$i"{new}
 	install -m 0444 -p -- build/"$i" config/vt/"$i"{new}
 done 
-for i in _nosh
+for i in _nosh _console_terminal_emulator _system_control
 do
 	rm -f -- config/zsh/"$i"{new}
-	install -m 0444 -p -- build/"$i" config/zsh/"$i"{new}
+	install -m 0444 -p -- build/zsh/"$i" config/zsh/"$i"{new}
 done 
 for i in cyclog@.service kmod@.service
 do
@@ -349,7 +362,7 @@ do
 	mv -f -- config/systemd/user/"$i"{new} config/systemd/user/"$i"
 done 
 (
-for i in bundles run-via-systemd run-via-mewburn-rc run-via-openbsd-rc run-debian-desktop-base run-debian-server-base run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base run-bcron
+for i in bundles run-via-systemd run-via-mewburn-rc run-via-open-rc run-via-openbsd-rc run-debian-desktop-base run-debian-server-base run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base run-bcron
 do
 	test \! -r package/common-nosh-$i-presets || cat package/common-nosh-"$i"-presets 
 	test \! -r package/linux-nosh-$i-presets || cat package/linux-nosh-"$i"-presets 
@@ -363,6 +376,10 @@ while read -r i
 do
 	mv -f -- config/mewburn-rc.d/"$i"{new} config/mewburn-rc.d/"$i"
 done < package/mewburn-rc-scripts
+while read -r i
+do
+	mv -f -- config/open-rc.d/"$i"{new} config/open-rc.d/"$i"
+done < package/open-rc-scripts
 while read -r i
 do
 	mv -f -- config/openbsd-rc.d/"$i"{new} config/openbsd-rc.d/"$i"
@@ -381,7 +398,7 @@ for i in issue.vc
 do
 	mv -f -- config/vt/"$i"{new} config/vt/"$i"
 done 
-for i in _nosh
+for i in _nosh _console_terminal_emulator _system_control
 do
 	mv -f -- config/zsh/"$i"{new} config/zsh/"$i"
 done 

@@ -268,53 +268,64 @@ const char *
 signame (
 	int signo
 ) ;
+enum {
+	WAIT_STATUS_RUNNING = 0, WAIT_STATUS_EXITED = 1, WAIT_STATUS_SIGNALLED = 2, WAIT_STATUS_SIGNALLED_CORE = 3, WAIT_STATUS_PAUSED = 4
+};
 extern
 int
 wait_nonblocking_for_anychild_stopcontexit (
 	pid_t & child,
-	int & status
+	int & status,
+	int & code
 ) ;
 extern
 int
 wait_nonblocking_for_anychild_stopexit (
 	pid_t & child,
-	int & status
+	int & status,
+	int & code
 ) ;
 extern
 int
 wait_nonblocking_for_anychild_exit (
 	pid_t & child,
-	int & status
+	int & status,
+	int & code
 ) ;
 extern
 int
 wait_blocking_for_anychild_exit (
 	pid_t & child,
-	int & status
+	int & status,
+	int & code
 ) ;
 extern
 int
 wait_nonblocking_for_stopcontexit_of (
 	const pid_t child,
-	int & status
+	int & status,
+	int & code
 ) ;
 extern
 int
 wait_nonblocking_for_stopexit_of (
 	const pid_t child,
-	int & status
+	int & status,
+	int & code
 ) ;
 extern
 int
 wait_nonblocking_for_exit_of (
 	const pid_t child,
-	int & status
+	int & status,
+	int & code
 ) ;
 extern
 int
 wait_blocking_for_exit_of (
 	const pid_t child,
-	int & status
+	int & status,
+	int & code
 ) ;
 
 #endif

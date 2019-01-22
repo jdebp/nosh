@@ -94,7 +94,11 @@ do
 	service="mysql@$i"
 	log="mysql-log@$i"
 
-	basedir="/usr"		## FIXME: /usr/local
+	case "`uname`" in
+	Linux)	basedir="/usr" ;;
+	*BSD)	basedir="/usr/local" ;;
+	*)	echo 1>&2 "$0: Do not know the MySQL root directory for your system." ; exec false ;;
+	esac
 	ledir="${basedir}/libexec"
 	plugindir="${basedir}/lib/mysql/plugin"
 	datadir="`get_var \"$i\" dbdir`"

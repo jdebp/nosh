@@ -100,14 +100,15 @@ public:
 	Realizer(FILE *, VirtualTerminalBackEnd &, TUIDisplayCompositor &, const DataTable tables[MAX_DATA_TABLES]);
 	~Realizer();
 
-	void set_display_update_needed() { update_needed = true; }
+	void set_refresh_needed() { refresh_needed = true; }
 	bool exit_signalled() const { return terminate_signalled||interrupt_signalled||hangup_signalled; }
-	void handle_non_kevents ();
+	void handle_refresh_event ();
+	void handle_update_event ();
 	void handle_signal (int);
 	void handle_input_event (uint32_t);
 
 protected:
-	bool update_needed;
+	bool refresh_needed, update_needed;
 	sig_atomic_t terminate_signalled, interrupt_signalled, hangup_signalled;
 	FileStar const buffer_file;
 	VirtualTerminalBackEnd & lower_vt;
@@ -434,6 +435,7 @@ Realizer::Realizer (
 	TUIDisplayCompositor & c,
 	const DataTable t[MAX_DATA_TABLES]
 ) :
+	refresh_needed(true),
 	update_needed(true),
 	terminate_signalled(false),
 	interrupt_signalled(false),
@@ -583,7 +585,7 @@ Realizer::use_current_conversion (
 		copy_conversion_to_send(converted_engravings);
 	else
 		copy_conversion_to_send(*current_conversion);
-	set_display_update_needed();
+	set_refresh_needed();
 }
 
 void
@@ -769,12 +771,22 @@ Realizer::paint_changed_cells (
 
 inline
 void
-Realizer::handle_non_kevents (
+Realizer::handle_refresh_event (
+) {
+	if (refresh_needed) {
+		refresh_needed = false;
+		resize();
+		compose();
+		update_needed = true;
+	}
+}
+
+inline
+void
+Realizer::handle_update_event (
 ) {
 	if (update_needed) {
 		update_needed = false;
-		resize();
-		compose();
 		comp.repaint_new_to_cur();
 		paint_changed_cells();
 	}
@@ -814,7 +826,7 @@ Realizer::handle_input_event(
 		toggle:
 		case INPUT_MSG_EKEY|(EXTENDED_KEY_IM_TOGGLE << 8U):
 			active = !active;
-			set_display_update_needed();
+			set_refresh_needed();
 			return;
 	}
 	if (!active) {
@@ -830,6 +842,24 @@ Realizer::handle_input_event(
 			// Always pass session switches to a lower console-multiplexor, so that users can switch sessions without turning the input method off and back on again.
 			lower_vt.WriteInputMessage(b);
 			return;
+		case INPUT_MSG_CKEY:	
+		{
+			switch (k) {
+				case CONSUMER_KEY_LOCK:
+				case CONSUMER_KEY_LOGON:
+				case CONSUMER_KEY_LOGOFF:
+				case CONSUMER_KEY_HALT_TASK:
+				case CONSUMER_KEY_TASK_MANAGER:
+				case CONSUMER_KEY_SELECT_TASK:
+				case CONSUMER_KEY_NEXT_TASK:
+				case CONSUMER_KEY_PREVIOUS_TASK:
+					lower_vt.WriteInputMessage(b);
+					return;
+				default:	
+					break;
+			}
+			break;
+		}
 		case INPUT_MSG_EKEY:
 		{
 			switch (k) {
@@ -1254,7 +1284,8 @@ console_input_method [[gnu::noreturn]] (
 	while (true) {
 		if (realizer.exit_signalled())
 			break;
-		realizer.handle_non_kevents();
+		realizer.handle_refresh_event();
+		realizer.handle_update_event();
 
 		struct kevent p[128];
 		const int rc(kevent(queue.get(), ip.data(), ip.size(), p, sizeof p/sizeof *p, lower_vt.query_reload_needed() ? &immediate_timeout : 0));
@@ -1270,7 +1301,7 @@ console_input_method [[gnu::noreturn]] (
 		if (0 == rc) {
 			if (lower_vt.query_reload_needed()) {
 				lower_vt.reload();
-				realizer.set_display_update_needed();
+				realizer.set_refresh_needed();
 			}
 			continue;
 		}

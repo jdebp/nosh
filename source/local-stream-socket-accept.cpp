@@ -60,13 +60,13 @@ reap (
 	unsigned long connection_limit
 ) {
 	for (;;) {
-		int status;
+		int status, code;
 		pid_t child;
-		if (0 >= wait_nonblocking_for_anychild_exit(child, status)) break;
+		if (0 >= wait_nonblocking_for_anychild_exit(child, status, code)) break;
 		if (connections) {
 			--connections;
 			if (verbose)
-				std::fprintf(stderr, "%s: %u ended status %i %lu/%lu\n", prog, child, status, connections, connection_limit);
+				std::fprintf(stderr, "%s: %u ended status %i code %i %lu/%lu\n", prog, child, status, code, connections, connection_limit);
 		}
 	}
 }
@@ -83,13 +83,16 @@ local_stream_socket_accept (
 ) {
 	const char * prog(basename_of(args[0]));
 	unsigned long connection_limit = 40U;
+	const char * localname = 0;
 	bool verbose(false);
 	try {
 		popt::bool_definition verbose_option('v', "verbose", "Print status information.", verbose);
 		popt::unsigned_number_definition connection_limit_option('c', "connection-limit", "number", "Specify the limit on the number of simultaneous parallel connections.", connection_limit, 0);
+		popt::string_definition localname_option('l', "localname", "pathname", "Override the local name.", localname);
 		popt::definition * top_table[] = {
 			&verbose_option,
-			&connection_limit_option
+			&connection_limit_option,
+			&localname_option
 		};
 		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{prog}");
 
@@ -212,15 +215,13 @@ exit_error:
 			envs.set("PROTO", "UNIX");
 			switch (localaddr.u.sun_family) {
 				case AF_LOCAL:
-					if (localaddrsz > offsetof(sockaddr_un, sun_path) && localaddr.u.sun_path[0])
-						envs.set("UNIXLOCALPATH", localaddr.u.sun_path);
-					else
-						envs.set("UNIXLOCALPATH", 0);
+					if (!localname && localaddrsz > offsetof(sockaddr_un, sun_path) && localaddr.u.sun_path[0])
+						localname = localaddr.u.sun_path;
 					break;
 				default:
-					envs.set("UNIXLOCALPATH", 0);
 					break;
 			}
+			envs.set("UNIXLOCALPATH", localname);
 			envs.set("UNIXLOCALUID", 0);
 			envs.set("UNIXLOCALGID", 0);
 			envs.set("UNIXLOCALPID", 0);

@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=GeoClue2 Service
+
+[Service]
+Type=dbus
+EnvironmentDirectory=env
+Restart=no
+
+[Install]

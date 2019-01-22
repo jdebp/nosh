@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=exim4 SMTP Relay daemon
+
+[Service]
+Environment=COMMAND=exim4
+EnvironmentDirectory=env
+LimitMEMORY=70000000
+# Yes, -bw not -bd.  exim4 has a socket-activated mode.
+# It also automatically figures out the difference between Relay and Submission.
+ExecStart="${COMMAND}" -bw
+ExecStartPre="${COMMAND}" -bV
+
+[Install]
+WantedBy=server.target

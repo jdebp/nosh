@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=iSNS server daemon
+Before=iscsi.service iscsid.service
+
+[Service]
+ExecStart=%p --foreground
+
+[Install]

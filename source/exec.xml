@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="exec">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -89,6 +95,7 @@ The alternative names are:
 <command>local-seqpacket-socket-accept</command>,
 <command>local-seqpacket-socket-listen</command>,
 <command>local-stream-socket-accept</command>,
+<command>local-stream-socket-connect</command>,
 <command>local-stream-socket-listen</command>, 
 <command>machineenv</command>, 
 <command>make-private-fs</command>,

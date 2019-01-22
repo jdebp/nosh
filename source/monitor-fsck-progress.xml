@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="monitor-fsck-progress">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -29,7 +35,7 @@ It loops forever, accepting socket connections and (for each such connection) li
 <para>
 It displays, on the terminal connected to its standard output, progress bars for all client instances of <command>fsck</command>.
 There is one progress bar per currently connected client.
-It uses wide-character ncurses (sometimes a.k.a. ncursesw) to create the progress bars, switching to cursor-addressing mode (and the alternate screen buffer, if there is one) when the number of clients rises above zero and switching back when it drops back to zero.
+It uses <citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry> and an <code>ECMA48Output</code> class to create the progress bars, switching to cursor-addressing mode (and the alternate screen buffer, if there is one).
 </para>
 
 <para>

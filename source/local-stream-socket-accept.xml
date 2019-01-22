@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="local-stream-socket-accept">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -18,7 +24,7 @@
 <command>local-stream-socket-accept</command>
 <arg>--verbose</arg>
 <arg>--connection-limit <replaceable>number</replaceable></arg>
-<arg>--localname <replaceable>hostname</replaceable></arg>
+<arg>--localname <replaceable>pathname</replaceable></arg>
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -35,7 +41,7 @@ It loops forever, accepting local socket connections and (for each such connecti
 </para>
 
 <para>
-Following the UCSPI conventions, <command>local-stream-socket-accept</command> sets up several environment variables containing information about the local socket connection.
+Following the UCSPI conventions, <command>local-stream-socket-accept</command> sets up several environment variables containing information about the local socket connection, which it obtains using the <citerefentry><refentrytitle><code>getpeername</code></refentrytitle><manvolnum>2</manvolnum></citerefentry>, <citerefentry><refentrytitle><code>getsockname</code></refentrytitle><manvolnum>2</manvolnum></citerefentry>, and (if available) <code>SO_PEERCRED</code> option of the <citerefentry><refentrytitle><code>getsockopt</code></refentrytitle><manvolnum>2</manvolnum></citerefentry> library functions.
 </para>
 
 <variablelist>
@@ -54,6 +60,7 @@ This always has the value <code>UNIX</code>.
 <listitem>
 <para>
 The local (server) pathname of the socket.
+The <replaceable>pathname</replaceable> set by the <arg>--localname</arg> option forcibly overrides the information supplied by the library function.
 </para>
 </listitem>
 </varlistentry>

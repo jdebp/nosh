@@ -46,9 +46,9 @@ public:
 	Realizer(FILE *, VirtualTerminalList &, VirtualTerminalList::iterator &);
 	~Realizer();
 
-	void set_display_update_needed() { update_needed = true; }
+	void set_refresh_needed() { update_needed = true; }
 	bool exit_signalled() const { return terminate_signalled||interrupt_signalled||hangup_signalled; }
-	void handle_non_kevents ();
+	void handle_update_event ();
 	void handle_signal (int);
 	void handle_input_event (uint32_t);
 
@@ -137,7 +137,7 @@ Realizer::paint_all_cells (
 
 inline
 void
-Realizer::handle_non_kevents (
+Realizer::handle_update_event (
 ) {
 	if (update_needed) {
 		update_needed = false;
@@ -171,7 +171,7 @@ Realizer::handle_input_event(
 				if (i >= f) {
 					const bool changed(current_vt != next_vt);
 					current_vt = next_vt;
-					update_needed |= changed;
+					if (changed) set_refresh_needed();
 					break;
 				}
 			}
@@ -190,7 +190,7 @@ Realizer::handle_input_event(
 				case CONSUMER_KEY_SELECT_TASK:
 					if (current_vt != vts.begin()) {
 						current_vt = vts.begin();
-						update_needed = true;
+						set_refresh_needed();
 					}
 					break;
 				case CONSUMER_KEY_NEXT_TASK:
@@ -199,14 +199,14 @@ Realizer::handle_input_event(
 					++next_vt;
 					if (next_vt != vts.end()) {
 						current_vt = next_vt;
-						update_needed = true;
+						set_refresh_needed();
 					}
 					break;
 				}
 				case CONSUMER_KEY_PREVIOUS_TASK:
 					if (current_vt != vts.begin()) {
 						--current_vt;
-						update_needed = true;
+						set_refresh_needed();
 					}
 					break;
 				default:	
@@ -392,7 +392,7 @@ console_multiplexor [[gnu::noreturn]] (
 	while (true) {
 		if (realizer.exit_signalled())
 			break;
-		realizer.handle_non_kevents();
+		realizer.handle_update_event();
 		if (old_vt != current_vt) {
 			const VirtualTerminalBackEnd & cvt(**current_vt);
 			symlinkat(cvt.query_dir_name(), upper_vt_dir_fd.get(), "active.new");
@@ -423,7 +423,7 @@ console_multiplexor [[gnu::noreturn]] (
 			VirtualTerminalBackEnd & lower_vt(**current_vt);
 			if (lower_vt.query_reload_needed()) {
 				lower_vt.reload();
-				realizer.set_display_update_needed();
+				realizer.set_refresh_needed();
 			}
 			continue;
 		}

@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="pty-get-tty">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -23,10 +29,7 @@
 <refsection><title>Description</title>
 
 <para>
-<command>pty-get-tty</command> is a chain-loading utility that allocates and opens the master
-side of a new pseudo-terminal, sets up environment variables appropriate to it,
-and then chain loads to <replaceable>next-prog</replaceable> with the 
-<citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+<command>pty-get-tty</command> is a chain-loading utility that allocates and opens the master side of a new pseudo-terminal, sets up environment variables appropriate to it, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
 </para>
 
 <para>
@@ -34,23 +37,18 @@ and then chain loads to <replaceable>next-prog</replaceable> with the
 </para>
 
 <para>
-<command>pty-get-tty</command> sets the <envar>TTY</envar> environment variable to the full device filename of the pseudo-terminal.
+<command>pty-get-tty</command> sets the <envar>TTY</envar> environment variable to the full device filename of the pseudo-terminal slave side.
 Programs such as <citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>login-banner</refentrytitle><manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>login-process</refentrytitle><manvolnum>1</manvolnum></citerefentry> will make use of this environment variable.
 </para>
 
 <para>
-<command>pty-get-tty</command> opens the master side of the pseudo-terminal as file descriptor
-number 4, closing that descriptor if it was already open.
-<citerefentry><refentrytitle>pty-run</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-and
-<citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-expect the pseudo-terminal master side on this open file descriptor.
+<command>pty-get-tty</command> opens the master side of the pseudo-terminal as file descriptor number 4, closing that descriptor if it was already open.
+<citerefentry><refentrytitle>pty-run</refentrytitle><manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> expect the pseudo-terminal master side on this open file descriptor.
 </para>
 
 <para>
 <command>pty-get-tty</command> otherwise leaves its environment and open file descriptors unchanged.
-Thus <replaceable>next-prog</replaceable> will inherit the <envar>TERM</envar> environment variable and the
-(as far as the kernel is concerned anyway) original controlling terminal.
+Thus <replaceable>next-prog</replaceable> will inherit the <citerefentry><refentrytitle><envar>TERM</envar></refentrytitle><manvolnum>7</manvolnum></citerefentry> environment variable and the (as far as the kernel is concerned anyway) original controlling terminal.
 </para>
 
 </refsection>
@@ -60,28 +58,18 @@ Thus <replaceable>next-prog</replaceable> will inherit the <envar>TERM</envar> e
 <refsection><title>Linux</title>
 
 <para>
-To prevent a race condition in 
-<citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> 
-(q.v.), 
-<command>pty-get-tty</command> calls
-<citerefentry><refentrytitle>grantpt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-to change the ownership of the slave side device to the (real, not effective)
-UID of the current process and set its permissions to allow only access to the
-owner; and then calls
-<citerefentry><refentrytitle>unlockpt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-to release the operating system interlock that prevents other processes from
-opening the slave side device before ownership and permissions have been set.
+To prevent a race condition in <citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> (q.v.), <command>pty-get-tty</command> calls <citerefentry><refentrytitle>grantpt</refentrytitle><manvolnum>3</manvolnum></citerefentry> to change the ownership of the slave side device to the (real, not effective) UID of the current process and set its permissions to allow only access to the owner; and then calls <citerefentry><refentrytitle>unlockpt</refentrytitle><manvolnum>3</manvolnum></citerefentry> to release the operating system interlock that prevents other processes from opening the slave side device before ownership and permissions have been set.
+</para>
+
+<para>
+The <citerefentry><refentrytitle>grantpt</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function is only rendered a no-operation if the relevant <filename>devpts</filename> is mounted with some specific mount options.
+<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> specifies these mount options, but that might not be what is performing system management for the machine.
 </para>
 
 </refsection><refsection><title>BSD</title>
 
 <para>
-The
-<citerefentry><refentrytitle>grantpt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-and
-<citerefentry><refentrytitle>unlockpt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-library functions are in fact no-ops on BSD, as the slave side devices of
-pseudo-terminals are created with these permissions and UID in the first place.
+The <citerefentry><refentrytitle>grantpt</refentrytitle><manvolnum>3</manvolnum></citerefentry> and <citerefentry><refentrytitle>unlockpt</refentrytitle><manvolnum>3</manvolnum></citerefentry> library functions are in fact no-ops on BSD, as the slave side devices of pseudo-terminals are created with these permissions and UID in the first place.
 </para>
 
 </refsection>

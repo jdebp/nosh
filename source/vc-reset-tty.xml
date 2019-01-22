@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="vc-reset-tty">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -17,7 +23,6 @@
 <cmdsynopsis>
 <command>vc-reset-tty</command>
 <arg>--hard-reset</arg>
-<arg>--no-newline</arg>
 <arg>--no-utf8</arg>
 <arg>--no-tostop</arg>
 <arg>--text-mode</arg>
@@ -41,10 +46,17 @@ If its standard output is not a terminal, it aborts without attempting to initia
 </para>
 
 <para>
-It initializes the terminal by resetting the line discipline and then outputting the escape sequences appropriate to the terminal type.
-Unless the <arg choice='plain'>--no-newline</arg> option is set a newline is printed afterwards.
-This program is thus much the same as the BSD <citerefentry><refentrytitle>reset</refentrytitle><manvolnum>1</manvolnum></citerefentry> command, except that it chain-loads to another command and has slightly different defaults.
+It initializes the terminal by resetting the kernel virtual terminal mode, resetting the line discipline, and then outputting the escape sequences appropriate to the terminal type that initialize the terminal itself.
 </para>
+
+<refsection><title>Kernel virtual terminal mode reset</title>
+
+<para>
+If the <arg choice='plain'>--text-mode</arg> command line option is used, <command>vc-reset-tty</command> will use operating-system-specific <citerefentry><refentrytitle>ioctl</refentrytitle><manvolnum>2</manvolnum></citerefentry> calls to attempt to switch a kernel virtual terminal to text mode.
+</para>
+
+</refsection>
+<refsection><title>Line discipline reset</title>
 
 <para>
 The line discipline is reset to approximately the same state as would be done by the <command>stty</command> <arg choice="plain">sane</arg> command, with several exceptions:
@@ -75,26 +87,50 @@ UTF-8 is the norm nowadays, and <citerefentry><refentrytitle>console-terminal-em
 
 </itemizedlist>
 
+</refsection>
+<refsection><title>Terminal reset</title>
+
 <para>
-<command>vc-reset-tty</command> writes escape sequences to soft (re-)initialize the terminal state, including tabstops, margins, windows, scrolling mode, and overstrike mode.
-Tabstops are reset to every 8th column.
-If the <arg choice='plain'>--hard-reset</arg> command line option is used, additional escape sequences are written to hard reset the terminal from an unknown state, including resetting the palette.
+<command>vc-reset-tty</command> writes terminal escape and control sequences to soft (re-)initialize the terminal state, including tabstops, margins, windows, scrolling mode, and overstrike mode.
+If the <arg choice='plain'>--hard-reset</arg> command line option is used, different escape sequences are written to hard reset the terminal.
 </para>
 
 <para>
-<command>vc-reset-tty</command> ignores the <envar>TERM</envar> environment variable and does not use <citerefentry><refentrytitle>terminfo</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
-Rather, it hardwires the terminal escape sequences to use to control the terminal, since they are fixed for each virtual console.
-If the standard output is not a virtual console, odd things may happen.
+It emits these terminal control sequences by spawning <citerefentry><refentrytitle>console-control-sequence</refentrytitle><manvolnum>1</manvolnum></citerefentry> with various options including <arg choice='plain'>--rows</arg>, <arg choice='plain'>--columns</arg>, and <arg choice='plain'>--soft-reset</arg>.
 </para>
 
 <para>
-If the <arg choice='plain'>--text-mode</arg> command line option is used, <command>vc-reset-tty</command> will use operating-system-specific <citerefentry><refentrytitle>ioctl</refentrytitle><manvolnum>2</manvolnum></citerefentry> calls to attempt to switch the virtual console to text mode.
-This is only suitable for use with kernel virtual consoles.
+For compatibility of the actual control sequences emitted with various terminals and terminal emulators, see the <citerefentry><refentrytitle>console-control-sequence</refentrytitle><manvolnum>1</manvolnum></citerefentry> manual.
 </para>
-</refsection><refsection><title>EXAMPLE</title>
+
+</refsection>
+
+</refsection><refsection><title>Use</title>
 
 <para>
 The major use case for <command>vc-reset-tty</command> is to reset the terminal and line discipline to some known states before printing the login banner (see <citerefentry><refentrytitle>login-banner</refentrytitle><manvolnum>1</manvolnum></citerefentry>) and running the <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry> program.
+The use case covers terminals that are "always on" and retain state from one terminal log-on session to the next, as is the case with real terminals (remote and local) and kernel virtual terminals.
+</para>
+
+<para>
+<command>vc-reset-tty</command> is, on the other hand, not particularly useful with <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>, which initializes the line discipline and terminal state itself to much the same state, and exits at hangup; making each log-on session start with an <emphasis>already</emphasis> freshly initialized terminal and line discipline.
+</para>
+
+<para>
+The program is much the same as the BSD <citerefentry><refentrytitle>reset</refentrytitle><manvolnum>1</manvolnum></citerefentry> command, except that it chain-loads to another command, has a more modern view of what a "sane" line discipline is, does not touch the line discipline's size information, and defaults to a softer reset.
+This is behaviour more suitable and streamlined for kernel virtual terminals, at which the command is specifically aimed.
+</para>
+
+<para>
+Virtual terminals update the line discipline size themselves, either in response to control sequences that change the terminal size or as part of specialized idiosyncratic resizing utilities.
+So there is no need for a VT reset utility to adjust them directly.
+(Conversely, real terminals have no access to the line discipline and require that it be expressly kept in synch.)
+</para>
+
+<para>
+Real terminals should not normally be sent the hard reset escape sequence, for reasons explained in the <citerefentry><refentrytitle>console-control-sequence</refentrytitle><manvolnum>1</manvolnum></citerefentry> manual and DEC VT documentation.
+Conversely, the Linux and FreeBSD kernel virtual terminals do not implement the DEC soft reset control sequence.
+In line with the general principle of avoiding hard resets, the <arg choice='plain'>--hard-reset</arg> command line option should only be used with these kernel virtual terminals.
 </para>
 
 </refsection><refsection><title>SEE ALSO</title>

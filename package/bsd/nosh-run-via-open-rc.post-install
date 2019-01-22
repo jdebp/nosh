@@ -1,0 +1,14 @@
+#!/bin/sh -
+
+# Re-apply presets to services that are cut-out by a special preset in this package.
+system-control preset sysinit.target local-syslog.target
+system-control preset static-networking.target
+system-control preset remote-fs.target remote-fs-pre.target
+
+# Preset and start OpenRC services
+rc-update add service-manager
+rc-update add service-manager-svscan
+rc-update add system-control-normal
+rc-service service-manager start
+rc-service service-manager-svscan start
+rc-service system-control-normal start

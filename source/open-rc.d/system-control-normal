@@ -1,0 +1,21 @@
+#!/sbin/openrc-run
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+name="system_control_normal"
+rcvar="system_control_normal_enable"
+command="/usr/local/bin/system-control"
+command_args="start --verbose normal"
+command_background=no
+
+depend()
+{
+	need localmount
+	need service-manager
+}
+
+start_pre()
+{
+	mkdir -p /run/system-manager/log /run/service-bundles/early-supervise
+}

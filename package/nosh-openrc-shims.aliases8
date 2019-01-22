@@ -1,0 +1,2 @@
+telinit rc-update
+telinit rc-service

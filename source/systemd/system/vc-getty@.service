@@ -9,7 +9,7 @@ After=dev-%i.device systemd-user-sessions.service plymouth-quit-wait.service
 Before=getty.target
 
 [Service]
-ExecStart=-/bin/exec vc-get-tty "%I" open-controlling-tty vc-reset-tty login-banner /etc/issue login-process /bin/login
+ExecStart=-/bin/exec vc-get-tty "%I" open-controlling-tty vc-reset-tty --hard-reset login-banner /etc/issue login-process login
 Restart=always
 UtmpIdentifier=%I
 TTYPath=/dev/%I

@@ -1,0 +1,8 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=BSD statically-configured network interface settings
+Description=This is needed on BSD systems for statically configured network interfaces.
+Description=The log service is used by auto-converted static_arp/static_ndp services.

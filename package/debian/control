@@ -30,10 +30,9 @@ Description: Minimal non-shell script processor and various chain-load utilities
   * fifo-listen,
   * local-datagram-socket-listen,
   * local-seqpacket-socket-accept, local-seqpacket-socket-listen,
-  * local-stream-socket-accept, local-stream-socket-listen,
-  * udp-socket-listen,
-  * tcp-socket-accept, tcp-socket-listen, 
-  * tcp-socket-connect, tcp-socket-connect, 
+  * local-stream-socket-accept, local-stream-socket-listen, local-stream-socket-connect,
+  * udp-socket-listen, udp-socket-connect,
+  * tcp-socket-accept, tcp-socket-listen, tcp-socket-connect,
 
 Package: nosh-service-management
 Architecture: amd64
@@ -67,7 +66,7 @@ Package: nosh-terminal-management
 Architecture: amd64
 Depends: ${shlibs:Depends}, nosh-service-management (>=1.14)
 Breaks: nosh-bundles (<= 1.20)
-Suggests: 
+Suggests: openvanilla-imgeneric-data-all
 Recommends: 
 Description: Virtual terminal, pseudo-terminal, and TUI login tools
  This package provides tools for creating and using pseudo-terminals and virtual consoles.
@@ -76,7 +75,9 @@ Description: Virtual terminal, pseudo-terminal, and TUI login tools
  * login-banner, login-process, login-prompt, open-controlling-tty, ttylogin-starter
  .
  Also present are commands for pseudo-terminals and virtual consoles:
-  * console-terminal-emulator, console-ncurses-realizer, console-fb-realizer, pty-get-tty, pty-run, vc-get-tty, vc-reset-tty
+  * console-terminal-emulator, console-termio-realizer, console-fb-realizer, console-multiplexor, console-input-method, console-control-sequence
+  * pty-get-tty, pty-run
+  * vc-get-tty, vc-reset-tty
 
 Package: nosh-terminal-extras
 Architecture: amd64
@@ -85,7 +86,7 @@ Suggests:
 Recommends: execline
 Description: Extra terminal utilities
  This package provides extra tools for use with terminals, including:
-  * getty, ptybandage, ptyrun
+  * ptybandage, ptyrun
 
 Package: nosh-zsh-completion
 Architecture: amd64
@@ -113,6 +114,7 @@ Description: BSD and System 5 shim service and system management utilities
  For utx, use the nosh-freebsd-shims package.
  For fastboot, fasthalt, and fastpoweroff, use the nosh-bsd-shims package.
  For invoke-rc.d and update-rc.d, use the nosh-debian-shims package.
+ For rc-update and rc-service use the nosh-openrc-shims package.
 
 Package: nosh-systemd-shims
 Architecture: amd64
@@ -155,12 +157,24 @@ Architecture: amd64
 Depends: nosh-exec
 Suggests: 
 Recommends: 
-Will-Conflict: coreutils, util-linux
+Will-Conflict: coreutils
 Description: core utility shims
- This package provides shims for core utility commands.
+ This package provides shims for commands with names from GNU Coreutils.
   * true, false, chroot, ulimit, umask
-  * unshare, setsid
+  * setsid
   * printenv
+ .
+ The shims simply invoke nosh built-in commands.
+
+Package: nosh-linux-shims
+Architecture: amd64
+Depends: nosh-exec, nosh-terminal-management
+Suggests: 
+Recommends: 
+Will-Conflict: util-linux
+Description: Linux utility shims
+ This package provides shims for commands with names from util-linux.
+  * unshare, setterm, getty
  .
  The shims simply invoke nosh built-in commands.
 
@@ -173,22 +187,37 @@ Will-Conflict: sysvinit-utils (<< 2.88dsf-59), upstart-sysv, systemd-sysv, init-
 Conflicts: nosh-systemv-shims (<= 1.36)
 Description: Shim for the old BSD and System 5 service command
  This package provides a shim for the old-style BSD and System 5 service command.
- It simply invoke native service management commands.
+ It simply invokes native service management commands.
 
 Package: nosh-debian-shims
 Architecture: amd64
 Depends: nosh-service-management, nosh-service-command-shim, nosh-systemv-shims
 Suggests: 
 Recommends: 
-Will-Conflict: sysvinit-core (<< 2.88dsf-59.9), file-rc, openrc, sysv-rc, init-system-helpers (>= 1.48)
-Provides: sysv-rc, file-rc, openrc
+Will-Conflict: sysvinit-core (<< 2.88dsf-59.9), file-rc, sysv-rc, init-system-helpers (>= 1.48)
+Provides: sysv-rc, file-rc, init-system-helpers
 Description: Debian shim service and system management utilities
  This package provides shims for Debian service and system management commands.
   * invoke-rc.d, update-rc.d
  .
  The shims simply invoke native service management commands.
  .
- It satisfies any packages that depend from sysv-rc, file-rc, or openrc in order to obtain these commands.
+ It satisfies any packages that depend from sysv-rc, file-rc, or init-system-helpers in order to obtain these commands.
+
+Package: nosh-openrc-shims
+Architecture: amd64
+Depends: nosh-service-management, nosh-systemv-shims
+Suggests: 
+Recommends: 
+Will-Conflict: openrc
+Provides: openrc
+Description: OpenRC shim service and system management utilities
+ This package provides shims for OpenRC service and system management commands.
+  * rc-update, rc-service
+ .
+ The shims simply invoke native service management commands.
+ .
+ It satisfies any packages that depend from openrc in order to obtain these commands.
 
 Package: nosh-openbsd-shims
 Architecture: amd64
@@ -284,7 +313,7 @@ Description: Replacements for Desktop Bus utilities
 
 Package: nosh-bundles
 Architecture: amd64
-Depends: nosh-exec (>=1.38), nosh-service-management (>=1.38), nosh-terminal-management (>=1.22), adduser
+Depends: nosh-exec (>=1.39), nosh-service-management (>=1.39), nosh-terminal-management (>=1.39), adduser
 Suggests: 
 Recommends: 
 Conflicts: nosh-standard-targets, nosh-sysinit-services, nosh-bsd-services, nosh-bsd-sockets, nosh-regular-sockets, nosh-regular-services
@@ -363,6 +392,15 @@ Suggests:
 Recommends: nosh-kbd-shims
 Description: Run new-style application-mode virtual terminals
  This package runs new-style application-mode virtual terminals, rendered via the (first) framebuffer and the input event stream.
+
+Package: nosh-run-via-open-rc
+Architecture: amd64
+Depends: nosh-service-management (>=1.33), systemd, nosh-bundles
+Suggests: 
+Recommends: 
+Description: Run the nosh service manager and daemontools service scanner via OpenRC
+ This package provides init.d scripts for running the nosh service manager and daemontools service scanner under OpenRC, instead of running the nosh service manager.
+ It disables the nosh sysinit.target, on the basis that systemd is doing that part of the work.
 
 Package: nosh-run-via-systemd
 Architecture: amd64

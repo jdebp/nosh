@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=System-wide "Desktop" bus service on the BSDs (not that this is currently possible)
+
+[Service]
+# ACLs don't work on BSD tmpfs; so we have to bodge group access and hope that only this group needs this.
+#ExecStartPre=sh -c "setfacl -m 'u:messagebus:rw' \"%t/service-manager/control\" || setfacl -m 'user:messagebus:rws::allow' \"%t/service-manager/control\""
+ExecStartPre=chgrp -v -- messagebus "%t/service-manager/control"
+ExecStartPre=chmod -v -- g=rw "%t/service-manager/control"

@@ -1,0 +1,7 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Service]
+User=mail
+Environment=COMMAND=exim

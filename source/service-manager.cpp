@@ -24,7 +24,6 @@ For copyright and licensing terms, see the file named COPYING.
 #else
 #include <sys/poll.h>
 #endif
-#include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/un.h>
@@ -70,9 +69,9 @@ struct service : public index {
 	void stamp_time(const timespec &);
 	void stamp_activity();
 	void stamp_pending_command();
-	void stamp_process_status(const unsigned int, int, const timespec &);
+	void stamp_process_status(const unsigned int, int, int, const timespec &);
 	void write_status();
-	void reap (const sigset_t &, int, int);
+	void reap (const sigset_t &, int, int, int);
 	void enact_control_message(const sigset_t &, char);
 	void add_to_input_activation_list();
 	void delete_from_input_activation_list();
@@ -98,13 +97,14 @@ protected:
 		STOP = 'o'	///< The service is running the "stop" program.
 	} activity;
 	int current_process_status;
+	int current_process_code;
 	unsigned char status[STATUS_BLOCK_SIZE];
 	std::set<int> processes;
 	ProcessEnvironment & envs;
 
 	void change_state_if_necessary (const sigset_t &);
 	void enter_state(const sigset_t &);
-	void del_process(int, int);
+	void del_process(int, int, int);
 	bool has_processes() const { return !processes.empty(); }
 	void killall(int);
 	void killtop(int);
@@ -113,6 +113,7 @@ protected:
 #if !defined(__LINUX__) && !defined(__linux__)
 	void delete_from_pending_forks();
 #endif
+	bool is_current_process_failure() const;
 };
 
 }
@@ -146,18 +147,6 @@ static service_map services;
 // **************************************************************************
 */
 
-static inline
-bool 
-is_failure (
-	int wait_status	///< a wait status from which WIFCONTINED and WIFSTOPPED have already been excluded
-) {
-	if (WIFSIGNALED(wait_status)) 
-		// Any signal at all is a failure.
-		return true;
-	else
-		return WEXITSTATUS(wait_status) != EXIT_SUCCESS;
-}
-
 service::service(const struct stat & s, ProcessEnvironment & e) : 
 	index(s),
 	in(STDIN_FILENO), 
@@ -176,7 +165,8 @@ service::service(const struct stat & s, ProcessEnvironment & e) :
 	paused(false), 
 	unload_after_stop(false),
 	activity(NONE), 
-	current_process_status(-1),
+	current_process_status(WAIT_STATUS_RUNNING),
+	current_process_code(0),
 	processes(),
 	envs(e)
 {
@@ -205,6 +195,17 @@ service::~service()
 	control_client_fd = -1;
 #endif
 	pipe_fds[0] = pipe_fds[1] = service_dir_fd = status_fd = control_fd = ok_fd = lock_fd = -1;
+}
+
+inline
+bool 
+service::is_current_process_failure (
+) const {
+	if (WAIT_STATUS_SIGNALLED == current_process_status || WAIT_STATUS_SIGNALLED_CORE == current_process_status) 
+		// Any signal at all is a failure.
+		return true;
+	else
+		return current_process_code != EXIT_SUCCESS;
 }
 
 void 
@@ -243,23 +244,19 @@ void
 service::stamp_process_status (
 	const unsigned index,
 	int wait_status,
+	int wait_code,
 	const timespec & now
 ) {
 	const std::size_t offset(EXIT_STATUSES_OFFSET + EXIT_STATUS_SIZE * index);
-	if (-1 == wait_status) {
-		status[offset] = 0;
-		pack_bigendian(status + offset + 1U, 0U, 4);
-	} else
-	if (WIFEXITED(wait_status)) {
-		const int code(WEXITSTATUS(wait_status));
-		status[offset] = 1;
-		pack_bigendian(status + offset + 1U, code, 4);
-	} else
-	{
-		const int signo(WTERMSIG(wait_status));
-		status[offset] = WCOREDUMP(wait_status) ? 3 : 2;
-		pack_bigendian(status + offset + 1U, signo, 4);
+	switch (wait_status) {
+		default:
+		case WAIT_STATUS_PAUSED:
+		case WAIT_STATUS_RUNNING:		status[offset] = 0; break;
+		case WAIT_STATUS_EXITED:		status[offset] = 1; break;
+		case WAIT_STATUS_SIGNALLED:		status[offset] = 2; break;
+		case WAIT_STATUS_SIGNALLED_CORE:	status[offset] = 3; break;
 	}
+	pack_bigendian(status + offset + 1U, wait_code, 4);
 	const uint64_t s(time_to_tai64(envs, TimeTAndLeap(now.tv_sec, false)));
 	const uint32_t n(now.tv_nsec);
 	pack_bigendian(status + offset +  5U, s, 8);
@@ -289,7 +286,8 @@ service::add_process (
 void 
 service::del_process (
 	int pid,
-	int s	///< a wait status from which WIFCONTINED and WIFSTOPPED have already been excluded
+	int wait_status,	///< a wait status from which RUNNING and PAUSED have already been excluded
+	int wait_code
 ) {
 	const bool affects_main_process(!processes.empty() && pid == *processes.begin());
 #if !defined(__LINUX__) && !defined(__linux__)
@@ -305,15 +303,16 @@ service::del_process (
 		clock_gettime(CLOCK_REALTIME, &now);
 		stamp_time(now);
 		switch (activity) {
-			case START:	stamp_process_status(0, s, now); break;
-			case RUN:	stamp_process_status(1, s, now); break;
-			case RESTART:	stamp_process_status(2, s, now); break;
-			case STOP:	stamp_process_status(3, s, now); break;
+			case START:	stamp_process_status(0, wait_status, wait_code, now); break;
+			case RUN:	stamp_process_status(1, wait_status, wait_code, now); break;
+			case RESTART:	stamp_process_status(2, wait_status, wait_code, now); break;
+			case STOP:	stamp_process_status(3, wait_status, wait_code, now); break;
 			case NONE:
 			default:	break;
 		}
 	}
-	current_process_status = s;
+	current_process_status = wait_status;
+	current_process_code = wait_code;
 }
 
 void
@@ -499,7 +498,7 @@ service::enter_state (
 	if (has_processes()) return;
 
 	const char * const * a(0);
-	const char * restart_args[] = { "restart", 0, 0, 0, 0 };
+	const char * restart_args[] = { "restart", 0, 0, 0, 0, 0 };
 	switch (activity) {
 		default:	
 			sleep(1); 
@@ -513,10 +512,10 @@ service::enter_state (
 			timespec now;
 			clock_gettime(CLOCK_REALTIME, &now);
 			a = start_args; 
-			stamp_process_status(0, -1, now); 
-			stamp_process_status(1, -1, now); 
-			stamp_process_status(2, -1, now); 
-			stamp_process_status(3, -1, now); 
+			stamp_process_status(0, WAIT_STATUS_RUNNING, 0, now); 
+			stamp_process_status(1, WAIT_STATUS_RUNNING, 0, now); 
+			stamp_process_status(2, WAIT_STATUS_RUNNING, 0, now); 
+			stamp_process_status(3, WAIT_STATUS_RUNNING, 0, now); 
 			write_status(); 
 			break;
 		}
@@ -525,7 +524,7 @@ service::enter_state (
 			timespec now;
 			clock_gettime(CLOCK_REALTIME, &now);
 			a = run_args; 
-			stamp_process_status(1, -1, now); 
+			stamp_process_status(1, WAIT_STATUS_RUNNING, 0, now); 
 			write_status(); 
 			break;
 		}
@@ -534,7 +533,7 @@ service::enter_state (
 			timespec now;
 			clock_gettime(CLOCK_REALTIME, &now);
 			a = restart_args; 
-			stamp_process_status(2, -1, now); 
+			stamp_process_status(2, WAIT_STATUS_RUNNING, 0, now); 
 			write_status(); 
 			break;
 		}
@@ -577,17 +576,16 @@ service::enter_state (
 		case STOP:	
 		default:	break;
 		case RESTART:	
-			if (WIFSIGNALED(current_process_status)) {
-				const int signo(WTERMSIG(current_process_status));
-				snprintf(codebuf, sizeof codebuf, "%u", signo);
-				const char * sname(signame(signo));
+			if (WAIT_STATUS_SIGNALLED == current_process_status || WAIT_STATUS_SIGNALLED_CORE == current_process_status) {
+				snprintf(codebuf, sizeof codebuf, "%u", current_process_code);
+				const char * sname(signame(current_process_code));
 				if (!sname) sname = codebuf;
-				restart_args[1] = classify_signal(signo);
+				restart_args[1] = classify_signal(current_process_code);
 				restart_args[2] = sname;
 				restart_args[3] = codebuf;
+				if (WAIT_STATUS_SIGNALLED_CORE == current_process_status) restart_args[4] = "core";
 			} else {
-				const int code(WEXITSTATUS(current_process_status));
-				snprintf(codebuf, sizeof codebuf, "%u", code);
+				snprintf(codebuf, sizeof codebuf, "%u", current_process_code);
 				restart_args[1] = "exit";
 				restart_args[2] = codebuf;
 			}
@@ -672,9 +670,9 @@ service::change_state_if_necessary (
 			switch (pending_command) {
 				case 'O': 	activity = STOP; break;
 				case 'o':	activity = STOP; break;
-				case 'u':	pending_command = '\0'; activity = is_failure(current_process_status) ? STOP : RUN; break;
+				case 'u':	pending_command = '\0'; activity = is_current_process_failure() ? STOP : RUN; break;
 				case 'd':	activity = STOP; break;
-				default:	activity = is_failure(current_process_status) ? STOP : RUN; break;
+				default:	activity = is_current_process_failure() ? STOP : RUN; break;
 			}
 			break;
 		case STOP:
@@ -700,19 +698,18 @@ inline
 void
 service::reap (
 	const sigset_t & original_signals,
-	int s,			///< status word from waitpid()
+	int wait_status,
+	int wait_code,
 	int pid
 ) {
 	// The child process might not have actually gone.
-#if defined(WIFCONTINUED) && defined(WCONTINUED)
-	if (WIFCONTINUED(s)) {
+	if (WAIT_STATUS_RUNNING == wait_status) {
 		paused = false;
 		stamp_activity();
 		write_status();
 		return;
 	}
-#endif
-	if (WIFSTOPPED(s)) {
+	if (WAIT_STATUS_PAUSED == wait_status) {
 		paused = true;
 		stamp_activity();
 		write_status();
@@ -720,7 +717,7 @@ service::reap (
 	}
 
 	// We have at this point excluded everything apart from normal exit and termination by a signal.
-	del_process(pid, s);
+	del_process(pid, wait_status, wait_code);
 	write_status();
 	change_state_if_necessary(original_signals);
 }
@@ -892,7 +889,7 @@ load (
 		s.stamp_activity();
 		s.stamp_pending_command();
 		for (unsigned state(0U); state < 4U; ++state)
-			s.stamp_process_status(state, -1, now);
+			s.stamp_process_status(state, WAIT_STATUS_RUNNING, 0, now);
 		s.write_status();
 		s.add_to_control_fifo_list();
 		std::fprintf(stderr, "%s: DEBUG: load %s\n", prog, s.name);
@@ -1035,17 +1032,18 @@ void
 reap (
 	const sigset_t & original_signals,
 	int status,
+	int code,
 	int pid
 ) {
 	pid_to_service_map::iterator i(active_services.find(pid));
 	if (i == active_services.end()) {
-		if (WIFSTOPPED(status))
+		if (WAIT_STATUS_PAUSED == status)
 			kill(pid, SIGCONT);
 		return;
 	}
 	service & s(*i->second);
 
-	s.reap(original_signals, status, pid);
+	s.reap(original_signals, status, code, pid);
 	if (s.unloadable()) {
 		service_map::iterator j(services.find(s));
 		if (j != services.end()) {
@@ -1061,10 +1059,10 @@ reaper (
 	const sigset_t & original_signals
 ) {
 	for (;;) {
-		int status;
+		int status, code;
 		pid_t c;
-		if (0 >= wait_nonblocking_for_anychild_stopcontexit(c, status)) break;
-		reap(original_signals, status, c);
+		if (0 >= wait_nonblocking_for_anychild_stopcontexit(c, status, code)) break;
+		reap(original_signals, status, code, c);
 	}
 }
  
@@ -1215,6 +1213,12 @@ service_manager [[gnu::noreturn]] (
 		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Unexpected argument.");
 		throw static_cast<int>(EXIT_USAGE);
 	}
+
+#if defined(__LINUX__) || defined(__linux__)
+	// Linux's default file handle limit of 1024 is far too low for normal usage patterns.
+	const rlimit file_limit = { 16384U, 16384U };
+	setrlimit(RLIMIT_NOFILE, &file_limit);
+#endif
 
 	const int dev_null_fd(openat(AT_FDCWD, "/dev/null", O_NOCTTY|O_CLOEXEC|O_RDWR|O_NONBLOCK));
 	if (0 > dev_null_fd) {
@@ -1413,9 +1417,9 @@ service_manager [[gnu::noreturn]] (
 				if (EVFILT_PROC != e.filter) continue;
 				const int pid(e.ident);
 				if (e.fflags & NOTE_EXIT) {
-					int status;
-					wait_nonblocking_for_stopcontexit_of(pid, status);
-					reap(original_signals, e.data, pid);
+					int status, code;
+					wait_nonblocking_for_stopcontexit_of(pid, status, code);
+					reap(original_signals, status, code, pid);
 				}
 			}
 			if (child_signalled) {

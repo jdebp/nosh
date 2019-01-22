@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="userenv-fromenv">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -128,7 +134,9 @@ The following environment variables are set from the <citerefentry><refentrytitl
 <variablelist>
 
 <varlistentry>
-<term><envar>TERM</envar></term>
+<term>
+<citerefentry><refentrytitle><envar>TERM</envar></refentrytitle><manvolnum>7</manvolnum></citerefentry>
+</term>
 <listitem><para>
 Set to the value of the <code>term</code> capability, defaulting to unset if there is no capability.
 Generally, this is inappropriate, as the <envar>TERM</envar> variable will have been set for the login session by the TTY login system.

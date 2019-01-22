@@ -11,8 +11,8 @@ For copyright and licensing terms, see the file named COPYING.
 enum {
 	INPUT_MSG_MASK		= 0xFF000000,
 	INPUT_MSG_UCS3		= 0x01000000,
-	// Don't clash with 0x03000000 being modifiers in keyboard maps.
 	INPUT_MSG_SKEY		= 0x02000000,
+	// Don't clash with 0x03000000 being modifiers in keyboard maps.
 	INPUT_MSG_XPOS		= 0x04000000,
 	INPUT_MSG_YPOS		= 0x05000000,
 	INPUT_MSG_WHEEL		= 0x06000000,
@@ -22,6 +22,7 @@ enum {
 	INPUT_MSG_CKEY		= 0x0C000000,
 	INPUT_MSG_EKEY		= 0x0E000000,
 	INPUT_MSG_FKEY		= 0x0F000000,
+	INPUT_MSG_AUCS3		= 0x11000000,
 	// Don't clash with 0x1E000000 being unshifted extended keys in keyboard maps.
 	// Don't clash with 0x1F000000 being unmodifiable function keys in keyboard maps.
 };
@@ -327,6 +328,7 @@ enum {
 };
 
 extern inline uint32_t MessageForUCS3(uint32_t c) { return INPUT_MSG_UCS3 | (c & ~INPUT_MSG_MASK); }
+extern inline uint32_t MessageForAcceleratorKey(uint32_t c) { return INPUT_MSG_AUCS3 | (c & ~INPUT_MSG_MASK); }
 extern inline uint32_t MessageForSystemKey(uint16_t k, uint8_t m) { return INPUT_MSG_SKEY | (uint32_t(k & 0xFFFF) << 8U) | uint32_t(m & 0xFF); }
 extern inline uint32_t MessageForConsumerKey(uint16_t k, uint8_t m) { return INPUT_MSG_CKEY | (uint32_t(k & 0xFFFF) << 8U) | uint32_t(m & 0xFF); }
 extern inline uint32_t MessageForExtendedKey(uint16_t k, uint8_t m) { return INPUT_MSG_EKEY | (uint32_t(k & 0xFFFF) << 8U) | uint32_t(m & 0xFF); }

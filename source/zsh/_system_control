@@ -1,0 +1,250 @@
+#compdef enable disable emergency login-update-utmpx normal per-user-manager power(off|cycle) preset reboot rescue reset shutdown start stop utx -p (init|system|rc)ctl (invoke|update)-rc.d (tel|sys|)init chk(config|service) halt(|sys) rc-(service|update) sv(show|ok|up|stat|c|scan|cadm) -P service-(status|control|manager|-is-(up|ok|enabled)|show|dt-scanner) system-(control|manager) 
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+#
+# Z Shell command-line completion
+
+function _system_control_subcommands()
+{
+	local -a commands
+	commands=(
+	'activate:start a service'
+	'cat:print a service bundle'\''s control scripts'
+	'condrestart:send a TERM signal to a running service'
+	'convert-fstab-services:convert fstab to service bundles'
+	'convert-systemd-units:convert systemd unit files to a service bundle'
+	'deactivate:stop a service'
+	'disable:configure a service to not auto-start'
+	'emergency:start emergency mode'
+	'enable:configure a service to auto-start'
+	'escape:escape names as the conversion utilities do'
+	'find:locate a service'\''s service directory'
+	'force-reload:send a TERM signal to a running service'
+	'get-mount-what:find the /etc/fstab mount "what" from its "where"'
+	'get-mount-where:find the /etc/fstab mount "where" from its "what"'
+	'halt:halt the system'
+	'hangup:send a HUP signal to a running service'
+	'init:run initial action'
+	'is-active:query whether a service is started'
+	'is-enabled:query whether a service is enabled'
+	'is-loaded:query whether a service is loaded'
+	'is-service-manager-client:query whether the service manager is running'
+	'isolate:start a service'
+	'load-kernel-module:load a kernel module'
+	'nagios-check-service:nagios plug-in for checking services'
+	'normal:start normal mode'
+	'poweroff:power off the system'
+	'powercycle:power cycle the system'
+	'preset:configure a service auto-start according to config files'
+	'print-service-env:display a standard-format env/ directory for a service'
+	'reboot:reboot the system'
+	'rescue:start rescue mode'
+	'reset:reset a service to its preset state'
+	'set-service-env:change a standard-format env/ directory for a service'
+	'show-json:print machine-readable service status'
+	'show:print machine-readable service status'
+	'start:start a service'
+	'status:display service status'
+	'stop:stop a service'
+#	'sysinit:run initial action'
+	'try-restart:send a TERM signal to a running service'
+	'unload-kernel-module:unload a kernel module'
+	'unload-when-stopped:set a service to unload when it next stops'
+	'version:output version information'
+	'write-volume-service-bundle:convert an fstab record to service bundles'
+	)
+	_describe -t command 'sub-commands' commands
+}
+
+function _chkconfig_subcommands()
+{
+	local -a commands
+	commands=(
+	'off:configure a service to not auto-start'
+	'on:configure a service to auto-start'
+	'reset:configure a service auto-start according to config files'
+	)
+	_describe -t command 'sub-commands' commands
+}
+
+#function _update_rc_d_subcommands()
+#{
+#	local -a commands
+#	commands=(
+#	'enable:configure a service to not auto-start'
+#	'disable:configure a service to auto-start'
+#	'defaults:configure a service auto-start according to config files'
+#	)
+#	_describe -t command 'sub-commands' commands
+#}
+
+function _rc_update_subcommands()
+{
+	local -a commands
+	commands=(
+	'add:configure a service to not auto-start'
+	'del:configure a service to auto-start'
+	)
+	_describe -t command 'sub-commands' commands
+}
+
+function _rcctl_subcommands()
+{
+	local -a rcctl_commands
+	rcctl_commands=(
+	'get:display a standard-format env/ directory for a service'
+	'set:change a standard-format env/ directory for a service'
+	)
+	_describe -t rcctl_command 'sub-commands' rcctl_commands
+	_system_control_subcommands
+}
+
+function _runlevels()
+{
+	local -a runlevels
+	runlevels=(
+	'0:poweroff'
+	'1:rescue'
+	'2:normal'
+	'3:normal'
+	'4:normal'
+	'5:normal'
+	'6:reboot'
+	'm:normal'
+	'auto:normal'
+	'C:powercycle'
+	'c:powercycle'
+	'H:halt'
+	'h:halt'
+	'S:rescue'
+	's:rescue'
+	'single:rescue'
+	'B:emergency'
+	'b:emergency'
+	'emergency:emergency'
+	)
+	_describe -t runlevel 'run levels' runlevels
+}
+
+function _utx_types()
+{
+	local -a types
+	types=(
+	'boot:add boot-time entry'
+	'reboot:add boot-time entry'
+	'shutdown:add shutdown entry'
+	)
+	_describe -t type 'types' types
+}
+
+function _service_bundles()
+{
+	local -a dir
+	dir=(/var/local/sv /var/sv /etc/service-bundles/services /etc/service-bundles/targets)
+	_path_files -/ -W dir
+}
+
+function _system_control_common()
+{
+	local lstate state
+	local -a common
+
+	common=(-s '--help[Display option help]' '--usage[Display option usage]')
+
+	case "$service" in
+		emergency|rescue|normal|halt|power(off|cycle)|reboot|convert-fstab-services)
+			_arguments -S $common -- ;;
+		init)
+			_arguments -S $common '1:run level:_runlevels' -- ;;
+		(un|)load-kernel-module)
+			_arguments -S $common '1:module name:_files' -- ;;
+		write-volume-service-bundle)
+			_arguments -A '-*' $common '1:fstype:' '2:what:_files' '3:where:_directories' '4:options:' -- ;;
+		get-mount-what)
+			_arguments -A '-*' $common '1:where:_directories' -- ;;
+		get-mount-where)
+			_arguments -A '-*' $common '1:what:_files' -- ;;
+		set-service-env)
+			_arguments -A '-*' $common '1:service name:_service_bundles' '2:name:' '3:value:' -- ;;
+		print-service-env)
+			_arguments -A '-*' $common '1:service name:_service_bundles' '2:value:' -- ;;
+		convert--units)
+			_arguments -A '-*' $common '1:unit name:_files' -- ;;
+		convert-systemd-units)
+			_arguments -A '-*' $common '1:unit name:_files' -- ;;
+		escape)
+			_arguments -A '-*' $common '*:name:' -- ;;
+		version)
+			_arguments -A '-*' $common -- ;;
+		*)
+			_arguments -A '-*' $common ${1:+'*:service name:_service_bundles'} -- ;;
+	esac
+}
+
+function _system_control_subargs()
+{
+	local service="$words[1]"
+	local curcontext="${curcontext%:*:*}:system-control-$words[1]:" 
+	_system_control_common "$@"
+}
+
+function _rcctl()
+{
+	local service="$words[1]"
+	local curcontext="${curcontext%:*:*}:system-control-$words[1]:" 
+	case "$service" in
+		get)	service=print-service-env ;;
+		set)	service=set-service-env ;;
+	esac
+	_system_control_common "$@"
+}
+
+function _update_rc_d_subcommands()
+{
+	local service="$words[1]"
+	local curcontext="${curcontext%:*:*}:system-control-$words[1]:" 
+	case "$service" in
+		defaults)	service=preset ;;
+	esac
+	_system_control_common "$@"
+}
+
+function _system_control()
+{
+	local lstate state
+	local -a common
+	common=(-s '--help[Display option help]' '--usage[Display option usage]')
+	local next='*:::next prog:_normal'
+
+	case "${service}" in
+		(service|per-user|system)-manager)
+			_message -r "${service} has no options or parameters." ;;
+		(system|init)ctl|svcadm|system-control) 
+			_arguments -A '-*' $common '1:subcommand:_system_control_subcommands' '*::subargs:_system_control_subargs YES' -- ;;
+		rcctl)
+			_arguments -A '-*' $common '1:subcommand:_rcctl_subcommands' '*::subargs:_rcctl' -- ;;
+		update-rc.d) 
+			_arguments -A '-*' $common '1:service name:_service_bundles' '2:subcommand:_update_rc_d_subcommands' -- ;;
+		rc-update) 
+			_arguments -A '-*' $common '1:service name:_service_bundles' '2:subcommand:_rc_update_subcommands' -- ;;
+		chkconfig) 
+			_arguments -A '-*' $common '1:service name:_service_bundles' '2:subcommand:_chkconfig_subcommands' -- ;;
+		(rc-|)service|invoke-rc.d)
+			_arguments -A '-*' $common '1:service name:_service_bundles' '*:::subargs:_system_control' -- ;;
+		(tel|)init)
+			_arguments -S $common '1:runlevel:_runlevels' -- ;;
+		utx|login-update-utmpx)
+			_arguments -S $common '1:type:_utx_types' -- ;;
+		service-(control|status|is-(ok|up|enabled)|show)|sv(up|c|ok|show|stat))
+			_arguments -A '-*' '*:service directory:_directories' -- ;;
+		svscan|service-dt-scanner)
+			_arguments -A '-*' $common '1:scan directory:_directories' -- ;;
+		shutdown)
+			_arguments -A '-*' $common '1:time:' '2:message:' -- ;;
+		*)
+			_arguments -A '-*' $common -- ;;
+	esac
+}
+
+_system_control "$@"

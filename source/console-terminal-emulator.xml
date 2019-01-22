@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="console-terminal-emulator">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -352,7 +358,7 @@ The terminal emulator also supports the ISO 8613-6 SGR colour extensions, that a
 <itemizedlist>
 <listitem>
 <para>
-The indexed colour extension (SGR 38:5 and SGR 48:5) has the conventional mapping of 16 "standard" colours, a 24 value grayscale, and a 6 by 6 by 6 colour cube.
+The indexed colour extension (SGR 38:5 and SGR 48:5) has the conventional mapping of 16 "standard" colours, a 24 value grayscale, and a 6&#x00D7;6&#x00D7;6 colour cube.
 </para>
 </listitem>
 <listitem>
@@ -518,6 +524,15 @@ The terminal emulator sends the equivalent control sequence through to the line 
 If bracketed paste has been switched on, the control sequence denoting end of paste is sent beforehand.
 </para></listitem>
 </varlistentry>
+<varlistentry>
+<term><code>0x11cccccc</code></term>
+<listitem> <para>
+Unicode accelerator character.  
+The UCS-4 code point is <code>cccccc</code>,
+This is UTF-8 encoded and sent through to the terminal line discipline as terminal input, prefixed with ESC.
+If bracketed paste has been switched on, the control sequence denoting end of paste is sent beforehand.
+</para></listitem>
+</varlistentry>
 </variablelist>
 
 <para>
@@ -567,18 +582,18 @@ The DEC status reports report that a keyboard is always present, with an unknown
 
 <para>
 Extended keys and function keys cause the terminal emulator to send control sequences through the line discipline to terminal input.
-What control sequences are sent depends from what console type the terminal emulator is set to: SCO console, Linux console, FreeBSD console, NetBSD console, or DEC VT.
+What control sequences are sent depends from what emulation type the terminal emulator is set to: SCO, Linux, FreeBSD, NetBSD, or DEC VT.
 </para>
 
 <para>
-No console terminal type defines control sequences for all keys, or distinct control sequences where it does define them.
-For example, the Linux console and DEC VT only define control sequences for function keys from 1 to 20 and have no defined control sequences for function keys outwith that range.
-(The SCO console defines control sequences for function keys from 1 to 48.)
+No emulated terminal type defines control sequences for all keys, or distinct control sequences where it does define them.
+For example, the Linux kernel virtual terminal and DEC VT only define control sequences for function keys from 1 to 20 and have no defined control sequences for function keys outwith that range.
+(The SCO kernel virtual terminal defines control sequences for function keys from 1 to 48.)
 </para>
 
 <para>
-The terminal emulator does not employ the ECMA-48 FNK sequences; no kernel virtual console sends them, in any mode.
-Most consoles use the non-standard DECFNK sequences instead, for function keys and for some (to varying extents) extended keys.
+The terminal emulator does not employ the ECMA-48 FNK sequences; no kernel virtual terminal sends them, in any mode.
+Most terminal emulators use the non-standard DECFNK sequences instead, for function keys and for some (to varying extents) extended keys.
 </para>
 
 <para>
@@ -597,39 +612,39 @@ These sub-modes are provided by realizers and their various keyboard mapping sys
 </para>
 
 <para>
-The function keys in the abstract keyboard are all proper function keys, and function keys 1 to 5 will generate documented, but unusual, DECFNK control sequences in non-SCO-console modes.
+The function keys in the abstract keyboard are all proper function keys, and function keys 1 to 5 will generate documented, but unusual, DECFNK control sequences in non-SCO modes.
 (Folklore has it that these control sequences were impossible for DEC VTs to send, as the function keys 1 to 5 were always in "local mode".
 In fact, in later model DEC VTs they could all be reconfigured to "host mode" and would generate DECFNK control sequences like any other function key.)
 DEC VTs have distinct extended, non-function, keys on the calculator keypad, <code>PAD_F1</code> to <code>PAD_F4</code>; which do not generate DECFNK control sequences.
 </para>
 
 <para>
-The Linux, FreeBSD, NetBSD, and SCO consoles, and many other terminal emulators, map the <code>F1</code> to <code>F4</code> keys on the actual keyboard to the <code>PAD_F1</code> to <code>PAD_F4</code> extended keys, for which they otherwise have no equivalent; and the control sequences that most applications will recognize as <code>F1</code> to <code>F4</code> are in reality the control sequences for <code>PAD_F1</code> to <code>PAD_F4</code>.
+The Linux, FreeBSD, NetBSD, and SCO kernel virtual terminals, and many other terminal emulators, map the <code>F1</code> to <code>F4</code> keys on the actual keyboard to the <code>PAD_F1</code> to <code>PAD_F4</code> extended keys, for which they otherwise have no equivalent; and the control sequences that most applications will recognize as <code>F1</code> to <code>F4</code> are in reality the control sequences for <code>PAD_F1</code> to <code>PAD_F4</code>.
 As with the locks, this is considered entirely and solely the domain of realizers, which apply their various mapping mechanisms to determine what keys on the realizing keyboard generate function key input messages and what real keys generate extended key input messages.
 </para>
 
 <para>
-There is a degree of variance amongst consoles that can cause problems if the <envar>TERM</envar> environment variable (and hence termcap/terminfo terminal type) used by applications connected to the slave side of the terminal does not match the console emulation being employed by the terminal emulator.
+There is a degree of variance amongst kernel virtual terminals that can cause problems if the <envar>TERM</envar> environment variable (and hence termcap/terminfo terminal type) used by applications connected to the slave side of the terminal does not match the emulation being employed by the terminal emulator.
 </para>
 
 <itemizedlist>
 <listitem>
 <para>
-The Linux console sends the DECFNK sequences for <code>FIND</code> and <code>SELECT</code> for the <code>HOME</code> and <code>END</code> keys.  
-The other consoles send the DECFNK <code>FIND</code> and <code>SELECT</code> sequences for those keys, with different control sequences for <code>HOME</code> and <code>END</code> (as per a DEC VT520 in VT mode).
+The Linux kernel virtual terminal sends the DECFNK sequences for <code>FIND</code> and <code>SELECT</code> for the <code>HOME</code> and <code>END</code> keys.  
+The other kernel virtual terminals send the DECFNK <code>FIND</code> and <code>SELECT</code> sequences for those keys, with different control sequences for <code>HOME</code> and <code>END</code> (as per a DEC VT520 in VT mode).
 This has two major consequences: 
-If the terminal emulator is in Linux console mode, <code>HOME</code> and <code>END</code> will not be correctly recognized if the <envar>TERM</envar> environment variable does not also specify "<code>linux</code>"; and if the terminal emulator is in another mode but the <envar>TERM</envar> environment variable is set to "<code>linux</code>", <code>FIND</code> and <code>SELECT</code> will be incorrectly recognized and <code>HOME</code> and <code>END</code> will not be recognized at all.
+If the terminal emulator is in Linux emulation mode, <code>HOME</code> and <code>END</code> will not be correctly recognized if the <envar>TERM</envar> environment variable does not also specify "<code>linux</code>"; and if the terminal emulator is in another mode but the <envar>TERM</envar> environment variable is set to "<code>linux</code>", <code>FIND</code> and <code>SELECT</code> will be incorrectly recognized and <code>HOME</code> and <code>END</code> will not be recognized at all.
 </para>
 </listitem>
 <listitem>
 <para>
-The SCO console does not use the DECFNK sequences at all, and has its own completely different set of control sequences generated by function keys.
+The SCO kernel virtual terminal does not use the DECFNK sequences at all, and has its own completely different set of control sequences generated by function keys.
 </para>
 </listitem>
 <listitem>
 <para>
-The FreeBSD console, because of incomplete functionality in its Teken library, uses a mongrel admixture of DECFNK and SCO console sequences.
-This is only properly reflected in the "teken" terminal type in the terminfo database, which is now the proper terminal type for the FreeBSD console.
+The FreeBSD kernel virtual terminal, because of incomplete functionality in its Teken library, uses a mongrel admixture of DECFNK and SCO kernel virtual terminal sequences.
+This is only properly reflected in the "teken" terminal type in the terminfo database, which is now the proper terminal type for the FreeBSD kernel virtual terminal.
 Importantly, it is <emphasis>not</emphasis> reflected in the "<code>xterm</code>" or "<code>cons25</code>" terminal types; and it is an error to think that Teken is XTerm or even a subset of it.
 (This is an error called out, for more than just Teken where people make this mistake, <ulink url="https://invisible-island.net/ncurses/ncurses.faq.html#xterm_generic">in the XTerm FAQ</ulink>.)
 </para>
@@ -658,7 +673,7 @@ If the next character is a pasted one, paste will then be switched back on again
 
 <para>
 The terminal emulator does not replicate all features of a real hardware terminal.
-Its goal is to provide a workalike for (the TUI parts of the) the virtual consoles that are/were built in to the Linux and BSD operating system kernels.
+Its goal is to provide a workalike for (the TUI parts of the) the virtual terminals that are/were built in to the Linux and BSD operating system kernels.
 There is no support for the historical features of real terminal hardwares such as attached printers, page switching, status lines, XON/XOFF modem flow control, programmable function keys, alternative (WYSE/TVI) control/escape sequences, direct auxiliary serial device I/O, and graphics modes.
 </para>
 
@@ -681,7 +696,7 @@ There is no ISO 2022 support.
 </para>
 
 <para>
-The two-character 7-bit mechanism of ECMA-48 (section 5) is not only present, but is more completely implemented than in several kernel console terminal emulators, which usually only implement the 7-bit aliases for CSI and OSC.
+The two-character 7-bit mechanism of ECMA-48 (section 5) is not only present, but is more completely implemented than in several kernel virtual terminal emulators, which usually only implement the 7-bit aliases for CSI and OSC.
 </para>
 
 <para>
@@ -704,6 +719,11 @@ That standard explicitly states in section 13.1.8 that "Pe" values are separated
 This would have resulted in SGR sequences that were unambiguous, since it would not be possible to mistake a sub-parameter specifying a colour value for an SGR attribute code: CSI <code>1;4;38:5:14;48:2:3:7:224m</code>.
 A long-standing misunderstanding/misreading on the parts of many people has led, however, to most programs (from terminfo to the Linux kernel terminal emulator) sending and expecting semi-colons instead of colons, leading to ambiguous SGR sequences: CSI <code>1;4;38;5;14;48;2;3;7;224m</code>.
 For compatibility, the terminal emulator has to do the same; even though it would be good to fix this 20-year-old bug.
+</para>
+
+<para>
+A genuine DEC VT sets no tabstops in response to the RIS and DECSTR control sequences.
+The Linux and FreeBSD kernel terminal emulators both do, however; so for compatibility so too does this terminal emulator.
 </para>
 
 </refsection>

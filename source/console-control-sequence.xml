@@ -1,0 +1,639 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
+<refentry id="console-control-sequence">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>console-control-sequence</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">administrator commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>console-control-sequence</refname>
+<refname>setterm</refname>
+<refpurpose>emit control sequences to a user-space virtual (or other) terminal</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>console-control-sequence</command>
+<arg choice='opt'>--7bit</arg>
+<arg choice='opt'>--8bit</arg>
+<arg choice='opt'>--permit-fake-truecolour</arg> 
+<arg choice='opt'>--foreground <replaceable>colour</replaceable></arg>
+<arg choice='opt'>--background <replaceable>colour</replaceable></arg>
+<arg choice='opt'>--bold <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--faint <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--italic <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--underline <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--blink <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--reverse <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--invisible <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--strikethrough <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--cursor <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--appcursorkeys <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--appcalckeys <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--altbuffer <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--backspace-is-bs <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--bce <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--linewrap <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--inversescreen <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--insert <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--132-columns <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--regtabs <replaceable>interval</replaceable></arg>
+<arg choice='opt'>--settabs <replaceable>tabstops</replaceable></arg>
+<arg choice='opt'>--clrtabs <replaceable>tabstops</replaceable></arg>
+<arg choice='opt'>--notabs</arg> 
+<arg choice='opt'>--rows <replaceable>count</replaceable></arg>
+<arg choice='opt'>--columns <replaceable>count</replaceable></arg>
+<arg choice='opt'>--dec-locator-reports <group choice='req'><arg choice='plain'>off</arg><arg choice='plain'>press</arg><arg choice='plain'>release</arg><arg choice='plain'>all</arg></group></arg>
+<arg choice='opt'>--xterm-mouse-reports <group choice='req'><arg choice='plain'>off</arg><arg choice='plain'>click</arg><arg choice='plain'>drag</arg><arg choice='plain'>all</arg></group></arg>
+<arg choice='opt'>--cursor-shape <group choice='req'><arg choice='plain'>default</arg><arg choice='plain'>block</arg><arg choice='plain'>underline</arg><arg choice='plain'>star</arg><arg choice='plain'>box</arg><arg choice='plain'>bar</arg></group></arg>
+<arg choice='opt'>--underline-type <group choice='req'><arg choice='plain'>single</arg><arg choice='plain'>double</arg><arg choice='plain'>curly</arg><arg choice='plain'>dotted</arg><arg choice='plain'>dashed</arg></group></arg>
+<arg choice='opt'>--reset</arg> 
+<arg choice='opt'>--soft-reset</arg> 
+<arg choice='opt'>--showtabs</arg> 
+</cmdsynopsis>
+<cmdsynopsis>
+<command>setterm</command>
+<arg choice='opt'>--7bit</arg> 
+<arg choice='opt'>--8bit</arg> 
+<arg choice='opt'>--permit-fake-truecolour</arg> 
+<arg choice='opt'>--foreground <replaceable>colour</replaceable></arg>
+<arg choice='opt'>--background <replaceable>colour</replaceable></arg>
+<arg choice='opt'>--bold <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--faint <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--italic <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--underline <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--blink <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--reverse <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--invisible <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--strikethrough <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--cursor <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--appcursorkeys <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--appcalckeys <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--altbuffer <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--backspace-is-bs <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--bce <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--linewrap <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--inversescreen <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--insert <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--132-columns <replaceable>boolean</replaceable></arg>
+<arg choice='opt'>--regtabs <replaceable>interval</replaceable></arg>
+<arg choice='opt'>--settabs <replaceable>tabstops</replaceable></arg>
+<arg choice='opt'>--clrtabs <replaceable>tabstops</replaceable></arg>
+<arg choice='opt'>--notabs</arg> 
+<arg choice='opt'>--rows <replaceable>count</replaceable></arg>
+<arg choice='opt'>--columns <replaceable>count</replaceable></arg>
+<arg choice='opt'>--dec-locator-reports <group choice='req'><arg choice='plain'>off</arg><arg choice='plain'>press</arg><arg choice='plain'>release</arg><arg choice='plain'>all</arg></group></arg>
+<arg choice='opt'>--xterm-mouse-reports <group choice='req'><arg choice='plain'>off</arg><arg choice='plain'>click</arg><arg choice='plain'>drag</arg><arg choice='plain'>all</arg></group></arg>
+<arg choice='opt'>--cursor-shape <group choice='req'><arg choice='plain'>default</arg><arg choice='plain'>block</arg><arg choice='plain'>underline</arg><arg choice='plain'>star</arg><arg choice='plain'>box</arg><arg choice='plain'>bar</arg></group></arg>
+<arg choice='opt'>--underline-type <group choice='req'><arg choice='plain'>single</arg><arg choice='plain'>double</arg><arg choice='plain'>curly</arg><arg choice='plain'>dotted</arg><arg choice='plain'>dashed</arg></group></arg>
+<arg choice='opt'>--reset</arg> 
+<arg choice='opt'>--soft-reset</arg> 
+<arg choice='opt'>--showtabs</arg> 
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>console-control-sequence</command> emits control sequences to its standard output that instruct a compatible terminal emulator to perform various actions.
+<citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> is one such compatible terminal emulator.
+</para>
+
+<para>
+Although its behaviour is controlled by the <citerefentry><refentrytitle><envar>TERM</envar></refentrytitle><manvolnum>7</manvolnum></citerefentry> environment variable, it does not use <citerefentry><refentrytitle>terminfo</refentrytitle><manvolnum>3</manvolnum></citerefentry> or <citerefentry><refentrytitle>termcap</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
+It instead uses <citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
+The terminal type determines a few terminal capabilities (such as whether the terminal can actually handle DEC private mode control sequences at all, and its degree of ISO 8613-6 support), but most processing adheres to the ECMA-48 and ISO 8613-6 de jure standard control sequences and the DEC VT, DTTerm, and AIXTerm de facto standard ones.
+</para>
+
+<para>
+It emits simple terminal control sequences (ECMA-48 and DEC VT names in parentheses), as follows:
+</para>
+<variablelist>
+<varlistentry>
+<term>
+<arg choice='plain'>--foreground <replaceable>colour</replaceable></arg>
+</term>
+<listitem><para>
+(SGR 30&#x2013;37,38,39,90&#x2013;97)
+Set the foreground colour to <replaceable>colour</replaceable>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--background <replaceable>colour</replaceable></arg>
+</term>
+<listitem><para>
+(SGR 40&#x2013;47,48,49,100&#x2013;107)
+Set the background colour to <replaceable>colour</replaceable>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--bold <replaceable>boolean</replaceable></arg>
+</term>
+<listitem><para>
+(SGR 1 and SGR 22)
+Set boldface on/off according to <replaceable>boolean</replaceable>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--faint <replaceable>boolean</replaceable></arg>
+</term>
+<listitem><para>
+(SGR 2 and SGR 22)
+Set faint on/off according to <replaceable>boolean</replaceable>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--italic <replaceable>boolean</replaceable></arg>
+</term>
+<listitem><para>
+(SGR 3 and SGR 23)
+Set italic on/off according to <replaceable>boolean</replaceable>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--underline <replaceable>boolean</replaceable></arg>
+</term>
+<listitem><para>
+(SGR 4 and SGR 24)
+Set underline on/off according to <replaceable>boolean</replaceable>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--blink <replaceable>boolean</replaceable></arg>
+</term>
+<listitem><para>
+(SGR 5 and SGR 25)
+Set blink on/off according to <replaceable>boolean</replaceable>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--reverse <replaceable>boolean</replaceable></arg>
+</term>
+<listitem><para>
+(SGR 7 and SGR 27)
+Set reverse on/off according to <replaceable>boolean</replaceable>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--invisible <replaceable>boolean</replaceable></arg>
+</term>
+<listitem><para>
+(SGR 8 and SGR 28)
+Set invisible on/off according to <replaceable>boolean</replaceable>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--strikethrough <replaceable>boolean</replaceable></arg>
+</term>
+<listitem><para>
+(SGR 9 and SGR 29)
+Set strikethrough on/off according to <replaceable>boolean</replaceable>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--cursor <replaceable>boolean</replaceable></arg>
+</term>
+<listitem><para>
+(DECTCEM)
+Cursor visibility on/off according to <replaceable>boolean</replaceable>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--appcursorkeys <replaceable>boolean</replaceable></arg>
+</term>
+<listitem><para>
+(DECCKM)
+Set cursor keypad sending application mode sequences on/off according to <replaceable>boolean</replaceable>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--appcalckeys <replaceable>boolean</replaceable></arg>
+</term>
+<listitem><para>
+(DECNKM)
+Set calculator keypad sending application mode sequences on/off according to <replaceable>boolean</replaceable>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--altbuffer <replaceable>boolean</replaceable></arg>
+</term>
+<listitem><para>
+Switch to/from the XTerm alternate screen buffer according to <replaceable>boolean</replaceable>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--backspace-is-bs <replaceable>boolean</replaceable></arg>
+</term>
+<listitem><para>
+(DECBKM)
+Set the Backspace key sending BS (instead of DEL) on/off according to <replaceable>boolean</replaceable>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--delete-is-del <replaceable>boolean</replaceable></arg>
+</term>
+<listitem><para>
+(DECSM, DECRM)
+Set the Delete key(s) sending DEL (instead of DECFNK 3) on/off according to <replaceable>boolean</replaceable>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--bce <replaceable>boolean</replaceable></arg>
+</term>
+<listitem><para>
+(DECECM)
+Set erase with background colour (instead of with screen/default colour) on/off according to <replaceable>boolean</replaceable>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--linewrap <replaceable>boolean</replaceable></arg>
+</term>
+<listitem><para>
+(DECAWM)
+Set automatic right margin wrap on/off according to <replaceable>boolean</replaceable>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--inversescreen <replaceable>boolean</replaceable></arg>
+</term>
+<listitem><para>
+(DECSCNM)
+Set whole screen reverse video on/off according to <replaceable>boolean</replaceable>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--insert <replaceable>boolean</replaceable></arg>
+</term>
+<listitem><para>
+(IRM)
+Set insert (not overstrike) on/off according to <replaceable>boolean</replaceable>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--132-columns <replaceable>boolean</replaceable></arg>
+</term>
+<listitem><para>
+(DECCOLM)
+Set 132-column mode on/off according to <replaceable>boolean</replaceable>.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--regtabs <replaceable>interval</replaceable></arg>
+</term>
+<listitem><para>
+(CTC, TBC, HTS, and DECST8C)
+Clear all existing tabs and register new ones at intervals of <replaceable>interval</replaceable> columns.
+The cursor will be moved to the beginning of the line.
+</para>
+<para>
+DECST8C is used if <replaceable>interval</replaceable> is 8 and the terminal type is known to support it (<citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry> has <varname>use_DECST8C</varname> set to true).
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--settabs <replaceable>tabstops</replaceable></arg>
+</term>
+<listitem><para>
+(CTC, CHA, HPA, and HTS)
+Register new tabstops at the positions given in the <replaceable>tabstops</replaceable> comma-separated list of column numbers.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--clrtabs <replaceable>tabstops</replaceable></arg>
+</term>
+<listitem><para>
+(CTC, CHA, HPA, and TBC)
+Clear existing tabstops at the positions given in the <replaceable>tabstops</replaceable> comma-separated list of column numbers.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--notabs</arg>
+</term>
+<listitem><para>
+(CTC and TBC)
+Clear all existing tabs.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--clear <group choice='req'><arg choice='plain'>all</arg><arg choice='plain'>rest</arg><arg choice='plain'>scrollback</arg></group></arg>
+</term>
+<listitem><para>
+(ED and CUP)
+Erase the whole display (and home the cursor) with ED 2, from the current position to the end of the display with ED 0, or the scrollback buffer with ED 3.
+The colour used is determined by whether the terminal is in background colour erase mode.
+</para><para>
+The type <arg choice='plain'>all</arg> is a misnomer for compatibility with the tool discussed in <link linkend="Compatibility">the later section on compatibility</link>.
+The ED 3 control sequence is an extension to ECMA-48 that is understood by some terminal emulators.
+Fortunately, those that do not understand it simply ignore the control sequence, and <command>console-control-sequence</command> can just emit it unconditionally.
+</para>
+<para>
+Compatible terminal emulators are:
+</para>
+<itemizedlist>
+<listitem><para>
+<citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para><para>
+This has always implemented the ED 3 extension, but does nothing because it has no off-screen buffers (what is "on screen" being a function of realizers, which are separate from the terminal emulator).
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>xterm</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para><para>
+<ulink url="http://invisible-island.net/xterm/xterm.log.html#xterm_107">This extension was added on 1999-06-12 by Stephen P. Wall.</ulink>
+</para></listitem>
+<listitem><para>
+PuTTY
+</para><para>
+<ulink url="http://chiark.greenend.org.uk/~sgtatham/putty/wishlist/term-clear-scrollback.html">This extension was added in 2006 by Jacob Nevins.</ulink>
+</para></listitem>
+<listitem><para>
+the Linux kernel built-in terminal emulator
+</para><para>
+<ulink url="http://git.kernel.org/cgit/linux/kernel/git/next/linux-next.git/commit/?id=f8df13e0a901fe55631fed66562369b4dba40f8b">This extension was added in 2011</ulink>, albeit erroneously, differing from the long-standing XTerm and PuTTY semantics of clearing <emphasis>only</emphasis> the scrollback buffer.
+</para></listitem>
+</itemizedlist>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--rows <replaceable>count</replaceable></arg>
+</term>
+<listitem><para>
+Set the number of rows to <replaceable>count</replaceable>.
+</para>
+<para>
+This uses the DECSNLS control sequence if the terminal type is known to support it (<citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry> has <varname>use_DECSNLS</varname> set to true), and the DECSLPP control sequence otherwise.
+In the latter case, it rounds <arg choice="plain"><replaceable>count</replaceable></arg> up to 25 if the terminal type is known to implement the DTTerm extensions (<citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry> has <varname>has_DTTerm_DECSLPP_extensions</varname> set to true).
+</para>
+<para>
+It then resets the top and bottom margins to the screen borders using the DECSTBM control sequence.
+</para>
+<para>
+Note that some shells issue an ED 0 control sequence as part of their prompt, which has the (perhaps unexpected) effect of clearing the screen if a shell prompt is issued immediately after the terminal has been resized.
+</para>
+<para>
+DECSTBM is supported by the DEC VT100 and later.
+DECSLPP is supported by the DEC VT340 and later.
+DECSNLS is supported by the DEC VT420 and later.
+The Linux and FreeBSD/TrueOS kernel virtual terminal subsystems do not support any of these control sequences.
+<citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> supports all three.
+</para>
+<para>
+DEC VTs allow any value in a DECSLPP control sequence, and round the number up to the nearest value supported by the terminal display hardware.
+However, several purportedly DEC VT compatible terminal emulators ascribe wholly different actions to attempts to set fewer than 25 lines, a re-use of DECSLPP pioneered by DTTerm that prevents its use for setting smaller screen heights.
+DECSNLS is unencumbered by the inconsistencies of DECSLPP in those terminal emulators, but conversely is not supported by several other purportedly DEC VT compatible terminal emulators.
+</para>
+<para>
+If the <arg choice='plain'>--columns</arg> command line option is used as well and the terminal is known to support the DTTerm extensions, setting the rows and columns is done in one operation with DECSLPP 8.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--columns <replaceable>count</replaceable></arg>
+</term>
+<listitem><para>
+Set the number of columns to <replaceable>count</replaceable>.
+</para>
+<para>
+This uses the DECSCPP control sequence if the terminal type is known to support it (<citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry> has <varname>use_DECSCPP</varname> set to true), and does nothing otherwise because there is no other control sequence for only setting the number of columns.
+It then resets the left and right margins to the screen borders using the DECSLRM control sequence.
+</para>
+<para>
+If the <arg choice='plain'>--rows</arg> command line option is used as well and the terminal is known to support the DTTerm extensions, setting the rows and columns is done in one operation with DECSLPP 8.
+</para>
+<para>
+DECSCPP is supported by the DEC VT340 and later.
+DECSLRM is supported by the DEC VT420 and later.
+The Linux and FreeBSD/TrueOS kernel virtual terminal subsystems do not support either of these control sequences.
+<citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> supports both.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--dec-locator-reports <group choice='req'><arg choice='plain'>off</arg><arg choice='plain'>press</arg><arg choice='plain'>release</arg><arg choice='plain'>all</arg></group></arg>
+</term>
+<listitem><para>
+(DECELR and DECSLE)
+Disable DEC Locator reports, enable for button press reports, enable for button release reports, and enable for all reports, respectively.
+This does nothing if the terminal type is not known to support these control sequences (<citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry> has <varname>use_DEC_Locator</varname> set to false).
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--xterm-mouse-reports <group choice='req'><arg choice='plain'>off</arg><arg choice='plain'>click</arg><arg choice='plain'>drag</arg><arg choice='plain'>all</arg></group></arg>
+</term>
+<listitem><para>
+Disable XTerm mouse reports, enable for button press reports, enable for button press and motion while pressed reports, and enable for all reports, respectively.
+</para>
+<para>
+Only the modern ECMA-48-conformant style of mouse report (often misnamed "SGR" style, although it is not a SGR control sequence, and invented by Thomas Dickey in 2012) is requested, which most terminal emulators support nowadays.
+The older styles of mouse reports from X10 xterm and Unicode rxvt are malformed CSI sequences which an ECMA-48-conformant decoder has to fail to handle (because they put additional characters after the final character).
+This thus does nothing if the terminal type is not known to support the ECMA-48-conformant style (<citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry> has <varname>has_XTerm1006Mouse</varname> set to false) because emitting the XTerm private mode settings anyway would turn on non-ECMA-48-conformant mouse reports on some terminals.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--cursor-shape <group choice='req'><arg choice='plain'>default</arg><arg choice='plain'>block</arg><arg choice='plain'>underline</arg><arg choice='plain'>star</arg><arg choice='plain'>box</arg><arg choice='plain'>bar</arg></group></arg>
+</term>
+<listitem><para>
+(DESCUSR and LINXSCUSR)
+Specify the shape of the cursor.
+Some terminals and terminal emulators do not have distinct shapes for star, box, and bar.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--underline-type <group choice='req'><arg choice='plain'>single</arg><arg choice='plain'>double</arg><arg choice='plain'>curly</arg><arg choice='plain'>dotted</arg><arg choice='plain'>dashed</arg></group></arg>
+</term>
+<listitem><para>
+Specify the type of underlining for SGR 4 (i.e. <arg choice='plain'>--underline on</arg>).
+This sets an SGR sub-parameter which only a few terminal emulator programs yet recognize or even correctly process.
+Even of those, few yet implement all types of underline.
+<citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> does not yet support this sub-parameter, but will at least correctly ignore it.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--reset</arg> 
+</term>
+<listitem><para>
+(RIS)
+Reset the terminal to its initial state.
+</para>
+<para>
+As DEC VT420 programmers' reference manual notes, this is usually overkill.
+On a real terminal, it resets the serial communications line from the terminal end and will as a result look like a terminal hangup to the host.
+Use <arg choice='plain'>--soft-reset</arg> for preference.
+That does not affect the serial communications.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--soft-reset</arg> 
+</term>
+<listitem><para>
+(DECSTR)
+Soft reset the terminal, if the terminal type is known to support it (<citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry> has <varname>use_DECSTR</varname> set to true); and do nothing otherwise because there is no other control sequence for soft reset.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<arg choice='plain'>--showtabs</arg> 
+</term>
+<listitem><para>
+Output a ruler line followed by a line showing where each tabstop is (generated by emitting TAB characters to move to each tabstop).
+If the lines do not appear properly, this is usually a symptom of the terminal emulator not correctly processing C1 control characters such as the NEL used at the end of the lines.
+Terminal output width is determined from the line discipline, if standard output is a terminal device, or assumed to be 160 characters otherwise.
+</para></listitem>
+</varlistentry>
+</variablelist>
+
+<para>
+Other than assuming a fixed output width, this command makes no attempt to behave differently if its output is not to a terminal, since one might want to use it to generate the control sequences to send to a file, a pipe, or a non-terminal device.
+</para>
+
+<para>
+If the <arg choice='plain'>--7bit</arg> command-line option is used, the various C1 control characters (CSI, HTS, NEL, and so forth) are sent using the ECMA-48 7-bit encoding scheme.
+If it is not used but the <arg choice='plain'>--8bit</arg> command-line option is used, the C1 control characters are sent as a raw 8-bit character.
+By default, in the absence of either option, the C1 control characters are sent encoded as UTF-8, in the expectation that the terminal is Unicode aware and decodes all output from UTF-8.
+</para>
+<itemizedlist>
+<listitem><para>
+<citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> properly decodes C1 characters from UTF-8 and processes them; so it does not require either option.
+(Indeed, since UTF-8 is mandatory, using the <arg choice='plain'>--8bit</arg> command-line option is inappropriate.)
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>xterm</refentrytitle><manvolnum>1</manvolnum></citerefentry> requires the <arg choice='plain'>--7bit</arg> option be used as it does not ever treat UTF-8-encoded C1 characters as control characters, irrespective of the setting of its UTF-8 encoding options.
+This will work however xterm is configured.
+One can use the <arg choice='plain'>--8bit</arg> option instead if xterm is configured to be in plain 8-bit (<arg choice='plain'>+u8</arg>) mode.
+</para></listitem>
+<listitem><para>
+PuTTY requires the <arg choice='plain'>--7bit</arg> option be used as it does not treat C1 characters as control characters, and only recognizes the 7-bit extension of ECMA-48 section 5 as C1 controls.
+</para></listitem>
+</itemizedlist>
+
+<refsection id="GraphicRendition" xreflabel="GraphicRendition">
+<title>Colours and attributes</title>
+
+<para>
+<replaceable>boolean</replaceable> can be <code>on</code>, <code>off</code>, <code>true</code>, <code>false</code>, <code>yes</code>, or <code>no</code>.
+</para>
+
+<para>
+The default <replaceable>colour</replaceable> is named <arg choice='plain'>default</arg>.
+The 16 standard colours can be specified by RGBCMYK names such as <arg choice='plain'>bright red</arg>, <arg choice='plain'>white</arg>, and <arg choice='plain'>yellow</arg>.
+Colour 7 is <arg choice='plain'>white</arg> or <arg choice='plain'>bright grey</arg>.
+Colour 8 is <arg choice='plain'>grey</arg> or <arg choice='plain'>bright black</arg>.
+Indexed colours can be specified by their index numbers, such as <arg choice='plain'>188</arg>.
+Note that hexadecimal and octal numbers are permitted, so care must be taken with leading zeroes.
+Direct RGB colours can be specified by <code>#</code> followed by the RGB value in hexadecimal, such as <arg choice='plain'>#00B0E815</arg>.
+</para>
+
+<para>
+If the terminal type is known to not support ISO 8613-6 Direct colour at all or is known to fake support by mapping 24-bit RGB colours to entries in their 8-bit colour palettes, <command>console-control-sequence</command> maps the RGB value to the nearest indexed colour value and uses ISO 8613-6 Indexed colour.
+It assumes a conventional palette with a 24 value greyscale and a 6&#x00D7;6&#x00D7;6 colour cube (the same as implemented in <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> for Indexed colour).
+Setting the first 16 ISO 8613-6 Indexed colours is done with the newer control sequences, not with the 16 ECMA-48 and aixterm standard colour ones.
+The <arg choice='plain'>--permit-fake-truecolour</arg> command-line option permits the use of ISO 8613-6 Direct colour control sequences even on terminals which are known to fake it.
+</para>
+
+</refsection>
+
+</refsection>
+
+<refsection id="Standards" xreflabel="Standards">
+<title>Standards</title>
+<refsection><title>de jure</title>
+<itemizedlist>
+<listitem><para>
+<ulink url="http://www.ecma-international.org/publications/standards/Ecma-048.htm"><citetitle>Control Functions for Coded Character Sets</citetitle> <citebiblioid>ECMA-48</citebiblioid></ulink> 5th edition. 1991. ECMA International.
+</para></listitem>
+<listitem><para>
+<ulink url="http://www.itu.int/rec/T-REC-T.412/en"><citetitle>Information technology &#x2014; Open Document Architecture (ODA) and interchange format: Document structures</citetitle> <citebiblioid>T.412</citebiblioid></ulink> International Telecommunication Union.
+</para></listitem>
+<listitem><para>
+<ulink url="http://www.itu.int/rec/T-REC-T.416/en"><citetitle>Information technology &#x2014; Open Document Architecture (ODA) and interchange format: Character content architectures</citetitle> <citebiblioid>T.416</citebiblioid></ulink> International Telecommunication Union.
+</para></listitem>
+<listitem><para>
+<ulink url="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=22943"><citetitle>Information technology &#x2014; Open Document Architecture (ODA) and Interchange Format: Character content architectures</citetitle> <citebiblioid>ISO/IEC 8613-6:1994</citebiblioid></ulink> International Organization for Standardization.
+</para></listitem>
+</itemizedlist>
+</refsection>
+<refsection><title>de facto</title>
+<itemizedlist>
+<listitem><para>
+<ulink url="http://vaxhaven.com/images/5/55/EK-VT420-RM-002.pdf"><citetitle>VT520/VT525 Video Terminal Programmer Information</citetitle> <citebiblioid>EK-VT520-RM</citebiblioid></ulink> July 1994.  Digital.
+</para></listitem>
+<listitem><para>
+<ulink url="http://vaxhaven.com/images/e/ee/EK-VT520-RM-A01.pdf"><citetitle>VT420 Programmer Reference Manual</citetitle> <citebiblioid>EK-VT420-RM-002</citebiblioid></ulink> February 1992. Digital.
+</para></listitem>
+</itemizedlist>
+</refsection>
+</refsection>
+
+<refsection id="Compatibility" xreflabel="Compatibility">
+<title>Compatibility</title>
+
+<para>
+There is a <citerefentry><refentrytitle>setterm</refentrytitle><manvolnum>1</manvolnum></citerefentry> command in the util-linux toolset.
+There is a wide range of overlap between the two tools.
+Some of the differences are:
+</para>
+<itemizedlist>
+<listitem><para>
+That tool employs operating system and device specific <citerefentry><refentrytitle>ioctl</refentrytitle><manvolnum>2</manvolnum></citerefentry> calls, and hardwires control sequences that are peculiar to the Linux built-in terminal emulator (not looking several of them up in the <citerefentry><refentrytitle>terminfo</refentrytitle><manvolnum>3</manvolnum></citerefentry> database, despite what its manual page claims).
+This command does not, and so can be used remotely and with terminal emulators other than the Linux built-in one.
+None of the things peculiar to the Linux built-in terminal emulator, such as setting blanking modes or power modes and accessing the internal character+attribute arrays through special device files, are supported.
+Conversely, <command>console-control-sequence</command> supports standard terminal control sequences that the Linux-specific tool does not, such as strikethrough and calculator keypad application mode.
+</para></listitem>
+<listitem><para>
+To simplify the command-line option parsing, displaying the tabstops and ruler is the remit of a distinct <arg choice='plain'>--showtabs</arg> option that never takes option arguments.
+Similarly, clearing all tabs is the remit of a distinct <arg choice='plain'>--notabs</arg> option.
+</para></listitem>
+<listitem><para>
+This command supports the additional 8 (de facto) standard colours (that originated with aixterm), and uses ISO 8613-6 Indexed and ISO 8613-6 Direct colour control sequences.
+</para></listitem>
+<listitem><para>
+No such concept as "underline colour" or "boldface colour" is recognized.
+This is a hangover from an odd quirk in the way that the Linux built-in terminal emulator handled CGA/EGA/VGA hardware in text mode (which it usually employs in graphics mode nowadays, the so-called "framebuffer console").
+Underlining and boldface are attributes (displayed on many terminal emulators by actually underlining and boldfacing the glyphs), not colours.
+</para></listitem>
+</itemizedlist>
+
+</refsection>
+
+<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+</refentry>

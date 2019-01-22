@@ -3,6 +3,7 @@ exec	chdir
 exec	chroot
 exec	clearenv
 exec	create-control-group
+exec	console-flat-table-viewer
 exec	cyclog
 exec	delegate-control-group-to
 exec	envdir
@@ -25,10 +26,12 @@ exec	local-reaper
 exec	local-seqpacket-socket-accept
 exec	local-seqpacket-socket-listen
 exec	local-stream-socket-accept
+exec	local-stream-socket-connect
 exec	local-stream-socket-listen
 exec	machineenv
 exec	make-private-fs
 exec	make-read-only-fs
+exec	monitor-fsck-progress
 exec	monitored-fsck
 exec	move-to-control-group
 exec	netlink-datagram-socket-listen
@@ -99,6 +102,7 @@ system-control	start
 system-control	status
 system-control	stop
 system-control	systemd-escape
+system-control	chkservice
 service-control	service-dt-scanner
 service-control	service-is-enabled
 service-control	service-is-ok
@@ -111,16 +115,17 @@ service-is-ok	svok
 service-is-up	svup
 service-show	svshow
 service-status	svstat
+console-terminal-emulator	console-decode-ecma48
 console-terminal-emulator	console-convert-kbdmap
 console-terminal-emulator	console-fb-realizer
 console-terminal-emulator	console-input-method
 console-terminal-emulator	console-input-method-control
 console-terminal-emulator	console-multiplexor
 console-terminal-emulator	console-multiplexor-control
-console-terminal-emulator	console-ncurses-realizer
 console-terminal-emulator	console-termio-realizer
 console-terminal-emulator	console-clear
 console-terminal-emulator	console-resize
+console-terminal-emulator	console-control-sequence
 console-terminal-emulator	detach-controlling-tty
 console-terminal-emulator	detach-kernel-usb-driver
 console-terminal-emulator	emergency-login
@@ -128,7 +133,6 @@ console-terminal-emulator	login-banner
 console-terminal-emulator	login-process
 console-terminal-emulator	login-prompt
 console-terminal-emulator	login-update-utmpx
-console-terminal-emulator	monitor-fsck-progress
 console-terminal-emulator	open-controlling-tty
 console-terminal-emulator	pty-get-tty
 console-terminal-emulator	pty-run
@@ -137,5 +141,6 @@ console-terminal-emulator	vc-get-tty
 console-terminal-emulator	vc-reset-tty
 console-clear	clear_console
 console-resize	resizecons
+console-control-sequence	setterm
 console-multiplexor-control	chvt
 login-update-utmpx	utx

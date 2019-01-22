@@ -130,7 +130,7 @@ udp_socket_connect (
 		if (!remote_info) {
 			std::fprintf(stderr, "%s: FATAL: %s\n", prog, "No addresses (remaining) to connect to.");
 		free_fail:
-			if (remote_info_list) freeaddrinfo(remote_info);
+			if (remote_info_list) freeaddrinfo(remote_info_list);
 			throw EXIT_FAILURE;
 		}
 

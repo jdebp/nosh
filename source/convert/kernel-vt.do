@@ -5,7 +5,7 @@
 # vim: set filetype=sh:
 #
 # Special setup for kernel virtual terminals.
-# This is invoked by general-services.do .
+# This is invoked by all.do .
 #
 
 # These get us *only* the configuration variables, safely.
@@ -20,14 +20,13 @@ then
 fi
 original="${keymap}"
 # There are a whole bunch of old names for keyboard mappings that systems could be using.
-# Note that this is NOT the same as the modernizations done by the /etc/rc.d system in the syscons to vt conversion.
-# There are some subtle differences, in part because the conversion process builds capsctrl versions of everything.
+# These the vt names, on the presumption that kbdcontrol is going to be using the vt keymaps.
 case "${keymap}" in
 hy.armscii-8)			keymap="am";;
 be.iso.acc)			keymap="be.acc";;
 be.iso)				keymap="be";;
-bg.bds.ctrlcaps)		keymap="bg.bds.capsctrl";;
-bg.phonetic.ctrlcaps)		keymap="bg.phonetic.capsctrl";;
+bg.bds.ctrlcaps)		keymap="bg.bds";;
+bg.phonetic.ctrlcaps)		keymap="bg.phonetic";;
 br275.iso.acc)			keymap="br";;
 br275.*)			keymap="br.noacc";;
 by.*)				keymap="by";;
@@ -98,6 +97,8 @@ if ! test _"${original}" = _"${keymap}"
 then
 	echo 1>&2 $0: Please adjust /etc/rc.conf to read keymap="${keymap}".
 fi
+
+exec printf "%s\n" "${keymap}" > "$3"
 
 if s="`system-control find kernel-vt-kbdcontrol 2>/dev/null`"
 then
@@ -208,9 +209,3 @@ then
 	printf >> "$3" "%s:\n" "${s}"
 	system-control print-service-env "${s}" >> "$3"
 fi
-
-# This is a common service, so no need for a find test.
-system-control set-service-env console-fb-realizer@head0 "KBDMAP" "kbdmaps/${keymap}.kbdmap"
-
-printf >> "$3" "%s:\n" console-fb-realizer@head0
-system-control print-service-env console-fb-realizer@head0 >> "$3"

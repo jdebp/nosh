@@ -30,6 +30,9 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 #if defined(__LINUX__) || defined(__linux__)
+static const char tty_class_dir[] = "/sys/class/tty";
+static const char tty0[] = "tty0";
+static const char console[] = "console";
 static const char active[] = "active";
 #endif
 
@@ -46,15 +49,11 @@ ttylogin_starter (
 	const char * prefix("ttylogin@");
 	const char * log_prefix("cyclog@");
 #if defined(__LINUX__) || defined(__linux__)
-	const char * class_dir("/sys/class/tty");
-	const char * tty("tty0");
 	unsigned long num_ttys(MAX_NR_CONSOLES);
 #endif
 	bool verbose(false);
 	try {
 #if defined(__LINUX__) || defined(__linux__)
-		popt::string_definition class_option('\0', "class", "directory", "Specify the sysfs TTY class for kernel virtual consoles.", class_dir);
-		popt::string_definition tty_option('\0', "tty", "tty-name", "Specify the sysfs TTY name for the 0th kernel virtual console.", tty);
 		popt::unsigned_number_definition num_ttys_option('n', "num-ttys", "number", "Number of kernel virtual terminals.", num_ttys, 0);
 #endif
 		popt::bool_definition verbose_option('v', "verbose", "Verbose mode.", verbose);
@@ -62,8 +61,6 @@ ttylogin_starter (
 		popt::string_definition log_prefix_option('\0', "log-prefix", "string", "Specify the prefix for the log service name.", log_prefix);
 		popt::definition * top_table[] = {
 #if defined(__LINUX__) || defined(__linux__)
-			&class_option,
-			&tty_option,
 			&num_ttys_option,
 #endif
 			&prefix_option,
@@ -95,26 +92,39 @@ ttylogin_starter (
 	sigaction(SIGCHLD,&sa,NULL);
 
 #if defined(__LINUX__) || defined(__linux__)
-	FileDescriptorOwner class_dir_fd(open_dir_at(AT_FDCWD, class_dir));
+	FileDescriptorOwner class_dir_fd(open_dir_at(AT_FDCWD, tty_class_dir));
 	if (0 > class_dir_fd.get()) {
 		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, class_dir, std::strerror(error));
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, tty_class_dir, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	FileDescriptorOwner tty_dir_fd(open_dir_at(class_dir_fd.get(), tty));
-	if (0 > tty_dir_fd.get()) {
+	FileDescriptorOwner tty0_dir_fd(open_dir_at(class_dir_fd.get(), tty0));
+	if (0 > tty0_dir_fd.get()) {
 		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, class_dir, tty, std::strerror(error));
+		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, tty_class_dir, tty0, std::strerror(error));
+		throw EXIT_FAILURE;
+	}
+	FileDescriptorOwner console_dir_fd(open_dir_at(class_dir_fd.get(), console));
+	if (0 > console_dir_fd.get()) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s/%s: %s\n", prog, tty_class_dir, console, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
 	class_dir_fd.release();
-	FileDescriptorOwner active_file_fd(open_read_at(tty_dir_fd.get(), active));
-	if (0 > active_file_fd.get()) {
+	FileDescriptorOwner tty0_active_file_fd(open_read_at(tty0_dir_fd.get(), active));
+	if (0 > tty0_active_file_fd.get()) {
 		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s/%s/%s: %s\n", prog, class_dir, tty, active, std::strerror(error));
+		std::fprintf(stderr, "%s: FATAL: %s/%s/%s: %s\n", prog, tty_class_dir, tty0, active, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
-	tty_dir_fd.release();
+	tty0_dir_fd.release();
+	FileDescriptorOwner console_active_file_fd(open_read_at(console_dir_fd.get(), active));
+	if (0 > console_active_file_fd.get()) {
+		const int error(errno);
+		std::fprintf(stderr, "%s: FATAL: %s/%s/%s: %s\n", prog, tty_class_dir, console, active, std::strerror(error));
+		throw EXIT_FAILURE;
+	}
+	console_dir_fd.release();
 
 	// Pre-create the kernel virtual terminals so that the user can switch to them in the first place.
 	for (unsigned n(0U); n < num_ttys; ++n) {
@@ -124,16 +134,17 @@ ttylogin_starter (
 		if (0 <= tty_fd) close(tty_fd);
 	}
 
-	FileStar active_file(fdopen(active_file_fd.get(), "r"));
-	if (!active_file) {
+	FileStar tty0_active_file(fdopen(tty0_active_file_fd.get(), "r"));
+	if (!tty0_active_file) {
 		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s/%s/%s: %s\n", prog, class_dir, tty, active, std::strerror(error));
+		std::fprintf(stderr, "%s: FATAL: %s/%s/%s: %s\n", prog, tty_class_dir, tty0, active, std::strerror(error));
 		throw EXIT_FAILURE;
 	}
 	pollfd p;
-	p.fd = active_file_fd.get();
+	p.fd = tty0_active_file_fd.get();
 	p.events = POLLPRI;
-	active_file_fd.release();
+	tty0_active_file_fd.release();
+
 	for (;;) {
 		const int rc(poll(&p, 1, -1));
 		if (0 > rc) {
@@ -145,10 +156,10 @@ ttylogin_starter (
 			// It is important to read from the file, clearing the POLLPRI state, before forking and letting the parent loop round to poll again.
 			// To ensure that we re-read the file, we must call std::fflush() after std::rewind(), so that the standard library actually reads from the underlying file rather than from its internal buffer that it has already read and just rewinds back to the beginning of.
 			// Strictly speaking, we are relying upon GNU and BSD libc non-standard extensions to std::fflush(), here.
-			std::rewind(active_file);
-			std::fflush(active_file);
+			std::rewind(tty0_active_file);
+			std::fflush(tty0_active_file);
 			std::string ttyname;
-			const bool success(read_line(active_file, ttyname));
+			const bool success(read_line(tty0_active_file, ttyname));
 			if (!success) {
 				const int error(errno);
 				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, active, std::strerror(error));
@@ -211,8 +222,8 @@ ttylogin_starter (
 	// Reap all of the children just created.
 	for (;;) {
 		pid_t c;
-		int status;
-		if (0 >= wait_blocking_for_anychild_exit(c, status)) break;
+		int status, code;
+		if (0 >= wait_blocking_for_anychild_exit(c, status, code)) break;
 	}
 #endif
 

@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="setlock">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -38,6 +44,12 @@ It is unspecified what access rights the file descriptor has for the lock file, 
 </para>
 
 <para>
+<command>setlock</command> does not read from or write to the lockfile.
+On platforms where the implementation (discussed further on) permits locking special files, this allows using such files as lockfiles.
+Note, however, that since the file access is unspecified, it is unspecified whether using a FIFO with no reader open as a lockfile will work.
+</para>
+
+<para>
 Unless the <arg choice='plain'>--non-blocking</arg> command line option is used, <command>setlock</command> will wait to obtain the lock whilst another process holds it.  
 If that option is used, it will not wait, but instead will fail to acquire the lock.
 </para>
@@ -47,10 +59,10 @@ Unless the <arg choice='plain'>--ignore</arg> option is used, failure to acquire
 If that option is used, it will still exit on failure, but without printing an error message and with a success status.
 </para>
 
-</refsection><refsection><title>UNRELIABLE IMPLEMENTATION DETAILS</title>
+</refsection><refsection><title>Unreliable implementation details</title>
 
 <para>
-On BSD and Linux locking is based upon the <citerefentry><refentrytitle>flock</refentrytitle><manvolnum>2</manvolnum></citerefentry> system call.
+On the BSDs and Linux, locking is based upon the <citerefentry><refentrytitle>flock</refentrytitle><manvolnum>2</manvolnum></citerefentry> system call.
 On such systems, explicitly unlocking the file with <citerefentry><refentrytitle>flock</refentrytitle><manvolnum>2</manvolnum></citerefentry> will also deactivate the lock.
 </para>
 

@@ -33,11 +33,17 @@ void
 ECMA48Output::print_control_character(
 	unsigned char character
 ) const {
-	if (character >= 0x80) {
-		std::putc(ESC, out);
-		character -= 0x40;
-	}
-	std::putc(character, out);
+        if (c1_7bit) {
+                if (character >= 0x80) {
+                        std::putc(ESC, out);
+                        character -= 0x40;
+                }
+                std::putc(character, out);
+        } else
+        if (c1_8bit)
+                std::putc(character, out);
+        else
+                UTF8(character);
 }
 
 void
@@ -133,23 +139,25 @@ ECMA48Output::SCUSR(CursorSprite::attribute_type a, CursorSprite::glyph_type g) 
 {
 	switch (caps.cursor_shape_command) {
 		case TerminalCapabilities::NO_SCUSR:
+			if (caps.use_DECPrivateMode)
+				DECPrivateMode(12U, a & CursorSprite::BLINK);
 			break;
-		case TerminalCapabilities::ORIGINAL_DECSUSR:
+		case TerminalCapabilities::ORIGINAL_DECSCUSR:
 			switch (g) {
-				case CursorSprite::UNDERLINE:	DECSCUSR(CursorSprite::BLINK & a ? 3U : 4U); break;
 				case CursorSprite::BAR:		[[clang::fallthrough]];
+				case CursorSprite::UNDERLINE:	DECSCUSR(CursorSprite::BLINK & a ? 3U : 4U); break;
 				case CursorSprite::BOX:		[[clang::fallthrough]];
 				case CursorSprite::STAR:	[[clang::fallthrough]];
 				case CursorSprite::BLOCK:	DECSCUSR(CursorSprite::BLINK & a ? 1U : 2U); break;
 				default:			DECSCUSR(0U); break;
 			}
 			break;
-		case TerminalCapabilities::EXTENDED_DECSUSR:
+		case TerminalCapabilities::EXTENDED_DECSCUSR:
 			switch (g) {
+				case CursorSprite::BLOCK:	DECSCUSR(CursorSprite::BLINK & a ? 1U : 2U); break;
 				case CursorSprite::UNDERLINE:	DECSCUSR(CursorSprite::BLINK & a ? 3U : 4U); break;
 				case CursorSprite::BAR:		DECSCUSR(CursorSprite::BLINK & a ? 5U : 6U); break;
 				case CursorSprite::BOX:		DECSCUSR(CursorSprite::BLINK & a ? 7U : 8U); break;
-				case CursorSprite::BLOCK:	DECSCUSR(CursorSprite::BLINK & a ? 1U : 2U); break;
 				case CursorSprite::STAR:	DECSCUSR(CursorSprite::BLINK & a ? 9U : 10U); break;
 				default:			DECSCUSR(0U); break;
 			}
@@ -173,8 +181,8 @@ ECMA48Output::SCUSR() const
 	switch (caps.cursor_shape_command) {
 		case TerminalCapabilities::NO_SCUSR:
 			break;
-		case TerminalCapabilities::ORIGINAL_DECSUSR:
-		case TerminalCapabilities::EXTENDED_DECSUSR:
+		case TerminalCapabilities::ORIGINAL_DECSCUSR:
+		case TerminalCapabilities::EXTENDED_DECSCUSR:
 			DECSCUSR();
 			break;
 		case TerminalCapabilities::LINUX_SCUSR:
@@ -185,10 +193,26 @@ ECMA48Output::SCUSR() const
 
 void
 ECMA48Output::SGRColour(
+	bool is_fg
+) const {
+	switch (caps.colour_level) {
+		case TerminalCapabilities::NO_COLOURS:
+			break;
+		default:
+			csi();
+			std::fprintf(out, "%um", is_fg ? 39U : 49U);
+			break;
+	}
+}
+
+void
+ECMA48Output::SGRColour(
 	bool is_fg,
 	const CharacterCell::colour_type & colour
 ) const {
 	switch (caps.colour_level) {
+		case TerminalCapabilities::NO_COLOURS:
+			break;
 		case TerminalCapabilities::ECMA_8_COLOURS:
 			{
 				uint_fast32_t dist(-1U);

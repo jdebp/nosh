@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Socket daemon for the %p protocol used by Apple devices
+
+[Service]
+ExecStart=%pd --user "${user:-%p}" --foreground
+
+[Install]
+WantedBy=server.target

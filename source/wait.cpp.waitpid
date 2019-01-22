@@ -22,20 +22,55 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 static inline
+void
+make_status (
+	int s,
+	int & status,
+	int & code
+) {
+#if defined(WIFCONTINUED)
+	if (WIFCONTINUED(s)) {
+		status = WAIT_STATUS_RUNNING;
+		code = 0;
+	} else
+#endif
+	if (WIFSTOPPED(s)) {
+		status = WAIT_STATUS_PAUSED;
+		code = WSTOPSIG(s);
+	} else
+	if (WIFEXITED(s)) {
+		status = WAIT_STATUS_EXITED;
+		code = WEXITSTATUS(s);
+	} else
+	if (WIFSIGNALED(s)) {
+		status = WCOREDUMP(s) ? WAIT_STATUS_SIGNALLED_CORE : WAIT_STATUS_SIGNALLED;
+		code = WTERMSIG(s);
+	} else
+	{
+		status = WAIT_STATUS_RUNNING;
+		code = 0;
+	}
+}
+
+static inline
 int	/// \retval -1 error \retval 0 no child \retval >0 found child
 wait_for_anychild (
 	pid_t & child,
 	int & status,
+	int & code,
 	int flags
 ) {
 	for (;;) {
-		const pid_t rc(waitpid(-1, &status, flags));
+		int s;
+		const pid_t rc(waitpid(-1, &s, flags));
 		if (static_cast<pid_t>(-1) == rc) {
 			if (EINTR != errno) return -1;
 		} else
 		if (static_cast<pid_t>(0) == rc) {
 			return 0;
-		} else {
+		} else
+		{
+			make_status(s, status, code);
 			child = rc;
 	       		return 1;
 	 	}
@@ -45,33 +80,37 @@ wait_for_anychild (
 int	/// \retval -1 error \retval 0 no child \retval >0 found child
 wait_nonblocking_for_anychild_stopcontexit (
 	pid_t & child,
-	int & status
+	int & status,
+	int & code
 ) {
-	return wait_for_anychild(child, status, WNOHANG|WSTOPPED|WCONTINUED);
+	return wait_for_anychild(child, status, code, WNOHANG|WSTOPPED|WCONTINUED);
 }
 
 int	/// \retval -1 error \retval 0 no child \retval >0 found child
 wait_nonblocking_for_anychild_stopexit (
 	pid_t & child,
-	int & status
+	int & status,
+	int & code
 ) {
-	return wait_for_anychild(child, status, WNOHANG|WSTOPPED);
+	return wait_for_anychild(child, status, code, WNOHANG|WSTOPPED);
 }
 
 int	/// \retval -1 error \retval 0 no child \retval >0 found child
 wait_nonblocking_for_anychild_exit (
 	pid_t & child,
-	int & status
+	int & status,
+	int & code
 ) {
-	return wait_for_anychild(child, status, WNOHANG);
+	return wait_for_anychild(child, status, code, WNOHANG);
 }
 
 int	/// \retval -1 error \retval 0 no child \retval >0 found child
 wait_blocking_for_anychild_exit (
 	pid_t & child,
-	int & status
+	int & status,
+	int & code
 ) {
-	return wait_for_anychild(child, status, 0);
+	return wait_for_anychild(child, status, code, 0);
 }
 
 static inline
@@ -79,16 +118,19 @@ int	/// \retval -1 error \retval 0 no child \retval >0 found child
 wait_for_event_of (
 	const pid_t child,
 	int & status,
+	int & code,
 	int flags
 ) {
 	for (;;) {
-		const pid_t rc(waitpid(child, &status, flags));
+		int s;
+		const pid_t rc(waitpid(child, &s, flags));
 		if (static_cast<pid_t>(-1) == rc) {
 			if (EINTR != errno) return -1;
 		} else
 		if (static_cast<pid_t>(0) == rc) {
 			return 0;
 		} else {
+			make_status(s, status, code);
 	       		return 1;
 	 	}
 	}
@@ -97,23 +139,26 @@ wait_for_event_of (
 int	/// \retval -1 error \retval 0 no child \retval >0 found child
 wait_nonblocking_for_stopcontexit_of (
 	const pid_t child,
-	int & status
+	int & status,
+	int & code
 ) {
-	return wait_for_event_of(child, status, WNOHANG|WSTOPPED|WCONTINUED);
+	return wait_for_event_of(child, status, code, WNOHANG|WSTOPPED|WCONTINUED);
 }
 
 int	/// \retval -1 error \retval 0 no child \retval >0 found child
 wait_nonblocking_for_stopexit_of (
 	const pid_t child,
-	int & status
+	int & status,
+	int & code
 ) {
-	return wait_for_event_of(child, status, WNOHANG|WSTOPPED);
+	return wait_for_event_of(child, status, code, WNOHANG|WSTOPPED);
 }
 
 int	/// \retval -1 error \retval 0 no child \retval >0 found child
 wait_blocking_for_exit_of (
 	const pid_t child,
-	int & status
+	int & status,
+	int & code
 ) {
-	return wait_for_event_of(child, status, 0);
+	return wait_for_event_of(child, status, code, 0);
 }

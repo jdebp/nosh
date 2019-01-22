@@ -1,0 +1,9 @@
+# This is an overlay keymap that sets the backspace key to be 
+# the DEC VT soft-programmable delete.
+#
+#                                                        option
+# scan                       cntrl         option option cntrl lock
+# code  base   shift  cntrl  shift  option shift  cntrl  shift state
+# ------------------------------------------------------------------
+  083   delete '.'    delete '.'    delete '.'    delete '.'     N
+  103   delete delete delete delete delete delete delete delete  O

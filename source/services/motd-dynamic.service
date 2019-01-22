@@ -2,6 +2,11 @@
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
 
+# This is obsolete on Debian Linux.
+# https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=735521
+#
+# Also note that the external configuration import subsystem creates an /etc/system-control/convert/motd .
+
 [Unit]
 Description=Create the "dynamic" part of the Message Of The Day
 Before=multi-user-pre.target

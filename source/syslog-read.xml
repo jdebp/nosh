@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="syslog-read">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -58,12 +64,8 @@ latency or desynchronized clocks.
 </para>
 
 <para>
-This server does expect a datagram socket and senders speaking the RFC 
-protocols, however.
-It is not suitable for use with operating system kernel log transports
-such as <filename>/dev/klog</filename>, <filename>/proc/kmsg</filename>,
-and <filename>/proc/kmsg</filename>, which have a non-RFC 5424 message
-format and which are not datagram-based.
+This server does expect a datagram socket and senders speaking the RFC protocols, however.
+It is not suitable for use with operating system kernel log transports such as <filename>/dev/klog</filename>, <filename>/dev/kmsg</filename>, and <filename>/proc/kmsg</filename>, which have a non-RFC 5424 message format and which are not datagram-based.
 </para>
 
 </refsection>

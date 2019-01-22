@@ -13,7 +13,7 @@ dump_rc() { clearenv read-conf rc.conf printenv ; }
 
 redo-ifchange rc.conf
 
-echo > "$3" "# Automatically re-generated from /etc/rc.conf{,.local}"
+echo > "$3" "# Automatically re-generated from rc.conf"
 dump_rc |
 awk >> "$3" -F = '
 /^harvest_/ { 

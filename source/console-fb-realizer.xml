@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="console-fb-realizer">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -225,7 +231,7 @@ On the BSDs, the <arg choice='plain'>--kernel-vt</arg> command-line option impli
 </variablelist>
 
 <para>
-For a tutorial on how to employ these in concert, see the Nosh Guide.
+For a tutorial on how to employ these in concert, see the <citetitle>nosh Guide</citetitle>.
 </para>
 
 </refsection>
@@ -329,7 +335,7 @@ FreeBSD/TrueOS keymaps can be compiled from the BSD/SCO <citerefentry><refentryt
 
 <para>
 In machine-readable form, a map is a simple 2-dimensional array of 96-octet map entries, representing 17 "rows" of 16 "columns" per row, in row-major order.
-This is the "matrix" of a logical keyboard denoted by the aforeentioned common codeset.
+This is the "matrix" of a logical keyboard denoted by the aforementioned common codeset.
 </para>
 
 <para>
@@ -425,7 +431,7 @@ An unused position, Power, Sleep, Wake, Debug, and 11 more unused positions.
 <varlistentry>
 <term>Application Commands keypad 1</term>
 <listitem><para>
-Pause, Next/Prev Task, Attention, Application, Break, Print Screen, 7 unused posititions, Mute, Volume Down, and Volume Up.
+Pause, Print Screen, Attention, Application, Break, 8 unused posititions, Mute, Volume Down, and Volume Up.
 </para></listitem>
 </varlistentry>
 <varlistentry>
@@ -469,7 +475,7 @@ A selection class determines how the set of modifiers is reduced to a four-bit a
 
 <para>
 Keyboard modifiers comprise (in ISO 9995-1 terminology) modifiers for level 2, level 3, and group 2; for caps, num, and shift locks; and for super, alt, and control.
-What keys act as these modifiers is of course determined by the keyboard layout: but often the level 2 modifiers are the shift keys; the level 3 modifier is the "Option"/"Closed Apple" (Apple keyboards) or "AltGr" (IBM PC/AT keyboards) key; and super is the "Command"/"Open Apple" (Apple keyboards), "Meta" (Sun keyboards), or "Windows" (Microsoft keyboards) key.
+What keys act as these modifiers is of course determined by the keyboard layout: but often the level 2 modifiers are the shift keys; the level 3 modifier is the right "Option"/"Closed Apple" (Apple keyboards) or "AltGr" (Windows and IBM PC/AT keyboards) key; the alt modifier is the left "Option"/"Closed Apple" (Apple keyboards) or "Alt" (Windows and IBM PC/AT keyboards) key; and super is the "Command"/"Open Apple" (Apple keyboards), "Meta" (Sun keyboards), or "Windows" (Windows keyboards) key.
 The initial state of all locks is off, except for the numeric lock when the <arg choice="plain">--initial-numlock</arg> option is used.
 </para>
 
@@ -548,7 +554,8 @@ This is used for keys that have no action in the key map.
 <term><code>0x01<replaceable>nnnnnn</replaceable></code></term>
 <listitem><para>
 UCS-3 key.
-On press or autorepeat, a unicode character message for the code point <code>U+00<replaceable>nnnnnn</replaceable></code> is sent to the input FIFO.
+On press or autorepeat, a Unicode character message for the code point <code>U+00<replaceable>nnnnnn</replaceable></code> is sent to the input FIFO.
+If the alt modifier is in effect, a Unicode accelerator message is sent instead.
 </para></listitem>
 </varlistentry>
 <varlistentry>
@@ -610,7 +617,7 @@ On press or autorepeat, an extended key message for the extended key number <cod
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><code>0x0E<replaceable>nnnn</replaceable><replaceable>zz</replaceable></code></term>
+<term><code>0x1E<replaceable>nnnn</replaceable><replaceable>zz</replaceable></code></term>
 <listitem><para>
 Unshiftable extended key.
 On press or autorepeat, an extended key message for the extended key number <code><replaceable>nnnn</replaceable></code> is sent to the input FIFO.

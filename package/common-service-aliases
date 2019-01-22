@@ -46,6 +46,7 @@ udisks2		org.freedesktop.UDisks2
 unbound	local-unbound
 unbound	local_unbound
 upower		org.freedesktop.UPower
+usbmux	usbmuxd
 utx	linux-utmp
 winbindd		winbind
 wpa_supplicant	fi.epitest.hostap.WPASupplicant

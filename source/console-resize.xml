@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="console-resize">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -20,7 +26,6 @@
 <arg choice='opt'>--lines</arg> 
 <arg choice='opt'>--7bit</arg> 
 <arg choice='opt'>--8bit</arg> 
-<arg choice='opt'>--vt420</arg> 
 <arg choice="req"><replaceable>size</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
@@ -28,7 +33,6 @@
 <arg choice='opt'>--lines</arg> 
 <arg choice='opt'>--7bit</arg> 
 <arg choice='opt'>--8bit</arg> 
-<arg choice='opt'>--vt420</arg> 
 <arg choice="req"><replaceable>size</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -40,57 +44,22 @@
 </para>
 
 <para>
-<arg choice="plain"><replaceable>size</replaceable></arg> must be of the form <code>COLSxROWS</code>; unless the <arg choice="plain">--lines</arg> command-line option is used, in which case it must be of the form <code>ROWS</code>.
+<arg choice="plain"><replaceable>size</replaceable></arg> must be of the form <code><replaceable>COLS</replaceable>&#x00D7;<replaceable>ROWS</replaceable></code>; unless the <arg choice="plain">--lines</arg> command-line option is used, in which case it must be of the form <code><replaceable>ROWS</replaceable></code>.
+(For convenience, <code>X</code> or <code>x</code> can be used in place of <code>&#x00D7;</code>, although both of those letters can occur in a number if hexadecimal is used.)
 </para>
 
 <para>
 <command>console-resize</command> does not employ operating system and device specific <citerefentry><refentrytitle>ioctl</refentrytitle><manvolnum>2</manvolnum></citerefentry> calls.
-Rather, it emits simple terminal control sequences, as follows:
-</para>
-<orderedlist>
-<listitem><para>
-To change the console width, it always emits the DECSCPP control sequence.
-</para></listitem>
-<listitem><para>
-If the <arg choice="plain">--lines</arg> command-line option is not used, it also changes the console height.
-To do this, it emits the DECSLPP control sequence, unless the <arg choice="plain">--vt420</arg> command-line option is used, in which case it emits the DECNLS control sequence.
-</para></listitem>
-<listitem><para>
-It then resets the top, and bottom margins to the screen borders using the DECSTBM control sequence.
-</para></listitem>
-<listitem><para>
-If the <arg choice="plain">--lines</arg> command-line option is not used, it then resets the left and right margins to the screen borders using the DECSLRM control sequence.
-</para></listitem>
-</orderedlist>
-
-<para>
-DECSTBM is supported by the DEC VT100 and later.
-DECSCPP and DECSLPP are supported by the DEC VT340 and later.
-DECSNLS and DECSLRM are supported by the DEC VT420 and later.
+Rather, it emits simple terminal control sequences, by chaining to <citerefentry><refentrytitle>console-control-sequence</refentrytitle><manvolnum>1</manvolnum></citerefentry> with <arg choice='plain'>--rows <replaceable>ROWS</replaceable></arg> and (if the <arg choice="plain">--lines</arg> command-line option is not used) with <arg choice='plain'>--columns <replaceable>COLS</replaceable></arg>.
 </para>
 
 <para>
-This command only works with DEC VT terminals or compatible terminal emulators.
-It simply assumes that its standard output is a terminal device that understands DEC VT420 control sequences, as it has no way to know.
-There is no termcap/terminfo capability covering this.
-Moreover, it makes no attempt to behave differently if its output is not to a terminal, since one might want to use it to generate the control sequences to send to a file, a pipe, or a non-terminal device.
-</para>
-
-<para>
-If the <arg choice='plain'>--7bit</arg> command-line option is used, the CSI control character that begins all of the control sequences is sent using the ECMA-48 7-bit encoding scheme.
-If it is not used but the <arg choice='plain'>--8bit</arg> command-line option is used, the CSI control character is sent as a raw 8-bit character.
-By default, in the absence of either option, the CSI control character is sent encoded as UTF-8, in the expectation that the terminal is Unicode aware and decodes all output from UTF-8.
-This is not true of real DEC terminals, but is true of <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-</para>
-
-<para>
-DECSTBM and DECSLRM reset the cursor position to the origin.
-Note that some shells issue an ED control sequence as part of their prompt, which has the (perhaps unexpected) effect of clearing the screen if a shell prompt is issued immediately after the console has been resized.
+It passes the the <arg choice='plain'>--7bit</arg> and <arg choice='plain'>--8bit</arg> command-line options straight through to <command>console-control-sequence</command>.
 </para>
 
 </refsection>
 
-<refsection><title>COMPATIBILITY</title>
+<refsection><title>Compatibility</title>
 
 <para>
 For compatibility with the old "kbd" toolset, this command is also available as <command>resizecons</command>.
@@ -98,14 +67,11 @@ Unlike the "kbd" toolset's <command>resizecons</command> command, this command i
 </para>
 
 <para>
-However, it does require a terminal that understands the DEC VT control sequences.
-The Linux and FreeBSD/TrueOS kernel virtual terminal subsystems do not.
+This command makes no attempt to behave differently if its output is not to a terminal, since one might want to use it to generate the control sequences to send to a file, a pipe, or a non-terminal device.
 </para>
 
 <para>
-DEC VT420 and VT520 terminals allow any value in a DECSLPP control sequence, and round the number up to the nearest value supported by the terminal display hardware.
-The <citerefentry><refentrytitle>xterm</refentrytitle><manvolnum>1</manvolnum></citerefentry> terminal emulator recognizes several values not supported by DEC hardware and responds to them with quite different actions.
-Do not use <arg choice="plain"><replaceable>ROWS</replaceable></arg> values less than 24 if the output is being sent to xterm.
+For compatibility of the actual control sequences emitted with various terminals and terminal emulators, see the <citerefentry><refentrytitle>console-control-sequence</refentrytitle><manvolnum>1</manvolnum></citerefentry> manual.
 </para>
 
 </refsection>

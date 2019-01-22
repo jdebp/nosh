@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="service-dt-scanner">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -10,7 +16,8 @@
 
 <refnamediv>
 <refname>service-dt-scanner</refname>
-<refname>svscan</refname><refpurpose>daemontools compatibility service directory scanner</refpurpose>
+<refname>svscan</refname>
+<refpurpose>daemontools compatibility service directory scanner</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>

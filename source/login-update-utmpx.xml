@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="login-update-utmpx">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -10,6 +16,7 @@
 
 <refnamediv>
 <refname>login-update-utmpx</refname>
+<refname>utx</refname>
 <refpurpose>update the login log and active login table</refpurpose>
 </refnamediv>
 

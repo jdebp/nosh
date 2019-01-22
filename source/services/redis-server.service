@@ -1,0 +1,21 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Redis key-value store server
+After=redis-runtime
+Wants=redis-runtime
+
+[Service]
+NUMAInterleave=all
+User=redis
+LimitNOFILE=64000
+# These are what a Debian person thinks, and are not the official word from redis development.
+PrivateTmp=yes
+PrivateDevices=yes
+#ReadOnlyDirectories=/
+#CapabilityBoundingSet=~CAP_SYS_PTRACE
+
+[Install]
+WantedBy=server.target

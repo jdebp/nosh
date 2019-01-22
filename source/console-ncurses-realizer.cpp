@@ -26,9 +26,9 @@ For copyright and licensing terms, see the file named COPYING.
 #include "SignalManagement.h"
 #include "VirtualTerminalBackEnd.h"
 #if defined(__LINUX__) || defined(__linux__)
-#include <ncursesw/curses.h>	// for colours
+#include <ncursesw/curses.h>
 #else
-#include <curses.h>	// for colours
+#include <curses.h>
 #endif
 
 /* Full-screen TUI **********************************************************
@@ -41,12 +41,9 @@ struct Realizer :
 {
 	Realizer(bool, VirtualTerminalBackEnd &);
 
-	void set_display_update_needed() { update_needed = true; }
 	bool exit_signalled() const { return terminate_signalled||interrupt_signalled||hangup_signalled; }
-	void handle_non_kevents ();
 	void handle_signal (int);
 protected:
-	bool update_needed;
 	sig_atomic_t terminate_signalled, interrupt_signalled, hangup_signalled;
 	const bool wrong_way_up;	///< causes coordinate transforms between c and vt
 	VirtualTerminalBackEnd & vt;
@@ -67,7 +64,6 @@ Realizer::Realizer(
 	bool wwu,
 	VirtualTerminalBackEnd & v
 ) :
-	update_needed(true),
 	terminate_signalled(false),
 	interrupt_signalled(false),
 	hangup_signalled(false),
@@ -205,18 +201,6 @@ Realizer::redraw (
 		set_cursor_visibility(1);
 	else
 		set_cursor_visibility(2);
-}
-
-inline
-void
-Realizer::handle_non_kevents (
-) {
-	if (update_needed) {
-		update_needed = false;
-		redraw();
-		set_update();
-	}
-	BaseTUI::handle_non_kevents();
 }
 
 inline
@@ -464,7 +448,9 @@ console_ncurses_realizer [[gnu::noreturn]] (
 	while (true) {
 		if (realizer.exit_signalled())
 			break;
-		realizer.handle_non_kevents();
+		realizer.handle_resize_event();
+		realizer.handle_refresh_event();
+		realizer.handle_update_event();
 
 		struct kevent p[3];
 		const int rc(kevent(queue, ip.data(), ip.size(), p, sizeof p/sizeof *p, vt.query_reload_needed() ? &immediate_timeout : 0));
@@ -484,7 +470,7 @@ console_ncurses_realizer [[gnu::noreturn]] (
 		if (0 == rc) {
 			if (vt.query_reload_needed()) {
 				vt.reload();
-				realizer.set_display_update_needed();
+				realizer.set_refresh_needed();
 			}
 			continue;
 		}

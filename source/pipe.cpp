@@ -106,10 +106,10 @@ pipe (
 			if (0 != child)
 				throw 0;
 		} else {
-			int status;
-			wait_blocking_for_exit_of(child, status);
-			if (0 != status) {
-				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "fork", std::strerror(status));
+			int status, code;
+			wait_blocking_for_exit_of(child, status, code);
+			if (0 != code) {
+				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "fork", std::strerror(code));
 				throw EXIT_FAILURE;
 			}
 		}

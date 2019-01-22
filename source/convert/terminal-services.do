@@ -200,6 +200,87 @@ do
 	done
 done
 
+# These get us *only* the configuration variables, safely.
+read_rc() { clearenv read-conf rc.conf printenv "$1" ; }
+get_var() { read_rc "$1" || true ; }
+
+redo-ifchange rc.conf
+
+if ! keymap="`read_rc \"keymap\"`"
+then
+	keymap="us"
+fi
+cc="${keymap%%.*}"
+option="${keymap#${cc}}"
+
+# There are a whole bunch of old names for keyboard mappings that systems could be using.
+# Note that this is NOT the same as the modernizations done by the /etc/rc.d system in the syscons to vt conversion.
+# These are the names built in our kbdmaps directory.
+case "${cc}" in
+hy)			cc="am";;
+br275)			cc="br";;
+fr_CA)			cc="ca-fr";;
+swissgerman)		cc="ch";;
+swissfrench)		cc="ch-fr";;
+ce)			cc="centraleuropean";;
+colemak)		cc="colemak";;
+cs)			cc="cz";;
+german)			cc="de";;
+danish)			cc="dk";;
+estonian)		cc="ee";;
+spanish)		cc="es";;
+finnish)		cc="fi";;
+el)			cc="gr";;
+gb)			cc="uk";;
+iw)			cc="il";;
+icelandic)		cc="is";;
+kk)			cc="kz";;
+norwegian)		cc="no";;
+dutch)			cc="nl";;
+pl_PL)			cc="pl";;
+swedish)		cc="se";;
+eee_nordic)		cc="nordic";option=".asus-eee";;
+esac
+case "${cc}" in
+ko)			keys="106";;
+br)			keys="107";;
+jp)			keys="109";;
+us)			keys="104";;
+*)			keys="105";;
+esac
+case "${option}" in
+.armscii-8)		option="";;
+.iso*.acc)
+	case "${cc}" in
+	br)		option="";;
+	nl)		option="";;
+	*)		option=".acc";;
+	esac
+	;;
+.us101.acc)		option=".acc";keys="104";;
+.macbook.acc)		option=".acc";;
+.iso*.macbook)		option=".macbook";;
+.iso2.101keys)		option="";keys="104";;
+.iso*)
+	case "${cc}" in
+	br)		option=".noacc";;
+	nl)		option=".noacc";;
+	*)		option="";;
+	esac
+	;;
+.pt154.io)		option=".io";;
+.pt154.kst)		option=".kst";;
+.106x)			option=".capsctrl";keys="109";;
+.*-ctrl)		option=".capsctrl";;
+.bds.ctrlcaps)		option=".bds.capsctrl";;
+.phonetic.ctrlcaps)	option=".phonetic.capsctrl";;
+.ISO8859-2)		option="";;
+.koi8-r.shift)		option=".shift";;
+.koi8-r.win)		option=".win";;
+.koi8-u.shift.alt)	option=".shift.alt";;
+.iso2)			option=".qwerty";;
+esac
+
 list_heads |
 while read -r n
 do
@@ -207,13 +288,11 @@ do
 	Linux)
 		set_if_unset console-fb-realizer@"$n" KERNEL_VT "1"
 		set_if_unset console-fb-realizer@"$n" FRAMEBUFFER "/dev/fb0"
-		set_if_unset console-fb-realizer@"$n" KBDMAP kbdmaps/us.104
 		set_if_unset console-fb-realizer@"$n" INPUTS "--ps2mouse /dev/input/mice"
 		set_if_unset console-fb-realizer@"$n" OWNED_DEVICES "/dev/input/event0 /dev/input/mice /dev/tty1 /dev/fb0"
 		;;
 	*BSD)
 		set_if_unset console-fb-realizer@"$n" KERNEL_VT "ttyv0"
-		set_if_unset console-fb-realizer@"$n" KBDMAP kbdmaps/us.104
 		set_if_unset console-fb-realizer@"$n" INPUTS "--sysmouse /dev/sysmouse"
 		set_if_unset console-fb-realizer@"$n" OWNED_DEVICES "/dev/uhid0 /dev/sysmouse /dev/ttyv0"
 		set_if_unset console-fb-realizer@"$n" DETACHED_UGEN_DEVICES ""
@@ -221,6 +300,7 @@ do
 	esac
 
 	set_if_unset console-input-method@"$n" lower /run/dev/"$n"mux
+	set_if_unset console-input-method@"$n" upper /run/dev/"$n"
 
 	svcdir="`system-control find console-multiplexor@\"$n\"`"
         if ! test -e "${svcdir}/service/provisioned"
@@ -244,4 +324,9 @@ do
 			ln -f -s "`pwd`/kbdmaps/${cc}"."${keys}""${option}".capsctrl "${svcdir}/service/kbdmaps/"
 		done
 	done
+
+	system-control set-service-env console-fb-realizer@"$n" "KBDMAP" "kbdmaps/${cc}.${keys}${option}"
+
+	printf >> "$3" "%s:\n" console-fb-realizer@"$n"
+	system-control print-service-env console-fb-realizer@"$n" >> "$3"
 done

@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="printenv">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -8,7 +14,10 @@
 <xi:include href="version.xml" />
 </refmeta>
 
-<refnamediv><refname>printenv</refname><refpurpose>print the whole environment, or the values of specific environment varables</refpurpose></refnamediv>
+<refnamediv>
+<refname>printenv</refname>
+<refpurpose>print the whole environment, or the values of specific environment varables</refpurpose>
+</refnamediv>
 
 <refsynopsisdiv>
 <cmdsynopsis>

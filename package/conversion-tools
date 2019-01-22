@@ -97,6 +97,7 @@ per-user/emacs.service
 per-user/evolution-addressbook-factory.service
 per-user/evolution-calendar-factory.service
 per-user/evolution-source-registry.service
+per-user/evolution-user-prompter.service
 per-user/exit.target
 per-user/gam_server.service
 per-user/gconfd.service
@@ -165,6 +166,7 @@ savecore.do
 securelevel.do
 snort@.service
 soft_backspace.kbd
+soft_delete.kbd
 soft_enter.kbd
 soft_return.kbd
 spppcontrol@.service

@@ -6,20 +6,19 @@
 Description=Clean-up X socket directories
 # These have traditionally been placed in /tmp .
 # As IPC mechanisms that do not survive restart they rightly belong in /run though.
-# So we no longer do:
-#	ExecStart=sh -c 'exec rm -r -f /tmp/.X11-unix /tmp/.XIM-unix /tmp/.ICE-unix /tmp/.font-unix /tmp/.X[0-9].lock'
-#	ExecStart=install -d -m 1777 /tmp/.X11-unix /tmp/.XIM-unix /tmp/.ICE-unix /tmp/.font-unix
-#	ExecStopPost=sh -c 'exec rm -r -f /tmp/.X11-unix /tmp/.XIM-unix /tmp/.ICE-unix /tmp/.font-unix /tmp/.X[0-9].lock'
 # See Debian bug #610667 and RedHat bug #503181.
+# Note that at least one X11 server breaks if /tmp/.X11-unix is a symbolic link and not a directory, because it tries to then mkdir() it.
 
 [Service]
 Type=oneshot
 WorkingDirectory=/tmp/
-RuntimeDirectory=X11
+RuntimeDirectory=%p
 RuntimeDirectoryMode=0755
-ExecStart=install -d -m 0755 %t/unix %t/lock
-ExecStart=sh -c 'for i in X11 XIM ICE font ; do install -d -m 1777 %t/unix/${i} ; rm -f -r -- .${i}-unix ; ln -s %t/unix/{$i} .${i}-unix ; done'
-ExecStart=sh -c 'for i in X0 X1 X2 X3 X4 X5 X6 X7 X8 X9 ; do install -d -m 1777 %t/lock/${i} ; rm -f -r -- .${i}.lock ; ln -s %t/lock/{$i} .${i}.lock ; done'
+ExecStart=install -d -m 0755 %t/%p/unix %t/%p/lock
+ExecStart=sh -c 'for i in XIM ICE font ; do install -d -m 1777 %t/%p/unix/${i} ; rm -f -r -- .${i}-unix ; ln -s %t/%p/unix/${i} .${i}-unix ; done'
+ExecStart=sh -c 'for i in X11 ; do install -d -m 1777 %t/%p/unix/${i} ; rm -f -r -- .${i}-unix ; install -d -m 1777 .${i}-unix ; done'
+ExecStart=sh -c 'for i in X0 X1 X2 X3 X4 X5 X6 X7 X8 X9 ; do install -d -m 1777 %t/%p/lock/${i} ; rm -f -r -- .${i}.lock ; ln -s %t/%p/lock/${i} .${i}.lock ; done'
+ExecStopPost=sh -c 'for i in X11 ; do rm -f -r -- .${i}-unix ; done'
 # This is a one-shot service that remains running without a main process, because we do not want to run it multiple times.
 RemainAfterExit=true
 Restart=no

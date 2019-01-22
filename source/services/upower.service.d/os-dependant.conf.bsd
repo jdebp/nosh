@@ -1,0 +1,6 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Service]
+ExecStart=/usr/local/libexec/%pd

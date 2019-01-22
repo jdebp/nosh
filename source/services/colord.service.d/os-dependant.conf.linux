@@ -1,0 +1,8 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Service]
+# This service fails to run when not invoked as the superuser.
+#User=colord
+ExecStart=/usr/lib/%p/%p

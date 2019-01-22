@@ -1,0 +1,25 @@
+# Extra post-upgrade for nosh-run-via-open-rc
+# vim: set filetype=sh:
+
+# Re-apply presets to services that are cut-out by a special preset in this package.
+system-control preset sysinit.target local-syslog.target
+system-control preset static-networking.target
+system-control preset remote-fs.target remote-fs-pre.target
+system-control preset udev.socket udev-finish.service udev-log.service udev-settle.service udev-trigger-add@devices.service udev-trigger-add@subsystems.service
+system-control preset busybox-mdev.socket busybox-mdev-log.service busybox-mdev-rescan.service
+system-control preset suckless-mdev.socket suckless-mdev-log.service suckless-mdev-rescan.service
+system-control preset vdev.socket vdev-log.service
+
+# Create runtime directories that the system manager would normally create.
+#for i in service-manager system-manager terminal-emulator
+#do
+#	systemd-tmpfiles --create /usr/local/lib/tmpfiles.d/$i.conf
+#done
+
+# Preset and start OpenRC services
+rc-update add service-manager
+rc-update add service-manager-svscan
+rc-update add system-control-normal
+rc-service service-manager start
+rc-service service-manager-svscan start
+rc-service system-control-normal start

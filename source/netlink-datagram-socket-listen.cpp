@@ -131,13 +131,6 @@ netlink_datagram_socket_listen (
 		throw EXIT_FAILURE;
 	}
 
-	// FIXME: Can we even get a SIGPIPE from listen()?
-	sigset_t original_signals;
-	sigprocmask(SIG_SETMASK, 0, &original_signals);
-	sigset_t masked_signals(original_signals);
-	sigaddset(&masked_signals, SIGPIPE);
-	sigprocmask(SIG_SETMASK, &masked_signals, 0);
-
 #if defined(__LINUX__) || defined(__linux__)
 	sockaddr_nl addr;
 	addr.nl_family = AF_NETLINK;
@@ -204,6 +197,4 @@ exit_error:
 		snprintf(buf, sizeof buf, "%u", getpid());
 		envs.set("LISTEN_PID", buf);
 	}
-
-	sigprocmask(SIG_SETMASK, &original_signals, 0);
 }

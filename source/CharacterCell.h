@@ -8,6 +8,8 @@ For copyright and licensing terms, see the file named COPYING.
 
 #include <stdint.h>
 
+enum { COLOUR_BLACK, COLOUR_RED, COLOUR_GREEN, COLOUR_YELLOW, COLOUR_BLUE, COLOUR_MAGENTA, COLOUR_CYAN, COLOUR_WHITE };
+
 struct CursorSprite {
 	typedef uint8_t attribute_type;
 	enum {
@@ -28,20 +30,20 @@ struct PointerSprite {
 		VISIBLE = 1U << 0U,
 	};
 };
-struct CharacterCell {
+struct ColourPair {
 	struct colour_type {
 		colour_type(uint8_t a, uint8_t r, uint8_t g, uint8_t b) : alpha(a), red(r), green(g), blue(b) {}
 		colour_type() : alpha(), red(), green(), blue() {}
 		uint8_t alpha, red, green, blue;
 	};
-	typedef uint16_t attribute_type;
-
-	CharacterCell(uint32_t c, attribute_type a, colour_type f, colour_type b) : character(c), attributes(a), foreground(f), background(b) {}
-	CharacterCell() : character(), attributes(), foreground(), background() {}
-
-	uint32_t character;
-	attribute_type attributes;
 	colour_type foreground, background;
+
+	ColourPair(colour_type f, colour_type b) : foreground(f), background(b) {}
+	ColourPair() : foreground(), background() {}
+};
+struct ColourPairAndAttributes : public ColourPair {
+	typedef uint16_t attribute_type;
+	attribute_type attributes;
 
 	enum {
 		BOLD = 1U << 0U,
@@ -58,6 +60,18 @@ struct CharacterCell {
 			DOTTED_UNDERLINE = 4U << 8U,
 			DASHED_UNDERLINE = 5U << 8U,
 	};
+
+	ColourPairAndAttributes(attribute_type a, colour_type f, colour_type b) : ColourPair(f, b), attributes(a) {}
+	ColourPairAndAttributes(attribute_type a, const ColourPair & p) : ColourPair(p), attributes(a) {}
+	ColourPairAndAttributes() : ColourPair(), attributes() {}
+};
+struct CharacterCell : ColourPairAndAttributes {
+	CharacterCell(uint32_t c, attribute_type a, colour_type f, colour_type b) : ColourPairAndAttributes(a, f, b), character(c) {}
+	CharacterCell(uint32_t c, attribute_type a, const ColourPair & p) : ColourPairAndAttributes(a, p), character(c) {}
+	CharacterCell(uint32_t c, const ColourPairAndAttributes & p) : ColourPairAndAttributes(p), character(c) {}
+	CharacterCell() : ColourPairAndAttributes(), character() {}
+
+	uint32_t character;
 };
 
 inline

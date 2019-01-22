@@ -19,20 +19,20 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 void
-console_clear [[gnu::noreturn]] ( 
-	const char * & /*next_prog*/,
+console_clear ( 
+	const char * & next_prog,
 	std::vector<const char *> & args,
 	ProcessEnvironment & /*envs*/
 ) {
 	const char * prog(basename_of(args[0]));
-	bool c17bit(false);
-	bool c18bit(false);
+	bool c1_7bit(false);
+	bool c1_8bit(false);
 	try {
-		popt::bool_definition c17bit_option('7', "7bit", "Use 7-bit C1 characters.", c17bit);
-		popt::bool_definition c18bit_option('8', "8bit", "Use 8-bit C1 characters instead of UTF-8.", c18bit);
+		popt::bool_definition c1_7bit_option('7', "7bit", "Use 7-bit C1 characters.", c1_7bit);
+		popt::bool_definition c1_8bit_option('8', "8bit", "Use 8-bit C1 characters instead of UTF-8.", c1_8bit);
 		popt::definition * top_table[] = {
-			&c17bit_option,
-			&c18bit_option
+			&c1_7bit_option,
+			&c1_8bit_option
 		};
 		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "");
 
@@ -49,9 +49,18 @@ console_clear [[gnu::noreturn]] (
 		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, args.front(), "Unexpected argument.");
 		throw static_cast<int>(EXIT_USAGE);
 	}
-	const char * const csi(c17bit ? "\x1B[" : c18bit ? "\x9B" : "\xC2\x9B");
-	// This order is important for PuTTY for some reason.
-	std::cout << csi << "2J";			// ED
-	std::cout << csi << "3J";			// xterm/PuTTY/Linux kernel extension
-	throw EXIT_SUCCESS;
+	// This order of all before scrollback is important for PuTTY for some reason.
+	args.insert(args.end(), "foreground");
+	args.insert(args.end(), "console-control-sequence");
+	if (c1_7bit) args.insert(args.end(), "--7bit");
+	if (c1_8bit) args.insert(args.end(), "--8bit");
+	args.insert(args.end(), "--clear");
+	args.insert(args.end(), "all");
+	args.insert(args.end(), ";");
+	args.insert(args.end(), "console-control-sequence");
+	if (c1_7bit) args.insert(args.end(), "--7bit");
+	if (c1_8bit) args.insert(args.end(), "--8bit");
+	args.insert(args.end(), "--clear");
+	args.insert(args.end(), "scrollback");
+	next_prog = arg0_of(args);
 }

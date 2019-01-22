@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="envgid">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -10,7 +16,7 @@
 
 <refnamediv>
 <refname>envgid</refname>
-<refpurpose>add UID and GID environment variables then chain</refpurpose>
+<refpurpose>add GID environment variable then chain</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>

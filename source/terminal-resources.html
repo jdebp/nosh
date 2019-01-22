@@ -25,6 +25,12 @@ The DEC VT backspace &#x232b; key is actually programmable with the DECBKM contr
 The FreeBSD keyboard maps hardwire the mapping from the backspace &#x232b; keycode to the <code>DEL</code> and <code>BS</code> control characters, and if used as they stand would prevent the key from being soft-switchable.
 This overlay replaces that with a mapping to the <code>bspace</code> action, letting <code>console-terminal-emulator</code> handle the mapping to control characters in concert with the DECBKM setting.
 </p></dd>
+<dt><a href="gazetteer.html#soft_delete.kbd"><code>soft_delete.kbd</code></a></dt>
+<dd><p>
+The XTerm delete &#x2326; key is actually programmable with the DECSM/DECRM 1037 control sequences.
+The FreeBSD keyboard maps hardwire the mapping from the delete &#x2326; keycode to the <code>DEL</code> control character, and if used as they stand would prevent the key from being soft-switchable.
+This overlay replaces that with a mapping to the <code>delete</code> action, letting <code>console-terminal-emulator</code> handle the mapping to control characters in concert with the DECSM/DECRM 1037 setting.
+</p></dd>
 <dt><a href="gazetteer.html#soft_enter.kbd"><code>soft_enter.kbd</code></a> and <a href="gazetteer.html#soft_return.kbf"><code>soft_return.kbd</code></a></dt>
 <dd><p>
 Likewise, these replace hardwired FreeBSD mappings, from the return &#x2ba0; and enter keys to the <code>CR</code> and <code>LF</code> control characters, with the <code>return</code> and <code>enter</code> actions.
@@ -73,7 +79,7 @@ fonts
 <p>
 Fonts suitable for <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a> have to be in the "vt" format of FreeBSD.
 BDF fonts can be converted to this format with <a href="https://www.freebsd.org/cgi/man.cgi?query=vtfontcvt&apropos=0&sektion=8">FreeBSD's <code>vtfontcvt</code> tool</a>, as long as they are (arbitrarily) limited to 8 or 16 pixel-wide bounding rectangles.
-(This unfortunately prevents FreeBSD's <code>vtfontcvt</code> from being able to convert <a href="https://wiki.ubuntu.com/UbuntuFontFamily">Ubuntu Monospace</a>, which has varying-sized bounding rectangles for individual characters.)
+(This unfortunately prevented FreeBSD's <code>vtfontcvt</code> until 2019 from being able to convert <a href="https://wiki.ubuntu.com/UbuntuFontFamily">Ubuntu Monospace</a>, which has varying-sized bounding rectangles for individual characters.)
 </p>
 
 <p>
@@ -125,6 +131,10 @@ input methods
 <p>
 <a href="console-input-method.html"><code>console-input-method</code></a> is table-driven.
 The tables that it uses are the same CIN data files as are used by xcin, gcin (<a href="https://github.com/pkg-ime/gcin/tree/master/data">GitHub</a>), jscin (<a href="https://github.com/google/jscin/tree/master/src/tables">GitHub</a>), hime (<a href="https://github.com/hime-ime/hime/tree/master/data">GitHub</a>), PIME (<a href="https://github.com/EasyIME/PIME/tree/master/python/cinbase/cin">GitHub</a>), OpenVanilla (<a href="https://github.com/openvanilla/openvanilla/tree/master/DataTables">GitHub</a>), Chinese Open Desktop (<a href="https://github.com/chinese-opendesktop/cin-tables">GitHub</a>), OkidoKey.app (<a href="https://github.com/ethanliu/OkidoKeyCharsets/tree/master/DataTables">GitHub</a>), and MacOS.
+</p>
+
+<p>
+Some operating systems supply snapshots of some of these collections as packages, such as <a href="https://packages.debian.org/en/sid/openvanilla-imgeneric-data-all">Debian's openvanilla-imgeneric-data-all package</a> for example.
 </p>
 
 <p>

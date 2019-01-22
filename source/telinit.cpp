@@ -274,8 +274,8 @@ shutdown (
 				next_prog = arg0_of(args);
 				return;
 			} else {
-				int status;
-				wait_blocking_for_exit_of(wall, status);
+				int status, code;
+				wait_blocking_for_exit_of(wall, status, code);
 			}
 		}
 		if (secs <= 0.0)

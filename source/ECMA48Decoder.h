@@ -18,7 +18,6 @@ public:
 		std::size_t argc;
 		unsigned int args[16];
 		bool seen_arg_digit;
-		char first_private_parameter, last_intermediate;
 		std::size_t slen;
 		char str[2096];
 
@@ -27,18 +26,20 @@ public:
 		void FinishArg(unsigned int d);
 		virtual void PrintableCharacter(bool error, unsigned short shift_level, uint_fast32_t character) = 0;
 		virtual void ControlCharacter(uint_fast32_t character) = 0;
-		virtual void EscapeSequence(uint_fast32_t character) = 0;
-		virtual void ControlSequence(uint_fast32_t character) = 0;
+		virtual void EscapeSequence(uint_fast32_t character, char last_intermediate) = 0;
+		virtual void ControlSequence(uint_fast32_t character, char last_intermediate, char first_private_parameter) = 0;
 		virtual void ControlString(uint_fast32_t character) = 0;
 	};
-	ECMA48Decoder(ECMA48ControlSequenceSink &, bool, bool, bool);
+	ECMA48Decoder(ECMA48ControlSequenceSink &, bool, bool, bool, bool, bool);
 	void Process(uint_fast32_t character, bool decoder_error, bool overlong);
 	void AbortSequence();
 protected:
 	ECMA48ControlSequenceSink & sink;
 	enum { NORMAL, ESCAPE1, ESCAPE2, CONTROL1, CONTROL2, SHIFT2, SHIFT3, SHIFTA, DSTRING, OSTRING, PSTRING, ASTRING, SSTRING } state;
-	const bool control_strings, interix_shift, rxvt_function_keys;
+	const bool control_strings, allow_cancel, allow_7bit_extension, interix_shift, rxvt_function_keys;
+	char first_private_parameter, last_intermediate;
 
+	void ResetControlSeqOrStr();
 	bool IsControl(uint_fast32_t);
 	bool IsInStringControl(uint_fast32_t);
 	bool IsIntermediate(uint_fast32_t);

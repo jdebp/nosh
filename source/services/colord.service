@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=ColourManager daemon
+After=local-syslog.target
+
+[Service]
+Type=dbus
+
+[Install]
+WantedBy=workstation.target

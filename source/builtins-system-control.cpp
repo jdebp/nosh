@@ -59,6 +59,7 @@ extern void service_is_ok ( const char * &, std::vector<const char *> &, Process
 extern void service_is_up ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void service_status ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void service_show ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void chkservice ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void pipe ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void tai64nlocal ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void move_to_control_group ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
@@ -154,5 +155,6 @@ personalities[] = {
 	{	"svshow",		service_show		},
 	{	"svstat",		service_status		},
 	{	"systemd-escape",	systemd_escape		},
+	{	"chkservice",		chkservice		},
 };
 const std::size_t num_personalities = sizeof personalities/sizeof *personalities;

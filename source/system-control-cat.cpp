@@ -86,8 +86,8 @@ cat (
 			next_prog = arg0_of(args);
 			return;
 		} else {
-			int status;
-			wait_blocking_for_exit_of(child, status);
+			int status, code;
+			wait_blocking_for_exit_of(child, status, code);
 		}
 		close(service_dir_fd);
 		close(bundle_dir_fd);

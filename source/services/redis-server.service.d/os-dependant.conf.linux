@@ -1,0 +1,12 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Service]
+ExecStart=%p /etc/redis/redis.conf
+ProtectHome=yes
+ReadWriteDirectories=-%S/redis
+ReadWriteDirectories=-%L/redis
+ReadWriteDirectories=-%t/redis
+ProtectSystem=true
+ReadWriteDirectories=-/etc/redis

@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=System control starting the normal target
+Description=System control activating the normal/shutdown target
 After=service-manager.socket
 After=service-manager.service
 

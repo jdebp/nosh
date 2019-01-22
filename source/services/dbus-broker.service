@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+After=machine-id.service extra-shared-libraries.target
+
+[Service]
+RuntimeDirectory=dbus
+RuntimeDirectoryMode=0755
+ExecStartPre=install -d -m 0755 -- /var/db/dbus
+ExecStartPre=sh -c 'test -r /var/db/dbus/machine-id || ln -s /etc/machine-id /var/db/dbus/'
+ExecStart=%p-launch -v --scope system --listen inherit
+
+[Install]
+WantedBy=dbus

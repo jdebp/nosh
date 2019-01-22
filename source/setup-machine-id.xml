@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="setup-machine-id">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -45,7 +51,7 @@ Some older softwares do not create valid UUIDs as machine IDs.
 In particular, they create entirely random UUIDs where even the UUID variant and type are random.
 <command>setup-machine-id</command> will attempt to correct for this, by converting any UUID that is not a type 1 to type 5 DCE-variant UUID into a type 4 DCE-variant UUID by simply overwriting the type and variant parts of the UUID.
 As a special case, it will treat a nil UUID (NCS-variant with all zeroes) as invalid rather than correct it.  
-(A nil UUID isn't globally unique by its very nature and is unsuitable as a machine ID.)
+(A nil UUID isn't globally unique by its very nature and is unsuitable as a machine ID.  The aforementioned correction system, if applied to it, would not work.)
 </para>
 
 </refsection>
@@ -157,6 +163,7 @@ It really shouldn't be used at all on systems with machine UUIDs available.
 <command>setup-machine-id</command> creates a host ID by hashing the machine ID.
 The hashing function used is to take the lower 32-bits of the CubeHash (see <citerefentry><refentrytitle>cubehash</refentrytitle><manvolnum>1</manvolnum></citerefentry>) of the machine ID, although this choice of hash function should not be relied upon by anything.
 Ironically, this provides a more stable host ID than some of the original schemes for determining a host ID did.  
+(They were only as stable as the host's IPv4 address assignment, for example.)
 As long as the machine ID does not change, the host ID will not change; and the host ID can be set up before network interfaces, and domain name to address mapping facilities, are even available.
 </para>
 
@@ -166,9 +173,6 @@ The GNU C library expects the <filename>/etc/hostid</filename> file to contain t
 (On BSD systems, this file contains the machine ID as a human-readable-form UUID.)
 <command>setup-machine-id</command> writes the host ID to that file if it can, and to <filename>/run/hostid</filename> as well.
 If <filename>/etc/hostid</filename> is unwritable, and if bind mounting is available, it will attempt to bind mount <filename>/run/hostid</filename> in place of it.
-</para></listitem>
-<listitem><para>
-The BSD C library expects the host ID to be stored in the <code>kern.hostid</code> variable (see <citerefentry><refentrytitle>sysctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>), so it is written there.
 </para></listitem>
 <listitem><para>
 The BSD C library expects the host ID to be stored in the <code>kern.hostid</code> variable (see <citerefentry><refentrytitle>sysctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>), so it is written there.

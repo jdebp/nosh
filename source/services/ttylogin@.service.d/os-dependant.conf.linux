@@ -1,0 +1,11 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Service]
+# login has no timeout or it is disabled.
+TTYPrompt=no
+TasksAccounting=true
+CPUAccounting=true
+IOAccounting=true
+MemoryAccounting=true

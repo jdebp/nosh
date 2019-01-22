@@ -21,7 +21,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sys/ioctl.h>
 #include <sys/uio.h>
 #include <sys/mount.h>
-#include <sys/wait.h>
 #include <dirent.h>
 #include <unistd.h>
 #include <cstddef>
@@ -910,18 +909,18 @@ reap_spawned_children (
 	if (child_signalled) {
 		child_signalled = false;
 		for (;;) {
-			int status;
+			int status, code;
 			pid_t c;
-			if (0 >= wait_nonblocking_for_anychild_exit(c, status)) break;
+			if (0 >= wait_nonblocking_for_anychild_exit(c, status, code)) break;
 			if (c == service_manager_pid) {
-				std::fprintf(stderr, "%s: WARNING: %s (pid %i) ended status %i\n", prog, "service-manager", c, status);
+				std::fprintf(stderr, "%s: WARNING: %s (pid %i) ended status %i code %i\n", prog, "service-manager", c, status, code);
 				service_manager_pid = -1;
 			} else
 			if (c == cyclog_pid) {
-				std::fprintf(stderr, "%s: WARNING: %s (pid %i) ended status %i\n", prog, "cyclog", c, status);
+				std::fprintf(stderr, "%s: WARNING: %s (pid %i) ended status %i code %i\n", prog, "cyclog", c, status, code);
 				cyclog_pid = -1;
 				// If cyclog abended, throttle respawns.
-				if (WIFSIGNALED(status) || (WIFEXITED(status) && 0 != WEXITSTATUS(status))) {
+				if (WAIT_STATUS_SIGNALLED == status || WAIT_STATUS_SIGNALLED_CORE == status || (WAIT_STATUS_EXITED == status && 0 != code)) {
 					timespec t;
 					t.tv_sec = 0;
 					t.tv_nsec = 500000000; // 0.5 second
@@ -930,15 +929,15 @@ reap_spawned_children (
 				}
 			} else
 			if (c == regular_system_control_pid) {
-				std::fprintf(stderr, "%s: INFO: %s (pid %i) ended status %i\n", prog, "system-control", c, status);
+				std::fprintf(stderr, "%s: INFO: %s (pid %i) ended status %i code %i\n", prog, "system-control", c, status, code);
 				regular_system_control_pid = -1;
-			}
+			} else
 			if (c == emergency_system_control_pid) {
-				std::fprintf(stderr, "%s: INFO: %s (pid %i) ended status %i\n", prog, "system-control", c, status);
+				std::fprintf(stderr, "%s: INFO: %s (pid %i) ended status %i code %i\n", prog, "system-control", c, status, code);
 				emergency_system_control_pid = -1;
-			}
+			} else
 			if (c == kbreq_system_control_pid) {
-				std::fprintf(stderr, "%s: INFO: %s (pid %i) ended status %i\n", prog, "system-control", c, status);
+				std::fprintf(stderr, "%s: INFO: %s (pid %i) ended status %i code %i\n", prog, "system-control", c, status, code);
 				kbreq_system_control_pid = -1;
 			}
 		}
@@ -1188,11 +1187,6 @@ fork_service_manager_as_needed (
 			const int error(errno);
 			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, "fork", std::strerror(error));
 		} else if (0 == service_manager_pid) {
-#if defined(__LINUX__) || defined(__linux__)
-			// Linux's default file handle limit of 1024 is far too low for normal usage patterns.
-			const rlimit file_limit = { 16384U, 16384U };
-			setrlimit(RLIMIT_NOFILE, &file_limit);
-#endif
 			if (is_system)
 				setsid();
 			default_all_signals();
@@ -1262,7 +1256,7 @@ common_manager (
 	}
 
 	// In the normal course of events, standard output and error will be connected to some form of logger process, via a pipe.
-	// We don't want our output cluttering a TTY and device files such as /dev/null and /dev/console do not exist yet.
+	// We don't want our output cluttering a TTY, and device files such as /dev/null and /dev/console do not exist yet.
 	FileDescriptorOwner read_log_pipe(-1), write_log_pipe(-1);
 	open_logging_pipe(prog, read_log_pipe, write_log_pipe);
 	dup2(prog, filler_stdio, write_log_pipe, STDOUT_FILENO);

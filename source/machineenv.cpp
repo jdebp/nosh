@@ -4,7 +4,6 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 #include <vector>
-#include <sstream>
 #include <cstdio>
 #include <cstdlib>
 #include <cerrno>
@@ -71,8 +70,8 @@ machineenv (
 	}
 	std::string name(max + 1, ' ');
 	gethostname(const_cast<char *>(name.data()), max + 1);
-	envs.set("HOSTNAME", name);
+	envs.set("HOSTNAME", name.c_str());
 	getdomainname(const_cast<char *>(name.data()), max + 1);
-	envs.set("DOMAINNAME", name);
+	envs.set("DOMAINNAME", name.c_str());
 #endif
 }

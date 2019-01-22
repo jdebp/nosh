@@ -155,7 +155,7 @@ console_multiplexor_control [[gnu::noreturn]] (
 			if ("n" == command || "next" == command) {
 #if defined(__FreeBSD__) || defined(__DragonFly__)
 				int index;
-				if (0 <= ioctl(vt_fd.get(), VT_GETINDEX, &index))
+				if (0 <= ioctl(vt_fd.get(), VT_GETACTIVE, &index))
 					ioctl(vt_fd.get(), VT_ACTIVATE, index + 1);
 #else
 				;	/// \bug FIXME: Implement next action
@@ -164,7 +164,7 @@ console_multiplexor_control [[gnu::noreturn]] (
 			if ("p" == command || "prev" == command) {
 #if defined(__FreeBSD__) || defined(__DragonFly__)
 				int index;
-				if (0 <= ioctl(vt_fd.get(), VT_GETINDEX, &index))
+				if (0 <= ioctl(vt_fd.get(), VT_GETACTIVE, &index))
 					ioctl(vt_fd.get(), VT_ACTIVATE, index - 1);
 #else
 				;	/// \bug FIXME: Implement previous action

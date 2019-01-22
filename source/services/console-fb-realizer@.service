@@ -1,0 +1,17 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Virtual console realizer for %I
+After=console-input-method@%i.service
+Wants=console-input-method@%i.service frame-buffer.target
+
+[Service]
+PermissionsStartOnly=yes
+EnvironmentDirectory=env/
+SessionLeader=yes
+Group=user-vt-realizer
+
+[Install]
+WantedBy=multi-user.target

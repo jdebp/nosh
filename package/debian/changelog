@@ -1,3 +1,40 @@
+nosh (1.39) unstable; urgency=medium
+
+  * More Linux services: rngd
+  * More common services: isnsd, isnsdd, usbmux, VBoxBalloonCtrl
+  * console-input-method now also passes through the consumer keys for session actions.
+  * A bug in the N and P actions of console-multiplexor-control for kernel virtual terminals has been fixed.
+  * A bug that caused convert/per-user/evolution-user-prompter.service not to be packaged has been fixed.
+  * A bug that caused console-input-method@head0 not to be initialized with an upper virtual terminal by the external configuration import subsystem has been fixed.
+  * A bug in the import of defaultrouter from amalgamated rc.conf has been fixed.
+  * A bug in cleanX that generated incorrect symbolic links in /tmp preventing X11 stuff from working has been fixed.
+  * There is now a console-decode-ecma48 command.
+  * There is now a console-control-sequence command, aliased as setterm.
+  * The vc-reset-tty and console-resize commands are now shims for console-control-sequence.
+  * vc-reset-tty no longer prints a newline.
+  * There is now a console-flat-table-viewer command.
+  * There is now a Linux shims package containing setterm, unshare, and getty.
+  * The Debian desktop and server base -run packages no longer preset ntpd and openntpd, on the grounds that a range of such services exist and these are not necessarily the installed softwares.
+  * There is now an openrc-shims package containing new rc-update and rc-service shims.
+  * convert-systemd-units now supports %T, %V, and %E.
+  * The Z Shell completions now cover a lot more commands.
+  * clearenv --keep-term now keeps a few more terminal-type-related environment variables.
+  * console-termio-realizer, console-fb-realizer, and console-terminal-emulator now deal in accelerator character messages.
+  * console-termio-realizer and console-decode-ecma48 have some new tweaks to stop decoding 7-bit code extensions and CAN.
+    7-bit code extensions now remain escape sequences, which become accelerator keys.
+    And not decoding CAN permits Control+X to pass through to applications.
+  * The ncurses TUI is now obsolete, replaced with ECMA48-based TUIs.
+    The only command that still uses ncurses is console-ncurses-realizer.
+  * There is now a local-stream-socket-connect command.
+  * SoftTerm now sets regular 8-column tabstops in response to the RIS and DECSTR control sequences, as the Linux and FreeBSD kernel terminal emulators both do.
+  * SoftTerm now understands DECST8C.
+  * Several problems in mouse handling by console-termio-realizer have been fixed.
+    In particular, DECLRP is now fully supported.
+  * convert-systemd-units now supports extra snippets files.
+  * The ttylogin services for user-space virtual terminals no longer use vhangup(), which was causing a loop, or superfluously reset the terminal emulator and line discipline.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.com>  Tue, 22 Jan 2019 07:51:40 +0000
+
 nosh (1.38) unstable; urgency=medium
 
   * More Linux services: connman, ofono, dundee, cntlm, minidlna, powertop, alsa-state, alsa-restore, unattended-upgrade-shutdown, apt-daily-update, apt-daily-upgrade

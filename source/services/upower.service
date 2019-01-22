@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=UPower daemon
+After=local-syslog.target
+
+[Service]
+Type=dbus
+
+[Install]
+# TODO: This might be better as graphical.
+WantedBy=workstation.target

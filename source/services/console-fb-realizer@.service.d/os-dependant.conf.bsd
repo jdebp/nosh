@@ -1,0 +1,10 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Service]
+ExecStartPre=detach-kernel-usb-driver ${DETACHED_UGEN_DEVICES}
+ExecRestartPre=detach-kernel-usb-driver ${DETACHED_UGEN_DEVICES}
+ExecStartPre=sh -c 'for d in ${OWNED_DEVICES} ; do if test -n "$d" && test -c "$d" ; then chown :user-vt-realizer "$d" && chmod g+rw "$d" ; fi ; done'
+ExecRestartPre=sh -c 'for d in ${OWNED_DEVICES} ; do if test -n "$d" && test -c "$d" ; then chown :user-vt-realizer "$d" && chmod g+rw "$d" ; fi ; done'
+ExecStart=vc-get-tty "${KERNEL_VT}" foreground sh -c 'chown :user-vt-realizer "${TTY}" && chmod g+rw "${TTY}"' ; setuidgid --primary-group user-vt-realizer -- daemon %p ${FONTS} ${FLAGS} --kernel-vt ${INPUTS} ${KBDMAP:+--keyboard-map "${KBDMAP}"} /run/dev/%I/

@@ -8,8 +8,7 @@ service_lists="../package/common-services ../package/bsd-services ../package/lin
 mount_lists="../package/common-mounts"
 
 (
-
-echo services/colord.service services/console-fb-realizer@.service services/cyclog@.service services/dbus-broker.service services/dbus-daemon.service services/exim4-smtp-relay@.service services/exim4-smtp-submission@.service services/geoclue.service services/gssd.service services/klogd.socket services/local-priv-syslog.socket services/local-syslog.socket services/mountd.service services/network-interfaces.service services/nfsd.service services/nscd.service services/phpsessionclean.service services/polkitd.service services/redis-sentinel.service services/redis-server.service services/sysctl.service services/system-wide.conf services/tcsd.service services/ttylogin@.service services/upower.service
+echo services/system-wide.conf 
 echo ${service_lists} ${mount_lists}
 
 awk '!x[$0]++' ${service_lists} |

@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="telinit">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -28,6 +34,8 @@
 <refname>chkconfig</refname>
 <refname>update-rc.d</refname>
 <refname>invoke-rc.d</refname>
+<refname>rc-service</refname>
+<refname>rc-update</refname>
 <refname>runlevel</refname>
 <refpurpose>BSD/System 5 compatibility utilities for system and service control</refpurpose>
 </refnamediv>
@@ -265,7 +273,7 @@ The <arg choice="plain">defaults</arg>, <arg choice="plain">start</arg>, and <ar
 </para>
 
 </refsection>
-<refsection><title>Old-style service control</title>
+<refsection><title>Generic service control</title>
 
 <cmdsynopsis>
 <command>service</command>
@@ -282,6 +290,58 @@ However, for best results restrict <replaceable>command</replaceable> to one of 
 
 <para>
 Note that, unlike the BSD command, <command>service</command> can manually start and stop disabled services.
+</para>
+
+</refsection>
+<refsection><title>OpenBSD service control</title>
+
+<cmdsynopsis>
+<command>rcctl</command>
+<arg choice="req"><replaceable>command</replaceable></arg>
+<arg choice="req"><replaceable>name</replaceable></arg>
+</cmdsynopsis>
+
+<para>
+Invoked as <command>rcctl</command> <arg choice="plain"><replaceable>command</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>, unless <arg choice="plain"><replaceable>command</replaceable></arg> is either <arg choice="plain">set</arg> or <arg choice="plain">get</arg> the program chains to <command>system-control</command> <arg choice="plain"><replaceable>command</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>.
+It makes no attempt itself to validate <replaceable>command</replaceable>, which can be any of the subcommands supported by <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+<arg choice="plain">set</arg> is replaced with <arg choice="plain">set-service-env</arg>.
+<arg choice="plain">get</arg> is replaced with <arg choice="plain">print-service-env</arg>.
+</para>
+
+<para>
+Do not use <command>rcctl</command> <arg choice="plain">set</arg> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice="plain">status</arg> to enable or disable services.
+This is not even correct for the original tool, as only OpenBSD uses variables named <replaceable>name</replaceable><code>_status</code> in the first place.
+Other BSDs have different names which won't work with this OpenBSD-specific syntax.
+In contrast, <command>rcctl</command> <arg choice="plain">enable</arg> <arg choice="plain"><replaceable>name</replaceable></arg> and <command>rcctl</command> <arg choice="plain">disable</arg> <arg choice="plain"><replaceable>name</replaceable></arg>, defined as equivalents in the original OpenBSD tool, will work portably.
+</para>
+
+</refsection>
+<refsection><title>OpenRC service control</title>
+
+<cmdsynopsis>
+<command>rc-service</command>
+<arg choice="opt">--verbose</arg>
+<arg choice="req"><replaceable>name</replaceable></arg>
+<arg choice="req"><replaceable>command</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>rc-update</command>
+<group choice="req">
+<arg choice="plain">add</arg>
+<arg choice="plain">delete</arg>
+</group>
+<arg choice="req"><replaceable>name</replaceable></arg>
+</cmdsynopsis>
+
+<para>
+Invoked as <command>rc-service</command> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice="plain"><replaceable>command</replaceable></arg>, the program chains to <command>system-control</command> <arg choice="plain"><replaceable>command</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>, passing along any <arg choice='plain'>--verbose</arg> option.
+It makes no attempt itself to validate <replaceable>command</replaceable>, which can be any of the subcommands supported by <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+However, for best results restrict <replaceable>command</replaceable> to one of <arg choice="plain">start</arg>, <arg choice="plain">stop</arg>, or <arg choice="plain">status</arg>.
+</para>
+
+<para>
+Invoked as <command>rc-update</command> <arg choice="plain"><replaceable>command1</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>, the program chains to <command>system-control</command> <arg choice="plain"><replaceable>command2</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>.
+<replaceable>command1</replaceable> may only be one of <arg choice="plain">add</arg> or <arg choice="plain">del</arg>, which are translated to <arg choice="plain">preset</arg> and <arg choice="plain">disable</arg> (respectively) for <replaceable>command2</replaceable>.
 </para>
 
 </refsection>
@@ -312,29 +372,6 @@ Invoked as <command>chkconfig</command> <arg choice="plain"><replaceable>name</r
 
 <para>
 No other functionality of the original <command>chkconfig</command> tool (whose operation varies incompatibly from platform to platform outwith these two subcommands) is supported.
-</para>
-
-</refsection>
-<refsection><title>OpenBSD service control</title>
-
-<cmdsynopsis>
-<command>rcctl</command>
-<arg choice="req"><replaceable>command</replaceable></arg>
-<arg choice="req"><replaceable>name</replaceable></arg>
-</cmdsynopsis>
-
-<para>
-Invoked as <command>rcctl</command> <arg choice="plain"><replaceable>command</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>, unless <arg choice="plain"><replaceable>command</replaceable></arg> is either <arg choice="plain">set</arg> or <arg choice="plain">get</arg> the program chains to <command>system-control</command> <arg choice="plain"><replaceable>command</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>.
-It makes no attempt itself to validate <replaceable>command</replaceable>, which can be any of the subcommands supported by <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-<arg choice="plain">set</arg> is replaced with <arg choice="plain">set-service-env</arg>.
-<arg choice="plain">get</arg> is replaced with <arg choice="plain">print-service-env</arg>.
-</para>
-
-<para>
-Do not use <command>rcctl</command> <arg choice="plain">set</arg> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice="plain">status</arg> to enable or disable services.
-This is not even correct for the original tool, as only OpenBSD uses variables named <replaceable>name</replaceable><code>_status</code> in the first place.
-Other BSDs have different names which won't work with this OpenBSD-specific syntax.
-In contrast, <command>rcctl</command> <arg choice="plain">enable</arg> <arg choice="plain"><replaceable>name</replaceable></arg> and <command>rcctl</command> <arg choice="plain">disable</arg> <arg choice="plain"><replaceable>name</replaceable></arg>, defined as equivalents in the original OpenBSD tool, will work portably.
 </para>
 
 </refsection>

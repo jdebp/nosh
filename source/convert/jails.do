@@ -5,7 +5,7 @@
 # vim: set filetype=sh:
 #
 # Convert the FreeBSD jails list external configuration formats.
-# This is invoked by general-services.do .
+# This is invoked by all.do .
 #
 
 redo-ifchange rc.conf general-services

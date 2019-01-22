@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="console-termio-realizer">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -23,6 +29,7 @@
 <arg choice='opt'>--permit-fake-truecolour</arg>
 <arg choice='opt'>--cursor-keypad-application-mode</arg>
 <arg choice='opt'>--calculator-keypad-application-mode</arg>
+<arg choice='opt'>--no-alternate-screen-buffer</arg>
 <arg choice='req'><replaceable>vcname</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -72,8 +79,11 @@ This is an oft-requested terminal feature, albeit by people who have never actua
 </para>
 
 <para>
-The <arg choice='plain'>--cursor-keypad-application-mode</arg> and <arg choice='plain'>--calculator-keypad-application-mode</arg> instruct <command>console-termio-realizer</command> to switch, respectively, the cursor keypad and the calculator keypad of the realizing terminal into their "application" modes.
+The <arg choice='plain'>--cursor-keypad-application-mode</arg> and <arg choice='plain'>--calculator-keypad-application-mode</arg> command-line options instruct <command>console-termio-realizer</command> to switch, respectively, the cursor keypad and the calculator keypad of the realizing terminal into their "application" modes.
 Otherwise it switches them into their "normal" modes.
+"application" mode is generally not useful to <command>console-termio-realizer</command>, since it makes cursor and calculator keys indistinguishable from accelerator keys.
+The <arg choice='plain'>--no-alternate-screen-buffer</arg> command-line option instructs <command>console-termio-realizer</command> to not switch to the alternative screen buffer.
+This works around problems with some (yet more!) broken terminal emulators that attempt to be and fail at being like XTerm, which forcibly change cursor and editing keys into application mode when the alternative screen buffer is active.
 </para>
 
 <refsection><title>I/O protocol</title>

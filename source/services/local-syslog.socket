@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Before=local-syslog.target
+
+[Socket]
+SocketMode=0666
+PassCredentials=yes
+PassSecurity=yes
+
+[Install]

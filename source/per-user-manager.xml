@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+
 <refentry id="per-user-manager">
 
 <refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -10,6 +16,7 @@
 
 <refnamediv>
 <refname>per-user-manager</refname>
+<refname>init</refname>
 <refpurpose>manage per-user stuff</refpurpose>
 </refnamediv>
 

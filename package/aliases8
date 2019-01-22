@@ -1,3 +1,4 @@
+system-manager	systemd
 telinit	chkconfig
 telinit	emergency
 telinit	fastboot
@@ -12,6 +13,8 @@ telinit	invoke-rc.d
 telinit	normal
 telinit	powercycle
 telinit	poweroff
+telinit	rc-service
+telinit	rc-update
 telinit	rcctl
 telinit	reboot
 telinit	rescue
@@ -19,4 +22,3 @@ telinit	runlevel
 telinit	service
 telinit	shutdown
 telinit	update-rc.d
-system-manager	systemd

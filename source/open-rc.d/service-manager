@@ -1,0 +1,21 @@
+#!/sbin/openrc-run
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+name="service_manager"
+rcvar="service_manager_enable"
+command="/usr/local/bin/prependpath"
+command_args="PATH /usr/local/bin:/usr/local/sbin local-datagram-socket-listen /run/service-manager/control service-manager &"
+command_background=yes
+
+depend()
+{
+	need localmount
+}
+
+service_manager_precmd()
+{
+	mount -t fdescfs fdescfs /dev/fd
+	mkdir -p /run/service-manager/log
+}

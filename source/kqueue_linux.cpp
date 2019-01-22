@@ -35,6 +35,7 @@ For copyright and licensing terms, see the file named COPYING.
 //  * EVFILT_READ does not return bytes available in data.
 //  * EVFILT_WRITE does not return EV_EOF.
 //  * EVFILT_VNODE does not handle character devices, block devices, or FIFOs.
+//  * EVFILT_READ and EVFILT_WRITE do not handle regular files (because epoll does not).
 //  * User data in filters is not supported.
 //
 // Differences from Linux libkqueue:

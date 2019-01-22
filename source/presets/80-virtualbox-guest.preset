@@ -10,6 +10,8 @@ enable	virtualbox-guest.target
 
 enable	VBoxService.service
 enable	cyclog@VBoxService.service
+disable	VBoxBalloonCtrl.service
+disable	cyclog@VBoxBalloonCtrl.service
 enable	virtualbox-guest-utils.service
 enable	cyclog@virtualbox-guest-utils.service
 enable	kmod@vboxadd.service

@@ -13,13 +13,25 @@ They just chain to the <a href="true.html"><code>true</code> command</a>, which 
 The meat of the service is its <code>run</code> program.
 </p>
 
+<blockquote><pre>% system-control cat atd
+start:#!/bin/nosh
+start:true
+stop:#!/bin/nosh
+stop:true
+run:#!/bin/nosh
+run:#Deferred execution scheduler
+run:atd -f
+restart:#!/bin/sh
+restart:exec true	# ignore script arguments
+%</pre></blockquote>
+
 <p>
-Here's its <code>run</code> program:
+Here's its <code>run</code> program alone:
 </p>
 
 <blockquote><pre>#!/bin/nosh
 #Deferred execution scheduler
-atd -f</blockquote></pre>
+atd -f</pre></blockquote>
 
 <p>
 <code>run</code> programs need not be scripts, but usually are in the daemontools world.

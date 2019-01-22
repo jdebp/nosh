@@ -1,0 +1,7 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Service]
+# login has a timeout and it is enabled.
+TTYPrompt=yes

@@ -29,6 +29,8 @@ BaseTUI::BaseTUI(
 ) :	
 	window(0),
 	pending_resize_event(true),
+	refresh_needed(true),
+	update_needed(true),
 	window_x(0),
 	window_y(0),
 	old_cursor_visibility(-1),
@@ -84,17 +86,34 @@ BaseTUI::handle_stdin (
 }
 
 void
-BaseTUI::handle_non_kevents (
+BaseTUI::handle_resize_event (
 ) {
 	if (pending_resize_event) {
 		pending_resize_event = false;
 		struct winsize size;
-		if (tcgetwinsz_nointr(STDOUT_FILENO, size) == 0)
+		if (0 <= tcgetwinsz_nointr(STDOUT_FILENO, size))
 			resize(size.ws_row, size.ws_col);
+		refresh_needed = true;
 	}
-	if (repaint_needed) {
-		repaint_needed = false;
-		repaint();
+}
+
+void
+BaseTUI::handle_refresh_event (
+) {
+	if (refresh_needed) {
+		refresh_needed = false;
+		redraw();
+		refresh();
+		update_needed = true;
+	}
+}
+
+void
+BaseTUI::handle_update_event (
+) {
+	if (update_needed) {
+		update_needed = false;
+		doupdate();
 	}
 }
 
@@ -106,7 +125,7 @@ BaseTUI::resize(
 	resize_term(row, col);
 	// We need to repaint the parts of stdscr that have just been exposed.
 	clearok(stdscr, 1);
-	repaint_needed = true;
+	refresh_needed = true;
 }
 
 unsigned
@@ -122,9 +141,9 @@ BaseTUI::set_cursor_visibility(
 	cursor_visibility = s;
 }
 
-/// \brief Actually render the window onto the terminal.
+/// \brief Refresh all of the window buffers onto the internal ncurses update buffer.
 void
-BaseTUI::repaint ()
+BaseTUI::refresh ()
 {
 	const int screen_w(getmaxx(stdscr)), screen_h(getmaxy(stdscr));
 	const int buffer_w(getmaxx(window)), buffer_h(getmaxy(window));
@@ -148,7 +167,7 @@ BaseTUI::repaint ()
 	werase(stdscr);
 	// Since we're moving the window around on the screen, we need to paint those parts of stdscr that get exposed from where the window was before.
 	wnoutrefresh(stdscr);
-	prefresh(window, window_y, window_x, screen_y, screen_x, screen_y + window_h - 1, screen_x + window_w - 1);
+	pnoutrefresh(window, window_y, window_x, screen_y, screen_x, screen_y + window_h - 1, screen_x + window_w - 1);
 	if (old_cursor_visibility != cursor_visibility)
 		curs_set(old_cursor_visibility = cursor_visibility);
 }

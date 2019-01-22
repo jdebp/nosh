@@ -6,7 +6,7 @@
 #
 
 # This is run by the system-wide external configuration import subsystem.
-# It is used to auto-generate source files for service bundles, from D-Bus system-widr service definition files.
+# It is used to auto-generate source files for service bundles, from D-Bus system-wide service definition files.
 
 name="$1""$2"
 busname="`basename \"$1\"`"

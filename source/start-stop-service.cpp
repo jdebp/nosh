@@ -18,8 +18,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <unistd.h>
 #include <dirent.h>
 #include <fcntl.h>
-#include <curses.h>
-#include <term.h>
 #include "utils.h"
 #include "fdutils.h"
 #include "kqueue_common.h"
@@ -27,7 +25,9 @@ For copyright and licensing terms, see the file named COPYING.
 #include "popt.h"
 #include "FileDescriptorOwner.h"
 #include "DirStar.h"
-#include "curses-const-fix.h"	// Must come after curses.h .
+#include "CharacterCell.h"
+#include "ECMA48Output.h"
+#include "TerminalCapabilities.h"
 
 enum {
 	DEFAULT = -1,
@@ -39,44 +39,14 @@ enum {
 // **************************************************************************
 */
 
-enum { COLOR_DEFAULT = 9 };
-
-static
-NCURSES_CONST
-char 
-	setaf[] = "setaf",
-	op[] = "op";
-
-static inline
-int
-puterr (
-	int c
-) {
-	return std::fputc(c, stderr);
-}
-
-static inline
-void
-put (
-	const char * s,
-	const int colour
-) {
-	tputs(tparm(const_cast<NCURSES_CONST char *>(s), colour), 1, puterr);
-}
+enum { COLOUR_DEFAULT = -1 };
 
 static inline
 void
 reset_colour (
-	bool no_colours
+	ECMA48Output & o
 ) {
-	if (no_colours) return;
-	const char * s(tigetstr(op));
-	if (!s || reinterpret_cast<const char *>(-1) == s) {
-		s = tigetstr(setaf);
-		if (!s) return;
-		put(s, COLOR_DEFAULT);
-	} else
-		tputs(s, 1, puterr);
+	o.SGRColour(true);
 }
 
 /* Utilities ****************************************************************
@@ -163,14 +133,14 @@ struct bundle {
 	void start_initial() { start(supervise_dir_fd); }
 	bool has_started() const;
 	bool has_stopped() const;
-	void print_event(const char *, bool, enum event) const;
+	void print_event(const char *, ECMA48Output &, enum event) const;
 protected:
 	// Our state machine guarantees that state transitions only ever increase the state value.
 	// Even though we don't make use of it, our logic requires at least one state between FORCED and DONE, for timed-out jobs to sit in.
 	enum { INITIAL, BLOCKED, ACTIONED, REREQUESTED = ACTIONED + 30, ORDERED = REREQUESTED + 30, FORCED = ORDERED + 30, TIMEDOUT = FORCED + 30, DONE } ;
 	int job_state;
 	static const char * name_of (enum event);
-	static void set_colour_of (bool, enum event);
+	static void set_colour_of (ECMA48Output &, enum event);
 	static int colour_of (enum event);
 };
 }
@@ -233,48 +203,49 @@ bundle::colour_of (
 	enum event e
 ) {
 	switch (e) {
-		case LOAD:			return COLOR_BLUE;
-		case LOG_LOAD:			return COLOR_BLUE;
-		case RUN_ON_EMPTY:		return COLOR_BLUE;
-		case LOG_RUN_ON_EMPTY:		return COLOR_BLUE;
-		case IS_BLOCKED:		return COLOR_MAGENTA;
-		case IS_BLOCKING:		return COLOR_MAGENTA;
-		case IS_UNBLOCKED:		return COLOR_CYAN;
-		case IS_START:			return COLOR_YELLOW;
-		case IS_STOP:			return COLOR_YELLOW;
-		case STOP_HARDER:		return COLOR_YELLOW;
-		case STOP_HARDEST:		return COLOR_YELLOW;
-		case CANNOT_START:		return COLOR_RED;
-		case CANNOT_STOP:		return COLOR_RED;
-		case IS_READY:			return COLOR_GREEN;
-		case IS_DONE:			return COLOR_GREEN;
-		default:			return COLOR_DEFAULT;
+		case LOAD:			return COLOUR_BLUE;
+		case LOG_LOAD:			return COLOUR_BLUE;
+		case RUN_ON_EMPTY:		return COLOUR_BLUE;
+		case LOG_RUN_ON_EMPTY:		return COLOUR_BLUE;
+		case IS_BLOCKED:		return COLOUR_MAGENTA;
+		case IS_BLOCKING:		return COLOUR_MAGENTA;
+		case IS_UNBLOCKED:		return COLOUR_CYAN;
+		case IS_START:			return COLOUR_YELLOW;
+		case IS_STOP:			return COLOUR_YELLOW;
+		case STOP_HARDER:		return COLOUR_YELLOW;
+		case STOP_HARDEST:		return COLOUR_YELLOW;
+		case CANNOT_START:		return COLOUR_RED;
+		case CANNOT_STOP:		return COLOUR_RED;
+		case IS_READY:			return COLOUR_GREEN;
+		case IS_DONE:			return COLOUR_GREEN;
+		default:			return COLOUR_DEFAULT;
 	}
 }
 
 inline
 void
 bundle::set_colour_of (
-	bool no_colours,
+	ECMA48Output & o,
 	enum bundle::event e
 ) {
-	if (no_colours) return;
-	const char * s(tigetstr(setaf));
-	if (!s || reinterpret_cast<const char *>(-1) == s) return;
-	put(s, colour_of(e));
+	const int colour(colour_of(e));
+	if (0 > colour)
+		o.SGRColour(true);
+	else
+		o.SGRColour(true, Map256Colour(colour));
 }
 
 inline
 void 
 bundle::print_event(
 	const char * prog,
-	bool no_colours, 
+	ECMA48Output & o,
 	enum event e
 ) const {
 	std::fprintf(stderr, "%s: ", prog);
-	set_colour_of(no_colours, e);
+	set_colour_of(o, e);
 	std::fprintf(stderr, "%s", name_of(e));
-	reset_colour(no_colours);
+	reset_colour(o);
 	std::fprintf(stderr, " %s%s\n", path.c_str(), name.c_str());
 }
 
@@ -492,7 +463,7 @@ static inline
 bool
 load (
 	const char * prog,
-	bool no_colours,
+	ECMA48Output & o,
 	bundle & b,
 	const int socket_fd,
 	const int supervise_dir_fd,
@@ -505,9 +476,9 @@ load (
 	if (was_already_loaded) return true;
 	const bool run_on_empty(!is_done_after_exit(service_dir_fd));
 	if (verbose) {
-		b.print_event(prog, no_colours, load_event);
+		b.print_event(prog, o, load_event);
 		if (run_on_empty)
-			b.print_event(prog, no_colours, run_on_empty_event);
+			b.print_event(prog, o, run_on_empty_event);
 	}
 	if (pretending) return true;
 	make_supervise_fifos (supervise_dir_fd);
@@ -529,13 +500,12 @@ start_stop_common [[gnu::noreturn]] (
 	const ProcessEnvironment & envs,
 	const char * prog,
 	int want,
-	bool no_colours
+	bool colours
 ) {
-	if (!no_colours) {
-		int err;
-		if (OK != setupterm(0, STDERR_FILENO, &err))
-			no_colours = true;
-	}
+	TerminalCapabilities caps(envs);
+	ECMA48Output o(caps, stderr, true /* C1 is 7-bit aliased */);
+	if (!colours)
+		caps.colour_level = caps.NO_COLOURS;
 
 	const FileDescriptorOwner queue(kqueue());
 	if (0 > queue.get()) {
@@ -694,7 +664,7 @@ start_stop_common [[gnu::noreturn]] (
 		if (bundle::WANT_START != b.wants) continue;
 		if (0 > b.supervise_dir_fd) continue;
 
-		if (!load(prog, no_colours, b, socket_fd.get(), b.supervise_dir_fd, b.service_dir_fd, b.name, b.LOAD, b.RUN_ON_EMPTY)) {
+		if (!load(prog, o, b, socket_fd.get(), b.supervise_dir_fd, b.service_dir_fd, b.name, b.LOAD, b.RUN_ON_EMPTY)) {
 			std::fprintf(stderr, "%s: ERROR: %s/%s/%s: %s\n", prog, b.path.c_str(), b.name.c_str(), "ok", "Unable to load service bundle.");
 			if (b.primary_target)
 				any_not_loaded = true;
@@ -708,7 +678,7 @@ start_stop_common [[gnu::noreturn]] (
 			const FileDescriptorOwner log_service_dir_fd(open_service_dir(log_bundle_dir_fd.get()));
 			if (0 <= log_supervise_dir_fd.get() && 0 <= log_service_dir_fd.get()) {
 				const std::string log_name(b.name + "/log");
-				if (!load(prog, no_colours, b, socket_fd.get(), log_supervise_dir_fd.get(), log_service_dir_fd.get(), log_name, b.LOG_LOAD, b.LOG_RUN_ON_EMPTY)) {
+				if (!load(prog, o, b, socket_fd.get(), log_supervise_dir_fd.get(), log_service_dir_fd.get(), log_name, b.LOG_LOAD, b.LOG_RUN_ON_EMPTY)) {
 					std::fprintf(stderr, "%s: ERROR: %s/%s/%s: %s\n", prog, b.path.c_str(), log_name.c_str(), "ok", "Unable to load service bundle.");
 					continue;
 				}
@@ -758,7 +728,7 @@ start_stop_common [[gnu::noreturn]] (
 				}
 				if (is_done) {
 					if (verbose)
-						b.print_event(prog, no_colours, bundle::WANT_START == b.wants ? b.IS_READY: b.IS_DONE);
+						b.print_event(prog, o, bundle::WANT_START == b.wants ? b.IS_READY: b.IS_DONE);
 					b.mark_done();
 					struct kevent k;
 					set_event(&k, b.status_file_fd, EVFILT_VNODE, EV_DELETE|EV_DISABLE, NOTE_WRITE, 0, 0);
@@ -775,8 +745,8 @@ start_stop_common [[gnu::noreturn]] (
 					bundle * p(*j);
 					if (!p->done()) {
 						if (verbose && b.initial()) {
-							b.print_event(prog, no_colours, b.IS_BLOCKED);
-							p->print_event(prog, no_colours, p->IS_BLOCKING);
+							b.print_event(prog, o, b.IS_BLOCKED);
+							p->print_event(prog, o, p->IS_BLOCKING);
 						}
 						is_blocked = true;
 						break;
@@ -788,7 +758,7 @@ start_stop_common [[gnu::noreturn]] (
 					continue;
 				}
 				if (verbose)
-					b.print_event(prog, no_colours, b.IS_UNBLOCKED);
+					b.print_event(prog, o, b.IS_UNBLOCKED);
 				b.mark_unblocked();
 				struct kevent k;
 				set_event(&k, b.status_file_fd, EVFILT_VNODE, EV_ADD|EV_ENABLE|EV_CLEAR, NOTE_WRITE, 0, 0);
@@ -809,11 +779,11 @@ start_stop_common [[gnu::noreturn]] (
 						if (0 > b.supervise_dir_fd) break;
 						const bool was_already_loaded(is_ok(b.supervise_dir_fd));
 						if (!was_already_loaded)
-							b.print_event(prog, no_colours, b.CANNOT_START);
+							b.print_event(prog, o, b.CANNOT_START);
 						else 
 						if (b.needs_initial_action()) {
 							if (verbose)
-								b.print_event(prog, no_colours, b.IS_START);
+								b.print_event(prog, o, b.IS_START);
 							if (!pretending)
 								b.start_initial();
 						}
@@ -824,23 +794,23 @@ start_stop_common [[gnu::noreturn]] (
 						if (0 > b.supervise_dir_fd) break;
 						const bool was_already_loaded(is_ok(b.supervise_dir_fd));
 						if (!was_already_loaded)
-							b.print_event(prog, no_colours, b.CANNOT_STOP);
+							b.print_event(prog, o, b.CANNOT_STOP);
 						else
 						if (b.needs_hardest_action()) {
 							if (verbose)
-								b.print_event(prog, no_colours, b.STOP_HARDEST);
+								b.print_event(prog, o, b.STOP_HARDEST);
 							if (!pretending)
 								b.stop_hardest();
 						} else 
 						if (b.needs_harder_action()) {
 							if (verbose)
-								b.print_event(prog, no_colours, b.STOP_HARDER);
+								b.print_event(prog, o, b.STOP_HARDER);
 							if (!pretending)
 								b.stop_harder();
 						} else 
 						if (b.needs_initial_action()) {
 							if (verbose)
-								b.print_event(prog, no_colours, b.IS_STOP);
+								b.print_event(prog, o, b.IS_STOP);
 							if (!pretending)
 								b.stop_initial();
 						}
@@ -889,7 +859,7 @@ activate [[gnu::noreturn]] (
 		throw static_cast<int>(EXIT_USAGE);
 	}
 
-	start_stop_common(next_prog, args, envs, prog, START, !colours);
+	start_stop_common(next_prog, args, envs, prog, START, colours);
 }
 
 void
@@ -924,7 +894,7 @@ deactivate [[gnu::noreturn]] (
 		throw static_cast<int>(EXIT_USAGE);
 	}
 
-	start_stop_common(next_prog, args, envs, prog, STOP, !colours);
+	start_stop_common(next_prog, args, envs, prog, STOP, colours);
 }
 
 void
@@ -959,7 +929,7 @@ isolate [[gnu::noreturn]] (
 		throw static_cast<int>(EXIT_USAGE);
 	}
 
-	start_stop_common(next_prog, args, envs, prog, START, !colours);
+	start_stop_common(next_prog, args, envs, prog, START, colours);
 }
 
 void
@@ -994,5 +964,5 @@ reset [[gnu::noreturn]] (
 		throw static_cast<int>(EXIT_USAGE);
 	}
 
-	start_stop_common(next_prog, args, envs, prog, DEFAULT, !colours);
+	start_stop_common(next_prog, args, envs, prog, DEFAULT, colours);
 }

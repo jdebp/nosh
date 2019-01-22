@@ -3,11 +3,18 @@
 ## **************************************************************************
 
 [Unit]
-Description=Common Unix Printing Service socket
+Description=Common Unix Printing Service sockets
 
 [Socket]
 Backlog=2
-ListenStream=%t/cups/cups.sock
+Accept=false
+SocketMode=0666
+# Do not use %t because:
+#	1. /var/run is not the same socket address as /run .
+#	2. Lots of applications hardwire /var/run .
+ListenStream=/var/run/cups/cups.sock
+ListenStream=[::1]:631
+ListenStream=127.0.0.1:631
 
 [Install]
 WantedBy=workstation.target

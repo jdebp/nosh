@@ -110,6 +110,7 @@ protected:
 	const ProcessEnvironment & envs;
 
 	void close(const char * name);
+	void flush_and_close(const char * name);
 	void pause (const char * s, const char * n);
 	bool need_rotate();
 	void cap_total_size();
@@ -128,12 +129,18 @@ void logger::pause (const char * s, const char * n) {
 
 void logger::close(const char * name) {
 	if (0 <= current_fd) {
-		flush();
-		while (0 > fsync(current_fd)) pause("syncing",name);
-		while (0 > fchmod(current_fd, 0744)) pause("fchmod",name);
 		while (0 > ::close(current_fd)) pause("closing",name);
 		current_fd = -1;
 	}
+}
+
+void logger::flush_and_close(const char * name) {
+	if (0 <= current_fd) {
+		flush();
+		while (0 > fsync(current_fd)) pause("syncing",name);
+		while (0 > fchmod(current_fd, 0744)) pause("fchmod",name);
+	}
+	close(name);
 }
 
 void logger::flush() {
@@ -242,24 +249,43 @@ void logger::rotate() {
 		char * name_u(0);
 		asprintf(&name_u, "@%016" PRIx64 "%08" PRIx32 ".u", secs, nano);
 		while (0 > renameat(dir_fd, "current", dir_fd, name_u)) pause("renaming","current");
-		std::fprintf(stderr, "Flushing %s/%s.\n", dir_name, name_u);
+		std::fprintf(stderr, "Flushing   %s/%s.\n", dir_name, name_u);
 
-		close(name_u);
+		flush_and_close(name_u);
 
 		char * name_s(0);
 		asprintf(&name_s, "@%016" PRIx64 "%08" PRIx32 ".s", secs, nano);
 		while (0 > renameat(dir_fd, name_u, dir_fd, name_s)) pause("renaming",name_u);
-		std::fprintf(stderr, "Closed   %s/%s.\n", dir_name, name_s);
+		std::fprintf(stderr, "Closed     %s/%s.\n", dir_name, name_s);
 
 		free(name_s);
 		free(name_u);
 	}
 	cap_total_size();
 	if (0 > current_fd) {
+corrupted_current:
 		for (;;) {
 			current_fd = open_readwritecreate_at(dir_fd, "current", 0744);
 			if (0 <= current_fd) break;
 			pause("opening", "current");
+		}
+		struct stat s;
+		if (0 > fstat(current_fd, &s) || !(s.st_mode & 0100)) {
+			timespec now;
+			clock_gettime(CLOCK_REALTIME, &now);
+			const uint64_t secs(time_to_tai64(envs, TimeTAndLeap(now.tv_sec, false)));
+			const uint32_t nano(now.tv_nsec);
+
+			char * name_u(0);
+			asprintf(&name_u, "@%016" PRIx64 "%08" PRIx32 ".u", secs, nano);
+			while (0 > renameat(dir_fd, "current", dir_fd, name_u)) pause("renaming","current");
+			std::fprintf(stderr, "Recovering %s/%s.\n", dir_name, name_u);
+
+			close(name_u);
+
+			free(name_u);
+
+			goto corrupted_current;
 		}
 		while (0 > fchmod(current_fd, 0644)) pause("fchmod","current");
 		for (;;) {
