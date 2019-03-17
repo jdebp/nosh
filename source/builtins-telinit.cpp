@@ -21,6 +21,8 @@ extern void telinit ( const char * & , std::vector<const char *> &, ProcessEnvir
 extern void runlevel ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
 extern void service ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
 extern void chkconfig ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void initctl ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
+extern void svcadm ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
 extern void invoke_rcd ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
 extern void update_rcd ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
 extern void rc_update ( const char * & , std::vector<const char *> &, ProcessEnvironment & ) ;
@@ -50,6 +52,8 @@ commands[] = {
 	{	"init",			telinit					},
 	{	"service",		service					},
 	{	"chkconfig",		chkconfig				},
+	{	"initctl",		initctl					},
+	{	"svcadm",		svcadm					},
 	{	"invoke-rc.d",		invoke_rcd				},
 	{	"update-rc.d",		update_rcd				},
 	{	"rc-update",		rc_update				},

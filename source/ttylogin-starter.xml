@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="ttylogin-starter">
 
@@ -22,7 +23,7 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>ttylogin-starter</command>
-<arg>--verbose</arg>
+<arg choice='opt'>--verbose</arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -77,6 +78,8 @@ Currently, no provision is made for excluding kernel virtual terminals that are 
 
 </refsection>
 
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

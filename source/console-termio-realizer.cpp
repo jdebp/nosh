@@ -138,9 +138,9 @@ Realizer::compose_new_from_vt ()
 	// If the cursor is invisible, we are not guaranteed that the VirtualTerminal has kept the visible area around it.
 	if (CursorSprite::VISIBLE & a) {
 		const unsigned short cursor_y(screen_y + (wrong_way_up ? vt.query_visible_h() - vt.query_cursor_y() - 1U : vt.query_cursor_y()) - vt.query_visible_y());
-		c.move_cursor(false /* no software cursor */, cursor_y, vt.query_cursor_x() - vt.query_visible_x() + screen_x);
+		c.move_cursor(cursor_y, vt.query_cursor_x() - vt.query_visible_x() + screen_x);
 	}
-	c.set_cursor_state(false /* no software cursor */, a, vt.query_cursor_glyph());
+	c.set_cursor_state(a, vt.query_cursor_glyph());
 	if (has_pointer)
 		c.set_pointer_attributes(vt.query_pointer_attributes());
 }
@@ -373,7 +373,7 @@ console_termio_realizer [[gnu::noreturn]] (
 	VirtualTerminalBackEnd vt(vt_dirname, buffer_file.release(), input_fd.release());
 	append_event(ip, vt.query_buffer_fd(), EVFILT_VNODE, EV_ADD|EV_ENABLE|EV_CLEAR, NOTE_WRITE, 0, 0);
 	append_event(ip, vt.query_input_fd(), EVFILT_WRITE, EV_ADD|EV_DISABLE, 0, 0, 0);
-	TUIDisplayCompositor compositor(24, 80);
+	TUIDisplayCompositor compositor(false /* no software cursor */, 24, 80);
 	Realizer realizer(envs, quadrant, wrong_way_up, bold_as_colour, faint_as_colour, cursor_application_mode, calculator_application_mode, !no_alternate_screen_buffer, vt, compositor);
 
 	const struct timespec immediate_timeout = { 0, 0 };

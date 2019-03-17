@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="setsid">
 
@@ -28,7 +29,7 @@
 Some operating systems come with a <command>setsid</command> command that does not chain,
 but that instead (often) spawns its target as a child process.  
 This command does not ever fork a child process, and so is suitable for use
-in supervised command chains run under control of a daemon supervisor.
+in supervised command chains run under control of a d&#xe6;mon supervisor.
 </para>
 
 </refsection><refsection><title>Description</title>
@@ -52,6 +53,8 @@ If the process is not permitted to become a session leader, or if the process
 already is a session leader, the program fails.
 </para>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

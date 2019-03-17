@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="telinit">
 
@@ -16,27 +17,29 @@
 
 <refnamediv>
 <refname>telinit</refname>
-<refname>init</refname>
-<refname>reboot</refname>
-<refname>halt</refname>
-<refname>haltsys</refname>
-<refname>powercycle</refname>
-<refname>poweroff</refname>
+<refname>chkconfig</refname>
 <refname>emergency</refname>
-<refname>rescue</refname>
-<refname>normal</refname>
 <refname>fastboot</refname>
 <refname>fasthalt</refname>
 <refname>fastpowercycle</refname>
 <refname>fastpoweroff</refname>
-<refname>service</refname>
-<refname>rcctl</refname>
-<refname>chkconfig</refname>
-<refname>update-rc.d</refname>
+<refname>halt</refname>
+<refname>haltsys</refname>
+<refname>init</refname>
+<refname>initctl</refname>
 <refname>invoke-rc.d</refname>
+<refname>normal</refname>
+<refname>powercycle</refname>
+<refname>poweroff</refname>
 <refname>rc-service</refname>
 <refname>rc-update</refname>
+<refname>rcctl</refname>
+<refname>reboot</refname>
+<refname>rescue</refname>
 <refname>runlevel</refname>
+<refname>service</refname>
+<refname>svcadm</refname>
+<refname>update-rc.d</refname>
 <refpurpose>BSD/System 5 compatibility utilities for system and service control</refpurpose>
 </refnamediv>
 
@@ -52,10 +55,6 @@ Avoid using them if possible.
 </para>
 
 <para>
-It is preferable, although not ideal, to have systemd, upstart, or Solaris/Illumos habits and use the <citerefentry><refentrytitle>systemctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>initctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and <citerefentry><refentrytitle>svcadm</refentrytitle><manvolnum>1</manvolnum></citerefentry> compatibility commands instead.
-</para>
-
-<para>
 Or one can just use the <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> command directly.
 </para>
 
@@ -67,6 +66,7 @@ These commands are all shims around <citerefentry><refentrytitle>system-control<
 
 <refsection><title>General</title>
 
+<refsynopsisdiv>
 <cmdsynopsis>
 <command>telinit</command>
 <arg choice="opt" rep="repeat"><replaceable>args</replaceable></arg>
@@ -78,6 +78,7 @@ These commands are all shims around <citerefentry><refentrytitle>system-control<
 <cmdsynopsis>
 <command>runlevel</command>
 </cmdsynopsis>
+</refsynopsisdiv>
 
 <para>
 Invoked as <command>telinit</command> <arg choice="plain" rep='repeat'><replaceable>args</replaceable></arg> or as <command>init</command> <arg choice="plain" rep='repeat'><replaceable>args</replaceable></arg> the program chains to <command>system-control</command> <arg choice="plain">init</arg> <arg choice="plain" rep='repeat'><replaceable>args</replaceable></arg>, the behaviour of which is documented in <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
@@ -107,17 +108,22 @@ Do not use this obsolete command.
 </para>
 
 </refsection>
+
 <refsection><title>Startup</title>
+<refsynopsisdiv>
 <cmdsynopsis><command>emergency</command></cmdsynopsis>
 <cmdsynopsis><command>rescue</command></cmdsynopsis>
 <cmdsynopsis><command>normal</command></cmdsynopsis>
+</refsynopsisdiv>
 
 <para>
 Invoked as one of the system control commands <command>emergency</command>, <command>rescue</command>, or <command>normal</command>, it will chain to <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry> inserting that as the 0th argument and passing the original arguments as the subcommand.
 </para>
 
 </refsection>
+
 <refsection><title>Shutdown</title>
+<refsynopsisdiv>
 <cmdsynopsis>
 <command>reboot</command>
 <group choice="opt">
@@ -162,6 +168,7 @@ Invoked as one of the system control commands <command>emergency</command>, <com
 <arg choice="opt">--powercycle</arg>
 <arg choice="opt">--poweroff</arg>
 </cmdsynopsis>
+</refsynopsisdiv>
 
 <para>
 Invoked as one of the system control commands <command>reboot</command>, <command>halt</command>, <command>powercycle</command>, or <command>poweroff</command> it will normally chain to <citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry> with the <arg choice='plain'>-r</arg>, <arg choice='plain'>-h</arg>, <arg choice='plain'>-c</arg>, or <arg choice='plain'>-p</arg> command-line option respectively.
@@ -201,8 +208,9 @@ These commands and will enforce correct service dependencies and start/stop orde
 For individual control of services without orderings or dependencies, use <citerefentry><refentrytitle>service-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> or <citerefentry><refentrytitle>service-status</refentrytitle><manvolnum>1</manvolnum></citerefentry> directly instead.
 </para>
 
-<refsection><title>Maintainer script utilities</title>
+<refsection><title>Debian maintainer script utilities</title>
 
+<refsynopsisdiv>
 <cmdsynopsis>
 <command>invoke-rc.d</command>
 <arg choice="req"><replaceable>name</replaceable></arg>
@@ -229,6 +237,7 @@ For individual control of services without orderings or dependencies, use <citer
 <arg choice="plain">defaults</arg>
 </group>
 </cmdsynopsis>
+</refsynopsisdiv>
 
 <para>
 Avoid using these commands outwith package installation/uninstallation scripts.
@@ -273,14 +282,16 @@ The <arg choice="plain">defaults</arg>, <arg choice="plain">start</arg>, and <ar
 </para>
 
 </refsection>
-<refsection><title>Generic service control</title>
+<refsection><title>Generic</title>
 
+<refsynopsisdiv>
 <cmdsynopsis>
 <command>service</command>
 <arg choice="opt">--verbose</arg>
 <arg choice="req"><replaceable>name</replaceable></arg>
 <arg choice="req"><replaceable>command</replaceable></arg>
 </cmdsynopsis>
+</refsynopsisdiv>
 
 <para>
 Invoked as <command>service</command> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice="plain"><replaceable>command</replaceable></arg>, the program chains to <command>system-control</command> <arg choice="plain"><replaceable>command</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>, passing along any <arg choice='plain'>--verbose</arg> option.
@@ -293,13 +304,15 @@ Note that, unlike the BSD command, <command>service</command> can manually start
 </para>
 
 </refsection>
-<refsection><title>OpenBSD service control</title>
+<refsection><title>OpenBSD rc</title>
 
+<refsynopsisdiv>
 <cmdsynopsis>
 <command>rcctl</command>
 <arg choice="req"><replaceable>command</replaceable></arg>
 <arg choice="req"><replaceable>name</replaceable></arg>
 </cmdsynopsis>
+</refsynopsisdiv>
 
 <para>
 Invoked as <command>rcctl</command> <arg choice="plain"><replaceable>command</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>, unless <arg choice="plain"><replaceable>command</replaceable></arg> is either <arg choice="plain">set</arg> or <arg choice="plain">get</arg> the program chains to <command>system-control</command> <arg choice="plain"><replaceable>command</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>.
@@ -316,8 +329,9 @@ In contrast, <command>rcctl</command> <arg choice="plain">enable</arg> <arg choi
 </para>
 
 </refsection>
-<refsection><title>OpenRC service control</title>
+<refsection><title>OpenRC</title>
 
+<refsynopsisdiv>
 <cmdsynopsis>
 <command>rc-service</command>
 <arg choice="opt">--verbose</arg>
@@ -332,6 +346,7 @@ In contrast, <command>rcctl</command> <arg choice="plain">enable</arg> <arg choi
 </group>
 <arg choice="req"><replaceable>name</replaceable></arg>
 </cmdsynopsis>
+</refsynopsisdiv>
 
 <para>
 Invoked as <command>rc-service</command> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice="plain"><replaceable>command</replaceable></arg>, the program chains to <command>system-control</command> <arg choice="plain"><replaceable>command</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>, passing along any <arg choice='plain'>--verbose</arg> option.
@@ -345,8 +360,63 @@ Invoked as <command>rc-update</command> <arg choice="plain"><replaceable>command
 </para>
 
 </refsection>
-<refsection><title>Old-style Linux service control</title>
 
+<refsection><title>Upstart</title>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>initctl</command>
+<group choice="req">
+<arg choice="plain">version</arg>
+<arg choice="plain">start</arg>
+<arg choice="plain">stop</arg>
+<arg choice="plain">stop</arg>
+<arg choice="plain">status</arg>
+<arg choice="plain">show-config</arg>
+</group>
+<arg choice="req"><replaceable>name</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<para>
+Invoked as <command>initctl</command> <arg choice="plain"><replaceable>command1</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>, the program chains to <command>system-control</command> <arg choice="plain"><replaceable>command2</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>.
+<replaceable>command1</replaceable> may only be one of <arg choice="plain">show-config</arg>, <arg choice="plain">start</arg>, <arg choice="plain">status</arg>, <arg choice="plain">stop</arg>, or <arg choice="plain">version</arg>, which are translated to <arg choice="plain">show</arg>, <arg choice="plain">start</arg>, <arg choice="plain">status</arg>, <arg choice="plain">stop</arg>, <arg choice="plain">reset</arg>, and <arg choice="plain">version</arg> (respectively) for <replaceable>command2</replaceable>.
+</para>
+
+<para>
+No other functionality of the original <command>initctl</command> tool is supported.
+</para>
+
+</refsection>
+
+<refsection><title>Solaris SMF</title>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>svcadm</command>
+<group choice="req">
+<arg choice="plain">version</arg>
+<arg choice="plain">enable</arg>
+<arg choice="plain">disable</arg>
+</group>
+<arg choice="req"><replaceable>name</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<para>
+Invoked as <command>svcadm</command> <arg choice="plain"><replaceable>command1</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>, the program chains to <command>system-control</command> <arg choice="plain"><replaceable>command2</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>.
+<replaceable>command1</replaceable> may only be one of <arg choice="plain">enable</arg>, <arg choice="plain">disable</arg>, or <arg choice="plain">version</arg>, which are translated to <arg choice="plain">start</arg>, <arg choice="plain">stop</arg>, and <arg choice="plain">version</arg> (respectively) for <replaceable>command2</replaceable>.
+</para>
+
+<para>
+No other functionality of the original <command>svcadm</command> tool is supported.
+</para>
+
+</refsection>
+
+<refsection><title>van Smoorenburg</title>
+
+<refsynopsisdiv>
 <cmdsynopsis>
 <command>chkconfig</command>
 <arg choice="req"><replaceable>name</replaceable></arg>
@@ -360,6 +430,7 @@ Invoked as <command>rc-update</command> <arg choice="plain"><replaceable>command
 <arg choice="plain">off</arg>
 </group>
 </cmdsynopsis>
+</refsynopsisdiv>
 
 <para>
 Invoked as <command>chkconfig</command> <arg choice="plain"><replaceable>name</replaceable></arg>, the program chains to <command>system-control</command> <arg choice="plain">is-enabled</arg> <arg choice="plain"><replaceable>name</replaceable></arg>.
@@ -380,9 +451,11 @@ No other functionality of the original <command>chkconfig</command> tool (whose 
 
 <refsection><title>telinit server</title>
 
+<refsynopsisdiv>
 <cmdsynopsis>
 <command>initctl-read</command> 
 </cmdsynopsis>
+</refsynopsisdiv>
 
 <para>
 <command>initctl-read</command> is a UCSPI telinit server.
@@ -404,6 +477,8 @@ No validation is made on the run level requested except that it be a printable c
 
 </refsection>
 
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

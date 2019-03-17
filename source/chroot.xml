@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="chroot">
 
@@ -26,7 +27,7 @@
 
 <para>
 Some operating systems come with a <command>chroot</command> command that does not chain, but that instead spawns its target as a child process.  
-This command does not fork a child process, and so is suitable for use in supervised command chains run under control of a daemon supervisor.
+This command does not fork a child process, and so is suitable for use in supervised command chains run under control of a d&#xe6;mon supervisor.
 </para>
 
 </refsection><refsection><title>Description</title>
@@ -39,18 +40,18 @@ This command does not fork a child process, and so is suitable for use in superv
 <replaceable>next-prog</replaceable> may contain its own command line options, which <command>chroot</command> will ignore.
 </para>
 
+<para>
+The functionality of the GNU <command>chroot</command> command can be achieved by combining this command with <citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
 </refsection><refsection><title>Security</title>
 
 <para>
 On most systems, only the superuser is permitted to execute the underlying system call.  
 </para>
 
-</refsection><refsection><title>Note</title>
-
-<para>
-The functionality of the GNU <command>chroot</command> command can be achieved by combining this command with <citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-</para>
-
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

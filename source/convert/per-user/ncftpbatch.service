@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=NcFTP batch mode service for %u
+
+[Service]
+Type=dbus
+EnvironmentDirectory=env
+ExecStart=%p -D
+
+[Install]
+WantedBy=normal.target

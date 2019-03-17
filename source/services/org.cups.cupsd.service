@@ -8,6 +8,7 @@ Description=Common Unix Printing Service daemon
 Before=udev-trigger-add@devices.service udev-trigger-add@subsystems.service
 Before=busybox-mdev-rescan.service
 Before=suckless-mdev-rescan.service
+Before=mdevd-rescan.service
 
 [Service]
 RuntimeDirectory=cups

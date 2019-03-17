@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="nosh">
 
@@ -78,8 +79,7 @@ Inside a single-quotation mark delimited sequence of characters no characters ar
 
 <refsection><title>Example</title>
 
-<programlisting>
-#!/bin/nosh
+<programlisting>#!/bin/nosh
 echo
 This"is"all'one'argument.
 This\
@@ -116,6 +116,8 @@ The use of this function results in <replaceable>filename</replaceable> having t
 <command>nosh</command> detects these circumstances and ensures that open file descriptor <replaceable>N</replaceable> is not leaked into the executed program (if that program is not a built-in command).
 </para>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

@@ -26,12 +26,18 @@ ipv4plen="`get_conf stf_interface_ipv4plen`"
 ipv6ifid="`get_conf stf_interface_ipv6_ifid`"
 ipv6slaid="`get_conf stf_interface_ipv6_slaid`"
 
-getladdr() {
+getip6laddr() {
 	local proto addr rest
 
-	ifconfig "$1" 2>/dev/null | 
-	while read -r proto addr rest
+	ifconfig "$1" "inet6" 2>/dev/null | 
+	while read -r proto keyw addr rest
 	do
+		if ! test _"${keyw}" = _"address"
+		then
+			rest="${addr} ${rest}"
+			addr="${keyw}"
+			keyw="address"
+		fi
 		case "${proto}/${addr}/${rest}" in
 		inet6/fe80::*/*)
 			echo ${addr}
@@ -39,7 +45,7 @@ getladdr() {
 			;;
 		inet6/fe80::/*tentative*)
 			sleep "`sysctl -N net.inet6.ip6.dad_count`"
-			getladdr "$1"
+			getip6laddr "$1"
 			return
 			;;
 		esac
@@ -54,7 +60,7 @@ case "${ipv6ifid}" in
 	get_conf ipv6_network_interfaces |
 	while read -r i
 	do
-		laddr="`getladdr \"${i}\"`"
+		laddr="`getip6laddr \"${i}\"`"
 		test -n "${laddr}" && break
 	done
 	ipv6ifid="`expr \"${laddr}\" : 'fe80::\(.*\)%\(.*\)'`"

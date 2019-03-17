@@ -6,6 +6,7 @@ ataidle@.service
 autobridge.do
 autobridge.helper
 autobridge@.service
+avahi-autoipd@.service
 axfrdns.do
 axfrdns@.service
 axfrdns@.socket

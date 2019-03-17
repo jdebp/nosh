@@ -27,7 +27,7 @@ From the point of view of service and system management, the following points ar
 
 <ul>
 <li><p>
-It is a memory file system, that is mounted early in the bootstrap process by the <a href="system-manager.html"><code>system-manager</code></a> program.
+It is a memory file system, that is mounted early in the bootstrap process by the <a href="commands/system-manager.xml"><code>system-manager</code></a> program.
 Thus its contents can potentially live from early bootstrap to shutdown, but do not live across system restarts, or powering the system down.
 </p></li>
 <li><p>
@@ -52,7 +52,7 @@ Files to be found here include:
 
 <dl>
 <dt><code class='filename'>/run/utx.active</code></dt><dd>the part of the BSD login database that records currently-logged in users since the last bootstrap, created by the <code>utx</code> service</dd>
-<dt><code class='filename'>/run/utmp</code></dt><dd>the part of the Linux login database that records currently-logged in users since the last bootstrap, created by the <code>utx</code> service running <a href="login-update-utmpx.html"><code>login-update-utmpx</code></a> </dd>
+<dt><code class='filename'>/run/utmp</code></dt><dd>the part of the Linux login database that records currently-logged in users since the last bootstrap, created by the <code>utx</code> service running <a href="commands/login-update-utmpx.xml"><code>login-update-utmpx</code></a> </dd>
 <dt id='tmpfs-machine-id'><code class='filename'>/run/machine-id</code></dt><dd>the machine ID, usually a simple duplicate of <a href="#machine-id"><code class='filename'>/etc/machine-id</code></a></dd>
 <dt><code class='filename'>/run/dmesg.boot</code></dt><dd>a dump of the early kernel log for the current bootstrap, saved by the <code>dmesg</code> service and redundant with the log of the <code>klogd</code> service</dd>
 <dt><code class='filename'>/run/log</code></dt><dd>the universally writable socket that the <code>local-syslog-read</code> service listens on</dd>
@@ -67,7 +67,7 @@ Files to be found here include:
 <dd>
 
 <p>
-The runtime area for the system-wide <a href="service-manager.html"><code>service-manager</code></a> instance, spawned by the system manager or run by some other system.
+The runtime area for the system-wide <a href="commands/service-manager.xml"><code>service-manager</code></a> instance, spawned by the system manager or run by some other system.
 This contains:
 </p>
 
@@ -81,7 +81,7 @@ This contains:
 <dd>
 
 <p>
-The runtime area for the <a href="system-manager.html"><code>system-manager</code></a>, on a fully-nosh-managed system.
+The runtime area for the <a href="commands/system-manager.xml"><code>system-manager</code></a>, on a fully-nosh-managed system.
 </p>
 
 </dd>
@@ -90,8 +90,8 @@ The runtime area for the <a href="system-manager.html"><code>system-manager</cod
 <dd>
 
 <p>
-A log directory that holds the log output of the system-manager, the system-wide service manager, and any <a href="system-control.html"><code>system-control</code></a> commands spawned to enact system state changes.
-It is the <a href="system-manager.html"><code>system-manager</code></a> that sets this up and spawns the logger d&aelig;mon that writes to it.
+A log directory that holds the log output of the system-manager, the system-wide service manager, and any <a href="commands/system-control.xml"><code>system-control</code></a> commands spawned to enact system state changes.
+It is the <a href="commands/system-manager.xml"><code>system-manager</code></a> that sets this up and spawns the logger d&aelig;mon that writes to it.
 If the system-wide service manager is run some other way, this log might be somewhere else.
 </p>
 
@@ -169,7 +169,7 @@ Thus we are ensured that no numeric user ID will ever clash with a valid account
 <dd>
 
 <p>
-The runtime area for <code>jim</code>'s per-user <a href="service-manager.html"><code>service-manager</code></a> instance, spawned by <code>jim</code>'s per-user manager or run by some other system.
+The runtime area for <code>jim</code>'s per-user <a href="commands/service-manager.xml"><code>service-manager</code></a> instance, spawned by <code>jim</code>'s per-user manager or run by some other system.
 This contains:
 </p>
 
@@ -183,7 +183,7 @@ This contains:
 <dd>
 
 <p>
-The runtime area for <code>jim</code>'s <a href="per-user-manager.html"><code>per-user-manager</code></a>.
+The runtime area for <code>jim</code>'s <a href="commands/per-user-manager.xml"><code>per-user-manager</code></a>.
 This contains:
 </p>
 
@@ -198,8 +198,8 @@ This contains:
 <dd>
 
 <p>
-A log directory that holds the log output of <code>jim</code>'s per-user manager, <code>jim</code>'s per-user service manager, and any <a href="system-control.html"><code>system-control</code></a> commands spawned to enact user management state changes.
-It is <code>jim</code>'s <a href="per-user-manager.html"><code>per-user-manager</code></a> that sets this up and spawns the logger d&aelig;mon that writes to it.
+A log directory that holds the log output of <code>jim</code>'s per-user manager, <code>jim</code>'s per-user service manager, and any <a href="commands/system-control.xml"><code>system-control</code></a> commands spawned to enact user management state changes.
+It is <code>jim</code>'s <a href="commands/per-user-manager.xml"><code>per-user-manager</code></a> that sets this up and spawns the logger d&aelig;mon that writes to it.
 If <code>jim</code>'s per-user service manager is run some other way, this log might be somewhere else.
 </p>
 
@@ -223,7 +223,7 @@ User-space virtual terminals are subdirectories, such as:
 </dl>
 
 <p>
-See <a href="console-terminal-emulator.html"><code>console-terminal-emulator</code></a> for the contents of these directories.
+See <a href="commands/console-terminal-emulator.xml"><code>console-terminal-emulator</code></a> for the contents of these directories.
 Virtual terminal directories and their contents are owned by user <code>daemon</code> and with group <code>tty</code>.
 The terminal emulator services run as this user.  (The TTY login services start running as the superuser, obviously.)
 </p>
@@ -261,13 +261,13 @@ This directly contains files such as:
 </p>
 
 <dl>
-<dt id="machine-id"><code class='filename'>/etc/machine-id</code></dt><dd>the machine ID, set up by the <code>machine-id</code> service (which runs <a href="setup-machine-id.html"><code>setup-machine-id</code></a>)</dd>
-<dt id="hostid"><code class='filename'>/etc/hostid</code></dt><dd>an ID, set up by the <code>machine-id</code> service (which runs <a href="setup-machine-id.html"><code>setup-machine-id</code></a>): the machine ID, in an alternative form to <a href="#machine-id"><code class='filename'>/etc/machine-id</code></a>, on BSD systems; the 8-character host ID on GNU C library systems</dd>
+<dt id="machine-id"><code class='filename'>/etc/machine-id</code></dt><dd>the machine ID, set up by the <code>machine-id</code> service (which runs <a href="commands/setup-machine-id.xml"><code>setup-machine-id</code></a>)</dd>
+<dt id="hostid"><code class='filename'>/etc/hostid</code></dt><dd>an ID, set up by the <code>machine-id</code> service (which runs <a href="commands/setup-machine-id.xml"><code>setup-machine-id</code></a>): the machine ID, in an alternative form to <a href="#machine-id"><code class='filename'>/etc/machine-id</code></a>, on BSD systems; the 8-character host ID on GNU C library systems</dd>
 <dt id="default-rc.conf"><code class='filename'>/etc/default/rc.conf</code></dt><dd>a set of <i>variable=value</i> assignments incorporated by the external formats import subsystem into <a href="#rc.conf">an amalgamated <code>rc.conf</code> file</a></li></dd>
 <dt id="etc-rc.conf"><code class='filename'>/etc/rc.conf</code></dt><dd>a set of <i>variable=value</i> assignments incorporated by the external formats import subsystem into <a href="#rc.conf">an amalgamated <code>rc.conf</code> file</a></li></dd>
 <dt id="etc-rc.conf.local"><code class='filename'>/etc/rc.conf.local</code></dt><dd>a set of <i>variable=value</i> assignments incorporated by the external formats import subsystem into <a href="#rc.conf">an amalgamated <code>rc.conf</code> file</a></li></dd>
 <dt id="fstab"><code class='filename'>/etc/fstab</code></dt><dd>a database table used by the external formats import subsystem <a href="fstab.html">to generate mount, swap, dump, and filesystem check service bundles</a></li></dd>
-<dt id="ttys"><code class='filename'>/etc/ttys</code></dt><dd>a database table used by <a href="system-control.html"><code>system-control</code></a>'s <code>preset</code> subcommand and the external formats import subsystem <a href="ttys.html">to configure TTY login service bundles</a></li></dd>
+<dt id="ttys"><code class='filename'>/etc/ttys</code></dt><dd>a database table used by <a href="commands/system-control.xml"><code>system-control</code></a>'s <code>preset</code> subcommand and the external formats import subsystem <a href="ttys.html">to configure TTY login service bundles</a></li></dd>
 <dt id="vconsole.conf"><code class='filename'>/etc/vconsole.conf</code></dt><dd>a set of <i>variable=value</i> assignments converted into <a href="#rc.conf"><code>rc.conf</code></a> settings by <a href="rcconf-amalgamation.html">amalgamation</a></li></dd>
 <dt id="network-interfaces"><code class='filename'>/etc/network/interfaces</code></dt><dd>a Debian-style configuration file converted into <a href="#rc.conf"><code>rc.conf</code></a> settings by <a href="rcconf-amalgamation.html">amalgamation</a></li></dd>
 <dt id="hostname"><code class='filename'>/etc/hostname</code></dt><dd>the hostname converted into a <a href="#rc.conf"><code>rc.conf</code></a> setting by <a href="rcconf-amalgamation.html">amalgamation</a></li></dd>
@@ -329,10 +329,10 @@ This comprises, amongst other things:
 a <a href="rcconf-amalgamation.html">generated amalgamation of all <code>rc.conf</code> configuration files</a> and several other external sources of configuration information.
 Do not symbolically link any of the <code>rc.conf</code> configuration files to this!
 It is generated <em>from them</em> in the first place.
-This can be conveniently used with <a href="read-conf.html"><code>read-conf</code></a> when one needs to access configuration settings from these files.
+This can be conveniently used with <a href="commands/read-conf.xml"><code>read-conf</code></a> when one needs to access configuration settings from these files.
 </dd>
 <dt><code class='filename'>/etc/system-control/convert/host.conf</code></dt><dd>a host.conf file generated from <code class='filename'>/etc/nsswitch.conf</code> which one can symbolically link to <code class='filename'>/etc/host.conf</code></dd>
-<dt id="kbdmaps"><code class='filename'>/etc/system-control/convert/kbdmaps/*</code></dt><dd>keyboard maps for <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a>, symbolically linked into the <code>service/kbdmaps</code> subdirectory of any <code>console-fb-realizer@*</code> services</dd>
+<dt id="kbdmaps"><code class='filename'>/etc/system-control/convert/kbdmaps/*</code></dt><dd>keyboard maps for <a href="commands/console-fb-realizer.xml"><code>console-fb-realizer</code></a>, symbolically linked into the <code>service/kbdmaps</code> subdirectory of any <code>console-fb-realizer@*</code> services</dd>
 <dt><code class='filename'>/etc/system-control/convert/swap_capsctrl.kbd</code></dt><dd>a keyboard map snippet that is <a href="terminal-resources.html#FreeBSDOverlays">overlaid on top of others in order to produce <code>.capsctrl</code> variants</a></dd>
 <dt id="soft_backspace.kbd"><code class='filename'>/etc/system-control/convert/soft_backspace.kbd</code></dt><dd>a keyboard map snippet that is <a href="terminal-resources.html#FreeBSDOverlays">overlaid on top of others in order to ensure that the <code>backspace &#x232b;</code> key is soft-switchable</a> by the terminal emulator</dd>
 <dt id="soft_delete.kbd"><code class='filename'>/etc/system-control/convert/soft_delete.kbd</code></dt><dd>a keyboard map snippet that is <a href="terminal-resources.html#FreeBSDOverlays">overlaid on top of others in order to ensure that the <code>delete &#x2326;</code> key is soft-switchable</a> by the terminal emulator</dd>
@@ -353,7 +353,7 @@ This can be conveniently used with <a href="read-conf.html"><code>read-conf</cod
 <dd>
 
 <p>
-Directories for nosh package only preset files that only <a href="system-control.html"><code>system-control</code></a>'s <code>preset</code> subcommand searches.
+Directories for nosh package only preset files that only <a href="commands/system-control.xml"><code>system-control</code></a>'s <code>preset</code> subcommand searches.
 Preset files that only have meaning for a nosh-managed system, or that are intended to modify and override systemd presets, go here.
 The (approximate) intention is the following split:
 </p>
@@ -370,7 +370,7 @@ The (approximate) intention is the following split:
 <dd>
 
 <p>
-Directories for common preset files, for system-wide services, that <a href="system-control.html"><code>system-control</code></a>'s <code>preset</code> subcommand and systemd's <code>systemctl preset</code> both search.
+Directories for common preset files, for system-wide services, that <a href="commands/system-control.xml"><code>system-control</code></a>'s <code>preset</code> subcommand and systemd's <code>systemctl preset</code> both search.
 </p>
 
 </dd>
@@ -379,7 +379,7 @@ Directories for common preset files, for system-wide services, that <a href="sys
 <dd>
 
 <p>
-Directories for common preset files, for per-user services, that <a href="system-control.html"><code>system-control</code></a>'s <code>preset</code> subcommand and systemd's <code>systemctl preset</code> both search.
+Directories for common preset files, for per-user services, that <a href="commands/system-control.xml"><code>system-control</code></a>'s <code>preset</code> subcommand and systemd's <code>systemctl preset</code> both search.
 </p>
 
 </dd>
@@ -409,7 +409,7 @@ Various files of interest are:
 
 <dl>
 <dt><code class='filename'>/var/sv/dbus/service/system-wide.conf</code></dt><dd>the configuration file used by the system-wide Desktop Bus service, that incorporates <code class='filename'>/usr/local/etc/dbus-1/system.conf</code> by reference</dd>
-<dt><code class='filename'>/var/sv/console-fb-realizer@*/service/fonts/*.fnt</code></dt><dd>fonts for <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a></dd>
+<dt><code class='filename'>/var/sv/console-fb-realizer@*/service/fonts/*.fnt</code></dt><dd>fonts for <a href="commands/console-fb-realizer.xml"><code>console-fb-realizer</code></a></dd>
 </dl>
 
 </dd>
@@ -528,7 +528,7 @@ This is symbolically linked from <code>~jim/.uschedule</code> for compatibility.
 <p>
 Where per-user external configuration import sets up override Desktop Bus server definitions.
 These overrides use the per-user service manager to start services that start the various Desktop Bus server programs, instead of the broker spawning them directly.
-They also work around a Desktop Bus broker code bug that requires <code>User=</code> even in per-user files like these, otherwise it does not run <a href="dbus-daemon-launch-helper.html"><code>dbus-daemon-launch-helper</code></a>.
+They also work around a Desktop Bus broker code bug that requires <code>User=</code> even in per-user files like these, otherwise it does not run <a href="commands/dbus-daemon-launch-helper.xml"><code>dbus-daemon-launch-helper</code></a>.
 They include:
 </p>
 

@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="monitored-fsck">
 
@@ -39,6 +40,8 @@ On the BSDs, it has no monitoring plug-in mechanism.
 On Linux, the monitoring is done by opening a client stream to the <filename>/run/fsck.progress</filename> local domain socket and passing the <arg choice='plain'>-C<replaceable>fd</replaceable></arg> command line option to <command>fsck</command> where <replaceable>fd</replaceable> is the number of the open file descriptor for that client.
 </para>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

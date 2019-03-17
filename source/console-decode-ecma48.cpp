@@ -380,7 +380,7 @@ Decoder::EscapeSequence(
 	switch (last_intermediate) {
 		default:	std::fprintf(stdout, "ESC "); plainchar(last_intermediate, ' '); plainchar(character, '\n'); break;
 		case NUL:
-			if (no_7bit) {
+			if (no_7bit && input) {
 				std::fprintf(stdout, "Meta "); plainchar(character, '\n');
 			} else
 			switch (character) {
@@ -480,13 +480,13 @@ Decoder::ControlSequence(
 			switch (character) {
 	// ---- ECMA-defined final characters ----
 				case '@':	csi_sumargs("ICH"); break;
-				case 'A':	csi_fnk("CUU"); break;
-				case 'B':	csi_fnk("CUD"); break;
-				case 'C':	csi_fnk("CUF"); break;
-				case 'D':	csi_fnk("CUB"); break;
+				case 'A':	input ? csi_fnk("CUU") : csi_sumargs("CUU"); break;
+				case 'B':	input ? csi_fnk("CUD") : csi_sumargs("CUD"); break;
+				case 'C':	input ? csi_fnk("CUF") : csi_sumargs("CUF"); break;
+				case 'D':	input ? csi_fnk("CUB") : csi_sumargs("CUB"); break;
 				case 'E':	input ? csi_fnk("CNL") : csi_sumargs("CNL"); break;
 				case 'F':	input ? csi_fnk("CPL") : csi_sumargs("CPL"); break;
-				case 'G':	csi_fnk("CHA"); break;
+				case 'G':	input ? csi_fnk("CHA") : csi("CHA"); break;
 				case 'H':	input ? csi_fnk("CUP") : csi("CUP"); break;
 				case 'I':	csi_sumargs("CHT"); break;
 				case 'J':	csi("ED"); break;
@@ -505,7 +505,7 @@ Decoder::ControlSequence(
 				case 'W':	csi("CTC"); break;
 				case 'X':	csi_sumargs("ECH"); break;
 				case 'Y':	csi_sumargs("CVT"); break;
-				case 'Z':	csi_fnk("CBT"); break;
+				case 'Z':	input ? csi_fnk("CBT") : csi_sumargs("CBT"); break;
 				case '[':	csi("SRS"); break;
 				case '\\':	csi("PTX"); break;
 				case ']':	csi("SDS"); break;

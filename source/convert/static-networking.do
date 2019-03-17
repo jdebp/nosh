@@ -30,12 +30,7 @@ get_ifconfig1() { read_rc ifconfig_"`iface_escape \"$1\"`" || read_rc ifconfig_D
 get_ifconfig2() { read_rc ifconfig_"`iface_escape \"$1\"`"_"$2" || read_rc ifconfig_DEFAULT_"$2" ; }
 get_ipv6_prefix1() { read_rc ipv6_prefix_"`iface_escape \"$1\"`" || read_rc ipv6_prefix_DEFAULT ; }
 get_children() { read_rc "$2"lans_"`iface_escape \"$1\"`" ; }
-list_available_network_interfaces() {
-	case "`uname`" in
-	Linux)	/bin/ls /sys/class/net ;;
-	*)	ifconfig -l ;;
-	esac
-}
+list_available_network_interfaces() { /bin/exec ifconfig -l ; }
 list_network_interfaces() { 
 	local n
 	local c
@@ -123,11 +118,12 @@ filter_ifconfig() {
 	for i
 	do
 		case "$i" in
-			SYNCDHCP|NOSYNCDHCP|DHCP|WPA|HOSTAP|NOAUTO)
+			SYNCDHCP|NOSYNCDHCP|DHCP|WPA|HOSTAP|NOAUTO|IPV4LL)
 				;;
 			inet|inet4|inet6|link|ether|ipx|atalk|lladr)
 				if test _"$i" = _"$n"
 				then
+					test -z "$o" || printf "\n"
 					o="$i"
 				else
 					o=""
@@ -138,7 +134,7 @@ filter_ifconfig() {
 				;;
 		esac
 	done
-	test -z "$o" || printf "\n"
+	printf "\n"
 }
 get_filtered_ifconfig2() { 
 	local i
@@ -147,7 +143,7 @@ get_filtered_ifconfig2() {
 	if ! c="`get_ifconfig1 "$1"`"
 	then
 		case "$1" in
-		lo0)	c="inet 127.0.0.1" ;;
+		lo0|lo)	c="inet 127.0.0.1/8 inet6 ::1/128" ;;
 		*)	c="" ;;
 		esac
 	fi
@@ -161,7 +157,8 @@ get_filtered_ifconfig3() {
 	if ! c="`get_ifconfig2 "$1" "$2"`"
 	then
 		case "$2:$1" in
-		aliases:lo0)	c="inet 127.0.0.1/8" ;;
+		aliases:lo0)	c="inet 127.0.0.1/8 inet6 ::1/128" ;;
+		aliases:lo)	c="inet 127.0.0.1/8 inet6 ::1/128" ;;
 		ipv6:*) 
 			if a="`read_rc \"$2\"_activate_all_interfaces`" && 
 			   test _"NO" = _"`if_no_or_empty "$a" NO`"
@@ -616,6 +613,28 @@ make_snort() {
 	system-control preset snort-log
 }
 
+make_avahi_autoipd() {
+	local service
+	service="avahi-autoipd@$1"
+	system-control convert-systemd-units $e "$r/" "./${service}.service"
+	install -d -m 0755 "$r/${service}/service/env"
+	if is_physical_interface "$1" &&
+	   is_ip_interface "$1" &&
+	   test 0 -lt "`expr \"${autoipd}\" : avahi-autoipd`" &&
+	   get_ifconfig1 "$1" | grep -q -E '\<IPV4LL\>' &&
+	   ! get_ifconfig1 "$1" | grep -q -E '\<NOAUTO\>'
+	then
+		system-control preset "${service}"
+	else
+		system-control disable "${service}"
+	fi
+	show_enable "${service}"
+	show_settings "${service}"
+	rm -f -- "$r/${service}/log"
+	ln -s -- "../../../sv/avahi-autoipd-log" "$r/${service}/log"
+	system-control preset avahi-autoipd-log
+}
+
 # $1: interface name
 # $2: extra create_args
 # $3: kernel modules wants+after
@@ -630,6 +649,7 @@ make_primary_services() {
 	make_dhclient "$1"
 	make_udhcpc "$1"
 	make_dhcpcd "$1"
+	make_avahi_autoipd "$1"
 }
  
 make_wlandebug() {
@@ -646,7 +666,7 @@ make_wlandebug() {
 	system-control preset wlandebug-log
 }
 
-redo-ifchange rc.conf general-services "netif@.service" "static_arp@.service" "static_ndp@.service" "static_ip4@.service" "static_ip6@.service" "natd@.service" "hostapd@.service" "dhclient@.service" "udhcpc@.service" "dhcpcd@.service" "wpa_supplicant@.service" "rfcomm_pppd@.service" "ppp@.service" "spppcontrol@.service" "ifscript@.service" "ifconfig@.service" "snort@.service" "wlandebug@.service"
+redo-ifchange rc.conf general-services "netif@.service" "static_arp@.service" "static_ndp@.service" "static_ip4@.service" "static_ip6@.service" "natd@.service" "hostapd@.service" "dhclient@.service" "udhcpc@.service" "dhcpcd@.service" "wpa_supplicant@.service" "rfcomm_pppd@.service" "ppp@.service" "spppcontrol@.service" "avahi-autoipd@.service" "ifscript@.service" "ifconfig@.service" "snort@.service" "wlandebug@.service"
 
 r="/var/local/sv"
 e="--no-systemd-quirks --escape-instance --local-bundle --bundle-root"
@@ -656,13 +676,20 @@ then
 else
 	dhclient="dhclient"
 fi
+if autoipd="`read_rc autoipd_program`" && test -n "${autoipd}"
+then
+	autoipd="`basename \"${autoipd}\"`"
+else
+	autoipd="avahi-autoipd"
+fi
 
-find "$r/" -maxdepth 1 -type d \( -name 'static_arp@*' -o -name 'static_ndp@*' -o -name 'static_ip4@*' -o -name 'static_ip6@*' -o -name 'netif@*' -o -name 'natd@*' -o -name 'hostapd@*' -o -name 'wpa_supplicant@*' -o -name 'dhclient@*' -o -name 'dhcpcd@*' -o -name 'ppp@*' -o -name 'spppcontrol@*' -o -name 'rfcomm_pppd@*' -o -name 'snort@*' -o -name 'wlandebug@*' \) -print0 |
+
+find "$r/" -maxdepth 1 -type d \( -name 'static_arp@*' -o -name 'static_ndp@*' -o -name 'static_ip4@*' -o -name 'static_ip6@*' -o -name 'netif@*' -o -name 'natd@*' -o -name 'hostapd@*' -o -name 'wpa_supplicant@*' -o -name 'dhclient@*' -o -name 'dhcpcd@*' -o -name 'ppp@*' -o -name 'spppcontrol@*' -o -name 'rfcomm_pppd@*' -o -name 'snort@*' -o -name 'avahi-autoipd@*' -o -name 'wlandebug@*' \) -print0 |
 xargs -0 system-control disable
 
-find "$r/" -maxdepth 1 -type d \( -name 'ifconfig@*' -o -name 'ifscript@*' -o -name 'natd@*' -o -name 'hostapd@*' -o -name 'wpa_supplicant@*' -o -name 'dhclient@*' -o -name 'dhcpcd@*' -o -name 'ppp@*' -o -name 'spppcontrol@*' -o -name 'rfcomm_pppd@*' -o -name 'snort@*' -o -name 'wlandebug@*' \) -exec rm -f -- {}/wanted-by/static-networking {}/wanted-by/workstation \;
+find "$r/" -maxdepth 1 -type d \( -name 'ifconfig@*' -o -name 'ifscript@*' -o -name 'natd@*' -o -name 'hostapd@*' -o -name 'wpa_supplicant@*' -o -name 'dhclient@*' -o -name 'dhcpcd@*' -o -name 'ppp@*' -o -name 'spppcontrol@*' -o -name 'rfcomm_pppd@*' -o -name 'snort@*' -o -name 'avahi-autoipd@*' -o -name 'wlandebug@*' \) -exec rm -f -- {}/wanted-by/static-networking {}/wanted-by/workstation \;
 
-system-control disable ifconfig-log natd-log dhclient-log dhcpcd-log snort-log rfcomm_pppd-log ppp-log sppp-log wlandebug-log
+system-control disable ifconfig-log natd-log dhclient-log dhcpcd-log snort-log rfcomm_pppd-log ppp-log sppp-log wlandebug-log avahi-autoipd-log
 
 if rfcomm_pppd_server_enable="`read_rc rfcomm_pppd_server_enable`"
 then

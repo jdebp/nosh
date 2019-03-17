@@ -148,8 +148,8 @@ const CharacterCell::colour_type overscan_fg(ALPHA_FOR_ERASED,255,255,255), over
 const CharacterCell overscan_blank(' ', 0U, overscan_fg, overscan_bg);
 const CharacterCell::colour_type border_fg(ALPHA_FOR_ERASED,95,95,95), border_bg(ALPHA_FOR_ERASED,0,0,0);
 const CharacterCell blank_cell(' ', CharacterCell::INVERSE, border_fg, border_bg);
-const CharacterCell::colour_type converted_fg(ALPHA_FOR_COLOURED,255,255,255), converted_bg(ALPHA_FOR_COLOURED,0,0,0);
-const CharacterCell::colour_type unconverted_fg(ALPHA_FOR_COLOURED,191,191,191), unconverted_bg(ALPHA_FOR_COLOURED,0,0,0);
+const CharacterCell::colour_type converted_fg(ALPHA_FOR_TRUE_COLOURED,255,255,255), converted_bg(ALPHA_FOR_TRUE_COLOURED,0,0,0);
+const CharacterCell::colour_type unconverted_fg(ALPHA_FOR_TRUE_COLOURED,191,191,191), unconverted_bg(ALPHA_FOR_TRUE_COLOURED,0,0,0);
 
 inline
 bool
@@ -651,8 +651,8 @@ Realizer::compose ()
 	unsigned short x(lower_vt.query_cursor_x());
 	unsigned short y(lower_vt.query_cursor_y());
 	if (!active) {
-		comp.move_cursor(false, y, x);
-		comp.set_cursor_state(false, a, lower_vt.query_cursor_glyph());
+		comp.move_cursor(y, x);
+		comp.set_cursor_state(a, lower_vt.query_cursor_glyph());
 		return;
 	}
 
@@ -662,8 +662,8 @@ Realizer::compose ()
 	if (x + len > comp.query_w()) x = comp.query_w() - len;
 	if (y + 2U > comp.query_h()) y = comp.query_h() - 2U;
 
-	comp.set_cursor_state(false, CursorSprite::VISIBLE|CursorSprite::BLINK, CursorSprite::BLOCK);
-	comp.move_cursor(false, y + 0U, x + cursorpos);
+	comp.set_cursor_state(CursorSprite::VISIBLE|CursorSprite::BLINK, CursorSprite::BLOCK);
+	comp.move_cursor(y + 0U, x + cursorpos);
 
 	for (unsigned short col(0U); col < data_to_sendlen; ++col) {
 		const CharacterCell::colour_type & fg(col < cursorpos ? converted_fg : unconverted_fg);
@@ -1276,7 +1276,7 @@ console_input_method [[gnu::noreturn]] (
 	VirtualTerminalBackEnd lower_vt(lvcname, lower_buffer_file.release(), lower_input_fd.release());
 	append_event(ip, lower_vt.query_buffer_fd(), EVFILT_VNODE, EV_ADD|EV_ENABLE|EV_CLEAR, NOTE_WRITE, 0, 0);
 	append_event(ip, lower_vt.query_input_fd(), EVFILT_WRITE, EV_ADD|EV_DISABLE, 0, 0, 0);
-	TUIDisplayCompositor compositor(24, 80);
+	TUIDisplayCompositor compositor(false /* no software cursor */, 24, 80);
 	Realizer realizer(upper_buffer_file, lower_vt, compositor, tables);
 
 	const struct timespec immediate_timeout = { 0, 0 };

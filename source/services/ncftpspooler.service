@@ -1,0 +1,14 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=NcFTP spool daemon
+
+[Service]
+User=ncftp
+EnvironmentDirectory=env
+ExecStart=%p -d ${queue:+-q "${queue}"} -o /dev/stderr
+
+[Install]
+WantedBy=workstation.target

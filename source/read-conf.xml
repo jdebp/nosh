@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="read-conf">
 
@@ -82,8 +83,7 @@ Inside a single-quotation mark delimited sequence of characters no characters ar
 
 <refsection><title>Example file</title>
 
-<programlisting>
-LANG="C"	# Set the LANG variable.
+<programlisting>LANG="C"	# Set the LANG variable.
 hash=#		# Only the second # on this line begins a comment.
 backslash1='\'
 backslash2="\\"
@@ -122,6 +122,8 @@ The previously documented workaround for those libraries' having memory leaks in
 </para></listitem>
 </itemizedlist>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

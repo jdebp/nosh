@@ -63,6 +63,8 @@ extern void chkservice ( const char * &, std::vector<const char *> &, ProcessEnv
 extern void pipe ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void tai64nlocal ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void move_to_control_group ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void procstat ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void ps ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 
 extern const
 struct command 
@@ -138,6 +140,8 @@ commands[] = {
 	{	"load-kernel-module",		load_kernel_module	},
 	{	"unload-kernel-module",		unload_kernel_module	},
 	{	"version",			system_version		},
+	{	"procstat",			procstat		},
+	{	"ps",				ps			},
 };
 const std::size_t num_commands = sizeof commands/sizeof *commands;
 

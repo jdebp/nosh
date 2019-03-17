@@ -152,6 +152,16 @@ ECMA48Output::SCUSR(CursorSprite::attribute_type a, CursorSprite::glyph_type g) 
 				default:			DECSCUSR(0U); break;
 			}
 			break;
+		case TerminalCapabilities::XTERM_DECSCUSR:
+			switch (g) {
+				case CursorSprite::BAR:		DECSCUSR(CursorSprite::BLINK & a ? 5U : 6U); break;
+				case CursorSprite::UNDERLINE:	DECSCUSR(CursorSprite::BLINK & a ? 3U : 4U); break;
+				case CursorSprite::BOX:		[[clang::fallthrough]];
+				case CursorSprite::STAR:	[[clang::fallthrough]];
+				case CursorSprite::BLOCK:	DECSCUSR(CursorSprite::BLINK & a ? 1U : 2U); break;
+				default:			DECSCUSR(0U); break;
+			}
+			break;
 		case TerminalCapabilities::EXTENDED_DECSCUSR:
 			switch (g) {
 				case CursorSprite::BLOCK:	DECSCUSR(CursorSprite::BLINK & a ? 1U : 2U); break;
@@ -245,9 +255,10 @@ ECMA48Output::SGRColour(
 			{
 				uint_fast32_t dist(-1U);
 				uint_least16_t closest(0U);
+				const bool prefer_standard(ALPHA_FOR_16_COLOURED == colour.alpha);
 				for (uint_least16_t i(0U); i < 256U; ++i) {
 					const uint_fast32_t d(PythagoreanDistance(Map256Colour(i), colour));
-					if (d < dist) {
+					if (prefer_standard ? d < dist : d <= dist) {
 						closest = i;
 						dist = d;
 					}
@@ -259,9 +270,10 @@ ECMA48Output::SGRColour(
 			{
 				uint_fast32_t dist(-1U);
 				uint_least16_t closest(0U);
+				const bool prefer_standard(ALPHA_FOR_16_COLOURED == colour.alpha);
 				for (uint_least16_t i(0U); i < 256U; ++i) {
 					const uint_fast32_t d(PythagoreanDistance(Map256Colour(i), colour));
-					if (d < dist) {
+					if (prefer_standard ? d < dist : d <= dist) {
 						closest = i;
 						dist = d;
 					}

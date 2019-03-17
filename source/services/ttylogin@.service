@@ -9,7 +9,7 @@ After=multi-user-pre.target
 [Service]
 SessionLeader=true
 StandardInput=tty
-ExecStart=login
+ExecStart=login -p
 RestartSec=0
 # This isn't appropriate for modern service management systems, and doesn't even do anything on BSDs.
 #UtmpIdentifier=%I

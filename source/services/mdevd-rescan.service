@@ -1,0 +1,22 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Laurent Bercot's mdevd plug-and-play manager one-shot initialization
+DefaultDependencies=false
+Before=shutdown.target
+After=local-fs.target mdevd.service
+
+[Service]
+Type=oneshot
+ExecStart=mdevd-coldplug
+# This only has meaningful behaviour at bootstrap, not later.
+RemainAfterExit=yes
+Restart=never
+# This is an outrageous bodge.
+ExecStartPre=sleep 5
+
+[Install]
+WantedBy=sysinit.target
+StoppedBy=shutdown.target

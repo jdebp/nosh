@@ -17,13 +17,17 @@ struct TUIVIO
 {
 	TUIVIO(TUIDisplayCompositor & comp);
 
-	void WriteNCells (long row, long col, const CharacterCell::attribute_type & attr, const ColourPair & colour, char c, unsigned n);
+	void WriteNCharsAttr (long row, long col, const CharacterCell::attribute_type & attr, const ColourPair & colour, CharacterCell::character_type c, unsigned n);
 	void WriteNAttrs (long row, long col, const CharacterCell::attribute_type & attr, const ColourPair & colour, unsigned n);
-	void WriteCellStr (long row, long col, const CharacterCell::attribute_type & attr, const ColourPair & colour, const char * b, std::size_t l);
+	void WriteCharStrAttr (long row, long col, const CharacterCell::attribute_type & attr, const ColourPair & colour, const CharacterCell::character_type * b, std::size_t l);
+	void WriteCharStrAttr (long row, long col, const CharacterCell::attribute_type & attr, const ColourPair & colour, const char * b, std::size_t l);
+	void WriteCharStr (long row, long col, const CharacterCell::character_type * b, std::size_t l);
 	void WriteCharStr (long row, long col, const char * b, std::size_t l);
 
-	void Print (long row, long & col, const CharacterCell::attribute_type & attr, const ColourPair & colour, char c);
+	void Print (long row, long & col, const CharacterCell::attribute_type & attr, const ColourPair & colour, CharacterCell::character_type c);
+	void Print (long row, long & col, const CharacterCell::attribute_type & attr, const ColourPair & colour, const CharacterCell::character_type * b, std::size_t l);
 	void Print (long row, long & col, const CharacterCell::attribute_type & attr, const ColourPair & colour, const char * b, std::size_t l);
+	void Print (long row, long & col, const CharacterCell::character_type * b, std::size_t l);
 	void Print (long row, long & col, const char * b, std::size_t l);
 	void PrintFormatted (long row, long & col, const CharacterCell::attribute_type & attr, const ColourPair & colour, const char * format, ...);
 	void PrintFormatted (long row, long & col, const char * format, ...);
@@ -31,8 +35,10 @@ struct TUIVIO
 protected:
 	TUIDisplayCompositor & c;
 
-	void poke_quick (long row, long col, const CharacterCell::attribute_type & attr, const ColourPair & colour, char c);
+	void poke_quick (long row, long col, const CharacterCell::attribute_type & attr, const ColourPair & colour, CharacterCell::character_type c);
+	void poke_quick (long row, long col, const CharacterCell::attribute_type & attr, const ColourPair & colour, const CharacterCell::character_type * b, std::size_t l);
 	void poke_quick (long row, long col, const CharacterCell::attribute_type & attr, const ColourPair & colour, const char * b, std::size_t l);
+	void poke_quick (long row, long col, const CharacterCell::character_type * b, std::size_t l);
 	void poke_quick (long row, long col, const char * b, std::size_t l);
 };
 

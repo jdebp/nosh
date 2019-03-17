@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
+
+<refentry id="ps">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>ps</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">administrator commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>ps</refname>
+<refpurpose>process listing tool</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>ps</command>
+<group choice="req">
+<arg choice="plain">-a</arg>
+<arg choice="plain">-x</arg>
+</group>
+<arg choice="opt">-d</arg>
+<arg choice="opt">-e</arg>
+<arg choice="opt">-o <replaceable>name(s)</replaceable></arg>
+<arg choice="opt">-j</arg>
+<arg choice="opt">-l</arg>
+<arg choice="opt">-u</arg>
+<arg choice="opt">-w</arg>
+<arg choice="opt">-f</arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>ps</command>
+<arg choice="req">-p <replaceable>process-id(s)</replaceable></arg>
+<arg choice="opt">-d</arg>
+<arg choice="opt">-e</arg>
+<arg choice="opt">-o <replaceable>name(s)</replaceable></arg>
+<arg choice="opt">-j</arg>
+<arg choice="opt">-l</arg>
+<arg choice="opt">-u</arg>
+<arg choice="opt">-w</arg>
+<arg choice="opt">-f</arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>ps</command> is a tool for listing process information.
+It is a shim for the <citerefentry><refentrytitle>list-process-table</refentrytitle><manvolnum>1</manvolnum></citerefentry> command that provides a more familiar interface to that command whilst yielding that command's table-format output.
+Its output is suitable for <citerefentry><refentrytitle>console-flat-table-viewer</refentrytitle><manvolnum>1</manvolnum></citerefentry> with 1 header line.
+</para>
+
+<para>
+It has just two filter modes.
+With the <arg choice="plain">-a</arg> and <arg choice="plain">-x</arg> command-line options, <citerefentry><refentrytitle>list-process-table</refentrytitle><manvolnum>1</manvolnum></citerefentry> is told to display the entire process table.
+With the <arg choice="plain">-p</arg> command-line option, <citerefentry><refentrytitle>list-process-table</refentrytitle><manvolnum>1</manvolnum></citerefentry> is told to display just the process table entries for <replaceable>process-id(s)</replaceable> which is a comma-separated list of process IDs.
+</para>
+
+<para>
+The <arg choice="plain">-w</arg> command-line option is present for compatibility and does nothing.
+The output of <citerefentry><refentrytitle>list-process-table</refentrytitle><manvolnum>1</manvolnum></citerefentry> is designed for a table-viewer and is not constrained by terminal width.
+The <arg choice="plain">-f</arg> command-line option is also present for compatibility and does nothing.
+</para>
+
+<para>
+The <arg choice="plain">-o</arg> command-line option is transformed into a sequence of <arg choice="plain">--output</arg> options, one for each of the fields in <replaceable>name(s)</replaceable>, which is a comma-separated list.
+If the last output column is either "command" or "args", the <arg choice="plain">-d</arg> command-line option is transformed into <arg choice="plain">--output tree</arg> and the <arg choice="plain">-e</arg> command-line option is transformed into <arg choice="plain">--output envs</arg>.
+Otherwise they have no effect.
+</para>
+
+<para>
+The <arg choice="plain">-j</arg>, <arg choice="plain">-l</arg>, and <arg choice="plain">-u</arg> command-line options are transformed into <arg choice="plain">--format</arg> options for "jobs", "long", and "user" formats, respectively.
+</para>
+
+<para>
+No deduplication of fields is done, so <citerefentry><refentrytitle>list-process-table</refentrytitle><manvolnum>1</manvolnum></citerefentry> will receive any repetitions exactly as they are.
+</para>
+
+</refsection>
+
+<refsection><title>Examples</title>
+
+<informalexample>
+<para>
+This command uses <command>ps</command> in a loop to feed <citerefentry><refentrytitle>console-flat-table-viewer</refentrytitle><manvolnum>1</manvolnum></citerefentry>, producing a continually updated display akin to <citerefentry><refentrytitle>top</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Using <citerefentry><refentrytitle>sed</refentrytitle><manvolnum>1</manvolnum></citerefentry> to insert the Form Feed rather than printing it separately with <citerefentry><refentrytitle>printf</refentrytitle><manvolnum>1</manvolnum></citerefentry> reduces flicker.
+</para>
+<literallayout><computeroutput># </computeroutput><userinput>while ps -a -x | sed -e '1s/^/^L/'</userinput><computeroutput>
+> </computeroutput><userinput>do</userinput><computeroutput>
+> </computeroutput><userinput>sleep 1</userinput><computeroutput>
+> </computeroutput><userinput>done |</userinput><computeroutput>
+> </computeroutput><userinput>console-flat-table-viewer --header-count 1</userinput></literallayout>
+</informalexample>
+
+</refsection>
+
+<refsection id="COMPATIBILITY" xreflabel="COMPATIBILITY">
+<title>Compatibility and history</title>
+
+<para>
+There is one <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>8</manvolnum></citerefentry> tool available on Linux operating systems, from GNU procps.
+It has an exceedingly complex command-line interface, one of the claims about which (made in its documentation) is that it provides the command-line interface of the BSD <command>ps</command>, where options are not preceded by minus signs.
+Michael K. Johnson's conversion (to procps) of Branko Lankester's original Linux <command>ps</command> command, back in 1993 and 1994, originated the claim that procps was providing an "extended BSD" command-line interface.
+</para>
+
+<para>
+This was not true at all.
+</para>
+
+<para>
+In fact, the BSD <command>ps</command> has not worked that way since the days of 4.3BSD in the 1980s, it having switched to using the <citerefentry><refentrytitle>getopt</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function before 4.4BSD.
+</para>
+
+<para>
+This <command>ps</command> is modelled on the FreeBSD <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>8</manvolnum></citerefentry> tool, providing a subset of its functionality.
+All versions of <command>ps</command> in FreeBSD, going back to the original 4.4BSD sources of 1994-05-26, use <citerefentry><refentrytitle>getopt</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
+That has been the only documented command-line syntax in its manual for all of that time, too.
+This <command>ps</command> provides the <emphasis>actual</emphasis> command-line option syntax that the BSDs have employed and documented for well over a quarter of a century, at the time of writing this manual.
+</para>
+
+</refsection>
+
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
+
+</refentry>

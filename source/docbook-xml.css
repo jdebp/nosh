@@ -1,0 +1,78 @@
+refentry, refsection, refsynopsisdiv { display:block; }
+example, informalexample, programlisting, literallayout, screen { display:block; border:1px dashed; padding:0.5em; margin-right:3em; margin-bottom:1em; }
+screen, literallayout, programlisting, funcsynopsisinfo, classsynopsisinfo { white-space:pre; }
+refmeta { display:block; border-bottom:double; margin-bottom:1em; }
+refmiscinfo[class="manual"] { text-transform:capitalize; font-style:italic; }
+refmiscinfo[class="source"] { float:right; }
+refsynopsisdiv>*, refnamediv>*, refsection>* { margin-left:2em; }
+refsynopsisdiv>title, refnamediv>title, refmeta>title, refsection>title { margin-left:0em; font-weight:bolder; margin-bottom:1em; }
+refentry>refsynopsisdiv>title, refentry>refnamediv>title, refentry>refmeta>title, refentry>refsection>title { font-variant:small-caps; font-size:x-large; }
+title, subtitle { display:block; border-bottom:1px dotted; }
+para, warning, caution, important, note, tip { display:block; margin-bottom:1em; }
+warning, caution, important, note, tip { border:1px dashed; }
+warning, caution { font-weight:bolder; foreground-color:Orange; }
+warning:before { content:"Warning: "; font-weight:bolder; }
+caution:before { content:"Caution: "; font-weight:bolder; }
+important:before { content:"Important: "; font-weight:bolder; }
+note:before { content:"Note: "; font-weight:bolder; }
+tip:before { content:"Tip: "; font-weight:bolder; }
+refnamediv:before { content:"Name"; display:block; font-weight:bolder; margin-bottom:1em; border-bottom:1px dotted; font-variant:small-caps; font-size:x-large; }
+refnamediv { display:block; margin-bottom:1em; }
+refnamediv>* { margin-bottom:1em; }
+refsynopsisdiv:before { content:"Synopsis"; display:block; font-weight:bolder; margin-bottom:1em; border-bottom:1px dotted; font-variant:small-caps; font-size:x-large; }
+refsynopsisdiv>* { margin-bottom:1em; }
+manvolnum:before { content:"("; }
+manvolnum:after { content:")"; }
+refmiscinfo {}
+refname { margin-left:0em; }
+refname:not(:last-of-type):after { content:", "; }
+refpurpose { margin-left:0em; }
+refpurpose:first-of-type:before { content:" \2014 "; }
+funcsynopsis, funcprototype { font-family:monospace; display:block; margin-bottom:1em; }
+funcsynopsis[language="C++"]>funcprototype>paramdef:first-of-type:before { content:"("; }
+funcsynopsis[language="C++"]>funcprototype>paramdef:last-of-type:after { content:")"; }
+funcsynopsis[language="C++"]>funcprototype>paramdef:not(:last-of-type):after { content:","; }
+cmdsynopsis { font-family:monospace; display:block; margin-bottom:1em; }
+cmdsynopsis>command, funcdef>function { font-weight:bolder; }
+paramdef>parameter { font-style:italic; }
+arg, command, function, parameter, filename, code, envar, computeroutput, userinput, programlisting, screen { font-family:monospace; }
+group[choice=opt]:before, arg[choice=opt]:before { content:"["; font-family:normal; }
+group[choice=opt]:after, arg[choice=opt]:after { content:"]"; font-family:normal; }
+group[choice=req]:before, arg[choice=req]:before { content:"{"; font-family:normal; }
+group[choice=req]:after, arg[choice=req]:after { content:"}"; font-family:normal; }
+group[rep=repeat]:after, arg[rep=repeat]:after { content:"..."; font-family:normal; }
+group[rep=repeat][choice=opt]:after, arg[rep=repeat][choice=opt]:after { content:"...]"; font-family:normal; }
+group[rep=repeat][choice=req]:after, arg[rep=repeat][choice=req]:after { content:"...}"; font-family:normal; }
+group>*:not(:last-child):after { content:" | "; font-family:normal; }
+orderedlist { display:block; list-style-type:decimal; }
+itemizedlist { display:block; list-style-type:disc; }
+variablelist { display:block; }
+varlistentry { display:block; }
+listitem { display:list-item; counter-increment:1; margin-left:2em; }
+varlistentry>listitem { display:block; margin-left:2em; }
+varlistentry>term { }
+term:not(:last-of-type):after { content:", "; }
+replaceable { font-style:italic; }
+emphasis { font-style:italic; }
+keycombo {}
+keycap { font-family:monospace; border-radius:3px; padding:1px; border:4px outset; line-height:2em; background-color:AntiqueWhite; }
+personname {}
+firstname {}
+firstname + surname:before { content:" "; }
+othername + surname:before { content:" "; }
+firstname + othername:before { content:" "; }
+surname {}
+table { display:table; border:1px dashed; padding:0.2em; margin-bottom:1em; }
+table>title { display:table-caption; font-weight:bolder; }
+thead { display:table-header-group; font-weight:bolder; padding:0.5em; border-bottom:1px solid; }
+tbody { display:table-row-group; }
+tr { display:table-row; }
+th { display:table-cell; }
+td { display:table-cell; }
+ulink { text-decoration:underline; }
+ulink:after { content:"<"attr(url)">"; cursor:pointer; text-decoration:inherit; font-size:smaller; }
+quote:before { content:"\2018"; }
+quote:after { content:"\2019"; }
+citebiblioid:before { content:"["; }
+citebiblioid:after { content:"]"; }
+citetitle { font-style:italic; }

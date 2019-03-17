@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="fdredir">
 
@@ -42,7 +43,7 @@ Command line options determine the mode in which <replaceable>name</replaceable>
 <variablelist>
 
 <varlistentry>
-<term><arg>--non-blocking</arg></term><listitem>
+<term><arg choice='plain'>--non-blocking</arg></term><listitem>
 
 <para>
 The file is opened in non-blocking mode (and blocking mode is restored once it has been opened).
@@ -152,6 +153,8 @@ Nor will it set synchronous mode or (which would be silly given what <command>fd
 the file descriptor as close-on-exec.
 </para>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

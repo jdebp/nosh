@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="exec">
 
@@ -22,9 +23,9 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>exec</command> 
-<arg>--login</arg> 
-<arg>--clear</arg> 
-<arg>--arg0 <replaceable>string</replaceable></arg> 
+<arg choice='opt'>--login</arg> 
+<arg choice='opt'>--clear</arg> 
+<arg choice='opt'>--arg0 <replaceable>string</replaceable></arg> 
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -32,8 +33,7 @@
 <refsection><title>Note</title>
 
 <para>
-Most shells have a built-in <command>exec</command> command that replaces the shell
-process itself.
+Most shells have a built-in <command>exec</command> command that replaces the shell process itself.
 See the manual for each individual shell for its built-in command.
 This command will be an external command to most shells.
 It is a built-in command for <citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
@@ -42,8 +42,7 @@ It is a built-in command for <citerefentry><refentrytitle>nosh</refentrytitle><m
 </refsection><refsection><title>Description</title>
 
 <para>
-<command>exec</command> is a chain-loading utility that simply chain loads to <replaceable>next-prog</replaceable>
-with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+<command>exec</command> is a chain-loading utility that simply chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
 </para>
 
 <para>
@@ -80,6 +79,7 @@ The alternative names are:
 <command>envdir</command>, 
 <command>envgid</command>, 
 <command>envuidgid</command>, 
+<command>erase-machine-id</command>
 <command>export-to-rsyslog</command>,
 <command>false</command>, 
 <command>fdmove</command>,
@@ -154,20 +154,11 @@ If <replaceable>next-prog</replaceable> is such a command, it will be executed d
 If invoked with prefixes, they will be run as ordinary overlaid programs via <citerefentry><refentrytitle>execv</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
 </para>
 
-<refsection><title>Aesthetics</title>
-
 <para>
-<command>tcp-socket-accept</command> is a built-in command.
-Because of this, daemons that run it chain loaded from other programs such as <command>tcp-socket-listen</command> will appear in a <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>1</manvolnum></citerefentry> listing to be running the chain of commands that preceded it.
+The built-in command mechanism tries to ensure that the <code>COMM</code> and <code>ARGS</code> fields shown in a <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>1</manvolnum></citerefentry> listing reflect the changes when chain-loading through built-in commands.
 </para>
 
-<para>
-This may be aesthetically unpleasing.
-The way to address it is simply to run <command>tcp-socket-accept</command> as an ordinary external command, by referencing it via its full pathname.
-The operating system will as a consequence overwrite the process' argument list visible with <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>1</manvolnum></citerefentry> with the arguments as they are by the time that program is run.
-</para>
-
-</refsection><refsection><title>SECURITY</title>
+</refsection><refsection><title>Security</title>
 
 <para>
 Having built-in commands, rather than forcing each individual command to be reloaded as a fresh process image by the operating system, exposes all built-in commands in a chain-loading chain to any weaknesses in one.
@@ -191,6 +182,8 @@ They are highly modular, with almost no coupling between commands; and usually s
 And you can always run the commands as external commands, as aforementioned.
 </para>
 
-</refsection></refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

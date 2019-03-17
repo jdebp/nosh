@@ -848,7 +848,7 @@ load (
 		//
 		// We have to keep a client (write) end descriptor open to the control FIFO.
 		// Otherwise, the first control client process triggers POLLHUP when it closes its end.
-		// Opening the FIFO for read+write isn't standard, although it would work on Linux.
+		// Opening the FIFO for read+write isn't standard, although it does work on Linux.
 		FileDescriptorOwner control_client_fd(open_writeexisting_at(supervise_dir_fd, "control"));
 		if (0 > control_client_fd.get()) return;
 #endif

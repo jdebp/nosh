@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="setlock">
 
@@ -19,8 +20,8 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>setlock</command> 
-<arg>--non-blocking</arg> 
-<arg>--ignore</arg> 
+<arg choice='opt'>--non-blocking</arg> 
+<arg choice='opt'>--ignore</arg> 
 <arg choice='req'><replaceable>file</replaceable></arg> 
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
@@ -66,6 +67,8 @@ On the BSDs and Linux, locking is based upon the <citerefentry><refentrytitle>fl
 On such systems, explicitly unlocking the file with <citerefentry><refentrytitle>flock</refentrytitle><manvolnum>2</manvolnum></citerefentry> will also deactivate the lock.
 </para>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

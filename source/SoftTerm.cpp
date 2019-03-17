@@ -35,6 +35,7 @@ SoftTerm::SoftTerm(
 	display_margin(w,h),
 	scrolling(true),
 	overstrike(true),
+	square(true),
 	no_clear_screen_on_column_change(false),
 	advance_pending(false),
 	attributes(0),
@@ -824,11 +825,11 @@ SoftTerm::SetAttributes()
 			i += 3U;
 		} else
 		if (i + 5U <= argc && 38U == args[i + 0U] && 2U == args[i + 1U]) {
-			foreground = CharacterCell::colour_type(ALPHA_FOR_COLOURED,args[i + 2U] % 256U,args[i + 3U] % 256U,args[i + 4U] % 256U);
+			foreground = MapTrueColour(args[i + 2U] % 256U,args[i + 3U] % 256U,args[i + 4U] % 256U);
 			i += 5U;
 		} else
 		if (i + 5U <= argc && 48U == args[i + 0U] && 2U == args[i + 1U]) {
-			background = CharacterCell::colour_type(ALPHA_FOR_COLOURED,args[i + 2U] % 256U,args[i + 3U] % 256U,args[i + 4U] % 256U);
+			background = MapTrueColour(args[i + 2U] % 256U,args[i + 3U] % 256U,args[i + 4U] % 256U);
 			i += 5U;
 		} else
 			SetAttribute (args[i++]);
@@ -882,18 +883,18 @@ SoftTerm::SetAttribute(unsigned int a)
 		case 29U:	attributes &= ~CharacterCell::STRIKETHROUGH; break;
 		case 30U: case 31U: case 32U: case 33U:
 		case 34U: case 35U: case 36U: case 37U:	
-				foreground = Map16Colour(a -  30U + 8U * (a >  30U)); break;
+				foreground = Map16Colour(a -  30U); break;
 		case 39U:	foreground = default_foreground; break;
 		case 40U: case 41U: case 42U: case 43U:
 		case 44U: case 45U: case 46U: case 47U:	
-				background = Map16Colour(a -  40U + 8U * (a >  40U)); break;
+				background = Map16Colour(a -  40U); break;
 		case 49U:	background = default_background; break;
 		case 90U: case 91U: case 92U: case 93U:
 		case 94U: case 95U: case 96U: case 97U:	
-				foreground = Map16Colour(a -  90U + 8U * (a >  90U)); break;
+				foreground = Map16Colour(a -  90U + 8U); break;
 		case 100U: case 101U: case 102U: case 103U:
 		case 104U: case 105U: case 106U: case 107U:	
-				background = Map16Colour(a - 100U + 8U * (a > 100U)); break;
+				background = Map16Colour(a - 100U + 8U); break;
 		// ECMA-48 defines these as font changes.  We don't provide that.  
 		// The Linux console defines them as something else.  We don't provide that, either.
 		case 10U:	break;
@@ -1046,6 +1047,7 @@ SoftTerm::SetPrivateMode(unsigned int a, bool f)
 			break;
 		case 1037U:	keyboard.SetDeleteIsDEL(f); break	;
 		case 2004U:	keyboard.SetSendPasteEvent(f); break	;
+		case 1369U:	square = f; break;
 
 		// ############## Intentionally unimplemented private modes
 		case 8U:	// DECARM (autorepeat)
@@ -1886,10 +1888,6 @@ SoftTerm::PrintableCharacter(
 	unsigned short shift_level,
 	uint_fast32_t character
 ) {
-	if (advance_pending) {
- 		if (WillWrap()) Advance();
- 		advance_pending = false;
-	}
 	/// FIXME: \bug
 	/// This needs a lot more attention.
 	/// Combining characters don't combine and we don't handle bidirectional printing.
@@ -1897,17 +1895,41 @@ SoftTerm::PrintableCharacter(
 	||  UnicodeCategorization::IsMarkNonSpacing(character)
 	) {
 		// Do nothing.
-	} else {
+	} else
+	{
 		const coordinate columns(display_origin.x + display_margin.w);
-		const ScreenBuffer::coordinate s(columns * active_cursor.y + active_cursor.x);
 		const CharacterCell::attribute_type a(attributes ^ (error || 1U != shift_level ? CharacterCell::INVERSE : 0));
+
+		if (advance_pending) {
+			if (WillWrap()) Advance();
+			advance_pending = false;
+		}
+		const ScreenBuffer::coordinate s(columns * active_cursor.y + active_cursor.x);
+
 		if (UnicodeCategorization::IsMarkEnclosing(character)) {
 			screen.WriteNCells(s, 1U, CharacterCell(character, a, foreground, background));
-		} else {
+		} else
+		{
 			if (!overstrike) InsertCharacters(1U);
 			screen.WriteNCells(s, 1U, CharacterCell(character, a, foreground, background));
 			advance_pending = WillWrap();
 			if (!advance_pending) Advance();
+			if (!square && UnicodeCategorization::IsWideOrFull(character)) {
+				const coordinate right_margin(scroll_origin.x + scroll_margin.w - 1U);
+
+				if (active_cursor.x < right_margin) {
+					if (advance_pending) {
+						if (WillWrap()) Advance();
+						advance_pending = false;
+					}
+					const ScreenBuffer::coordinate s1(columns * active_cursor.y + active_cursor.x);
+
+					if (!overstrike) InsertCharacters(1U);
+					screen.WriteNCells(s1, 1U, CharacterCell(SPC, a, foreground, background));
+					advance_pending = WillWrap();
+					if (!advance_pending) Advance();
+				}
+			}
 		}
 	}
 }

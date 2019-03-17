@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="userenv">
 
@@ -33,6 +34,8 @@
 <citerefentry><refentrytitle>getuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry> retrieves the current process's effective UID and GID and supplementary group ID list, and <citerefentry><refentrytitle>userenv-fromenv</refentrytitle><manvolnum>1</manvolnum></citerefentry> uses them to set per-account environment variables.
 </para>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

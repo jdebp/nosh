@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Anonymous FTP service using twoftpd
+Conflicts=twoftpd
+
+[Service]
+EnvironmentDirectory=env
+LimitData=12000000
+Environment=CHROOT=1
+ExecStart=envuidgid ftp twoftpd-anon
+
+[Install]
+WantedBy=server.target

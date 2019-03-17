@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="pty-get-tty">
 
@@ -53,7 +54,7 @@ Thus <replaceable>next-prog</replaceable> will inherit the <citerefentry><refent
 
 </refsection>
 
-<refsection><title>SECURITY</title>
+<refsection><title>Security</title>
 
 <refsection><title>Linux</title>
 
@@ -83,25 +84,24 @@ The <citerefentry><refentrytitle>grantpt</refentrytitle><manvolnum>3</manvolnum>
 <term>
 <citerefentry><refentrytitle>pty-run</refentrytitle><manvolnum>1</manvolnum></citerefentry> 
 </term>
-<listitem>
-used to run a program attached to the newly created pseudo-terminal,
-passing its input and output to standard input and standard output
-</listitem>
+<listitem><para>
+used to run a program attached to the newly created pseudo-terminal, passing its input and output to standard input and standard output
+</para></listitem>
 </varlistentry>
 <varlistentry>
 <term>
 <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> 
 </term>
-<listitem>
-use to run a terminal emulator on the newly created pseudo-terminal,
-that sends and responds to the same control sequences as the kernel's
-built-in terminal emulator for (kernel) virtual terminals
-</listitem>
+<listitem><para>
+use to run a terminal emulator on the newly created pseudo-terminal, that sends and responds to the same control sequences as the kernel's built-in terminal emulator for (kernel) virtual terminals
+</para></listitem>
 </varlistentry>
 </variablelist>
 
 </refsection>
 
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

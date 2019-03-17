@@ -27,7 +27,7 @@ NetBSD systems provide kernel virtual terminals on devices <code>/dev/ttyE0</cod
 
 <p>
 Login on such terminals is done with <a href="virtual-terminal-login.html"><code>ttylogin</code> services</a> configured to use those devices of course, which can be managed just like other ordinary services.
-There is one augmentation to ordinary service management: the <a href="preset.html"><code>preset</code></a> command uses the ordinary preset file mechanism, but can also <a href="ttys.html">read the <code>/etc/ttys</code> file</a>.
+There is one augmentation to ordinary service management: the <a href="commands/preset.xml"><code>preset</code></a> command uses the ordinary preset file mechanism, but can also <a href="ttys.html">read the <code>/etc/ttys</code> file</a>.
 </p>
 
 <h2>
@@ -55,7 +55,7 @@ Enabled <code>ttylogin@</code> services are started at bootstrap in the ordinary
 </p>
 
 <p>
-However, on Linux such services can be left <em>disabled</em> and instead can be activated on demand by the <a href="ttylogin-starter.html"><code>ttylogin-starter</code></a> tool.
+However, on Linux such services can be left <em>disabled</em> and instead can be activated on demand by the <a href="commands/ttylogin-starter.xml"><code>ttylogin-starter</code></a> tool.
 This utility, for which there is a service bundle allowing one to run it itself as a service, starts <code>ttylogin</code> services, directly, as and when the user switches between kernel virtual terminals.
 </p>
 
@@ -64,13 +64,13 @@ Leaving room for X or console-fb-realizer
 </h2>
 
 <p>
-An X server needs a virtual terminal allocated to it for the same reason that <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a> does: interlocking the use of the framebuffer and input event subsystem with the kernel's terminal emulator program.
+An X server needs a virtual terminal allocated to it for the same reason that <a href="commands/console-fb-realizer.xml"><code>console-fb-realizer</code></a> does: interlocking the use of the framebuffer and input event subsystem with the kernel's terminal emulator program.
 So if using kernel virtual terminals alongside an X server, either one starts the server directly from a login session on one of those terminals, or one reserves a virtual terminal for the X server.
 </p>
 
 <p>
 To do this, one simply disables the service.
-(Note that <a href="ttylogin-starter.html"><code>ttylogin-starter</code></a>, which manually starts services irrespective of their enable/disable state, is incompatible with X servers and <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a> and should not be used when they are.)
+(Note that <a href="commands/ttylogin-starter.xml"><code>ttylogin-starter</code></a>, which manually starts services irrespective of their enable/disable state, is incompatible with X servers and <a href="commands/console-fb-realizer.xml"><code>console-fb-realizer</code></a> and should not be used when they are.)
 There are three ways to do this:
 </p>
 
@@ -84,7 +84,7 @@ With presets:
 <p>
 If <a href="ttys.html">the <code>/etc/ttys</code> file is being used for presets</a>, one first presets the service off in that file.
 </p>
-<blockquote><pre>ttyv7&nbsp;/usr/bin/false&nbsp;xterm&nbsp;off&nbsp;secure</pre></blockquote>
+<blockquote><pre>ttyv7&nbsp;/usr/bin/false&nbsp;teken&nbsp;off&nbsp;secure</pre></blockquote>
 <p>
 Then one <a href="external-formats.html">uses the external formats conversion mechanism</a> to import that preset.
 </p>

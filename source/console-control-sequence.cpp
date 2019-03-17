@@ -165,7 +165,7 @@ void colour_definition::action(popt::processor & /*proc*/, const char * text)
 	if ('#'== *text) {
 		unsigned long rgb(std::strtoul(text + 1, const_cast<char **>(&end), 16));
 		if (!*end && end != text + 1) {
-			v = CharacterCell::colour_type(ALPHA_FOR_COLOURED,(rgb >> 16) & 0xFF,(rgb >> 8) & 0xFF,(rgb >> 0) & 0xFF);
+			v = MapTrueColour((rgb >> 16) & 0xFF,(rgb >> 8) & 0xFF,(rgb >> 0) & 0xFF);
 			set = true;
 			return;
 		}
@@ -356,7 +356,7 @@ console_control_sequence [[gnu::noreturn]] (
 	popt::bool_string_definition reverse_option('\0', "reverse", "Switch reverse on/off.", reverse);
 	popt::bool_string_definition invisible_option('\0', "invisible", "Switch invisible on/off.", invisible);
 	popt::bool_string_definition strikethrough_option('\0', "strikethrough", "Switch strikethrough on/off.", strikethrough);
-	bool cursor, cursorappkeys, calcappkeys, altbuffer, backspace_mode, delete_mode, bce, awm, scnm, irm, colm;
+	bool cursor, cursorappkeys, calcappkeys, altbuffer, backspace_mode, delete_mode, bce, awm, scnm, irm, square, colm;
 	popt::bool_string_definition cursor_option('\0', "cursor", "Switch cursor on/off.", cursor);
 	popt::bool_string_definition cursorappkeys_option('\0', "appcursorkeys", "Switch cursor keypad application mode on/off.", cursorappkeys);
 	popt::bool_string_definition calcappkeys_option('\0', "appcalckeys", "Switch calculator keypad application mode on/off.", calcappkeys);
@@ -367,6 +367,7 @@ console_control_sequence [[gnu::noreturn]] (
 	popt::bool_string_definition awm_option('\0', "linewrap", "Switch automatic right margin on/off.", awm);
 	popt::bool_string_definition scnm_option('\0', "inversescreen", "Switch inverse screen mode on/off.", scnm);
 	popt::bool_string_definition irm_option('\0', "insert", "Switch insert (not overstrike) on/off.", irm);
+	popt::bool_string_definition square_option('\0', "square", "Switch square (not obling) mode on/off.", square);
 	popt::bool_string_definition colm_option('\0', "132-columns", "Switch 132-columns mode on/off.", colm);
 	unsigned long regtabs, rows, columns;
 	popt::unsigned_number_definition regtabs_option('\0', "regtabs", "interval", "Set regular tabs at the given interval.", regtabs, 0);
@@ -411,6 +412,7 @@ console_control_sequence [[gnu::noreturn]] (
 			&underline_type_option,
 			&erase_display_option,
 			&irm_option,
+			&square_option,
 		};
 		popt::table_definition ECMA48_table_option(sizeof ECMA48_table/sizeof *ECMA48_table, ECMA48_table, "Standard ECMA-48 and ISO 8613-6 control sequences");
 		popt::definition * DEC_table[] = {
@@ -511,6 +513,8 @@ console_control_sequence [[gnu::noreturn]] (
 	if (irm_option.is_set())
 		o.IRM(irm);
 	if (caps.use_DECPrivateMode) {
+		if (square_option.is_set())
+			o.SquareMode(square);
 		if (colm_option.is_set())
 			o.DECCOLM(colm);
 		if (cursor_option.is_set())

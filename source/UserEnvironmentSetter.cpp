@@ -19,8 +19,8 @@ For copyright and licensing terms, see the file named COPYING.
 // OpenBSD requires const incorrectness bodges.
 #if defined(__OpenBSD__)
 namespace {
-login_cap_t * login_getclass(const char * c) { return login_getclass(const_cast<char *>(c)); }
-const char * login_getcapstr(login_cap_t * d, const char * cap, const char * def, const char * err) { return login_getcapstr(d, const_cast<char *>(cap), const_cast<char *>(def), const_cast<char *>(err)); }
+inline login_cap_t * login_getclass(const char * c) { return login_getclass(const_cast<char *>(c)); }
+inline const char * login_getcapstr(login_cap_t * d, const char * cap, const char * def, const char * err) { return login_getcapstr(d, const_cast<char *>(cap), const_cast<char *>(def), const_cast<char *>(err)); }
 }
 #endif
 
@@ -33,9 +33,11 @@ const char * login_getcapstr(login_cap_t * d, const char * cap, const char * def
 #define LOGIN_DEFCLASS "default"
 #endif
 
+namespace {
+
 // FreeBSD's login_getpwclass() has a security hole when the class is "me".
 // And OpenBSD does not have the function at all.
-static inline
+inline
 login_cap_t *
 login_getsystemclass(
 	const passwd * pwd
@@ -50,10 +52,24 @@ login_getsystemclass(
 	return login_getclass(c);
 }
 
+#if defined(__OpenBSD__)
+// OpenBSD lacks this, too.
+inline login_cap_t * login_getuserclass(const passwd *) { return 0; }
+#endif
+
+}
+
 #else
 
-struct login_cap_t;
-void login_close(struct login_cap_t *) {}
+namespace {
+
+struct login_cap_t {} singleton_cap;
+inline login_cap_t * login_getsystemclass(const passwd *) { return &singleton_cap; }
+inline login_cap_t * login_getuserclass(const passwd *) { return &singleton_cap; }
+inline const char * login_getcapstr(struct login_cap_t * d, const char *cap, const char *def, const char *err) { return d && cap ? def : err; }
+inline void login_close(struct login_cap_t *) {}
+
+}
 
 #endif
 
@@ -83,22 +99,20 @@ UserEnvironmentSetter::LoginDBOwner::getcapstr(
 	const char * def,
 	const char * err
 ) {
-#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
+#if defined(__OpenBSD__)
 	// OpenBSD's login_getcapstr() does not have FreeBSD's NULL pointer check.
 	if (!d) return err;
-	// FreeBSD's and OpenBSD's login_getcapstr() leaks memory, only sometimes.
+#endif
 	const char * r(login_getcapstr(d, cap, def, err));
+#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
+	// FreeBSD's and OpenBSD's login_getcapstr() leaks memory, only sometimes.
 	if (def != r && err != r && r) {
 		res = r;
 		free(const_cast<char *>(r));
 		r = res.c_str();
 	}
-	return r;
-#else
-	static_cast<void>(cap);		// Silence a compiler warning.
-	static_cast<void>(err);		// Silence a compiler warning.
-	return def;
 #endif
+	return r;
 }
 
 UserEnvironmentSetter::UserEnvironmentSetter(
@@ -277,16 +291,8 @@ UserEnvironmentSetter::apply (
 	const passwd * pw
 ) {
 	if (pw) {
-#if defined(__FreeBSD__) || defined(__DragonFly__)
 		LoginDBOwner lc_system(login_getsystemclass(pw));
 		LoginDBOwner lc_user(login_getuserclass(pw));
-#elif defined(__OpenBSD__)
-		LoginDBOwner lc_system(login_getsystemclass(pw));
-		LoginDBOwner lc_user;
-#else
-		LoginDBOwner lc_system;
-		LoginDBOwner lc_user;
-#endif
 		// These three are supersedable by setenv in login.conf.
 		if (set_tools) {
 			// POSIX gives us two choices of default line editor; we do not dump ed on people.

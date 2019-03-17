@@ -24,7 +24,11 @@ add_group() {
 		pw groupadd "$1" 
 	fi
 }
-add_log() { install -d -m 0755 -o "$1" /var/log/sv/"$2" ; }
+add_log() {
+	install -d -m 0755 /var/log/sv/"$2"
+	# setfacl -m g:adm:rx /var/log/sv/"$2" 2>/dev/null || setfacl -m group:adm:rx::allow /var/log/sv/"$2" || :
+	setfacl -m u:"$1":rwx /var/log/sv/"$2" 2>/dev/null || setfacl -m user:"$1":rwxpD::allow /var/log/sv/"$2" || :
+}
 rename_user() {
 	if getent passwd "$1$3" > /dev/null 
 	then

@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="time-env-set">
 
@@ -72,6 +73,8 @@ The environment variable value, when set, is always set to the <code>@<replaceab
 
 </refsection>
 
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

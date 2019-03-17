@@ -1,0 +1,19 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Laurent Bercot's %p plug-and-play manager daemon
+DefaultDependencies=false
+Before=shutdown.target
+After=local-fs.target
+Conflicts=busybox-mdev udev vdev suckless-mdev systemd-udev
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=%p -f ${CONFIG:-/etc/mdev.conf} $OPTIONS -v 2
+RestartSec=5
+
+[Install]
+WantedBy=sysinit.target
+StoppedBy=shutdown.target

@@ -8,6 +8,7 @@ telinit	fastpoweroff
 telinit	halt
 telinit	haltsys
 telinit	init
+telinit	initctl
 telinit	initctl-read
 telinit	invoke-rc.d
 telinit	normal
@@ -21,4 +22,5 @@ telinit	rescue
 telinit	runlevel
 telinit	service
 telinit	shutdown
+telinit	svcadm
 telinit	update-rc.d

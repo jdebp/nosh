@@ -72,7 +72,7 @@ JVMVersion::parse(
 	}
 	if (0U >= d.size()) return false;
 	if (1U == d.size()) {
-		if (10U > d[0]) {
+		if (17U > d[0]) {
 			vmajor = 1U;
 			vminor = d[0];
 		} else {

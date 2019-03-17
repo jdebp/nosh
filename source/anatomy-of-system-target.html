@@ -17,14 +17,14 @@ In the case of the <code>run</code> program, this would normally result in the p
 </p>
 
 <p>
-The "remain" flag file tells <a href="system-control.html"><code>system-control</code></a>, however, to set a "run on empty" flag for this service when loading it.
+The "remain" flag file tells <a href="commands/system-control.xml"><code>system-control</code></a>, however, to set a "run on empty" flag for this service when loading it.
 This causes the service manager to consider the service to be still in the running state even if its last service process has exited.
 (Normally, exiting the last service process causes a state transition, via the failed state either back to the running state or to the stopped state.)
 Thus targets show up in the output of service-status as running services with no process ID.
 </p>
 
 <p>
-(An alternative way of creating a target is to not use the "remain" flag but to use the <a href="pause.html"><code>pause</code> built-in command in nosh</a>.
+(An alternative way of creating a target is to not use the "remain" flag but to use the <a href="commands/pause.xml"><code>pause</code> built-in command in nosh</a>.
 This has the usually undesirable effect of having an indefinitely running process in the process list that is sitting swapped out and doing nothing.
 But it has the advantage of not having the service manager treat it as a special "run on empty" service, which cannot be adjusted at runtime after a target has been loaded, and permitting the target to actually do something concrete if so desired.)
 </p>

@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="udp-socket-listen">
 
@@ -22,15 +23,15 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>udp-socket-listen</command> 
-<arg>--no-reuse-address</arg> 
-<arg>--reuse-port</arg> 
-<arg>--bind-to-any</arg> 
-<arg>--numeric-host</arg> 
-<arg>--numeric-service</arg> 
-<arg>--check-interfaces</arg> 
-<arg>--combine4and6</arg> 
-<arg>--upstart-compatibility</arg>
-<arg>--systemd-compatibility</arg> 
+<arg choice='opt'>--no-reuse-address</arg> 
+<arg choice='opt'>--reuse-port</arg> 
+<arg choice='opt'>--bind-to-any</arg> 
+<arg choice='opt'>--numeric-host</arg> 
+<arg choice='opt'>--numeric-service</arg> 
+<arg choice='opt'>--check-interfaces</arg> 
+<arg choice='opt'>--combine4and6</arg> 
+<arg choice='opt'>--upstart-compatibility</arg>
+<arg choice='opt'>--systemd-compatibility</arg> 
 <arg choice='req'><replaceable>host</replaceable></arg> 
 <arg choice='req'><replaceable>service</replaceable></arg> 
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
@@ -62,18 +63,18 @@ Conversely, the <arg choice='plain'>--bind-to-any</arg> option is quite useful o
 
 <para>
 The <arg choice='plain'>--upstart-compatibility</arg> option causes <command>udp-socket-listen</command> to set the <envar>UPSTART_FDS</envar> environment variable to 3, and the <envar>UPSTART_EVENTS</envar> environment variable to <literal>socket</literal>.
-This is for compatibility with daemons that expect to be run under <citerefentry><refentrytitle>upstart</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+This is for compatibility with d&#xe6;mons that expect to be run under <citerefentry><refentrytitle>upstart</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
 <para>
-The <arg choice='plain'>--systemd-compatibility</arg> option is for compatibility with daemons that expect to be run under <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+The <arg choice='plain'>--systemd-compatibility</arg> option is for compatibility with d&#xe6;mons that expect to be run under <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 It causes <command>udp-socket-listen</command> to set the <envar>LISTEN_FDS</envar> environment variable to the number of listening file descriptors, and the <envar>LISTEN_PID</envar> environment variable to its own process ID.
 If the command is started up with the <envar>LISTEN_FDS</envar> and the <envar>LISTEN_PID</envar> environment variables already appropriately set, the number of listening file descriptors is taken from them and increased by one, otherwise the number of file descriptors is 1.
 Thus a list of listening file descriptors can be built up with multiple commands, as long as they all use the <arg choice='plain'>--systemd-compatibility</arg> option.
 </para>
 
 <para>
-For compatibility with daemons that expect to be run under <citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry>, inheriting the listening socket as their standard input, simply use <command>fdmove</command> <arg choice="plain">0</arg> <arg choice="plain">3</arg> in <replaceable>next-prog</replaceable>.
+For compatibility with d&#xe6;mons that expect to be run under <citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry>, inheriting the listening socket as their standard input, simply use <command>fdmove</command> <arg choice="plain">0</arg> <arg choice="plain">3</arg> in <replaceable>next-prog</replaceable>.
 See <citerefentry><refentrytitle>fdmove</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
@@ -94,7 +95,7 @@ To listen on an IPv4 address and an IPv6 address on such kernels, one must have 
 </refsection><refsection><title>Usage</title>
 
 <para>
-<command>udp-socket-listen</command> can be used as a simple daemon monitored by
+<command>udp-socket-listen</command> can be used as a simple d&#xe6;mon monitored by
 <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 <command>udp-socket-listen</command> overlaps the functionality of
 <citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
@@ -125,6 +126,8 @@ To change the process' UID and GID after opening the socket, simply chain throug
 	</varlistentry>
 </variablelist>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

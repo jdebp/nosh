@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="cyclog">
 
@@ -19,9 +20,9 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>cyclog</command> 
-<arg>--max-file-size <replaceable>max-file-size</replaceable></arg> 
-<arg>--max-total-size <replaceable>max-total-size</replaceable></arg> 
-<arg>--margin <replaceable>margin</replaceable></arg> 
+<arg choice='opt'>--max-file-size <replaceable>max-file-size</replaceable></arg> 
+<arg choice='opt'>--max-total-size <replaceable>max-total-size</replaceable></arg> 
+<arg choice='opt'>--margin <replaceable>margin</replaceable></arg> 
 <arg choice='req' rep='repeat'><replaceable>directories</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -182,6 +183,8 @@ daemontools' and daemontools-encore's <citerefentry><refentrytitle>multilog</ref
 See <ulink url="timestamps.html">the timestamps section of the <citetitle>nosh Guide</citetitle></ulink> for detailed information on the differences from daemontools, daemontools-encore, and other toolsets in how <command>cyclog</command> handles TAI.
 </para>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

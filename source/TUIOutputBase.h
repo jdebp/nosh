@@ -56,11 +56,11 @@ private:
 	CursorSprite::glyph_type cursor_glyph;
 	CursorSprite::attribute_type cursor_attributes;
 
-	static unsigned width (uint32_t ch);
-	void print(uint32_t ch, const CharacterCell::colour_type & fg, const CharacterCell::colour_type & bg, const CharacterCell::attribute_type & attr);
+	unsigned width (uint32_t ch) const;
+	bool is_blank(uint32_t cols) const;
 	void print(const TUIDisplayCompositor::DirtiableCell & cell, bool inverted);
-	bool is_cheap_to_print(unsigned cols) const;
-	bool is_all_blank(unsigned cols) const;
+	bool is_cheap_to_print(unsigned short row, unsigned short col, unsigned cols) const;
+	bool is_all_blank(unsigned short row, unsigned short col, unsigned cols) const;
 	void GotoYX(unsigned short row, unsigned short col);
 	void SGRFGColour(const CharacterCell::colour_type & colour) { if (colour != current_fg) out.SGRColour(true, current_fg = colour); }
 	void SGRBGColour(const CharacterCell::colour_type & colour) { if (colour != current_bg) out.SGRColour(false, current_bg = colour); }

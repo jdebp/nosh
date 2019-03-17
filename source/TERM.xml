@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="TERM">
 
@@ -33,8 +34,7 @@ The <envar>COLORTERM</envar>, <envar>XTERM_VERSION</envar>, and <envar>VTE_VERSI
 <refsection><title>Meaning</title>
 
 <para>
-Some applications take the value of the <envar>TERM</envar> environment variable as a key used to look up records in the
-<citerefentry><refentrytitle>terminfo</refentrytitle><manvolnum>5</manvolnum></citerefentry> or <citerefentry><refentrytitle>termcap</refentrytitle><manvolnum>5</manvolnum></citerefentry> databases.
+Some applications take the value of the <envar>TERM</envar> environment variable as a key used to look up records in the <citerefentry><refentrytitle>terminfo</refentrytitle><manvolnum>5</manvolnum></citerefentry> or <citerefentry><refentrytitle>termcap</refentrytitle><manvolnum>5</manvolnum></citerefentry> databases.
 These records describe the "capabilities" of a terminal of the named type.
 Unfortunately, these databases have some long-standing problems:
 </para>
@@ -97,7 +97,7 @@ It is convenient to replicate them, too, therefore.
 
 <para>
 It is an error to specify <code>xterm</code> or <code>xterm-256color</code> as the value of the <envar>TERM</envar> environment variable when the terminal emulator is not actually XTerm.
-The XTerm terminal emulator provides a wide range of functionality, from sixel graphics through Tektronix mode to DTTerm extensions to the DECSLPP control sequence.
+The XTerm terminal emulator provides a wide range of functionality, from sixel graphics through Tektronix mode and DTTerm extensions to the DECSLPP control sequence.
 No other terminal emulator is precisely functionally equivalent to XTerm.
 Even considering the small subset of terminal functionality that termcap/terminfo records encode, the <code>xterm</code>/<code>xterm-256color</code> records encode capabilities that are not correct matches to the behaviours and capabilities of other terminal emulators.
 </para>
@@ -180,7 +180,7 @@ nosh TUI login
 </term>
 <listitem>
 <para>
-Like AT&#x0026;T Unix System 5 Release 4, nosh TUI login on kernel virtual terminals no longer uses <command>getty</command> at all.
+<ulink url="http://jdebp.eu./FGA/inittab-getty-is-history.html">Like AT&#x0026;T Unix System 5 Release 4</ulink>, nosh TUI login on kernel virtual terminals no longer uses <command>getty</command> at all.
 </para>
 <para>
 The nosh pre-supplied TUI login service bundles for kernel virtual terminal and user-space virtual terminal login services employ <citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
@@ -267,10 +267,12 @@ ncurses/terminfo explanation of the values taken by the <envar>TERM</envar> envi
 
 </refsection>
 <refsection><title>Author</title>
+<para>
 Documentation by
 <author>
-<personname><firstname>Jonathan</firstname><surname>de Boyne Pollard</surname></personname>
+<personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname>
 </author>
+</para>
 </refsection>
 
 </refentry>

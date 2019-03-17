@@ -14,9 +14,10 @@ For copyright and licensing terms, see the file named COPYING.
 #include <inttypes.h>
 #include <stdint.h>
 #include <sys/types.h>
-#include "kqueue_common.h"
+#include <termios.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include "kqueue_common.h"
 #include "popt.h"
 #include "fdutils.h"
 #include "ttyutils.h"
@@ -372,13 +373,13 @@ UnicodeBuffer::SetSize(const coordinate & w, const coordinate & h)
 */
 
 namespace {
-class ECMA48KeyboardEncoder :
+class ECMA48InputEncoder :
 	public SoftTerm::KeyboardBuffer,
 	public SoftTerm::MouseBuffer
 {
 public:
 	enum Emulation { DECVT, SCO_CONSOLE, LINUX_CONSOLE, NETBSD_CONSOLE, TEKEN, XTERM_PC };
-	ECMA48KeyboardEncoder(int, Emulation);
+	ECMA48InputEncoder(int, Emulation);
 	void HandleMessage(uint32_t);
 	void WriteOutput();
 	bool OutputAvailable() { return output_pending > 0U; }
@@ -458,9 +459,21 @@ protected:
 	bool mouse_buttons[8];
 	bool pasting;
 };
+
+inline
+bool
+IsAll7Bit (std::size_t l, const char * p)
+{
+	while (l) {
+		if (static_cast<unsigned char>(*p++) > 0x7F)
+			return false;
+		--l;
+	}
+	return true;
+}
 }
 
-ECMA48KeyboardEncoder::ECMA48KeyboardEncoder(int m, Emulation e) : 
+ECMA48InputEncoder::ECMA48InputEncoder(int m, Emulation e) : 
 	master_fd(m),
 	emulation(e),
 	send_8bit_controls(false),
@@ -487,7 +500,7 @@ ECMA48KeyboardEncoder::ECMA48KeyboardEncoder(int m, Emulation e) :
 }
 
 void 
-ECMA48KeyboardEncoder::WriteRawCharacters(std::size_t l, const char * p)
+ECMA48InputEncoder::WriteRawCharacters(std::size_t l, const char * p)
 {
 	if (l > (sizeof output_buffer - output_pending))
 		l = sizeof output_buffer - output_pending;
@@ -497,13 +510,13 @@ ECMA48KeyboardEncoder::WriteRawCharacters(std::size_t l, const char * p)
 
 inline 
 void 
-ECMA48KeyboardEncoder::WriteRawCharacters(const char * s) 
+ECMA48InputEncoder::WriteRawCharacters(const char * s) 
 { 
 	WriteRawCharacters(std::strlen(s), s); 
 }
 
 void 
-ECMA48KeyboardEncoder::ReportSize(coordinate w, coordinate h)
+ECMA48InputEncoder::ReportSize(coordinate w, coordinate h)
 {
 	winsize size = { 0, 0, 0, 0 };
 	size.ws_col = w;
@@ -511,20 +524,8 @@ ECMA48KeyboardEncoder::ReportSize(coordinate w, coordinate h)
 	tcsetwinsz_nointr(master_fd, size);
 }
 
-static inline
-bool
-IsAll7Bit (std::size_t l, const char * p)
-{
-	while (l) {
-		if (static_cast<unsigned char>(*p++) > 0x7F)
-			return false;
-		--l;
-	}
-	return true;
-}
-
 void 
-ECMA48KeyboardEncoder::WriteLatin1Characters(std::size_t l, const char * p)
+ECMA48InputEncoder::WriteLatin1Characters(std::size_t l, const char * p)
 {
 	if (IsAll7Bit(l, p)) 
 		return WriteRawCharacters(l, p);
@@ -535,7 +536,7 @@ ECMA48KeyboardEncoder::WriteLatin1Characters(std::size_t l, const char * p)
 }
 
 void 
-ECMA48KeyboardEncoder::WriteUnicodeCharacter(uint32_t c)
+ECMA48InputEncoder::WriteUnicodeCharacter(uint32_t c)
 {
 	if (c < 0x00000080) {
 		const char s[1] = { 
@@ -591,7 +592,7 @@ ECMA48KeyboardEncoder::WriteUnicodeCharacter(uint32_t c)
 }
 
 void 
-ECMA48KeyboardEncoder::WriteControl1Character(uint8_t c)
+ECMA48InputEncoder::WriteControl1Character(uint8_t c)
 {
 	if (send_8bit_controls)
 		WriteUnicodeCharacter(c);
@@ -602,85 +603,85 @@ ECMA48KeyboardEncoder::WriteControl1Character(uint8_t c)
 }
 
 void 
-ECMA48KeyboardEncoder::Set8BitControl1(bool b)
+ECMA48InputEncoder::Set8BitControl1(bool b)
 {
 	send_8bit_controls = b;
 }
 
 void 
-ECMA48KeyboardEncoder::SetBackspaceIsBS(bool b)
+ECMA48InputEncoder::SetBackspaceIsBS(bool b)
 {
 	backspace_is_bs = b;
 }
 
 void 
-ECMA48KeyboardEncoder::SetDeleteIsDEL(bool b)
+ECMA48InputEncoder::SetDeleteIsDEL(bool b)
 {
 	delete_is_del = b;
 }
 
 void
-ECMA48KeyboardEncoder::SetCursorApplicationMode(bool b)
+ECMA48InputEncoder::SetCursorApplicationMode(bool b)
 {
 	cursor_application_mode = b;
 }
 
 void
-ECMA48KeyboardEncoder::SetCalculatorApplicationMode(bool b)
+ECMA48InputEncoder::SetCalculatorApplicationMode(bool b)
 {
 	calculator_application_mode = b;
 }
 
 void 
-ECMA48KeyboardEncoder::SetSendPasteEvent(bool b)
+ECMA48InputEncoder::SetSendPasteEvent(bool b)
 {
 	send_paste = b;
 }
 
 void 
-ECMA48KeyboardEncoder::SetSendXTermMouse(bool b)
+ECMA48InputEncoder::SetSendXTermMouse(bool b)
 {
 	send_xterm_mouse = b;
 }
 
 void 
-ECMA48KeyboardEncoder::SetSendXTermMouseClicks(bool b)
+ECMA48InputEncoder::SetSendXTermMouseClicks(bool b)
 {
 	send_xterm_mouse_clicks = b;
 }
 
 void 
-ECMA48KeyboardEncoder::SetSendXTermMouseButtonMotions(bool b)
+ECMA48InputEncoder::SetSendXTermMouseButtonMotions(bool b)
 {
 	send_xterm_mouse_button_motions = b;
 }
 
 void 
-ECMA48KeyboardEncoder::SetSendXTermMouseNoButtonMotions(bool b)
+ECMA48InputEncoder::SetSendXTermMouseNoButtonMotions(bool b)
 {
 	send_xterm_mouse_nobutton_motions = b;
 }
 
 void 
-ECMA48KeyboardEncoder::SetSendDECLocator(unsigned int mode)
+ECMA48InputEncoder::SetSendDECLocator(unsigned int mode)
 {
 	send_locator_mode = mode;
 }
 
 void 
-ECMA48KeyboardEncoder::SetSendDECLocatorPressEvent(bool b)
+ECMA48InputEncoder::SetSendDECLocatorPressEvent(bool b)
 {
 	send_locator_press_events = b;
 }
 
 void 
-ECMA48KeyboardEncoder::SetSendDECLocatorReleaseEvent(bool b)
+ECMA48InputEncoder::SetSendDECLocatorReleaseEvent(bool b)
 {
 	send_locator_release_events = b;
 }
 
 void
-ECMA48KeyboardEncoder::WriteDELOrDECFNK(uint8_t m)
+ECMA48InputEncoder::WriteDELOrDECFNK(uint8_t m)
 {
 	if (delete_is_del && 0 == m)
 		WriteRawCharacters("\x7F"); 	// We can bypass UTF-8 encoding as we guarantee ASCII.
@@ -689,33 +690,33 @@ ECMA48KeyboardEncoder::WriteDELOrDECFNK(uint8_t m)
 }
 
 void
-ECMA48KeyboardEncoder::WriteBackspaceOrDEL(uint8_t m)
+ECMA48InputEncoder::WriteBackspaceOrDEL(uint8_t m)
 {
 	WriteRawCharacters(backspace_is_bs ^ !!(INPUT_MODIFIER_CONTROL & m) ? "\x08" : "\x7F"); 	// We can bypass UTF-8 encoding as we guarantee ASCII.
 }
 
 void
-ECMA48KeyboardEncoder::WriteReturnEnter(uint8_t m)
+ECMA48InputEncoder::WriteReturnEnter(uint8_t m)
 {
 	WriteRawCharacters((INPUT_MODIFIER_CONTROL & m) ? "\x0A" : "\x0D"); 	// We can bypass UTF-8 encoding as we guarantee ASCII.
 }
 
 inline 
 void 
-ECMA48KeyboardEncoder::WriteCSI() 
+ECMA48InputEncoder::WriteCSI() 
 { 
 	WriteControl1Character(CSI); 
 }
 
 inline 
 void 
-ECMA48KeyboardEncoder::WriteSS3() 
+ECMA48InputEncoder::WriteSS3() 
 { 
 	WriteControl1Character(SS3); 
 }
 
 void 
-ECMA48KeyboardEncoder::WriteCSISequence(unsigned m, char c)
+ECMA48InputEncoder::WriteCSISequence(unsigned m, char c)
 {
 	WriteCSI();
 	if (0 != m) {
@@ -727,7 +728,7 @@ ECMA48KeyboardEncoder::WriteCSISequence(unsigned m, char c)
 }
 
 void 
-ECMA48KeyboardEncoder::WriteSS3Character(char c)
+ECMA48InputEncoder::WriteSS3Character(char c)
 {
 	WriteSS3();
 	WriteUnicodeCharacter(c);
@@ -735,7 +736,7 @@ ECMA48KeyboardEncoder::WriteSS3Character(char c)
 
 /// \brief Write malformed SS3 sequences.
 void 
-ECMA48KeyboardEncoder::WriteBrokenSS3Sequence(unsigned m, char c)
+ECMA48InputEncoder::WriteBrokenSS3Sequence(unsigned m, char c)
 {
 	WriteSS3();
 	if (0 != m) {
@@ -747,7 +748,7 @@ ECMA48KeyboardEncoder::WriteBrokenSS3Sequence(unsigned m, char c)
 }
 
 void 
-ECMA48KeyboardEncoder::WriteDECFNK(unsigned n, unsigned m)
+ECMA48InputEncoder::WriteDECFNK(unsigned n, unsigned m)
 {
 	WriteCSI();
 	char b[16];
@@ -759,7 +760,7 @@ ECMA48KeyboardEncoder::WriteDECFNK(unsigned n, unsigned m)
 }
 
 void 
-ECMA48KeyboardEncoder::WriteLinuxConsoleFNK(unsigned m, char c)
+ECMA48InputEncoder::WriteLinuxConsoleFNK(unsigned m, char c)
 {
 	WriteCSI();
 	char b[16];
@@ -771,14 +772,14 @@ ECMA48KeyboardEncoder::WriteLinuxConsoleFNK(unsigned m, char c)
 }
 
 void 
-ECMA48KeyboardEncoder::WriteSCOConsoleFNK(char c)
+ECMA48InputEncoder::WriteSCOConsoleFNK(char c)
 {
 	WriteCSI();
 	WriteUnicodeCharacter(c);
 }
 
 void 
-ECMA48KeyboardEncoder::SetPasting(const bool p)
+ECMA48InputEncoder::SetPasting(const bool p)
 {
 	if (p == pasting) return;
 	pasting = p;
@@ -787,7 +788,7 @@ ECMA48KeyboardEncoder::SetPasting(const bool p)
 }
 
 void 
-ECMA48KeyboardEncoder::WriteFunctionKeyDECVT(uint16_t k, uint8_t m)
+ECMA48InputEncoder::WriteFunctionKeyDECVT(uint16_t k, uint8_t m)
 {
 	switch (k) {
 		case 1:		WriteDECFNK(11U,m); break;
@@ -819,7 +820,7 @@ ECMA48KeyboardEncoder::WriteFunctionKeyDECVT(uint16_t k, uint8_t m)
 }
 
 void 
-ECMA48KeyboardEncoder::WriteFunctionKeySCOConsole(uint16_t k, uint8_t /*m*/)
+ECMA48InputEncoder::WriteFunctionKeySCOConsole(uint16_t k, uint8_t /*m*/)
 {
 	static const char other[9] = "@[\\]^_`{";
 	if (15U > k)
@@ -833,7 +834,7 @@ ECMA48KeyboardEncoder::WriteFunctionKeySCOConsole(uint16_t k, uint8_t /*m*/)
 }
 
 void 
-ECMA48KeyboardEncoder::WriteFunctionKeyTeken(uint16_t k, uint8_t m)
+ECMA48InputEncoder::WriteFunctionKeyTeken(uint16_t k, uint8_t m)
 {
 	if (13U > k)
 		WriteFunctionKeyDECVT(k, m);
@@ -842,7 +843,7 @@ ECMA48KeyboardEncoder::WriteFunctionKeyTeken(uint16_t k, uint8_t m)
 }
 
 void 
-ECMA48KeyboardEncoder::WriteFunctionKey(uint16_t k, uint8_t m)
+ECMA48InputEncoder::WriteFunctionKey(uint16_t k, uint8_t m)
 {
 	SetPasting(false);
 	switch (emulation) {
@@ -857,7 +858,7 @@ ECMA48KeyboardEncoder::WriteFunctionKey(uint16_t k, uint8_t m)
 }
 
 void 
-ECMA48KeyboardEncoder::WriteDECVTNumericKeypadKey(char app_char, unsigned decfnk, unsigned m)
+ECMA48InputEncoder::WriteDECVTNumericKeypadKey(char app_char, unsigned decfnk, unsigned m)
 {
 	if (calculator_application_mode)
 		WriteSS3Character(app_char);
@@ -866,7 +867,7 @@ ECMA48KeyboardEncoder::WriteDECVTNumericKeypadKey(char app_char, unsigned decfnk
 }
 
 void 
-ECMA48KeyboardEncoder::WriteDECVTNumericKeypadKey(char app_char, char ord_char)
+ECMA48InputEncoder::WriteDECVTNumericKeypadKey(char app_char, char ord_char)
 {
 	if (calculator_application_mode)
 		WriteSS3Character(app_char);
@@ -875,7 +876,7 @@ ECMA48KeyboardEncoder::WriteDECVTNumericKeypadKey(char app_char, char ord_char)
 }
 
 void 
-ECMA48KeyboardEncoder::WriteDECVTNumericKeypadKey(char app_char, char csi_char, unsigned m)
+ECMA48InputEncoder::WriteDECVTNumericKeypadKey(char app_char, char csi_char, unsigned m)
 {
 	if (calculator_application_mode)
 		WriteSS3Character(app_char);
@@ -884,7 +885,7 @@ ECMA48KeyboardEncoder::WriteDECVTNumericKeypadKey(char app_char, char csi_char, 
 }
 
 void 
-ECMA48KeyboardEncoder::WriteDECVTNumericKeypadKey(char app_char, char csi_char, unsigned decfnk, unsigned m)
+ECMA48InputEncoder::WriteDECVTNumericKeypadKey(char app_char, char csi_char, unsigned decfnk, unsigned m)
 {
 	if (calculator_application_mode)
 		WriteSS3Character(app_char);
@@ -896,7 +897,7 @@ ECMA48KeyboardEncoder::WriteDECVTNumericKeypadKey(char app_char, char csi_char, 
 }
 
 void 
-ECMA48KeyboardEncoder::WriteDECVTCursorKeypadKey(char c, unsigned decfnk, unsigned m)
+ECMA48InputEncoder::WriteDECVTCursorKeypadKey(char c, unsigned decfnk, unsigned m)
 {
 	if (cursor_application_mode)
 		WriteSS3Character(c);
@@ -908,7 +909,7 @@ ECMA48KeyboardEncoder::WriteDECVTCursorKeypadKey(char c, unsigned decfnk, unsign
 }
 
 void 
-ECMA48KeyboardEncoder::WriteXTermPCNumericKeypadKey(char app_char, unsigned decfnk, unsigned m)
+ECMA48InputEncoder::WriteXTermPCNumericKeypadKey(char app_char, unsigned decfnk, unsigned m)
 {
 	if (calculator_application_mode && (INPUT_MODIFIER_LEVEL2 & m))
 		WriteBrokenSS3Sequence(m, app_char);
@@ -917,7 +918,7 @@ ECMA48KeyboardEncoder::WriteXTermPCNumericKeypadKey(char app_char, unsigned decf
 }
 
 void 
-ECMA48KeyboardEncoder::WriteXTermPCNumericKeypadKey(char app_char, char ord_char)
+ECMA48InputEncoder::WriteXTermPCNumericKeypadKey(char app_char, char ord_char)
 {
 	if (calculator_application_mode)
 		WriteSS3Character(app_char);
@@ -926,7 +927,7 @@ ECMA48KeyboardEncoder::WriteXTermPCNumericKeypadKey(char app_char, char ord_char
 }
 
 void 
-ECMA48KeyboardEncoder::WriteXTermPCNumericKeypadKey(char app_char, char csi_char, unsigned m)
+ECMA48InputEncoder::WriteXTermPCNumericKeypadKey(char app_char, char csi_char, unsigned m)
 {
 	if (calculator_application_mode && (INPUT_MODIFIER_LEVEL2 & m))
 		WriteBrokenSS3Sequence(m, app_char);
@@ -935,7 +936,7 @@ ECMA48KeyboardEncoder::WriteXTermPCNumericKeypadKey(char app_char, char csi_char
 }
 
 void 
-ECMA48KeyboardEncoder::WriteXTermPCCursorKeypadKey(char c, unsigned m)
+ECMA48InputEncoder::WriteXTermPCCursorKeypadKey(char c, unsigned m)
 {
 	if (cursor_application_mode && 0 == m)
 		WriteSS3Character(c);
@@ -944,7 +945,7 @@ ECMA48KeyboardEncoder::WriteXTermPCCursorKeypadKey(char c, unsigned m)
 }
 
 void 
-ECMA48KeyboardEncoder::WriteExtendedKeyCommonExtensions(uint16_t k, uint8_t /*m*/)
+ECMA48InputEncoder::WriteExtendedKeyCommonExtensions(uint16_t k, uint8_t /*m*/)
 {
 	switch (k) {
  		case EXTENDED_KEY_PAD_00:		WriteRawCharacters("00"); break;
@@ -989,7 +990,7 @@ ECMA48KeyboardEncoder::WriteExtendedKeyCommonExtensions(uint16_t k, uint8_t /*m*
 //
 // * There is no way to transmit modifier state with "application mode" keys.
 void 
-ECMA48KeyboardEncoder::WriteExtendedKeyDECVT(uint16_t k, uint8_t m)
+ECMA48InputEncoder::WriteExtendedKeyDECVT(uint16_t k, uint8_t m)
 {
 	switch (k) {
 	// The calculator keypad
@@ -1053,7 +1054,7 @@ ECMA48KeyboardEncoder::WriteExtendedKeyDECVT(uint16_t k, uint8_t m)
 //  * In application mode, XTerm reverts to normal mode for cursor and calculator keypad keys if Control or Level 3 shift (ALT) is in effect; DEC VTPC does not.
 //  * In normal mode, XTerm does not switch to DECFNK sequences for the level 3 (actually ALT) modifier; DEC VTPC does.
 void 
-ECMA48KeyboardEncoder::WriteExtendedKeyXTermPC(uint16_t k, uint8_t m)
+ECMA48InputEncoder::WriteExtendedKeyXTermPC(uint16_t k, uint8_t m)
 {
 	switch (k) {
 	// The calculator keypad
@@ -1123,7 +1124,7 @@ ECMA48KeyboardEncoder::WriteExtendedKeyXTermPC(uint16_t k, uint8_t m)
 //  * teken does not have numeric keypad comma and equals; we are thus not bound by compatibility and give them DEC VT semantics.
 //  * teken always issues DEL for calculator keypad Delete; we provide the DEC VT application mode as well.
 void 
-ECMA48KeyboardEncoder::WriteExtendedKeyTeken(uint16_t k, uint8_t m)
+ECMA48InputEncoder::WriteExtendedKeyTeken(uint16_t k, uint8_t m)
 {
 	switch (k) {
 		case EXTENDED_KEY_PAD_ASTERISK:		WriteRawCharacters("*"); break;
@@ -1188,7 +1189,7 @@ ECMA48KeyboardEncoder::WriteExtendedKeyTeken(uint16_t k, uint8_t m)
 //  * The SCO console does not have numeric keypad comma and equals; we are thus not bound by compatibility and give them DEC VT semantics.
 //  * Delete keys always send DEL.
 void 
-ECMA48KeyboardEncoder::WriteExtendedKeySCOConsole(uint16_t k, uint8_t m)
+ECMA48InputEncoder::WriteExtendedKeySCOConsole(uint16_t k, uint8_t m)
 {
 	switch (k) {
 		case EXTENDED_KEY_PAD_ASTERISK:		WriteRawCharacters("*"); break;
@@ -1252,7 +1253,7 @@ ECMA48KeyboardEncoder::WriteExtendedKeySCOConsole(uint16_t k, uint8_t m)
 //  * The Linux console does not provide LF from return or enter with the control modifier; we do.
 //  * The Linux console does not have numeric keypad comma and equals; we are thus not bound by compatibility and give them DEC VT semantics.
 void 
-ECMA48KeyboardEncoder::WriteExtendedKeyLinuxConsole(uint16_t k, uint8_t m)
+ECMA48InputEncoder::WriteExtendedKeyLinuxConsole(uint16_t k, uint8_t m)
 {
 	switch (k) {
 		case EXTENDED_KEY_PAD_ASTERISK:		WriteRawCharacters("*"); break;
@@ -1317,7 +1318,7 @@ ECMA48KeyboardEncoder::WriteExtendedKeyLinuxConsole(uint16_t k, uint8_t m)
 // Some differences from the vanilla NetBSD console:
 //  * The NetBSD console does not have numeric keypad comma and equals; we are thus not bound by compatibility and give them DEC VT semantics.
 void 
-ECMA48KeyboardEncoder::WriteExtendedKeyNetBSDConsole(uint16_t k, uint8_t m)
+ECMA48InputEncoder::WriteExtendedKeyNetBSDConsole(uint16_t k, uint8_t m)
 {
 	switch (k) {
 		case EXTENDED_KEY_PAD_ASTERISK:		WriteRawCharacters("*"); break;
@@ -1369,7 +1370,7 @@ ECMA48KeyboardEncoder::WriteExtendedKeyNetBSDConsole(uint16_t k, uint8_t m)
 }
 
 void 
-ECMA48KeyboardEncoder::WriteExtendedKey(uint16_t k, uint8_t m)
+ECMA48InputEncoder::WriteExtendedKey(uint16_t k, uint8_t m)
 {
 	SetPasting(false);
 	switch (emulation) {
@@ -1384,7 +1385,7 @@ ECMA48KeyboardEncoder::WriteExtendedKey(uint16_t k, uint8_t m)
 }
 
 void 
-ECMA48KeyboardEncoder::WriteWheelMotion(uint8_t w, int8_t o, uint8_t m) 
+ECMA48InputEncoder::WriteWheelMotion(uint8_t w, int8_t o, uint8_t m) 
 {
 	SetPasting(false);
 	// The horizontal wheel (#1) is an extension to the xterm protocol.
@@ -1420,7 +1421,7 @@ ECMA48KeyboardEncoder::WriteWheelMotion(uint8_t w, int8_t o, uint8_t m)
 }
 
 void 
-ECMA48KeyboardEncoder::WriteXTermMouse(
+ECMA48InputEncoder::WriteXTermMouse(
 	int button, 
 	uint8_t modifiers
 ) {
@@ -1465,7 +1466,7 @@ ECMA48KeyboardEncoder::WriteXTermMouse(
 }
 
 void 
-ECMA48KeyboardEncoder::WriteDECLocatorReport(int button) 
+ECMA48InputEncoder::WriteDECLocatorReport(int button) 
 {
 	if (!send_locator_mode) return;
 	if (0 <= button) {
@@ -1498,7 +1499,7 @@ ECMA48KeyboardEncoder::WriteDECLocatorReport(int button)
 }
 
 void 
-ECMA48KeyboardEncoder::SetMouseX(uint16_t p, uint8_t m) 
+ECMA48InputEncoder::SetMouseX(uint16_t p, uint8_t m) 
 {
 	SetPasting(false);
 	if (mouse_column != p) {
@@ -1509,7 +1510,7 @@ ECMA48KeyboardEncoder::SetMouseX(uint16_t p, uint8_t m)
 }
 
 void 
-ECMA48KeyboardEncoder::SetMouseY(uint16_t p, uint8_t m) 
+ECMA48InputEncoder::SetMouseY(uint16_t p, uint8_t m) 
 { 
 	SetPasting(false);
 	if (mouse_row != p) {
@@ -1520,7 +1521,7 @@ ECMA48KeyboardEncoder::SetMouseY(uint16_t p, uint8_t m)
 }
 
 void 
-ECMA48KeyboardEncoder::SetMouseButton(uint8_t b, bool v, uint8_t m) 
+ECMA48InputEncoder::SetMouseButton(uint8_t b, bool v, uint8_t m) 
 { 
 	SetPasting(false);
 	if (mouse_buttons[b] != v) {
@@ -1531,7 +1532,7 @@ ECMA48KeyboardEncoder::SetMouseButton(uint8_t b, bool v, uint8_t m)
 }
 
 void 
-ECMA48KeyboardEncoder::RequestDECLocatorReport()
+ECMA48InputEncoder::RequestDECLocatorReport()
 {
 	SetPasting(false);
 	if (0U == send_locator_mode) {
@@ -1543,7 +1544,7 @@ ECMA48KeyboardEncoder::RequestDECLocatorReport()
 }
 
 void 
-ECMA48KeyboardEncoder::WriteUCS3Character(uint32_t c, bool pasted, bool accelerator)
+ECMA48InputEncoder::WriteUCS3Character(uint32_t c, bool pasted, bool accelerator)
 {
 	SetPasting(pasted);
 	if (accelerator)
@@ -1555,7 +1556,7 @@ ECMA48KeyboardEncoder::WriteUCS3Character(uint32_t c, bool pasted, bool accelera
 }
 
 void
-ECMA48KeyboardEncoder::HandleMessage(uint32_t b)
+ECMA48InputEncoder::HandleMessage(uint32_t b)
 {
 	switch (b & INPUT_MSG_MASK) {
 		case INPUT_MSG_UCS3:	WriteUCS3Character(b & ~INPUT_MSG_MASK, false, false); break;
@@ -1574,7 +1575,7 @@ ECMA48KeyboardEncoder::HandleMessage(uint32_t b)
 }
 
 void
-ECMA48KeyboardEncoder::WriteOutput()
+ECMA48InputEncoder::WriteOutput()
 {
 	const int l(write(master_fd, output_buffer, output_pending));
 	if (l > 0) {
@@ -1697,12 +1698,12 @@ handle_signal (
 
 struct emulation_definition : public popt::simple_named_definition {
 public:
-	emulation_definition(char s, const char * l, const char * d, ECMA48KeyboardEncoder::Emulation & e, ECMA48KeyboardEncoder::Emulation v) : simple_named_definition(s, l, d), emulation(e), value(v) {}
+	emulation_definition(char s, const char * l, const char * d, ECMA48InputEncoder::Emulation & e, ECMA48InputEncoder::Emulation v) : simple_named_definition(s, l, d), emulation(e), value(v) {}
 	virtual void action(popt::processor &);
 	virtual ~emulation_definition();
 protected:
-	ECMA48KeyboardEncoder::Emulation & emulation;
-	ECMA48KeyboardEncoder::Emulation value;
+	ECMA48InputEncoder::Emulation & emulation;
+	ECMA48InputEncoder::Emulation value;
 };
 emulation_definition::~emulation_definition() {}
 void emulation_definition::action(popt::processor &)
@@ -1722,23 +1723,23 @@ console_terminal_emulator [[gnu::noreturn]] (
 ) {
 	const char * prog(basename_of(args[0]));
 #if defined(__LINUX__) || defined(__linux__)
-	ECMA48KeyboardEncoder::Emulation emulation(ECMA48KeyboardEncoder::LINUX_CONSOLE);
+	ECMA48InputEncoder::Emulation emulation(ECMA48InputEncoder::LINUX_CONSOLE);
 #elif defined(__FreeBSD__) || defined(__DragonFly__)
-	ECMA48KeyboardEncoder::Emulation emulation(ECMA48KeyboardEncoder::TEKEN);
+	ECMA48InputEncoder::Emulation emulation(ECMA48InputEncoder::TEKEN);
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-	ECMA48KeyboardEncoder::Emulation emulation(ECMA48KeyboardEncoder::NETBSD_CONSOLE);
+	ECMA48InputEncoder::Emulation emulation(ECMA48InputEncoder::NETBSD_CONSOLE);
 #else
-	ECMA48KeyboardEncoder::Emulation emulation(ECMA48KeyboardEncoder::DECVT);
+	ECMA48InputEncoder::Emulation emulation(ECMA48InputEncoder::DECVT);
 #endif
 	bool vcsa(false);
 
 	try {
-		emulation_definition linux_option('\0', "linux", "Emulate the Linux virtual console.", emulation, ECMA48KeyboardEncoder::LINUX_CONSOLE);
-		emulation_definition sco_option('\0', "sco", "Emulate the SCO virtual console.", emulation, ECMA48KeyboardEncoder::SCO_CONSOLE);
-		emulation_definition teken_option('\0', "teken", "Emulate the teken library.", emulation, ECMA48KeyboardEncoder::TEKEN);
-		emulation_definition netbsd_option('\0', "netbsd", "Emulate the NetBSD virtual console.", emulation, ECMA48KeyboardEncoder::NETBSD_CONSOLE);
-		emulation_definition decvt_option('\0', "decvt", "Emulate the DEC VT.", emulation, ECMA48KeyboardEncoder::DECVT);
-		emulation_definition xtermpc_option('\0', "xtermpc", "Emulate a subset of XTerm in Sun/PC mode.", emulation, ECMA48KeyboardEncoder::XTERM_PC);
+		emulation_definition linux_option('\0', "linux", "Emulate the Linux virtual console.", emulation, ECMA48InputEncoder::LINUX_CONSOLE);
+		emulation_definition sco_option('\0', "sco", "Emulate the SCO virtual console.", emulation, ECMA48InputEncoder::SCO_CONSOLE);
+		emulation_definition teken_option('\0', "teken", "Emulate the teken library.", emulation, ECMA48InputEncoder::TEKEN);
+		emulation_definition netbsd_option('\0', "netbsd", "Emulate the NetBSD virtual console.", emulation, ECMA48InputEncoder::NETBSD_CONSOLE);
+		emulation_definition decvt_option('\0', "decvt", "Emulate the DEC VT.", emulation, ECMA48InputEncoder::DECVT);
+		emulation_definition xtermpc_option('\0', "xtermpc", "Emulate a subset of XTerm in Sun/PC mode.", emulation, ECMA48InputEncoder::XTERM_PC);
 		popt::bool_definition vcsa_option('\0', "vcsa", "Maintain a vcsa-compatible display buffer.", vcsa);
 		popt::definition * top_table[] = {
 			&linux_option,
@@ -1868,15 +1869,17 @@ console_terminal_emulator [[gnu::noreturn]] (
 	mbuffer.Add(&ubuffer);
 	if (vcsa)
 		mbuffer.Add(&vbuffer);
-	ECMA48KeyboardEncoder keyboard_encoder(PTY_MASTER_FILENO, emulation);
+	ECMA48InputEncoder input_encoder(PTY_MASTER_FILENO, emulation);
 	// X terminal emulators choose 80 by 24, for compatibility with real DEC VTs.
 	// We choose 80 by 25 because we are, rather, being compatible with the kernel terminal emluators, which have no status lines and default to PC 25 line modes.
-	SoftTerm emulator(mbuffer, keyboard_encoder, keyboard_encoder, 80U, 25U);
+	SoftTerm emulator(mbuffer, input_encoder, input_encoder, 80U, 25U);
+	// We want slightly different defaults, with UTF-8 input mode on because that's what our input encoder sends, and tostop mode on.
+	tcsetattr_nointr(PTY_MASTER_FILENO, TCSADRAIN, sane(false /*tostop on*/, false /*utf8 on*/));
 
 	bool hangup(false);
 	while (!shutdown_signalled && !hangup) {
-		append_event(ip, PTY_MASTER_FILENO, EVFILT_WRITE, keyboard_encoder.OutputAvailable() ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
-		append_event(ip, input_fifo.get(), EVFILT_READ, keyboard_encoder.HasInputSpace() ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
+		append_event(ip, PTY_MASTER_FILENO, EVFILT_WRITE, input_encoder.OutputAvailable() ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
+		append_event(ip, input_fifo.get(), EVFILT_READ, input_encoder.HasInputSpace() ? EV_ENABLE : EV_DISABLE, 0, 0, 0);
 
 		struct kevent p[128];
 		const int rc(kevent(queue, ip.data(), ip.size(), p, sizeof p/sizeof *p, 0));
@@ -1927,10 +1930,10 @@ console_terminal_emulator [[gnu::noreturn]] (
 			input_fifo.ReadInput();
 		if (master_hangup)
 			hangup = true;
-		while (input_fifo.HasMessage() && keyboard_encoder.HasInputSpace())
-			keyboard_encoder.HandleMessage(input_fifo.PullMessage());
+		while (input_fifo.HasMessage() && input_encoder.HasInputSpace())
+			input_encoder.HandleMessage(input_fifo.PullMessage());
 		if (masterout_ready) 
-			keyboard_encoder.WriteOutput();
+			input_encoder.WriteOutput();
 	}
 
 	unlinkat(dir_fd.get(), "tty", 0);

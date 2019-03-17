@@ -12,10 +12,7 @@ for i in \
 do
 	if test -d /var/log/sv/$i/
 	then
-		chown "$i"-log /var/log/sv/$i/
-		test -e /var/log/sv/$i/lock && chown "$i"-log /var/log/sv/$i/lock
-		test -e /var/log/sv/$i/current && chown "$i"-log /var/log/sv/$i/current
-		find /var/log/sv/$i/ -name '@*' -print0|xargs -0 chown "$i"-log
+                find /var/log/sv/$i/ \( -name '@*' -o -name lock -o -name current \) -print0|xargs -0 chown "$i"-log
 	fi
 done
 # Adjust to new relationships.

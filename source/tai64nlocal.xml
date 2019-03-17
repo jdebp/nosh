@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="tai64nlocal">
 
@@ -18,7 +19,8 @@
 
 <refsynopsisdiv>
 <cmdsynopsis>
-<command>tai64nlocal</command> <arg rep='repeat'><replaceable>files</replaceable></arg>
+<command>tai64nlocal</command>
+<arg choice='opt' rep='repeat'><replaceable>files</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -62,6 +64,8 @@ The daemontools and daemontools-encore <citerefentry><refentrytitle>tai64nlocal<
 See <ulink url="timestamps.html">the timestamps section of the <citetitle>nosh Guide</citetitle></ulink> for detailed information on the differences from daemontools, daemontools-encore, and other toolsets in how <command>tai64nlocal</command> handles TAI.
 </para>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

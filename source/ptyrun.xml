@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="ptyrun">
 
@@ -42,6 +43,21 @@ It is a script that needs <citerefentry><refentrytitle>execlineb</refentrytitle>
 <replaceable>next-prog</replaceable> may contain its own command line options, which <command>pty-run</command> will ignore.
 </para>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+<para>
+See <citerefentry><refentrytitle>open-controlling-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> for the environment and open file descriptors inherited by <replaceable>next-prog</replaceable>.
+</para>
+
+</refsection>
+
+<refsection><title>History</title>
+
+<para>
+There was a <command>ptyrun</command> shell script in Daniel J. Bernstein's pty package in 1996.
+This workalike <command>execlineb</command> script based upon nosh tools was created in 2013.
+</para>
+
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

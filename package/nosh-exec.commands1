@@ -1,6 +1,7 @@
 appendpath
 chdir
 clearenv
+console-docbook-xml-viewer
 console-flat-table-viewer
 create-control-group
 delegate-control-group-to
@@ -56,6 +57,7 @@ syslog-read
 tcp-socket-accept
 tcp-socket-listen
 tcp-socket-connect
+erase-machine-id
 ucspi-socket-rules-check
 udp-socket-listen
 udp-socket-connect

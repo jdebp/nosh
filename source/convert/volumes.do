@@ -44,10 +44,7 @@ case "`uname`" in
 *BSD)
 	# ZFS non-swap volumes
 	zfs list -H -o canmount,name,mountpoint -t filesystem |
-	awk "{
-		if (\$3 == \"none\" || \$1 == \"no\") next;
-		print \"system-control write-volume-service-bundles --bundle-root \\\"$r\\\" $o zfs \\\"\"\$2\"\\\" \\\"\"\$3\"\\\"\";
-	}" | 
+	awk '{ if ($3 != "none" && $1 != "off") print "system-control write-volume-service-bundles --bundle-root \"'"$r"'\" '"$o"' zfs \""$2"\" \""$3"\""; }' | 
 	sh -e
 	zfs list -H -o canmount,mountpoint -t filesystem |
 	awk '{ if ($2 != "none" && $1 == "noauto") { gsub("-","'${esc}'x2d",$2); gsub("/","-",$2); print "system-control disable mount@\""$2"\""; } }' | 

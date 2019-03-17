@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="login-banner">
 
@@ -19,7 +20,7 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>login-banner</command>
-<arg>--utmp-filename <replaceable>filename</replaceable></arg>
+<arg choice='opt'>--utmp-filename <replaceable>filename</replaceable></arg>
 <arg choice='req'><replaceable>template-filename</replaceable></arg>
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
@@ -43,11 +44,11 @@ Normally, the <replaceable>next-prog</replaceable> will be (or will eventually c
 <para>
 <command>login-banner</command> derives information about the number of users logged on from the <filename>utmp</filename> file.
 The location of the <filename>utmp</filename> file is derived at compile time from a system header when the utility is built from source.
-To override it at runtime, use the <code>--utmp-filename</code> option.
+To override it at runtime, use the <arg>--utmp-filename</arg> option.
 </para>
 
 <para>
-It determines the name of the controlling TTY from the value of the <code>TTY</code> environment variable, if present.
+It determines the name of the controlling TTY from the value of the <envar>TTY</envar> environment variable, if present.
 This will be the case if <command>login-banner</command> has been invoked within a chain that has run <citerefentry><refentrytitle>vc-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry> or <citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, or an equivalent <citerefentry><refentrytitle>getty</refentrytitle><manvolnum>1</manvolnum></citerefentry> program that sets that variable.
 If absent, the <citerefentry><refentrytitle>ttyname</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function is called.
 </para>
@@ -74,7 +75,7 @@ A single backslash.
 <term><code>\s</code></term>
 <listitem><para>
 The "system" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> function.
-On FreeBSD/TrueOS, the C library allows this to be overridden by a <code>UNAME_s</code> environment variable.
+On FreeBSD/TrueOS, the C library allows this to be overridden by a <envar>UNAME_s</envar> environment variable.
 </para></listitem>
 </varlistentry>
 
@@ -105,7 +106,7 @@ This defaults to the same as <code>\n</code>.
 <term><code>\r</code></term>
 <listitem><para>
 The "release" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> function.
-On FreeBSD/TrueOS, the C library allows this to be overridden by a <code>UNAME_r</code> environment variable.
+On FreeBSD/TrueOS, the C library allows this to be overridden by a <envar>UNAME_r</envar> environment variable.
 </para></listitem>
 </varlistentry>
 
@@ -113,7 +114,7 @@ On FreeBSD/TrueOS, the C library allows this to be overridden by a <code>UNAME_r
 <term><code>\v</code></term>
 <listitem><para>
 The "version" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> function.
-On FreeBSD/TrueOS, the C library allows this to be overridden by a <code>UNAME_v</code> environment variable.
+On FreeBSD/TrueOS, the C library allows this to be overridden by a <envar>UNAME_v</envar> environment variable.
 </para></listitem>
 </varlistentry>
 
@@ -121,7 +122,7 @@ On FreeBSD/TrueOS, the C library allows this to be overridden by a <code>UNAME_v
 <term><code>\m</code></term>
 <listitem><para>
 The "machine" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> function.
-On FreeBSD/TrueOS, the C library allows this to be overridden by a <code>UNAME_m</code> environment variable.
+On FreeBSD/TrueOS, the C library allows this to be overridden by a <envar>UNAME_m</envar> environment variable.
 </para></listitem>
 </varlistentry>
 
@@ -129,7 +130,7 @@ On FreeBSD/TrueOS, the C library allows this to be overridden by a <code>UNAME_m
 <term><code>\o</code></term>
 <listitem><para>
 The "domain" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> or the <citerefentry><refentrytitle>getdomainname</refentrytitle><manvolnum>2</manvolnum></citerefentry> function.
-<command>login-banner</command> implements a common (DNS client library) convention of allowing this to be overridden by a <code>LOCALDOMAIN</code> environment variable.
+<command>login-banner</command> implements a common (DNS client library) convention of allowing this to be overridden by a <envar>LOCALDOMAIN</envar> environment variable.
 </para></listitem>
 </varlistentry>
 
@@ -170,13 +171,13 @@ The current time.
 
 </variablelist>
 
-</refsection><refsection><title>SECURITY</title>
+</refsection><refsection><title>Security</title>
 
 <para>
 The program requires permission to read <filename>utmp</filename> and the template file.
 </para>
 
-</refsection><refsection><title>EXAMPLE</title>
+</refsection><refsection><title>Example</title>
 
 <para>
 <command>login-banner</command> doesn't really care if its standard output is not a virtual console, or even a terminal or a character device at all.
@@ -188,30 +189,28 @@ It can be used to display login banners to arbitrary destinations, even to socke
 The following <citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry> script is (roughly) equivalent to what <citerefentry><refentrytitle>in.telnetd</refentrytitle><manvolnum>1</manvolnum></citerefentry> does, except that it doesn't handle the TELNET protocol negotiation or the various debugging options.
 </para>
 
-<programlisting>
-#!/bin/nosh
+<informalexample><programlisting>#!/bin/nosh
 pty-get-tty
 pty-run
 setsid
 open-controlling-tty
 login-banner /etc/issue.net
-login
-</programlisting>
+login</programlisting></informalexample>
 
 <para>
 This is the <citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry> equivalent:
 </para>
 
-<programlisting>
-#!/bin/sh -e
+<informalexample><programlisting>#!/bin/sh -e
 exec \
 pty-get-tty \
 pty-run \
 open-controlling-tty \
 login-banner /etc/issue.net \
-login
-</programlisting>
+login</programlisting></informalexample>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

@@ -8,27 +8,16 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstdlib>
 #include <cerrno>
 #include <cstring>
-#include <cctype>
-#include <iostream>
-#include <fstream>
-#include <iomanip>
 #include <stdint.h>
-#if !defined(_GNU_SOURCE)
-#include <sys/syslimits.h>
-#endif
-#include <sys/mount.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #if !defined(__LINUX__) && !defined(__linux__)
 #include <sys/types.h>
-#include <sys/sysctl.h>
-//#include <netinet/in.h>
 #include "uuid.h"
 #else
 #include "uuid/uuid.h"
 #endif
+#include <unistd.h>
 #include "utils.h"
-#include "jail.h"
 #include "popt.h"
 #include "host_id.h"
 #include "machine_id.h"
@@ -71,24 +60,29 @@ setup_machine_id [[gnu::noreturn]] (
 	using namespace machine_id;
 
 	erase();
+
 	bool rewrite(false);
 	if (!read_non_volatile() || is_null()) {
 		if (!read_fallbacks(envs) || is_null())
 			create();
 		rewrite = true;
 	}
-	if (!validate())
+	if (!validate()) {
+		create();
 		rewrite = true;
+	}
+
 	const uint32_t hostid(calculate_host_id(the_machine_id));
 	if (verbose) {
 		std::fprintf(stdout, "Machine ID: %s\n", human_readable_form().c_str());
 		std::fprintf(stdout, "POSIX Host ID: %08lx\n", static_cast<unsigned long>(hostid));
 	}
+
 	umask(0033);
 	write_fallbacks(prog);
-	write_volatile_hostid(prog, hostid);
 	if (rewrite)
 		write_non_volatile(prog);
+	write_volatile_hostid(prog, hostid);
 	write_non_volatile_hostid(prog, hostid);
 
 	throw EXIT_SUCCESS;

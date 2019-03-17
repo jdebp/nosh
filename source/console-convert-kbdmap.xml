@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="console-convert-kbdmap">
 
@@ -63,7 +64,7 @@ level3 and level4 of group 1 in the converted keymap are taken from the first fo
 </itemizedlist>
 </listitem>
 <listitem><para>
-Keycode 0x5D (decimal 93, the "AltGr" or "Option" key) with level2 modifier in effect is always a group2 modifier latch.
+Keycode 0x5D (decimal 93, the <keycap>&#x21ee;&#160;AltGr</keycap> or <keycap>&#x2325;&#160;Option</keycap> key) with level2 modifier in effect is always a group2 modifier latch.
 The BSD/SCO kbdmap is itself overlaid with this, because otherwise there would be no group2 modifier (since BSD/SCO kbdmaps have no notion of the ISO 9995-3 common group 2 or a modifier to switch to it, and do not set the appropriate action).
 </para></listitem>
 <listitem><para>
@@ -115,47 +116,47 @@ The ISO 9995-3 common group 2 that is underlaid beneath all BSD/SCO kbdmaps actu
 <varlistentry>
 <term>Pound</term>
 <listitem><para>
-<code>Group2</code>+<code>Level2</code>+<code>E03</code> 
-(<code>Shift</code>+<code>Option</code>,<code>Option</code>+<code>'3'</code>)
+<keycap>Group2</keycap>+<keycap>&#x21e7;&#160;Level2</keycap>+E03 
+(<keycap>&#x21e7;&#160;Shift</keycap>+<keycap>O&#x21eb;&#160;ption</keycap>,<keycap>&#x21eb;&#160;Option</keycap>+<keycap>3</keycap>)
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>Yen</term>
 <listitem><para>
-<code>Group2</code>+<code>Level2</code>+<code>D06</code> 
-(<code>Shift</code>+<code>Option</code>,<code>Option</code>+<code>'Y'</code>)
+<keycap>Group2</keycap>+<keycap>&#x21e7;&#160;Level2</keycap>+D06 
+(<keycap>&#x21e7;&#160;Shift</keycap>+<keycap>&#x21eb;&#160;Option</keycap>,<keycap>&#x21eb;&#160;Option</keycap>+<keycap>Y</keycap>)
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>Euro</term>
 <listitem><para>
-<code>Group2</code>+<code>Level2</code>+<code>E04</code> 
-(<code>Shift</code>+<code>Option</code>,<code>Option</code>+<code>'4'</code>)
+<keycap>Group2</keycap>+<keycap>&#x21e7;&#160;Level2</keycap>+E04 
+(<keycap>&#x21e7;&#160;Shift</keycap>+<keycap>&#x21eb;&#160;Option</keycap>,<keycap>&#x21eb;&#160;Option</keycap>+<keycap>4</keycap>)
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>Dollar</term>
 <listitem><para>
-<code>Group2</code>+<code>Level3</code>+<code>B08</code> 
-(<code>Shift</code>+<code>Option</code>,<code>Option</code>+<code>','</code>)
+<keycap>Group2</keycap>+<keycap>&#x21eb;&#160;Level3</keycap>+B08 
+(<keycap>&#x21e7;&#160;Shift</keycap>+<keycap>&#x21eb;&#160;Option</keycap>,<keycap>&#x21eb;&#160;Option</keycap>+<keycap>,</keycap>)
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>cent</term>
 <listitem><para>
-<code>Group2</code>+<code>Level1</code>+<code>B02</code> 
-(<code>Shift</code>+<code>Option</code>,<code>Option</code>+<code>'c'</code>)
+<keycap>Group2</keycap>+<keycap>&#x21eb;&#160;Level3</keycap>+B02 
+(<keycap>&#x21e7;&#160;Shift</keycap>+<keycap>&#x21eb;&#160;Option</keycap>,<keycap>&#x21eb;&#160;Option</keycap>+<keycap>c</keycap>)
 </para></listitem>
 </varlistentry>
 </variablelist>
 </listitem>
 <listitem><para>
-BSD/SCO kbdmaps hardwire the BS and DEL control characters for the backspace key, and hardwire the DEL control character for the delete key(s).
+BSD/SCO kbdmaps hardwire the BS and DEL control characters for the <keycap>&#x232b;&#160;Backspace</keycap> key, and hardwire the DEL control character for the <keycap>&#x2326;&#160;Delete</keycap> key(s).
 However, <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> supplies a soft-settable backspace action that can be programmed using the DECBKM control sequence (DEC private mode 67) and a soft-settable delete action that can be programmed using DEC private mode 1037.
 To allow specifying these from BSD/SCO kbdmaps, the convertor adds a "bspace" and a "delete" extension to the BSD/SCO kbdmap keyword set.
 </para></listitem>
 <listitem><para>
-BSD/SCO kbdmaps hardwire the CR and LF control characters for the return and enter keys.
+BSD/SCO kbdmaps hardwire the CR and LF control characters for the <keycap>&#x2ba0;&#160;Return</keycap> and <keycap>Enter</keycap> keys.
 This prevents <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> from ever generating DEC application mode control sequences for the latter.
 To allow for a more complete DEC VT emulation from BSD/SCO kbdmaps, the convertor adds "return" and "enter" extensions to the BSD/SCO kbdmap keyword set that map to the extended key messages rather than directly to control code characters.
 </para></listitem>
@@ -171,6 +172,8 @@ For the PC/AT keycodes these denote the cursor/editing keypad keys as message ac
 
 </refsection>
 
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

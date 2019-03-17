@@ -21,7 +21,7 @@ Other subdirectories contain symbolic links that define service interrelationshi
 
 <p>
 Bundle directories can live anywhere that one likes in the filesystem.
-The <a href="system-control.html"><code>system-control</code></a> program locates various standard targets in the <code>/etc/service-bundles/targets</code> directory.
+The <a href="commands/system-control.xml"><code>system-control</code></a> program locates various standard targets in the <code>/etc/service-bundles/targets</code> directory.
 But those targets refer to other services (and targets) via symbolic links, which can point anywhere in the filesystem.
 </p>
 
@@ -38,8 +38,8 @@ Distinct managers
 
 <p>
 The <em>service</em> manager is not the <em>system</em> manager.
-The service manager (<a href="service-manager.html"><code>service-manager</code></a>) manages daemons, and their state transitions through the "stopped", "starting", "running", "failed", and "stopping" states.
-The system manager (<a href="system-manager.html"><code>system-manager</code></a>) manages the state machine for the system as a whole, with the "normal", "rescue", and "emergency" bootstrap modes, the "halt", "reboot", and "poweroff" targets, and system-level control mechanisms such as hotkeys (Control+Alt+Delete and on Linux Alt-UpArrow) on the system console.
+The service manager (<a href="commands/service-manager.xml"><code>service-manager</code></a>) manages d&#xe6;mons, and their state transitions through the "stopped", "starting", "running", "failed", and "stopping" states.
+The system manager (<a href="commands/system-manager.xml"><code>system-manager</code></a>) manages the state machine for the system as a whole, with the "normal", "rescue", and "emergency" bootstrap modes, the "halt", "reboot", and "poweroff" targets, and system-level control mechanisms such as hotkeys (Control+Alt+Delete and on Linux Alt-UpArrow) on the system console.
 </p>
 
 <p>
@@ -59,7 +59,7 @@ The service <em>manager</em> is not the service <em>scanner</em>.
 In daemontools (and in 
 <a href="http://skarnet.org/software/s6/">s6</a> and 
 <a href="http://untroubled.org/daemontools-encore/">daemontools-encore</a>) the service scanner forks supervisory processes for services, directly.
-In this system the daemontools-compatibility service scanner, <a href="service-dt-scanner.html"><code>service-dt-scanner</code></a>, talks through the RPC API to the service manager, which forks the service processes.
+In this system the daemontools-compatibility service scanner, <a href="commands/service-dt-scanner.xml"><code>service-dt-scanner</code></a>, talks through the RPC API to the service manager, which forks the service processes.
 The service scanner is not the parent of service processes.
 Indeed, it can be treated as a service <em>itself</em> (running under the service manager), and can be brought up and down.
 Traditional daemontools service scanners are not expected to be terminated, in contrast.
@@ -68,8 +68,8 @@ Traditional daemontools service scanners are not expected to be terminated, in c
 <p>
 One can do away with <code>service-dt-scanner</code> and any <code>/service/</code> directory entirely, moreover.
 The service manager API provides mechanism; whereas tools like <code>service-dt-scanner</code> determine in what particular way that mechanism is used, and are replaceable.
-Running <a href="system-manager.html"><code>system-manager</code></a> as process #1, there's no daemontools-compatible scanner involved in normal operation.
-Instead, <a href="system-control.html"><code>system-control</code></a> institutes the full service/target bundle interdependency framework.
+Running <a href="commands/system-manager.xml"><code>system-manager</code></a> as process #1, there's no daemontools-compatible scanner involved in normal operation.
+Instead, <a href="commands/system-control.xml"><code>system-control</code></a> institutes the full service/target bundle interdependency framework.
 </p>
 
 <h2>
@@ -83,7 +83,7 @@ This program is given arguments that tell it the status of the last service proc
 </p>
 
 <p>
-A very simple <code>restart</code> script executes the <a href="true.html"><code>true</code> command</a>, which causes the service to be unconditionally restarted by the service manager.
+A very simple <code>restart</code> script executes the <a href="commands/true.xml"><code>true</code> command</a>, which causes the service to be unconditionally restarted by the service manager.
 However, one can do a lot more than that.
 More complex <code>restart</code> scripts can &hellip;
 </p>

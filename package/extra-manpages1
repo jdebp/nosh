@@ -7,6 +7,7 @@ console-clear
 console-control-sequence
 console-convert-kbdmap
 console-decode-ecma48
+console-docbook-xml-viewer
 console-fb-realizer
 console-flat-table-viewer
 console-input-method
@@ -34,6 +35,7 @@ find-matching-jvm
 follow-log-directories
 foreground
 getuidgid
+ifconfig
 klog-read
 line-banner
 local-datagram-socket-listen
@@ -63,6 +65,8 @@ pipe
 plug-and-play-event-handler
 prependpath
 printenv
+procstat
+ps
 pty-get-tty
 pty-run
 read-conf
@@ -95,6 +99,7 @@ tcp-socket-accept
 tcp-socket-connect
 tcp-socket-listen
 tcpserver
+erase-machine-id
 time-env-add
 time-env-set
 time-pause-until

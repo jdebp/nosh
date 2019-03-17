@@ -25,26 +25,35 @@ extern uuid_t the_machine_id;
 
 void
 erase() ;
+
 void
 create() ;
+
 bool
 is_null () ;
+
 std::string
 human_readable_form() ;
+
 std::string
 human_readable_form_compact () ;
+
 bool
 read_non_volatile () ;
+
 void
 write_non_volatile (
 	const char * prog
 ) ;
+
 bool 
 validate () ;
+
 bool
 read_fallbacks (
 	const ProcessEnvironment &
 ) ;
+
 void
 write_fallbacks (
 	const char * prog

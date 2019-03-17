@@ -1,7 +1,9 @@
-<!--
-.... Copyright (c) 2018 Jonathan de Boyne Pollard.
-.... Licensed under the licence of the Linux Man-Pages Project manual pages.
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="console">
 
@@ -71,6 +73,7 @@ See your container software's documentation.
 <listitem>
 <para>
 The list of devices specified for the console.
+This is in the reverse order to the order used on the kernel command line, and thus the first item on the list is the one that <filename>/dev/console</filename> device maps to.
 </para>
 </listitem>
 </varlistentry>
@@ -112,10 +115,12 @@ Until Linux version 2.1.71, it was a symbolic link to another device file that w
 
 </refsection>
 <refsection><title>Author</title>
+<para>
 Documentation by
 <author>
-<personname><firstname>Jonathan</firstname><surname>de Boyne Pollard</surname></personname>
+<personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname>
 </author>
+</para>
 </refsection>
 
 </refentry>

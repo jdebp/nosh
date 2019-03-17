@@ -14,14 +14,14 @@ Converting systemd units
 
 <p>
 One approach to adding a service bundle to an existing package or port is to <a href="converting-systemd-units.html">convert an existing systemd service or socket unit</a> that comes with the bundle as part of its build process.
-There are several things that the <a href="convert-systemd-units.html"><code>convert-systemd-units</code></a> command does not do:
+There are several things that the <a href="commands/convert-systemd-units.xml"><code>convert-systemd-units</code></a> command does not do:
 </p>
 
 <ul>
 
 <li>
 <p>
-Conversion will not create any environment directories, as used by <a href="envdir.html"><code>envdir</code></a> commands.
+Conversion will not create any environment directories, as used by <a href="commands/envdir.xml"><code>envdir</code></a> commands.
 If your package is intended to also install the environment directory, then you need to explicitly create it in your package's staging area yourself.
 </p>
 <p>
@@ -31,7 +31,7 @@ The conventional location for an environment directory is <code>service/env</cod
 
 <li>
 <p>
-Conversion will not create any rules directories, as used by <a href="ucspi-socket-rules-check.html"><code>ucspi-socket-rules-check</code></a> commands.
+Conversion will not create any rules directories, as used by <a href="commands/ucspi-socket-rules-check.xml"><code>ucspi-socket-rules-check</code></a> commands.
 If your package is intended to also install the rules directories, then you need to explicitly create them in your package's staging area yourself.
 </p>
 <p>
@@ -68,8 +68,8 @@ Do not include <code>down</code> files or <code>wants/</code> or <code>conflicts
 
 <li>
 <p> <strong> The mechanisms have opposite sense defaults when the files are not packaged. </strong>
-If a <code>down</code> file does not exist, then a service is considered enabled by <a href="service-dt-scanner.html"><code>service-dt-scanner</code></a>.
-If a <code>wants/</code> or <code>conflicts/</code> symbolic link does not exist pointing to it, then a service is disabled as far as <a href="system-control.html"><code>system-control</code></a> is concerned.
+If a <code>down</code> file does not exist, then a service is considered enabled by <a href="commands/service-dt-scanner.xml"><code>service-dt-scanner</code></a>.
+If a <code>wants/</code> or <code>conflicts/</code> symbolic link does not exist pointing to it, then a service is disabled as far as <a href="commands/system-control.xml"><code>system-control</code></a> is concerned.
 Unfortunately, this is exactly the scenario that initially obtains when a packaged service bundle is first installed.
 </p>
 </li>

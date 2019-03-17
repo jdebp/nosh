@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="TerminalCapabilities">
 
@@ -18,6 +19,12 @@
 <refname>TerminalCapabilities</refname>
 <refpurpose>terminal capabilities class</refpurpose>
 </refnamediv>
+
+<refsynopsisdiv>
+<classsynopsis class="class" language="C++">
+<classsynopsisinfo>class TerminalCapabilities;</classsynopsisinfo> 
+</classsynopsis>
+</refsynopsisdiv>
 
 <refsection><title>Description</title>
 
@@ -65,7 +72,7 @@ User-space virtual terminals support features extra to what KVTs support; includ
 <para>
 Set by the XTerm program in the child processes that it spawns for terminal sessions, this indicates the version number of XTerm.
 It is used to attempt to determine when a user or a programmer has incorrectly used <code>xterm</code> when the terminal emulator program is not in fact XTerm, and disable the use of some features that genuine XTerm has that other programs incorrectly ascribed the <code>xterm</code> terminal type have not.
-These include extended DECSCUSR, DEC Locator, XTerm-style SGR mouse reports, the HPA and CTC control sequences, and the NEL control character.
+These include extended DECSCUSR, DEC Locator, XTerm-style ECMA-48-conformant mouse reports, the HPA and CTC control sequences, and the NEL control character.
 </para>
 </listitem>
 </varlistentry>
@@ -90,7 +97,7 @@ From the version number of VTE it can be determined whether it is possible to us
 <para>
 Set by the Konsole program in the child processes that it spawns for terminal sessions, this indicates the Konsole profile in use.
 Its value is ignored.
-Its existence indicates that it is possible to use XTerm-style SGR mouse reports.
+Its existence indicates that it is possible to use XTerm-style ECMA-48-conformant mouse reports.
 </para>
 </listitem>
 </varlistentry>
@@ -254,8 +261,8 @@ Only genuine XTerm and <citerefentry><refentrytitle>console-terminal-emulator</r
 </term>
 <listitem>
 <para>
-The <code>dumb</code> terminal type family, the <code>rxvt</code> terminal type family, and erroneously labelled <code>xterm</code> family terminals that are not XTerm, not the VTE library, and not Konsole, are not capable of generating XTerm-style SGR-form mouse reports.
-(Other forms of XTerm-style mouse report are not ECMA control sequences, are problematic to decode, and have been deprecated in favour of the SGR form since the 2000s.)
+The <code>dumb</code> terminal type family, the <code>rxvt</code> terminal type family, and erroneously labelled <code>xterm</code> family terminals that are not XTerm, not the VTE library, and not Konsole, are not capable of generating XTerm-style ECMA-48-conformant mouse reports.
+(Other forms of XTerm-style mouse report are not ECMA control sequences, are problematic to decode, and have been deprecated in favour of the ECMA-48-conformant form since the 2000s.)
 </para>
 </listitem>
 </varlistentry>
@@ -396,7 +403,8 @@ For other terminal types, DECSLPP can set all heights and widths have to be set 
 </term>
 <listitem>
 <para>
-Only <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> understands DECST8C.
+The <code>linux</code>, <code>teken</code>, and <code>rxvt</code> terminal type families, and <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>, effectively perform the action of DECST8C at terminal hard/soft reset, making explicitly setting regular tabs at 8 column intervals superfluous.
+(Real DEC VTs do not do this, and the initial state is for all tabstops to be cleared.)
 </para>
 </listitem>
 </varlistentry>
@@ -473,6 +481,18 @@ The <code>dumb</code> and <code>interix</code> terminal type families do not imp
 </listitem>
 </varlistentry>
 
+<varlistentry>
+<term>
+<code>has_square_mode</code>
+</term>
+<listitem>
+<para>
+Only <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> has a mode where all characters are full-width (i.e. "square").
+Others display some characters half-width, and applications have to account for different character widths.
+</para>
+</listitem>
+</varlistentry>
+
 </variablelist>
 
 </refsection>
@@ -496,10 +516,12 @@ the <envar>TERM</envar> and other environment variables that signify terminal ty
 
 </refsection>
 <refsection><title>Author</title>
+<para>
 Documentation by
 <author>
-<personname><firstname>Jonathan</firstname><surname>de Boyne Pollard</surname></personname>
+<personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname>
 </author>
+</para>
 </refsection>
 
 </refentry>

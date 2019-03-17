@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
+
+<refentry id="procstat">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>procstat</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">administrator commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>procstat</refname>
+<refpurpose>process listing tool</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>procstat</command>
+<arg choice="opt">-b</arg>
+<arg choice="opt">-c</arg>
+<arg choice="opt">-e</arg>
+<arg choice="opt">-f</arg>
+<arg choice="opt">-i</arg>
+<arg choice="opt">-j</arg>
+<arg choice="opt">-k</arg>
+<arg choice="opt">-l</arg>
+<arg choice="opt">-r</arg>
+<arg choice="opt">-s</arg>
+<arg choice="opt">-S</arg>
+<arg choice="opt">-t</arg>
+<arg choice="opt">-v</arg>
+<arg choice="opt">-x</arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>procstat</command> is a tool for listing process information.
+It is a shim for the <citerefentry><refentrytitle>list-process-table</refentrytitle><manvolnum>1</manvolnum></citerefentry> command that provides a more familiar interface to that command whilst yielding that command's table-format output.
+Its output is suitable for <citerefentry><refentrytitle>console-flat-table-viewer</refentrytitle><manvolnum>1</manvolnum></citerefentry> with 1 header line.
+</para>
+
+<refsection><title>Options</title>
+
+<para>
+Command-line options are translated into options for <citerefentry><refentrytitle>list-process-table</refentrytitle><manvolnum>1</manvolnum></citerefentry> as follows:
+</para>
+
+<variablelist>
+<varlistentry>
+<term><arg choice="plain">-b</arg></term><listitem><para><arg choice="plain">--format binary</arg></para></listitem>
+</varlistentry>
+<varlistentry>
+<term><arg choice="plain">-c</arg></term><listitem><para><arg choice="plain">--format args</arg></para></listitem>
+</varlistentry>
+<varlistentry>
+<term><arg choice="plain">-e</arg></term><listitem><para><arg choice="plain">--format envs</arg></para></listitem>
+</varlistentry>
+<varlistentry>
+<term><arg choice="plain">-f</arg></term><listitem><para><arg choice="plain">--format fds</arg></para></listitem>
+</varlistentry>
+<varlistentry>
+<term><arg choice="plain">-i</arg></term><listitem><para><arg choice="plain">--format process-signal</arg></para></listitem>
+</varlistentry>
+<varlistentry>
+<term><arg choice="plain">-j</arg></term><listitem><para><arg choice="plain">--format thread-signal</arg></para></listitem>
+</varlistentry>
+<varlistentry>
+<term><arg choice="plain">-k</arg></term><listitem><para><arg choice="plain">--format kernel-stack</arg></para></listitem>
+</varlistentry>
+<varlistentry>
+<term><arg choice="plain">-l</arg></term><listitem><para><arg choice="plain">--format resource-limits</arg></para></listitem>
+</varlistentry>
+<varlistentry>
+<term><arg choice="plain">-r</arg></term><listitem><para><arg choice="plain">--format resource-usage</arg></para></listitem>
+</varlistentry>
+<varlistentry>
+<term><arg choice="plain">-s</arg></term><listitem><para><arg choice="plain">--format credentials</arg></para></listitem>
+</varlistentry>
+<varlistentry>
+<term><arg choice="plain">-S</arg></term><listitem><para><arg choice="plain">--format cpuset</arg></para></listitem>
+</varlistentry>
+<varlistentry>
+<term><arg choice="plain">-t</arg></term><listitem><para><arg choice="plain">--format thread</arg></para></listitem>
+</varlistentry>
+<varlistentry>
+<term><arg choice="plain">-v</arg></term><listitem><para><arg choice="plain">--format vm</arg></para></listitem>
+</varlistentry>
+<varlistentry>
+<term><arg choice="plain">-x</arg></term><listitem><para><arg choice="plain">--format aux</arg></para></listitem>
+</varlistentry>
+</variablelist>
+
+<para>
+No deduplication is done, so <citerefentry><refentrytitle>list-process-table</refentrytitle><manvolnum>1</manvolnum></citerefentry> will receive any repetitions exactly as they are.
+</para>
+
+</refsection>
+
+</refsection>
+
+<refsection><title>Examples</title>
+
+<informalexample>
+<para>
+This command uses <command>procstat</command> in a loop to feed <citerefentry><refentrytitle>console-flat-table-viewer</refentrytitle><manvolnum>1</manvolnum></citerefentry>, producing a continually updated display akin to <citerefentry><refentrytitle>top</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Using <citerefentry><refentrytitle>sed</refentrytitle><manvolnum>1</manvolnum></citerefentry> to insert the Form Feed rather than printing it separately with <citerefentry><refentrytitle>printf</refentrytitle><manvolnum>1</manvolnum></citerefentry> reduces flicker.
+</para>
+<literallayout><computeroutput># </computeroutput><userinput>while procstat | sed -e '1s/^/^L/'</userinput><computeroutput>
+> </computeroutput><userinput>do</userinput><computeroutput>
+> </computeroutput><userinput>sleep 1</userinput><computeroutput>
+> </computeroutput><userinput>done |</userinput><computeroutput>
+> </computeroutput><userinput>console-flat-table-viewer --header-count 1</userinput></literallayout>
+</informalexample>
+
+</refsection>
+
+<refsection id="COMPATIBILITY" xreflabel="COMPATIBILITY">
+<title>Compatibility and history</title>
+
+<para>
+This <command>procstat</command> is modelled on the FreeBSD <citerefentry><refentrytitle>procstat</refentrytitle><manvolnum>8</manvolnum></citerefentry> tool, providing a subset of its functionality.
+</para>
+
+</refsection>
+
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
+
+</refentry>

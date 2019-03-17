@@ -33,7 +33,7 @@ These files include the overrides at <a href="gazetteer.html#user-dbus-definitio
 It finds an override named <code>~</code><i>username</i><code>/.local/share/dbus-1/services/org.example.Sheila.service</code> that has <code>Name=org.example.Sheila</code>.
 </p></li>
 <li><p>
-Using <a href="dbus-daemon-launch-helper.html"><code>dbus-daemon-launch-helper</code></a>, the broker sends a <code>system-control --user start org.example.Sheila</code> to the per-user service manager.
+Using <a href="commands/dbus-daemon-launch-helper.xml"><code>dbus-daemon-launch-helper</code></a>, the broker sends a <code>system-control --user start org.example.Sheila</code> to the per-user service manager.
 </p></li>
 <li><p>
 The per-user service manager starts the <code>~</code><i>username</i><code>/.config/service-bundles/services/org.example.Sheila</code> service.
@@ -51,7 +51,7 @@ Unified server names
 </h2>
 
 <p>
-In theory <a href="dbus-daemon-launch-helper.html"><code>dbus-daemon-launch-helper</code></a> is supposed to look in the Desktop Bus broker server definition file for a <code>SystemdService</code> setting.
+In theory <a href="commands/dbus-daemon-launch-helper.xml"><code>dbus-daemon-launch-helper</code></a> is supposed to look in the Desktop Bus broker server definition file for a <code>SystemdService</code> setting.
 In theory, the name of the service to be started could thus be different from the name that the server registers with the broker when it starts up.
 </p>
 

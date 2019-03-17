@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="set-dynamic-hostname">
 
@@ -29,12 +30,12 @@
 <refsection><title>Description</title>
 
 <para>
-<command>dbus-daemon-launch-helper</command> is called by the Desktop Bus broker daemon whenever it wants to launch a D-BUS service that isn't yet running "on demand" in response to clients attempting to communicate with that service over the Desktop Bus.
+<command>dbus-daemon-launch-helper</command> is called by the Desktop Bus broker d&#xe6;mon whenever it wants to launch a D-BUS service that isn't yet running "on demand" in response to clients attempting to communicate with that service over the Desktop Bus.
 </para>
 
 <para>
 It supersedes an old command of the same name that is supplied with the D-BUS broker.
-The D-BUS broker daemon has to be instructed to invoke it via a configuration change in <filename>/etc/dbus-1/system.conf</filename> and <filename>/etc/dbus-1/session.conf</filename>.
+The D-BUS broker d&#xe6;mon has to be instructed to invoke it via a configuration change in <filename>/etc/dbus-1/system.conf</filename> and <filename>/etc/dbus-1/session.conf</filename>.
 (Drop-in configuration snippets do not work for this, alas.)
 It isn't really useful to run it directly.
 </para>
@@ -50,9 +51,9 @@ Unlike the command that it supersedes, it attempts to respect the enable/disable
 </para>
 
 <para>
-If a D-BUS service daemon is running but currently <emphasis>disabled</emphasis>, it will respect the enable/disable state to the extent of stopping that service.
+If a D-BUS service d&#xe6;mon is running but currently <emphasis>disabled</emphasis>, it will respect the enable/disable state to the extent of stopping that service.
 However, this scenario does not occur in practice.
-If a D-BUS service daemon is running, the D-BUS broker daemon does not need to, and thus attempt to, start it on demand in the first place.
+If a D-BUS service d&#xe6;mon is running, the D-BUS broker d&#xe6;mon does not need to, and thus attempt to, start it on demand in the first place.
 </para>
 
 </refsection>
@@ -61,11 +62,11 @@ If a D-BUS service daemon is running, the D-BUS broker daemon does not need to, 
 
 <para>
 This program has, unlike its predecessors, no reason to be set-UID or set-GID.
-It does not attempt to run daemons directly itself.
+It does not attempt to run d&#xe6;mons directly itself.
 </para>
 
 <para>
-It runs under the aegis of the same unprivileged user account that the D-BUS broker daemon itself runs under.
+It runs under the aegis of the same unprivileged user account that the D-BUS broker d&#xe6;mon itself runs under.
 Whatever service management system is in place must therefore be configured so that (only) the requisite services can be started by that account invoking the relevant service management command.
 With the nosh toolset's <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>, for example, this means granting the necessary privileges to the control FIFOs in the various service bundles' <filename>supervise/</filename> directories.
 </para>
@@ -99,7 +100,7 @@ However:
 
 <itemizedlist>
 <listitem><para>
-Executing <emphasis>any</emphasis> D-BUS server daemon directly from the D-BUS broker daemon is a bad idea.
+Executing <emphasis>any</emphasis> D-BUS server d&#xe6;mon directly from the D-BUS broker d&#xe6;mon is a bad idea.
 All D-BUS server programs should <emphasis>only</emphasis> be executed via, and under the control of, service management.
 Respecting <code>Exec=</code> is wholly the wrong thing to do.
 </para></listitem>
@@ -110,13 +111,15 @@ If every service managed service has an alias that is its D-BUS service (file) n
 </itemizedlist>
 
 <para>
-By adopting the principles that all D-BUS server daemons <emphasis>must</emphasis> be managed by service management and that all such services <emphasis>must</emphasis> have an alias that matches their D-BUS service (file) names, <command>dbus-daemon-launch-helper</command> can thus ignore the contents of the D-BUS service file entirely.
+By adopting the principles that all D-BUS server d&#xe6;mons <emphasis>must</emphasis> be managed by service management and that all such services <emphasis>must</emphasis> have an alias that matches their D-BUS service (file) names, <command>dbus-daemon-launch-helper</command> can thus ignore the contents of the D-BUS service file entirely.
 Indeed, it does not even need to locate and open the D-BUS service file.
 It solely relies upon the D-BUS service (file) name mapping to the service management service name, either directly or via an alias that has been set up in service management configuration.
 </para>
 
 </refsection>
 
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

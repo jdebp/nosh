@@ -20,5 +20,8 @@ udev-log
 udev-settle
 udev-trigger-add@devices
 udev-trigger-add@subsystems
+mdevd
+mdevd-log
+mdevd-rescan
 vdev
 vdev-log

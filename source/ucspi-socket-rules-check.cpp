@@ -17,104 +17,80 @@ For copyright and licensing terms, see the file named COPYING.
 #include "utils.h"
 #include "fdutils.h"
 #include "ProcessEnvironment.h"
+#include "IPAddress.h"
+
+/* Rules processing *********************************************************
+// **************************************************************************
+*/
+
+namespace {
+
+	bool verbose(false);
+
+	bool
+	allowed (
+		const char * prog,
+		const char * name,
+		const std::string & subdir
+	) {
+		const int dir_fd(open_dir_at(AT_FDCWD, subdir.c_str()));
+		if (0 > dir_fd) return false;
+		const int allowed(faccessat(dir_fd, "allow", F_OK, AT_EACCESS));
+		const int denied(faccessat(dir_fd, "deny", F_OK, AT_EACCESS));
+		close(dir_fd);
+		if (0 <= allowed) return true;
+		if (0 <= denied) {
+			if (verbose)
+				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, "Access denied.");
+			throw EXIT_FAILURE;
+		}
+		return false;
+	}
+
+	bool
+	is_self (
+		const char * s,
+		unsigned long id
+	) {
+		const char * old(s);
+		unsigned long v(std::strtoul(s, const_cast<char **>(&s), 0));
+		if (*s || old == s) return false;
+		return v == id;
+	}
+
+}
+
+/* IP address masks *********************************************************
+// **************************************************************************
+*/
+
+namespace {
+
+	inline
+	in_addr 
+	make_mask4 (
+		unsigned prefix_length
+	) {
+		in_addr r;
+		IPAddress::SetPrefix(r, prefix_length);
+		return r;
+	}
+
+	inline
+	in6_addr 
+	make_mask6 (
+		unsigned prefix_length
+	) {
+		in6_addr r;
+		IPAddress::SetPrefix(r, prefix_length);
+		return r;
+	}
+
+}
 
 /* Main function ************************************************************
 // **************************************************************************
 */
-
-static bool verbose(false);
-
-static
-bool
-allowed (
-	const char * prog,
-	const char * name,
-	const std::string & subdir
-) {
-	const int dir_fd(open_dir_at(AT_FDCWD, subdir.c_str()));
-	if (0 > dir_fd) return false;
-	const int allowed(faccessat(dir_fd, "allow", F_OK, AT_EACCESS));
-	const int denied(faccessat(dir_fd, "deny", F_OK, AT_EACCESS));
-	close(dir_fd);
-	if (0 <= allowed) return true;
-	if (0 <= denied) {
-		if (verbose)
-			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, "Access denied.");
-		throw EXIT_FAILURE;
-	}
-	return false;
-}
-
-static
-struct in_addr 
-make_mask4 (
-	unsigned prefix_length
-) {
-	struct in_addr r;
-	unsigned char * b(reinterpret_cast<unsigned char *>(&r));
-	for (size_t j(0); j < sizeof r; ++j) {
-		if (prefix_length <= 0)
-			b[j] = 0;
-		else if (prefix_length > 7) {
-			b[j] = 0xFF;
-			prefix_length -= 8;
-		} else {
-			b[j] = 0xFF << (8U - prefix_length);
-			prefix_length = 0;
-		}
-	}
-	return r;
-}
-
-static
-struct in6_addr 
-make_mask6 (
-	unsigned prefix_length
-) {
-	struct in6_addr r;
-	unsigned char * b(reinterpret_cast<unsigned char *>(&r));
-	for (size_t j(0); j < sizeof r; ++j) {
-		if (prefix_length <= 0)
-			b[j] = 0;
-		else if (prefix_length > 7) {
-			b[j] = 0xFF;
-			prefix_length -= 8;
-		} else {
-			b[j] = 0xFF << (8U - prefix_length);
-			prefix_length = 0;
-		}
-	}
-	return r;
-}
-
-struct in_addr
-operator & (
-	const struct in_addr & lhs,
-	const struct in_addr & rhs
-) {
-	struct in_addr r;
-	const unsigned char * lb(reinterpret_cast<const unsigned char *>(&lhs));
-	const unsigned char * rb(reinterpret_cast<const unsigned char *>(&rhs));
-	unsigned char * b(reinterpret_cast<unsigned char *>(&r));
-	for (size_t j(0); j < sizeof r; ++j) 
-		b[j] = lb[j] & rb[j];
-	return r;
-}
-
-struct in6_addr
-operator & (
-	const struct in6_addr & lhs,
-	const struct in6_addr & rhs
-) {
-	struct in6_addr r;
-	const unsigned char * lb(reinterpret_cast<const unsigned char *>(&lhs));
-	const unsigned char * rb(reinterpret_cast<const unsigned char *>(&rhs));
-	unsigned char * b(reinterpret_cast<unsigned char *>(&r));
-	for (size_t j(0); j < sizeof r; ++j) 
-		b[j] = lb[j] & rb[j];
-	return r;
-}
-
 
 void
 ucspi_socket_rules_check ( 
@@ -162,6 +138,8 @@ ucspi_socket_rules_check (
 			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, "UNIXREMOTEEGID", "Missing environment variable.");
 			throw EXIT_FAILURE;
 		}
+		if (is_self(uid, geteuid()) && allowed(prog, uid, "uid/self/")) return;
+		if (is_self(gid, getegid()) && allowed(prog, gid, "gid/self/")) return;
 		if (allowed(prog, uid, "uid/" + std::string(uid) + "/")) return;
 		if (allowed(prog, gid, "gid/" + std::string(gid) + "/")) return;
 		if (allowed(prog, "default", "uid/default/")) return;
@@ -181,7 +159,7 @@ ucspi_socket_rules_check (
 			const std::string dir("ip4/");
 			for (unsigned prefix_length(33); prefix_length > 0; ) {
 				--prefix_length;
-				const struct in_addr net4(make_mask4(prefix_length) & addr4);
+				const in_addr net4(make_mask4(prefix_length) & addr4);
 				char buf[INET_ADDRSTRLEN], suffix[32];
 				inet_ntop(AF_INET, &net4, buf, sizeof buf);
 				snprintf(suffix, sizeof suffix, "_%u", prefix_length);
@@ -192,7 +170,7 @@ ucspi_socket_rules_check (
 			const std::string dir("ip6/");
 			for (unsigned prefix_length(129); prefix_length > 0; ) {
 				--prefix_length;
-				const struct in6_addr net6(make_mask6(prefix_length) & addr6);
+				const in6_addr net6(make_mask6(prefix_length) & addr6);
 				char buf[INET6_ADDRSTRLEN], suffix[32];
 				inet_ntop(AF_INET6, &net6, buf, sizeof buf);
 				snprintf(suffix, sizeof suffix, "_%u", prefix_length);

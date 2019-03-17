@@ -352,3 +352,135 @@ rc_update (
 	args.insert(args.end(), service);
 	next_prog = arg0_of(args);
 }
+
+void
+initctl ( 
+	const char * & next_prog,
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
+) {
+	const char * prog(basename_of(args[0]));
+	try {
+		popt::top_table_definition main_option(0, 0, "Main options", "{command} {service-name}");
+
+		std::vector<const char *> new_args;
+		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
+		p.process(true /* strictly options before arguments */);
+		args = new_args;
+		next_prog = arg0_of(args);
+		if (p.stopped()) throw EXIT_SUCCESS;
+	} catch (const popt::error & e) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
+		throw static_cast<int>(EXIT_USAGE);
+	}
+
+	if (args.empty()) {
+		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing command name.");
+		throw static_cast<int>(EXIT_USAGE);
+	}
+	const char * command(args.front());
+	args.erase(args.begin());
+	const char * service(0);
+
+        if (0 == std::strcmp("version", command)) {
+                /* This is unchanged. */;
+	} else
+	{
+		if (args.empty()) {
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, command, "Missing service name.");
+			throw static_cast<int>(EXIT_USAGE);
+		}
+		service = args.front();
+		args.erase(args.begin());
+
+		if (false
+		||  0 == std::strcmp("start", command)
+		||  0 == std::strcmp("status", command)
+		||  0 == std::strcmp("stop", command)
+		)
+			/* This is unchanged. */;
+		else
+		if (0 == std::strcmp("show-config", command))
+			command = "show-json";
+		else
+		{
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, command, "Unsupported subcommand.");
+			throw EXIT_FAILURE;
+		}
+	}
+	if (!args.empty()) {
+		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Unrecognized extra arguments.");
+		throw EXIT_FAILURE;
+	}
+
+        args.clear();
+        args.insert(args.end(), "system-control");
+        args.insert(args.end(), command);
+	if (service)
+		args.insert(args.end(), service);
+	next_prog = arg0_of(args);
+}
+
+void
+svcadm ( 
+	const char * & next_prog,
+	std::vector<const char *> & args,
+	ProcessEnvironment & /*envs*/
+) {
+	const char * prog(basename_of(args[0]));
+	try {
+		popt::top_table_definition main_option(0, 0, "Main options", "{command} {service-name}");
+
+		std::vector<const char *> new_args;
+		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, main_option, new_args);
+		p.process(true /* strictly options before arguments */);
+		args = new_args;
+		next_prog = arg0_of(args);
+		if (p.stopped()) throw EXIT_SUCCESS;
+	} catch (const popt::error & e) {
+		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, e.arg, e.msg);
+		throw static_cast<int>(EXIT_USAGE);
+	}
+
+	if (args.empty()) {
+		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Missing command name.");
+		throw static_cast<int>(EXIT_USAGE);
+	}
+	const char * command(args.front());
+	args.erase(args.begin());
+	const char * service(0);
+
+        if (0 == std::strcmp("version", command)) {
+                /* This is unchanged. */;
+	} else
+	{
+		if (args.empty()) {
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, command, "Missing service name.");
+			throw static_cast<int>(EXIT_USAGE);
+		}
+		service = args.front();
+		args.erase(args.begin());
+
+		if (0 == std::strcmp("enable", command)) {
+			command = "start";
+		} else
+		if (0 == std::strcmp("disable", command)) {
+			command = "stop";
+		} else
+		{
+			std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, command, "Unsupported subcommand.");
+			throw EXIT_FAILURE;
+		}
+	}
+	if (!args.empty()) {
+		std::fprintf(stderr, "%s: FATAL: %s\n", prog, "Unrecognized extra arguments.");
+		throw EXIT_FAILURE;
+	}
+
+        args.clear();
+        args.insert(args.end(), "system-control");
+        args.insert(args.end(), command);
+	if (service)
+		args.insert(args.end(), service);
+	next_prog = arg0_of(args);
+}

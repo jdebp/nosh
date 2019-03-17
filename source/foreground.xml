@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="foreground">
 
@@ -50,7 +51,7 @@ Both are executed as if with the <citerefentry><refentrytitle>execvp</refentryti
 </para>
 
 <para>
-The <arg choice='opt'>--separator</arg> command line option specifies an alternative separator argument, to scan for in place of <arg choice='req'>;</arg> or <arg choice='req'>&#x0026;</arg>.
+The <arg choice='plain'>--separator</arg> command line option specifies an alternative separator argument, to scan for in place of <arg choice='plain'>;</arg> or <arg choice='plain'>&#x0026;</arg>.
 </para>
 
 <para>
@@ -63,17 +64,19 @@ The <arg choice='opt'>--separator</arg> command line option specifies an alterna
 
 <para>
 The primary use of <command>foreground</command> and <command>background</command> is from a <citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry> script to enact command lists.
-When invoking <command>foreground</command> or <command>background</command> from within a shell script, remember that <arg choice='req'>;</arg> or <arg choice='req'>&#x0026;</arg> must be escaped or quoted in order to prevent the shell from recognizing it.
+When invoking <command>foreground</command> or <command>background</command> from within a shell script, remember that <arg choice='plain'>;</arg> or <arg choice='plain'>&#x0026;</arg> must be escaped or quoted in order to prevent the shell from recognizing it.
 </para>
 
 <para>
-The commands look for the leftmost instance of the separator <arg choice='req'>;</arg>/<arg choice='req'>&#x0026;</arg>, and separate left from right there.
+The commands look for the leftmost instance of the separator <arg choice='plain'>;</arg>/<arg choice='plain'>&#x0026;</arg>, and separate left from right there.
 Further instances of the separator in <replaceable>right-prog</replaceable> are left alone.
 This allows longer lists, by using another <command>foreground</command> or <command>background</command> in <replaceable>right-prog</replaceable>.  However, these commands are intended only for enacting simple sequential or parallel command lists.
 For more complex command lists, these are not the correct tools.
 </para>
 
 </refsection>
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

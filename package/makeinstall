@@ -17,7 +17,7 @@ export CDPATH=
 # The build and release directories need not be on the same disc volume.
 # And the files released must not be potentially overwritable and truncatable by the compiler/linker during subsequent builds.
 # But released files can be links to other released files, of course.
-install -d -m 0755 command manual config guide guide/services guide/convert
+install -d -m 0755 command manual config guide guide/services guide/commands guide/convert
 
 # ##############################################################################
 # Build all of the ...{new} files in ./command and ./manual.
@@ -52,6 +52,11 @@ do
 	rm -f -- guide/"$i"{new}
 	install -m 0444 -p -- build/"$i" guide/"$i"{new}
 done
+for i in docbook-xml.css
+do
+	rm -f -- guide/commands/"$i"{new}
+	install -m 0444 -p -- build/"$i" guide/commands/"$i"{new}
+done
 # All of the commands that have their own manual and guide pages
 for section in 1 8
 do
@@ -60,12 +65,10 @@ do
 	do
 		rm -f -- manual/"$i".${section}{new}
 		install -m 0444 -p -- build/"$i".${section} manual/"$i".${section}{new}
-	done
-	cat package/commands${section} package/extra-manpages${section} | 
-	while read -r i
-	do
 		rm -f -- guide/"$i".html{new}
 		install -m 0444 -p -- build/"$i".html guide/"$i".html{new}
+		rm -f -- guide/commands/"$i".xml{new}
+		install -m 0444 -p -- build/"$i".xml guide/commands/"$i".xml{new}
 	done
 done
 # Aliased manual and guide pages
@@ -76,12 +79,8 @@ do
 	do
 		grep -q -- "^${alias}\$" package/commands${section} package/extra-manpages${section} && continue
 		ln -f -s -- "${command}".${section} manual/"${alias}".${section}{new}
-	done
-	cat package/aliases${section} | 
-	while read -r command alias
-	do
-		grep -q -- "^${alias}\$" package/commands${section} package/extra-manpages${section} && continue
 		ln -f -s -- "${command}".html guide/"${alias}".html{new}
+		ln -f -s -- "${command}".xml guide/commands/"${alias}".xml{new}
 	done
 done
 # Other manual and guide pages
@@ -98,6 +97,8 @@ do
 	do
 		rm -f -- guide/"$i".html{new}
 		install -m 0444 -p -- build/"$i".html guide/"$i".html{new}
+		rm -f -- guide/commands/"$i".xml{new}
+		install -m 0444 -p -- build/"$i".xml guide/commands/"$i".xml{new}
 	done
 done
 
@@ -121,6 +122,10 @@ for i in COPYING
 do
 	mv -f -- guide/"$i"{new} guide/"$i"
 done
+for i in docbook-xml.css
+do
+	mv -f -- guide/commands/"$i"{new} guide/commands/"$i"
+done
 # All of the commands that have their own manual and guide pages
 for section in 1 8
 do
@@ -133,6 +138,7 @@ do
 	while read -r i
 	do
 		mv -f -- guide/"$i".html{new} guide/"$i".html
+		mv -f -- guide/commands/"$i".xml{new} guide/commands/"$i".xml
 	done
 done
 # Aliased manual and guide pages
@@ -149,6 +155,7 @@ do
 	do
 		grep -q -- "^${alias}\$" package/commands${section} package/extra-manpages${section} && continue
 		mv -f -- guide/"${alias}".html{new} guide/"${alias}".html
+		mv -f -- guide/commands/"${alias}".xml{new} guide/commands/"${alias}".xml
 	done
 done
 # Other manual and guide pages
@@ -163,6 +170,7 @@ do
 	while read -r i
 	do
 		mv -f -- guide/"$i".html{new} guide/"$i".html
+		mv -f -- guide/commands/"$i".xml{new} guide/commands/"$i".xml
 	done
 done
 
@@ -268,7 +276,7 @@ do
 	install -m 0444 -p -- build/systemd/user/"$i" config/systemd/user/"$i"{new}
 done
 (
-	for i in bundles run-via-systemd run-via-mewburn-rc run-via-open-rc run-via-openbsd-rc run-debian-desktop-base run-debian-server-base run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base run-bcron
+	for i in bundles run-via-systemd run-via-mewburn-rc run-via-open-rc run-via-openbsd-rc run-debian-desktop-base run-debian-server-base run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-mdevd run-vdev run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base run-bcron
 	do
 		test \! -r package/common-nosh-"$i"-presets || cat package/common-nosh-"$i"-presets 
 		test \! -r package/linux-nosh-"$i"-presets || cat package/linux-nosh-"$i"-presets 
@@ -362,7 +370,7 @@ do
 	mv -f -- config/systemd/user/"$i"{new} config/systemd/user/"$i"
 done 
 (
-for i in bundles run-via-systemd run-via-mewburn-rc run-via-open-rc run-via-openbsd-rc run-debian-desktop-base run-debian-server-base run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-vdev run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base run-bcron
+for i in bundles run-via-systemd run-via-mewburn-rc run-via-open-rc run-via-openbsd-rc run-debian-desktop-base run-debian-server-base run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-mdevd run-vdev run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base run-bcron
 do
 	test \! -r package/common-nosh-$i-presets || cat package/common-nosh-"$i"-presets 
 	test \! -r package/linux-nosh-$i-presets || cat package/linux-nosh-"$i"-presets 

@@ -89,7 +89,7 @@ do
 	org.freedesktop.import[0-9]*)	continue ;;	# blacklisted
 	org.freedesktop.machine[0-9]*)	continue ;;	# blacklisted
 	org.freedesktop.portable[0-9]*)	continue ;;	# blacklisted
-	org.freedesktop.timesnc[0-9]*)	continue ;;	# blacklisted
+	org.freedesktop.timesync[0-9]*)	continue ;;	# blacklisted
 	esac
 	redo-ifchange -- "dbus/$i.service"
 	printf "dbus/%s\n" "$i" >> "$3"

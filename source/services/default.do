@@ -210,7 +210,7 @@ emergency-login@console)
 	etc=--etc-bundle
 	after=
 	;;
-sysinit-log|suckless-mdev-log|busybox-mdev-log|vdev-log|devd-log) 
+sysinit-log|suckless-mdev-log|busybox-mdev-log|mdevd-log|vdev-log|devd-log) 
 	log=
 	etc=--etc-bundle
 	after=
@@ -242,6 +242,11 @@ busybox-mdev|busybox-mdev-rescan)
 	;;
 suckless-mdev|suckless-mdev-rescan)
 	log="../suckless-mdev-log"
+	etc=--etc-bundle
+	after="log"
+	;;
+mdevd|mdevd-rescan)
+	log="../mdevd-log"
 	etc=--etc-bundle
 	after="log"
 	;;

@@ -537,8 +537,8 @@ TUI::redraw_new (
 		write_one_line(row - window_y, -window_x, attr, **i, z);
 	}
 
-	c.move_cursor(false /* no software cursor */, cursor_y - window_y, cursor_x - window_x);
-	c.set_cursor_state(false /* no software cursor */, CursorSprite::VISIBLE|CursorSprite::BLINK, CursorSprite::BOX);
+	c.move_cursor(cursor_y - window_y, cursor_x - window_x);
+	c.set_cursor_state(CursorSprite::VISIBLE|CursorSprite::BLINK, CursorSprite::BOX);
 }
 
 void
@@ -809,7 +809,7 @@ chkservice [[gnu::noreturn]] (
 	append_event(ip, SIGTSTP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 	append_event(ip, SIGCONT, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
 
-	TUIDisplayCompositor compositor(24, 80);
+	TUIDisplayCompositor compositor(false /* no software cursor */, 24, 80);
 	TUI ui(envs, bundle_map, compositor, cursor_application_mode, calculator_application_mode, !no_alternate_screen_buffer);
 
 	while (true) {

@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%p for %i
+Wants=%p-log.service
+After=%p-log.service
+PartOf=netif@%i
+
+[Service]
+EnvironmentDirectory=env
+ExecStart=%p "%I"
+
+[Install]
+WantedBy=netif@%i

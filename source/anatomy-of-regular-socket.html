@@ -41,20 +41,20 @@ sh -c 'exec httpd ~publicfile/public'</blockquote></pre>
 <p>
 Like many of the pre-packaged services, these scripts are in fact automatically generated from a description file that is in the source package.
 (In fact, that description is a slight variant on a systemd unit file.)
-Both invoke <a href="nosh.html"><code>nosh</code></a> as their script interpreter, and comprise a series of utility commands, each chain-loading to the next, passing along what program arguments it has not itself absorbed.
+Both invoke <a href="commands/nosh.xml"><code>nosh</code></a> as their script interpreter, and comprise a series of utility commands, each chain-loading to the next, passing along what program arguments it has not itself absorbed.
 </p>
 
 <p>
 In the <code>run</code> program:
 </p>
 <ul>
-<li><p><a href="nosh.html"><code>nosh</code></a> chain loads tcp-socket-listen.</p></li>
-<li><p><a href="tcp-socket-listen.html"><code>tcp-socket-listen</code></a> opens a TCP socket, binds it to a wildcard IP address and the well-known TCP port for HTTP, and then chain loads envuidgid.</p></li>
-<li><p><a href="envuidgid.html"><code>envuidgid</code></a> reads the system's account database for the user "publicfile", sets up some environment variables for later use, and chain loads softlimit.</p></li>
-<li><p><a href="softlimit.html"><code>softlimit</code></a> adjusts some kernel resource limits for the current process, and chain loads hardlimit.</p></li>
-<li><p><a href="hardlimit.html"><code>hardlimit</code></a> adjusts some kernel resource limits for the current process, and chain loads tcp-socket-accept.</p></li>
-<li><p><a href="tcp-socket-accept.html"><code>tcp-socket-accept</code></a> sits waiting for TCP connections on the listening socket that was opened for it, forking a new process for each accepted connection and chain loading to ucspi-socket-rules-check in that process.</p></li>
-<li><p><a href="ucspi-socket-rules-check.html"><code>ucspi-socket-rules-check</code></a> checks a local database, in the service directory, for access controls on the connecting client IP address, and if the client is permitted access chains to the <code>service</code> program.</p></li>
+<li><p><a href="commands/nosh.xml"><code>nosh</code></a> chain loads tcp-socket-listen.</p></li>
+<li><p><a href="commands/tcp-socket-listen.xml"><code>tcp-socket-listen</code></a> opens a TCP socket, binds it to a wildcard IP address and the well-known TCP port for HTTP, and then chain loads envuidgid.</p></li>
+<li><p><a href="commands/envuidgid.xml"><code>envuidgid</code></a> reads the system's account database for the user "publicfile", sets up some environment variables for later use, and chain loads softlimit.</p></li>
+<li><p><a href="commands/softlimit.xml"><code>softlimit</code></a> adjusts some kernel resource limits for the current process, and chain loads hardlimit.</p></li>
+<li><p><a href="commands/hardlimit.xml"><code>hardlimit</code></a> adjusts some kernel resource limits for the current process, and chain loads tcp-socket-accept.</p></li>
+<li><p><a href="commands/tcp-socket-accept.xml"><code>tcp-socket-accept</code></a> sits waiting for TCP connections on the listening socket that was opened for it, forking a new process for each accepted connection and chain loading to ucspi-socket-rules-check in that process.</p></li>
+<li><p><a href="commands/ucspi-socket-rules-check.xml"><code>ucspi-socket-rules-check</code></a> checks a local database, in the service directory, for access controls on the connecting client IP address, and if the client is permitted access chains to the <code>service</code> program.</p></li>
 </ul>
 
 <p>

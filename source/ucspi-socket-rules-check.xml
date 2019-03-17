@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="ucspi-socket-rules-check">
 
@@ -22,7 +23,7 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>ucspi-socket-rules-check</command>
-<arg>--verbose</arg>
+<arg choice='opt'>--verbose</arg>
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -63,6 +64,18 @@ If <envar>PROTO</envar> has the value <code>UNIX</code>:
 </para>
 
 <orderedlist>
+
+<listitem>
+<para>
+If the value of <envar>UNIXREMOTEEUID</envar> is the same as the process's effective UID and a directory named <filename>uid/self/</filename> exists then access is granted according to the directory contents (continuing to search if access is neither granted nor denied by the directory).
+</para>
+</listitem>
+
+<listitem>
+<para>
+If the value of <envar>UNIXREMOTEEGID</envar> is the same as the process's effective GID and a directory named <filename>gid/self/</filename> exists then access is granted according to the directory contents (continuing to search if access is neither granted nor denied by the directory).
+</para>
+</listitem>
 
 <listitem>
 <para>
@@ -243,6 +256,8 @@ Otherwise access is neither granted nor denied.
 
 </refsection>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

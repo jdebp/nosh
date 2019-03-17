@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="chkservice">
 
@@ -22,7 +23,7 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>chkservice</command>
-<arg>--user</arg>
+<arg choice='opt'>--user</arg>
 <arg choice='opt'>--cursor-keypad-application-mode</arg>
 <arg choice='opt'>--calculator-keypad-application-mode</arg>
 <arg choice='opt'>--no-alternate-screen-buffer</arg>
@@ -80,6 +81,8 @@ Show all of the system services in some conventional places.
 
 </refsection>
 
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

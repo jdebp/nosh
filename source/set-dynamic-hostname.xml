@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="set-dynamic-hostname">
 
@@ -44,12 +45,12 @@ Normally, <command>set-dynamic-hostname</command> will be chain-loaded from some
 </para>
 
 <para>
-If that environment variable is missing, <command>set-dynamic-hostname</command> looks (on operating systems that support it) to the kernel environment variable <code>dhcp.host-name</code>, which is the host name contained in the DHCP lease obtained by a PXE boot loader.
-If that fails, it sets the dynamic hostname to <code>"localhost"</code>.
+If that environment variable is missing, <command>set-dynamic-hostname</command> looks (on operating systems that support it) to the kernel environment variable <envar>dhcp.host-name</envar>, which is the host name contained in the DHCP lease obtained by a PXE boot loader.
+If that fails, it sets the dynamic hostname to <quote><code>localhost</code></quote>.
 </para>
 
 <para>
-Unless the <arg choice="opt">--force</arg> option is used, <command>set-dynamic-hostname</command> will not attempt to set the dynamic hostname if it has already been set to something.
+Unless the <arg choice="plain">--force</arg> option is used, <command>set-dynamic-hostname</command> will not attempt to set the dynamic hostname if it has already been set to something.
 Thus setting the dynamic hostname for a container/jail can be done by simply setting it as the jail is created.
 Any later execution of <command>set-dynamic-hostname</command> within the jail, as part of its startup process, will not override that.
 </para>
@@ -87,6 +88,8 @@ the domain name, as returned by the <citerefentry><refentrytitle>getdomainname</
 </para></listitem>
 </itemizedlist>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

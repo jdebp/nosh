@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="console-input-method">
 
@@ -80,8 +81,8 @@ renders the contents of the character/attribute buffer file for the lower virtua
 <refsection><title>Input event handling</title>
 
 <para>
-When inactive, the input method passes all input events from the upper input FIFO to the lower input FIFO, filtering out and activating the input method upon receipt of the Henkan, Muhenkan, Katakana/Hiragana/Romaji, Han/Yeong, Hanja, Katakana, Hiragama, Romaji, Hangeul, and Zenkaku/Hankaku keys.
-What these keys are depends from the realizer and whatever keyboard maps it is using; but conventionally the Henkan, Muhenkan, Katakana/Hiragana/Romaji, and Kanji keys are from the 106/109-key PC keyboard, the Hanja and Han/Yeong keys are from the 103/107-key PC keyboard, and the Hiragama, Katakana, Romaji, Hangeul, and Zenkaku/Hankaku keys (per the USB specification) are from non-PC keyboards.
+When inactive, the input method passes all input events from the upper input FIFO to the lower input FIFO, filtering out and activating the input method upon receipt of the Henkan, Muhenkan, Katakana/Hiragana/Romaji, Han/Yeong, Hanja, Katakana, Hiragana, Romaji, Hangeul, and Zenkaku/Hankaku keys.
+What these keys are depends from the realizer and whatever keyboard maps it is using; but conventionally the Henkan, Muhenkan, Katakana/Hiragana/Romaji, and Kanji keys are from the 106/109-key PC keyboard, the Hanja and Han/Yeong keys are from the 103/107-key PC keyboard, and the Hiragana, Katakana, Romaji, Hangeul, and Zenkaku/Hankaku keys (per the USB specification) are from non-PC keyboards.
 </para>
 
 <para>
@@ -181,26 +182,26 @@ With a 106/109-key PC keyboard and an appropriate keyboard map, the user interfa
 </para>
 <variablelist>
 <varlistentry>
-<term>Katakana/Hiragana/Romaji</term>
+<term>Hiragana/Katakana/Romaji (<keycap>&#x3072;&#x3089;&#x30c4;&#x306a;/&#x30ab;&#x30bf;&#x30ab;&#x30ca;/&#x30ed;&#x30fc;&#x30de;&#x5b57;</keycap>)</term>
 <listitem><para>
 This key's function depends from the shift level.
 Level 1 sets hiragana conversion mode, level 2 sets katakana conversion mode, and level 3 sets romaji conversion mode and cycles through the three romaji sub-modes (all lower case, all upper case, and title case).
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term>IM Switch</term>
+<term>IM Switch (<keycap>&#x6f22;&#x5b57;</keycap>)</term>
 <listitem><para>
 Toggle the user interface on and off.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term>Henkan</term>
+<term>Henkan (<keycap>&#x5909;&#x63db;</keycap>)</term>
 <listitem><para>
 Set chinese conversion mode, cycling through both chinese sub-modes.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term>Muhenkan</term>
+<term>Muhenkan (<keycap>&#x7121;&#x5909;&#x63db;</keycap>)</term>
 <listitem><para>
 This key does nothing.
 The input method converts directly from ASCII to kanji and does not have an intermediate "no conversion" mode.
@@ -217,7 +218,7 @@ With a Korean 103/107-key PC keyboard and an appropriate keyboard map, the user 
 </para>
 <variablelist>
 <varlistentry>
-<term>Hanja</term>
+<term>Hanja (<keycap>&#x5909;&#x63db;</keycap>)</term>
 <listitem><para>
 Set chinese conversion mode, cycling through both chinese sub-modes.
 </para></listitem>
@@ -244,39 +245,39 @@ For 101/104-key, 102/105-key, and 104/107-key PC keyboards, much of the same fun
 </para>
 <variablelist>
 <varlistentry>
-<term>Control+@</term>
+<term><keycap>&#x2388;&#160;Control</keycap>+<keycap>@</keycap></term>
 <listitem><para>
 Turn the user interface off.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term>Control+G</term>
+<term><keycap>&#x2388;&#160;Control</keycap>+<keycap>G</keycap></term>
 <listitem><para>
 Set hangeul conversion mode.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term>Control+L</term>
+<term><keycap>&#x2388;&#160;Control</keycap>+<keycap>L</keycap></term>
 <listitem><para>
 (per IMLIB in OSF/1)
 Set hiragana conversion mode.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term>Control+K</term>
+<term><keycap>&#x2388;&#160;Control</keycap>+<keycap>K</keycap></term>
 <listitem><para>
 (per IMLIB in OSF/1)
 Set katakana conversion mode.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term>Control+R</term>
+<term><keycap>&#x2388;&#160;Control</keycap>+<keycap>R</keycap></term>
 <listitem><para>
 Set romaji conversion mode and cycle through the three romaji sub-modes (all lower case, all upper case, and title case).
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term>Control+Z</term>
+<term><keycap>&#x2388;&#160;Control</keycap>+<keycap>Z</keycap></term>
 <listitem><para>
 Set chinese conversion mode, cycling through both chinese sub-modes.
 </para></listitem>
@@ -304,7 +305,7 @@ Set katakana conversion mode.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term>Zenkaku/Hankaku</term>
+<term>Zenkaku/Hankaku (<keycap>&#x534a;&#x89d2;/&#x5168;&#x89d2;</keycap>)</term>
 <listitem><para>
 This key does nothing, for two reasons.
 First, all characters are the same width in the user-space console subsystem anyway and there is no meaning to selecting half/full width.
@@ -322,9 +323,9 @@ Other keys are:
 </para>
 <variablelist>
 <varlistentry>
-<term>Return</term>
-<term>Enter</term>
-<term>Execute</term>
+<term><keycap>&#x2ba0;&#160;Return</keycap></term>
+<term><keycap>Enter</keycap></term>
+<term><keycap>Execute</keycap></term>
 <listitem><para>
 (i.e. the keys on the main and numeric keypads, and any "execute" consumer key)
 Accept whatever is in the data-to-send edit field in its current state and send the appropriate input messages to the "lower" virtual terminal.
@@ -332,53 +333,53 @@ The pre-edit and conversion list are then reset to empty.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term>Cursor Down</term>
-<term>Cursor Up</term>
+<term><keycap>Cursor&#160;Down</keycap></term>
+<term><keycap>Cursor&#160;Up</keycap></term>
 <listitem><para>
 Scroll up and down the current list of conversions.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term>Cursor Left</term>
-<term>Cursor Right</term>
+<term><keycap>Cursor&#160;Left</keycap></term>
+<term><keycap>Cursor&#160;Right</keycap></term>
 <listitem><para>
 Move the cursor back and forth across the editing field; unconverting and reconverting as it moves.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term>Home</term>
-<term>Control+A</term>
+<term><keycap>&#x21f1;&#160;Home</keycap></term>
+<term><keycombo><keycap>&#x2388;&#160;Control</keycap>+<keycap>A</keycap></keycombo></term>
 <listitem><para>
 (per emacs)
 Move the cursor to the beginning of the editing field; unconverting everything.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term>End</term>
-<term>Control+E</term>
+<term><keycap>&#x21f2;&#160;End</keycap></term>
+<term><keycap>&#x2388;&#160;Control</keycap>+<keycap>E</keycap></term>
 <listitem><para>
 (per emacs)
 Move the cursor to the end of the editing field; re-converting everything.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term>Delete</term>
-<term>Del</term>
+<term><keycap>&#x2326;&#160;Delete</keycap></term>
+<term><keycap>Del</keycap></term>
 <listitem><para>
 (i.e. the keys on the editing and numeric keypads)
 Delete the character at the cursor position.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term>Backspace</term>
-<term>BS</term>
+<term><keycap>&#x232b;&#160;Backspace</keycap></term>
+<term><keycap>BS</keycap></term>
 <listitem><para>
 (i.e. the keys on the main and, if present, numeric keypads)
 Delete the character before the cursor position and reconvert.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term>Space</term>
+<term><keycap>&#x2423;&#160;Space</keycap></term>
 <listitem><para>
 Mark a division for the converter.
 The table-based conversion will not convert sequences with spaces in the middle, so this is a way to limit conversion to shorter sequences.
@@ -402,7 +403,7 @@ Put another way: the ASCII spelling of a character displayed on screen is invari
 
 <para>
 That is the case for input methods that are based upon spelling character names or pronunciations.
-Conversely, input methods that are, rather, columnar usually require that the realizer be employing a QWERTY layout, as that is what their columnar conversions assume (with, for example, the "Q", "A", and "Z" keys being in the same column on the keyboard).
+Conversely, input methods that are, rather, columnar usually require that the realizer be employing a QWERTY layout, as that is what their columnar conversions assume (with, for example, the <keycap>Q</keycap>, <keycap>A</keycap>, and <keycap>Z</keycap> keys being in the same column on the keyboard).
 </para>
 
 <para>
@@ -434,6 +435,8 @@ Changing the groups of <filename><replaceable>uvcname</replaceable>/input</filen
 
 </refsection>
 
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

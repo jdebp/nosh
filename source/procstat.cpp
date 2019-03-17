@@ -92,7 +92,6 @@ procstat (
 	}
 
 	next_args.insert(next_args.begin(), "list-process-table");
-	next_args.insert(next_args.begin(), "echo");
 
 	args = next_args;
 	next_prog = arg0_of(args);

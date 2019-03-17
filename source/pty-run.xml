@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="pty-run">
 
@@ -22,7 +23,7 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>pty-run</command>
-<arg>-t</arg>
+<arg choice='opt'>-t</arg>
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -95,7 +96,7 @@ If the child process stops with a stop signal, it simply sends it a <code>SIGCON
 <replaceable>next-prog</replaceable> may contain its own command line options, which <command>pty-run</command> will ignore.
 </para>
 
-</refsection><refsection><title>SECURITY</title>
+</refsection><refsection><title>Security</title>
 
 <para>
 <command>pty-run</command> does not touch the slave side device at all.
@@ -118,6 +119,8 @@ The slave device race condition that must be avoided for <citerefentry><refentry
 
 </refsection>
 
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

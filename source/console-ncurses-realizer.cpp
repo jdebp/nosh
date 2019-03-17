@@ -182,7 +182,7 @@ Realizer::redraw (
 	const unsigned cols(vt.query_w()), rows(vt.query_h());
 	wresize(window, rows, cols);
 	for (unsigned source_row(0); source_row < rows; ++source_row) {
-		const unsigned dest_row(rows - source_row - 1U);
+		const unsigned dest_row(wrong_way_up ? rows - source_row - 1U : source_row);
 		for (unsigned col(0); col < cols; ++col) {
 			const CharacterCell & c(vt.at(source_row, col));
 			wchar_t ws[2] = { static_cast<wchar_t>(c.character), L'\0' };

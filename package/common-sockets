@@ -37,6 +37,8 @@ sendmail-smtp-submission
 sshd
 svnserve
 tinysshd
+twoftpd
+twoftpd-anon
 udp-rsyslogd
 udp-syslogd
 udp-syslog-read

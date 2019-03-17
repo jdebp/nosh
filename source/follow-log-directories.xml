@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="follow-log-directories">
 
@@ -66,14 +67,20 @@ Erroneous lines without TAI64N timestamps and incorrectly named files are skippe
 </refsection>
 
 <refsection><title>Security</title>
+
+<para>
 The only file that the user running <command>follow-log-directories</command> needs write access to is the <filename>last</filename> file, which is updated in place without unlinking.
 (Operating systems guarantee that the  <citerefentry><refentrytitle>write</refentrytitle><manvolnum>2</manvolnum></citerefentry> system call works atomically if certain constraints are met; the update of the timestamp in the <filename>last</filename> file fits within those constraints.)
 This file is created if it does not exist, so ensure that it exists and is (say) zero length if that user has no write access to the enclosing cursor directory.
 The user running <command>follow-log-directories</command> needs no owner access to anything; but of course needs read access to log files and read+execute access to the cursors directory, the individual cursor directories, and the log directories.
-</refsection>
+</para>
 
 </refsection>
 
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection>
+
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

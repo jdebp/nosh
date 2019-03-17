@@ -3,4 +3,5 @@
 ## **************************************************************************
 
 [Service]
+; BSD nscd puts its socket at %t/%p so cannot have a runtime directory there.
 ExecStart=%p -n ${flags}

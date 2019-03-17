@@ -526,6 +526,14 @@ find_dhcp_client() {
 	fi
 }
 
+find_autoipd() {
+	local m
+	if m="`command -v avahi-autoipd 2>&1`"
+	then
+		printf "autoipd_program=%s\n" "${m}"
+	fi
+}
+
 convert_linux() {
 	local m
 	local os_version
@@ -549,6 +557,7 @@ convert_linux() {
 		;;
 	esac
 	find_dhcp_client
+	find_autoipd
 	m="`list_modules_linux | tr '\r\n' ' '`"
 	printf "kld_list=\"%s\"\n" "${m}"
 
@@ -580,6 +589,7 @@ convert_any() {
 		;;
 	esac
 	find_dhcp_client
+	find_autoipd
 
 	convert_hostname
 	convert_debian_network_interfaces

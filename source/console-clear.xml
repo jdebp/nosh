@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="console-clear">
 
@@ -53,11 +54,12 @@ It passes the the <arg choice='plain'>--7bit</arg> and <arg choice='plain'>--8bi
 
 </refsection>
 
-<refsection><title>Compatibility</title>
+<refsection id="COMPATIBILITY" xreflabel="COMPATIBILITY">
+<title>Compatibility</title>
 
 <para>
 For compatibility with the Bourne Again shell toolset, this command is also available as <command>clear_console</command>, whose functionality it duplicates.
-Unlike the Bourne Again shell toolset's <command>clear_console</command> command, this command is not specific to kernel virtual terminal character devices, does not involve switching virtual terminals (<ulink url="https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=791342">a process that can go wrong if an X server happens to be using the "other" virtual terminal</ulink>), and respects redirection of its standard output.
+Unlike the Bourne Again shell toolset's <command>clear_console</command> command, this command is not specific to kernel virtual terminal character devices, does not involve switching kernel virtual terminals (<ulink url="https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=791342">a process that can go wrong if an X server happens to be using the "other" virtual terminal</ulink>), and respects redirection of its standard output.
 </para>
 
 <para>
@@ -74,6 +76,8 @@ For compatibility of the actual control sequences emitted with various terminals
 
 </refsection>
 
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

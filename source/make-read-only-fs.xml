@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="make-read-only-fs">
 
@@ -22,13 +23,13 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>make-read-only-fs</command>
-<arg>--os</arg>
-<arg>--etc</arg>
-<arg>--homes</arg>
-<arg>--sysctl</arg>
-<arg>--cgroups</arg>
-<arg>--include <replaceable>directory</replaceable></arg>
-<arg>--except <replaceable>directory</replaceable></arg>
+<arg choice='opt'>--os</arg>
+<arg choice='opt'>--etc</arg>
+<arg choice='opt'>--homes</arg>
+<arg choice='opt'>--sysctl</arg>
+<arg choice='opt'>--cgroups</arg>
+<arg choice='opt'>--include <replaceable>directory</replaceable></arg>
+<arg choice='opt'>--except <replaceable>directory</replaceable></arg>
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -125,6 +126,8 @@ The command will fail if the process is not running under the aegis of the super
 Beware: Running it without unsharing first will affect the global mount namespace.
 </para>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

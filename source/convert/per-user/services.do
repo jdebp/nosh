@@ -363,6 +363,7 @@ user_simple_socket "urxvt" "urxvtd"
 user_simple_socket "watchman"
 
 user_simple_service "emacs"
+user_simple_service "ncftpbatch"
 user_simple_service "gam_server"
 user_simple_service "speech-dispatcher"
 

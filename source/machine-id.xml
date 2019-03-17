@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
+
+<refentry id="machine-id">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>machine-id</refentrytitle>
+<manvolnum>7</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>machine-id</refname>
+<refpurpose>identify the machine for various applications</refpurpose>
+</refnamediv>
+
+<refsection><title>Description</title>
+
+<para>
+Machine IDs are UUIDs.
+A machine ID is a 128-bit number that is intended to be a globally unique ID for identifying the machine, and that is intended to be constant across system restarts (once it has been set up), or (at minimum) from restart to shutdown.
+</para>
+
+<para>
+It is not dependent from the presence of any particular piece of hardware.
+Replacing hardware is not intended to affect a machine ID; although replacing the particular non-volatile storage that is used to store the machine ID when the system is powered off will result in a change to the machine ID, obviously.
+</para>
+
+<para>
+It identifies the whole machine, not individual pieces.  
+It is not suitable for use (in whole or in part) in IPv6 addresses (which identify individual interfaces) or anywhere else at the network layer, but it is suitable for identifying entire hosts on a network at the application layer.
+It is important to blank machine IDs when cloning systems from images, so that multiple clones do not have the same machine ID.
+</para>
+
+<para>
+It is unsuitable for publishing.
+It is globally unique in order to prevent collisions at the application level, <emphasis>not</emphasis> in order to be globally visible.
+</para>
+
+<para>
+The application layer use originally envisaged by its inventor was that co&#x00F6;perating applications using network-capable IPC could compare machine IDs to determine whether they could communicate via non-networkable IPC such as AF_LOCAL sockets or shared memory.
+</para>
+
+<caution>
+Like network hardware MAC addresses, machine IDs are information that potentially hostile people can use for tracking other people.
+It is important to blank or eliminate machine IDs when providing data to the outside world.
+Hashing machine IDs, with or without a "salt", is insufficient for privacy.
+Privacy requires that IDs cannot be correlated, not that they cannot be decrypted; and a hashed ID(+salt) in one place can still be correlated with the same hashed ID(+salt) elsewhere.
+</caution>
+
+<refsection><title>Faulty and nil UUIDs</title>
+
+<para>
+Some older softwares, including old versions of systemd, do not create valid UUIDs as machine IDs.
+In particular, they create entirely random UUIDs where even the UUID variant and type are random.
+Machine ID generation at system bootstrap (or otherwise) should attempt to correct for this, by converting any UUID that is not a type 1 to type 5 DCE-variant UUID into a type 4 DCE-variant UUID.
+This conversion is done by simply overwriting the type and variant parts of the UUID.
+</para>
+
+<para>
+A nil UUID (NCS-variant with all zeroes) should be treated as unset, and not corrected in this manner.
+A nil UUID isn't globally unique by its very nature and is unsuitable as a machine ID.
+The aforementioned correction system, if applied to it, would not work.
+</para>
+
+</refsection>
+
+</refsection>
+
+<refsection id="STORAGE" xreflabel="STORAGE">
+<title>Storage</title>
+
+<refsection id="NON-VOLATILE" xreflabel="NON-VOLATILE">
+<title>Non-volatile storage</title>
+
+<para>
+The machine ID, once set up, is stored in the file <filename>/etc/machine-id</filename>.
+If a machine ID can be read and parsed from that file, then (subject to the aforementioned corrections of variant and type) it should be considered to be valid and initialized.
+Machine IDs are stored in the file as 32 lowercase hexadecimal characters (the machine ID as a 128-bit bigendian integer) followed by a linefeed.
+</para>
+
+<para>
+On Linux operating systems, both systemd and recent versions of <citerefentry><refentrytitle>dbus-daemon</refentrytitle><manvolnum>1</manvolnum></citerefentry> read this file.
+On FreeBSD/TrueOS systems, ports of <citerefentry><refentrytitle>dbus-daemon</refentrytitle><manvolnum>1</manvolnum></citerefentry> read <filename>/usr/local/etc/machine-id</filename> instead.
+</para>
+
+<para>
+Older versions of <citerefentry><refentrytitle>dbus-daemon</refentrytitle><manvolnum>1</manvolnum></citerefentry> read <filename>/var/lib/dbus/machine-id</filename> or <filename>/var/db/dbus/machine-id</filename>, according to platform.
+To prevent inconsistency, these can just be symbolic links to <filename>/etc/machine-id</filename>.
+(Symbolic links the other way around would break if <filename>/var</filename> or one of its subdirectories is not mounted, as can be the case at the point that a machine ID is generated during system bootstrap.)
+</para>
+
+<para>
+On the BSDs, the machine ID is also stored, but as a human-readable-form UUID, in <filename>/etc/hostid</filename>.
+</para>
+
+</refsection>
+
+<refsection id="VOLATILE" xreflabel="VOLATILE">
+<title>Volatile storage</title>
+
+<para>
+The machine ID, once set up, is also stored in the file <filename>/run/machine-id</filename>.
+This may, according to need, be the source of a bind mount over the top of <filename>/etc/machine-id</filename>.
+</para>
+
+<para>
+On the BSDs the machine ID is stored in the <code>kern.hostuuid</code> variable (see <citerefentry><refentrytitle>sysctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+It is also stored, but as a human-readable-form UUID, in <filename>/run/hostid</filename>.
+</para>
+
+</refsection>
+
+</refsection>
+
+<refsection id="HOST-ID" xreflabel="HOST-ID">
+<title>Host IDs</title>
+
+<para>
+An older unique ID for machines is the host ID, as queried and set by the <citerefentry><refentrytitle>gethostid</refentrytitle><manvolnum>3</manvolnum></citerefentry> and <citerefentry><refentrytitle>sethostid</refentrytitle><manvolnum>3</manvolnum></citerefentry> library functions.
+As those functions' manual pages state, this is a mechanism that was dropped by its originating system in 1994, but that has continued since largely due to the inertia of standardization.
+It really shouldn't be used at all on systems with machine UUIDs available.
+</para>
+
+<para>
+One way of generating a host ID is to hash the machine ID.
+Ironically, this provides a more stable host ID than some of the original schemes for determining a host ID did.  
+(They were only as stable as the host's IPv4 address assignment, for example.)
+As long as the machine ID does not change, the host ID will not change; and the host ID can be set up before network interfaces, and domain name to address mapping facilities, are even available.
+</para>
+
+<refsection>
+<title>Generation</title>
+
+<para>
+There are multiple hashing protocols in use, and softwares should not rely upon any particular choice:
+</para>
+<itemizedlist>
+<listitem><para>
+The Dawidek mechanism on FreeBSD takes the upper 32 bits of the MD5 of the machine ID.
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>setup-machine-id</refentrytitle><manvolnum>1</manvolnum></citerefentry> takes the lower 32-bits of the CubeHash (see <citerefentry><refentrytitle>cubehash</refentrytitle><manvolnum>1</manvolnum></citerefentry>) of the machine ID.
+</para></listitem>
+</itemizedlist>
+
+</refsection>
+
+<refsection id="HOST-ID-STORAGE" xreflabel="HOST-ID-STORAGE">
+<title>Storage</title>
+
+<para>
+The BSD C library expects the host ID to be stored in the <code>kern.hostid</code> variable (see <citerefentry><refentrytitle>sysctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+</para>
+
+<para>
+The GNU C library expects the host ID to be stored in the <filename>/etc/hostid</filename> file.
+</para>
+<note>On the BSDs, this file contains the machine ID as a human-readable-form UUID, and this file is not used for the host ID.</note>
+
+<para>
+On Linux operating systems, <citerefentry><refentrytitle>setup-machine-id</refentrytitle><manvolnum>1</manvolnum></citerefentry> will also write the host ID to the <filename>/run/hostid</filename> file.
+This may, according to need, be the source of a bind mount over the top of <filename>/etc/hostid</filename>.
+</para>
+
+</refsection>
+
+</refsection>
+
+<refsection id="USERS" xreflabel="USERS">
+<title>Example users</title>
+
+<variablelist>
+<varlistentry>
+<term><citerefentry><refentrytitle>systemd-journald</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+<listitem><para>
+This uses the machine ID for naming directories under <filename>/run/log/journal/</filename> and <filename>/var/log/journal/</filename>.
+Furthermore, it includes the machine ID in every individual journal entry.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><citerefentry><refentrytitle>journalctl</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+<listitem><para>
+This distinguishes log streams by the embeded machine IDs in every entry.
+Changing machine IDs across reboots will make it split log output into different log streams.
+</para><para>
+Machine IDs are not stripped by <command>journalctl</command> or in general by other tools that export or print systemd journal entries.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><citerefentry><refentrytitle>dbus-daemon</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+<listitem><para>
+Clients can make a <function>org.freedesktop.DBus.Peer.GetMachineId</function> remote procedure call to obtain the machine ID.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+Most applications that use the Desktop Bus (D-Bus)
+<listitem><para>
+<ulink url="https://bugs.freedesktop.org/show_bug.cgi?id=13194">The complaint was raised in 2007</ulink> that all applications softwares that used the libdbus library read the machine ID even though they made no use of it (outwith a mechanism known as "X11 autolaunching").
+Ten years later, the D-Bus developers came around to the idea that X11 autolaunching was not preferable and that applications softwares should not have such a drastic coupling to the machine ID, and this is no longer the case with softwares built with newer libraries.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><citerefentry><refentrytitle>chromium</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+<listitem><para>
+Google Chrome uses the machine ID to lock user profiles to the machines that they were generated on.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><citerefentry><refentrytitle>pulseaudio</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+<listitem><para>
+PulseAudio uses the machine ID in the names of its settings files under <filename>~/.config/pulse/</filename>.
+</para></listitem>
+</varlistentry>
+</variablelist>
+
+</refsection>
+
+<refsection id="HISTORY" xreflabel="HISTORY">
+<title>History</title>
+
+<para>
+The machine ID mechanism was invented by Havoc Pennington for Desktop Bus (D-Bus) in 2006.
+The idea was that communicating D-Bus clients and servers could determine whether they were on a single shared system.
+However, the Desktop Bus mechanism never became network transparent (like CORBA and others), meaning that clients and servers were <emphasis>always</emphasis> on a single shared system.
+</para>
+
+<para>
+Pawel Jakub Dawidek added a unique per-machine UUID mechanism to FreeBSD in April 2007, making it use the SMBIOS system UUID from the machine's firmware if available.
+</para>
+
+<para>
+Lennart Poettering et al. adopted a modified version of the D-Bus machine ID mechanism in systemd for Fedora 15.
+Initially, it generated invalid UUIDs.
+This bug was corrected some years later.
+</para>
+
+<para>
+Sometime around 2013, D-Bus was modified to use the systemd files for storing machine IDs.
+</para>
+
+</refsection>
+
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
+
+</refentry>

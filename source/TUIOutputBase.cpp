@@ -91,16 +91,18 @@ static const CharacterCell overscan_blank(' ', 0U, overscan_fg, overscan_bg);
 inline
 bool
 TUIOutputBase::is_cheap_to_print(
+	unsigned short row,
+	unsigned short col, 
 	unsigned cols
 ) const {
 	for (unsigned i(0U); i < cols; ++i) {
-		const TUIDisplayCompositor::DirtiableCell & cell(c.cur_at(cursor_y, cursor_x + i));
+		const TUIDisplayCompositor::DirtiableCell & cell(c.cur_at(row, col + i));
 		if (cell.attributes != current_attr
 		||  cell.foreground != current_fg
 		||  cell.background != current_bg
-		||  cell.character >= 0x00010000
-		||  c.is_marked(false, cursor_y, cursor_x + i)
-		||  c.is_pointer(cursor_y, cursor_x + i)
+		||  UnicodeCategorization::IsWideOrFull(cell.character)
+		||  c.is_marked(false, row, col + i)
+		||  c.is_pointer(row, col + i)
 		)
 			return false;
 	}
@@ -109,12 +111,28 @@ TUIOutputBase::is_cheap_to_print(
 
 inline
 bool
+TUIOutputBase::is_blank(
+	uint32_t ch
+) const {
+	return ch <= SPC || (DEL <= ch && ch <= 0x0000009F);
+}
+
+inline
+bool
 TUIOutputBase::is_all_blank(
+	unsigned short row,
+	unsigned short col, 
 	unsigned cols
 ) const {
 	for (unsigned i(0U); i < cols; ++i) {
-		const TUIDisplayCompositor::DirtiableCell & cell(c.cur_at(cursor_y, cursor_x + i));
-		if (cell.character != 0x00000020 || cell.attributes != 0U)
+		const TUIDisplayCompositor::DirtiableCell & cell(c.cur_at(row, col + i));
+		if (cell.attributes != current_attr
+		||  cell.foreground != current_fg
+		||  cell.background != current_bg
+		||  !is_blank(cell.character)
+		||  c.is_marked(false, row, col + i)
+		||  c.is_pointer(row, col + i)
+		)
 			return false;
 	}
 	return true;
@@ -188,7 +206,7 @@ TUIOutputBase::GotoYX(
 		} else
 		if (col > cursor_x) {
 			const unsigned short n(col - cursor_x);
-			if (n <= 6U && is_cheap_to_print(n))
+			if (n <= 6U && is_cheap_to_print(cursor_y, cursor_x, n))
 				for (unsigned i(cursor_x); i < col; ++i) {
 					TUIDisplayCompositor::DirtiableCell & cell(c.cur_at(cursor_y, i));
 					print(cell, false /* We checked for no pointer or mark. */);
@@ -290,45 +308,23 @@ inline
 unsigned
 TUIOutputBase::width (
 	uint32_t ch
-) {
+) const {
 
-	if ((0x00000000 == ch)
-	||  (0x00000080 <= ch && ch <= 0x0000009F)
-	||  (0x0000200B == ch)
+	if ((ch < SPC)
+	||  (DEL <= ch && ch <= 0x0000009F)
 	||  (0x00001160 <= ch && ch <= 0x000011FF)
+	||  (0x0000200B == ch)
 	||  UnicodeCategorization::IsMarkEnclosing(ch)
 	||  UnicodeCategorization::IsMarkNonSpacing(ch)
 	||  UnicodeCategorization::IsOtherFormat(ch)
 	)
 		return 0U;
-	if (0x000000AD == ch) return 1U;
-	if (UnicodeCategorization::IsWideOrFull(ch))
-		return 2U;
-	return 1U;
-}
-
-inline
-void
-TUIOutputBase::print(
-	uint32_t ch,
-	const CharacterCell::colour_type & fg,
-	const CharacterCell::colour_type & bg,
-	const CharacterCell::attribute_type & attr
-) {
-	SGRAttr(attr);
-	SGRFGColour(fg);
-	SGRBGColour(bg);
-	if (ch < 0x00000020 || (0x00000080 <= ch && ch <= 0x0000009F))
-		ch = 0x00000020;
-	out.UTF8(ch);
-	for (unsigned w(width(ch)); w > 0U; --w) {
-		++cursor_x;
-		if (!out.caps.pending_wrap && cursor_x >= c.query_w()) {
-			cursor_x = 0;
-			if (cursor_y < c.query_h())
-				++cursor_y;
-		}
+	if (!out.caps.has_square_mode) {
+		if (0x000000AD == ch) return 1U;
+		if (UnicodeCategorization::IsWideOrFull(ch))
+			return 2U;
 	}
+	return 1U;
 }
 
 void
@@ -338,6 +334,7 @@ TUIOutputBase::print(
 ) {
 	CharacterCell::attribute_type font_attributes(cell.attributes);
 	CharacterCell::colour_type fg(cell.foreground), bg(cell.background);
+
 	if (faint_as_colour) {
 		if (CharacterCell::FAINT & font_attributes) {
 			dim(fg);
@@ -356,11 +353,33 @@ TUIOutputBase::print(
 		invert(fg);
 		invert(bg);
 	}
+
+	const unsigned w(width(cell.character));
+	bool replace_with_spaces(false);
+
 	if (!out.caps.has_invisible && (CharacterCell::INVISIBLE & font_attributes)) {
-		// Being invisible is always the same glyph.
-		print(0x20, fg, bg, font_attributes & ~CharacterCell::INVISIBLE);
-	} else {
-		print(cell.character, fg, bg, font_attributes);
+		font_attributes &= ~CharacterCell::INVISIBLE;
+		replace_with_spaces = true;
+	} else
+	if (is_blank(cell.character)) {
+		replace_with_spaces = true;
+	}
+
+	SGRFGColour(fg);
+	SGRBGColour(bg);
+	SGRAttr(font_attributes);
+	if (replace_with_spaces) {
+		for (unsigned n(w); n > 0U; --n)
+			out.UTF8(SPC);
+	} else
+		out.UTF8(cell.character);
+	for (unsigned n(w); n > 0U; --n) {
+		++cursor_x;
+		if (!out.caps.pending_wrap && cursor_x >= c.query_w()) {
+			cursor_x = 0;
+			if (cursor_y < c.query_h())
+				++cursor_y;
+		}
 	}
 }
 
@@ -384,6 +403,8 @@ TUIOutputBase::enter_full_screen_mode(
 		out.DECSLE(false /*release*/, true);
 	}
 	if (out.caps.use_DECPrivateMode) {
+		if (out.caps.has_square_mode)
+			out.SquareMode(true);
 		out.DECAWM(false);
 		out.DECECM(false);	// We rely upon erasure to the background colour, not to the screen/default colour.
 		out.DECBKM(true);	// We want to be able to distinguish Backspace from Control+Backspace.
@@ -410,12 +431,14 @@ TUIOutputBase::exit_full_screen_mode(
 		out.DECSLE();
 	}
 	if (out.caps.use_DECPrivateMode) {
+		out.DECNKM(false);
+		out.DECCKM(false);
 		out.XTermSendNoMouseEvents();
 		out.DECBKM(false);			// Restore the more common Unix convention.
 		out.DECECM(false);
 		out.DECAWM(true);
-		out.DECNKM(false);
-		out.DECCKM(false);
+		if (out.caps.has_square_mode)
+			out.SquareMode(true);
 	}
 	SGRBGColour(overscan_bg);
 	SGRFGColour(overscan_fg);
@@ -511,9 +534,9 @@ TUIOutputBase::write_changed_cells_to_output()
 			TUIDisplayCompositor::DirtiableCell & cell(c.cur_at(row, col));
 			if (!cell.touched()) continue;
 			GotoYX(row, col);
-			if (0x20 == cell.character) {
+			if (is_blank(cell.character)) {
 				const unsigned n(c.query_w() - col);
-				if (3U < n && is_cheap_to_print(n) && is_all_blank(n)) {
+				if (3U < n && is_cheap_to_print(row, col, n) && is_all_blank(row, col, n)) {
 					out.EL(0U);
 					while (col < c.query_w())
 						c.cur_at(row, col++).untouch();
@@ -527,6 +550,13 @@ TUIOutputBase::write_changed_cells_to_output()
 			);
 			print(cell, inverted);
 			cell.untouch();
+			unsigned n(width(cell.character));
+			if (1U < n && is_cheap_to_print(row, col + 1U, n - 1U) && is_all_blank(row, col + 1U, n - 1U)) {
+				while (1U < n && col + 1U < c.query_w()) {
+					c.cur_at(row, ++col).untouch();
+					--n;
+				}
+			}
 		}
 	}
 	GotoYX(c.query_cursor_row(), c.query_cursor_col());

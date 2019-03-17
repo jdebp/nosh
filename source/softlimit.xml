@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="softlimit">
 
@@ -125,6 +126,8 @@ All suffixes are case-sensitive.
 For a command with coarser granularity, that can set soft and hard limits in one operation, see <citerefentry><refentrytitle>ulimit</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

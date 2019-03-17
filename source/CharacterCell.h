@@ -9,6 +9,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <stdint.h>
 
 enum { COLOUR_BLACK, COLOUR_RED, COLOUR_GREEN, COLOUR_YELLOW, COLOUR_BLUE, COLOUR_MAGENTA, COLOUR_CYAN, COLOUR_WHITE };
+enum { COLOUR_DARK_VIOLET = 92, COLOUR_DARK_ORANGE3 = 130 };
 
 struct CursorSprite {
 	typedef uint8_t attribute_type;
@@ -66,12 +67,14 @@ struct ColourPairAndAttributes : public ColourPair {
 	ColourPairAndAttributes() : ColourPair(), attributes() {}
 };
 struct CharacterCell : ColourPairAndAttributes {
-	CharacterCell(uint32_t c, attribute_type a, colour_type f, colour_type b) : ColourPairAndAttributes(a, f, b), character(c) {}
-	CharacterCell(uint32_t c, attribute_type a, const ColourPair & p) : ColourPairAndAttributes(a, p), character(c) {}
-	CharacterCell(uint32_t c, const ColourPairAndAttributes & p) : ColourPairAndAttributes(p), character(c) {}
+	typedef uint32_t character_type;
+
+	CharacterCell(character_type c, attribute_type a, colour_type f, colour_type b) : ColourPairAndAttributes(a, f, b), character(c) {}
+	CharacterCell(character_type c, attribute_type a, const ColourPair & p) : ColourPairAndAttributes(a, p), character(c) {}
+	CharacterCell(character_type c, const ColourPairAndAttributes & p) : ColourPairAndAttributes(p), character(c) {}
 	CharacterCell() : ColourPairAndAttributes(), character() {}
 
-	uint32_t character;
+	character_type character;
 };
 
 inline
@@ -93,11 +96,20 @@ CharacterCell::colour_type
 Map256Colour (
 	uint8_t c
 ) ;
+extern
+CharacterCell::colour_type
+MapTrueColour (
+	uint8_t r,
+	uint8_t g,
+	uint8_t b
+) ;
 
 enum {
 	ALPHA_FOR_ERASED	= 0,
 	ALPHA_FOR_DEFAULT	= 1,
-	ALPHA_FOR_COLOURED	= 2,
+	ALPHA_FOR_16_COLOURED	= 2,
+	ALPHA_FOR_256_COLOURED	= 3,
+	ALPHA_FOR_TRUE_COLOURED	= 4,
 };
 
 #endif

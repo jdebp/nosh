@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="tcp-socket-connect">
 
@@ -22,16 +23,16 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>tcp-socket-connect</command> 
-<arg>--verbose</arg> 
-<arg>--local-name <replaceable>name</replaceable></arg> 
-<arg>--local-address <replaceable>address</replaceable></arg> 
-<arg>--local-port <replaceable>port</replaceable></arg> 
-<arg>--numeric-host</arg> 
-<arg>--numeric-service</arg> 
-<arg>--check-interfaces</arg> 
-<arg>--no-keepalives</arg> 
-<arg>--no-kill-IP-options</arg> 
-<arg>--no-delay</arg> 
+<arg choice='opt'>--verbose</arg> 
+<arg choice='opt'>--local-name <replaceable>name</replaceable></arg> 
+<arg choice='opt'>--local-address <replaceable>address</replaceable></arg> 
+<arg choice='opt'>--local-port <replaceable>port</replaceable></arg> 
+<arg choice='opt'>--numeric-host</arg> 
+<arg choice='opt'>--numeric-service</arg> 
+<arg choice='opt'>--check-interfaces</arg> 
+<arg choice='opt'>--no-keepalives</arg> 
+<arg choice='opt'>--no-kill-IP-options</arg> 
+<arg choice='opt'>--no-delay</arg> 
 <arg choice='req'><replaceable>host</replaceable></arg> 
 <arg choice='req'><replaceable>service</replaceable></arg> 
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
@@ -41,7 +42,7 @@
 <refsection><title>Description</title>
 
 <para>
-<command>tcp-socket-connect</command> is a chain-loading utility that opens a TCP socket, connects it to <replaceable>host</replaceable> and <replaceable>service</replaceable> with <citerefentry><refentrytitle>connect</refentrytitle><manvolnum>1</manvolnum></citerefentry>, sets the socket to file descriptors 6 and 7 (closing whatever those descriptors were), and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
+<command>tcp-socket-connect</command> is a chain-loading utility that opens a TCP socket, connects it to <replaceable>host</replaceable> and <replaceable>service</replaceable> with <citerefentry><refentrytitle>connect</refentrytitle><manvolnum>3</manvolnum></citerefentry>, sets the socket to file descriptors 6 and 7 (closing whatever those descriptors were), and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
 It sets up various conventional UCSPI environment variables that describe the local and remote ends of the connection.
 By UCSPI convention the chained-to program is expected to use file descriptor 6 for reading from the server and file descriptor 7 for writing to the server.
 </para>
@@ -58,7 +59,6 @@ Otherwise, <replaceable>host</replaceable> is looked up using the system name re
 
 <para>
 The <arg choice='plain'>--check-interfaces</arg> option prevents the use of any IPv4 addresses if there are no IPv4 addresses on any network interface, and the use of any IPv6 addresses if there are no IPv6 addresses.
-This isn't particularly useful on a dynamically configured system where network interface IP addresses can come and go.
 </para>
 
 <para>
@@ -152,6 +152,8 @@ The <arg choice='plain'>--no-keepalives</arg>, <arg choice='plain'>--no-kill-IP-
 The first disables the use of TCP keepalive probes (which are used by default to ensure that dead connections are noticed and eliminated); the second permits IP options (which are removed by default) so that clients can set source routes; and the third disables the "Nagle" delay algorithm used for slow clients.
 </para>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

@@ -28,7 +28,7 @@ Five kinds of unit can be converted:
 </ul>
 
 <p>
-There are a few restrictions (summarized here, for details, see the <a href="convert-systemd-units.html"><code>convert-systemd-units</code></a> manual):
+There are a few restrictions (summarized here, for details, see the <a href="commands/convert-systemd-units.xml"><code>convert-systemd-units</code></a> manual):
 </p>
 <ul>
 <li><p>The service must be a forking, oneshot, dbus, or simple service; not a notify service.</p></li>
@@ -45,13 +45,13 @@ What import does
 </h2>
 
 <p>
-<a href="convert-systemd-units.html"><code>convert-systemd-units</code></a> breaks down the unit files and builds <code>run</code>, <code>start</code>, and <code>service</code> scripts that use the various utility programs to set up a service's run-time environment in the way specified by the unit files.
+<a href="commands/convert-systemd-units.xml"><code>convert-systemd-units</code></a> breaks down the unit files and builds <code>run</code>, <code>start</code>, and <code>service</code> scripts that use the various utility programs to set up a service's run-time environment in the way specified by the unit files.
 (This is only a subset of what a <code>run</code> script can actually do.)
-A <code>User=</code> directive becomes a <a href="setuidgid.html"><code>setuidgid</code> command</a>, for example.
+A <code>User=</code> directive becomes a <a href="commands/setuidgid.xml"><code>setuidgid</code> command</a>, for example.
 </p>
 
 <p>
 Import can operate in either "ideal" mode or "quirks" mode.
 Quirks mode deals with several quirks of systemd and is the mode to use when taking existing unit files supplied with other packages.
-See the <a href="convert-systemd-units.html"><code>convert-systemd-units</code></a> manual for details.
+See the <a href="commands/convert-systemd-units.xml"><code>convert-systemd-units</code></a> manual for details.
 </p>

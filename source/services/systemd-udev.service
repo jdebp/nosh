@@ -7,7 +7,7 @@ Description=%pd plug-and-play manager daemon
 DefaultDependencies=false
 Before=shutdown.target
 After=local-fs.target local-syslog.target
-Conflicts=busybox-mdev vdev suckless-mdev
+Conflicts=busybox-mdev vdev suckless-mdev mdevd
 
 [Service]
 RuntimeDirectory=%p

@@ -46,7 +46,7 @@ terminal emulator services
 </h2>
 
 <p>
-Each user-space virtual terminal has one service, running <a href="console-terminal-emulator.html"><code>console-terminal-emulator</code></a>.
+Each user-space virtual terminal has one service, running <a href="commands/console-terminal-emulator.xml"><code>console-terminal-emulator</code></a>.
 This duplicates the function of the old-style kernel terminal emulator code, but as an application-mode process outwith the kernel.
 </p>
 
@@ -70,7 +70,7 @@ multiplexors
 </h2>
 
 <p>
-A multiplexor service runs <a href="console-multiplexor.html"><code>console-multiplexor</code></a>.
+A multiplexor service runs <a href="commands/console-multiplexor.xml"><code>console-multiplexor</code></a>.
 This provides a simple screen-switching service that presents one virtual terminal display buffer and input FIFO that is switched amongst one or more other terminal display buffers and input FIFOs.
 This again duplicates the function of the old-style kernel terminal emulator code, but as an application-mode process outwith the kernel.
 </p>
@@ -81,7 +81,7 @@ That input FIFO is the one provided by the mutiplexor, which strips these messag
 </p>
 
 <p>
-The <a href="console-multiplexor-control.html"><code>console-multiplexor-control</code></a> command, also available under the name <code>chvt</code>, generates the same messages.
+The <a href="commands/console-multiplexor-control.xml"><code>console-multiplexor-control</code></a> command, also available under the name <code>chvt</code>, generates the same messages.
 A user with sufficient access to the input FIFO, the security concerns of which you can find discussed in the user manual, can programmatically switch a multiplexor between multiple inputs.
 </p>
 
@@ -96,7 +96,7 @@ input method front-end processors
 </h2>
 
 <p>
-An input method front-end processor service runs <a href="console-input-method.html"><code>console-input-method</code></a>.
+An input method front-end processor service runs <a href="commands/console-input-method.xml"><code>console-input-method</code></a>.
 This overlays a pre-editing user interface on top of a virtual terminal, presenting itself as another virtual terminal with its own display buffer and input FIFO.
 </p>
 
@@ -113,7 +113,7 @@ It is a fairly simple exercise to add and to use one's own data files for custom
 </p>
 
 <p>
-The <a href="console-multiplexor-control.html"><code>console-input-method-control</code></a> command generates various special input method key messages.
+The <a href="commands/console-multiplexor-control.xml"><code>console-input-method-control</code></a> command generates various special input method key messages.
 A user with sufficient access to the input FIFO, the security concerns of which you can find discussed in the user manual, can programmatically switch input method modes and toggle the input method on and off.
 </p>
 
@@ -141,17 +141,17 @@ The exact security model depends from the kind of realizer, and there are many p
 </p>
 <ul>
 <li><p>
-<a href="console-ncurses-realizer.html"><code>console-ncurses-realizer</code></a> &mdash; 
+<a href="commands/console-ncurses-realizer.xml"><code>console-ncurses-realizer</code></a> &mdash; 
 a realizer that uses wide character ncurses (ncursesw) to render one user-space virtual terminal on the terminal that the realizer itself is attached to.
 This realizer needs no additional privileged access to anything apart from the files of the user-space virtual terminal.
 </p></li>
 <li><p>
-<a href="console-termio-realizer.html"><code>console-termio-realizer</code></a> &mdash; 
+<a href="commands/console-termio-realizer.xml"><code>console-termio-realizer</code></a> &mdash; 
 a realizer that uses straight terminal I/O, hardwiring DEC VT, SCO Console, ISO, and ECMA control sequences, to render one user-space virtual terminal on the terminal that the realizer itself is attached to.
 This realizer needs no additional privileged access to anything apart from the files of the user-space virtual terminal.
 </p></li>
 <li><p>
-<a href="console-fb-realizer.html"><code>console-fb-realizer</code></a> &mdash; 
+<a href="commands/console-fb-realizer.xml"><code>console-fb-realizer</code></a> &mdash; 
 a realizer that uses a framebuffer device, and mouse and keyboard input devices, realizing one user-space virtual terminals.
 This realizer needs additional privileged access to the device files, in order to open them at startup, but needs no more privileges than that.
 </p></li>

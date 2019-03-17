@@ -30,10 +30,10 @@ esac
 redo-ifchange "user-dbus-daemon@.socket" "user-dbus-daemon.service" "user-dbus-broker@.socket" "user-dbus-broker.service" "user-dbus-log@.service" "user-services.service" "user-services@.socket" "user-runtime@.service" "run-user-directory@.service" "user@.target" "per-user/exit.target" "per-user/per-user.conf" "per-user/all.do" "per-user/default.do" "per-user/home.do" "per-user/user.do" "per-user/config-path.do" "per-user/services.do"
 
 getent passwd |
-awk -F : '{ if (!match($7,"/nologin$")) print $1; }' |
+awk -F : '{ if (!match($7,"/nologin$") && !match($7,"/false$")) print $1; }' |
 while read -r i
 do
-	# On systems that don't set nologin as the shell, there is nothing distinguishing "system" accounts from accounts that temporarily have their password disabled.
+	# On systems that don't set nologin/false as the shell, there is nothing distinguishing "system" accounts from accounts that temporarily have their password disabled.
 	# As the manual page says, an account with a temporarily disabled password could still be used via SSH, and obviously one might want user Desktop Bus service for such a login.
 	case "$i" in
 	bin|daemon|nobody|root|toor|sync|sys|games|irc|mail|news|uucp|www-data|libuuid|backup|lp|saned|man|proxy|backup|list|gnats) continue ;;

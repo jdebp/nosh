@@ -12,14 +12,14 @@ See their manual pages for documentation.
 <h2 class="Ruled" id="Interpreters">Script interpreters</h2>
 
 <p>
-The eponymous <a href="nosh.html"><code>nosh</code></a> is a minimal non-shell script interpreter, for use in <code>run</code> scripts (and elsewhere) where desired.
+The eponymous <a href="commands/nosh.xml"><code>nosh</code></a> is a minimal non-shell script interpreter, for use in <code>run</code> scripts (and elsewhere) where desired.
 Its operation is akin to that of <a href="http://skarnet.org/software/execline/">Laurent Bercot's <code>execline</code></a>.
 The idea of it is to eliminate even the startup cost of the Almquist shell from service scripts (c.f. Debian's switch from the Bourne Again to the Almquist shell to reduce shell overhead in system scripts).
 <code>nosh</code> isn't a shell at all, does no parsing (only lexing), and incorporates most of the package's chain-loading tools as built-ins (to even eliminate the cost of <code>execve</code> and runtime library setup/teardown).
 </p>
 
 <p>
-<a href="exec.html"><code>exec</code></a> is, similarly, a simple tool for chain-loading.
+<a href="commands/exec.xml"><code>exec</code></a> is, similarly, a simple tool for chain-loading.
 </p>
 
 <h2 class="Ruled" id="ChainLoading">Commands for manipulating process state and then chain loading something else</h2>
@@ -29,52 +29,52 @@ General process state:
 </p>
 
 <ul class="compact">
-<li><p> <a href="appendpath.html"><code>appendpath</code></a> &mdash; append a value to the end of a path-style environment variable, handling the separator characters for you </p></li>
-<li><p> <a href="background.html"><code>background</code></a> &mdash; run a child process asynchronously </p></li>
-<li><p> <a href="chdir.html"><code>chdir</code></a> &mdash; change working directory </p></li>
-<li><p> <a href="chroot.html"><code>chroot</code></a> &mdash; change root directory </p></li>
-<li><p> <a href="clearenv.html"><code>clearenv</code></a> &mdash; clear the environment, selectively or totally </p></li>
-<li><p> <a href="delegate-control-group-to.html"><code>delegate-control-group-to</code></a> &mdash; delegate the current control group to an(other) account, preparatory to becoming that user with <code>setuidgid</code> or similar </p></li>
-<li><p> <a href="envdir.html"><code>envdir</code></a> &mdash; process a daemontools-style envdir to set/unset environment variables </p></li>
-<li><p> <a href="envgid.html"><code>envgid</code></a> &mdash; set <code>GID</code> and <code>GIDLIST</code> environment variable values from the system account database </p></li>
-<li><p> <a href="envuidgid.html"><code>envuidgid</code></a> &mdash; set <code>UID</code>, <code>GID</code>, and <code>GIDLIST</code> environment variable values from the system account database </p></li>
-<li><p> <a href="fdmove.html"><code>fdmove</code></a> &mdash; copy/move file descriptors around </p></li>
-<li><p> <a href="fdredir.html"><code>fdredir</code></a> &mdash; open file descriptors for reading, writing, append, and so forth </p></li>
-<li><p> <a href="find-default-jvm.html"><code>find-default-jvm</code></a> &mdash; find the <code>JAVA_HOME</code> for the default JVM </p></li>
-<li><p> <a href="find-matching-jvm.html"><code>find-matching-jvm</code></a> &mdash; find the <code>JAVA_HOME</code> for a matching JVM </p></li>
-<li><p> <a href="foreground.html"><code>foreground</code></a> &mdash; run a child process synchronously, before continuing </p></li>
-<li><p> <a href="getuidgid.html"><code>getuidgid</code></a> &mdash; set the <code>UID</code>, <code>GID</code>, and <code>GIDLIST</code> environment variables from the effective UID+GID and supplementary groups of the process </p></li>
-<li><p> <a href="hardlimit.html"><code>hardlimit</code></a> &mdash; change hard resource limits </p></li>
-<li><p> <a href="local-reaper.html"><code>local-reaper</code></a> &mdash; set the local "Grim Reaper" status on/off </p></li>
-<li><p> <a href="machineenv.html"><code>machineenv</code></a> &mdash; initialize "machine" environment variables such as <code>HOSTNAME</code>, <code>MACHINEID</code>, and <code>DOMAINNAME</code> </p></li>
-<li><p> <a href="make-private-fs.html"><code>make-private-fs</code></a> &mdash; mount private filesystems in various places to hide the global filesystems from view </p></li>
-<li><p> <a href="make-read-only-fs.html"><code>make-read-only-fs</code></a> &mdash; mount read-only filesystems in various places </p></li>
-<li><p> <a href="move-to-control-group.html"><code>move-to-control-group</code></a> &mdash; change into a given control group, absolute or relative to the current one </p></li>
-<li><p> <a href="oom-kill-protect.html"><code>oom-kill-protect</code></a> &mdash; set the protection level against the kernel's Out Of Memory Killer </p></li>
-<li><p> <a href="pipe.html"><code>pipe</code></a> &mdash; run a child process asynchronously, connected to the current process's standard input or standard output via a pipe </p></li>
-<li><p> <a href="prependpath.html"><code>prependpath</code></a> &mdash; prepend a value to the beginning of a path-style environment variable, handling the separator characters for you </p></li>
-<li><p> <a href="read-conf.html"><code>read-conf</code></a> &mdash; process a BSD <code>rc.conf</code> style file to set environment variables </p></li>
-<li><p> <a href="set-control-group-knob.html"><code>set-control-group-knob</code></a> &mdash; change a knob in the current control group </p></li>
-<li><p> <a href="set-mount-object.html"><code>set-mount-object</code></a> &mdash; set the state of a mount object, in the process' mount namespace </p></li>
-<li><p> <a href="setenv.html"><code>setenv</code></a> &mdash; set an environment variable </p></li>
-<li><p> <a href="setgid-fromenv.html"><code>setgid-fromenv</code></a> &mdash; set GID and supplementary groups from environment variables </p></li>
-<li><p> <a href="setlock.html"><code>setlock</code></a> &mdash; obtain an open file descriptor for a lock file </p></li>
-<li><p> <a href="setlogin.html"><code>setlogin</code></a> &mdash; set the account name/user ID of the current login session, if permitted </p></li>
-<li><p> <a href="setpgrp.html"><code>setpgrp</code></a> &mdash; become a process group leader, if permitted </p></li>
-<li><p> <a href="setsid.html"><code>setsid</code></a> &mdash; become a session leader, if permitted </p></li>
-<li><p> <a href="setuidgid-fromenv.html"><code>setuidgid-fromenv</code></a> &mdash; set UID, GID, and supplementary groups from environment variables </p></li>
-<li><p> <a href="setuidgid.html"><code>setuidgid</code></a> &mdash; set UID, GID, and supplementary groups from the system account database </p></li>
-<li><p> <a href="softlimit.html"><code>softlimit</code></a> &mdash; change soft resource limits </p></li>
-<li><p> <a href="time-env-add.html"><code>time-env-add</code></a> &mdash; add an offset to a TAI64N time held in an environment variable</p></li>
-<li><p> <a href="time-env-set.html"><code>time-env-set</code></a> &mdash; set a TAI64N time held in an environment variable</p></li>
-<li><p> <a href="time-env-set-if-earlier.html"><code>time-env-set-if-earlier</code></a> &mdash; overwrite a TAI64N time held in an environment variable with another value if it is earlier</p></li>
-<li><p> <a href="time-env-unset-if-later.html"><code>time-env-unset-if-later</code></a> &mdash; unset an environment variable if the TAI64N time held there is later than another value</p></li>
-<li><p> <a href="ulimit.html"><code>ulimit</code></a> &mdash; change soft or hard resource limits </p></li>
-<li><p> <a href="umask.html"><code>umask</code></a> &mdash; change the umask </p></li>
-<li><p> <a href="unsetenv.html"><code>unsetenv</code></a> &mdash; unset an environment variable </p></li>
-<li><p> <a href="unshare.html"><code>unshare</code></a> &mdash; unshare Linux namespaces </p></li>
-<li><p> <a href="userenv.html"><code>userenv</code></a> &mdash; initialize "login" environment variables such as <code>HOME</code>, <code>SHELL</code>, <code>USER</code>, and <code>LOGNAME</code> based upon the effectuve UID+GID and supplementary groups of the process </p></li>
-<li><p> <a href="userenv-fromenv.html"><code>userenv-fromenv</code></a> &mdash; initialize "login" environment variables such as <code>HOME</code>, <code>SHELL</code>, <code>USER</code>, and <code>LOGNAME</code> based upon the values of the <code>UID</code>, <code>GID</code>, and <code>GIDLIST</code> environment variables</p></li>
+<li><p> <a href="commands/appendpath.xml"><code>appendpath</code></a> &mdash; append a value to the end of a path-style environment variable, handling the separator characters for you </p></li>
+<li><p> <a href="commands/background.xml"><code>background</code></a> &mdash; run a child process asynchronously </p></li>
+<li><p> <a href="commands/chdir.xml"><code>chdir</code></a> &mdash; change working directory </p></li>
+<li><p> <a href="commands/chroot.xml"><code>chroot</code></a> &mdash; change root directory </p></li>
+<li><p> <a href="commands/clearenv.xml"><code>clearenv</code></a> &mdash; clear the environment, selectively or totally </p></li>
+<li><p> <a href="commands/delegate-control-group-to.xml"><code>delegate-control-group-to</code></a> &mdash; delegate the current control group to an(other) account, preparatory to becoming that user with <code>setuidgid</code> or similar </p></li>
+<li><p> <a href="commands/envdir.xml"><code>envdir</code></a> &mdash; process a daemontools-style envdir to set/unset environment variables </p></li>
+<li><p> <a href="commands/envgid.xml"><code>envgid</code></a> &mdash; set <code>GID</code> and <code>GIDLIST</code> environment variable values from the system account database </p></li>
+<li><p> <a href="commands/envuidgid.xml"><code>envuidgid</code></a> &mdash; set <code>UID</code>, <code>GID</code>, and <code>GIDLIST</code> environment variable values from the system account database </p></li>
+<li><p> <a href="commands/fdmove.xml"><code>fdmove</code></a> &mdash; copy/move file descriptors around </p></li>
+<li><p> <a href="commands/fdredir.xml"><code>fdredir</code></a> &mdash; open file descriptors for reading, writing, append, and so forth </p></li>
+<li><p> <a href="commands/find-default-jvm.xml"><code>find-default-jvm</code></a> &mdash; find the <code>JAVA_HOME</code> for the default JVM </p></li>
+<li><p> <a href="commands/find-matching-jvm.xml"><code>find-matching-jvm</code></a> &mdash; find the <code>JAVA_HOME</code> for a matching JVM </p></li>
+<li><p> <a href="commands/foreground.xml"><code>foreground</code></a> &mdash; run a child process synchronously, before continuing </p></li>
+<li><p> <a href="commands/getuidgid.xml"><code>getuidgid</code></a> &mdash; set the <code>UID</code>, <code>GID</code>, and <code>GIDLIST</code> environment variables from the effective UID+GID and supplementary groups of the process </p></li>
+<li><p> <a href="commands/hardlimit.xml"><code>hardlimit</code></a> &mdash; change hard resource limits </p></li>
+<li><p> <a href="commands/local-reaper.xml"><code>local-reaper</code></a> &mdash; set the local "Grim Reaper" status on/off </p></li>
+<li><p> <a href="commands/machineenv.xml"><code>machineenv</code></a> &mdash; initialize "machine" environment variables such as <code>HOSTNAME</code>, <code>MACHINEID</code>, and <code>DOMAINNAME</code> </p></li>
+<li><p> <a href="commands/make-private-fs.xml"><code>make-private-fs</code></a> &mdash; mount private filesystems in various places to hide the global filesystems from view </p></li>
+<li><p> <a href="commands/make-read-only-fs.xml"><code>make-read-only-fs</code></a> &mdash; mount read-only filesystems in various places </p></li>
+<li><p> <a href="commands/move-to-control-group.xml"><code>move-to-control-group</code></a> &mdash; change into a given control group, absolute or relative to the current one </p></li>
+<li><p> <a href="commands/oom-kill-protect.xml"><code>oom-kill-protect</code></a> &mdash; set the protection level against the kernel's Out Of Memory Killer </p></li>
+<li><p> <a href="commands/pipe.xml"><code>pipe</code></a> &mdash; run a child process asynchronously, connected to the current process's standard input or standard output via a pipe </p></li>
+<li><p> <a href="commands/prependpath.xml"><code>prependpath</code></a> &mdash; prepend a value to the beginning of a path-style environment variable, handling the separator characters for you </p></li>
+<li><p> <a href="commands/read-conf.xml"><code>read-conf</code></a> &mdash; process a BSD <code>rc.conf</code> style file to set environment variables </p></li>
+<li><p> <a href="commands/set-control-group-knob.xml"><code>set-control-group-knob</code></a> &mdash; change a knob in the current control group </p></li>
+<li><p> <a href="commands/set-mount-object.xml"><code>set-mount-object</code></a> &mdash; set the state of a mount object, in the process' mount namespace </p></li>
+<li><p> <a href="commands/setenv.xml"><code>setenv</code></a> &mdash; set an environment variable </p></li>
+<li><p> <a href="commands/setgid-fromenv.xml"><code>setgid-fromenv</code></a> &mdash; set GID and supplementary groups from environment variables </p></li>
+<li><p> <a href="commands/setlock.xml"><code>setlock</code></a> &mdash; obtain an open file descriptor for a lock file </p></li>
+<li><p> <a href="commands/setlogin.xml"><code>setlogin</code></a> &mdash; set the account name/user ID of the current login session, if permitted </p></li>
+<li><p> <a href="commands/setpgrp.xml"><code>setpgrp</code></a> &mdash; become a process group leader, if permitted </p></li>
+<li><p> <a href="commands/setsid.xml"><code>setsid</code></a> &mdash; become a session leader, if permitted </p></li>
+<li><p> <a href="commands/setuidgid-fromenv.xml"><code>setuidgid-fromenv</code></a> &mdash; set UID, GID, and supplementary groups from environment variables </p></li>
+<li><p> <a href="commands/setuidgid.xml"><code>setuidgid</code></a> &mdash; set UID, GID, and supplementary groups from the system account database </p></li>
+<li><p> <a href="commands/softlimit.xml"><code>softlimit</code></a> &mdash; change soft resource limits </p></li>
+<li><p> <a href="commands/time-env-add.xml"><code>time-env-add</code></a> &mdash; add an offset to a TAI64N time held in an environment variable</p></li>
+<li><p> <a href="commands/time-env-set.xml"><code>time-env-set</code></a> &mdash; set a TAI64N time held in an environment variable</p></li>
+<li><p> <a href="commands/time-env-set-if-earlier.xml"><code>time-env-set-if-earlier</code></a> &mdash; overwrite a TAI64N time held in an environment variable with another value if it is earlier</p></li>
+<li><p> <a href="commands/time-env-unset-if-later.xml"><code>time-env-unset-if-later</code></a> &mdash; unset an environment variable if the TAI64N time held there is later than another value</p></li>
+<li><p> <a href="commands/ulimit.xml"><code>ulimit</code></a> &mdash; change soft or hard resource limits </p></li>
+<li><p> <a href="commands/umask.xml"><code>umask</code></a> &mdash; change the umask </p></li>
+<li><p> <a href="commands/unsetenv.xml"><code>unsetenv</code></a> &mdash; unset an environment variable </p></li>
+<li><p> <a href="commands/unshare.xml"><code>unshare</code></a> &mdash; unshare Linux namespaces </p></li>
+<li><p> <a href="commands/userenv.xml"><code>userenv</code></a> &mdash; initialize "login" environment variables such as <code>HOME</code>, <code>SHELL</code>, <code>USER</code>, and <code>LOGNAME</code> based upon the effectuve UID+GID and supplementary groups of the process </p></li>
+<li><p> <a href="commands/userenv-fromenv.xml"><code>userenv-fromenv</code></a> &mdash; initialize "login" environment variables such as <code>HOME</code>, <code>SHELL</code>, <code>USER</code>, and <code>LOGNAME</code> based upon the values of the <code>UID</code>, <code>GID</code>, and <code>GIDLIST</code> environment variables</p></li>
 </ul>
 
 <p>
@@ -82,14 +82,14 @@ Construction tools for terminal login services and pseudo-terminal tools:
 </p>
 
 <ul class="compact">
-<li><p> <a href="login-banner.html"><code>login-banner</code></a> &mdash; display an <code>/etc/issue</code> style banner </p></li>
-<li><p> <a href="login-process.html"><code>login-process</code></a> &mdash; write a "login"/"getty" entry in the login accounting database for the controlling terminal (Modern BSDs no longer support this notion.) </p></li>
-<li><p> <a href="login-prompt.html"><code>login-prompt</code></a> &mdash; wait for a newline from the terminal, serial terminal login style, to prevent unnecessary service churn when <code>login</code> has a timeout that cannot be turned off </p></li>
-<li><p> <a href="open-controlling-tty.html"><code>open-controlling-tty</code></a> &mdash; open the device named by <code>TTY</code> as the controlling terminal and set the standard file descriptors </p></li>
-<li><p> <a href="pty-get-tty.html"><code>pty-get-tty</code></a> &mdash; open the master side of a new pseudo-terminal and set <code>TTY</code> to the name of the attached slave side device </p></li>
-<li><p> <a href="pty-run.html"><code>pty-run</code></a> &mdash; perform all I/O beween the master side of a pseudo-terminal and standard input/output, and spawn a child as the slave side </p></li>
-<li><p> <a href="vc-get-tty.html"><code>vc-get-tty</code></a> &mdash; set <code>TTY</code> to the name of a kernel/user space virtual terminal device, and set <code>TERM</code> to an appropriate terminal emulator type </p></li>
-<li><p> <a href="vc-reset-tty.html"><code>vc-reset-tty</code></a> &mdash; emit, without need for any termcap/terminfo database to be accessible, the control sequences to reset a kernel/user space virtual terminal (Logout causes terminal hangup and <code>console-terminal-emulator</code> to reset the terminal, making this largely unnecessary with user space virtual terminals.) </p></li>
+<li><p> <a href="commands/login-banner.xml"><code>login-banner</code></a> &mdash; display an <code>/etc/issue</code> style banner </p></li>
+<li><p> <a href="commands/login-process.xml"><code>login-process</code></a> &mdash; write a "login"/"getty" entry in the login accounting database for the controlling terminal (Modern BSDs no longer support this notion.) </p></li>
+<li><p> <a href="commands/login-prompt.xml"><code>login-prompt</code></a> &mdash; wait for a newline from the terminal, serial terminal login style, to prevent unnecessary service churn when <code>login</code> has a timeout that cannot be turned off </p></li>
+<li><p> <a href="commands/open-controlling-tty.xml"><code>open-controlling-tty</code></a> &mdash; open the device named by <code>TTY</code> as the controlling terminal and set the standard file descriptors </p></li>
+<li><p> <a href="commands/pty-get-tty.xml"><code>pty-get-tty</code></a> &mdash; open the master side of a new pseudo-terminal and set <code>TTY</code> to the name of the attached slave side device </p></li>
+<li><p> <a href="commands/pty-run.xml"><code>pty-run</code></a> &mdash; perform all I/O beween the master side of a pseudo-terminal and standard input/output, and spawn a child as the slave side </p></li>
+<li><p> <a href="commands/vc-get-tty.xml"><code>vc-get-tty</code></a> &mdash; set <code>TTY</code> to the name of a kernel/user space virtual terminal device, and set <code>TERM</code> to an appropriate terminal emulator type </p></li>
+<li><p> <a href="commands/vc-reset-tty.xml"><code>vc-reset-tty</code></a> &mdash; emit, without need for any termcap/terminfo database to be accessible, the control sequences to reset a kernel/user space virtual terminal (Logout causes terminal hangup and <code>console-terminal-emulator</code> to reset the terminal, making this largely unnecessary with user space virtual terminals.) </p></li>
 </ul>
 
 <p>
@@ -97,23 +97,23 @@ Interacting with <a href="../../FGA/UCSPI.html">UCSPI</a> servers:
 </p>
 
 <ul class="compact">
-<li><p> <a href="line-banner.html"><code>line-banner</code></a> &mdash; print the initial greeting that some UCSPI-TCP services do not print for themselves </p></li>
-<li><p> <a href="fifo-listen.html"><code>fifo-listen</code></a> &mdash; open a listening FIFO </p></li>
-<li><p> <a href="local-datagram-socket-listen.html"><code>local-datagram-socket-listen</code></a> &mdash; open a listening AF_LOCAL datagram socket </p></li>
-<li><p> <a href="local-seqpacket-socket-accept.html"><code>local-seqpacket-socket-accept</code></a> &mdash; accept connections on an AF_LOCAL sequential packet socket, with concurrency control </p></li>
-<li><p> <a href="local-seqpacket-socket-listen.html"><code>local-seqpacket-socket-listen</code></a> &mdash; open a listening AF_LOCAL sequantial packet socket </p></li>
-<li><p> <a href="local-stream-socket-accept.html"><code>local-stream-socket-accept</code></a> &mdash; accept connections on an AF_LOCAL stream socket, with concurrency control </p></li>
-<li><p> <a href="local-stream-socket-connect.html"><code>local-stream-socket-connect</code></a> &mdash; connect to an AF_LOCAL stream server </p></li>
-<li><p> <a href="local-stream-socket-listen.html"><code>local-stream-socket-listen</code></a> &mdash; open a listening AF_LOCAL stream socket </p></li>
-<li><p> <a href="netlink-datagram-socket-listen.html"><code>netlink-datagram-socket-listen</code></a> &mdash; open a listening AF_NETLINK datagram socket </p></li>
-<li><p> <a href="recordio.html"><code>recordio</code></a> &mdash; a UCSPI filter that records all I/O traffic to file </p></li>
-<li><p> <a href="tcp-socket-accept.html"><code>tcp-socket-accept</code></a> &mdash; accept connections on a TCP socket, with concurrency control </p></li>
-<li><p> <a href="tcp-socket-connect.html"><code>tcp-socket-connect</code></a> &mdash; connect to a TCP server </p></li>
-<li><p> <a href="tcp-socket-listen.html"><code>tcp-socket-listen</code></a> &mdash; open a listening TCP socket </p></li>
-<li><p> <a href="tcpserver.html"><code>tcpserver</code></a> &mdash; open a listening TCP socket and accept connections on it </p></li>
-<li><p> <a href="ucspi-socket-rules-check.html"><code>ucspi-socket-rules-check</code></a> &mdash; check the peer (i.e. client) end of the open socket against an access control rules database </p></li>
-<li><p> <a href="udp-socket-connect.html"><code>udp-socket-connect</code></a> &mdash; connect to a UDP server </p></li>
-<li><p> <a href="udp-socket-listen.html"><code>udp-socket-listen</code></a> &mdash; open a listening UDP socket </p></li>
+<li><p> <a href="commands/line-banner.xml"><code>line-banner</code></a> &mdash; print the initial greeting that some UCSPI-TCP services do not print for themselves </p></li>
+<li><p> <a href="commands/fifo-listen.xml"><code>fifo-listen</code></a> &mdash; open a listening FIFO </p></li>
+<li><p> <a href="commands/local-datagram-socket-listen.xml"><code>local-datagram-socket-listen</code></a> &mdash; open a listening AF_LOCAL datagram socket </p></li>
+<li><p> <a href="commands/local-seqpacket-socket-accept.xml"><code>local-seqpacket-socket-accept</code></a> &mdash; accept connections on an AF_LOCAL sequential packet socket, with concurrency control </p></li>
+<li><p> <a href="commands/local-seqpacket-socket-listen.xml"><code>local-seqpacket-socket-listen</code></a> &mdash; open a listening AF_LOCAL sequantial packet socket </p></li>
+<li><p> <a href="commands/local-stream-socket-accept.xml"><code>local-stream-socket-accept</code></a> &mdash; accept connections on an AF_LOCAL stream socket, with concurrency control </p></li>
+<li><p> <a href="commands/local-stream-socket-connect.xml"><code>local-stream-socket-connect</code></a> &mdash; connect to an AF_LOCAL stream server </p></li>
+<li><p> <a href="commands/local-stream-socket-listen.xml"><code>local-stream-socket-listen</code></a> &mdash; open a listening AF_LOCAL stream socket </p></li>
+<li><p> <a href="commands/netlink-datagram-socket-listen.xml"><code>netlink-datagram-socket-listen</code></a> &mdash; open a listening AF_NETLINK datagram socket </p></li>
+<li><p> <a href="commands/recordio.xml"><code>recordio</code></a> &mdash; a UCSPI filter that records all I/O traffic to file </p></li>
+<li><p> <a href="commands/tcp-socket-accept.xml"><code>tcp-socket-accept</code></a> &mdash; accept connections on a TCP socket, with concurrency control </p></li>
+<li><p> <a href="commands/tcp-socket-connect.xml"><code>tcp-socket-connect</code></a> &mdash; connect to a TCP server </p></li>
+<li><p> <a href="commands/tcp-socket-listen.xml"><code>tcp-socket-listen</code></a> &mdash; open a listening TCP socket </p></li>
+<li><p> <a href="commands/tcpserver.xml"><code>tcpserver</code></a> &mdash; open a listening TCP socket and accept connections on it </p></li>
+<li><p> <a href="commands/ucspi-socket-rules-check.xml"><code>ucspi-socket-rules-check</code></a> &mdash; check the peer (i.e. client) end of the open socket against an access control rules database </p></li>
+<li><p> <a href="commands/udp-socket-connect.xml"><code>udp-socket-connect</code></a> &mdash; connect to a UDP server </p></li>
+<li><p> <a href="commands/udp-socket-listen.xml"><code>udp-socket-listen</code></a> &mdash; open a listening UDP socket </p></li>
 </ul>
 
 <p>
@@ -121,7 +121,7 @@ Others:
 </p>
 
 <ul class="compact">
-<li><p> <a href="monitored-fsck.html"><code>monitored-fsck</code></a> &mdash; invoke <code>fsck</code> so that its progress information is directed to a monitoring service </p></li>
+<li><p> <a href="commands/monitored-fsck.xml"><code>monitored-fsck</code></a> &mdash; invoke <code>fsck</code> so that its progress information is directed to a monitoring service </p></li>
 </ul>
 
 <h2 class="Ruled" id="Services">Commands that provide specific services</h2>
@@ -131,13 +131,13 @@ Log management:
 </p>
 
 <ul class="compact">
-<li><p> <a href="cyclog.html"><code>cyclog</code></a> &mdash; a tool to run (simple) logging services that write a size-limited, nanosecond timestamped, and automatically-rotated set of log files </p></li>
-<li><p> <a href="klog-read.html"><code>klog-read</code></a> &mdash; a UCSPI server that expects stream input, which it decodes from the old syslog message format and writes to its own log output </p></li>
-<li><p> <a href="syslog-read.html"><code>syslog-read</code></a> &mdash; a UCSPI server that expects datagram input, which it decodes from the old syslog message format and writes to its own log output </p></li>
-<li><p> <a href="tai64n.html"><code>tai64n</code></a> &mdash; a Unix-style filter to prepend nanosecond timestamps to each line of its input and send the result to its output </p></li>
-<li><p> <a href="tai64nlocal.html"><code>tai64nlocal</code></a> &mdash; a Unix-style filter to substitute local format local timezone timestamps for nanosecond timestamps in its input and send the result to its output </p></li>
-<li><p> <a href="export-to-rsyslog.html"><code>export-to-rsyslog</code></a> &mdash; post-process one or more log directories, sending log data to an RSYSLOG server </p></li>
-<li><p> <a href="follow-log-directories.html"><code>follow-log-directories</code></a> &mdash; post-process one or more log directories, writing log data to standard error </p></li>
+<li><p> <a href="commands/cyclog.xml"><code>cyclog</code></a> &mdash; a tool to run (simple) logging services that write a size-limited, nanosecond timestamped, and automatically-rotated set of log files </p></li>
+<li><p> <a href="commands/klog-read.xml"><code>klog-read</code></a> &mdash; a UCSPI server that expects stream input, which it decodes from the old syslog message format and writes to its own log output </p></li>
+<li><p> <a href="commands/syslog-read.xml"><code>syslog-read</code></a> &mdash; a UCSPI server that expects datagram input, which it decodes from the old syslog message format and writes to its own log output </p></li>
+<li><p> <a href="commands/tai64n.xml"><code>tai64n</code></a> &mdash; a Unix-style filter to prepend nanosecond timestamps to each line of its input and send the result to its output </p></li>
+<li><p> <a href="commands/tai64nlocal.xml"><code>tai64nlocal</code></a> &mdash; a Unix-style filter to substitute local format local timezone timestamps for nanosecond timestamps in its input and send the result to its output </p></li>
+<li><p> <a href="commands/export-to-rsyslog.xml"><code>export-to-rsyslog</code></a> &mdash; post-process one or more log directories, sending log data to an RSYSLOG server </p></li>
+<li><p> <a href="commands/follow-log-directories.xml"><code>follow-log-directories</code></a> &mdash; post-process one or more log directories, writing log data to standard error </p></li>
 </ul>
 
 <p>
@@ -145,19 +145,19 @@ User space virtual terminal services and terminal tools:
 </p>
 
 <ul class="compact">
-<li><p> <a href="console-clear.html"><code>console-clear</code></a> (a.k.a. <code>clear_console</code>) &mdash; clear a terminal's display, and its scroll back buffer if it has one (a replacement for the Bourne Again shell's external command of the same name) that uses (de facto) standard control sequences (supported by xterm, PuTTY, the Linux kernel terminal emulator, and <code>console-terminal-emulator</code>) rather than kernel-specific virtual terminal mechanisms (Logout causes terminal hangup and <code>console-terminal-emulator</code> to clear the display buffer, making this largely unnecessary with user space virtual terminals.) </p></li>
-<li><p> <a href="console-convert-kbdmap.html"><code>console-convert-kbdmap</code></a> &mdash; create a full ISO 9995-3 keyboard map from a BSD <code>kbdmap</code> file </p></li>
-<li><p> <a href="console-control-sequence.html"><code>console-control-sequence</code></a> &mdash; emit various standard and conventional control sequences </p></li>
-<li><p> <a href="console-decode-ecma48.html"><code>console-decode-ecma48</code></a> &mdash; decode ECMA 48 sequences into human-readable form </p></li>
-<li><p> <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a> &mdash; "realize" a user-space virtual terminal onto a physical "head", i.e a keyboard input event device and a framebuffer display device, with specified fonts and keyboard maps </p></li>
-<li><p> <a href="console-ncurses-realizer.html"><code>console-ncurses-realizer</code></a> &mdash; "realize" a user-space virtual terminal onto another terminal using Wide NCurses </p></li>
-<li><p> <a href="console-termio-realizer.html"><code>console-termio-realizer</code></a> &mdash; "realize" a user-space virtual terminal onto another terminal using straight terminal I/O </p></li>
-<li><p> <a href="console-input-method.html"><code>console-input-method</code></a> &mdash; layer an input method over a user-space virtual terminal, providing CJK and other input </p></li>
-<li><p> <a href="console-input-method-control.html"><code>console-input-method-control</code></a> &mdash; control input method user-space virtual terminals </p></li>
-<li><p> <a href="console-multiplexor.html"><code>console-multiplexor</code></a> &mdash; multiplex several user-space virtual terminals into one, using the conventional <code>alt</code>-plus-function-key hotkeys </p></li>
-<li><p> <a href="console-multiplexor-control.html"><code>console-multiplexor-control</code></a> &mdash; control multiplexed user-space virtual terminals </p></li>
-<li><p> <a href="console-resize.html"><code>console-resize</code></a> (a.k.a. <code>resizecons</code>) &mdash; resize a terminal's display using DEC VT control sequences, which can properly pass over remote connections and don't need superuser privileges </p></li>
-<li><p> <a href="console-terminal-emulator.html"><code>console-terminal-emulator</code></a> &mdash; provide the internal workings of a user-space virtual terminal, compatible with the Linux/FreeBSD/SCO kernel terminal emulators or a DEC VT </p></li>
+<li><p> <a href="commands/console-clear.xml"><code>console-clear</code></a> (a.k.a. <code>clear_console</code>) &mdash; clear a terminal's display, and its scroll back buffer if it has one (a replacement for the Bourne Again shell's external command of the same name) that uses (de facto) standard control sequences (supported by xterm, PuTTY, the Linux kernel terminal emulator, and <code>console-terminal-emulator</code>) rather than kernel-specific virtual terminal mechanisms (Logout causes terminal hangup and <code>console-terminal-emulator</code> to clear the display buffer, making this largely unnecessary with user space virtual terminals.) </p></li>
+<li><p> <a href="commands/console-convert-kbdmap.xml"><code>console-convert-kbdmap</code></a> &mdash; create a full ISO 9995-3 keyboard map from a BSD <code>kbdmap</code> file </p></li>
+<li><p> <a href="commands/console-control-sequence.xml"><code>console-control-sequence</code></a> &mdash; emit various standard and conventional control sequences </p></li>
+<li><p> <a href="commands/console-decode-ecma48.xml"><code>console-decode-ecma48</code></a> &mdash; decode ECMA 48 sequences into human-readable form </p></li>
+<li><p> <a href="commands/console-fb-realizer.xml"><code>console-fb-realizer</code></a> &mdash; "realize" a user-space virtual terminal onto a physical "head", i.e a keyboard input event device and a framebuffer display device, with specified fonts and keyboard maps </p></li>
+<li><p> <a href="commands/console-ncurses-realizer.xml"><code>console-ncurses-realizer</code></a> &mdash; "realize" a user-space virtual terminal onto another terminal using Wide NCurses </p></li>
+<li><p> <a href="commands/console-termio-realizer.xml"><code>console-termio-realizer</code></a> &mdash; "realize" a user-space virtual terminal onto another terminal using straight terminal I/O </p></li>
+<li><p> <a href="commands/console-input-method.xml"><code>console-input-method</code></a> &mdash; layer an input method over a user-space virtual terminal, providing CJK and other input </p></li>
+<li><p> <a href="commands/console-input-method-control.xml"><code>console-input-method-control</code></a> &mdash; control input method user-space virtual terminals </p></li>
+<li><p> <a href="commands/console-multiplexor.xml"><code>console-multiplexor</code></a> &mdash; multiplex several user-space virtual terminals into one, using the conventional <code>alt</code>-plus-function-key hotkeys </p></li>
+<li><p> <a href="commands/console-multiplexor-control.xml"><code>console-multiplexor-control</code></a> &mdash; control multiplexed user-space virtual terminals </p></li>
+<li><p> <a href="commands/console-resize.xml"><code>console-resize</code></a> (a.k.a. <code>resizecons</code>) &mdash; resize a terminal's display using DEC VT control sequences, which can properly pass over remote connections and don't need superuser privileges </p></li>
+<li><p> <a href="commands/console-terminal-emulator.xml"><code>console-terminal-emulator</code></a> &mdash; provide the internal workings of a user-space virtual terminal, compatible with the Linux/FreeBSD/SCO kernel terminal emulators or a DEC VT </p></li>
 </ul>
 
 <p>
@@ -165,9 +165,9 @@ Login services:
 </p>
 
 <ul class="compact">
-<li><p> <a href="emergency-login.html"><code>emergency-login</code></a> &mdash; a minimal superuser login program that only uses the system account database, suitable for use in emergency mode when there is no remote authentication available, there are no non-root filesystems mounted, and the TTY "secure" flag needs to be ignored </p></li>
-<li><p> <a href="ttylogin-starter.html"><code>ttylogin-starter</code></a> &mdash; auto-start <code>ttylogin@</code> services (on demand on Linux) for kernel virtual terminals </p></li>
-<li><p> <a href="login-update-utmpx.html"><code>login-update-utmpx</code></a> &mdash; update the active terminal login database for bootstrap and shutdown </p></li>
+<li><p> <a href="commands/emergency-login.xml"><code>emergency-login</code></a> &mdash; a minimal superuser login program that only uses the system account database, suitable for use in emergency mode when there is no remote authentication available, there are no non-root filesystems mounted, and the TTY "secure" flag needs to be ignored </p></li>
+<li><p> <a href="commands/ttylogin-starter.xml"><code>ttylogin-starter</code></a> &mdash; auto-start <code>ttylogin@</code> services (on demand on Linux) for kernel virtual terminals </p></li>
+<li><p> <a href="commands/login-update-utmpx.xml"><code>login-update-utmpx</code></a> &mdash; update the active terminal login database for bootstrap and shutdown </p></li>
 </ul>
 
 <p>
@@ -175,31 +175,38 @@ Others:
 </p>
 
 <ul class="compact">
-<li><p> <a href="console-flat-table-viewer.html"><code>console-flat-table-viewer</code></a> &mdash; view tables from variable-length-record flat file databases </p></li>
-<li><p> <a href="monitor-fsck-progress.html"><code>monitor-fsck-progress</code></a> &mdash; a UCSPI "accepting" server that expects instances of <code>fsck</code> to connect to it as clients, and that displays fancy progress information on the console it is attached to </p></li>
-<li><p> <a href="plug-and-play-event-handler.html"><code>plug-and-play-event-handler</code></a> &mdash; a UCSPI server to read Plug and Play events and invoke a Plug and Play manager utility, one at a time and in order, for each event </p></li>
-<li><p> <a href="set-dynamic-hostname.html"><code>set-dynamic-hostname</code></a> &mdash; initialize the system hostname </p></li>
-<li><p> <a href="setup-machine-id.html"><code>setup-machine-id</code></a> &mdash; initialize the system machine ID and (BSD) host ID </p></li>
-<li><p> <a href="false.html"><code>false</code></a> &mdash; do nothing, and exit with a failure code </p></li>
-<li><p> <a href="time-pause-until.html"><code>time-pause-until</code></a> &mdash; wait until a specified TAI64N time has passed</p></li>
-<li><p> <a href="time-print-tai64n.html"><code>time-print-tai64n</code></a> &mdash; print a specified time in TAI64N form</p></li>
-<li><p> <a href="true.html"><code>true</code></a> &mdash; do nothing, and exit with a success code </p></li>
-<li><p> <a href="pause.html"><code>pause</code></a> &mdash; do nothing forever, until signalled </p></li>
-<li><p> <a href="printenv.html"><code>printenv</code></a> &mdash; print the values of specified environment variable, or the whole environment </p></li>
+<li><p> <a href="commands/console-docbook-xml-viewer.xml"><code>console-docbook-xml-viewer</code></a> &mdash; view DocBook XML reference manuals </p></li>
+<li><p> <a href="commands/console-flat-table-viewer.xml"><code>console-flat-table-viewer</code></a> &mdash; view tables from variable-length-record flat file databases </p></li>
+<li><p> <a href="commands/false.xml"><code>false</code></a> &mdash; do nothing, and exit with a failure code </p></li>
+<li><p> <a href="commands/ifconfig.xml"><code>ifconfig</code></a> &mdash; configure network interfaces </p></li>
+<li><p> <a href="commands/monitor-fsck-progress.xml"><code>monitor-fsck-progress</code></a> &mdash; a UCSPI "accepting" server that expects instances of <code>fsck</code> to connect to it as clients, and that displays fancy progress information on the console it is attached to </p></li>
+<li><p> <a href="commands/pause.xml"><code>pause</code></a> &mdash; do nothing forever, until signalled </p></li>
+<li><p> <a href="commands/plug-and-play-event-handler.xml"><code>plug-and-play-event-handler</code></a> &mdash; a UCSPI server to read Plug and Play events and invoke a Plug and Play manager utility, one at a time and in order, for each event </p></li>
+<li><p> <a href="commands/printenv.xml"><code>printenv</code></a> &mdash; print the values of specified environment variable, or the whole environment </p></li>
+<li><p> <a href="commands/set-dynamic-hostname.xml"><code>set-dynamic-hostname</code></a> &mdash; initialize the system hostname </p></li>
+<li><p> <a href="commands/setup-machine-id.xml"><code>setup-machine-id</code></a> &mdash; initialize the system machine ID and (BSD) host ID </p></li>
+<li><p> <a href="commands/erase-machine-id.xml"><code>erase-machine-id</code></a> &mdash; erase the system machine ID and (BSD) host ID </p></li>
+<li><p> <a href="commands/time-pause-until.xml"><code>time-pause-until</code></a> &mdash; wait until a specified TAI64N time has passed</p></li>
+<li><p> <a href="commands/time-print-tai64n.xml"><code>time-print-tai64n</code></a> &mdash; print a specified time in TAI64N form</p></li>
+<li><p> <a href="commands/true.xml"><code>true</code></a> &mdash; do nothing, and exit with a success code </p></li>
+<!--
+<li><p> <a href="commands/procstat.xml"><code>procstat</code></a> &mdash; output the process table </p></li>
+<li><p> <a href="commands/ps.xml"><code>ps</code></a> &mdash; output the process table </p></li>
+-->
 </ul>
 
 <h2 class="Ruled" id="Managers">Service and system management</h2>
 
 <ul class="compact">
-<li><p> <a href="system-manager.html"><code>system-manager</code></a> &mdash; the system manager </p></li>
-<li><p> <a href="per-user-manager.html"><code>per-user-manager</code></a> &mdash; the per-user manager </p></li>
-<li><p> <a href="service-manager.html"><code>service-manager</code></a> &mdash; the service manager </p></li>
+<li><p> <a href="commands/system-manager.xml"><code>system-manager</code></a> &mdash; the system manager </p></li>
+<li><p> <a href="commands/per-user-manager.xml"><code>per-user-manager</code></a> &mdash; the per-user manager </p></li>
+<li><p> <a href="commands/service-manager.xml"><code>service-manager</code></a> &mdash; the service manager </p></li>
 </ul>
 
 <h2 class="Ruled" id="ControlStatus">Service and system control/status</h2>
 
 <p>
-The <a href="system-control.html"><code>system-control</code></a> utility provides native <em>service</em> control and status that takes account of service orderings and dependencies.
+The <a href="commands/system-control.xml"><code>system-control</code></a> utility provides native <em>service</em> control and status that takes account of service orderings and dependencies.
 Its subcommands include:
 </p>
 
@@ -225,7 +232,7 @@ Its subcommands include:
 </ul>
 
 <p>
-For OpenBSD compatibility, it can also be invoked under the name <a href="rcctl.html"><code>rcctl</code></a>, with subcommands:
+For OpenBSD compatibility, it can also be invoked under the name <a href="commands/rcctl.xml"><code>rcctl</code></a>, with subcommands:
 </p>
 
 <ul class="compact">
@@ -242,7 +249,7 @@ Other systemd compatibility commands include:
 </p>
 
 <ul class="compact">
-<li> <a href="convert-systemd-units.html"><code>convert-systemd-units</code></a> &mdash; convert a systemd target unit, a systemd service unit, or a pair of a service unit and a systemd socket unit, into a native service bundle </p></li>
+<li> <a href="commands/convert-systemd-units.xml"><code>convert-systemd-units</code></a> &mdash; convert a systemd target unit, a systemd service unit, or a pair of a service unit and a systemd socket unit, into a native service bundle </p></li>
 </li>
 </ul>
 
@@ -281,7 +288,7 @@ daemontools-style raw service control and status commands are:
 </p>
 
 <ul class="compact">
-<li><p> <a href="service-control.html"><code>service-control</code></a> &mdash; the service control utility through which one sends low-level commands to an individual service via its control API in the <code>supervise</code> directory</p>
+<li><p> <a href="commands/service-control.xml"><code>service-control</code></a> &mdash; the service control utility through which one sends low-level commands to an individual service via its control API in the <code>supervise</code> directory</p>
 <ul class="compact">
 <li><p> daemontools-compatible form: <code>svc&nbsp;-u&nbsp;</code><i>service</i> </p></li>
 <li><p> native form: <code>service-control&nbsp;--down&nbsp;</code><i>service</i> </p></li>
@@ -295,12 +302,12 @@ daemontools-style raw service control and status commands are:
 <li><p> <code>svc&nbsp;-z</code> / <code>service-control&nbsp;--suspend</code> </p></li>
 </ul>
 </li>
-<li><p> <a href="service-dt-scanner.html"><code>service-dt-scanner</code></a> (a.k.a. <code>svscan</code>) &mdash; scan a daemontools-style services directory and command the service manager accordingly </p></li>
-<li><p> <a href="service-status.html"><code>service-status</code></a> (a.k.a. <code>svstat</code>) &mdash; service status query tool with human-readable output </p></li>
-<li><p> <a href="service-show.html"><code>service-show</code></a> (a.k.a. <code>svshow</code>) &mdash; service status query tool with machine-readable (.INI or JSON) output </p></li>
-<li><p> <a href="service-is-up.html"><code>service-is-up</code></a> (a.k.a. <code>svup</code>) &mdash; test that a service is in the "running" state </p></li>
-<li><p> <a href="service-is-ok.html"><code>service-is-ok</code></a> (a.k.a. <code>svok</code>) &mdash; test that a service is loaded and managed by the service manager </p></li>
-<li><p> <a href="service-is-enabled.html"><code>service-is-enabled</code></a> &mdash; test that a service is enabled </p></li>
+<li><p> <a href="commands/service-dt-scanner.xml"><code>service-dt-scanner</code></a> (a.k.a. <code>svscan</code>) &mdash; scan a daemontools-style services directory and command the service manager accordingly </p></li>
+<li><p> <a href="commands/service-status.xml"><code>service-status</code></a> (a.k.a. <code>svstat</code>) &mdash; service status query tool with human-readable output </p></li>
+<li><p> <a href="commands/service-show.xml"><code>service-show</code></a> (a.k.a. <code>svshow</code>) &mdash; service status query tool with machine-readable (.INI or JSON) output </p></li>
+<li><p> <a href="commands/service-is-up.xml"><code>service-is-up</code></a> (a.k.a. <code>svup</code>) &mdash; test that a service is in the "running" state </p></li>
+<li><p> <a href="commands/service-is-ok.xml"><code>service-is-ok</code></a> (a.k.a. <code>svok</code>) &mdash; test that a service is loaded and managed by the service manager </p></li>
+<li><p> <a href="commands/service-is-enabled.xml"><code>service-is-enabled</code></a> &mdash; test that a service is enabled </p></li>
 </ul>
 
 <p>
@@ -310,31 +317,31 @@ The System 5, Debian, BSD, Solaris, and upstart compatibility commands are:
 </p>
 
 <ul class="compact">
-<li><p> <a href="shutdown.html"><code>shutdown</code></a> &mdash; halt/reboot/poweroff, optionally after a period and writing warning messages to logged-on users </p></li>
-<li><p> <a href="reboot.html"><code>reboot</code></a> &mdash; halt/reboot/poweroff </p></li>
-<li><p> <a href="fastboot.html"><code>fastboot</code></a> &mdash; halt/reboot/poweroff, bypassing shutdown </p></li>
-<li><p> <a href="halt.html"><code>halt</code></a> (a.k.a. <code>haltsys</code>) &mdash; halt/reboot/poweroff </p></li>
-<li><p> <a href="fasthalt.html"><code>fasthalt</code></a> &mdash; halt/reboot/poweroff, bypassing shutdown </p></li>
-<li><p> <a href="poweroff.html"><code>poweroff</code></a> &mdash; halt/reboot/poweroff </p></li>
-<li><p> <a href="telinit.html"><code>telinit</code></a> &mdash; halt/reboot/poweroff or rescue/normal </p></li>
-<li><p> <a href="service.html"><code>service</code></a> &mdash; a limited shim supporting the subset of conventional subcommands that are common to both System 5 and BSD </p>
+<li><p> <a href="commands/shutdown.xml"><code>shutdown</code></a> &mdash; halt/reboot/poweroff, optionally after a period and writing warning messages to logged-on users </p></li>
+<li><p> <a href="commands/reboot.xml"><code>reboot</code></a> &mdash; halt/reboot/poweroff </p></li>
+<li><p> <a href="commands/fastboot.xml"><code>fastboot</code></a> &mdash; halt/reboot/poweroff, bypassing shutdown </p></li>
+<li><p> <a href="commands/halt.xml"><code>halt</code></a> (a.k.a. <code>haltsys</code>) &mdash; halt/reboot/poweroff </p></li>
+<li><p> <a href="commands/fasthalt.xml"><code>fasthalt</code></a> &mdash; halt/reboot/poweroff, bypassing shutdown </p></li>
+<li><p> <a href="commands/poweroff.xml"><code>poweroff</code></a> &mdash; halt/reboot/poweroff </p></li>
+<li><p> <a href="commands/telinit.xml"><code>telinit</code></a> &mdash; halt/reboot/poweroff or rescue/normal </p></li>
+<li><p> <a href="commands/service.xml"><code>service</code></a> &mdash; a limited shim supporting the subset of conventional subcommands that are common to both System 5 and BSD </p>
 <ul class="compact">
 <li><p> <code>start</code> &mdash; start a service </p></li>
 <li><p> <code>stop</code> &mdash; stop a service </p></li>
 <li><p> <code>status</code> &mdash; display the status of a service </p></li>
 </ul>
 </li>
-<li><p> <a href="chkconfig.html"><code>chkconfig</code></a> &mdash; a limited shim with subcommands</p>
+<li><p> <a href="commands/chkconfig.xml"><code>chkconfig</code></a> &mdash; a limited shim with subcommands</p>
 <ul class="compact">
 <li><p> <code>on</code> &mdash; enable a service </p></li>
 <li><p> <code>off</code> &mdash; disable a service </p></li>
 <li><p> <code>reset</code> &mdash; preset a service </p></li>
 </ul>
 </li>
-<li><p> <a href="update-rc.d.html"><code>update-rc.d</code></a> &mdash; preset/disable a service, providing a simple Debian workalike that consults native and systemd-compatible preset information rather than Debian-only "policy" mechanisms </p></li>
-<li><p> <a href="invoke-rc.d.html"><code>invoke-rc.d</code></a> &mdash; reset/stop a service, providing a simple Debian workalike that simply relies upon the already-determined preset status </p></li>
-<li><p> <a href="rc-update.html"><code>rc-update</code></a> &mdash; preset/disable a service, providing a simple OpenRC workalike that consults native and systemd-compatible preset information </p></li>
-<li><p> <a href="rc-service.html"><code>rc-service</code></a> &mdash; start/stop a service, providing a simple OpenRC workalike </p></li>
-<li><p> <a href="initctl.html"><code>initctl</code></a> &mdash; a simple alias for <code>system-control</code>; supporting <code>start</code>, <code>stop</code>, <code>status</code>, and suchlike subcommands; and as a bonus adding extra non-upstart things like <code>initctl show</code> and <code>initctl preset</code> because of that </p></li>
-<li><p> <a href="svcadm.html"><code>svcadm</code></a> &mdash; a simple alias for <code>system-control</code>, for Solaris compatibility </p></li>
+<li><p> <a href="commands/update-rc.d.xml"><code>update-rc.d</code></a> &mdash; preset/disable a service, providing a simple Debian workalike that consults native and systemd-compatible preset information rather than Debian-only "policy" mechanisms </p></li>
+<li><p> <a href="commands/invoke-rc.d.xml"><code>invoke-rc.d</code></a> &mdash; reset/stop a service, providing a simple Debian workalike that simply relies upon the already-determined preset status </p></li>
+<li><p> <a href="commands/rc-update.xml"><code>rc-update</code></a> &mdash; preset/disable a service, providing a simple OpenRC workalike that consults native and systemd-compatible preset information </p></li>
+<li><p> <a href="commands/rc-service.xml"><code>rc-service</code></a> &mdash; start/stop a service, providing a simple OpenRC workalike </p></li>
+<li><p> <a href="commands/initctl.xml"><code>initctl</code></a> &mdash; a simple alias for <code>system-control</code>; supporting <code>start</code>, <code>stop</code>, <code>status</code>, and suchlike subcommands; and as a bonus adding extra non-upstart things like <code>initctl show</code> and <code>initctl preset</code> because of that </p></li>
+<li><p> <a href="commands/svcadm.xml"><code>svcadm</code></a> &mdash; a simple alias for <code>system-control</code>, for Solaris compatibility </p></li>
 </ul>

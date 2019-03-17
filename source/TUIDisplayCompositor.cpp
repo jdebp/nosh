@@ -24,7 +24,12 @@ operator != (
 // **************************************************************************
 */
 
-TUIDisplayCompositor::TUIDisplayCompositor(coordinate init_h, coordinate init_w) :
+TUIDisplayCompositor::TUIDisplayCompositor(
+	bool i,
+	coordinate init_h,
+	coordinate init_w
+) :
+	invalidate_software_cursor(i),
 	cursor_row(0U),
 	cursor_col(0U),
 	pointer_row(0U),
@@ -90,7 +95,7 @@ TUIDisplayCompositor::poke(coordinate y, coordinate x, const CharacterCell & c)
 }
 
 void 
-TUIDisplayCompositor::move_cursor(bool invalidate_software_cursor, coordinate row, coordinate col) 
+TUIDisplayCompositor::move_cursor(coordinate row, coordinate col) 
 {
 	if (cursor_row != row || cursor_col != col) {
 		if (invalidate_software_cursor) cur_at(cursor_row, cursor_col).touch();
@@ -125,7 +130,7 @@ TUIDisplayCompositor::change_pointer_col(coordinate col)
 }
 
 void 
-TUIDisplayCompositor::set_cursor_state(bool invalidate_software_cursor, CursorSprite::attribute_type a, CursorSprite::glyph_type g) 
+TUIDisplayCompositor::set_cursor_state(CursorSprite::attribute_type a, CursorSprite::glyph_type g) 
 { 
 	if (cursor_attributes != a || cursor_glyph != g) {
 		cursor_attributes = a; 

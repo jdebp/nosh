@@ -281,6 +281,18 @@ Description: shim kbd utilities
  .
  The shims simply invoke native virtual console management commands.
 
+Package: nosh-net-tools-shims
+Architecture: amd64
+Depends: nosh-exec
+Suggests: 
+Recommends: 
+Will-Conflict: net-tools
+Description: Linux utility shims 
+ This package provides shims for  commands with names from net-tools
+  * ifconfig
+ .
+ The shims simply invoke nosh built-in commands.
+
 Package: nosh-logrotate-shims
 Architecture: amd64
 Depends: nosh-bundles
@@ -395,16 +407,16 @@ Description: Run new-style application-mode virtual terminals
 
 Package: nosh-run-via-open-rc
 Architecture: amd64
-Depends: nosh-service-management (>=1.33), systemd, nosh-bundles
+Depends: nosh-service-management (>=1.33), systemd, nosh-bundles (>=1.40)
 Suggests: 
 Recommends: 
 Description: Run the nosh service manager and daemontools service scanner via OpenRC
  This package provides init.d scripts for running the nosh service manager and daemontools service scanner under OpenRC, instead of running the nosh service manager.
- It disables the nosh sysinit.target, on the basis that systemd is doing that part of the work.
+ It disables the nosh sysinit.target, on the basis that OpenRC is doing that part of the work.
 
 Package: nosh-run-via-systemd
 Architecture: amd64
-Depends: nosh-service-management (>=1.33), systemd, nosh-bundles
+Depends: nosh-service-management (>=1.33), systemd, nosh-bundles (>=1.40)
 Suggests: 
 Recommends: 
 Replaces: nosh-systemd-services
@@ -473,7 +485,7 @@ Description: Run the various AppleTalk services
 
 Package: nosh-run-udev
 Architecture: amd64
-Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, udev
+Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, udev, nosh-run-mdevd
 Suggests: 
 Recommends: 
 Conflicts: nosh-run-busybox-mdev, nosh-run-suckless-mdev, nosh-run-vdev, nosh-run-systemd-udev
@@ -487,7 +499,7 @@ Architecture: amd64
 Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles (>=1.34), udev
 Suggests: 
 Recommends: 
-Conflicts: nosh-run-busybox-mdev, nosh-run-suckless-mdev, nosh-run-vdev, nosh-run-udev
+Conflicts: nosh-run-busybox-mdev, nosh-run-suckless-mdev, nosh-run-vdev, nosh-run-udev, nosh-run-mdevd
 Description: Run systemd-udev as the device manager.
  This package causes systemd udev to be run as the plug-and-play device manager.
  .
@@ -498,7 +510,7 @@ Architecture: amd64
 Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, busybox
 Suggests: 
 Recommends: 
-Conflicts: nosh-run-udev, nosh-run-suckless-mdev, nosh-run-vdev, nosh-run-systemd-udev
+Conflicts: nosh-run-udev, nosh-run-suckless-mdev, nosh-run-vdev, nosh-run-systemd-udev, nosh-run-mdevd
 Description: Run BusyBox mdev as the device manager.
  This package causes BusyBox mdev to be run as the plug-and-play device manager.
 
@@ -507,7 +519,7 @@ Architecture: amd64
 Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, smdev
 Suggests: 
 Recommends: 
-Conflicts: nosh-run-udev, nosh-run-suckless-mdev, nosh-run-vdev, nosh-run-systemd-udev
+Conflicts: nosh-run-udev, nosh-run-suckless-mdev, nosh-run-vdev, nosh-run-systemd-udev, nosh-run-mdevd
 Description: Run SuckLess mdev as the device manager.
  This package causes SuckLess mdev to be run as the plug-and-play device manager.
 
@@ -516,9 +528,18 @@ Architecture: amd64
 Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, vdev
 Suggests: 
 Recommends: 
-Conflicts: nosh-run-busybox-mdev, nosh-run-suckless-mdev, nosh-run-udev, nosh-run-systemd-udev
+Conflicts: nosh-run-busybox-mdev, nosh-run-suckless-mdev, nosh-run-udev, nosh-run-systemd-udev, nosh-run-mdevd
 Description: Run vdev as the device manager.
  This package causes Devuan vdev to be run as the plug-and-play device manager.
+
+Package: nosh-run-mdevd
+Architecture: amd64
+Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles
+Suggests: 
+Recommends: 
+Conflicts: nosh-run-busybox-mdev, nosh-run-suckless-mdev, nosh-run-udev, nosh-run-systemd-udev, nosh-run-vdev
+Description: Run Laurent Bercot's mdevd as the device manager.
+ This package causes Laurent Bercot's mdevd to be run as the plug-and-play device manager.
 
 Package: nosh-run-local-syslog
 Architecture: amd64

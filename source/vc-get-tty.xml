@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="vc-get-tty">
 
@@ -22,8 +23,8 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>vc-get-tty</command> 
-<arg>--long-hostname</arg> 
-<arg>--term <replaceable>type</replaceable></arg> 
+<arg choice='opt'>--long-hostname</arg> 
+<arg choice='opt'>--term <replaceable>type</replaceable></arg> 
 <arg choice='req'><replaceable>terminal-device-name</replaceable></arg> 
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
@@ -104,10 +105,10 @@ In theory, OpenBSD also supports <code>sun</code> and <code>dumb</code> terminal
 The <code>--term</code> command line option is available for overriding these hardwired values, but there is little reason for using it as the terminal types for virtual consoles have not changed for several years on FreeBSD and for a decade and a half (as of 2013) on Linux.
 </para>
 
-</refsection><refsection><title>SECURITY</title>
+</refsection><refsection><title>Security</title>
 
 <para>
-<command>vc-get-tty</command> expects to be run either directly from <citerefentry><refentrytitle>init</refentrytitle><manvolnum>1</manvolnum></citerefentry> or under a daemon supervisor of some sort.
+<command>vc-get-tty</command> expects to be run either directly from <citerefentry><refentrytitle>init</refentrytitle><manvolnum>1</manvolnum></citerefentry> or under a d&#xe6;mon supervisor of some sort.
 As such, it expects to start up with an <replaceable>already</replaceable> safe environment, open file descriptors, and resource limits for a process that is running under the aegis of the superuser.
 </para>
 
@@ -131,6 +132,8 @@ To prevent a race condition in <citerefentry><refentrytitle>open-controlling-tty
 </itemizedlist>
 </refsection>
 
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

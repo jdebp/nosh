@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="console-termio-realizer">
 
@@ -130,8 +131,8 @@ However, such terminals whilst possible to regularly encounter in the 1960s and 
 </refsection>
 
 <para>
-What the terminal supports is determined from the terminal type specified in the <envar>TERM</envar> environment variable.
-Terminal types are, per the NCurses and Terminfo documentation, assumed to comprise "families" that share a common name as a prefix (e.g. <code>gnome</code> and <code>gnome-256color</code>)
+What the terminal supports is determined from the terminal type specified in the <citerefentry><refentrytitle><envar>TERM</envar></refentrytitle><manvolnum>7</manvolnum></citerefentry> environment variable.
+Terminal types are, per <citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry>, assumed to comprise "families" that share a common name as a prefix (e.g. <code>gnome</code> and <code>gnome-256color</code>)
 <command>console-termio-realizer</command> mainly only looks at these families, not the trailing "subfamily" denotations (with a couple of exceptions such as checking for "256color").
 </para>
 
@@ -159,6 +160,8 @@ Don't do it.
 
 </refsection>
 
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

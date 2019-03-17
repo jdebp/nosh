@@ -6,7 +6,7 @@
 
 <p>
 The native mechanism for this system is the service bundle.
-Services are enabled/disabled with service bundle mechanisms, and service environment variables are set with the likes of <a href="envdir.html"><code>envdir</code></a> processing a directory within the service bundle.
+Services are enabled/disabled with service bundle mechanisms, and service environment variables are set with the likes of <a href="commands/envdir.xml"><code>envdir</code></a> processing a directory within the service bundle.
 The external formats import subsystem first <a href="rcconf-amalgamation.html">creates an amalgamated <code>rc.conf</code> file</a> which incorporates the information from all of the several system <code>rc.conf</code> files as well as from other sources.
 Then it translates from that amalgamated form into the native mechanisms for this system.
 </p>
@@ -25,7 +25,7 @@ This is done by setting configuration variables, whose names are the name of the
 </p>
 
 <p>
-The <a href="system-control.html"><code>system-control&nbsp;preset</code></a> command automatically imports these settings when determining whether a service should be enabled or disabled.
+The <a href="commands/system-control.xml"><code>system-control&nbsp;preset</code></a> command automatically imports these settings when determining whether a service should be enabled or disabled.
 </p>
 
 <p>
@@ -46,12 +46,12 @@ Conventionally, environment variables begin with the name of the service.
 
 <p>
 If you always manipulate d&aelig;mon environment variable information with the BSD <code>rcctl</code> command, rather than by editing <code>/etc/rc.conf</code> and <code>/etc/rc.conf.local</code> directly, then environment variable information will be edited directly within service bundles.
-The toolset comes with a replacement <a href="rcctl.html"><code>rcctl</code></a> command that translates <code>get</code> and <code>set</code> subcommands into the service bundle equivalent, editing files in the service bundle's <code>env/</code> subdirectory with <a href="system-control.html"><code>system-control&nbsp;set-service-env</code></a> and <a href="system-control.html"><code>system-control&nbsp;print-service-env</code></a>.
+The toolset comes with a replacement <a href="commands/rcctl.xml"><code>rcctl</code></a> command that translates <code>get</code> and <code>set</code> subcommands into the service bundle equivalent, editing files in the service bundle's <code>env/</code> subdirectory with <a href="commands/system-control.xml"><code>system-control&nbsp;set-service-env</code></a> and <a href="commands/system-control.xml"><code>system-control&nbsp;print-service-env</code></a>.
 </p>
 
 <p>
 As the manual page mentions, best practice <em>even with the original OpenBSD tool</em> is to <em>not</em> get into the bad habit of using <code>rcctl&nbsp;set&nbsp;</code><i>name</i><code>&nbsp;status</code> instead of <code>rcctl&nbsp;enable&nbsp;</code><i>name</i> and <code>rcctl&nbsp;disable&nbsp;</code><i>name</i>.
-The <code>set</code>/<code>get</code> way of doing things not only doesn't work with the <a href="rcctl.html"><code>rcctl</code></a> shim but doesn't even work for NetBSD, DragonFly BSD, FreeBSD, or TrueOS, none of which are compatible with OpenBSD's unique <code>rc.conf</code> variable naming scheme.
+The <code>set</code>/<code>get</code> way of doing things not only doesn't work with the <a href="commands/rcctl.xml"><code>rcctl</code></a> shim but doesn't even work for NetBSD, DragonFly BSD, FreeBSD, or TrueOS, none of which are compatible with OpenBSD's unique <code>rc.conf</code> variable naming scheme.
 In contrast, the <code>enable</code>/<code>disable</code> way of doing things works both with the original tool and the shim.
 (Ports of the original OpenBSD tool to other BSDs will also likely ensure that <code>enable</code>/<code>disable</code> do the right thing for the target platform.)
 </p>

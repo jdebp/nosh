@@ -133,16 +133,24 @@ Here are some of the ways ways where the advances in design are the same as thos
 
 <ul>
 <li><p>
-<strong>No <code>/etc/inittab</code>.</strong>
+<strong> No <code>/etc/inittab</code>. </strong>
 It comes as a surprise to some, but System 5 <code>init</code> was never the only game in town.
 Over the 1990s and 2000s, many alternative process #1 programs were published.
 Of those <em>only one</em>, Nikola Vladov's <a href="http://riemann.fmi.uni-sofia.bg/ninit/"><code>ninit</code></a>, maintained compatibility with System 5 <code>/etc/inittab</code>.
 <em>No other</em> replacements for System 5 <code>init</code> did &mdash; not <code>finit</code>, not <code>minit</code>, not <code>runit-init</code>, not upstart, not systemd, not any of the others.
 Nor does the nosh package.
-</p> </li>
+</p></li>
 <li><p>
-<strong>No run levels.</strong>
-This not only reflects the roots of the package in BSDs, which never had run levels in the first place, but also reflects the fact that run-levels are an outdated (Solaris 10 replaced them with symbolic "milestones" that have names like <code>multi-user</code> in 2005.) hodge-podge (Multi-user bootstrap with an X server can be run-level 2, 4, or 5, depending from which system one uses.) that are best avoided.
+<strong> Terminal login is an ordinary service like any other and there is no <code>getty</code>. </strong>
+It comes as a surprise to <em>even more</em> people that <a href="http://jdebp.eu./FGA/inittab-getty-is-history.html">process #1 stopped being responsible for runnning terminal login services and <code>getty</code> stopped being used in Unix in 1988</a>, years before Linux even existed.
+As the <a href="http://jdebp.eu./FGA/unix-service-access-facility.html">Service Access Facility</a> did, nosh puts terminal login services in the charge of the service manager, as ordinary services like any others.
+With the SAF, this meant that terminal login could be manipulated with ordinary SAF commands, and terminal login services could be enabled and disabled, and (more importantly, since the old <code>/etc/inittab</code> system provided no mechanism for this) started and stopped on the fly.
+Terminal login services are individually controllable in the ordinary manner with the nosh package, too.
+And as the SAF did, <a href="virtual-terminal-login.html">nosh terminal login services replace the functionality of <code>getty</code> is with native login management tools</a>, for all terminals apart from real physical terminals connected to serial ports.
+</p></li>
+<li><p>
+<strong> No run levels. </strong>
+This not only reflects the roots of the package in BSDs, which never had run levels in the first place, but also reflects the fact that run-levels are an <a href="http://jdebp.eu./FGA/run-levels-are-history.html">outdated and pass&eacute;</a> hodge-podge (Multi-user bootstrap with an X server can be run-level 2, 4, or 5, depending from which system one uses.) that are best avoided.
 You are strongly encouraged to un-learn the idea of run-levels.
 </p> </li>
 <li><p>
@@ -154,7 +162,7 @@ The service manager tracks services properly, without stale information lying ar
 <li><p>
 <strong> Parallel and ordered service startup. </strong>
 If you've ever waited impatiently for the old <code>/etc/rc.delay</code> to stop <code>sleep</code>ing you'll appreciate this.
-nosh service management starts (and stops) daemons in parallel, calculating a grouping, and a start/stop order, based upon inter-service ordering dependencies.
+nosh service management starts (and stops) d&#xe6;mons in parallel, calculating a grouping, and a start/stop order, based upon inter-service ordering dependencies.
 </p></li>
 </ul>
 

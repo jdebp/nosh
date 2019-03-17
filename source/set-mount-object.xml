@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="set-mount-object">
 
@@ -22,7 +23,7 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>set-mount-object</command>
-<arg>--recursive</arg>
+<arg choice='opt'>--recursive</arg>
 <arg choice='req'><replaceable>state</replaceable></arg>
 <arg choice='req'><replaceable>directory</replaceable></arg>
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
@@ -75,7 +76,9 @@ The states are
 
 </variablelist>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>
 

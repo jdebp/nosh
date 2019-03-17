@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="service-manager">
 
@@ -40,10 +41,10 @@ It creates individual control FIFOs for each service, through which it receives 
 </para>
 
 <para>
-<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry> invokes <command>service-manager</command> with the appropriate socket (which it sets up itself) and output directed to a logging daemon.
+<citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry> invokes <command>service-manager</command> with the appropriate socket (which it sets up itself) and output directed to a logging d&#xe6;mon.
 So also does <citerefentry><refentrytitle>per-user-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 Alternatively, <command>service-manager</command> can be started by <citerefentry><refentrytitle>local-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>, which will set up the appropriate socket.
-(<command>service-manager</command> can even be started as a "socket-activated" daemon by <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry> with the systemd-recommended <code>Accept=false</code>.)
+(<command>service-manager</command> can even be started as a "socket-activated" d&#xe6;mon by <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry> with the systemd-recommended <code>Accept=false</code>.)
 </para>
 
 </refsection><refsection><title>Services</title>
@@ -110,7 +111,7 @@ A <citerefentry><refentrytitle>tcp-socket-accept</refentrytitle><manvolnum>1</ma
 </listitem>
 <listitem>
 <para>
-Many services have <filename>env</filename> subdirectories read by <citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry> in order to control daemon process environment variables.
+Many services have <filename>env</filename> subdirectories read by <citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry> in order to control d&#xe6;mon process environment variables.
 </para>
 </listitem>
 </itemizedlist>
@@ -214,7 +215,7 @@ The <filename>status</filename> file contents are:
 <orderedlist>
 <listitem><para>12-byte TAI64N timestamp of last service status change event.</para></listitem>
 <listitem><para>4-byte current main process ID in host byte order, <literal>0</literal> meaning no process and <literal>-1</literal> meaning process #0.</para></listitem>
-<listitem><para>1-byte paused flag, if the daemon process is in the stopped state.</para></listitem>
+<listitem><para>1-byte paused flag, if the d&#xe6;mon process is in the stopped state.</para></listitem>
 <listitem>
 	<para>1-byte pending command flag, which is an ASCII-encoded character:</para>
 	<variablelist spacing="compact">
@@ -384,6 +385,8 @@ The second is either (for <code>exit</code>) the decimal exit status of the proc
 For convenience, the third is (for other than <code>exit</code>) always the decimal code of the specific signal.
 </para>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

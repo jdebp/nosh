@@ -18,7 +18,7 @@ A service is stuck in the "starting", "failed", or "stopping" states.
 </h2>
 
 <p>
-The <a href="service-control.html"><code>service-control</code> command</a> causes the service manager to send signals to the service process(es).
+The <a href="commands/service-control.xml"><code>service-control</code> command</a> causes the service manager to send signals to the service process(es).
 Those processes include the ones that run in the "starting", "failed", and "stopping" states &mdash; namely the <code>start</code>, <code>restart</code>, and <code>stop</code> programs and anything that they in their turn run.
 So just terminate the process(es) with <code>service-control --terminate</code>.
 </p>
@@ -214,6 +214,6 @@ But interactive shell programs generally outright ignore the <code>SIGTERM</code
 </p>
 
 <p>
-So if you issue a <a href="shutdown.html"><code>shutdown</code></a> or (say) a <a href="system-control.html"><code>system-control&nbsp;poweroff</code></a> command in the emergency login session, <em>you must also exit the emergency login session</em> before the system and service managers will finish the final part of the shutdown process.
+So if you issue a <a href="commands/shutdown.xml"><code>shutdown</code></a> or (say) a <a href="commands/system-control.xml"><code>system-control&nbsp;poweroff</code></a> command in the emergency login session, <em>you must also exit the emergency login session</em> before the system and service managers will finish the final part of the shutdown process.
 </p>
 -->

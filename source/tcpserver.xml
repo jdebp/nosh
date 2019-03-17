@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="tcpserver">
 
@@ -22,21 +23,21 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>tcpserver</command> 
-<arg>-O</arg> 
-<arg>-P</arg> 
-<arg>-q</arg> 
-<arg>-Q</arg> 
-<arg>-R</arg> 
-<arg>-H</arg> 
-<arg>-d</arg> 
-<arg>-b <replaceable>backlog</replaceable></arg> 
-<arg>-v</arg> 
-<arg>-D</arg> 
-<arg>-o</arg> 
-<arg>-l <replaceable>localname</replaceable></arg> 
-<arg>-c <replaceable>connlimit</replaceable></arg> 
-<arg>-U</arg> 
-<arg>-B <replaceable>banner</replaceable></arg> 
+<arg choice='opt'>-O</arg> 
+<arg choice='opt'>-P</arg> 
+<arg choice='opt'>-q</arg> 
+<arg choice='opt'>-Q</arg> 
+<arg choice='opt'>-R</arg> 
+<arg choice='opt'>-H</arg> 
+<arg choice='opt'>-d</arg> 
+<arg choice='opt'>-b <replaceable>backlog</replaceable></arg> 
+<arg choice='opt'>-v</arg> 
+<arg choice='opt'>-D</arg> 
+<arg choice='opt'>-o</arg> 
+<arg choice='opt'>-l <replaceable>localname</replaceable></arg> 
+<arg choice='opt'>-c <replaceable>connlimit</replaceable></arg> 
+<arg choice='opt'>-U</arg> 
+<arg choice='opt'>-B <replaceable>banner</replaceable></arg> 
 <arg choice='req'><replaceable>host</replaceable></arg> 
 <arg choice='req'><replaceable>port</replaceable></arg> 
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
@@ -55,7 +56,7 @@ It devolves to a combination of <citerefentry><refentrytitle>tcp-socket-listen</
 </para>
 
 <para>
-The <arg choice='plain'>-O</arg>, <arg choice='plain'>-P</arg>, <arg choice='plain'>-q</arg>, <arg choice='plain'>-Q</arg>, <arg choice='plain'>-H</arg>, <arg choice='plain'>-R</arg>, and <arg choice='plain'>-d</arg> command-line options simply would enact what are already the defaults, are thus present solely for compatibility, and are thus ignored.
+The <arg choice='plain'>-O</arg>, <arg choice='plain'>-P</arg>, <arg choice='plain'>-q</arg>, <arg choice='plain'>-Q</arg>, <arg choice='plain'>-H</arg>, <arg choice='plain'>-R</arg>, and <arg choice='plain'>-d</arg> command-line options (which originate with the Bernstein tool by this name) simply would enact what are already the defaults, are thus present solely for compatibility, and are thus ignored.
 </para>
 
 <para>
@@ -72,6 +73,8 @@ The options that permit attackers to run IDENT and DNS servers and inject attack
 </refsection>
 
 </refsection>
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

@@ -10,12 +10,12 @@ terminal resources
 The virtual terminal subsystem requires various resources.
 </p>
 
-<h2>
+<h2 id="kbdmaps">
 keyboard maps
 </h2>
 
 <p>
-On systems with <code>/usr/share/vt/keymaps/</code> (such as FreeBSD), <a href="external-formats.html">the external formats conversion subsystem</a> takes the old-style SCO/FreeBSD kernel virtual terminal keyboard maps from there and generates a range of keyboard map files suitable for <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a> by passing them through <a href="console-convert-kbdmap.html"><code>console-convert-kbdmap</code></a>.
+On systems with <code>/usr/share/vt/keymaps/</code> (such as FreeBSD), <a href="external-formats.html">the external formats conversion subsystem</a> takes the old-style SCO/FreeBSD kernel virtual terminal keyboard maps from there and generates a range of keyboard map files suitable for <a href="commands/console-fb-realizer.xml"><code>console-fb-realizer</code></a> by passing them through <a href="commands/console-convert-kbdmap.xml"><code>console-convert-kbdmap</code></a>.
 The original maps are converted with some modifications supplied by overlay map files:
 </p>
 <dl id="FreeBSDOverlays">
@@ -62,7 +62,7 @@ The FreeBSD <code>jp.kbd</code> keyboard map maps the "Grave" key (engraved with
 </dl>
 
 <p>
-On systems where there is no <code>/usr/share/vt/keymaps/</code>, <a href="external-formats.html">the external formats conversion subsystem</a> generates a (narrower) range of keyboard map files by overlaying the default null map, U.S. International, built into <a href="console-convert-kbdmap.html"><code>console-convert-kbdmap</code></a> with map files that provide just the differences between U.S. International and other layouts rather than entire maps as come with FreeBSD.
+On systems where there is no <code>/usr/share/vt/keymaps/</code>, <a href="external-formats.html">the external formats conversion subsystem</a> generates a (narrower) range of keyboard map files by overlaying the default null map, U.S. International, built into <a href="commands/console-convert-kbdmap.xml"><code>console-convert-kbdmap</code></a> with map files that provide just the differences between U.S. International and other layouts rather than entire maps as come with FreeBSD.
 For example:
 <a href="gazetteer.html#default_to_uk.kbd"><code>default_to_uk.kbd</code></a> is the difference between U.S. International and U.K. International.
 </p>
@@ -72,12 +72,12 @@ The generated keyboard maps are placed in <a href="gazetteer.html#kbdmaps"><code
 Their names follow a regular pattern comprising the ISO country code, the PC Windows keyboard variant (i.e. 104, 105, 106, 107, or 109), and any options such as <code>.capsctrl</code> for maps generated with the <a href="gazetteer.html#swap_capsctrl.kbd"><code>swap_capsctrl.kbd</code></a> overlay that swaps the capitals lock &#x21ec; and control &#x2388; keys.
 </p>
 
-<h2>
+<h2 id="fonts">
 fonts
 </h2>
 
 <p>
-Fonts suitable for <a href="console-fb-realizer.html"><code>console-fb-realizer</code></a> have to be in the "vt" format of FreeBSD.
+Fonts suitable for <a href="commands/console-fb-realizer.xml"><code>console-fb-realizer</code></a> have to be in the "vt" format of FreeBSD.
 BDF fonts can be converted to this format with <a href="https://www.freebsd.org/cgi/man.cgi?query=vtfontcvt&apropos=0&sektion=8">FreeBSD's <code>vtfontcvt</code> tool</a>, as long as they are (arbitrarily) limited to 8 or 16 pixel-wide bounding rectangles.
 (This unfortunately prevented FreeBSD's <code>vtfontcvt</code> until 2019 from being able to convert <a href="https://wiki.ubuntu.com/UbuntuFontFamily">Ubuntu Monospace</a>, which has varying-sized bounding rectangles for individual characters.)
 </p>
@@ -129,7 +129,7 @@ input methods
 </h2>
 
 <p>
-<a href="console-input-method.html"><code>console-input-method</code></a> is table-driven.
+<a href="commands/console-input-method.xml"><code>console-input-method</code></a> is table-driven.
 The tables that it uses are the same CIN data files as are used by xcin, gcin (<a href="https://github.com/pkg-ime/gcin/tree/master/data">GitHub</a>), jscin (<a href="https://github.com/google/jscin/tree/master/src/tables">GitHub</a>), hime (<a href="https://github.com/hime-ime/hime/tree/master/data">GitHub</a>), PIME (<a href="https://github.com/EasyIME/PIME/tree/master/python/cinbase/cin">GitHub</a>), OpenVanilla (<a href="https://github.com/openvanilla/openvanilla/tree/master/DataTables">GitHub</a>), Chinese Open Desktop (<a href="https://github.com/chinese-opendesktop/cin-tables">GitHub</a>), OkidoKey.app (<a href="https://github.com/ethanliu/OkidoKeyCharsets/tree/master/DataTables">GitHub</a>), and MacOS.
 </p>
 

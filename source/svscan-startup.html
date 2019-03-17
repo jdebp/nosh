@@ -8,20 +8,20 @@ Compatible old-style startup
 
 <p>
 As an alternative to the full startup and shutdown mechanisms that involve running the system manager, one can use a mechanism that operates more like traditional daemontools.
-The service manager still runs, but instead of being sent control messages by <a href="system-control.html"><code>system-control</code></a> it is sent control messages by <a href="service-dt-scanner.html"><code>service-dt-scanner</code></a>, which implements old-style daemontools service activation involving a <code>/service/</code> directory.
+The service manager still runs, but instead of being sent control messages by <a href="commands/system-control.xml"><code>system-control</code></a> it is sent control messages by <a href="commands/service-dt-scanner.xml"><code>service-dt-scanner</code></a>, which implements old-style daemontools service activation involving a <code>/service/</code> directory.
 </p>
 
 <p>
-Of course, one has to do one's own system management, with some program running as process #1 that invokes <a href="service-manager.html"><code>service-manager</code></a> and <code>service-dt-scanner</code>.
+Of course, one has to do one's own system management, with some program running as process #1 that invokes <a href="commands/service-manager.xml"><code>service-manager</code></a> and <code>service-dt-scanner</code>.
 Exactly what one uses is beyond the scope of this guide, obviously.
 </p>
 
-<h2>
-Old-style startup under Mewburn <code>rc</code> and OpenBSD <code>rc</code>
+<h2 id="RC">
+Old-style startup under Mewburn <code>rc</code>, OpenRC, and OpenBSD <code>rc</code>
 </h2>
 
 <p>
-The package comes supplied with some <code>rc.d</code> scripts that enable one to run the service manager and old-style scanner under Mewburn <code>rc</code> (on FreeBSD, NetBSD, TrueOS, and others) or under OpenBSD <code>rc</code>.
+The package comes supplied with some <code>rc.d</code> scripts that enable one to run the service manager and old-style scanner under Mewburn <code>rc</code> (on FreeBSD, NetBSD, TrueOS, and others), under OpenRC, or under OpenBSD <code>rc</code>.
 </p>
 
 <ul>
@@ -43,10 +43,10 @@ What happens at system bootstrap, with these enabled, is:
 
 <ol>
 <li><p>
-Mewburn/OpenBSD <code>rc</code> activates the <code>service-manager</code> script, spawning <code>service-manager</code> with an open file descriptor (set up by <code>local-datagram-socket-listen</code>) listening on <code>/run/service-manager/control</code>.
+Mewburn/OpenRC/OpenBSD <code>rc</code> activates the <code>service-manager</code> script, spawning <code>service-manager</code> with an open file descriptor (set up by <code>local-datagram-socket-listen</code>) listening on <code>/run/service-manager/control</code>.
 </p></li>
 <li><p>
-Mewburn/OpenBSD <code>rc</code> activates the <code>service-manager-svscan</code> script, spawning <code>service-dt-scanner /service/</code>.
+Mewburn/OpenRC/OpenBSD <code>rc</code> activates the <code>service-manager-svscan</code> script, spawning <code>service-dt-scanner /service/</code>.
 </p>
 <ol>
 <li><p>
@@ -58,12 +58,12 @@ Mewburn/OpenBSD <code>rc</code> activates the <code>service-manager-svscan</code
 </ol>
 </li>
 <li><p>
-Mewburn/OpenBSD <code>rc</code> activates the <code>system-control-normal</code> script, spawning <code>system-control start normal</code>.
+Mewburn/OpenRC/OpenBSD <code>rc</code> activates the <code>system-control-normal</code> script, spawning <code>system-control start normal</code>.
 </p>
 <ol>
 <li><p>
 <code>system-control start</code> finds all of the services wanted-by the <code>normal</code> target, sends a LOAD command for every such service to the <code>/run/service-manager/control</code> socket, and sends a START command.
-(A special cut-out, only in place when the system is configured to run under Mewburn/OpenBSD <code>rc</code>, prevents the <code>sysinit</code> target and its dependencies from being started, on the grounds that the Mewburn/OpenBSD <code>rc</code> takes care of its equivalent.)
+(A special cut-out, only in place when the system is configured to run under Mewburn/OpenRC/OpenBSD <code>rc</code>, prevents the <code>sysinit</code> target and its dependencies from being started, on the grounds that the Mewburn/OpenBSD <code>rc</code> takes care of its equivalent.)
 </p></li>
 <li><p>
 <code>service-manager</code> loads and manages the services that <code>system-control start</code> tells it to.
@@ -72,7 +72,7 @@ Mewburn/OpenBSD <code>rc</code> activates the <code>system-control-normal</code>
 </li>
 </ol>
 
-<h2>
+<h2 id="systemd">
 Old-style startup under systemd
 </h2>
 
@@ -133,3 +133,9 @@ systemd activates the <code>system-control-normal.service</code> service, spawni
 </ol>
 </li>
 </ol>
+
+<p>
+At shutdown, systemd first deactivates the <code>system-control-normal.service</code> service, spawning <code>system-control start shutdown</code> to perform a normal orderly shutdown.
+This sends various commands to the service manager to attempt, with various signals, to stop all services that the <code>shutdown</code> service has a <code>conflicts/</code> relationship with.
+It happens before systemd attempts to shut down the actual <code>service-manager.service</code> itself.
+</p>

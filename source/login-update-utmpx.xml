@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="login-update-utmpx">
 
@@ -72,6 +73,19 @@ On operating systems such as FreeBSD, note that <command>login-update-utmpx</com
 </para>
 
 </refsection>
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+
+<refsection id="COMPATIBILITY" xreflabel="COMPATIBILITY">
+<title>Compatibility</title>
+
+<para>
+For compatibility with the FreeBSD <citerefentry><refentrytitle>utx</refentrytitle><manvolnum>8</manvolnum></citerefentry> command, this command is also available as <command>utx</command>.
+Its primary use is in services that run at startup and shutdown, so it does not duplicate that command's <arg choice="plain">rm</arg> subcommand.
+</para>
+
+</refsection>
+
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

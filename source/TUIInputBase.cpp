@@ -3,20 +3,13 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-#define __STDC_FORMAT_MACROS
 #define _XOPEN_SOURCE_EXTENDED
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <unistd.h>
-#if defined(__LINUX__) || defined(__linux__)
 #include "ttyutils.h"
-#elif defined(__OpenBSD__)
-#include "ttyutils.h"
-#else
-#include "ttyutils.h"
-#endif
 #include "utils.h"
 #include "TerminalCapabilities.h"
 #include "InputMessage.h"

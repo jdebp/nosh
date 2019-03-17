@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="chdir">
 
@@ -34,16 +35,22 @@ This command is more commonly used with <citerefentry><refentrytitle>exec</refen
 
 </refsection><refsection><title>Description</title>
 
+<para>
 <command>chdir</command> is a chain-loading utility that changes its working directory to
 <replaceable>directory</replaceable> and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.  
+</para>
 
+<para>
 <replaceable>next-prog</replaceable> may contain its own command line options, which <command>chdir</command> will ignore.
+</para>
 
 <para>
 Unlike the shell built-in of the same name, <command>chdir</command> has no notion of
 "logical" and "physical" paths.
 </para>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

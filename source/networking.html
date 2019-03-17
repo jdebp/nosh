@@ -156,7 +156,7 @@ Not only are these commands not necessarily available across all such operating 
 The <code>network-runtime</code> service handles the creation and destruction of the <code>/run/network</code> runtime directory that various other services use.
 </p>
 
-<h2>
+<h2 id="Plug-and-Play">
 Plug-and-Play and dynamic configuration
 </h2>
 
@@ -175,7 +175,7 @@ This configuration file specifies various events that will start the <code>ifscr
 
 <li>
 <p>
-On Linux operating systems, the Plug and Play manager can be <code>eudev</code>, Busybox <code>mdev</code>, Suckless <code>mdev</code>, <code>systemd-udev</code>, or <code>vdev</code>.
+On Linux operating systems, the Plug and Play manager can be <code>eudev</code>, Busybox <code>mdev</code>, Suckless <code>mdev</code>, <code>systemd-udev</code>, <code>mdevd</code>, or <code>vdev</code>.
 There are as yet no supplied configuration files for linking them to the network services.
 </p>
 </li>

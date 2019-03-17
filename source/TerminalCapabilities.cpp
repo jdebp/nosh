@@ -36,7 +36,8 @@ TerminalCapabilities::TerminalCapabilities(
 	rxvt_function_keys(false),
 	reset_sets_tabs(false),
 	has_invisible(true),
-	has_reverse_off(true)
+	has_reverse_off(true),
+	has_square_mode(false)
 {
 	const char * term(envs.query("TERM"));
 	const char * colorterm(envs.query("COLORTERM"));
@@ -124,15 +125,20 @@ TerminalCapabilities::TerminalCapabilities(
 		colour_level = ECMA_8_COLOURS;
 	}
 
+	if (false
+        // Allows forcing the use of DECSCUSR on KVT-compatible terminals that do indeed implement the xterm extension:
+	||  (!true_kvt && (teken || linuxvt))
+	) {
+		// These have an extended version that has a vertical bar, a box, and a star.
+		cursor_shape_command = EXTENDED_DECSCUSR;
+	} else
 	if (true_xterm	// per xterm ctlseqs doco (since version 282)
         ||  rxvt	// per command.C
         ||  iterm || iterm_pretending_xterm	// per analysis of VT100Terminal.m
         ||  teraterm	// per TeraTerm "Supported Control Functions" doco
-        // Allows forcing the use of DECSCUSR on KVT-compatible terminals that do indeed implement the xterm extension:
-	||  (!true_kvt && (teken || linuxvt))
 	) {
 		// xterm has an extended version that has a vertical bar.
-		cursor_shape_command = EXTENDED_DECSCUSR;
+		cursor_shape_command = XTERM_DECSCUSR;
 	} else
 	if (putty		// per MinTTY 0.4.3-1 release notes from 2009
 	||  vte_version >= 3900	// per https://bugzilla.gnome.org/show_bug.cgi?id=720821
@@ -268,4 +274,7 @@ TerminalCapabilities::TerminalCapabilities(
 	) {
 		reset_sets_tabs = true;
 	}
+
+	if (!true_kvt && (teken || linuxvt))
+		has_square_mode = true;
 }

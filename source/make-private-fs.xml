@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="make-private-fs">
 
@@ -22,10 +23,10 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>make-private-fs</command>
-<arg>--temp</arg>
-<arg>--devices</arg>
-<arg>--homes</arg>
-<arg>--hide <replaceable>directory</replaceable></arg>
+<arg choice='opt'>--temp</arg>
+<arg choice='opt'>--devices</arg>
+<arg choice='opt'>--homes</arg>
+<arg choice='opt'>--hide <replaceable>directory</replaceable></arg>
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -102,6 +103,8 @@ The command will fail if the process is not running under the aegis of the super
 Beware: Running it without unsharing first will affect the global mount namespace.
 </para>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

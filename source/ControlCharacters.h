@@ -30,6 +30,7 @@ For copyright and licensing terms, see the file named COPYING.
 		GS = 0x1d,
 		RS = 0x1e,
 		US = 0x1f,
+		SPC = 0x20,
 		DEL = 0x7f,
 		IND = 0x84,
 		NEL = 0x85,

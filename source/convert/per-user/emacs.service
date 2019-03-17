@@ -4,6 +4,7 @@
 
 [Unit]
 Description=EMACS Made A Client-Server for %u
+Description=This requires emacs version 26 or later.
 
 [Service]
 #WorkingDirectory=~

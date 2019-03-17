@@ -37,8 +37,8 @@ The import subsystem does not generate or supply such mount services.
 </h3>
 
 <p>
-This service runs an instance of <a href="per-user-manager.html"><code>per-user-manager</code></a> as the user.
-This in turn runs an instance of <a href="service-manager.html"><code>service-manager</code></a> that manages <a href="per-user-user-services.html">the per-user services</a>.
+This service runs an instance of <a href="commands/per-user-manager.xml"><code>per-user-manager</code></a> as the user.
+This in turn runs an instance of <a href="commands/service-manager.xml"><code>service-manager</code></a> that manages <a href="per-user-user-services.html">the per-user services</a>.
 </p>
 
 <h3>
@@ -47,7 +47,7 @@ This in turn runs an instance of <a href="service-manager.html"><code>service-ma
 
 <p>
 This service runs an instance of <code>dbus-daemon</code> as the user.
-It uses <a href="gazetteer.html#per-user.conf">a private configuration file</a> from the service definition that ensures that <a href="dbus-daemon-launch-helper.html"><code>dbus-daemon-launch-helper</code></a> is used to <a href="per-user-dbus-demand-start.html">demand-start servers</a>.
+It uses <a href="gazetteer.html#per-user.conf">a private configuration file</a> from the service definition that ensures that <a href="commands/dbus-daemon-launch-helper.xml"><code>dbus-daemon-launch-helper</code></a> is used to <a href="per-user-dbus-demand-start.html">demand-start servers</a>.
 The socket that this broker listens on is in the conventional place at <a href="gazetteer.html#user-bus-socket"><code>/run/user/</code><i>name</i><code>/bus</code></a>.
 </p>
 

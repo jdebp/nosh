@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="console-terminal-emulator">
 
@@ -341,6 +342,14 @@ The digit sequences are parameters to the action, and zero-length digit sequence
 In most cases, a control sequence with N parameters is equivalent to N such control sequences in order each with one of the parameters.
 </para>
 
+<para>
+There is one control sequence that is peculiar to this terminal emulator.
+DEC Private Mode 1369 is so-called "square" mode.
+If it is off, all Unicode characters classified as "full-width" or "wide" have an extra space printed after them.
+This is for the benefit of realizers that have oblong cells that cannot hold full-width or wide glyphs.
+It defaults to on, where no such special processing occurs.
+</para>
+
 </refsection>
 
 <refsection><title>Colours and attributes</title>
@@ -406,6 +415,12 @@ In practice, things are slightly more complex if automatic margins are turned on
 Rather than a wrap happening there and then when the character is written to the last column, instead a pending wrap is flagged.
 If the cursor is then explicitly moved, the pending wrap is cancelled.
 Otherwise, when the next graphic is to be printed the pending wrap is enacted immediately beforehand.
+</para>
+
+<para>
+The purpose of pending wrap is to allow full-screen TUI programs to write right up to the lower-right-hand corner without scrolling the screen.
+Programs must be aware of and careful about its effect.
+In the pending state, the terminal cursor is in a different position to where an application would have expected it to immediately wrap to; and using relative cursor motions in that state, including BackSpace and Next Line, needs to account for this.
 </para>
 
 <para>
@@ -615,11 +630,11 @@ These sub-modes are provided by realizers and their various keyboard mapping sys
 The function keys in the abstract keyboard are all proper function keys, and function keys 1 to 5 will generate documented, but unusual, DECFNK control sequences in non-SCO modes.
 (Folklore has it that these control sequences were impossible for DEC VTs to send, as the function keys 1 to 5 were always in "local mode".
 In fact, in later model DEC VTs they could all be reconfigured to "host mode" and would generate DECFNK control sequences like any other function key.)
-DEC VTs have distinct extended, non-function, keys on the calculator keypad, <code>PAD_F1</code> to <code>PAD_F4</code>; which do not generate DECFNK control sequences.
+DEC VTs have distinct extended, non-function, keys on the calculator keypad, <keycap>PAD_F1</keycap> to <keycap>PAD_F4</keycap>; which do not generate DECFNK control sequences.
 </para>
 
 <para>
-The Linux, FreeBSD, NetBSD, and SCO kernel virtual terminals, and many other terminal emulators, map the <code>F1</code> to <code>F4</code> keys on the actual keyboard to the <code>PAD_F1</code> to <code>PAD_F4</code> extended keys, for which they otherwise have no equivalent; and the control sequences that most applications will recognize as <code>F1</code> to <code>F4</code> are in reality the control sequences for <code>PAD_F1</code> to <code>PAD_F4</code>.
+The Linux, FreeBSD, NetBSD, and SCO kernel virtual terminals, and many other terminal emulators, map the <keycap>F1</keycap> to <keycap>F4</keycap> keys on the actual keyboard to the <keycap>PAD_F1</keycap> to <keycap>PAD_F4</keycap> extended keys, for which they otherwise have no equivalent; and the control sequences that most applications will recognize as <keycap>F1</keycap> to <keycap>F4</keycap> are in reality the control sequences for <keycap>PAD_F1</keycap> to <keycap>PAD_F4</keycap>.
 As with the locks, this is considered entirely and solely the domain of realizers, which apply their various mapping mechanisms to determine what keys on the realizing keyboard generate function key input messages and what real keys generate extended key input messages.
 </para>
 
@@ -630,10 +645,10 @@ There is a degree of variance amongst kernel virtual terminals that can cause pr
 <itemizedlist>
 <listitem>
 <para>
-The Linux kernel virtual terminal sends the DECFNK sequences for <code>FIND</code> and <code>SELECT</code> for the <code>HOME</code> and <code>END</code> keys.  
-The other kernel virtual terminals send the DECFNK <code>FIND</code> and <code>SELECT</code> sequences for those keys, with different control sequences for <code>HOME</code> and <code>END</code> (as per a DEC VT520 in VT mode).
+The Linux kernel virtual terminal sends the DECFNK sequences for <keycap>FIND</keycap> and <keycap>SELECT</keycap> for the <keycap>HOME</keycap> and <keycap>END</keycap> keys.  
+The other kernel virtual terminals send the DECFNK <keycap>FIND</keycap> and <keycap>SELECT</keycap> sequences for those keys, with different control sequences for <keycap>HOME</keycap> and <keycap>END</keycap> (as per a DEC VT520 in VT mode).
 This has two major consequences: 
-If the terminal emulator is in Linux emulation mode, <code>HOME</code> and <code>END</code> will not be correctly recognized if the <envar>TERM</envar> environment variable does not also specify "<code>linux</code>"; and if the terminal emulator is in another mode but the <envar>TERM</envar> environment variable is set to "<code>linux</code>", <code>FIND</code> and <code>SELECT</code> will be incorrectly recognized and <code>HOME</code> and <code>END</code> will not be recognized at all.
+If the terminal emulator is in Linux emulation mode, <keycap>HOME</keycap> and <keycap>END</keycap> will not be correctly recognized if the <envar>TERM</envar> environment variable does not also specify "<code>linux</code>"; and if the terminal emulator is in another mode but the <envar>TERM</envar> environment variable is set to "<code>linux</code>", <keycap>FIND</keycap> and <keycap>SELECT</keycap> will be incorrectly recognized and <keycap>HOME</keycap> and <keycap>END</keycap> will not be recognized at all.
 </para>
 </listitem>
 <listitem>
@@ -743,6 +758,8 @@ The Linux and FreeBSD kernel terminal emulators both do, however; so for compati
 
 </refsection>
 
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

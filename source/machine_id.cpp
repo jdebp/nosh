@@ -13,24 +13,32 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-static const char volatile_filename[] = "/run/machine-id";
-static const char non_volatile_filename[] = "/etc/machine-id";
+namespace {
+
+	const char volatile_filename[] = "/run/machine-id";
+	const char non_volatile_filename[] = "/etc/machine-id";
 #if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
-static const char volatile_hostuuid_filename[] = "/run/hostid";
-static const char non_volatile_hostuuid_filename[] = "/etc/hostid";
-static const char non_volatile_local_etc_machineid_filename[] = "/usr/local/etc/machine-id";
+	const char volatile_hostuuid_filename[] = "/run/hostid";
+	const char non_volatile_hostuuid_filename[] = "/etc/hostid";
+	const char non_volatile_local_etc_machineid_filename[] = "/usr/local/etc/machine-id";
 #endif
+
+}
 
 namespace machine_id {
 
 uuid_t the_machine_id;
 
+}
+
 /* bottom level functions ***************************************************
 // **************************************************************************
 */
 
+namespace {
+
 #if !defined(__LINUX__) && !defined(__linux__)
-static inline
+inline
 uuid_t
 uuid_to_guid (
 	const uuid_t & u
@@ -42,7 +50,7 @@ uuid_to_guid (
 	return g;
 }
 
-static inline
+inline
 uuid_t
 guid_to_uuid (
 	const uuid_t & g
@@ -55,7 +63,7 @@ guid_to_uuid (
 }
 #endif
 
-static inline 
+inline 
 int 
 x2c ( int c ) 
 {
@@ -67,7 +75,7 @@ x2c ( int c )
 	return EOF;
 }
 
-static inline 
+inline 
 int 
 c2x ( int c ) 
 {
@@ -77,14 +85,13 @@ c2x ( int c )
 	return EOF;
 }
 
-static
 bool
 read_first_line_machine_id (
 	std:: istream & i
 ) {
 	if (i.fail()) return false;
-	erase();
-	unsigned char * m(reinterpret_cast<unsigned char *>(&the_machine_id));
+	machine_id::erase();
+	unsigned char * m(reinterpret_cast<unsigned char *>(&machine_id::the_machine_id));
 	for (unsigned int p(0U); p < 32U; ++p) {
 		const int c(i.get());
 		unsigned char & b(m[p / 2]);
@@ -97,7 +104,6 @@ read_first_line_machine_id (
 	return i.eof() || '\n' == c;
 }
 
-static
 bool
 read_first_line_machine_id (
 	const char * filename
@@ -107,24 +113,22 @@ read_first_line_machine_id (
 	return read_first_line_machine_id(s);
 }
 
-static
 bool
 read_uuid (
 	const char * p
 ) {
 #if defined(__LINUX__) || defined(__linux__)
-	return 0 <= uuid_parse(p, the_machine_id);
+	return 0 <= uuid_parse(p, machine_id::the_machine_id);
 #else
 	uint32_t status;
 	uuid_t guid;
 	uuid_from_string(p, &guid, &status);
-	the_machine_id = guid_to_uuid(guid);
+	machine_id::the_machine_id = guid_to_uuid(guid);
 	return uuid_s_ok == status;
 #endif
 }
 
-#if defined(__LINUX__) || defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
-static
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 bool
 read_first_line_uuid (
 	std:: istream & i
@@ -136,7 +140,6 @@ read_first_line_uuid (
 	return read_uuid(buf);
 }
 
-static
 bool
 read_first_line_uuid (
 	const char * filename
@@ -147,13 +150,12 @@ read_first_line_uuid (
 }
 #endif
 
-static
 void
 write_one_line_machine_id (
 	std:: ostream & i
 ) {
-	unsigned char * m(reinterpret_cast<unsigned char *>(&the_machine_id));
-	for (std::size_t n(0U); n < sizeof the_machine_id; ++n) {
+	unsigned char * m(reinterpret_cast<unsigned char *>(&machine_id::the_machine_id));
+	for (std::size_t n(0U); n < sizeof machine_id::the_machine_id; ++n) {
 		const unsigned char b(m[n]);
 		i.put(c2x((b >> 4) & 0x0F)).put(c2x(b & 0x0F));
 	}
@@ -161,14 +163,14 @@ write_one_line_machine_id (
 }
 
 #if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
-static inline
+inline
 void
 write_one_line_hostuuid (
 	std:: ostream & i
 ) {
 	char * buf(0);
 	uint32_t status;
-	const uuid_t guid(uuid_to_guid(the_machine_id));
+	const uuid_t guid(uuid_to_guid(machine_id::the_machine_id));
 	uuid_to_string(&guid, &buf, &status);
 	i.write(buf, 36).put('\n');
 	const int error(errno);
@@ -177,7 +179,7 @@ write_one_line_hostuuid (
 }
 #endif
 
-static inline
+inline
 void
 write_or_bind_mount_machine_id (
 	const char * prog,
@@ -204,7 +206,7 @@ write_or_bind_mount_machine_id (
 }
 
 #if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
-static inline
+inline
 void
 write_or_bind_mount_hostuuid (
 	const char * prog,
@@ -231,7 +233,7 @@ write_or_bind_mount_hostuuid (
 }
 #endif
 
-static inline
+inline
 bool
 read_container_id (const ProcessEnvironment & envs)
 {
@@ -240,25 +242,7 @@ read_container_id (const ProcessEnvironment & envs)
 	return false;
 }
 
-static inline
-bool
-read_boot_id ()
-{
-#if defined(__LINUX__) || defined(__linux__)
-	return read_first_line_uuid("/sys/class/dmi/id/product_uuid");
-#elif defined(__FreeBSD__) || defined(__DragonFly__)
-	int oid[CTL_MAXNAME];
-	std::size_t len = sizeof oid/sizeof *oid;
-	if (0 > sysctlnametomib("smbios.system.uuid", oid, &len)) return false;
-	std::size_t siz(sizeof the_machine_id);
-	if (0 > sysctl(oid, len, &the_machine_id, &siz, 0, 0)) return false;
-	return true;
-#else
-	return false;
-#endif
-}
-
-static inline
+inline
 bool
 read_backwards_compatible_non_volatile ()
 {
@@ -271,7 +255,7 @@ read_backwards_compatible_non_volatile ()
 		read_first_line_machine_id("/var/db/dbus/machine-id");
 }
 
-static inline
+inline
 void
 write_backwards_compatible_non_volatile (const char * prog)
 {
@@ -284,12 +268,12 @@ write_backwards_compatible_non_volatile (const char * prog)
 }
 
 #if defined(__FreeBSD__) || defined(__DragonFly__)
-static const int host_uuid_oid[2] = {CTL_KERN, KERN_HOSTUUID};
+const int host_uuid_oid[2] = {CTL_KERN, KERN_HOSTUUID};
 #elif defined(__OpenBSD__)
-static const int host_uuid_oid[2] = {CTL_HW, HW_UUID};
+const int host_uuid_oid[2] = {CTL_HW, HW_UUID};
 #endif
 
-static inline
+inline
 bool
 read_host_uuid ()
 {
@@ -313,7 +297,7 @@ read_host_uuid ()
 #endif
 }
 
-static inline
+inline
 void
 write_host_uuid (
 	const char * prog
@@ -321,7 +305,7 @@ write_host_uuid (
 #if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
 	char * buf(0);
 	uint32_t status;
-	const uuid_t guid(uuid_to_guid(the_machine_id));
+	const uuid_t guid(uuid_to_guid(machine_id::the_machine_id));
 	uuid_to_string(&guid, &buf, &status);
 	if (0 > sysctl(host_uuid_oid, sizeof host_uuid_oid/sizeof *host_uuid_oid, 0, 0, buf, std::strlen(buf) + 1)) {
 		const int error(errno);
@@ -334,9 +318,36 @@ write_host_uuid (
 #error "Don't know how to manipulate volatile host UUID on your platform."
 #endif
 }
+
+bool
+read_volatile ()
+{
+	return read_first_line_machine_id(volatile_filename) || read_host_uuid();
+}
+
+void
+write_volatile (
+	const char * prog
+) {
+	write_host_uuid(prog);
+
+	std::ofstream s(volatile_filename);
+	if (!s.fail()) {
+		write_one_line_machine_id(s);
+		return;
+	}
+	const int error(errno);
+	std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, volatile_filename, std::strerror(error));
+	throw EXIT_FAILURE;
+}
+
+}
+
 /* API functions ************************************************************
 // **************************************************************************
 */
+
+namespace machine_id {
 
 void
 erase()
@@ -415,26 +426,6 @@ write_non_volatile (
 	write_or_bind_mount_machine_id(prog, non_volatile_filename, volatile_filename);
 }
 
-bool
-read_volatile ()
-{
-	return read_first_line_machine_id(volatile_filename);
-}
-
-void
-write_volatile (
-	const char * prog
-) {
-	std::ofstream s(volatile_filename);
-	if (!s.fail()) {
-		write_one_line_machine_id(s);
-		return;
-	}
-	const int error(errno);
-	std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, volatile_filename, std::strerror(error));
-	throw EXIT_FAILURE;
-}
-
 bool 
 validate ()
 {
@@ -453,14 +444,17 @@ validate ()
 bool
 read_fallbacks (const ProcessEnvironment & envs)
 {
-	return read_volatile() || read_host_uuid() || read_backwards_compatible_non_volatile() || (am_in_jail(envs) ? read_container_id(envs) : read_boot_id());
+	return
+		read_volatile() ||
+		read_backwards_compatible_non_volatile() ||
+		(am_in_jail(envs) && read_container_id(envs))
+	;
 }
 
 void
 write_fallbacks (const char * prog)
 {
 	write_volatile(prog);
-	write_host_uuid(prog);
 	write_backwards_compatible_non_volatile(prog);
 }
 

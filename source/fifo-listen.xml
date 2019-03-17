@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="fifo-listen">
 
@@ -22,10 +23,10 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>fifo-listen</command>
-<arg>--uid <replaceable>number</replaceable></arg>
-<arg>--gid <replaceable>number</replaceable></arg>
-<arg>--mode <replaceable>number</replaceable></arg>
-<arg>--systemd-compatibility</arg>
+<arg choice='opt'>--uid <replaceable>number</replaceable></arg>
+<arg choice='opt'>--gid <replaceable>number</replaceable></arg>
+<arg choice='opt'>--mode <replaceable>number</replaceable></arg>
+<arg choice='opt'>--systemd-compatibility</arg>
 <arg choice='req'><replaceable>path</replaceable></arg>
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
@@ -48,14 +49,14 @@ Symbolic permissions and account names are not supported.
 </para>
 
 <para>
-The <arg choice='plain'>--systemd-compatibility</arg> option is for compatibility with daemons that expect to be run under <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+The <arg choice='plain'>--systemd-compatibility</arg> option is for compatibility with d&#xe6;mons that expect to be run under <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 It causes <command>fifo-listen</command> to set the <envar>LISTEN_FDS</envar> environment variable to the number of listening file descriptors, and the <envar>LISTEN_PID</envar> environment variable to its own process ID.
 If the command is started up with the <envar>LISTEN_FDS</envar> and the <envar>LISTEN_PID</envar> environment variables already appropriately set, the number of listening file descriptors is taken from them and increased by one, otherwise the number of file descriptors is 1.
 Thus a list of listening file descriptors can be built up with multiple commands, as long as they all use the <arg choice='plain'>--systemd-compatibility</arg> option.
 </para>
 
 <para>
-For compatibility with daemons that expect to be run under <citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry>, inheriting the listening socket as their standard input, simply use <command>fdmove</command> <arg choice="plain">0</arg> <arg choice="plain">3</arg> in <replaceable>next-prog</replaceable>.
+For compatibility with d&#xe6;mons that expect to be run under <citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry>, inheriting the listening socket as their standard input, simply use <command>fdmove</command> <arg choice="plain">0</arg> <arg choice="plain">3</arg> in <replaceable>next-prog</replaceable>.
 See <citerefentry><refentrytitle>fdmove</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
@@ -78,6 +79,8 @@ This is to allow its use with non-FIFO files such as <filename>/dev/kmsg</filena
 </para>
 
 </refsection>
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

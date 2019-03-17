@@ -1,7 +1,9 @@
-<!--
-.... Copyright (c) 2018 Jonathan de Boyne Pollard.
-.... Licensed under the licence of the Linux Man-Pages Project manual pages.
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="vt">
 
@@ -44,8 +46,13 @@ Applications can take over individual virtual terminals, disconnecting the kerne
 </para>
 
 <para>
+In the event of there being more than one framebuffer device available, applications can also control which framebuffer device is associated with which kernel virtual terminal (although only one kernel virtual terminal can be active at any given time).
+This is done through the framebuffer devices, however, not through the virtual terminal devices.
+</para>
+
+<para>
 The type of the terminal emulated does not closely match any other terminal, although there are borrowings from DEC VTs, ECMA-48, and the Xenix console.
-Only 256 colours are supported, direct colour being emulated by mapping to the nearest indexed colour; and the DEC VT control sequence conventions for the <code>Home</code> and <code>End</code> keys are swapped with the <code>Find</code> and <code>Select</code> keys.
+Only 256 colours are supported, direct colour being emulated by mapping to the nearest indexed colour; and the DEC VT/Xenix control sequence conventions for the <keycap>&#x21f1;&#160;Home</keycap> and <keycap>&#x21f2;&#160;End</keycap> keys are swapped with the <keycap>Find</keycap> and <keycap>Select</keycap> keys.
 </para>
 
 <refsection><title>Hot keys</title>
@@ -53,12 +60,12 @@ Only 256 colours are supported, direct colour being emulated by mapping to the n
 <para>
 The user sitting at the keyboard and display can change which is the currently active kernel virtual terminal using hot-key keychords.
 What the keychords are is programmable by uploading different keyboard maps to the kernel's terminal emulator.
-By default when no keyboard map has been loaded and conventionally in most keyboard maps, the chord <code>Alt</code>+<code>F<replaceable>N</replaceable></code> requests a switch to virtual terminal <replaceable>N</replaceable>.
+By default when no keyboard map has been loaded and conventionally in most keyboard maps, the chord <keycap>&#x2387;&#160;Alt</keycap>+<keycap>F<replaceable>N</replaceable></keycap> requests a switch to virtual terminal <replaceable>N</replaceable>.
 </para>
 
 <para>
 Applications that take over a virtual terminal and do their own HID and display handling, such as <citerefentry><refentrytitle>xorg</refentrytitle><manvolnum>8</manvolnum></citerefentry>, have their own hot keys that are not necessarily the same and that are not managed by the kernel.
-Conventionally but not universally in such applications, the chord <code>Control</code>+<code>Alt</code>+<code>F<replaceable>N</replaceable></code> requests a switch to virtual terminal <replaceable>N</replaceable>.
+Conventionally but not universally in such applications, the chord <keycombo><keycap>&#x2388;&#160;Control</keycap>+<keycap>&#x2387;&#160;Alt</keycap>+<keycap>F<replaceable>N</replaceable></keycap></keycombo> requests a switch to virtual terminal <replaceable>N</replaceable>.
 For convenience, these same chords are conventionally mapped to virtual terminal switch requests in the keyboard map of the kernel's virtual terminal emulator, too.
 </para>
 
@@ -96,6 +103,14 @@ This describes the <code>ioctl()</code> controls that are peculiar to kernel vir
 <listitem>
 <para>
 a utility that can be used to switch amongst kernel virtual terminals under script control
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><citerefentry><refentrytitle>con2fbmap</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+<listitem>
+<para>
+a utility that can be used to query and set the mapping between kernel virtual terminals and framebuffers
 </para>
 </listitem>
 </varlistentry>
@@ -158,10 +173,12 @@ Until Linux version 1.1.54, the list of kernel virtual terminals was fixed (with
 
 </refsection>
 <refsection><title>Author</title>
+<para>
 Documentation by
 <author>
-<personname><firstname>Jonathan</firstname><surname>de Boyne Pollard</surname></personname>
+<personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname>
 </author>
+</para>
 </refsection>
 
 </refentry>

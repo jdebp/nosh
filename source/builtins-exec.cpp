@@ -20,6 +20,7 @@ extern void chroot ( const char * &, std::vector<const char *> &, ProcessEnviron
 extern void clearenv ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void command_exec ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void console_flat_table_viewer ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void console_docbook_xml_viewer ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void create_control_group ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void cyclog ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void delegate_control_group_to ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
@@ -58,7 +59,6 @@ extern void pause ( const char * &, std::vector<const char *> &, ProcessEnvironm
 extern void pipe ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void plug_and_play_event_handler ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void prependpath ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
-extern void procstat ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void printenv ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void read_conf ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void recordio ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
@@ -74,6 +74,7 @@ extern void setsid ( const char * &, std::vector<const char *> &, ProcessEnviron
 extern void setuidgid ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void setuidgid_fromenv ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void setup_machine_id ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void erase_machine_id ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void softlimit ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void syslog_read ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void tai64n ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
@@ -98,6 +99,7 @@ extern void unsetenv ( const char * &, std::vector<const char *> &, ProcessEnvir
 extern void unshare ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void userenv ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void userenv_fromenv ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void ifconfig ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 #if defined(__LINUX__) || defined(__linux__)
 extern void netlink_datagram_socket_listen ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 #endif
@@ -189,6 +191,7 @@ commands[] = {
 	{	"tai64nlocal",				tai64nlocal			},
 	{	"set-dynamic-hostname",			set_dynamic_hostname		},
 	{	"setup-machine-id",			setup_machine_id		},
+	{	"erase-machine-id",			erase_machine_id		},
 	{	"export-to-rsyslog",			export_to_rsyslog		},
 	{	"follow-log-directories",		follow_log_directories		},
 	{	"syslog-read",				syslog_read			},
@@ -196,8 +199,9 @@ commands[] = {
 	{	"cyclog",				cyclog				},
 	{	"monitor-fsck-progress",		monitor_fsck_progress		},
 	{	"console-flat-table-viewer",		console_flat_table_viewer	},
+	{	"console-docbook-xml-viewer",		console_docbook_xml_viewer	},
 	{	"time-print-tai64n",			time_print_tai64n		},
-	{	"procstat",				procstat			},
+	{	"ifconfig",				ifconfig			},
 };
 const std::size_t num_commands = sizeof commands/sizeof *commands;
 

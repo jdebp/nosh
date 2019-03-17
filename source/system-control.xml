@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="system-control">
 
@@ -91,7 +92,7 @@ Although there is no constraint enforced, and <command>system-control</command> 
 </para>
 
 <para>
-A service is generally a daemon process that runs.
+A service is generally a d&#xe6;mon process that runs.
 A target is generally a collection of services that are started/stopped together.
 </para>
 
@@ -323,10 +324,12 @@ If the path search fails, the <arg choice='plain'><replaceable>name</replaceable
 
 <refsection><title>System information subcommands</title>
 
+<refsynopsisdiv>
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">version</arg>
 </cmdsynopsis>
+</refsynopsisdiv>
 
 <para>
 For compatibility with uses of <command>initctl</command>, the <command>version</command> subcommand displays the (compiled-in) version of the toolset.
@@ -336,25 +339,26 @@ It does not contain the string "upstart".
 </refsection>
 <refsection><title>System control subcommands</title>
 
+<refsynopsisdiv>
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">reboot</arg>
-<group><arg choice="plain">-f</arg><arg choice="plain">--force</arg></group>
+<group choice='opt'><arg choice="plain">-f</arg><arg choice="plain">--force</arg></group>
 </cmdsynopsis>
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">halt</arg>
-<group><arg choice="plain">-f</arg><arg choice="plain">--force</arg></group>
+<group choice='opt'><arg choice="plain">-f</arg><arg choice="plain">--force</arg></group>
 </cmdsynopsis>
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">powercycle</arg>
-<group><arg choice="plain">-f</arg><arg choice="plain">--force</arg></group>
+<group choice='opt'><arg choice="plain">-f</arg><arg choice="plain">--force</arg></group>
 </cmdsynopsis>
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">poweroff</arg>
-<group><arg choice="plain">-f</arg><arg choice="plain">--force</arg></group>
+<group choice='opt'><arg choice="plain">-f</arg><arg choice="plain">--force</arg></group>
 </cmdsynopsis>
 <cmdsynopsis>
 <command>system-control</command>
@@ -389,6 +393,7 @@ It does not contain the string "upstart".
 <arg choice="opt">-z <replaceable>string</replaceable></arg>
 <arg rep='repeat'><replaceable>runlevel(s)</replaceable></arg>
 </cmdsynopsis>
+</refsynopsisdiv>
 
 <para>
 Those subcommands communicate with the system manager to change system state.
@@ -399,8 +404,8 @@ It will fail if it does not have the necessary privileges for sending a signal t
 <table>
 <title>The signals for each subcommand:</title>
 <thead>
-<tr><th rowspan='2'>command</th><th colspan='2' align='center'>signal</th></tr>
-<tr><th>on BSD</th><th>on Linux</th></tr>
+<tr><th>command</th><th>signal</th><th></th></tr>
+<tr><th></th><th>on BSD</th><th>on Linux</th></tr>
 </thead>
 <tbody>
 <tr><td><command>halt</command></td><td><code>SIGUSR1</code></td><td><code>SIGRTMIN + 3</code></td></tr>
@@ -468,6 +473,7 @@ The <arg choice='plain'>--update</arg> command line option is reserved for futur
 </refsection>
 <refsection><title>job subcommands</title>
 
+<refsynopsisdiv>
 <cmdsynopsis>
 <command>system-control</command>
 <group choice='req'>
@@ -506,6 +512,7 @@ The <arg choice='plain'>--update</arg> command line option is reserved for futur
 <arg choice='opt'>--pretend</arg>
 <arg rep='repeat'><replaceable>names</replaceable></arg>
 </cmdsynopsis>
+</refsynopsisdiv>
 
 <para>
 These subcommands process one or more jobs, sending messages to the service manager to start or to stop one or more services.
@@ -516,7 +523,7 @@ To control services directly and individually without regard for dependencies, u
 
 <para>
 The <arg choice="plain">--verbose</arg> command line option cause information about actions taken and blocked/unblocked services to be written to standard error as jobs are processed.
-If the standard error is a terminal, <command>system-control</command> uses whatever it can find via the terminfo library to display various parts of the output in different colours, highlighting different events in different colours.
+If the standard error is a terminal, <command>system-control</command> uses whatever it can find via the <citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry> library to display various parts of the output in different colours, highlighting different events in different colours.
 The <arg choice='plain'>--colour</arg> command line option tells it to do this unconditionally, even if its standard error is not a terminal.
 The <arg choice='plain'>--pretend</arg> command line option tells it to only pretend that it is taking actions, and not actually take them.
 </para>
@@ -535,6 +542,7 @@ The <command>isolate</command> subcommand exists for compatibility, and is equiv
 </refsection>
 <refsection><title>service autoboot configuration subcommands</title>
 
+<refsynopsisdiv>
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">enable</arg>
@@ -556,6 +564,7 @@ The <command>isolate</command> subcommand exists for compatibility, and is equiv
 <arg choice='opt'>--dry-run</arg> 
 <arg rep='repeat'><replaceable>names</replaceable></arg>
 </cmdsynopsis>
+</refsynopsisdiv>
 
 <para>
 These subcommands enable or disable one or more services or targets, so that they do or do not automatically start when one of the standard targets is started and automatically stop when the shutdown standard target is started.
@@ -662,6 +671,7 @@ This is designed in particular for use with service bundles generated by the <co
 </refsection>
 <refsection><title>service status/control subcommands</title>
 
+<refsynopsisdiv>
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">status</arg>
@@ -712,6 +722,7 @@ This is designed in particular for use with service bundles generated by the <co
 <arg choice="req">unload-when-stopped</arg>
 <arg rep='repeat'><replaceable>names</replaceable></arg>
 </cmdsynopsis>
+</refsynopsisdiv>
 
 <para>
 <command>system-control</command> takes each of the <arg rep='repeat'><replaceable>names</replaceable></arg>, searches for the corresponding service bundle directory, constructs a list of directory names, and chains to other commands with those directory names as arguments:
@@ -762,16 +773,17 @@ This is designed in particular for use with service bundles generated by the <co
 </refsection>
 <refsection><title>script conversion subcommand</title>
 
+<refsynopsisdiv>
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">convert-systemd-units</arg>
-<arg>--bundle-root <replaceable>root</replaceable></arg> 
-<arg>--alt-escape</arg> 
-<arg>--etc-bundle</arg> 
-<arg>--escape-instance</arg> 
-<arg>--escape-prefix</arg> 
-<arg>--no-systemd-quirks</arg> 
-<arg>--no-generation-comment</arg> 
+<arg choice='opt'>--bundle-root <replaceable>root</replaceable></arg> 
+<arg choice='opt'>--alt-escape</arg> 
+<arg choice='opt'>--etc-bundle</arg> 
+<arg choice='opt'>--escape-instance</arg> 
+<arg choice='opt'>--escape-prefix</arg> 
+<arg choice='opt'>--no-systemd-quirks</arg> 
+<arg choice='opt'>--no-generation-comment</arg> 
 <group choice='req'>
 <arg choice='plain'><replaceable>name</replaceable>.target</arg>
 <arg choice='plain'><replaceable>name</replaceable>@<replaceable>parameter</replaceable>.target</arg>
@@ -783,6 +795,7 @@ This is designed in particular for use with service bundles generated by the <co
 <arg choice='plain'><replaceable>name</replaceable>@<replaceable>parameter</replaceable>.service</arg>
 </group>
 </cmdsynopsis>
+</refsynopsisdiv>
 
 <para>
 This subcommand takes some systemd unit files and generates from them a service bundle in the current directory (or in the <arg choice='plain'><replaceable>root</replaceable></arg> directory) that contains scripts, dependencies, and autoboot dependency configuration information.
@@ -1000,7 +1013,7 @@ The daemontools convention is to just set the primary group when switching to th
 It's not documented, but systemd always changes directory when it starts a service.
 It explicitly changes to the root directory when no <code>WorkingDirectory=</code> directive is given.
 The daemontools convention is for services to be run in their service directories, which is the case in ideal mode.
-A small number of daemons have been found to rely upon the undocumented systemd behaviour of being in the root directory.
+A small number of d&#xe6;mons have been found to rely upon the undocumented systemd behaviour of being in the root directory.
 </para></listitem>
 <listitem><para>
 A fair few directives can occur in both a socket unit or its associated service unit.
@@ -1031,17 +1044,17 @@ Alternatively, one can turn off some quirks with various unit file directives:
 <itemizedlist>
 <listitem><para>
 The <code>systemdWorkingDirectory=</code> setting (defaulting to <code>true</code> in quirks mode) if <code>false</code> causes the generated bundle to not bother changing directory to the root.
-Set this on services and targets where the daemon program is happy to run in the <filename>service</filename> directory.
+Set this on services and targets where the d&#xe6;mon program is happy to run in the <filename>service</filename> directory.
 </para></listitem>
 <listitem><para>
 The <code>systemdUserEnvironment=</code> setting (defaulting to <code>true</code> in quirks mode) if <code>false</code> causes the generated bundle to not bother setting the user environment variables.
-Set this on services and targets where the daemon program has no need for the <envar>HOME</envar>, <envar>USER</envar>, <envar>LOGNAME</envar>, or <envar>SHELL</envar> environment variables.
-This is the case for most daemon programs.
+Set this on services and targets where the d&#xe6;mon program has no need for the <envar>HOME</envar>, <envar>USER</envar>, <envar>LOGNAME</envar>, or <envar>SHELL</envar> environment variables.
+This is the case for most d&#xe6;mon programs.
 </para></listitem>
 <listitem><para>
 The <code>systemdUserGroups=</code> setting (defaulting to <code>true</code> in quirks mode) if <code>false</code> causes the generated bundle to not bother setting the suplementary user groups.
-Set this on services and targets where the daemon program has no need for supplementary group access.
-This is the case for almost all daemon programs.
+Set this on services and targets where the d&#xe6;mon program has no need for supplementary group access.
+This is the case for almost all d&#xe6;mon programs.
 </para></listitem>
 </itemizedlist>
 
@@ -1077,7 +1090,7 @@ The <code>FullEnvironmentDirectory=</code> setting specifies that the <arg choic
 </para></listitem>
 <listitem><para>
 The <code>EnvironmentUserOnly=</code> setting (defaulting to <code>false</code>) if <code>true</code> causes the generated bundle to call <citerefentry><refentrytitle>envuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry> but not <citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-Set this on a service where the main daemon program changes its own process UID and GID, but expects to be told via environment variables what UID and GID to run as.
+Set this on a service where the main d&#xe6;mon program changes its own process UID and GID, but expects to be told via environment variables what UID and GID to run as.
 </para></listitem>
 <listitem><para>
 The <code>EarlySupervise=</code> setting (defaulting to <code>true</code> for "etc" bundles and <code>false</code> for others) if <code>true</code> causes the generated bundle to use a <filename>supervise</filename> directory in <filename>/run/service-bundles/early-supervise/</filename>.
@@ -1092,19 +1105,19 @@ By default, unless the <code>DefaultDependencies=false</code> setting is used, s
 The <code>JailID=</code> setting specifies the ID of a jail in which to run the service, as if by <citerefentry><refentrytitle>jexec</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para></listitem>
 <listitem><para>
-The <code>ProcessGroupLeader=</code> setting (defaulting to <code>false</code>) if <code>true</code> causes the generated bundle to run the daemon as a process group leader with <citerefentry><refentrytitle>setpgrp</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+The <code>ProcessGroupLeader=</code> setting (defaulting to <code>false</code>) if <code>true</code> causes the generated bundle to run the d&#xe6;mon as a process group leader with <citerefentry><refentrytitle>setpgrp</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para></listitem>
 <listitem><para>
-The <code>SessionLeader=</code> setting (defaulting to <code>false</code>) if <code>true</code> causes the generated bundle to run the daemon as a session leader with <citerefentry><refentrytitle>setsid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+The <code>SessionLeader=</code> setting (defaulting to <code>false</code>) if <code>true</code> causes the generated bundle to run the d&#xe6;mon as a session leader with <citerefentry><refentrytitle>setsid</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para></listitem>
 <listitem><para>
 The <code>TTYPrompt=</code> setting (defaulting to <code>false</code>) if <code>true</code> causes the generated bundle to invoke <citerefentry><refentrytitle>login-prompt</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para></listitem>
 <listitem><para>
-The <code>BannerLine=</code> setting causes the generated bundle to invoke <citerefentry><refentrytitle>line-banner</refentrytitle><manvolnum>1</manvolnum></citerefentry> to write the specified banner line before daemon invocation.
+The <code>BannerLine=</code> setting causes the generated bundle to invoke <citerefentry><refentrytitle>line-banner</refentrytitle><manvolnum>1</manvolnum></citerefentry> to write the specified banner line before d&#xe6;mon invocation.
 </para></listitem>
 <listitem><para>
-The <code>BannerFile=</code> setting causes the generated bundle to invoke <citerefentry><refentrytitle>login-banner</refentrytitle><manvolnum>1</manvolnum></citerefentry> to process the specified banner file(s) before daemon invocation.
+The <code>BannerFile=</code> setting causes the generated bundle to invoke <citerefentry><refentrytitle>login-banner</refentrytitle><manvolnum>1</manvolnum></citerefentry> to process the specified banner file(s) before d&#xe6;mon invocation.
 </para></listitem>
 <listitem><para>
 The <code>ExecRestartPre=</code> setting allows one to specify extra commands to be run in the (automatically generated) <filename>restart</filename> script.
@@ -1142,23 +1155,25 @@ The <code>WantsMountsFor=<replaceable>directories</replaceable></code> setting d
 </refsection>
 <refsection><title>fstab conversion subcommand</title>
 
+<refsynopsisdiv>
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">convert-fstab-services</arg>
-<arg>--etc-bundle</arg> 
-<arg>--bundle-root <replaceable>root</replaceable></arg> 
+<arg choice='opt'>--etc-bundle</arg> 
+<arg choice='opt'>--bundle-root <replaceable>root</replaceable></arg> 
 </cmdsynopsis>
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">write-volume-service-bundle</arg>
-<arg>--etc-bundle</arg> 
-<arg>--want-fsck</arg> 
-<arg>--bundle-root <replaceable>root</replaceable></arg> 
+<arg choice='opt'>--etc-bundle</arg> 
+<arg choice='opt'>--want-fsck</arg> 
+<arg choice='opt'>--bundle-root <replaceable>root</replaceable></arg> 
 <arg choice="req"><replaceable>fstype</replaceable></arg> 
 <arg choice="req"><replaceable>source</replaceable></arg> 
 <arg choice="req"><replaceable>directory</replaceable></arg> 
 <arg choice="req"><replaceable>options</replaceable></arg> 
 </cmdsynopsis>
+</refsynopsisdiv>
 
 <para>
 The <command>convert-fstab-services</command> subcommand takes the entries in <filename>/etc/fstab</filename> and generates from them a set of service bundles.
@@ -1284,13 +1299,15 @@ It also forces the bundle to be marked as an <code>EarlySupervise</code> bundle 
 
 <refsection><title>conversion utility subcommand</title>
 
+<refsynopsisdiv>
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">escape</arg>
-<arg>--alt-escape</arg> 
-<arg>--prefix <replaceable>prefix</replaceable></arg> 
+<arg choice='opt'>--alt-escape</arg> 
+<arg choice='opt'>--prefix <replaceable>prefix</replaceable></arg> 
 <arg choice="req" rep='repeat'><replaceable>name</replaceable></arg> 
 </cmdsynopsis>
+</refsynopsisdiv>
 
 <para>
 The <command>escape</command> subcommand takes each <replaceable>name</replaceable> and converts it using the escaping rules used in the <command>convert-systemd-units</command> subcommand.
@@ -1305,13 +1322,15 @@ The <arg choice='plain'>--alt-escape</arg> option causes the same selection of a
 
 <refsection><title>Nagios plug-in subcommand</title>
 
+<refsynopsisdiv>
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">nagios-check-service</arg>
-<arg>--min-seconds <replaceable>seconds</replaceable></arg> 
+<arg choice='opt'>--min-seconds <replaceable>seconds</replaceable></arg> 
 <arg choice="opt">--critical-if-below-min</arg>
 <arg choice='req' rep='repeat'><replaceable>name</replaceable></arg>
 </cmdsynopsis>
+</refsynopsisdiv>
 
 <para>
 This subcommand is intended for use as a Nagios plug-in.
@@ -1342,6 +1361,7 @@ If the service is unexpectedly down or unloaded, if the status API reports the s
 
 <refsection><title>Kernel module management subcommands</title>
 
+<refsynopsisdiv>
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">load-kernel-module</arg>
@@ -1352,6 +1372,7 @@ If the service is unexpectedly down or unloaded, if the status API reports the s
 <arg choice="req">unload-kernel-module</arg>
 <arg choice='req' rep='repeat'><replaceable>module</replaceable></arg>
 </cmdsynopsis>
+</refsynopsisdiv>
 
 <para>
 These subcommands provide a minimal operating-system-neutral kernel module loading and unloading mechanism, for use in cross-platform service bundles.
@@ -1361,11 +1382,13 @@ They devolve to the appropriate operating system commands, which are <citerefent
 </refsection>
 <refsection><title>service program dump subcommands</title>
 
+<refsynopsisdiv>
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">cat</arg>
 <arg rep='repeat'><replaceable>names</replaceable></arg>
 </cmdsynopsis>
+</refsynopsisdiv>
 
 <para>
 <command>system-control</command> takes each of the <arg rep='repeat'><replaceable>names</replaceable></arg>, searches for the corresponding service bundle directory, changes to the corresponding service directory, and runs <citerefentry><refentrytitle>grep</refentrytitle><manvolnum>1</manvolnum></citerefentry> to dump the contents of the <filename>start</filename>, <filename>stop</filename>, <filename>run</filename>, and <filename>restart</filename> files.
@@ -1374,6 +1397,7 @@ They devolve to the appropriate operating system commands, which are <citerefent
 </refsection>
 <refsection><title>service environment manipulation subcommands</title>
 
+<refsynopsisdiv>
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">set-service-env</arg>
@@ -1389,6 +1413,7 @@ They devolve to the appropriate operating system commands, which are <citerefent
 <arg choice="req"><replaceable>name</replaceable></arg>
 <arg><replaceable>var</replaceable></arg>
 </cmdsynopsis>
+</refsynopsisdiv>
 
 <para>
 If the <arg choice="plain"><replaceable>name</replaceable></arg> service has an environment template subdirectory named <filename>env/</filename> (in the format understood by <citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry>), these subcommands can be used to manipulate that template.
@@ -1416,6 +1441,7 @@ The <arg choice="plain">--full</arg> command-line option switches to an alternat
 </refsection>
 <refsection><title>filesystem table query subcommands</title>
 
+<refsynopsisdiv>
 <cmdsynopsis>
 <command>system-control</command>
 <arg choice="req">get-mount-what</arg>
@@ -1426,6 +1452,7 @@ The <arg choice="plain">--full</arg> command-line option switches to an alternat
 <arg choice="req">get-mount-where</arg>
 <arg ><replaceable>what</replaceable></arg>
 </cmdsynopsis>
+</refsynopsisdiv>
 
 <para>
 These subcommands query the <filename>/etc/fstab</filename> database.
@@ -1595,7 +1622,7 @@ These targets are usually not started explicitly.
 <varlistentry><term><filename>workstation</filename></term>
 <listitem><para>
 All services that normally form part of bringing the system up as a "workstation" should be listed in this target's <filename>wants/</filename> list.
-Such services will include things such as the <citerefentry><refentrytitle>cron</refentrytitle><manvolnum>1</manvolnum></citerefentry> daemon.
+Such services will include things such as the <citerefentry><refentrytitle>cron</refentrytitle><manvolnum>1</manvolnum></citerefentry> d&#xe6;mon.
 This target "wants" the <filename>basic</filename> target, so starting it (directly or indirectly) will bring the basic system up.
 It is a collection that is used to group services, but is not an ordering milestone and has no <filename>before/</filename> or <filename>after/</filename> relationships.
 </para></listitem>
@@ -1604,7 +1631,7 @@ It is a collection that is used to group services, but is not an ordering milest
 <varlistentry><term><filename>server</filename></term>
 <listitem><para>
 All services that normally form part of bringing the system up as a "server" should be listed in this target's <filename>wants/</filename> list.
-Such services will include things such as HTTP/FTP/SMTP daemons, and daemons that provide services over the network.
+Such services will include things such as HTTP/FTP/SMTP d&#xe6;mons, and d&#xe6;mons that provide services over the network.
 This target "wants" the <filename>basic</filename> target, so starting it (directly or indirectly) will bring the basic system up.
 It is a collection that is used to group services, but is not an ordering milestone and has no <filename>before/</filename> or <filename>after/</filename> relationships.
 </para></listitem>
@@ -1706,7 +1733,7 @@ Local filesystem checks, decryptions, and mounts should list this target (only) 
 <listitem><para>
 This "filesystems servers" target is not a collection; its <filename>wants/</filename> list should be empty.
 It is solely an ordering milestone, that is brought in only if the services that want to order after it are themselves brought in.
-It exists in order to ensure that remote filesystem mounts of volumes on the local machine work, by ordering them after the startup of any filesystem servers (e.g. SAMBA or NFS server daemons).
+It exists in order to ensure that remote filesystem mounts of volumes on the local machine work, by ordering them after the startup of any filesystem servers (e.g. SAMBA or NFS server d&#xe6;mons).
 Such server services should list this target (only) in their <filename>before/</filename> and <filename>wants/</filename> lists.
 Remote filesystem mounts should list this target (only) in their <filename>after/</filename> lists, so that they order relative to it if the target is brought in but do not themselves bring it in.
 </para></listitem>
@@ -1791,6 +1818,8 @@ They are ordering milestones, with all <filename>finish-install</filename>/<file
 
 </refsection>
 
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

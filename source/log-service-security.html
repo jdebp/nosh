@@ -84,7 +84,7 @@ Reliable log rotation
 </h2>
 
 <p>
-This applies to <a href="cyclog.html"><code>cyclog</code></a> and to many of <a href="beyond-cyclog.html">the alternatives one can use in place of it</a>.
+This applies to <a href="commands/cyclog.xml"><code>cyclog</code></a> and to many of <a href="beyond-cyclog.html">the alternatives one can use in place of it</a>.
 </p>
 
 <p>
@@ -109,7 +109,7 @@ These behaviours can be relied upon if one wants to place log directories on sto
 
 <p>
 (<a href="http://jdebp.eu/FGA/do-not-use-logrotate.html">GNU <code>tail</code> and BSD <code>tail</code> have more than one problem</a>, though.
-For avoiding the other problems, one has to use something like <a href="follow-log-directories.html"><code>follow-log-directories</code></a> which actually knows that it is looking at a log directory, rather than only knowing to look at a single file.)
+For avoiding the other problems, one has to use something like <a href="commands/follow-log-directories.xml"><code>follow-log-directories</code></a> which actually knows that it is looking at a log directory, rather than only knowing to look at a single file.)
 </p>
 
 <h2 id="old-services">
@@ -143,7 +143,7 @@ The log writing services run as <em>different</em> dedicated users, and are insu
 They, too, do no parsing or conditional processing that depends from potentially attacker-supplied data.
 </p></li>
 <li><p>
-<a href="cyclog.html"><code>cyclog</code></a> and many of <a href="beyond-cyclog.html">the alternatives one can use in place of it</a> are immune to malformed character encodings, control characters, and <code>NUL</code>s.
+<a href="commands/cyclog.xml"><code>cyclog</code></a> and many of <a href="beyond-cyclog.html">the alternatives one can use in place of it</a> are immune to malformed character encodings, control characters, and <code>NUL</code>s.
 </p></li>
 </ul>
 

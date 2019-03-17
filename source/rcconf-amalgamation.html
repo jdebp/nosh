@@ -61,14 +61,14 @@ The same restriction applies these as to <code>/etc/rc.conf</code>: they should 
 </p></li>
 </ul>
 <p>
-This takes over external configuration import functionality that used to be, but is no longer, part of <a href="set-dynamic-hostname.html"><code>set-dynamic-hostname</code></a>.
+This takes over external configuration import functionality that used to be, but is no longer, part of <a href="commands/set-dynamic-hostname.xml"><code>set-dynamic-hostname</code></a>.
 <code>set-dynamic-hostname</code> only uses native configuration mechanisms, environment variables, now; relying upon the external configuration import subsystem to translate all of the aforementioned non-native configuration systems.
 </p>
 </li>
 </ul>
 
 <p>
-The result is an amalgam that can be conveniently used with <a href="read-conf.html"><code>read-conf</code></a> when one needs to access configuration settings.
+The result is an amalgam that can be conveniently used with <a href="commands/read-conf.xml"><code>read-conf</code></a> when one needs to access configuration settings.
 This amalgam is the unified source of information for the subsequent conversion into native form.
 </p>
 

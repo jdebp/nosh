@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="local-stream-socket-connect">
 
@@ -22,8 +23,8 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>local-stream-socket-connect</command> 
-<arg>--verbose</arg> 
-<arg>--local-path <replaceable>path</replaceable></arg> 
+<arg choice='opt'>--verbose</arg> 
+<arg choice='opt'>--local-path <replaceable>path</replaceable></arg> 
 <arg choice='req'><replaceable>host</replaceable></arg> 
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
@@ -32,7 +33,7 @@
 <refsection><title>Description</title>
 
 <para>
-<command>local-stream-socket-connect</command> is a chain-loading utility that opens a local stream socket, connects it to <replaceable>path</replaceable> with <citerefentry><refentrytitle>connect</refentrytitle><manvolnum>1</manvolnum></citerefentry>, sets the socket to file descriptors 6 and 7 (closing whatever those descriptors were), and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
+<command>local-stream-socket-connect</command> is a chain-loading utility that opens a local stream socket, connects it to <replaceable>path</replaceable> with <citerefentry><refentrytitle>connect</refentrytitle><manvolnum>3</manvolnum></citerefentry>, sets the socket to file descriptors 6 and 7 (closing whatever those descriptors were), and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
 It sets up various conventional UCSPI environment variables that describe the local and remote ends of the connection.
 By UCSPI convention the chained-to program is expected to use file descriptor 6 for reading from the server and file descriptor 7 for writing to the server.
 </para>
@@ -108,6 +109,8 @@ The effective GID of the remote (server) process.
 If the <arg choice='plain'>--verbose</arg> option is used, <command>local-stream-socket-connect</command> logs information about connections made.
 </para>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

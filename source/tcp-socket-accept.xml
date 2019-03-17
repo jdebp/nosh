@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="tcp-socket-accept">
 
@@ -19,12 +20,12 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>tcp-socket-accept</command> 
-<arg>--verbose</arg> 
-<arg>--no-keepalives</arg> 
-<arg>--no-kill-IP-options</arg> 
-<arg>--no-delay</arg> 
-<arg>--connection-limit <replaceable>number</replaceable></arg> 
-<arg>--localname <replaceable>hostname</replaceable></arg> 
+<arg choice='opt'>--verbose</arg> 
+<arg choice='opt'>--no-keepalives</arg> 
+<arg choice='opt'>--no-kill-IP-options</arg> 
+<arg choice='opt'>--no-delay</arg> 
+<arg choice='opt'>--connection-limit <replaceable>number</replaceable></arg> 
+<arg choice='opt'>--localname <replaceable>hostname</replaceable></arg> 
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -138,13 +139,13 @@ The first disables the use of TCP keepalive probes (which are used by default to
 <command>tcp-socket-accept</command> can be used 
 <itemizedlist>
 <listitem>
-as a "socket-activated" daemon monitored by <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry> (with the systemd-recommended <code>Accept=false</code>),
+as a "socket-activated" d&#xe6;mon monitored by <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry> (with the systemd-recommended <code>Accept=false</code>),
 </listitem>
 <listitem>
-as a daemon started by <citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry> (with <code>wait</code> and as long as it is chained via <code>fdmove 0 3</code>), and
+as a d&#xe6;mon started by <citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry> (with <code>wait</code> and as long as it is chained via <code>fdmove 0 3</code>), and
 </listitem>
 <listitem>
-as a simple daemon chained from <citerefentry><refentrytitle>tcp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry> and monitored by <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+as a simple d&#xe6;mon chained from <citerefentry><refentrytitle>tcp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry> and monitored by <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </listitem>
 </itemizedlist>
 Together, <command>tcp-socket-accept</command> and <citerefentry><refentrytitle>tcp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry> replace <citerefentry><refentrytitle>tcpserver</refentrytitle><manvolnum>1</manvolnum></citerefentry> from ucspi-tcp.
@@ -155,6 +156,8 @@ To change the process' UID and GID after a successful call to <citerefentry><ref
 This is, however, not usually necessary because unprivileged processes can accept any connections.
 It is preferable to chain <command>tcp-socket-accept</command> from <citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry> or <citerefentry><refentrytitle>setuidgid-fromenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

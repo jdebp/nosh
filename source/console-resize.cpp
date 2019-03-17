@@ -14,6 +14,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "utils.h"
 #include "popt.h"
 
+// This must have static storage duration as we are using it in args.
 static std::string columns_arg;
 
 /* Main function ************************************************************

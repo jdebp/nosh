@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
+
+<refentry id="erase-machine-id">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>erase-machine-id</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>erase-machine-id</refname>
+<refpurpose>tear down the machine ID</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>erase-machine-id</command>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>erase-machine-id</command> erases the current machine ID, stored in various areas of volatile and non-volatile storage.
+See <citerefentry><refentrytitle>machine-id</refentrytitle><manvolnum>7</manvolnum></citerefentry> for where the volatile and non-volatile storage areas are.
+</para>
+
+<para>
+Rather than remove storage files, which could create stale data and inconsistencies if a system administrator had decided to employ symbolic links, it overwrites them with a nil machine ID (NCS-variant UUID with all zeroes).
+<citerefentry><refentrytitle>setup-machine-id</refentrytitle><manvolnum>1</manvolnum></citerefentry> treats a nil UUID as a case of needing a fresh ID to be generated.
+</para>
+
+</refsection>
+
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
+
+</refentry>

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
+
+<refentry id="console-docbook-xml-viewer">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>console-docbook-xml-viewer</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">administrator commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>console-docbook-xml-viewer</refname>
+<refpurpose>TUI viewer for UTF-8 DocBook XML references</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>console-docbook-xml-viewer</command>
+<arg choice='opt'>--cursor-keypad-application-mode</arg>
+<arg choice='opt'>--calculator-keypad-application-mode</arg>
+<arg choice='opt'>--no-alternate-screen-buffer</arg>
+<arg choice='opt' repeat='rep'><replaceable>filename(s)</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>console-docbook-xml-viewer</command> is a simple TUI viewer for UTF-8 encoded DocBook XML reference manuals.
+</para>
+
+<para>
+The manual data are read from the command's standard input and parsed at startup, before its initializes its display.
+</para>
+
+<refsection><title>Documents</title>
+
+<para>
+<command>console-docbook-xml-viewer</command> ignores XML Prologues and Document Type Definitions.
+Documents are simply assumed to be encoded in UTF-8 and marked up as references.
+</para>
+
+<para>
+Most documents nowadays are encoded as UTF-8.
+Simply pass any that are not through <citerefentry><refentrytitle>iconv</refentrytitle><manvolnum>1</manvolnum></citerefentry> or a similar tool.
+</para>
+
+<para>
+Documents that are DocBook entities other than references, such as book chapters and appendixes, may not render ideally.
+The primary target is a reference manual document with <code>&lt;refentry&gt;</code>s.
+</para>
+
+</refsection>
+
+<refsection><title>User interface</title>
+
+<para>
+<command>console-docbook-xml-viewer</command> opens its controlling terminal via <filename>/dev/tty</filename> and uses that for its user interface, both input and output.
+If its standard input is also its controlling terminal, odd behaviour may result, determined by how the operating system kernel decides to route input.
+(This is not a sensible usage of the program; so simply do not do this.)
+</para>
+
+<para>
+Although its behaviour is controlled by the <citerefentry><refentrytitle><envar>TERM</envar></refentrytitle><manvolnum>7</manvolnum></citerefentry> environment variable, it does not use <citerefentry><refentrytitle>terminfo</refentrytitle><manvolnum>3</manvolnum></citerefentry> or <citerefentry><refentrytitle>termcap</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
+It instead uses <citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
+The terminal type determines a few terminal capabilities (such as whether the terminal can actually handle DEC private mode control sequences at all, and its degree of ISO 8613-6 support), but most processing adheres to the ECMA-48 and ISO 8613-6 de jure standard control sequences and the DEC VT, DTTerm, and AIXTerm de facto standard ones.
+</para>
+
+<para>
+The user interface responds to actual arrow keys, HJKL navigation in the style of <citerefentry><refentrytitle>vi</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and WASD navigation.
+(The command only knows about characters and escape/control sequences coming from the terminal.
+Thus the latter two are not particularly ergonomic on several countries' standard keyboard layouts.)
+Note that the cursor is initially positioned on the first line, so the screen will not begin to scroll until the cursor is moved to the bottom.
+Also note that SPC and LF characters as input do not do anything; this not being a pagination tool.
+</para>
+
+<para>
+Various common control characters with conventional special meanings may be used to quit, although the simplest way of quitting is simply <userinput>q</userinput>.
+</para>
+
+<para>
+The <arg choice='plain'>--cursor-keypad-application-mode</arg> and <arg choice='plain'>--calculator-keypad-application-mode</arg> command-line options instruct <command>console-docbook-xml-viewer</command> to switch, respectively, the cursor keypad and the calculator keypad of the realizing terminal into their "application" modes.
+Otherwise it switches them into their "normal" modes.
+"application" mode is generally not useful to <command>console-docbook-xml-viewer</command>, since it makes cursor and calculator keys indistinguishable from accelerator keys.
+The <arg choice='plain'>--no-alternate-screen-buffer</arg> command-line option instructs <command>console-docbook-xml-viewer</command> to not switch to the alternative screen buffer.
+This works around problems with some (yet more!) broken terminal emulators that attempt to be and fail at being like XTerm, which forcibly change cursor and editing keys into application mode when the alternative screen buffer is active.
+</para>
+
+</refsection>
+
+<refsection><title>Limitations</title>
+
+<para>
+<command>console-docbook-xml-viewer</command> by design will not render graphical elements such as images.
+Moreover, its internal document model is a simple one, that does not handle tables well.
+To view documents with images and tables, use a GUI viewer.
+Many GUI HTML viewers can be persuaded to view DocBook XML with the simple addition of a stylesheet.
+(One such stylesheet can be found in the <ulink url="docbook-xml.css"><citetitle>nosh Guide</citetitle></ulink>.)
+</para>
+
+<para>
+Real XML processors are less forgiving than <command>console-docbook-xml-viewer</command>, which allows some constructs that are not actually well-formed XML.
+Do not rely upon this; future versions are free to be more strict.
+</para>
+
+<para>
+The internal document model will not cope well with some valid, but unusual, ways of writing reference manuals.
+Generally &lt;title&gt; elements are expected to come first in sections, &lt;refname&gt; elements to come before &lt;refpurpose&gt; elements, and &lt;refentrytitle&gt; elements to come before &lt;manvolnum&gt; elements.
+Fortuately, these are the logical ways for human authors to write.
+</para>
+
+</refsection>
+
+</refsection>
+
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
+
+</refentry>

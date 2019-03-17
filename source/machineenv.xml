@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="machineenv">
 
@@ -43,7 +44,7 @@ The following environment variables are set:
 <varlistentry>
 <term><envar>MACHINEID</envar></term>
 <listitem><para>
-Set to the human-readable hexadecimal non-punctuated form of the machine ID, for details on which see <citerefentry><refentrytitle>setup-machine-id</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Set to the human-readable hexadecimal non-punctuated form of the machine ID, for details on which see <citerefentry><refentrytitle>machine-id</refentrytitle><manvolnum>7</manvolnum></citerefentry>.
 </para></listitem>
 </varlistentry><varlistentry>
 <term><envar>HOSTNAME</envar></term>
@@ -84,6 +85,8 @@ The previously documented workaround for those libraries' having memory leaks in
 </para></listitem>
 </itemizedlist>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

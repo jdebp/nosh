@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="line-banner">
 
@@ -47,13 +48,10 @@ Normally, it follows the Unix convention of just a linefeed.
 </refsection><refsection><title>EXAMPLE</title>
 
 <para>
-The following <citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry> script wraps the <citerefentry><refentrytitle>ftpd</refentrytitle><manvolnum>1</manvolnum></citerefentry> server from the publicfile
-package, which requires that the initial 220 response be written before
-the daemon is invoked.
+The following <citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry> script wraps the <citerefentry><refentrytitle>ftpd</refentrytitle><manvolnum>1</manvolnum></citerefentry> server from the publicfile package, which requires that the initial 220 response be written before the d&#xe6;mon is invoked.
 </para>
 
-<programlisting>
-#!/bin/nosh
+<programlisting>#!/bin/nosh
 fdmove -c 2 1
 envuidgid publicfile
 softlimit -o 20 -d 50000
@@ -67,8 +65,7 @@ sh -c 'exec ftpd ~publicfile/public'
 This is the <citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry> equivalent:
 </para>
 
-<programlisting>
-#!/bin/sh -e
+<programlisting>#!/bin/sh -e
 exec 2&lt;>&amp;1 \
 envuidgid publicfile \
 softlimit -o 20 -d 50000 \
@@ -78,6 +75,8 @@ line-banner --NVT '220 Features: a p .' \
 ftpd ~publicfile/public
 </programlisting>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

@@ -29,9 +29,27 @@ TUIVIO::poke_quick (
 	long col,
 	const CharacterCell::attribute_type & attr,
 	const ColourPair & colour,
-	char character
+	CharacterCell::character_type character
 ) {
 	c.poke(row, col, CharacterCell(character, attr, colour));
+}
+
+inline
+void
+TUIVIO::poke_quick (
+	long row,
+	long col,
+	const CharacterCell::attribute_type & attr,
+	const ColourPair & colour,
+	const CharacterCell::character_type * b,
+	std::size_t l
+) {
+	CharacterCell cell('\0', attr, colour);
+	while (l) {
+		--l;
+		cell.character = *b++;
+		c.poke(row, col++, cell);
+	}
 }
 
 inline
@@ -57,6 +75,23 @@ void
 TUIVIO::poke_quick (
 	long row,
 	long col,
+	const CharacterCell::character_type * b,
+	std::size_t l
+) {
+	while (l) {
+		--l;
+		CharacterCell cell(c.new_at(row, col));
+		cell.character = *b++;
+		c.poke(row, col, cell);
+		++col;
+	}
+}
+
+inline
+void
+TUIVIO::poke_quick (
+	long row,
+	long col,
 	const char * b,
 	std::size_t l
 ) {
@@ -70,12 +105,12 @@ TUIVIO::poke_quick (
 }
 
 void
-TUIVIO::WriteNCells (
+TUIVIO::WriteNCharsAttr (
         long row,
         long col,
         const CharacterCell::attribute_type & attr,
         const ColourPair & colour,
-        char character,
+        CharacterCell::character_type character,
         unsigned n
 ) {
 	if (row < 0 || c.query_h() <= row || c.query_w() <= col || (col < 0 && -col >= n))
@@ -118,7 +153,27 @@ TUIVIO::WriteNAttrs (
 }
 
 void
-TUIVIO::WriteCellStr (
+TUIVIO::WriteCharStrAttr (
+	long row,
+	long col,
+	const CharacterCell::attribute_type & attr,
+	const ColourPair & colour,
+	const CharacterCell::character_type * b,
+	std::size_t l
+) {
+	if (row < 0 || c.query_h() <= row || c.query_w() <= col || (col < 0 && static_cast<std::size_t>(-col) >= l))
+		return;
+	if (col < 0) {
+		b += -col;
+		l -= -col;
+		col = 0;
+	}
+	if (col + l > c.query_w()) l = c.query_w() - col;
+	poke_quick(row, col, attr, colour, b, l);
+}
+
+void
+TUIVIO::WriteCharStrAttr (
 	long row,
 	long col,
 	const CharacterCell::attribute_type & attr,
@@ -135,6 +190,23 @@ TUIVIO::WriteCellStr (
 	}
 	if (col + l > c.query_w()) l = c.query_w() - col;
 	poke_quick(row, col, attr, colour, b, l);
+}
+
+void
+TUIVIO::WriteCharStr (
+	long row,
+	long col,
+	const CharacterCell::character_type * b,
+	std::size_t l
+) {
+	if (row < 0 || c.query_h() <= row || c.query_w() <= col || (col < 0 && static_cast<std::size_t>(-col) >= l))
+		return;
+	if (col < 0) {
+		l -= -col;
+		col = 0;
+	}
+	if (col + l > c.query_w()) l = c.query_w() - col;
+	poke_quick(row, col, b, l);
 }
 
 void
@@ -160,7 +232,7 @@ TUIVIO::Print (
 	long & col,
 	const CharacterCell::attribute_type & attr,
 	const ColourPair & colour,
-	char character
+	CharacterCell::character_type character
 ) {
 	if (0 <= row && row < c.query_h() && 0 <= col && col < c.query_w())
 		poke_quick(row, col, attr, colour, character);
@@ -173,10 +245,34 @@ TUIVIO::Print (
 	long & col,
 	const CharacterCell::attribute_type & attr,
 	const ColourPair & colour,
+	const CharacterCell::character_type * b,
+	std::size_t l
+) {
+	WriteCharStrAttr(row, col, attr, colour, b, l);
+	col += l;
+}
+
+void
+TUIVIO::Print (
+	long row,
+	long & col,
+	const CharacterCell::attribute_type & attr,
+	const ColourPair & colour,
 	const char * b,
 	std::size_t l
 ) {
-	WriteCellStr(row, col, attr, colour, b, l);
+	WriteCharStrAttr(row, col, attr, colour, b, l);
+	col += l;
+}
+
+void
+TUIVIO::Print (
+	long row,
+	long & col,
+	const CharacterCell::character_type * b,
+	std::size_t l
+) {
+	WriteCharStr(row, col, b, l);
 	col += l;
 }
 
@@ -226,4 +322,3 @@ TUIVIO::PrintFormatted (
 		Print(row, col, buf, n);
 	free(buf);
 }
-

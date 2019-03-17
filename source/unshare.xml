@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="unshare">
 
@@ -22,12 +23,12 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>unshare</command>
-<arg>--mount</arg>
-<arg>--network</arg>
-<arg>--uts</arg>
-<arg>--ipc</arg>
-<arg>--process</arg>
-<arg>--user</arg>
+<arg choice='opt'>--mount</arg>
+<arg choice='opt'>--network</arg>
+<arg choice='opt'>--uts</arg>
+<arg choice='opt'>--ipc</arg>
+<arg choice='opt'>--process</arg>
+<arg choice='opt'>--user</arg>
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -98,6 +99,8 @@ The command will fail if the process is not running under the aegis of the super
 Non-superusers are not permitted to unshare these things.
 </para>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

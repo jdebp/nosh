@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="open-controlling-tty">
 
@@ -23,15 +24,15 @@
 <refsection><title>BSD</title>
 <cmdsynopsis>
 <command>open-controlling-tty</command> 
-<arg>--revoke</arg> 
-<arg>--exclusive</arg> 
+<arg choice='opt'>--revoke</arg> 
+<arg choice='opt'>--exclusive</arg> 
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsection><refsection><title>Linux</title>
 <cmdsynopsis>
 <command>open-controlling-tty</command> 
-<arg>--vhangup</arg> 
-<arg>--exclusive</arg> 
+<arg choice='opt'>--vhangup</arg> 
+<arg choice='opt'>--exclusive</arg> 
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsection>
@@ -74,7 +75,7 @@ Dealing with these is the province of a job-control shell, which may not even ru
 If the <arg choice='plain'>--exclusive</arg> command line option is used, it will attempt to use the <code>TIOCEXCL</code> <citerefentry><refentrytitle>ioctl</refentrytitle><manvolnum>2</manvolnum></citerefentry> function to put the terminal device into "exclusive" mode.
 </para>
 
-</refsection><refsection><title>SECURITY</title>
+</refsection><refsection><title>Security</title>
 
 <refsection><title>Linux</title>
 
@@ -118,6 +119,8 @@ Unfortunately, there is no moral equivalent for kernel-supplied virtual consoles
 However, userspace virtual consoles use pseudo-terminals and <citerefentry><refentrytitle>pty-get-tty</refentrytitle><manvolnum>1</manvolnum></citerefentry>.  </para></listitem>
 </itemizedlist>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

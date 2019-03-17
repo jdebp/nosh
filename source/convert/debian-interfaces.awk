@@ -38,19 +38,26 @@
 			dhcp[iface]=1
 			ipv4[iface] = ipv4[iface];
 		} else
+		if ("ipv4ll" == method) {
+			if ("inet" == family) {
+				ipv4ll[iface]=1
+				ipv4[iface] = ipv4[iface];
+			} else
+				;
+		} else
 		if ("loopback" == method) {
 			if ("inet" == family) {
 				if (1 < ipv4s[iface])
-					aliases[iface] = aliases[iface] " 127.0.0.1";
+					aliases[iface] = aliases[iface] " 127.0.0.1/8";
 				else
-					ipv4_address[iface] = ipv4_address[iface] " 127.0.0.1";
+					ipv4_address[iface] = ipv4_address[iface] " 127.0.0.1/8";
 				ipv4[iface] = ipv4[iface];
 			} else
 			if ("inet6" == family) {
 				if (1 < ipv6s[iface])
-					aliases[iface] = aliases[iface] " ::1";
+					aliases[iface] = aliases[iface] " ::1/128";
 				else
-					ipv6_address[iface] = ipv6_address[iface] " ::1";
+					ipv6_address[iface] = ipv6_address[iface] " ::1/128";
 				ipv6[iface] = ipv6[iface];
 				ipv4[iface] = ipv4[iface];
 			} else
@@ -83,7 +90,25 @@
 			} else
 				;
 		} else
-		if ("netmask" == $1 || "broadcast" == $1) {
+		if ("broadcast" == $1 && "+" == $2) {
+			if ("inet" == family) {
+				if (1 < ipv4s[iface])
+					aliases[iface] = aliases[iface] " broadcast1";
+				else
+					ipv4_address[iface] = ipv4_address[iface] " broadcast1";
+				ipv4[iface] = ipv4[iface];
+			} else
+			if ("inet6" == family) {
+				if (1 < ipv6s[iface])
+					aliases[iface] = aliases[iface] " broadcast1";
+				else
+					ipv6_address[iface] = ipv6_address[iface] " broadcast1";
+				ipv6[iface] = ipv6[iface];
+				ipv4[iface] = ipv4[iface];
+			} else
+				;
+		} else
+		if ("netmask" == $1 || "broadcast" == $1 || "prefixlen" == $1) {
 			if ("inet" == family) {
 				if (1 < ipv4s[iface])
 					aliases[iface] = aliases[iface] " " $1 " " $2;
@@ -101,18 +126,71 @@
 			} else
 				;
 		} else
-		if ("metric" == $1)
-			ipv4[iface] = ipv4[iface] " " $1 " " $2;
+		if ("scope" == $1) {
+			## "link" is an address family.
+			if ("link" == $2)
+				$2 = "link-local";
+			if ("inet" == family) {
+				if (1 < ipv4s[iface])
+					aliases[iface] = aliases[iface] " " $1 " " $2;
+				else
+					ipv4_address[iface] = ipv4_address[iface] " " $1 " " $2;
+				ipv4[iface] = ipv4[iface];
+			} else
+			if ("inet6" == family) {
+				if (1 < ipv6s[iface])
+					aliases[iface] = aliases[iface] " " $1 " " $2;
+				else
+					ipv6_address[iface] = ipv6_address[iface] " " $1 " " $2;
+				ipv6[iface] = ipv6[iface];
+				ipv4[iface] = ipv4[iface];
+			} else
+				;
+		} else
+		if ("pointopoint" == $1) {
+			if ("inet" == family) {
+				if (1 < ipv4s[iface])
+					aliases[iface] = aliases[iface] " dest " $2;
+				else
+					ipv4_address[iface] = ipv4_address[iface] " dest " $2;
+				ipv4[iface] = ipv4[iface];
+			} else
+			if ("inet6" == family) {
+				if (1 < ipv6s[iface])
+					aliases[iface] = aliases[iface] " dest " $2;
+				else
+					ipv6_address[iface] = ipv6_address[iface] " dest " $2;
+				ipv6[iface] = ipv6[iface];
+				ipv4[iface] = ipv4[iface];
+			} else
+				;
+		} else
+		if ("metric" == $1 || "hwaddress" == $1 || "mtu" == $1)
+			link[iface] = link[iface] " " $1 " " $2;
 		else
 		if ("gateway" == $1) {
-			if ("" != aliases[iface])
-				aliases[iface] = aliases[iface] " " $1 " " $2;
-			else
-				ipv4_address[iface] = ipv4_address[iface] " " $1 " " $2;
-			ipv4[iface] = ipv4[iface];
+			;
 		} else
 		if ("media" == $1)
 			;
+		else
+		if ("eui64" == $1)
+			if ("inet" == family) {
+				if (1 < ipv4s[iface])
+					aliases[iface] = aliases[iface] " " $1;
+				else
+					ipv4_address[iface] = ipv4_address[iface] " " $1;
+				ipv4[iface] = ipv4[iface];
+			} else
+			if ("inet6" == family) {
+				if (1 < ipv6s[iface])
+					aliases[iface] = aliases[iface] " " $1;
+				else
+					ipv6_address[iface] = ipv6_address[iface] " " $1;
+				ipv6[iface] = ipv6[iface];
+				ipv4[iface] = ipv4[iface];
+			} else
+				;
 		else
 		if ("accept_ra" == $1)
 			ipv6[iface] = ipv6[iface] " accept_rtadv";
@@ -130,18 +208,6 @@
 			;
 		else
 		if ("dad-lifetime" == $1)
-			;
-		else
-		if ("pointopoint" == $1)
-			;
-		else
-		if ("hwaddress" == $1)
-			link[iface] = link[iface] " " $1 " " $2;
-		else
-		if ("mtu" == $1)
-			ipv4[iface] = ipv4[iface] " " $1 " " $2;
-		else
-		if ("scope" == $1)
 			;
 		else
 			;
@@ -168,11 +234,8 @@
 			;
 	} else
 	if ("manual" == method) {
-		if ("hwaddress" == $1)
+		if ("metric" == $1 || "hwaddress" == $1 || "mtu" == $1)
 			link[iface] = link[iface] " " $1 " " $2;
-		else
-		if ("mtu" == $1)
-			ipv4[iface] = ipv4[iface] " " $1 " " $2;
 		else
 			;
 	} else
@@ -180,8 +243,8 @@
 		if ("hostname" == $1)
 			hostnames[iface]=$2;
 		else
-		if ("metric" == $1)
-			ipv4[iface] = ipv4[iface] " " $1 " " $2;
+		if ("metric" == $1 || "hwaddress" == $1 || "mtu" == $1)
+			link[iface] = link[iface] " " $1 " " $2;
 		else
 		if ("leasehours" == $1)
 			;
@@ -207,9 +270,6 @@
 		if ("ll-interval" == $1)
 			;
 		else
-		if ("hwaddress" == $1)
-			link[iface] = link[iface] " link " $1 " " $2;
-		else
 			;
 	} else
 		;
@@ -226,6 +286,7 @@ END {
 		if (dhcp[n]) printf "DHCP ";
 		if (wpa[n]) printf "WPA ";
 		if (hostap[n]) printf "HOSTAP ";
+		if (ipv4ll[n]) printf "IPV4LL ";
 		printf "inet %s %s\"\n",ipv4_address[n],ipv4[n];
 	}
 	for (n in link)

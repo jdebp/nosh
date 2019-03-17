@@ -172,8 +172,8 @@ TUI::TUI(
 	immediate_update_needed(true),
 	window_y(0U),
 	window_x(0U),
-	body(ColourPair(h_colour, Map256Colour(COLOUR_BLACK))),
-	heading(ColourPair(b_colour, Map256Colour(COLOUR_BLACK))),
+	heading(ColourPair(h_colour, Map256Colour(COLOUR_BLACK))),
+	body(ColourPair(b_colour, Map256Colour(COLOUR_BLACK))),
 	header_count(c),
 	table(m),
 	state(START),
@@ -400,8 +400,8 @@ TUI::redraw_new (
 		}
 	}
 
-	c.move_cursor(false /* no software cursor */, y - window_y, x - window_x);
-	c.set_cursor_state(false /* no software cursor */, CursorSprite::BLINK, CursorSprite::BOX);
+	c.move_cursor(y - window_y, x - window_x);
+	c.set_cursor_state(CursorSprite::BLINK, CursorSprite::BOX);
 }
 
 void
@@ -705,7 +705,7 @@ void colour_definition::action(popt::processor & /*proc*/, const char * text)
 	if ('#'== *text) {
 		unsigned long rgb(std::strtoul(text + 1, const_cast<char **>(&end), 16));
 		if (!*end && end != text + 1) {
-			value = CharacterCell::colour_type(ALPHA_FOR_COLOURED,(rgb >> 16) & 0xFF,(rgb >> 8) & 0xFF,(rgb >> 0) & 0xFF);
+			value = MapTrueColour((rgb >> 16) & 0xFF,(rgb >> 8) & 0xFF,(rgb >> 0) & 0xFF);
 			return;
 		}
 	}
@@ -850,7 +850,7 @@ console_flat_table_viewer
 
 	Table table;
 
-	TUIDisplayCompositor compositor(24, 80);
+	TUIDisplayCompositor compositor(false /* no software cursor */, 24, 80);
 	TUI ui(envs, table, compositor, control, header_count, format_option, header_colour, body_colour, cursor_application_mode, calculator_application_mode, !no_alternate_screen_buffer);
 
 	// How long to wait with updates pending.

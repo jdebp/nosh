@@ -54,7 +54,7 @@ function _system_control_subcommands()
 	'version:output version information'
 	'write-volume-service-bundle:convert an fstab record to service bundles'
 	)
-	_describe -t command 'sub-commands' commands
+	_describe -t command 'system-control sub-commands' commands
 }
 
 function _chkconfig_subcommands()
@@ -89,6 +89,32 @@ function _rc_update_subcommands()
 	_describe -t command 'sub-commands' commands
 }
 
+function _initctl_subcommands()
+{
+	local -a initctl_commands
+	initctl_commands=(
+	'show-config:print machine-readable service status'
+	'start:start a service'
+	'status:display service status'
+	'stop:stop a service'
+	'version:show the version'
+	)
+	_describe -t initctl_command 'initctl sub-commands' initctl_commands
+	_system_control_subcommands
+}
+
+function _svcadm_subcommands()
+{
+	local -a svcadm_commands
+	svcadm_commands=(
+	'enable:start a service'
+	'disable:stop a service'
+	'version:show the version'
+	)
+	_describe -t svcadm_command 'svcadm sub-commands' svcadm_commands
+	_system_control_subcommands
+}
+
 function _rcctl_subcommands()
 {
 	local -a rcctl_commands
@@ -96,7 +122,7 @@ function _rcctl_subcommands()
 	'get:display a standard-format env/ directory for a service'
 	'set:change a standard-format env/ directory for a service'
 	)
-	_describe -t rcctl_command 'sub-commands' rcctl_commands
+	_describe -t rcctl_command 'rcctl sub-commands' rcctl_commands
 	_system_control_subcommands
 }
 
@@ -200,6 +226,27 @@ function _rcctl()
 	_system_control_common "$@"
 }
 
+function _initctl()
+{
+	local service="$words[1]"
+	local curcontext="${curcontext%:*:*}:system-control-$words[1]:" 
+	case "$service" in
+		show-config)	service=show-json ;;
+	esac
+	_system_control_common "$@"
+}
+
+function _svcadm()
+{
+	local service="$words[1]"
+	local curcontext="${curcontext%:*:*}:system-control-$words[1]:" 
+	case "$service" in
+		enable) 	service=start ;;
+		disable)	service=stop ;;
+	esac
+	_system_control_common "$@"
+}
+
 function _update_rc_d_subcommands()
 {
 	local service="$words[1]"
@@ -220,10 +267,14 @@ function _system_control()
 	case "${service}" in
 		(service|per-user|system)-manager)
 			_message -r "${service} has no options or parameters." ;;
-		(system|init)ctl|svcadm|system-control) 
+		systemctl|system-control) 
 			_arguments -A '-*' $common '1:subcommand:_system_control_subcommands' '*::subargs:_system_control_subargs YES' -- ;;
 		rcctl)
 			_arguments -A '-*' $common '1:subcommand:_rcctl_subcommands' '*::subargs:_rcctl' -- ;;
+		initctl)
+			_arguments -A '-*' $common '1:subcommand:_initctl_subcommands' '*::subargs:_initctl' -- ;;
+		svcadm)
+			_arguments -A '-*' $common '1:subcommand:_svcadm_subcommands' '*::subargs:_svcadm' -- ;;
 		update-rc.d) 
 			_arguments -A '-*' $common '1:service name:_service_bundles' '2:subcommand:_update_rc_d_subcommands' -- ;;
 		rc-update) 

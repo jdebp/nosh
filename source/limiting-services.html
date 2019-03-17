@@ -40,13 +40,13 @@ Usually it does this as part of an overall sequence of setting up a changed root
 (This is because it requires a lot more setup, and a lot more files and directories exposed, to use chain-loading to set up a changed root.
 Chain loading involves the overlay of new process images that must be visible, along with the dynamic loader and any dynamically loaded shared objects, in the changed root environment.
 All of that needs to be set up with hard links, bind mounts, and whatnot.)
-In such cases, one can use <a href="envuidgid.html"><code>envuidgid</code></a> to look up the user ID and group ID of the unprivileged user account that the program should switch to, and place them in the environment for it to read.
+In such cases, one can use <a href="commands/envuidgid.xml"><code>envuidgid</code></a> to look up the user ID and group ID of the unprivileged user account that the program should switch to, and place them in the environment for it to read.
 </p>
 
 <p>
 Othertimes privileges are dropped by a sequence of chain-loading tools leading up to the execution of the main d&aelig;mon program itself.
 Usually this is the case where there is no changed root involved.
-In such cases, one can use <a href="setuidgid.html"><code>setuidgid</code></a> or <a href="setuidgid-fromenv.html"><code>setuidgid-fromenv</code></a> to drop privileges.
+In such cases, one can use <a href="commands/setuidgid.xml"><code>setuidgid</code></a> or <a href="commands/setuidgid-fromenv.xml"><code>setuidgid-fromenv</code></a> to drop privileges.
 </p>
 
 <p>
@@ -66,7 +66,7 @@ Using the original Unix resource limit mechanism
 </h3>
 
 <p>
-The original Unix resource limit mechanism is controllable in a <code>run</code> program by using the <a href="softlimit.html"><code>softlimit</code></a> and the <a href="hardlimit.html"><code>hardlimit</code></a> utilities, which have the conventional daemontools style of interface (complete with a unified "memory" setting that sets several limits as one), or the <a href="ulimit.html"><code>ulimit</code></a> utility, which has an interface similar to the built-in command of the same name in POSIX-conformant shells.
+The original Unix resource limit mechanism is controllable in a <code>run</code> program by using the <a href="commands/softlimit.xml"><code>softlimit</code></a> and the <a href="commands/hardlimit.xml"><code>hardlimit</code></a> utilities, which have the conventional daemontools style of interface (complete with a unified "memory" setting that sets several limits as one), or the <a href="commands/ulimit.xml"><code>ulimit</code></a> utility, which has an interface similar to the built-in command of the same name in POSIX-conformant shells.
 This resource limit mechanism has some well-known lacks, which one may or may not hit, depending from exactly what one's d&aelig;mon does.
 A d&aelig;mon that never spawns child processes will not, for example, raise the well-known problem that some of these Unix resource limits are <em>per-process</em>.
 </p>
@@ -85,7 +85,7 @@ Using the Linux control groups
 
 <p>
 The Linux "control groups" mechanism is an enhanced and improved version of the original Unix mechanism, intended to overcome some of its limitations with respect to limits constraining multiple processes.
-It is used from <code>run</code> programs with the <a href="move-to-control-group.html"><code>move-to-control-group</code></a>, the <a href="set-control-group-knob.html"><code>set-control-group-knob</code></a>, and the <a href="delegate-control-group-to.html"><code>delegate-control-to-knob</code></a> utilities.
+It is used from <code>run</code> programs with the <a href="commands/move-to-control-group.xml"><code>move-to-control-group</code></a>, the <a href="commands/set-control-group-knob.xml"><code>set-control-group-knob</code></a>, and the <a href="commands/delegate-control-group-to.xml"><code>delegate-control-to-knob</code></a> utilities.
 </p>
 
 <p>
@@ -104,10 +104,10 @@ This happens as follows:
 </p>
 <ul>
 <li><p>
-In the <code>start</code> program one uses <a href="move-to-control-group.html"><code>move-to-control-group</code></a>, <a href="set-control-group-knob.html"><code>set-control-group-knob</code></a>, and <a href="delegate-control-group-to.html"><code>delegate-control-group-to</code></a> to create and then change control group, to set the various knobs on the control group to limit processes run within it, and to enable (if appropriate) the creation of further sub-groups by the unprivileged account that the service processes run as.
+In the <code>start</code> program one uses <a href="commands/move-to-control-group.xml"><code>move-to-control-group</code></a>, <a href="commands/set-control-group-knob.xml"><code>set-control-group-knob</code></a>, and <a href="commands/delegate-control-group-to.xml"><code>delegate-control-group-to</code></a> to create and then change control group, to set the various knobs on the control group to limit processes run within it, and to enable (if appropriate) the creation of further sub-groups by the unprivileged account that the service processes run as.
 </p></li>
 <li><p>
-In the <code>run</code> program one uses <a href="move-to-control-group.html"><code>move-to-control-group</code></a> to change control group to the same control group.
+In the <code>run</code> program one uses <a href="commands/move-to-control-group.xml"><code>move-to-control-group</code></a> to change control group to the same control group.
 This is done before dropping privileges.
 </p></li>
 </ul>
@@ -115,7 +115,7 @@ This is done before dropping privileges.
 <li><p>
 Conventionally, the services run in sibling control groups to the service manager's control group.
 </p><p>
-When <a href="system-manager.html"><code>system-manager</code></a>, <a href="per-user-manager.html"><code>per-user-manager</code></a>, or some other program spawns the service manager in the first place, it places it into a control group.
+When <a href="commands/system-manager.xml"><code>system-manager</code></a>, <a href="commands/per-user-manager.xml"><code>per-user-manager</code></a>, or some other program spawns the service manager in the first place, it places it into a control group.
 This original control group becomes a common root control group for a whole lot of sub-groups, including one for the service manager itself and others for individual services.
 </p></li>
 <li><p>
@@ -160,7 +160,7 @@ Its <code>run</code> program only needs to change to the same control group befo
 oom-kill-protect -- -800</pre></blockquote>
 
 <p>
-This uses <a href="set-control-group-knob.html"><code>set-control-group-knob</code></a> for two things:
+This uses <a href="commands/set-control-group-knob.xml"><code>set-control-group-knob</code></a> for two things:
 </p>
 <ul>
 <li><p>
@@ -285,7 +285,7 @@ Linux has a system of namespaces which can be used to limit what a service sees 
 </p>
 
 <p>
-Manipulating Linux namespaces is the province of the <a href="unshare.html"><code>unshare</code></a>, <a href="set-mount-object.html"><code>set-mount-object</code></a>, <a href="make-private-fs.html"><code>make-private-fs</code></a>, and <a href="make-read-only-fs.html"><code>make-read-only-fs</code></a> commands, used in chains in <code>run</code> programs.
+Manipulating Linux namespaces is the province of the <a href="commands/unshare.xml"><code>unshare</code></a>, <a href="commands/set-mount-object.xml"><code>set-mount-object</code></a>, <a href="commands/make-private-fs.xml"><code>make-private-fs</code></a>, and <a href="commands/make-read-only-fs.xml"><code>make-read-only-fs</code></a> commands, used in chains in <code>run</code> programs.
 With them a process detaches from one or more shared namespaces, and then manipulates its (now) private namespaces to show a different view of the system.
 </p>
 

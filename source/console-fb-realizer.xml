@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="console-fb-realizer">
 
@@ -359,103 +360,103 @@ The key sometimes found at position D13 is grouped with other similar keys in th
 <varlistentry>
 <term>ISO 9995 "C" row</term>
 <listitem><para>
-An unused position, positions C01 to C11, the key usually found in position E00 (grave or kanji/zenkaku/hankaku), the key usually found in position C12 (on 102/105-key, 103/106-key, 104/107-key, and 106/109-key PC keyboards) or D13 (on 101/104-key PC keyboards), then two more unused positions.
+An unused position, positions C01 to C11, the key usually found in position E00 (<keycap>grave</keycap> or <keycap>kanji/zenkaku/hankaku</keycap>), the key usually found in position C12 (on 102/105-key, 103/106-key, 104/107-key, and 106/109-key PC keyboards) or D13 (on 101/104-key PC keyboards), then two more unused positions.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>ISO 9995 "B" row</term>
 <listitem><para>
-</para></listitem>
 An unused position, the additional "Europe 2" key from the 102/105-key and 104/107-key PC keyboards at B00, positions B01 to B10, the additional key from the 104/107-key and 106/109-key PC keyboards at B11, and three more unused positions.
+</para></listitem>
 </varlistentry>
 <varlistentry>
 <term>Modifiers</term>
-1st Level 2 shift, 2nd Level 2 shift, Level 3 shift, an unused position, 1st Control, 2nd Control, 1st Super, 2nd Super, 1st Alt, three unused positions, Caps Lock, Scroll Lock, Num Lock, and an unused position.
 <listitem><para>
+1st <keycap>&#x21e7;&#160;Level&#160;2&#160;shift</keycap>, 2nd <keycap>&#x21e7;&#160;Level&#160;2&#160;shift</keycap>, <keycap>&#x21eb;&#160;Level&#160;3&#160;shift</keycap>, an unused position, 1st <keycap>&#x2388;&#160;Control</keycap>, 2nd <keycap>&#x2388;&#160;Control</keycap>, 1st <keycap>&#x2318;&#160;Super</keycap>, 2nd <keycap>&#x2318;&#160;Super</keycap>, 1st <keycap>&#x2387;&#160;Alt</keycap>, three unused positions, <keycap>&#x21ec;&#160;Caps&#160;Lock</keycap>, <keycap>Scroll&#160;Lock</keycap>, <keycap>&#x21ed;&#160;Num&#160;Lock</keycap>, and an unused position.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>ISO 9995 "A" row</term>
 <listitem><para>
-An unused position, the "Katakana/Hiragana/Romaji" key from the 106/109-key PC keyboard, the "Zenkaku/Hankaku" key (from USB but not a PC keyboard key, and not to be confused with the PC keyboard key at E00), the "Hiragana" key (from USB but not a PC keyboard key), the "Katakana" key (from USB but not a PC keyboard key), the "Henkan" (XFER) key from the 106/109-key PC keyboard, the "Muhenkan" (NFER) key from the 106/109-key PC keyboard, an unused position, the "Han/Yeong" key from the 103/106-key PC keyboard, the "Hanja" key from the 103/106-key PC keyboard, three unused positions, Alternate Erase, Compose, and Space.
+An unused position, the <keycap>&#x3072;&#x3089;&#x30c4;&#x306a;/&#x30ab;&#x30bf;&#x30ab;&#x30ca;/&#x30ed;&#x30fc;&#x30de;&#x5b57;</keycap> (<keycap>Hiragana/Katakana/Romaji</keycap>) key from the 106/109-key PC keyboard, the <keycap>&#x534a;&#x89d2;/&#x5168;&#x89d2;</keycap> (<keycap>Zenkaku/Hankaku</keycap>) key (from USB but not a PC keyboard key, and not to be confused with the PC keyboard key at E00), the <keycap>Hiragana</keycap> key (from USB but not a PC keyboard key), the <keycap>Katakana</keycap> key (from USB but not a PC keyboard key), the <keycap>&#x5909;&#x63db;</keycap> (<keycap>Henkan</keycap> or <keycap>XFER</keycap>) key from the 106/109-key PC keyboard, the <keycap>&#x7121;&#x5909;&#x63db;</keycap> (<keycap>Muhenkan</keycap> or <keycap>NFER</keycap>) key from the 106/109-key PC keyboard, an unused position, the <keycap>Han/Yeong</keycap> key from the 103/106-key PC keyboard, the <keycap>&#x5909;&#x63db;</keycap> (<keycap>Hanja</keycap>) key from the 103/106-key PC keyboard, three unused positions, <keycap>Alternate Erase</keycap>, <keycap>&#x2384;&#160;Compose</keycap>, and <keycap>&#x2423;&#160;Space</keycap>.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>Cursor/Editing keypad</term>
 <listitem><para>
-Home, Up Arrow, Page Up, Left Arrow, Right Arrow, End, Down Arrow, Page Down, Insert, Delete, and 6 unused positions.
+<keycap>&#x21f1;&#160;Home</keycap>, <keycap>Up&#160;Arrow</keycap>, <keycap>Page&#160;Up</keycap>, <keycap>Left&#160;Arrow</keycap>, <keycap>Right&#160;Arrow</keycap>, <keycap>&#x21f2;&#160;End</keycap>, <keycap>Down&#160;Arrow</keycap>, <keycap>Page&#160;Down</keycap>, <keycap>Insert</keycap>, <keycap>Delete</keycap>, and 6 unused positions.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>Calculator keypad 1</term>
 <listitem><para>
-Asterisk, 7, 8, 9, Minus, 4, 5, 6, Plus, 1, 2, 3, 0, Decimal Point, Enter, and Divide.
+<keycap>*</keycap>, <keycap>7</keycap>, <keycap>8</keycap>, <keycap>9</keycap>, <keycap>-</keycap>, <keycap>4</keycap>, <keycap>5</keycap>, <keycap>6</keycap>, <keycap>+</keycap>, <keycap>1</keycap>, <keycap>2</keycap>, <keycap>3</keycap>, <keycap>0</keycap>, <keycap>. Decimal Point</keycap>, <keycap>Enter</keycap>, and <keycap>/&#160;Divide</keycap>.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>Calculator keypad 2</term>
 <listitem><para>
-Thousands Separator from the Apple Pro JIS and 107-key PC keyboards, JP Comma, Equals from the Apple Pro JIS keyboard, AS/400 Equals, Sign Change, Open Bracket, Close Bracket, Open Brace, Close Brace, and 7 unused positions.
+<keycap>,&#160;Thousands&#160;Separator</keycap> from the Apple Pro JIS and 107-key PC keyboards, <keycap>,&#160;JP&#160;Comma</keycap>, <keycap>=</keycap> from the Apple Pro JIS keyboard, AS/400 <keycap>=</keycap>, <keycap>&#x00b1;&#160;Sign&#160;Change</keycap>, <keycap>(</keycap>, <keycap>)</keycap>, <keycap>{</keycap>, <keycap>}</keycap>, and 7 unused positions.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>Function row 1</term>
 <listitem><para>
-The Escape key, then F01 to F15.
+The <keycap>&#x238b;&#160;Escape</keycap> key, then <keycap>F01</keycap> to <keycap>F15</keycap>.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>Function row 2</term>
 <listitem><para>
-F16 to F31.
+<keycap>F16</keycap> to <keycap>F31</keycap>.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>Function row 3</term>
 <listitem><para>
-F32 to F47.
+<keycap>F32</keycap> to <keycap>F47</keycap>.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>Function row 4</term>
 <listitem><para>
-F47 to F63.
+<keycap>F47</keycap> to <keycap>F63</keycap>.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>System Commands keypad</term>
 <listitem><para>
-An unused position, Power, Sleep, Wake, Debug, and 11 more unused positions.
+An unused position, <keycap>Power</keycap>, <keycap>Sleep</keycap>, <keycap>Wake</keycap>, <keycap>Debug</keycap>, and 11 more unused positions.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>Application Commands keypad 1</term>
 <listitem><para>
-Pause, Print Screen, Attention, Application, Break, 8 unused posititions, Mute, Volume Down, and Volume Up.
+<keycap>Pause</keycap>, <keycap>Print&#160;Screen</keycap>, <keycap>Attention</keycap>, <keycap>&#x2bc9;&#160;Application</keycap>, <keycap>Break</keycap>, 8 unused posititions, <keycap>Mute</keycap>, <keycap>Volume&#160;Down</keycap>, and <keycap>Volume&#160;Up</keycap>.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>Application Commands keypad 2</term>
 <listitem><para>
-An unused position, Execute, Help, Menu, Select, Cancel, Clear, Prior, Return, Separator, Out, Oper, Clear/again, Ex Sel, and 2 more unused positions.
+An unused position, <keycap>Execute</keycap>, <keycap>Help</keycap>, <keycap>Menu</keycap>, <keycap>Select</keycap>, <keycap>Cancel</keycap>, <keycap>Clear</keycap>, <keycap>Prior</keycap>, <keycap>Return</keycap>, <keycap>Separator</keycap>, <keycap>Out</keycap>, <keycap>Oper</keycap>, <keycap>Clear/again</keycap>, <keycap>Ex&#160;Sel</keycap>, and 2 more unused positions.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>Application Commands keypad 3</term>
 <listitem><para>
-An unused position, Stop, Again, Properties, Undo, Redo, Copy, Open, Paste, Find, Cut, and 5 more unused positions.
+An unused position, <keycap>Stop</keycap>, <keycap>Again</keycap>, <keycap>Properties</keycap>, <keycap>Undo</keycap>, <keycap>Redo</keycap>, <keycap>Copy</keycap>, <keycap>Open</keycap>, <keycap>Paste</keycap>, <keycap>Find</keycap>, <keycap>Cut</keycap>, and 5 more unused positions.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>Consumer keypad 1</term>
 <listitem><para>
-Calculator, File Manager, WWW, Home, Refresh, Mail, Bookmarks, Computer, Back, Forward, Lock, CLI, Next Track, Prev Track, Play/Pause, and Stop Playing.
+<keycap>Calculator</keycap>, <keycap>File&#160;Manager</keycap>, <keycap>WWW</keycap>, <keycap>Home</keycap>, <keycap>Refresh</keycap>, <keycap>Mail</keycap>, <keycap>Bookmarks</keycap>, <keycap>Computer</keycap>, <keycap>Back</keycap>, <keycap>Forward</keycap>, <keycap>Lock</keycap>, <keycap>CLI</keycap>, <keycap>Next&#160;Track</keycap>, <keycap>Prev&#160;Track</keycap>, <keycap>Play/Pause</keycap>, and <keycap>Stop&#160;Playing</keycap>.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term>Consumer keypad 2</term>
 <listitem><para>
-Record, Rewind, Fast Forward, Eject, New, Exit, and 10 unused positions.
+<keycap>Record</keycap>, <keycap>Rewind</keycap>, <keycap>Fast&#160;Forward</keycap>, <keycap>Eject</keycap>, <keycap>New</keycap>, <keycap>Exit</keycap>, and 10 unused positions.
 </para></listitem>
 </varlistentry>
 </variablelist>
@@ -475,7 +476,7 @@ A selection class determines how the set of modifiers is reduced to a four-bit a
 
 <para>
 Keyboard modifiers comprise (in ISO 9995-1 terminology) modifiers for level 2, level 3, and group 2; for caps, num, and shift locks; and for super, alt, and control.
-What keys act as these modifiers is of course determined by the keyboard layout: but often the level 2 modifiers are the shift keys; the level 3 modifier is the right "Option"/"Closed Apple" (Apple keyboards) or "AltGr" (Windows and IBM PC/AT keyboards) key; the alt modifier is the left "Option"/"Closed Apple" (Apple keyboards) or "Alt" (Windows and IBM PC/AT keyboards) key; and super is the "Command"/"Open Apple" (Apple keyboards), "Meta" (Sun keyboards), or "Windows" (Windows keyboards) key.
+What keys act as these modifiers is of course determined by the keyboard layout: but often the level 2 modifiers are the <keycap>&#x21e7;&#160;Shift</keycap> keys; the level 3 modifier is the right <keycap>&#x2325;&#160;Option</keycap>/<keycap>Closed&#160;Apple</keycap> (Apple keyboards) or <keycap>&#x21ee;&#160;AltGr</keycap> (Windows and IBM PC/AT keyboards) key; the alt modifier is the left <keycap>&#x2325;&#160;Option</keycap>/<keycap>Closed&#160;Apple</keycap> (Apple keyboards) or <keycap>&#x2387;&#160;Alt</keycap> (Windows and IBM PC/AT keyboards) key; and super is the <keycap>&#x2318;&#160;Command</keycap>/<keycap>Open&#160;Apple</keycap> (Apple keyboards), <keycap>Meta</keycap> (Sun keyboards), or <keycap>Windows</keycap> (Windows keyboards) key.
 The initial state of all locks is off, except for the numeric lock when the <arg choice="plain">--initial-numlock</arg> option is used.
 </para>
 
@@ -765,14 +766,14 @@ Most of these involve:
 <varlistentry>
 <term><code>COMBINING SHORT STROKE OVERLAY</code> (U+0335)</term>
 <listitem><para>
-In ISO 9995-3 keyboard layouts this is <code>Group2</code>+<code>Level3</code>+<code>C08</code> (<code>Shift</code>+<code>Option</code>, <code>Option</code>+<code>'K'</code> on the U.S. International keyboard).
+In ISO 9995-3 keyboard layouts this is <keycap>Group2</keycap>+<keycap>&#x21eb;&#160;Level3</keycap>+<keycap>C08</keycap> (<keycap>&#x21e7;&#160;Shift</keycap>+<keycap>&#x2325;&#160;Option</keycap>, <keycap>&#x2325;&#160;Option</keycap>+<keycap>K</keycap> on the U.S. International keyboard).
 Unicode does not define any compositions using this combining character.
 </para></listitem>
 </varlistentry>
 <varlistentry>
 <term><code>COMBINING LONG SOLIDUS OVERLAY</code> (U+0338)</term>
 <listitem><para>
-In ISO 9995-3 keyboard layouts this is <code>Group2</code>+<code>Level3</code>+<code>C09</code> (<code>Shift</code>+<code>Option</code>, <code>Option</code>+<code>'L'</code> on the U.S. International keyboard).
+In ISO 9995-3 keyboard layouts this is <keycap>Group2</keycap>+<keycap>&#x21eb;&#160;Level3</keycap>+<keycap>C09</keycap> (<keycap>&#x21e7;&#160;Shift</keycap>+<keycap>&#x2325;&#160;Option</keycap>, <keycap>&#x2325;&#160;Option</keycap>+<keycap>L</keycap> on the U.S. International keyboard).
 Unicode also defines compositions using this combining character.
 The ISO 9995-3 compositions overlap in only one case, which is the same in both ISO 9995-3 and Unicode.
 </para></listitem>
@@ -793,7 +794,7 @@ Having leftover combining characters precede the composed character both mimicks
 </para></listitem>
 <listitem><para>
 Not all input is in Unicode Normalized Form C.
-The ISO and DIN standards define a "pass-through" mechanism that allows a typist to enter combining characters as-is: any sequence of "dead" keys followed by the Zero-Width Non-Joiner (entered as <code>Group2</code>+<code>Level2</code>+<code>A03</code> in ISO 9995-3 keyboard layouts; which is <code>Shift</code>+<code>Option</code>, <code>Shift</code>+<code>Space</code> on the U.S. International keyboard) generates that sequence of non-combining characters in typed order.
+The ISO and DIN standards define a "pass-through" mechanism that allows a typist to enter combining characters as-is: any sequence of "dead" keys followed by the Zero-Width Non-Joiner (entered as <keycap>Group2</keycap>+<keycap>&#x21e7;&#160;Level2</keycap>+<keycap>A03</keycap> in ISO 9995-3 keyboard layouts; which is <keycap>&#x21e7;&#160;Shift</keycap>+<keycap>&#x2325;&#160;Option</keycap>, <keycap>&#x21e7;&#160;Shift</keycap>+<keycap>&#x2423;&#160;Space</keycap> on the U.S. International keyboard) generates that sequence of non-combining characters in typed order.
 </para></listitem>
 <listitem><para>
 Full Unicode Normalization is not performed.
@@ -822,6 +823,8 @@ It does not attempt to create the file or FIFO if they do not exist, because thi
 
 </refsection>
 
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

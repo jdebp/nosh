@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="plug-and-play-event-handler">
 
@@ -41,7 +42,7 @@ There are also no limits on the number of instances of the plug-in that are run.
 </para></listitem>
 <listitem><para>
 There is no service control mechanism.
-The plug-in cannot be enabled/disabled started/stopped using normal daemon management tools.
+The plug-in cannot be enabled/disabled started/stopped using normal d&#xe6;mon management tools.
 There are no ways to set resource limits or to control privileges.
 The startup/shutdown systems are not synchronized with them.
 </para></listitem>
@@ -77,6 +78,8 @@ It does not recover from such a situation, leaving the plug and play manager bro
 To avoid this, use the <arg choice='plain'>--receive-buffer-size</arg> option to <citerefentry><refentrytitle>netlink-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry> and pass a large size.
 </para>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

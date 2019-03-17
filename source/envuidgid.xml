@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="envuidgid">
 
@@ -22,8 +23,8 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>envuidgid</command> 
-<arg>--primary-group <replaceable>group</replaceable></arg>
-<arg>--supplementary</arg>
+<arg choice='opt'>--primary-group <replaceable>group</replaceable></arg>
+<arg choice='opt'>--supplementary</arg>
 <arg choice='req'><replaceable>account</replaceable></arg> 
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
@@ -68,6 +69,8 @@ Instead of running <citerefentry><refentrytitle>setuidgid</refentrytitle><manvol
 </para></listitem>
 </itemizedlist>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

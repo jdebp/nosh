@@ -16,7 +16,7 @@ System startup
 
 <ol>
 <li><p>
-<a href="system-manager.html"><code>system-manager</code></a> performs process setup, a few inescapable items of system setup, starts the service manager and a logger for it, and enters the main system management state machine.
+<a href="commands/system-manager.xml"><code>system-manager</code></a> performs process setup, a few inescapable items of system setup, starts the service manager and a logger for it, and enters the main system management state machine.
 It will restart the service manager and logger if they exit before system shutdown is initiated.
 The service manager process and its logger process are joined, standard output+error to standard input, via a pipe.
 The system manager keeps an open file descriptor for this pipe, so that its contents aren't lost in the event of a logger restart.
@@ -26,7 +26,7 @@ The initialization action of the system management state machine is to spawn a p
 They will usually be flags such as <code>-b</code> or <code>-s</code>, to indicate "emergency" and "rescue" (formerly known as "single-user") modes.
 </p></li>
 <li><p>
-In normal mode, <a href="system-control.html"><code>system-control</code></a> simply sends <code>SIGRTMIN + 10</code> to process #1, followed by <code>SIGRTMIN + 0</code>.
+In normal mode, <a href="commands/system-control.xml"><code>system-control</code></a> simply sends <code>SIGRTMIN + 10</code> to process #1, followed by <code>SIGRTMIN + 0</code>.
 In rescue mode it sends <code>SIGRTMIN + 10</code>, followed by <code>SIGRTMIN + 1</code>.
 In emergency mode it sends just <code>SIGRTMIN + 2</code>.
 </p></li>

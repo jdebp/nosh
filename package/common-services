@@ -10,6 +10,7 @@ apacheds
 ataidle-log
 autobridge-log
 avahi-dnsconfd
+avahi-autoipd-log
 bcron-start
 bcron-update
 blueman-mechanism
@@ -100,6 +101,7 @@ motd-dynamic
 mountd
 moused
 nagios
+ncftpspooler
 natd-log
 network-interfaces
 network-runtime
@@ -204,6 +206,7 @@ udisks
 udisks2
 usbmux
 unbound
+upmpdcli
 upower
 utx
 virecover

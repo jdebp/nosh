@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="login-process">
 
@@ -22,7 +23,7 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>login-process</command>
-<arg>--id <replaceable>id</replaceable></arg>
+<arg choice='opt'>--id <replaceable>id</replaceable></arg>
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -62,7 +63,7 @@ This utility need not be used at all on such operating systems.
 
 </refsection>
 
-<refsection><title>Obsolete System 5 behaviour</title>
+<refsection><title>Obsolete Unix System 5 Release 3 behaviour on Linux</title>
 
 <para>
 In the obsolete <filename>/etc/inittab</filename> system the active terminal login table is indexed by the "id" field from <filename>/etc/inittab</filename> or by its process ID field, depending from who is doing the lookup.
@@ -89,31 +90,32 @@ In an ideal world, this would be the sole mechanism and the ID would be what res
 However, this is not what other softwares, including GUI terminal emulators, do.
 </para></listitem>
 <listitem><para>
-If the remaining terminal line name begins with "<code>vc</code>" and ends with "<code>/tty</code>", as is conventionally the case with user-space virtual terminals, the ID is the string less the "<code>/tty</code>" suffix.
+If the remaining terminal line name begins with "<filename>vc</filename>" and ends with "<filename>/tty</filename>", as is conventionally the case with user-space virtual terminals, the ID is the string less the "<filename>/tty</filename>" suffix.
 </para></listitem>
 <listitem><para>
-On Linux: if it can discard any further <filename>tty</filename>, <filename>pty</filename>, <filename>tts</filename>, or <filename>pts</filename> prefixes, the remainder becomes the ID; otherwise, it discards any further non-digit characters up until the first digit character.
+If it can discard any further <filename>tty</filename>, <filename>pty</filename>, <filename>tts</filename>, or <filename>pts</filename> prefixes, the remainder becomes the ID; otherwise, it discards any further non-digit characters up until the first digit character.
 </para></listitem>
 </itemizedlist>
 
+<informalexample>
 <para>
-So:
+So, for examples:
 </para>
-
 <itemizedlist>
 <listitem><para>
-"<code>/run/dev/vc1/tty</code>" becomes "<code>vc1</code>".
+"<filename>/run/dev/vc1/tty</filename>" becomes "<code>vc1</code>".
 </para></listitem>
 <listitem><para>
-"<code>/dev/pts/5</code>" becomes "<code>/5</code>" on Linux and "<code>pts/5</code>" otherwise.
+"<filename>/dev/pts/5</filename>" becomes "<code>/5</code>".
 </para></listitem>
 <listitem><para>
-"<code>/dev/tty5</code>" becomes "<code>5</code>" on Linux and "<code>tty5</code>" otherwise.
+"<filename>/dev/tty5</filename>" becomes "<code>5</code>".
 </para></listitem>
 <listitem><para>
-"<code>/dev/ttyv5</code>" becomes "<code>v5</code>" on Linux and "<code>ttyv5</code>" otherwise.
+"<filename>/dev/ttyv5</filename>" becomes "<code>v5</code>".
 </para></listitem>
 </itemizedlist>
+</informalexample>
 
 <para>
 Ironically, this song and dance is exactly what GUI terminal emulator programs have <emphasis>already</emphasis> had to do <emphasis>anyway</emphasis>, inventing a nonce "id" and adding new <code>USER_PROCESS</code> records with no existing record to overwrite.
@@ -138,6 +140,8 @@ Lack of permission will result in the program aborting with an error.
 
 </refsection>
 
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

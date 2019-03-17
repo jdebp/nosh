@@ -74,7 +74,7 @@ protected:
 	} scroll_margin, display_margin;
 	bool h_tab_pins[256];
 	bool v_tab_pins[256];
-	bool scrolling, overstrike;
+	bool scrolling, overstrike, square;
 	struct mode {
 		bool automatic_right_margin, background_colour_erase, origin, left_right_margins;
 		mode();

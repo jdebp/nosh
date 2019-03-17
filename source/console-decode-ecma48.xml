@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="console-decode-ecma48">
 
@@ -25,7 +26,7 @@
 <arg choice='opt'>--input</arg>
 <arg choice='opt'>--no-cancel</arg>
 <arg choice='opt'>--no-7bit</arg>
-<arg rep='repeat'><replaceable>files</replaceable></arg>
+<arg choice='opt' rep='repeat'><replaceable>files</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -42,9 +43,12 @@ It also understands the function key control sequences for Interix, SCO console,
 </para>
 
 <para>
-The <arg choice='plain'>--input</arg> command-line option causes it to disambiguate certain ambiguous control sequences as function key inputs rather than as output actions.
-For example, the parameters to CUP (CSI <code>H</code>) have different meanings as input (repeat count and modifiers) to those as output (row and column position).
+If no <replaceable>files</replaceable> are supplied, <command>console-decode-ecma48</command> reads from its standard input until EOF.
+Otherwise it processes each named file in turn.
+In both cases it writes to its standard output.
 </para>
+
+<refsection><title>Decoding</title>
 
 <para>
 Malformed escape and control sequences, interrupted by CSI or ESC or cancelled by CAN, are discarded and not decoded; just as most terminals will ignore them.
@@ -53,14 +57,105 @@ The <arg choice='plain'>--no-cancel</arg> command-line option disables cancellat
 
 <para>
 The <arg choice='plain'>--no-7bit</arg> command-line option disables all ECMA-48 7-bit code extensions except for CSI.
-The escape sequences that would be 7-bit code extensions are instead treated as accelerators.
+The 7-bit code extensions are treated as escape sequences rather than as aliases for control characters.
 </para>
 
 <para>
-If no <replaceable>files</replaceable> are supplied, <command>console-decode-ecma48</command> reads from its standard input until EOF.
-Otherwise it processes each named file in turn.
-In both cases it writes to its standard output.
+The <arg choice='plain'>--input</arg> command-line option causes <command>console-decode-ecma48</command> to process data as if they are terminal input rather than as if they are terminal output (ECMA-48 applying to both).
+It disambiguates certain ambiguous control sequences as function key inputs rather than as output actions.
+For example, the parameters to CUP (CSI <code>H</code>) have different meanings as input (repeat count and modifiers) to those as output (row and column position).
 </para>
+
+<para>
+The <arg choice='plain'>--no-7bit</arg> and <arg choice='plain'>--input</arg> command-line options used together use a non-ECMA-48 decoding of 2-character escape sequences, including the ones that would be ECMA-48 7-bit code extensions.
+These escape sequences are decoded as accelerators.
+</para>
+
+</refsection>
+
+<refsection><title>Output</title>
+
+<para>
+ECMA-48 control codes, escape sequences, and control sequences are printed using their standard abbreviations.
+"CSI" is "Control Sequence Introducer", for example, documented in &#x00a7;8.3.16 of ECMA-48:1991.
+And similarly "CUU" is "CUrsor Up", documented in &#x00a7;8.3.22.
+For a full list of codes, see the standard.
+</para>
+<note>
+A common confusion is to mistake "CUU", CUrsor Up, for "CUP", which is actually CUrsor Position (&#x00a7;8.3.21).
+</note>
+
+<para>
+DEC private extensions are printed using the abbreviations from the DEC VT Programmer References (q.v.) from DECALN to DECXMT.
+DECFNK in particular is further decoded and printed as the name of the relevant function, cursor, or editing key, where that is known.
+Otherwise it is printed as DECFNK and the number of the unknown key.
+Modifiers are decoded and added as prefixes.
+</para>
+
+<para>
+SCO console, Interix, and rxvt function keys are always printed as the name of the function key, as there is no possibility of such sequences <emphasis>not</emphasis> being function keys, as there is with the more general-purpose DECFNK control sequence.
+</para>
+
+<para>
+Other keyboard input control sequences are printed using the names of the ECMA-48 control sequences that are used for them.
+The conventions for these come from the SCO console and from DEC VTs and are:
+</para>
+<variablelist>
+<varlistentry>
+<term>CUP</term>
+<listitem><para>
+<keycap>&#x21f1;&#160;Home</keycap> (per the fact that the CUrsor Position control sequence, when output with no parameters, positions the cursor in the home position)
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>CPL</term>
+<listitem><para>
+<keycap>&#x21f2;&#160;End</keycap>
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>CNL</term>
+<term>CHA</term>
+<listitem><para>
+<keycap>Centre</keycap> (i.e. the key in the middle of the cursor-key cross shape)
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>CUU</term>
+<listitem><para>
+<keycap>Up&#160;Arrow</keycap>
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>CUD</term>
+<listitem><para>
+<keycap>Down&#160;Arrow</keycap>
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>CUB</term>
+<listitem><para>
+<keycap>Left&#160;Arrow</keycap>
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>CUF</term>
+<listitem><para>
+<keycap>Right&#160;Arrow</keycap>
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>CBT</term>
+<listitem><para>
+<keycap>&#x21e7;&#160;Shift</keycap>+<keycap>&#x21e5;&#160;Tab</keycap>
+</para></listitem>
+</varlistentry>
+</variablelist>
+<note>
+The DECFNK control sequences for the DEC VT <keycap>Find</keycap> and <keycap>Select</keycap> keys on the editing keypad are printed as "DEC FIND" and "DEC SELECT".
+A few terminal emulators get these wrong, and send these codes for the <keycap>&#x21f1;&#160;Home</keycap> and <keycap>&#x21f2;&#160;End</keycap> keys, which are not in fact DEC VT keys and have their own non-DECFNK conventional control sequences (as aforementioned).
+Other editing keypad keys are printed with their IBM PC/AT names rather than their DEC VT names (i.e. "INSERT", "DELETE", "PAGE UP" and "PAGE DOWN" rather than "Insert here", "Remove", "Prev screen", and "Next screen")
+</note>
 
 <para>
 <command>console-decode-ecma48</command> uses the C/C++ runtime library for output, and therefore has the normal C/C++ stream buffering semantics.
@@ -68,6 +163,36 @@ It uses the <citerefentry><refentrytitle>read</refentrytitle><manvolnum>2</manvo
 To duplicate the GNU and BSD C/C++ runtime libraries' behaviours, it explicitly flushes the output's buffer whenever it is about to read more input and that input is the beginning of a new line.
 </para>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection>
+
+</refsection>
+
+<refsection id="Standards" xreflabel="Standards">
+<title>Standards</title>
+<refsection><title>de jure</title>
+<itemizedlist>
+<listitem><para>
+<ulink url="http://www.ecma-international.org/publications/standards/Ecma-048.htm"><citetitle>Control Functions for Coded Character Sets</citetitle> <citebiblioid>ECMA-48</citebiblioid></ulink> 5th edition. 1991. ECMA International.
+</para></listitem>
+<listitem><para>
+<ulink url="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=22943"><citetitle>Information technology &#x2014; Open Document Architecture (ODA) and Interchange Format: Character content architectures</citetitle> <citebiblioid>ISO/IEC 8613-6:1994</citebiblioid></ulink> International Organization for Standardization.
+</para></listitem>
+</itemizedlist>
+</refsection>
+<refsection><title>de facto</title>
+<itemizedlist>
+<listitem><para>
+<ulink url="http://vaxhaven.com/images/5/55/EK-VT420-RM-002.pdf"><citetitle>VT520/VT525 Video Terminal Programmer Information</citetitle> <citebiblioid>EK-VT520-RM</citebiblioid></ulink> July 1994.  Digital.
+</para></listitem>
+<listitem><para>
+<ulink url="http://vaxhaven.com/images/e/ee/EK-VT520-RM-A01.pdf"><citetitle>VT420 Programmer Reference Manual</citetitle> <citebiblioid>EK-VT420-RM-002</citebiblioid></ulink> February 1992. Digital.
+</para></listitem>
+</itemizedlist>
+</refsection>
+</refsection>
+
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

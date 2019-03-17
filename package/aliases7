@@ -1,3 +1,5 @@
 TERM	COLORTERM
 TERM	XTERM_VERSION
 TERM	VTE_VERSION
+machine-id	hostid
+machine-id	hostuuid

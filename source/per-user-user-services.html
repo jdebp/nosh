@@ -5,11 +5,11 @@ Per-user user services
 </h1>
 
 <p>
-In addition to setting up <a href="per-user-system-services.html">system-level services for each user</a> the configuration import subsystem sets up a whole load of service bundles for each user, to be managed by that user's personal instance of <a href="service-manager.html"><code>service-manager</code></a>.
+In addition to setting up <a href="per-user-system-services.html">system-level services for each user</a> the configuration import subsystem sets up a whole load of service bundles for each user, to be managed by that user's personal instance of <a href="commands/service-manager.xml"><code>service-manager</code></a>.
 These service bundles live in <a href="gazetteer.html#user-service-bundles">the user's service bundles directory</a> in the user's home directory.
 </p>
 
-<h2>
+<h2 id="types">
 The types of services
 </h2>
 
@@ -17,7 +17,7 @@ The types of services
 The services fall into one of three main groups: logging, non-Desktop Bus, and Desktop Bus.
 </p>
 
-<h3>
+<h3 id="logging">
 Logging services
 </h3>
 
@@ -42,7 +42,7 @@ This takes the log outputs of most Desktop Bus servers, and writes it to <code>/
 
 </dl>
 
-<h3>
+<h3 id="non-dbus">
 Non-Desktop Bus services
 </h3>
 
@@ -85,7 +85,7 @@ The latter requires that the full per-user service manager be running; and canno
 
 <p>
 They also need to know how to talk to it.
-So the configuration import subsystem chain loads them from the <a href="userenv.html"><code>userenv</code></a> program with the <code>--set-dbus</code> option, setting an environment variable that gives the address (in <code>path=</code> form because no-one understands the <code>runtime=</code> form yet) of the <a href="gazetteer.html#user-bus-socket"><code>/run/user/</code><i>name</i><code>/bus</code></a> socket.
+So the configuration import subsystem chain loads them from the <a href="commands/userenv.xml"><code>userenv</code></a> program with the <code>--set-dbus</code> option, setting an environment variable that gives the address (in <code>path=</code> form because no-one understands the <code>runtime=</code> form yet) of the <a href="gazetteer.html#user-bus-socket"><code>/run/user/</code><i>name</i><code>/bus</code></a> socket.
 </p>
 
 <p>
@@ -99,7 +99,7 @@ Environment variables
 
 <p>
 Processes run under per-user service management execute in a d&aelig;mon-style context.
-They don't have controlling terminals, and (initially) they only have the environment variables set up by the <code>user-services@</code><i>username</i> service itself, which just runs <a href="userenv.html"><code>userenv</code></a>.
+They don't have controlling terminals, and (initially) they only have the environment variables set up by the <code>user-services@</code><i>username</i> service itself, which just runs <a href="commands/userenv.xml"><code>userenv</code></a>.
 In particular:
 </p>
 

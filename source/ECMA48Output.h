@@ -81,6 +81,7 @@ public:
 	void XTermAlternateScreenBuffer(bool v) const { DECPrivateMode(1047U, v); }
 	void XTermSaveRestore(bool v) const { DECPrivateMode(1048U, v); }
 	void XTermDeleteIsDEL(bool v) const { DECPrivateMode(1037U, v); }
+	void SquareMode(bool v) const { DECPrivateMode(1369U, v); }
 protected:
 	FILE * const out;
 

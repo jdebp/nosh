@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="userenv-fromenv">
 
@@ -22,16 +23,16 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>userenv-fromenv</command> 
-<arg>--no-set-user</arg> 
-<arg>--no-set-shell</arg> 
-<arg>--set-path</arg> 
-<arg>--set-tools</arg> 
-<arg>--set-term</arg> 
-<arg>--set-locale</arg> 
-<arg>--set-xdg</arg> 
-<arg>--set-dbus</arg> 
-<arg>--set-timezone</arg> 
-<arg>--set-other</arg> 
+<arg choice='opt'>--no-set-user</arg> 
+<arg choice='opt'>--no-set-shell</arg> 
+<arg choice='opt'>--set-path</arg> 
+<arg choice='opt'>--set-tools</arg> 
+<arg choice='opt'>--set-term</arg> 
+<arg choice='opt'>--set-locale</arg> 
+<arg choice='opt'>--set-xdg</arg> 
+<arg choice='opt'>--set-dbus</arg> 
+<arg choice='opt'>--set-timezone</arg> 
+<arg choice='opt'>--set-other</arg> 
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -287,6 +288,8 @@ To include literal tildes and dollar characters <emphasis>anywhere</emphasis> in
 </para></listitem>
 </itemizedlist>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

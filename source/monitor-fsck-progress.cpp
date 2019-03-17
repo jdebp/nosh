@@ -208,13 +208,13 @@ TUI::redraw_new (
 ) {
 	erase_new_to_backdrop();
 
-	vio.WriteNCells(0, 0, 0U, title, ' ', c.query_w());
-	vio.WriteCellStr(0, (c.query_w() - sizeof title_text + 1) / 2, 0U, title, title_text, sizeof title_text - 1);
-	vio.WriteNCells(1, 0, 0U, status, ' ', c.query_w());
+	vio.WriteNCharsAttr(0, 0, 0U, title, ' ', c.query_w());
+	vio.WriteCharStrAttr(0, (c.query_w() - sizeof title_text + 1) / 2, 0U, title, title_text, sizeof title_text - 1);
+	vio.WriteNCharsAttr(1, 0, 0U, status, ' ', c.query_w());
 	const std::size_t sl(clients.empty() ? sizeof no_fscks : sizeof in_progress);
 	const char * st(clients.empty() ? no_fscks : in_progress);
-	vio.WriteCellStr(1, (c.query_w() - sl + 1) / 2, 0U, status, st, sl - 1);
-	vio.WriteNCells(2, 0, 0U, status, '=', c.query_w());
+	vio.WriteCharStrAttr(1, (c.query_w() - sl + 1) / 2, 0U, status, st, sl - 1);
+	vio.WriteNCharsAttr(2, 0, 0U, status, '=', c.query_w());
 
 	long row(3);
 	for (ClientTable::const_iterator i(clients.begin()); i != clients.end(); ++i, ++row) {
@@ -222,19 +222,19 @@ TUI::redraw_new (
 		if (row >= c.query_h()) break;
 		const ConnectedClient & client(i->second);
 		const std::string l(client.left()), r(client.right());
-		vio.WriteNCells(row, 0, 0U, line, ' ', c.query_w());
+		vio.WriteNCharsAttr(row, 0, 0U, line, ' ', c.query_w());
 		long col(0);
 		vio.PrintFormatted(row, col, 0U, line, "%s %s ", l.c_str(), client.name.c_str());
 		if (col + r.length() < c.query_w())
 			col = c.query_w() - r.length();
-		vio.WriteCellStr(row, col, 0U, line, r.c_str(), r.length());
+		vio.WriteCharStrAttr(row, col, 0U, line, r.c_str(), r.length());
 		if (client.max) {
 			const unsigned n(client.count * c.query_w() / client.max);
 			vio.WriteNAttrs(row, 0, 0U, progress, n);
 		}
 	}
-	c.move_cursor(false /* no software cursor */, 0U, 0U);
-	c.set_cursor_state(false /* no software cursor */, CursorSprite::BLINK, CursorSprite::BOX);
+	c.move_cursor(0U, 0U);
+	c.set_cursor_state(CursorSprite::BLINK, CursorSprite::BOX);
 }
 
 void
@@ -356,7 +356,7 @@ monitor_fsck_progress [[gnu::noreturn]] (
 
 	ClientTable clients;
 
-	TUIDisplayCompositor compositor(24, 80);
+	TUIDisplayCompositor compositor(false /* no software cursor */, 24, 80);
 	TUI ui(envs, clients, compositor);
 
 	std::vector<struct kevent> p(listen_fds + 4);

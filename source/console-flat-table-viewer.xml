@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="console-flat-table-viewer">
 
@@ -136,9 +137,6 @@ Comments are discarded.
 With the exceptions of control characters in the C0 and C1 ranges, which are displayed as blanks, it displays field data in their decoded form.
 </para>
 
-<para>
-</para>
-
 <refsection><title>User interface</title>
 
 <para>
@@ -203,6 +201,8 @@ So on Linux in order to make its standard input something that is pollable, <com
 
 </refsection>
 
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

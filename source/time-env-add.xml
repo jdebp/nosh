@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="time-env-add">
 
@@ -205,6 +206,8 @@ In other words, in a "right" timezone:
 
 <refsection><title>Compatibility modes</title>
 
+<refsection><title>systemd time units</title>
+
 <para>
 The <arg choice='plain'>--systemd-compatibility</arg> command-line option invokes a mode that is more compatible with systemd's timer behaviour (following the actual behaviour wherever this differs from the systemd documentation).
 </para>
@@ -307,6 +310,10 @@ Thus, in stark contrast to the default mode behaviour:
 </listitem>
 </itemizedlist>
 
+</refsection>
+
+<refsection><title>gnu <command>date</command></title>
+
 <para>
 The <arg choice='plain'>--gnu-compatibility</arg> command-line option invokes a mode that is a subset of the systemd compatibility mode, that is compatible with the GNU implementation of the <citerefentry><refentrytitle>date</refentrytitle><manvolnum>1</manvolnum></citerefentry> command.  
 This mode is mostly the same as systemd compatibility mode, except that it does not use systemd's definitions of the minute and larger units but instead uses the calendar units.
@@ -342,6 +349,10 @@ But in a "posix" timezone seconds intervals are as non-uniform as they are for s
 
 </refsection>
 
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection>
+
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

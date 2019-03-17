@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="klog-read">
 
@@ -50,7 +51,7 @@ It is not suitable for use with UDP or AF_LOCAL syslog sockets, which are datagr
 
 </refsection>
 
-<refsection><title>SECURITY</title>
+<refsection><title>Security</title>
 
 <para>
 Unlike other kernel log servers, this server has no need to be run as the superuser.
@@ -71,6 +72,8 @@ Its read buffer is a fixed size, with no size calculations at all, let alone one
 
 </refsection>
 
-<refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

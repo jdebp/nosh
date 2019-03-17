@@ -21,7 +21,7 @@ class TUIDisplayCompositor
 public:
 	typedef unsigned short coordinate;
 
-	TUIDisplayCompositor(coordinate h, coordinate w);
+	TUIDisplayCompositor(bool invalidate_software_cursor, coordinate h, coordinate w);
 	~TUIDisplayCompositor();
 	coordinate query_h() const { return h; }
 	coordinate query_w() const { return w; }
@@ -30,12 +30,12 @@ public:
 	void touch_all();
 	void repaint_new_to_cur();
 	void poke(coordinate y, coordinate x, const CharacterCell & c);
-	void move_cursor(bool invalidate_software_cursor, coordinate y, coordinate x);
+	void move_cursor(coordinate y, coordinate x);
 	bool change_pointer_row(coordinate row);
 	bool change_pointer_col(coordinate col);
 	bool is_marked(bool inclusive, coordinate y, coordinate x);
 	bool is_pointer(coordinate y, coordinate x);
-	void set_cursor_state(bool invalidate_software_cursor, CursorSprite::attribute_type a, CursorSprite::glyph_type g);
+	void set_cursor_state(CursorSprite::attribute_type a, CursorSprite::glyph_type g);
 	void set_pointer_attributes(PointerSprite::attribute_type a);
 	CursorSprite::glyph_type query_cursor_glyph() const { return cursor_glyph; }
 	CursorSprite::attribute_type query_cursor_attributes() const { return cursor_attributes; }
@@ -56,6 +56,7 @@ public:
 	DirtiableCell & cur_at(coordinate y, coordinate x) { return cur_cells[static_cast<std::size_t>(y) * w + x]; }
 	CharacterCell & new_at(coordinate y, coordinate x) { return new_cells[static_cast<std::size_t>(y) * w + x]; }
 protected:
+	bool invalidate_software_cursor;
 	coordinate cursor_row, cursor_col;
 	coordinate pointer_row, pointer_col;
 	CursorSprite::glyph_type cursor_glyph;

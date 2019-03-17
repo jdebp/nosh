@@ -14,11 +14,11 @@ socket_close_on_exec (
 	int type, 
 	int protocol
 ) {
-#if defined(SOCKET_CLOOEXEC)
-	return socket(domain, type|SOCKET_CLOEXEC, protocol);
+#if defined(SOCK_CLOEXEC)
+	return socket(domain, type|SOCK_CLOEXEC, protocol);
 #else
 	const int rc(socket(domain, type, protocol));
-	if (0 >= rc)
+	if (0 <= rc)
 		set_close_on_exec(rc, true);
 	return rc;
 #endif

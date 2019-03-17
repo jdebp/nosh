@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="local-stream-socket-accept">
 
@@ -22,9 +23,9 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>local-stream-socket-accept</command>
-<arg>--verbose</arg>
-<arg>--connection-limit <replaceable>number</replaceable></arg>
-<arg>--localname <replaceable>pathname</replaceable></arg>
+<arg choice='opt'>--verbose</arg>
+<arg choice='opt'>--connection-limit <replaceable>number</replaceable></arg>
+<arg choice='opt'>--localname <replaceable>pathname</replaceable></arg>
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -116,13 +117,13 @@ If it is reached, <command>local-stream-socket-accept</command> stops accepting 
 <command>local-stream-socket-accept</command> can be used 
 <itemizedlist>
 <listitem>
-as a "socket-activated" daemon monitored by <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry> (with the systemd-recommended <code>Accept=false</code>),
+as a "socket-activated" d&#xe6;mon monitored by <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry> (with the systemd-recommended <code>Accept=false</code>),
 </listitem>
 <listitem>
-as a daemon started by <citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry> (with <code>wait</code> and as long as it is chained via <command>fdmove</command> <arg choice="plain">0</arg> <arg choice="plain">3</arg>), and
+as a d&#xe6;mon started by <citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry> (with <code>wait</code> and as long as it is chained via <command>fdmove</command> <arg choice="plain">0</arg> <arg choice="plain">3</arg>), and
 </listitem>
 <listitem>
-as a simple daemon chained from <citerefentry><refentrytitle>local-stream-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry> and monitored by <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+as a simple d&#xe6;mon chained from <citerefentry><refentrytitle>local-stream-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry> and monitored by <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </listitem>
 </itemizedlist>
 Together, <command>local-stream-socket-accept</command> and <citerefentry><refentrytitle>local-stream-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry> replace <citerefentry><refentrytitle>unixserver</refentrytitle><manvolnum>1</manvolnum></citerefentry> from ucspi-unix.
@@ -134,6 +135,8 @@ This is, however, not usually necessary because unprivileged processes can accep
 It is preferable to chain <command>local-stream-socket-accept</command> from <citerefentry><refentrytitle>setuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry> or <citerefentry><refentrytitle>setuidgid-fromenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

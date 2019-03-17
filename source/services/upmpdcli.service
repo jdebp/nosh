@@ -1,0 +1,13 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=UPnP Renderer front-end to MPD
+After=mpd.socket
+
+[Service]
+ExecStart=%p -c /etc/%p.conf
+
+[Install]
+WantedBy=workstation.target

@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
+
+<refentry id="ifconfig">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>ifconfig</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">administrator commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>ifconfig</refname>
+<refpurpose>network interface configuration tool</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>ifconfig</command>
+<arg choice='opt' repeat='rep'><replaceable>options-and-flags</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>ifconfig</command> is a tool for configuring network interfaces.
+Its primary purpose is to provide a uniform tool across platforms that can be incorporated into services that deal in network device configuration.
+It only handles link-layer, IP version 4, and IP version 6 configuration.
+</para>
+
+<refsection><title>Reporting interface configuration</title>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>ifconfig</command>
+<arg choice="opt">-u</arg>
+<arg choice="opt">-d</arg>
+<arg choice='opt'>--colour</arg>
+<arg choice="req">-a</arg>
+<arg choice="opt"><replaceable>address-family</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>ifconfig</command>
+<arg choice="opt">-u</arg>
+<arg choice="opt">-d</arg>
+<arg choice='opt'>--colour</arg>
+<arg choice="req">-l</arg>
+<arg choice="opt"><replaceable>address-family</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>ifconfig</command>
+<arg choice="opt">-u</arg>
+<arg choice="opt">-d</arg>
+<arg choice='opt'>--colour</arg>
+<arg choice="req"><replaceable>interface</replaceable></arg>
+<arg choice="opt"><replaceable>address-family</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<para>
+Invoked in these manners, <command>ifconfig</command> displays information about the network interfaces as currently configured.
+With the <arg choice="plain">-a</arg> and <arg choice="plain">-l</arg> options it displays information about all network interfaces, otherwise it displays information about the one named <replaceable>interface</replaceable>.
+</para>
+
+<para>
+If the standard output is a terminal, <command>ifconfig</command> uses whatever it can find via the <citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry> library to display various parts of the output in different colours, highlighting addresses in different address families in different colours.
+The <arg choice='plain'>--colour</arg> command line option tells it to do this unconditionally, even if its standard output is not a terminal.
+</para>
+
+<para>
+The <replaceable>address-family</replaceable> command-line option restricts its output to information about only that particular address family, eliminating any interfaces that do not have any addresses in that family.
+The <arg choice="plain">-u</arg> and <arg choice="plain">-d</arg> command-line options restrict reporting to only interfaces that are, respectively, up or down.
+</para>
+
+<para>
+The <arg choice="plain">-l</arg> command-line option causes a short listing that contains only interface names.
+Otherwise, both interface names and configuration information are displayed.
+The latter is displayed in a form that is roughly the same as <command>ifconfig</command>'s own command line.
+Each network address is on a separate line, and with a minimal amount of massaging the output could in theory be fed back to <command>ifconfig</command> as its command line, one line at a time.
+</para>
+
+<para>
+The output prefers to display prefix lengths rather than network masks, and will only fall back to the latter if the network mask is not a true prefix.
+Network masks, broadcast addresses, and point-to-point addresses are displayed in the same form as addresses.
+The notation <arg choice="plain">bdaddr</arg> is used where an interface has a broadcast/point-to-point address but is not specifically marked as either broadcast or point-to-point.
+This is generally an erroneous state.
+</para>
+
+<refsection><title>Examples</title>
+
+<informalexample>
+<para>
+On a system with two Ethernet interfaces and a loopback interface, where only one of the Ethernet interfaces has any IP version 6 addresses, and the other is down:
+</para>
+<literallayout><computeroutput>% </computeroutput><userinput>ifconfig -l</userinput><computeroutput>
+enp14s0 enp15s0 lo
+% </computeroutput><userinput>ifconfig -l inet6</userinput><computeroutput>
+enp14s0 lo
+% </computeroutput><userinput>ifconfig -l -d</userinput><computeroutput>
+enp15s0
+% </computeroutput></literallayout>
+</informalexample>
+
+</refsection>
+
+</refsection>
+
+<refsection><title>Interface cloning</title>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>ifconfig</command>
+<arg choice="req"><replaceable>interface</replaceable></arg>
+<arg choice="req">create</arg>
+<arg choice="opt"><replaceable>address-family</replaceable></arg>
+<arg choice="opt"><replaceable>address</replaceable></arg>
+<arg choice="opt"><replaceable>flags</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>ifconfig</command>
+<arg choice="req"><replaceable>interface</replaceable></arg>
+<arg choice="req">destroy</arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>ifconfig</command>
+<arg choice="req">-C</arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<note>Not all operating systems support interface cloning.  Linux does not, for example.</note>
+
+<para>
+With the <arg choice="plain">-C</arg> option, <command>ifconfig</command> displays is a list of all cloners, i.e. interfaces which can be cloned via the <arg choice="plain">create</arg> subcommand.
+</para>
+
+<para>
+With the <arg choice="plain">create</arg> and <arg choice="plain">destroy</arg> subcommands, <command>ifconfig</command> can be used to create and to destroy instances of cloneable interfaces.
+For compatibility, <replaceable>flags</replaceable> and one <replaceable>address</replaceable> can also be specified at creation.
+It is recommended not to do this, however.
+</para>
+
+<para>
+It is also recommended to explicitly supply the unit number of the cloned interface, as <command>ifconfig</command> provides no means for obtaining the unit number generated by the kernel if the interface to be cloned is unitless.
+</para>
+
+<refsection><title>Examples</title>
+
+<informalexample>
+<para>
+On FreeBSD, where <citerefentry><refentrytitle>lo</refentrytitle><manvolnum>4</manvolnum></citerefentry> is a cloning interface:
+</para>
+<literallayout><computeroutput># </computeroutput><userinput>ifconfig lo1 create</userinput><computeroutput>
+# </computeroutput><userinput>ifconfig -l -d</userinput><computeroutput>
+lo1
+# </computeroutput><userinput>ifconfig lo1 destroy</userinput><computeroutput>
+# </computeroutput><userinput>ifconfig -l -d</userinput><computeroutput>
+# </computeroutput></literallayout>
+</informalexample>
+
+</refsection>
+
+</refsection>
+
+<refsection><title>Reconfiguring existing interfaces</title>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>ifconfig</command>
+<arg choice="req"><replaceable>interface</replaceable></arg>
+<arg choice="req"><replaceable>address-family</replaceable></arg>
+<arg choice="opt"><replaceable>address</replaceable></arg>
+<arg choice="opt"><replaceable>flags</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>ifconfig</command>
+<arg choice="req"><replaceable>interface</replaceable></arg>
+<arg choice="req"><replaceable>address-family</replaceable></arg>
+<arg choice="req"><replaceable>address</replaceable></arg>
+<arg choice="req">alias</arg>
+<arg choice="opt"><replaceable>flags</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>ifconfig</command>
+<arg choice="req"><replaceable>interface</replaceable></arg>
+<arg choice="req"><replaceable>address-family</replaceable></arg>
+<arg choice="req"><replaceable>address</replaceable></arg>
+<arg choice="req">-alias</arg>
+<arg choice="opt"><replaceable>flags</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<para>
+Invoked in these manners, <command>ifconfig</command> adds or deletes an address, of the given address family, to or from the given interface; and sets flags on and off.
+One can change flags without changing addresses, and change addresses without changing flags.
+</para>
+
+<para>
+Modern networking is no longer structured around the idea of network interfaces having a single "primary" IP address and zero or more subordinate "alias" addresses.
+(The syntax of the command that <command>ifconfig</command> is compatible with is structured around that old idea.)
+The first form of the command when supplied an address does the same thing as the second form, rather than overwriting a single primary address.
+The third form is capable of removing any address, down to an interface having zero IP addresses, rather than only removing alias addresses.
+</para>
+
+<refsection><title>Address families</title>
+
+<para>
+Address families are <arg choice="plain">inet4</arg>, <arg choice="plain">inet6</arg>, and <arg choice="plain">link</arg>.
+</para>
+
+</refsection>
+
+<refsection><title>Addresses</title>
+
+<para>
+Interfaces may, and commonly do, have multiple addresses in the IP address families; and just one address at the link layer.
+These addresses are specified with three pieces of information, spread across various command-line options:
+</para>
+
+<variablelist>
+<varlistentry>
+<term><arg choice="opt">address</arg> <replaceable>addr</replaceable></term>
+<term><arg choice="opt">address</arg> <replaceable>addr</replaceable>/<replaceable>prefixlen</replaceable></term>
+<listitem><para>
+A literal address in the given address family, specifying the interface address to add/delete.
+The optional <replaceable>prefixlen</replaceable> is mutually exclusive with the <arg choice="plain">prefixlen</arg> and <arg choice="plain">netmask</arg> options.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><arg choice="plain">netmask <replaceable>addr</replaceable></arg></term>
+<term><arg choice="plain">prefixlen <replaceable>prefix</replaceable></arg></term>
+<listitem><para>
+These are mutually exclusive with a <replaceable>prefixlen</replaceable> in the main address, and specify the network mask to be used, either (old-style) in the form of an address or (new-style) in the form of a numeric prefix length.
+Note that <arg choice="plain">prefixlen</arg> is <emphasis>not</emphasis> restricted to just IP version 6.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><arg choice="plain">broadcast <replaceable>addr</replaceable></arg></term>
+<term><arg choice="plain">dest <replaceable>addr</replaceable></arg></term>
+<listitem><para>
+These are mutually exclusive with each other, and specify the broadcast or point-to-point address to be used.
+They will automatically switch on the relevant flag, turning the other flag off.
+(Setting these flags directly, as actual flags, is not permitted.)
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><arg choice="plain">scope <replaceable>number</replaceable></arg></term>
+<listitem><para>
+This specifies the scope of the address.
+Neither Linux nor the BSDs document for end-users what the various address scopes actually are.
+</para></listitem>
+</varlistentry>
+</variablelist>
+
+</refsection>
+
+<refsection><title>Flags</title>
+
+<para>
+Flags are set on by specifying the flag name to turn them on.
+To turn them off, prefix the flag with either <arg choice="plain">-</arg> or <arg choice="plain">no</arg>.
+(For flags with negative senses such as <arg choice="plain">noarp</arg> this means either <arg choice="plain">nonoarp</arg> or <arg choice="plain">-noarp</arg>.)
+The exceptions are <arg choice="plain">eui64</arg>, <arg choice="plain">broadcast1</arg>, <arg choice="plain">anycast</arg>, <arg choice="plain">up</arg>, and <arg choice="plain">down</arg>, which do not have negative forms.
+</para>
+
+<para>
+What flags are supported, apart from a basic common set (<arg choice="plain">up</arg>, <arg choice="plain">down</arg>, <arg choice="plain">debug</arg>, <arg choice="plain">loopback</arg>, <arg choice="plain">noarp</arg>, <arg choice="plain">allmulti</arg>, and <arg choice="plain">promisc</arg>) varies from operating system to operating system.
+</para>
+
+<para>
+The set of flags also varies by address family, IP version 6 having extra flags, related to neighbourhood discovery and suchlike, that are not applicable to IP version 4.
+It is thus required to specify <replaceable>address-family</replaceable> when setting flags.
+For convenience <arg choice="plain">nd6</arg> is a synonym for the IP version 6 address family.
+</para>
+
+<para>
+<arg choice="plain">alias</arg> has the appearance of a flag, for compatibility, but actually is not.
+</para>
+
+<para>
+<arg choice="plain">broadcast1</arg> is a flag, but can only be set on.
+It is mutually exclusive with explicitly setting a broadcast address.
+It causes a broadcast address to be calculated from the supplied address and netmask, setting all of the host part bits of the address to 1.
+</para>
+
+<refsection><title>eui64</title>
+
+<para>
+<arg choice="plain">eui64</arg> is a flag, but can only be set on.
+It is only allowed for IP version 6 addresses, and only when the prefix length is 64 or less.
+It causes the interface to be scanned for any existing link-local IP version 6 addresses, and the lower 64 bits of such an address (if found) to be substituted into the address that is to be added/deleted.
+</para>
+
+<para>
+When <arg choice="plain">auto_linklocal</arg> is turned on, the kernel automatically adds a link-local IP version 6 address based upon the MAC address, and <arg choice="plain">eui64</arg> thus causes <command>ifconfig</command> to propagate the MAC address (converted to EUI-64) into routable IP version 6 addresses with the given prefix.
+</para>
+
+<para>
+The privacy-conscious can turn <arg choice="plain">auto_linklocal</arg> off, explicitly assign link-local IP version 6 addresses that do not use MAC addresses in their lower 64 bits, and have those employed by <arg choice="plain">eui64</arg> instead.
+However, the IP version 6 prefix may, by itself, already be enough to uniquely identify a system.
+</para>
+
+<note>
+<command>ifconfig</command> will propagate whatever the lower 64 bits are, as-is.
+Passing the MAC address, either alone or in conjunction with a machine-local "salt", through a hash function is insufficient for privacy, and <command>ifconfig</command> does not do that.
+(For an IP version 6 address not to provide strong identification, it must change regularly, in a pattern that cannot be inferred from outwith the system.
+This is not the case for a hashed value of an unchanging MAC address and an unchanging salt.)
+</note>
+
+<para>
+<command>ifconfig</command> intentionally makes no attempt to directly employ and convert the MAC address.
+It is intentionally an error to employ <arg choice="plain">eui64</arg> without either setting <arg choice="plain">auto_linklocal</arg> or explicitly providing a link-local IP version 6 address with the desired lower 64 bits.
+</para>
+
+</refsection>
+
+</refsection>
+
+<para>
+On some operating systems, with certain address families, the netmask and broadcast/point-to-point addresses are ignored when deleting an address.
+On others, they must match the values associated with the address to be deleted.
+For best results across platforms and address families, always supply matching values.
+</para>
+
+<refsection><title>Examples</title>
+
+<informalexample><literallayout><computeroutput># </computeroutput><userinput>ifconfig enp15s0 link up</userinput><computeroutput>
+# </computeroutput><userinput>ifconfig enp15s0 inet6 ::3/128 alias</userinput><computeroutput>
+# </computeroutput><userinput>ifconfig enp15s0 inet6 2001:db8::/32 eui64 alias</userinput><computeroutput>
+# </computeroutput><userinput>ifconfig enp15s0 inet6 2001:db8::/32 eui64 -alias</userinput><computeroutput>
+# </computeroutput><userinput>ifconfig enp15s0 inet6 ::3/128 -alias</userinput><computeroutput>
+# </computeroutput><userinput>ifconfig enp15s0 link down</userinput><computeroutput>
+# </computeroutput></literallayout></informalexample>
+
+</refsection>
+
+</refsection>
+
+</refsection>
+
+<refsection><title>Kernel problems</title>
+
+<para>
+There are several errors which are caused by the operating system kernel:
+</para>
+
+<itemizedlist>
+<listitem><para>
+Linux fails, with an "invalid argument" error, if <arg choice="plain">broadcast</arg> is used in the IP version 6 address family.
+It only allows broadcast addresses with IP version 4.
+</para></listitem>
+<listitem><para>
+Linux fails, with an "invalid argument" error, if <arg choice="plain">scope</arg> is used with a non-zero scope in the IP version 4 address family.
+It only allows scopes with IP version 6.
+</para></listitem>
+</itemizedlist>
+
+</refsection>
+
+<refsection id="COMPATIBILITY" xreflabel="COMPATIBILITY">
+<title>Compatibility</title>
+
+<para>
+There are two <citerefentry><refentrytitle>ifconfig</refentrytitle><manvolnum>8</manvolnum></citerefentry> tools available on Linux operating systems, one from GNU inetutils and the other from NET-3 net-tools.
+They are incompatible with each other, having significantly different syntaxes; they are incompatible with the BSD tool; they have trouble with alias addresses; they have limited or outright missing support for IP version 6; and they are not in fact portable outwith Linux.
+<command>ifconfig</command> is not intended to be compatible with them.
+</para>
+
+<para>
+<command>ifconfig</command> is, rather, modelled on the FreeBSD <citerefentry><refentrytitle>ifconfig</refentrytitle><manvolnum>8</manvolnum></citerefentry> tool, providing the subset of its functionality that is needed to support cross-platform networking services.
+However, this is not a slavish imitation.
+The FreeBSD tool does not, for starters, display interface flags and options in a way that can be fed back on its own command line almost unchanged.
+The FreeBSD tool makes <replaceable>address-family</replaceable> optional when setting flags.
+The FreeBSD tool makes <arg choice="plain">-a</arg> the default behaviour.
+The FreeBSD tool has compatibility options for BSD/OS and Solaris.
+The FreeBSD bizarrely displays network masks in hexdecimal, with the addresses in decimal, but only for IP version 4.
+And the FreeBSD tool erroneously allows combinations of the mutually exclusive <arg choice="plain">-a</arg>, <arg choice="plain">-l</arg>, and <arg choice="plain">-C</arg> options.
+</para>
+
+</refsection>
+
+<refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
+
+</refentry>

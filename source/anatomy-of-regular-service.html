@@ -9,7 +9,7 @@ Anatomy of a typical service
 <p>
 The atd service in the services collection is an example of a typical and commonly used regular service.
 Its <code>start</code>, <code>stop</code>, and <code>restart</code> programs are fairly trivial and straightforward.
-They just chain to the <a href="true.html"><code>true</code> command</a>, which is effectively a no-operation for <code>start</code> and <code>stop</code> and which indicates in <code>restart</code> that the service should always be automatically restarted should it terminate.
+They just chain to the <a href="commands/true.xml"><code>true</code> command</a>, which is effectively a no-operation for <code>start</code> and <code>stop</code> and which indicates in <code>restart</code> that the service should always be automatically restarted should it terminate.
 The meat of the service is its <code>run</code> program.
 </p>
 
@@ -36,25 +36,25 @@ atd -f</pre></blockquote>
 <p>
 <code>run</code> programs need not be scripts, but usually are in the daemontools world.
 They are often shell scripts, but (as here) they need not be.
-This <code>run</code> script, like most of the script files in the pre-packed service bundles, uses <a href="nosh.html"><code>nosh</code></a> as its script interpreter.
+This <code>run</code> script, like most of the script files in the pre-packed service bundles, uses <a href="commands/nosh.xml"><code>nosh</code></a> as its script interpreter.
 The needs of <code>run</code> scripts are fairly simple, and they don't actually need the capabilities of a fully-fledged shell.
 They <em>never</em> need the capabilities of a fully-fledged shell that has a complex interactive mode and a raft of startup scripts that are sourced.
 </p>
 
 <p>
-A script interpreter for a <code>run</code> script will thus generally be a tool designed for this purpose such as <a href="nosh.html"><code>nosh</code></a> or <a href="http://skarnet.org/software/execline/">Laurent Bercot's <code>execlineb</code></a>, a script interpreter such as Python or Perl, or a lightweight shell such as the Almquist or (the lightweight, non-interactive, flavour of) the MirBSD Korn shell.
+A script interpreter for a <code>run</code> script will thus generally be a tool designed for this purpose such as <a href="commands/nosh.xml"><code>nosh</code></a> or <a href="http://skarnet.org/software/execline/">Laurent Bercot's <code>execlineb</code></a>, a script interpreter such as Python or Perl, or a lightweight shell such as the Almquist or (the lightweight, non-interactive, flavour of) the MirBSD Korn shell.
 </p>
 
 <p>
 This nosh script is one of the simplest.
-<a href="nosh.html"><code>nosh</code></a> just directly chain loads the service program proper.
-In more complex services one might include utility commands for (amongst other things) setting environment variables from configuration files (<a href="read-conf.html"><code>read-conf</code></a>), changing working directory (<a href="chdir.html"><code>chdir</code></a>), dropping root privileges and running as a dedicated user that owns no files nor directories (<a href="setuidgid.html"><code>setuidgid</code></a>), or redirecting standard open file descriptors (<a href="fdredir.html"><code>fdredir</code></a>).
+<a href="commands/nosh.xml"><code>nosh</code></a> just directly chain loads the service program proper.
+In more complex services one might include utility commands for (amongst other things) setting environment variables from configuration files (<a href="commands/read-conf.xml"><code>read-conf</code></a>), changing working directory (<a href="commands/chdir.xml"><code>chdir</code></a>), dropping root privileges and running as a dedicated user that owns no files nor directories (<a href="commands/setuidgid.xml"><code>setuidgid</code></a>), or redirecting standard open file descriptors (<a href="commands/fdredir.xml"><code>fdredir</code></a>).
 </p>
 
 <p>
 An important thing to remember is that the interpreter process itself is considered to be the service by the service manager.
 It must usually chain load the service program proper, as its final step.
-With <a href="nosh.html"><code>nosh</code></a> or <code>execlineb</code> as the script interpreter, this happens as a matter of course.
+With <a href="commands/nosh.xml"><code>nosh</code></a> or <code>execlineb</code> as the script interpreter, this happens as a matter of course.
 With a shell program as the script interpreter, one must remember to run the service program proper with the shell's built-in <code>exec</code> command.
 </p>
 

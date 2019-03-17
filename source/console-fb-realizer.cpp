@@ -997,9 +997,9 @@ Realizer::compose_new_from_vt ()
 	// If the cursor is invisible, we are not guaranteed that the VirtualTerminal has kept the visible area around it.
 	if (CursorSprite::VISIBLE & a) {
 		const unsigned short cursor_y(screen_y + (wrong_way_up ? vt.query_visible_h() - vt.query_cursor_y() - 1U : vt.query_cursor_y()) - vt.query_visible_y());
-		c.move_cursor(true, cursor_y, vt.query_cursor_x() - vt.query_visible_x() + screen_x);
+		c.move_cursor(cursor_y, vt.query_cursor_x() - vt.query_visible_x() + screen_x);
 	}
-	c.set_cursor_state(true, a, vt.query_cursor_glyph());
+	c.set_cursor_state(a, vt.query_cursor_glyph());
 	if (has_pointer)
 		c.set_pointer_attributes(vt.query_pointer_attributes());
 }
@@ -4799,7 +4799,7 @@ console_fb_realizer [[gnu::noreturn]] (
 	VirtualTerminalBackEnd vt(vt_dirname, buffer_file.release(), input_fd.release());
 	append_event(ip, vt.query_buffer_fd(), EVFILT_VNODE, EV_ADD|EV_ENABLE|EV_CLEAR, NOTE_WRITE, 0, 0);
 	append_event(ip, vt.query_input_fd(), EVFILT_WRITE, EV_ADD|EV_DISABLE, 0, 0, 0);
-	TUIDisplayCompositor c(Realizer::pixel_to_row(fb.query_yres()), Realizer::pixel_to_column(fb.query_xres()));
+	TUIDisplayCompositor c(true /* software cursor */, Realizer::pixel_to_row(fb.query_yres()), Realizer::pixel_to_column(fb.query_xres()));
 	GraphicsInterface gdi(base, fb.query_size(), fb.query_yres(), fb.query_xres(), fb.query_stride(), fb.query_depth());
 	Realizer realizer(fb, quadrant, wrong_way_up, !font.has_faint(), bold_as_colour, has_pointer, gdi, font, vt, c);
 

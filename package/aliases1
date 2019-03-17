@@ -4,6 +4,7 @@ exec	chroot
 exec	clearenv
 exec	create-control-group
 exec	console-flat-table-viewer
+exec	console-docbook-xml-viewer
 exec	cyclog
 exec	delegate-control-group-to
 exec	envdir
@@ -19,8 +20,10 @@ exec	find-matching-jvm
 exec	follow-log-directories
 exec	foreground
 exec	getuidgid
+exec	ifconfig
 exec	klog-read
 exec	line-banner
+exec	list-process-table
 exec	local-datagram-socket-listen
 exec	local-reaper
 exec	local-seqpacket-socket-accept
@@ -42,6 +45,8 @@ exec	pipe
 exec	plug-and-play-event-handler
 exec	prependpath
 exec	printenv
+exec	procstat
+exec	ps
 exec	read-conf
 exec	recordio
 exec	set-control-group-knob
@@ -60,6 +65,7 @@ exec	softlimit
 exec	syslog-read
 exec	tai64n
 exec	tai64nlocal
+exec	erase-machine-id
 exec	tcp-socket-accept
 exec	tcp-socket-connect
 exec	tcp-socket-listen
@@ -92,8 +98,6 @@ system-control	load-kernel-module
 system-control	unload-kernel-module
 system-control	disable
 system-control	enable
-system-control	initctl
-system-control	svcadm
 system-control	preset
 system-control	reset
 system-control	show

@@ -3,7 +3,7 @@
 ## **************************************************************************
 
 [Unit]
-Description=Set up the machine ID
+Description=Set up and tear down the machine ID
 DefaultDependencies=false
 After=local-fs.target
 
@@ -11,8 +11,9 @@ After=local-fs.target
 Type=oneshot
 EnvironmentDirectory=env
 ExecStart=setup-machine-id
-# This is a one-shot service that can be re-triggered by starting it again.
-#RemainAfterExit=1
+ExecStopPost=erase-machine-id
+# This is a pseudo-daemon that does not have a running process.
+RemainAfterExit=yes
 Restart=no
 
 [Install]

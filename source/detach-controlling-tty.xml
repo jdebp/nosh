@@ -3,6 +3,7 @@
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
 .-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
 <refentry id="detach-controlling-tty">
 
@@ -36,14 +37,16 @@
 <replaceable>next-prog</replaceable> may contain its own command line options, which <command>detach-controlling-tty</command> will ignore.
 </para>
 
-</refsection><refsection><title>SECURITY</title>
+</refsection><refsection><title>Security</title>
 
 <para>
 This must not be used for attempting to "daemonize" programs run from within a login session.
-A large amount of <emphasis>other</emphasis> state from the login session is still retained, including login session state that cannot be dropped once set and state that renders daemons vulnerable to control from the login session.
+A large amount of <emphasis>other</emphasis> state from the login session is still retained, including login session state that cannot be dropped once set and state that renders d&#xe6;mons vulnerable to control from the login session.
 The use case for this tool is where one is allowing <replaceable>next-prog</replaceable> to open a <emphasis>different</emphasis> controlling terminal.
 </para>
 
-</refsection><refsection><title>Author</title><para>Jonathan de Boyne Pollard</para></refsection>
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
 
 </refentry>

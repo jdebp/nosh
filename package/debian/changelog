@@ -1,3 +1,30 @@
+nosh (1.40) unstable; urgency=medium
+
+  * More cross-platform services: ncftpspooler, twoftpd, twoftpd-anon, upmpdcli
+  * More per-user services: ncftpbatch
+  * More Linux services: mdevd, mdevd-rescan, mdevd-log
+  * Various minor documentation corrections.
+  * The TERM(7) manual page is now available under several aliases including COLORTERM(7).
+  * The guide now includes the original DocBook XML manuals, and a stylesheet for reading them with a WWW browser.
+  * There is now a console-docbook-xml-viewer command.
+  * static-networking configuration import now also sets up avahi-autoipd services.
+  * There is now an ifconfig command, and it is used by the ifconfig@ services on both Linux and the BSDs.
+  * ucspi-socket-rules-check now supports uid/self/ and gid/self/ for UCSPI-UNIX.
+  * The terminal emulator now sets different alpha values for different colour systems.
+  * TUI output now handles the case of terminals with all-square (i.e. uniform-width) characters.
+  * TUI output now handles DECSCUSR on XTerm not supporting certain shapes.
+  * A bug in console-ncurses-realizer that made everything upside down has been fixed.
+  * Conversion of /etc/network/interfaces now allows:
+    * "broadcast +" for auto-calculated broadcast addresses
+    * "eui64" stanzas for EUI-64 processing
+    * "ipv4ll" stanzas for link-local IPv4 addresses
+    * "scope" settings
+  * "false" as the login shell now signifies a non-personal user account.
+  * There is now a nosh-net-tools-shims package for ifconfig, supplanting the net-tools package.
+  * There is now an erase-machine-id command, which is now used at shutdown by the machine-id service.
+
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.com>  Sun, 17 Mar 2019 17:32:48 +0000
+
 nosh (1.39) unstable; urgency=medium
 
   * More Linux services: rngd
