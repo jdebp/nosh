@@ -3,12 +3,5 @@ redo-ifchange ./cxx ./cxxflags ./cppflags
 read cxx < ./cxx
 read cxxflags < ./cxxflags
 read cppflags < ./cppflags
-if g++ -E --usage >/dev/null 2>&1
-then
-	${cxx} ${cxxflags} ${cppflags} -o "$1" -c "$2"
-	g++ -E ${cxxflags} ${cppflags} "$2" -MD -MF "$3" >/dev/null || true
-	. "$3" || true
-else
-        ${cxx} ${cxxflags} ${cppflags} -o "$1" -c "$2" -MMD -MF "$3" 
-        sed -e "s!^$1: *!!" -e 's/\\$//g' "$3" | xargs -r redo-ifchange
-fi
+${cxx} ${cxxflags} ${cppflags} -o "$1" -c "$2" -MMD -MF "$3" 
+sed -e "s!^$1: *!!" -e 's/\\$//g' "$3" | xargs -r redo-ifchange
