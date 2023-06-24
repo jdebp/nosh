@@ -3,6 +3,8 @@ redo-ifchange ./cxx ./cxxflags ./cppflags
 read cxx < ./cxx
 read cxxflags < ./cxxflags
 read cppflags < ./cppflags
+
+# Requires gcc8 and no clang on RHEL8
 if g++ -E --usage >/dev/null 2>&1
 then
 	${cxx} ${cxxflags} ${cppflags} -o "$1" -c "$2"
