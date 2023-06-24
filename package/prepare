@@ -8,6 +8,6 @@ fi
 
 export CDPATH=
 
-# Create and populate the build directory.
+# Create and populate the build directory. Requires pax3.4 on RHEL.
 install -d -m 0755 build
 ( cd source && ( 2>/dev/null pax -w -r -l -u -- * ../build/ || true ) )
