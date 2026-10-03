@@ -204,21 +204,11 @@ ECMA48Decoder::ECMA48ControlSequenceSink::QueryArgNull(std::size_t sub, std::siz
 
 ECMA48Decoder::ECMA48Decoder(
 	ECMA48ControlSequenceSink & s,
-	bool cs,
-	bool can,
-	bool e7,
-	bool is,
-	bool rx,
-	bool lx
+	const Options & o
 ) :
 	sink(s),
 	state(NORMAL),
-	control_strings(cs),
-	allow_cancel(can),
-	allow_7bit_extension(e7),
-	interix_shift(is),
-	rxvt_function_keys(rx),
-	linux_function_keys(lx),
+	options(o),
 	first_private_parameter(NUL),
 	saved_intermediate(NUL),
 	string_char(NUL)
@@ -249,6 +239,7 @@ ECMA48Decoder::AbortSequence(
 
 void
 ECMA48Decoder::TerminateSequence(
+	char32_t term_char
 ) {
 	switch (state) {
 		case NORMAL: case SHIFT2: case SHIFT3: case SHIFTA: case SHIFTL:
@@ -258,7 +249,7 @@ ECMA48Decoder::TerminateSequence(
 			break;
 		case ESCAPE: case ESCAPE_NF:			break;
 		case CONTROL1: case CONTROL2:			break;
-		case CONTROLSTRING: case CONTROLSTRINGESCAPE:	sink.ControlString(string_char); break;
+		case CONTROLSTRING: case CONTROLSTRINGESCAPE:	sink.ControlString(string_char, term_char); break;
 	}
 	state = NORMAL;
 }
@@ -284,7 +275,7 @@ ECMA48Decoder::ControlCharacter(char32_t character)
 		case PM:
 		case APC:
 		case SOS:
-			if (!control_strings) break;	// These are not aborts if control strings are not being recognized.
+			if (!options.control_strings) break;	// These are not aborts if control strings are not being recognized.
 			[[clang::fallthrough]];
 		case CSI:
 			AbortSequence();
@@ -293,7 +284,7 @@ ECMA48Decoder::ControlCharacter(char32_t character)
 			if (CONTROLSTRING != state) AbortSequence();
 			break;
 		case ST:
-			TerminateSequence();
+			TerminateSequence(character);
 			break;
 		default:
 			break;
@@ -301,32 +292,38 @@ ECMA48Decoder::ControlCharacter(char32_t character)
 	switch (character) {
 		case SSA:
 			// Pretend that Start of Selected Area is Shift State A.
-			if (interix_shift) {
+			if (options.interix_shift) {
 				state = SHIFTA;
 				break;
 			}
 			[[clang::fallthrough]];
 		default:	sink.ControlCharacter(character); break;
 	// The sink might never see any of these control characters.
-		case CAN:	if (allow_cancel) state = NORMAL; else sink.ControlCharacter(character); break;
+		case CAN:	if (options.allow_cancel) state = NORMAL; else sink.ControlCharacter(character); break;
 	// The sink will never see any of these control characters, unless a sequence is aborted partway.
 		case ESC:	state = CONTROLSTRING == state ? CONTROLSTRINGESCAPE : ESCAPE; saved_intermediate = NUL; break;
 		case CSI:	state = CONTROL1; ResetControlSeqAndStr(); break;
 		case SS2:	state = SHIFT2; break;
 		case SS3:	state = SHIFT3; break;
-	// The sink will never see any of these control characters, even if control strings are not being recognized, unless a sequence is aborted partway.
+	// The sink will never see any of these control characters, unless control strings are not being recognized, or a sequence is aborted partway.
 		case DCS:
 		case OSC:
 		case PM:
 		case APC:
 		case SOS:
-			if (control_strings) {
+			if (options.control_strings) {
 				state = CONTROLSTRING;
 				ResetControlSeqAndStr();
 				string_char = character;
-			}
+			} else
+				sink.ControlCharacter(character);
 			break;
-		case ST:	if (control_strings) { state = NORMAL; } break;
+		case ST:
+			if (options.control_strings) {
+				state = NORMAL;
+			} else
+				sink.ControlCharacter(character);
+			break;
 	}
 }
 
@@ -347,7 +344,7 @@ ECMA48Decoder::Escape(char32_t character)
 		state = NORMAL;
 	} else
 	if (character >= 0x40 && character <= 0x5f) {
-		if (allow_7bit_extension || IsAlways7BitExtension(character)) {
+		if (options.allow_7bit_extension || IsAlways7BitExtension(character)) {
 			// Do this first, so that it can be overridden by the control character processing.
 			state = NORMAL;
 			// This is known as ECMA-35 "7-bit code extension" (Fe) and is defined for the entire range.
@@ -423,11 +420,11 @@ ECMA48Decoder::ControlSequence(char32_t character)
 				break;
 		}
 	} else
-	if (IsIntermediate(character) && !(rxvt_function_keys && 0x24 == character)) {
+	if (IsIntermediate(character) && !(options.rxvt_function_keys && 0x24 == character)) {
 		saved_intermediate = character;
 		state = CONTROL2;
 	} else
-	if (linux_function_keys && '[' == character && NUL == saved_intermediate && NUL == first_private_parameter) {
+	if (options.linux_function_keys && '[' == character && NUL == saved_intermediate && NUL == first_private_parameter) {
 		// Pretend that SRS is Shift State L.
 		state = SHIFTL;
 	} else
@@ -470,7 +467,7 @@ ECMA48Decoder::ControlStringEscape(char32_t character)
 		;	// Ignore inside control strings.
 	else
 	if (character >= 0x40 && character <= 0x5f) {
-		if (allow_7bit_extension || IsAlways7BitExtension(character)) {
+		if (options.allow_7bit_extension || IsAlways7BitExtension(character)) {
 			// This is known as ECMA-35 "7-bit code extension" (Fe) and is defined for the entire range.
 			ControlCharacter(character + 0x40);
 		} else {

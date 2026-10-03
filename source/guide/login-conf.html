@@ -1,0 +1,115 @@
+<link rel="Up" href="terminals.html" title="Terminals" />
+<link rel="Prev" href="real-terminal-call-out.html" title="real terminal call-out" />
+<link rel="Next" href="terminal-resources.html" title="terminal resources" />
+<link rel="Stylesheet" type="text/css" href="guide.css" title="Guide default style" />
+<title>Using login.conf</title>
+<h1 class="Ruled">
+Using login.conf
+</h1>
+
+<p>
+login.conf is a mechanism provided by all of the BSDs, which supply manual pages for it (q.v.).
+The nosh toolset, in particular the <a href="commands/userenv-fromenv.xml"><code>userenv-fromenv</code></a> command (and its <a href="commands/userenv.xml"><code>userenv</code></a> wrapper command) extends this to Linux-based operating systems; extends the mechanism with additional specific capabilities; and extends some FreeBSD enhancements to NetBSD and OpenBSD.
+</p>
+
+<p>
+Its primary use is a way of setting user-preference and personalization environment variables at login
+</p>
+<ul>
+<li><p>
+without needing to deal in the different "profile" files for the Z, Korn, Almquist, Watanabe, C, Tenex C, Bourne Again, and other shells (or a Hellish combined profile that has conditional code that attempts to detect what shell is interpreting it); and
+</p></li>
+<li><p>
+without needing to grant users write access to files outwith their own home directories.
+</p></li>
+</ul>
+
+<h2 class="Ruled" id="Limitations">
+Limitations
+</h2>
+
+<p>
+<a href="commands/userenv-fromenv.xml"><code>userenv-fromenv</code></a> specifically deals only in environment variables.
+It does not set resource limits or apply password/login controls.
+(Indeed, the <i>FreeBSD Handbook</i> nowadays recommends that resource limits be applied in a different way, rather than via the login subsystem.)
+</p>
+
+<p>
+The <code>libutil</code> library on the BSDs permits the capabilities files to be compiled to a Berkeley DB file (with <code>cap_mkdb</code>) which provides for much faster access.
+On Linux-based operating systems, the workalike library that the nosh toolset uses does not have Berkeley DB file access methods and only uses the source text files.
+It also does not support the <code>tc=</code> item for chaining capabilities.
+</p>
+
+<h3 class="Ruled" id="SSHLimitations">
+SSH tip for overcoming its limitations
+</h3>
+
+<p>
+SSH does not respect login.conf on <em>any</em> operating system, even though it really should do at least on the BSDs where it is a standard part of the base operating systems.
+</p>
+
+<p>
+One can overcome this limitation of SSH by using the nosh toolset's chain loading and login subsystem tools, however.
+Instead of just plain <code>ssh&nbsp;-t&nbsp;-Y&nbsp;<i>user</i>@</i><i>host</i></code>, run:
+</p>
+<div class="command-window">
+<pre>% ssh -t -Y <i>user</i>@<i>host</i> unsetenv PATH userenv --default-path --default-tools --default-locale --default-timezone --toolkit-pager --set-other login-shell</pre>
+</div>
+<p class="note">
+Note:
+In Microsoft Terminal or MobaXTerm and suchlike GUI SSH front-ends, this is an entryfield in a settings dialogue and not a command line entered at a command interpreter, but it is pretty much an identical configuration.
+</p>
+<p>
+<a href="commands/userenv.xml"><code>userenv</code></a> does the login.conf processing that SSH omits.
+It does not need <code>--default-term</code>, of course.
+<a href="commands/unsetenv.xml"><code>unsetenv</code></a> unsets the <code>PATH</code> environment variable, as otherwise a default set by SSH would be inherited causing <code>userenv</code> to leave the variable alone.
+Finally <a href="commands/login-shell.xml"><code>login-shell</code></a> runs the user's <code>SHELL</code> (which <code>userenv</code> has read from the user account databases) as a login shell.
+</p>
+
+<h2 class="Ruled" id="PerUser">
+Per-user settings
+</h2>
+
+<p>
+An augmentation to login.conf available on FreeBSD, but not on bare NetBSD or OpenBSD, is the ability for users to have <code>.login_conf</code> files in their own home directories, which have a single "<code>me</code>" record that can override (only) environment variable settings from the administrator-set system <code>login.conf</code> file.
+The nosh toolset makes this feature available on both NetBSD and OpenBSD.
+</p>
+<p class="note">
+Note:
+The FreeBSD implementation introduces a weird corner-case security hole when a system administrator (bizarrely, but not impossibly) decides to have an actual login class named "<code>me</code>".
+The nosh toolset avoids the particular FreeBSD library function that has this problem.
+</p>
+
+<h2 class="Ruled" id="AdditionalCapabilities">
+Additional capabilities
+</h2>
+
+<p>
+In the unextended mechanism, environment variables are set through the <code>charset</code>, <code>lang</code>, <code>manpath</code>, <code>path</code>, <code>shell</code>, <code>term</code>, <code>timezone</code>, and general <code>setenv</code> capabilities.
+To these <a href="commands/userenv-fromenv.xml"><code>userenv-fromenv</code></a> adds <code>termpath</code>, <code>terminfopath</code>, <code>editor</code>, <code>visual</code>, <code>pager</code>, <code>manpager</code>, <code>manxmlviewer</code>, and <code>wwwbrowser</code> (for details of which, see its manual page).
+</p>
+
+<p>
+For examples:
+</p>
+<ul>
+<li><p>
+A user can set private preference for the full-screen "visual" program, line-mode text editor programs, and for the manual pager to use.
+</p>
+<blockquote><pre>me:\
+&nbsp;&nbsp;:visual=nvim:\
+&nbsp;&nbsp;:editor=nex:\
+&nbsp;&nbsp;:manpager=most:</pre><blockquote>
+</li>
+<li><p>
+An administrator can globally set a termcap search path.
+</p>
+<blockquote><pre>default:\
+&nbsp;&nbsp;:termpath=/etc/system-control/convert/termcap/termcap.linux /etc/system-control/convert/termcap/termcap.teken /etc/system-control/convert/termcap/termcap.ms-terminal /usr/share/misc/termcap:</pre><blockquote>
+</li>
+</ul>
+
+<p>
+This was (and still is) possible with the general <code>setenv</code> capability, of course.
+But these extensions permit some further common environment variables to be set without the complexities of embedding and escaping a path inside a comma-separated list inside a capability list, the same convenience as already available with the <code>manpath</code> capability.
+</p>

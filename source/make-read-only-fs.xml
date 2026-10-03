@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -41,11 +42,11 @@
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>make-read-only-fs</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>make-read-only-fs</command> will ignore.
 </para>
 
 <para>
-The parts of the filesystem that are re-mounted are controlled by command-line options as follows:
+The parts of the filesystem that are re-mounted are controlled by command&#x2010;line options as follows:
 </para>
 
 <variablelist>

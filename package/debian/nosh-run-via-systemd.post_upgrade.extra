@@ -19,17 +19,17 @@ done
 
 # Preset and start systemd service/socket/path units.
 systemctl preset service-manager.socket
-if systemctl is-enabled --quiet service-manager.socket 
+if systemctl is-enabled --quiet service-manager.socket
 then
 	systemctl start --no-ask-password service-manager.socket
 fi
 systemctl preset system-control-normal.service
-if systemctl is-enabled --quiet system-control-normal.service 
+if systemctl is-enabled --quiet system-control-normal.service
 then
 	systemctl start --no-ask-password system-control-normal.service
 fi
 systemctl preset service-manager-svscan.path
-if systemctl is-enabled --quiet service-manager-svscan.path 
+if systemctl is-enabled --quiet service-manager-svscan.path
 then
 	systemctl start --no-ask-password service-manager-svscan.path
 fi

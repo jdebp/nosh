@@ -20,32 +20,56 @@ export CDPATH=
 install -d -m 0755 command manual config guide guide/services guide/commands guide/commands/html guide/convert
 
 # ##############################################################################
+# Low-level file and directory manipulation.
+case "`uname`" in
+(Linux)
+	rename_symbolic_link() {
+		! test -e "$2" || mv -f -- "$2" "$2"{old}
+		mv -f -- "$1" "$2"
+		rm -f -- "$2"{old}
+	}
+	make_symbolic_link() {
+		ln -f -n -s -- "$1" "$2"
+	}
+	;;
+(*)
+	rename_symbolic_link() {
+		mv -f -h -- "$1" "$2"
+	}
+	make_symbolic_link() {
+		ln -f -h -s -- "$1" "$2"
+	}
+	;;
+esac
+
+# ##############################################################################
 # Build all of the ...{new} files in ./command, ./manual, and ./guide.
 # Symbolic links in place of subdirectories to fool the man(1) command
-for directory in en_GB.UTF-8 en.UTF-8
+for directory in en_GB.UTF-8 en.UTF-8 en
 do
-	rm -f -- manual/"${directory}"{new}
-	ln -f -s -- . manual/"${directory}"{new}
+	make_symbolic_link . manual/"${directory}"{new}
 done
 # Main guide pages
 cat package/guidepages |
 while read -r i
 do
 	rm -f -- guide/"$i".html{new}
-	install -m 0444 -p -- build/"$i".html guide/"$i".html{new}
+	install -m 0444 -p -- build/guide/"$i".html guide/"$i".html{new}
 done
-for i in COPYING guide.css
+for i in COPYING
 do
 	rm -f -- guide/"$i"{new}
 	install -m 0444 -p -- build/"$i" guide/"$i"{new}
 done
-for i in docbook-xml.css
+for i in guide.css commands/docbook-xml.css
 do
 	rm -f -- guide/"$i"{new}
-	install -m 0444 -p -- build/"$i" guide/commands/"$i"{new}
+	install -m 0444 -p -- build/guide/"$i" guide/"$i"{new}
 done
-for section in 1 2 3 4 5 6 7 8 9
+for section in 1 3 4 5 7 8	# Omit kernel API, games, and kernel internals.
 do
+	make_symbolic_link . manual/man"${section}"{new}
+	make_symbolic_link . manual/docbook"${section}"{new}
 	if test 1 = "${section}" || test 8 = "${section}"
 	then
 		# All of the commands that have executables
@@ -53,13 +77,13 @@ do
 		while read -r i
 		do
 			rm -f -- command/"$i"{new}
-			if objdump -f build/"$i" >/dev/null 2>&1
+			if objdump -f build/command/"$i" >/dev/null 2>&1
 			then
-				install -m 0755 -p -- build/"$i" command/"$i"{new}
+				install -m 0755 -p -- build/command/"$i" command/"$i"{new}
 				strip -p -- command/"$i"{new}
 				chmod a-w command/"$i"{new}
 			else
-				install -m 0555 -p -- build/"$i" command/"$i"{new}
+				install -m 0555 -p -- build/command/"$i" command/"$i"{new}
 			fi
 		done
 		# All of the aliases for other executables
@@ -75,17 +99,16 @@ do
 		test -r package/commands${section} && cat package/commands${section}
 		test -r package/extra-manpages${section} && cat package/extra-manpages${section}
 	) |
-	while read -r i
+	while read -r command
 	do
-		install -d -m 0755 -- manual/man${section} manual/docbook${section}
-		rm -f -- manual/man${section}/"$i".${section}{new}
-		install -m 0444 -p -- build/"$i".${section} manual/man${section}/"$i".${section}{new}
-		rm -f -- manual/docbook${section}/"$i".xml{new}
-		install -m 0444 -p -- build/"$i".xml manual/docbook${section}/"$i".xml{new}
-		rm -f -- guide/commands/html/"$i".html{new}
-		install -m 0444 -p -- build/slashdoc/"$i".html guide/commands/html/"$i".html{new}
-		rm -f -- guide/commands/"$i".xml{new}
-		ln -f -- manual/docbook${section}/"$i".xml{new} guide/commands/"$i".xml{new}
+		rm -f -- manual/"${command}".${section}{new}
+		install -m 0444 -p -- build/manual/"${command}".${section} manual/"${command}".${section}{new}
+		rm -f -- manual/"${command}".xml{new}
+		install -m 0444 -p -- build/"${command}".xml manual/"${command}".xml{new}
+		rm -f -- guide/commands/html/"${command}".html{new}
+		ln -f -- manual/"${command}".${section}{new} guide/commands/html/"${command}".html{new}
+		rm -f -- guide/commands/"${command}".xml{new}
+		ln -f -- manual/"${command}".xml{new} guide/commands/"${command}".xml{new}
 	done
 	# Aliased manual and guide pages
 	test -r package/aliases${section} && cat package/aliases${section} |
@@ -93,10 +116,10 @@ do
 	do
 		test -r package/commands${section} && grep -q -- "^${alias}\$" package/commands${section} && continue
 		test -r package/extra-manpages${section} && grep -q -- "^${alias}\$" package/extra-manpages${section} && continue
-		rm -f -- manual/man${section}/"${alias}".${section}{new}
-		ln -f -- manual/man${section}/"${command}".${section}{new} manual/man${section}/"${alias}".${section}{new}
-		rm -f -- manual/docbook${section}/"${alias}".xml{new}
-		ln -f -- manual/docbook${section}/"${command}".xml{new} manual/docbook${section}/"${alias}".xml{new}
+		rm -f -- manual/"${alias}".${section}{new}
+		ln -f -- manual/"${command}".${section}{new} manual/"${alias}".${section}{new}
+		rm -f -- manual/"${alias}".xml{new}
+		ln -f -- manual/"${command}".xml{new} manual/"${alias}".xml{new}
 		rm -f -- guide/commands/html/"${alias}".html{new}
 		ln -f -- guide/commands/html/"${command}".html{new} guide/commands/html/"${alias}".html{new}
 		rm -f -- guide/commands/"${alias}".xml{new}
@@ -107,11 +130,9 @@ done
 # ##############################################################################
 # Rename the ...{new} files in ./command, ./manual, and ./guide.
 # Symbolic links in place of subdirectories to fool the man(1) command
-for directory in en_GB.UTF-8 en.UTF-8
+for directory in en_GB.UTF-8 en.UTF-8 en
 do
-	test -e manual/"${directory}" && mv -f -- manual/"${directory}" manual/"${directory}"{old}
-	mv -f -- manual/"${directory}"{new} manual/"${directory}"
-	rm -f -- manual/"${directory}"{old}
+	rename_symbolic_link manual/"${directory}"{new} manual/"${directory}"
 done
 # Main guide pages
 cat package/guidepages |
@@ -123,8 +144,10 @@ for i in COPYING guide.css commands/docbook-xml.css
 do
 	mv -f -- guide/"$i"{new} guide/"$i"
 done
-for section in 1 2 3 4 5 6 7 8 9
+for section in 1 3 4 5 7 8	# Omit kernel API, games, and kernel internals.
 do
+	rename_symbolic_link manual/man"${section}"{new} manual/man"${section}"
+	rename_symbolic_link manual/docbook"${section}"{new} manual/docbook"${section}"
 	if test 1 = "${section}" || test 8 = "${section}"
 	then
 		# All of the commands that have executables and all of their aliases
@@ -144,8 +167,8 @@ do
 	) |
 	while read -r i
 	do
-		mv -f -- manual/man${section}/"$i".${section}{new} manual/man${section}/"$i".${section}
-		mv -f -- manual/docbook${section}/"$i".xml{new} manual/docbook${section}/"$i".xml
+		mv -f -- manual/"$i".${section}{new} manual/"$i".${section}
+		mv -f -- manual/"$i".xml{new} manual/"$i".xml
 		mv -f -- guide/commands/html/"$i".html{new} guide/commands/html/"$i".html
 		mv -f -- guide/commands/"$i".xml{new} guide/commands/"$i".xml
 	done
@@ -155,8 +178,8 @@ do
 	do
 		test -r package/commands${section} && grep -q -- "^${alias}\$" package/commands${section} && continue
 		test -r package/extra-manpages${section} && grep -q -- "^${alias}\$" package/extra-manpages${section} && continue
-		mv -f -- manual/man${section}/"${alias}".${section}{new} manual/man${section}/"${alias}".${section}
-		mv -f -- manual/docbook${section}/"${alias}".xml{new} manual/docbook${section}/"${alias}".xml
+		mv -f -- manual/"${alias}".${section}{new} manual/"${alias}".${section}
+		mv -f -- manual/"${alias}".xml{new} manual/"${alias}".xml
 		mv -f -- guide/commands/html/"${alias}".html{new} guide/commands/html/"${alias}".html
 		mv -f -- guide/commands/"${alias}".xml{new} guide/commands/"${alias}".xml
 	done
@@ -175,13 +198,13 @@ do
 	( cd build/services/ && pax -r -w mount@$i fsck@$i ../../config/services{new}/ )
 done < package/common-mounts
 (
-	cat package/common-etc-services 
+	cat package/common-etc-services
 	case "`uname`" in
-	Linux)		cat package/linux-etc-services ;;
-	OpenBSD)	cat package/bsd-etc-services ;;
-	FreeBSD)	cat package/bsd-etc-services package/freebsd-etc-services ;;
-	NetBSD)		cat package/bsd-etc-services package/netbsd-etc-services ;;
-	*BSD)		cat package/bsd-etc-services ;;
+	(Linux)		cat package/linux-etc-services ;;
+	(OpenBSD)	cat package/bsd-etc-services ;;
+	(FreeBSD)	cat package/bsd-etc-services package/freebsd-etc-services ;;
+	(NetBSD)	cat package/bsd-etc-services package/netbsd-etc-services ;;
+	(*BSD)		cat package/bsd-etc-services ;;
 	esac
 ) |
 while read -r i
@@ -189,53 +212,53 @@ do
 	( cd build/services/ && pax -r -w $i ../../config/services{new}/ )
 done
 (
-	cat package/common-services package/common-sockets package/common-timers package/common-ttys 
+	cat package/common-services package/common-sockets package/common-timers package/common-ttys
 	case "`uname`" in
-	Linux)		cat package/linux-services package/linux-sockets package/linux-timers package/linux-ttys ;;
-	OpenBSD)	cat package/bsd-services package/bsd-sockets package/openbsd-services package/openbsd-timers package/openbsd-ttys ;;
-	NetBSD)		cat package/bsd-services package/bsd-sockets package/netbsd-services package/netbsd-timers package/netbsd-ttys ;;
-	FreeBSD)	cat package/bsd-services package/bsd-sockets package/freebsd-services package/freebsd-timers package/freebsd-ttys ;;
-	*BSD)		cat package/bsd-services package/bsd-sockets ;;
+	(Linux)		cat package/linux-services package/linux-sockets package/linux-timers package/linux-ttys ;;
+	(OpenBSD)	cat package/bsd-services package/bsd-sockets package/openbsd-services package/openbsd-timers package/openbsd-ttys ;;
+	(NetBSD)	cat package/bsd-services package/bsd-sockets package/netbsd-services package/netbsd-timers package/netbsd-ttys ;;
+	(FreeBSD)	cat package/bsd-services package/bsd-sockets package/freebsd-services package/freebsd-timers package/freebsd-ttys ;;
+	(*BSD)		cat package/bsd-services package/bsd-sockets ;;
 	esac
 ) |
 while read -r i
 do
 	case "$i" in
-		*-log)	
+		(*-log)
 			( cd build/services/ && pax -r -w $i ../../config/services{new}/ )
 			;;
-		*)	
+		(*)
 			( cd build/services/ && pax -r -w $i cyclog@$i ../../config/services{new}/ )
 			;;
 	esac
 done
 (
-	cat package/common-service-aliases 
+	cat package/common-service-aliases
 	case "`uname`" in
-	Linux) cat package/linux-service-aliases ;;
-	OpenBSD) cat package/openbsd-service-aliases ;;
-	FreeBSD) cat package/freebsd-service-aliases ;;
-	NetBSD) cat package/netbsd-service-aliases ;;
-	*BSD) cat package/bsd-service-aliases ;;
+	(Linux)		cat package/linux-service-aliases ;;
+	(OpenBSD)	cat package/openbsd-service-aliases ;;
+	(FreeBSD)	cat package/freebsd-service-aliases ;;
+	(NetBSD)	cat package/netbsd-service-aliases ;;
+	(*BSD)		cat package/bsd-service-aliases ;;
 	esac
 ) |
 while read -r service alias
 do
 	ln -s "${service}" config/services{new}/"${alias}"
 	case "${alias}" in
-		*-log)	
+		(*-log)
 			;;
-		*)	
+		(*)
 			ln -s cyclog@"${service}" config/services{new}/cyclog@"${alias}"
 			;;
 	esac
 done
 (
-	cat package/common-target-aliases 
+	cat package/common-target-aliases
 	case "`uname`" in
-	Linux) cat package/linux-target-aliases ;;
-	OpenBSD) cat package/openbsd-target-aliases ;;
-	*BSD) cat package/bsd-target-aliases ;;
+	(Linux)		cat package/linux-target-aliases ;;
+	(OpenBSD)	cat package/openbsd-target-aliases ;;
+	(*BSD)		cat package/bsd-target-aliases ;;
 	esac
 ) |
 while read -r service alias
@@ -243,10 +266,10 @@ do
 	ln -s "${service}" config/targets{new}/"${alias}"
 done
 (
-	cat package/common-etc-service-aliases 
+	cat package/common-etc-service-aliases
 	case "`uname`" in
-	Linux)	cat package/linux-etc-service-aliases ;;
-	*BSD)	cat package/bsd-etc-service-aliases ;;
+	(Linux)	cat package/linux-etc-service-aliases ;;
+	(*BSD)	cat package/bsd-etc-service-aliases ;;
 	esac
 ) |
 while read -r service alias
@@ -285,9 +308,9 @@ done
 (
 	cat package/common-presets
 	case "`uname`" in
-	Linux) cat package/linux-presets ;;
-	OpenBSD) cat package/openbsd-presets ;;
-	*BSD) cat package/bsd-presets ;;
+	(Linux)		cat package/linux-presets ;;
+	(OpenBSD)	cat package/openbsd-presets ;;
+	(*BSD)		cat package/bsd-presets ;;
 	esac
 ) |
 awk '!x[$0]++' |
@@ -315,10 +338,10 @@ while read -r i
 do
 	rm -f -- config/convert/"$i"{new}
 	case "$i" in
-	*.do)
+	(*.do)
 		install -m 0555 -p -- build/convert/"$i" config/convert/"$i"{new}
 		;;
-	*)
+	(*)
 		install -m 0444 -p -- build/convert/"$i" config/convert/"$i"{new}
 		;;
 	esac
@@ -327,12 +350,12 @@ for i in issue.vc
 do
 	rm -f -- config/vt/"$i"{new}
 	install -m 0444 -p -- build/"$i" config/vt/"$i"{new}
-done 
+done
 for i in _nosh _console_terminal_emulator _system_control
 do
 	rm -f -- config/zsh/"$i"{new}
 	install -m 0444 -p -- build/zsh/"$i" config/zsh/"$i"{new}
-done 
+done
 for i in generate spin-up spin-down
 do
 	rm -f -- config/service-generators/"$i"{new}
@@ -348,12 +371,12 @@ do
 	rm -f -- config/service-generators/"$i"{new}
 	install -d -m 0755 config/service-generators/"`dirname "$i"`"
 	install -m 0444 -p -- build/service-generators/"$i" config/service-generators/"$i"{new}
-done < package/service-generators 
+done < package/service-generators
 for i in no-anacron anacron
 do
 	rm -f -- config/crontab/crontab.debian."$i"{new}
 	install -m 0444 -p -- build/bcron/crontab.debian."$i" config/crontab/crontab.debian."$i"{new}
-done 
+done
 while read -r i
 do
 	rm -f -- config/cin-data-tables/"$i"{new}
@@ -392,12 +415,12 @@ cat package/tmpfiles-snippets |
 while read -r i
 do
 	mv -f -- config/systemd/tmpfiles/"$i"{new} config/systemd/tmpfiles/"$i"
-done 
+done
 cat package/systemd-system-services |
 while read -r i
 do
 	mv -f -- config/systemd/system/"$i"{new} config/systemd/system/"$i"
-done 
+done
 cat package/systemd-system-overrides |
 while read -r i
 do
@@ -407,19 +430,19 @@ cat package/systemd-user-services |
 while read -r i
 do
 	mv -f -- config/systemd/user/"$i"{new} config/systemd/user/"$i"
-done 
+done
 (
 	cat package/common-presets
 	case "`uname`" in
-	Linux) cat package/linux-presets ;;
-	OpenBSD) cat package/openbsd-presets ;;
-	*BSD) cat package/bsd-presets ;;
+	(Linux)		cat package/linux-presets ;;
+	(OpenBSD)	cat package/openbsd-presets ;;
+	(*BSD)		cat package/bsd-presets ;;
 	esac
 ) |
 awk '!x[$0]++' | while read i
 do
 	mv -f -- config/presets/"$i"{new} config/presets/"$i"
-done 
+done
 while read -r i
 do
 	mv -f -- config/mewburn-rc.d/"$i"{new} config/mewburn-rc.d/"$i"
@@ -445,11 +468,11 @@ done
 for i in issue.vc
 do
 	mv -f -- config/vt/"$i"{new} config/vt/"$i"
-done 
+done
 for i in _nosh _console_terminal_emulator _system_control
 do
 	mv -f -- config/zsh/"$i"{new} config/zsh/"$i"
-done 
+done
 (
         printf '%s\n' generate cyclog@.service kmod@.service spin-up spin-down
         cat package/service-generators
@@ -461,7 +484,7 @@ done
 for i in no-anacron anacron
 do
 	mv -f -- config/crontab/crontab.debian."$i"{new} config/crontab/crontab.debian."$i"
-done 
+done
 while read -r i
 do
 	mv -f -- config/cin-data-tables/"$i"{new} config/cin-data-tables/"$i"

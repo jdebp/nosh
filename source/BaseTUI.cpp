@@ -4,16 +4,17 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 #define __STDC_FORMAT_MACROS
-#define _XOPEN_SOURCE_EXTENDED
 #include <csignal>
 #include <cerrno>
 #include <stdint.h>
+#include <wchar.h>
 #include <sys/ioctl.h>	// for struct winsize
 #include <unistd.h>
 #include <fcntl.h>
 #if defined(__LINUX__) || defined(__linux__)
 #include <ncursesw/curses.h>
 #else
+#define _XOPEN_SOURCE_EXTENDED
 #include <curses.h>
 #endif
 #include "curses-const-fix.h"	// Must come after curses.h .

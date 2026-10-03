@@ -4,6 +4,7 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 #define __STDC_FORMAT_MACROS
+#define _BSD_SOURCE 1
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
@@ -2347,6 +2348,43 @@ handle_signal (
 
 }
 
+/* Line discipline options **************************************************
+// **************************************************************************
+*/
+
+namespace {
+
+struct terminal_mode_definition : public popt::integral_definition {
+public:
+	terminal_mode_definition(char s, const char * l, const char * d, bool & v) : integral_definition(s, l, a, d), value(v) {}
+	virtual ~terminal_mode_definition();
+protected:
+	static const char a[];
+	virtual void action(popt::processor &, const char *);
+	bool & value;
+};
+
+}
+
+const char terminal_mode_definition::a[] = "mode";
+terminal_mode_definition::~terminal_mode_definition() {}
+void terminal_mode_definition::action(popt::processor & /*proc*/, const char * text)
+{
+	if (0 == std::strcmp(text, "canonical")
+	||  0 == std::strcmp(text, "sane")
+	) {
+		value = true;
+		set = true;
+	} else
+	if (0 == std::strcmp(text, "non-canonical")
+	||  0 == std::strcmp(text, "raw")
+	) {
+		value = false;
+		set = true;
+	} else
+		throw popt::error(text, "terminal mode specification is not {canonical|sane|non-canonical|raw}");
+}
+
 /* Emulation options ********************************************************
 // **************************************************************************
 */
@@ -2419,7 +2457,7 @@ console_terminal_emulator [[gnu::noreturn]] (
 #else
 	ECMA48InputEncoder::Emulation emulation(ECMA48InputEncoder::DECVT);
 #endif
-	bool vcsa(false), inverted(false);
+	bool vcsa(false), inverted(false), canonical_mode(true);
 	// X terminal emulators choose 80 by 24, for compatibility with real DEC VTs.
 	// We choose 80 by 25 because we are, rather, being compatible with the kernel terminal emluators, which have no status lines and default to PC 25 line modes.
 	unsigned long columns(80U), rows(25U);
@@ -2431,21 +2469,31 @@ console_terminal_emulator [[gnu::noreturn]] (
 		emulation_definition netbsd_option('\0', "netbsd", "Emulate the NetBSD virtual console.", emulation, ECMA48InputEncoder::NETBSD_CONSOLE);
 		emulation_definition decvt_option('\0', "decvt", "Emulate the DEC VT.", emulation, ECMA48InputEncoder::DECVT);
 		emulation_definition xtermpc_option('\0', "xtermpc", "Emulate a subset of XTerm in Sun/PC mode.", emulation, ECMA48InputEncoder::XTERM_PC);
-		popt::bool_definition vcsa_option('\0', "vcsa", "Maintain a vcsa-compatible display buffer.", vcsa);
-		popt::bool_definition inverted_option('\0', "inverted", "Begin in inverted mode.", inverted);
-		popt::unsigned_number_definition rows_option('\0', "rows", "count", "Set the terminal height.", rows, 0);
-		popt::unsigned_number_definition columns_option('\0', "columns", "count", "Set the terminal width.", columns, 0);
-		popt::definition * top_table[] = {
+		popt::definition * emulations_table[] = {
 			&linux_option,
 			&sco_option,
 			&teken_option,
 			&netbsd_option,
 			&decvt_option,
 			&xtermpc_option,
-			&vcsa_option,
-			&inverted_option,
+		};
+		popt::table_definition emulations_option(sizeof emulations_table/sizeof *emulations_table, emulations_table, "Emulation options");
+		popt::unsigned_number_definition rows_option('\0', "rows", "count", "Set the terminal height.", rows, 0 /* parse for base */);
+		popt::unsigned_number_definition columns_option('\0', "columns", "count", "Set the terminal width.", columns, 0 /* parse for base */);
+		popt::definition * sizes_table[] = {
 			&rows_option,
 			&columns_option,
+		};
+		popt::table_definition sizes_option(sizeof sizes_table/sizeof *sizes_table, sizes_table, "Size options");
+		popt::bool_definition vcsa_option('\0', "vcsa", "Maintain a vcsa-compatible display buffer.", vcsa);
+		popt::bool_definition inverted_option('\0', "inverted", "Begin in inverted mode.", inverted);
+		terminal_mode_definition canonical_mode_option('\0', "terminal-mode", "Set the terminal mode.", canonical_mode);
+		popt::definition * top_table[] = {
+			&emulations_option,
+			&sizes_option,
+			&vcsa_option,
+			&inverted_option,
+			&canonical_mode_option,
 		};
 		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{directory}");
 
@@ -2543,7 +2591,7 @@ console_terminal_emulator [[gnu::noreturn]] (
 		termios t;
 		// We want slightly different defaults, with UTF-8 input mode on because that's what our input encoder sends, and tostop mode on.
 		if (0 <= tcgetattr_nointr(PTY_BACK_END_FILENO, t))
-			tcsetattr_nointr(PTY_BACK_END_FILENO, TCSADRAIN, sane(t, false /*tostop on*/, false /*local on*/, false /*utf8 on*/, false /* keep speed */));
+			tcsetattr_nointr(PTY_BACK_END_FILENO, TCSADRAIN, canonical_mode ? enable_canonical_software_processing(t) : disable_tostop(disable_canonical_software_processing(t)));
 	}
 
 	bool hangup(false);

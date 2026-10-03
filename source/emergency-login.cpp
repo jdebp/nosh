@@ -11,8 +11,13 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cctype>
 #include <unistd.h>
 #include <termios.h>
-#if defined(__LINUX__) || defined(__linux__)
-#include <shadow.h>
+#include "config/hasshadow.h"
+#if defined(HAS_SHADOW)
+#	include <shadow.h>
+#endif
+#include "config/haskenv.h"
+#if defined(HAS_KENV)
+#	include <kenv.h>
 #endif
 #include <pwd.h>
 #include "popt.h"
@@ -23,8 +28,10 @@ For copyright and licensing terms, see the file named COPYING.
 
 namespace {
 
+// This is not a utility library function because this is the only place in the entire toolset where echo is specifically disabled for password input.
+// We do not want to bring in the rest of the ttyutils library just for this.
 termios
-make_noecho (
+disable_echo (
 	const termios & ti
 ) {
 	termios t(ti);
@@ -48,9 +55,7 @@ emergency_login (
 ) {
 	const char * prog(basename_of(args[0]));
 	try {
-		popt::definition * top_table[] = {
-		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "");
+		popt::top_table_definition main_option(0, nullptr, "Main options", "");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, envs, main_option, new_args);
@@ -63,11 +68,20 @@ emergency_login (
 	}
 	if (!args.empty()) die_unexpected_argument(prog, args, envs);
 
-	const char * shell(nullptr);
+	const char * shell(envs.query("SHELL"));
+#if defined(HAS_KENV)
+	char kenv_buf[PATH_MAX + 1];
+	const int n(kenv(KENV_GET, "init_shell", kenv_buf, sizeof kenv_buf - 1));
+	if (0 < n) {
+		kenv_buf[n] = '\0';
+		shell = kenv_buf;
+	}
+#endif
+
 	struct passwd * p(getpwnam("root"));
 	if (!p || p->pw_uid != 0) p = getpwuid(0);
 	if (p) {
-#if defined(__LINUX__) || defined(__linux__)
+#if defined(HAS_SHADOW)
 		struct spwd * const s(getspnam(p->pw_name));
 		if (s) {
 			const char * const passwd(s->sp_pwdp);
@@ -81,14 +95,14 @@ emergency_login (
 					std::fputs("Emergency superuser password:", stdout);
 					std::fflush(stdout);
 					if (0 <= tcgetattr_nointr(STDIN_FILENO, original_attr))
-						tcsetattr_nointr(STDIN_FILENO, TCSADRAIN, make_noecho(original_attr));
+						tcsetattr_nointr(STDIN_FILENO, TCSADRAIN, disable_echo(original_attr));
 					const char * r(std::fgets(pass, sizeof pass, stdin));
 					std::putc('\n', stdout);
 					std::fflush(stdout);
 					tcsetattr_nointr(STDIN_FILENO, TCSADRAIN, original_attr);
 					if (!r) {
 						std::fprintf(stderr, "%s: FATAL: %s\n", prog, "EOF");
-#if defined(__LINUX__) || defined(__linux__)
+#if defined(HAS_SHADOW)
 						endspent();
 #endif
 						endpwent();
@@ -102,33 +116,27 @@ emergency_login (
 					std::fputs("Wrong superuser password.\n", stderr);
 				}
 			}
-#if defined(__LINUX__) || defined(__linux__)
+#if defined(HAS_SHADOW)
 			endspent();
 		}
 #endif
-		if (p->pw_shell && *p->pw_shell)
-			shell = strdup(p->pw_shell);
+		if (!shell) {
+			if (p->pw_shell && *p->pw_shell)
+				shell = strdup(p->pw_shell);
+		}
 	}
 	endpwent();
 
 	if (shell && *shell) {
-		execl(shell, SH, static_cast<const char *>(nullptr));
-		std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, shell, std::strerror(errno));
-	}
-
-	shell = envs.query("SHELL");
-	if (shell && *shell) {
-		execl(shell, SH, static_cast<const char *>(nullptr));
-		std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, shell, std::strerror(errno));
+		execlp(shell, SH, static_cast<const char *>(nullptr));
+		message_error_errno(prog, envs, shell);
 	}
 
 	shell = DefaultEnvironment::UserLogin::SHELL;
-	execl(shell, SH, static_cast<const char *>(nullptr));
-	std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, shell, std::strerror(errno));
-
-	shell = "/bin/sh";
-	execl(shell, SH, static_cast<const char *>(nullptr));
-	std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, shell, std::strerror(errno));
+	if (shell && *shell) {
+		execlp(shell, SH, static_cast<const char *>(nullptr));
+		message_error_errno(prog, envs, shell);
+	}
 
 	args.push_back(SH);
 	next_prog = arg0_of(args);

@@ -11,10 +11,9 @@ For copyright and licensing terms, see the file named COPYING.
 #include <string>
 
 struct ProcessEnvironment {
-private:
-	typedef std::map<std::string, std::string> map;
 public:
 	ProcessEnvironment(const char * const *);
+	ProcessEnvironment(const ProcessEnvironment &);
 	const char * const * data() { if (!cached_data) make_data(); return cached_data; }
 	std::size_t size() { make_copy(); return m.size(); }
 	bool clear();
@@ -24,6 +23,7 @@ public:
 	bool unset(const char * var) { return set(var, nullptr); }
 	bool unset(const std::string & var) { return set(var, nullptr); }
 	const char * query(const char *) const;
+	typedef std::map<std::string, std::string> map;
 	typedef map::const_iterator const_iterator;
 	const_iterator find(const std::string &);
 	const_iterator begin();

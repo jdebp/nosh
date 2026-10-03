@@ -3,8 +3,10 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
+#define _BSD_SOURCE 1
 #include <vector>
-#include <cstdio>
+#include <iostream>
+#include <fstream>
 #include <cstdlib>
 #include <cstring>
 #include <csignal>
@@ -88,7 +90,7 @@ protected:
 	virtual void ControlCharacter(char32_t character);
 	virtual void EscapeSequence(char32_t character, char32_t first_intermediate);
 	virtual void ControlSequence(char32_t character, char32_t last_intermediate, char32_t first_private_parameter);
-	virtual void ControlString(char32_t character);
+	virtual void ControlString(char32_t start_char, char32_t term_char);
 	/// @}
 
 	void off(CharacterCell::attribute_type a) { attributes &= ~a; }
@@ -99,7 +101,7 @@ protected:
 struct UTF8ToECMA48 :
 	public UTF8Decoder::UCS32CharacterSink
 {
-	UTF8ToECMA48(ECMA48Decoder::ECMA48ControlSequenceSink & sink) : decoder(sink, false /* no control strings */, true /* allow cancel */, true /* 7-bit extensions */, false /* no Interix shift */, false /* no rxvt function keys */, false /* no Linux function keys */) {}
+	UTF8ToECMA48(ECMA48Decoder::ECMA48ControlSequenceSink & sink, bool discard_control_strings) : decoder(sink, ECMA48Decoder::Options(discard_control_strings, true /* allow cancel */, true /* 7-bit extensions */, false /* no Interix shift */, false /* no rxvt function keys */, false /* no Linux function keys */)) {}
 protected:
 	ECMA48Decoder decoder;
 	virtual void ProcessDecodedUTF8(char32_t character, bool decoder_error, bool overlong);
@@ -110,7 +112,7 @@ struct TUI :
 	public TUIOutputBase,
 	public TUIInputBase
 {
-	TUI(ProcessEnvironment & e, DisplayDocument & m, TUIDisplayCompositor & comp, FILE * tty, unsigned long c, const TUIOutputBase::Options &);
+	TUI(ProcessEnvironment & e, DisplayDocument & m, TUIDisplayCompositor & comp, std::iostream & tty, int tty_fd, unsigned long c, const TUIOutputBase::Options &);
 	~TUI();
 
 	bool quit_flagged() const { return pending_quit_event; }
@@ -413,7 +415,8 @@ DocumentParser::ControlSequence(
 
 void
 DocumentParser::ControlString(
-	char32_t /*character*/
+	char32_t /*start_char*/,
+	char32_t /*term_char*/
 ) {
 }
 
@@ -430,13 +433,14 @@ TUI::TUI(
 	ProcessEnvironment & e,
 	DisplayDocument & d,
 	TUIDisplayCompositor & comp,
-	FILE * tty,
+	std::iostream & tty,
+	int tty_fd,
 	unsigned long c,
 	const TUIOutputBase::Options & options
 ) :
 	TerminalCapabilities(e),
-	TUIOutputBase(*this, tty, options, comp),
-	TUIInputBase(static_cast<const TerminalCapabilities &>(*this), tty),
+	TUIOutputBase(*this, tty, tty_fd, options, comp),
+	TUIInputBase(static_cast<const TerminalCapabilities &>(*this), tty, tty_fd),
 	handler0(*this),
 	handler1(*this),
 	handler2(*this),
@@ -662,7 +666,7 @@ console_tty37_viewer [[gnu::noreturn]]
 ) {
 	const char * prog(basename_of(args[0]));
 	TUIOutputBase::Options options;
-	bool squeeze_empty_lines(false);
+	bool squeeze_empty_lines(false), discard_control_strings(false);
 	try {
 		popt::bool_definition cursor_application_mode_option('\0', "cursor-keypad-application-mode", "Set the cursor keypad to application mode instead of normal mode.", options.cursor_application_mode);
 		popt::bool_definition calculator_application_mode_option('\0', "calculator-keypad-application-mode", "Set the calculator keypad to application mode instead of normal mode.", options.calculator_application_mode);
@@ -678,8 +682,10 @@ console_tty37_viewer [[gnu::noreturn]]
 		};
 		popt::table_definition tui_table_option(sizeof tui_table/sizeof *tui_table, tui_table, "Terminal quirks options");
 		popt::bool_definition squeeze_empty_lines_option('s', "squeeze-empty-lines", "Squeeze successive empty lines into 1 line.", squeeze_empty_lines);
+		popt::bool_definition discard_control_strings_option('\0', "discard-control-strings", "Recognize ECMA48 control strings.", discard_control_strings);
 		popt::definition * top_table[] = {
 			&squeeze_empty_lines_option,
+			&discard_control_strings_option,
 			&tui_table_option,
 		};
 		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{file(s)...}");
@@ -697,18 +703,26 @@ console_tty37_viewer [[gnu::noreturn]]
 
 	const char * tty(envs.query("TTY"));
 	if (!tty) tty = "/dev/tty";
-	FileStar control(std::fopen(tty, "w+"));
-	if (!control) {
+	std::fstream control(tty);
+	if (!control.is_open()) {
 		die_errno(prog, envs, tty);
 	}
+#if __cpp_lib_fstream_native_handle
+	const int control_fd(control.rdbuf()->native_handle());
+#else
+	const int control_fd(open_readwriteexisting_at(AT_FDCWD, tty));
+	if (0 > control_fd) {
+		die_errno(prog, envs, tty);
+	}
+#endif
 
-	const unsigned long columns(get_columns(envs, fileno(control)));
+	const unsigned long columns(get_columns(envs, control_fd));
 
 	DisplayDocument doc;
 
 	{
 		DocumentParser parser(doc, columns, squeeze_empty_lines);
-		UTF8ToECMA48 utf8toecma48(parser);
+		UTF8ToECMA48 utf8toecma48(parser, discard_control_strings);
 		UTF8Decoder utf8decoder(utf8toecma48);
 
 		if (args.empty()) {
@@ -716,7 +730,7 @@ console_tty37_viewer [[gnu::noreturn]]
 				struct stat s0, st;
 
 				if (0 <= fstat(STDIN_FILENO, &s0)
-				&&  0 <= fstat(fileno(control), &st)
+				&&  0 <= fstat(control_fd, &st)
 				&&  S_ISCHR(s0.st_mode)
 				&&  (s0.st_rdev == st.st_rdev)
 				) {
@@ -755,7 +769,7 @@ console_tty37_viewer [[gnu::noreturn]]
 	}
 	std::vector<struct kevent> ip;
 
-	append_event(ip, fileno(control), EVFILT_READ, EV_ADD, 0, 0, nullptr);
+	append_event(ip, control_fd, EVFILT_READ, EV_ADD, 0, 0, nullptr);
 	ReserveSignalsForKQueue kqueue_reservation(SIGTERM, SIGINT, SIGHUP, SIGPIPE, SIGUSR1, SIGUSR2, SIGWINCH, SIGTSTP, SIGCONT, 0);
 	PreventDefaultForFatalSignals ignored_signals(SIGTERM, SIGINT, SIGHUP, SIGPIPE, SIGUSR1, SIGUSR2, 0);
 	append_event(ip, SIGWINCH, EVFILT_SIGNAL, EV_ADD, 0, 0, nullptr);
@@ -767,7 +781,7 @@ console_tty37_viewer [[gnu::noreturn]]
 	append_event(ip, SIGCONT, EVFILT_SIGNAL, EV_ADD, 0, 0, nullptr);
 
 	TUIDisplayCompositor compositor(false /* no software cursor */, 24, 80);
-	TUI ui(envs, doc, compositor, control, columns, options);
+	TUI ui(envs, doc, compositor, control, control_fd, columns, options);
 
 	// How long to wait with updates pending.
 	const struct timespec short_timeout = { 0, 100000000L };
@@ -807,7 +821,7 @@ console_tty37_viewer [[gnu::noreturn]]
 				case EVFILT_READ:
 				{
 					const int fd(static_cast<int>(e.ident));
-					if (fileno(control) == fd) {
+					if (control_fd == fd) {
 						ui.handle_control(fd, e.data);
 					}
 					break;

@@ -3,8 +3,7 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-#define _XOPEN_SOURCE_EXTENDED
-#define _NETBSD_SOURCE
+#define _BSD_SOURCE 1
 #include <vector>
 #include <memory>
 #include <iostream>
@@ -14,7 +13,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cctype>
 #include <stdint.h>
 #include <unistd.h>
-#include "hasutmpx.h"
+#include "config/hasutmpx.h"
 #if defined(HAS_UTMPX)
 #include <utmpx.h>
 #include <sys/time.h>

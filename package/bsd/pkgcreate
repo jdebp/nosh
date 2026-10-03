@@ -26,8 +26,8 @@ pkgsrc_create() {
 	pkg_create -f "$1/+MANIFEST" -d "$1/+DESC" -c "$1/+COMMENT" -b "$1/+BUILD_VERSION" -B "$1/+BUILD_INFO" -i "$1/+INSTALL" -k "$1/+DEINSTALL" -p "$2/" "./$3-${version}.tgz"
 }
 case "`uname`" in
-OpenBSD)	old_pkg1 "$@" ;;
-NetBSD)		pkgsrc_create "$@" ;;
-FreeBSD)	pkgng_create "$@" ;;
-*)		exec false ;;
+(OpenBSD)	old_pkg1 "$@" ;;
+(NetBSD)	pkgsrc_create "$@" ;;
+(FreeBSD)	pkgng_create "$@" ;;
+(*)		exec false ;;
 esac

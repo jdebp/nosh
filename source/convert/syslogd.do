@@ -17,8 +17,8 @@ redo-ifchange rc.conf general-services
 flags="`get_var1 syslogd_flags`"
 
 case "`uname`" in
-Linux)	extra="systemd-syslogd" ;;
-*BSD)	extra="syslogd" ;;
+(Linux)	extra="systemd-syslogd" ;;
+(*BSD)	extra="syslogd" ;;
 esac
 
 for i in local-syslogd udp-syslogd ${extra}

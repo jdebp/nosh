@@ -1,6 +1,6 @@
 # nosh virtual terminal in Linux console mode
 #
-# The LInux vt emulator  supports LINUXSCUSR, which has more than 2 states, so we use it in preferene to DECSM/DECRM 25.
+# The Linux vt emulator supports LINUXSCUSR, which has more than 2 states, so we use it in preference to DECSM/DECRM 25.
 #
 # Actual differences:
 # * No tab stops are assigned, initially:

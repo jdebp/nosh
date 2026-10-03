@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -35,11 +36,11 @@
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>envdir</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>envdir</command> will ignore.
 </para>
 
 <para>
-Unless the <arg choice='opt'>--ignore-nodir</arg> command line option is used, the non-existence of <replaceable>dir</replaceable>, or it being something other than a directory, is a fatal error.
+Unless the <arg choice='opt'>--ignore-nodir</arg> command&#x2010;line option is used, the non-existence of <replaceable>dir</replaceable>, or it being something other than a directory, is a fatal error.
 </para>
 
 <para>
@@ -59,13 +60,13 @@ If the file is empty, <command>envdir</command> unsets the variable <filename>fi
 Otherwise <command>envdir</command> sets the variable <filename>file</filename>, overwriting its existing value if it has one, to the contents of <filename>file</filename>, after turning NUL characters into LF characters (and turning the final LF character into a string-terminating NUL).
 </para>
 <para>
-If the <arg choice='opt'>--full</arg> command line option is used, <command>envdir</command> uses the full contents of <filename>file</filename>; otherwise it uses just the first line of those contents.
+If the <arg choice='opt'>--full</arg> command&#x2010;line option is used, <command>envdir</command> uses the full contents of <filename>file</filename>; otherwise it uses just the first line of those contents.
 This is a bodge for malformed out-of-spec environment directories.
 Always create environment directories properly, according to the Bernstein specification, and you should never need this.
 Use <citerefentry><refentrytitle>tr</refentrytitle><manvolnum>1</manvolnum></citerefentry> in shell scripts to properly translate LFs to NULs for writing environment directories, for example.
 </para>
 <para>
-If the <arg choice='opt'>--chomp</arg> command line option is used, each line used has leading and trailing whitespace characters trimmed.
+If the <arg choice='opt'>--chomp</arg> command&#x2010;line option is used, each line used has leading and trailing whitespace characters trimmed.
 </para>
 </listitem>
 

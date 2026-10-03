@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -93,8 +94,8 @@ For each non-swap entry:
 <itemizedlist>
 <listitem>
 <para>
-It acts as if it had run <command>write-volume-service-bundles</command> with the values from the entry, discarding the "dump frequency" column of the table.
-If the entry specifies a "pass number" that is greater than zero, it acts as if the <arg choice='plain'>--want-fsck</arg> option had been passed.
+It acts as if it had run <command>write-volume-service-bundles</command> with the values from the entry, discarding the <quote>dump frequency</quote> column of the table.
+If the entry specifies a <quote>pass number</quote> that is greater than zero, it acts as if the <arg choice='plain'>--want-fsck</arg> option had been passed.
 </para>
 </listitem>
 </itemizedlist>
@@ -102,7 +103,7 @@ If the entry specifies a "pass number" that is greater than zero, it acts as if 
 
 <listitem>
 <para>
-For each swap entry the "source" column is taken to be a <filename><replaceable>device</replaceable></filename> special device filename and the "options" column may contain various flags.
+For each swap entry the <quote>source</quote> column is taken to be a <filename><replaceable>device</replaceable></filename> special device filename and the <quote>options</quote> column may contain various flags.
 </para>
 <itemizedlist>
 <listitem>
@@ -135,7 +136,7 @@ The bundle is created as <filename>wanted-by/</filename> the system <code>dumpau
 <refsection><title>Generating services for a single volume</title>
 
 <para>
-The <command>write-volume-service-bundles</command> subcommand writes service bundles for a single volume described with its command-line arguments.
+The <command>write-volume-service-bundles</command> subcommand writes service bundles for a single volume described with its command&#x2010;line arguments.
 </para>
 
 <itemizedlist>
@@ -147,8 +148,8 @@ It always creates a <filename>mount@<replaceable>directory</replaceable></filena
 <para>
 The bundle is created as <filename>wanted-by/</filename> the system <code>local-fs.target</code> or the system <code>remote-fs.target</code>, depending from the filesystem type <replaceable>fstype</replaceable> and whether the <replaceable>options</replaceable> contains <code>_netdev</code>.
 This so that it is started during autoboot when it is enabled.
-The list of types that are considered to be "remote" is a superset of the old Debian list from <filename>mountall.sh</filename>, with a few additions from the BSDs.
-The <code>_netdev</code> option overrides this list and forces a bundle to be unconditionally considered "remote".
+The list of types that are considered to be <quote>remote</quote> is a superset of the old Debian list from <filename>mountall.sh</filename>, with a few additions from the BSDs.
+The <code>_netdev</code> option overrides this list and forces a bundle to be unconditionally considered <quote>remote</quote>.
 </para>
 <para>
 If it detects a FUSE mount, it makes the bundle <filename>wants/</filename> and <filename>after/</filename> a bundle to load the FUSE kernel module.
@@ -159,7 +160,7 @@ Similarly, if the <replaceable>fstype</replaceable> is <filename>efivarfs</filen
 </para>
 <itemizedlist>
 <listitem><para>
-They are assumed already mounted by the time that service management starts, and are thus mounted with the "remount"/"update" flag.
+They are assumed already mounted by the time that service management starts, and are thus mounted with the <quote>remount</quote>/<quote>update</quote> flag.
 </para></listitem>
 <listitem><para>
 The root is required to remain mounted beyond service management termination, and thus it is merely remounted/updated to read-write at start and to read-only at stop.

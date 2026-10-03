@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -25,7 +26,7 @@
 <para>
 Unfortunately, Linux and the BSDs do not agree on a single set of keycode numbers, and cannot share one another's keyboard layout definitions.
 So the user-space virtual terminal subsystem uses its own portable keyboard map file, stored in machine-readable form, with a common keyboard matrix that is a superset of USB HID keyboards, PC/AT keyboards, and others.
-A keyboard input realizer (<citerefentry><refentrytitle>console-ugen-hid-realizer</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>console-evdev-realizer</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>console-uhid-realizer</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>console-wscons-realizer</refentrytitle><manvolnum>1</manvolnum></citerefentry>, or <citerefentry><refentrytitle>console-pcat-keyboard-realizer</refentrytitle><manvolnum>1</manvolnum></citerefentry>) translates from the non-portable Linux and BSD keyboard codes, or (portable, but insufficient) USB HID "usages", provided by the various devices to this set of common codes.
+A keyboard input realizer (<citerefentry><refentrytitle>console-ugen-hid-realizer</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>console-evdev-realizer</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>console-uhid-realizer</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>console-wscons-realizer</refentrytitle><manvolnum>1</manvolnum></citerefentry>, or <citerefentry><refentrytitle>console-pcat-keyboard-realizer</refentrytitle><manvolnum>1</manvolnum></citerefentry>) translates from the non-portable Linux and BSD keyboard codes, or (portable, but insufficient) USB HID <quote>usages</quote>, provided by the various devices to this set of common codes.
 It then uses a portable keyboard map, supplied to it, to determine what actions to take; which may range from internal state changes to sending key events to an input FIFO of a user-space virtual terminal.
 </para>
 
@@ -38,8 +39,8 @@ See <ulink url="terminal-resources.html">the <citetitle>terminal resources</cite
 <refsection><title>Uniform common keyboard matrix</title>
 
 <para>
-In machine-readable form, a map is a simple 2-dimensional array of 96-octet map entries, representing 17 "rows" of 16 "columns" per row, in row-major order.
-This is the "matrix" of a common keyboard denoted by the aforementioned common codeset.
+In machine-readable form, a map is a simple 2-dimensional array of 96-octet map entries, representing 17 <quote>rows</quote> of 16 <quote>columns</quote> per row, in row-major order.
+This is the <quote>matrix</quote> of a common keyboard denoted by the aforementioned common codeset.
 It is modelled on the ISO 9995 keyboard standard.
 It has extra rows for the many USB keys not covered by ISO 9995.
 It also has accomodations for the keys that have different physical ISO 9995 positions on 101/104-key, 102/105-key, 103/106-key, 104/107-key, and 106/109-key keyboards but that are actually the same PC/AT or USB key code; and vice versa, keys that are in the same physical locations on those keyboards that are actually different PC/AT or USB key codes.
@@ -50,7 +51,7 @@ These rows are, in order:
 </para>
 <variablelist>
 <varlistentry>
-<term>ISO 9995 "E" row</term>
+<term>ISO 9995 <quote>E</quote> row</term>
 <listitem><para>
 The <keycap>&#x238b;&#160;Escape</keycap> key; positions E01 to E12; the additional key from the 106/109-key PC keyboard at E13; one more unused position; then position E14.
 </para><note><para>
@@ -61,12 +62,12 @@ In BSD/SCO keyboard map files (c.f. <citerefentry><refentrytitle>kbdmap</refentr
 It is at E00 here.
 </para><para>
 IBM PC/AT, Model M, and Windows keyboards move <keycap>&#x238b;&#160;Escape</keycap> to the function row, and misleadingly place the language-variant key (called <keycap>grave</keycap> in the USB specification) at position E00.
-That key is here is grouped with other similar keys in the "C" row after C11 (q.v.), where the IBM PC/AT keyboard code numbering in reality placed it.
+That key is here is grouped with other similar keys in the <quote>C</quote> row after C11 (q.v.), where the IBM PC/AT keyboard code numbering in reality placed it.
 </para>
 </note></listitem>
 </varlistentry>
 <varlistentry>
-<term>ISO 9995 "D" row</term>
+<term>ISO 9995 <quote>D</quote> row</term>
 <listitem><para>
 Positions D00 to D12; two unused positions; then position D14.
 </para><note>
@@ -74,7 +75,7 @@ The key sometimes found at position D13 is grouped with other similar keys in th
 </note></listitem>
 </varlistentry>
 <varlistentry>
-<term>ISO 9995 "C" row</term>
+<term>ISO 9995 <quote>C</quote> row</term>
 <listitem><para>
 An unused position; positions C01 to C11; the language-variant key usually found in position E00; the key usually found in position C12; then two more unused positions.
 </para><note>
@@ -86,9 +87,9 @@ Despite the engraving, on 106/109-key PC keyboards the key is still the language
 </note></listitem>
 </varlistentry>
 <varlistentry>
-<term>ISO 9995 "B" row</term>
+<term>ISO 9995 <quote>B</quote> row</term>
 <listitem><para>
-An unused position; the additional "Europe 2" key from the 102/105-key and 104/107-key PC keyboards at B00; positions B01 to B10; the additional key from the 104/107-key and 106/109-key PC keyboards at B11; and three more unused positions.
+An unused position; the additional <quote>Europe 2</quote> key from the 102/105-key and 104/107-key PC keyboards at B00; positions B01 to B10; the additional key from the 104/107-key and 106/109-key PC keyboards at B11; and three more unused positions.
 </para><note>
 Modifier keys that are on this row per ISO 9995 are factored out into a separate modifiers row.
 </note></listitem>
@@ -106,7 +107,7 @@ This has no USB HID equivalent.
 </note></listitem>
 </varlistentry>
 <varlistentry>
-<term>ISO 9995 "A" row</term>
+<term>ISO 9995 <quote>A</quote> row</term>
 <listitem><para>
 An unused position; the <keycap>&#x3072;&#x3089;&#x30c4;&#x306a;/&#x30ab;&#x30bf;&#x30ab;&#x30ca;/&#x30ed;&#x30fc;&#x30de;&#x5b57;</keycap> (Hiragana/Katakana/Romaji) key from USB; the <keycap>&#x534a;&#x89d2;/&#x5168;&#x89d2;</keycap> (Zenkaku/Hankaku) key from USB; the <keycap>&#x3072;&#x3089;&#x30c4;&#x306a;</keycap> (Hiragana) key from USB; the <keycap>&#x30ab;&#x30bf;&#x30ab;&#x30ca;</keycap> (Katakana) key from USB; the <keycap>&#x5909;&#x63db;</keycap> (Henkan) or <keycap>XFER</keycap> key from the 106/109-key PC keyboard; the <keycap>&#x7121;&#x5909;&#x63db;</keycap> (Muhenkan) or <keycap>NFER</keycap> key from the 106/109-key PC keyboard; an unused position; the <keycap>&#xd55c;/&#xc601;</keycap> (Han/Yeong) key from the 103/106-key PC keyboard; the <keycap>&#x5909;&#x63db;</keycap> (Kanji) or <keycap>&#xd55c;&#xc601;</keycap> (Hanja) key, from the 106/109-key or 103/106-key PC keyboards; three unused positions; <keycap>Alternate Erase</keycap>; <keycap>&#x2384;&#160;Compose</keycap>; and <keycap>&#x2423;&#160;Space</keycap>.
 </para><note>
@@ -115,7 +116,7 @@ Modifier keys that are on this row per ISO 9995 are factored out into a separate
 The <keycap>&#x534a;&#x89d2;/&#x5168;&#x89d2;</keycap> (Zenkaku/Hankaku) key from USB is not to be confused with the PC keyboard key at E00, which is a language-variant (<keycap>grave</keycap>) key and a different key with a different identity in the USB specification.
 </note><note>
 The <keycap>&#x3072;&#x3089;&#x30c4;&#x306a;</keycap> (Hiragana) and <keycap>&#x30ab;&#x30bf;&#x30ab;&#x30ca;</keycap> (Katakana) keys are separate keys in the USB specification, and not to be confused with the <keycap>&#x3072;&#x3089;&#x30c4;&#x306a;/&#x30ab;&#x30bf;&#x30ab;&#x30ca;/&#x30ed;&#x30fc;&#x30de;&#x5b57;</keycap> key in the USB specification; thus all three have separate key identities.
-The key with the <keycap>&#x3072;&#x3089;&#x30c4;&#x306a;/&#x30ab;&#x30bf;&#x30ab;&#x30ca;/&#x30ed;&#x30fc;&#x30de;&#x5b57;</keycap> engraving on the 106/109-key PC keyboard is in fact the language-variant key (called <keycap>grave</keycap> in the USB specification) in the "C" row (q.v.).
+The key with the <keycap>&#x3072;&#x3089;&#x30c4;&#x306a;/&#x30ab;&#x30bf;&#x30ab;&#x30ca;/&#x30ed;&#x30fc;&#x30de;&#x5b57;</keycap> engraving on the 106/109-key PC keyboard is in fact the language-variant key (called <keycap>grave</keycap> in the USB specification) in the <quote>C</quote> row (q.v.).
 </note><note>
 There is no <keycap>&#x30ed;&#x30fc;&#x30de;&#x5b57;</keycap> (Romaji) key in the USB specification or on the PC keyboard, so there is no map for it; although an extended key message code for it exists, to permit realizers to generate it by some other means.
 </note><note>
@@ -127,7 +128,7 @@ The <keycap>&#x5909;&#x63db;</keycap> (Kanji) key from the 106/109-key PC keyboa
 <listitem><para>
 <keycap>&#x21f1;&#160;Home</keycap>; <keycap>&#x2b61;&#160;Up&#160;Arrow</keycap>; <keycap>&#x2397;&#160;Page&#160;Up</keycap>; <keycap>&#x2b60;&#160;Left&#160;Arrow</keycap>; <keycap>&#x2b62;&#160;Right&#160;Arrow</keycap>; <keycap>&#x21f2;&#160;End</keycap>; <keycap>&#x2b63;&#160;Down&#160;Arrow</keycap>; <keycap>&#x2398;&#160;Page&#160;Down</keycap>; <keycap>&#x2380;&#160;Insert</keycap>; <keycap>Delete</keycap>; <keycap>Cut</keycap>; <keycap>Copy</keycap>; <keycap>Paste</keycap>; <keycap>Find</keycap>; <keycap>&#x238c;&#160;Undo</keycap>; and <keycap>Redo</keycap>.
 </para><note>
-The final 6 keys are found on Sun Microsystems and "Office" keyboards.
+The final 6 keys are found on Sun Microsystems and <quote>Office</quote> keyboards.
 </note></listitem>
 </varlistentry>
 <varlistentry>
@@ -168,7 +169,7 @@ The <keycap>&#x238b;&#160;Escape</keycap> key is not considered part of this row
 <listitem><para>
 An unused position; Fn-Locked <keycap>F1</keycap> to <keycap>F12</keycap>; and 7 unused positions.
 </para><note>
-Various PS/2 "Office" keyboards report modified scancodes for the <keycap>F1</keycap> to <keycap>F12</keycap> keys when <keycap>Fn</keycap> lock is on.
+Various PS/2 <quote>Office</quote> keyboards report modified scancodes for the <keycap>F1</keycap> to <keycap>F12</keycap> keys when <keycap>Fn</keycap> lock is on.
 PS/2 HID realizers use this part of the keyboard map in order to allow the function keys in that mode to have alternative mappings.
 </note></listitem>
 </varlistentry>
@@ -183,7 +184,7 @@ PS/2 HID realizers use this part of the keyboard map in order to allow the funct
 <listitem><para>
 <keycap>Calculator</keycap>; <keycap>File&#160;Manager</keycap>; <keycap>WWW&#160;Browser</keycap>; <keycap>&#x2302;&#160;Home&#160;Page</keycap>; <keycap>Mail</keycap>; <keycap>Computer</keycap>; <keycap>CLI</keycap>; <keycap>Word&#160;Processor</keycap>; <keycap>Spreadsheet</keycap>; <keycap>My&#160;Computer</keycap>; <keycap>Instant&#160;Messaging</keycap>; <keycap>Media&#160;Player</keycap>; <keycap>My&#160;Pictures</keycap>; <keycap>Text&#160;Editor</keycap>; <keycap>Spell</keycap>; and <keycap>Calendar</keycap>.
 </para><note>
-These are present on "Office", "Internet", and "Multimedia" keyboards.
+These are present on <quote>Office</quote>, <quote>Internet</quote>, and <quote>Multimedia</quote> keyboards.
 In the USB HID specification they are consumer keys.
 </note></listitem>
 </varlistentry>
@@ -200,7 +201,7 @@ The USB HID specification defines many more shortcuts as consumer keys.
 <listitem><para>
 <keycap>&#x2bc9;&#160;Popup menu</keycap>; <keycap>&#x23f9;&#160;Stop&#160;Playing</keycap>; <keycap>&#x23ed;&#160;Next&#160;Track</keycap>; <keycap>&#x23ee;&#160;Previous&#160;Track</keycap>; <keycap>&#x23ef;&#160;Play/Pause</keycap>; <keycap>Mute</keycap>; <keycap>Volume&#160;Up</keycap>; <keycap>Volume&#160;Down</keycap>; <keycap>&#x23ea;&#160;Rewind</keycap>; <keycap>&#x23e9;&#160;Fast&#160;Forward</keycap>; <keycap>&#x23cf;&#160;Eject</keycap>; <keycap>&#x23fa;&#160;Record</keycap>; <keycap>Application&#160;Back</keycap>; <keycap>Application&#160;Forward</keycap>; <keycap>Application&#160;Left</keycap>; and <keycap>Application&#160;Right</keycap>.
 </para><note>
-These are present on "Multimedia" keyboards.
+These are present on <quote>Multimedia</quote> keyboards.
 These are primarily media player control keys.
 </note></listitem>
 </varlistentry>
@@ -209,7 +210,7 @@ These are primarily media player control keys.
 <listitem><para>
 <keycap>Help</keycap>; <keycap>Pause</keycap>; <keycap>&#x2399;&#160;Print&#160;Screen</keycap>; <keycap>Attention</keycap>; <keycap>Refresh</keycap>; <keycap>New</keycap>; <keycap>Exit</keycap>; <keycap>Save</keycap>; <keycap>Stop/Break</keycap>; <keycap>Search</keycap>; <keycap>Bookmarks</keycap>; <keycap>Stop&#160;Loading</keycap>; <keycap>Execute</keycap>; <keycap>Menu</keycap>; <keycap>Open</keycap>; and <keycap>Close</keycap>.
 </para><note>
-This is a mixture of long-standing PC/AT command keys (usually located on row "F") and keys found on "Office" and "Internet" keyboards.
+This is a mixture of long-standing PC/AT command keys (usually located on row <quote>F</quote>) and keys found on <quote>Office</quote> and <quote>Internet</quote> keyboards.
 </note></listitem>
 </varlistentry>
 <varlistentry>
@@ -245,20 +246,20 @@ The selection class code is first in each entry, and the code values are here de
 
 <variablelist>
 <varlistentry>
-<term>'<code>p</code>' (U+00000070, "plain")</term>
+<term>'<code>p</code>' (U+00000070, <quote>plain</quote>)</term>
 <listitem><para>
 The keyboard modifier state is entirely ignored and the first action is always chosen.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><quote><code>s</code></quote> (U+00000073, "shiftable")</term>
+<term><quote><code>s</code></quote> (U+00000073, <quote>shiftable</quote>)</term>
 <listitem><para>
 When selecting an action, the sense of the level2 modifier state is inverted by the level2 shift lock state, and the sense of the level3 modifier state is inverted by the level3 shift lock state.
 This is generally used for non-alphabetic keys that obey shift lock but not caps lock.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><quote><code>l</code></quote> (U+0000006C, "semi-shiftable")</term>
+<term><quote><code>l</code></quote> (U+0000006C, <quote>semi-shiftable</quote>)</term>
 <listitem><para>
 When selecting an action, the sense of the level2 and level 3 modifier states are taken as they are.
 This is generally used for non-alphabetic keys that ignore all locks but obey pressed modifiers.
@@ -266,21 +267,21 @@ In particular, this is used for lock keys that involve modifiers being pressed, 
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><quote><code>c</code></quote> (U+00000063, "capsable")</term>
+<term><quote><code>c</code></quote> (U+00000063, <quote>capsable</quote>)</term>
 <listitem><para>
 When selecting an action, the sense of the level2 modifier state is inverted by the OR-combined caps lock and shift lock states.
 This is generally used for alphabetic keys that obey caps lock and shift lock.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><quote><code>n</code></quote> (U+0000006E, "numable")</term>
+<term><quote><code>n</code></quote> (U+0000006E, <quote>numable</quote>)</term>
 <listitem><para>
 When selecting an action, the sense of the level2 modifier state is inverted by the OR-combined num lock and shift lock states.
 This is generally used for auxiliary keys that obey num lock and shift lock.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><quote><code>f</code></quote> (U+00000066, "funcable")</term>
+<term><quote><code>f</code></quote> (U+00000066, <quote>funcable</quote>)</term>
 <listitem><para>
 When selecting an action, the sense of the level2 modifier state is inverted by the shift lock state, and the level3 modifier state is replaced by the alt state.
 This is generally used for function block keys that obey shift lock but not caps lock.
@@ -410,7 +411,7 @@ Unmodifiable function key.
 On press or autorepeat, a function key message for the function key number <code><replaceable>nnnn</replaceable></code> is sent.
 <code><replaceable>zz</replaceable></code> is ignored and should be set to zero for upwards compatibility.
 The accompanying keyboard modifier state does not incorporate the level or group modifiers, which will never be seen by the terminal emulator or processes connected to the terminal.
-This is used for keyboard layouts where the function key block has a small number of actual keys and the level+group modifiers are used "locally" (within the realizer) to simulate a larger key block.
+This is used for keyboard layouts where the function key block has a small number of actual keys and the level+group modifiers are used <quote>locally</quote> (within the realizer) to simulate a larger key block.
 </para></listitem>
 </varlistentry>
 </variablelist>

@@ -1,0 +1,146 @@
+#######
+# Split-horizon DNS service using a root content DNS server
+#
+# Site-local location codes, root authority, and various apices.
+# 
+# See
+#   https://jdebp.uk/FGA/dns-private-address-split-horizon.html#WhatToDo
+#   https://jdebp.uk/FGA/dns-split-horizon.html
+#######
+
+# Pre-define conventional location codes.
+# You should use these in your "main" data file, and define any additional location codes (e.g. "ex") as needed.
+%si:10
+%si:172.16
+%si:172.17
+%si:172.18
+%si:172.19
+%si:172.20
+%si:172.21
+%si:172.22
+%si:172.23
+%si:172.24
+%si:172.25
+%si:172.26
+%si:172.27
+%si:172.28
+%si:172.29
+%si:172.30
+%si:172.31
+%si:192.168
+#%si:10.0.0.0/8
+#%si:172.16.0.0/12
+#%si:192.168.0.0/16
+
+##
+# Private root.
+#
+# The Makefile constructs various *.data files merged in from other sources.
+# This expects the not-necessarily-default assignment of 10.0.0.0/8 to the LAN.
+##
+
+.:10.53.0.1:a:::si
+
+##
+# IP address reverse mappings domain apices.
+#
+# The imported public root delegates arpa. but the arpa. servers have "no such domain" for all subdomains of these.
+# Claim these apices for the private root as far as all machine-local clients are concerned.
+# Your actual data mapping the addresses in these ranges will be in the "main" data file.
+##
+
+# machine-local addresses
+.2.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa:10.53.0.1:a:::si
+# dnscache and DNS client libraries handle these specially, and tinydns should never see them.
+.0.in-addr.arpa:10.53.0.1:a:::si
+.0.in-addr.arpa:0_0_0_0_0_0_0_2:a:::si
+.127.in-addr.arpa:10.53.0.1:a:::si
+.127.in-addr.arpa:0_0_0_0_0_0_0_2:a:::si
+.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa:10.53.0.1:a:::si
+.1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa:10.53.0.1:a:::si
+# They do not do these 6-to-4 equivalents, though.
+.0.0.2.0.0.2.ip6.arpa:10.53.0.1:a:::si
+.F.7.2.0.0.2.ip6.arpa:10.53.0.1:a:::si
+
+# various link-local addresses
+# dnscache and DNS client libraries handle these specially, and tinydns should never see them.
+.254.169.in-addr.arpa:10.53.0.1:a:::si
+.8.E.F.ip6.arpa:10.53.0.1:a:::si
+.9.E.F.ip6.arpa:10.53.0.1:a:::si
+.A.E.F.ip6.arpa:10.53.0.1:a:::si
+.B.E.F.ip6.arpa:10.53.0.1:a:::si
+# They do not do these 6-to-4 equivalents, though.
+.E.F.9.A.2.0.0.2.ip6.arpa:10.53.0.1:a:::si
+
+# site-local addresses
+.10.in-addr.arpa:10.53.0.1:a:::si
+.16.172.in-addr.arpa:10.53.0.1:a:::si
+.17.172.in-addr.arpa:10.53.0.1:a:::si
+.18.172.in-addr.arpa:10.53.0.1:a:::si
+.19.172.in-addr.arpa:10.53.0.1:a:::si
+.20.172.in-addr.arpa:10.53.0.1:a:::si
+.21.172.in-addr.arpa:10.53.0.1:a:::si
+.22.172.in-addr.arpa:10.53.0.1:a:::si
+.23.172.in-addr.arpa:10.53.0.1:a:::si
+.24.172.in-addr.arpa:10.53.0.1:a:::si
+.25.172.in-addr.arpa:10.53.0.1:a:::si
+.26.172.in-addr.arpa:10.53.0.1:a:::si
+.27.172.in-addr.arpa:10.53.0.1:a:::si
+.28.172.in-addr.arpa:10.53.0.1:a:::si
+.29.172.in-addr.arpa:10.53.0.1:a:::si
+.30.172.in-addr.arpa:10.53.0.1:a:::si
+.31.172.in-addr.arpa:10.53.0.1:a:::si
+.168.192.in-addr.arpa:10.53.0.1:a:::si
+.C.E.F.ip6.arpa:10.53.0.1:a:::si
+.D.E.F.ip6.arpa:10.53.0.1:a:::si
+.E.E.F.ip6.arpa:10.53.0.1:a:::si
+.F.E.F.ip6.arpa:10.53.0.1:a:::si
+# 6-to-4 equivalents
+.A.0.2.0.0.2.ip6.arpa:10.53.0.1:a:::si
+.1.C.A.2.0.0.2.ip6.arpa:10.53.0.1:a:::si
+.8.A.0.C.2.0.0.2.ip6.arpa:10.53.0.1:a:::si
+
+# unique-local addresses
+.C.F.ip6.arpa:10.53.0.1:a:::si
+.D.F.ip6.arpa:10.53.0.1:a:::si
+
+# site-scope multicast addresses
+.5.0.F.F.ip6.arpa:10.53.0.1:a:::si
+
+# organization-scope multicast addresses
+.8.0.F.F.ip6.arpa:10.53.0.1:a:::si
+
+# various anycast/multicast addresses
+# The public DNS actually gives names to the various assigned anycast/multicast addresses.
+#.224.in-addr.arpa:10.53.0.1:a:::si
+# It does not do these 6-to-4 equivalents, though.
+.E.2.0.0.2.ip6.arpa:10.53.0.1:a:::si
+
+# various test and doco-only addresses
+.8.b.d.0.1.0.0.2.ip6.arpa:10.53.0.1:a:::si
+.2.0.192.in-addr.arpa:10.53.0.1:a:::si
+.100.51.198.in-addr.arpa:10.53.0.1:a:::si
+.113.0.203.in-addr.arpa:10.53.0.1:a:::si
+# 6-to-4 equivalents
+.2.0.0.0.0.C.2.0.0.2.ip6.arpa:10.53.0.1:a:::si
+.4.6.3.3.6.C.2.0.0.2.ip6.arpa:10.53.0.1:a:::si
+.1.7.0.0.B.C.2.0.0.2.ip6.arpa:10.53.0.1:a:::si
+
+##
+# local-only domains.
+#
+# The imported public root blackhole-delegates or simply does not have these.
+# Your actual data for these will be in the "main" data file.
+##
+
+.test:10.53.0.1:a:::si
+.home.arpa:10.53.0.1:a:::si
+
+# These are various other split-horizon prune-and-graft points that have evolved over the years.
+# They have varying degrees of legitimacy, and varying uses.
+# See RFCs 6762, 7686, and 8375.
+.internal:10.53.0.1:a:::si
+.intranet:10.53.0.1:a:::si
+.corp:10.53.0.1:a:::si
+.home:10.53.0.1:a:::si
+.lan:10.53.0.1:a:::si

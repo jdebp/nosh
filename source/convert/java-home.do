@@ -14,9 +14,9 @@ read_rc() { clearenv read-conf rc.conf printenv "$1" ; }
 redo-ifchange rc.conf general-services
 
 case "`uname`" in
-Linux)		extended_regexp="-r" ; no_target_dir="-T" ;;
-OpenBSD)	extended_regexp="-E" ; no_target_dir="" ;;
-*BSD)		extended_regexp="-E" ; no_target_dir="-h" ;;
+(Linux)		extended_regexp="-r" ; no_target_dir="-T" ;;
+(OpenBSD)	extended_regexp="-E" ; no_target_dir="" ;;
+(*BSD)		extended_regexp="-E" ; no_target_dir="-h" ;;
 esac
 
 version_of() {
@@ -120,26 +120,26 @@ then
 				o=
 				m=
 				case "$n" in
-				default-java)	
+				(default-java)	
 					continue
 					;;
-				java-*-openjdk*)
+				(java-*-openjdk*)
 					o=native
 					m=openjdk
 					;;
-				java-*-gcj*)
+				(java-*-gcj*)
 					o=native
 					m=gnu
 					;;
-				java-*-sun*)
+				(java-*-sun*)
 					o=native
 					m=sun
 					;;
-				java-*-oracle*)
+				(java-*-oracle*)
 					o=native
 					m=oracle
 					;;
-				*)
+				(*)
 					continue
 					;;
 				esac

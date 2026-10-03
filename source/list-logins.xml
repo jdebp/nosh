@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -23,7 +24,7 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>list-logins</command>
-<arg choice="opt">--field <replaceable>name</replaceable></arg>
+<arg choice="opt" repeat='rep'>--field <replaceable>name</replaceable></arg>
 <arg choice="opt">--time-format <replaceable>formatstring</replaceable></arg>
 <arg choice="opt">--no-init</arg>
 <arg choice="opt" repeat="rep"><replaceable>line(s)</replaceable></arg>
@@ -33,35 +34,66 @@
 <refsection><title>Description</title>
 
 <para>
-<command>list-logins</command> is a tool for listing login information.
-Its output is machine-parseable and suitable for <citerefentry><refentrytitle>console-flat-table-viewer</refentrytitle><manvolnum>1</manvolnum></citerefentry> with 1 header line and <arg choice='plain'>--format tabbed</arg> or <citerefentry><refentrytitle>awk</refentrytitle><manvolnum>1</manvolnum></citerefentry> with <arg choice='plain'>-F'\t'</arg>.
+<command>list-logins</command> is a tool for listing login information, taken from the operating system's terminal logins table (which is maintained by commands such as <citerefentry><refentrytitle>login-update-utx</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>utx</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>login-process</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>login-envuidgid</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>getty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and others).
+Its output is machine-parseable, being encoded field by field with <citerefentry><refentrytitle>vis</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
+The output is suitable for <citerefentry><refentrytitle>console-flat-table-viewer</refentrytitle><manvolnum>1</manvolnum></citerefentry> with 1 header line and <arg choice='plain'>--format tabbed</arg>, or for <citerefentry><refentrytitle>awk</refentrytitle><manvolnum>1</manvolnum></citerefentry> with <arg choice='plain'>-F'\t'</arg>, or for <citerefentry><refentrytitle>mlr</refentrytitle><manvolnum>1</manvolnum></citerefentry> with its <arg choice='plain'>--inidx</arg> option.
 </para>
 
-<para>
-The <arg choice="plain"><replaceable>line</replaceable></arg> command-line arguments are a filter set that is matched against the line names, enabling the selection of individual login records.
-If there are no <arg choice="plain"><replaceable>line</replaceable></arg> arguments, the entire list is output, unfiltered.
-It is not an error for a filter item not to match a line.
-</para>
+<refsection><title>Login table fields</title>
 
 <para>
-The <arg choice="plain">--field</arg> command-line option specifies a list of fields by <arg choice="plain"><replaceable>name</replaceable></arg>.
+The <arg choice="plain">--field</arg> command&#x2010;line option specifies the list of fields to emit.
+Each field named <arg choice="plain"><replaceable>name</replaceable></arg> is specified by a separate option.
 What exactly the fields are varies from operating system to operating system.
 There is a basic common set:
 <arg choice="plain">line</arg>,
 <arg choice="plain">user</arg>,
 <arg choice="plain">host</arg>, and
 <arg choice="plain">time</arg>.
+These fields are from <citerefentry><refentrytitle>utmp</refentrytitle><manvolnum>5</manvolnum></citerefentry>; and apart from <arg choice="plain">host</arg>, they have a history that goes back to 7th Edition Unix.
+</para>
+<note>
+It is not an error for <arg choice="plain"><replaceable>name</replaceable></arg> to name a field that does not exist on the current platform.
+<command>list-logins</command> will simply emit a column with all blank fields in that case.
+Field names are case sensitive, and in the current implementation there are no field names with any uppercase letters.
+</note>
+
+<para>
+Operating systems that implement <citerefentry><refentrytitle>utmpx</refentrytitle><manvolnum>5</manvolnum></citerefentry> often add extensions:
+<arg choice="plain">pid</arg>,
+<arg choice="plain">session</arg>, and
+<arg choice="plain">address</arg>.
+The platforms that supply an <arg choice="plain">address</arg> field always supply it as an IP version 6 address.
+If IP version 4 was used, they supply the field contents as a mapped IP version 6 address.
+<command>list-logins</command> uses the platform's library to convert IP version 6 addresses to a (<citerefentry><refentrytitle>vis</refentrytitle><manvolnum>3</manvolnum></citerefentry>&#x2010;encoded) human-readable form, and makes no effort to itself guess when and how to display IP version 4 addresses.
+</para>
+<note>
+Everyone who provides these extra fields also provides <citerefentry><refentrytitle>utmpx</refentrytitle><manvolnum>5</manvolnum></citerefentry>, so <command>list-logins</command> does not bother with any extensions to <citerefentry><refentrytitle>utmp</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
+<citerefentry><refentrytitle>utmpx</refentrytitle><manvolnum>5</manvolnum></citerefentry> is the preferred system and is used exclusively if the platform's library is found to support it.
+</note>
+
+<para>
+The <arg choice="plain">--time-format</arg> command&#x2010;line option specifies an alternative display format to be employed for all time fields, <arg choice="plain"><replaceable>formatstring</replaceable></arg>, in the form employed by the <citerefentry><refentrytitle>strftime</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function.
+The default is ISO 8601 date and time, and numeric timezone offset.
+</para>
+
+</refsection>
+
+<refsection><title>Selecting login table records</title>
+
+<para>
+The <arg choice="plain"><replaceable>line</replaceable></arg> command&#x2010;line arguments are a filter set that is matched against the line names, enabling the selection of individual login records.
+If there are no <arg choice="plain"><replaceable>line</replaceable></arg> arguments, the entire list is output, unfiltered.
+It is not an error for a filter item not to match a line.
 </para>
 
 <para>
-The <arg choice="plain">--time-format</arg> command-line option specifies an alternative display format to be employed for all time fields, <arg choice="plain"><replaceable>formatstring</replaceable></arg>, in the form employed by the <citerefentry><refentrytitle>strftime</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function.
+The <arg choice="plain">--no-init</arg> command&#x2010;line option has no effect on most BSDs, where the concept is meaningless.
+On Linux-based operating systems, it excludes <code>INIT_PROCESS</code> and <code>LOGIN_PROCESS</code> records, created by <citerefentry><refentrytitle>login-process</refentrytitle><manvolnum>1</manvolnum></citerefentry> and the programs that it is compatible with.
+With modern systems with modern system managers, this option is either meaningless or moot on Linux-based operating systems also.
 </para>
 
-<para>
-The <arg choice="plain">--no-init</arg> command-line option has no effect on most BSDs, where the concept is meaningless.
-On Linux-based operating systems, it excludes <code>INIT_PROCESS</code> and <code>LOGIN_PROCESS</code> records, <citerefentry><refentrytitle>login-process</refentrytitle><manvolnum>1</manvolnum></citerefentry> and the programs that it is compatible with.
-With modern systems with modern system managers, this option is either meaningless or moot.
-</para>
+</refsection>
 
 </refsection>
 

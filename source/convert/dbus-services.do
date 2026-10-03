@@ -9,24 +9,24 @@
 #
 
 case "`uname`" in
-Linux)
+(Linux)
 	redo-ifchange rc.conf
 
 	# This gets us *only* the configuration variables, safely.
 	read_rc() { clearenv read-conf rc.conf printenv "$1" ; }
 
 	case "`read_rc os_version`" in
-	arch:*) 	g=dbus ;;
-	void:*) 	g=dbus ;;
-	debian:*) 	g=messagebus ;;
-	gentoo:*) 	g=messagebus ;;
-	centos:*)	g=dbus ;;
-	rhel:*) 	g=dbus ;;
-	*)      	echo 1>&2 "$0: Do not know the message bus group for your system." ; exec false ;;
+	(arch:*) 	g=dbus ;;
+	(void:*) 	g=dbus ;;
+	(debian:*) 	g=messagebus ;;
+	(gentoo:*) 	g=messagebus ;;
+	(centos:*)	g=dbus ;;
+	(rhel:*) 	g=dbus ;;
+	(*)      	echo 1>&2 "$0: Do not know the message bus group for your system." ; exec false ;;
 	esac
 	;;
-*BSD)	g=messagebus ;;
-*)	echo 1>&2 "$0: Do not know the message bus group for your system." ; exec false ;;
+(*BSD)	g=messagebus ;;
+(*)	echo 1>&2 "$0: Do not know the message bus group for your system." ; exec false ;;
 esac
 
 test -h /var/local/service-bundles/targets || { install -d -m 0755 /var/local/service-bundles && ln -s /etc/service-bundles/targets /var/local/service-bundles/ ; }
@@ -95,14 +95,14 @@ do
 	redo-ifcreate -- "${sr}/$i"
 	test \! -d "${sr}/$i/" || continue
 	case "${i}" in
-	org.freedesktop.systemd[0-9]*)	continue ;;	# deny-listed
-	org.freedesktop.network[0-9]*)	continue ;;	# deny-listed
-	org.freedesktop.resolve[0-9]*)	continue ;;	# deny-listed
-	org.freedesktop.import[0-9]*)	continue ;;	# deny-listed
-	org.freedesktop.machine[0-9]*)	continue ;;	# deny-listed
-	org.freedesktop.portable[0-9]*)	continue ;;	# deny-listed
-	org.freedesktop.timesync[0-9]*)	continue ;;	# deny-listed
-	org.freedesktop.login[0-9]*)	continue ;;	# deny-listed
+	(org.freedesktop.systemd[0-9]*)	continue ;;	# deny-listed
+	(org.freedesktop.network[0-9]*)	continue ;;	# deny-listed
+	(org.freedesktop.resolve[0-9]*)	continue ;;	# deny-listed
+	(org.freedesktop.import[0-9]*)	continue ;;	# deny-listed
+	(org.freedesktop.machine[0-9]*)	continue ;;	# deny-listed
+	(org.freedesktop.portable[0-9]*)	continue ;;	# deny-listed
+	(org.freedesktop.timesync[0-9]*)	continue ;;	# deny-listed
+	(org.freedesktop.login[0-9]*)	continue ;;	# deny-listed
 	esac
 	redo-ifchange -- "dbus/${i}.service"
 	printf 'Made dbus/%s.service\n' "$i" >> "$3"
@@ -113,7 +113,7 @@ do
 	fi
 	system-control convert-systemd-units $e --bundle-root "${lr}/" "./dbus/$i.service"
 	install -d -m 0755 -- "${lr}/$i/service/env"
-	link_service_to_logger_service "$i" "../../sv/cyclog@dbus"
+	link_service_to_logger_service "$i" "../../service-bundles/services/cyclog@dbus"
 	system-control preset "$i.service"
 	allow_dbus_bus_activation "${lr}/$i"
 	printf 'Configured %s/%s\n' "${lr}" "$i" >> "$3"

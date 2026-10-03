@@ -3,7 +3,7 @@
 
 if test -z "$2"		# No prior version installed/left configured.
 then
-	for i in - -usr -var -home 
+	for i in - -usr -var -home
 	do
 		/bin/rm -f -r /etc/service-bundles/services/fsck@$i/
 		/bin/rm -f -r /etc/service-bundles/services/mount@$i/

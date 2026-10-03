@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -34,7 +35,7 @@
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>setlock</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>setlock</command> will ignore.
 </para>
 
 <para>
@@ -56,7 +57,7 @@ Note, however, that since the file access is unspecified, it is unspecified whet
 </para>
 
 <para>
-Unless the <arg choice='plain'>--non-blocking</arg> command line option is used, <command>setlock</command> will wait to obtain the lock whilst another process holds it.
+Unless the <arg choice='plain'>--non-blocking</arg> command&#x2010;line option is used, <command>setlock</command> will wait to obtain the lock whilst another process holds it.
 If that option is used, it will not wait, but instead will fail to acquire the lock.
 </para>
 
@@ -73,7 +74,7 @@ If that option is used, it will still exit on failure, but without printing an e
 
 <caution>
 There is a broad range of tools that will interlock with this tool.
-However, there are also a couple of tools that do not, one of which shares its name and command-line syntax with a tool that does, making it important to know which of those tools one is using.
+However, there are also a couple of tools that do not, one of which shares its name and command&#x2010;line syntax with a tool that does, making it important to know which of those tools one is using.
 </caution>
 
 <caution>
@@ -269,8 +270,8 @@ Both Illumos and Linux provide the not-standardized open file description record
 </itemizedlist>
 
 <para>
-In general, the <citerefentry><refentrytitle>flock</refentrytitle><manvolnum>2</manvolnum></citerefentry> system call is the widely recommended locking mechanism, and has been for decades, with the Linux manual politely describing the semantics of <citerefentry><refentrytitle>fcntl</refentrytitle><manvolnum>2</manvolnum></citerefentry> and <citerefentry><refentrytitle>lockf</refentrytitle><manvolnum>2</manvolnum></citerefentry> system call locking as "unfortunate" and the BSD manual more forthrightly talking about "the completely stupid semantics of System V" and POSIX.
-(Sharing the sentiment, Michael Tokarev comments in the source code of <citerefentry><refentrytitle>lckdo</refentrytitle><manvolnum>1</manvolnum></citerefentry> on the "stupid POSIX fcntl locking semantics".)
+In general, the <citerefentry><refentrytitle>flock</refentrytitle><manvolnum>2</manvolnum></citerefentry> system call is the widely recommended locking mechanism, and has been for decades, with the Linux manual politely describing the semantics of <citerefentry><refentrytitle>fcntl</refentrytitle><manvolnum>2</manvolnum></citerefentry> and <citerefentry><refentrytitle>lockf</refentrytitle><manvolnum>2</manvolnum></citerefentry> system call locking as <quote>unfortunate</quote> and the BSD manual more forthrightly talking about <quote>the completely stupid semantics of System V</quote> and POSIX.
+(Sharing the sentiment, Michael Tokarev comments in the source code of <citerefentry><refentrytitle>lckdo</refentrytitle><manvolnum>1</manvolnum></citerefentry> on the <quote>stupid POSIX fcntl locking semantics</quote>.)
 </para>
 
 <para>

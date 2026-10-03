@@ -16,8 +16,8 @@ ifchange_follow() {
 			redo-ifchange "$i"
 			l="`readlink \"$i\"`" || break
 			case "$l" in
-			/*)	i="$l" ;;
-			*)	i="`dirname \"$i\"`/$l" || break ;;
+			(/*)	i="$l" ;;
+			(*)	i="`dirname \"$i\"`/$l" || break ;;
 			esac
 		done
 	done
@@ -28,7 +28,7 @@ ifchange_follow() {
 # ###
 
 case "${base}" in
-*@*)
+(*@*)
 	template="${name%%@*}"
 	if test -e "${template}"@.socket
 	then
@@ -58,6 +58,7 @@ case "${base}" in
 	then
 		if test -d "${service_unit}".d
 		then
+			redo-ifdelete "${service_unit}".d
 			for d in "${service_unit}.d/"*".conf.do"
 			do
 				test ! "${d}" = "${service_unit}"'.d/*.conf.do' || continue
@@ -76,6 +77,7 @@ case "${base}" in
 	# Check for drop-ins in the activating template unit.
 	if test -d "${template}"@"${suffix}".d
 	then
+		redo-ifdelete "${template}"@"${suffix}".d
 		for d in "${template}"@"${suffix}.d/"*".conf.do"
 		do
 			test ! "${d}" = "${template}"@"${suffix}"'.d/*.conf.do' || continue
@@ -92,6 +94,7 @@ case "${base}" in
 	# Check for drop-ins in the activating instance unit.
 	if test -d "${unit}".d
 	then
+		redo-ifdelete "${unit}".d
 		for d in "${unit}.d/"*".conf.do"
 		do
 			test ! "${d}" = "${unit}"'.d/*.conf.do' || continue
@@ -106,7 +109,7 @@ case "${base}" in
 		redo-ifcreate "${unit}".d
 	fi
 	;;
-*)
+(*)
 	if test -e "${name}".socket
 	then
 		unit="${name}".socket
@@ -138,6 +141,7 @@ case "${base}" in
 	then
 		if test -d "${service_unit}".d
 		then
+			redo-ifdelete "${service_unit}".d
 			for d in "${service_unit}.d/"*".conf.do"
 			do
 				test ! "${d}" = "${service_unit}"'.d/*.conf.do' || continue
@@ -156,6 +160,7 @@ case "${base}" in
 	# Check for drop-ins in the activating unit.
 	if test -d "${unit}".d
 	then
+		redo-ifdelete "${unit}".d
 		for d in "${unit}.d/"*".conf.do"
 		do
 			test ! "${d}" = "${unit}"'.d/*.conf.do' || continue
@@ -177,31 +182,33 @@ esac
 # ###
 
 case "${base}" in
-cyclog@*)
+(cyclog@*)
 	escape="--escape-format account --escape-instance"
 	;;
-*-log)
+(*-log)
 	escape="--escape-format account --escape-prefix"
 	;;
-*)
+(*)
 	escape=
 	;;
 esac
 
 case "`uname`" in
-Linux)	etc_services="../package/common-etc-services ../package/linux-etc-services" ;;
-*BSD)	etc_services="../package/common-etc-services ../package/bsd-etc-services" ;;
-*)	etc_services="../package/common-etc-services" ;;
+(Linux)		etc_services="../package/common-etc-services ../package/linux-etc-services" ;;
+(FreeBSD)	etc_services="../package/common-etc-services ../package/bsd-etc-services ../package/freebsd-etc-services" ;;
+(NetBSD)	etc_services="../package/common-etc-services ../package/bsd-etc-services ../package/netbsd-etc-services" ;;
+(*BSD)		etc_services="../package/common-etc-services ../package/bsd-etc-services" ;;
+(*)		etc_services="../package/common-etc-services" ;;
 esac
 redo-ifchange -- ${etc_services}
 
 case "${base}" in
-mount@*|fsck@*)
+(mount@*|fsck@*)
 	# This is just the template-generated services that cannot be listed in package/*-etc-services .
 	# Normally such services are handled by the default case, below.
 	etc="--etc-bundle --supervise-in-run"
 	;;
-*)
+(*)
 	# In the default case sysinit services log to a fan-in sysinit-log service and non-sysinit services log to a dedicated log service.
 	if grep -q -- "^${base}\$" ${etc_services}
 	then
@@ -213,69 +220,69 @@ mount@*|fsck@*)
 esac
 
 case "${base}" in
-dbus)
+(dbus)
 	# This is an umbrella service that has no log service.
 	log=
 	after=
 	;;
-cyclog@*|*-log)
+(cyclog@*|*-log)
 	# Logging services themselves have no logs.
 	log=
 	after=
 	;;
-emergency-login@console)
+(emergency-login@console)
 	# This is an emergency service that has no log service.
 	log=
 	after=
 	;;
-mount@*|fsck@*)
+(mount@*|fsck@*)
 	# These sysinit services log to a common fan-in log service.
 	# This is just the template-generated services that cannot be listed in package/*-etc-services .
 	# Normally such services are handled by the default case, below.
 	log="../sysinit-log"
 	after=	# sysinit-log only comes up after filesystems have been mounted.
 	;;
-devd|devpubd)
+(devd|devpubd)
 	# These sysinit services log to their own dedicated log services.
 	log="../${base}-log"
 	after="log"
 	;;
-systemd-udev|systemd-udev-trigger-add@*)
+(systemd-udev|systemd-udev-trigger-add@*)
 	# These sysinit services log to a common fan-in log service.
 	log="../systemd-udev-log"
 	after="log"
 	;;
-udev|udev-trigger-add@*|udev-finish)
+(udev|udev-trigger-add@*|udev-finish)
 	# These sysinit services log to a common fan-in log service.
 	log="../udev-log"
 	after="log"
 	;;
-busybox-mdev|busybox-mdev-rescan)
+(busybox-mdev|busybox-mdev-rescan)
 	# These sysinit services log to a common fan-in log service.
 	log="../busybox-mdev-log"
 	after="log"
 	;;
-suckless-mdev|suckless-mdev-rescan)
+(suckless-mdev|suckless-mdev-rescan)
 	# These sysinit services log to a common fan-in log service.
 	log="../suckless-mdev-log"
 	after="log"
 	;;
-mdevd|mdevd-rescan)
+(mdevd|mdevd-rescan)
 	# These sysinit services log to a common fan-in log service.
 	log="../mdevd-log"
 	after="log"
 	;;
-ip6addrctl@*)
+(ip6addrctl@*)
 	# These non-sysinit services log to a common fan-in log service.
 	log="../ip6addrctl-log"
 	after="log"
 	;;
-trueos-update-finish|trueos-install-finish|freebsd-update-finish|freebsd-install-finish)
+(trueos-update-finish|trueos-install-finish|freebsd-update-finish|freebsd-install-finish)
 	# These sysinit services log to a common fan-in log service.
 	log="../system-installer-log"
 	after="log"
 	;;
-*)
+(*)
 	# In the default case sysinit services log to a common fan-in service and non-sysinit services log to a dedicated log service.
 	if grep -q -- "^${base}\$" ${etc_services}
 	then
@@ -296,9 +303,9 @@ install -d -m 0755 services.new
 
 rm -r -f services.new/"${base}"
 
-redo-ifchange system-control
+redo-ifchange command/build-helper
 
-./system-control convert-systemd-units --no-systemd-quirks --no-generation-comment ${escape} ${etc} --bundle-root services.new/ "${unit}"
+command/build-helper convert-systemd-units --no-systemd-quirks --no-generation-comment ${escape} ${etc} --bundle-root services.new/ "${unit}"
 
 test -n "${log}" && ln -s -f "${log}" services.new/"${base}"/log
 test -n "${after}" && ln -s -f "../${after}" services.new/"${base}"/after/
@@ -317,10 +324,10 @@ fi
 # ###
 
 case "${base}" in
-cyclog@*)
+(cyclog@*)
 	ln -f -s -- /var/log/sv/"${base#cyclog@}" services.new/"${base}"/main
 	;;
-*-log)
+(*-log)
 	ln -f -s -- /var/log/sv/"${base%-log}" services.new/"${base}"/main
 	;;
 esac
@@ -330,36 +337,36 @@ esac
 # ###
 
 case "${base}" in
-kmod@vboxvideo)
+(kmod@vboxvideo)
 	ln -f -s -- /etc/service-bundles/targets/virtualbox-guest services.new/"${base}"/wanted-by/
 	ln -f -s -- ../../kmod@uvesafb services.new/"${base}"/after/
 	;;
-kmod@vboxadd|kmod@vboxsf|kmod@vboxguest)
+(kmod@vboxadd|kmod@vboxsf|kmod@vboxguest)
 	ln -f -s -- /etc/service-bundles/targets/virtualbox-guest services.new/"${base}"/wanted-by/
 	;;
-kmod@vboxdrv|kmod@vboxnetadp|kmod@vboxnetflt|kmod@vboxpci)
+(kmod@vboxdrv|kmod@vboxnetadp|kmod@vboxnetflt|kmod@vboxpci)
 	ln -f -s -- /etc/service-bundles/targets/virtualbox-host services.new/"${base}"/wanted-by/
 	;;
-kmod@uvesafb)
+(kmod@uvesafb)
 	ln -f -s -- /etc/service-bundles/targets/frame-buffer services.new/"${base}"/wanted-by/
 	;;
-cyclog@ttylogin@*|cyclog@console-kvt-realizer@*|cyclog@ttycallout@*)
+(cyclog@ttylogin@*|cyclog@console-kvt-realizer@*|cyclog@ttycallout@*)
 	rm -f -- services.new/"${base}"/wanted-by/workstation
 	ln -s -f -- ../../"${base#cyclog@}" services.new/"${base}"/wanted-by/
 	;;
-cyclog@VBoxService|cyclog@VBoxBalloonCtrl|cyclog@kmod@vboxadd|cyclog@kmod@vboxsf|cyclog@kmod@vboxguest|cyclog@kmod@vboxvideo)
+(cyclog@VBoxService|cyclog@VBoxBalloonCtrl|cyclog@kmod@vboxadd|cyclog@kmod@vboxsf|cyclog@kmod@vboxguest|cyclog@kmod@vboxvideo)
 	rm -f -- services.new/"${base}"/wanted-by/workstation
 	ln -f -s -- /etc/service-bundles/targets/virtualbox-guest services.new/"${base}"/wanted-by/
 	;;
-cyclog@kmod@vboxdrv|cyclog@kmod@vboxnetadp|cyclog@kmod@vboxnetflt|cyclog@kmod@vboxpci)
+(cyclog@kmod@vboxdrv|cyclog@kmod@vboxnetadp|cyclog@kmod@vboxnetflt|cyclog@kmod@vboxpci)
 	rm -f -- services.new/"${base}"/wanted-by/workstation
 	ln -f -s -- /etc/service-bundles/targets/virtualbox-host services.new/"${base}"/wanted-by/
 	;;
-cyclog@vmtoolsd|cyclog@vgathd)
+(cyclog@vmtoolsd|cyclog@vgathd)
 	rm -f -- services.new/"${base}"/wanted-by/workstation
 	ln -f -s -- /etc/service-bundles/targets/vmware-guest services.new/"${base}"/wanted-by/
 	;;
-dbus-daemon)
+(dbus-daemon)
 	redo-ifchange services/system-wide.conf
 	install -m 0644 -- services/system-wide.conf services.new/"${base}"/service/system-wide.conf
 	;;

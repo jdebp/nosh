@@ -11,13 +11,13 @@
 common="ataidle axfrdns brltty dbus-services dnscache ftp-proxy general-services geom host.conf hostname iovctl java-home kdm kernel-modules kernel-vt keyboard-maps mdconfig mysql nfs ntp openldap openvpn pefs rc.conf savecore securelevel static-networking sysctl.conf syslogd system-installer taiclockd terminal-services tinydns user-services user-vt-realizer-configuration walldns volumes webcamd"
 
 case "`uname`" in
-Linux)
+(Linux)
 	platform="motd"
 	;;
-*BSD)
-	platform="appcafe autobridge ip6addrctl jails ldconfig mdmfs mixer stf uhidd v9-jails warden"
+(FreeBSD)
+	platform="appcafe autobridge ip6addrctl jails ldconfig mdmfs mixer stf uhidd v9-jails warden termcap/termcap.db"
 	;;
-*)
+(*)
 	platform=""
 	;;
 esac

@@ -3,13 +3,13 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
+#define _BSD_SOURCE 1
 #include <vector>
 #include <sys/reboot.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include "kqueue_common.h"
 #if defined(__LINUX__) || defined(__linux__)
-#define _BSD_SOURCE 1
 #include <sys/resource.h>
 #include <linux/kd.h>
 #include <fcntl.h>
@@ -322,7 +322,10 @@ setnoctty (
 ) {
 	const FileDescriptorOwner fd(open_readwriteexisting_at(AT_FDCWD, "/dev/tty"));
 	if (0 <= fd.get()) return -1;
-	if (!isatty(fd.get())) return errno = ENOTTY, -1;
+	if (!isatty(fd.get())) {
+		errno = ENOTTY;
+		return -1;
+	}
 	return ioctl(fd.get(), TIOCNOTTY, 0);
 }
 #endif
@@ -803,8 +806,7 @@ inline
 void
 start_system(
 	const char * prog
-)
-{
+) {
 #if defined(__LINUX__) || defined(__linux__)
 	reboot(RB_DISABLE_CAD);
 	FileDescriptorOwner current_kvt(open_readwriteexisting_at(AT_FDCWD, "/dev/tty0"));

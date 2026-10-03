@@ -3,13 +3,14 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
+#define _BSD_SOURCE 1
 #include <vector>
 #include <map>
 #include <unordered_map>
 #include <set>
 #include <cstddef>
 #include <cstdlib>
-#include <cstdio>
+#include <iostream>
 #include <csignal>
 #include <cstring>
 #include <cerrno>
@@ -23,6 +24,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "kqueue_common.h"
 #include "service-manager-client.h"
 #include "popt.h"
+#include "ttyname.h"
 #include "FileDescriptorOwner.h"
 #include "DirStar.h"
 #include "CharacterCell.h"
@@ -507,7 +509,7 @@ start_stop_common [[gnu::noreturn]] (
 	bool colours
 ) {
 	TerminalCapabilities caps(envs);
-	ECMA48Output o(caps, stderr, true /* C1 is 7-bit aliased */, false /* C1 is not raw 8-bit */);
+	ECMA48Output o(caps, std::cerr, true /* C1 is 7-bit aliased */, false /* C1 is not raw 8-bit */);
 	if (!colours)
 		caps.colour_level = caps.NO_COLOURS;
 
@@ -835,7 +837,7 @@ activate [[gnu::noreturn]] (
 	std::vector<const char *> & args,
 	ProcessEnvironment & envs
 ) {
-	bool colours(isatty(STDERR_FILENO));
+	bool colours(ECMA48Output::query_use_colours(envs, STDOUT_FILENO));
 	const char * prog(basename_of(args[0]));
 	try {
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
@@ -869,7 +871,7 @@ deactivate [[gnu::noreturn]] (
 	std::vector<const char *> & args,
 	ProcessEnvironment & envs
 ) {
-	bool colours(isatty(STDERR_FILENO));
+	bool colours(ECMA48Output::query_use_colours(envs, STDOUT_FILENO));
 	const char * prog(basename_of(args[0]));
 	try {
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
@@ -903,7 +905,7 @@ isolate [[gnu::noreturn]] (
 	std::vector<const char *> & args,
 	ProcessEnvironment & envs
 ) {
-	bool colours(isatty(STDERR_FILENO));
+	bool colours(ECMA48Output::query_use_colours(envs, STDOUT_FILENO));
 	const char * prog(basename_of(args[0]));
 	try {
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
@@ -937,7 +939,7 @@ reset [[gnu::noreturn]] (
 	std::vector<const char *> & args,
 	ProcessEnvironment & envs
 ) {
-	bool colours(isatty(STDERR_FILENO));
+	bool colours(ECMA48Output::query_use_colours(envs, STDOUT_FILENO));
 	const char * prog(basename_of(args[0]));
 	try {
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);

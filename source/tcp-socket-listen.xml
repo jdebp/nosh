@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -46,7 +47,7 @@
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>tcp-socket-listen</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>tcp-socket-listen</command> will ignore.
 </para>
 
 <para>
@@ -55,8 +56,8 @@ See <citerefentry><refentrytitle>fdmove</refentrytitle><manvolnum>1</manvolnum><
 </para>
 
 <para>
-If the <arg choice='plain'>--numeric-host</arg> command line option is used, then no name lookup is done on <replaceable>host</replaceable> and it must be (a human readable form of) an IP address.
-If the <arg choice='plain'>--numeric-service</arg> command line option is used, then no name lookup is done on <replaceable>service</replaceable> and it must be a port number.
+If the <arg choice='plain'>--numeric-host</arg> command&#x2010;line option is used, then no name lookup is done on <replaceable>host</replaceable> and it must be (a human readable form of) an IP address.
+If the <arg choice='plain'>--numeric-service</arg> command&#x2010;line option is used, then no name lookup is done on <replaceable>service</replaceable> and it must be a port number.
 Otherwise, <replaceable>host</replaceable> is looked up using the system name resolution facility, with the first IP address found being used, and <replaceable>service</replaceable> can be an alphanumeric service name.
 </para>
 
@@ -126,18 +127,18 @@ To change the process' UID and GID after a successful call to <citerefentry><ref
 
 <refsection><title>See also</title>
 <variablelist>
-	<varlistentry>
-		<term><citerefentry><refentrytitle>udp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
-		<term><citerefentry><refentrytitle>local-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
-		<term><citerefentry><refentrytitle>local-stream-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
-		<term><citerefentry><refentrytitle>local-seqpacket-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
-		<term><citerefentry><refentrytitle>netlink-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
-		<listitem>
-			<para>
-				listeners for other protocols
-			</para>
-		</listitem>
-	</varlistentry>
+<varlistentry>
+<term><citerefentry><refentrytitle>udp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+<term><citerefentry><refentrytitle>local-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+<term><citerefentry><refentrytitle>local-stream-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+<term><citerefentry><refentrytitle>local-seqpacket-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+<term><citerefentry><refentrytitle>netlink-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+<listitem>
+<para>
+listeners for other protocols
+</para>
+</listitem>
+</varlistentry>
 </variablelist>
 
 </refsection><refsection><title>Author</title>

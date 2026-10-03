@@ -3,12 +3,13 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
+#define _BSD_SOURCE 1
 #include <map>
 #include <string>
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
-#include "haslogincap.h"
+#include "config/haslogincap.h"
 #if defined(HAS_LOGINCAP)
 #include <sys/types.h>
 #include <login_cap.h>

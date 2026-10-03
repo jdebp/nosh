@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -50,7 +51,7 @@ The command will fail if the process is not allowed to move to the given control
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>move-to-control-group</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>move-to-control-group</command> will ignore.
 </para>
 
 </refsection>

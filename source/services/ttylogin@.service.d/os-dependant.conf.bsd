@@ -4,3 +4,5 @@
 # vim: set filetype=conf:
 
 [Service]
+# OpenPAM on the BSDs handles utmpx itself with pam_lastlog.
+UTmpXEvenIfPAM=off

@@ -9,9 +9,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include <vector>
 #include <list>
 #include <string>
-#include <cstdio>
+#include <iosfwd>
 
-class TerminalCapabilities;
 struct ProcessEnvironment;
 class ECMA48Output;
 
@@ -43,7 +42,7 @@ namespace popt {
 #endif
 				))
 					slash = arg[0];
-				if (!slash || slash != arg[0]) {
+				if (0 == slash || slash != arg[0]) {
 					file_vector.push_back(arg);
 					if (strictly_options_before_arguments)
 						slash = EOF;
@@ -65,16 +64,17 @@ namespace popt {
 		bool stopped() const { return is_stopped; }
 		void stop() { is_stopped = true; }
 		std::vector<const char *> & file_vector;
-		const char * name;
+		const char * name() const { return n; }
 		const ProcessEnvironment & envs;
 	protected:
+		const char * n;
 		int slash;
 		definition & def;
 		bool is_stopped;
 	};
 	template <class InputIterator> class arg_processor : public processor {
 	public:
-		arg_processor(InputIterator b, InputIterator e, const char * n, const ProcessEnvironment & envsp, definition & d, std::vector<const char *> & f) : processor(n, envsp, d, f), current(b), end(e) {}
+		arg_processor(InputIterator b, InputIterator e, const char * n0, const ProcessEnvironment & envsp, definition & d, std::vector<const char *> & f) : processor(n0, envsp, d, f), current(b), end(e) {}
 		const char * next_arg()
 		{
 			if (current >= end) return nullptr;
@@ -86,8 +86,8 @@ namespace popt {
 	struct table_definition : public definition {
 	public:
 		table_definition(unsigned c, definition * const * v, const char * d) : definition(), count(c), array(v), description(d) {}
-		virtual void long_usage(ECMA48Output &, bool);
-		virtual void help(ECMA48Output &, bool);
+		virtual void long_usage(std::ostream &, ECMA48Output &, bool);
+		virtual void help(std::ostream &, ECMA48Output &, bool);
 		virtual ~table_definition();
 	protected:
 		virtual bool execute(processor &, char c);
@@ -134,28 +134,28 @@ namespace popt {
 		virtual bool execute(processor &, char c, const char * s);
 		virtual bool execute(processor & proc, const char * s);
 	};
-	struct compound_named_definition : public named_definition {
+	struct compound_1arg_named_definition : public named_definition {
 	public:
-		compound_named_definition(char s, const char * l, const char * a, const char * d) : named_definition(s, l, a, d) {}
-		virtual ~compound_named_definition() = 0;
+		compound_1arg_named_definition(char s, const char * l, const char * a, const char * d) : named_definition(s, l, a, d) {}
+		virtual ~compound_1arg_named_definition() = 0;
 	protected:
 		virtual void action(processor &, const char *) = 0;
 		virtual bool execute(processor & proc, char c);
 		virtual bool execute(processor &, char c, const char * s);
 		virtual bool execute(processor & proc, const char * s);
 	};
-	struct string_definition : public compound_named_definition {
+	struct string_definition : public compound_1arg_named_definition {
 	public:
-		string_definition(char s, const char * l, const char * a, const char * d, const char * & v) : compound_named_definition(s, l, a, d), value(v) {}
+		string_definition(char s, const char * l, const char * a, const char * d, const char * & v) : compound_1arg_named_definition(s, l, a, d), value(v) {}
 		virtual ~string_definition();
 	protected:
 		virtual void action(processor &, const char *);
 		const char * & value;
 	};
-	struct string_list_definition : public compound_named_definition {
+	struct string_list_definition : public compound_1arg_named_definition {
 	public:
 		typedef std::list<std::string> list_type;
-		string_list_definition(char s, const char * l, const char * a, const char * d, list_type & v) : compound_named_definition(s, l, a, d), value_list(v) {}
+		string_list_definition(char s, const char * l, const char * a, const char * d, list_type & v) : compound_1arg_named_definition(s, l, a, d), value_list(v) {}
 		virtual ~string_list_definition();
 	protected:
 		virtual void action(processor &, const char *);
@@ -169,9 +169,9 @@ namespace popt {
 		virtual void action(processor &);
 		bool & value;
 	};
-	struct integral_definition : public compound_named_definition {
+	struct integral_definition : public compound_1arg_named_definition {
 	public:
-		integral_definition(char s, const char * l, const char * a, const char * d) : compound_named_definition(s, l, a, d), set(false) {}
+		integral_definition(char s, const char * l, const char * a, const char * d) : compound_1arg_named_definition(s, l, a, d), set(false) {}
 		virtual ~integral_definition() = 0;
 		bool is_set() const { return set; }
 	protected:

@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -67,7 +68,7 @@ For each datagram read, it spawns <command><replaceable>prog</replaceable></comm
 <para>
 It serializes invocations of <command><replaceable>prog</replaceable></command>.
 It will not read the next datagram until the previous instance has exited.
-If it is sent the "graceful" termination signals <code>SIGTERM</code>, <code>SIGINT</code>, or <code>SIGHUP</code> it waits for the child to exit before it exits itself.
+If it is sent the <quote>graceful</quote> termination signals <code>SIGTERM</code>, <code>SIGINT</code>, or <code>SIGHUP</code> it waits for the child to exit before it exits itself.
 </para>
 
 </refsection><refsection><title>Bugs</title>

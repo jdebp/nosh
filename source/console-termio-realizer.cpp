@@ -4,10 +4,9 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 #define __STDC_FORMAT_MACROS
-#define _XOPEN_SOURCE_EXTENDED
+#define _BSD_SOURCE 1
 #include <vector>
 #include <iostream>
-#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <cerrno>
@@ -150,8 +149,8 @@ Realizer::Realizer(
 	const bool mp
 ) :
 	TerminalCapabilities(e),
-	TUIOutputBase(*this, stdout, o, compositor),
-	TUIInputBase(static_cast<const TerminalCapabilities &>(*this), stdin),
+	TUIOutputBase(*this, std::cout, STDOUT_FILENO, o, compositor),
+	TUIInputBase(static_cast<const TerminalCapabilities &>(*this), std::cin, STDIN_FILENO),
 	handler0(*this),
 	prog(p),
 	envs(e),

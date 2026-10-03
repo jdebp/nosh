@@ -155,7 +155,7 @@ wait_nonblocking_for_stopexit_of (
 }
 
 int	/// \retval -1 error \retval 0 no child \retval >0 found child
-wait_blocking_for_exit_of (
+wait_nonblocking_for_exit_of (
 	const pid_t child,
 	int & status,
 	int & code

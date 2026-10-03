@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -34,13 +35,13 @@
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>detach-controlling-terminal</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>detach-controlling-terminal</command> will ignore.
 </para>
 
 </refsection><refsection><title>Security</title>
 
 <para>
-This must not be used for attempting to "daemonize" programs run from within a login session.
+This must not be used for attempting to <quote>daemonize</quote> programs run from within a login session.
 A large amount of <emphasis>other</emphasis> state from the login session is still retained, including login session state that cannot be dropped once set and state that renders d&#xe6;mons vulnerable to control from the login session.
 The use case for this tool is where one is allowing <replaceable>next-prog</replaceable> to open a <emphasis>different</emphasis> controlling terminal.
 </para>

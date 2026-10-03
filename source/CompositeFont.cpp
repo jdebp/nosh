@@ -49,8 +49,9 @@ find (
 	uint32_t character
 ) {
 	const CombinedFont::Font::UnicodeMapEntry one = { character, 0U, 1U };
-	CombinedFont::Font::UnicodeMap::const_iterator p(std::lower_bound(unicode_map.begin(), unicode_map.end(), one));
-	if (p < unicode_map.end() && !p->Contains(character)) p = unicode_map.end();
+	const CombinedFont::Font::UnicodeMap::const_iterator e(unicode_map.end());
+	CombinedFont::Font::UnicodeMap::const_iterator p(std::lower_bound(unicode_map.begin(), e, one));
+	if (p < e && !p->Contains(character)) p = e;
 	return p;
 }
 

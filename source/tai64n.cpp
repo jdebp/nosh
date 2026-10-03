@@ -9,7 +9,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cstdlib>
 #include <cstring>
 #include <inttypes.h>
-#include <stdint.h>
+#include <cstdint>
 #include <cctype>
 #include <cerrno>
 #include <ctime>
@@ -45,8 +45,8 @@ process (
 			if (bol) {
 				timespec now;
 				clock_gettime(CLOCK_REALTIME, &now);
-				const uint64_t secs(time_to_tai64(envs, TimeTAndLeap(now.tv_sec, false)));
-				const uint32_t nano(now.tv_nsec);
+				const std::uint64_t secs(time_to_tai64(envs, TimeTAndLeap(now.tv_sec, false)));
+				const std::uint32_t nano(now.tv_nsec);
 				std::fprintf(stdout, "@%016" PRIx64 "%08" PRIx32 " ", secs, nano);
 				bol = false;
 			}
@@ -89,8 +89,7 @@ tai64n [[gnu::noreturn]] (
 			const char * name(*i);
 			const int fd(open_read_at(AT_FDCWD, name));
 			if (0 > fd) {
-				const int error(errno);
-				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, std::strerror(error));
+				message_fatal_errno(prog, envs, name);
 				throw static_cast<int>(EXIT_PERMANENT_FAILURE);	// Bernstein daemontools compatibility
 			}
 			if (!process(prog, envs, name, fd))

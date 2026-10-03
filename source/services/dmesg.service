@@ -10,7 +10,7 @@ Before=shutdown.target
 [Service]
 Type=oneshot
 Umask=0022
-StandardOutput=file:/run/dmesg.boot
+StandardOutput=file:/run/%p.boot
 ExecStart=%p
 # This only has appropriate behaviour at bootstrap, not later.
 RemainAfterExit=yes

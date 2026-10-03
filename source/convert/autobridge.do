@@ -42,6 +42,6 @@ do
 	system-control print-service-env "${service}" >> "$3"
 	install -m 0555 -- autobridge.helper "$r/${service}/service/helper"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../sv/autobridge-log" "$r/${service}/log"
+	ln -s -- "../../service-bundles/services/autobridge-log" "$r/${service}/log"
 	system-control preset autobridge-log
 done

@@ -32,7 +32,7 @@ do
 	system-control convert-systemd-units $e --bundle-root "$r/" "./${service}.service"
 	install -d -m 0755 -- "$r/${service}/service/env"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../../sv/iovctl-log" "$r/${service}/log"
+	ln -s -- "../../../service-bundles/services/iovctl-log" "$r/${service}/log"
 
 	system-control preset iovctl-log "${service}"
 	if system-control is-enabled "${service}"

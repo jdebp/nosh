@@ -30,20 +30,20 @@ ssl="`read_conf ssl`"
 port="`read_conf port`"
 
 case "${ssl}" in
-[Tt][Rr][Uu][Ee]|[Yy][Ee][Ss]|[Oo][Nn]|1)
+([Tt][Rr][Uu][Ee]|[Yy][Ee][Ss]|[Oo][Nn]|1)
 	conf="/usr/local/share/appcafe/nginx.conf.ssl"
 	;;
-*)
+(*)
 	conf="/usr/local/share/appcafe/nginx.conf"
 	;;
 esac
 redo-ifchange "${conf}"
 
 case "${port}" in
-8885|'')
+(8885|'')
 	cat "${conf}" > "$3"
 	;;
-*)
+(*)
 	sed -e "s/:8885/:${port}/g" "${conf}" > "$3"
 	;;
 esac

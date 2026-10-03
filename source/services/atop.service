@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=%p advanced performance monitor
+
+[Service]
+EnvironmentFile=/etc/default/%p
+EnvironmentDirectory=env
+ExecStartPre=install -d -m 0755 "${LOGPATH:-/var/log/%p}"'
+ExecStartPre=find "${LOGPATH:-/var/log/%p}" -name "%p_*" -mtime +"${LOGGENERATIONS:-28}" -delete ;
+ExecStart=%p ${LOGOPTS} -w "${LOGPATH:-/var/log/%p}/%p_$(date +%%Y%%m%%d)" "${LOGINTERVAL:-600}"
+
+[Install]
+WantedBy=multi-user.target

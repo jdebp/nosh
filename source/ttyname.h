@@ -14,6 +14,5 @@ extern const char * get_controlling_tty_filename (const ProcessEnvironment &) ;	
 extern const char * get_line_name (const ProcessEnvironment &) ;	///< the controlling terminal name as presentable to humans
 extern std::string id_field_from (const char * s) ;
 extern unsigned long get_columns (const ProcessEnvironment &, int);
-extern bool query_use_colours (const ProcessEnvironment &, int);	///< whether we should do terminal colour changes on this file descriptor
 
 #endif

@@ -4,9 +4,9 @@
 ## **************************************************************************
 # vim: set filetype=sh:
 case "`uname`" in
-NetBSD)	ext=netbsd ;;
-Linux)	ext=linux ;;
-*)	ext=portable ;;
+(NetBSD)	ext=netbsd ;;
+(Linux)		ext=linux ;;
+(*)		ext=portable ;;
 esac
 redo-ifchange "$1.${ext}"
 ln -s -f "`basename \"$1\"`.${ext}" "$3"

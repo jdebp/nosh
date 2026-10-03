@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -51,7 +52,7 @@ It exists for script compatibility only.
 <refsection><title>Linux</title>
 
 <para>
-On Linux, one can alternatively arrange, for just <emphasis>kernel virtual</emphasis> terminals specifically, for TUI login services to be started on-demand, as the terminals are switched to and become the "active" kernel virtual terminal, rather than have them always running.
+On Linux, one can alternatively arrange, for just <emphasis>kernel virtual</emphasis> terminals specifically, for TUI login services to be started on-demand, as the terminals are switched to and become the <quote>active</quote> kernel virtual terminal, rather than have them always running.
 This is done by disabling all kernel virtual terminals and letting <command>ttylogin-starter</command> start them on-demand, which it does with the <command>system-control</command> <arg choice="plain">start</arg> command, ignoring the disabled state of the service.
 </para>
 

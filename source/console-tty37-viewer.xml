@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="tty37.css" type="text/css"?>
 
@@ -32,6 +33,7 @@
 <arg choice='plain'>--squeeze-empty-lines</arg>
 <arg choice='plain'>-s</arg>
 </group>
+<arg choice='opt'>--discard-control-strings</arg>
 <arg choice='opt' repeat='rep'><replaceable>filename(s)</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -40,7 +42,7 @@
 
 <para>
 <command>console-tty37-viewer</command> is a simple TUI viewer for text that is in the format emitted by <citerefentry><refentrytitle><envar>grotty</envar></refentrytitle><manvolnum>1</manvolnum></citerefentry> and others.
-It is designed to be a safer <envar>MANPAGER</envar> than pagers that attempt to pass through control sequences in some "raw" mode.
+It is designed to be a safer <envar>MANPAGER</envar> than pagers that attempt to pass through control sequences in some <quote>raw</quote> mode.
 <command>console-tty37-viewer</command> fully decodes all of its input per ECMA-48, and emits its own control sequences constructed from scratch.
 </para>
 
@@ -70,9 +72,21 @@ There is no reverse scrolling or cursor addressing; once output has moved to the
 </para>
 
 <para>
-All ECMA-48 escape sequences, control sequences, and operating system control sequences are stripped and ignored, except for SGR.
+Normally, all ECMA-48 escape sequences, control sequence characters, and operating system control sequence characters are stripped and ignored, except for SGR.
 The SGR control sequence changes character colours and attributes.
 Boldface, italics, underline, faint, strikethrough, reverse video, and invisible are all supported; although the rendering terminal might itself not be capable of some of these.
+</para>
+
+<para>
+Stripping control sequence and operating system control sequence characters avoids an oft&#x2010;hit problem where <command>console-tty37-viewer</command> is used as a general&#x2010;purpose pager, and random input accidentally matches one of the several start characters (Device Control String, Operating System Command, Privacy Message, Application Program Command, and Start Of String) for a control sequence, and the sequence is either never or very belatedly terminated with the end character (String Terminator).
+Normally, the start characters are dropped and what would be a control sequence is treated as ordinary text.
+However, if the input is known to have cleanly and correctly generated ECMA-48 control sequences (such as the output of commands like <citerefentry><refentrytitle><envar>grotty</envar></refentrytitle><manvolnum>1</manvolnum></citerefentry>) then the <arg choice='plain'>--discard-control-strings</arg> option can be used to turn on control sequence character recognition.
+</para>
+
+<para>
+<command>console-tty37-viewer</command> discards the control strings when control sequence character recognition is turned on.
+The ability for viewed files to generate application, device, or operating system commands would be a textbook injection attack enabling mechanism.
+The purpose of the <arg choice='plain'>--discard-control-strings</arg> option is to discard ineffectual clutter, not to enable pass&#x2010;through attacks on terminal emulators.
 </para>
 
 <para>
@@ -128,15 +142,15 @@ Various common control characters with conventional special meanings may be used
 </para>
 
 <para>
-The <arg choice='plain'>--cursor-keypad-application-mode</arg> and <arg choice='plain'>--calculator-keypad-application-mode</arg> command-line options instruct <command>console-tty37-viewer</command> to switch, respectively, the cursor keypad and the calculator keypad of the realizing terminal into their "application" modes.
-Otherwise it switches them into their "normal" modes.
+The <arg choice='plain'>--cursor-keypad-application-mode</arg> and <arg choice='plain'>--calculator-keypad-application-mode</arg> command&#x2010;line options instruct <command>console-tty37-viewer</command> to switch, respectively, the cursor keypad and the calculator keypad of the realizing terminal into their <quote>application</quote> modes.
+Otherwise it switches them into their <quote>normal</quote> modes.
 "application" mode is generally not useful to <command>console-tty37-viewer</command>, since it makes cursor and calculator keys indistinguishable from accelerator keys.
-The <arg choice='plain'>--no-alternate-screen-buffer</arg> command-line option instructs <command>console-tty37-viewer</command> to not switch to the alternative screen buffer.
+The <arg choice='plain'>--no-alternate-screen-buffer</arg> command&#x2010;line option instructs <command>console-tty37-viewer</command> to not switch to the alternative screen buffer.
 This has two uses.
 First, it allows one to retain visibility of displayed information after the program has exited (although <citerefentry><refentrytitle>setterm</refentrytitle><manvolnum>1</manvolnum></citerefentry> provides access to the alternative screen buffer).
 Second, it works around problems with some (yet more!) broken terminal emulators that attempt to be and fail at being like XTerm, which forcibly change cursor and editing keys into application mode when the alternative screen buffer is active.
-The <arg choice='plain'>--inversescreen</arg> command-line option instructs <command>console-tty37-viewer</command> to switch the DECSCNM ("light"/"dark" screen mode) private mode on or off.
-The <arg choice='plain'>--tui-level</arg> command-line option constrains the use of MouseText or Unicode block graphics and line drawing characters in TUI widgets; currently none.
+The <arg choice='plain'>--inversescreen</arg> command&#x2010;line option instructs <command>console-tty37-viewer</command> to switch the DECSCNM ("light"/"dark" screen mode) private mode on or off.
+The <arg choice='plain'>--tui-level</arg> command&#x2010;line option constrains the use of MouseText or Unicode block graphics and line drawing characters in TUI widgets; currently none.
 </para>
 
 </refsection>

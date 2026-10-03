@@ -4,7 +4,7 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 #include <string>
-#include "hasvis.h"
+#include "config/hasvis.h"
 #if defined(HAS_VIS)
 #include <vis.h>
 #endif
@@ -23,7 +23,7 @@ namespace {
 		int
 	) {
 		unsigned char c(static_cast<unsigned char>(p));
-		if (c > 0x20 && c < 0x7F) {
+		if (c > 0x20 && c < 0x7F && '\\' != c) {
 			*b++ = c;
 		} else
 		{
@@ -43,6 +43,11 @@ namespace {
 				*b++ = '0';
 				*b++ = '4';
 				*b++ = '0';
+			} else
+			if ('\\' == c) {
+				*b++ = '1';
+				*b++ = '3';
+				*b++ = '4';
 			} else
 			{
 				while (0x80 <= c) {

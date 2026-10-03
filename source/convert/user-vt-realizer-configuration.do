@@ -23,70 +23,70 @@ get_default_map() {
 	# There are a whole bunch of old syscons names for keyboard mappings that rc.conf could be using.
 	# This incorporates the modernizations done by /etc/rc.d/syscons plus the translation therefrom to yield the name built in our kbdmaps directory.
 	case "${cc}" in
-	hy)			cc="am";;
-	br275)			cc="br";;
-	fr_CA)			cc="ca-fr";;
-	swissgerman)		cc="ch";;
-	swissfrench)		cc="ch-fr";;
-	ce)			cc="centraleuropean";;
-	colemak)		cc="colemak";;
-	cs)			cc="cz";;
-	german)			cc="de";;
-	danish)			cc="dk";;
-	estonian)		cc="ee";;
-	spanish)		cc="es";;
-	finnish)		cc="fi";;
-	el)			cc="gr";;
-	gb)			cc="uk";;
-	iw)			cc="il";;
-	icelandic)		cc="is";;
-	kk)			cc="kz";;
-	norwegian)		cc="no";;
-	dutch)			cc="nl";;
-	pl_PL)			cc="pl";;
-	swedish)		cc="se";;
-	eee_nordic)		cc="nordic";option=".asus-eee";;
+	(hy)			cc="am";;
+	(br275)			cc="br";;
+	(fr_CA)			cc="ca-fr";;
+	(swissgerman)		cc="ch";;
+	(swissfrench)		cc="ch-fr";;
+	(ce)			cc="centraleuropean";;
+	(colemak)		cc="colemak";;
+	(cs)			cc="cz";;
+	(german)		cc="de";;
+	(danish)		cc="dk";;
+	(estonian)		cc="ee";;
+	(spanish)		cc="es";;
+	(finnish)		cc="fi";;
+	(el)			cc="gr";;
+	(gb)			cc="uk";;
+	(iw)			cc="il";;
+	(icelandic)		cc="is";;
+	(kk)			cc="kz";;
+	(norwegian)		cc="no";;
+	(dutch)			cc="nl";;
+	(pl_PL)			cc="pl";;
+	(swedish)		cc="se";;
+	(eee_nordic)		cc="nordic";option=".asus-eee";;
 	esac
 
 	case "${cc}" in
-	ko)			keys="106";;
-	br)			keys="107";;
-	jp)			keys="109";;
-	us)			keys="104";;
-	*)			keys="105";;
+	(ko)			keys="106";;
+	(br)			keys="107";;
+	(jp)			keys="109";;
+	(us)			keys="104";;
+	(*)			keys="105";;
 	esac
 
 	case "${option}" in
-	.armscii-8)		option="";;
-	.iso*.acc)
+	(.armscii-8)		option="";;
+	(.iso*.acc)
 		case "${cc}" in
-		br)		option="";;
-		nl)		option="";;
-		*)		option=".acc";;
+		(br)		option="";;
+		(nl)		option="";;
+		(*)		option=".acc";;
 		esac
 		;;
-	.us101.acc)		option=".acc";keys="104";;
-	.macbook.acc)		option=".acc";;
-	.iso*.macbook)		option=".macbook";;
-	.iso2.101keys)		option="";keys="104";;
-	.iso*)
+	(.us101.acc)		option=".acc";keys="104";;
+	(.macbook.acc)		option=".acc";;
+	(.iso*.macbook)		option=".macbook";;
+	(.iso2.101keys)		option="";keys="104";;
+	(.iso*)
 		case "${cc}" in
-		br)		option=".noacc";;
-		nl)		option=".noacc";;
-		*)		option="";;
+		(br)		option=".noacc";;
+		(nl)		option=".noacc";;
+		(*)		option="";;
 		esac
 		;;
-	.pt154.io)		option=".io";;
-	.pt154.kst)		option=".kst";;
-	.106x)			option=".capsctrl";keys="109";;
-	.*-ctrl)		option=".capsctrl";;
-	.bds.ctrlcaps)		option=".bds.capsctrl";;
-	.phonetic.ctrlcaps)	option=".phonetic.capsctrl";;
-	.ISO8859-2)		option="";;
-	.koi8-r.shift)		option=".shift";;
-	.koi8-r.win)		option=".win";;
-	.koi8-u.shift.alt)	option=".shift.alt";;
-	.iso2)			option=".qwerty";;
+	(.pt154.io)		option=".io";;
+	(.pt154.kst)		option=".kst";;
+	(.106x)			option=".capsctrl";keys="109";;
+	(.*-ctrl)		option=".capsctrl";;
+	(.bds.ctrlcaps)		option=".bds.capsctrl";;
+	(.phonetic.ctrlcaps)	option=".phonetic.capsctrl";;
+	(.ISO8859-2)		option="";;
+	(.koi8-r.shift)		option=".shift";;
+	(.koi8-r.win)		option=".win";;
+	(.koi8-u.shift.alt)	option=".shift.alt";;
+	(.iso2)			option=".qwerty";;
 	esac
 
 	printf '%s.%s%s\n' "${cc}" "${keys}" "${option}"

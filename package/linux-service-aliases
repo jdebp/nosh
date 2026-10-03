@@ -1,3 +1,4 @@
+Debian-mask-initscripts alsa-utils
 Debian-mask-initscripts bootlogs
 Debian-mask-initscripts bootmisc.sh
 Debian-mask-initscripts checkfs.sh
@@ -49,6 +50,7 @@ lightdm		org.freedesktop.DisplayManager
 motd-dynamic	motd
 network-interfaces	networking
 nft	nftables
+virecover	nvi
 ofono	org.ofono
 org.cups.cups-lpd	lpd
 org.cups.cupsd	cups

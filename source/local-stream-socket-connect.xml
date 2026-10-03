@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -37,7 +38,7 @@
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>local-stream-socket-connect</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>local-stream-socket-connect</command> will ignore.
 </para>
 
 <para>
@@ -71,7 +72,7 @@ This always has the value <code>UNIX</code>, indicating the prefix to the names 
 </term><listitem>
 <para>
 The local (client) path of the connecting socket.
-Normally, the operating system assigns this; but an explicit assignment can be requested with the <arg choice='plain'>--local-path</arg> command-line option, where <replaceable>client-path</replaceable> is a pathname.
+Normally, the operating system assigns this; but an explicit assignment can be requested with the <arg choice='plain'>--local-path</arg> command&#x2010;line option, where <replaceable>client-path</replaceable> is a pathname.
 </para>
 </listitem>
 </varlistentry>

@@ -214,7 +214,10 @@ void
 UserEnvironmentSetter::apply (
 	const passwd * pw
 ) {
-	const char * pager(toolkit_pager ? "console-tty37-viewer" : DefaultEnvironment::UserLogin::PAGER);
+	const char * pager(toolkit_pager ? DefaultEnvironment::Toolkit::PAGER : DefaultEnvironment::UserLogin::PAGER);
+	const char * manpager(toolkit_pager ? DefaultEnvironment::Toolkit::MANPAGER : DefaultEnvironment::UserLogin::MANPAGER);
+	const char * www_browser(DefaultEnvironment::UserLogin::WWWBROWSER);
+	const char * xml_viewer(toolkit_pager ? DefaultEnvironment::Toolkit::XMLVIEWER : nullptr);
 	if (pw) {
 		LoginClassRecordOwner lc_system(LoginClassRecordOwner::GetSystem(*pw));
 		LoginClassRecordOwner lc_user(LoginClassRecordOwner::GetUser(*pw));
@@ -259,7 +262,9 @@ UserEnvironmentSetter::apply (
 			default_str("EDITOR", "editor", *pw, lc_system, lc_user, DefaultEnvironment::UserLogin::EDITOR);
 			default_str("VISUAL", "visual", *pw, lc_system, lc_user, DefaultEnvironment::UserLogin::VISUAL);
 			default_str("PAGER", "pager", *pw, lc_system, lc_user, pager);
-			default_str("MANPAGER", "manpager", *pw, lc_system, lc_user, pager);
+			default_str("MANPAGER", "manpager", *pw, lc_system, lc_user, manpager);
+			default_str("MANXMLVIEWER", "manxmlviewer", *pw, lc_system, lc_user, xml_viewer);
+			default_str("WWWBROWSER", "www-browser", *pw, lc_system, lc_user, www_browser);
 		}
 		if (set_user) {
 			envs.set("HOME", pw->pw_dir);
@@ -311,7 +316,9 @@ UserEnvironmentSetter::apply (
 			default_str("EDITOR", DefaultEnvironment::UserLogin::EDITOR);
 			default_str("VISUAL", DefaultEnvironment::UserLogin::VISUAL);
 			default_str("PAGER", pager);
-			default_str("MANPAGER", pager);
+			default_str("MANPAGER", manpager);
+			default_str("MANXMLVIEWER", xml_viewer);
+			default_str("WWWBROWSER", www_browser);
 		}
 		if (set_user) {
 			envs.set("HOME", nullptr);

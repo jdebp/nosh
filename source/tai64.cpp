@@ -5,11 +5,11 @@ For copyright and licensing terms, see the file named COPYING.
 
 #include <ctime>
 #include <stdint.h>
-#include <cstring>
-#include <fcntl.h>
-#include <unistd.h>
 #include "utils.h"
 #if defined(__LINUX__) || defined(__linux__) || defined(__OpenBSD__)
+#include <cstring>
+#include <unistd.h>
+#include <fcntl.h>
 #include "ProcessEnvironment.h"
 #endif
 

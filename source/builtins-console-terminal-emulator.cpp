@@ -6,8 +6,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include <vector>
 #include <cstddef>
 #include "builtins.h"
-#include "haswscons.h"
-#include "hasevdev.h"
+#include "config/haswscons.h"
+#include "config/hasevdev.h"
 
 /* Table of commands ********************************************************
 // **************************************************************************

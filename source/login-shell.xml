@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -35,7 +36,7 @@ The <envar>SHELL</envar> environment variable can be set up with the <citerefent
 </para>
 
 <para>
-This is effectively identical to using <citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry> with its <arg choice="plain">-a</arg> command-line option:
+This is effectively identical to using <citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry> with its <arg choice="plain">-a</arg> command&#x2010;line option:
 </para>
 <literallayout><computeroutput>$ </computeroutput><userinput>command exec -a -"${SHELL}" "${SHELL}"</userinput><computeroutput>
 </computeroutput></literallayout>

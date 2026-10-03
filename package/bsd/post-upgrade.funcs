@@ -10,7 +10,7 @@ try_restart() {
 	for i
 	do
 		# In theory this can operate foreign daemontools-style service managers.
-		if system-control is-loaded "$i" && 
+		if system-control is-loaded "$i" &&
 		   system-control is-active "$i"
 		then
 			printf 1>&2 "Try-Restart: %s\n" "$i"
@@ -18,8 +18,8 @@ try_restart() {
 		fi
 	done
 }
-add_user() { 
-	if ! getent passwd "$1" > /dev/null 
+add_user() {
+	if ! getent passwd "$1" > /dev/null
 	then
                 if test -n "$2"
                 then
@@ -33,11 +33,11 @@ add_user() {
 		:
 	fi
 }
-add_group() { 
-	if ! getent group "$1" > /dev/null 
+add_group() {
+	if ! getent group "$1" > /dev/null
 	then
 		printf 1>&2 "Adding group: %s\n" "$1"
-		pw groupadd "$1" 
+		pw groupadd "$1"
 	fi
 }
 add_log() {
@@ -46,14 +46,14 @@ add_log() {
 	setfacl -m u:"$1":rwx /var/log/sv/"$2" 2>/dev/null || setfacl -m user:"$1":rwxpD::allow /var/log/sv/"$2" || { chgrp "$1" /var/log/sv/"$2" && chmod g+w /var/log/sv/"$2" ; } || :
 }
 rename_user() {
-	if getent passwd "$1$3" > /dev/null 
+	if getent passwd "$1$3" > /dev/null
 	then
 		printf 1>&2 "Renaming user: %s to %s\n" "$1$3" "$2$3"
 		pw usermod "$1$3" -l "$2$3"
 	fi
 }
 rename_group() {
-	if getent group "$1$3" > /dev/null 
+	if getent group "$1$3" > /dev/null
 	then
 		printf 1>&2 "Renaming group: %s to %s\n" "$1$3" "$2$3"
 		groupmod_rename "$1$3" "$2$3"
@@ -61,7 +61,7 @@ rename_group() {
 }
 rename_logfile_owning_user() {
 	local opwescaped="`old_escape "$1"`"
-	if ! getent passwd "${opwescaped}"-log > /dev/null 
+	if ! getent passwd "${opwescaped}"-log > /dev/null
 	then
 		return
 	fi
@@ -76,7 +76,7 @@ rename_logfile_owning_user() {
 }
 fixup_user_account_name() {
 	local opwescaped="`old_escape "$1"`"
-	if ! getent passwd "${opwescaped}" > /dev/null 
+	if ! getent passwd "${opwescaped}" > /dev/null
 	then
 		return
 	fi
@@ -110,7 +110,7 @@ prefixed_service_with_dedicated_logger() {
 	else
 		system-control preset --prefix "$1" "$2.service"
 		system-control preset --prefix "cyclog@$1" "$2.service"
-		start_up "cyclog@$1$2.service" "$1$2.service"
+		try_restart "cyclog@$1$2.service" "$1$2.service"
 	fi
 }
 tty_service_with_dedicated_logger() {
@@ -130,33 +130,33 @@ login_service_with_dedicated_logger() {
 }
 kvt_login_service_with_dedicated_logger() {
 	case "`uname`" in
-	OpenBSD)	ttybase=ttyC; break ;;
-	NetBSD)		ttybase=ttyE; break ;;
-	*)		ttybase=ttyv; break ;;
+	(OpenBSD)	ttybase=ttyC; break ;;
+	(NetBSD)	ttybase=ttyE; break ;;
+	(*)		ttybase=ttyv; break ;;
 	esac
 	tty_service_with_dedicated_logger "ttylogin@" "${ttybase}$1"
 }
 kvt_realizer_service_with_dedicated_logger() {
 	case "`uname`" in
-	OpenBSD)	ttybase=ttyC; break ;;
-	NetBSD)		ttybase=ttyE; break ;;
-	*)		ttybase=ttyv; break ;;
+	(OpenBSD)	ttybase=ttyC; break ;;
+	(NetBSD)	ttybase=ttyE; break ;;
+	(*)		ttybase=ttyv; break ;;
 	esac
 	prefixed_service_with_dedicated_logger "console-kvt-realizer@" "${ttybase}$1"
 }
 serial_tty_login_service_with_dedicated_logger() {
 	case "`uname`" in
-	OpenBSD)	ttybase=tty0; break ;;
-	NetBSD)		ttybase=tty0; break ;;
-	*)		ttybase=ttyu; break ;;
+	(OpenBSD)	ttybase=tty0; break ;;
+	(NetBSD)	ttybase=tty0; break ;;
+	(*)		ttybase=ttyu; break ;;
 	esac
 	tty_service_with_dedicated_logger "getty@" "${ttybase}$1"
 }
 serial_tty_callout_service_with_dedicated_logger() {
 	case "`uname`" in
-	OpenBSD)	ttybase=tty0; break ;;
-	NetBSD)		ttybase=dty0; break ;;
-	*)		ttybase=cuau; break ;;
+	(OpenBSD)	ttybase=tty0; break ;;
+	(NetBSD)	ttybase=dty0; break ;;
+	(*)		ttybase=cuau; break ;;
 	esac
 	prefixed_service_with_dedicated_logger "ttycallout@" "${ttybase}$1"
 }

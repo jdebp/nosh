@@ -3,7 +3,7 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-#define _XOPEN_SOURCE_EXTENDED
+#define _BSD_SOURCE 1
 #include <vector>
 #include <memory>
 #include <iostream>
@@ -43,7 +43,7 @@ console_input_method_control [[gnu::noreturn]] (
 	try {
 		popt::definition * top_table[] = {
 		};
-		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{.|K|L|R|G|Y|Z|N|C...}");
+		popt::top_table_definition main_option(sizeof top_table/sizeof *top_table, top_table, "Main options", "{.|K|L|R|G|Y|Z|N|C}...");
 
 		std::vector<const char *> new_args;
 		popt::arg_processor<const char **> p(args.data() + 1, args.data() + args.size(), prog, envs, main_option, new_args);

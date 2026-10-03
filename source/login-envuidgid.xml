@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -30,6 +31,8 @@
 <arg choice='opt'>--inversescreen <replaceable>boolean</replaceable></arg>
 <arg choice='opt'>--tui_level <replaceable>level</replaceable></arg>
 <arg choice='opt'>--verbose</arg>
+<arg choice='opt'>--utmpx</arg>
+<arg choice='opt'>--utmpx-even-if-pam</arg>
 <arg choice='req'><replaceable>next-prog</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
@@ -54,7 +57,7 @@ In the parent process it waits for that child process to terminate and then repl
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which the utility will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which the utility will ignore.
 </para>
 
 <para>
@@ -64,7 +67,7 @@ In the parent process it waits for that child process to terminate and then repl
 
 <note>
 Forking is required for both the PAM and non-PAM flavours for the same reasons:
-PAM requires that "user sessions" be opened and closed by a process with a privileged effective user ID; and non-PAM needs write access to the (privileged access) <citerefentry><refentrytitle>utmpx</refentrytitle><manvolnum>3</manvolnum></citerefentry> "active login" table.
+PAM requires that <quote>user sessions</quote> be opened and closed by a process with a privileged effective user ID; and non-PAM needs write access to the (privileged access) <citerefentry><refentrytitle>utmpx</refentrytitle><manvolnum>3</manvolnum></citerefentry> <quote>active login</quote> table.
 </note>
 
 <para>
@@ -74,13 +77,14 @@ If the login dialogue is cancelled, the login authentication fails, there is a P
 <refsection><title>Log-in logs</title>
 
 <para>
-The <arg choice='plain'>--verbose</arg> command-line option instructs the utility to log, to standard error, login attempt failure and success messages.
-Only success messages contain the account name, on the grounds that this is attacker-supplied data and an authentication failure has failed to sanitize it.
+The <arg choice='plain'>--verbose</arg> command&#x2010;line option instructs the utility to log, to standard error, login attempt failure and success messages.
+Only success messages contain the account name, on the grounds that this is attacker&#x2010;supplied data and an authentication failure has failed to sanitize it.
 </para>
 
 <para>
-In the non-PAM case, the <arg choice='plain'>--utmpx</arg> command-line option causes <command>login-envuidgid-nopam</command> to explicitly write <code>USER_PROCESS</code> and <code>DEAD_PROCESS</code> records to the <citerefentry><refentrytitle>utmpx</refentrytitle><manvolnum>3</manvolnum></citerefentry> "active login" table for the forked child process.
-(In the PAM case, this is normally handled by a PAM module.)
+The <arg choice='plain'>--utmpx</arg> command&#x2010;line option causes <command>login-envuidgid-nopam</command> to explicitly write <code>USER_PROCESS</code> and <code>DEAD_PROCESS</code> records to the <citerefentry><refentrytitle>utmpx</refentrytitle><manvolnum>3</manvolnum></citerefentry> <quote>active login</quote> table for the forked child process, except in the case where PAM is used.
+On several operating systems, an OpenPAM module (usually <citerefentry><refentrytitle>pam_lastlog</refentrytitle><manvolnum>8</manvolnum></citerefentry>) handles upserting the <quote>active login</quote> table, and <command>login-envuidgid-nopam</command> need only do this itself when it is not using PAM.
+However, on other operating systems PAM does not handle this, and the <arg choice='plain'>--utmpx-even-if-pam</arg> command&#x2010;line option causes <command>login-envuidgid-nopam</command> to apply the <arg choice='plain'>--utmpx</arg> option, even though PAM is being used.
 </para>
 
 <warning>
@@ -106,7 +110,7 @@ The utility opens its controlling terminal via <filename>/dev/tty</filename>, or
 <refsection><title>Input</title>
 
 <para>
-Input is always in insert mode, and (unlike "glass-TTY" login programs) allows editing input fields from elsewhere than only their ends.
+Input is always in insert mode, and (unlike <quote>glass-TTY</quote> login programs) allows editing input fields from elsewhere than only their ends.
 It operates in Unicode, decoding what input it reads from the terminal with the assumption that it is UTF-8, and accepts most non-C0 and non-C1 Unicode characters.
 The results are transformed into UTF-8 before passing back to PAM (or being directly employed against the system account database).
 </para>
@@ -129,7 +133,7 @@ The user interface responds to some conventional line editing characters and con
 </varlistentry>
 <varlistentry>
 <term>CBT (<keycap>&#x21e4;&#160;BackTab</keycap>)</term>
-<listitem><para>move to the previous editable field, if any</para><note>The FreeBSD console in "teken" and "cons25" modes, and hence <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> when emulating it, employs a mongrel admixture of DEC VT and SCO function key control sequences, and it is impossible to distinguish the DEC VT Backwards TAB control sequence from the SCO Unix Multiscreen virtual terminal shifted function key 2 control sequence.  (The sequence as retained in FreeBSD, at any rate. <ulink url="http://uw714doc.sco.com/en/man/html.7/keyboard.7.html">The actual SCO Console</ulink> used slightly different encodings to what remains of it in FreeBSD, and thus somewhat ironically did not have FreeBSD's amibiguity over backtab.)</note></listitem>
+<listitem><para>move to the previous editable field, if any</para><note>The FreeBSD console in <quote>teken</quote> and <quote>cons25</quote> modes, and hence <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> when emulating it, employs a mongrel admixture of DEC VT and SCO function key control sequences, and it is impossible to distinguish the DEC VT Backwards TAB control sequence from the SCO Unix Multiscreen virtual terminal shifted function key 2 control sequence.  (The sequence as retained in FreeBSD, at any rate. <ulink url="http://uw714doc.sco.com/en/man/html.7/keyboard.7.html">The actual SCO Console</ulink> used slightly different encodings to what remains of it in FreeBSD, and thus somewhat ironically did not have FreeBSD's amibiguity over backtab.)</note></listitem>
 </varlistentry>
 <varlistentry>
 <term>CR (<keycombo><keycap>&#x2388;&#160;Control</keycap>+<keycap>M</keycap></keycombo>)</term>
@@ -185,7 +189,7 @@ The user interface responds to some conventional line editing characters and con
 
 <para>
 Output operates in Unicode, encoded as UTF-8, and employs Unicode box drawing and Apple IIc MouseText characters to draw pseudo-graphic windows around the input fields, to hide password fields, and to draw a banner with an updating digital clock.
-The <arg choice='plain'>--tui-level</arg> command-line option constrains the use of MouseText or Unicode block graphics and line drawing characters in TUI widgets; including the clock and the pseudo-window borders.
+The <arg choice='plain'>--tui-level</arg> command&#x2010;line option constrains the use of MouseText or Unicode block graphics and line drawing characters in TUI widgets; including the clock and the pseudo-window borders.
 </para>
 
 <para>
@@ -201,14 +205,14 @@ The terminal type determines a few terminal capabilities (such as whether the te
 </para>
 
 <para>
-The <arg choice='plain'>--cursor-keypad-application-mode</arg> and <arg choice='plain'>--calculator-keypad-application-mode</arg> command-line options instruct the utility to switch, respectively, the cursor keypad and the calculator keypad of the realizing terminal into their "application" modes.
-Otherwise it switches them into their "normal" modes.
+The <arg choice='plain'>--cursor-keypad-application-mode</arg> and <arg choice='plain'>--calculator-keypad-application-mode</arg> command&#x2010;line options instruct the utility to switch, respectively, the cursor keypad and the calculator keypad of the realizing terminal into their <quote>application</quote> modes.
+Otherwise it switches them into their <quote>normal</quote> modes.
 "application" mode is generally not useful to the utility, since it makes cursor and calculator keys indistinguishable from accelerator keys.
-The <arg choice='plain'>--no-alternate-screen-buffer</arg> command-line option instructs the utility to not switch to the alternative screen buffer.
+The <arg choice='plain'>--no-alternate-screen-buffer</arg> command&#x2010;line option instructs the utility to not switch to the alternative screen buffer.
 This has two uses.
 First, it allows one to retain visibility of displayed information after the program has exited (although <citerefentry><refentrytitle>setterm</refentrytitle><manvolnum>1</manvolnum></citerefentry> provides access to the alternative screen buffer).
 Second, it works around problems with some (yet more!) broken terminal emulators that attempt to be and fail at being like XTerm, which forcibly change cursor and editing keys into application mode when the alternative screen buffer is active.
-The <arg choice='plain'>--inversescreen</arg> command-line option instructs <command>login-envuidgid</command> to switch the DECSCNM ("light"/"dark" screen mode) private mode on or off.
+The <arg choice='plain'>--inversescreen</arg> command&#x2010;line option instructs <command>login-envuidgid</command> to switch the DECSCNM ("light"/"dark" screen mode) private mode on or off.
 </para>
 
 </refsection>

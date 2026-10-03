@@ -47,45 +47,45 @@ list_network_interfaces() {
 
 	# This is "effectively mandatory" and must be first.
 	case "`uname`" in
-	Linux)	echo lo ;;
-	*)	echo lo0 ;;
+	(Linux)	echo lo ;;
+	(*)	echo lo0 ;;
 	esac
 
 	for i in $n $c
 	do
 		case "$i" in
-			lo0|lo)			;;
-			epair[0-9]*[ab])	;;
-			epair[0-9]*)		printf "%s " "${i}a" "${i}b" ;;
-			*)			printf "%s " "$i" ;;
+			(lo0|lo)		;;
+			(epair[0-9]*[ab])	;;
+			(epair[0-9]*)		printf "%s " "${i}a" "${i}b" ;;
+			(*)			printf "%s " "$i" ;;
 		esac
 	done
 }
 is_physical_interface() {
 	case "$1" in
-		lo[0-9]*|lo)	return 1 ;;
-		faith[0-9]*)	return 1 ;;
-		stf[0-9]*)	return 1 ;;
-		lp[0-9]*)	return 1 ;;
-		sl[0-9]*)	return 1 ;;
+		(lo[0-9]*|lo)	return 1 ;;
+		(faith[0-9]*)	return 1 ;;
+		(stf[0-9]*)	return 1 ;;
+		(lp[0-9]*)	return 1 ;;
+		(sl[0-9]*)	return 1 ;;
 	esac
 	return 0
 }
 is_ip_interface() {
 	case "$1" in
-		pflog[0-9]*)	return 1 ;;
-		pfsync[0-9]*)	return 1 ;;
-		usbus[0-9]*)	return 1 ;;
-		an[0-9]*)	return 1 ;;
-		ath[0-9]*)	return 1 ;;
-		ipw[0-9]*)	return 1 ;;
-		ipfw[0-9]*)	return 1 ;;
-		iwi[0-9]*)	return 1 ;;
-		iwn[0-9]*)	return 1 ;;
-		ral[0-9]*)	return 1 ;;
-		wi[0-9]*)	return 1 ;;
-		wl[0-9]*)	return 1 ;;
-		wpi[0-9]*)	return 1 ;;
+		(pflog[0-9]*)	return 1 ;;
+		(pfsync[0-9]*)	return 1 ;;
+		(usbus[0-9]*)	return 1 ;;
+		(an[0-9]*)	return 1 ;;
+		(ath[0-9]*)	return 1 ;;
+		(ipw[0-9]*)	return 1 ;;
+		(ipfw[0-9]*)	return 1 ;;
+		(iwi[0-9]*)	return 1 ;;
+		(iwn[0-9]*)	return 1 ;;
+		(ral[0-9]*)	return 1 ;;
+		(wi[0-9]*)	return 1 ;;
+		(wl[0-9]*)	return 1 ;;
+		(wpi[0-9]*)	return 1 ;;
 	esac
 	return 0
 }
@@ -118,9 +118,9 @@ filter_ifconfig() {
 	for i
 	do
 		case "$i" in
-			SYNCDHCP|NOSYNCDHCP|DHCP|WPA|HOSTAP|NOAUTO|IPV4LL|RTSOL)
+			(SYNCDHCP|NOSYNCDHCP|DHCP|WPA|HOSTAP|NOAUTO|IPV4LL|RTSOL)
 				;;
-			inet|inet4|inet6|link|ether|ipx|atalk|lladr)
+			(inet|inet4|inet6|link|ether|ipx|atalk|lladr)
 				if test _"$i" = _"$n"
 				then
 					test -z "$o" || printf "\n"
@@ -129,7 +129,7 @@ filter_ifconfig() {
 					o=""
 				fi
 				;;
-			*)
+			(*)
 				test -z "$o" || printf "%s " "$i"
 				;;
 		esac
@@ -143,8 +143,8 @@ get_filtered_ifconfig2() {
 	if ! c="`get_ifconfig1 "$1"`"
 	then
 		case "$1" in
-		lo0|lo)	c="inet 127.0.0.1/8 inet6 ::1/128" ;;
-		*)	c="" ;;
+		(lo0|lo)	c="inet 127.0.0.1/8 inet6 ::1/128" ;;
+		(*)	c="" ;;
 		esac
 	fi
 
@@ -157,9 +157,9 @@ get_filtered_ifconfig3() {
 	if ! c="`get_ifconfig2 "$1" "$2"`"
 	then
 		case "$2:$1" in
-		aliases:lo0)	c="inet 127.0.0.1/8 inet6 ::1/128" ;;
-		aliases:lo)	c="inet 127.0.0.1/8 inet6 ::1/128" ;;
-		ipv6:*) 
+		(aliases:lo0)	c="inet 127.0.0.1/8 inet6 ::1/128" ;;
+		(aliases:lo)	c="inet 127.0.0.1/8 inet6 ::1/128" ;;
+		(ipv6:*) 
 			if a="`read_rc \"$2\"_activate_all_interfaces`" && 
 			   test _"NO" = _"`if_no_or_empty "$a" NO`"
 			then
@@ -168,7 +168,7 @@ get_filtered_ifconfig3() {
 				c="inet6 -ifdisabled" 
 			fi
 			;;
-		*)	c="" ;;
+		(*)	c="" ;;
 		esac
 	fi
 
@@ -181,8 +181,8 @@ get_ipv6_prefix() {
 	for i in `get_ipv6_prefix1 "$1" || true`
 	do
 		case "$i" in
-			*/*)	l="${i#*/}" ; i="${i%/*}" ;;
-			*)	l="64" ;;
+			(*/*)	l="${i#*/}" ; i="${i%/*}" ;;
+			(*)	l="64" ;;
 		esac
 		i="${i%::*}"
 		i="${i%:}"
@@ -208,7 +208,7 @@ get_inet6_opts() {
 
 	is_ip_interface "$1" || return 0
 	case "`uname`" in
-	*BSD)	
+	(*BSD)	
 		if is_ipv6_default_interface "$1"
 		then
 			printf -- "%s " defaultif
@@ -227,7 +227,7 @@ get_inet6_opts() {
 		fi
 		printf -- "%s " $r
 		;;
-	*)	;;
+	(*)	;;
 	esac
 	get_filtered_ifconfig2 "$1" inet6
 	get_filtered_ifconfig3 "$1" ipv6 inet6
@@ -278,7 +278,7 @@ make_arp() {
 	show_enable "${service}"
 	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../../sv/cyclog@network-interfaces" "$r/${service}/log"
+	ln -s -- "../../../service-bundles/services/cyclog@network-interfaces" "$r/${service}/log"
 }
 
 make_ndp() {
@@ -292,7 +292,7 @@ make_ndp() {
 	show_enable "${service}"
 	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../../sv/cyclog@network-interfaces" "$r/${service}/log"
+	ln -s -- "../../../service-bundles/services/cyclog@network-interfaces" "$r/${service}/log"
 }
 
 make_ip4_route() {
@@ -305,7 +305,7 @@ make_ip4_route() {
 	show_enable "${service}"
 	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../../sv/cyclog@network-interfaces" "$r/${service}/log"
+	ln -s -- "../../../service-bundles/services/cyclog@network-interfaces" "$r/${service}/log"
 }
 
 make_ip6_route() {
@@ -318,7 +318,7 @@ make_ip6_route() {
 	show_enable "${service}"
 	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../../sv/cyclog@network-interfaces" "$r/${service}/log"
+	ln -s -- "../../../service-bundles/services/cyclog@network-interfaces" "$r/${service}/log"
 }
 
 make_netif() {
@@ -335,7 +335,7 @@ make_netif() {
 	show_enable "${service}"
 	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../../sv/ifconfig-log" "$r/${service}/log"
+	ln -s -- "../../../service-bundles/services/ifconfig-log" "$r/${service}/log"
 	system-control preset ifconfig-log
 }
 
@@ -353,7 +353,7 @@ make_ifscript() {
 	show_enable "${service}"
 	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../../sv/ifconfig-log" "$r/${service}/log"
+	ln -s -- "../../../service-bundles/services/ifconfig-log" "$r/${service}/log"
 	system-control preset ifconfig-log
 }
 
@@ -384,8 +384,8 @@ make_ifconfig() {
 	do
 		rm -f -- "$r/${service}/wants/kmod@$m"
 		rm -f -- "$r/${service}/after/kmod@$m"
-		ln -s -- "../../../sv/kmod@$m" "$r/${service}/wants/"
-		ln -s -- "../../../sv/kmod@$m" "$r/${service}/after/"
+		ln -s -- "../../../service-bundles/services/kmod@$m" "$r/${service}/wants/"
+		ln -s -- "../../../service-bundles/services/kmod@$m" "$r/${service}/after/"
 	done
 	for c in $4
 	do
@@ -401,7 +401,7 @@ make_ifconfig() {
 	show_enable "${service}"
 	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../../sv/ifconfig-log" "$r/${service}/log"
+	ln -s -- "../../../service-bundles/services/ifconfig-log" "$r/${service}/log"
 	system-control preset ifconfig-log
 }
 
@@ -433,7 +433,7 @@ make_natd() {
 	show_enable "${service}"
 	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../../sv/natd-log" "$r/${service}/log"
+	ln -s -- "../../../service-bundles/services/natd-log" "$r/${service}/log"
 	system-control preset natd-log
 }
 
@@ -455,7 +455,7 @@ make_dhclient() {
 	show_enable "${service}"
 	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../../sv/dhclient-log" "$r/${service}/log"
+	ln -s -- "../../../service-bundles/services/dhclient-log" "$r/${service}/log"
 	system-control preset dhclient-log
 }
 
@@ -477,7 +477,7 @@ make_udhcpc() {
 	show_enable "${service}"
 	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../../sv/udhcpc-log" "$r/${service}/log"
+	ln -s -- "../../../service-bundles/services/udhcpc-log" "$r/${service}/log"
 	system-control preset udhcpc-log
 }
 
@@ -499,7 +499,7 @@ make_dhcpcd() {
 	show_enable "${service}"
 	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../../sv/dhcpcd-log" "$r/${service}/log"
+	ln -s -- "../../../service-bundles/services/dhcpcd-log" "$r/${service}/log"
 	system-control preset dhcpcd-log
 }
 
@@ -517,7 +517,7 @@ make_hostap() {
 	show_enable "${service}"
 	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../../sv/cyclog@hostapd" "$r/${service}/log"
+	ln -s -- "../../../service-bundles/services/cyclog@hostapd" "$r/${service}/log"
 	system-control preset cyclog@hostapd
 }
 
@@ -535,7 +535,7 @@ make_rtsol() {
 	show_enable "${service}"
 	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../../sv/cyclog@rtsold" "$r/${service}/log"
+	ln -s -- "../../../service-bundles/services/cyclog@rtsold" "$r/${service}/log"
 	system-control preset cyclog@rtsold
 }
 
@@ -553,7 +553,7 @@ make_wpa() {
 	show_enable "${service}"
 	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../../sv/cyclog@wpa_supplicant" "$r/${service}/log"
+	ln -s -- "../../../service-bundles/services/cyclog@wpa_supplicant" "$r/${service}/log"
 	system-control preset cyclog@wpa_supplicant
 }
 
@@ -574,7 +574,7 @@ make_ppp() {
 	show_enable "${service}"
 	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../../sv/ppp-log" "$r/${service}/log"
+	ln -s -- "../../../service-bundles/services/ppp-log" "$r/${service}/log"
 	system-control preset ppp-log
 }
 
@@ -588,7 +588,7 @@ make_sppp() {
 	show_enable "${service}"
 	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../sv/sppp-log" "$r/${service}/log"
+	ln -s -- "../../../service-bundles/services/sppp-log" "$r/${service}/log"
 	system-control preset sppp-log
 }
 
@@ -610,7 +610,7 @@ make_rfcomm_pppd() {
 	show_enable "${service}"
 	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../../sv/rfcomm_pppd-log" "$r/${service}/log"
+	ln -s -- "../../../service-bundles/services/rfcomm_pppd-log" "$r/${service}/log"
 	system-control preset rfcomm_pppd-log
 }
 
@@ -628,7 +628,7 @@ make_snort() {
 	show_enable "${service}"
 	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../../sv/snort-log" "$r/${service}/log"
+	ln -s -- "../../../service-bundles/services/snort-log" "$r/${service}/log"
 	system-control preset snort-log
 }
 
@@ -650,7 +650,7 @@ make_avahi_autoipd() {
 	show_enable "${service}"
 	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../../sv/avahi-autoipd-log" "$r/${service}/log"
+	ln -s -- "../../../service-bundles/services/avahi-autoipd-log" "$r/${service}/log"
 	system-control preset avahi-autoipd-log
 }
 
@@ -682,7 +682,7 @@ make_wlandebug() {
 	show_enable "${service}"
 	show_settings "${service}"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../../sv/wlandebug-log" "$r/${service}/log"
+	ln -s -- "../../../service-bundles/services/wlandebug-log" "$r/${service}/log"
 	system-control preset wlandebug-log
 }
 
@@ -755,9 +755,9 @@ done
 if d="`get_var1 defaultrouter`"
 then
 	case "${d}" in
-		[Nn][Oo]|'')
+		([Nn][Oo]|'')
 			;;
-		*)
+		(*)
 			make_ip4_route "_default" "default ${d}" >> "$3"
 			;;
 	esac
@@ -796,9 +796,9 @@ done
 if d="`get_var1 ipv6_defaultrouter`"
 then
 	case "${d}" in
-		[Nn][Oo]|'')
+		([Nn][Oo]|'')
 			;;
-		*)
+		(*)
 			make_ip6_route "_default" "default ${d}" >> "$3"
 			;;
 	esac

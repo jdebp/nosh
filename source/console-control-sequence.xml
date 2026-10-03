@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -460,7 +461,7 @@ Compatible terminal emulators are:
 <listitem><para>
 <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 </para><para>
-This has always implemented the ED 3 extension, but does nothing because it has no off-screen buffers (what is "on screen" being a function of realizers, which are separate from the terminal emulator).
+This has always implemented the ED 3 extension, but does nothing because it has no off-screen buffers (what is <quote>on screen</quote> being a function of realizers, which are separate from the terminal emulator).
 </para></listitem>
 <listitem><para>
 <citerefentry><refentrytitle>xterm</refentrytitle><manvolnum>1</manvolnum></citerefentry>
@@ -510,7 +511,7 @@ However, several purportedly DEC VT compatible terminal emulators ascribe wholly
 DECSNLS is unencumbered by the inconsistencies of DECSLPP in those terminal emulators, but conversely is not supported by several other purportedly DEC VT compatible terminal emulators.
 </para>
 <para>
-If the <arg choice='plain'>--columns</arg> command line option is used as well and the terminal is known to support the DTTerm extensions, setting the rows and columns is done in one operation with DECSLPP 8.
+If the <arg choice='plain'>--columns</arg> command&#x2010;line option is used as well and the terminal is known to support the DTTerm extensions, setting the rows and columns is done in one operation with DECSLPP 8.
 </para>
 </listitem>
 </varlistentry>
@@ -526,7 +527,7 @@ This uses the DECSCPP control sequence if the terminal type is known to support 
 It then resets the left and right margins to the screen borders using the DECSLRM control sequence.
 </para>
 <para>
-If the <arg choice='plain'>--rows</arg> command line option is used as well and the terminal is known to support the DTTerm extensions, setting the rows and columns is done in one operation with DECSLPP 8.
+If the <arg choice='plain'>--rows</arg> command&#x2010;line option is used as well and the terminal is known to support the DTTerm extensions, setting the rows and columns is done in one operation with DECSLPP 8.
 </para>
 <para>
 DECSCPP is supported by the DEC VT340 and later.
@@ -553,7 +554,7 @@ This does nothing if the terminal type is not known to support these control seq
 Disable XTerm mouse reports, enable for button press reports, enable for button press and motion while pressed reports, and enable for all reports, respectively.
 </para>
 <para>
-Only the modern ECMA-48-conformant style of mouse report (often misnamed "SGR" style, although it is not a SGR control sequence, and invented by Thomas Dickey in 2012) is requested, which most terminal emulators support nowadays.
+Only the modern ECMA-48-conformant style of mouse report (often misnamed <quote>SGR</quote> style, although it is not a SGR control sequence, and invented by Thomas Dickey in 2012) is requested, which most terminal emulators support nowadays.
 The older styles of mouse reports from X10 xterm and Unicode rxvt are malformed CSI sequences which an ECMA-48-conformant decoder has to fail to handle (because they put additional characters after the final character).
 This thus does nothing if the terminal type is not known to support the ECMA-48-conformant style (<citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry> has <varname>has_XTerm1006Mouse</varname> set to false) because emitting the XTerm private mode settings anyway would turn on non-ECMA-48-conformant mouse reports on some terminals.
 </para></listitem>
@@ -598,10 +599,10 @@ On a real terminal, it resets the serial communications line from the terminal e
 <arg choice='plain'>--soft-reset</arg> does not affect the serial communications.
 </para>
 <para>
-Moreover, the RIS control sequence invokes what is known as "implied XOFF".
+Moreover, the RIS control sequence invokes what is known as <quote>implied XOFF</quote>.
 To use it <emphasis>correctly</emphasis>, an application must put the line discipline into XOFF-received mode, so that it does not lose output by sending it while the terminal is resetting.
 This is not actually possible with terminal I/O on Linux or the BSDs, and it is not possible to use RIS completely correctly.
-<arg choice='plain'>--soft-reset</arg> does not invoke "implied XOFF".
+<arg choice='plain'>--soft-reset</arg> does not invoke <quote>implied XOFF</quote>.
 </para>
 <para>
 This is not a match for POSIX terminal I/O, and its use has been proscribed for decades.
@@ -652,14 +653,14 @@ Virtual terminals connect the line discipline to the emulator, through back chan
 <title>Character sets</title>
 
 <para>
-If the <arg choice='plain'>--7bit</arg> command-line option is used, the various C1 control characters (CSI, HTS, NEL, and so forth) are sent using the ECMA-48 7-bit encoding scheme.
-If it is not used but the <arg choice='plain'>--8bit</arg> command-line option is used, the C1 control characters are sent as a raw 8-bit character.
+If the <arg choice='plain'>--7bit</arg> command&#x2010;line option is used, the various C1 control characters (CSI, HTS, NEL, and so forth) are sent using the ECMA-48 7-bit encoding scheme.
+If it is not used but the <arg choice='plain'>--8bit</arg> command&#x2010;line option is used, the C1 control characters are sent as a raw 8-bit character.
 By default, in the absence of either option, the C1 control characters are sent encoded as UTF-8, in the expectation that the terminal is Unicode aware and decodes all output from UTF-8.
 </para>
 <itemizedlist>
 <listitem><para>
 <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> properly decodes C1 characters from UTF-8 and processes them; so it does not require either option.
-(Indeed, since UTF-8 is mandatory, using the <arg choice='plain'>--8bit</arg> command-line option is inappropriate.)
+(Indeed, since UTF-8 is mandatory, using the <arg choice='plain'>--8bit</arg> command&#x2010;line option is inappropriate.)
 </para></listitem>
 <listitem><para>
 <citerefentry><refentrytitle>xterm</refentrytitle><manvolnum>1</manvolnum></citerefentry> requires the <arg choice='plain'>--7bit</arg> option be used as it does not ever treat UTF-8-encoded C1 characters as control characters, irrespective of the setting of its UTF-8 encoding options.
@@ -696,7 +697,7 @@ Hexadecimal and octal numbers are permitted in index number, so care must be tak
 If the terminal type is known to not support ISO 8613-6/ITU T.416 Direct colour at all or is known to fake support by mapping 24-bit RGB colours to entries in their 8-bit colour palettes, <command>console-control-sequence</command> maps the RGB value to the nearest indexed colour value and uses ISO 8613-6/ITU T.416 Indexed colour.
 It assumes a conventional palette with a 24 value greyscale and a 6&#x00D7;6&#x00D7;6 colour cube (the same as implemented in <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> for Indexed colour).
 Setting the first 16 ISO 8613-6/ITU T.416 Indexed colours is done with the newer control sequences, not with the 16 ECMA-48 and AIXTerm standard colour ones.
-The <arg choice='plain'>--permit-fake-truecolour</arg> command-line option permits the use of ISO 8613-6/ITU T.416 Direct colour control sequences even on terminals which are known to fake it.
+The <arg choice='plain'>--permit-fake-truecolour</arg> command&#x2010;line option permits the use of ISO 8613-6/ITU T.416 Direct colour control sequences even on terminals which are known to fake it.
 </para>
 
 </refsection>
@@ -749,15 +750,15 @@ None of the things peculiar to the Linux built-in terminal emulator, such as set
 Conversely, <command>console-control-sequence</command> supports standard terminal control sequences that the Linux-specific tool does not, such as strikethrough and calculator keypad application mode.
 </para></listitem>
 <listitem><para>
-To simplify the command-line option parsing, displaying the tabstops and ruler is the remit of a distinct <arg choice='plain'>--showtabs</arg> option that never takes option arguments.
+To simplify the command&#x2010;line option parsing, displaying the tabstops and ruler is the remit of a distinct <arg choice='plain'>--showtabs</arg> option that never takes option arguments.
 Similarly, clearing all tabs is the remit of a distinct <arg choice='plain'>--notabs</arg> option.
 </para></listitem>
 <listitem><para>
 This command supports the additional 8 (de facto) standard colours (that originated with AIXTerm), and uses ISO 8613-6/ITU T.416 Indexed and ISO 8613-6/ITU T.416 Direct colour control sequences.
 </para></listitem>
 <listitem><para>
-No such concept as "underline colour" or "boldface colour" is recognized.
-This is a hangover from an odd quirk in the way that the Linux built-in terminal emulator handled CGA/EGA/VGA hardware in text mode (which it usually employs in graphics mode nowadays, the so-called "framebuffer console").
+No such concept as <quote>underline colour</quote> or <quote>boldface colour</quote> is recognized.
+This is a hangover from an odd quirk in the way that the Linux built-in terminal emulator handled CGA/EGA/VGA hardware in text mode (which it usually employs in graphics mode nowadays, the so-called <quote>framebuffer console</quote>).
 Underlining and boldface are attributes (displayed on many terminal emulators by actually underlining and boldfacing the glyphs), not colours.
 </para></listitem>
 </itemizedlist>

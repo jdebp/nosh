@@ -1,22 +1,18 @@
 #!/bin/sh -e
-if [ \! -d package ] || [ \! -d package/debian ] 
+if ! test -d package || ! test -d package/debian
 then
-	echo "You are not in the right directory." 1>&2 
+	echo "You are not in the right directory." 1>&2
+	exit 100
+fi
+if ! command -v pax >/dev/null
+then
+	# https://pubs.opengroup.org/onlinepubs/9799919799/utilities/pax.html
+	echo "Non-POSIX operating system: pax not found." 1>&2
 	exit 100
 fi
 
+export CDPATH=
+
 # Create and populate the debian directory.
 install -d -m 0755 debian
-(
-	cd package/debian
-	ls -1 .
-) | (
-	cd debian	# The syntax of ln -s makes more sense if we are in the target directory.
-	while read i
-	do
-		dir="`dirname $i`"
-		# Try to create a hard link, and fall back to a symbolic link.
-		# The package and debian directories aren't necessarily on the same disc volume.
-		ln -f ../package/debian/"$i" "${dir}"/"$i" 2>/dev/null || ln -s -f ../package/debian/"$i" "${dir}"/"$i"
-	done
-)
+( cd package/debian && ( 2>/dev/null pax -w -r -l -u -- * ../../debian/ || true ) )

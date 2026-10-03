@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -46,16 +47,16 @@ Whilst it is built in to them, it is an external command as far as shells are co
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>ulimit</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>ulimit</command> will ignore.
 </para>
 
 <para>
-If the <arg choice='plain'>-H</arg> command line option is used, <command>ulimit</command> will set the hard resource limits.
+If the <arg choice='plain'>-H</arg> command&#x2010;line option is used, <command>ulimit</command> will set the hard resource limits.
 If the <arg choice='plain'>-S</arg> option is used as well, <command>ulimit</command> will set both the hard and the soft resource limits.
 Otherwise, <command>ulimit</command> will set just the soft resource limits.
 </para>
 <note>
-The behaviours when neither command-line option is specified or both are do not match the behaviours of (some) shells.
+The behaviours when neither command&#x2010;line option is specified or both are do not match the behaviours of (some) shells.
 However, note that even shells do not agree with one another on what to do in those two cases.
 For script clarity, the recommended use is to explicitly use <arg choice='plain'>-H</arg> for hard only and <arg choice='plain'>-S</arg> for soft only in separate invocations of the command, and avoid <arg choice='plain'>-H</arg> <arg choice='plain'>-S</arg> combined in a single invocation.
 This not only prevents misunderstanding by shell script programmers, it also clarifies the order in which limits are being set.
@@ -142,7 +143,7 @@ See <citerefentry><refentrytitle>setrlimit</refentrytitle><manvolnum>2</manvolnu
 </refsection>
 
 <para>
-To set an "infinite" limit, use the text <code>unlimited</code> for the limit value.
+To set an <quote>infinite</quote> limit, use the text <code>unlimited</code> for the limit value.
 Similarly, the text <code>=</code> or <code>hard</code> will use the current value of the hard limit as the value.
 (This is particularly useful when setting soft limits, as it provides a simple means of setting the soft limit to the hard limit ceiling without knowing its current value.)
 </para>

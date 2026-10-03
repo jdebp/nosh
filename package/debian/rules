@@ -1,8 +1,12 @@
 #!/usr/bin/make -sf
 
-.PHONY: build binary install clean stage control create
+# This is called by the Debian package builder.
 
-BINARY_PACKAGES=guide exec terminal-management service-management terminal-extras service-management-extras zsh-completion service-command-shim systemv-shims systemd-shims upstart-shims smf-shims execline-shims core-shims linux-shims debian-shims openrc-shims bsd-shims openbsd-shims freebsd-shims ucspi-tcp-shims kbd-shims net-tools-shims logrotate-shims bcron-as-cron-shims desktop-bus-shims bundles debian-crontab-no-anacron debian-crontab-anacron run-system-manager run-via-open-rc run-via-systemd run-debian-desktop-base run-debian-server-base run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-mdevd run-vdev run-local-syslog run-klog run-bcron run-publicfile run-sntpclock run-taiclock run-taiclockd run-djbdns run-fake-hwclock
+.PHONY: build binary stage control create clean
+
+BINARY_PACKAGES=guide exec terminal-management service-management terminal-extras service-management-extras zsh-completion service-command-shim systemv-shims systemd-shims upstart-shims smf-shims execline-shims core-shims linux-shims debian-shims openrc-shims bsd-shims openbsd-shims freebsd-shims ucspi-tcp-shims kbd-shims net-tools-shims bcron-as-cron-shims desktop-bus-shims bundles run-system-manager run-via-open-rc run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-local-syslog run-klog run-bcron run-publicfile run-sntpclock run-taiclock run-taiclockd run-djbdns run-fake-hwclock
+BSD_SPECIFIC_PACKAGES=run-via-mewburn-rc run-via-openbsd-rc run-devd run-devpubd run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base
+DEBIAN_SPECIFIC_PACKAGES=debian-crontab-anacron debian-crontab-no-anacron run-debian-desktop-base run-debian-server-base run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-mdevd run-vdev run-via-systemd logrotate-shims
 
 # The Debian package builder targets this in order to make the package contents.
 build:
@@ -12,7 +16,7 @@ build:
 clean:
 	echo 1>&2 "Cleaning individual staged packages under debian/ ."
 	${RM} debian/files debian/substvars
-	for i in ${BINARY_PACKAGES} ; \
+	for i in ${BINARY_PACKAGES} ${DEBIAN_SPECIFIC_PACKAGES} ; \
 	do \
 		${RM} -r debian/nosh-"$$i"/ || exit 1 ; \
 	done
@@ -31,14 +35,14 @@ stage:
 
 control:
 	${RM} debian/files
-	for i in ${BINARY_PACKAGES} ; \
+	for i in ${BINARY_PACKAGES} ${DEBIAN_SPECIFIC_PACKAGES} ; \
 	do \
 		echo 1>&2 "Building control file for nosh-$$i." ; \
 		debian/gencontrol nosh-"$$i" debian/nosh-"$$i" || exit 1 ; \
 	done
 
 create:
-	for i in ${BINARY_PACKAGES} ; \
+	for i in ${BINARY_PACKAGES} ${DEBIAN_SPECIFIC_PACKAGES} ; \
 	do \
-		dpkg -b debian/nosh-"$$i" ./ || exit 1 ; \
+		dpkg-deb --root-owner-group -b debian/nosh-"$$i" ./ || exit 1 ; \
 	done

@@ -40,6 +40,8 @@ enum {
 	CLNEXT		= SYN,	// ^V
 	CDISCARD	= SI, 	// ^O
 	CSTATUS		= DC4,	// ^T
+	CMIN		= 1,
+	CTIME		= 0,
 };
 enum {
 	TTYDEF_IFLAG =	BRKINT|ICRNL|IMAXBEL|IXON|IXANY,
@@ -54,32 +56,19 @@ enum {
 
 }
 
-// Like the BSD cfmakesane() but more flexible and available outwith BSD.
+// Like the BSD cfmakesane() but available outwith BSD.
+// This does not touch the hardware control flags or speeds.
 termios
-sane (
-	const termios & original,
-	bool no_tostop,
-	bool no_local,
-	bool no_utf_8,
-	bool set_speed
+enable_canonical_software_processing (
+	const termios & original
 ) {
 	termios t(original);
 
 	// Unlike "stty sane", we don't set ISTRIP; it's 1970s Think.
 	t.c_iflag = (TTYDEF_IFLAG&~ISTRIP)|IGNPAR|IGNBRK|IXANY;
-#if defined(IUTF8)
-	if (!no_utf_8)
-		t.c_iflag |= IUTF8;
-#else
-	static_cast<void>(no_utf_8);	// Silences a compiler warning.
-#endif
 	t.c_oflag = TTYDEF_OFLAG;
-	t.c_cflag = TTYDEF_CFLAG;
-	if (!no_local)
-		t.c_cflag |= CLOCAL;
 	t.c_lflag = TTYDEF_LFLAG_ECHO|ECHOK;
-	if (!no_tostop)
-		t.c_lflag |= TOSTOP;
+
 #if defined(_POSIX_VDISABLE)
 	// See IEEE 1003.1 Interpretation Request #27 for why _POSIX_VDISABLE is not usable as a preprocessor expression.
        	if (-1 != _POSIX_VDISABLE)
@@ -98,8 +87,21 @@ sane (
 	t.c_cc[VQUIT] = CQUIT;
 	t.c_cc[VSTART] = CSTART;
 	t.c_cc[VSTOP] = CSTOP;
+	// We don't need to set these for canonical mode, but some programs set non-canonical mode without explicitly setting these as well.
+	// So we set them to the defaults here, and a badly written program that only turns off ICANON will at least get the defaults.
+	t.c_cc[VTIME] = CTIME;
+	t.c_cc[VMIN] = CMIN;
 #if defined(VERASE2)
 	t.c_cc[VERASE2] = CERASE2;
+#endif
+#if defined(VEOL)
+	t.c_cc[VEOL] = CEOL;
+#endif
+#if defined(VEOL2)
+	// t.c_cc[VEOL2] = CEOL2;
+#endif
+#if defined(VSWTC)
+	// t.c_cc[VSWTC] = CSWTC;
 #endif
 #if defined(VWERASE)
 	t.c_cc[VWERASE] = CWERASE;
@@ -122,21 +124,49 @@ sane (
 #if defined(VSTATUS)
 	t.c_cc[VSTATUS] = CSTATUS;
 #endif
-	if (set_speed)
-		cfsetspeed(&t, TTYDEF_SPEED);	// We don't want to accidentally hang up the terminal by setting 0 BPS.
 
 	return t;
 }
 
-// Like the BSD cfmakesane() but more flexible and available outwith BSD.
+namespace {
+
+inline
 termios
-sane (
+enable_canonical_software_processing (
+	const termios & original,
 	bool no_tostop,
-	bool no_local,
+	bool no_utf_8
+) {
+	termios t(enable_canonical_software_processing(original));
+
+#if defined(IUTF8)
+	if (!no_utf_8)
+		t.c_iflag |= IUTF8;
+#else
+	static_cast<void>(no_utf_8);	// Silences a compiler warning.
+#endif
+	if (!no_tostop)
+		t.c_lflag |= TOSTOP;
+
+	return t;
+}
+
+}
+
+// Create a termios from scratch suitable for initializing a local virtual terminal.
+// This initializes the hardware flags and speeds.
+termios
+make_default_local_virtual (
+	bool no_tostop,
 	bool no_utf_8
 ) {
 	termios t = {};
-	return sane(t, no_tostop, no_local, no_utf_8, true /* set default speed */);
+
+	t.c_cflag = TTYDEF_CFLAG;
+	t.c_cflag |= CLOCAL;		// Always local
+	cfsetspeed(&t, TTYDEF_SPEED);	// We don't want to accidentally hang up the terminal by setting 0 BPS.
+
+	return enable_canonical_software_processing(t, no_tostop, no_utf_8);
 }
 
 /// Ignore attempts to have a zero size terminal.

@@ -20,8 +20,8 @@ redo_ifchange_follow() {
 			redo-ifchange "$i"
 			l="`readlink \"$i\"`" || break
 			case "$l" in
-			/*)	i="$l" ;;
-			*)	i="`dirname \"$i\"`/$l" || break ;;
+			(/*)	i="$l" ;;
+			(*)	i="`dirname \"$i\"`/$l" || break ;;
 			esac
 		done
 	done

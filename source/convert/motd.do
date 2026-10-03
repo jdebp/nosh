@@ -13,9 +13,9 @@ redo-ifchange rc.conf
 read_rc() { clearenv read-conf rc.conf printenv "$1" ; }
 
 case "`read_rc os_version`" in
-arch:*) 	uname -srm > "$3" ;;
-void:*) 	uname -srm > "$3" ;;
-debian:*)
+(arch:*) 	uname -srm > "$3" ;;
+(void:*) 	uname -srm > "$3" ;;
+(debian:*)
 	if test -d "/etc/update-motd.d/"
 	then
 		redo-ifchange "/etc/update-motd.d"
@@ -26,8 +26,8 @@ debian:*)
 		uname -srm > "$3"
 	fi
 	;;
-gentoo:*) 	uname -srm > "$3" ;;
-centos:*)	uname -srm > "$3" ;;
-rhel:*) 	uname -srm > "$3" ;;
-*)      	uname -srm > "$3" ;;
+(gentoo:*) 	uname -srm > "$3" ;;
+(centos:*)	uname -srm > "$3" ;;
+(rhel:*) 	uname -srm > "$3" ;;
+(*)      	uname -srm > "$3" ;;
 esac

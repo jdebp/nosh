@@ -7,6 +7,7 @@ For copyright and licensing terms, see the file named COPYING.
 #define INCLUDE_TUIINPUTBASE_H
 
 #include <list>
+#include <iosfwd>
 #include <termios.h>
 #include <stdint.h>
 class TerminalCapabilities;
@@ -182,7 +183,7 @@ public:
 
 	int QueryInputFD() const;
 protected:
-	TUIInputBase(const TerminalCapabilities &, FILE *);
+	TUIInputBase(const TerminalCapabilities &, std::istream &, int);
 	virtual ~TUIInputBase() = 0;
 
 	/// \name Input
@@ -194,7 +195,8 @@ private:
 	const TerminalCapabilities & caps;
 	UTF8Decoder utf8_decoder;
 	ECMA48Decoder ecma48_decoder;
-	FILE * const in;
+	std::istream & in;
+	int in_fd;
 	std::list<EventHandler*> handlers;
 
 	/// \name Concrete UTF-8 Sink
@@ -210,7 +212,7 @@ private:
 	virtual void ControlCharacter(char32_t);
 	virtual void EscapeSequence(char32_t, char32_t);
 	virtual void ControlSequence(char32_t, char32_t, char32_t);
-	virtual void ControlString(char32_t);
+	virtual void ControlString(char32_t, char32_t);
 	/// @}
 
 	/// \name Handler dispatchers

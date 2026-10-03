@@ -11,7 +11,7 @@ AbsoluteServiceDependencies=true
 [Service]
 SessionLeader=true
 StandardInput=tty
-ExecStart=emergency %p
+ExecStart=%p
 Restart=always
 RestartSec=0
 TTYPath=%I

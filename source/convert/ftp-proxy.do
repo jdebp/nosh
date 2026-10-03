@@ -32,7 +32,7 @@ do
 	system-control convert-systemd-units $e --bundle-root "$r/" "./${service}.service"
 	mkdir -p -m 0755 "$r/${service}/service/env"
 	rm -f -- "$r/${service}/log"
-	ln -s -- "../../../sv/cyclog@ftp-proxy" "$r/${service}/log"
+	ln -s -- "../../../service-bundles/services/cyclog@ftp-proxy" "$r/${service}/log"
 
 	flags="`get_var2 \"${dev}\" flags`"
 

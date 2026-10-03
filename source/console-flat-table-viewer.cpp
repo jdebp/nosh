@@ -4,10 +4,12 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 #define __STDC_FORMAT_MACROS
+#define _BSD_SOURCE 1
 #include <map>
 #include <vector>
 #include <limits>
-#include <cstdio>
+#include <iostream>
+#include <fstream>
 #include <cstdlib>
 #include <cstring>
 #include <csignal>
@@ -100,7 +102,7 @@ struct TUI :
 	public TUIOutputBase,
 	public TUIInputBase
 {
-	TUI(ProcessEnvironment & e, Table & m, TUIDisplayCompositor & c, FILE * tty, unsigned long header_count, const ParserCharacters &, const CharacterCell::colour_type &, const CharacterCell::colour_type &, const TUIOutputBase::Options &);
+	TUI(ProcessEnvironment & e, Table & m, TUIDisplayCompositor & c, std::iostream & tty, int ttyfd, unsigned long header_count, const ParserCharacters &, const CharacterCell::colour_type &, const CharacterCell::colour_type &, const TUIOutputBase::Options &);
 	~TUI();
 
 	bool quit_flagged() const { return pending_quit_event; }
@@ -178,7 +180,8 @@ TUI::TUI(
 	ProcessEnvironment & e,
 	Table & m,
 	TUIDisplayCompositor & comp,
-	FILE * tty,
+	std::iostream & tty,
+	int tty_fd,
 	unsigned long c,
 	const ParserCharacters & p,
 	const CharacterCell::colour_type & h_colour,
@@ -187,8 +190,8 @@ TUI::TUI(
 ) :
 	ParserCharacters(p),
 	TerminalCapabilities(e),
-	TUIOutputBase(*this, tty, options, comp),
-	TUIInputBase(static_cast<const TerminalCapabilities &>(*this), tty),
+	TUIOutputBase(*this, tty, tty_fd, options, comp),
+	TUIInputBase(static_cast<const TerminalCapabilities &>(*this), tty, tty_fd),
 	handler0(*this),
 	handler1(*this),
 	handler2(*this),
@@ -541,17 +544,17 @@ TUI::EventHandler::~EventHandler() {}
 */
 
 namespace {
-	struct format_definition : public popt::compound_named_definition, public ParserCharacters {
+	struct format_definition : public popt::compound_1arg_named_definition, public ParserCharacters {
 	public:
-		format_definition(char s, const char * l, const char * d) : compound_named_definition(s, l, a, d) {}
+		format_definition(char s, const char * l, const char * d) : popt::compound_1arg_named_definition(s, l, a, d) {}
 		virtual ~format_definition();
 	protected:
 		static const char a[];
 		virtual void action(popt::processor &, const char *);
 	};
-	struct colour_definition : public popt::compound_named_definition {
+	struct colour_definition : public popt::compound_1arg_named_definition {
 	public:
-		colour_definition(char s, const char * l, const char * d, CharacterCell::colour_type & v) : compound_named_definition(s, l, a, d), value(v) {}
+		colour_definition(char s, const char * l, const char * d, CharacterCell::colour_type & v) : popt::compound_1arg_named_definition(s, l, a, d), value(v) {}
 		virtual ~colour_definition();
 	protected:
                 static const char a[];
@@ -735,17 +738,25 @@ console_flat_table_viewer
 
 	const char * tty(envs.query("TTY"));
 	if (!tty) tty = "/dev/tty";
-	FileStar control(std::fopen(tty, "w+"));
-	if (!control) {
+	std::fstream control(tty);
+	if (!control.is_open()) {
 		die_errno(prog, envs, tty);
 	}
+#if __cpp_lib_fstream_native_handle
+	const int control_fd(control.rdbuf()->native_handle());
+#else
+	const int control_fd(open_readwriteexisting_at(AT_FDCWD, tty));
+	if (0 > control_fd) {
+		die_errno(prog, envs, tty);
+	}
+#endif
 
 	if (args.empty()) {
 		if (isatty(STDIN_FILENO)) {
 			struct stat s0, st;
 
 			if (0 <= fstat(STDIN_FILENO, &s0)
-			&&  0 <= fstat(fileno(control), &st)
+			&&  0 <= fstat(control_fd, &st)
 			&&  S_ISCHR(s0.st_mode)
 			&&  (s0.st_rdev == st.st_rdev)
 			) {
@@ -790,7 +801,7 @@ console_flat_table_viewer
 	}
 
 	append_event(ip, STDIN_FILENO, EVFILT_READ, EV_ADD, 0, 0, nullptr);
-	append_event(ip, fileno(control), EVFILT_READ, EV_ADD, 0, 0, nullptr);
+	append_event(ip, control_fd, EVFILT_READ, EV_ADD, 0, 0, nullptr);
 	ReserveSignalsForKQueue kqueue_reservation(SIGTERM, SIGINT, SIGHUP, SIGPIPE, SIGUSR1, SIGUSR2, SIGWINCH, SIGTSTP, SIGCONT, 0);
 	PreventDefaultForFatalSignals ignored_signals(SIGTERM, SIGINT, SIGHUP, SIGPIPE, SIGUSR1, SIGUSR2, 0);
 	append_event(ip, SIGWINCH, EVFILT_SIGNAL, EV_ADD, 0, 0, nullptr);
@@ -804,7 +815,7 @@ console_flat_table_viewer
 	Table table;
 
 	TUIDisplayCompositor compositor(false /* no software cursor */, 24, 80);
-	TUI ui(envs, table, compositor, control, header_count, format_option, header_colour, body_colour, oo);
+	TUI ui(envs, table, compositor, control, control_fd, header_count, format_option, header_colour, body_colour, oo);
 
 	// How long to wait with updates pending.
 	const struct timespec short_timeout = { 0, 100000000L };
@@ -844,7 +855,7 @@ console_flat_table_viewer
 				case EVFILT_READ:
 				{
 					const int fd(static_cast<int>(e.ident));
-					if (fileno(control) == fd) {
+					if (control_fd == fd) {
 						ui.handle_control(fd, e.data);
 					} else
 					{

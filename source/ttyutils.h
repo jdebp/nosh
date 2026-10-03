@@ -11,23 +11,23 @@ struct winsize;
 
 extern
 struct termios
-sane (
-	const struct termios & t,
+make_default_local_virtual (
 	bool no_tostop,
-	bool no_local,
-	bool no_utf_8,
-	bool set_speed
-) ;
-extern
-struct termios
-sane (
-	bool no_tostop,
-	bool no_local,
 	bool no_utf_8
 ) ;
 extern
 struct termios
-make_raw (
+enable_canonical_software_processing (
+	const struct termios & t
+) ;
+extern
+struct termios
+disable_canonical_software_processing (
+	const struct termios & t
+) ;
+extern
+struct termios
+disable_tostop (
 	const struct termios & t
 ) ;
 extern

@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -35,7 +36,7 @@ It also sets permissions of the terminal device to 0600.
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>login-giveown-controlling-terminal</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>login-giveown-controlling-terminal</command> will ignore.
 </para>
 
 </refsection>

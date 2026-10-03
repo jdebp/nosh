@@ -3,7 +3,6 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-#define _XOPEN_SOURCE_EXTENDED
 #include <vector>
 #include <iostream>
 #include <iomanip>
@@ -15,7 +14,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
-#include "haswscons.h"
+#include "config/haswscons.h"
 #if defined(HAS_WSCONS)
 #	include <dev/wscons/wsconsio.h>
 #elif defined(__LINUX__) || defined(__linux__)

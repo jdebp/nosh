@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -34,7 +35,7 @@ Normally, the <replaceable>next-prog</replaceable> will be (or will eventually c
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>login-banner</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>login-banner</command> will ignore.
 </para>
 
 <para>
@@ -71,7 +72,7 @@ The current date in the local timezone of the process.
 <varlistentry>
 <term><code>\h</code></term>
 <listitem><para>
-The "hostname", by default the dynamic hostname obtained from the <citerefentry><refentrytitle>gethostname</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function.
+The <quote>hostname</quote>, by default the dynamic hostname obtained from the <citerefentry><refentrytitle>gethostname</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function.
 See <citerefentry><refentrytitle>set-dynamic-hostname</refentrytitle><manvolnum>1</manvolnum></citerefentry> for how this is set.
 <command>login-banner</command> allows the value held by the kernel to be overridden by the value of a <envar>HOSTNAME</envar> environment variable (the same convention as <citerefentry><refentrytitle>machineenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
 </para></listitem>
@@ -80,7 +81,7 @@ See <citerefentry><refentrytitle>set-dynamic-hostname</refentrytitle><manvolnum>
 <varlistentry>
 <term><code>\L</code></term>
 <listitem><para>
-The "location" name, from the <filename>/etc/machine-info</filename> file, if available.
+The <quote>location</quote> name, from the <filename>/etc/machine-info</filename> file, if available.
 This defaults to an empty string.
 </para></listitem>
 </varlistentry>
@@ -88,7 +89,7 @@ This defaults to an empty string.
 <varlistentry>
 <term><code>\l</code></term>
 <listitem><para>
-The "line", i.e. the pathname of the controlling TTY name relative to <filename>/dev</filename>, from the <citerefentry><refentrytitle>ttyname</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function (applied to standard input).
+The <quote>line</quote>, i.e. the pathname of the controlling TTY name relative to <filename>/dev</filename>, from the <citerefentry><refentrytitle>ttyname</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function (applied to standard input).
 <command>login-banner</command> allows the value held by the kernel to be overridden by the value of a <envar>TTY</envar> environment variable (the same convention as <citerefentry><refentrytitle>vc-get-terminal</refentrytitle><manvolnum>1</manvolnum></citerefentry> or <citerefentry><refentrytitle>pty-allocate</refentrytitle><manvolnum>1</manvolnum></citerefentry>, or an equivalent <citerefentry><refentrytitle>getty</refentrytitle><manvolnum>1</manvolnum></citerefentry> program that sets that variable, and usually the case in TTY login services which chain to <command>login-banner</command> via these).
 </para>
 
@@ -98,7 +99,7 @@ The "line", i.e. the pathname of the controlling TTY name relative to <filename>
 <varlistentry>
 <term><code>\m</code></term>
 <listitem><para>
-The "machine" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function.
+The <quote>machine</quote> name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function.
 On FreeBSD, the C library allows the value held by the kernel to be overridden by the value of a <envar>UNAME_m</envar> environment variable.
 </para></listitem>
 </varlistentry>
@@ -106,7 +107,7 @@ On FreeBSD, the C library allows the value held by the kernel to be overridden b
 <varlistentry>
 <term><code>\N</code></term>
 <listitem><para>
-The "pretty" "node" name, from the <filename>/etc/machine-info</filename> file, if available.
+The <quote>pretty</quote> <quote>node</quote> name, from the <filename>/etc/machine-info</filename> file, if available.
 This defaults to the same as <code>\n</code>.
 </para></listitem>
 </varlistentry>
@@ -114,8 +115,8 @@ This defaults to the same as <code>\n</code>.
 <varlistentry>
 <term><code>\n</code></term>
 <listitem><para>
-The "node" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function.
-See <citerefentry><refentrytitle>set-dynamic-hostname</refentrytitle><manvolnum>1</manvolnum></citerefentry> for how this is set and why in practice it is identical to, and redundant with, the "hostname" from the expansion of <code>\h</code>.
+The <quote>node</quote> name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function.
+See <citerefentry><refentrytitle>set-dynamic-hostname</refentrytitle><manvolnum>1</manvolnum></citerefentry> for how this is set and why in practice it is identical to, and redundant with, the <quote>hostname</quote> from the expansion of <code>\h</code>.
 </para>
 <note>
 Despite the claim in its documentation, on FreeBSD the C library <emphasis>does not</emphasis> allow the value held by the kernel to be overridden by the value of a <envar>UNAME_n</envar> environment variable.
@@ -126,7 +127,7 @@ Despite the claim in its documentation, on FreeBSD the C library <emphasis>does 
 <varlistentry>
 <term><code>\O</code></term>
 <listitem><para>
-The "DNS domain name", derived from the "hostname" by taking it to be (the human-readable form of) a DNS domain name and stripping its first "label".
+The <quote>DNS domain name</quote>, derived from the <quote>hostname</quote> by taking it to be (the human-readable form of) a DNS domain name and stripping its first <quote>label</quote>.
 <command>login-banner</command> allows the value held by the kernel to be overridden by the value of a <envar>LOCALDOMAIN</envar> environment variable (a common DNS client library convention).
 </para>
 <note>
@@ -138,7 +139,7 @@ See <citerefentry><refentrytitle>set-dynamic-hostname</refentrytitle><manvolnum>
 <varlistentry>
 <term><code>\o</code></term>
 <listitem><para>
-The "NIS domain" name, from the <citerefentry><refentrytitle>getdomainname</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function.
+The <quote>NIS domain</quote> name, from the <citerefentry><refentrytitle>getdomainname</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function.
 See <citerefentry><refentrytitle>set-dynamic-hostname</refentrytitle><manvolnum>1</manvolnum></citerefentry> for how this is set.
 <command>login-banner</command> allows the value held by the kernel to be overridden by the value of a <envar>DOMAINNAME</envar> environment variable (the same convention as <citerefentry><refentrytitle>machineenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
 </para></listitem>
@@ -147,7 +148,7 @@ See <citerefentry><refentrytitle>set-dynamic-hostname</refentrytitle><manvolnum>
 <varlistentry>
 <term><code>\p</code></term>
 <listitem><para>
-The "deployment" name, from the <filename>/etc/machine-info</filename> file, if available.
+The <quote>deployment</quote> name, from the <filename>/etc/machine-info</filename> file, if available.
 This defaults to an empty string.
 </para></listitem>
 </varlistentry>
@@ -155,7 +156,7 @@ This defaults to an empty string.
 <varlistentry>
 <term><code>\r</code></term>
 <listitem><para>
-The "release" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function.
+The <quote>release</quote> name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function.
 On FreeBSD, the C library allows the value held by the kernel to be overridden by the value of a <envar>UNAME_r</envar> environment variable.
 </para></listitem>
 </varlistentry>
@@ -163,7 +164,7 @@ On FreeBSD, the C library allows the value held by the kernel to be overridden b
 <varlistentry>
 <term><code>\S</code></term>
 <listitem><para>
-The "pretty" "system" name, from the <filename>/etc/os-release</filename> file, if available.
+The <quote>pretty</quote> <quote>system</quote> name, from the <filename>/etc/os-release</filename> file, if available.
 This defaults to the same as <code>\s</code>.
 </para></listitem>
 </varlistentry>
@@ -171,7 +172,7 @@ This defaults to the same as <code>\s</code>.
 <varlistentry>
 <term><code>\s</code></term>
 <listitem><para>
-The "system" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function.
+The <quote>system</quote> name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function.
 On FreeBSD, the C library allows the value held by the kernel to be overridden by the value of a <envar>UNAME_s</envar> environment variable.
 </para></listitem>
 </varlistentry>
@@ -186,7 +187,7 @@ The current time in the local timezone of the process.
 <varlistentry>
 <term><code>\U</code></term>
 <listitem><para>
-The number of users logged on, followed by a space and the string "users" (or "user" if the number is exactly one).
+The number of users logged on, followed by a space and the string <quote>users</quote> (or <quote>user</quote> if the number is exactly one).
 See <code>\u</code> for how this information is obtained.
 </para></listitem>
 </varlistentry>
@@ -207,7 +208,7 @@ To override it at runtime, use the <arg>--utmp-filename</arg> option.
 <varlistentry>
 <term><code>\v</code></term>
 <listitem><para>
-The "version" name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function.
+The <quote>version</quote> name, from the <citerefentry><refentrytitle>uname</refentrytitle><manvolnum>2</manvolnum></citerefentry> library function.
 On FreeBSD, the C library allows the value held by the kernel to be overridden by the value of a <envar>UNAME_v</envar> environment variable.
 </para></listitem>
 </varlistentry>
@@ -239,7 +240,7 @@ The program requires permission to read <filename>utmp</filename> and the templa
 <title>Compatibility</title>
 
 <para>
-The functionality is a rough superset of that for "issue" files provided by other tools that implement the old and superseded "getty" tool:
+The functionality is a rough superset of that for <quote>issue</quote> files provided by other tools that implement the old and superseded <quote>getty</quote> tool:
 </para>
 <itemizedlist>
 <listitem><para>

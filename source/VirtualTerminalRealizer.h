@@ -450,7 +450,7 @@ protected:
 	virtual void set_mode();
 	virtual void restore();
 	/// @}
-	virtual termios make_raw (const termios &);
+	virtual termios disable_canonical_software_processing (const termios &);
 };
 
 /// \brief HIDs that are character devices with a terminal line discipline that speak the kbio protocol

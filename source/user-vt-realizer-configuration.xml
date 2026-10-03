@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -30,7 +31,7 @@ The realizers employ a search path mechanism attempting to find the files to use
 <note>
 All of these realizers generally run as services, and their working directories are the service directories.
 <citerefentry><refentrytitle>console-termio-realizer</refentrytitle><manvolnum>1</manvolnum></citerefentry> is an ad-hoc tool that generally does not run as a service, and so does not employ this configuration system.
-All of its various resources are supplied as command-line arguments.
+All of its various resources are supplied as command&#x2010;line arguments.
 </note>
 
 </refsection>

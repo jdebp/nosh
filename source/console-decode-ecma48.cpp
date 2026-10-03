@@ -4,6 +4,7 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 #define __STDC_FORMAT_MACROS
+#define _BSD_SOURCE 1
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
@@ -52,7 +53,7 @@ protected:
 	virtual void ControlCharacter(char32_t);
 	virtual void EscapeSequence(char32_t, char32_t);
 	virtual void ControlSequence(char32_t, char32_t, char32_t);
-	virtual void ControlString(char32_t);
+	virtual void ControlString(char32_t, char32_t);
 
 	void out(const char *);
 	void csi(const char *);
@@ -98,7 +99,7 @@ Decoder::Decoder(
 	TerminalCapabilities(e),
 	ECMA48Decoder::ECMA48ControlSequenceSink(),
 	utf8_decoder(*this),
-	ecma48_decoder(*this, permit_control_strings, permit_cancel, permit_7bit_extensions, interix_function_keys, rxvt_function_keys, linux_function_keys),
+	ecma48_decoder(*this, ECMA48Decoder::Options(permit_control_strings, permit_cancel, permit_7bit_extensions, interix_function_keys, rxvt_function_keys, linux_function_keys)),
 	prog(p),
 	envs(e),
 	input(i),
@@ -991,10 +992,10 @@ skip_dec: 		;
 }
 
 void
-Decoder::ControlString(char32_t character)
+Decoder::ControlString(char32_t start_char, char32_t term_char)
 {
-	switch (character) {
-		default:	std::fprintf(stdout, "unknown control string "); plainchar(character, ' '); break;
+	switch (start_char) {
+		default:	std::fprintf(stdout, "unknown control string "); plainchar(start_char, ' '); break;
 		case DCS:	std::fprintf(stdout, "DCS "); break;
 		case OSC:	std::fprintf(stdout, "OSC "); break;
 		case PM:	std::fprintf(stdout, "PM "); break;
@@ -1003,6 +1004,11 @@ Decoder::ControlString(char32_t character)
 	}
 	for (std::size_t s(0U); s < QueryControlStringLength(); ++s)
 		plainchar(QueryControlStringCharacter(s), ' ');
+	switch (term_char) {
+		default:	std::fprintf(stdout, "unknown terminator "); plainchar(term_char, ' '); break;
+		case BEL:	std::fprintf(stdout, "BEL "); break;
+		case ST:	std::fprintf(stdout, "ST "); break;
+	}
 	std::fputc('\n', stdout);
 }
 
@@ -1070,8 +1076,7 @@ console_decode_ecma48 [[gnu::noreturn]] (
 			const char * name(*i);
 			const FileDescriptorOwner fd(open_read_at(AT_FDCWD, name));
 			if (0 > fd.get()) {
-				const int error(errno);
-				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, std::strerror(error));
+				message_fatal_errno(prog, envs, name);
 				throw static_cast<int>(EXIT_PERMANENT_FAILURE);	// Bernstein daemontools compatibility
 			}
 			if (!decoder.process(name, fd.get()))

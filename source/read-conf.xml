@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -30,7 +31,7 @@
 
 <para>
 <command>read-conf</command> reads the file <replaceable>filename</replaceable>, constructing a sequence of environment variable assignments, and then attempts to chain load <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
-Unless the <arg choice='opt'>--oknofile</arg> command line option is given, then a failure to open the file for reading is a fatal error.
+Unless the <arg choice='opt'>--oknofile</arg> command&#x2010;line option is given, then a failure to open the file for reading is a fatal error.
 With that option, the failure will be ignored and <replaceable>next-prog</replaceable> chain loaded.
 </para>
 

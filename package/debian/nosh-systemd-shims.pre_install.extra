@@ -1,0 +1,8 @@
+# Extra pre-install for nosh-systemd-shims
+# vim: set filetype=sh:
+
+for i in systemctl systemd-escape
+do
+	dpkg-divert --package nosh-systemd-shims --rename --add /usr/bin/"${i}"
+	dpkg-divert --package nosh-systemd-shims --rename --divert /usr/share/man/man1/"${i}".distrib.1.gz --add /usr/share/man/man1/"${i}".1.gz
+done

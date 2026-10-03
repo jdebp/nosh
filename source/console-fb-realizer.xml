@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -186,7 +187,7 @@ These are the I/O back ends for a (user-space) virtual terminal, that realize th
 </para>
 
 <para>
-Each one opens the back end interfaces of a user-space virtual terminal and opens the I/O devices (if any) specified by command line options and the particular command.
+Each one opens the back end interfaces of a user-space virtual terminal and opens the I/O devices (if any) specified by command&#x2010;line options and the particular command.
 The I/O devices are the concrete devices with which the user-space virtual terminal is to be (partly or wholly) realized.
 It is the user's responsibility to ensure that these refer to the same, single, physical user station.
 </para>
@@ -243,7 +244,7 @@ Shared mouse state comprises information about the mouse position and limits of 
 <refsection><title>Specifying I/O devices</title>
 
 <para>
-I/O devices are specified by the choice of command, and thus their various command-line options.
+I/O devices are specified by the choice of command, and thus their various command&#x2010;line options.
 </para>
 
 <refsection><title>The superior (or sole) choices</title>
@@ -258,11 +259,11 @@ If VT switching support is needed, instead of <command>console-fb-realizer</comm
 <varlistentry>
 <term><arg choice='plain'><replaceable>ugendevicename</replaceable></arg></term>
 <listitem><para>
-This command-line option designates the superior choice of input device on the BSDs.
+This command&#x2010;line option designates the superior choice of input device on the BSDs.
 <replaceable>ugendevicename</replaceable> must be the the device file name of a Generic USB device, using the <citerefentry><refentrytitle>ugen</refentrytitle><manvolnum>4</manvolnum></citerefentry> protocol, such as <filename>/dev/ugen0.2</filename> for example.
 <command>console-ugen-hid-realizer</command> parses the bus and address from the name and actually opens the interface device names such as <filename>/dev/usb/0.2.0</filename>, <filename>/dev/usb/0.2.1</filename>, and <filename>/dev/usb/0.2.2</filename>.
 </para><para>
-It queries the "type" of the device (e.g. keyboard, tablet, mouse, and so forth) from the device itself, without need for explicitly describing it to the comand.
+It queries the <quote>type</quote> of the device (e.g. keyboard, tablet, mouse, and so forth) from the device itself, without need for explicitly describing it to the comand.
 It reads the HID I/O report descriptors from the device and from them decides whether the interface has normal keys, consumer device keys, system keys, keyboard LEDs, relative positioning (mice), and absolute positioning (touchscreen).
 Any combination of HID I/O in a single USB device can be handled.
 Multiple keyboard and mice USB interfaces at the given bus+address are combined, and the program acts as if they are a single giant keyboard/mouse.
@@ -274,10 +275,10 @@ Multiple keyboard and mice USB interfaces at the given bus+address are combined,
 <varlistentry>
 <term><arg choice='plain'><replaceable>evdevdevicename</replaceable></arg></term>
 <listitem><para>
-This command-line option designates the superior choice of input device on Linux, the Human Input Devices enumerated by the operating system.
+This command&#x2010;line option designates the superior choice of input device on Linux, the Human Input Devices enumerated by the operating system.
 On Linux, <replaceable>evdevdevicename</replaceable> must be the device file name of an event device, using the evdev subsystem, such as <filename>/dev/input/event0</filename> for example.
 </para><para>
-<command>console-evdev-realizer</command> queries the "type" of the device (e.g. keyboard, tablet, mouse, and so forth) from the device itself, without need for explicitly describing it to the comand.
+<command>console-evdev-realizer</command> queries the <quote>type</quote> of the device (e.g. keyboard, tablet, mouse, and so forth) from the device itself, without need for explicitly describing it to the comand.
 </para><para>
 Some BSDs have Linux evdev compatibility subsystems, but Generic USB is superior for two reasons.
 First, the compatibility is incomplete by its nature.
@@ -288,7 +289,7 @@ Second, even natively evdev hides the extensible nature of the underlying USB HI
 <varlistentry>
 <term><arg choice='plain'><replaceable>wsconsdevicename</replaceable></arg></term>
 <listitem><para>
-This command-line option designates the superior choice of input device on BSDs, the Human Input Devices enumerated by the operating system.
+This command&#x2010;line option designates the superior choice of input device on BSDs, the Human Input Devices enumerated by the operating system.
 <replaceable>wsconsdevicename</replaceable> must be the device file name of a <filename>wskbd</filename> or <filename>wsmouse</filename> device.
 </para><para>
 All wscons devices (e.g. keyboard, tablet, mouse, and so forth) speak the same event protocol.
@@ -298,20 +299,20 @@ All wscons devices (e.g. keyboard, tablet, mouse, and so forth) speak the same e
 <varlistentry>
 <term><arg choice='plain'><replaceable>fbname</replaceable></arg></term>
 <listitem><para>
-This command-line option option designates a framebuffer output device for realizing the user-space virtual terminal's display.
-<replaceable>fbname</replaceable> must be a device that speaks the "fbio" API to programs.
+This command&#x2010;line option option designates a framebuffer output device for realizing the user-space virtual terminal's display.
+<replaceable>fbname</replaceable> must be a device that speaks the <quote>fbio</quote> API to programs.
 On Linux only framebuffer devices, such as <filename>/dev/fb0</filename>, speak this protocol.
-(Remember that "kernel mode setting" device drivers create simple framebuffer devices for programs that use the "fbio" API.)
+(Remember that <quote>kernel mode setting</quote> device drivers create simple framebuffer devices for programs that use the <quote>fbio</quote> API.)
 On the BSDs, kernel virtual terminal devices speak this protocol, and framebuffers are not directly accessible via separate devices.
 </para>
 <para>
 The framebuffer device need not be the same size or height:width ratio as the virtual terminal display.
-When it is smaller than the display, the realizer will move the framebuffer around as a "window" onto the virtual terminal display, such that the cursor position is always within the window.
-When it is larger than the display, the realizer will align the virtual terminal display to one corner of the framebuffer, as specified by the <arg choice='plain'>--quadrant</arg> command-line option.
+When it is smaller than the display, the realizer will move the framebuffer around as a <quote>window</quote> onto the virtual terminal display, such that the cursor position is always within the window.
+When it is larger than the display, the realizer will align the virtual terminal display to one corner of the framebuffer, as specified by the <arg choice='plain'>--quadrant</arg> command&#x2010;line option.
 It will render the parts of the framebuffer outwith the virtual terminal display area as black.
 </para>
 <para>
-The <arg choice='plain'>--wrong-way-up</arg> command-line option causes the display to be realized the wrong way up, swapping the direction of increasing line numbers.
+The <arg choice='plain'>--wrong-way-up</arg> command&#x2010;line option causes the display to be realized the wrong way up, swapping the direction of increasing line numbers.
 This is an oft-requested terminal feature, albeit by people who have never actually experienced it.
 </para></listitem>
 </varlistentry>
@@ -325,10 +326,10 @@ This is an oft-requested terminal feature, albeit by people who have never actua
 <varlistentry>
 <term><arg choice='plain'><replaceable>uhiddevicename</replaceable></arg></term>
 <listitem><para>
-This command-line option designates an inferior choice of input device on the BSDs, the Human Input Devices enumerated by the operating system or created by <citerefentry><refentrytitle>uhidd</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+This command&#x2010;line option designates an inferior choice of input device on the BSDs, the Human Input Devices enumerated by the operating system or created by <citerefentry><refentrytitle>uhidd</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
 Linux does not have such devices.
 <replaceable>uhiddeviceename</replaceable> must be the device file name of a USB HID device, using the <citerefentry><refentrytitle>uhid</refentrytitle><manvolnum>4</manvolnum></citerefentry> protocol, such as <filename>/dev/uhid0</filename> for example.
-<command>console-uhid-realizer</command> queries the "type" of the device (e.g. keyboard, tablet, mouse, and so forth) from the device itself, without need for explicitly describing it on the command line.
+<command>console-uhid-realizer</command> queries the <quote>type</quote> of the device (e.g. keyboard, tablet, mouse, and so forth) from the device itself, without need for explicitly describing it on the command line.
 </para><caution>
 This is inferior to Generic USB because the kernel and <citerefentry><refentrytitle>uhidd</refentrytitle><manvolnum>8</manvolnum></citerefentry> disagree on what the <citerefentry><refentrytitle>uhid</refentrytitle><manvolnum>4</manvolnum></citerefentry> protocol actually is, and produce devices that are not I/O compatible.
 Do not use this with devices created by <citerefentry><refentrytitle>uhidd</refentrytitle><manvolnum>8</manvolnum></citerefentry> (which is largely superfluous with these realizers anyway).
@@ -338,16 +339,16 @@ Do not use this with devices created by <citerefentry><refentrytitle>uhidd</refe
 <varlistentry>
 <term><arg choice='plain'><replaceable>sysmousedevicename</replaceable></arg></term>
 <listitem><para>
-This command-line option designates an inferior choice of input device on the BSDs.
+This command&#x2010;line option designates an inferior choice of input device on the BSDs.
 <replaceable>sysmousedevicesname</replaceable> must be a device that speaks the BSD <citerefentry><refentrytitle>mouse</refentrytitle><manvolnum>4</manvolnum></citerefentry> protocol to programs, such as <filename>/dev/sysmouse</filename>, or <filename>/dev/ums0</filename> (created by the kernel), or <filename>/dev/psm0</filename> for examples.
-BSD mouse devices, while speaking their own idiosyncratic protocols at "mouse level 1" all have a common "mouse level 2" of operation where they all speak this same protocol.
+BSD mouse devices, while speaking their own idiosyncratic protocols at <quote>mouse level 1</quote> all have a common <quote>mouse level 2</quote> of operation where they all speak this same protocol.
 </para>
 <para>
 However, this common mouse protocol is limited compared to using the USB HID devices directly.
 It has no support for absolute-position pointing devices, such as USB tablets, because the protocol simply does not support the notion of transmitting absolute position information, only relative pointer movements.
 </para><para>
-Transparent "mouse integration" under some virtual machine systems requires support for absolute-position pointing devices.
-(In Oracle VirtualBox, for example, when "mouse integration" is off, host machine mouse input is reported to the guest machine as input from a relative-positioning mouse device; but when "mouse integration" is on, host machine mouse input is reported to the guest machine as input from an absolute-positioning tablet device.)
+Transparent <quote>mouse integration</quote> under some virtual machine systems requires support for absolute-position pointing devices.
+(In Oracle VirtualBox, for example, when <quote>mouse integration</quote> is off, host machine mouse input is reported to the guest machine as input from a relative-positioning mouse device; but when <quote>mouse integration</quote> is on, host machine mouse input is reported to the guest machine as input from an absolute-positioning tablet device.)
 This type of device cannot work with them.
 </para><para>
 If used at all this is best used only with the mouse concentrator device, <filename>/dev/sysmouse</filename>, as a backstop catch-all and with PS/2 mice devices.
@@ -357,12 +358,12 @@ If used at all this is best used only with the mouse concentrator device, <filen
 <varlistentry>
 <term><arg choice='plain'><replaceable>atkbddevicename</replaceable></arg></term>
 <listitem><para>
-This command-line option designates an inferior choice of input device on the BSDs.
-<replaceable>filename</replaceable> must be a device that speaks the "kbio" API to programs.
+This command&#x2010;line option designates an inferior choice of input device on the BSDs.
+<replaceable>filename</replaceable> must be a device that speaks the <quote>kbio</quote> API to programs.
 On the BSDs, <replaceable>atkbddevicename</replaceable> must be an a kernel virtual terminal device or an <citerefentry><refentrytitle>atkbd</refentrytitle><manvolnum>4</manvolnum></citerefentry> device, such as <filename>/dev/atkbd0</filename>, <filename>/dev/kbdmux0</filename>, <filename>/dev/ukbd0</filename>, or <filename>/dev/vkbd0</filename> (created by <citerefentry><refentrytitle>uhidd</refentrytitle><manvolnum>8</manvolnum></citerefentry>) for examples.
 </para>
 <note>
-On Linux, "kbio" devices are not directly accessible via separate devices.
+On Linux, <quote>kbio</quote> devices are not directly accessible via separate devices.
 Kernel virtual terminal devices speak this protocol, but the <citerefentry><refentrytitle>console-kvt-realizer</refentrytitle><manvolnum>1</manvolnum></citerefentry> command is used to employ those.
 </note>
 <para>
@@ -376,7 +377,7 @@ If used at all this is best used only with the keyboard concentrator device, <fi
 <varlistentry>
 <term><arg choice='plain'><replaceable>ps2mousedevicename</replaceable></arg></term>
 <listitem><para>
-This command-line option designates an inferior choice of input device on Linux.
+This command&#x2010;line option designates an inferior choice of input device on Linux.
 <replaceable>ps2mousdevicename</replaceable> must be a device that speaks the Linux PS/2 mouse protocol to programs, such as <filename>/dev/input/mice</filename> (a backwards-compatibility mouse concentrator provided by the evdev subsystem) for example.
 </para>
 <note>
@@ -387,7 +388,7 @@ It is for <emphasis>Linux</emphasis> PS/2 mouse devices, which speak a 3-byte pa
 <para>
 This is inferior to accessing the mouse via its evdev device.
 This protocol has no scope for mice wheels, the Z or W axes, or more than 3 buttons.
-It is also poorly effected in some virtual machine systems, which try to enforce a relationship between "mickeys" in the virtual hardware and pixels on the host display, and do not always do that right.
+It is also poorly effected in some virtual machine systems, which try to enforce a relationship between <quote>mickeys</quote> in the virtual hardware and pixels on the host display, and do not always do that right.
 </para></listitem>
 </varlistentry>
 
@@ -428,8 +429,8 @@ It also tells the kernel's built-in terminal emulator to do the complement, tell
 
 <para>
 <command>console-kvt-realizer</command> uses a kernel virtual terminal (KVT) for device sharing, and also for some I/O devices that they provide.
-On the BSDs, the "kbio" keyboard input and "fbio" framebuffer output devices are accessible via a KVT, but the mouse input devices are not.
-On Linux, only the "kbio" keyboard input devices are accessible via a KVT, but the framebuffer output and mouse input devices are not.
+On the BSDs, the <quote>kbio</quote> keyboard input and <quote>fbio</quote> framebuffer output devices are accessible via a KVT, but the mouse input devices are not.
+On Linux, only the <quote>kbio</quote> keyboard input devices are accessible via a KVT, but the framebuffer output and mouse input devices are not.
 </para>
 
 <note>
@@ -455,7 +456,7 @@ This is a quirk of the operating system kernels themselves, which require this i
 </note>
 
 <para>
-At startup, <command>console-kvt-realizer</command> switches the virtual terminal display (if it is "fbio") into a suitable graphics mode, configures the ("kbio") input to deliver raw keycodes, and switches the line discipline (of the "kbio" device) to non-canonical input (i.e. "raw") mode (so that the raw keycodes are unmolested by the line discipline); switching all of these back to their saved prior settings upon its termination.
+At startup, <command>console-kvt-realizer</command> switches the virtual terminal display (if it is <quote>fbio</quote>) into a suitable graphics mode, configures the (<quote>kbio</quote>) input to deliver raw keycodes, and switches the line discipline (of the <quote>kbio</quote> device) to non-canonical input (i.e. <quote>raw</quote>) mode (so that the raw keycodes are unmolested by the line discipline); switching all of these back to their saved prior settings upon its termination.
 The realizer attempts to choose the highest resolution graphics mode available that has a 32-bit or 24-bit colour depth.
 The <arg choice='plain'>--80-columns</arg> option constrains its choice to graphics modes that are no wider than 80 columns (1280 pixels).
 </para>
@@ -484,7 +485,7 @@ The blinking attribute for the cursor is not, however, supported.
 </para>
 
 <para>
-As with real DEC VTs, but unlike some terminal <emphasis>emulators</emphasis>, the "light/dark" flag causes foreground and background colours to be swapped when displaying every display cell, i.e. "reverse video".
+As with real DEC VTs, but unlike some terminal <emphasis>emulators</emphasis>, the "light/dark" flag causes foreground and background colours to be swapped when displaying every display cell, i.e. <quote>reverse video</quote>.
 The cursor is not realized by reverse video.
 Rather, the foreground and background colours of the cell with the cursor are complemented against white.
 </para>
@@ -506,19 +507,19 @@ This does not, of course, affect the operation of the terminal emulator or the p
 </para>
 
 <para>
-Fonts are loaded from font files, which may be either in the FreeBSD "vtfont" format or in the straight 8&#xD7;16 unadorned bitmap format used by FreeBSD's "syscons".
-(To convert an Adobe BDF format font file to "vtfont" format, use the FreeBSD <citerefentry><refentrytitle>vtfontcvt</refentrytitle><manvolnum>1</manvolnum></citerefentry> utility.)
-Font files are specified by the <replaceable>filename</replaceable> in the various font command-line options.
+Fonts are loaded from font files, which may be either in the FreeBSD <quote>vtfont</quote> format or in the straight 8&#xD7;16 unadorned bitmap format used by FreeBSD's <quote>syscons</quote>.
+(To convert an Adobe BDF format font file to <quote>vtfont</quote> format, use the FreeBSD <citerefentry><refentrytitle>vtfontcvt</refentrytitle><manvolnum>1</manvolnum></citerefentry> utility.)
+Font files are specified by the <replaceable>filename</replaceable> in the various font command&#x2010;line options.
 </para>
 
 <para>
-The weight and slant are encoded via these command-line options, because meta-information about weight and slant is not in a font file itself (it usually being encoded in the filename).
+The weight and slant are encoded via these command&#x2010;line options, because meta-information about weight and slant is not in a font file itself (it usually being encoded in the filename).
 Bitmap fonts contain just one glyph set.
-The "vtfont" format has two glyph sets for a pair of unspecified weights.
+The <quote>vtfont</quote> format has two glyph sets for a pair of unspecified weights.
 </para>
 <itemizedlist>
 <listitem><para>
-The "vtfont" command-line options
+The <quote>vtfont</quote> command&#x2010;line options
 <arg choice='plain'>--vtfont-faint-r</arg>,
 <arg choice='plain'>--vtfont-faint-o</arg>,
 <arg choice='plain'>--vtfont-faint-i</arg>,
@@ -526,12 +527,12 @@ The "vtfont" command-line options
 <arg choice='plain'>--vtfont-normal-o</arg>,
 <arg choice='plain'>--vtfont-normal-i</arg>, and
 <arg choice='plain'>--vtfont</arg>
-load both sets of glyphs from a "vtfont" format font.
-"normal" in the option name specifies that the presumed weights of the pair are medium and bold; "faint" specifies that the presumed weights are light and demibold.
-"r", "o", and "i" specify the presumed slants as upright, oblique, and italic respectively.
+load both sets of glyphs from a <quote>vtfont</quote> format font.
+<quote>normal</quote> in the option name specifies that the presumed weights of the pair are medium and bold; <quote>faint</quote> specifies that the presumed weights are light and demibold.
+<quote>r</quote>, <quote>o</quote>, and <quote>i</quote> specify the presumed slants as upright, oblique, and italic respectively.
 </para></listitem>
 <listitem><para>
-The "font" command-line options
+The <quote>font</quote> command&#x2010;line options
 <arg choice='plain'>--font-light-r</arg>,
 <arg choice='plain'>--font-light-o</arg>,
 <arg choice='plain'>--font-light-i</arg>,
@@ -544,9 +545,9 @@ The "font" command-line options
 <arg choice='plain'>--font-bold-r</arg>,
 <arg choice='plain'>--font-bold-o</arg>, and
 <arg choice='plain'>--font-bold-i</arg>
-are the only way to load bitmap fonts, and can also be used to load just the first set of glyphs from a "vtfont" format font, providing fine-grained control of what glyphs are used if that is required.
-Again, "r", "o", and "i" in the option name specify the presumed slants as upright, oblique, and italic respectively.
-The four presumable weights in the option name are "light", "medium", "demibold", and "bold".
+are the only way to load bitmap fonts, and can also be used to load just the first set of glyphs from a <quote>vtfont</quote> format font, providing fine-grained control of what glyphs are used if that is required.
+Again, <quote>r</quote>, <quote>o</quote>, and <quote>i</quote> in the option name specify the presumed slants as upright, oblique, and italic respectively.
+The four presumable weights in the option name are <quote>light</quote>, <quote>medium</quote>, <quote>demibold</quote>, and <quote>bold</quote>.
 </para></listitem>
 </itemizedlist>
 
@@ -554,7 +555,7 @@ The four presumable weights in the option name are "light", "medium", "demibold"
 Fonts must be monospace fonts with a height of 8, 14, 15, or 16 and a width of 8, 9, 12, or 16.
 All glyphs are rendered in a 16&#xD7;16 bounding square, with 8&#xD7;8 pixel fonts doubled to 16&#xD7;16 pixels.
 8&#xD7;16 pixel block graphic and box drawing characters are doubled in width.
-Any "horizontally extendable" characters (such as the em dash) not otherwise extended to 16 pixels wide are extended by overlaying themselves to the right.
+Any <quote>horizontally extendable</quote> characters (such as the em dash) not otherwise extended to 16 pixels wide are extended by overlaying themselves to the right.
 </para>
 
 <refsection><title>Fallback behaviour</title>
@@ -562,16 +563,16 @@ Any "horizontally extendable" characters (such as the em dash) not otherwise ext
 <para>
 If faint and demibold weights are unavailable, the faint attribute is emulated by shading the foreground and background colours towards black.
 If bold weight is unavailable, the bold attribute is rendered by overlaying a glyph with a shifted copy of itself.
-(The <arg choice='plain'>--bold-as-colour</arg> command-line option will as an alternative always render boldface by tinting foreground colours towards white, but this is of limited use with applications that employ 256-colour or true-colour terminal controls, as many do nowadays.)
+(The <arg choice='plain'>--bold-as-colour</arg> command&#x2010;line option will as an alternative always render boldface by tinting foreground colours towards white, but this is of limited use with applications that employ 256-colour or true-colour terminal controls, as many do nowadays.)
 If italic stroke is unavailable, the first fallback is to use an oblique font.
 (Oblique is not the same as italic, note, and is often an inferior substitute for it.)
 If neither italic nor oblique are available, the italic attribute is rendered by shifting the upright glyph into an oblique form within the character bounding square if the character size permits.
 </para>
 
 <para>
-With no fonts loaded, and for any characters which cannot be found in the loaded fonts, <command>console-fb-realizer</command> "greeks" its output,
+With no fonts loaded, and for any characters which cannot be found in the loaded fonts, <command>console-fb-realizer</command> <quote>greeks</quote> its output,
 falling back to displaying a blank for any whitespace characters, a box for any C0 or C1 control characters, and a block for all other characters.
-Such "greeking" is of course illegible; and it is recommended that sufficient fonts be loaded in order to render at least the whole of Microsoft's Windows Glyph List 4.
+Such <quote>greeking</quote> is of course illegible; and it is recommended that sufficient fonts be loaded in order to render at least the whole of Microsoft's Windows Glyph List 4.
 (One might be tempted to simply cover the OpenType World Glyph Set 1 character set instead.
 Bear in mind that the W1G character set does not include line drawing, block, arrow, and other characters that are commonly employed by TUI systems to draw UI widgets; whereas WGL4 does.)
 </para>
@@ -595,15 +596,15 @@ The map file format is given in <citerefentry><refentrytitle>console-keyboard-ma
 <refsection id="DEAD-KEYS" xreflabel="DEAD-KEYS"><title>Dead keys</title>
 
 <para>
-So-called "dead" keys are otherwise ordinary UCS-3 keys in a keyboard map, except that they denote Unicode combining characters; i.e. characters in the "Me" ("Mark, Enclosing") and "Mn" ("Mark, Non-spacing") Unicode code point categories.
-The keyboard realizers  remember such "dead" keys, without transmitting them to the input FIFO as they are pressed (or autorepeated).
+So-called <quote>dead</quote> keys are otherwise ordinary UCS-3 keys in a keyboard map, except that they denote Unicode combining characters; i.e. characters in the <quote>Me</quote> ("Mark, Enclosing") and <quote>Mn</quote> ("Mark, Non-spacing") Unicode code point categories.
+The keyboard realizers  remember such <quote>dead</quote> keys, without transmitting them to the input FIFO as they are pressed (or autorepeated).
 They attempt to combine them with the next non-combining character keypress.
 In this respect they behave mostly according to ISO/IEC 9995-3 and DIN/EN 2137:
 </para>
 
 <itemizedlist>
 <listitem><para>
-The keyboard realizers implement the extra so-called "peculiar" combinations given by the ISO and DIN standards (and also found in several other national keyboard standards).
+The keyboard realizers implement the extra so-called <quote>peculiar</quote> combinations given by the ISO and DIN standards (and also found in several other national keyboard standards).
 These are applied before attempting any Unicode composition.
 Most of these involve:
 </para>
@@ -626,24 +627,24 @@ The ISO 9995-3 compositions overlap in only one case, which is the same in both 
 </variablelist>
 </listitem>
 <listitem><para>
-The ISO and DIN standards define "peculiar" combinations with the space character that generate standalone accents.
-Any sequence of "dead" keys followed by Space generates a sequence of precomposed non-combining accent characters that correspond to the combining characters.
+The ISO and DIN standards define <quote>peculiar</quote> combinations with the space character that generate standalone accents.
+Any sequence of <quote>dead</quote> keys followed by Space generates a sequence of precomposed non-combining accent characters that correspond to the combining characters.
 </para></listitem>
 <listitem><para>
 The ISO and DIN standards are not specific about Unicode combining characters.
-The keyboard realizers apply the "canonical" composition rules given by Unicode, attempting to produce a stream of input characters in Unicode Normalized Form C.
+The keyboard realizers apply the <quote>canonical</quote> composition rules given by Unicode, attempting to produce a stream of input characters in Unicode Normalized Form C.
 Any leftover combining characters that cannot be precomposed are treated as if combined with Space, and emitted before the composed character.
-This differs from Unicode Normalization, where leftover combining characters always follow the "starter" character.
-Having leftover combining characters precede the composed character both mimicks the existing behaviour of "dead" keys on several systems and is least surprising to the typist as it (roughly) preserves typed order.
-(Typed order is not entirely preserved; the "dead" keys are sorted by Unicode combining class as a side-effect of NFC composition.)
+This differs from Unicode Normalization, where leftover combining characters always follow the <quote>starter</quote> character.
+Having leftover combining characters precede the composed character both mimicks the existing behaviour of <quote>dead</quote> keys on several systems and is least surprising to the typist as it (roughly) preserves typed order.
+(Typed order is not entirely preserved; the <quote>dead</quote> keys are sorted by Unicode combining class as a side-effect of NFC composition.)
 </para></listitem>
 <listitem><para>
 Not all input is in Unicode Normalized Form C.
-The ISO and DIN standards define a "pass-through" mechanism that allows a typist to enter combining characters as-is: any sequence of "dead" keys followed by the Zero-Width Non-Joiner (entered as <keycap>Group2</keycap>+<keycap>&#x21e7;&#160;Level2</keycap>+<keycap>A03</keycap> in ISO 9995-3 keyboard layouts; which is <keycap>&#x21e7;&#160;Shift</keycap>+<keycap>&#x2325;&#160;Option</keycap>, <keycap>&#x21e7;&#160;Shift</keycap>+<keycap>&#x2423;&#160;Space</keycap> on the U.S. International keyboard) generates that sequence of non-combining characters in typed order.
+The ISO and DIN standards define a <quote>pass-through</quote> mechanism that allows a typist to enter combining characters as-is: any sequence of <quote>dead</quote> keys followed by the Zero-Width Non-Joiner (entered as <keycap>Group2</keycap>+<keycap>&#x21e7;&#160;Level2</keycap>+<keycap>A03</keycap> in ISO 9995-3 keyboard layouts; which is <keycap>&#x21e7;&#160;Shift</keycap>+<keycap>&#x2325;&#160;Option</keycap>, <keycap>&#x21e7;&#160;Shift</keycap>+<keycap>&#x2423;&#160;Space</keycap> on the U.S. International keyboard) generates that sequence of non-combining characters in typed order.
 </para></listitem>
 <listitem><para>
 Full Unicode Normalization is not performed.
-In particular, if the typist enters a precomposed character after the "dead" keys, it is not decomposed before the composition rules are applied.
+In particular, if the typist enters a precomposed character after the <quote>dead</quote> keys, it is not decomposed before the composition rules are applied.
 This is done in order not to surprise the typist.
 Full Unicode NFD decomposition followed by Unicode NFC composition could result in different leftover combining characters in some cases.
 It also would perform various one-way transformations.

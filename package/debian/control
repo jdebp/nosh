@@ -2,7 +2,7 @@ Source: nosh
 Section: admin
 Priority: optional
 Maintainer: Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@ntlworld.com>
-Build-Depends: redo, xmlto, pax, libncursesw5-dev, uuid-dev, libssl-dev, libpam0g-dev
+Build-Depends: redo (>= 1.6), xmlto, pax, libncurses-dev, uuid-dev, libssl-dev, libpam0g-dev
 Rules-Requires-Root: no
 
 Package: nosh-guide
@@ -24,7 +24,7 @@ Description: Minimal non-shell script processor and various chain-load utilities
  nosh is a minimal script processor for use in the #! lines of scripts.
  .
  Included here are various commands for altering process state:
-  * appendpath, chdir, chroot, clearenv, envdir, envuidgid, fdmove, fdredir, getuidgid
+  * appendpath, chdir, chroot, clearenv, envdir, envuidgid, fdmove, fdredir, getuidgid,
   * machineenv, prependpath, read-conf, setenv, setgid-fromenv, setlogin, setsid, setuidgid,
   * setuidgid-fromenv, softlimit, ulimit, umask, unsetenv, userenv, userenv-fromenv
  .
@@ -35,7 +35,11 @@ Description: Minimal non-shell script processor and various chain-load utilities
   * local-seqpacket-socket-accept, local-seqpacket-socket-listen,
   * local-stream-socket-accept, local-stream-socket-listen, local-stream-socket-connect,
   * udp-socket-listen, udp-socket-connect,
-  * tcp-socket-accept, tcp-socket-listen, tcp-socket-connect,
+  * tcp-socket-accept, tcp-socket-listen, tcp-socket-connect
+ .
+ Additionally there are some miscellaneous commands:
+  * sqz, linenumber
+ .
 
 Package: nosh-service-management
 Architecture: amd64
@@ -112,8 +116,9 @@ Architecture: amd64
 Depends: ${shlibs:Depends}, nosh-service-management
 Suggests: 
 Recommends: 
-Will-Conflict: sysvinit-utils (<< 2.88dsf-59), upstart-sysv, systemd-sysv, init-system-helpers (>= 1.48)
-Will-Provide: systemd-sysv
+#Conflicts: sysvinit-utils (<< 2.88dsf-59), upstart-sysv, systemd-sysv, init-system-helpers (>= 1.48)
+Conflicts: sysvinit-utils (<< 2.88dsf-59), upstart-sysv
+Provides: systemd-sysv
 Description: BSD and System 5 shim service and system management utilities
  This package provides shims for old-style BSD and System 5 system management commands.
   * init, shutdown, telinit, halt, haltsys, poweroff, reboot, runlevel
@@ -132,7 +137,7 @@ Architecture: amd64
 Depends: nosh-service-management
 Suggests: 
 Recommends: 
-Will-Conflict: systemd
+#Conflicts: systemd
 Description: systemd shim service and system management utilities
  This package provides shims for systemd service and system management commands.
   * systemctl, systemd
@@ -156,7 +161,7 @@ Architecture: amd64
 Depends: nosh-service-management
 Suggests: 
 Recommends: 
-Will-Conflict: smf
+Conflicts: smf
 Description: SunOS SMF shim service and system management utilities
  This package provides shims for SunOS SMF service and system management commands.
   * svcadm
@@ -181,7 +186,7 @@ Section: utils
 Depends: nosh-exec
 Suggests: 
 Recommends: 
-Will-Conflict: coreutils
+#Conflicts: coreutils
 Description: core utility shims
  This package provides shims for commands with names from GNU Coreutils.
   * true, false, chroot, ulimit, umask
@@ -196,7 +201,7 @@ Section: utils
 Depends: nosh-exec, nosh-terminal-management
 Suggests: 
 Recommends: 
-Will-Conflict: util-linux
+#Conflicts: util-linux
 Description: Linux utility shims
  This package provides shims for commands with names from util-linux.
   * unshare, setterm, getty
@@ -208,7 +213,7 @@ Architecture: amd64
 Depends: ${shlibs:Depends}, nosh-service-management, nosh-systemv-shims
 Suggests: 
 Recommends: 
-Will-Conflict: sysvinit-utils (<< 2.88dsf-59), upstart-sysv, systemd-sysv, init-system-helpers (>= 1.48)
+#Conflicts: sysvinit-utils (<< 2.88dsf-59), upstart-sysv, systemd-sysv, init-system-helpers (>= 1.48)
 Conflicts: nosh-systemv-shims (<= 1.36)
 Description: Shim for the old BSD and System 5 service command
  This package provides a shim for the old-style BSD and System 5 service command.
@@ -219,8 +224,8 @@ Architecture: amd64
 Depends: nosh-service-management, nosh-service-command-shim, nosh-systemv-shims
 Suggests: 
 Recommends: 
-Will-Conflict: sysvinit-core (<< 2.88dsf-59.9), init-system-helpers (>= 1.48)
-Will-Provide: init-system-helpers
+#Conflicts: sysvinit-core (<= 2.88dsf-59.9), init-system-helpers (>= 1.48)
+#Provides: init-system-helpers
 Description: Debian shim service and system management utilities
  This package provides shims for Debian service and system management commands.
   * chkconfig, invoke-rc.d, update-rc.d, deb-systemd-invoke
@@ -236,7 +241,7 @@ Architecture: amd64
 Depends: nosh-service-management, nosh-systemv-shims
 Suggests: 
 Recommends: 
-Will-Conflict: openrc
+#Conflicts: openrc
 Provides: openrc
 Description: OpenRC shim service and system management utilities
  This package provides shims for OpenRC service and system management commands.
@@ -302,7 +307,7 @@ Package: nosh-kbd-shims
 Architecture: amd64
 Section: utils
 Depends: nosh-terminal-management
-Will-Conflict: kbd
+#Conflicts: kbd
 Suggests: 
 Recommends: 
 Description: shim kbd utilities
@@ -318,7 +323,7 @@ Section: net
 Depends: nosh-exec
 Suggests: 
 Recommends: 
-Will-Conflict: net-tools
+#Conflicts: net-tools
 Description: Linux utility shims 
  This package provides shims for commands with names from net-tools
   * ifconfig
@@ -681,7 +686,7 @@ Section: web
 Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, publicfile (>=10)
 Provides:
 Suggests: 
-Recommends: ucspi-ssl
+Recommends: ucspi-ssl, publicfile (>=12)
 Conflicts:
 Description: Run the publicfile services.
  This package causes the publicfile services to run:
@@ -692,14 +697,15 @@ Description: Run the publicfile services.
    * combined-stack GEMINI
    * combined-stack NICNAME
    * combined-stack FINGER
+   * combined-stack IDENT
 
 Package: nosh-run-djbdns
 Architecture: amd64
 Section: web
 Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, djbdns
 Provides:
-Suggests: 
-Recommends: 
+Suggests:
+Recommends: djbdns (>=12)
 Conflicts:
 Description: Run the djbdns services.
  This package causes the various djbdns services to run.
@@ -714,7 +720,7 @@ Section: web
 Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, taiclockd | clockspeed
 Provides:
 Suggests: 
-Recommends: 
+Recommends: taiclockd (>=12)
 Conflicts: nosh-run-sntpclock
 Description: Run the sntpclock service.
  This package causes the sntpclock service to run.
@@ -725,7 +731,7 @@ Section: web
 Depends: nosh-exec, nosh-service-management (>=1.33), nosh-bundles, clockspeed
 Provides:
 Suggests: 
-Recommends: 
+Recommends:
 Conflicts: nosh-run-taiclock
 Description: Run the taiclock service.
  This package causes the taiclock service to run.

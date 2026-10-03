@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -44,15 +45,15 @@ Be careful, therefore, of the effect that this will have on <citerefentry><refen
 <refsection><title>Description</title>
 
 <para>
-<command>unshare</command> is a chain-loading utility that calls <citerefentry><refentrytitle>unshare</refentrytitle><manvolnum>2</manvolnum></citerefentry> to "unshare" various "namespaces" from its parent process and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
+<command>unshare</command> is a chain-loading utility that calls <citerefentry><refentrytitle>unshare</refentrytitle><manvolnum>2</manvolnum></citerefentry> to <quote>unshare</quote> various <quote>namespaces</quote> from its parent process and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>unshare</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>unshare</command> will ignore.
 </para>
 
 <para>
-The namespaces un-shared are controlled by command-line options as follows:
+The namespaces un-shared are controlled by command&#x2010;line options as follows:
 </para>
 
 <variablelist>

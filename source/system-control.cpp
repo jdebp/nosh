@@ -157,12 +157,15 @@ system_control (
 	try {
 		// These compatibility options make command completion in the Z and Bourne Again shells slightly smoother.
 		// They also prevent install/uninstall scripts in RPM packages from breaking.
-		bool full(false), no_legend(false), no_pager(false), no_reload(false), quiet(false);
+		bool full(false), no_legend(false), no_pager(false), no_reload(false), quiet(false), rootdirslash(false);
+		const char * rootdir(nullptr);
 		popt::bool_definition full_option('\0', "full", "Compatibility option.  Ignored.", full);
 		popt::bool_definition no_legend_option('\0', "no-legend", "Compatibility option.  Ignored.", no_legend);
 		popt::bool_definition no_pager_option('\0', "no-pager", "Compatibility option.  Ignored.", no_pager);
 		popt::bool_definition no_reload_option('\0', "no-reload", "Compatibility option.  Ignored.", no_reload);
 		popt::bool_definition quiet_option('\0', "quite", "Compatibility option.  Ignored.", quiet);
+		popt::string_definition rootdir_option('\0', "root", "Compatibility option.  Ignored.", "directory", rootdir);
+		popt::bool_definition rootdirslash_option('\0', "root=/", "Compatibility option.  Ignored.", rootdirslash);
 		popt::bool_definition user_option('u', "user", "Communicate with the per-user manager.", per_user_mode);
 		popt::definition * top_table[] = {
 			&user_option,

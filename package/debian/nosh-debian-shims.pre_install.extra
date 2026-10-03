@@ -1,0 +1,13 @@
+# Extra pre-install for nosh-debian-shims
+# vim: set filetype=sh:
+
+for i in chkconfig invoke-rc.d update-rc.d
+do
+	dpkg-divert --package nosh-debian-shims --rename --add /usr/bin/"${i}"
+	dpkg-divert --package nosh-debian-shims --rename --divert /usr/share/man/man8/"${i}".distrib.8.gz --add /usr/share/man/man8/"${i}".8.gz
+done
+for i in deb-systemd-invoke
+do
+	dpkg-divert --package nosh-debian-shims --rename --add /usr/bin/"${i}"
+	dpkg-divert --package nosh-debian-shims --rename --divert /usr/share/man/man1/"${i}".distrib.1p.gz --add /usr/share/man/man1/"${i}".1p.gz
+done

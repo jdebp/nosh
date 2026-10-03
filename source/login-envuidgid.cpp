@@ -3,8 +3,10 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
+#define _BSD_SOURCE 1
 #include <vector>
-#include <cstdio>
+#include <iostream>
+#include <fstream>
 #include <cstdlib>
 #include <cstring>
 #include <csignal>
@@ -13,18 +15,21 @@ For copyright and licensing terms, see the file named COPYING.
 #include <inttypes.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "haspam.h"
+#include "config/haspam.h"
 #if defined(HAS_PAM)
 #	include <security/pam_appl.h>
 #	include <security/pam_modules.h>
 #endif
-#include "hasutmpx.h"
+#include "config/hasutmpx.h"
+#include "config/hasutmpxexit.h"
+#include "config/hasutmpxsession.h"
 #if defined(HAS_UTMPX)
 #include <sys/time.h>
 #include <utmpx.h>
 #endif
-#include "hasupdwtmpx.h"
-#if defined(__LINUX__) || defined(__linux__)
+#include "config/hasupdwtmpx.h"
+#include "config/hasshadow.h"
+#if defined(HAS_SHADOW)
 #	include <shadow.h>
 #endif
 #include <pwd.h>
@@ -82,6 +87,8 @@ const char help_message_unicode[] = "edit:[\u2326][\u232b] nav:[\u21f1][\u21f2][
 const char help_message_ascii[] = "edit:Delete/Backspace nav:Home/End/BackTab/Tab/Down/Up/Left/Right OK:Return/Enter cancel:Ctrl+D status:F1";
 const char * help_messages[TUIOutputBase::Options::TUI_LEVELS] = { help_message_unicode, help_message_unicode, help_message_ascii };
 
+/// \brief an individual item, label and entry field, underpinning the dialogue that is shown on screen
+/// These are not TUIDrawables, because we special-case their re-painting.
 struct EntryField {
 	enum Type { ERROR, INFO, PASSWORD, NORMAL };
 	EntryField(const std::string & p, const std::string & v, bool error) : prompt(ConvertFromUTF8(p)), value(ConvertFromUTF8(v)), type(error ? ERROR : INFO), pos(value.length()) {}
@@ -108,12 +115,13 @@ private:
 	std::string utf8value;
 };
 
+/// \brief the full-screen TUI
 struct TUI :
 	public TerminalCapabilities,
 	public TUIOutputBase,
 	public TUIInputBase
 {
-	TUI(const char *, ProcessEnvironment & e, TUIDisplayCompositor & comp, FILE * tty, const FileDescriptorOwner & queue, unsigned long c, const TUIOutputBase::Options &, const LoginBannerInformation &);
+	TUI(const char *, ProcessEnvironment & e, TUIDisplayCompositor & comp, std::iostream & tty, int tty_fd, const FileDescriptorOwner & queue, unsigned long c, const TUIOutputBase::Options &, const LoginBannerInformation &);
 	~TUI();
 
 #if defined(HAS_PAM)
@@ -124,6 +132,12 @@ struct TUI :
 		const struct pam_message * messages[],
 		struct pam_response ** return_responses,
 		void * data
+	);
+	int
+	pam_conv (
+		std::size_t count,
+		const struct pam_message * messages[],
+		struct pam_response responses[]
 	);
 #endif
 
@@ -136,12 +150,16 @@ struct TUI :
 	std::vector<struct kevent> ip;
 
 protected:
+	/// \name Common event handlers providing conventional keyboard semantics.
+	/// @{
 	TUIInputBase::WheelToKeyboard handler0;
 	TUIInputBase::CalculatorKeypadToPrintables handler1;
 	TUIInputBase::CUAToExtendedKeys handler2;
 	TUIInputBase::LineDisciplineToExtendedKeys handler3;
 	TUIInputBase::ConsumerKeysToExtendedKeys handler4;
 	TUIInputBase::CalculatorKeypadToPrintables handler5;
+	/// @}
+	/// \brief a custom event handler for things that are particular to this UI
 	class EventHandler : public TUIInputBase::EventHandler {
 	public:
 		EventHandler(TUI & i) : TUIInputBase::EventHandler(i), ui(i) {}
@@ -157,11 +175,14 @@ protected:
 	const char * const type;
 	const FileDescriptorOwner & queue;
 	sig_atomic_t terminate_signalled, interrupt_signalled, hangup_signalled, usr1_signalled, usr2_signalled;
+	/// \name The constant TUI elememts, other than the EntryFields.
+	/// @{
 	TUIVIO vio;
 	TUIBackdrop * backdrop;
 	TUIFrame * frame;
 	TUIStatusBar * statusbar;
 	std::vector<TUIDrawable *> drawables;
+	/// @}
 	int dismiss_code;
 	bool immediate_update_needed;
 	std::time_t now;
@@ -209,15 +230,16 @@ TUI::TUI(
 	const char * p,
 	ProcessEnvironment & e,
 	TUIDisplayCompositor & comp,
-	FILE * tty,
+	std::iostream & tty,
+	int tty_fd,
 	const FileDescriptorOwner & q,
 	unsigned long /*columns*/,
 	const TUIOutputBase::Options & options,
 	const LoginBannerInformation & info
 ) :
 	TerminalCapabilities(e),
-	TUIOutputBase(*this, tty, options, comp),
-	TUIInputBase(static_cast<const TerminalCapabilities &>(*this), tty),
+	TUIOutputBase(*this, tty, tty_fd, options, comp),
+	TUIInputBase(static_cast<const TerminalCapabilities &>(*this), tty, tty_fd),
 	handler0(*this),
 	handler1(*this),
 	handler2(*this),
@@ -341,6 +363,9 @@ TUI::redraw_new (
 		c.set_cursor_state(0U, CursorSprite::BOX);
 	}
 }
+
+/// \name Actions bound to input events by the event handler
+/// @{
 
 void
 TUI::start_of_field(
@@ -518,6 +543,10 @@ TUI::toggle_mute()
 	set_refresh_and_immediate_update_needed();
 }
 
+/// @}
+
+/// \brief The inner show dialogue function.
+/// This contains an event loop that terminates when the dialogue is dismissed.
 bool
 TUI::show(
 ) {
@@ -543,7 +572,7 @@ TUI::show(
 	std::vector<struct kevent> p(4);
 	while (true) {
 		if (dismissed())
-			break;	// FIXME: we never return true
+			break;
 		if (exit_signalled()) {
 			suspended();
 			vio.CLSToSpace(ColourPair::def);
@@ -700,6 +729,8 @@ TUI::add_press_return_field(
 }
 
 #if defined(HAS_PAM)
+
+/// \brief Reflect the static member call back on to a non-static member function of the TUI object.
 int
 TUI::pam_conv (
 	int count,
@@ -707,42 +738,56 @@ TUI::pam_conv (
 	struct pam_response ** return_responses,
 	void * data
 ) {
-	TUI & ui = *static_cast<TUI *>(data);
-	ui.fields.clear();
+	if (count < 0) return PAM_BUF_ERR;
+	struct pam_response * responses = static_cast<struct pam_response *>(std::calloc(sizeof(struct pam_response), count));
+	if (!responses) return PAM_BUF_ERR;
+	*return_responses = responses;
+	return static_cast<TUI *>(data)->pam_conv(count, messages, responses);
+}
+
+/// \brief This is essentially treating the TUI as a modal dialogue.
+int
+TUI::pam_conv (
+	std::size_t count,
+	const struct pam_message * messages[],
+	struct pam_response responses[]
+) {
+	// Convert the PAM messages into a list of abstract EntryFields.
+	fields.clear();
 	bool seen_entryfield(false);
-	for(int i(0); i < count; ++i) {
+	for(std::size_t i(0); i < count; ++i) {
 		const struct pam_message & m(*messages[i]);
 		switch (m.msg_style) {
 			case PAM_PROMPT_ECHO_OFF:
-				ui.fields.push_back(EntryField(m.msg, true));
+				fields.push_back(EntryField(m.msg, true));
 				seen_entryfield = true;
 				break;
 			case PAM_PROMPT_ECHO_ON:
-				ui.fields.push_back(EntryField(m.msg, false));
+				fields.push_back(EntryField(m.msg, false));
 				seen_entryfield = true;
 				break;
 			default:
 			case PAM_ERROR_MSG:
-				ui.fields.push_back(EntryField("error", m.msg, true));
+				fields.push_back(EntryField("error", m.msg, true));
 				break;
 			case PAM_TEXT_INFO:
-				ui.fields.push_back(EntryField("information", m.msg, false));
+				fields.push_back(EntryField("information", m.msg, false));
 				break;
 		}
 	}
 	if (!seen_entryfield)
-		ui.add_press_return_field();
-	ui.show();
-	if (1 > ui.query_dismiss_code()) return PAM_CONV_ERR;
-	struct pam_response * responses = static_cast<struct pam_response *>(std::calloc(sizeof(struct pam_response), count));
-	if (!responses) return PAM_BUF_ERR;
-	for(int i(0); i < count; ++i) {
+		add_press_return_field();
+	// ShowDialog(), pretty much.
+	show();
+	if (1 > query_dismiss_code()) return PAM_CONV_ERR;
+	// Read the abstract EntryFields back into the PAM results.
+	for(std::size_t i(0); i < count; ++i) {
 		const struct pam_message & m(*messages[i]);
 		struct pam_response & r(responses[i]);
 		switch (m.msg_style) {
 			case PAM_PROMPT_ECHO_OFF:
 			case PAM_PROMPT_ECHO_ON:
-				r.resp = strdup(ui.fields[i].query_value().c_str());
+				r.resp = strdup(fields[i].query_value().c_str());
 				break;
 			default:
 			case PAM_ERROR_MSG:
@@ -752,9 +797,9 @@ TUI::pam_conv (
 		}
 		r.resp_retcode = 0;
 	}
-	*return_responses = responses;
 	return PAM_SUCCESS;
 }
+
 #endif
 
 /* Utilities ****************************************************************
@@ -806,6 +851,9 @@ login_envuidgid
 	bool verbose(false);
 #if defined(HAS_UTMPX)
 	bool do_utmpx(false);
+#if defined(HAS_PAM)
+	bool utmpx_even_if_pam(false);
+#endif
 #endif
 	try {
 		popt::bool_definition cursor_application_mode_option('\0', "cursor-keypad-application-mode", "Set the cursor keypad to application mode instead of normal mode.", options.cursor_application_mode);
@@ -824,12 +872,21 @@ login_envuidgid
 		popt::bool_definition verbose_option('v', "verbose", "Log verbose information.", verbose);
 #if defined(HAS_UTMPX)
 		popt::bool_definition utmpx_option('\0', "utmpx", "Update the utmpx login database.", do_utmpx);
+#if defined(HAS_PAM)
+		popt::bool_definition utmpx_even_if_pam_option('\0', "utmpx-even-if-pam", "Update the utmpx login database even when PAM is being used.", utmpx_even_if_pam);
+#else
+		bool utmpx_even_if_pam(false);
+		popt::bool_definition utmpx_even_if_pam_option('\0', "utmpx-even-if-pam", "Compatibility option; ignored.", utmpx_even_if_pam);
+#endif
 #else
 		bool do_utmpx(false);
+		bool utmpx_even_if_pam(false);
 		popt::bool_definition utmpx_option('\0', "utmpx", "Compatibility option; ignored.", do_utmpx);
+		popt::bool_definition utmpx_even_if_pam_option('\0', "utmpx-even-if-pam", "Compatibility option; ignored.", utmpx_even_if_pam);
 #endif
 		popt::definition * top_table[] = {
 			&utmpx_option,
+			&utmpx_even_if_pam_option,
 			&verbose_option,
 			&tui_table_option,
 		};
@@ -847,12 +904,20 @@ login_envuidgid
 	}
 
 	const char * tty(get_controlling_tty_filename(envs));
-	FileStar control(std::fopen(tty, "w+"));
-	if (!control) {
+	std::fstream control(tty);
+	if (!control.is_open()) {
 		die_errno(prog, envs, tty);
 	}
+#if __cpp_lib_fstream_native_handle
+	const int control_fd(control.rdbuf()->native_handle());
+#else
+	const int control_fd(open_readwriteexisting_at(AT_FDCWD, tty));
+	if (0 > control_fd) {
+		die_errno(prog, envs, tty);
+	}
+#endif
 
-	const unsigned long columns(get_columns(envs, fileno(control)));
+	const unsigned long columns(get_columns(envs, control_fd));
 
 	LoginBannerInformation info(prog, envs);
 
@@ -862,7 +927,7 @@ login_envuidgid
 	}
 
 	TUIDisplayCompositor compositor(false /* no software cursor */, 24, 80);
-	TUI ui(prog, envs, compositor, control, queue, columns, options, info);
+	TUI ui(prog, envs, compositor, control, control_fd, queue, columns, options, info);
 
 	append_event(ui.ip, ui.QueryInputFD(), EVFILT_READ, EV_ADD, 0, 0, nullptr);
 	ReserveSignalsForKQueue kqueue_reservation(SIGTERM, SIGINT, SIGHUP, SIGPIPE, SIGUSR1, SIGUSR2, SIGWINCH, SIGTSTP, SIGCONT, 0);
@@ -979,7 +1044,7 @@ exit_pamerror:
 	else
 #endif
 	{
-#	if defined(__LINUX__) || defined(__linux__)
+#	if defined(HAS_SHADOW)
 		errno = 0;
 		struct spwd * const s(getspnam(p->pw_name));
 		if (!s) goto exit_error;
@@ -1028,7 +1093,7 @@ exit_pamerror:
 	if (!do_pam)
 #endif
 	{
-#	if defined(__LINUX__) || defined(__linux__)
+#	if defined(HAS_SHADOW)
 		endspent();
 #	endif
 	}
@@ -1064,14 +1129,14 @@ exit_error_pam_cleanup:
 		struct utmpx u = {};
 		if (do_utmpx
 #if defined(HAS_PAM)
-		&& !do_pam
+		&& (!do_pam || utmpx_even_if_pam)
 #endif
 		) {
 			// The entire decades-since obsolete scheme with inittab IDs and INIT_PROCESS+LOGIN_PROCESS states depends from matching the process ID of this process.
 			// But the modern reality is that only USER_PROCESS and DEAD_PROCESS are meaningful at all.
 			// So we can mark the actual user process as the process ID, instead of our own process ID.
 			u.ut_pid = child;
-#if defined(__LINUX__) || defined(__linux__) || defined(__NetBSD__)
+#if defined(HAS_UTMPX_SESSION)
 			u.ut_session = getsid(0);
 #endif
 			std::strncpy(u.ut_user, user, sizeof u.ut_user);
@@ -1086,7 +1151,7 @@ exit_error_pam_cleanup:
 #if defined(HAS_UTMPX)
 		if (do_utmpx
 #if defined(HAS_PAM)
-		&& !do_pam
+		&& (!do_pam || utmpx_even_if_pam)
 #endif
 		) {
 			u.ut_type = USER_PROCESS;
@@ -1107,12 +1172,16 @@ exit_error_pam_cleanup:
 #if defined(HAS_UTMPX)
 		if (do_utmpx
 #if defined(HAS_PAM)
-		&& !do_pam
+		&& (!do_pam || utmpx_even_if_pam)
 #endif
 		) {
 			u.ut_type = DEAD_PROCESS;
 			gettimeofday(u);
 			setutxent();
+#if defined(HAS_UTMPX_EXIT)
+			u.ut_exit.e_termination = status;
+			u.ut_exit.e_exit = code;
+#endif
 			pututxline(&u);
 #if defined(HAS_UPDWTMPX)
 			updwtmpx(_PATH_WTMP, &u);

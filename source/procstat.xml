@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -52,7 +53,7 @@ It has just two selection modes.
 </para>
 <itemizedlist>
 <listitem><para>
-With the <arg choice="plain">-a</arg> command-line option, <citerefentry><refentrytitle>list-process-table</refentrytitle><manvolnum>1</manvolnum></citerefentry> is told to display the entire process table.
+With the <arg choice="plain">-a</arg> command&#x2010;line option, <citerefentry><refentrytitle>list-process-table</refentrytitle><manvolnum>1</manvolnum></citerefentry> is told to display the entire process table.
 </para></listitem>
 <listitem><para>
 With a list of <arg choice="plain" repeat="rep"><replaceable>process-id(s)</replaceable></arg>, <citerefentry><refentrytitle>list-process-table</refentrytitle><manvolnum>1</manvolnum></citerefentry> is told to display just the process table entries for <replaceable>process-id(s)</replaceable> (one process ID per argument).
@@ -68,41 +69,41 @@ Command-line options are translated into options for <citerefentry><refentrytitl
 <variablelist>
 <varlistentry>
 <term><arg choice="plain">-H</arg></term>
-<listitem><para>Pass the <arg choice="plain">--threads</arg> command-line option.</para></listitem>
+<listitem><para>Pass the <arg choice="plain">--threads</arg> command&#x2010;line option.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><arg choice="plain">-b</arg></term>
-<listitem><para>Request the <arg choice="plain">pid</arg>, <arg choice="plain">comm</arg>, <arg choice="plain">osrel</arg>, <arg choice="plain">emul</arg>, and <arg choice="plain">command</arg> fields with the <arg choice="plain">--field</arg> command-line option.</para></listitem>
+<listitem><para>Request the <arg choice="plain">pid</arg>, <arg choice="plain">comm</arg>, <arg choice="plain">osrel</arg>, <arg choice="plain">emul</arg>, and <arg choice="plain">command</arg> fields with the <arg choice="plain">--field</arg> command&#x2010;line option.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><arg choice="plain">-c</arg></term>
 <listitem><para>Request the
-<arg choice="plain">pid</arg>, <arg choice="plain">comm</arg>, <arg choice="plain">args</arg> fields with the <arg choice="plain">--field</arg> command-line option.</para></listitem>
+<arg choice="plain">pid</arg>, <arg choice="plain">comm</arg>, <arg choice="plain">args</arg> fields with the <arg choice="plain">--field</arg> command&#x2010;line option.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><arg choice="plain">-e</arg></term>
-<listitem><para>Request the <arg choice="plain">pid</arg>, <arg choice="plain">comm</arg>, and <arg choice="plain">envs</arg> fields with the <arg choice="plain">--field</arg> command-line option.</para></listitem>
+<listitem><para>Request the <arg choice="plain">pid</arg>, <arg choice="plain">comm</arg>, and <arg choice="plain">envs</arg> fields with the <arg choice="plain">--field</arg> command&#x2010;line option.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><arg choice="plain">-i</arg></term>
 <listitem><para>Request the
-<arg choice="plain">pid</arg>, <arg choice="plain">comm</arg>, <arg choice="plain">siglist</arg>, <arg choice="plain">sigmask</arg>, <arg choice="plain">sigignore</arg>, and <arg choice="plain">sigcatch</arg> fields with the <arg choice="plain">--field</arg> command-line option.</para></listitem>
+<arg choice="plain">pid</arg>, <arg choice="plain">comm</arg>, <arg choice="plain">siglist</arg>, <arg choice="plain">sigmask</arg>, <arg choice="plain">sigignore</arg>, and <arg choice="plain">sigcatch</arg> fields with the <arg choice="plain">--field</arg> command&#x2010;line option.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><arg choice="plain">-k</arg></term>
-<listitem><para>Request the <arg choice="plain">pid</arg>, <arg choice="plain">tid</arg>, <arg choice="plain">comm</arg>, <arg choice="plain">tdname</arg>, and <arg choice="plain">kstack</arg> fields with the <arg choice="plain">--field</arg> command-line option.</para></listitem>
+<listitem><para>Request the <arg choice="plain">pid</arg>, <arg choice="plain">tid</arg>, <arg choice="plain">comm</arg>, <arg choice="plain">tdname</arg>, and <arg choice="plain">kstack</arg> fields with the <arg choice="plain">--field</arg> command&#x2010;line option.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><arg choice="plain">-s</arg></term>
-<listitem><para>Request the <arg choice="plain">pid</arg>, <arg choice="plain">comm</arg>, <arg choice="plain">euid</arg>, <arg choice="plain">ruid</arg>, <arg choice="plain">svuid</arg>, <arg choice="plain">egid</arg>, <arg choice="plain">rgid</arg>, <arg choice="plain">svgid</arg>, <arg choice="plain">umask</arg>, <arg choice="plain">crflags</arg>, and <arg choice="plain">groups</arg> fields with the <arg choice="plain">--field</arg> command-line option.</para></listitem>
+<listitem><para>Request the <arg choice="plain">pid</arg>, <arg choice="plain">comm</arg>, <arg choice="plain">euid</arg>, <arg choice="plain">ruid</arg>, <arg choice="plain">svuid</arg>, <arg choice="plain">egid</arg>, <arg choice="plain">rgid</arg>, <arg choice="plain">svgid</arg>, <arg choice="plain">umask</arg>, <arg choice="plain">crflags</arg>, and <arg choice="plain">groups</arg> fields with the <arg choice="plain">--field</arg> command&#x2010;line option.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><arg choice="plain">-S</arg></term>
-<listitem><para>Request the <arg choice="plain">pid</arg>, <arg choice="plain">tid</arg>, <arg choice="plain">comm</arg>, <arg choice="plain">tdname</arg>, <arg choice="plain">oncpu</arg>, <arg choice="plain">lastcpu</arg>, <arg choice="plain">csid</arg>, <arg choice="plain">lastcpu</arg>, and <arg choice="plain">csmask</arg> fields with the <arg choice="plain">--field</arg> command-line option.</para></listitem>
+<listitem><para>Request the <arg choice="plain">pid</arg>, <arg choice="plain">tid</arg>, <arg choice="plain">comm</arg>, <arg choice="plain">tdname</arg>, <arg choice="plain">oncpu</arg>, <arg choice="plain">lastcpu</arg>, <arg choice="plain">csid</arg>, <arg choice="plain">lastcpu</arg>, and <arg choice="plain">csmask</arg> fields with the <arg choice="plain">--field</arg> command&#x2010;line option.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><arg choice="plain">-t</arg></term>
-<listitem><para>Request the <arg choice="plain">pid</arg>, <arg choice="plain">tid</arg>, <arg choice="plain">comm</arg>, <arg choice="plain">tdname</arg>, <arg choice="plain">oncpu</arg>, <arg choice="plain">lastcpu</arg>, <arg choice="plain">pri</arg>, <arg choice="plain">state</arg>, <arg choice="plain">mwchan</arg>, and <arg choice="plain">wchan</arg> fields with the <arg choice="plain">--field</arg> command-line option.</para></listitem>
+<listitem><para>Request the <arg choice="plain">pid</arg>, <arg choice="plain">tid</arg>, <arg choice="plain">comm</arg>, <arg choice="plain">tdname</arg>, <arg choice="plain">oncpu</arg>, <arg choice="plain">lastcpu</arg>, <arg choice="plain">pri</arg>, <arg choice="plain">state</arg>, <arg choice="plain">mwchan</arg>, and <arg choice="plain">wchan</arg> fields with the <arg choice="plain">--field</arg> command&#x2010;line option.</para></listitem>
 </varlistentry>
 </variablelist>
 
@@ -185,7 +186,7 @@ This <command>procstat</command> is modelled on the FreeBSD <citerefentry><refen
 </para>
 
 <para>
-Several command-line options of the FreeBSD <citerefentry><refentrytitle>procstat</refentrytitle><manvolnum>8</manvolnum></citerefentry> command are not supported, because they do not translate into <citerefentry><refentrytitle>list-process-table</refentrytitle><manvolnum>1</manvolnum></citerefentry> mechanims.
+Several command&#x2010;line options of the FreeBSD <citerefentry><refentrytitle>procstat</refentrytitle><manvolnum>8</manvolnum></citerefentry> command are not supported, because they do not translate into <citerefentry><refentrytitle>list-process-table</refentrytitle><manvolnum>1</manvolnum></citerefentry> mechanims.
 Also, several fields are not meaningful outwith FreeBSD.
 </para>
 

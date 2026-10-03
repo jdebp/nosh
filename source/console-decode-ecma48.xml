@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -53,27 +54,27 @@ In both cases it writes to its standard output.
 
 <para>
 Malformed escape and control sequences, interrupted by CSI or ESC or cancelled by CAN, are discarded and not decoded; just as most terminals will ignore them.
-The <arg choice='plain'>--no-cancel</arg> command-line option disables cancellation by CAN, allowing that character to be passed through as a control character.
+The <arg choice='plain'>--no-cancel</arg> command&#x2010;line option disables cancellation by CAN, allowing that character to be passed through as a control character.
 </para>
 
 <para>
-The <arg choice='plain'>--no-7bit</arg> command-line option disables all ECMA-48 7-bit code extensions except for CSI.
+The <arg choice='plain'>--no-7bit</arg> command&#x2010;line option disables all ECMA-48 7-bit code extensions except for CSI.
 The 7-bit code extensions are treated as escape sequences rather than as aliases for control characters.
 </para>
 
 <para>
-The <arg choice='plain'>--control-strings</arg> command-line option enables ECMA-48 control strings introduced by DCS, OSC, PM, APC, and SOS.
+The <arg choice='plain'>--control-strings</arg> command&#x2010;line option enables ECMA-48 control strings introduced by DCS, OSC, PM, APC, and SOS.
 Because control strings have to be terminated by ST, but most outputs do not generate them properly, processing of control strings is normally disabled and these characters are simply discarded.
 </para>
 
 <para>
-The <arg choice='plain'>--input</arg> command-line option causes <command>console-decode-ecma48</command> to process data as if they are terminal input rather than as if they are terminal output (ECMA-48 applying to both).
+The <arg choice='plain'>--input</arg> command&#x2010;line option causes <command>console-decode-ecma48</command> to process data as if they are terminal input rather than as if they are terminal output (ECMA-48 applying to both).
 It disambiguates certain ambiguous control sequences as function key inputs rather than as output actions.
 For example, the parameters to CUP (CSI <code>H</code>) have different meanings as input (repeat count and modifiers) to those as output (row and column position).
 </para>
 
 <para>
-The <arg choice='plain'>--no-7bit</arg> and <arg choice='plain'>--input</arg> command-line options used together use a non-ECMA-48 decoding of 2-character escape sequences, including the ones that would be ECMA-48 7-bit code extensions.
+The <arg choice='plain'>--no-7bit</arg> and <arg choice='plain'>--input</arg> command&#x2010;line options used together use a non-ECMA-48 decoding of 2-character escape sequences, including the ones that would be ECMA-48 7-bit code extensions.
 These escape sequences are decoded as accelerators.
 </para>
 
@@ -88,12 +89,12 @@ Under the new 1986 rule, zero means zero.
 
 <para>
 ECMA-48 control codes, escape sequences, and control sequences are printed using their standard abbreviations.
-"CSI" is "Control Sequence Introducer", for example, documented in &#x00a7;8.3.16 of ECMA-48:1991.
-And similarly "CUU" is "CUrsor Up", documented in &#x00a7;8.3.22.
+<quote>CSI</quote> is <quote>Control Sequence Introducer</quote>, for example, documented in &#x00a7;8.3.16 of ECMA-48:1991.
+And similarly <quote>CUU</quote> is <quote>CUrsor Up</quote>, documented in &#x00a7;8.3.22.
 For a full list of codes, see the standard.
 </para>
 <note>
-A common confusion is to mistake "CUU", CUrsor Up, for "CUP", which is actually CUrsor Position (&#x00a7;8.3.21).
+A common confusion is to mistake <quote>CUU</quote>, CUrsor Up, for <quote>CUP</quote>, which is actually CUrsor Position (&#x00a7;8.3.21).
 </note>
 
 <para>
@@ -164,9 +165,9 @@ The conventions for these come from the SCO console and from DEC VTs and are:
 </varlistentry>
 </variablelist>
 <note>
-The DECFNK control sequences for the DEC VT <keycap>Find</keycap> and <keycap>Select</keycap> keys on the editing keypad are printed as "DEC FIND" and "DEC SELECT".
+The DECFNK control sequences for the DEC VT <keycap>Find</keycap> and <keycap>Select</keycap> keys on the editing keypad are printed as <quote>DEC FIND</quote> and <quote>DEC SELECT</quote>.
 A few terminal emulators get these wrong, and send these codes for the <keycap>&#x21f1;&#160;Home</keycap> and <keycap>&#x21f2;&#160;End</keycap> keys, which are not in fact DEC VT keys and have their own non-DECFNK conventional control sequences (as aforementioned).
-Other editing keypad keys are printed with their IBM PC/AT names rather than their DEC VT names (i.e. "INSERT", "DELETE", "PAGE UP" and "PAGE DOWN" rather than "Insert here", "Remove", "Prev screen", and "Next screen")
+Other editing keypad keys are printed with their IBM PC/AT names rather than their DEC VT names (i.e. <quote>INSERT</quote>, <quote>DELETE</quote>, <quote>PAGE UP</quote> and <quote>PAGE DOWN</quote> rather than <quote>Insert here</quote>, <quote>Remove</quote>, <quote>Prev screen</quote>, and <quote>Next screen</quote>)
 </note>
 
 <para>
@@ -207,10 +208,10 @@ Two private variations on ECMA-48 FNK that are sent by <citerefentry><refentryti
 </para>
 <itemizedlist>
 <listitem><para>
-With the <quote>?</quote> parameter character modifier FNK encodes certain "multimedia" keys using their USB HID usage codes in the keyboard page.
+With the <quote>?</quote> parameter character modifier FNK encodes certain <quote>multimedia</quote> keys using their USB HID usage codes in the keyboard page.
 </para></listitem>
 <listitem><para>
-With the <quote>=</quote> parameter character modifier FNK encodes certain "multimedia", "Internet", and "office" keys using their USB HID usage codes in the consumer page.
+With the <quote>=</quote> parameter character modifier FNK encodes certain <quote>multimedia</quote>, <quote>Internet</quote>, and <quote>office</quote> keys using their USB HID usage codes in the consumer page.
 </para></listitem>
 </itemizedlist>
 <para>

@@ -42,6 +42,7 @@ getuidgid
 ifconfig
 klog-read
 line-banner
+linenumber
 list-logins
 list-process-table
 local-datagram-socket-listen
@@ -103,6 +104,7 @@ setuidgid
 setuidgid-fromenv
 setup-machine-id
 softlimit
+sqz
 syslog-read
 tai64n
 tai64nlocal

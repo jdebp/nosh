@@ -3,9 +3,11 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
+#define _BSD_SOURCE 1
 #include <map>
 #include <vector>
-#include <cstdio>
+#include <iostream>
+#include <fstream>
 #include <cstdlib>
 #include <cstring>
 #include <csignal>
@@ -197,7 +199,7 @@ struct TUI :
 	public TUIOutputBase,
 	public TUIInputBase
 {
-	TUI(ProcessEnvironment & e, DisplayDocument & m, TUIDisplayCompositor & comp, FILE * tty, unsigned long c, const TUIOutputBase::Options &);
+	TUI(ProcessEnvironment & e, DisplayDocument & m, TUIDisplayCompositor & comp, std::iostream & tty, int tty_fd, unsigned long c, const TUIOutputBase::Options &);
 	~TUI();
 
 	bool quit_flagged() const { return pending_quit_event; }
@@ -290,6 +292,8 @@ Element::Element(
 		Equals(name, "refsynopsisdiv") ||
 		Equals(name, "refsection") ||
 		Equals(name, "refsect1") ||
+		Equals(name, "sect1") ||
+		Equals(name, "sect2") ||
 		Equals(name, "funcsynopsis") ||
 		Equals(name, "classynopsis") ||
 		Equals(name, "group") ||
@@ -320,6 +324,8 @@ Element::Element(
 		Equals(name, "refentry") ||
 		Equals(name, "refsection") ||
 		Equals(name, "refsect1") ||
+		Equals(name, "sect1") ||
+		Equals(name, "sect2") ||
 		Equals(name, "refsynopsisdiv") ||
 		Equals(name, "refnamediv") ||
 		Equals(name, "example") ||
@@ -355,6 +361,8 @@ Element::Element(
 		Equals(name, "refmeta") ||
 		Equals(name, "refsection") ||
 		Equals(name, "refsect1") ||
+		Equals(name, "sect1") ||
+		Equals(name, "sect2") ||
 		Equals(name, "refsynopsisdiv") ||
 		Equals(name, "refnamediv") ||
 		Equals(name, "example") ||
@@ -376,6 +384,8 @@ Element::Element(
 		Equals(name, "refmeta") ||
 		Equals(name, "refsection") ||
 		Equals(name, "refsect1") ||
+		Equals(name, "sect1") ||
+		Equals(name, "sect2") ||
 		Equals(name, "refsynopsisdiv") ||
 		Equals(name, "refnamediv") ||
 		Equals(name, "listitem") ||
@@ -1128,13 +1138,14 @@ TUI::TUI(
 	ProcessEnvironment & e,
 	DisplayDocument & d,
 	TUIDisplayCompositor & comp,
-	FILE * tty,
+	std::iostream & tty,
+	int tty_fd,
 	unsigned long c,
 	const TUIOutputBase::Options & options
 ) :
 	TerminalCapabilities(e),
-	TUIOutputBase(*this, tty, options, comp),
-	TUIInputBase(static_cast<const TerminalCapabilities &>(*this), tty),
+	TUIOutputBase(*this, tty, tty_fd, options, comp),
+	TUIInputBase(static_cast<const TerminalCapabilities &>(*this), tty, tty_fd),
 	handler0(*this),
 	handler1(*this),
 	handler2(*this),
@@ -1393,12 +1404,20 @@ console_docbook_xml_viewer [[gnu::noreturn]]
 
 	const char * tty(envs.query("TTY"));
 	if (!tty) tty = "/dev/tty";
-	FileStar control(std::fopen(tty, "w+"));
-	if (!control) {
+	std::fstream control(tty);
+	if (!control.is_open()) {
 		die_errno(prog, envs, tty);
 	}
+#if __cpp_lib_fstream_native_handle
+	const int control_fd(control.rdbuf()->native_handle());
+#else
+	const int control_fd(open_readwriteexisting_at(AT_FDCWD, tty));
+	if (0 > control_fd) {
+		die_errno(prog, envs, tty);
+	}
+#endif
 
-	const unsigned long columns(get_columns(envs, fileno(control)));
+	const unsigned long columns(get_columns(envs, control_fd));
 
 	DisplayDocument doc;
 
@@ -1411,7 +1430,7 @@ console_docbook_xml_viewer [[gnu::noreturn]]
 				struct stat s0, st;
 
 				if (0 <= fstat(STDIN_FILENO, &s0)
-				&&  0 <= fstat(fileno(control), &st)
+				&&  0 <= fstat(control_fd, &st)
 				&&  S_ISCHR(s0.st_mode)
 				&&  (s0.st_rdev == st.st_rdev)
 				) {
@@ -1455,7 +1474,7 @@ console_docbook_xml_viewer [[gnu::noreturn]]
 	}
 	std::vector<struct kevent> ip;
 
-	append_event(ip, fileno(control), EVFILT_READ, EV_ADD, 0, 0, nullptr);
+	append_event(ip, control_fd, EVFILT_READ, EV_ADD, 0, 0, nullptr);
 	ReserveSignalsForKQueue kqueue_reservation(SIGTERM, SIGINT, SIGHUP, SIGPIPE, SIGUSR1, SIGUSR2, SIGWINCH, SIGTSTP, SIGCONT, 0);
 	PreventDefaultForFatalSignals ignored_signals(SIGTERM, SIGINT, SIGHUP, SIGPIPE, SIGUSR1, SIGUSR2, 0);
 	append_event(ip, SIGWINCH, EVFILT_SIGNAL, EV_ADD, 0, 0, nullptr);
@@ -1467,7 +1486,7 @@ console_docbook_xml_viewer [[gnu::noreturn]]
 	append_event(ip, SIGCONT, EVFILT_SIGNAL, EV_ADD, 0, 0, nullptr);
 
 	TUIDisplayCompositor compositor(false /* no software cursor */, 24, 80);
-	TUI ui(envs, doc, compositor, control, columns, options);
+	TUI ui(envs, doc, compositor, control, control_fd, columns, options);
 
 	// How long to wait with updates pending.
 	const struct timespec short_timeout = { 0, 100000000L };
@@ -1507,7 +1526,7 @@ console_docbook_xml_viewer [[gnu::noreturn]]
 				case EVFILT_READ:
 				{
 					const int fd(static_cast<int>(e.ident));
-					if (fileno(control) == fd) {
+					if (control_fd == fd) {
 						ui.handle_control(fd, e.data);
 					}
 					break;

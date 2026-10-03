@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -37,7 +38,7 @@ It chain loads to <citerefentry><refentrytitle>fsck</refentrytitle><manvolnum>8<
 <para>
 The monitoring capability depends from the abilities of the <citerefentry><refentrytitle>fsck</refentrytitle><manvolnum>8</manvolnum></citerefentry> program.
 On the BSDs, it has no monitoring plug-in mechanism.
-On Linux, the monitoring is done by opening a client stream to the <filename>/run/fsck.progress</filename> local domain socket and passing the <arg choice='plain'>-C<replaceable>fd</replaceable></arg> command line option to <command>fsck</command> where <replaceable>fd</replaceable> is the number of the open file descriptor for that client.
+On Linux, the monitoring is done by opening a client stream to the <filename>/run/fsck.progress</filename> local domain socket and passing the <arg choice='plain'>-C<replaceable>fd</replaceable></arg> command&#x2010;line option to <command>fsck</command> where <replaceable>fd</replaceable> is the number of the open file descriptor for that client.
 </para>
 
 </refsection><refsection><title>Author</title>

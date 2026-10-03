@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -39,7 +40,7 @@ If its standard output is not a terminal, it aborts without attempting to initia
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>vc-reset-terminal</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>vc-reset-terminal</command> will ignore.
 </para>
 
 <para>
@@ -53,7 +54,7 @@ It initializes the terminal by resetting the kernel virtual terminal mode, reset
 <refsection><title>Kernel virtual terminal mode reset</title>
 
 <para>
-If the <arg choice='plain'>--text-mode</arg> command line option is used, <command>vc-reset-terminal</command> will use operating-system-specific <citerefentry><refentrytitle>ioctl</refentrytitle><manvolnum>2</manvolnum></citerefentry> calls to attempt to switch a kernel virtual terminal to text mode.
+If the <arg choice='plain'>--text-mode</arg> command&#x2010;line option is used, <command>vc-reset-terminal</command> will use operating-system-specific <citerefentry><refentrytitle>ioctl</refentrytitle><manvolnum>2</manvolnum></citerefentry> calls to attempt to switch a kernel virtual terminal to text mode.
 </para>
 
 </refsection>
@@ -74,14 +75,14 @@ The <code>istrip</code> option is not set.
 
 <listitem>
 <para>
-The <code>tostop</code> option is set, unless the <arg choice='plain'>--no-tostop</arg> command-line option has been used.
+The <code>tostop</code> option is set, unless the <arg choice='plain'>--no-tostop</arg> command&#x2010;line option has been used.
 Job control is the norm nowadays.
 </para>
 </listitem>
 
 <listitem>
 <para>
-The <code>iutf8</code> option is set, unless the <arg choice='plain'>--no-utf8</arg> command-line option has been used.
+The <code>iutf8</code> option is set, unless the <arg choice='plain'>--no-utf8</arg> command&#x2010;line option has been used.
 UTF-8 is the norm nowadays, and <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> sends UTF-8 input sequences to virtual terminals.
 </para>
 </listitem>
@@ -93,7 +94,7 @@ UTF-8 is the norm nowadays, and <citerefentry><refentrytitle>console-terminal-em
 
 <para>
 <command>vc-reset-terminal</command> writes terminal escape and control sequences to soft (re-)initialize the terminal state, including tabstops, margins, windows, scrolling mode, and overstrike mode.
-If the <arg choice='plain'>--hard-reset</arg> command line option is used, different escape sequences are written to hard reset the terminal.
+If the <arg choice='plain'>--hard-reset</arg> command&#x2010;line option is used, different escape sequences are written to hard reset the terminal.
 </para>
 
 <para>
@@ -110,7 +111,7 @@ For compatibility of the actual control sequences emitted with various terminals
 
 <para>
 The major use case for <command>vc-reset-terminal</command> is to reset the terminal and line discipline to some known states before printing the login banner (see <citerefentry><refentrytitle>login-banner</refentrytitle><manvolnum>1</manvolnum></citerefentry>) and running the <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry> program.
-The use case covers terminals that are "always on" and retain state from one terminal log-on session to the next, as is the case with real terminals (remote and local) and kernel virtual terminals.
+The use case covers terminals that are <quote>always on</quote> and retain state from one terminal log-on session to the next, as is the case with real terminals (remote and local) and kernel virtual terminals.
 </para>
 
 <para>
@@ -118,7 +119,7 @@ The use case covers terminals that are "always on" and retain state from one ter
 </para>
 
 <para>
-The program is much the same as the BSD <citerefentry><refentrytitle>reset</refentrytitle><manvolnum>1</manvolnum></citerefentry> command, except that it chain-loads to another command, has a more modern view of what a "sane" line discipline is, does not touch the line discipline's size information, and defaults to a softer reset.
+The program is much the same as the BSD <citerefentry><refentrytitle>reset</refentrytitle><manvolnum>1</manvolnum></citerefentry> command, except that it chain-loads to another command, has a more modern view of what a <quote>sane</quote> line discipline is, does not touch the line discipline's size information, and defaults to a softer reset.
 This is behaviour more suitable and streamlined for kernel virtual terminals, at which the command is specifically aimed.
 </para>
 
@@ -131,7 +132,7 @@ So there is no need for a VT reset utility to adjust them directly.
 <para>
 Real terminals should not normally be sent the hard reset escape sequence, for reasons explained in the <citerefentry><refentrytitle>console-control-sequence</refentrytitle><manvolnum>1</manvolnum></citerefentry> manual and DEC VT documentation.
 Conversely, the Linux and FreeBSD kernel virtual terminals do not implement the DEC soft reset control sequence.
-In line with the general principle of avoiding hard resets, the <arg choice='plain'>--hard-reset</arg> command line option should only be used with these kernel virtual terminals.
+In line with the general principle of avoiding hard resets, the <arg choice='plain'>--hard-reset</arg> command&#x2010;line option should only be used with these kernel virtual terminals.
 </para>
 
 </refsection><refsection><title>SEE ALSO</title>

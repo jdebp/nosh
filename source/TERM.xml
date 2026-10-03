@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -37,12 +38,12 @@ This makes no distinction amongst the standard files, which must all be terminal
 
 <para>
 Some applications take the value of the <envar>TERM</envar> environment variable as a key used to look up records in the <citerefentry><refentrytitle>terminfo</refentrytitle><manvolnum>5</manvolnum></citerefentry> or <citerefentry><refentrytitle>termcap</refentrytitle><manvolnum>5</manvolnum></citerefentry> databases.
-These records describe the "capabilities" of a terminal of the named type.
+These records describe the <quote>capabilities</quote> of a terminal of the named type.
 Unfortunately, these databases have some long-standing problems:
 </para>
 <itemizedlist>
 <listitem><para>
-The model of a "cursor addressing mode" that is switched on and off and a keypad that has "local" and "xmit" modes does not match the nowadays widespread architectures of DEC VTs and of the GUI terminal emulators that emulate them, where rather terminals have "alternate screen buffers", calculator and cursor keypads that have "application" and "normal" modes (neither of which are "local"), and the display is always cursor-addressible.
+The model of a <quote>cursor addressing mode</quote> that is switched on and off and a keypad that has <quote>local</quote> and <quote>xmit</quote> modes does not match the nowadays widespread architectures of DEC VTs and of the GUI terminal emulators that emulate them, where rather terminals have <quote>alternate screen buffers</quote>, calculator and cursor keypads that have <quote>application</quote> and <quote>normal</quote> modes (neither of which are <quote>local</quote>), and the display is always cursor-addressible.
 </para></listitem>
 <listitem><para>
 The keyboard input model involves matching fixed strings, which does not work well with DEC VT and compatible terminals where the control sequences for various keys can vary according to the current modifier states.
@@ -51,7 +52,7 @@ The keyboard input model involves matching fixed strings, which does not work we
 termcap/terminfo do not include capabilities for informing applications that the terminals support ISO 8613-6/ITU T.416 Indexed colour or ISO 8613-6/ITU T.416 Direct colour (i.e. setting colour from a pallette of usually 256 entries, or setting colour by directly specifying RGB values) and have no direct matches for the ECMA-48 invisible or strikethrough character attributes.
 </para></listitem>
 <listitem><para>
-termcap/terminfo have capabilities that are largely meaningless on modern terminals and terminal emulators, such as the ability to switch between "near letter quality" and "draft" modes, which applied to (only some) dot-matrix printers and paper terminals.
+termcap/terminfo have capabilities that are largely meaningless on modern terminals and terminal emulators, such as the ability to switch between <quote>near letter quality</quote> and <quote>draft</quote> modes, which applied to (only some) dot-matrix printers and paper terminals.
 </para></listitem>
 </itemizedlist>
 
@@ -60,14 +61,14 @@ Some applications use the <citerefentry><refentrytitle>ncurses</refentrytitle><m
 </para>
 <itemizedlist>
 <listitem><para>
-The ncurses colour model has the notion of "colour pairs" which existed in some terminals that are rare to nonexistent nowadays, and there is a limited repertoire of such pairs.
+The ncurses colour model has the notion of <quote>colour pairs</quote> which existed in some terminals that are rare to nonexistent nowadays, and there is a limited repertoire of such pairs.
 The colour model of the DEC VTs and compatibles does not comprise colour pairs, but rather has separately settable foreground and background colours that can include every possible pairing.
 </para></listitem>
 </itemizedlist>
 
 <para>
 Because of these, some applications take to employing their own systems that have different models (that are more like the prevalent ECMA-48 and DEC VT model) or just outright ignoring the value of the <envar>TERM</envar> environment variable and hard-coding terminal escape sequences and control sequences.
-Hard-coding, however, undermines conventions such as the one that specifying the terminal type "dumb" causes applications to generate no escape sequences or control sequences, and limit themselves to just the C0 control characters.
+Hard-coding, however, undermines conventions such as the one that specifying the terminal type <quote>dumb</quote> causes applications to generate no escape sequences or control sequences, and limit themselves to just the C0 control characters.
 <citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry> describes how some tools in the nosh toolset, which do not use ncurses/termcap/terminfo, react to these environment variables.
 </para>
 
@@ -110,7 +111,7 @@ Authors claiming that they have implemented XTerm compatibility far too often tu
 </para>
 
 <para>
-The termcap/terminfo databases actually have proper, fully-fledged, records that are specifically created for the terminal emulators that are commonly mis-labelled "xterm":
+The termcap/terminfo databases actually have proper, fully-fledged, records that are specifically created for the terminal emulators that are commonly mis-labelled <quote>xterm</quote>:
 </para>
 <variablelist>
 
@@ -227,7 +228,7 @@ Others hardwire it, sometimes unfortunately hardwiring the wrong thing.
 </para>
 <para>
 Programs like GNU Screen, <citerefentry><refentrytitle>mosh-server</refentrytitle><manvolnum>1</manvolnum></citerefentry> , and <citerefentry><refentrytitle>tmux</refentrytitle><manvolnum>1</manvolnum></citerefentry> are in fact terminal emulators, with their own distinct types reflected in these environment variables.
-They emulate their particular type of terminal on the back end (called "master side" in older documentation) of the pseudo-terminal, and a client program renders the state of that terminal onto a third-party terminal.
+They emulate their particular type of terminal on the back end (called <quote>master side</quote> in older documentation) of the pseudo-terminal, and a client program renders the state of that terminal onto a third-party terminal.
 The terminal type seen by the child processes in the terminal sessions in these environment variables is not that seen by the rendering process for its terminal.
 </para>
 <para>
@@ -281,20 +282,20 @@ How it sets it varies, because there are multiple different <command>getty</comm
 <itemizedlist>
 <listitem>
 <para>
-BSD <command>getty</command> sets the <envar>TERM</envar> environment variable from its command-line argument, which does not specify it directly but specifies an entry in the <citerefentry><refentrytitle>gettytab</refentrytitle><manvolnum>5</manvolnum></citerefentry> database.
+BSD <command>getty</command> sets the <envar>TERM</envar> environment variable from its command&#x2010;line argument, which does not specify it directly but specifies an entry in the <citerefentry><refentrytitle>gettytab</refentrytitle><manvolnum>5</manvolnum></citerefentry> database.
 The <filename>gettytab</filename> record pointed to in turn specifies the <envar>TERM</envar> environment variable's value.
 The command line is in turn specified by the system administrator by a record in the <citerefentry><refentrytitle>ttys</refentrytitle><manvolnum>5</manvolnum></citerefentry> database, <filename>/etc/ttys</filename>.
 </para>
 </listitem>
 <listitem>
 <para>
-With van Smoorenburg <command>init</command>, <command>getty</command> sets the <envar>TERM</envar> environment variable from its command-line argument (defaulting to <code>linux</code>, <code>vt100</code>, or <code>hurd</code> according to the specific <command>getty</command> program employed).
+With van Smoorenburg <command>init</command>, <command>getty</command> sets the <envar>TERM</envar> environment variable from its command&#x2010;line argument (defaulting to <code>linux</code>, <code>vt100</code>, or <code>hurd</code> according to the specific <command>getty</command> program employed).
 The command line is in turn specified by the system administrator by a record in the <filename>/etc/inittab</filename> file.
 </para>
 </listitem>
 <listitem>
 <para>
-With systemd, <command>getty</command> likewise sets the <envar>TERM</envar> environment variable from its command-line argument.
+With systemd, <command>getty</command> likewise sets the <envar>TERM</envar> environment variable from its command&#x2010;line argument.
 The defaults are never used, because the systemd services that invoke <command>getty</command>, on kernel virtual terminals and on real terminals, always supply <command>getty</command> with a terminal type to set.
 They supply it from the <envar>TERM</envar> environment variable of the systemd process itself, which initializes its own <envar>TERM</envar> environment variable to either <code>linux</code> or <code>vt220</code> according to what it find the <filename>/dev/console</filename> device actually pointing to (a kernel virtual terminal or a real terminal, respectively; see <citerefentry><refentrytitle>linux-console</refentrytitle><manvolnum>4</manvolnum></citerefentry>).
 </para>

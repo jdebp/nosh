@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -59,13 +60,13 @@ It re-scans <replaceable>directory</replaceable> whenever <citerefentry><refentr
 <para>
 Every subdirectory, or symbolic link to a directory, in <replaceable>directory</replaceable> whose name does not start with a dot is a bundle directory.
 A subdirectory, or symbolic link to a directory, beneath each of those bundle directories that is named <filename>log</filename> is also a bundle directory.
-The parent bundle directory denotes the "main" service, whose output is fed through a pipe to the input of the "log" service.
+The parent bundle directory denotes the <quote>main</quote> service, whose output is fed through a pipe to the input of the <quote>log</quote> service.
 (See <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> for bundle directories.)
 </para>
 
 <para>
-<command>service-dt-scanner</command> tells the service manager to both load and start the "main" and "log" services; unless the <arg choice='plain'>--input-activation</arg> command-line option is used, in which case the "log" service is only loaded and marked to be input-activated.
-It tells the service manager to plumb the standard input of the "log" service to the standard output and standard error of the "main" service.
+<command>service-dt-scanner</command> tells the service manager to both load and start the <quote>main</quote> and <quote>log</quote> services; unless the <arg choice='plain'>--input-activation</arg> command&#x2010;line option is used, in which case the <quote>log</quote> service is only loaded and marked to be input-activated.
+It tells the service manager to plumb the standard input of the <quote>log</quote> service to the standard output and standard error of the <quote>main</quote> service.
 </para>
 
 <para>

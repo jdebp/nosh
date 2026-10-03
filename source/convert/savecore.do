@@ -13,11 +13,11 @@ set_if_unset() { if test -z "`system-control print-service-env \"$1\" \"$2\"`" ;
 redo-ifchange general-services
 
 case "`uname`" in
-*BSD)
+(*BSD)
 	set_if_unset savecore flags -z
 	system-control print-service-env savecore >> "$3"
 	;;
-*)
+(*)
 	touch "$3"
 	;;
 esac

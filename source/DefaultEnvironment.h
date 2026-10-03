@@ -18,14 +18,14 @@ extern const char PATH[], LANG[];
 /// Default environment variable values set by the login subsystem.
 namespace UserLogin {
 
-extern const char PATH[], TERMPATH[], TERMINFO_DIRS[], XDG_DATA_DIRS[], XDG_CONFIG_DIRS[], LANG[], MM_CHARSET[], EDITOR[], VISUAL[], PAGER[], SHELL[], TZ[];
+extern const char PATH[], TERMPATH[], TERMINFO_DIRS[], XDG_DATA_DIRS[], XDG_CONFIG_DIRS[], LANG[], MM_CHARSET[], EDITOR[], VISUAL[], PAGER[], SHELL[], TZ[], WWWBROWSER[], MANPAGER[];
 
 }
 
 /// Default environment variable values specific to the toolkit.
 namespace Toolkit {
 
-extern const char PATH[], PAGER[];
+extern const char PATH[], PAGER[], XMLVIEWER[], MANPAGER[];
 
 }
 

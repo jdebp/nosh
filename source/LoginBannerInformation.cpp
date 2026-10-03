@@ -7,8 +7,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include <string>
 #include <cstring>
 #include <cstdlib>
-#include "hasutmpx.h"
-#include "hasutmp.h"
+#include "config/hasutmpx.h"
+#include "config/hasutmp.h"
 #if defined(HAS_UTMPX)
 #include <utmpx.h>
 #elif defined(HAS_UTMP)
@@ -117,9 +117,8 @@ LoginBannerInformation::LoginBannerInformation(
 			os_release = std::fopen(release_filename = lib_release_filename, "r");
 	}
 	if (!os_release) {
-		const int error(errno);
-		if (ENOENT != error)
-			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, release_filename, std::strerror(error));
+		if (ENOENT != errno)
+			message_error_errno(prog, envs, release_filename);
 	}
 	if (os_release) {
 		try {
@@ -133,7 +132,7 @@ LoginBannerInformation::LoginBannerInformation(
 					pretty_sysname = val;
 			}
 		} catch (const char * r) {
-			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, release_filename, r);
+			message_error(prog, envs, release_filename, r);
 		}
 		os_release = nullptr;
 	}
@@ -145,9 +144,8 @@ LoginBannerInformation::LoginBannerInformation(
 			machine_info = std::fopen(machineinfo_filename = run_machineinfo_filename, "r");
 	}
 	if (!machine_info) {
-		const int error(errno);
-		if (ENOENT != error)
-			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, machineinfo_filename, std::strerror(error));
+		if (ENOENT != errno)
+			message_error_errno(prog, envs, machineinfo_filename);
 	}
 	if (machine_info) {
 		try {
@@ -167,7 +165,7 @@ LoginBannerInformation::LoginBannerInformation(
 					location = val;
 			}
 		} catch (const char * r) {
-			std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, machineinfo_filename, r);
+			message_error(prog, envs, machineinfo_filename, r);
 		}
 		machine_info = nullptr;
 	}

@@ -25,6 +25,7 @@ default_to_de.kbd
 default_to_dk.kbd
 default_to_es.kbd
 default_to_fi.kbd
+default_to_gb-shaw.kbd
 default_to_gr.kbd
 default_to_il.kbd
 default_to_is.kbd
@@ -230,7 +231,6 @@ user-services.do
 user-services.service
 user-services@.socket
 user-vt-realizer-configuration.do
-user-vt.do
 user@.target
 v9-jail@.service
 v9-jailed@.service

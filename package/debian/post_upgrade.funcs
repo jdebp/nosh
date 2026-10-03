@@ -2,8 +2,8 @@
 # vim: set filetype=sh:
 old_escape() { system-control escape --format old-alt -- "$@" ; }
 pwescape() { system-control escape --format account -- "$@" ; }
-add_user() { 
-	if ! getent passwd "$1" > /dev/null 
+add_user() {
+	if ! getent passwd "$1" > /dev/null
 	then
                 if test -n "$2"
                 then
@@ -17,34 +17,34 @@ add_user() {
 		:
 	fi
 }
-del_user() { 
-	if getent passwd "$1" > /dev/null 
+del_user() {
+	if getent passwd "$1" > /dev/null
 	then
 		printf 1>&2 "Removing user: %s\n" "$1"
-		pw userdel "$1" 
+		pw userdel "$1"
 	fi
 }
-add_group() { 
-	if ! getent group "$1" > /dev/null 
+add_group() {
+	if ! getent group "$1" > /dev/null
 	then
 		printf 1>&2 "Adding group: %s\n" "$1"
-		groupadd "$1" 
+		groupadd "$1"
 	fi
 }
-add_log() { 
+add_log() {
 	install -d -m 0750 /var/log/sv/"$2"
 	setfacl -m g:adm:rx /var/log/sv/"$2" || :
 	setfacl -m u:"$1":rwx /var/log/sv/"$2" || :
 }
 rename_user() {
-	if getent passwd "$1$3" > /dev/null 
+	if getent passwd "$1$3" > /dev/null
 	then
 		printf 1>&2 "Renaming user: %s to %s\n" "$1$3" "$2$3"
 		usermod -l "$2$3" "$1$3"
 	fi
 }
 rename_group() {
-	if getent group "$1$3" > /dev/null 
+	if getent group "$1$3" > /dev/null
 	then
 		printf 1>&2 "Renaming group: %s to %s\n" "$1$3" "$2$3"
 		groupmod -l "$2$3" "$1$3"
@@ -54,7 +54,7 @@ try_restart() {
 	for i
 	do
 		# In theory this can operate foreign daemontools-style service managers.
-		if system-control is-loaded "$i" && 
+		if system-control is-loaded "$i" &&
 		   system-control is-active "$i"
 		then
 			printf 1>&2 "Try-Restart: %s\n" "$i"
@@ -64,7 +64,7 @@ try_restart() {
 }
 rename_logfile_owning_user() {
 	local opwescaped="`old_escape "$1"`"
-	if ! getent passwd "${opwescaped}"-log > /dev/null 
+	if ! getent passwd "${opwescaped}"-log > /dev/null
 	then
 		return
 	fi
@@ -79,7 +79,7 @@ rename_logfile_owning_user() {
 }
 fixup_user_account_name() {
 	local opwescaped="`old_escape "$1"`"
-	if ! getent passwd "${opwescaped}" > /dev/null 
+	if ! getent passwd "${opwescaped}" > /dev/null
 	then
 		return
 	fi
@@ -111,7 +111,7 @@ prefixed_service_with_dedicated_logger() {
 	else
 		system-control preset --prefix "$1" "$2.service"
 		system-control preset --prefix "cyclog@$1" "$2.service"
-		start_up "cyclog@$1$2.service" "$1$2.service"
+		try_restart "cyclog@$1$2.service" "$1$2.service"
 	fi
 }
 tty_service_with_dedicated_logger() {

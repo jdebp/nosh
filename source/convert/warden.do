@@ -24,6 +24,7 @@ then
 	redo-ifcreate "${JDIR}"
 	exit $?
 fi
+redo-ifdelete "${JDIR}"
 
 redo-ifchange "warden-jail@.service" "warden-jailed@.service"
 

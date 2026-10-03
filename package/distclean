@@ -2,7 +2,7 @@
 # See http://jdebp.uk./FGA/slashpackage.html
 if test \! -d package || test \! -d source
 then
-	echo "You are not in the right directory." 1>&2 
+	echo "You are not in the right directory." 1>&2
 	exit 100
 fi
 

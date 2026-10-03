@@ -1,3 +1,39 @@
+nosh (1.42) stable; urgency=low
+ 
+  * minor corrections to the Guide.
+  * Debian package-building now builds a (not quite right) source package.
+  * An accidentally omitted terminal device on NetBSD has been added.
+  * An error in utmp auto-detection, only significant on operating systems without utmpx, has been fixed.
+  * An error in PAM auto-detection, timing sensitive so not always occurring, has been fixed.
+  * console-terminal-emulator now sets more appropriate terminal line discipline flags on call-out services.
+  * A bug in the Linux kevent() emulator has been fixed.
+    This would manifest itself as the display not being up-to-date when switching virtual terminals in console-multiplexor.
+  * emergency-login now respects the FreeBSD init_shell kernel environment variable, as a way to override the on-disc selection of emergency shell.
+  * The tinydns example root now tries harder to eliminate . and & overlaps between source data files.
+  * nvt-client now does not change the terminal line discipline's input flags if it is not taking its standard input from the terminal.
+  * Error messages in tcp-socket-accept have been improved.
+  * More cross-platform services: ident6d
+  * A bug in the vis encoder on Debian that caused backslashes to be not encoded has been fixed.
+  * A gb-shaw keyboard map has been added.
+  * Because there is no universally working syntax across platforms, the external configuration import subsystem no longer uses the fmt utility.
+  * invoke-rc.d now accepts the status sub-command.
+  * A bug in cyclog with the Linux kevent() emulator has been fixed.
+    This would manifest in cyclog not terminating when reading EOF on standard input.
+  * An error where a netbsd6 user-space virtual terminal was not recognized by TerminalCapabilities has been fixed.
+  * There are now a sqz and a linenumber command.
+  * There is now a coreboot-console for the new coreboot(4) functionality in FreeBSD.
+  * Several more commands now understand the FreeBSD CLICOLOR/CLICOLOR_FORCE convention.
+    These are also now documented with manual pages.
+  * A new internal build-helper tool now reduces the unnecessary rebuilding when a non-build command changes.
+  * A TUI output bug that cause excessive amounts of RI/IND when optimizing scrolling, has been fixed.
+  * userenv-fromenv now recognizes capabilities for setting MANXMLVIEWER and WWWBROWSER environment variables.
+  * userenv-fromenv now has default for the MANPAGER environment variable that depends from whether the --toolkit-pager option is used.
+  * The Z shell completions now cover more of the console-terminal-emulator commands group.
+  * The Z shell completions are now in the vendor-functions directory, per Debian.
+  * list-logins now supports some extra fields on some platforms, auto-detected from the C library's utmpx.
+ 
+ -- Jonathan de Boyne Pollard <J.deBoynePollard-newsgroups@NTLWorld.com>  Sat, 03 Oct 2026 16:10:26 +0100
+
 nosh (1.41) stable; urgency=low
  
   * Important changes that need special attention:

@@ -25,7 +25,8 @@ subreaper (
 #	if defined(PR_SET_CHILD_SUBREAPER)
 		return prctl(PR_SET_CHILD_SUBREAPER, on ? 1 : 0);
 #	else
-		return errno = ENOSYS, -1;
+		errno = ENOSYS;
+		return -1;
 #	endif
 #elif defined(__FreeBSD__) || defined(__DragonFly__)
 	if (on) {
@@ -37,8 +38,10 @@ subreaper (
 		return procctl(P_PID, getpid(), PROC_REAP_RELEASE, nullptr);
 #	endif
 	}
-	return errno = ENOSYS, -1;
+	errno = ENOSYS;
+	return -1;
 #else
-	return errno = ENOSYS, -1;
+	errno = ENOSYS;
+	return -1;
 #endif
 }

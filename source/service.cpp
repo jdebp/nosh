@@ -73,7 +73,7 @@ invoke_rcd (
 		popt::bool_definition user_option('\0', "user", "Operate upon per-user services.", user);
 		bool quiet(false), skip_systemd_native(false);
 		popt::bool_definition quiet_option('q', "quiet", "Compatibility option; ignored.", quiet);
-		popt::bool_definition skip_systemd_native_option('\0', "skip-systemd=native", "Compatibility option; ignored.", skip_systemd_native);
+		popt::bool_definition skip_systemd_native_option('\0', "skip-systemd-native", "Compatibility option; ignored.", skip_systemd_native);
 		popt::definition * top_table[] = {
 			&user_option,
 			&quiet_option,
@@ -105,6 +105,9 @@ invoke_rcd (
 	if (0 == std::strcmp("stop", command))
 		;	// Don't touch it.
 	else
+	if (0 == std::strcmp("status", command))
+		;	// Don't touch it.
+	else
 	if (0 == std::strcmp("force-stop", command))
 		command = "stop";
 	else
@@ -128,6 +131,9 @@ invoke_rcd (
 		next_prog = arg0_of(args);
 		return;
 	}
+	else
+	if (0 == std::strcmp("try-restart", command))
+		command = "condrestart";
 	else
 		die_unsupported_command(prog, envs, service, command);
 
@@ -258,6 +264,9 @@ deb_systemd_invoke (
 		return;
 	}
 	else
+	if (0 == std::strcmp("try-restart", command))
+		command = "condrestart";
+	else
 		die_unsupported_command(prog, envs, service, command);
 
 	args.clear();
@@ -355,7 +364,9 @@ rc_update (
 	if (args.empty()) die_missing_service_name(prog, envs);
 	const char * service(args.front());
 	args.erase(args.begin());
+#if 0	// Let the subcommands handle this.
 	if (!args.empty()) die_unexpected_argument(prog, args, envs);
+#endif
 
 	if (0 == std::strcmp("add", command)) {
 		if (!args.empty())

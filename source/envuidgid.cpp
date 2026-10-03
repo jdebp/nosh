@@ -4,7 +4,7 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 #if defined(__LINUX__) || defined(__linux__)
-#define _BSD_SOURCE
+#define _BSD_SOURCE 1
 #endif
 #include <vector>
 #include <cstdio>

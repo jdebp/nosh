@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -39,7 +40,7 @@ Standard I/O do not need to actually be a terminal, of course.
 </para>
 
 <para>
-Its primary use case is for building noddy automated (anonymous, unauthenticated) clients for servers that speak "line" protocols (derived from the NVT idea) like HTTP, which would otherwise be built with Bernstein <citerefentry><refentrytitle>addcr</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>delcr</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and <citerefentry><refentrytitle>fixcrio</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Its primary use case is for building noddy automated (anonymous, unauthenticated) clients for servers that speak <quote>line</quote> protocols (derived from the NVT idea) like HTTP, which would otherwise be built with Bernstein <citerefentry><refentrytitle>addcr</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>delcr</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and <citerefentry><refentrytitle>fixcrio</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 It does in one program what <citerefentry><refentrytitle>addcr</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>delcr</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and <citerefentry><refentrytitle>fixcrio</refentrytitle><manvolnum>1</manvolnum></citerefentry> did in two; with the advantages that it handles data transfer in both directions simultaneously, handles the connection between the two directions that the TELNET protocol requires, understands UTF-8, understands the UCSPI conventions, and can do local echo.
 </para>
 
@@ -81,15 +82,15 @@ The POSIX newline convention is translated into the NVT newline convention.
 </para>
 
 <para>
-<command>nvt-client</command> has no "escape" characters, command mode, or any kind of interactive local off-line control.
-It does not send TELNET commands for "special" characters nor act upon any received, and recognizes no input character as "special".
+<command>nvt-client</command> has no <quote>escape</quote> characters, command mode, or any kind of interactive local off-line control.
+It does not send TELNET commands for <quote>special</quote> characters nor act upon any received, and recognizes no input character as <quote>special</quote>.
 It expects the server to handle any special characters, and turns off special character processing by the local line discipline for the duration of its run, if its standard input is a terminal device.
 If it is sent signals such as <code>SIGHUP</code> it ABENDs in the appropriate way.
 </para>
 
 <note>
 In order to normally end a <command>nvt-client</command> that is being used interactively, it is thus necessary to ask the server end to terminate the connection.
-This will be either some form of <command>QUIT</command> command in whatever line-based protocol is being spoken, or a character such as EOT that the remote end denotes as a "special" terminal character for signalling the end of transmission.
+This will be either some form of <command>QUIT</command> command in whatever line-based protocol is being spoken, or a character such as EOT that the remote end denotes as a <quote>special</quote> terminal character for signalling the end of transmission.
 One can ABEND it by sending it a signal, of course; but this will have to be done via some other means than via the local line discipline.
 </note>
 
@@ -104,7 +105,7 @@ All other TELNET options are rejected when requested.
 <para>
 Any responses to TELNET option commands are sent to the network output, when the commands are received from network input, in order.
 Thus, Timing Mark is trivially supported.
-8-bit clean "binary" is effectively always the case anyway, in order to even support UTF-8; and if NAWS is negotiated on, <command>nvt-client</command> sends window sizes whenever it receives a <code>SIGWINCH</code> signal.
+8-bit clean <quote>binary</quote> is effectively always the case anyway, in order to even support UTF-8; and if NAWS is negotiated on, <command>nvt-client</command> sends window sizes whenever it receives a <code>SIGWINCH</code> signal.
 </para>
 
 </refsection>
@@ -113,13 +114,13 @@ Thus, Timing Mark is trivially supported.
 
 <para>
 <command>nvt-client</command> operates solely in a modern full-duplex character mode.
-It has no plethora of line and "edit" modes for (say) old Multics terminals mentioned in RFCs, nor any half-duplex considerations.
+It has no plethora of line and <quote>edit</quote> modes for (say) old Multics terminals mentioned in RFCs, nor any half-duplex considerations.
 Indeed, its primary use case is where its standard I/O is not a terminal and it is not even talking to a fully-fledged NVT at the remote end.
 </para>
 
 <para>
 It never sends Go Ahead, RFC 854 having permitted clients to never do so since 1983; and allows the remote end to suspend Go Ahead, which like almost everything in the decades since the RFCs were written, it has no need of.
-This thus does not satisfy the "kludge line mode" heuristic that is used by BSD <citerefentry><refentrytitle>telnetd</refentrytitle><manvolnum>8</manvolnum></citerefentry>, which requires Go Ahead to be sent by clients.
+This thus does not satisfy the <quote>kludge line mode</quote> heuristic that is used by BSD <citerefentry><refentrytitle>telnetd</refentrytitle><manvolnum>8</manvolnum></citerefentry>, which requires Go Ahead to be sent by clients.
 </para>
 
 <para>
@@ -129,15 +130,15 @@ It never negotiates RFC 857 ECHO for itself; it being a client rather than a ser
 </para>
 
 <para>
-The <arg choice='plain'>--local-echo</arg> command line option is for use with not-fully-NVT line-oriented protocols, where it might be useful to see what is being sent when using <command>nvt-client</command> interactively from a terminal as a protocol debugging tool.
-When that command line option is employed, <command>nvt-client</command> does its own local echo using the <citerefentry><refentrytitle>vis</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function in "safe" mode.
+The <arg choice='plain'>--local-echo</arg> command&#x2010;line option is for use with not-fully-NVT line-oriented protocols, where it might be useful to see what is being sent when using <command>nvt-client</command> interactively from a terminal as a protocol debugging tool.
+When that command&#x2010;line option is employed, <command>nvt-client</command> does its own local echo using the <citerefentry><refentrytitle>vis</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function in <quote>safe</quote> mode.
 </para>
 
 <para>
 Local echo is turned <emphasis>off</emphasis> if the remote end negotiates the ECHO option on and turned back <emphasis>on</emphasis> if the remote end negotiates ECHO off.
 This may seem confusing, and the confusion originates with RFC 857.
 Think of it as the remote end negotiating its taking over the handling of echoing all input, including whether it even happens or not.
-The <arg choice='plain'>--no-remote-echo</arg> command line option prevents the remote end from being allowed to negotiate ECHO on, keeping the local echo choice at the local end.
+The <arg choice='plain'>--no-remote-echo</arg> command&#x2010;line option prevents the remote end from being allowed to negotiate ECHO on, keeping the local echo choice at the local end.
 </para>
 
 </refsection>
@@ -164,7 +165,7 @@ Encoding errors in local data are always silently dropped; but overlength encodi
 
 <para>
 Network input is more strictly sanitized; with both encoding errors and overlength encodings being silently dropped.
-The <arg choice='plain'>--pass-through-overlength-remote-data</arg> command line option lifts that latter restriction, permitting overlength encodings in data from the network and causing them to be normalized and passed through.
+The <arg choice='plain'>--pass-through-overlength-remote-data</arg> command&#x2010;line option lifts that latter restriction, permitting overlength encodings in data from the network and causing them to be normalized and passed through.
 </para>
 
 </refsection>
@@ -189,7 +190,7 @@ Do not use <command>nvt-client</command> with TELNET servers that provide Unix o
 
 <para>
 Unix or Unix-like log-on is not within <command>nvt-client</command>'s use case, which is <emphasis>unauthenticated</emphasis>, <emphasis>public</emphasis>, and <emphasis>interceptable</emphasis> comunication.
-Logging on to a "TELNET BBS" as a "guest" or a "visitor" may not per se require a password, but even then other personally identifying information (e.g. a mailbox address, or the host transmitting who it thinks the client is) is not secured and subject to interception.
+Logging on to a <quote>TELNET BBS</quote> as a <quote>guest</quote> or a <quote>visitor</quote> may not per se require a password, but even then other personally identifying information (e.g. a mailbox address, or the host transmitting who it thinks the client is) is not secured and subject to interception.
 </para>
 
 <para>
@@ -198,7 +199,7 @@ Pace all of these dire warnings; because <command>nvt-client</command> obeys the
 
 <para>
 Because of its UTF-8 sanitization, <command>nvt-client</command> silently prevents attempts to bypass the newline conversions that employ overlong encodings for CR, LF, and NUL.
-The <arg choice='plain'>--pass-through-overlength-remote-data</arg> command line option is not the default in order to militate against Gresham' Law, where bad protocol implementations drive up the cost of correct protocol implementations and make bad protocol the cheaper option; and does not open up a hole for characters to bypass character clasification checks.
+The <arg choice='plain'>--pass-through-overlength-remote-data</arg> command&#x2010;line option is not the default in order to militate against Gresham' Law, where bad protocol implementations drive up the cost of correct protocol implementations and make bad protocol the cheaper option; and does not open up a hole for characters to bypass character clasification checks.
 </para>
 
 <para>

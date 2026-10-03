@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -31,7 +32,7 @@
 <refsection><title>Description</title>
 
 <para>
-<command>pty-run</command> is a utility that expects file descriptor 4 to be the back end (called "master side" in older documentation) of a pseudo-terminal and the <envar>TTY</envar> environment variable to be the full device filename of the front end.
+<command>pty-run</command> is a utility that expects file descriptor 4 to be the back end (called <quote>master side</quote> in older documentation) of a pseudo-terminal and the <envar>TTY</envar> environment variable to be the full device filename of the front end.
 (<citerefentry><refentrytitle>pty-allocate</refentrytitle><manvolnum>1</manvolnum></citerefentry> can be used to set this process state up.)
 </para>
 
@@ -69,11 +70,11 @@ It has two modes:
 
 <listitem>
 <para>
-If the <arg choice='plain'>-t</arg> option was used, it behaves in "pass-through TTY" mode.
+If the <arg choice='plain'>-t</arg> option was used, it behaves in <quote>pass-through TTY</quote> mode.
 </para>
 
 <para>
-It copies the terminal mode settings from its standard input or output to the pseudo-terminal and sets both its standard input and output to "raw" mode.
+It copies the terminal mode settings from its standard input or output to the pseudo-terminal and sets both its standard input and output to <quote>raw</quote> mode.
 If the child process stops with a stop signal, it undoes this and stops itself.
 When it receives a <code>SIGCONT</code>, it re-does it and sends a <code>SIGCONT</code> to its child.
 </para>
@@ -81,7 +82,7 @@ When it receives a <code>SIGCONT</code>, it re-does it and sends a <code>SIGCONT
 
 <listitem>
 <para>
-In the default if the <arg choice='plain'>-t</arg> option is not used, it behaves in "pipe" mode.
+In the default if the <arg choice='plain'>-t</arg> option is not used, it behaves in <quote>pipe</quote> mode.
 </para>
 
 <para>
@@ -93,7 +94,7 @@ If the child process stops with a stop signal, it simply sends it a <code>SIGCON
 </itemizedlist>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>pty-run</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>pty-run</command> will ignore.
 </para>
 
 </refsection><refsection><title>Security</title>

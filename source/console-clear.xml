@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -49,7 +50,7 @@ Rather, it emits simple terminal control sequences, by chaining to <citerefentry
 </para>
 
 <para>
-It passes the the <arg choice='plain'>--7bit</arg> and <arg choice='plain'>--8bit</arg> command-line options straight through to <command>console-control-sequence</command>.
+It passes the the <arg choice='plain'>--7bit</arg> and <arg choice='plain'>--8bit</arg> command&#x2010;line options straight through to <command>console-control-sequence</command>.
 </para>
 
 </refsection>
@@ -59,7 +60,7 @@ It passes the the <arg choice='plain'>--7bit</arg> and <arg choice='plain'>--8bi
 
 <para>
 For compatibility with the Bourne Again shell toolset, this command is also available as <command>clear_console</command>, whose functionality it duplicates.
-Unlike the Bourne Again shell toolset's <command>clear_console</command> command, this command is not specific to kernel virtual terminal character devices, does not involve switching kernel virtual terminals (<ulink url="https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=791342">a process that can go wrong if an X server happens to be using the "other" virtual terminal</ulink>), and respects redirection of its standard output.
+Unlike the Bourne Again shell toolset's <command>clear_console</command> command, this command is not specific to kernel virtual terminal character devices, does not involve switching kernel virtual terminals (<ulink url="https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=791342">a process that can go wrong if an X server happens to be using the <quote>other</quote> virtual terminal</ulink>), and respects redirection of its standard output.
 </para>
 
 <note>

@@ -67,7 +67,7 @@ find_parts() {
 	src='/dev/null'
 
 	case "`uname`" in
-	FreeBSD)
+	(FreeBSD)
 		fkeys='sco_fkeys'.kbd
 
 		countrydiff="default_to_${cc}${keycount}".kbd
@@ -87,7 +87,7 @@ find_parts() {
 
 		fkeys=''
 		;;
-	*)
+	(*)
 		;;
 	esac
 
@@ -115,13 +115,13 @@ option="`basename "$1"`"
 cc="${option%%.*}"
 option="${option#${cc}.}"
 case "${option}" in
-*.capsctrl)	capsctrl='swap_capsctrl.kbd'; option="${option%.capsctrl}" ;;
-*)		capsctrl='modelm_capsctrl.kbd' ;;
+(*.capsctrl)	capsctrl='swap_capsctrl.kbd'; option="${option%.capsctrl}" ;;
+(*)		capsctrl='modelm_capsctrl.kbd' ;;
 esac
 case "${option}" in
-10[1-9].*)	keycount="${option%%.*}"; option="${option#${keycount}.}" ;;
-10[1-9])	keycount="${option}"; option='' ;;
-*)		keycount='' ;;
+(10[1-9].*)	keycount="${option%%.*}"; option="${option#${keycount}.}" ;;
+(10[1-9])	keycount="${option}"; option='' ;;
+(*)		keycount='' ;;
 esac
 keycount="${keycount:+.${keycount}}"
 option="${option:+.${option}}"

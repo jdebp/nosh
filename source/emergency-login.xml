@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -17,7 +18,7 @@
 
 <refnamediv>
 <refname>emergency-login</refname>
-<refpurpose>perform emergency mode login</refpurpose>
+<refpurpose>perform emergency startup mode login</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>
@@ -38,7 +39,7 @@ Its function is restricted compared to the usual <citerefentry><refentrytitle>lo
 
 <itemizedlist>
 <listitem><para>
-It presents a very simple "glass TTY" user interface, suitable for even completely dumb TeleType Model 37 terminals, that makes no use of any escape or control sequences and relies entirely upon the terminal device line discpline for editing functions and not echoing passwords.
+It presents a very simple <quote>glass TTY</quote> user interface, suitable for even completely dumb TeleType Model 37 terminals, that makes no use of any escape or control sequences and relies entirely upon the terminal device line discipline for editing functions and not echoing passwords.
 </para></listitem>
 <listitem><para>
 It communicates entirely through its standard input and output, which it presumes are open to the terminal to log on to, and does not attempt to open its controlling terminal device.
@@ -47,11 +48,11 @@ It makes no attempt to become a session or process group leader, and does not ca
 <listitem><para>
 It does not use PAM or the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> subsystem.
 It presents a single, one-time, hardwired, prompt for a password that never times out.
-It has no "hushlogin", "nologin", or "welcome" mechanisms, configurable prompts, or configurable retry/timeout settings.
+It has no <quote>hushlogin</quote>, <quote>nologin</quote>, or <quote>welcome</quote> mechanisms, configurable prompts, or configurable retry/timeout settings.
 </para></listitem>
 <listitem><para>
 It only uses the system account database and access to that is directly through the <citerefentry><refentrytitle>endpwent</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>endspent</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>getpwuid</refentrytitle><manvolnum>3</manvolnum></citerefentry> and <citerefentry><refentrytitle>getspnam</refentrytitle><manvolnum>3</manvolnum></citerefentry> library functions.
-Networking, NIS, and even <citerefentry><refentrytitle>nscd</refentrytitle><manvolnum>1</manvolnum></citerefentry> are presumed unavailable in emergency mode.
+Networking, NIS, and even <citerefentry><refentrytitle>nscd</refentrytitle><manvolnum>1</manvolnum></citerefentry> are presumed unavailable in emergency startup mode.
 </para></listitem>
 <listitem><para>
 It only allows login as the superuser.
@@ -68,40 +69,84 @@ It is not a set-UID program, and expects to already be running as the superuser.
 It fails open in the event of a missing password (or shadow) file.
 If <citerefentry><refentrytitle>getpwuid</refentrytitle><manvolnum>3</manvolnum></citerefentry> (or <citerefentry><refentrytitle>getspnam</refentrytitle><manvolnum>3</manvolnum></citerefentry>) fails for some reason, it issues no prompt and acts as if the correct password had been entered.
 </para><caution>
-Emergency mode is a last resort system repair mode.
+Emergency startup mode is a last resort system repair mode.
 If the system account database is broken, failing open enables it to be fixed.
-Do not conflate emergency mode with rescue mode, where the system account database is required to be functional and login fails closed if it is not so.
+Do not conflate emergency startup mode with rescue startup mode, where the system account database is required to be functional and login fails closed if it is not so.
 </caution></listitem>
 <listitem><para>
 It does not record anything in the accounting logs.
-The filesystem containing them might not be mounted in emergency mode, or might be mounted read-only.
+The filesystem containing them might not be mounted in emergency startup mode, or might be mounted read-only.
 For that and other reasons, it does not use <citerefentry><refentrytitle>syslog</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
 </para></listitem>
 <listitem><para>
 It ignores any <code>secure</code> settings in the <citerefentry><refentrytitle>ttys</refentrytitle><manvolnum>5</manvolnum></citerefentry> database (if the operating system has one).
 </para><caution>
-The terminal is presumed to be a "secure" terminal that permits direct log-on by the superuser.
+The terminal is presumed to be a <quote>secure</quote> terminal that permits direct log-on by the superuser.
 Do not invoke <command>emergency-login</command> on non-"secure" terminals.
 </caution></listitem>
 <listitem><para>
 It ignores all settings in the account database relating to password expiry.
 </para></listitem>
 <listitem><para>
-It tries hard to execute a shell.
-If it cannot execute the shell listed in the account record (or that field is blank), it attempts to fall back to the program denoted by the <envar>SHELL</envar> environment variable, or the program hardwired as the platform's <code>_PATH_BSHELL</code> setting at compilation time.
+It looks for what shell to execute in a different manner, ignoring <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> but conversely respecting the <envar>init_shell</envar> kernel environment variable.
 </para></listitem>
 <listitem><para>
-It does not tell the shell that it is a login shell, in order that the shell does not attempt to source "profile" or "login" scripts that may not be appropriate for emergency mode.
+It does not tell the shell that it is a login shell, in order that the shell does not attempt to source <quote>profile</quote> or <quote>login</quote> scripts that may not be appropriate for emergency startup mode.
 </para></listitem>
 <listitem><para>
-It tells the shell that its name is "sh".
-This should invoke the POSIX-conformant mode of the shell, which for non-login shells must only look at the "rc" file denoted by the <envar>ENV</envar> environment variable.
-Since it does not set this environment variable, the shell should not attempt to source "rc" scripts that may not be appropriate for emergency mode.
+It tells the shell that its name is <quote>sh</quote>.
+This should invoke the POSIX-conformant mode of the shell, which for non-login shells must only look at the <quote>rc</quote> file denoted by the <envar>ENV</envar> environment variable.
+Since it does not set this environment variable, the shell should not attempt to source <quote>rc</quote> scripts that may not be appropriate for emergency startup mode.
 </para></listitem>
 <listitem><para>
 It alters no environment variables at all, and does not attempt to change into a home directory.
 </para></listitem>
 </itemizedlist>
+
+</refsection>
+
+<refsection><title>What shell is executed</title>
+
+<para>
+<command>emergency-login</command> tries to execute the shell listed in the (looked up) superuser account record.
+There are two overrides for this, a way to differentiate rescue startup mode and normal startup mode login, and two fallbacks.
+</para>
+
+<para>
+The superuser account record's shell can be overridden by the <envar>SHELL</envar> environment variable, which in turn can be overridden by the <envar>init_shell</envar> kernel environment variable.
+Thus:
+</para>
+<itemizedlist>
+<listitem><para>
+If the superuser account record's shell is known not to function in emergency startup mode (e.g. because it is dynamically linked and the shared libraries are not available in emergency startup mode) one can set the <envar>SHELL</envar> environment variable (in the configuration of whatever service runs <command>emergency-login</command>) to the pathname of a known statically linked shell.
+</para></listitem>
+<listitem><para>
+If is possible to set the <envar>init_shell</envar> kernel environment variable interactively in the boot loader as a way to override all on-disc configuration, of both the superuser account record's shell and the <envar>SHELL</envar> environment variable.
+</para>
+<note><para>
+Not all operating systems have the <citerefentry><refentrytitle>kenv</refentrytitle><manvolnum>3</manvolnum></citerefentry> mechanism for accessing kernel environment variables.
+</para></note>
+</listitem>
+</itemizedlist>
+
+<para>
+Rescue/normal startup modes can be differentiated from emergency startup mode with the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> mechanism.
+The former twain will use the shell configured for the superuser's login class in <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
+Emergency startup mode will use the shell in the superuser account record (or whatever overrides it).
+</para>
+
+<para>
+If the superuser account record's shell field is missing or its value is blank, the same going for the <envar>SHELL</envar> environment variable or the <envar>init_shell</envar> kernel environment variable if they are being employed to override that, then <command>emergency-login</command> falls back to the program hardwired as the platform's <code>_PATH_BSHELL</code> setting at compilation time.
+Although not a standardized Unix mechanism, this exists on most Unices and Linux-based operating systems and gives an invariant (and absolute) pathname of where a Bourne-like shell program can be found on that operating system.
+</para>
+
+<para>
+If that fails, <command>emergency-login</command>'s option of last resort is the standard way to invoke a shell on a Unix system: try to invoke a command named <command>sh</command> with the <citerefentry><refentrytitle>execlp</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function (or equivalent) searching the path given by <envar>PATH</envar>, or the <quote>standard path</quote>.
+(The <quote>standard path</quote> is the path shown by <citerefentry><refentrytitle>getconf</refentrytitle><manvolnum>1</manvolnum></citerefentry> <arg choice='plain'>PATH</arg> and is the path that is guaranteed on a particular operating system that will enable <citerefentry><refentrytitle>execlp</refentrytitle><manvolnum>3</manvolnum></citerefentry> et al. to always locate standard commands such as <command>sh</command>.)
+</para>
+<note><para>
+This last resort is only generally workable if the standard <command>sh</command> command works in emergency startup mode.
+</para></note>
 
 </refsection>
 

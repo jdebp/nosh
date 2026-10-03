@@ -2,12 +2,12 @@
 # See http://jdebp.uk./FGA/slashpackage.html
 if test \! -d package || test \! -d source
 then
-	echo "You are not in the right directory." 1>&2 
+	echo "You are not in the right directory." 1>&2
 	exit 100
 fi
 if ! test $# -ge 2
 then
-	echo "Two arguments are required." 1>&2 
+	echo "Two arguments are required." 1>&2
 	exit 100
 fi
 
@@ -21,21 +21,36 @@ absdest="`readlink -f "${dest}"`/"
 # These are the parents of the relevant directory trees.
 # Uniformly, packages go under /usr/local on FreeBSD, mixed in with actually local stuff.
 # Eventually, we will switch to the NetBSD convention of /usr/pkg .
-binprefix="/usr/local"
-libprefix="/usr/local"
-manprefix="/usr/local"
-etcprefix="/usr/local"
-shrprefix="/usr/local"
+case "`uname`" in
+(Linux)
+	pkgbase="/usr/local"
+	zshprefix="/usr"
+	;;
+(FreeBSD)
+	pkgbase="/usr/local"
+	zshprefix="/usr/local"
+	;;
+(*BSD)
+	pkgbase="/usr/pkg"
+	zshprefix="/usr/pkg"
+	;;
+esac
 
 ##########################################################
 # derived from distributor patchable stuff or from the operating system
 
+binprefix="${pkgbase}"
+etcprefix="${pkgbase}"
+libprefix="${pkgbase}"
+manprefix="${pkgbase}"
+incprefix="${pkgbase}"
+shrprefix="${pkgbase}"
 docprefix="${shrprefix}/share"
 prsprefix="${etcprefix}/etc"
 
 # Set this to blank or unset it if /usr/{s,}bin and /{s,}bin are identical.
 case "`uname`" in
-Linux)	
+(Linux)
 	# These get us *only* the operating system variables, safely.
         if test -r /etc/os-release
         then
@@ -48,31 +63,26 @@ Linux)
         fi
 
 	case "`read_os ID linux`:`read_os VERSION_ID \"\"`" in
-	arch:*) 	split_os="" ;;
-	centos:*)	split_os="" ;;
-	rhel:*) 	split_os="" ;;
-	*)      	split_os="YES" ;;
+	(arch:*) 	split_os="" ;;
+	(centos:*)	split_os="" ;;
+	(rhel:*) 	split_os="" ;;
+	(*)      	split_os="YES" ;;
 	esac
 	;;
-*BSD)	split_os="YES" ;;
+(*BSD)	split_os="YES" ;;
 esac
 
 case "`uname`" in
-Linux)	dbusprefix="/usr/lib/dbus-1.0" ;;
-#*BSD)	dbusprefix="/usr/local/lib/dbus-1.0" ;;	# No dpkg-divert on the BSDs.
-esac
-
-case "`uname`" in
-Linux)	zshprefix="${shrprefix}/share/zsh" ;;
-*BSD)	zshprefix="${shrprefix}/share/zsh" ;;
+(Linux)	dbusprefix="/usr/lib/dbus-1.0" ;;
+#(*BSD)	dbusprefix="/usr/local/lib/dbus-1.0" ;;	# No dpkg-divert on the BSDs.
 esac
 
 ##########################################################
 # binaries and doco
 
 case "`uname`" in
-Linux)	extra_packages="logrotate-shims" ;;
-*BSD)	extra_packages="" ;;
+(Linux)	extra_packages="logrotate-shims" ;;
+(*BSD)	extra_packages="" ;;
 esac
 
 for i in exec terminal-management service-management terminal-extras service-management-extras zsh-completion service-command-shim systemv-shims systemd-shims upstart-shims smf-shims execline-shims core-shims linux-shims debian-shims openrc-shims bsd-shims openbsd-shims freebsd-shims ucspi-tcp-shims kbd-shims net-tools-shims bcron-as-cron-shims desktop-bus-shims ${extra_packages} ;
@@ -81,39 +91,39 @@ do
 
 	if test -s package/export-manifests/nosh-"$i".commands1 || test -s package/export-manifests/nosh-"$i".aliases1
 	then
-		install -d -m 0755 -- "${dest}"/nosh-"${i}"/"${binprefix}"/bin 
+		install -d -m 0755 -- "${dest}"/nosh-"${i}"/"${binprefix}"/bin
 	fi
 	if test -s package/export-manifests/nosh-"$i".commands1
 	then
 		while read -r j
 		do
-			ln -f -- "${src}"/command/"$j" "${dest}"/nosh-"${i}"/"${binprefix}"/bin/ 
+			ln -f -- "${src}"/command/"$j" "${dest}"/nosh-"${i}"/"${binprefix}"/bin/
 		done < package/export-manifests/nosh-"$i".commands1
 	fi
 	if test -s package/export-manifests/nosh-"$i".aliases1
 	then
 		while read -r c a
 		do
-			ln -f -s "$c" "${dest}"/nosh-"${i}"/"${binprefix}"/bin/"$a" 
+			ln -f -s "$c" "${dest}"/nosh-"${i}"/"${binprefix}"/bin/"$a"
 		done < package/export-manifests/nosh-"$i".aliases1
 	fi
 
 	if test -s package/export-manifests/nosh-"$i".commands8 || test -s package/export-manifests/nosh-"$i".aliases8
 	then
-		install -d -m 0755 -- "${dest}"/nosh-"${i}"/"${binprefix}"/sbin 
+		install -d -m 0755 -- "${dest}"/nosh-"${i}"/"${binprefix}"/sbin
 	fi
 	if test -s package/export-manifests/nosh-"$i".commands8
 	then
 		while read -r j
 		do
-			ln -f -- "${src}"/command/"$j" "${dest}"/nosh-"${i}"/"${binprefix}"/sbin/ 
+			ln -f -- "${src}"/command/"$j" "${dest}"/nosh-"${i}"/"${binprefix}"/sbin/
 		done < package/export-manifests/nosh-"$i".commands8
 	fi
 	if test -s package/export-manifests/nosh-"$i".aliases8
 	then
 		while read -r c a
 		do
-			ln -f -s "$c" "${dest}"/nosh-"${i}"/"${binprefix}"/sbin/"$a" 
+			ln -f -s "$c" "${dest}"/nosh-"${i}"/"${binprefix}"/sbin/"$a"
 		done < package/export-manifests/nosh-"$i".aliases8
 	fi
 
@@ -127,8 +137,8 @@ do
 		then
 			while read -r j
 			do
-				ln -f -- "${src}"/manual/man${section}/"$j".${section} "${dest}"/nosh-"${i}"/"${manprefix}"/man/man${section}/ 
-				ln -f -- "${src}"/guide/commands/"$j".xml "${dest}"/nosh-"${i}"/"${manprefix}"/man/docbook${section}/ 
+				ln -f -- "${src}"/manual/man${section}/"$j".${section} "${dest}"/nosh-"${i}"/"${manprefix}"/man/man${section}/
+				ln -f -- "${src}"/guide/commands/"$j".xml "${dest}"/nosh-"${i}"/"${manprefix}"/man/docbook${section}/
 			done < package/export-manifests/nosh-"$i".commands${section}
 		fi
 		if test -s package/export-manifests/nosh-"$i".aliases${section}
@@ -137,13 +147,13 @@ do
 			do
 				if test -f "${src}"/manual/man${section}/"$a".${section}
 				then
-				        ln -f -- "${src}"/manual/man${section}/"$a".${section} "${dest}"/nosh-"${i}"/"${manprefix}"/man/man${section}/ 
+				        ln -f -- "${src}"/manual/man${section}/"$a".${section} "${dest}"/nosh-"${i}"/"${manprefix}"/man/man${section}/
 				else
 					ln -f -s "$c".${section} "${dest}"/nosh-"${i}"/"${manprefix}"/man/man${section}/"$a".${section}
 				fi
 				if test -f "${src}"/manual/docbook${section}/"$a".xml
 				then
-				        ln -f -- "${src}"/manual/docbook${section}/"$a".xml "${dest}"/nosh-"${i}"/"${manprefix}"/man/docbook${section}/ 
+				        ln -f -- "${src}"/manual/docbook${section}/"$a".xml "${dest}"/nosh-"${i}"/"${manprefix}"/man/docbook${section}/
 				else
 					ln -f -s "$c".xml "${dest}"/nosh-"${i}"/"${manprefix}"/man/docbook${section}/"$a".xml
 				fi
@@ -154,24 +164,24 @@ done
 if test -n "${split_os}"
 then
 	case "`uname`" in
-	Linux)	link_across_usr="-l" ;;
-	*BSD)	link_across_usr="" ;;
+	(Linux)	link_across_usr="-l" ;;
+	(*BSD)	link_across_usr="" ;;
 	esac
-	install -d -m 0755 "${dest}"/nosh-exec/bin 
-	(cd "${dest}"/nosh-exec/"${binprefix}"/ && pax -r -w ${link_across_usr} -- bin/exec "${absdest}"/nosh-exec/)
+	install -d -m 0755 "${dest}"/nosh-exec/bin
+	(cd "${dest}"/nosh-exec/"${binprefix}"/ && pax -r -w -p a ${link_across_usr} -- bin/exec "${absdest}"/nosh-exec/)
 	for j in nosh
 	do
 		ln -f -- "${dest}"/nosh-exec/bin/exec "${dest}"/nosh-exec/bin/"$j"
 	done
-	install -d -m 0755 -- "${dest}"/nosh-service-management/sbin 
-	install -d -m 0755 -- "${dest}"/nosh-service-management/bin 
-	(cd "${dest}"/nosh-service-management/"${binprefix}"/ && pax -r -w ${link_across_usr} -- bin/cyclog bin/system-control sbin/system-manager "${absdest}"/nosh-service-management/)
+	install -d -m 0755 -- "${dest}"/nosh-service-management/sbin
+	install -d -m 0755 -- "${dest}"/nosh-service-management/bin
+	(cd "${dest}"/nosh-service-management/"${binprefix}"/ && pax -r -w -p a ${link_across_usr} -- bin/cyclog bin/system-control sbin/system-manager "${absdest}"/nosh-service-management/)
 	for j in service-manager service-dt-scanner
 	do
 		ln -f -- "${dest}"/nosh-service-management/bin/system-control "${dest}"/nosh-service-management/bin/"$j"
 	done
-	install -d -m 0755 "${dest}"/nosh-terminal-management/bin 
-	(cd "${dest}"/nosh-terminal-management/"${binprefix}"/ && pax -r -w ${link_across_usr} -- bin/emergency-login bin/vc-get-tty bin/vc-get-terminal "${absdest}"/nosh-terminal-management/)
+	install -d -m 0755 "${dest}"/nosh-terminal-management/bin
+	(cd "${dest}"/nosh-terminal-management/"${binprefix}"/ && pax -r -w -p a ${link_across_usr} -- bin/emergency-login bin/vc-get-tty bin/vc-get-terminal "${absdest}"/nosh-terminal-management/)
 fi
 if test -n "${dbusprefix}"
 then
@@ -180,8 +190,8 @@ then
 fi
 install -d -m 0755 -- "${dest}"/nosh-run-system-manager/
 case "`uname`" in
-Linux)	
-	install -d -m 0755 -- "${dest}"/nosh-run-system-manager/sbin 
+(Linux)
+	install -d -m 0755 -- "${dest}"/nosh-run-system-manager/sbin
 	ln -f -s system-manager "${dest}"/nosh-run-system-manager/sbin/init
 	if test _"${binprefix}" != _"/usr"
 	then
@@ -196,35 +206,35 @@ Linux)
 		ln -f -s bcrontab.5.gz "${dest}"/nosh-bcron-as-cron-shims/usr/share/man/man5/crontab.5.gz
 	fi
 	;;
-*BSD)	;;
+(*BSD)	;;
 esac
 
 ##########################################################
 # more doco
 for i in guide ;
 do
-	install -d -m 0755 -- "${dest}"/nosh-"${i}"/"${docprefix}"/doc/nosh 
+	install -d -m 0755 -- "${dest}"/nosh-"${i}"/"${docprefix}"/doc/nosh
 	( cd "${src}"/guide && pax -r -w -l -- * "${absdest}"/nosh-"${i}"/"${docprefix}"/doc/nosh/ )
 done
 
 ##########################################################
 # bundles
-install -d -m 0755 -- "${dest}"/nosh-bundles/var/service-bundles/services 
-install -d -m 0755 -- "${dest}"/nosh-bundles/etc/service-bundles/services 
-install -d -m 0755 -- "${dest}"/nosh-bundles/etc/service-bundles/generators 
-install -d -m 0755 -- "${dest}"/nosh-bundles/etc/service-bundles/targets 
-install -d -m 0755 -- "${dest}"/nosh-bundles/var/sv 
-install -d -m 0755 -- "${dest}"/nosh-bundles/var/local/sv 
-rm -f "${dest}"/nosh-bundles/var/service-bundles/targets 
+install -d -m 0755 -- "${dest}"/nosh-bundles/var/service-bundles/services
+install -d -m 0755 -- "${dest}"/nosh-bundles/etc/service-bundles/services
+install -d -m 0755 -- "${dest}"/nosh-bundles/etc/service-bundles/generators
+install -d -m 0755 -- "${dest}"/nosh-bundles/etc/service-bundles/targets
+install -d -m 0755 -- "${dest}"/nosh-bundles/var/sv
+install -d -m 0755 -- "${dest}"/nosh-bundles/var/local/sv
+rm -f "${dest}"/nosh-bundles/var/service-bundles/targets
 ln -f -s ../../etc/service-bundles/targets "${dest}"/nosh-bundles/var/service-bundles/targets
 (
-	cat package/common-etc-services 
+	cat package/common-etc-services
 	case "`uname`" in
-	Linux)		cat package/linux-etc-services ;;
-	OpenBSD)	cat package/bsd-etc-services ;;
-	FreeBSD)	cat package/bsd-etc-services package/freebsd-etc-services ;;
-	NetBSD)		cat package/bsd-etc-services package/netbsd-etc-services ;;
-	*BSD)		cat package/bsd-etc-services ;;
+	(Linux)		cat package/linux-etc-services ;;
+	(OpenBSD)	cat package/bsd-etc-services ;;
+	(FreeBSD)	cat package/bsd-etc-services package/freebsd-etc-services ;;
+	(NetBSD)	cat package/bsd-etc-services package/netbsd-etc-services ;;
+	(*BSD)		cat package/bsd-etc-services ;;
 	esac
 ) |
 while read -r j
@@ -233,22 +243,22 @@ do
 	rm -f -- "${dest}"/nosh-bundles/etc/service-bundles/services/"$j"/service/down
 done
 (
-	cat package/common-services package/common-sockets package/common-timers package/common-ttys 
+	cat package/common-services package/common-sockets package/common-timers package/common-ttys
 	case "`uname`" in
-	Linux)		cat package/linux-services package/linux-sockets package/linux-timers package/linux-ttys ;;
-	OpenBSD)	cat package/bsd-services package/bsd-sockets package/openbsd-services package/openbsd-timers package/openbsd-ttys ;;
-	NetBSD)		cat package/bsd-services package/bsd-sockets package/netbsd-services package/netbsd-timers package/netbsd-ttys ;;
-	FreeBSD)	cat package/bsd-services package/bsd-sockets package/freebsd-services package/freebsd-timers package/freebsd-ttys ;;
-	*BSD)		cat package/bsd-services package/bsd-sockets ;;
+	(Linux)		cat package/linux-services package/linux-sockets package/linux-timers package/linux-ttys ;;
+	(OpenBSD)	cat package/bsd-services package/bsd-sockets package/openbsd-services package/openbsd-timers package/openbsd-ttys ;;
+	(NetBSD)	cat package/bsd-services package/bsd-sockets package/netbsd-services package/netbsd-timers package/netbsd-ttys ;;
+	(FreeBSD)	cat package/bsd-services package/bsd-sockets package/freebsd-services package/freebsd-timers package/freebsd-ttys ;;
+	(*BSD)		cat package/bsd-services package/bsd-sockets ;;
 	esac
 ) |
 while read -r j
 do
 	case "$j" in
-	*-log)
+	(*-log)
 		(cd "${src}"/config/services && pax -r -w -l -- "$j" "${absdest}"/nosh-bundles/var/service-bundles/services/)
 		;;
-	*)
+	(*)
 		(cd "${src}"/config/services && pax -r -w -l -- "$j" cyclog@"$j" "${absdest}"/nosh-bundles/var/service-bundles/services/)
 		rm -f -- "${dest}"/nosh-bundles/var/service-bundles/services/cyclog@"$j"/service/down
 		;;
@@ -267,32 +277,32 @@ do
 	rm -f -- "${dest}"/nosh-bundles/etc/service-bundles/services/fsck@"$j"/service/down
 done < package/common-mounts
 (
-	cat package/common-service-aliases 
+	cat package/common-service-aliases
 	case "`uname`" in
-	Linux) cat package/linux-service-aliases ;;
-	OpenBSD) cat package/openbsd-service-aliases ;;
-	OpenBSD) cat package/freebsd-service-aliases ;;
-	NetBSD) cat package/netbsd-service-aliases ;;
-	*BSD) cat package/bsd-service-aliases ;;
+	(Linux) cat package/linux-service-aliases ;;
+	(OpenBSD) cat package/openbsd-service-aliases ;;
+	(OpenBSD) cat package/freebsd-service-aliases ;;
+	(NetBSD) cat package/netbsd-service-aliases ;;
+	(*BSD) cat package/bsd-service-aliases ;;
 	esac
 ) |
 while read -r service alias
 do
 	case "${alias}" in
-	*-log)
+	(*-log)
 		(cd "${src}"/config/services && pax -r -w -l -- "${alias}" "${absdest}"/nosh-bundles/var/service-bundles/services/)
 		;;
-	*)
+	(*)
 		(cd "${src}"/config/services && pax -r -w -l -- "${alias}" cyclog@"${alias}" "${absdest}"/nosh-bundles/var/service-bundles/services/)
 		;;
 	esac
 done
 (
-	cat package/common-target-aliases 
+	cat package/common-target-aliases
 	case "`uname`" in
-	Linux) cat package/linux-target-aliases ;;
-	OpenBSD) cat package/openbsd-target-aliases ;;
-	*BSD) cat package/bsd-target-aliases ;;
+	(Linux) cat package/linux-target-aliases ;;
+	(OpenBSD) cat package/openbsd-target-aliases ;;
+	(*BSD) cat package/bsd-target-aliases ;;
 	esac
 ) |
 while read -r service j
@@ -300,10 +310,10 @@ do
 	(cd "${src}"/config/targets && pax -r -w -l -- "$j" "${absdest}"/nosh-bundles/etc/service-bundles/targets/)
 done
 (
-	cat package/common-etc-service-aliases 
+	cat package/common-etc-service-aliases
 	case "`uname`" in
-	Linux)	cat package/linux-etc-service-aliases ;;
-	*BSD)	cat package/bsd-etc-service-aliases ;;
+	(Linux)	cat package/linux-etc-service-aliases ;;
+	(*BSD)	cat package/bsd-etc-service-aliases ;;
 	esac
 ) |
 while read -r service j
@@ -359,22 +369,22 @@ done < package/udevd-rules
 # completion
 if test -n "${zshprefix}"
 then
-	install -d -m 0755 -- "${dest}"/nosh-zsh-completion/"${zshprefix}"/site-functions
+	install -d -m 0755 -- "${dest}"/nosh-zsh-completion/"${zshprefix}"/share/zsh/vendor-completions
 	for j in _nosh _console_terminal_emulator _system_control
 	do
-		(cd "${src}"/config/zsh && pax -r -w -l -- "$j" "${absdest}"/nosh-zsh-completion/"${zshprefix}"/site-functions)
+		(cd "${src}"/config/zsh && pax -r -w -l -- "$j" "${absdest}"/nosh-zsh-completion/"${zshprefix}"/share/zsh/vendor-completions)
 	done
 fi
 
 ##########################################################
 # Running under foreign service management
-install -d -m 0755 -- "${dest}"/nosh-run-via-mewburn-rc/"${etcprefix}"/etc/rc.d 
-install -d -m 0755 -- "${dest}"/nosh-run-via-open-rc/"${etcprefix}"/etc/init.d 
-install -d -m 0755 -- "${dest}"/nosh-run-via-openbsd-rc/"${etcprefix}"/etc/rc.d 
-install -d -m 0755 -- "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system 
-install -d -m 0755 -- "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/user 
-install -d -m 0755 -- "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/tmpfiles.d 
-install -d -m 0755 -- "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system-preset 
+install -d -m 0755 -- "${dest}"/nosh-run-via-mewburn-rc/"${etcprefix}"/etc/rc.d
+install -d -m 0755 -- "${dest}"/nosh-run-via-open-rc/"${etcprefix}"/etc/init.d
+install -d -m 0755 -- "${dest}"/nosh-run-via-openbsd-rc/"${etcprefix}"/etc/rc.d
+install -d -m 0755 -- "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system
+install -d -m 0755 -- "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/user
+install -d -m 0755 -- "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/tmpfiles.d
+install -d -m 0755 -- "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system-preset
 while read  -r j
 do
 	ln -f -- "${src}"/config/systemd/system/"$j" "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system/
@@ -383,7 +393,7 @@ while read  -r j
 do
 	install -d -m 0755 "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system/"`dirname "$j"`"
 	ln -f -- "${src}"/config/systemd/system/"$j" "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/systemd/system/"`dirname "$j"`"/
-done < package/systemd-system-overrides 
+done < package/systemd-system-overrides
 while read  -r j
 do
 	ln -f -- "${src}"/config/systemd/tmpfiles/"$j" "${dest}"/nosh-run-via-systemd/"${libprefix}"/lib/tmpfiles.d/
@@ -409,12 +419,12 @@ done < package/openbsd-rc-scripts
 # Presetting stuff, generally
 for i in bundles run-via-systemd run-via-mewburn-rc run-via-open-rc run-via-openbsd-rc run-debian-desktop-base run-debian-server-base run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-user-vt run-kernel-vt run-appletalk run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-mdevd run-vdev run-devd run-devpubd run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base run-bcron run-publicfile run-sntpclock run-taiclock run-taiclockd run-djbdns run-fake-hwclock
 do
-	install -d -m 0755 -- "${dest}"/nosh-"${i}"/"${prsprefix}"/system-control/presets 
+	install -d -m 0755 -- "${dest}"/nosh-"${i}"/"${prsprefix}"/system-control/presets
 	(
 	test \! -r package/export-manifests/common-nosh-$i-presets || cat package/export-manifests/common-nosh-"$i"-presets
 	case "`uname`" in
-	Linux)	test \! -r package/export-manifests/linux-nosh-$i-presets || cat package/export-manifests/linux-nosh-"$i"-presets ;;
-	*BSD)	test \! -r package/export-manifests/bsd-nosh-$i-presets || cat package/export-manifests/bsd-nosh-"$i"-presets ;;
+	(Linux)	test \! -r package/export-manifests/linux-nosh-$i-presets || cat package/export-manifests/linux-nosh-"$i"-presets ;;
+	(*BSD)	test \! -r package/export-manifests/bsd-nosh-$i-presets || cat package/export-manifests/bsd-nosh-"$i"-presets ;;
 	esac
 	) | while read  -r j
 	do

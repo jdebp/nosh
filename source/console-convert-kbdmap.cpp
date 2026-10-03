@@ -137,6 +137,7 @@ bsd_actions[]= {
 	{ {	EXTN(EXTENDED_KEY_PAD_ENTER),		EXTE(EXTENDED_KEY_PAD_ENTER),		}, "enter"		},	// This is an extension to the BSD format that allows use of the DEC VT enter key.
 	{ {	EXTE(EXTENDED_KEY_IM_TOGGLE),		EXTE(EXTENDED_KEY_IM_TOGGLE),		}, "imsw"		},	// This is an extension to the BSD format that allows an IM toggle key.
 	{ {	EXTE(EXTENDED_KEY_HANJA),		EXTE(EXTENDED_KEY_HANJA),		}, "hanja"		},	// This is an extension to the BSD format that allows a Hanja key.
+	{ {	EXTE(EXTENDED_KEY_ROMAJI),		EXTE(EXTENDED_KEY_ROMAJI),		}, "romaji"		},	// This is an extension to the BSD format that allows a Romaji key.
 	{ {	LOCK(KBDMAP_MODIFIER_LEVEL2),		LOCK(KBDMAP_MODIFIER_LEVEL2),		}, "l2lock"		},	// This is an extension to the BSD format that allows level 2 lock.
 	{ {	LOCK(KBDMAP_MODIFIER_LEVEL3),		LOCK(KBDMAP_MODIFIER_LEVEL3),		}, "l3lock"		},	// This is an extension to the BSD format that allows level 3 lock (more systematic name than "alock").
 	{ {	MMNT(KBDMAP_MODIFIER_1ST_GROUP2),	MMNT(KBDMAP_MODIFIER_1ST_GROUP2),	}, "g2shift"		},	// This is an extension to the BSD format that allows group 2 shift.
@@ -486,8 +487,7 @@ console_convert_kbdmap [[gnu::noreturn]] (
 			const char * name(*i);
 			std::ifstream ifs(name);
 			if (ifs.fail()) {
-				const int error(errno);
-				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, std::strerror(error));
+				message_fatal_errno(prog, envs, name);
 				throw static_cast<int>(EXIT_PERMANENT_FAILURE);	// Bernstein daemontools compatibility
 			}
 			if (!process(map, prog, envs, name, ifs))

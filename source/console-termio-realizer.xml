@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -160,8 +161,8 @@ However, such terminals whilst possible to regularly encounter in the 1960s and 
 
 <para>
 What the terminal supports is determined from the terminal type specified in the <citerefentry><refentrytitle><envar>TERM</envar></refentrytitle><manvolnum>7</manvolnum></citerefentry> environment variable.
-Terminal types are, per <citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry>, assumed to comprise "families" that share a common name as a prefix (e.g. <code>gnome</code> and <code>gnome-256color</code>)
-<command>console-termio-realizer</command> mainly only looks at these families, not the trailing "subfamily" denotations (with a couple of exceptions such as checking for "256color").
+Terminal types are, per <citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry>, assumed to comprise <quote>families</quote> that share a common name as a prefix (e.g. <code>gnome</code> and <code>gnome-256color</code>)
+<command>console-termio-realizer</command> mainly only looks at these families, not the trailing <quote>subfamily</quote> denotations (with a couple of exceptions such as checking for <quote>256color</quote>).
 </para>
 
 <refsection><title>Display elements</title>
@@ -182,8 +183,8 @@ It swaps all foreground and background colours, which is also what a DEC VT is d
 </para>
 
 <para>
-A "default" foreground or background cell colour is realized using the realized-upon terminal's own default colour.
-This produces a more visually acceptable effect on terminal emulators which come up in reverse video screen mode, at the expense of the "default" colour not being the same across multiple realizations of the same user-space virtual terminal.
+A <quote>default</quote> foreground or background cell colour is realized using the realized-upon terminal's own default colour.
+This produces a more visually acceptable effect on terminal emulators which come up in reverse video screen mode, at the expense of the <quote>default</quote> colour not being the same across multiple realizations of the same user-space virtual terminal.
 </para>
 
 </refsection>
@@ -198,7 +199,7 @@ The terminal emulators encode modifier key information in the control sequences 
 
 <para>
 <command>console-termio-realizer</command> decodes the modifier information and simply passes it along to the user-space virtual terminal's input as part of the input message.
-There is thus a relatively "straight paper path", when it comes to function keys, between the realizing terminal and what the applications on the far side of the user-space virtual terminal see.
+There is thus a relatively <quote>straight paper path</quote>, when it comes to function keys, between the realizing terminal and what the applications on the far side of the user-space virtual terminal see.
 (Teken emulation by the user-space virtual terminal confounds this somewhat.)
 </para>
 
@@ -220,25 +221,25 @@ Teken emulation by the user-space virtual terminal makes this even worse.
 
 <para>
 Various workarounds for deficiencies in the realizing terminal are available.
-The <arg choice='plain'>--bold-as-colour</arg> and <arg choice='plain'>--faint-as-colour</arg> command-line options accomodate terminals that do not yet implement the <code>bold</code> and <code>faint</code> SGR attributes that were standardized by ECMA-48 in 1976.
-The <arg choice='plain'>--permit-fake-truecolour</arg> command-line option permits the use of ISO 8613-6/ITU T.416 Direct colour control sequences even on terminals which are known to fake this by mapping 24-bit RGB colours to entries in their 8-bit colour palettes.
+The <arg choice='plain'>--bold-as-colour</arg> and <arg choice='plain'>--faint-as-colour</arg> command&#x2010;line options accomodate terminals that do not yet implement the <code>bold</code> and <code>faint</code> SGR attributes that were standardized by ECMA-48 in 1976.
+The <arg choice='plain'>--permit-fake-truecolour</arg> command&#x2010;line option permits the use of ISO 8613-6/ITU T.416 Direct colour control sequences even on terminals which are known to fake this by mapping 24-bit RGB colours to entries in their 8-bit colour palettes.
 </para>
 
 <para>
-The <arg choice='plain'>--wrong-way-up</arg> command-line option causes the display to be realized the wrong way up, swapping the direction of increasing line numbers.
+The <arg choice='plain'>--wrong-way-up</arg> command&#x2010;line option causes the display to be realized the wrong way up, swapping the direction of increasing line numbers.
 This is an oft-requested terminal feature, albeit by people who have never actually experienced it.
 </para>
 
 <para>
-The <arg choice='plain'>--cursor-keypad-application-mode</arg> and <arg choice='plain'>--calculator-keypad-application-mode</arg> command-line options instruct <command>console-termio-realizer</command> to switch, respectively, the cursor keypad and the calculator keypad of the realizing terminal into their "application" modes.
-Otherwise it switches them into their "normal" modes.
+The <arg choice='plain'>--cursor-keypad-application-mode</arg> and <arg choice='plain'>--calculator-keypad-application-mode</arg> command&#x2010;line options instruct <command>console-termio-realizer</command> to switch, respectively, the cursor keypad and the calculator keypad of the realizing terminal into their <quote>application</quote> modes.
+Otherwise it switches them into their <quote>normal</quote> modes.
 "application" mode is generally not useful to <command>console-termio-realizer</command>, since it makes cursor and calculator keys indistinguishable from accelerator keys.
-The <arg choice='plain'>--no-alternate-screen-buffer</arg> command-line option instructs <command>console-termio-realizer</command> to not switch to the alternative screen buffer.
+The <arg choice='plain'>--no-alternate-screen-buffer</arg> command&#x2010;line option instructs <command>console-termio-realizer</command> to not switch to the alternative screen buffer.
 This has two uses.
 First, it allows one to retain visibility of displayed information after the program has exited (although <citerefentry><refentrytitle>setterm</refentrytitle><manvolnum>1</manvolnum></citerefentry> provides access to the alternative screen buffer).
 Second, it works around problems with some (yet more!) broken terminal emulators that attempt to be and fail at being like XTerm, which forcibly change cursor and editing keys into application mode when the alternative screen buffer is active.
-The <arg choice='plain'>--inversescreen</arg> command-line option instructs <command>console-termio-realizer</command> to switch the DECSCNM ("light"/"dark" screen mode) private mode on or off.
-The <arg choice='plain'>--tui-level</arg> command-line option constrains the use of MouseText or Unicode block graphics and line drawing characters in TUI widgets and the mouse pointer.
+The <arg choice='plain'>--inversescreen</arg> command&#x2010;line option instructs <command>console-termio-realizer</command> to switch the DECSCNM ("light"/"dark" screen mode) private mode on or off.
+The <arg choice='plain'>--tui-level</arg> command&#x2010;line option constrains the use of MouseText or Unicode block graphics and line drawing characters in TUI widgets and the mouse pointer.
 </para>
 
 </refsection>

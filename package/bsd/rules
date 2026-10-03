@@ -4,8 +4,9 @@
 
 .PHONY: build binary stage control create clean
 
-BINARY_PACKAGES=guide exec terminal-management service-management terminal-extras service-management-extras zsh-completion service-command-shim systemv-shims systemd-shims upstart-shims smf-shims execline-shims core-shims linux-shims debian-shims openrc-shims bsd-shims openbsd-shims freebsd-shims ucspi-tcp-shims kbd-shims net-tools-shims bcron-as-cron-shims desktop-bus-shims bundles run-system-manager run-via-mewburn-rc run-via-open-rc run-via-openbsd-rc run-devd run-devpubd run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-local-syslog run-klog run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base run-bcron run-publicfile run-sntpclock run-taiclock run-taiclockd run-djbdns run-fake-hwclock
-FOREIGN_PACKAGES=debian-crontab-anacron debian-crontab-no-anacron run-busybox-mdev run-debian-desktop-base run-debian-server-base run-mdevd run-suckless-mdev run-systemd-udev run-udev run-vdev run-via-systemd
+BINARY_PACKAGES=guide exec terminal-management service-management terminal-extras service-management-extras zsh-completion service-command-shim systemv-shims systemd-shims upstart-shims smf-shims execline-shims core-shims linux-shims debian-shims openrc-shims bsd-shims openbsd-shims freebsd-shims ucspi-tcp-shims kbd-shims net-tools-shims bcron-as-cron-shims desktop-bus-shims bundles run-system-manager run-via-open-rc run-kernel-vt run-user-vt run-virtualbox-guest run-freedesktop-system-bus run-freedesktop-kits run-openssh-server run-appletalk run-local-syslog run-klog run-bcron run-publicfile run-sntpclock run-taiclock run-taiclockd run-djbdns run-fake-hwclock
+BSD_SPECIFIC_PACKAGES=run-via-mewburn-rc run-via-openbsd-rc run-devd run-devpubd run-trueos-desktop-base run-trueos-server-base run-freebsd-desktop-base run-freebsd-server-base
+DEBIAN_SPECIFIC_PACKAGES=debian-crontab-anacron debian-crontab-no-anacron run-debian-desktop-base run-debian-server-base run-systemd-udev run-udev run-busybox-mdev run-suckless-mdev run-mdevd run-vdev run-via-systemd logrotate-shims
 
 # Target this in order to make the package contents.
 build:
@@ -14,12 +15,13 @@ build:
 # Target this in order to clean the build areas.
 clean:
 	echo 1>&2 "Cleaning individual staged packages under bsd/ ."
-	for i in ${BINARY_PACKAGES} ${FOREIGN_PACKAGES} ; \
+	# Debian dpkg would remove bsd/substvars here.
+	for i in ${BINARY_PACKAGES} ${BSD_SPECIFIC_PACKAGES} ${DEBIAN_SPECIFIC_PACKAGES} ; \
 	do \
-		rm -r -f bsd/nosh-"$$i"/ || exit 1 ; \
+		rm -f -r bsd/nosh-"$$i"/ || exit 1 ; \
 	done
 	echo 1>&2 "Cleaning snapshot area in bsd/tmp/ ."
-	rm -r -f bsd/tmp/
+	rm -f -r bsd/tmp/
 
 # Target this in order to make the package files.
 binary: stage control create
@@ -32,7 +34,8 @@ stage:
 	package/stage bsd/tmp bsd
 
 control:
-	for i in ${BINARY_PACKAGES} ; \
+	# Debian dpkg would remove bsd/files here.
+	for i in ${BINARY_PACKAGES} ${BSD_SPECIFIC_PACKAGES} ; \
 	do \
 		echo 1>&2 "Building control file for nosh-$$i." ; \
 		bsd/gencontrol nosh-"$$i" bsd/nosh-"$$i" || exit 1 ; \

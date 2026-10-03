@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -58,7 +59,7 @@ It is referred to without qualification in this manual for simplicity.
 <refsection><title>Description</title>
 
 <para>
-This subcommand of <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> takes some systemd unit files and generates from them a service bundle in the current directory (or in the <arg choice='plain'><replaceable>root</replaceable></arg> directory if the <arg choice='plain'>--bundle-root</arg> command-line option is used) that contains scripts, dependencies, and autoboot dependency configuration information.
+This subcommand of <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> takes some systemd unit files and generates from them a service bundle in the current directory (or in the <arg choice='plain'><replaceable>root</replaceable></arg> directory if the <arg choice='plain'>--bundle-root</arg> command&#x2010;line option is used) that contains scripts, dependencies, and autoboot dependency configuration information.
 The bundle is not enabled by the conversion process, but can be started and enabled as it stands, with the <command>start</command> and <command>preset</command> subcommands, just like any other service bundle.
 </para>
 
@@ -282,7 +283,7 @@ See <citerefentry><refentrytitle>machine-id</refentrytitle><manvolnum>7</manvoln
 <title>Ideal and quirks mode</title>
 
 <para>
-Import can operate in either "ideal" mode or "quirks" mode.
+Import can operate in either <quote>ideal</quote> mode or <quote>quirks</quote> mode.
 The default is quirks mode, which is the better mode for real systemd unit files.
 It replicates several quirks of systemd:
 </para>
@@ -325,7 +326,7 @@ In ideal mode, the redirection of standard input implies redirecting standard ou
 </itemizedlist>
 
 <para>
-The <arg choice='plain'>--no-systemd-quirks</arg> command line option turns off these systemd quirks and sets "ideal" mode.
+The <arg choice='plain'>--no-systemd-quirks</arg> command&#x2010;line option turns off these systemd quirks and sets <quote>ideal</quote> mode.
 Alternatively, one can turn off some quirks with various unit file directives:
 </para>
 
@@ -362,7 +363,7 @@ Generated <filename>run</filename> scripts will use <citerefentry><refentrytitle
 This makes it possible, for example, for a single service unit file to just say <code>ExecStart=cupsd</code> without needing to have two different unit files, one saying <code>ExecStart=/usr/sbin/cupsd</code> for Linux systems and one saying <code>ExecStart=/usr/local/sbin/cupsd</code> for BSD systems.
 </para></listitem>
 <listitem><para>
-The <code>LimitMemory=</code> setting translates to the <arg choice='plain'>-m</arg> option of <citerefentry><refentrytitle>softlimit</refentrytitle><manvolnum>1</manvolnum></citerefentry>, for setting multiple "memory" resource limits in one go.
+The <code>LimitMemory=</code> setting translates to the <arg choice='plain'>-m</arg> option of <citerefentry><refentrytitle>softlimit</refentrytitle><manvolnum>1</manvolnum></citerefentry>, for setting multiple <quote>memory</quote> resource limits in one go.
 </para></listitem>
 <listitem><para>
 The <code>MachineEnvironment=</code> setting (defaulting to <code>false</code>) if <code>true</code> causes the generated bundle to set the machine environment variables with <citerefentry><refentrytitle>machineenv</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
@@ -375,7 +376,7 @@ The <code>EnvironmentDirectory=</code> setting specifies a directory to be read 
 Set this on a service that is configured via an <filename>envdir</filename> environment directory.
 </para></listitem>
 <listitem><para>
-The <code>FullEnvironmentDirectory=</code> setting specifies that the <arg choice='plain'>--full</arg> command line option to <citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry> be applied when reading the environment directory.
+The <code>FullEnvironmentDirectory=</code> setting specifies that the <arg choice='plain'>--full</arg> command&#x2010;line option to <citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry> be applied when reading the environment directory.
 (This is not usually applicable.)
 </para></listitem>
 <listitem><para>
@@ -383,13 +384,13 @@ The <code>EnvironmentUserOnly=</code> setting (defaulting to <code>false</code>)
 Set this on a service where the main d&#xe6;mon program changes its own process UID and GID, but expects to be told via environment variables what UID and GID to run as.
 </para></listitem>
 <listitem><para>
-The <code>EarlySupervise=</code> setting (defaulting to <code>true</code> for "etc" bundles and <code>false</code> for others) if <code>true</code> causes the generated bundle to use a <filename>supervise</filename> directory in <filename>/run/service-bundles/early-supervise/</filename>.
-This is for avoiding access to <filename>/var</filename> before it is mounted, during the bootstrap process, and is mainly used for "sysinit" services and system targets that are in <filename>/etc</filename>.
+The <code>EarlySupervise=</code> setting (defaulting to <code>true</code> for <quote>etc</quote> bundles and <code>false</code> for others) if <code>true</code> causes the generated bundle to use a <filename>supervise</filename> directory in <filename>/run/service-bundles/early-supervise/</filename>.
+This is for avoiding access to <filename>/var</filename> before it is mounted, during the bootstrap process, and is mainly used for <quote>sysinit</quote> services and system targets that are in <filename>/etc</filename>.
 </para></listitem>
 <listitem><para>
 The <code>StoppedBy=</code> setting defines a <filename>stopped-by</filename> relationship to other services, stored in the generated bundle.
 This is the inverse of the <filename>conflicts</filename> relationship.
-By default, unless the <code>DefaultDependencies=false</code> setting is used, services are stopped by the "shutdown" target in addition to anything specified in this setting.
+By default, unless the <code>DefaultDependencies=false</code> setting is used, services are stopped by the <quote>shutdown</quote> target in addition to anything specified in this setting.
 </para></listitem>
 <listitem><para>
 The <code>JailID=</code> setting specifies the ID of a jail in which to run the service, as if by <citerefentry><refentrytitle>jexec</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
@@ -427,7 +428,7 @@ The <code>NUMAInterleave=</code>, <code>NUMAMemBind=</code>, <code>NUMACPUNodeBi
 </para></listitem>
 <listitem><para>
 The <code>JVMVersions=</code>, <code>JVMOperatingSystems=</code>, and <code>JVMManufacturers=</code> settings cause the generated bundle to invoke <citerefentry><refentrytitle>find-matching-jvm</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-Each setting's value is a space-separated list, which is turned into zero or more equivalent command-line options.
+Each setting's value is a space-separated list, which is turned into zero or more equivalent command&#x2010;line options.
 </para></listitem>
 <listitem><para>
 The <code>JVMDefault=</code> setting (defaulting to <code>false</code>) if <code>true</code> causes the generated bundle to invoke <citerefentry><refentrytitle>find-default-jvm</refentrytitle><manvolnum>1</manvolnum></citerefentry>.

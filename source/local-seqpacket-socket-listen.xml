@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -42,7 +43,7 @@
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>local-seqpacket-socket-listen</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>local-seqpacket-socket-listen</command> will ignore.
 </para>
 
 <para>
@@ -106,18 +107,18 @@ To change the process' UID and GID after opening the socket, simply chain throug
 
 <refsection><title>See also</title>
 <variablelist>
-	<varlistentry>
-		<term><citerefentry><refentrytitle>tcp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
-		<term><citerefentry><refentrytitle>udp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
-		<term><citerefentry><refentrytitle>local-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
-		<term><citerefentry><refentrytitle>local-stream-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
-		<term><citerefentry><refentrytitle>netlink-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
-		<listitem>
-			<para>
-				listeners for other protocols
-			</para>
-		</listitem>
-	</varlistentry>
+<varlistentry>
+<term><citerefentry><refentrytitle>tcp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+<term><citerefentry><refentrytitle>udp-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+<term><citerefentry><refentrytitle>local-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+<term><citerefentry><refentrytitle>local-stream-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+<term><citerefentry><refentrytitle>netlink-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+<listitem>
+<para>
+listeners for other protocols
+</para>
+</listitem>
+</varlistentry>
 </variablelist>
 
 </refsection><refsection><title>Author</title>

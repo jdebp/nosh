@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -37,7 +38,7 @@
 <para>
 <command>per-user-manager</command> can be used by individual users to manage non-system-wide, per-user, stuff.
 The purpose of <command>per-user-manager</command> is to run per-user service management providing an overall control API for it that is similar to that of process #1.
-This permits per-user service manament to be addressed by <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> (when its <arg choice='plain'>--user</arg> command-line option is employed) control subcommands such as <command>halt</command>.
+This permits per-user service manament to be addressed by <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> (when its <arg choice='plain'>--user</arg> command&#x2010;line option is employed) control subcommands such as <command>halt</command>.
 </para>
 
 <caution>
@@ -52,7 +53,7 @@ process setup, reaping, and responding to per-user events.
 
 <para>
 Unlike <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry> it does no system setup.
-Mounting "API" filesystems, creating device nodes, and requesting the kernel for special system events are not user-local actions.
+Mounting <quote>API</quote> filesystems, creating device nodes, and requesting the kernel for special system events are not user-local actions.
 </para>
 
 <refsection><title>Process setup</title>
@@ -66,8 +67,8 @@ It does very little to its process state, which is inherited by the service mana
 
 <listitem>
 <para>
-(On operating systems that support this) it calls <citerefentry><refentrytitle>prctl</refentrytitle><manvolnum>2</manvolnum></citerefentry> to tell the kernel that it is a "local reaper".
-Any service processes started (directly or indirectly) by the <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> that lose their original parents will be re-parented to the <command>per-user-manager</command> process, which will "reap" them when they terminate.
+(On operating systems that support this) it calls <citerefentry><refentrytitle>prctl</refentrytitle><manvolnum>2</manvolnum></citerefentry> to tell the kernel that it is a <quote>local reaper</quote>.
+Any service processes started (directly or indirectly) by the <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> that lose their original parents will be re-parented to the <command>per-user-manager</command> process, which will <quote>reap</quote> them when they terminate.
 This yields a slightly more informative process tree.
 </para>
 </listitem>
@@ -112,7 +113,7 @@ If you wish it to run as a session leader, chain to it from <citerefentry><refen
 </refsection><refsection><title>Reaping</title>
 
 <para>
-<command>per-user-manager</command> operates as a "grim reaper", cleaning up after any child processes that exit.
+<command>per-user-manager</command> operates as a <quote>grim reaper</quote>, cleaning up after any child processes that exit.
 The operating system (if this is supported) re-parents any orphaned descendent processes to it.
 <command>per-user-manager</command> spawns exactly three processes itself:
 </para>
@@ -254,7 +255,7 @@ It ignores the <code>SIGTTIN</code>, <code>SIGTTOU</code>, <code>SIGTSTP</code>,
 
 <para>
 <command>per-user-manager</command> startup is also treated as a user-local event.
-In response this "event" <command>per-user-manager</command> spawns <command>system-control</command> <arg choice='plain'>--user</arg> <arg choice="plain">init</arg>.
+In response this <quote>event</quote> <command>per-user-manager</command> spawns <command>system-control</command> <arg choice='plain'>--user</arg> <arg choice='plain'>init</arg>.
 This calculates what to initialize and sends appropriate signals back to the per-user manager process.
 </para>
 

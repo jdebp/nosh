@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -36,7 +37,7 @@
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>vc-get-terminal</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>vc-get-terminal</command> will ignore.
 </para>
 
 <para>
@@ -71,7 +72,7 @@ The <citerefentry><refentrytitle><envar>COLORTERM</envar></refentrytitle><manvol
 
 <note>
 In FreeBSD 9.0 the old kernel terminal emulator was replaced with the teken library, improving the escape sequence handler and enabling UTF-8 support.
-<command>vc-get-terminal</command> expects either <citerefentry><refentrytitle>syscons</refentrytitle><manvolnum>4</manvolnum></citerefentry> in its default teken mode or <citerefentry><refentrytitle>vt</refentrytitle><manvolnum>4</manvolnum></citerefentry>, and does not support either the old kernel terminal emulator or <citerefentry><refentrytitle>syscons</refentrytitle><manvolnum>4</manvolnum></citerefentry> pretending to be the old kernel terminal emulator in its "cons25" mode.
+<command>vc-get-terminal</command> expects either <citerefentry><refentrytitle>syscons</refentrytitle><manvolnum>4</manvolnum></citerefentry> in its default teken mode or <citerefentry><refentrytitle>vt</refentrytitle><manvolnum>4</manvolnum></citerefentry>, and does not support either the old kernel terminal emulator or <citerefentry><refentrytitle>syscons</refentrytitle><manvolnum>4</manvolnum></citerefentry> pretending to be the old kernel terminal emulator in its <quote>cons25</quote> mode.
 </note>
 
 </refsection>
@@ -97,7 +98,7 @@ The old <code>pcvtXX</code> terminal type in <citerefentry><refentrytitle><filen
 </note>
 <note>
 In theory, NetBSD also supports <code>sun</code> and <code>dumb</code> terminals.
-In practice, the former is unfortunately configured out on most platforms and the latter is barely even a "glass lineprinter" which does not even do what an actual lineprinter could, such as overstrike.
+In practice, the former is unfortunately configured out on most platforms and the latter is barely even a <quote>glass lineprinter</quote> which does not even do what an actual lineprinter could, such as overstrike.
 </note>
 
 </refsection>
@@ -119,7 +120,7 @@ In theory, OpenBSD also supports <code>sun</code> and <code>dumb</code> terminal
 </itemizedlist>
 
 <para>
-The <code>--term</code> command line option is available for overriding these hardwired values, but there is little reason for using it as the terminal types for virtual terminals have not changed for several years on FreeBSD and for two and a half decades (as of 2025) on Linux.
+The <code>--term</code> command&#x2010;line option is available for overriding these hardwired values, but there is little reason for using it as the terminal types for virtual terminals have not changed for several years on FreeBSD and for two and a half decades (as of 2025) on Linux.
 </para>
 
 </refsection>

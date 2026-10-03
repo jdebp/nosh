@@ -94,6 +94,17 @@ ConvertToUTF8(
 		encoder.Process(*p);
 }
 
+void
+ConvertToUTF8(
+	std::string & d,
+	const std::string & s
+) {
+	UTF8EncoderHelper2 helper(d);
+	UTF8Encoder encoder(helper);
+	for (std::string::const_iterator p(s.begin()), e(s.end()); p != e; ++p)
+		encoder.Process(static_cast<unsigned char>(*p));
+}
+
 std::string::size_type
 LengthInUTF8 (
 	const u32string & value
@@ -117,4 +128,3 @@ LengthAsUTF8 (
 		decoder.Process(*p);
 	return length;
 }
-

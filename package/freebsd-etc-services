@@ -1,3 +1,4 @@
+coreboot_console
 devd
 devd-log
 kmod@fuse

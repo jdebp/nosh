@@ -4,9 +4,9 @@
 ## **************************************************************************
 # vim: set filetype=sh:
 case "`mysqld --version`" in
-*MariaDB*)	ext=mariadb ;;
-*Percona*)	ext=percona ;;
-*)		ext=mysql ;;
+(*MariaDB*)	ext=mariadb ;;
+(*Percona*)	ext=percona ;;
+(*)		ext=mysql ;;
 esac
 redo-ifchange "$1.${ext}"
 ln -s -f "`basename \"$1\"`.${ext}" "$3"

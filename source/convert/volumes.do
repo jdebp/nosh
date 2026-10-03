@@ -15,8 +15,8 @@ r="/etc/service-bundles/services/"
 o="--etc-bundle --supervise-in-run --overwrite"
 
 case "`uname`" in
-Linux)	esc='\' ;;
-*BSD)	esc='_' ;;
+(Linux)	esc='\' ;;
+(*BSD)	esc='_' ;;
 esac
 
 system-control convert-fstab-services --bundle-root "$r" $o
@@ -63,7 +63,7 @@ case "`uname`" in
 	while read -r state n
 	do
 		case "${state}" in
-		[Oo][Nn])
+		([Oo][Nn])
 			system-control preset --fstab --prefix "swap@" -- "-dev-zvol-$n"
 			if system-control is-enabled "swap@-dev-zvol-$n"
 			then
@@ -72,7 +72,7 @@ case "`uname`" in
 				echo >> "$3" off "/dev/zvol/$n"
 			fi
 			;;
-		*)
+		(*)
 			system-control disable "swap@-dev-zvol-$n"
 			echo >> "$3" off "/dev/zvol/$n"
 			;;

@@ -9,7 +9,7 @@ then
 	exec false
 fi
 case "`uname`" in
-FreeBSD)	
+(FreeBSD)	
 	if test 0 -ne "$(/sbin/sysctl -n security.jail.jailed)"
 	then
 		echo 1>&2 "Do not use this in a jail."
@@ -22,11 +22,11 @@ esac
 # An unconventional location should be signalled by actually setting the service environment variables and not relying upon a fallback default.
 # The external configuration import subsystem (q.v.) uses what is in /etc/rc.conf, generating a fake rc.conf with these settings on Linux operating systems.
 case "`uname`" in
-Linux)	
+(Linux)	
 	file="${file-/var/lib/urandom/random-seed}"
 	dir="${dir-/var/lib/urandom/random-seeds}"	# Our addition to the Linux convention.
 	;;
-*BSD)	
+(*BSD)	
 	dir="${dir-/var/db/entropy}" 
 	file="${file-/var/db/entropy-file}" 
 	;;
@@ -38,9 +38,9 @@ umask 0377
 
 load() {
 	case "${dir}" in
-	[Nn][Oo]|'')
+	([Nn][Oo]|'')
 		;;
-	*)
+	(*)
 		if test -d "${dir}"
 		then
 			ls -1 -r "${dir}/" | while read -r f
@@ -48,11 +48,11 @@ load() {
 				if test -f "${dir}/${f}"
 				then
 					case "${f}" in
-					[0-9]*.data)
+					([0-9]*.data)
 						dd if="${dir}/${f}" of=/dev/random bs="${save_sz}" count=1
 						rm -- "${dir}/${f}"
 						;;
-					*)
+					(*)
 						echo 1>&2 "${dir}/${f}": Skipping apparently non-data file.
 						;;
 					esac
@@ -66,9 +66,9 @@ load() {
 		;;
 	esac
 	case "${file}" in
-	[Nn][Oo]|'')
+	([Nn][Oo]|'')
 		;;
-	*)
+	(*)
 		if test -f "${file}"
 		then
 			dd if="${file}" of=/dev/random bs="${save_sz}" count=1
@@ -83,9 +83,9 @@ load() {
 
 save() {
 	case "${file}" in
-	[Nn][Oo]|'')
+	([Nn][Oo]|'')
 		;;
-	*)
+	(*)
 		if ! test -e "${file}" || test -f "${file}"
 		then
 			install -m 0600 -o 0 -g 0 /dev/null "${file}"	# additional security
@@ -100,9 +100,9 @@ save() {
 
 savemore() {
 	case "${dir}" in
-	[Nn][Oo]|'')
+	([Nn][Oo]|'')
 		;;
-	*)
+	(*)
 		install -d -m 0700 "${dir}"
 		if test -d "${dir}"
 		then
@@ -111,7 +111,7 @@ savemore() {
 				if test -f "${dir}/${f}"
 				then
 					case "${f}" in
-					[0-9]*.data)
+					([0-9]*.data)
 						n="${f%.data}"
 						if test "${n}" -ge "${save_num}"
 						then
@@ -121,7 +121,7 @@ savemore() {
 							mv -- "${dir}/${f}" "${dir}/$(( n + 1 )).data"
 						fi
 						;;
-					*)
+					(*)
 						echo 1>&2 "${dir}/${f}": Skipping apparently non-data file.
 						;;
 					esac

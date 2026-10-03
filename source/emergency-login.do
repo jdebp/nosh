@@ -4,19 +4,19 @@
 ## **************************************************************************
 # vim: set filetype=sh:
 main="`basename "$1"`"
-objects="main-exec.o builtins-${main}.o"
-libraries="builtins.a utils.a"
+objects="object/main-exec.o object/builtins-${main}.o"
+libraries='library/builtins.a library/utils.a'
 case "`uname`" in
-	Linux)
+	(Linux)
 		crypt=-lcrypt
 		;;
-	FreeBSD)
+	(FreeBSD)
 		crypt=-lcrypt
 		util=-lutil
 		# Needed because emergency-login can be run before filesystems are mounted.
 		static="-static"
 		;;
-	*BSD)
+	(*BSD)
 		crypt=-lcrypt
 		util=-lutil
 		;;

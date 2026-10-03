@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -103,7 +104,7 @@ Code points in the ranges 0x00 to 0x1F and 0x80 to 0x9F may appear, and terminal
 
 <para>
 The 24-bit RGB foreground and background colour values for character cells are mapped to 3-bit CGA by comparing the relative intensities of red, green, and blue.
-The "bright foreground" and "bright background" CGA attribute bits are taken from the boldface and blink terminal attributes, respectively.
+The <quote>bright foreground</quote> and <quote>bright background</quote> CGA attribute bits are taken from the boldface and blink terminal attributes, respectively.
 No attempt is made to provide MDA or VGA in monochrome mode attributes, such as underline.
 To handle the full range of attributes, terminal realizing softwares should use the Unicode screen buffer.
 </para>
@@ -266,7 +267,7 @@ Because of this, codes <code>0x03nnnnnn</code>, <code>0x1Ennnnnn</code>, and <co
 
 <para>
 The modifier flags represent abstract level2, level3, control, group2, and super modifiers.
-(See ISO 9995 for the concepts of levels and groups; super is an abstract "Command" or "GUI" modifier.)
+(See ISO 9995 for the concepts of levels and groups; super is an abstract <quote>Command</quote> or <quote>GUI</quote> modifier.)
 The input protocol does not comprise standalone events for modifier keys or associated modifier lock keys.
 </para>
 

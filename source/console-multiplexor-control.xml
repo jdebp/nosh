@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -59,21 +60,21 @@ If omitted, it defaults to <filename>head0</filename>.
 <varlistentry>
 <term><code>S</code></term>
 <listitem><para>
-Switch to the first session, as if the "select task" USB consumer key were pressed.
+Switch to the first session, as if the <quote>select task</quote> USB consumer key were pressed.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><code>N</code></term>
 <listitem><para>
-Switch to the next session, as if the "next task" USB consumer key were pressed.
+Switch to the next session, as if the <quote>next task</quote> USB consumer key were pressed.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><code>P</code></term>
 <listitem><para>
-Switch to the previous session, as if the "previous task" USB consumer key were pressed.
+Switch to the previous session, as if the <quote>previous task</quote> USB consumer key were pressed.
 </para></listitem>
 </varlistentry>
 

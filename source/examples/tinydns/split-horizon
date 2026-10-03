@@ -1,151 +1,42 @@
-##
+#######
 # Split-horizon DNS service using a root content DNS server
+#
+# Common part
 # 
-# See https://jdebp.uk/FGA/dns-private-address-split-horizon.html#WhatToDo .
+# See
+#   https://jdebp.uk/FGA/dns-private-address-split-horizon.html#WhatToDo
+#   https://jdebp.uk/FGA/dns-split-horizon.html
+#######
+
+##
+# Some pre-supplied forward and reverse mappings.
+#
+# This is the sort of thing that will be in the "main" data file.
+# Because the apices are location-tagged, and control whether these are served, these do not have to be.
 ##
 
-# Pre-define two conventional location codes.
-# You should use these in your "main" data file, and define any additional location codes (e.g. "ex") as needed.
-%lo:127
-%si:10
-%si:192.168
+=net1.iana.test:192.0.2.0:::
+=net2.iana.test:198.51.100.0:::
+=net3.iana.test:203.0.113.0:::
 
-# This is conventionally where the content DNS server itself lives.
-# This expects the not-necessarily-default assignments of ::2/128 and 127.0.0.0/8 to a loopback interface.
-# You should add a site-local address in the "si" location in the "main" data file if the content DNS server also lives on a site-local address.
-.:127.53.0.1:a:::lo
-.:0_0_0_0_0_0_0_2:a:::lo
+=doco-net.iana.example:2001_db8_0_0_0_0_0_0:::
 
-# Claim the reverse mappings superdomains for machine-local addresses as far as all machine-local clients are concerned.
-# You will also need to duplicate these for site-local clients, delegating to a site-local address.
-.127.in-addr.arpa:127.53.0.1:a:::lo
-.127.in-addr.arpa:0_0_0_0_0_0_0_2:a:::lo
-.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa:127.53.0.1:a:::lo
-.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa:0_0_0_0_0_0_0_2:a:::lo
-.1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa:127.53.0.1:a:::lo
-.1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa:0_0_0_0_0_0_0_2:a:::lo
-.2.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa:127.53.0.1:a:::lo
-.2.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa:0_0_0_0_0_0_0_2:a:::lo
+=this.6-4.home.arpa:2002_0_0_0_0_0_0_0:::
+=iface-local.6-4.home.arpa:2002_7f00_0_0_0_0_0_0:::
+=link-local.6-4.home.arpa:2002_a9fe_0_0_0_0_0_0:::
+=mcast-net.6-4.home.arpa:2002_e000_0_0_0_0_0_0:::
 
-# Claim the reverse mappings superdomains for various multicast and link-local addresses as far as all machine-local clients are concerned.
-# You will also need to duplicate these for site-local clients, delegating to a site-local address.
-.0.0.0.224.in-addr.arpa:127.53.0.1:a:::lo
-.0.0.254.169.in-addr.arpa:127.53.0.1:a:::lo
-.2.0.192.in-addr.arpa:127.53.0.1:a:::lo
-.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.2.0.0.2.ip6.arpa:127.53.0.1:a:::lo
-
-# Claim the reverse mappings superdomains for various test and doco-only addresses as far as all machine-local clients are concerned.
-# You will also need to duplicate these for site-local clients, delegating to a site-local address.
-.8.b.d.0.1.0.0.2.ip6.arpa:127.53.0.1:a:::lo
-
-# The pre-supplied forward and reverse mappings.
-# This is the sort of thing that will be in the "main" data file.
-=tinydns-root.self.home.arpa:127.53.0.1:::lo
-=tinydns-root.self.home.arpa:0_0_0_0_0_0_0_2:::lo
-# These multicast and link-local addresses are mainly found in routing tables.
-=0.0.0.0.ip4.ip6.arpa:0.0.0.0:::lo
-=2.0.0.0.ip4.ip6.arpa:0.0.0.2:::lo
-=multicast.ip4.arpa:224.0.0.0:::lo
-=link-local.ip4.arpa:169.254.0.0:::lo
-=iface-local-multicast.ip6.arpa:ff01_0_0_0_0_0_0_0:::lo
-=link-local-multicast.ip6.arpa:ff02_0_0_0_0_0_0_0:::lo
-=link-local.ip6.arpa:fe80_0_0_0_0_0_0_0:::lo
-=link-local.ip6.arpa:fe90_0_0_0_0_0_0_0:::lo
-=link-local.ip6.arpa:fea0_0_0_0_0_0_0_0:::lo
-=link-local.ip6.arpa:feb0_0_0_0_0_0_0_0:::lo
-=old-site-local.ip6.arpa:fec0_0_0_0_0_0_0_0:::lo
-=old-site-local.ip6.arpa:fed0_0_0_0_0_0_0_0:::lo
-=old-site-local.ip6.arpa:fee0_0_0_0_0_0_0_0:::lo
-=old-site-local.ip6.arpa:fef0_0_0_0_0_0_0_0:::lo
-=stf.ip6.arpa:2002_0_0_0_0_0_0_0:::lo
-=iface-local.stf.ip6.arpa:2002_7f00_0_0_0_0_0_0:::lo
-=link-local.stf.ip6.arpa:2002_a9fe_0_0_0_0_0_0:::lo
-=link-local.stf.ip6.arpa:2002_e000_0_0_0_0_0_0:::lo
-=unassigned-unique-local.ip6.arpa:fc00_0_0_0_0_0_0_0:::lo
-=random-unique-local.ip6.arpa:fd00_0_0_0_0_0_0_0:::lo
-# Since they do not need site-local adjusted forms, we also include here what site-local clients get.
-.0.0.0.224.in-addr.arpa:127.53.0.1:a:::si
-=0.0.0.0.ip4.ip6.arpa:0.0.0.0:::si
-=2.0.0.0.ip4.ip6.arpa:0.0.0.2:::si
-=multicast.ip4.arpa:224.0.0.0:::si
-.0.0.254.169.in-addr.arpa:127.53.0.1:a:::si
-=link-local.ip4.arpa:169.254.0.0:::si
-=iface-local-multicast.ip6.arpa:ff01_0_0_0_0_0_0_0:::si
-=link-local-multicast.ip6.arpa:ff02_0_0_0_0_0_0_0:::si
-=link-local.ip6.arpa:fe80_0_0_0_0_0_0_0:::si
-=link-local.ip6.arpa:fe90_0_0_0_0_0_0_0:::si
-=link-local.ip6.arpa:fea0_0_0_0_0_0_0_0:::si
-=link-local.ip6.arpa:feb0_0_0_0_0_0_0_0:::si
-=old-site-local.ip6.arpa:fec0_0_0_0_0_0_0_0:::si
-=old-site-local.ip6.arpa:fed0_0_0_0_0_0_0_0:::si
-=old-site-local.ip6.arpa:fee0_0_0_0_0_0_0_0:::si
-=old-site-local.ip6.arpa:fef0_0_0_0_0_0_0_0:::si
-=stf.ip6.arpa:2002_0_0_0_0_0_0_0:::si
-=iface-local.stf.ip6.arpa:2002_7f00_0_0_0_0_0_0:::si
-=link-local.stf.ip6.arpa:2002_a9fe_0_0_0_0_0_0:::si
-=link-local.stf.ip6.arpa:2002_e000_0_0_0_0_0_0:::si
-=unassigned-unique-local.ip6.arpa:fc00_0_0_0_0_0_0_0:::si
-=random-unique-local.ip6.arpa:fd00_0_0_0_0_0_0_0:::si
-# These are for use in doco, so it is pointless expecting the public Internet to map them.
-=test.iana.ip4.arpa:192.0.2.0:::lo
-=doco.iana.ip6.arpa:2001_db8_0_0_0_0_0_0:::lo
-# Since they do not need site-local adjusted forms, we also include here what site-local clients get.
-=test.iana.ip4.arpa:192.0.2.0:::si
-=doco.iana.ip6.arpa:2001_db8_0_0_0_0_0_0:::si
-
-# These are various split-horizon prune-and-graft points that have evolved over the years.
-# They have varying degrees of legitimacy, and varying uses.
-# What they have in common is that looking them up outwith a site is always wrong.
-# See RFCs 6762, 7686, and 8375.
-# You will also need to duplicate these for site-local clients, delegating to a site-local address.
-.local:127.53.0.1:a:::lo
-.test:127.53.0.1:a:::lo
-.example:127.53.0.1:a:::lo
-.example.org:127.53.0.1:a:::lo
-.example.net:127.53.0.1:a:::lo
-.example.com:127.53.0.1:a:::lo
-.internal:127.53.0.1:a:::lo
-.intranet:127.53.0.1:a:::lo
-.corp:127.53.0.1:a:::lo
-.home:127.53.0.1:a:::lo
-.lan:127.53.0.1:a:::lo
-.home.arpa:127.53.0.1:a:::lo
-.onion:127.53.0.1:a:::lo
-
-# Claim all of the apices when machine-local clients ask.
-# Your actual data mapping the addresses in these ranges will be in the "main" data file.
-# You will also need to duplicate these for site-local clients, delegating to a site-local address.
-.f.7.2.0.0.2.ip6.arpa:127.53.0.1:a:::lo
-.e.f.9.a.2.0.0.2.ip6.arpa:127.53.0.1:a:::lo
-.e.2.0.0.2.ip6.arpa:127.53.0.1:a:::lo
-.D.F.ip6.arpa:127.53.0.1:a:::lo
-.8.E.F.ip6.arpa:127.53.0.1:a:::lo
-.9.E.F.ip6.arpa:127.53.0.1:a:::lo
-.A.E.F.ip6.arpa:127.53.0.1:a:::lo
-.B.E.F.ip6.arpa:127.53.0.1:a:::lo
-.C.E.F.ip6.arpa:127.53.0.1:a:::lo
-.D.E.F.ip6.arpa:127.53.0.1:a:::lo
-.E.E.F.ip6.arpa:127.53.0.1:a:::lo
-.F.E.F.ip6.arpa:127.53.0.1:a:::lo
-.0.in-addr.arpa:127.53.0.1:a:::lo
-.10.in-addr.arpa:127.53.0.1:a:::lo
-.254.169.in-addr.arpa:127.53.0.1:a:::lo
-.16.172.in-addr.arpa:127.53.0.1:a:::lo
-.17.172.in-addr.arpa:127.53.0.1:a:::lo
-.18.172.in-addr.arpa:127.53.0.1:a:::lo
-.19.172.in-addr.arpa:127.53.0.1:a:::lo
-.20.172.in-addr.arpa:127.53.0.1:a:::lo
-.21.172.in-addr.arpa:127.53.0.1:a:::lo
-.22.172.in-addr.arpa:127.53.0.1:a:::lo
-.23.172.in-addr.arpa:127.53.0.1:a:::lo
-.24.172.in-addr.arpa:127.53.0.1:a:::lo
-.25.172.in-addr.arpa:127.53.0.1:a:::lo
-.26.172.in-addr.arpa:127.53.0.1:a:::lo
-.27.172.in-addr.arpa:127.53.0.1:a:::lo
-.28.172.in-addr.arpa:127.53.0.1:a:::lo
-.29.172.in-addr.arpa:127.53.0.1:a:::lo
-.30.172.in-addr.arpa:127.53.0.1:a:::lo
-.31.172.in-addr.arpa:127.53.0.1:a:::lo
-.2.0.192.in-addr.arpa:127.53.0.1:a:::lo
-.168.192.in-addr.arpa:127.53.0.1:a:::lo
-.255.255.255.255.in-addr.arpa:127.53.0.1:a:::lo
+=iface-local.multicast.6.home.arpa:ff01_0_0_0_0_0_0_0:::
+=link-local.multicast.6.home.arpa:ff02_0_0_0_0_0_0_0:::
+=site-local.multicast.6.home.arpa:ff05_0_0_0_0_0_0_0:::
+=organization-local.multicast.6.home.arpa:ff08_0_0_0_0_0_0_0:::
+=net8.link-local.unicast.6.home.arpa:fe80_0_0_0_0_0_0_0:::
+=net9.link-local.unicast.6.home.arpa:fe90_0_0_0_0_0_0_0:::
+=neta.link-local.unicast.6.home.arpa:fea0_0_0_0_0_0_0_0:::
+=netb.link-local.unicast.6.home.arpa:feb0_0_0_0_0_0_0_0:::
+=netc.old-site-local.unicast.6.home.arpa:fec0_0_0_0_0_0_0_0:::
+=netd.old-site-local.unicast.6.home.arpa:fed0_0_0_0_0_0_0_0:::
+=nete.old-site-local.unicast.6.home.arpa:fee0_0_0_0_0_0_0_0:::
+=netf.old-site-local.unicast.6.home.arpa:fef0_0_0_0_0_0_0_0:::
+=unassigned-unique-local6.home.arpa:fc00_0_0_0_0_0_0_0:::
+=random-unique-local6.home.arpa:fd00_0_0_0_0_0_0_0:::

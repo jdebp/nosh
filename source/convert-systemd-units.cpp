@@ -3,6 +3,7 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
+#define _BSD_SOURCE 1
 #include <vector>
 #include <map>
 #include <cstdio>
@@ -407,17 +408,17 @@ inline
 bool
 is_regular (
 	const char * prog,
+	const ProcessEnvironment & envs,
 	const std::string & name,
 	FILE * file
 ) {
 	struct stat s;
 	if (0 > fstat(fileno(file), &s)) {
-		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name.c_str(), std::strerror(error));
+		message_error_errno(prog, envs, name.c_str());
 		return false;
 	}
 	if (!S_ISREG(s.st_mode)) {
-		std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, name.c_str(), "Not a regular file.");
+		message_error(prog, envs, name.c_str(), "Not a regular file.");
 		return false;
 	}
 	return true;
@@ -427,11 +428,12 @@ inline
 void
 load (
 	const char * prog,
+	const ProcessEnvironment & envs,
 	profile & p,
 	FILE * file,
 	const std::string & file_name
 ) {
-	if (!is_regular(prog, file_name, file))
+	if (!is_regular(prog, envs, file_name, file))
 		throw EXIT_FAILURE;
 	load(p, file);
 }
@@ -481,10 +483,8 @@ bad_file:
 		}
 		struct stat s;
 		if (0 > fstat(snippet_file_fd.get(), &s)) goto bad_file;
-		if (!S_ISREG(s.st_mode)) {
-			std::fprintf(stderr, "%s: ERROR: %s/%s: %s\n", prog, snippet_dir_name.c_str(), entry->d_name, "Not a regular file.");
-			throw EXIT_FAILURE;
-		}
+		if (!S_ISREG(s.st_mode))
+			die_invalid(prog, envs, snippet_dir_name.c_str(), entry->d_name, "Not a regular file.");
 
 		FileStar snippet_file(fdopen(snippet_file_fd.get(), "r"));
 		if (!snippet_file) goto bad_file;
@@ -492,7 +492,7 @@ bad_file:
 
 		const std::string snippet_file_name(snippet_dir_name + "/" + entry->d_name);
 		source_filenames.push_back(snippet_file_name);
-		load(prog, p, snippet_file, snippet_file_name);
+		load(prog, envs, p, snippet_file, snippet_file_name);
 	}
 }
 
@@ -515,7 +515,7 @@ load (
 		die_errno(prog, envs, filename.c_str());
 	}
 	source_filenames.push_back(filename);
-	load(prog, p, file, filename);
+	load(prog, envs, p, file, filename);
 	load(prog, envs, p, source_filenames, unit_path, unit_base + ".d");
 	if (!instance.empty())
 		load(prog, envs, p, source_filenames, unit_path, prefix + "@" + instance + suffix + ".d");
@@ -524,6 +524,7 @@ load (
 void
 report_unused (
 	const char * prog,
+	const ProcessEnvironment & envs,
 	profile & p,
 	const std::string & name
 ) {
@@ -536,7 +537,7 @@ report_unused (
 			if (!v.used) {
 				for (value::settings::const_iterator i2(v.all_settings().begin()), e2(v.all_settings().end()); e2 != i2; ++i2) {
 				       const std::string & val(*i2);
-				       std::fprintf(stderr, "%s: WARNING: %s: Unused setting: [%s] %s = %s\n", prog, name.c_str(), section.c_str(), var.c_str(), val.c_str());
+				       message_warning(prog, envs, name.c_str(), section.c_str(), var.c_str(), val.c_str(), "Unused setting");
 				}
 			}
 		}
@@ -1166,7 +1167,7 @@ convert_systemd_units [[gnu::noreturn]] (
 	}
 	if (is_dbus) {
 		if (!busname && systemd_quirks)
-			std::fprintf(stderr, "%s: WARNING: %s: %s\n", prog, service_filename.c_str(), "Ignoring that the BusName entry is missing.");
+			message_warning(prog, envs, service_filename.c_str(), "Ignoring that the BusName entry is missing.");
 	} else {
 		if (busname && (type || !systemd_quirks))
 			busname->used = false;
@@ -1345,6 +1346,8 @@ convert_systemd_units [[gnu::noreturn]] (
 		value * processgroupleader(service_profile.use("service", "processgroupleader"));	// This is an extension to systemd.
 		value * sessionleader(service_profile.use("service", "sessionleader"));	// This is an extension to systemd.
 		value * localreaper(service_profile.use("service", "localreaper"));	// This is an extension to systemd.
+		value * utmpx(service_profile.use("service", "utmpx"));	// This is an extension to systemd.
+		value * utmpxevenifpam(service_profile.use("service", "utmpxevenifpam"));	// This is an extension to systemd.
 	//	value * ignoresigpipe(service_profile.use("service", "ignoresigpipe"));
 #if defined(__LINUX__) || defined(__linux__)
 		value * privatetmp(service_profile.use("service", "privatetmp"));
@@ -1777,12 +1780,18 @@ convert_systemd_units [[gnu::noreturn]] (
 		const bool stdin_tty(is_string(standardinput, "tty", "tty-force"));
 		const bool owns_stdin_tty(stdin_tty && is_bool_true(ttyowner, false));
 		const bool setuidgidall(!is_bool_true(permissionsstartonly, false));
+		const bool do_utmpx(is_bool_true(utmpx, false));
+		const bool do_utmpx_even_if_pam(is_bool_true(utmpxevenifpam, false));
 		if (is_bool_true(interactivelogin, false)) {
 			if (systemduserenvironment) systemduserenvironment->used = false;
 			if (systemdusergroups) systemdusergroups->used = false;
 			login_dialogue += "login-envuidgid --verbose";
 			if (tuilevel)
 				login_dialogue += " --tui-level " + quote(names.substitute(tuilevel->last_setting()));
+			if (do_utmpx)
+				login_dialogue += " --utmpx";
+			if (do_utmpx_even_if_pam)
+				login_dialogue += " --utmpx-even-if-pam";
 			login_dialogue += "\n";
 			if (stderr_log) login_dialogue += "fdmove -c 2 1\n";
 			userenv += "userenv-fromenv";
@@ -2926,9 +2935,9 @@ convert_systemd_units [[gnu::noreturn]] (
 
 	// Issue the final reports.
 
-	report_unused(prog, socket_profile, socket_filename);
-	report_unused(prog, timer_profile, timer_filename);
-	report_unused(prog, service_profile, service_filename);
+	report_unused(prog, envs, socket_profile, socket_filename);
+	report_unused(prog, envs, timer_profile, timer_filename);
+	report_unused(prog, envs, service_profile, service_filename);
 
 	throw EXIT_SUCCESS;
 }

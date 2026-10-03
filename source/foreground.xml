@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -47,11 +48,11 @@ Both are executed as if with the <citerefentry><refentrytitle>execvp</refentryti
 </para>
 
 <para>
-<replaceable>left-prog</replaceable> and <replaceable>right-prog</replaceable> may contain their own command line options, which <command>foreground</command> and <command>background</command> will ignore.
+<replaceable>left-prog</replaceable> and <replaceable>right-prog</replaceable> may contain their own command&#x2010;line options, which <command>foreground</command> and <command>background</command> will ignore.
 </para>
 
 <para>
-The <arg choice='plain'>--separator</arg> command line option specifies an alternative separator argument, to scan for in place of <arg choice='plain'>;</arg> or <arg choice='plain'>&#x0026;</arg>.
+The <arg choice='plain'>--separator</arg> command&#x2010;line option specifies an alternative separator argument, to scan for in place of <arg choice='plain'>;</arg> or <arg choice='plain'>&#x0026;</arg>.
 </para>
 
 <para>

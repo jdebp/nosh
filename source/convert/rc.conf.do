@@ -14,9 +14,9 @@ read_variable() { clearenv read-conf "$1" printenv "$2" ; }
 read_optional_variable() { clearenv setenv "$2" "$3" read-conf "$1" printenv "$2" ; }
 
 case "`uname`" in
-Linux)		extended_regexp="-r" ;;
-OpenBSD)	extended_regexp="-E" ;;
-*BSD)		extended_regexp="-E" ;;
+(Linux)		extended_regexp="-r" ;;
+(OpenBSD)	extended_regexp="-E" ;;
+(*BSD)		extended_regexp="-E" ;;
 esac
 
 convert_hostname() {
@@ -83,22 +83,22 @@ found_fonts() {
 	do
 		f="${f#./}"
 		case "${f}" in
-		*16.psf.gz|*16.fnt)
+		(*16.psf.gz|*16.fnt)
 			printf "font8x16=\"%s\"\n" "${f}"
 			;;
-		*15.psf.gz|*15.fnt)
+		(*15.psf.gz|*15.fnt)
 			printf "font8x15=\"%s\"\n" "${f}"
 			;;
-		*14.psf.gz|*14.fnt)
+		(*14.psf.gz|*14.fnt)
 			printf "font8x14=\"%s\"\n" "${f}"
 			;;
-		*13.psf.gz|*13.fnt)
+		(*13.psf.gz|*13.fnt)
 			printf "font8x13=\"%s\"\n" "${f}"
 			;;
-		*8.psf.gz|*8.fnt)
+		(*8.psf.gz|*8.fnt)
 			printf "font8x8=\"%s\"\n" "${f}"
 			;;
-		*)
+		(*)
 			printf "font=\"%s\"\n" "${f}"
 			;;
 		esac
@@ -260,9 +260,9 @@ convert_debian_console_settings() {
 	then
 		# The file names do not incorporate the complete size specifications.
 		case "${size}" in
-		8x*)	size="${size#8x}" ;;
-		*x8)	size="${size%x8}" ;;
-		*x*)	
+		(8x*)	size="${size#8x}" ;;
+		(*x8)	size="${size%x8}" ;;
+		(*x*)	
 			a="${size%x*}"
 			b="${size%x*}"
 			if test "$a" -lt "$b"
@@ -503,13 +503,13 @@ convert_longhand() {
 			fi
 		done
 		case "`uname`" in
-		Linux|OpenBSD)
+		(Linux|OpenBSD)
 			for i in "${default_rc}" $rc_conf_files
 			do
 				! test -e "$i" || cat "$i"
 			done
 			;;
-		*)
+		(*)
 			clearenv --keep-path sh -c "
 			for i in \"${default_rc}\" $rc_conf_files ;
 			do
@@ -600,19 +600,22 @@ convert_linux() {
 
 	printf "entropy_enable=%s\n" "DUMMY"
 	case "${os_version}" in
-	arch:*|centos:*|rhel:*)
+	(arch:*|centos:*|rhel:*)
 		printf "entropy_file=%s\n" "/var/lib/systemd/random-seed"
 		;;
-	debian:*|ubuntu:*)
+	(debian:*|ubuntu:*)
 		printf "entropy_file=%s\n" "/var/lib/urandom/random-seed"
 		;;
-	*)      	
+	(*)      	
 		printf "entropy_file=%s\n" "/var/lib/urandom/random-seed"
 		;;
 	esac
 	find_dhcp_client
 	find_autoipd
-	m="`list_modules_linux | tr '\r\n' ' '`"
+	case "`uname`" in
+	(Linux)	m="`list_modules_linux | tr '\r\n' ' '`" ;;
+	(*)	m='' ;;
+	esac
 	printf "kld_list=\"%s\"\n" "${m}"
 
 	convert_hostname
@@ -640,7 +643,7 @@ convert_any() {
 	# Stuff that can be overriden by explicit lines in rc.conf comes first.
 
 	case "`uname`" in
-	OpenBSD)
+	(OpenBSD)
 		printf "entropy_file=%s\n" "/etc/random.seed"
 		;;
 	esac

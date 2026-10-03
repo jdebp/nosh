@@ -15,7 +15,9 @@ WantsMountsFor=/var/log
 
 [Service]
 Type=oneshot
+ExecStart=printf '%s\n' boot
 ExecStart=%p boot
+ExecStopPost=printf '%s\n' shutdown
 ExecStopPost=%p shutdown
 # This is a pseudo-daemon that does not have a running process.
 RemainAfterExit=yes

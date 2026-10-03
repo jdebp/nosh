@@ -16,33 +16,33 @@ login_service_with_dedicated_logger() {
 }
 kvt_login_service_with_dedicated_logger() {
 	case "`uname`" in
-	OpenBSD)	ttybase=ttyC; break ;;
-	NetBSD)		ttybase=ttyE; break ;;
-	*)		ttybase=ttyv; break ;;
+	(OpenBSD)	ttybase=ttyC; break ;;
+	(NetBSD)	ttybase=ttyE; break ;;
+	(*)		ttybase=ttyv; break ;;
 	esac
 	tty_service_with_dedicated_logger "ttylogin@" "${ttybase}$1"
 }
 kvt_realizer_service_with_dedicated_logger() {
 	case "`uname`" in
-	OpenBSD)	ttybase=ttyC; break ;;
-	NetBSD)		ttybase=ttyE; break ;;
-	*)		ttybase=ttyv; break ;;
+	(OpenBSD)	ttybase=ttyC; break ;;
+	(NetBSD)	ttybase=ttyE; break ;;
+	(*)		ttybase=ttyv; break ;;
 	esac
 	prefixed_service_with_dedicated_logger "console-kvt-realizer@" "${ttybase}$1"
 }
 serial_tty_login_service_with_dedicated_logger() {
 	case "`uname`" in
-	OpenBSD)	ttybase=tty0; break ;;
-	NetBSD)		ttybase=tty0; break ;;
-	*)		ttybase=ttyu; break ;;
+	(OpenBSD)	ttybase=tty0; break ;;
+	(NetBSD)	ttybase=tty0; break ;;
+	(*)		ttybase=ttyu; break ;;
 	esac
 	tty_service_with_dedicated_logger "getty@" "${ttybase}$1"
 }
 serial_tty_callout_service_with_dedicated_logger() {
 	case "`uname`" in
-	OpenBSD)	ttybase=tty0; break ;;
-	NetBSD)		ttybase=dty0; break ;;
-	*)		ttybase=cuau; break ;;
+	(OpenBSD)	ttybase=tty0; break ;;
+	(NetBSD)	ttybase=dty0; break ;;
+	(*)		ttybase=cuau; break ;;
 	esac
 	prefixed_service_with_dedicated_logger "ttycallout@" "${ttybase}$1"
 }

@@ -15,7 +15,7 @@ while read -r i
 do
 	echo targets/"$i"
 	printf >> "$3" 'targets/%s\n' "$i"
-done 
+done
 
-) | 
+) |
 xargs -r redo-ifchange

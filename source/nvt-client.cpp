@@ -3,6 +3,7 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
+#define _BSD_SOURCE 1
 #include <set>
 #include <vector>
 #include <cstdlib>
@@ -40,12 +41,26 @@ termios original_out_attr, original_in_attr;
 
 inline
 termios
-make_crfix (
+enable_input_crfix (
 	const termios & ti
 ) {
 	termios t(ti);
 	t.c_iflag |= ICRNL;
+	return t;
+}
+
+inline
+termios
+enable_output_crfix (
+	const termios & ti
+) {
+	termios t(ti);
 	t.c_oflag |= OPOST|ONLCR;
+	t.c_oflag &= ~(OCRNL
+#if defined(ONOEOT)
+			|ONOEOT
+#endif
+			|ONOCR|ONLRET);
 	return t;
 }
 
@@ -54,9 +69,11 @@ void
 save_attributes()
 {
 	if (0 <= tcgetattr_nointr(STDIN_FILENO, original_in_attr))
-		tcsetattr_nointr(STDIN_FILENO, TCSADRAIN, make_crfix(make_raw(original_in_attr)));
+		tcsetattr_nointr(STDIN_FILENO, TCSADRAIN, enable_input_crfix(disable_canonical_software_processing(original_in_attr)));
 	if (0 <= tcgetattr_nointr(STDOUT_FILENO, original_out_attr))
-		tcsetattr_nointr(STDOUT_FILENO, TCSADRAIN, make_crfix(make_raw(original_out_attr)));
+		// We don't want to disable canonical input processing if only standard output is a terminal.
+		// We just want the line discipline to do the CR stuffing for us.
+		tcsetattr_nointr(STDOUT_FILENO, TCSADRAIN, enable_output_crfix(original_out_attr));
 }
 
 inline

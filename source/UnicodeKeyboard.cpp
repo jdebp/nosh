@@ -3,7 +3,6 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-#define _XOPEN_SOURCE_EXTENDED
 #include <algorithm>
 #include <cstdlib>
 #include <cerrno>

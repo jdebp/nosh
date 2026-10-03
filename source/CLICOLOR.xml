@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.... vim: indentexpr=:
+.-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
+
+<refentry id="CLICOLOR">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>CLICOLOR</refentrytitle>
+<manvolnum>7</manvolnum>
+<refmiscinfo class="manual">miscellany</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv>
+<refname>CLICOLOR</refname>
+<refname>CLICOLOR_FORCE</refname>
+<refpurpose>command&#x2010;line colourization environment variables</refpurpose>
+</refnamediv>
+
+<refsection><title>Description</title>
+
+<para>
+The <envar>CLICOLOR</envar> environment variable, when set, tells programs that understand terminal colours to emit control sequences to change colours and other <quote>graphic renditions</quote>.
+Such programs are to emit those control sequences if either the device file to which they are writing is a terminal device as determined by the <citerefentry><refentrytitle>isatty</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function, or the <envar>CLICOLOR_FORCE</envar> environment variable is set.
+</para>
+
+<para>
+The control sequences to emit are determined by the values of the <citerefentry><refentrytitle>TERM</refentrytitle><manvolnum>7</manvolnum></citerefentry> and <citerefentry><refentrytitle>COLORTERM</refentrytitle><manvolnum>7</manvolnum></citerefentry> environment variables.
+</para>
+
+<para>
+The usual place to define <envar>CLICOLOR</envar> is in the system&#x2010;wide or the per&#x2010;user <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database, in the <code>setenv</code> capability.
+This is then picked up at user login time when <citerefentry><refentrytitle>userenv-fromenv</refentrytitle><manvolnum>1</manvolnum></citerefentry> is run with its <arg choice='plain'>--set-other</arg> command&#x2010;line option.
+</para>
+
+</refsection>
+<refsection><title>See also</title>
+
+<variablelist>
+<varlistentry>
+<term>
+<citerefentry><refentrytitle>ls</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</term>
+<listitem>
+<para>
+one of the most noticeable users of <envar>CLICOLOR</envar> and <envar>CLICOLOR_FORCE</envar>
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</refsection>
+
+<refsection><title>Author</title>
+<para>
+Documentation by
+<author>
+<personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname>
+</author>
+</para>
+</refsection>
+
+</refentry>

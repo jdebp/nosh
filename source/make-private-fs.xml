@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -38,11 +39,11 @@
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>make-private-fs</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>make-private-fs</command> will ignore.
 </para>
 
 <para>
-The parts of the filesystem that are mounted and populated are controlled by command-line options as follows:
+The parts of the filesystem that are mounted and populated are controlled by command&#x2010;line options as follows:
 </para>
 
 <variablelist>
@@ -62,7 +63,7 @@ They have <code>rwx</code> permissions for the owner, group, and world; and they
 <listitem>
 <para>
 A <code>tmpfs</code> filesystem is mounted at <filename>/dev</filename>, without any real devices in it.
-It is populated only with "API" devices such as <filename>/dev/shm</filename>.
+It is populated only with <quote>API</quote> devices such as <filename>/dev/shm</filename>.
 On Linux, a <code>devpts</code> filesystem is mounted at <filename>/dev/pts</filename>.
 On BSD systems, a <code>fdescfs</code> filesystem is mounted at <filename>/dev/fd</filename>.
 </para>

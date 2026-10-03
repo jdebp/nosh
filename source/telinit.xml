@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -102,12 +103,12 @@ Again, invoke that directly, optionally under the name <command>init</command>.
 </warning>
 
 <para>
-Invoked as <command>runlevel</command>, this simply prints "N" twice, to indicate that runlevels do not exist.
+Invoked as <command>runlevel</command>, this simply prints <quote>N</quote> twice, to indicate that runlevels do not exist.
 </para>
 
 <caution>
 This command exists for compatibility with some badly-written package installation/uninstallation scripts.
-It doesn't print "unknown", because those scripts are so badly written that they cannot even cope with <command>runlevel</command> not emitting two words.
+It doesn't print <quote>unknown</quote>, because those scripts are so badly written that they cannot even cope with <command>runlevel</command> not emitting two words.
 Do not use this obsolete command.
 </caution>
 
@@ -175,19 +176,19 @@ Invoked as one of the system control commands <command>emergency</command>, <com
 </refsynopsisdiv>
 
 <para>
-Invoked as one of the system control commands <command>reboot</command>, <command>halt</command>, <command>powercycle</command>, or <command>poweroff</command> it will normally chain to <citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry> with the <arg choice='plain'>-r</arg>, <arg choice='plain'>-h</arg>, <arg choice='plain'>-c</arg>, or <arg choice='plain'>-p</arg> command-line option respectively.
+Invoked as one of the system control commands <command>reboot</command>, <command>halt</command>, <command>powercycle</command>, or <command>poweroff</command> it will normally chain to <citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry> with the <arg choice='plain'>-r</arg>, <arg choice='plain'>-h</arg>, <arg choice='plain'>-c</arg>, or <arg choice='plain'>-p</arg> command&#x2010;line option respectively.
 <citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry> is then responsible for issuing the relevant commands to the system manager.
-The <arg choice='plain'>--halt</arg>, <arg choice='plain'>--reboot</arg>, <arg choice='plain'>--powercycle</arg>, and <arg choice='plain'>--poweroff</arg> command-line options force which option is sent to <citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry>, for the benefits of system administrators who enjoy giving computers self-contradictory instructions like <command>reboot</command> <arg choice="plain">--halt</arg>.
+The <arg choice='plain'>--halt</arg>, <arg choice='plain'>--reboot</arg>, <arg choice='plain'>--powercycle</arg>, and <arg choice='plain'>--poweroff</arg> command&#x2010;line options force which option is sent to <citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry>, for the benefits of system administrators who enjoy giving computers self-contradictory instructions like <command>reboot</command> <arg choice="plain">--halt</arg>.
 </para>
 
 <para>
-The <arg choice='plain'>--force</arg> command-line option specifies that the shutdown process should bypass service changes and enact the finalization action immediately.
-When it is used the command will instead chain to the <arg choice="req">reboot</arg>, <arg choice="req">halt</arg>, <arg choice="req">powercycle</arg>, and <arg choice="req">poweroff</arg> subcommands of <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>, passing the <arg choice='plain'>--force</arg> command-line option through.
+The <arg choice='plain'>--force</arg> command&#x2010;line option specifies that the shutdown process should bypass service changes and enact the finalization action immediately.
+When it is used the command will instead chain to the <arg choice="req">reboot</arg>, <arg choice="req">halt</arg>, <arg choice="req">powercycle</arg>, and <arg choice="req">poweroff</arg> subcommands of <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>, passing the <arg choice='plain'>--force</arg> command&#x2010;line option through.
 This will also bypass whatever actions <citerefentry><refentrytitle>shutdown</refentrytitle><manvolnum>8</manvolnum></citerefentry> would have taken, including writing warning messages to users and writing login accounting database entries.
 </para>
 
 <para>
-Invoked as one of the system control commands <command>fastboot</command>, <command>fasthalt</command>, <command>fastpowercycle</command>, or <command>fastpoweroff</command>, it will act as if invoked as <command>reboot</command>, <command>halt</command>, <command>powercycle</command>, or <command>poweroff</command> with the <arg choice='plain'>--force</arg> command-line option.
+Invoked as one of the system control commands <command>fastboot</command>, <command>fasthalt</command>, <command>fastpowercycle</command>, or <command>fastpoweroff</command>, it will act as if invoked as <command>reboot</command>, <command>halt</command>, <command>powercycle</command>, or <command>poweroff</command> with the <arg choice='plain'>--force</arg> command&#x2010;line option.
 </para>
 
 <para>
@@ -414,7 +415,7 @@ Invoked as <command>chkconfig</command> <arg choice="plain"><replaceable>name</r
 The <arg choice='plain'>--force</arg> option has no translatable meaning, does nothing, and is present for compatibility only.
 The IRIX <citerefentry><refentrytitle>chkconfig</refentrytitle><manvolnum>1M</manvolnum></citerefentry> tool manipulated (possibly non-existent) flag files in <filename>/var/config</filename> and required a flag to force the creation of non-existent files.
 This has no meaning with <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
-Conversely, <arg choice="plain">reset</arg> has no meaning for the IRIX original, where flag files had no "preset" information to be initialized from.
+Conversely, <arg choice='plain'>reset</arg> has no meaning for the IRIX original, where flag files had no <quote>preset</quote> information to be initialized from.
 </para>
 
 <para>
@@ -434,7 +435,7 @@ It was conceptually like the flags in the BSD <citerefentry><refentrytitle>rc.co
 <para>
 Miquel van Smoorenberg wrote a similar tool, that used and altered completely different configuration information for van Smoorenberg's <citerefentry><refentrytitle>rc</refentrytitle><manvolnum>8</manvolnum></citerefentry> system.
 It was limited to solely service enable/disable states, and no longer supported arbitrary uses for named flags.
-van Smoorenberg's <citerefentry><refentrytitle>chkconfig</refentrytitle><manvolnum>8</manvolnum></citerefentry> added a different command-line syntax, not in the IRIX original, which is not supported by this command.
+van Smoorenberg's <citerefentry><refentrytitle>chkconfig</refentrytitle><manvolnum>8</manvolnum></citerefentry> added a different command&#x2010;line syntax, not in the IRIX original, which is not supported by this command.
 They have only the original IRIX syntax in common, along with the <arg choice="plain">reset</arg> argument, which is a van Smoorenberg addition to the IRIX original that took preset information held in comments in <citerefentry><refentrytitle>rc</refentrytitle><manvolnum>8</manvolnum></citerefentry> scripts.
 (The added, different, van Smoorenberg syntax was for adding and removing services, rather than enabling and disabling them, which has no translatable meaning.)
 </para>
@@ -468,6 +469,8 @@ Michael Schroeder's <citerefentry><refentrytitle>chkconfig</refentrytitle><manvo
 <group choice="req">
 <arg choice="plain">start</arg>
 <arg choice="plain">stop</arg>
+<arg choice="plain">status</arg>
+<arg choice="plain">try-restart</arg>
 </group>
 </cmdsynopsis>
 <cmdsynopsis>
@@ -506,11 +509,22 @@ They are tailored for such use in particular.
 </caution>
 
 <para>
-Invoked as either <command>invoke-rc.d</command> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice="plain"><replaceable>command1</replaceable></arg> or <command>deb-systemd-invoke</command> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice="plain"><replaceable>command1</replaceable></arg>, the program chains to <command>system-control</command> <arg choice="plain"><replaceable>command2</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>.
-<replaceable>command1</replaceable> may only be one of <arg choice="plain">start</arg> or <arg choice="plain">stop</arg>, which are translated to <arg choice="plain">reset</arg> and <arg choice="plain">stop</arg> (respectively) for <replaceable>command2</replaceable>.
-The behaviour that it is designed to be backwards compatible with only starting a service in response to the <arg choice="plain">start</arg> subcommand if the administrator has configured the service to auto-start.
+Invoked as either <command>invoke-rc.d</command> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice="plain"><replaceable>command1</replaceable></arg> or <command>deb-systemd-invoke</command> <arg choice="plain"><replaceable>name</replaceable></arg> <arg choice="plain"><replaceable>command1</replaceable></arg>, the program chains to <command>system-control</command> <arg choice="plain"><replaceable>command2</replaceable></arg> <arg choice="plain"><replaceable>name</replaceable></arg>, translating as in the following table.
+The behaviour, that it is designed to be backwards compatible with, is only starting a service in response to the <arg choice="plain">start</arg> subcommand if the administrator has configured the service to auto-start.
 Hence the replacement of <arg choice="plain">start</arg> by <arg choice="plain">reset</arg>.
 </para>
+<table>
+<title>Sub-command translation:</title>
+<thead>
+<tr><td><replaceable>command1</replaceable></td><td><replaceable>command2</replaceable></td></tr>
+</thead>
+<tbody>
+<tr><td><arg choice='plain'>start</arg></td><td><arg choice='plain'>reset</arg></td></tr>
+<tr><td><arg choice='plain'>stop</arg></td><td><arg choice='plain'>stop</arg></td></tr>
+<tr><td><arg choice='plain'>status</arg></td><td><arg choice='plain'>status</arg></td></tr>
+<tr><td><arg choice='plain'>try-restart</arg></td><td><arg choice='plain'>condrestart</arg></td></tr>
+</tbody>
+</table>
 
 <para>
 The <arg choice='plain'>--user</arg> option is simply passed through to <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.

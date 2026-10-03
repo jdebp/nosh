@@ -1,0 +1,8 @@
+# Extra pre-upgrade for nosh-openrc-shims
+# vim: set filetype=sh:
+
+for i in rc-service rc-update
+do
+	dpkg-divert --package nosh-openrc-shims --rename --add /usr/bin/"${i}"
+	dpkg-divert --package nosh-openrc-shims --rename --divert /usr/share/man/man8/"${i}".distrib.8.gz --add /usr/share/man/man8/"${i}".8.gz
+done

@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -45,17 +46,17 @@
 </para>
 
 <para>
-<arg choice="plain"><replaceable>size</replaceable></arg> must be of the form <code><replaceable>COLS</replaceable>&#x00D7;<replaceable>ROWS</replaceable></code>; unless the <arg choice="plain">--lines</arg> command-line option is used, in which case it must be of the form <code><replaceable>ROWS</replaceable></code>.
+<arg choice="plain"><replaceable>size</replaceable></arg> must be of the form <code><replaceable>COLS</replaceable>&#x00D7;<replaceable>ROWS</replaceable></code>; unless the <arg choice="plain">--lines</arg> command&#x2010;line option is used, in which case it must be of the form <code><replaceable>ROWS</replaceable></code>.
 (For convenience, <code>X</code> or <code>x</code> can be used in place of <code>&#x00D7;</code>, although both of those letters can occur in a number if hexadecimal is used.)
 </para>
 
 <para>
 <command>console-resize</command> does not employ operating system and device specific <citerefentry><refentrytitle>ioctl</refentrytitle><manvolnum>2</manvolnum></citerefentry> calls.
-Rather, it emits simple terminal control sequences, by chaining to <citerefentry><refentrytitle>console-control-sequence</refentrytitle><manvolnum>1</manvolnum></citerefentry> with <arg choice='plain'>--rows <replaceable>ROWS</replaceable></arg> and (if the <arg choice="plain">--lines</arg> command-line option is not used) with <arg choice='plain'>--columns <replaceable>COLS</replaceable></arg>.
+Rather, it emits simple terminal control sequences, by chaining to <citerefentry><refentrytitle>console-control-sequence</refentrytitle><manvolnum>1</manvolnum></citerefentry> with <arg choice='plain'>--rows <replaceable>ROWS</replaceable></arg> and (if the <arg choice="plain">--lines</arg> command&#x2010;line option is not used) with <arg choice='plain'>--columns <replaceable>COLS</replaceable></arg>.
 </para>
 
 <para>
-It passes the the <arg choice='plain'>--7bit</arg> and <arg choice='plain'>--8bit</arg> command-line options straight through to <command>console-control-sequence</command>.
+It passes the the <arg choice='plain'>--7bit</arg> and <arg choice='plain'>--8bit</arg> command&#x2010;line options straight through to <command>console-control-sequence</command>.
 </para>
 
 </refsection>
@@ -63,8 +64,8 @@ It passes the the <arg choice='plain'>--7bit</arg> and <arg choice='plain'>--8bi
 <refsection><title>Compatibility</title>
 
 <para>
-For compatibility with the old "kbd" toolset, this command is also available as <command>resizecons</command>.
-Unlike the "kbd" toolset's <command>resizecons</command> command, this command is not specific to kernel virtual terminal character devices, does not involve reprogramming hardware, has no need of a <citerefentry><refentrytitle>restoretextmode</refentrytitle><manvolnum>1</manvolnum></citerefentry> helper command, does not use <citerefentry><refentrytitle>stty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, sends no signals, has no need of a <citerefentry><refentrytitle>setfont</refentrytitle><manvolnum>1</manvolnum></citerefentry> helper command, and needs no dealings in fonts.
+For compatibility with the old <quote>kbd</quote> toolset, this command is also available as <command>resizecons</command>.
+Unlike the <quote>kbd</quote> toolset's <command>resizecons</command> command, this command is not specific to kernel virtual terminal character devices, does not involve reprogramming hardware, has no need of a <citerefentry><refentrytitle>restoretextmode</refentrytitle><manvolnum>1</manvolnum></citerefentry> helper command, does not use <citerefentry><refentrytitle>stty</refentrytitle><manvolnum>1</manvolnum></citerefentry>, sends no signals, has no need of a <citerefentry><refentrytitle>setfont</refentrytitle><manvolnum>1</manvolnum></citerefentry> helper command, and needs no dealings in fonts.
 </para>
 
 <para>

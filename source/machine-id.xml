@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -50,7 +51,7 @@ The application layer use originally envisaged by its inventor was that co&#x00F
 <caution>
 Like network hardware MAC addresses, machine IDs are information that potentially hostile people can use for tracking other people.
 It is important to blank or eliminate machine IDs when providing data to the outside world.
-Hashing machine IDs, with or without a "salt", is insufficient for privacy.
+Hashing machine IDs, with or without a <quote>salt</quote>, is insufficient for privacy.
 Privacy requires that IDs cannot be correlated, not that they cannot be decrypted; and a hashed ID(+salt) in one place can still be correlated with the same hashed ID(+salt) elsewhere.
 </caution>
 
@@ -202,7 +203,7 @@ Clients can make a <function>org.freedesktop.DBus.Peer.GetMachineId</function> r
 <varlistentry>
 <term>Most applications that use the Desktop Bus (D-Bus)</term>
 <listitem><para>
-<ulink url="https://bugs.freedesktop.org/show_bug.cgi?id=13194">The complaint was raised in 2007</ulink> that all applications softwares that used the libdbus library read the machine ID even though they made no use of it (outwith a mechanism known as "X11 autolaunching").
+<ulink url="https://bugs.freedesktop.org/show_bug.cgi?id=13194">The complaint was raised in 2007</ulink> that all applications softwares that used the libdbus library read the machine ID even though they made no use of it (outwith a mechanism known as <quote>X11 autolaunching</quote>).
 Ten years later, the D-Bus developers came around to the idea that X11 autolaunching was not preferable and that applications softwares should not have such a drastic coupling to the machine ID, and this is no longer the case with softwares built with newer libraries.
 </para></listitem>
 </varlistentry>
@@ -225,7 +226,7 @@ This uses the machine ID for directory names on the EFI System Partition.
 <listitem><para>
 Google Chrome uses the machine ID to lock user profiles to the machines that they were generated on.
 </para><para>
-ungoogled-chromium has a <arg choice="plain">--disable-machine-id</arg> command-line option that switches this off, however as of 2019 this option is still problematic in practice and there are open bugs about it causing profile data loss.
+ungoogled-chromium has a <arg choice="plain">--disable-machine-id</arg> command&#x2010;line option that switches this off, however as of 2019 this option is still problematic in practice and there are open bugs about it causing profile data loss.
 </para></listitem>
 </varlistentry>
 <varlistentry>

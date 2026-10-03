@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -40,7 +41,7 @@ It is a script that needs <citerefentry><refentrytitle>execlineb</refentrytitle>
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>pty-run</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>pty-run</command> will ignore.
 </para>
 
 <para>

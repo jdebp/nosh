@@ -8,8 +8,11 @@ fi
 cwd="`/bin/pwd`"
 base_plus_version="`basename "${cwd}"`"
 case "`uname`" in
-Linux)	ext=bz2 ; opt=-j ;;
-*BSD)	ext=gz  ; opt=-z ;;
+(FreeBSD)	ext=gz  ; opt=-z ; sum="sha256 -q" ;;
+(Linux)	ext=bz2 ; opt=-j ; sum=sha256sum ;;
+(*BSD)	ext=bz2  ; opt=-j ; sum="sha256 -q" ;;
 esac
 pax -w ${opt} > "${base_plus_version}.tar.${ext}.new" source package
+${sum} "${base_plus_version}.tar.${ext}.new" > "${base_plus_version}.tar.${ext}.sum.new"
 mv "${base_plus_version}.tar.${ext}.new" "${base_plus_version}.tar.${ext}"
+mv "${base_plus_version}.tar.${ext}.sum.new" "${base_plus_version}.tar.${ext}.sum"

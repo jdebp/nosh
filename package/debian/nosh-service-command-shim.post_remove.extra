@@ -1,0 +1,8 @@
+# Extra post-remove for nosh-service-command-shim
+# vim: set filetype=sh:
+
+for i in service
+do
+	dpkg-divert --package nosh-service-command-shim --rename --remove /usr/bin/"${i}"
+	dpkg-divert --package nosh-service-command-shim --rename --divert /usr/share/man/man8/"${i}".distrib.8.gz --remove /usr/share/man/man8/"${i}".8.gz
+done

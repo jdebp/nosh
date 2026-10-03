@@ -26,19 +26,19 @@ list_user_virtual_terminals() {
 
 list_kernel_virtual_terminals() {
 	case "`uname`" in
-	Linux)
+	(Linux)
 		printf "tty%s\n" 1 2 3 4 5 6 7 8 9 10 11 12
 		;;
-	OpenBSD)
+	(OpenBSD)
 		for i in C D E F G H I J
 		do 
 			printf "tty$i%s\n" 0 1 2 3 4 5 6 7 8 9 a b
 		done
 		;;
-	FreeBSD)
+	(FreeBSD)
 		printf "ttyv%s\n" 0 1 2 3 4 5 6 7 8 9 a b c d e f
 		;;
-	NetBSD)
+	(NetBSD)
 		for i in E F G H
 		do 
 			printf "tty$i%s\n" 0 1 2 3 4 5 6 7
@@ -49,24 +49,24 @@ list_kernel_virtual_terminals() {
 
 list_real_terminals() {
 	case "`uname`" in
-	Linux) 
+	(Linux) 
 		# Linux is technically /dev/ttyS[0-9]* , but no-one has that many real terminal devices nowadays.
 		jot 99 0 | sed -e 's:^:ttyS:'
 		jot 99 0 | sed -e 's:^:ttyACM:'
 		# These are special serial devices in several virtual machines.
 		printf "%s\n" hvc0 xvc0 hvsi0 sclp_line0 ttysclp0 '3270!tty1'
 		;;
-	OpenBSD)
+	(OpenBSD)
 		printf "ttyU%s\n" 0 1 2 3
 		for i in 0 1 2 3 4 5 6 7
 		do 
 			printf "tty$i%s\n" 0 1 2 3 4 5 6 7 8 9 a b c d e f
 		done
 		;;
-	FreeBSD)
+	(FreeBSD)
 		printf "ttyu%s\n" 0 1 2 3 4 5 6 7 8 9 a b c d e f
 		;;
-	NetBSD)
+	(NetBSD)
 		printf "tty0%s\n" 0 1 2 3
 		;;
 	esac
@@ -103,12 +103,6 @@ do
 		redo-ifcreate "$i"
 	fi
 done
-
-case "`uname`" in
-FreeBSD)
-	redo-ifchange termcap/termcap.db
-	;;
-esac
 
 list_kernel_virtual_terminals | 
 while read -r n
@@ -149,7 +143,7 @@ do
 			echo >> "$3" no "console-kvt-realizer@$n"
 		fi
 	fi
-	redo-ifchange "/dev/$n"
+	redo-ifdelete "/dev/$n"
 done
 
 list_user_virtual_terminals | 
@@ -185,5 +179,5 @@ do
 			echo >> "$3" no "ttylogin@$n"
 		fi
 	fi
-	redo-ifchange "/dev/$n"
+	redo-ifdelete "/dev/$n"
 done

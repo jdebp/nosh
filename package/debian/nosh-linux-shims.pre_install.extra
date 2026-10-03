@@ -1,0 +1,13 @@
+# Extra pre-install for nosh-linux-shims
+# vim: set filetype=sh:
+
+for i in setsid setterm unshare
+do
+	dpkg-divert --package nosh-linux-shims --rename --add /usr/bin/"${i}"
+	dpkg-divert --package nosh-linux-shims --rename --divert /usr/share/man/man1/"${i}".distrib.1.gz --add /usr/share/man/man1/"${i}".1.gz
+done
+for i in getty
+do
+	dpkg-divert --package nosh-linux-shims --rename --add /usr/bin/"${i}"
+	dpkg-divert --package nosh-linux-shims --rename --divert /usr/share/man/man8/"${i}".distrib.8.gz --add /usr/share/man/man8/"${i}".8.gz
+done

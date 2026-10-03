@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -45,35 +46,35 @@ For details on what knobs are available and what values they can be set to, cons
 </para>
 
 <para>
-The Linux I/O control groups mechanism has several knobs that operate in terms of a device "key" that denotes which device the knob setting is affecting.
+The Linux I/O control groups mechanism has several knobs that operate in terms of a device <quote>key</quote> that denotes which device the knob setting is affecting.
 The key actually comprises major and minor device numbers, not device file names.
 However, because of Plug and Play these major and minor device numbers are not necessarily stable from run to run of the system, or the same across systems.
-The <arg choice='plain'>--device-name-key</arg> command line option is used to allow one to operate with device file names.
-If that command line option is given, then the first thing that <command>set-control-group-knob</command> does is strip the first white-space delimited word from <replaceable>value</replaceable>, treat it as the name of a block or character device file (failing if that is not the case), and prefix the remainder of <replaceable>value</replaceable> that was left with the major and minor device numbers of the device.
+The <arg choice='plain'>--device-name-key</arg> command&#x2010;line option is used to allow one to operate with device file names.
+If that command&#x2010;line option is given, then the first thing that <command>set-control-group-knob</command> does is strip the first white-space delimited word from <replaceable>value</replaceable>, treat it as the name of a block or character device file (failing if that is not the case), and prefix the remainder of <replaceable>value</replaceable> that was left with the major and minor device numbers of the device.
 Other options then act upon the remainder of <replaceable>value</replaceable> as if the device key were not there.
 So, for example, one can use a <replaceable>value</replaceable> of "/dev/null default" in the command line arguments in a script and that will be re-written using the major and minor device numbers of the actual current <filename>/dev/null</filename> device when the <command>set-control-group-knob</command> command is run.
 </para>
 
 <para>
-If the <arg choice='plain'>--infinity-is-max</arg> command line option is given, then if <replaceable>value</replaceable> is <code>infinity</code> it is replaced with <code>max</code>.
-The Linux control groups mechanism actually recognizes "max", not "infinity"; but unfortunately some toolsets have encouraged the use of "infinity" when talking to control groups.
+If the <arg choice='plain'>--infinity-is-max</arg> command&#x2010;line option is given, then if <replaceable>value</replaceable> is <code>infinity</code> it is replaced with <code>max</code>.
+The Linux control groups mechanism actually recognizes <quote>max</quote>, not <quote>infinity</quote>; but unfortunately some toolsets have encouraged the use of <quote>infinity</quote> when talking to control groups.
 This provides compatibility with such usage.
 </para>
 
 <para>
-If the <arg choice='plain'>--nested-key</arg> command line option is given, then <replaceable>value</replaceable> when finally written is prefixed by <replaceable>key</replaceable> as a nested key.
+If the <arg choice='plain'>--nested-key</arg> command&#x2010;line option is given, then <replaceable>value</replaceable> when finally written is prefixed by <replaceable>key</replaceable> as a nested key.
 Of course one can simply provide <replaceable>key</replaceable> directly in <replaceable>value</replaceable>.
 This provides a convenience mechanism for using nested keys in scripts without the script having to merge the nested key into the value itself.
 It also enables the options that expect <replaceable>value</replaceable> to take the form of a number followed by a suffix, which do not allow for nested keys in <replaceable>value</replaceable>.
 </para>
 
 <para>
-If the <arg choice='plain'>--multiplier-suffixes</arg> command line option is given and if <replaceable>value</replaceable> is parseable as a number followed by an SI or an IEEE/IEC abbreviation, then it is replaced by the value that results when multiplying the number by the associated scale factor.
+If the <arg choice='plain'>--multiplier-suffixes</arg> command&#x2010;line option is given and if <replaceable>value</replaceable> is parseable as a number followed by an SI or an IEEE/IEC abbreviation, then it is replaced by the value that results when multiplying the number by the associated scale factor.
 The SI abbreviations are <code>k</code>, <code>M</code>, <code>G</code>, or <code>T</code> denoting the relevant power of 10; the IEEE/IEC abbreviations are <code>Ki</code>, <code>Mi</code>, <code>Gi</code>, and <code>Ti</code> denoting the relevant power of 2.
 </para>
 
 <para>
-If the <arg choice='plain'>--percent-of</arg> command line option is given and <replaceable>value</replaceable> is parseable as a number followed by a percent symbol, then <replaceable>file</replaceable> is read and parsed as a decimal number followed by a newline.
+If the <arg choice='plain'>--percent-of</arg> command&#x2010;line option is given and <replaceable>value</replaceable> is parseable as a number followed by a percent symbol, then <replaceable>file</replaceable> is read and parsed as a decimal number followed by a newline.
 If opening the file and parsing the number fails, <command>set-control-group-knob</command> exits with a failure code.
 Otherwise, <replaceable>value</replaceable> is replaced by the value of that number, in decimal without exponential notation and rounded to an integer value, multiplied by the given percentage.
 At minimum, 64-bit integer arithmetic is used to calculate the percentage.

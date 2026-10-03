@@ -85,6 +85,11 @@ extern const char SHELL[] = _PATH_BSHELL;
 
 extern const char TZ[] = "UTC";
 
+// This is Debian's generic 'alternatives' name.
+extern const char WWWBROWSER[] = "www-browser";
+
+extern const char MANPAGER[] = "more";
+
 }
 
 namespace Toolkit {
@@ -94,6 +99,10 @@ namespace Toolkit {
 extern const char PATH[] = "/usr/local/sbin:/usr/local/bin:/usr/pkg/sbin:/usr/pkg/bin:/usr/sbin:/usr/bin:/sbin:/bin";
 
 extern const char PAGER[] = "console-tty37-viewer";
+
+extern const char XMLVIEWER[] = "console-docbook-xml-viewer";
+
+extern const char MANPAGER[] = "console-tty37-viewer --discard-control-strings";
 
 }
 

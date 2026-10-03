@@ -107,10 +107,10 @@ then
 	do
 		v="`get_var \"$i\"`"
 		case "$v" in
-		[Nn][Oo]|'')
+		([Nn][Oo]|'')
 			system-control set-service-env "${s}" "$i"
 			;;
-		*)
+		(*)
 			system-control set-service-env "${s}" "$i" "$v"
 			;;
 		esac
@@ -126,10 +126,10 @@ then
 	do
 		v="`get_var \"$i\"`"
 		case "$v" in
-		[Nn][Oo]|'')
+		([Nn][Oo]|'')
 			system-control set-service-env "${s}" "$i"
 			;;
-		*)
+		(*)
 			system-control set-service-env "${s}" "$i" "$v"
 			;;
 		esac
@@ -153,10 +153,10 @@ then
 	do
 		v="`get_var \"$i\"`"
 		case "$v" in
-		[Nn][Oo]|'')
+		([Nn][Oo]|'')
 			system-control set-service-env "${s}" "$i"
 			;;
-		*)
+		(*)
 			system-control set-service-env "${s}" "$i" "$v"
 			;;
 		esac
@@ -171,10 +171,10 @@ then
 	do
 		v="`get_var \"$i\"`"
 		case "$v" in
-		[Nn][Oo]|'')
+		([Nn][Oo]|'')
 			system-control set-service-env "${s}" "$i"
 			;;
-		*)
+		(*)
 			system-control set-service-env "${s}" "$i" "$v"
 			;;
 		esac
@@ -188,23 +188,23 @@ then
 	v="`get_var \"keyrate\"`"
 	# This service does not understand the kbdcontrol high-level settings, so we have to translate to the low-level kbdrate ones.
 	case "$v" in
-	[Nn][Oo]|'')
+	([Nn][Oo]|'')
 		system-control set-service-env "${s}" "rate"
 		system-control set-service-env "${s}" "delay"
 		;;
-	slow)
+	(slow)
 		system-control set-service-env "${s}" "rate" "1000"
 		system-control set-service-env "${s}" "delay" "504"
 		;;
-	normal)
+	(normal)
 		system-control set-service-env "${s}" "rate" "500"
 		system-control set-service-env "${s}" "delay" "126"
 		;;
-	fast)
+	(fast)
 		system-control set-service-env "${s}" "rate" "250"
 		system-control set-service-env "${s}" "delay" "34"
 		;;
-	*)
+	(*)
 		system-control set-service-env "${s}" "rate" "${v%%.*}"
 		system-control set-service-env "${s}" "delay" "${v#*.}"
 		;;

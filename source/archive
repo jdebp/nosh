@@ -1,7 +1,7 @@
 #!/bin/sh -e
-redo-ifchange ./ar ./arflags
-read ar < ./ar
-read arflags < ./arflags
+redo-ifchange config/ar config/arflags
+read ar < config/ar
+read arflags < config/arflags
 archive="$1"
 shift
 rm -f -- "$archive"

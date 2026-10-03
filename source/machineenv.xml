@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -17,7 +18,7 @@
 
 <refnamediv>
 <refname>machineenv</refname>
-<refpurpose>set the "machine" environment variables from the dynamic values</refpurpose>
+<refpurpose>set the <quote>machine</quote> environment variables from the dynamic values</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>
@@ -34,7 +35,7 @@
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>machineenv</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>machineenv</command> will ignore.
 </para>
 
 <para>
@@ -49,15 +50,15 @@ Set to the human-readable hexadecimal non-punctuated form of the machine ID, for
 </varlistentry><varlistentry>
 <term><envar>HOSTNAME</envar></term>
 <listitem><para>
-Set to the dynamic "host" name, as initialized by <citerefentry><refentrytitle>set-dynamic-hostname</refentrytitle><manvolnum>1</manvolnum></citerefentry> (for example) and obtained by the <citerefentry><refentrytitle>gethostname</refentrytitle><manvolnum>2</manvolnum></citerefentry> function.
+Set to the dynamic <quote>host</quote> name, as initialized by <citerefentry><refentrytitle>set-dynamic-hostname</refentrytitle><manvolnum>1</manvolnum></citerefentry> (for example) and obtained by the <citerefentry><refentrytitle>gethostname</refentrytitle><manvolnum>2</manvolnum></citerefentry> function.
 </para></listitem>
 </varlistentry><varlistentry>
 <term><envar>DOMAINNAME</envar></term>
 <listitem><para>
-Set to the dynamic "NIS domain" name, as obtained by the <citerefentry><refentrytitle>getdomainname</refentrytitle><manvolnum>2</manvolnum></citerefentry> function.
+Set to the dynamic <quote>NIS domain</quote> name, as obtained by the <citerefentry><refentrytitle>getdomainname</refentrytitle><manvolnum>2</manvolnum></citerefentry> function.
 </para>
 <note>
-This is not the "DNS domain" name, conventionally found in a <envar>LOCALDOMAIN</envar> environment variable.
+This is not the <quote>DNS domain</quote> name, conventionally found in a <envar>LOCALDOMAIN</envar> environment variable.
 </note>
 </listitem>
 </varlistentry>

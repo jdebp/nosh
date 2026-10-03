@@ -8,3 +8,5 @@ TasksAccounting=true
 CPUAccounting=true
 IOAccounting=true
 MemoryAccounting=true
+# Linux PAM nowadays does not handle utmpx itself.
+UTmpXEvenIfPAM=on

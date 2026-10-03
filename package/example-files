@@ -2,6 +2,8 @@ tinydns/Makefile
 tinydns/convert.awk
 tinydns/main
 tinydns/split-horizon
+tinydns/split-horizon-site-local
+tinydns/split-horizon-machine-local
 tinydns/add-alias
 tinydns/add-mx
 tinydns/add-host

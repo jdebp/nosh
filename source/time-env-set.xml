@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -99,7 +100,7 @@ They then set or unset the environment variable <envar><replaceable>var</replace
 </itemizedlist>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which these commands will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which these commands will ignore.
 </para>
 
 <para>

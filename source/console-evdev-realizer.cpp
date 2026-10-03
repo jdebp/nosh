@@ -3,7 +3,7 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-#define _XOPEN_SOURCE_EXTENDED
+#define _BSD_SOURCE 1
 #include <map>
 #include <set>
 #include <stack>
@@ -13,7 +13,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cerrno>
 #include <csignal>
 #include <sys/mman.h>
-#include "hasevdev.h"
+#include "config/hasevdev.h"
 #if defined(HAS_EVDEV)
 #	include <linux/input.h>
 #endif

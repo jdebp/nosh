@@ -3,7 +3,7 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-#define _XOPEN_SOURCE_EXTENDED
+#define _BSD_SOURCE 1
 #include <map>
 #include <set>
 #include <stack>
@@ -1378,13 +1378,13 @@ console_ugen_hid_realizer [[gnu::noreturn]] (
 				}
 			}
 			if (!input->read_report_description()) {
-				std::fprintf(stderr, "%s: WARNING: %s: Interface has no report descriptor.\n", prog, input_filename.c_str());
+				message_warning(prog, envs, input_filename.c_str(), "Interface has no report descriptor.");
 				delete input; input = nullptr;
 				continue;
 			}
 			std::fprintf(stderr, "%s: INFO: %s: Has mouse %s, keyboard %s, NumLock %s, LEDs %s.\n", prog, input_filename.c_str(), ToYesNo(input->has_mouse()), ToYesNo(input->has_keyboard()), ToYesNo(input->has_numlock_key()), ToYesNo(input->has_LEDs()));
 			if (!input->has_mouse() && !input->has_keyboard() && !input->has_LEDs()) {
-				std::fprintf(stderr, "%s: ERROR: %s: %s\n", prog, input_filename.c_str(), "Not a keyboard/mouse human input device.");
+				message_error(prog, envs, input_filename.c_str(), "Not a keyboard/mouse human input device.");
 				delete input; input = nullptr;
 				continue;
 			}

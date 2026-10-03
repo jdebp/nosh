@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -32,7 +33,7 @@
 
 <para>
 <command>time-print-tai64n</command> parses <arg choice='plain'><replaceable>timestamp</replaceable></arg> to yield a TAI64N time.
-It prints the result as a <code>@</code> character prefix, a TAI64N timestamp in external form (16 hexadecimal digits of seconds and 8 hexadecimal digits of nanoseconds), a space, and (if the <arg choice='plain'>-n</arg> command-line option is not used) a newline.
+It prints the result as a <code>@</code> character prefix, a TAI64N timestamp in external form (16 hexadecimal digits of seconds and 8 hexadecimal digits of nanoseconds), a space, and (if the <arg choice='plain'>-n</arg> command&#x2010;line option is not used) a newline.
 </para>
 
 </refsection>
@@ -160,7 +161,7 @@ Operating systems do not specify when this clock ticks from.
 
 <para>
 <command>time-print-tai64n</command> attempts to generate correct TAI64N times when reading the real-time clock.
-On a Linux system where it detects an Olson "right" timezone currently in use, it knows that the real-time clock is TAI seconds since the Epoch and performs a simple conversion.
+On a Linux system where it detects an Olson <quote>right</quote> timezone currently in use, it knows that the real-time clock is TAI seconds since the Epoch and performs a simple conversion.
 On other Linux systems, and on BSDs, it assumes that the real-time clock is UTC seconds since the Epoch and attempts to correct for (known) UTC leap seconds in order to determine TAI.
 </para>
 

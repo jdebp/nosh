@@ -1,0 +1,8 @@
+# Extra post-remove for nosh-core-shims
+# vim: set filetype=sh:
+
+for i in chroot false printenv true
+do
+	dpkg-divert --package nosh-core-shims --rename --remove /usr/bin/"${i}"
+	dpkg-divert --package nosh-core-shims --rename --divert /usr/share/man/man1/"${i}".distrib.1.gz --remove /usr/share/man/man1/"${i}".1.gz
+done

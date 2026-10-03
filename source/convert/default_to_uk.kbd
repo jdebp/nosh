@@ -18,6 +18,7 @@
   012   '-'    '_'    us     us     '|'    '|'    us     us      O
   013   '='    '+'    nop    nop    '}'    '}'    nop    nop     O
   040   '''    '@'    nul    nul    '''    '@'    nul    nul     O
-  041   '`'    0xac   nop    nop    0xa6   0xa6   nop    nop     O
+# E00 has the normal functions plus the input method switch.
+  041   '`'    0xac   imsw   imsw   0xa6   0xa6   romaji romaji  O
   043   '#'    '~'    nop    nop    '#'    '~'    nop    nop     O
   086   '\'    '|'    fs     fs     '\'    '|'    fs     fs      O

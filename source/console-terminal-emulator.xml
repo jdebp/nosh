@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -25,11 +26,12 @@
 <command>console-terminal-emulator</command>
 <arg choice='opt'>--linux</arg>
 <arg choice='opt'>--sco</arg>
-<arg choice='opt'>--freebsd</arg>
+<arg choice='opt'>--teken</arg>
 <arg choice='opt'>--netbsd</arg>
 <arg choice='opt'>--decvt</arg>
 <arg choice='opt'>--vcsa</arg>
 <arg choice='opt'>--inverted</arg>
+<arg choice='opt'>--terminal-mode <replaceable>mode</replaceable></arg>
 <arg choice='req'><replaceable>directory</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -37,7 +39,7 @@
 <refsection><title>Description</title>
 
 <para>
-<command>console-terminal-emulator</command> is a utility that expects file descriptor 4 to be the back end (called "master side" in older documentation) of a pseudo-terminal and the <envar>TTY</envar> environment variable to be the full device filename of the front end (called "slave side" in older documentation).
+<command>console-terminal-emulator</command> is a utility that expects file descriptor 4 to be the back end (called <quote>master side</quote> in older documentation) of a pseudo-terminal and the <envar>TTY</envar> environment variable to be the full device filename of the front end (called <quote>slave side</quote> in older documentation).
 (<citerefentry><refentrytitle>pty-allocate</refentrytitle><manvolnum>1</manvolnum></citerefentry> can be used to set this process state up.)
 </para>
 
@@ -45,6 +47,14 @@
 First it sets up the various files in <filename><replaceable>directory</replaceable>/</filename>, opening the input FIFO for reading and the display buffers for reading and writing.
 The FIFOs are created unconditionally, and opened in non-blocking mode.
 The display buffers are created if they do not exist.
+</para>
+
+<para>
+If the <replaceable>mode</replaceable> is <code>non-canonical</code> it initializes the pseudo-terminal into <quote>non-canonical input processing</quote> (also known as <quote>raw</quote>) mode.
+This is suitable for when <command>console-terminal-emulator</command> is emulating a remote terminal for another machine, as there should be no software special processing of input or output, or signal handling, done locally in such a case.
+If the <replaceable>mode</replaceable> is <code>canonical</code> it initializes the pseudo-terminal into <quote>canonical input processing</quote> mode.
+This is suitable for when <command>console-terminal-emulator</command> is emulating a local (virtual) terminal for the local machine.
+The latter is the default if the <arg choice='plain'>--terminal-mode</arg> command&#x2010;line option is not supplied.
 </para>
 
 <para>
@@ -81,7 +91,7 @@ The files used in <filename><replaceable>directory</replaceable>/</filename>, ar
 </para>
 
 <para>
-The <arg choice='plain'>--vcsa</arg> command line option enables the creation of and output to the <filename><replaceable>directory</replaceable>/vcsa</filename> file.
+The <arg choice='plain'>--vcsa</arg> command&#x2010;line option enables the creation of and output to the <filename><replaceable>directory</replaceable>/vcsa</filename> file.
 It is normally ignored.
 The terminal emulator does not recognize nor handle CSI sequences that deal with 8-bit character set switching.
 </para>
@@ -137,7 +147,7 @@ This behaviour should not be relied upon, and programs should not send such UTF-
 <refsection><title>Control character processing</title>
 
 <para>
-Characters in the "Cc" ("Other, Control") Unicode code point category (a.k.a. "C0" and "C1" characters) are control characters.
+Characters in the <quote>Cc</quote> ("Other, Control") Unicode code point category (a.k.a. <quote>C0</quote> and <quote>C1</quote> characters) are control characters.
 They are always processed, even in the middle of escape or control sequences.
 All control characters are no-ops except for the following:
 </para>
@@ -191,7 +201,7 @@ All control characters are no-ops except for the following:
 
 <note>
 <code>BPH</code> is a no-op because the terminal emulator does not have enough information about word breaks or context to handle soft hyphenation.
-<code>CCH</code> is a no-op because ECMA-48 leaves it unspecified what the "data preceding it in the data stream" are, and thus it is possible to interpret this in several ways, from BS plus ECH 1 (that only considers printable output as "preceding data") to CAN (because control sequences are data, too).
+<code>CCH</code> is a no-op because ECMA-48 leaves it unspecified what the <quote>data preceding it in the data stream</quote> are, and thus it is possible to interpret this in several ways, from BS plus ECH 1 (that only considers printable output as <quote>preceding data</quote>) to CAN (because control sequences are data, too).
 </note>
 
 </refsection>
@@ -212,7 +222,7 @@ The only supported escape sequences are:
 <varlistentry>
 <term><para>DECALN</para></term>
 <listitem><para>
-the DEC VT extension that fills the display with the letter "E" as a screen alignment test
+the DEC VT extension that fills the display with the letter <quote>E</quote> as a screen alignment test
 </para></listitem>
 </varlistentry>
 <varlistentry>
@@ -264,7 +274,7 @@ In most cases, a control sequence with N parameters is equivalent to N such cont
 
 <para>
 ISO 8613-6/ITU T.416 SGR colour extensions make use of this mechanism, with colour values being encoded as sub-parameters behind a leading 38 or 48 sub-parameter.
-That standard explicitly states in section 13.1.8 that "Pe" values are separated by character "3/10" (i.e. U+003A).
+That standard explicitly states in section 13.1.8 that <quote>Pe</quote> values are separated by character "3/10" (i.e. U+003A).
 Such SGR sequences are unambiguous, since it is not possible to mistake a sub-parameter specifying a colour value for an SGR attribute code: CSI <code>1;4;38:5:14;48:2:0:224:3:7m</code>.
 </para>
 
@@ -294,8 +304,8 @@ Pseudo-SCO private modes:
 <varlistentry>
 <term>1</term>
 <listitem><para>
-This is so-called "square" mode.
-If it is off, all Unicode characters classified as "full-width" or "wide" have an extra space printed after them.
+This is so-called <quote>square</quote> mode.
+If it is off, all Unicode characters classified as <quote>full-width</quote> or <quote>wide</quote> have an extra space printed after them.
 This is for the benefit of realizers that have oblong cells that cannot hold full-width or wide glyphs.
 It defaults to on, where no such special processing occurs.
 </para></listitem>
@@ -346,7 +356,7 @@ Each character cell thus has its own, independent, attributes and 24-bit foregro
 <refsection><title>How indexed and direct colours are implemented</title>
 
 <para>
-The 8 ECMA-48 standard colours set by the SGR control sequences 30&#x2013;37 and 40&#x2013;47, and the 8 AIXTerm colours set by the SGR control sequences 90&#x2013;97 and 100&#x2013;107, map from their 3-bit RGB colours to 24-bit RGB in the conventional manner; which is mostly an RGB 1-bit value mapping to an RGB 8-bit value 127 (standard colours being "dark") or 255 (AIXTerm colours being "bright") when set on and to 0 when set off.
+The 8 ECMA-48 standard colours set by the SGR control sequences 30&#x2013;37 and 40&#x2013;47, and the 8 AIXTerm colours set by the SGR control sequences 90&#x2013;97 and 100&#x2013;107, map from their 3-bit RGB colours to 24-bit RGB in the conventional manner; which is mostly an RGB 1-bit value mapping to an RGB 8-bit value 127 (standard colours being <quote>dark</quote>) or 255 (AIXTerm colours being <quote>bright</quote>) when set on and to 0 when set off.
 Special exceptions are made for bright black (which would be the same as dark black otherwise) mapping to #7F7F7F and dark white (which would in turn be the same as bright black) mapping to #BFBFBF; and for dark blue mapping to #4B0082 ("Web Indigo").
 </para>
 
@@ -356,7 +366,7 @@ The terminal emulator also supports the ISO 8613-6/ITU T.416 SGR colour extensio
 <itemizedlist>
 <listitem>
 <para>
-The indexed colour extension (SGR 38:5 and SGR 48:5) has the conventional mapping of 16 "standard" colours, a 24 value grayscale, and a 6&#x00D7;6&#x00D7;6 colour cube.
+The indexed colour extension (SGR 38:5 and SGR 48:5) has the conventional mapping of 16 <quote>standard</quote> colours, a 24 value grayscale, and a 6&#x00D7;6&#x00D7;6 colour cube.
 </para><note>
 Colours #000000 and #FFFFFF occur three times each in this conventional map, and the saturated reds and greens occur twice.
 </note>
@@ -373,9 +383,9 @@ The RGB direct colour extension (SGR 38:2 and SGR 48:2) simply sets the 24-bit R
 <refsection><title>Erasure</title>
 
 <para>
-When characters or lines are deleted (resulting in erased characters or lines being scrolled in), or characters or lines or the screen are explicitly erased, the background colour used for the "filler" that is placed in the newly blanked cells defaults to the current background colour.
-This is "background colour erase" and is the default for DEC VT520 terminals as well as the only option on Linux and BSD kernel virtual terminals.
-By changing the "DECECM" private mode setting, it can be switched to "screen colour erase", which uses the <emphasis>default</emphasis> terminal background colour (as set by SGR 0 and SGR 49) rather than the current one.
+When characters or lines are deleted (resulting in erased characters or lines being scrolled in), or characters or lines or the screen are explicitly erased, the background colour used for the <quote>filler</quote> that is placed in the newly blanked cells defaults to the current background colour.
+This is <quote>background colour erase</quote> and is the default for DEC VT520 terminals as well as the only option on Linux and BSD kernel virtual terminals.
+By changing the <quote>DECECM</quote> private mode setting, it can be switched to <quote>screen colour erase</quote>, which uses the <emphasis>default</emphasis> terminal background colour (as set by SGR 0 and SGR 49) rather than the current one.
 </para>
 
 <para>
@@ -392,7 +402,7 @@ For why this matters, see the explanation of <code>faulty_inverse_erase</code> i
 <refsection><title>Screen mode ("dark"/"light")</title>
 
 <para>
-The <arg choice='plain'>--inverted</arg> command line option determines the initial state of the "DECSCNM" private mode setting, defaulting to off (i.e. "dark").
+The <arg choice='plain'>--inverted</arg> command&#x2010;line option determines the initial state of the <quote>DECSCNM</quote> private mode setting, defaulting to off (i.e. <quote>dark</quote>).
 Use this for a default colour pair akin to a Sun SPARC machine's virtual terminal console, or GUI terminal emulators.
 </para>
 <note>
@@ -409,11 +419,11 @@ However, for other choices, see the explanation of <code>faulty_inverse_erase</c
 <refsection><title>Printing characters</title>
 
 <para>
-All other characters are "printing" characters.
+All other characters are <quote>printing</quote> characters.
 </para>
 
 <para>
-Characters in the "Cf" ("Other, Format") and "Mn" ("Mark, Non-spacing") Unicode code point categories are simply discarded.
+Characters in the <quote>Cf</quote> ("Other, Format") and <quote>Mn</quote> ("Mark, Non-spacing") Unicode code point categories are simply discarded.
 </para>
 <note>
 This includes U+00AD (soft hyphen).
@@ -421,7 +431,7 @@ See the discussion of the BPH control character.
 </note>
 
 <para>
-Characters in the "Me" ("Mark, Enclosing") Unicode code point category overstrike the character at the current cursor position without advancing.
+Characters in the <quote>Me</quote> ("Mark, Enclosing") Unicode code point category overstrike the character at the current cursor position without advancing.
 </para>
 
 <para>
@@ -507,8 +517,8 @@ For capslock, numlock, and shiftlock, the interactions of the locks and shifts i
 </para>
 
 <para>
-Consequently, for the calculator keypad keys and the cursor/editing keypad keys on the abstract keyboard there are exactly two behaviours: "application mode" and "normal mode".
-There are no sub-states of "normal mode" controlled by <keycap>NumLock</keycap>, albeit that in "normal mode" whatever the realizer transmits as an accompanying modifier state may be reflected in generated control sequences using the DEC VT augmentations to DECFNK employed by the VT420 onwards.
+Consequently, for the calculator keypad keys and the cursor/editing keypad keys on the abstract keyboard there are exactly two behaviours: <quote>application mode</quote> and <quote>normal mode</quote>.
+There are no sub-states of <quote>normal mode</quote> controlled by <keycap>NumLock</keycap>, albeit that in <quote>normal mode</quote> whatever the realizer transmits as an accompanying modifier state may be reflected in generated control sequences using the DEC VT augmentations to DECFNK employed by the VT420 onwards.
 (Numeric lock is a function internal to most keyboard hardwares <emphasis>anyway</emphasis> on PS/2 and USB keyboards, with many keyboards sending different scan codes according to the value of the NumLock status LED.
 Dealing with it lies in the part of the system that speaks to hardware.)
 These sub-modes are provided by realizers and their various keyboard mapping systems, and numlock and the associated shifting are handled before the input stream is translated into the abstract keyboard.
@@ -516,9 +526,9 @@ These sub-modes are provided by realizers and their various keyboard mapping sys
 
 <para>
 Realizers also perform any substitution of <keycap>PF1</keycap> to <keycap>PF5</keycap> on the calculator keypad (which are distinct, extended, keys) for the <keycap>F1</keycap> to <keycap>F5</keycap> function keys.
-This is a substitution that originates with DEC VTs, where at reset <keycap>F1</keycap> to <keycap>F5</keycap> were in a "local" mode and did not transmit characters, resulting in applications developers relying upon the calculator keypad keys instead, and hence terminal emulator softwares performing the same substtution for application compatibility.
-(In later model DEC VTs these function keys could all be reconfigured to "host mode" and would transmit DECFNK control sequences like any other function key.)
-The input protocol distinguishes the function keys from the calculator keypad keys, and a message denoting <keycap>F1</keycap> to <keycap>F5</keycap> denotes those function keys in their "host" mode, not the calculator keypad keys.
+This is a substitution that originates with DEC VTs, where at reset <keycap>F1</keycap> to <keycap>F5</keycap> were in a <quote>local</quote> mode and did not transmit characters, resulting in applications developers relying upon the calculator keypad keys instead, and hence terminal emulator softwares performing the same substtution for application compatibility.
+(In later model DEC VTs these function keys could all be reconfigured to <quote>host mode</quote> and would transmit DECFNK control sequences like any other function key.)
+The input protocol distinguishes the function keys from the calculator keypad keys, and a message denoting <keycap>F1</keycap> to <keycap>F5</keycap> denotes those function keys in their <quote>host</quote> mode, not the calculator keypad keys.
 </para>
 
 </refsection>
@@ -612,8 +622,8 @@ CSI <code>1:5U</code> is <keycap>Shift</keycap>+<keycap>Control</keycap>+<keycap
 
 <para>
 The FreeBSD kernel terminal emulator only has function keys from 1 to 12.
-It was historically "cons25", whose behaviour closely matched the SCO Unix Multiscreen virtual terminal.
-It was then changed from "cons25" to "teken", with the clear intent of being more like DEC VTs and XTerm; and avoiding the problematic SCO function key system.
+It was historically <quote>cons25</quote>, whose behaviour closely matched the SCO Unix Multiscreen virtual terminal.
+It was then changed from <quote>cons25</quote> to <quote>teken</quote>, with the clear intent of being more like DEC VTs and XTerm; and avoiding the problematic SCO function key system.
 But only part of the job was done, and the result is a mongrel admixture of DECFNK, SS3, and SCOFNK sequences.
 </para>
 
@@ -698,7 +708,7 @@ In response to device status report requests, it always responds with fixed info
 </para>
 
 <para>
-The handling of U+00AD differs from some other terminal emulation programs, which are based upon code written by Markus Kuhn that treats U+00AD unconditionally as an spacing character and explicitly overrides its actual "Mn" (non-spacing) categorization in Unicode.
+The handling of U+00AD differs from some other terminal emulation programs, which are based upon code written by Markus Kuhn that treats U+00AD unconditionally as an spacing character and explicitly overrides its actual <quote>Mn</quote> (non-spacing) categorization in Unicode.
 </para>
 
 <para>
@@ -726,7 +736,7 @@ Nowadays, several common GUI terminal emulators obey the zero-means-zero rule; a
 
 <para>
 Neither ECMA-48 nor the DEC VT520 <citetitle>Video Terminal Programmer Information</citetitle> <citebiblioid>EK-VT520-RM</citebiblioid> reference document a quirk of most DEC VT-family emulators: holding line wrap pending.
-(This was only ever documented by DEC in internal documentation that was marked "company confidential".)
+(This was only ever documented by DEC in internal documentation that was marked <quote>company confidential</quote>.)
 Actual implementations, including the FreeBSD kernel virtual terminal emulator, have this mechanism.
 This is largely undocumented behaviour, but it is behaviour that many programs (including the prompt display of the Z Shell, for example) rely upon.
 So it is implemented here.
@@ -752,7 +762,7 @@ As explained in <citerefentry><refentrytitle>TERM</refentrytitle><manvolnum>5</m
 <refsection><title>DEC VT</title>
 
 <para>
-This mode is selected by the <arg choice='plain'>--decvt</arg> command-line option.
+This mode is selected by the <arg choice='plain'>--decvt</arg> command&#x2010;line option.
 It matches (a subset of) a DEC VT in its native VT mode.
 </para>
 
@@ -782,7 +792,7 @@ This terminal emulator does, giving them SS3-shifted <code>j</code>, <code>m</co
 <refsection><title>SCO</title>
 
 <para>
-This mode is selected by the <arg choice='plain'>--sco</arg> command-line option.
+This mode is selected by the <arg choice='plain'>--sco</arg> command&#x2010;line option.
 With variances as laid out here, it matches the SCO kernel virtual terminal, the FreeBSD KVT with the Teken library in CONS25 mode, the old WSCONS FreeBSD KVT from version 8 and earlier, and (a subset of) a DEC VT in its SCO Console mode.
 </para>
 
@@ -856,7 +866,7 @@ This terminal emulator instead falls back to an extended SCOFNK mechanism, as de
 <refsection><title>FreeBSD (Teken)</title>
 
 <para>
-This mode is selected by the <arg choice='plain'>--freebsd</arg> command-line option, and is the default when the terminal emulator is compiled for FreeBSD.
+This mode is selected by the <arg choice='plain'>--teken</arg> command&#x2010;line option, and is the default when the terminal emulator is compiled for FreeBSD.
 With variances as laid out here, it matches the FreeBSD 9 and later kernel virtual terminal, that uses the Teken library, in its native Teken mode.
 </para>
 
@@ -933,12 +943,12 @@ This terminal emulator does.
 <refsection><title>NetBSD ("vt100")</title>
 
 <para>
-This mode is selected by the <arg choice='plain'>--netbsd</arg> command-line option, and is the default when the terminal emulator is compiled for NetBSD.
-With variances as laid out here, it matches the NetBSD kernel virtual terminal in its "vt100" mode.
+This mode is selected by the <arg choice='plain'>--netbsd</arg> command&#x2010;line option, and is the default when the terminal emulator is compiled for NetBSD.
+With variances as laid out here, it matches the NetBSD kernel virtual terminal in its <quote>vt100</quote> mode.
 </para>
 
 <note>
-It is a misnomer to name this "vt100", as NetBSD does.
+It is a misnomer to name this <quote>vt100</quote>, as NetBSD does.
 A true DEC VT100 series does not match this emulation.
 It did not do ECMA-48 colour, for example.
 </note>
@@ -1006,7 +1016,7 @@ The latter is defined by DEC VTs.
 <refsection><title>Linux</title>
 
 <para>
-This mode is selected by the <arg choice='plain'>--linux</arg> command-line option, and is the default when the terminal emulator is compiled for Linux.
+This mode is selected by the <arg choice='plain'>--linux</arg> command&#x2010;line option, and is the default when the terminal emulator is compiled for Linux.
 </para>
 
 <para>

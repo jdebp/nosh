@@ -3,7 +3,7 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-#define _XOPEN_SOURCE_EXTENDED
+#define _BSD_SOURCE 1
 #include <cerrno>
 #include <cstdio>
 #include <cstddef>

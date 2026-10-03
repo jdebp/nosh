@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -51,14 +52,14 @@ If omitted, it defaults to <filename>head0</filename>.
 <varlistentry>
 <term><code>.</code></term>
 <listitem><para>
-Generate an "IM Switch" input event.
+Generate an <quote>IM Switch</quote> input event.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><code>K</code></term>
 <listitem><para>
-Generate a "Katakana" input event.
+Generate a <quote>Katakana</quote> input event.
 (Strictly speaking, PC keyboard maps do not use this event, but use a "Katakana/Hiragana/Romaji" event with level 2 shift.)
 </para></listitem>
 </varlistentry>
@@ -66,7 +67,7 @@ Generate a "Katakana" input event.
 <varlistentry>
 <term><code>L</code></term>
 <listitem><para>
-Generate a "Hiragana" input event.
+Generate a <quote>Hiragana</quote> input event.
 (Strictly speaking, PC keyboard maps do not use this event, but use a "Katakana/Hiragana/Romaji" event with level 1 shift.)
 </para></listitem>
 </varlistentry>
@@ -74,7 +75,7 @@ Generate a "Hiragana" input event.
 <varlistentry>
 <term><code>R</code></term>
 <listitem><para>
-Generate a "Romaji" input event.
+Generate a <quote>Romaji</quote> input event.
 (Strictly speaking, PC keyboard maps do not use this event, but use a "Katakana/Hiragana/Romaji" event with level 3 shift.)
 </para></listitem>
 </varlistentry>
@@ -82,7 +83,7 @@ Generate a "Romaji" input event.
 <varlistentry>
 <term><code>G</code></term>
 <listitem><para>
-Generate a "Hangeul" input event.
+Generate a <quote>Hangeul</quote> input event.
 (Strictly speaking, PC keyboard maps do not use this event.)
 </para></listitem>
 </varlistentry>
@@ -97,21 +98,21 @@ Generate a "Han/Yeong" input event.
 <varlistentry>
 <term><code>Z</code></term>
 <listitem><para>
-Generate a "Hanja" input event.
+Generate a <quote>Hanja</quote> input event.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><code>N</code></term>
 <listitem><para>
-Generate a "Muhenkan" input event.
+Generate a <quote>Muhenkan</quote> input event.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
 <term><code>C</code></term>
 <listitem><para>
-Generate a "Henkan" input event.
+Generate a <quote>Henkan</quote> input event.
 </para></listitem>
 </varlistentry>
 

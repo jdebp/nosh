@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -47,19 +48,19 @@ For more on service and supervise directories, see <citerefentry><refentrytitle>
 
 <para>
 If the standard output is a terminal, <command>service-status</command> uses <citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry> and an <code>ECMA48Output</code> instance to display various parts of the output in different colours, highlighting different service states in different colours for example.
-The <arg choice='plain'>--colour</arg> command line option tells it to do this unconditionally, even if its standard output is not a terminal.
+The <arg choice='plain'>--colour</arg> command&#x2010;line option tells it to do this unconditionally, even if its standard output is not a terminal.
 </para>
 
 <para>
-The <arg choice='plain'>--long</arg> command line option switches from the default 1-line output form to a multiple-line form.
-This form includes the service's configured enable/disable state, information about its "main" process, and (if it has an associated service accessible via the conventional <filename>log/</filename> name that in turn has its log directory accessible via the conventional <filename>main/</filename> name) the tail end of the service's log, post-processed by the <citerefentry><refentrytitle>tai64nlocal</refentrytitle><manvolnum>1</manvolnum></citerefentry> command.
+The <arg choice='plain'>--long</arg> command&#x2010;line option switches from the default 1-line output form to a multiple-line form.
+This form includes the service's configured enable/disable state, information about its <quote>main</quote> process, and (if it has an associated service accessible via the conventional <filename>log/</filename> name that in turn has its log directory accessible via the conventional <filename>main/</filename> name) the tail end of the service's log, post-processed by the <citerefentry><refentrytitle>tai64nlocal</refentrytitle><manvolnum>1</manvolnum></citerefentry> command.
 The <arg choice='plain'>--log-lines</arg> command passes <replaceable>lines</replaceable> to the <citerefentry><refentrytitle>tail</refentrytitle><manvolnum>1</manvolnum></citerefentry> command with its <arg choice='plain'>-n</arg> option.
 </para>
 
 <para>
 Ready-after-run services have their states reported slightly different to other services.
-Such a service that is in the "stopped" daemontools-encore state will be reported as "done" if its <filename>run</filename> program has been run at least once.
-Such a service that is in the "running" daemontools-encore state will be reported as "started" if its <filename>run</filename> program is still running and "ready" otherwise.
+Such a service that is in the <quote>stopped</quote> daemontools-encore state will be reported as <quote>done</quote> if its <filename>run</filename> program has been run at least once.
+Such a service that is in the <quote>running</quote> daemontools-encore state will be reported as <quote>started</quote> if its <filename>run</filename> program is still running and <quote>ready</quote> otherwise.
 </para>
 
 </refsection><refsection><title>Compatibility</title>

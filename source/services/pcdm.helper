@@ -106,7 +106,7 @@ run() {
 
 fall-back-on-failure() {
 	case "$1" in
-		e*)
+		(e*)
 			if test 0 -ne "$2"
 			then
 				 if ! test -e "/tmp/.pcdm-x-started" ; then
@@ -125,13 +125,13 @@ fall-back-on-failure() {
 				:
 			fi
 			;;
-		t*)
+		(t*)
 			;;
-		k*)
+		(k*)
 			;;
-		a*)
+		(a*)
 			;;
-		c*|*)
+		(c*|*)
 			;;
 	esac
 }

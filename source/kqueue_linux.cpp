@@ -3,6 +3,7 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
+#define _BSD_SOURCE 1
 #include <cerrno>
 #include <climits>
 #include <csignal>
@@ -55,7 +56,8 @@ public:
 	uint32_t wanted_notes;
 	char * path;		/// not owned
 	int notes_for(uint32_t mask);
-	static uint32_t mask_for(struct stat &, unsigned int);
+	int notes_for(uint32_t mask, const struct stat &);
+	static uint32_t mask_for(const struct stat &, unsigned int);
 };
 
 class PollFD {
@@ -78,6 +80,7 @@ public:
 	bool apply_changes(const struct kevent *, int);
 	int wait(struct kevent * pevents, int nevents, const struct timespec* timeout);
 	void return_event(int & n, struct kevent * pevents, int nevents, const struct kevent & k);
+	void return_event(const struct kevent & k);
 
 	std::deque<struct kevent> pending;
 
@@ -107,17 +110,25 @@ get_path_from_procfs(
 	int fd,
 	char * & path
 ) {
-	if (0 > fd) return errno = EINVAL, fd;
+	if (0 > fd) {
+		errno = EINVAL;
+		return fd;
+	}
 	char procfs_path[128];
-	if (0 > snprintf(procfs_path, sizeof procfs_path, "/proc/self/fd/%d", fd))
+	if (0 > snprintf(procfs_path, sizeof procfs_path, "/proc/self/fd/%d", fd)) {
+		errno = ENOMEM;
 		return -1;
+	}
 	struct stat s;
 	if (0 > fstatat(AT_FDCWD, procfs_path, &s, AT_SYMLINK_NOFOLLOW))
 		return -1;
 	off_t size(s.st_size);
 try_again:	// We have to retry because Linux can report totally bogus symbolic link lengths on a procfs.
 	path = static_cast<char *>(std::malloc(size + 1));
-	if (!path) return errno = ENOMEM, -1;
+	if (!path) {
+		errno = ENOMEM;
+		return -1;
+	}
 	const int n(readlink(procfs_path, path, size + 1));
 	if (0 > n)
 		return -1;
@@ -129,6 +140,14 @@ try_again:	// We have to retry because Linux can report totally bogus symbolic l
 	}
 	path[n] = '\0';
 	return 0;
+}
+
+bool
+operator != (
+	const struct timespec & l,
+	const struct timespec & r
+) {
+	return l.tv_sec != r.tv_sec && l.tv_nsec != r.tv_nsec;
 }
 
 }
@@ -147,20 +166,48 @@ Watch::Watch(
 
 int
 Watch::notes_for(
+	uint32_t mask,
+	const struct stat & ns
+) {
+	int n(0);
+	if (mask & IN_ATTRIB) {
+		if (ns.st_nlink != s.st_nlink) {
+			n |= NOTE_LINK;
+			s.st_nlink = ns.st_nlink;
+		}
+		if (ns.st_mode != s.st_mode) {
+			n |= NOTE_ATTRIB;
+			s.st_mode = ns.st_mode;
+		}
+		if (ns.st_size > s.st_size) {
+			n |= NOTE_EXTEND;
+			s.st_size = ns.st_size;
+		}
+	}
+	if (mask & IN_MODIFY) {
+		if (S_ISREG(s.st_mode) && ns.st_mtim != s.st_mtim) {
+			n |= NOTE_WRITE;
+			s.st_mtim = ns.st_mtim;
+		}
+	}
+	if (mask & (IN_CREATE|IN_DELETE)) {
+		if (S_ISDIR(s.st_mode) && ns.st_mtim != s.st_mtim) {
+			n |= NOTE_WRITE;
+			s.st_mtim = ns.st_mtim;
+		}
+	}
+	return n & wanted_notes;
+}
+
+int
+Watch::notes_for(
 	uint32_t mask
 ) {
 	int n(0);
 	if (mask & IN_ATTRIB) {
 		struct stat ns;
-		if (0 <= fstat(fd, &ns)) {
-			if (ns.st_nlink != s.st_nlink)
-				n |= NOTE_LINK;
-			if (ns.st_mode != s.st_mode)
-				n |= NOTE_ATTRIB;
-			if (ns.st_size > s.st_size)
-				n |= NOTE_EXTEND;
-			s = ns;
-		}
+		if (0 <= fstat(fd, &ns))
+			n |= notes_for(IN_ATTRIB, ns);
 	}
 	if (S_ISREG(s.st_mode)) {
 		if (mask & IN_MODIFY)
@@ -179,7 +226,7 @@ Watch::notes_for(
 
 uint32_t
 Watch::mask_for(
-	struct stat & s,
+	const struct stat & s,
 	unsigned int notes
 ) {
 	uint32_t m(0U);
@@ -253,6 +300,14 @@ Queue::legal_changes(
 	return true;
 }
 
+inline
+void
+Queue::return_event(
+	const struct kevent & k
+) {
+	pending.push_back(k);
+}
+
 // This routine assumes that all illegal combinations have been eliminated.
 inline
 bool
@@ -319,15 +374,19 @@ Queue::apply_changes(
 			continue;
 		switch (c.filter) {
 			case EVFILT_VNODE:
-				if (-1 == notify.get())
-					return errno = EINVAL, false;
+				if (-1 == notify.get()) {
+					errno = EINVAL;
+					return false;
+				}
 				break;
 #if 0 // Not implemented.  Yet.
 			case EVFILT_PROC:
 #endif
 			case EVFILT_SIGNAL:
-				if (-1 == signals.get())
-					return errno = EINVAL, false;
+				if (-1 == signals.get()) {
+					errno = EINVAL;
+					return false;
+				}
 				break;
 		}
 	}
@@ -348,6 +407,12 @@ Queue::apply_changes(
 				epoll_event e = {};
 				e.data.fd = c.ident;
 				const uint32_t mask(EVFILT_READ == c.filter ? EPOLLIN|EPOLLHUP|EPOLLRDHUP : EPOLLOUT);
+				if (false) {
+			rw_error:
+					struct kevent k;
+					set_event(k, c.ident, c.filter, EV_ERROR, 0, errno, nullptr);
+					return_event(k);
+				} else
 				if (c.flags & EV_ADD) {
 					std::pair<PollFDMap::iterator, bool> r(pollfds.insert(PollFDMap::value_type(c.ident, PollFD())));
 					const PollFDMap::iterator & pi(r.first);
@@ -358,11 +423,9 @@ Queue::apply_changes(
 						pi->second.enabled_events |= mask;
 					e.events = pi->second.mask();
 					if (r.second) {
-						if (0 > epoll_ctl(epoll.get(), EPOLL_CTL_ADD, c.ident, &e))
-							return false;
+						if (0 > epoll_ctl(epoll.get(), EPOLL_CTL_ADD, c.ident, &e)) goto rw_error;
 					} else {
-						if (0 > epoll_ctl(epoll.get(), EPOLL_CTL_MOD, c.ident, &e))
-							return false;
+						if (0 > epoll_ctl(epoll.get(), EPOLL_CTL_MOD, c.ident, &e)) goto rw_error;
 					}
 				} else
 				if (c.flags & EV_DELETE) {
@@ -371,91 +434,110 @@ Queue::apply_changes(
 						pi->second.added_events &= ~mask;
 						if (!pi->second.added_events) {
 							e.events = 0;
-							if (0 > epoll_ctl(epoll.get(), EPOLL_CTL_DEL, c.ident, &e))
-								return false;
 							pollfds.erase(pi);
+							if (0 > epoll_ctl(epoll.get(), EPOLL_CTL_DEL, c.ident, &e)) goto rw_error;
 						} else {
 							e.events = pi->second.mask();
-							if (0 > epoll_ctl(epoll.get(), EPOLL_CTL_MOD, c.ident, &e))
-								return false;
+							if (0 > epoll_ctl(epoll.get(), EPOLL_CTL_MOD, c.ident, &e)) goto rw_error;
 						}
-					} else
-						return errno = EINVAL, false;
+					} else {
+						errno = EINVAL;
+						goto rw_error;
+					}
 				} else
 				if (c.flags & EV_ENABLE) {
 					const PollFDMap::iterator pi(pollfds.find(c.ident));
 					if (pi != pollfds.end()) {
 						pi->second.enabled_events |= mask;
 						e.events = pi->second.mask();
-						if (0 > epoll_ctl(epoll.get(), EPOLL_CTL_MOD, c.ident, &e))
-							return false;
-					} else
-						return errno = EINVAL, false;
+						if (0 > epoll_ctl(epoll.get(), EPOLL_CTL_MOD, c.ident, &e)) goto rw_error;
+					} else {
+						errno = EINVAL;
+						goto rw_error;
+					}
 				} else
 				if (c.flags & EV_DISABLE) {
 					const PollFDMap::iterator pi(pollfds.find(c.ident));
 					if (pi != pollfds.end()) {
 						pi->second.enabled_events &= ~mask;
 						e.events = pi->second.mask();
-						if (0 > epoll_ctl(epoll.get(), EPOLL_CTL_MOD, c.ident, &e))
-							return false;
-					} else
-						return errno = EINVAL, false;
+						if (0 > epoll_ctl(epoll.get(), EPOLL_CTL_MOD, c.ident, &e)) goto rw_error;
+					} else {
+						errno = EINVAL;
+						goto rw_error;
+					}
 				}
 				break;
 			}
 			case EVFILT_VNODE:
 			{
 				const int fd(c.ident);
+				if (false) {
+			vnode_error:
+					struct kevent k;
+					set_event(k, c.ident, c.filter, EV_ERROR, 0, errno, nullptr);
+					return_event(k);
+				} else
 				if (c.flags & EV_ADD) {
 					struct stat s;
-					if (0 > fstat(fd, &s))
-						return false;
-					if (!S_ISDIR(s.st_mode) && !S_ISREG(s.st_mode))
-						return errno = EBADF, false;
+					if (0 > fstat(fd, &s)) goto vnode_error;
+					if (!S_ISDIR(s.st_mode) && !S_ISREG(s.st_mode)) {
+						errno = EBADF;
+						goto vnode_error;
+					}
 					char * path(nullptr);
-					if (0 > get_path_from_procfs(fd, path))
-						return false;
+					if (0 > get_path_from_procfs(fd, path)) goto vnode_error;
 					const uint32_t mask(c.flags & EV_DISABLE ? IN_OPEN : Watch::mask_for(s, c.fflags));
 					const int wd(inotify_add_watch(notify.get(), path, mask));
 					if (0 > wd) {
 						const int error(errno);
 						std::free(path);
 						errno = error;
-						return false;
+						goto vnode_error;
 					}
 					std::pair<WatchMap::iterator, bool> r(watches.insert(WatchMap::value_type(wd, Watch(fd, s, c.fflags))));
+					Watch & w(r.first->second);
 					if (!r.second)
-						r.first->second.wanted_notes = c.fflags;
-					std::free(r.first->second.path); r.first->second.path = path;
+						w.wanted_notes = c.fflags;
+					std::free(w.path); w.path = path;
 				} else
 				if (c.flags & EV_DELETE) {
 					for (WatchMap::iterator j(watches.begin()); watches.end() != j; ) {
-						if (j->second.fd != fd) {
+						Watch & w(j->second);
+						if (w.fd != fd) {
 							++j;
 							continue;
 						}
-						if (0 > inotify_rm_watch(notify.get(), j->first))
-							return false;
-						std::free(j->second.path); j->second.path = nullptr;
+						if (0 > inotify_rm_watch(notify.get(), j->first)) goto vnode_error;
+						std::free(w.path); w.path = nullptr;
 						j = watches.erase(j);
 					}
 				} else
 				if (c.flags & EV_ENABLE) {
 					for (WatchMap::iterator j(watches.begin()); watches.end() != j; ++j) {
-						if (j->second.fd != fd)
+						Watch & w(j->second);
+						if (w.fd != fd)
 							continue;
-						const uint32_t mask(Watch::mask_for(j->second.s, c.fflags));
-						if (0 > inotify_add_watch(notify.get(), j->second.path, mask))
-							return false;
+						const uint32_t mask(Watch::mask_for(w.s, c.fflags));
+						if (0 > inotify_add_watch(notify.get(), w.path, mask)) goto vnode_error;
+						if (mask & (IN_MODIFY|IN_CREATE|IN_DELETE|IN_ATTRIB)) {
+							struct stat s;
+							if (0 > fstat(w.fd, &s)) goto vnode_error;
+							const int n(w.notes_for(IN_MODIFY|IN_CREATE|IN_DELETE|IN_ATTRIB, s));
+							if (n) {
+								struct kevent k;
+								set_event(k, c.ident, c.filter, 0, n, 0, nullptr);
+								return_event(k);
+							}
+						}
 					}
 				} else
 				if (c.flags & EV_DISABLE) {
 					for (WatchMap::iterator j(watches.begin()); watches.end() != j; ++j) {
-						if (j->second.fd != fd)
+						Watch & w(j->second);
+						if (w.fd != fd)
 							continue;
-						if (0 > inotify_add_watch(notify.get(), j->second.path, IN_OPEN))
-							return false;
+						if (0 > inotify_add_watch(notify.get(), w.path, IN_OPEN)) goto vnode_error;
 					}
 				}
 				break;
@@ -510,7 +592,7 @@ Queue::return_event(
 	if (n < nevents)
 		pevents[n++] = k;
 	else
-		pending.push_back(k);
+		return_event(k);
 }
 
 inline
@@ -520,8 +602,10 @@ Queue::wait(
 	int nevents,
 	const struct timespec* timeout
 ) {
-	if (nevents < 0)
-		return errno = EINVAL, -1;
+	if (nevents < 0) {
+		errno = EINVAL;
+		return -1;
+	}
 	if (nevents == 0)
 		return 0;
 
@@ -648,12 +732,16 @@ kevent_linux(
 	const struct timespec* timeout
 ) {
 	QueueMap::iterator i(queues.find(fd));
-	if (queues.end() == i)
-		return errno = EBADF, -1;
+	if (queues.end() == i) {
+		errno = EBADF;
+		return -1;
+	}
 	Queue & q(*i->second);
 
-	if (!q.legal_changes(pchanges, nchanges))
-		return errno = EINVAL, -1;
+	if (!q.legal_changes(pchanges, nchanges)) {
+		errno = EINVAL;
+		return -1;
+	}
 
 	if (!q.apply_changes(pchanges, nchanges))
 		return -1;

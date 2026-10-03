@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -36,13 +37,13 @@ The machine-readable map file format is given in <citerefentry><refentrytitle>co
 
 <para>
 The BSD/SCO kbdmaps are overlaid on top of a much larger, pre-defined, keyboard map.
-The underlay map has a U.S. International IBM PC/AT QWERTY layout as group 1, and the ISO 9995-3 "common secondary group" as group 2.
+The underlay map has a U.S. International IBM PC/AT QWERTY layout as group 1, and the ISO 9995-3 <quote>common secondary group</quote> as group 2.
 </para>
 
 <para>
 <citerefentry><refentrytitle>console-keyboard-map</refentrytitle><manvolnum>5</manvolnum></citerefentry> keyboard maps contain a lot of entries for things that are simply inexpressible in BSD keyboard maps, such as consumer media device control keys, a distinct cursor/editing keypad, and calculator keypad keys such as change sign, comma, and equals.
 These are largely invariant, fortunately, and are supplied by the fixed underlay map.
-The expectation is that the BSD/SCO keymaps become the "national variant" portion in group 1; overwriting the group 1 entries for the alphanumeric rows A, B, C, D, and E, the function key block, and the PC/AT subset of the calculator keypad; but leaving group 2 as the ISO 9995-3 trans-national "common" group and leaving the non-BSD-expressible things as they stand.
+The expectation is that the BSD/SCO keymaps become the <quote>national variant</quote> portion in group 1; overwriting the group 1 entries for the alphanumeric rows A, B, C, D, and E, the function key block, and the PC/AT subset of the calculator keypad; but leaving group 2 as the ISO 9995-3 trans-national <quote>common</quote> group and leaving the non-BSD-expressible things as they stand.
 </para>
 
 <para>
@@ -55,19 +56,19 @@ Such keymaps are effectively group 1 only.
 </para></listitem>
 <listitem><para>
 BSD/SCO kbdmaps can also have anywhere from 129 to 256 entries.
-Such keymaps are the BSD way of defining what is in effect a group 2, with the keycodes above 127 being the "group2" equivalents to keycodes with values 128 lower.
+Such keymaps are the BSD way of defining what is in effect a group 2, with the keycodes above 127 being the <quote>group2</quote> equivalents to keycodes with values 128 lower.
 </para><para>
-However, in practice invariably the second four columns in actual such "group 2" keymaps duplicate the first four.
+However, in practice invariably the second four columns in actual such <quote>group 2</quote> keymaps duplicate the first four.
 So, in order to fit the BSD/SCO kbdmap all into group 1, leaving the ISO 9995-3 common group 2 in group 2, the redundancy in the BSD/SCO kbdmap is eliminated:
 </para>
 <itemizedlist>
 <listitem><para>
 level1 and level2 of group 1 in the converted keymap are taken from the first four columns of the first 128 entries in the BSD/SCO kbdmap.
-In other words: BSD/SCO "group 1" levels 1 and 2 become group 1 levels 1 and 2 in the converted keymap.
+In other words: BSD/SCO <quote>group 1</quote> levels 1 and 2 become group 1 levels 1 and 2 in the converted keymap.
 </para></listitem>
 <listitem><para>
 level3 and level4 of group 1 in the converted keymap are taken from the first four columns of the second 128 entries in the BSD/SCO kbdmap.
-In other words: BSD/SCO "group 2" levels 1 and 2 become group 1 levels 3 and 4 in the converted keymap.
+In other words: BSD/SCO <quote>group 2</quote> levels 1 and 2 become group 1 levels 3 and 4 in the converted keymap.
 </para></listitem>
 </itemizedlist>
 <para>
@@ -80,7 +81,7 @@ The BSD/SCO kbdmap is itself overlaid with this, because otherwise there would b
 </para></listitem>
 <listitem><para>
 "accent" definition sections in a keymap are ignored.
-The various "accent" key actions in the map sections instead simply cause Unicode character messages like other keys do.
+The various <quote>accent</quote> key actions in the map sections instead simply cause Unicode character messages like other keys do.
 But these are Unicode combining characters.
 <citerefentry><refentrytitle>console-ugen-hid-realizer</refentrytitle><manvolnum>1</manvolnum>, </citerefentry><citerefentry><refentrytitle>console-hid-realizer</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>console-pcat-keyboard-realizer</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and <citerefentry><refentrytitle>console-evdev-realizer</refentrytitle><manvolnum>1</manvolnum></citerefentry> combine those characters with following characters using the ISO 9995-3 rules.
 </para></listitem>
@@ -153,7 +154,7 @@ The <code>ashift</code> and <code>alock</code> actions are level 3 shifts, not a
 <term><code>hanja</code></term>
 <listitem><para>
 BSD/SCO kbdmaps have no concept of input methods and map the <keycap>Grave</keycap> key on the main keypad to ordinary UCS3 characters.
-However, <citerefentry><refentrytitle>console-input-method</refentrytitle><manvolnum>1</manvolnum></citerefentry> recognizes an IM Switch extended key for toggling the input method UI on and off, and a Kanji/Hanja key for selecting and cycling through "chinese" input methods.
+However, <citerefentry><refentrytitle>console-input-method</refentrytitle><manvolnum>1</manvolnum></citerefentry> recognizes an IM Switch extended key for toggling the input method UI on and off, and a Kanji/Hanja key for selecting and cycling through <quote>chinese</quote> input methods.
 <code>imsw</code> and <code>hanja</code> are message actions for these two extended keys.
 </para></listitem>
 </varlistentry>
@@ -165,7 +166,7 @@ However, <citerefentry><refentrytitle>console-input-method</refentrytitle><manvo
 
 <itemizedlist>
 <listitem><para>
-There is no ASCII control character named "ns".
+There is no ASCII control character named <quote>ns</quote>.
 This was an error in FreeBSD 11 and earlier tooling that the author reported as a bug and had fixed.
 </para></listitem>
 <listitem><para>
@@ -180,11 +181,11 @@ For the PC/AT keycodes these denote the cursor/editing keypad keys as message ac
 <citerefentry><refentrytitle>atkbd</refentrytitle><manvolnum>5</manvolnum></citerefentry> does not define meanings for <code>fkey65</code> and higher.
 </para></listitem>
 <listitem><para>
-The <code>dsla</code> action has no direct Unicode combining character equivalent, as there is no "combining slash" Unicode code point.
+The <code>dsla</code> action has no direct Unicode combining character equivalent, as there is no <quote>combining slash</quote> Unicode code point.
 But because it operates like the combining stroke character does in ISO 9995-3 appendix F, that is what it is converted into.
 </para></listitem>
 <listitem><para>
-The "<code>dapo</code>" action has no direct Unicode combining character equivalent, as there is no "combining apostrophe" Unicode code point.
+The "<code>dapo</code>" action has no direct Unicode combining character equivalent, as there is no <quote>combining apostrophe</quote> Unicode code point.
 This is a BSDism that isn't used in BSD-supplied keymaps, but that is used in third-party keymaps for currency characters.
 However, it is redundant.
 The ISO 9995-3 common group 2 that is underlaid beneath all BSD/SCO kbdmaps actually has keys for all of the currency characters that <code>dapo</code> is often used for:

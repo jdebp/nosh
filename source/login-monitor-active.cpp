@@ -3,6 +3,7 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
+#define _BSD_SOURCE 1
 #include <vector>
 #include <map>
 #include <set>
@@ -13,8 +14,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cerrno>
 #include <cctype>
 #include <unistd.h>
-#include "hasutmpx.h"
-#include "hasutmp.h"
+#include "config/hasutmpx.h"
+#include "config/hasutmp.h"
 #if defined(HAS_UTMPX)
 #include <utmpx.h>
 #elif defined(HAS_UTMP)
@@ -92,8 +93,8 @@ update(
 		for (;;) {
 			const size_t n(std::fread(&u, sizeof u, 1, file));
 			if (n < 1) break;
-			if (!u->ut_name[0] || !u->ut_line[0]) continue;
-			const std::string name(rtrim(u->ut_name, sizeof u->ut_name));
+			if (!u.ut_name[0] || !u.ut_line[0]) continue;
+			const std::string name(rtrim(u.ut_name, sizeof u.ut_name));
 			active_users.insert(name);
 		}
 	}

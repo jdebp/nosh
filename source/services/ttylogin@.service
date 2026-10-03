@@ -37,6 +37,9 @@ ExecStart=login-shell
 TUILevel=ascii
 # The login program works off the terminal type environment variables, as does everything in the resultant login session.
 TTYType=on
+# If PAM is used, the UTmpEvenIfPAM setting needs to be true as well.
+# Otherwise, this only applies to the non-PAM case.
+UTmpX=on
 
 [Install]
 WantedBy=multi-user.target

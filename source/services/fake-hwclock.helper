@@ -4,7 +4,7 @@
 ## **************************************************************************
 
 case "`uname`" in
-FreeBSD)	
+(FreeBSD)	
 	if test 0 -ne "$(/sbin/sysctl -n security.jail.jailed)"
 	then
 		echo 1>&2 "Do not use this in a jail."
@@ -14,11 +14,11 @@ FreeBSD)
 esac
 
 case "`uname`" in
-Linux)	
+(Linux)	
 	notimed=
 	noset=
 	;;
-*BSD)	
+(*BSD)	
 	notimed=-n
 	noset=-j
 	;;
@@ -32,9 +32,9 @@ umask 022
 
 load() {
 	case "${file}" in
-	[Nn][Oo]|'')
+	([Nn][Oo]|'')
 		;;
-	*)
+	(*)
 		if ! test -e "${file}"
 		then
 			echo 1>&2 "${file}": No persistent clock time file exists.
@@ -65,9 +65,9 @@ load() {
 
 save() {
 	case "${file}" in
-	[Nn][Oo]|'')
+	([Nn][Oo]|'')
 		;;
-	*)
+	(*)
 		if ! test -e "${file}" || test -f "${file}"
 		then
 			date -u $noset '+%s' > "${file}"

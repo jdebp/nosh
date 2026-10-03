@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -71,16 +72,16 @@ With the <arg choice="plain">-a</arg> and <arg choice="plain">-l</arg> options i
 
 <para>
 If the standard output is a terminal, <command>ifconfig</command> uses whatever it can find via the <citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry> library to display various parts of the output in different colours, highlighting addresses in different address families in different colours.
-The <arg choice='plain'>--colour</arg> command line option tells it to do this unconditionally, even if its standard output is not a terminal.
+The <arg choice='plain'>--colour</arg> command&#x2010;line option tells it to do this unconditionally, even if its standard output is not a terminal.
 </para>
 
 <para>
-The <replaceable>address-family</replaceable> command-line option restricts its output to information about only that particular address family, eliminating any interfaces that do not have any addresses in that family.
-The <arg choice="plain">-u</arg> and <arg choice="plain">-d</arg> command-line options restrict reporting to only interfaces that are, respectively, up or down.
+The <replaceable>address-family</replaceable> command&#x2010;line option restricts its output to information about only that particular address family, eliminating any interfaces that do not have any addresses in that family.
+The <arg choice="plain">-u</arg> and <arg choice="plain">-d</arg> command&#x2010;line options restrict reporting to only interfaces that are, respectively, up or down.
 </para>
 
 <para>
-The <arg choice="plain">-l</arg> command-line option causes a short listing that contains only interface names.
+The <arg choice="plain">-l</arg> command&#x2010;line option causes a short listing that contains only interface names.
 Otherwise, both interface names and configuration information are displayed.
 The latter is displayed in a form that is roughly the same as <command>ifconfig</command>'s own command line.
 Each network address is on a separate line, and with a minimal amount of massaging the output could in theory be fed back to <command>ifconfig</command> as its command line, one line at a time.
@@ -154,7 +155,7 @@ It is also recommended to explicitly supply the unit number of the cloned interf
 
 <informalexample>
 <para>
-On FreeBSD, where <citerefentry><refentrytitle>lo</refentrytitle><manvolnum>4</manvolnum></citerefentry> is a cloning interface:
+On FreeBSD or NetBSD, where <citerefentry><refentrytitle>lo</refentrytitle><manvolnum>4</manvolnum></citerefentry> is a cloning interface:
 </para>
 <literallayout><computeroutput># </computeroutput><userinput>ifconfig lo1 create</userinput><computeroutput>
 # </computeroutput><userinput>ifconfig -l -d</userinput><computeroutput>
@@ -202,7 +203,7 @@ One can change flags without changing addresses, and change addresses without ch
 </para>
 
 <para>
-Modern networking is no longer structured around the idea of network interfaces having a single "primary" IP address and zero or more subordinate "alias" addresses.
+Modern networking is no longer structured around the idea of network interfaces having a single <quote>primary</quote> IP address and zero or more subordinate <quote>alias</quote> addresses.
 (The syntax of the command that <command>ifconfig</command> is compatible with is structured around that old idea.)
 The first form of the command when supplied an address does the same thing as the second form, rather than overwriting a single primary address.
 The third form is capable of removing any address, down to an interface having zero IP addresses, rather than only removing alias addresses.
@@ -220,7 +221,7 @@ Address families are <arg choice="plain">inet4</arg>, <arg choice="plain">inet6<
 
 <para>
 Interfaces may, and commonly do, have multiple addresses in the IP address families; and just one address at the link layer.
-These addresses are specified with three pieces of information, spread across various command-line options:
+These addresses are specified with three pieces of information, spread across various command&#x2010;line options:
 </para>
 
 <variablelist>
@@ -260,7 +261,7 @@ Neither Linux nor the BSDs document for end-users what the various address scope
 </variablelist>
 
 <note>
-Commas here are part of how definition lists are rendered in manual pages, and are not part of the command-line syntax.
+Commas here are part of how definition lists are rendered in manual pages, and are not part of the command&#x2010;line syntax.
 </note>
 
 </refsection>
@@ -317,7 +318,7 @@ However, the IP version 6 prefix may, by itself, already be enough to uniquely i
 
 <note>
 <command>ifconfig</command> will propagate whatever the lower 64 bits are, as-is.
-Passing the MAC address, either alone or in conjunction with a machine-local "salt", through a hash function is insufficient for privacy, and <command>ifconfig</command> does not do that.
+Passing the MAC address, either alone or in conjunction with a machine-local <quote>salt</quote>, through a hash function is insufficient for privacy, and <command>ifconfig</command> does not do that.
 (For an IP version 6 address not to provide strong identification, it must change regularly, in a pattern that cannot be inferred from outwith the system.
 This is not the case for a hashed value of an unchanging MAC address and an unchanging salt.)
 </note>
@@ -361,11 +362,11 @@ There are several errors which are caused by the operating system kernel:
 
 <itemizedlist>
 <listitem><para>
-Linux fails, with an "invalid argument" error, if <arg choice="plain">broadcast</arg> is used in the IP version 6 address family.
+Linux fails, with an <quote>invalid argument</quote> error, if <arg choice="plain">broadcast</arg> is used in the IP version 6 address family.
 It only allows broadcast addresses with IP version 4.
 </para></listitem>
 <listitem><para>
-Linux fails, with an "invalid argument" error, if <arg choice="plain">scope</arg> is used with a non-zero scope in the IP version 4 address family.
+Linux fails, with an <quote>invalid argument</quote> error, if <arg choice="plain">scope</arg> is used with a non-zero scope in the IP version 4 address family.
 It only allows scopes with IP version 6.
 </para></listitem>
 </itemizedlist>

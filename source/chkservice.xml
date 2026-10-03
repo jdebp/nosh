@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -40,34 +41,34 @@
 </para>
 
 <para>
-It operates in one of two modes, controlled by the <arg choice="req">--user</arg> command line option:
+It operates in one of two modes, controlled by the <arg choice="req">--user</arg> command&#x2010;line option:
 </para>
 
 <itemizedlist>
 <listitem>
 <para>
-In "system" mode it operates on system-wide state and services.
+In <quote>system</quote> mode it operates on system-wide state and services.
 It potentially communicates with a Service Manager process, such as <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> via a local domain socket at <filename>/run/service-manager/control</filename> and via the control/status API of the individual services.
 </para>
 </listitem>
 <listitem>
 <para>
-In "user" mode it operates on per-user state and services.
+In <quote>user</quote> mode it operates on per-user state and services.
 It potentially communicates with a Service Manager process, such as <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> via a local domain socket at <filename>/run/user/<replaceable>$USER</replaceable>/service-manager/control</filename> and via the control/status API of the individual services.
 </para>
 </listitem>
 </itemizedlist>
 
 <para>
-The <arg choice='plain'>--cursor-keypad-application-mode</arg> and <arg choice='plain'>--calculator-keypad-application-mode</arg> command-line options instruct <command>chkservice</command> to switch, respectively, the cursor keypad and the calculator keypad of the realizing terminal into their "application" modes.
-Otherwise it switches them into their "normal" modes.
+The <arg choice='plain'>--cursor-keypad-application-mode</arg> and <arg choice='plain'>--calculator-keypad-application-mode</arg> command&#x2010;line options instruct <command>chkservice</command> to switch, respectively, the cursor keypad and the calculator keypad of the realizing terminal into their <quote>application</quote> modes.
+Otherwise it switches them into their <quote>normal</quote> modes.
 "application" mode is generally not useful to <command>chkservice</command>, since it makes cursor and calculator keys indistinguishable from accelerator keys.
-The <arg choice='plain'>--no-alternate-screen-buffer</arg> command-line option instructs <command>chkservice</command> to not switch to the alternative screen buffer.
+The <arg choice='plain'>--no-alternate-screen-buffer</arg> command&#x2010;line option instructs <command>chkservice</command> to not switch to the alternative screen buffer.
 This has two uses.
 First, it allows one to retain visibility of displayed information after the program has exited (although <citerefentry><refentrytitle>setterm</refentrytitle><manvolnum>1</manvolnum></citerefentry> provides access to the alternative screen buffer).
 Second, it works around problems with some (yet more!) broken terminal emulators that attempt to be and fail at being like XTerm, which forcibly change cursor and editing keys into application mode when the alternative screen buffer is active.
-The <arg choice='plain'>--inversescreen</arg> command-line option instructs <command>chkservice</command> to switch the DECSCNM ("light"/"dark" screen mode) private mode on or off.
-The <arg choice='plain'>--tui-level</arg> command-line option constrains the use of MouseText or Unicode block graphics and line drawing characters in TUI widgets; currently none.
+The <arg choice='plain'>--inversescreen</arg> command&#x2010;line option instructs <command>chkservice</command> to switch the DECSCNM ("light"/"dark" screen mode) private mode on or off.
+The <arg choice='plain'>--tui-level</arg> command&#x2010;line option constrains the use of MouseText or Unicode block graphics and line drawing characters in TUI widgets; currently none.
 </para>
 
 </refsection>

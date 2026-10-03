@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -38,7 +39,7 @@
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>time-env-add</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>time-env-add</command> will ignore.
 </para>
 
 </refsection>
@@ -155,7 +156,7 @@ Actions fall into two categories, broadly characterized as simple arithmetic on 
 An action whose unit is a second or subdivision of a second operates in terms of TAI seconds (as opposed to UTC seconds) and is able to yield a result TAI64N time that is a leap second.
 Its operation does not involve local calendar time at all.
 Thus (for example) a timer mechanism that uses <command>time-env-add</command> to run every 10 seconds will run every 10 physical seconds, even across a leap second.
-In other words, in either "posix" or "right" timezones:
+In other words, in either <quote>posix</quote> or <quote>right</quote> timezones:
 </para>
 <itemizedlist>
 <listitem><para>
@@ -168,7 +169,7 @@ In other words, in either "posix" or "right" timezones:
 </listitem>
 <listitem><para>
 An action whose unit is a minute or larger operates in terms of the current timezone's local calendar time.
-It can only yield a result TAI64N time that is a leap second if the current timezone is a "right" timezone; "posix" timezones will never yield the TAI64N timestamps for leap seconds, the GNU and BSD C libraries yielding an adjoining UTC second instead.
+It can only yield a result TAI64N time that is a leap second if the current timezone is a <quote>right</quote> timezone; <quote>posix</quote> timezones will never yield the TAI64N timestamps for leap seconds, the GNU and BSD C libraries yielding an adjoining UTC second instead.
 </para><para>
 Moreover, the action will account for whatever the library knows about the local calendar, including UTC offset changes, month lengths, and leap days.
 Thus (for example) a mechanism that uses <command>time-env-add</command> and the action <arg choice='plain'>1month</arg> to calculate the 1st days of successive months will yield the same time on the 1st day of every month.
@@ -190,7 +191,7 @@ In other words:
 </itemizedlist>
 <para>
 Similarly, a <arg choice='plain'>1minute</arg> action will yield the same point in every minute, even when those points are not uniformly spaced.
-In other words, in a "right" timezone:
+In other words, in a <quote>right</quote> timezone:
 </para>
 <itemizedlist>
 <listitem><para>
@@ -208,15 +209,15 @@ In other words, in a "right" timezone:
 <refsection><title>systemd time units</title>
 
 <para>
-The <arg choice='plain'>--systemd-compatibility</arg> command-line option invokes a mode that is more compatible with systemd's timer behaviour (following the actual behaviour wherever this differs from the systemd documentation).
+The <arg choice='plain'>--systemd-compatibility</arg> command&#x2010;line option invokes a mode that is more compatible with systemd's timer behaviour (following the actual behaviour wherever this differs from the systemd documentation).
 </para>
 
 <itemizedlist>
 <listitem><para>
 All actions with units of a second or smaller operate in terms of the current timezone's local calendar time.
-Thus leap second times can only result in "right" timezones, and will never result, for any action, in "posix" timezones.
+Thus leap second times can only result in <quote>right</quote> timezones, and will never result, for any action, in <quote>posix</quote> timezones.
 </para><para>
-In a "posix" timezone, a timer mechanism using seconds as units thus will not run at uniform intervals.
+In a <quote>posix</quote> timezone, a timer mechanism using seconds as units thus will not run at uniform intervals.
 For example, in contrast with the default mode behaviour:
 </para>
 <itemizedlist>
@@ -236,13 +237,13 @@ It is, however, not intuitive for human beings who are not programmers.
 <listitem><para>
 Actions with units of a minute or larger use systemd unit sizes rather than calendar units.
 These unit sizes are fixed multiples of a second.
-In "right" timezones this yields intervals of uniform length, but calendar arithmetic that appears odd to humans.
-In "posix" timezones this yields normal-appearing calendar arithmetic (except for calculations involving months and years, which still appear odd), but intervals that are actually non-uniform in length.
+In <quote>right</quote> timezones this yields intervals of uniform length, but calendar arithmetic that appears odd to humans.
+In <quote>posix</quote> timezones this yields normal-appearing calendar arithmetic (except for calculations involving months and years, which still appear odd), but intervals that are actually non-uniform in length.
 </para>
 <itemizedlist>
 <listitem><para>
 One minute is always exactly 60 seconds.
-Thus in a "right" timezone, in contrast with the default mode behaviour:
+Thus in a <quote>right</quote> timezone, in contrast with the default mode behaviour:
 </para>
 <itemizedlist>
 <listitem><para>
@@ -314,9 +315,9 @@ Thus, in stark contrast to the default mode behaviour:
 <refsection><title>gnu <command>date</command></title>
 
 <para>
-The <arg choice='plain'>--gnu-compatibility</arg> command-line option invokes a mode that is a subset of the systemd compatibility mode, that is compatible with the GNU implementation of the <citerefentry><refentrytitle>date</refentrytitle><manvolnum>1</manvolnum></citerefentry> command.
+The <arg choice='plain'>--gnu-compatibility</arg> command&#x2010;line option invokes a mode that is a subset of the systemd compatibility mode, that is compatible with the GNU implementation of the <citerefentry><refentrytitle>date</refentrytitle><manvolnum>1</manvolnum></citerefentry> command.
 This mode is mostly the same as systemd compatibility mode, except that it does not use systemd's definitions of the minute and larger units but instead uses the calendar units.
-Thus in a "right" timezone, in agreement with the default mode behaviour and in contrast with the systemd mode behaviour:
+Thus in a <quote>right</quote> timezone, in agreement with the default mode behaviour and in contrast with the systemd mode behaviour:
 </para>
 <itemizedlist>
 <listitem><para>
@@ -333,7 +334,7 @@ Thus in a "right" timezone, in agreement with the default mode behaviour and in 
 </para></listitem>
 </itemizedlist>
 <para>
-But in a "posix" timezone seconds intervals are as non-uniform as they are for systemd, in contrast with the default mode behaviour:
+But in a <quote>posix</quote> timezone seconds intervals are as non-uniform as they are for systemd, in contrast with the default mode behaviour:
 </para>
 <itemizedlist>
 <listitem><para>

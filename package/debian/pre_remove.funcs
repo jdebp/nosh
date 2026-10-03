@@ -1,18 +1,18 @@
 # shell pre-deinstall function library for Debian
 # vim: set filetype=sh:
 pwescape() { system-control escape --format account -- "$@" ; }
-del_user() { 
-	if getent passwd "$1" > /dev/null 
+del_user() {
+	if getent passwd "$1" > /dev/null
 	then
 		printf 1>&2 "Removing user: %s\n" "$1"
-		userdel "$1" 
+		userdel "$1"
 	fi
 }
-del_group() { 
-	if getent group "$1" > /dev/null 
+del_group() {
+	if getent group "$1" > /dev/null
 	then
 		printf 1>&2 "Removing group: %s\n" "$1"
-		groupdel "$1" 
+		groupdel "$1"
 	fi
 }
 shut_down() {

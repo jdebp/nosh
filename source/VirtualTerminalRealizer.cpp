@@ -3,6 +3,7 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
+#define _BSD_SOURCE 1
 #include <algorithm>
 #include <vector>
 #include <iostream>
@@ -28,7 +29,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include "SignalManagement.h"
 #include "kbdmap_utils.h"
 #include "kbdmap_default.h"
-#include "haswscons.h"
+#include "config/haswscons.h"
 #include <sys/ioctl.h>
 #if defined(HAS_WSCONS)
 #	include <dev/wscons/wsconsio.h>
@@ -1060,7 +1061,7 @@ HIDWithLineDiscipline::set_mode()
 {
 	if (0 <= device.get())
 		// The line discipline needs to be set to raw mode for the duration.
-		tcsetattr_nointr(device.get(), TCSADRAIN, make_raw(original_attr));
+		tcsetattr_nointr(device.get(), TCSADRAIN, disable_canonical_software_processing(original_attr));
 }
 
 void
@@ -1071,10 +1072,10 @@ HIDWithLineDiscipline::restore()
 }
 
 termios
-HIDWithLineDiscipline::make_raw (
+HIDWithLineDiscipline::disable_canonical_software_processing (
 	const termios & ti
 ) {
-	return ::make_raw(ti);
+	return ::disable_canonical_software_processing(ti);
 }
 
 /* Human input devices with line disciplines that speak the KBIO protocol ***

@@ -3,9 +3,8 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-#define _XOPEN_SOURCE_EXTENDED
 #include <vector>
-#include <cstdio>
+#include <iostream>
 #include <cstdlib>
 #include <cstring>
 #include <unistd.h>
@@ -37,21 +36,23 @@ inline uint16_t TranslateFromXTermButton(const uint16_t button) {
 
 TUIInputBase::TUIInputBase(
 	const TerminalCapabilities & c,
-	FILE * f
+	std::istream & i,
+	int d
 ) :
 	ECMA48Decoder::ECMA48ControlSequenceSink(),
 	caps(c),
 	utf8_decoder(*this),
-	ecma48_decoder(*this, false /* no control strings */, false /* no cancel */, true /* 7-bit extensions */, caps.interix_function_keys, caps.rxvt_function_keys, caps.linux_function_keys),
-	in(f)
+	ecma48_decoder(*this, ECMA48Decoder::Options(false /* no control strings */, false /* no cancel */, true /* 7-bit extensions */, caps.interix_function_keys, caps.rxvt_function_keys, caps.linux_function_keys)),
+	in(i),
+	in_fd(d)
 {
-	if (0 <= tcgetattr_nointr(fileno(in), original_attr))
-		tcsetattr_nointr(fileno(in), TCSADRAIN, make_raw(original_attr));
+	if (0 <= tcgetattr_nointr(in_fd, original_attr))
+		tcsetattr_nointr(in_fd, TCSADRAIN, disable_canonical_software_processing(original_attr));
 }
 
 TUIInputBase::~TUIInputBase(
 ) {
-	tcsetattr_nointr(fileno(in), TCSADRAIN, original_attr);
+	tcsetattr_nointr(in_fd, TCSADRAIN, original_attr);
 }
 
 void
@@ -66,7 +67,7 @@ TUIInputBase::HandleInput(
 int
 TUIInputBase::QueryInputFD(
 ) const {
-	return fileno(in);
+	return in_fd;
 }
 
 void
@@ -638,8 +639,10 @@ skip_dec: 		;
 }
 
 void
-TUIInputBase::ControlString(char32_t /*character*/)
-{
+TUIInputBase::ControlString(
+	char32_t /*start_char*/,
+	char32_t /*term_char*/
+) {
 }
 
 void
@@ -977,10 +980,10 @@ TUIInputBase::LessToExtendedKeys::UCS3(
 	switch (character) {
 		default:	return VIMToExtendedKeys::UCS3(character);
 		case DLE:	// Control+P
-			GenerateExtendedKey(EXTENDED_KEY_PAGE_UP, 0U);
+			GenerateExtendedKey(EXTENDED_KEY_UP_ARROW, 0U);
 			return true;
 		case SO:	// Control+N
-			GenerateExtendedKey(EXTENDED_KEY_PAGE_DOWN, 0U);
+			GenerateExtendedKey(EXTENDED_KEY_DOWN_ARROW, 0U);
 			return true;
 		case SPC:	GenerateExtendedKey(EXTENDED_KEY_PAD_SPACE, 0U); return true;
 		case '?':	GenerateExtendedKey(EXTENDED_KEY_HELP, 0U); return true;

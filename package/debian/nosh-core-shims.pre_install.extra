@@ -1,0 +1,8 @@
+# Extra pre-install for nosh-core-shims
+# vim: set filetype=sh:
+
+for i in chroot false printenv true
+do
+	dpkg-divert --package nosh-core-shims --rename --add /usr/bin/"${i}"
+	dpkg-divert --package nosh-core-shims --rename --divert /usr/share/man/man8/"${i}".distrib.8.gz --add /usr/share/man/man8/"${i}".8.gz
+done

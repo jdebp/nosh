@@ -9,10 +9,9 @@ then
 	echo "usage: $0 name staging-dir" 1>&2
 	exit 100
 fi
-gen_pkgng() {
+gen_scripts() {
 	local name="$1"
 	local dir="$2"
-	local checksum_type=1
 	for j in pre- post-
 	do
 		for k in install deinstall upgrade
@@ -41,19 +40,17 @@ gen_pkgng() {
 			fi
 		done
 	done
+}
+gen_pkgng() {
+	local name="$1"
+	local dir="$2"
+	local version="$(basename "$(pwd -P)" | sed -e 's/^.*-\([[:digit:]][[:alnum:].]*\)$/\1/')"
+	if test -r bsd/"${name}".epoch
+	then
+		version="${version},$(cat "bsd/${name}.epoch")"
+	fi
+	pkg-gencontrol -p "${name}" -P "${dir}" --prefix /usr/local --version "${version}" --comment "$(head -n 1 bsd/"${name}".comment)" --description "$(cat bsd/"${name}".desc)" --maintainer J.deBoynePollard --origin admin/nosh --www 'http://JdeBP.info./Softwares/nosh/'
 	(
-		printf 'name: %s\n' "${name}"
-		printf 'prefix: %s\n' '/'
-		printf 'origin: %s/%s\n' 'local' "${name}"
-		printf 'maintainer: %s\n' 'J.deBoynePollard'
-		printf 'www: %s\n' 'http:/JdeBP.info./Softwares/nosh/'
-		version="`basename \`/bin/pwd\` | sed -e 's/^.*-\([[:digit:]][[:alnum:].]*\)$/\1/'`"
-		if test -r bsd/"${name}".epoch
-		then
-			echo "version: \"${version},`cat \"bsd/${name}.epoch\"`\""
-		else
-			echo "version: \"${version}\""
-		fi
 		if test -r bsd/"${name}".deps
 		then
 			printf '%s: {\n' 'deps'
@@ -75,60 +72,22 @@ gen_pkgng() {
 			done < bsd/"${name}".conflicts
 			printf ' ]\n'
 		fi
-		if test -r bsd/"${name}".comment
-		then
-			printf "%s: <<ENDOFTHETEXT\n" "comment"
-			sed -e 's/^/  /' bsd/"${name}".comment
-			printf "ENDOFTHETEXT\n"
-		fi
-		if test -r bsd/"${name}".desc
-		then
-			printf "%s: <<ENDOFTHETEXT\n" "desc"
-			sed -e 's/^/  /' bsd/"${name}".desc
-			printf "ENDOFTHETEXT\n"
-		fi
 		printf '%s: {\n' 'scripts'
 		for j in pre- post-
 		do
 			for k in install deinstall upgrade
 			do
 				s="$j$k"
-				if test -r "${dir}"/"$s"
+				if test -r bsd/"${name}"."$s"
 				then
 					printf "  %s: <<ENDOFTHETEXT\n" "$s"
-					sed -e 's/^/    /' "${dir}"/"$s"
+					sed -e 's/^/    /' bsd/"${name}"."$s"
 					printf "ENDOFTHETEXT\n"
 				fi
 			done
 		done
 		printf '}\n'
-		cd "${dir}"
-		printf '%s: {\n' 'directories'
-		for j in *bin usr var etc run
-		do
-			! test -d "$j" || find "$j" -type d
-		done | while read k
-		do
-			printf '  "/%s": { uname:"%s"; gname:"%s"; perm:%s; }\n' "$k" "root" "wheel" "`stat -f '%Lp' \"$k\"`"
-		done
-		printf '}\n'
-		printf '%s: {\n' 'files'
-		for j in *bin usr var etc run
-		do
-			! test -d "$j" || find "$j" -type l
-		done | while read k
-		do
-			printf '  "/%s": '-'\n' "$k"
-		done
-		for j in *bin usr var etc run
-		do
-			! test -d "$j" || find "$j" -type f
-		done | while read k
-		do
-			printf '  "/%s": { uname:"%s"; gname:"%s"; sum:"%d$%s"; perm:%s; }\n' "$k" "root" "wheel" "${checksum_type}" "`sha256 -q $k`" "`stat -f '%Lp' \"$k\"`"
-		done
-		printf '}\n'
-	) > ${dir}/+MANIFEST
+	) >> ${dir}/+MANIFEST
 }
 old_pkg() {
 	local name="$1"
@@ -248,9 +207,7 @@ gen_pkgsrc() {
 		done
 	) > ${dir}/+MANIFEST
 	(
-		printf "%s=%s\n" 'OPSYS' "`uname -s`"
-		printf "%s=%s\n" 'MACHINE_ARCH' "`uname -p`"
-		printf "%s=%s\n" 'OS_VERSION' "`uname -r`"
+		printf "%s=%s\n" 'OPSYS' "`uname -s`" 'MACHINE_ARCH' "`uname -p`" 'OS_VERSION' "`uname -r`"
 		if test -r build/cc
 		then
 			read -r cc < build/cc
@@ -283,9 +240,9 @@ gen_pkgsrc() {
 	ln -f bsd/"${name}".desc ${dir}/+DESC
 }
 case "`uname`" in
-OpenBSD)	old_pkg "$1" "$2" ;;
-NetBSD)		gen_pkgsrc "$1" "$2" ;;
-FreeBSD)	gen_pkgng "$1" "$2" ;;
-*)		exec false ;;
+(OpenBSD)	old_pkg "$1" "$2" ;;
+(NetBSD)	gen_scripts "$1" "$2" ; gen_pkgsrc "$1" "$2" ;;
+(FreeBSD)	gen_pkgng "$1" "$2" ;;
+(*)		exec false ;;
 esac
 true

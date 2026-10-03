@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -42,7 +43,7 @@
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>softlimit</command> and <command>hardlimit</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>softlimit</command> and <command>hardlimit</command> will ignore.
 </para>
 
 <para>
@@ -102,7 +103,7 @@ See <citerefentry><refentrytitle>setrlimit</refentrytitle><manvolnum>2</manvolnu
 </para>
 
 <para>
-To set an "infinite" limit, use the text <code>unlimited</code> for the limit value.
+To set an <quote>infinite</quote> limit, use the text <code>unlimited</code> for the limit value.
 Similarly, the text <code>=</code> or <code>hard</code> will use the current value of the hard limit as the value.
 (This provides a simple means of setting the soft limit to the hard limit ceiling without knowing its current value.)
 </para>

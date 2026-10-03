@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -37,7 +38,7 @@ See the manual for each individual shell for its built-in command.
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>unsetenv</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>unsetenv</command> will ignore.
 </para>
 
 <para>

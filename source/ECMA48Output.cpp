@@ -3,8 +3,14 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
+#include <ostream>
+#include <sstream>
+#include <unistd.h>
+
 #include "ECMA48Output.h"
+#include "CharacterCell.h"
 #include "TerminalCapabilities.h"
+#include "ProcessEnvironment.h"
 
 namespace {
 
@@ -29,74 +35,37 @@ PythagoreanDistance (
 
 }
 
-void
-ECMA48Output::print_control_character(
-	unsigned char character
-) const {
-        if (c1_7bit) {
-                if (character >= 0x80) {
-                        std::putc(ESC, out);
-                        character -= 0x40;
-                }
-                std::putc(character, out);
-        } else
-        if (c1_8bit)
-                std::putc(character, out);
-        else
-                UTF8(character);
+bool
+ECMA48Output::query_use_colours (
+	const ProcessEnvironment & envs,
+	int fd
+) {
+	// This is the FreeBSD logic, for now.
+	const char * c = envs.query("CLICOLOR");
+	if (!c) return false;
+	if (isatty(fd)) return true;
+	return !!envs.query("CLICOLOR_FORCE");
 }
 
-void
-ECMA48Output::print_control_characters(
-	unsigned char character,
-	unsigned int n
-) const {
-	while (n) {
-		--n;
-		print_control_character(character);
-	}
-}
+namespace {
 
 void
-ECMA48Output::newline() const
-{
-	if (!caps.lacks_NEL)
-		print_control_character(NEL);
-	else
-	{
-		print_control_character(CR);
-		print_control_character(LF);
-	}
-}
-
-void
-ECMA48Output::reverse_index() const
-{
-	print_control_character(RI);
-}
-
-void
-ECMA48Output::forward_index() const
-{
-	print_control_character(IND);
-}
-
-void
-ECMA48Output::UTF8(
+UTF8(
+	std::ostream & out,
 	uint32_t ch
-) const {
+) {
 	if (ch < 0x00000080) {
 		const char s[1] = {
 			static_cast<char>(ch)
 		};
-		std::fwrite(s, sizeof s, 1, out);
+		out.write(s, sizeof s);
 	} else
 	if (ch < 0x00000800) {
 		const char s[2] = {
 			static_cast<char>(0xC0 | (0x1F & (ch >> 6U))),
 			static_cast<char>(0x80 | (0x3F & (ch >> 0U))),
 		};
-		std::fwrite(s, sizeof s, 1, out);
+		out.write(s, sizeof s);
 	} else
 	if (ch < 0x00010000) {
 		const char s[3] = {
@@ -104,7 +73,7 @@ ECMA48Output::UTF8(
 			static_cast<char>(0x80 | (0x3F & (ch >> 6U))),
 			static_cast<char>(0x80 | (0x3F & (ch >> 0U))),
 		};
-		std::fwrite(s, sizeof s, 1, out);
+		out.write(s, sizeof s);
 	} else
 	if (ch < 0x00200000) {
 		const char s[4] = {
@@ -113,7 +82,7 @@ ECMA48Output::UTF8(
 			static_cast<char>(0x80 | (0x3F & (ch >> 6U))),
 			static_cast<char>(0x80 | (0x3F & (ch >> 0U))),
 		};
-		std::fwrite(s, sizeof s, 1, out);
+		out.write(s, sizeof s);
 	} else
 	if (ch < 0x04000000) {
 		const char s[5] = {
@@ -123,7 +92,7 @@ ECMA48Output::UTF8(
 			static_cast<char>(0x80 | (0x3F & (ch >> 6U))),
 			static_cast<char>(0x80 | (0x3F & (ch >> 0U))),
 		};
-		std::fwrite(s, sizeof s, 1, out);
+		out.write(s, sizeof s);
 	} else
 	{
 		const char s[6] = {
@@ -134,8 +103,129 @@ ECMA48Output::UTF8(
 			static_cast<char>(0x80 | (0x3F & (ch >> 6U))),
 			static_cast<char>(0x80 | (0x3F & (ch >> 0U))),
 		};
-		std::fwrite(s, sizeof s, 1, out);
+		out.write(s, sizeof s);
 	}
+}
+
+void
+print_control_character(
+	std::ostream & s,
+	bool c1_7bit,
+	bool c1_8bit,
+	unsigned char character
+) {
+	if (c1_7bit) {
+		if (character >= 0x80) {
+			s.put(ESC);
+			character -= 0x40;
+		}
+		s.put(character);
+	} else
+	if (c1_8bit)
+		s.put(character);
+	else
+		UTF8(s, character);
+}
+
+void
+print_control_characters(
+	std::ostream & s,
+	bool c1_7bit,
+	bool c1_8bit,
+	unsigned char character,
+	unsigned int n
+) {
+	if (c1_7bit) {
+		if (character >= 0x80) {
+			character -= 0x40;
+			while (n) {
+				--n;
+				s.put(ESC);
+				s.put(character);
+			}
+		} else
+		while (n) {
+			--n;
+			s.put(character);
+		}
+	} else
+	if (c1_8bit)
+		while (n) {
+			--n;
+			s.put(character);
+		}
+	else
+		while (n) {
+			--n;
+			UTF8(s, character);
+		}
+}
+
+inline
+void
+print_subparameter(
+	std::ostream & s,
+	unsigned n
+) {
+	s.put(':') << n;
+}
+
+inline
+void
+csi(
+	std::ostream & s,
+	bool c1_7bit,
+	bool c1_8bit
+) {
+	print_control_character(s, c1_7bit, c1_8bit, CSI);
+}
+
+struct sentry : public std::ostringstream {
+	sentry(std::ostream & o) : out(o) {}
+	~sentry() {
+		const std::string & s(str());
+		out.write(s.data(), s.length());
+	}
+	std::ostream & out;
+};
+
+}
+
+void
+ECMA48Output::control_character(
+	unsigned char character
+) const {
+	sentry s(out);
+	print_control_character(s, c1_7bit, c1_8bit, character);
+}
+
+void
+ECMA48Output::control_characters(
+	unsigned char character,
+	unsigned int n
+) const {
+	sentry s(out);
+	print_control_characters(s, c1_7bit, c1_8bit, character, n);
+}
+
+void
+ECMA48Output::newline() const
+{
+	sentry s(out);
+	if (!caps.lacks_NEL)
+		print_control_character(s, c1_7bit, c1_8bit, NEL);
+	else
+	{
+		s.put(CR);
+		s.put(LF);
+	}
+}
+
+void
+ECMA48Output::UTF8(
+	uint32_t character
+) const {
+	::UTF8(out, character);
 }
 
 void
@@ -144,6 +234,225 @@ ECMA48Output::change_cursor_visibility(
 ) const {
 	if (caps.use_DECPrivateMode)
 		DECTCEM(v);
+}
+
+void
+ECMA48Output::set_horizontal_tabstop_here(
+) const {
+	if (!caps.lacks_CTC)
+		CTC(0U);
+	else
+		control_character(HTS);
+}
+
+void
+ECMA48Output::clear_horizontal_tabstop_here(
+) const {
+	if (!caps.lacks_CTC)
+		CTC(2U);
+	else
+		TBC(0U);
+}
+
+void
+ECMA48Output::horizontal_position(
+	unsigned n
+) const {
+	if (!caps.lacks_HPA)
+		HPA(n);
+	else
+		CHA(n);
+}
+
+void
+ECMA48Output::SGRColour256(
+	bool is_fg, unsigned n
+) const {
+	sentry s(out);
+	csi(s, c1_7bit, c1_8bit);
+	s << (is_fg ? 38U : 48U);
+	print_subparameter(s, 5U);
+	print_subparameter(s, n);
+	s.put('m');
+}
+
+void
+ECMA48Output::SGRTrueColourFaulty(
+	bool is_fg, unsigned r, unsigned g, unsigned b
+) const {
+	sentry s(out);
+	csi(s, c1_7bit, c1_8bit);
+	s << (is_fg ? 38U : 48U);
+	print_subparameter(s, 2U);
+	print_subparameter(s, r);
+	print_subparameter(s, g);
+	print_subparameter(s, b);
+	s.put('m');
+}
+
+void
+ECMA48Output::SGRTrueColour(
+	bool is_fg, unsigned r, unsigned g, unsigned b
+) const {
+	sentry s(out);
+	csi(s, c1_7bit, c1_8bit);
+	s << (is_fg ? 38U : 48U);
+	print_subparameter(s, 2U);
+	s.put(':');
+	print_subparameter(s, r);
+	print_subparameter(s, g);
+	print_subparameter(s, b);
+	s.put('m');
+}
+
+void
+ECMA48Output::escape_sequence(
+	char character
+) const {
+	sentry s(out);
+	s.put(ESC).put(character);
+}
+
+void
+ECMA48Output::control_sequence(
+	char f
+) const {
+	sentry s(out);
+	csi(s, c1_7bit, c1_8bit);
+	s.put(f);
+}
+
+void
+ECMA48Output::control_sequence(
+	char f,
+	unsigned n0
+) const {
+	sentry s(out);
+	csi(s, c1_7bit, c1_8bit);
+	s << n0;
+	s.put(f);
+}
+
+void
+ECMA48Output::control_sequence(
+	char f,
+	unsigned n0,
+	unsigned n1
+) const {
+	sentry s(out);
+	csi(s, c1_7bit, c1_8bit);
+	s << n0;
+	s.put(';') << n1;
+	s.put(f);
+}
+
+void
+ECMA48Output::control_sequence(
+	char f,
+	unsigned n0,
+	unsigned n1,
+	unsigned n2
+) const {
+	sentry s(out);
+	csi(s, c1_7bit, c1_8bit);
+	s << n0;
+	s.put(';') << n1;
+	s.put(';') << n2;
+	s.put(f);
+}
+
+void
+ECMA48Output::control_sequence(
+	char f,
+	unsigned n0,
+	unsigned n1,
+	unsigned n2,
+	unsigned n3,
+	unsigned n4
+) const {
+	sentry s(out);
+	csi(s, c1_7bit, c1_8bit);
+	s << n0;
+	s.put(';') << n1;
+	s.put(';') << n2;
+	s.put(';') << n3;
+	s.put(';') << n4;
+	s.put(f);
+}
+
+void
+ECMA48Output::control_sequence(
+	char f,
+	const std::vector<unsigned> & n
+) const {
+	sentry s(out);
+	csi(s, c1_7bit, c1_8bit);
+	for (std::vector<unsigned>::const_iterator b(n.begin()), e(n.end()), p(b); e != p; ++p) {
+		if (b != p) s.put(';');
+		s << *p;
+	}
+	s.put(f);
+}
+
+void
+ECMA48Output::control_sequence(
+	char f,
+	unsigned n,
+	const std::vector<unsigned> & u
+) const {
+	sentry s(out);
+	csi(s, c1_7bit, c1_8bit);
+	s << n;
+	for (std::vector<unsigned>::const_iterator p(u.begin()), e(u.end()); e != p; ++p) {
+		s.put(':');
+		s << *p;
+	}
+	s.put(f);
+}
+
+void
+ECMA48Output::control_sequence(
+	char i,
+	char f
+) const {
+	sentry s(out);
+	csi(s, c1_7bit, c1_8bit);
+	s.put(i).put(f);
+}
+
+void
+ECMA48Output::control_sequence(
+	char i,
+	char f,
+	unsigned n0
+) const {
+	sentry s(out);
+	csi(s, c1_7bit, c1_8bit);
+	s << n0;
+	s.put(i).put(f);
+}
+
+void
+ECMA48Output::private_control_sequence(
+	char p,
+	char f
+) const {
+	sentry s(out);
+	csi(s, c1_7bit, c1_8bit);
+	s.put(p).put(f);
+}
+
+void
+ECMA48Output::private_control_sequence(
+	char p,
+	char f,
+	unsigned n0
+) const {
+	sentry s(out);
+	csi(s, c1_7bit, c1_8bit);
+	s.put(p);
+	s << n0;
+	s.put(f);
 }
 
 void
@@ -237,8 +546,7 @@ ECMA48Output::SGRColour(
 	bool is_fg
 ) const {
 	if (TerminalCapabilities::NO_COLOURS == caps.colour_level) return;
-	csi();
-	std::fprintf(out, "%um", is_fg ? 39U : 49U);
+	control_sequence('m', is_fg ? 39U : 49U);
 }
 
 void

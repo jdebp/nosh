@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -17,7 +18,7 @@
 
 <refnamediv>
 <refname>userenv-fromenv</refname>
-<refpurpose>set the "user" environment variables from a given UID</refpurpose>
+<refpurpose>set the <quote>user</quote> environment variables from a given UID</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>
@@ -45,7 +46,7 @@
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>userenv-fromenv</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>userenv-fromenv</command> will ignore.
 </para>
 
 <para>
@@ -66,7 +67,7 @@ From the contents of the account database record, it sets these environment vari
 <refsection><title>User account database variables</title>
 
 <para>
-The following environment variables are set unless the <arg choice='plain'>--no-set-user</arg> command-line option is used:
+The following environment variables are set unless the <arg choice='plain'>--no-set-user</arg> command&#x2010;line option is used:
 </para>
 <variablelist>
 
@@ -82,15 +83,18 @@ The following environment variables are set unless the <arg choice='plain'>--no-
 </variablelist>
 
 <para>
-The following environment variables are set unless the <arg choice='plain'>--no-set-shell</arg> command-line option is used:
+The following environment variables are set unless the <arg choice='plain'>--no-set-shell</arg> command&#x2010;line option is used:
 </para>
 <variablelist>
 
 <varlistentry>
 <term><envar>SHELL</envar></term>
 <listitem><para>
-Set to the pathname of the user's shell program, as given in the system account database, falling back if the field is blank to the system's default "B" shell name that is hardwired into the C library.
-(This fallback is in line with the behaviour of <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
+Set to the pathname of the user's shell program, as given by the value of the <code>shell</code> capability in the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database.
+There is a twofold default fallback if that capability is not set.
+The first default is the user's shell, as given in the system account database.
+If that field is blank, a further fallback is to the system's default <quote>B</quote> shell name that is hardwired into the C library.
+(This second fallback is in line with the behaviour of <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
 </para></listitem>
 </varlistentry>
 
@@ -99,7 +103,7 @@ Set to the pathname of the user's shell program, as given in the system account 
 </refsection><refsection><title>Path variables</title>
 
 <para>
-The following environment variables are set from the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database if the <arg choice='plain'>--default-path</arg> command-line option is used and they are not already set:
+The following environment variables are set from the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database if the <arg choice='plain'>--default-path</arg> command&#x2010;line option is used and they are not already set:
 </para>
 <variablelist>
 
@@ -122,7 +126,7 @@ The following environment variables are set from the <citerefentry><refentrytitl
 </refsection><refsection><title>Tools variables</title>
 
 <para>
-The following environment variables are set from the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database if the <arg choice='plain'>--default-tools</arg> command-line option is used and they are not already set:
+The following environment variables are set from the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database if the <arg choice='plain'>--default-tools</arg> command&#x2010;line option is used and they are not already set:
 </para>
 <variablelist>
 
@@ -143,19 +147,42 @@ Set to the value of the <code>visual</code> capability, defaulting if there is n
 <term><envar>PAGER</envar></term>
 <listitem><para>
 Set to the value of the <code>pager</code> capability, defaulting if there is no capability to <command>more</command>.
-(The Single Unix Specification dropped <command>pg</command> in 2017.
-<command>less</command> is not universal, and where it is available it is usually also available as <command>more</command> anyway.
-<command>most</command> is likewise not universal.)
-If the <arg choice='plain'>--toolkit-pager</arg> command-line option is used that default changes from the standard <citerefentry><refentrytitle>more</refentrytitle><manvolnum>1</manvolnum></citerefentry> to the <citerefentry><refentrytitle>console-tty37-viewer</refentrytitle><manvolnum>1</manvolnum></citerefentry> that comes in the same toolkit as <command>userenv-fromenv</command>.
+If the <arg choice='plain'>--toolkit-pager</arg> command&#x2010;line option is used that default changes from the standard <citerefentry><refentrytitle>more</refentrytitle><manvolnum>1</manvolnum></citerefentry> to the <citerefentry><refentrytitle>console-tty37-viewer</refentrytitle><manvolnum>1</manvolnum></citerefentry> that comes in the same toolkit as <command>userenv-fromenv</command>.
+</para></listitem>
+</varlistentry><varlistentry>
+<term><envar>MANPAGER</envar></term>
+<listitem><para>
+Set to the value of the <code>manpager</code> capability, defaulting if there is no capability to <command>more</command>.
+If the <arg choice='plain'>--toolkit-pager</arg> command&#x2010;line option is used that default changes from the standard <citerefentry><refentrytitle>more</refentrytitle><manvolnum>1</manvolnum></citerefentry> to the <citerefentry><refentrytitle>console-tty37-viewer</refentrytitle><manvolnum>1</manvolnum></citerefentry> that comes in the same toolkit as <command>userenv-fromenv</command>, with its <arg choice='plain'>--discard-control-strings</arg> option.
+This environment variable is used by some <citerefentry><refentrytitle>man</refentrytitle><manvolnum>1</manvolnum></citerefentry> commands.
+</para></listitem>
+</varlistentry><varlistentry>
+<term><envar>MANXMLVIEWER</envar></term>
+<listitem><para>
+Set to the value of the <code>manxmlviewer</code> capability, defaulting if there is no capability to <citerefentry><refentrytitle>console-docbook-xml-viewer</refentrytitle><manvolnum>1</manvolnum></citerefentry> that comes in the same toolkit as <command>userenv-fromenv</command>.
+This environment variable is used by some <citerefentry><refentrytitle>man</refentrytitle><manvolnum>1</manvolnum></citerefentry> commands.
+</para></listitem>
+</varlistentry><varlistentry>
+<term><envar>WWWBROWSER</envar></term>
+<listitem><para>
+Set to the value of the <code>wwwbrowser</code> capability, defaulting if there is no capability to <command>www-browser</command> which is the name of the <quote>alternative</quote> from Debian's <citerefentry><refentrytitle>update-alternatives</refentrytitle><manvolnum>1</manvolnum></citerefentry> system.
+This environment variable is used by some <citerefentry><refentrytitle>man</refentrytitle><manvolnum>1</manvolnum></citerefentry> commands.
 </para></listitem>
 </varlistentry>
 
 </variablelist>
 
+<note>
+The default of <command>more</command> is the most portable choice.
+The Single Unix Specification dropped <command>pg</command> in 2017.
+<command>less</command> is not universal, and where it is available it is usually also available as <command>more</command> anyway.
+<command>most</command> is likewise not universal.
+</note>
+
 </refsection><refsection><title>Terminal variables</title>
 
 <para>
-The following environment variables are set from the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database if the <arg choice='plain'>--default-term</arg> command-line option is used and they are not already set:
+The following environment variables are set from the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database if the <arg choice='plain'>--default-term</arg> command&#x2010;line option is used and they are not already set:
 </para>
 <variablelist>
 
@@ -174,7 +201,7 @@ The <envar>TERM</envar> variable will have been set for a login session by the T
 </refsection><refsection><title>Locale variables</title>
 
 <para>
-The following environment variables are set from the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database if the <arg choice='plain'>--default-locale</arg> command-line option is used and they are not already set:
+The following environment variables are set from the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database if the <arg choice='plain'>--default-locale</arg> command&#x2010;line option is used and they are not already set:
 </para>
 <variablelist>
 
@@ -191,7 +218,7 @@ The following environment variables are set from the <citerefentry><refentrytitl
 </refsection><refsection><title>Timezone variables</title>
 
 <para>
-The following environment variables are set from the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database if the <arg choice='plain'>--default-timezone</arg> command-line option is used and they are not already set:
+The following environment variables are set from the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database if the <arg choice='plain'>--default-timezone</arg> command&#x2010;line option is used and they are not already set:
 </para>
 <variablelist>
 
@@ -205,7 +232,7 @@ The following environment variables are set from the <citerefentry><refentrytitl
 </refsection><refsection><title>XDG variables</title>
 
 <para>
-The following environment variables are set if the <arg choice='plain'>--set-xdg</arg> command-line option is used:
+The following environment variables are set if the <arg choice='plain'>--set-xdg</arg> command&#x2010;line option is used:
 </para>
 <variablelist>
 
@@ -230,7 +257,7 @@ Set to <filename>/usr/local/share</filename>:<filename>/usr/pkg/share</filename>
 The addition of <filename>/share</filename> comes from TrueOS Desktop.
 <filename>/usr/pkg/share</filename> is the conventional <filename><replaceable>$LOCALBASE</replaceable>/share</filename> from NetBSD pkgsrc.
 </para><note>
-TrueOS Desktop ordered the directories the other way around, giving operating system data files priority over "site local" ones.
+TrueOS Desktop ordered the directories the other way around, giving operating system data files priority over <quote>site local</quote> ones.
 This ordering, on the other hand, is the ordering that is used in the XDG Desktop Specification.
 </note></listitem>
 </varlistentry>
@@ -264,7 +291,7 @@ This ordering, on the other hand, is the ordering that is used in the XDG Deskto
 </refsection><refsection><title>Desktop Bus variables</title>
 
 <para>
-The following environment variables are set if the <arg choice='plain'>--set-dbus</arg> command-line option is used:
+The following environment variables are set if the <arg choice='plain'>--set-dbus</arg> command&#x2010;line option is used:
 </para>
 <variablelist>
 
@@ -281,7 +308,7 @@ Set to <filename>unix:path=/run/user/<replaceable>username</replaceable>/bus</fi
 </refsection><refsection><title>Other variables</title>
 
 <para>
-If the <arg choice='plain'>--set-other</arg> command-line option is used, all environment variables are set from the <code>setenv</code> capability in the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database.
+If the <arg choice='plain'>--set-other</arg> command&#x2010;line option is used, all environment variables are set from the <code>setenv</code> capability in the <citerefentry><refentrytitle>login.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> database.
 Both the system and user databases are processed.
 In line with the behaviour of <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>, any conflicting environment variables set here will be overridden by the variables taken from other capabilities and from the user account database, with the exceptions of the tools, XDG, and Desktop Bus variables, which will conversely be overriden by any settings here.
 This ordering is because the tools, XDG, and Desktop Bus variables are an extension, setting variables for which people will have been using <code>setenv</code>.
@@ -293,7 +320,7 @@ This ordering is because the tools, XDG, and Desktop Bus variables are an extens
 
 <para>
 As of version 1.34 this program no longer employs the GNU C library nor the BSD C library for environment variable handling.
-The previously documented workaround for those libraries' have memory leaks in their <citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>3</manvolnum></citerefentry> and <citerefentry><refentrytitle>clearenv</refentrytitle><manvolnum>3</manvolnum></citerefentry> functions, is therefore no longer necessary.
+The previously documented workaround for those libraries' having memory leaks in their <citerefentry><refentrytitle>setenv</refentrytitle><manvolnum>3</manvolnum></citerefentry> and <citerefentry><refentrytitle>clearenv</refentrytitle><manvolnum>3</manvolnum></citerefentry> functions, is therefore no longer necessary.
 </para>
 
 <para>

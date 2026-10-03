@@ -11,17 +11,18 @@ then
 fi
 name="$1"
 dest="$2"
+pkgbase=/usr/local
 
 install -d -m 0755 "${dest}"/DEBIAN
 
 rm -f -- debian/substvars
 case "${name}" in
 nosh-exec|nosh-terminal-management)
-	dpkg-shlibdeps "${dest}"/usr/local/bin/*
+	dpkg-shlibdeps "${dest}${pkgbase}"/bin/*
 	;;
 nosh-service-management)
-	dpkg-shlibdeps "${dest}"/usr/local/bin/*
-	dpkg-shlibdeps "${dest}"/usr/local/sbin/*
+	dpkg-shlibdeps "${dest}${pkgbase}"/bin/*
+	dpkg-shlibdeps "${dest}${pkgbase}"/sbin/*
 	;;
 nosh-service-command-shim)
 	;;
@@ -91,7 +92,7 @@ Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Name: ${name}
 
 Files: *
-Copyright: 2012,2013,2014,2015,2016,2017,2018,2025 Jonathan de Boyne Pollard
+Copyright: 2012,2013,2014,2015,2016,2017,2018,2025,2026 Jonathan de Boyne Pollard
 License: ISC, BSD-2-clause, FreeBSD, Expat
 EOF
 

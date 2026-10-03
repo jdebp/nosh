@@ -29,7 +29,7 @@ do
 	system-control convert-systemd-units $e --bundle-root "$r/" "./${ataidle_service}.service"
 	mkdir -p -m 0755 "$r/${ataidle_service}/service/env"
 	rm -f -- "$r/${ataidle_service}/log"
-	ln -s -- "../../../sv/ataidle-log" "$r/${ataidle_service}/log"
+	ln -s -- "../../../service-bundles/services/ataidle-log" "$r/${ataidle_service}/log"
 	system-control preset ataidle-log
 	flags="`get_var2 \"${dev}\" default`"
 	system-control set-service-env "${ataidle_service}" flags "${flags}"

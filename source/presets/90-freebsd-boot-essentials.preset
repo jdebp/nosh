@@ -13,5 +13,6 @@ enable	freebsd-update-finish.service
 enable	trueos-update-finish.service
 
 # Sysinit services
+enable	coreboot-console.service
 enable	devd-log.service
 enable	devd.service

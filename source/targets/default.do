@@ -15,8 +15,8 @@ ifchange_follow() {
 			redo-ifchange "$i"
 			l="`readlink \"$i\"`" || break
 			case "$l" in
-			/*)	i="$l" ;;
-			*)	i="`dirname \"$i\"`/$l" || break ;;
+			(/*)	i="$l" ;;
+			(*)	i="`dirname \"$i\"`/$l" || break ;;
 			esac
 		done
 	done
@@ -27,7 +27,7 @@ ifchange_follow() {
 # ###
 
 case "${base}" in
-*@*) 
+(*@*) 
 	template="${name%%@*}"
 	if test -e "${template}"@.target
 	then
@@ -38,7 +38,7 @@ case "${base}" in
 		exit 1
 	fi
 	;;
-*)
+(*)
 	if test -e "${name}".target
 	then
 		unit="${name}".target
@@ -65,9 +65,9 @@ install -d -m 0755 targets.new
 
 rm -r -f targets.new/"${base}"
 
-redo-ifchange system-control
+redo-ifchange command/build-helper
 
-./system-control convert-systemd-units --no-systemd-quirks --no-generation-comment ${etc} --bundle-root targets.new/ "${unit}"
+command/build-helper convert-systemd-units --no-systemd-quirks --no-generation-comment ${etc} --bundle-root targets.new/ "${unit}"
 
 # ###
 # Add in the environment directory and UCSPI ruleset infrastructure, if required.

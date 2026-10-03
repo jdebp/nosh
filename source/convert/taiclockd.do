@@ -12,7 +12,7 @@ set_if_unset() { if test -z "`system-control print-service-env \"$1\" \"$2\"`" ;
 
 # These get us *only* the configuration variables, safely.
 read_rc() { clearenv read-conf rc.conf printenv "$1" ; }
-list_network_addresses() { ( read_rc taiclockd_network_addresses || echo ::0 ) | fmt -w 1 ; }
+list_network_addresses() { printf '%s\n' `read_rc taiclockd_network_addresses || echo ::0` ; }
 
 redo-ifchange rc.conf general-services "taiclockd@.socket" "taiclockd.service"
 

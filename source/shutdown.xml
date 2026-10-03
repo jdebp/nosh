@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -82,11 +83,11 @@ They are sent at 6-hourly intervals until the final 6 hours, at hourly intervals
 </para>
 
 <para>
-When to shutdown must be specified either with a command line option or an argument:
+When to shutdown must be specified either with a command&#x2010;line option or an argument:
 </para>
 <itemizedlist>
 <listitem><para>
-The <arg choice='plain'>-g</arg> (grace period) command line option specifies when with a relative time.
+The <arg choice='plain'>-g</arg> (grace period) command&#x2010;line option specifies when with a relative time.
 It can be:
 </para>
 <variablelist>
@@ -133,7 +134,7 @@ Shutdown scheduled for <replaceable>minutes</replaceable> minutes from now.
 <listitem><para>
 Shutdown scheduled for <replaceable>HH</replaceable>:<replaceable>MM</replaceable> today.
 This must be now or in the future; and a valid time.
-It is an absolute time that is not to be confused with the relative time used with the <arg choice='plain'>-g</arg> command line option.
+It is an absolute time that is not to be confused with the relative time used with the <arg choice='plain'>-g</arg> command&#x2010;line option.
 </para><caution>
 The old BSD <command>shutdown</command> command considers this to be a backwards compatibility syntax, which is undocumented in its manual.
 Because of that, and also because of the potential confusion with the (in contrast, documented by AT&amp;T System 5) grace period syntax, use of this form of absolute time is strongly discouraged.
@@ -152,7 +153,7 @@ This must be now or in the future.
 
 <para>
 The final state change request can be disabled with the <arg choice='plain'>--kick-off</arg> option.
-Its name derives from the notion that one can perform a partial switch to (the old) "single-user" mode which only logs out interactive users, kicking them off the system, although this mechanism has been superseded now that "single-user" mode no longer exists.
+Its name derives from the notion that one can perform a partial switch to (the old) <quote>single-user</quote> mode which only logs out interactive users, kicking them off the system, although this mechanism has been superseded now that <quote>single-user</quote> mode no longer exists.
 </para>
 
 </refsection>
@@ -184,15 +185,15 @@ In this <command>shutdown</command>, the intervals between warning messages roug
 
 </refsection>
 
-<refsection><title>Defaults and the obsolete "single-user" mode</title>
+<refsection><title>Defaults and the obsolete <quote>single-user</quote> mode</title>
 
 <para>
-The upstart, old BSD, and van Smoorenberg systems incorporated the notion of shutting down to "single-user" mode, even though (on the BSDs at least) that was not strictly speaking possible as the switch to "multi-user" mode made a one-way change to the kernel secure level.
+The upstart, old BSD, and van Smoorenberg systems incorporated the notion of shutting down to <quote>single-user</quote> mode, even though (on the BSDs at least) that was not strictly speaking possible as the switch to <quote>multi-user</quote> mode made a one-way change to the kernel secure level.
 As a consequence, their <command>shutdown</command> commands had the following semantics:
 </para>
 <itemizedlist>
 <listitem><para>
-With no options, the default action was to (attempt to) transition to "single-user" mode.
+With no options, the default action was to (attempt to) transition to <quote>single-user</quote> mode.
 </para></listitem>
 <listitem><para>
 The <arg choice='plain'>-r</arg>, <arg choice='plain'>-h</arg>, and (in the old BSD system) <arg choice='plain'>-p</arg> options overrode that to select reboot, halt, or poweroff.
@@ -203,7 +204,7 @@ In the old BSD system the <arg choice='plain'>-h</arg> and <arg choice='plain'>-
 </itemizedlist>
 
 <para>
-There is no "single-user" mode now.
+There is no <quote>single-user</quote> mode now.
 Neither <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> nor systemd encompass any such thing, and it was in fact also superseded in the van Smoorenberg system in 1995.
 Its replacements <ulink url="https://jdebp.uk/FGA/emergency-and-rescue-mode-bootstrap.html">since the 1990s</ulink> have been and are the <filename>emergency</filename> and <filename>rescue</filename> targets, described in <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 These are <emphasis>startup</emphasis> targets that are not reachable via <emphasis>shutdown</emphasis> procedures.
@@ -222,13 +223,13 @@ The <arg choice='plain'>-r</arg>, <arg choice='plain'>-h</arg>, and <arg choice=
 </itemizedlist>
 
 <para>
-UnixWare supported a <arg choice="plain">su</arg> command-line argument.
-This was <emphasis>itself</emphasis> a backwards-compatibility mechanism for the <command>shutdown</command> command in XENIX, the UnixWare command having a different syntax involving an <arg choice="plain">-i</arg> commmand-line option and "run levels".
-Neither command-line syntax was provided by the old BSD, van Smoorenberg, upstart, or systemd <command>shutdown</command> comands.
+UnixWare supported a <arg choice="plain">su</arg> command&#x2010;line argument.
+This was <emphasis>itself</emphasis> a backwards-compatibility mechanism for the <command>shutdown</command> command in XENIX, the UnixWare command having a different syntax involving an <arg choice="plain">-i</arg> commmand-line option and <quote>run levels</quote>.
+Neither command&#x2010;line syntax was provided by the old BSD, van Smoorenberg, upstart, or systemd <command>shutdown</command> comands.
 </para>
 
 <para>
-Not only is there no "single-user" mode now, <ulink url="https://jdebp.uk/FGA/run-levels-are-history.html">run levels have been obsolete in the AT&amp;T Unix world since the 1980s</ulink> and UnixWare had switched to the Service Access Facility.
+Not only is there no <quote>single-user</quote> mode now, <ulink url="https://jdebp.uk/FGA/run-levels-are-history.html">run levels have been obsolete in the AT&amp;T Unix world since the 1980s</ulink> and UnixWare had switched to the Service Access Facility.
 Therefore, this <command>shutdown</command> likewise does not provide this XENIX syntax that translates a then-obsolete thing into something that was <emphasis>also then</emphasis> largely obsolete.
 </para>
 

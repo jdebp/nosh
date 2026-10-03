@@ -4,8 +4,8 @@
 ## **************************************************************************
 # vim: set filetype=sh:
 main="`basename "$1"`"
-objects="main-exec.o builtins-${main}.o"
-libraries="builtins.a manager.a utils.a"
+objects="object/main-exec.o object/builtins-${main}.o"
+libraries='library/builtins.a library/manager.a library/utils.a'
 #test _"`uname`" = _"FreeBSD" || uuid=-luuid
 test _"`uname`" = _"Linux" && rt=-lrt
 # Needed because system-manager runs before filesystems are mounted.

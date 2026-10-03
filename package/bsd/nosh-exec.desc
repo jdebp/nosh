@@ -1,7 +1,7 @@
  nosh is a minimal script processor for use in the #! lines of scripts.
  .
  Included here are various commands for altering process state:
-  * appendpath, chdir, chroot, clearenv, envdir, envuidgid, fdmove, fdredir, getuidgid
+  * appendpath, chdir, chroot, clearenv, envdir, envuidgid, fdmove, fdredir, getuidgid,
   * machineenv, prependpath, read-conf, setenv, setgid-fromenv, setlogin, setsid, setuidgid,
   * setuidgid-fromenv, softlimit, ulimit, umask, unsetenv, userenv, userenv-fromenv
  .
@@ -12,4 +12,8 @@
   * local-seqpacket-socket-accept, local-seqpacket-socket-listen,
   * local-stream-socket-accept, local-stream-socket-listen, local-stream-socket-connect,
   * udp-socket-listen, udp-socket-connect,
-  * tcp-socket-accept, tcp-socket-listen, tcp-socket-connect,
+  * tcp-socket-accept, tcp-socket-listen, tcp-socket-connect
+ .
+ Additionally there are some miscellaneous commands:
+  * sqz, linenumber
+ .

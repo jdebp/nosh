@@ -1,0 +1,14 @@
+--tar-ignore build
+--tar-ignore command
+--tar-ignore config
+--tar-ignore guide
+--tar-ignore manual
+--tar-ignore TODO*
+--tar-ignore *.deb
+--tar-ignore *.gz
+--tar-ignore *.bz2
+--tar-ignore *.dsc
+--tar-ignore *.buildinfo
+--tar-ignore .git*
+--tar-ignore debian/nosh-*/*
+--tar-ignore install-*

@@ -5,7 +5,7 @@ For copyright and licensing terms, see the file named COPYING.
 
 #define __STDC_FORMAT_MACROS
 #include <string>
-#include "hasvis.h"
+#include "config/hasvis.h"
 #if defined(HAS_VIS)
 #include <vis.h>
 #else

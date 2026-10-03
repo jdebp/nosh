@@ -141,13 +141,14 @@ system-control preset vdev.socket vdev-log.service
 
 # Set up gopher, http, and ftp access control defaults.
 for I in \
-	gopher6d \
-	http6d \
+	axfrdns \
+	finger6d \
 	ftp6d \
 	ftp4d \
-	axfrdns \
 	gemini6d \
-	finger6d \
+	gopher6d \
+	http6d \
+	ident6d \
 	nicname6d \
 	;
 do
@@ -157,9 +158,11 @@ do
 		then
 			install -d -m 0755 "${svcdir}"/service/ip4/10.0.0.0_8
 			install -d -m 0755 "${svcdir}"/service/ip4/127.0.0.0_8
+			install -d -m 0755 "${svcdir}"/service/ip4/172.16.0.0_12
 			install -d -m 0755 "${svcdir}"/service/ip4/192.168.0.0_16
 			install -m 0644 /dev/null "${svcdir}"/service/ip4/10.0.0.0_8/deny
 			install -m 0644 /dev/null "${svcdir}"/service/ip4/127.0.0.0_8/allow
+			install -m 0644 /dev/null "${svcdir}"/service/ip4/172.16.0.0_12/deny
 			install -m 0644 /dev/null "${svcdir}"/service/ip4/192.168.0.0_16/deny
 			if test "$I" = "axfrdns"
 			then
@@ -174,7 +177,14 @@ do
 			install -m 0644 /dev/null "${svcdir}"/service/ip6/::1_128/allow
 			ln -s -- ../ip4/10.0.0.0_8 "${svcdir}"/service/ip6/::ffff:10.0.0.0_104
 			ln -s -- ../ip4/127.0.0.0_8 "${svcdir}"/service/ip6/::ffff:127.0.0.0_104
+			ln -s -- ../ip4/172.16.0.0_12 "${svcdir}"/service/ip6/::ffff:172.16.0.0_108
 			ln -s -- ../ip4/192.168.0.0_16 "${svcdir}"/service/ip6/::ffff:192.168.0.0_112
+			if test "$I" = "axfrdns"
+			then
+				# Disallow "zone transfer" to whomever we allow access by default.
+				install -m 0644 /dev/null "${svcdir}"/service/ip6/::1_128/settings
+				printf '%s=%s\n' AXFR '' >> "${svcdir}"/service/ip6/::1_128/settings
+			fi
 		fi
 	fi
 done

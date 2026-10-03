@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -38,20 +39,20 @@ It loops forever, accepting TCP connections and (for each such connection) spawn
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>tcp-socket-accept</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>tcp-socket-accept</command> will ignore.
 </para>
 
 <para>
 If the <arg choice='plain'>--verbose</arg> option is used, <command>tcp-socket-accept</command> logs information about processes spawned and the current and maximum number of connections.
 The latter is set with the <arg choice='plain'>--connection-limit</arg> option, which defaults to 40.
 If it is reached, <command>tcp-socket-accept</command> stops accepting new connections until one or more child processes exit.
-<command>tcp-socket-accept</command> always limits the number of connections, and has no notion of an "unlimited" number of connections.
+<command>tcp-socket-accept</command> always limits the number of connections, and has no notion of an <quote>unlimited</quote> number of connections.
 (Whilst it is not accepting connections, the kernel will build up a backlog of unaccepted connections until the listening socket's backlog limit, specified by whatever opened the socket for <command>tcp-socket-accept</command>, is reached.)
 </para>
 
 <para>
-The <arg choice='plain'>--no-keepalives</arg>, <arg choice='plain'>--no-kill-IP-options</arg>, and <arg choice='plain'>--no-delay</arg> command line options set options on the accepted sockets.
-The first disables the use of TCP keepalive probes (which are used by default to ensure that dead connections are noticed and eliminated); the second permits IP options (which are removed by default) so that clients can set source routes; and the third disables the "Nagle" delay algorithm used for slow clients.
+The <arg choice='plain'>--no-keepalives</arg>, <arg choice='plain'>--no-kill-IP-options</arg>, and <arg choice='plain'>--no-delay</arg> command&#x2010;line options set options on the accepted sockets.
+The first disables the use of TCP keepalive probes (which are used by default to ensure that dead connections are noticed and eliminated); the second permits IP options (which are removed by default) so that clients can set source routes; and the third disables the <quote>Nagle</quote> delay algorithm used for slow clients.
 </para>
 
 <refsection><title>Listening socket conventions</title>
@@ -175,7 +176,7 @@ Even attempting to find out such information can involve contacting potentially 
 </para>
 <itemizedlist>
 <listitem><para>
-as a "socket-activated" d&#xe6;mon monitored by <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry> (with the systemd-recommended <code>Accept=false</code>),
+as a <quote>socket-activated</quote> d&#xe6;mon monitored by <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry> (with the systemd-recommended <code>Accept=false</code>),
 </para></listitem>
 <listitem><para>
 as a d&#xe6;mon started by <citerefentry><refentrytitle>inetd</refentrytitle><manvolnum>1</manvolnum></citerefentry> (with <code>wait</code> and as long as it is chained via <code>fdmove 0 3</code>), and

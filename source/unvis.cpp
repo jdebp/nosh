@@ -57,7 +57,7 @@ unvis [[gnu::noreturn]] (
 			decoder.Begin();
 			for (int c = std::fgetc(f); EOF != c; c = std::fgetc(f))
 				std::cout << decoder.Normal(c);
-			if (std::ferror(stdin)) die_errno(prog, envs, file);
+			if (std::ferror(f)) die_errno(prog, envs, file);
 			std::cout << decoder.End();
 		}
 	}

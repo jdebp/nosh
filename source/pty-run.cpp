@@ -3,6 +3,7 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
+#define _BSD_SOURCE 1
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
@@ -60,7 +61,7 @@ copy_window_size_and_move_attributes()
 {
 	if (-1 == outer_tty_fd) return;
 	if (0 <= tcgetattr_nointr(outer_tty_fd, original_attr)) {
-		tcsetattr_nointr(outer_tty_fd, TCSADRAIN, make_raw(original_attr));
+		tcsetattr_nointr(outer_tty_fd, TCSADRAIN, disable_canonical_software_processing(original_attr));
 		tcsetattr_nointr(PTY_BACK_END_FILENO, TCSADRAIN, original_attr);
 	}
 	struct winsize size;

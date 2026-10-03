@@ -18,8 +18,8 @@ if ! > /dev/null expr -- "${MAKEFLAGS}" : "--jobs" &&
    test -z "${cpus}"
 then
 	case "`uname`" in
-	Linux) cpus="`grep -F -c processor /proc/cpuinfo`" ;;
-	*BSD) cpus="`sysctl -n hw.ncpu`" ;;
+	(Linux) cpus="`grep -F -c processor /proc/cpuinfo`" ;;
+	(*BSD) cpus="`sysctl -n hw.ncpu`" ;;
 	esac
 fi
 redo --directory build ${cpus:+--jobs "${cpus}"} -- all

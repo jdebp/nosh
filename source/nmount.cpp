@@ -88,7 +88,8 @@ nmount (
 		}
 	}
 
-	return errno = ENOSYS, -1;	/// FIXME \bug This should work out what to do and call the real mount().
+	errno = ENOSYS;
+	return -1;	/// FIXME \bug This should work out what to do and call the real mount().
 }
 
 #elif defined(__NetBSD__)
@@ -102,7 +103,8 @@ nmount (
 	unsigned int ioc,
 	int flags
 ) {
-	return errno = ENOSYS, -1;	/// FIXME \bug This should work out what to do and call the real mount().
+	errno = ENOSYS;
+	return -1;	/// FIXME \bug This should work out what to do and call the real mount().
 }
 
 #endif

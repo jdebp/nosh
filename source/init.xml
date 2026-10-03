@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -65,7 +66,7 @@ On Debian-family Linux operating systems, the (not universally implemented acros
 
 <para>
 Several toolsets <emphasis>do not</emphasis> provide System 5 compatibility when <command>/sbin/init</command> is run other than as process #1, and this <emphasis>is not</emphasis> the SVID <command>init</command> command.
-Upstart, for example, starts up a "session init" in this situation.
+Upstart, for example, starts up a <quote>session init</quote> in this situation.
 Similarly, in the nosh toolset case, <filename>/sbin/init</filename> becomes <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> as process #1 and <citerefentry><refentrytitle>per-user-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> otherwise.
 systemd, as built on some Linux operating systems, does not provide a <command>telinit</command> shim in <command>/usr/lib/systemd/systemd</command> (systemd's <command>telinit</command> shim being rather in its <command>systemctl</command> program).
 None of these is designed to provide System 5 compatibility <command>init</command> functionality.

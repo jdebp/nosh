@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -64,10 +65,10 @@ The complex selectors of the BSD <citerefentry><refentrytitle>ps</refentrytitle>
 </para>
 <itemizedlist>
 <listitem><para>
-With the <arg choice="plain">-A</arg>, or (both) the <arg choice="plain">-a</arg> and <arg choice="plain">-x</arg>, command-line options, <citerefentry><refentrytitle>list-process-table</refentrytitle><manvolnum>1</manvolnum></citerefentry> is told to display the entire process table.
+With the <arg choice="plain">-A</arg>, or (both) the <arg choice="plain">-a</arg> and <arg choice="plain">-x</arg>, command&#x2010;line options, <citerefentry><refentrytitle>list-process-table</refentrytitle><manvolnum>1</manvolnum></citerefentry> is told to display the entire process table.
 </para></listitem>
 <listitem><para>
-With the <arg choice="plain">-p</arg> command-line option, <citerefentry><refentrytitle>list-process-table</refentrytitle><manvolnum>1</manvolnum></citerefentry> is told to display just the process table entries for <replaceable>process-id(s)</replaceable> which is a comma-separated list of process IDs.
+With the <arg choice="plain">-p</arg> command&#x2010;line option, <citerefentry><refentrytitle>list-process-table</refentrytitle><manvolnum>1</manvolnum></citerefentry> is told to display just the process table entries for <replaceable>process-id(s)</replaceable> which is a comma-separated list of process IDs.
 </para></listitem>
 </itemizedlist>
 
@@ -78,38 +79,38 @@ See <citerefentry><refentrytitle>list-process-table</refentrytitle><manvolnum>1<
 </para>
 
 <para>
-The <arg choice="plain">-7</arg> command-line option is transformed into the <arg choice="plain">--7-bit</arg> option.
+The <arg choice="plain">-7</arg> command&#x2010;line option is transformed into the <arg choice="plain">--7-bit</arg> option.
 </para>
 
 <para>
-The <arg choice="plain">-H</arg> command-line option is transformed into the <arg choice="plain">--threads</arg> option.
+The <arg choice="plain">-H</arg> command&#x2010;line option is transformed into the <arg choice="plain">--threads</arg> option.
 </para>
 
 <para>
-The <arg choice="plain">-w</arg> command-line option is present for compatibility and does nothing.
+The <arg choice="plain">-w</arg> command&#x2010;line option is present for compatibility and does nothing.
 The output of <citerefentry><refentrytitle>list-process-table</refentrytitle><manvolnum>1</manvolnum></citerefentry> is designed for a table-viewer, or processing by another utility, and is not constrained by terminal width.
 </para>
 
 <para>
-The <arg choice="plain">-o</arg> command-line option is transformed into a sequence of <arg choice="plain">--field</arg> options, one for each of the fields in <replaceable>name(s)</replaceable>, which is a comma-separated list.
+The <arg choice="plain">-o</arg> command&#x2010;line option is transformed into a sequence of <arg choice="plain">--field</arg> options, one for each of the fields in <replaceable>name(s)</replaceable>, which is a comma-separated list.
 The use of this option nullifies the effects of all other format options, including <arg choice="plain">-O</arg>.
 </para>
 
 <para>
-If the <arg choice="plain">-o</arg> command-line option is not used:
+If the <arg choice="plain">-o</arg> command&#x2010;line option is not used:
 </para>
 <itemizedlist>
 <listitem><para>
-The <arg choice="plain">-f</arg>, <arg choice="plain">-j</arg>, <arg choice="plain">-l</arg>, and <arg choice="plain">-u</arg> command-line options are transformed into sequences of <arg choice="plain">--field</arg> options specifying the (hardwired) fields for "full", "jobs", "long", and "user" formats, respectively.
-If none of these options are set, a "default" set of fields is employed.
+The <arg choice='plain'>-f</arg>, <arg choice='plain'>-j</arg>, <arg choice='plain'>-l</arg>, and <arg choice='plain'>-u</arg> command&#x2010;line options are transformed into sequences of <arg choice='plain'>--field</arg> options specifying the (hardwired) fields for <quote>full</quote>, <quote>jobs</quote>, <quote>long</quote>, and <quote>user</quote> formats, respectively.
+If none of these options are set, a <quote>default</quote> set of fields is employed.
 </para>
 <note>
 These options are accumulative rather than exclusive.
 If multiple options are used, all of the fields from all sets will be included.
 </note></listitem>
 <listitem><para>
-The <arg choice="plain">-O</arg> command-line option is transformed into a sequence of <arg choice="plain">--field</arg> options, one for each of the fields in <replaceable>name(s)</replaceable>, which is a comma-separated list.
-This sequence is inserted into the "default"/"full"/"jobs"/"long"/"user" list after the <code>pid</code> column.
+The <arg choice="plain">-O</arg> command&#x2010;line option is transformed into a sequence of <arg choice="plain">--field</arg> options, one for each of the fields in <replaceable>name(s)</replaceable>, which is a comma-separated list.
+This sequence is inserted into the <quote>default</quote>/<quote>full</quote>/<quote>jobs</quote>/<quote>long</quote>/<quote>user</quote> list after the <code>pid</code> column.
 </para>
 <note>
 No deduplication of fields is done, so <citerefentry><refentrytitle>list-process-table</refentrytitle><manvolnum>1</manvolnum></citerefentry> will receive any repetitions exactly as they are.
@@ -117,7 +118,7 @@ No deduplication of fields is done, so <citerefentry><refentrytitle>list-process
 </itemizedlist>
 
 <para>
-If an output column is either <arg choice="plain">command</arg> or <arg choice="plain">args</arg>, the <arg choice="plain">-d</arg> command-line option is transformed into <arg choice="plain">--field tree</arg> preceding it and the <arg choice="plain">-e</arg> command-line option is transformed into <arg choice="plain">--field envs</arg> following it.
+If an output column is either <arg choice="plain">command</arg> or <arg choice="plain">args</arg>, the <arg choice="plain">-d</arg> command&#x2010;line option is transformed into <arg choice="plain">--field tree</arg> preceding it and the <arg choice="plain">-e</arg> command&#x2010;line option is transformed into <arg choice="plain">--field envs</arg> following it.
 Otherwise they have no effect.
 </para>
 
@@ -138,13 +139,13 @@ Even though the process tree diagram and argument strings contain whitespace, th
 
 <informalexample>
 <para>
-This command uses <command>ps</command> to display all processes run by the current user whose (accounting) names are "chrome".
+This command uses <command>ps</command> to display all processes run by the current user whose (accounting) names are <quote>chrome</quote>.
 Again, the field matching by <citerefentry><refentrytitle>awk</refentrytitle><manvolnum>1</manvolnum></citerefentry> has no ambiguity, and does not accidentally match the wrong columns or partial strings.
 (It is Chrome itself that incorrectly rewrites its argument strings into one single long argument, by the way.)
 </para>
 <literallayout><computeroutput>$ </computeroutput><userinput>ps -A -o "pid,uid,comm,args" |</userinput><computeroutput>
 &#x3e; </computeroutput><userinput>awk -F'\t' -v UID="$(id -u)" \</userinput><computeroutput>
-&#x3e; </computeroutput><userinput>    '($2 == UID &amp;&amp; "chrome" == $3) { printf "%8u %s\n",$1,$4 }' |</userinput><computeroutput>
+&#x3e; </computeroutput><userinput>    '($2 == UID &amp;&amp; <quote>chrome</quote> == $3) { printf "%8u %s\n",$1,$4 }' |</userinput><computeroutput>
 &#x3e; </computeroutput><userinput>unvis</userinput></literallayout>
 </informalexample>
 
@@ -169,17 +170,17 @@ Using <citerefentry><refentrytitle>sed</refentrytitle><manvolnum>1</manvolnum></
 <title>Compatibility</title>
 
 <para>
-This <command>ps</command> is modelled on the FreeBSD <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>8</manvolnum></citerefentry> tool, providing a subset of its functionality; with the <arg choice="plain">-A</arg> and <arg choice="plain">-f</arg> command-line options taken from the the Single Unix Specification, and the <arg choice="plain">-O</arg> command-line option taken from the NetBSD and OpenBSD <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
-It provides the <emphasis>actual</emphasis> command-line option syntax that the BSDs have employed and documented for 29 years, at the time of writing this manual.
+This <command>ps</command> is modelled on the FreeBSD <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>8</manvolnum></citerefentry> tool, providing a subset of its functionality; with the <arg choice="plain">-A</arg> and <arg choice="plain">-f</arg> command&#x2010;line options taken from the the Single Unix Specification, and the <arg choice="plain">-O</arg> command&#x2010;line option taken from the NetBSD and OpenBSD <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+It provides the <emphasis>actual</emphasis> command&#x2010;line option syntax that the BSDs have employed and documented for 29 years, at the time of writing this manual.
 </para>
 
 <para>
-It differs from the Single Unix Specification in the same ways that the BSD <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>8</manvolnum></citerefentry> differs from the Single Unix Specification, namely in the <arg choice="plain">-d</arg>, <arg choice="plain">-e</arg>, <arg choice="plain">-g</arg>, <arg choice="plain">-n</arg>, and <arg choice="plain">-u</arg> command-line options.
+It differs from the Single Unix Specification in the same ways that the BSD <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>8</manvolnum></citerefentry> differs from the Single Unix Specification, namely in the <arg choice="plain">-d</arg>, <arg choice="plain">-e</arg>, <arg choice="plain">-g</arg>, <arg choice="plain">-n</arg>, and <arg choice="plain">-u</arg> command&#x2010;line options.
 There are three exceptions:
 </para>
 <itemizedlist>
 <listitem><para>
-It implements the Single Unix Specification´s <arg choice="plain">-A</arg> and <arg choice="plain">-f</arg> command-line options.
+It implements the Single Unix Specification´s <arg choice="plain">-A</arg> and <arg choice="plain">-f</arg> command&#x2010;line options.
 The former is already in most of the BSD <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>8</manvolnum></citerefentry> commands, except for FreeBSD's.
 The latter has a widely employed standard meaning and only has another meaning at all in the FreeBSD <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>8</manvolnum></citerefentry> command.
 </para></listitem>
@@ -187,7 +188,7 @@ The latter has a widely employed standard meaning and only has another meaning a
 It uses the Single Unix Specification's <code>stime</code> instead of the FreeBSD <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>8</manvolnum></citerefentry>'s <code>start</code>.
 </para></listitem>
 <listitem><para>
-It does not implement the <arg choice="plain">-G</arg>, <arg choice="plain">-t</arg>, and <arg choice="plain">-U</arg> command-line options, which are implemented by BSD <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>8</manvolnum></citerefentry> and specified in the Single Unix Specification.
+It does not implement the <arg choice="plain">-G</arg>, <arg choice="plain">-t</arg>, and <arg choice="plain">-U</arg> command&#x2010;line options, which are implemented by BSD <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>8</manvolnum></citerefentry> and specified in the Single Unix Specification.
 </para></listitem>
 </itemizedlist>
 
@@ -195,9 +196,9 @@ It does not implement the <arg choice="plain">-G</arg>, <arg choice="plain">-t</
 <title>History</title>
 
 <para>
-The <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>8</manvolnum></citerefentry> tool from the procps toolset (as sometimes used on Linux operating systems) has an exceedingly complex command-line interface.
-One of the claims made in its documentation is that this complex command-line interface provides the command-line interface of the BSD <command>ps</command>, where options are not preceded by minus signs.
-Michael K. Johnson's conversion from "kmem-ps" to "procps" of the Linux <command>ps</command> command as modified by Albert D. Cahalan originated the claim that that <command>ps</command> command was providing an "extended BSD" command-line interface, a claim that has stood ever since.
+The <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>8</manvolnum></citerefentry> tool from the procps toolset (as sometimes used on Linux operating systems) has an exceedingly complex command&#x2010;line interface.
+One of the claims made in its documentation is that this complex command&#x2010;line interface provides the command&#x2010;line interface of the BSD <command>ps</command>, where options are not preceded by minus signs.
+Michael K. Johnson's conversion from <quote>kmem-ps</quote> to <quote>procps</quote> of the Linux <command>ps</command> command as modified by Albert D. Cahalan originated the claim that that <command>ps</command> command was providing an <quote>extended BSD</quote> command&#x2010;line interface, a claim that has stood ever since.
 </para>
 
 <para>
@@ -206,17 +207,17 @@ This is not, and was not, true at all.
 
 <para>
 In fact, the BSD <command>ps</command> has not worked that way since the days of 4.3BSD in the 1980s, <ulink url="https://svnweb.freebsd.org/csrg/bin/ps/ps.c?r1=40257&amp;r2=40675">Marc Teitelbaum having switched it to using the <citerefentry><refentrytitle>getopt</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function on 1990-04-02</ulink>.
-It had, in other words, not worked that way for 2 years prior to the creation of Branko Lankester's <emphasis>original</emphasis> Linux "kmem-ps" <command>ps</command>, in 1992.
+It had, in other words, not worked that way for 2 years prior to the creation of Branko Lankester's <emphasis>original</emphasis> Linux <quote>kmem-ps</quote> <command>ps</command>, in 1992.
 </para>
 
 <para>
 The BSD (and later FreeBSD and NetBSD) <command>ps</command> has used <citerefentry><refentrytitle>getopt</refentrytitle><manvolnum>3</manvolnum></citerefentry> ever since.
-This has been the only documented command-line syntax in its manual for all of that time, too.
+This has been the only documented command&#x2010;line syntax in its manual for all of that time, too.
 <emphasis>This decades-long-standing BSD command syntax</emphasis> is the model here.
 </para>
 
 <para>
-The <arg choice="plain">-O</arg> command-line option to the BSD <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>8</manvolnum></citerefentry> tool originally operated somewhat differently, adding the fields specified in the option argument <emphasis>plus</emphasis> the "default" set of fields to the desired set of fields.
+The <arg choice='plain'>-O</arg> command&#x2010;line option to the BSD <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>8</manvolnum></citerefentry> tool originally operated somewhat differently, adding the fields specified in the option argument <emphasis>plus</emphasis> the <quote>default</quote> set of fields to the desired set of fields.
 This <ulink url="http://cvsweb.netbsd.org/bsdweb.cgi/src/bin/ps/ps.c?rev=1.61&amp;content-type=text/x-cvsweb-markup">was deemed not particularly useful by NetBSD developers in 2006</ulink>, as it resulted in a lot of pointless column duplication, and was revised.
 This revised behaviour made its way from NetBSD into the OpenBSD <citerefentry><refentrytitle>ps</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
 It has not yet made it into the FreeBSD flavour of the tool as of the time of writing this manual, hence the aforegiven ascription of <arg choice="plain">-O</arg> to NetBSD and OpenBSD, rather than to the BSDs in general.

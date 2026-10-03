@@ -13,6 +13,7 @@ list_keyboard_maps() {
 
 	if test -d 'vt-keymaps/'
 	then
+		redo-ifdelete vt-keymaps/
 		find 'vt-keymaps/' -maxdepth 1 -name '*.kbd' -a \( -type l -o -type f \) |
 		while read -r k
 		do
@@ -30,10 +31,12 @@ list_keyboard_maps() {
 			printf "%s\n" "$b"
 			printf >> "$3" 'SCO Multiscreen Console keymap file %s\n' "${k}"
 		done
+	else
+		redo-ifcreate vt-keymaps/
 	fi
 
 	# FIXME: missing: hu ko kz se
-	printf "%s\n" br ca ca-fr ch ch-fr cz de dk es 'fi' gr il is jp nl no pl uk us
+	printf "%s\n" br ca ca-fr ch ch-fr cz de dk es 'fi' gb-shaw gr il is jp nl no pl uk us
 }
 
 list_keyboard_maps '' '' "$3" |

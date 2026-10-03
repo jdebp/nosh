@@ -1,6 +1,6 @@
 #!/bin/sh -e
-redo-ifchange ./cxx ./cxxflags ./ldflags
-read cxx < ./cxx
-read cxxflags < ./cxxflags
-read ldflags < ./ldflags
+redo-ifchange config/cxx config/cxxflags config/ldflags
+read cxx < config/cxx
+read cxxflags < config/cxxflags
+read ldflags < config/ldflags
 exec ${cxx} ${cxxflags} -o "$@" ${ldflags}

@@ -187,8 +187,7 @@ tai64nlocal [[gnu::noreturn]] (
 			const char * name(*i);
 			const int fd(open_read_at(AT_FDCWD, name));
 			if (0 > fd) {
-				const int error(errno);
-				std::fprintf(stderr, "%s: FATAL: %s: %s\n", prog, name, std::strerror(error));
+				message_fatal_errno(prog, envs, name);
 				throw static_cast<int>(EXIT_PERMANENT_FAILURE);	// Bernstein daemontools compatibility
 			}
 			if (!process(prog, envs, name, fd))

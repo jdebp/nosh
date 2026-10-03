@@ -11,15 +11,18 @@ disable	axfrdns.service
 disable	dnscache.service
 disable	tinydns.service
 disable	walldns.service
+disable	rbldns.service
 
 # Enable the shared logs.
 enable	cyclog@axfrdns.service
 enable	cyclog@dnscache.service
 enable	cyclog@tinydns.service
 enable	cyclog@walldns.service
+enable	cyclog@rbldns.service
 
 # Enable the new style of service that listens on the IP address supplied as a parameter.
 enable	axfrdns@*.service
 enable	dnscache@*.service
 enable	tinydns@*.service
 enable	walldns@*.service
+enable	rbldns@*.service

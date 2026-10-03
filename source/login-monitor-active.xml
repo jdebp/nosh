@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -43,7 +44,7 @@ Renaming or unlinking the file requires restarting <command>login-monitor-active
 
 <para>
 When a new user appears in the active logins table, not already logged in, <command>login-monitor-active</command> issues a <arg choice="plain">reset</arg> to start/stop the <filename>user@<replaceable>username</replaceable></filename>, <filename>user-services@<replaceable>username</replaceable></filename>, and <filename>user-runtime@<replaceable>username</replaceable></filename> target and services (respectively) for the user.
-The prefixes in front of <replaceable>username</replaceable> can be changed with the <arg choice='plain'>--target-prefix</arg>, <arg choice='plain'>--manager-prefix</arg>, and <arg choice='plain'>--runtime-prefix</arg> command-line options.
+The prefixes in front of <replaceable>username</replaceable> can be changed with the <arg choice='plain'>--target-prefix</arg>, <arg choice='plain'>--manager-prefix</arg>, and <arg choice='plain'>--runtime-prefix</arg> command&#x2010;line options.
 When the last login record for a user disappears, <command>login-monitor-active</command> issues a <arg choice="plain">stop</arg> to unconditionally stop those.
 </para>
 
@@ -51,7 +52,7 @@ When the last login record for a user disappears, <command>login-monitor-active<
 Where the file is varies by operating system.
 On FreeBSD, it is <code>/var/run/utx.active</code>, for example.
 The <citerefentry><refentrytitle>getutxent</refentrytitle><manvolnum>3</manvolnum></citerefentry> manual page usually gives the location.
-The <arg choice='plain'>--active-file</arg> command-line option forces the use of <filename><replaceable>activefile</replaceable></filename> instead, if this is supported by the C runtime library.
+The <arg choice='plain'>--active-file</arg> command&#x2010;line option forces the use of <filename><replaceable>activefile</replaceable></filename> instead, if this is supported by the C runtime library.
 </para>
 
 <para>

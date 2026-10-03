@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -49,7 +50,7 @@ If the environment variable is absent, it calls the <citerefentry><refentrytitle
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>login-process</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>login-process</command> will ignore.
 </para>
 
 <para>
@@ -62,7 +63,7 @@ If the environment variable is absent, it calls the <citerefentry><refentrytitle
 Normally, this command simply does nothing at all.
 <ulink url="http://jdebp.uk./FGA/inittab-is-history.html"><filename>/etc/inittab</filename> was obsolete as of AT&#x0026;T Unix System 5 Release 4</ulink>.
 BSD operating systems never had it in the first place.
-There are simply no or empty "active terminal login" table entries for terminals where no-one is currently logged in; and the active terminal login table is indexed by terminal device (base)name, not by some "id" out of <filename>/etc/inittab</filename>.
+There are simply no or empty <quote>active terminal login</quote> table entries for terminals where no-one is currently logged in; and the active terminal login table is indexed by terminal device (base)name, not by some <quote>id</quote> out of <filename>/etc/inittab</filename>.
 </para>
 
 </refsection>
@@ -70,20 +71,20 @@ There are simply no or empty "active terminal login" table entries for terminals
 <refsection><title>Obsolete Unix System 5 Release 3 behaviour on Linux</title>
 
 <para>
-In the obsolete <filename>/etc/inittab</filename> system the "active login" table is indexed by the "id" field from <filename>/etc/inittab</filename> or by its process ID field, depending from who is doing the lookup.
-The system manager process only knows the "id" and doesn't know the terminal device name, which isn't a field in <filename>/etc/inittab</filename>.
-The various "getty" and "login" programs know their own process IDs, but don't know the "id" field of the <filename>/etc/inittab</filename> record that spawned them.
+In the obsolete <filename>/etc/inittab</filename> system the <quote>active login</quote> table is indexed by the <quote>id</quote> field from <filename>/etc/inittab</filename> or by its process ID field, depending from who is doing the lookup.
+The system manager process only knows the <quote>id</quote> and doesn't know the terminal device name, which isn't a field in <filename>/etc/inittab</filename>.
+The various <quote>getty</quote> and <quote>login</quote> programs know their own process IDs, but don't know the <quote>id</quote> field of the <filename>/etc/inittab</filename> record that spawned them.
 </para>
 
 <para>
-The system manager process is expected to have created a <citerefentry><refentrytitle>utmpx</refentrytitle><manvolnum>3</manvolnum></citerefentry> "active login" table entry of type <code>INIT_PROCESS</code> with the process ID of the forked process and the "id" field from the <filename>/etc/inittab</filename> record; and the "getty" process (of whatever stripe) is expected to use its process ID to find that record and change it to <code>LOGIN_PROCESS</code>.
+The system manager process is expected to have created a <citerefentry><refentrytitle>utmpx</refentrytitle><manvolnum>3</manvolnum></citerefentry> <quote>active login</quote> table entry of type <code>INIT_PROCESS</code> with the process ID of the forked process and the <quote>id</quote> field from the <filename>/etc/inittab</filename> record; and the <quote>getty</quote> process (of whatever stripe) is expected to use its process ID to find that record and change it to <code>LOGIN_PROCESS</code>.
 All this so that the <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry> command can use its process ID to find that record and change it to <code>USER_PROCESS</code>.
 </para>
 
 <para>
 <command>login-process</command> emulates this.
 There simply is no <filename>/etc/inittab</filename> on systems managed by <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>, systemd, upstart, or other system managers.
-So it determines a fictitious "id" field from the value of the terminal device name, unless forcibly overridden with the <arg choice='plain'>--id</arg> command option.
+So it determines a fictitious <quote>id</quote> field from the value of the terminal device name, unless forcibly overridden with the <arg choice='plain'>--id</arg> command option.
 There is no fixed convention for this, as there is no enforced convention between IDs and terminal device names in the old <filename>/etc/inittab</filename> system.
 </para>
 
@@ -122,15 +123,15 @@ So, for examples:
 </informalexample>
 
 <para>
-Ironically, this song and dance is exactly what GUI terminal emulator programs have <emphasis>already</emphasis> had to do <emphasis>anyway</emphasis>, inventing a nonce "id" and adding new <code>USER_PROCESS</code> records with no existing record to overwrite.
+Ironically, this song and dance is exactly what GUI terminal emulator programs have <emphasis>already</emphasis> had to do <emphasis>anyway</emphasis>, inventing a nonce <quote>id</quote> and adding new <code>USER_PROCESS</code> records with no existing record to overwrite.
 Real/virtual terminal login can just take the same approach, and entirely do away with the <code>INIT_PROCESS</code> and <code>LOGIN_PROCESS</code> states like both FreeBSD/DragonFly BSD and GUI terminal emulator programs do.
-The "login" programs have to wait around for logout <emphasis>anyway</emphasis>, because PAM does not work correctly if there is no session cleanup at logout, and that is where the "active login" table record should be changed to <code>DEAD_PROCESS</code> too.
+The <quote>login</quote> programs have to wait around for logout <emphasis>anyway</emphasis>, because PAM does not work correctly if there is no session cleanup at logout, and that is where the <quote>active login</quote> table record should be changed to <code>DEAD_PROCESS</code> too.
 </para>
 
 <refsection><title>Security</title>
 
 <para>
-The program requires permission to read and write to the "active login" table and append (write) to the terminal login log.
+The program requires permission to read and write to the <quote>active login</quote> table and append (write) to the terminal login log.
 Lack of permission will result in the program aborting with an error.
 </para>
 

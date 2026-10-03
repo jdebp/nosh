@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -42,7 +43,7 @@ Each of the <replaceable>directories</replaceable> is either a supervise directo
 </para>
 
 <para>
-The control commands are determined by command line options given to <command>service-control</command>.
+The control commands are determined by command&#x2010;line options given to <command>service-control</command>.
 Commands are sent in first to last order of the options passed to <command>service-control</command>, and each service is given all commands at once before going onto the next.
 </para>
 

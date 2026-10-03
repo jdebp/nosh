@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -17,7 +18,7 @@
 
 <refnamediv>
 <refname>local-reaper</refname>
-<refpurpose>become a local "Grim Reaper" or not</refpurpose>
+<refpurpose>become a local <quote>Grim Reaper</quote> or not</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>
@@ -31,11 +32,11 @@
 <refsection><title>Description</title>
 
 <para>
-<command>local-reaper</command> is a chain-loading utility that sets the local "Grim Reaper" setting of the process according to <replaceable>enable</replaceable> and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
+<command>local-reaper</command> is a chain-loading utility that sets the local <quote>Grim Reaper</quote> setting of the process according to <replaceable>enable</replaceable> and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>local-reaper</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>local-reaper</command> will ignore.
 </para>
 
 <para>
@@ -50,13 +51,13 @@ One cannot just apply this willy-nilly.
 </para>
 
 <para>
-Setting a process to be a local "Grim Reaper" when the program that it is running does not handle being notified about children that it did not fork in the first place can cause some programs to misbehave or even crash.
-Most shells understand that they might hear about "disowned" processes that they deliberately lost track of, and can cope with being local reapers.
+Setting a process to be a local <quote>Grim Reaper</quote> when the program that it is running does not handle being notified about children that it did not fork in the first place can cause some programs to misbehave or even crash.
+Most shells understand that they might hear about <quote>disowned</quote> processes that they deliberately lost track of, and can cope with being local reapers.
 Not all other programs do, however.
 </para>
 
 <para>
-Setting a process to be a local "Grim Reaper" when the program that it is running does not itself wait for child processes, or only waits for specifically identified children that it knows about, can cause the process table to fill up with "zombie" entries.
+Setting a process to be a local <quote>Grim Reaper</quote> when the program that it is running does not itself wait for child processes, or only waits for specifically identified children that it knows about, can cause the process table to fill up with <quote>zombie</quote> entries.
 </para>
 
 </refsection>

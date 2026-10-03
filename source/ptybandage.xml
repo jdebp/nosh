@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -35,11 +36,11 @@ When run via <command>ptybandage</command>, they will believe that they are runn
 </para>
 
 <para>
-If <command>ptybandage</command> is itself taking input directly from a terminal, it will operate in "terminal pass-through" mode.
-It will set that terminal to non-canonical (i.e. "raw") mode for the duration, copying the prior mode to the pseudo-terminal that <replaceable>next-prog</replaceable> is using.
+If <command>ptybandage</command> is itself taking input directly from a terminal, it will operate in <quote>terminal pass-through</quote> mode.
+It will set that terminal to non-canonical (i.e. <quote>raw</quote>) mode for the duration, copying the prior mode to the pseudo-terminal that <replaceable>next-prog</replaceable> is using.
 If <replaceable>next-prog</replaceable> stops with a signal, <command>ptybandage</command> will restore the prior terminal mode before stopping itself.
 Upon continuing, it will put the terminal back into non-canonical mode and copy the prior mode across again.
-It reflects all "window size" changes from its input terminal to the pseudo-terminal, too.
+It reflects all <quote>window size</quote> changes from its input terminal to the pseudo-terminal, too.
 </para>
 
 <para>
@@ -48,7 +49,7 @@ It is a script that needs <citerefentry><refentrytitle>execlineb</refentrytitle>
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>pty-run</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>pty-run</command> will ignore.
 </para>
 
 <para>

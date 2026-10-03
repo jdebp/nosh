@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -42,20 +43,20 @@ On NetBSD framebuffer device filenames take the form <filename>/dev/tty[EF]<repl
 
 <para>
 Only graphic modes can be dumped; text modes cannot be.
-Of those graphic modes, only linear or "packed pixel" modes can be dumped.
-i.e.  <command>framebuffer-dump</command> will not attempt to dump the framebuffer if <citerefentry><refentrytitle>vidcontrol</refentrytitle><manvolnum>8</manvolnum></citerefentry> has set an old "planar" VGA mode.
+Of those graphic modes, only linear or <quote>packed pixel</quote> modes can be dumped.
+i.e.  <command>framebuffer-dump</command> will not attempt to dump the framebuffer if <citerefentry><refentrytitle>vidcontrol</refentrytitle><manvolnum>8</manvolnum></citerefentry> has set an old <quote>planar</quote> VGA mode.
 </para>
 
 <note>
-Most Super VGA cards (sic!) are capable of a linear mode equivalent to the old "planar" VGA mode, with the same resolution, and those modes should be used instead.
-As a beneficial side-effect, dropping use of the "planar" video modes allows <emphasis>other</emphasis> softwares that use framebuffers to take a code path where they no longer require direct I/O instruction access to the display hardware from application mode, and no longer require superuser privileges, just read+write access to the framebuffer device.
+Most Super VGA cards (sic!) are capable of a linear mode equivalent to the old <quote>planar</quote> VGA mode, with the same resolution, and those modes should be used instead.
+As a beneficial side-effect, dropping use of the <quote>planar</quote> video modes allows <emphasis>other</emphasis> softwares that use framebuffers to take a code path where they no longer require direct I/O instruction access to the display hardware from application mode, and no longer require superuser privileges, just read+write access to the framebuffer device.
 </note>
 
 <para>
 In Direct Colour modes, the framebuffer contents are output as a PPM file.
 In Indexed Colour (i.e. palette colour) modes, the framebuffer contents are output as a PPM file, mapping the colours to RGB values using the same (default) palette as used by <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 In Monochrome modes, the framebuffer contents are output as PBM file.
-All three use the relevant textual "plain" file format rather than the binary "raw" format.
+All three use the relevant textual <quote>plain</quote> file format rather than the binary <quote>raw</quote> format.
 </para>
 
 <note>
@@ -79,7 +80,7 @@ The ability to dump the framebuffer is the ability to see whatever a user using 
 <para>
 For this reason, FreeBSD does not permit access to the framebuffer unless the <filename>/dev/ttyv<replaceable>number</replaceable></filename> device is the currently active kernel virtual terminal being rendered upon it.
 Otherwise, since logged-in users have owner access to their kernel virtual terminals, one logged-in user could see the framebuffer of another logged-in user's virtual terminal.
-The obscure error that it returns to indicate that the framebuffer is not the active kernel virtual terminal device is "Invalid parameter".
+The obscure error that it returns to indicate that the framebuffer is not the active kernel virtual terminal device is <quote>Invalid parameter</quote>.
 </para>
 <note>
 The currently active kernel virtual terminal can be set by hotkeys or with the <citerefentry><refentrytitle>console-multiplexor-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> utility.

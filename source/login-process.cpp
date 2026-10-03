@@ -11,12 +11,12 @@ For copyright and licensing terms, see the file named COPYING.
 #include <ctime>
 #include <cctype>
 #include <unistd.h>
-#include "hasutmpx.h"
+#include "config/hasutmpx.h"
 #if defined(HAS_UTMPX)
 #include <utmpx.h>
 #include <sys/time.h>
 #endif
-#include "hasupdwtmpx.h"
+#include "config/hasupdwtmpx.h"
 #include "popt.h"
 #include "ttyname.h"
 #include "utils.h"

@@ -1,4 +1,4 @@
-#compdef enable disable emergency login-update-utmpx normal per-user-manager power(off|cycle) preset reboot rescue reset shutdown start stop utx -p (init|system|rc)ctl (invoke|update)-rc.d (tel|sys|)init chk(config|service) halt(|sys) rc-(service|update) sv(show|ok|up|stat|c|scan|cadm) -P service-(status|control|manager|-is-(up|ok|enabled)|show|dt-scanner) system-(control|manager) 
+#compdef enable disable emergency login-update-utmpx normal per-user-manager power(off|cycle) preset reboot rescue reset shutdown start stop utx -p service (init|system|rc)ctl (invoke|update)-rc.d (tel|sys|)init chk(config|service) halt(|sys) rc-(service|update) sv(show|ok|up|stat|c|scan|cadm) -P service-(status|control|manager|-is-(up|ok|enabled)|show|dt-scanner) system-(control|manager)
 ## **************************************************************************
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
@@ -192,31 +192,31 @@ function _system_control_common()
 	common=(-s '--help[Display option help]' '--usage[Display option usage]')
 
 	case "$service" in
-		emergency|rescue|normal|halt|power(off|cycle)|reboot|convert-fstab-services)
+		(emergency|rescue|normal|halt|power(off|cycle)|reboot|convert-fstab-services)
 			_arguments -S $common -- ;;
-		init)
+		(init)
 			_arguments -S $common '1:run level:_runlevels' -- ;;
-		(un|)load-kernel-module)
+		((un|)load-kernel-module)
 			_arguments -S $common '1:module name:_files' -- ;;
-		write-volume-service-bundle)
+		(write-volume-service-bundle)
 			_arguments -A '-*' $common '1:fstype:' '2:what:_files' '3:where:_directories' '4:options:' -- ;;
-		get-mount-what)
+		(get-mount-what)
 			_arguments -A '-*' $common '1:where:_directories' -- ;;
-		get-mount-where)
+		(get-mount-where)
 			_arguments -A '-*' $common '1:what:_files' -- ;;
-		set-service-env)
+		(set-service-env)
 			_arguments -A '-*' $common '1:service name:_service_bundles' '2:name:' '3:value:' -- ;;
-		print-service-env)
+		(print-service-env)
 			_arguments -A '-*' $common '1:service name:_service_bundles' '2:value:' -- ;;
-		convert--units)
+		(convert--units)
 			_arguments -A '-*' $common '1:unit name:_files' -- ;;
-		convert-systemd-units)
+		(convert-systemd-units)
 			_arguments -A '-*' $common '1:unit name:_files' -- ;;
-		escape)
+		(escape)
 			_arguments -A '-*' $common '*:name:' -- ;;
-		version)
+		(version)
 			_arguments -A '-*' $common -- ;;
-		*)
+		(*)
 			_arguments -A '-*' $common ${1:+'*:service name:_service_bundles'} -- ;;
 	esac
 }
@@ -224,17 +224,17 @@ function _system_control_common()
 function _system_control_subargs()
 {
 	local service="$words[1]"
-	local curcontext="${curcontext%:*:*}:system-control-$words[1]:" 
+	local curcontext="${curcontext%:*:*}:system-control-$words[1]:"
 	_system_control_common "$@"
 }
 
 function _rcctl()
 {
 	local service="$words[1]"
-	local curcontext="${curcontext%:*:*}:system-control-$words[1]:" 
+	local curcontext="${curcontext%:*:*}:system-control-$words[1]:"
 	case "$service" in
-		get)	service=print-service-env ;;
-		set)	service=set-service-env ;;
+		(get)	service=print-service-env ;;
+		(set)	service=set-service-env ;;
 	esac
 	_system_control_common "$@"
 }
@@ -242,9 +242,9 @@ function _rcctl()
 function _initctl()
 {
 	local service="$words[1]"
-	local curcontext="${curcontext%:*:*}:system-control-$words[1]:" 
+	local curcontext="${curcontext%:*:*}:system-control-$words[1]:"
 	case "$service" in
-		show-config)	service=show-json ;;
+		(show-config)	service=show-json ;;
 	esac
 	_system_control_common "$@"
 }
@@ -252,10 +252,21 @@ function _initctl()
 function _svcadm()
 {
 	local service="$words[1]"
-	local curcontext="${curcontext%:*:*}:system-control-$words[1]:" 
+	local curcontext="${curcontext%:*:*}:system-control-$words[1]:"
 	case "$service" in
-		enable) 	service=start ;;
-		disable)	service=stop ;;
+		(enable) 	service=start ;;
+		(disable)	service=stop ;;
+	esac
+	_system_control_common "$@"
+}
+
+function _invoke_rc_d_subcommands()
+{
+	local service="$words[1]"
+	local curcontext="${curcontext%:*:*}:system-control-$words[1]:"
+	case "$service" in
+		(start)	service=reset ;;
+		(try-restart)	service=condrestart ;;
 	esac
 	_system_control_common "$@"
 }
@@ -263,9 +274,9 @@ function _svcadm()
 function _update_rc_d_subcommands()
 {
 	local service="$words[1]"
-	local curcontext="${curcontext%:*:*}:system-control-$words[1]:" 
+	local curcontext="${curcontext%:*:*}:system-control-$words[1]:"
 	case "$service" in
-		defaults)	service=preset ;;
+		(defaults)	service=preset ;;
 	esac
 	_system_control_common "$@"
 }
@@ -278,35 +289,37 @@ function _system_control()
 	local next='*:::next prog:_normal'
 
 	case "${service}" in
-		(service|per-user|system)-manager)
+		((service|per-user|system)-manager)
 			_message -r "${service} has no options or parameters." ;;
-		systemctl|system-control) 
+		(systemctl|system-control)
 			_arguments -A '-*' $common '1:subcommand:_system_control_subcommands' '*::subargs:_system_control_subargs YES' -- ;;
-		rcctl)
+		(rcctl)
 			_arguments -A '-*' $common '1:subcommand:_rcctl_subcommands' '*::subargs:_rcctl' -- ;;
-		initctl)
+		(initctl)
 			_arguments -A '-*' $common '1:subcommand:_initctl_subcommands' '*::subargs:_initctl' -- ;;
-		svcadm)
+		(svcadm)
 			_arguments -A '-*' $common '1:subcommand:_svcadm_subcommands' '*::subargs:_svcadm' -- ;;
-		update-rc.d) 
+		(update-rc.d)
 			_arguments -A '-*' $common '1:service name:_service_bundles' '2:subcommand:_update_rc_d_subcommands' -- ;;
-		rc-update) 
+		(rc-update)
 			_arguments -A '-*' $common '1:service name:_service_bundles' '2:subcommand:_rc_update_subcommands' -- ;;
-		chkconfig) 
+		(chkconfig)
 			_arguments -A '-*' $common '1:service name:_service_bundles' '2:subcommand:_chkconfig_subcommands' -- ;;
-		(rc-|)service|invoke-rc.d)
+		(invoke-rc.d)
+			_arguments -A '-*' $common '1:service name:_service_bundles' '2:subcommand:_invoke_rc_d_subcommands' -- ;;
+		((rc-|)service)
 			_arguments -A '-*' $common '1:service name:_service_bundles' '*:::subargs:_system_control' -- ;;
-		(tel|)init)
+		((tel|)init)
 			_arguments -S $common '1:runlevel:_runlevels' -- ;;
-		utx|login-update-utmpx)
+		(utx|login-update-utmpx)
 			_arguments -S $common '1:type:_utx_types' -- ;;
-		service-(control|status|is-(ok|up|enabled)|show)|sv(up|c|ok|show|stat))
+		(service-(control|status|is-(ok|up|enabled)|show)|sv(up|c|ok|show|stat))
 			_arguments -A '-*' '*:service directory:_directories' -- ;;
-		svscan|service-dt-scanner)
+		(svscan|service-dt-scanner)
 			_arguments -A '-*' $common '1:scan directory:_directories' -- ;;
-		shutdown)
+		(shutdown)
 			_arguments -A '-*' $common '1:time:' '2:message:' -- ;;
-		*)
+		(*)
 			_arguments -A '-*' $common -- ;;
 	esac
 }

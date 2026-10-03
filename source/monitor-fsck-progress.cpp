@@ -4,10 +4,11 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 #define __STDC_FORMAT_MACROS
+#define _BSD_SOURCE 1
 #include <map>
 #include <vector>
 #include <limits>
-#include <cstdio>
+#include <iostream>
 #include <cstdlib>
 #include <cstring>
 #include <csignal>
@@ -148,8 +149,8 @@ TUI::TUI(
 	TUIDisplayCompositor & comp
 ) :
 	TerminalCapabilities(e),
-	TUIOutputBase(*this, stdout, options, comp),
-	TUIInputBase(static_cast<const TerminalCapabilities &>(*this), stdin),
+	TUIOutputBase(*this, std::cout, STDOUT_FILENO, options, comp),
+	TUIInputBase(static_cast<const TerminalCapabilities &>(*this), std::cin, STDIN_FILENO),
 	terminate_signalled(false),
 	interrupt_signalled(false),
 	hangup_signalled(false),

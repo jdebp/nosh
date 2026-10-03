@@ -512,11 +512,10 @@ console_control_sequence [[gnu::noreturn]] (
 	add(sgr, overline, overline_option, 53, 55);
 
 	TerminalCapabilities caps(envs);
-	ECMA48Output o(caps, stdout, c1_7bit, c1_8bit);
+	ECMA48Output o(caps, std::cout, c1_7bit, c1_8bit);
 
 	if (reset) {
-		o.print_control_character(ESC);
-		o.UTF8('c');
+		o.hard_reset();
 	}
 	if (softreset) {
 		if (caps.use_DECSTR)
@@ -527,14 +526,15 @@ console_control_sequence [[gnu::noreturn]] (
 			o.XTermAlternateScreenBuffer(altbuffer);
 	}
 	if (!sgr.empty()) {
-		o.csi();
-		for (sgr_params::const_iterator b(sgr.begin()), e(sgr.end()), p(b); e != p; ++p) {
-			if (p != b) o.UTF8(';');
-			std::fprintf(stdout, "%lu", *p);
+		std::vector<unsigned> n, u;
+		for (sgr_params::const_iterator p(sgr.begin()), e(sgr.end()); e != p; ++p) {
 			if (4U == *p && underline_type_option.is_set())
-				std::fprintf(stdout, ":%u", underline_type_option.value());
+				u.push_back(underline_type_option.value());
+			else
+				n.push_back(*p);
 		}
-		o.UTF8('m');
+		o.SGRAttribute(n);
+		if (!u.empty()) o.SGRAttribute(4U, u);
 	}
 	if (foreground_option.is_set()) {
 		if (foreground_option.is_default())
@@ -675,7 +675,7 @@ console_control_sequence [[gnu::noreturn]] (
 				columns = size.ws_col;
 			}
 		}
-		o.print_control_character(CR);
+		o.carriage_return();
 		if (regtabs_option.is_set()) {
 			if (caps.reset_sets_tabs && (reset || softreset) && 8U == regtabs)
 				/* This work is already done. */;
@@ -685,13 +685,10 @@ console_control_sequence [[gnu::noreturn]] (
 			else {
 				// Each new tabstop is set AFTER n more columns.
 				for (unsigned long i(regtabs); i < columns; i += regtabs) {
-					o.print_control_characters(' ', regtabs);
-					if (!caps.lacks_CTC)
-						o.CTC(0U);
-					else
-						o.print_control_character(HTS);
+					o.space(regtabs);
+					o.set_horizontal_tabstop_here();
 				}
-				o.print_control_character(CR);
+				o.carriage_return();
 			}
 		}
 		if (settabs_option.is_set()) {
@@ -699,32 +696,20 @@ console_control_sequence [[gnu::noreturn]] (
 			for (tabstops::const_iterator b(l.begin()), e(l.end()), p(b); e != p; ++p) {
 				unsigned long n(*p);
 				if (n > columns) continue;
-				if (!caps.lacks_HPA)
-					o.HPA(n);
-				else
-					o.CHA(n);
-				if (!caps.lacks_CTC)
-					o.CTC(0U);
-				else
-					o.print_control_character(HTS);
+				o.horizontal_position(n);
+				o.set_horizontal_tabstop_here();
 			}
-			o.print_control_character(CR);
+			o.carriage_return();
 		}
 		if (clrtabs_option.is_set()) {
 			const tabstops & l(clrtabs_option.value());
 			for (tabstops::const_iterator b(l.begin()), e(l.end()), p(b); e != p; ++p) {
 				unsigned long n(*p);
 				if (n > columns) continue;
-				if (!caps.lacks_HPA)
-					o.HPA(n);
-				else
-					o.CHA(n);
-				if (!caps.lacks_CTC)
-					o.CTC(0U);
-				else
-					o.TBC(0U);
+				o.horizontal_position(n);
+				o.clear_horizontal_tabstop_here();
 			}
-			o.print_control_character(CR);
+			o.carriage_return();
 		}
 		if (showtabs) {
 			for (unsigned i(0U); i < columns; ++i) {
@@ -733,9 +718,9 @@ console_control_sequence [[gnu::noreturn]] (
 			}
 			o.newline();
 			for (unsigned i(0U); i < columns; ++i) {
-				o.print_control_character(TAB);
+				o.tab();
 				o.UTF8('T');
-				o.print_control_character(BS);
+				o.backspace();
 			}
 			o.newline();
 		}

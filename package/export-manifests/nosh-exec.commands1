@@ -22,6 +22,7 @@ getuidgid
 hardlimit
 klog-read
 line-banner
+linenumber
 local-datagram-socket-listen
 local-reaper
 local-seqpacket-socket-accept
@@ -55,6 +56,7 @@ setuidgid
 setuidgid-fromenv
 setup-machine-id
 softlimit
+sqz
 syslog-read
 tcp-socket-accept
 tcp-socket-listen

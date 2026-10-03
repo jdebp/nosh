@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -30,7 +31,7 @@
 <refsection><title>Description</title>
 
 <para>
-<command>dbus-daemon-launch-helper</command> is called by the Desktop Bus broker d&#xe6;mon whenever it wants to launch a D-BUS service that isn't yet running "on demand" in response to clients attempting to communicate with that service over the Desktop Bus.
+<command>dbus-daemon-launch-helper</command> is called by the Desktop Bus broker d&#xe6;mon whenever it wants to launch a D-BUS service that isn't yet running <quote>on demand</quote> in response to clients attempting to communicate with that service over the Desktop Bus.
 </para>
 
 <para>

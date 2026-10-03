@@ -3,6 +3,7 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
+#define _BSD_SOURCE 1
 #include <map>
 #include <unordered_map>
 #include <set>
@@ -15,7 +16,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cerrno>
 #include <sys/stat.h>
 #if defined(__LINUX__) || defined(__linux__)
-#define _BSD_SOURCE 1
 #include <sys/resource.h>
 #endif
 #include <unistd.h>
@@ -333,8 +333,8 @@ TUI::TUI(
 	const TUIOutputBase::Options & options
 ) :
 	TerminalCapabilities(e),
-	TUIOutputBase(*this, stdout, options, comp),
-	TUIInputBase(static_cast<const TerminalCapabilities &>(*this), stdin),
+	TUIOutputBase(*this, std::cout, STDOUT_FILENO, options, comp),
+	TUIInputBase(static_cast<const TerminalCapabilities &>(*this), std::cin, STDIN_FILENO),
 	handler0(*this),
 	handler1(*this),
 	handler2(*this),

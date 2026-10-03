@@ -8,6 +8,7 @@ For copyright and licensing terms, see the file named COPYING.
 
 #include <termios.h>
 #include <csignal>
+#include <iosfwd>
 #include "CharacterCell.h"
 #include "ECMA48Output.h"
 #include "TUIDisplayCompositor.h"
@@ -36,7 +37,7 @@ public:
 		enum { TUI_LEVELS = 3U };
 	};
 
-	TUIOutputBase(const TerminalCapabilities & t, FILE * f, const Options & options, TUIDisplayCompositor & comp);
+	TUIOutputBase(const TerminalCapabilities & t, std::ostream & o, int d, const Options & options, TUIDisplayCompositor & comp);
 	~TUIOutputBase();
 
 	/// \brief event handling, called by the main loops of TUIs to handle events, if they are pending
@@ -70,6 +71,7 @@ protected:
 
 private:
 	ECMA48Output out;
+	int fd;
 	/// \brief event pending flags
 	/// @{
 	sig_atomic_t window_resized;
@@ -99,8 +101,6 @@ private:
 	void SGRFGColour(const CharacterCell::colour_type & colour) { if (colour != current.foreground) out.SGRColour(true, current.foreground = colour); }
 	void SGRBGColour(const CharacterCell::colour_type & colour) { if (colour != current.background) out.SGRColour(false, current.background = colour); }
 	void SGRAttr(const CharacterCell::attribute_type & attr);
-	void SGRAttr1(const CharacterCell::attribute_type & attr, const CharacterCell::attribute_type & mask, char m, char & semi) const;
-	void SGRAttr1(const CharacterCell::attribute_type & attr, const CharacterCell::attribute_type & mask, const CharacterCell::attribute_type & unit, char m, char & semi) const;
 	void enter_full_screen_mode() ;
 	void exit_full_screen_mode() ;
 

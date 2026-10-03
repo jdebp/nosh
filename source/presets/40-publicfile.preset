@@ -26,3 +26,6 @@ enable	cyclog@gemini6d.service
 
 enable	ftp4d.service
 enable	cyclog@ftp4d.service
+
+enable	ident6d.service
+enable	cyclog@ident6d.service

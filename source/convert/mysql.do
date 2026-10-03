@@ -33,22 +33,22 @@ list_instances() {
 		while read -r l
 		do
 			case "$l" in
-			\[mysqld@*\]*)
+			(\[mysqld@*\]*)
 				l="${l#\[mysqld@}"
 				printf "%s\n" "${l%%]*}"
 				;;
-			\[mysqld[0-9]*\]*)
+			(\[mysqld[0-9]*\]*)
 				l="${l#\[mysqld}"
 				printf "%s\n" "${l%%]*}"
 				;;
-			\[mysqld\]*)
+			(\[mysqld\]*)
 				printf "\n"
 				;;
-			\!includefile\ *)
+			(\!includefile\ *)
 				l="${l#!includefile }"
 				list_instances "$l"
 				;;
-			\!includedir\ *)
+			(\!includedir\ *)
 				l="${l#!includedir }"
 				if ! test -e "$l"
 				then
@@ -58,6 +58,7 @@ list_instances() {
 					# We only want to be sensitive to changes of a potentially containing directory if it is not a directory at the moment.
 					redo-ifchange "$l"
 				else
+					redo-ifdelete "$l"
 					list_instances "$l"/*.cnf
 				fi
 				;;
@@ -94,6 +95,7 @@ do
 		echo >>"$3" "${etcdir}" "is not valid."
 		continue
 	fi
+	redo-ifdelete "${etcdir}"
 	echo >>"$3" "Config in" "${etcdir}" "."
 	list_instances "${etcdir}/my.cnf" 2>>"$3"
 done |
@@ -103,9 +105,9 @@ do
 	log="mysql-log@$i"
 
 	case "`uname`" in
-	Linux)	basedir="/usr" ;;
-	*BSD)	basedir="/usr/local" ;;
-	*)	echo 1>&2 "$0: Do not know the MySQL root directory for your system." ; exec false ;;
+	(Linux)	basedir="/usr" ;;
+	(*BSD)	basedir="/usr/local" ;;
+	(*)	echo 1>&2 "$0: Do not know the MySQL root directory for your system." ; exec false ;;
 	esac
 	ledir="${basedir}/libexec"
 	plugindir="${basedir}/lib/mysql/plugin"
@@ -114,6 +116,7 @@ do
 	then
 		if test -d "/var/db/mysql$i"
 		then
+			redo-ifdelete "/var/db/mysql$i"
 			datadir="/var/db/mysql$i"
 		else
 			redo-ifcreate "/var/db/mysql$i"
@@ -125,6 +128,7 @@ do
 	then
 		if test -r "${datadir}/my.cnf" 
 		then
+			redo-ifdelete "${datadir}/my.cnf" 
 			defaults_extra_file="${datadir}/my.cnf"
 		else
 			redo-ifcreate "${datadir}/my.cnf" 
@@ -167,51 +171,51 @@ do
 			case "${arg}" in
 
 			# options that are recognised by mysqld but that require interception
-			--basedir=*)
+			(--basedir=*)
 				basedir="${arg#--basedir=}"
 				;;
-			--datadir=*)
+			(--datadir=*)
 				datadir="${arg#--datadir=}"
 				;;
-			--plugin-dir=*)
+			(--plugin-dir=*)
 				plugindir="${arg#--plugin-dir=}"
 				;;
-			--ledir=*)
+			(--ledir=*)
 				ledir="${arg#--ledir=}"
 				;;
-			--defaults-extra-file=*)
+			(--defaults-extra-file=*)
 				defaults_extra_file="${arg#--defaults-extra-file=}"
 				;;
-			--port=*)
+			(--port=*)
 				system-control set-service-env "${service}" port "${arg#--port=}"
 				;;
-			--socket=*)
+			(--socket=*)
 				system-control set-service-env "${service}" socket "${arg#--socket=}"
 				;;
-			--timezone=*)
+			(--timezone=*)
 				system-control set-service-env "${service}" TZ "${arg#--timezone=}"
 				;;
 
 			# options that were recognized and enacted by the old mysqld-safe wrapper not by mysqld itself
-			--mysqld=*)
+			(--mysqld=*)
 				mysqld="${arg#--mysqld=}"
 				;;
-			--user=*)
+			(--user=*)
 				system-control set-service-env "${service}" user "${arg#--user=}"
 				;;
-			--nice=*)
+			(--nice=*)
 				system-control set-service-env "${service}" nice "${arg#--nice=}"
 				;;
-			--flush-caches=*)
+			(--flush-caches=*)
 				system-control set-service-env "${service}" flush_caches "${arg#--flush-caches=}"
 				;;
-			--open-files-limit=*|--open_files_limit=*)
+			(--open-files-limit=*|--open_files_limit=*)
 				system-control set-service-env "${service}" open_file_limit "${arg#--open?files?limit=}"
 				;;
-			--core-file-size=*)
+			(--core-file-size=*)
 				system-control set-service-env "${service}" core_file_size "${arg#--core-file-size=}"
 				;;
-			--numa-interleave=*)
+			(--numa-interleave=*)
 				numa_interleave="${arg#--numa-interleave=}"
 				test -n "${numa_interleave}" && if test 0 -eq "${numa_interleave}"
 				then
@@ -221,22 +225,22 @@ do
 				fi
 				system-control set-service-env "${service}" numa_interleave "${numa_interleave}"
 				;;
-			--pid-file=*)
+			(--pid-file=*)
 				pid_file="${arg#--pid-file=}"
 				;;
-			--malloc-lib=*|--mysqld-version=*)
+			(--malloc-lib=*|--mysqld-version=*)
 				echo >> "$3" "Ignoring unsupported ${arg}"
 				;;
-			--log-error=*|--skip-syslog|--syslog-tag=*|--skip-kill-mysqld*)
+			(--log-error=*|--skip-syslog|--syslog-tag=*|--skip-kill-mysqld*)
 				echo >> "$3" "Ignoring inappropriate ${arg}"
 				;;
-			--syslog) 	# always in effect anyway
+			(--syslog) 	# always in effect anyway
 				;;
 
 			# options that are used on the mysqld-safe command line only, which we should never see
-			--help) ;;
+			(--help) ;;
 
-			*)
+			(*)
 				printf >> "$r/${service}/service/env/flags" "%s  " "${arg}"
 				;;
 			esac

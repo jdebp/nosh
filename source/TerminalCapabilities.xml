@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -331,7 +332,7 @@ The <quote>linux</quote> terminal type family, because of a long-standing bug, s
 <para>
 The <quote>interix</quote> terminal type family reports function keys as Start of Selected Area followed by a character.
 To decode function keys from an Interix terminal emulator an ECMA decoder has to (mis)treat the SSA character as another single-character shift, like SS2 and SS3.
-It is effectively "Single Shift level A".
+It is effectively <quote>Single Shift level A</quote>.
 </para>
 </listitem>
 </varlistentry>
@@ -544,7 +545,7 @@ The <quote>dumb</quote> terminal type family, the <quote>rxvt</quote> terminal t
 </term>
 <listitem>
 <para>
-Only <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> has a mode where all characters are full-width (i.e. "square").
+Only <citerefentry><refentrytitle>console-terminal-emulator</refentrytitle><manvolnum>1</manvolnum></citerefentry> has a mode where all characters are full-width (i.e. <quote>square</quote>).
 Others display some characters half-width, and applications have to account for different character widths.
 This is also set true where the value of the <envar>TERM</envar> environment variable contains the <quote>-square</quote> feature suffix.
 </para>
@@ -612,14 +613,14 @@ PuTTY, rxvt, the Linux kernel virtual terminal, Teken, tmux, and anything falsel
 Otherwise, terminals are taken to only support the 8 ECMA-48 colours.
 </para></listitem>
 <listitem><para>
-Where the <envar>COLORTERM</envar> environment variable exists and its value is the string "truecolor" or "24bit", the terminal is taken to support ISO 8613-6/ITU T.416 Direct colour, with the historic error.
+Where the <envar>COLORTERM</envar> environment variable exists and its value is the string <quote>truecolor</quote> or <quote>24bit</quote>, the terminal is taken to support ISO 8613-6/ITU T.416 Direct colour, with the historic error.
 </para></listitem>
 <listitem><para>
 Where the <envar>COLORTERM</envar> environment variable exists, the terminal is taken to support at least the two mechanisms for the 16 standard colours.
 </para></listitem>
 <listitem><para>
-Where either the <envar>COLORTERM</envar> or the <envar>TERM</envar> environment variable value contains the string "256", the terminal is taken to support at least ISO 8613-6/ITU T.416 Indexed colour (with the historic error).
-The former comes from a convention of specifying the terminal type without the <quote>-256color</quote> feature suffix in the <envar>TERM</envar> environment variable and the "real" terminal type in the <envar>COLORTERM</envar> environment variable.
+Where either the <envar>COLORTERM</envar> or the <envar>TERM</envar> environment variable value contains the string <quote>256</quote>, the terminal is taken to support at least ISO 8613-6/ITU T.416 Indexed colour (with the historic error).
+The former comes from a convention of specifying the terminal type without the <quote>-256color</quote> feature suffix in the <envar>TERM</envar> environment variable and the <quote>real</quote> terminal type in the <envar>COLORTERM</envar> environment variable.
 This was to cope with databases to which the <quote>-256color</quote> name variants had not yet spread, back when they were a new idea, and is largely obsolete nowadays.
 It is the latter that should nowadays be used.
 </para></listitem>

@@ -20,15 +20,15 @@ exceptions='! -name .
 ! ( -type f -uid 0 -path ./.clean )
 ! ( -type f -uid 0 -path ./...security* )'
 case "`uname`" in
-Linux)	
+(Linux)	
 	find . -depth -xdev $exceptions ! -type d -delete
 	find . -depth -xdev $exceptions -type d -empty -delete
 	;;
-FreeBSD)
+(FreeBSD)
 	find -x . -depth $exceptions ! -type d -delete
 	find -x . -depth $exceptions -type d -empty -delete
 	;;
-*BSD)
+(*BSD)
 	find -x . -depth $exceptions -delete
 	;;
 esac

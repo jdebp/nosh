@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -40,23 +41,23 @@ Both are executed with the <citerefentry><refentrytitle>execvp</refentrytitle><m
 </para>
 
 <para>
-<replaceable>left-prog</replaceable> and <replaceable>right-prog</replaceable> may contain their own command line options, which <command>pipe</command> will ignore.
+<replaceable>left-prog</replaceable> and <replaceable>right-prog</replaceable> may contain their own command&#x2010;line options, which <command>pipe</command> will ignore.
 </para>
 
 <para>
 Normally, in outwards mode, <replaceable>left-prog</replaceable> is chain loaded in the original process and <replaceable>right-prog</replaceable> is forked and run in the new child process.
-If the <arg choice='opt'>--inwards</arg> command line option is used, <replaceable>right-prog</replaceable> is chain loaded in the original process and <replaceable>left-prog</replaceable> is forked and run in the new child process.
+If the <arg choice='opt'>--inwards</arg> command&#x2010;line option is used, <replaceable>right-prog</replaceable> is chain loaded in the original process and <replaceable>left-prog</replaceable> is forked and run in the new child process.
 </para>
 
 <para>
-The <arg choice='opt'>--separator</arg> command line option specifies an alternative separator argument, to scan for in place of <arg choice='req'>|</arg>.
+The <arg choice='opt'>--separator</arg> command&#x2010;line option specifies an alternative separator argument, to scan for in place of <arg choice='req'>|</arg>.
 </para>
 
 <para>
-The <arg choice='opt'>--grandchild</arg> command line option causes whichever side of the pipe that is run in the forked child to perform a second fork and then exit, so that that side of the pipe runs in an orphaned child process.
+The <arg choice='opt'>--grandchild</arg> command&#x2010;line option causes whichever side of the pipe that is run in the forked child to perform a second fork and then exit, so that that side of the pipe runs in an orphaned child process.
 This is useful when it is known that the side of the pipe that runs in the forked parent never cleans up its terminated children.
 However, it makes the process tree less obvious.
-An alternative to this is the <arg choice='opt'>--ignore-children</arg> command line option which makes the parent program ignore the <code>SIGCHLD</code> signal.
+An alternative to this is the <arg choice='opt'>--ignore-children</arg> command&#x2010;line option which makes the parent program ignore the <code>SIGCHLD</code> signal.
 </para>
 
 </refsection>

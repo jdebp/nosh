@@ -4,7 +4,7 @@
 ## **************************************************************************
 # vim: set filetype=sh:
 main="`basename "$1"`"
-objects="main-exec.o builtins-${main}.o ${main}.o"
-libraries="builtins.a utils.a"
+objects="object/main-exec.o object/builtins-${main}.o object/${main}.o"
+libraries='library/builtins.a library/utils.a'
 redo-ifchange link ${objects} ${libraries}
 exec ./link "$3" ${objects} ${libraries}

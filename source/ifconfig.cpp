@@ -7,7 +7,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <vector>
 #include <iostream>
 #include <iomanip>
-#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <csignal>
@@ -60,6 +59,7 @@ struct prf_ra : public in6_prflags::prf_ra {};
 #include "popt.h"
 #include "utils.h"
 #include "fdutils.h"
+#include "ttyname.h"
 #include "FileDescriptorOwner.h"
 #include "CharacterCell.h"
 #include "ECMA48Output.h"
@@ -375,11 +375,11 @@ namespace {
 				const struct sockaddr_in & addr4(reinterpret_cast<const struct sockaddr_in &>(addr));
 				char ip[INET_ADDRSTRLEN];
 				if (nullptr != inet_ntop(addr4.sin_family, &addr4.sin_addr, ip, sizeof ip)) {
-					std::fputs(prefix, o.file());
+					std::cout << prefix;
 					o.SGRColour(true, Map256Colour(COLOUR_MAGENTA));
-					std::fputs(ip, o.file());
+					std::cout << ip;
 					o.SGRColour(true);
-					std::fputc(' ', o.file());
+					std::cout.put(' ');
 				}
 				break;
 			}
@@ -388,40 +388,40 @@ namespace {
 				const struct sockaddr_in6 & addr6(reinterpret_cast<const struct sockaddr_in6 &>(addr));
 				char ip[INET6_ADDRSTRLEN];
 				if (nullptr != inet_ntop(addr6.sin6_family, &addr6.sin6_addr, ip, sizeof ip)) {
-					std::fputs(prefix, o.file());
+					std::cout << prefix;
 					o.SGRColour(true, Map256Colour(COLOUR_CYAN));
-					std::fputs(ip, o.file());
+					std::cout << ip;
 					o.SGRColour(true);
-					std::fprintf(o.file(), " scope %u", addr6.sin6_scope_id);
-					std::fputc(' ', o.file());
+					std::cout << " scope " << addr6.sin6_scope_id;
+					std::cout.put(' ');
 				}
 				break;
 			}
 			case AF_LOCAL:
 			{
 				const struct sockaddr_un & addru(reinterpret_cast<const struct sockaddr_un &>(addr));
-				std::fputs(prefix, o.file());
+				std::cout << prefix;
 				o.SGRColour(true, Map256Colour(COLOUR_BLUE));
-				std::fputs(addru.sun_path, o.file());
+				std::cout << addru.sun_path;
 				o.SGRColour(true);
-				std::fputc(' ', o.file());
+				std::cout.put(' ');
 				break;
 			}
 #if defined(AF_PACKET)
 			case AF_PACKET:
 			{
 				const struct sockaddr_ll & addrl(reinterpret_cast<const struct sockaddr_ll &>(addr));
-				std::fputs(prefix, o.file());
+				std::cout << prefix;
 				o.SGRColour(true, Map256Colour(COLOUR_YELLOW));
 				if (addrl.sll_halen)
 					for (std::size_t i(0U); i < addrl.sll_halen; ++i) {
-						if (i) std::fputc(':', o.file());
-						std::fprintf(o.file(), "%02x", unsigned(addrl.sll_addr[i]));
+						if (i) std::cout.put(':');
+						std::cout << std::hex << std::setfill('0') << std::setw(2) << unsigned(addrl.sll_addr[i]) << std::dec << std::setfill(' ');
 					}
 				else
-					std::fputc(':', o.file());
+					std::cout.put(':');
 				o.SGRColour(true);
-				std::fputc(' ', o.file());
+				std::cout.put(' ');
 				break;
 			}
 #endif
@@ -429,22 +429,22 @@ namespace {
 			case AF_LINK:
 			{
 				const struct sockaddr_dl & addrl(reinterpret_cast<const struct sockaddr_dl &>(addr));
-				std::fputs(prefix, o.file());
+				std::cout << prefix;
 				o.SGRColour(true, Map256Colour(COLOUR_YELLOW));
 				if (addrl.sdl_alen)
 					for (std::size_t i(0U); i < addrl.sdl_alen; ++i) {
-						if (i) std::fputc(':', o.file());
-						std::fprintf(o.file(), "%02" PRIx8, uint8_t(LLADDR(&addrl)[i]));
+						if (i) std::cout.put(':');
+						std::cout << std::hex << std::setfill('0') << std::setw(2) << unsigned(uint8_t(LLADDR(&addrl)[i])) << std::dec << std::setfill(' ');
 					}
 				else
-					std::fputc(':', o.file());
+					std::cout.put(':');
 				o.SGRColour(true);
-				std::fputc(' ', o.file());
+				std::cout.put(' ');
 				break;
 			}
 #endif
 			default:
-				std::fprintf(o.file(), "%ssa_?%d ", prefix, int(addr.sa_family));
+				std::cout << prefix << "sa_?" << int(addr.sa_family);
 				break;
 			case AF_UNSPEC:
 				break;
@@ -1807,7 +1807,7 @@ ifconfig [[gnu::noreturn]] (
 	std::vector<const char *> & args,
 	ProcessEnvironment & envs
 ) {
-	bool colours(isatty(STDOUT_FILENO));
+	bool colours(ECMA48Output::query_use_colours(envs, STDOUT_FILENO));
 	const char * prog(basename_of(args[0]));
 	bool all(false), up_only(false), down_only(false), clones(false), list(false);
 	try {
@@ -1838,7 +1838,7 @@ ifconfig [[gnu::noreturn]] (
 	}
 
 	TerminalCapabilities caps(envs);
-	ECMA48Output o(caps, stdout, true /* C1 is 7-bit aliased */, false /* C1 is not raw 8-bit */);
+	ECMA48Output o(caps, std::cout, true /* C1 is 7-bit aliased */, false /* C1 is not raw 8-bit */);
 	if (!colours)
 		caps.colour_level = caps.NO_COLOURS;
 

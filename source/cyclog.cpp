@@ -4,6 +4,7 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 #define __STDC_FORMAT_MACROS
+#define _BSD_SOURCE 1
 #include <vector>
 #include <memory>
 #include <cstdio>
@@ -128,6 +129,15 @@ any_pending(
 	return false;
 }
 
+inline
+void
+flush_all (
+	const loglist & loggers
+) {
+	for (loglist::const_iterator l(loggers.begin()), e(loggers.end()); l != e; ++l)
+		(*l)->flush();
+}
+
 }
 
 void logger::pause (const char * s, const char * n) {
@@ -138,8 +148,8 @@ void logger::pause (const char * s, const char * n) {
 
 void logger::close(const char * name) {
 	if (0 <= current_fd.get()) {
-		while (0 > ::close(current_fd.get())) pause("closing",name);
-		current_fd.reset(-1);
+		const int fd(current_fd.release());
+		while (0 > ::close(fd)) pause("closing",name);
 	}
 }
 
@@ -198,7 +208,7 @@ logger::unlink_oldest_file() {
 		if (!entry) {
 			const int error(errno);
 			if (error) {
-				scan_dir.release();
+				scan_dir = nullptr;
 				errno = error;
 				return -1 ;
 			}
@@ -211,7 +221,7 @@ logger::unlink_oldest_file() {
 			struct stat s;
 			if (0 > fstatat(dir_fd.get(), entry->d_name, &s, 0)) {
 				const int error(errno);
-				scan_dir.release();
+				scan_dir = nullptr;
 				errno = error;
 				return -1;
 			}
@@ -221,7 +231,7 @@ logger::unlink_oldest_file() {
 			struct stat s;
 			if (0 > fstatat(dir_fd.get(), entry->d_name, &s, 0)) {
 				const int error(errno);
-				scan_dir.release();
+				scan_dir = nullptr;
 				errno = error;
 				return -1;
 			}
@@ -233,7 +243,7 @@ logger::unlink_oldest_file() {
 			seen_old = true;
 		}
 	}
-	scan_dir.release();
+	scan_dir = nullptr;
 	if (!seen_old) return 1;
 	if (total > max_total_size) {
 		std::fprintf(stderr, "Removed  %s/%s to reclaim %"  PRIu64 " bytes\n", dir_name, earliest_old, reclaim);
@@ -439,22 +449,13 @@ cyclog [[gnu::noreturn]] (
 		struct kevent p[16];
 		const int rc(kevent(queue, ip.data(), ip.size(), p, sizeof p/sizeof *p, pending ? &zero : nullptr));
 		ip.clear();
+		bool any_action(false);
 		if (0 > rc) {
 			if (EINTR == errno) continue;
 			die_errno(prog, envs, "kevent");
 		} else
-		if (0 == rc) {
-			for (loglist::const_iterator l(loggers.begin()), e(loggers.end()); l != e; ++l)
-				(*l)->flush();
-		} else
 		for (size_t i(0); i < static_cast<size_t>(rc); ++i) {
 			if (EVFILT_READ == p[i].filter && STDIN_FILENO == p[i].ident) {
-				if (EV_EOF & p[i].flags) {
-				input_eof:
-					std::fprintf(stderr, "%s: INFO: %s\n", prog, "Input EOF.");
-					terminate_requested = true;
-					continue;
-				}
 				if (EV_ERROR & p[i].flags) {
 					std::fprintf(stderr, "%s: FATAL: %s\n", prog, std::strerror(p[i].data));
 				input_error:
@@ -468,15 +469,24 @@ cyclog [[gnu::noreturn]] (
 						std::fprintf(stderr, "%s: FATAL: %s\n", prog, std::strerror(error));
 						goto input_error;
 					}
-				} else if (0 == rd) 
-					goto input_eof;
+				} else if (0 == rd) {
+					std::fprintf(stderr, "%s: INFO: %s\n", prog, "Input EOF.");
+					terminate_requested = true;
+					continue;
+				}
+				any_action = true;
 				for (ssize_t j(0); j < rd; ++j) {
 					const char c(buf[j]);
 					for (loglist::const_iterator l(loggers.begin()), e(loggers.end()); l != e; ++l)
 						(*l)->put(c);
 				}
+				if (EV_EOF & p[i].flags) {
+					std::fprintf(stderr, "%s: INFO: %s\n", prog, "Input will EOF.");
+					flush_all(loggers);
+				}
 			} else
 			if (EVFILT_SIGNAL == p[i].filter) {
+				any_action = true;
 				switch (p[i].ident) {
 					case SIGHUP:
 					case SIGTERM:
@@ -501,6 +511,8 @@ cyclog [[gnu::noreturn]] (
 			       }
 			}
 		}
+		if (!any_action) 
+			flush_all(loggers);
 	}
 	throw EXIT_SUCCESS;
 }

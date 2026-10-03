@@ -107,15 +107,3 @@ get_columns (
 	}
 	return columns;
 }
-
-bool
-query_use_colours (
-	const ProcessEnvironment & envs,
-	int fd
-) {
-	// This is the FreeBSD logic, for now.
-	const char * c = envs.query("CLICOLOR");
-	if (!c) return false;
-	if (isatty(fd)) return true;
-	return !!envs.query("CLICOLOR_FORCE");
-}

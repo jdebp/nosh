@@ -141,7 +141,7 @@ protected:
 	virtual void ControlCharacter(char32_t);
 	virtual void EscapeSequence(char32_t, char32_t);
 	virtual void ControlSequence(char32_t, char32_t, char32_t);
-	virtual void ControlString(char32_t);
+	virtual void ControlString(char32_t, char32_t);
 	/// @}
 
 	void SetHorizontalTabstop();

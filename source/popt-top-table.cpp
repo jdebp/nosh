@@ -4,11 +4,8 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 #include <iostream>
-#include <iomanip>
-#include <cstring>
-#include <cstdlib>
-#include <cctype>
 #include <unistd.h>
+#include <cstring>
 
 #include "popt.h"
 #include "ttyname.h"
@@ -32,34 +29,41 @@ bool top_table_definition::execute(processor & proc, const char * s)
 void top_table_definition::do_usage(processor & proc)
 {
 	TerminalCapabilities caps(proc.envs);
-	ECMA48Output o(caps, stdout, true /* C1 is 7-bit aliased */, false /* C1 is not raw 8-bit */);
-	const bool do_colour(query_use_colours(proc.envs, o.fd()));
+	ECMA48Output ecma48(caps, std::cout, true /* C1 is 7-bit aliased */, false /* C1 is not raw 8-bit */);
+	const bool do_colour(ECMA48Output::query_use_colours(proc.envs, STDOUT_FILENO));
 	std::string shorts("?");
 	gather_combining_shorts(shorts);
-	std::cout << "Usage: " << proc.name << " [-";
-	if (do_colour) {
-		std::cout.flush();
-		o.set_underline(true);
-		o.flush();
-	}
-	std::cout << shorts;
-	if (do_colour) {
-		std::cout.flush();
-		o.set_underline(false);
-		o.flush();
-	}
-	std::cout << "] [--help] [--usage] ";
-	long_usage(o, do_colour);
+	if (do_colour) ecma48.set_underline(true);
+	std::cout << "Usage";
+	if (do_colour) ecma48.set_underline(false);
+	std::cout << ": ";
+	if (do_colour) ecma48.set_boldface(true);
+	std::cout << proc.name();
+	if (do_colour) ecma48.set_boldface(false);
+	std::cout << " [";
+	if (do_colour) ecma48.set_boldface(true);
+	std::cout.put('-') << shorts;
+	if (do_colour) ecma48.set_boldface(false);
+	std::cout << "] [";
+	if (do_colour) ecma48.set_boldface(true);
+	std::cout << "--help";
+	if (do_colour) ecma48.set_boldface(false);
+	std::cout << "] [";
+	if (do_colour) ecma48.set_boldface(true);
+	std::cout << "--usage";
+	if (do_colour) ecma48.set_boldface(false);
+	std::cout << "] ";
+	long_usage(std::cout, ecma48, do_colour);
 	std::cout << arguments_description << '\n';
 	proc.stop();
 }
 void top_table_definition::do_help(processor & proc)
 {
 	TerminalCapabilities caps(proc.envs);
-	ECMA48Output o(caps, stdout, true /* C1 is 7-bit aliased */, false /* C1 is not raw 8-bit */);
-	const bool do_colour(query_use_colours(proc.envs, o.fd()));
+	ECMA48Output ecma48(caps, std::cout, true /* C1 is 7-bit aliased */, false /* C1 is not raw 8-bit */);
+	const bool do_colour(ECMA48Output::query_use_colours(proc.envs, STDOUT_FILENO));
 	do_usage(proc);
 	std::cout.put('\n');
-	help(o, do_colour);
+	help(std::cout, ecma48, do_colour);
 	proc.stop();
 }

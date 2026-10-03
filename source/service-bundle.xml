@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -55,7 +56,7 @@ The contents of the bundle define dependencies and relationships amongst service
 </para>
 
 <para>
-It is not necessary for the I/O plumbing relationship between services to be exactly one "main" service feeding its output into one subordinate "log" service.
+It is not necessary for the I/O plumbing relationship between services to be exactly one <quote>main</quote> service feeding its output into one subordinate <quote>log</quote> service.
 The service manager permits arbitrary-length pipelines of services, as well as fan-in.
 (However, fan-in should be used sparingly as it generally causes more administrative headaches than it solves.)
 </para>
@@ -65,17 +66,17 @@ The service manager permits arbitrary-length pipelines of services, as well as f
 <refsection><title>Flavours of service bundle</title>
 
 <para>
-<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> makes a distinction between services that are "services" and services that are "targets".
+<citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> makes a distinction between services that are <quote>services</quote> and services that are <quote>targets</quote>.
 Although there is no constraint enforced, and <command>system-control</command> simply follows symbolic links, by convention service bundle directories generally live under <filename>/etc/service-bundles/services</filename>, <filename>/run/service-bundles/services</filename>, or <filename>/var/service-bundles/services</filename>; and target bundle directories generally live under <filename>/run/service-bundles/targets</filename> or <filename>/etc/service-bundles/targets</filename>.
-There is a potential for "services" and "targets" to have the same names.
+There is a potential for <quote>services</quote> and <quote>targets</quote> to have the same names.
 <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> allows the bundle name of a service to be suffixed with <code>.service</code> or <code>.target</code> if it is necessary to distinguish between two such conflicting service bundles.
 </para>
 
 <para>
-As far as basic service management is concerned, there is no difference between "services" and "targets".
+As far as basic service management is concerned, there is no difference between <quote>services</quote> and <quote>targets</quote>.
 A service generally has a fully-fledged d&#xe6;mon process that runs, whereas a target often runs just a dummy placeholder program.
 A target generally has active dependencies, whereas a service generally only has passive dependencies.
-There are several conventional "standard targets" used in system administration.
+There are several conventional <quote>standard targets</quote> used in system administration.
 </para>
 
 </refsection>
@@ -157,12 +158,12 @@ A <filename>down</filename> file indicates to <citerefentry><refentrytitle>syste
 </listitem>
 <listitem>
 <para>
-A <filename>remain</filename> file indicates to <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> that a service should be marked as "run on empty", so that it is considered still running even if it has no processes.
+A <filename>remain</filename> file indicates to <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> that a service should be marked as <quote>run on empty</quote>, so that it is considered still running even if it has no processes.
 </para>
 </listitem>
 <listitem>
 <para>
-A <filename>ready_after_run</filename> file indicates to <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> that a service should be considered "ready" after it has finished running, and has either remained in the running state with no processes or transitioned to the stopped state with a prior run recorded in its status.
+A <filename>ready_after_run</filename> file indicates to <citerefentry><refentrytitle>system-control</refentrytitle><manvolnum>1</manvolnum></citerefentry> that a service should be considered <quote>ready</quote> after it has finished running, and has either remained in the running state with no processes or transitioned to the stopped state with a prior run recorded in its status.
 </para>
 </listitem>
 <listitem>
@@ -210,7 +211,7 @@ The two pieces of information are its three command line arguments.
 The first is a code, one of <code>exit</code>, <code>term</code>, <code>kill</code>, <code>abort</code>, or <code>crash</code>.
 This categorizes how <filename>run</filename> exited.
 Everything apart from <code>exit</code> denotes being terminated by an uncaught signal.
-<code>term</code> denotes the "good" termination signals <code>SIGTERM</code>, <code>SIGPIPE</code>, <code>SIGHUP</code>, and <code>SIGINT</code>.
+<code>term</code> denotes the <quote>good</quote> termination signals <code>SIGTERM</code>, <code>SIGPIPE</code>, <code>SIGHUP</code>, and <code>SIGINT</code>.
 <code>kill</code> denotes <code>SIGKILL</code>.
 <code>abort</code> denotes <code>SIGABRT</code>, <code>SIGALRM</code>, or <code>SIGQUIT</code>.
 And <code>crash</code> is everything else.
@@ -282,7 +283,7 @@ Control of services and access to service status is thus subject to ordinary per
 
 <para>
 Bernstein's daemontools employs an 18-byte <filename>status</filename> file.
-daemontools has no notion of "starting", "failing", or "stopping" states for services, and its status file provides only simple binary "up" or "down" state information.
+daemontools has no notion of <quote>starting</quote>, <quote>failing</quote>, or <quote>stopping</quote> states for services, and its status file provides only simple binary <quote>up</quote> or <quote>down</quote> state information.
 Guenter's daemontools-encore employs a 19-byte <filename>status</filename> that includes extra state information for the aforementioned states.
 <command>service-manager</command> employs an 87-byte <filename>status</filename> that adds exit status and timestamp information for the start, run, restart, and stop programs.
 The <filename>status</filename> file contents are:
@@ -293,24 +294,24 @@ The <filename>status</filename> file contents are:
 <listitem><para>4-byte current main process ID in host byte order, <literal>0</literal> meaning no process and <literal>-1</literal> meaning process #0.</para></listitem>
 <listitem><para>1-byte paused flag, if the d&#xe6;mon process is in the stopped state.</para></listitem>
 <listitem>
-	<para>1-byte pending command flag, which is an ASCII-encoded character:</para>
-	<variablelist spacing="compact">
-	<varlistentry><term><literal>d</literal></term><listitem><para>down</para></listitem></varlistentry>
-	<varlistentry><term><literal>u</literal></term><listitem><para>up</para></listitem></varlistentry>
-	<varlistentry><term><literal>o</literal></term><listitem><para>once</para></listitem></varlistentry>
-	<varlistentry><term><literal>O</literal></term><listitem><para>at most once</para></listitem></varlistentry>
-	</variablelist>
+<para>1-byte pending command flag, which is an ASCII-encoded character:</para>
+<variablelist spacing="compact">
+<varlistentry><term><literal>d</literal></term><listitem><para>down</para></listitem></varlistentry>
+<varlistentry><term><literal>u</literal></term><listitem><para>up</para></listitem></varlistentry>
+<varlistentry><term><literal>o</literal></term><listitem><para>once</para></listitem></varlistentry>
+<varlistentry><term><literal>O</literal></term><listitem><para>at most once</para></listitem></varlistentry>
+</variablelist>
 </listitem>
 <listitem>
-	<para>1-byte daemontools-encore status (for details see later) which is a binary number:</para>
-	<variablelist spacing="compact">
-	<varlistentry><term><literal>0</literal></term><listitem><para>stopped</para></listitem></varlistentry>
-	<varlistentry><term><literal>1</literal></term><listitem><para>starting</para></listitem></varlistentry>
-	<varlistentry><term><literal>2</literal></term><listitem><para>started</para></listitem></varlistentry>
-	<varlistentry><term><literal>3</literal></term><listitem><para>running</para></listitem></varlistentry>
-	<varlistentry><term><literal>4</literal></term><listitem><para>stopping</para></listitem></varlistentry>
-	<varlistentry><term><literal>5</literal></term><listitem><para>failed</para></listitem></varlistentry>
-	</variablelist>
+<para>1-byte daemontools-encore status (for details see later) which is a binary number:</para>
+<variablelist spacing="compact">
+<varlistentry><term><literal>0</literal></term><listitem><para>stopped</para></listitem></varlistentry>
+<varlistentry><term><literal>1</literal></term><listitem><para>starting</para></listitem></varlistentry>
+<varlistentry><term><literal>2</literal></term><listitem><para>started</para></listitem></varlistentry>
+<varlistentry><term><literal>3</literal></term><listitem><para>running</para></listitem></varlistentry>
+<varlistentry><term><literal>4</literal></term><listitem><para>stopping</para></listitem></varlistentry>
+<varlistentry><term><literal>5</literal></term><listitem><para>failed</para></listitem></varlistentry>
+</variablelist>
 </listitem>
 <listitem>
 <para>
@@ -318,25 +319,25 @@ The <filename>status</filename> file contents are:
 </para>
 <orderedlist>
 <listitem>
-	<para>1-byte code for termination status, which is a binary number:</para>
-	<variablelist>
-	<varlistentry>
-	<term><literal>0</literal></term>
-	<listitem><para>Not yet terminated, other fields should not be considered valid.</para></listitem>
-	</varlistentry>
-	<varlistentry>
-	<term><literal>1</literal></term>
-	<listitem><para>Terminated normally with an exit code.</para></listitem>
-	</varlistentry>
-	<varlistentry>
-	<term><literal>2</literal></term>
-	<listitem><para>Terminated by a signal.</para></listitem>
-	</varlistentry>
-	<varlistentry>
-	<term><literal>3</literal></term>
-	<listitem><para>Terminated by a signal, and core dumped.</para></listitem>
-	</varlistentry>
-	</variablelist>
+<para>1-byte code for termination status, which is a binary number:</para>
+<variablelist>
+<varlistentry>
+<term><literal>0</literal></term>
+<listitem><para>Not yet terminated, other fields should not be considered valid.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><literal>1</literal></term>
+<listitem><para>Terminated normally with an exit code.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><literal>2</literal></term>
+<listitem><para>Terminated by a signal.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><literal>3</literal></term>
+<listitem><para>Terminated by a signal, and core dumped.</para></listitem>
+</varlistentry>
+</variablelist>
 </listitem>
 <listitem><para>4-byte exit code or signal number, in host byte order.</para></listitem>
 <listitem><para>12-byte TAI64N timestamp.</para></listitem>
@@ -421,7 +422,7 @@ The <filename>service/</filename> and <filename>supervise/</filename> subdirecto
 <para>
 When bundles are on a read-only filesystem, such as a CD-ROM, <filename>supervise</filename> must be a symbolic link pointing to a directory on a read-write filesystem, since supervise directories must be writable.
 One might choose a subdirectory of <filename>/run/service-bundles/early-supervise/</filename> for example.
-<command>system-control</command> attempts to create the target of such a symbolic link before attempting to load the service, to avoid a chicken-and-egg situation with "sysinit" services that are set up this way.
+<command>system-control</command> attempts to create the target of such a symbolic link before attempting to load the service, to avoid a chicken-and-egg situation with <quote>sysinit</quote> services that are set up this way.
 </para>
 </listitem>
 
@@ -435,43 +436,43 @@ Each contains a set of symbolic links to other bundle directories for other serv
 
 <listitem>
 <para>
-<filename>wants/</filename> contains links to services that the current service "wants".
+<filename>wants/</filename> contains links to services that the current service <quote>wants</quote>.
 Starting the current service implies starting the linked-to service as well.
 </para>
 </listitem>
 
 <listitem>
 <para>
-<filename>requires/</filename> contains links to services that should be "required-by" the current service when it is enabled.
-Enabling the service places it in the targets' "required-by" lists, and disabling the service removes it.
+<filename>requires/</filename> contains links to services that should be <quote>required-by</quote> the current service when it is enabled.
+Enabling the service places it in the targets' <quote>required-by</quote> lists, and disabling the service removes it.
 </para>
 </listitem>
 
 <listitem>
 <para>
-<filename>conflicts/</filename> contains links to services that "conflict" with the current service.
+<filename>conflicts/</filename> contains links to services that <quote>conflict</quote> with the current service.
 Starting the current service implies stopping the linked-to services.
 </para>
 </listitem>
 
 <listitem>
 <para>
-<filename>required-by/</filename> contains links to services that "require" the current service.
+<filename>required-by/</filename> contains links to services that <quote>require</quote> the current service.
 Stopping the current service implies stopping the linked-to services as well.
 </para>
 </listitem>
 
 <listitem>
 <para>
-<filename>wanted-by/</filename> contains links to (standard) targets that should "want" the current service when it is enabled.
+<filename>wanted-by/</filename> contains links to (standard) targets that should <quote>want</quote> the current service when it is enabled.
 Enabling the service places it in the targets' <filename>wants/</filename> lists, and disabling the service removes it.
 </para>
 </listitem>
 
 <listitem>
 <para>
-<filename>stopped-by/</filename> contains links to (standard) targets that should "conflict" with the current service when it is enabled.
-Enabling the service places it in the targets' "conflicts" lists, and disabling the service removes it.
+<filename>stopped-by/</filename> contains links to (standard) targets that should <quote>conflict</quote> with the current service when it is enabled.
+Enabling the service places it in the targets' <quote>conflicts</quote> lists, and disabling the service removes it.
 </para>
 </listitem>
 
@@ -509,15 +510,15 @@ before/stopped after the current service when executing a start/stop job.
 
 <para>
 Relationships are not the same as dependencies.
-A service can "want" another service without having any ordering against it with respect to start/stop actions.
+A service can <quote>want</quote> another service without having any ordering against it with respect to start/stop actions.
 Indeed, this is a common case for system targets.
 The <filename>normal</filename> target, for example, <filename>wants/</filename> the <filename>server</filename>, <filename>workstation</filename>, <filename>multi-user</filename>, <filename>static-networking</filename> , and <filename>users</filename> targets (and by extension everything that they in their turn <filename>wants/</filename>), but all of the wanted services are started in parallel with the <filename>normal</filename> target itself.
 </para>
 
 <para>
 Similarly, a service can be ordered with respect to another service without having a dependency from it.
-For example, both "log" and "main" services are "wanted" by the <filename>server</filename> and <filename>workstation</filename> targets, explicitly.
-The individual "main" services, therefore, only need to be ordered after their corresponding "log" services, and do not <filename>wants/</filename> them.
+For example, both <quote>log</quote> and <quote>main</quote> services are <quote>wanted</quote> by the <filename>server</filename> and <filename>workstation</filename> targets, explicitly.
+The individual <quote>main</quote> services, therefore, only need to be ordered after their corresponding <quote>log</quote> services, and do not <filename>wants/</filename> them.
 ("log" services are first-class citizens in this respect.)
 </para>
 
@@ -647,10 +648,10 @@ So in the absence of orderings in between the individual services wanted by thos
 <varlistentry><term><filename>emergency</filename></term>
 <listitem><para>
 This target is the target started by the <command>init</command> subcommand with the <arg choice='plain'>-b</arg> option.
-Starting it is intended to bring up the system in "emergency mode", bringing up no services, mounting no (non-system) volumes, and bringing up just "emergency mode" services, such as a secure login on the default terminal.
+Starting it is intended to bring up the system in <quote>emergency mode</quote>, bringing up no services, mounting no (non-system) volumes, and bringing up just <quote>emergency mode</quote> services, such as a secure login on the default terminal.
 </para><para>
 It <filename>wants/</filename> no other targets or services.
-So in "emergency mode" (if nothing else has been started) only the system filesystems are available, and not necessarily even read-write.
+So in <quote>emergency mode</quote> (if nothing else has been started) only the system filesystems are available, and not necessarily even read-write.
 </para></listitem>
 </varlistentry>
 
@@ -658,7 +659,7 @@ So in "emergency mode" (if nothing else has been started) only the system filesy
 <term><filename>rescue</filename></term>
 <listitem><para>
 This target is the target started by the <command>init</command> subcommand with the <arg choice='plain'>-s</arg> option.
-Starting it is intended to bring up the system in "rescue mode", bringing up with it the fundamental system initialization services and a secure login user interface.
+Starting it is intended to bring up the system in <quote>rescue mode</quote>, bringing up with it the fundamental system initialization services and a secure login user interface.
 </para><para>
 It <filename>wants/</filename> the <filename>sysinit</filename> target, but not the <filename>basic</filename> target.
 </para></listitem>
@@ -668,7 +669,7 @@ It <filename>wants/</filename> the <filename>sysinit</filename> target, but not 
 <term><filename>update</filename></term>
 <listitem><para>
 This target is the target started by the <command>init</command> subcommand with the <arg choice='plain'>--update</arg> option.
-Starting it is intended to bring up the system in "update mode", bringing up with it the fundamental system initialization services and the system update utility.
+Starting it is intended to bring up the system in <quote>update mode</quote>, bringing up with it the fundamental system initialization services and the system update utility.
 </para><para>
 It <filename>wants/</filename> the <filename>sysinit</filename> target, but not the <filename>basic</filename> target.
 </para></listitem>
@@ -696,7 +697,7 @@ The <command>poweroff</command>, <command>powercycle</command>, <command>halt</c
 These four targets both <filename>wants/</filename> the <filename>shutdown</filename> target and order themselves to start after it.
 Thus starting them shuts down all services and then, once this has been done, starts these targets.
 They are usually started by the System Manager, in response to system control commands requesting system reboot, halt, or power off.
-When they (finally) start, they invoke the <command>reboot</command>, <command>halt</command>, <command>powercycle</command>, and <command>poweroff</command> subcommands of <command>system-control</command> with the <arg choice="req">-f</arg> command-line option.
+When they (finally) start, they invoke the <command>reboot</command>, <command>halt</command>, <command>powercycle</command>, and <command>poweroff</command> subcommands of <command>system-control</command> with the <arg choice="req">-f</arg> command&#x2010;line option.
 This signals the System Manager to enact the actual reboot, halt, power-cycle, or power-off action.
 </para></listitem>
 </varlistentry>
@@ -766,7 +767,7 @@ These targets are usually not started explicitly.
 
 <varlistentry><term><filename>workstation</filename></term>
 <listitem><para>
-All services that normally form part of bringing the system up as a "workstation" should be listed in this target's <filename>wants/</filename> list.
+All services that normally form part of bringing the system up as a <quote>workstation</quote> should be listed in this target's <filename>wants/</filename> list.
 Such services will include things such as the <citerefentry><refentrytitle>cron</refentrytitle><manvolnum>1</manvolnum></citerefentry> d&#xe6;mon.
 This target <filename>wants/</filename> the <filename>basic</filename> target, so starting it (directly or indirectly) will bring the basic system up.
 It is a collection that is used to group services, but is not an ordering milestone and has no <filename>before/</filename> or <filename>after/</filename> relationships.
@@ -775,7 +776,7 @@ It is a collection that is used to group services, but is not an ordering milest
 
 <varlistentry><term><filename>server</filename></term>
 <listitem><para>
-All services that normally form part of bringing the system up as a "server" should be listed in this target's <filename>wants/</filename> list.
+All services that normally form part of bringing the system up as a <quote>server</quote> should be listed in this target's <filename>wants/</filename> list.
 Such services will include things such as HTTP/FTP/SMTP d&#xe6;mons, and d&#xe6;mons that provide services over the network.
 This target <filename>wants/</filename> the <filename>basic</filename> target, so starting it (directly or indirectly) will bring the basic system up.
 It is a collection that is used to group services, but is not an ordering milestone and has no <filename>before/</filename> or <filename>after/</filename> relationships.
@@ -796,7 +797,7 @@ It is a collection that is used to group services, but is not an ordering milest
 Starting this target is intended to shut down all running normal services.
 All normal services should be in this target's <filename>conflicts/</filename> list.
 It is also an ordering milestone, in that all services listed in its <filename>conflicts/</filename> list should also be listed in its <filename>after/</filename> list.
-<filename>shutdown</filename> is then listed in the <filename>after/</filename> list of the <filename>poweroff</filename>, <filename>powercycle</filename>, <filename>halt</filename>, and <filename>reboot</filename> target to ensure that they are only started after the system has entered "shutdown mode".
+<filename>shutdown</filename> is then listed in the <filename>after/</filename> list of the <filename>poweroff</filename>, <filename>powercycle</filename>, <filename>halt</filename>, and <filename>reboot</filename> target to ensure that they are only started after the system has entered <quote>shutdown mode</quote>.
 </para></listitem>
 </varlistentry>
 
@@ -812,13 +813,15 @@ All <filename>mount@*</filename> services should be in this target's <filename>c
 
 </refsection>
 
-<refsection><title>core subordinate targets</title>
+<refsection id="CORESUBORDINATETARGETS" xreflabel="CORESUBORDINATETARGETS">
+<title>core subordinate targets</title>
 
 <para>
 Core services and targets are incorporated into a set of further subordinate targets.
 </para>
 
-<refsection><title>Pure collections</title>
+<refsection id="COREPURECOLLECTIONTARGETS" xreflabel="COREPURECOLLECTIONTARGETS">
+<title>Pure collections</title>
 
 <para>
 These core targets are solely collections.
@@ -830,7 +833,7 @@ They are not ordering milestones and have no <filename>before/</filename> or <fi
 
 <varlistentry><term><filename>basic</filename></term>
 <listitem><para>
-This target implies the "basic" system, excluding all workstation, server, and multi-user services.
+This target implies the <quote>basic</quote> system, excluding all workstation, server, and multi-user services.
 It <filename>wants/</filename> the <filename>sysinit</filename> target.
 </para></listitem>
 </varlistentry>
@@ -851,22 +854,22 @@ Such services will include things such as the <filename>hostname</filename> serv
 
 <varlistentry><term><filename>swapauto</filename></term>
 <listitem><para>
-This target is wanted by "sysinit".
-All "auto" "swap" services should be listed in its <filename>wants/</filename> lists.
+This target is wanted by <quote>sysinit</quote>.
+All <quote>auto</quote> <quote>swap</quote> services should be listed in its <filename>wants/</filename> lists.
 </para></listitem>
 </varlistentry>
 
 <varlistentry><term><filename>swaplate</filename></term>
 <listitem><para>
-This target is wanted by "sysinit".
-All "late" "swap" services should be listed in its <filename>wants/</filename> lists.
+This target is wanted by <quote>sysinit</quote>.
+All <quote>late</quote> <quote>swap</quote> services should be listed in its <filename>wants/</filename> lists.
 </para></listitem>
 </varlistentry>
 
 <varlistentry><term><filename>dumpauto</filename></term>
 <listitem><para>
-This target is wanted by "sysinit".
-All "dump" services should be listed in its <filename>wants/</filename> lists.
+This target is wanted by <quote>sysinit</quote>.
+All <quote>dump</quote> services should be listed in its <filename>wants/</filename> lists.
 </para></listitem>
 </varlistentry>
 
@@ -882,7 +885,8 @@ These targets <filename>wants/</filename> the various services that finish a sys
 
 </refsection>
 
-<refsection><title>Pure ordering milestones</title>
+<refsection id="COREPUREORDERINGTARGETS" xreflabel="COREPUREORDERINGTARGETS">
+<title>Pure ordering milestones</title>
 
 <para>
 These core targets are not collections; their <filename>wants/</filename> lists should be empty.
@@ -901,7 +905,7 @@ It is simply the case that <emphasis>something</emphasis> must bring the target 
 
 <varlistentry><term><filename>local-fs-pre</filename></term>
 <listitem><para>
-This "local filesystems precursor" target exists because system initialization services that need to occur before any filesystem checks or mounts, usually special services that initialize an interactive UI for <citerefentry><refentrytitle>fsck</refentrytitle><manvolnum>1</manvolnum></citerefentry>, do not have another way to hold the checks/mounts from commencing until they are done.
+This <quote>local filesystems precursor</quote> target exists because system initialization services that need to occur before any filesystem checks or mounts, usually special services that initialize an interactive UI for <citerefentry><refentrytitle>fsck</refentrytitle><manvolnum>1</manvolnum></citerefentry>, do not have another way to hold the checks/mounts from commencing until they are done.
 Such services should list this target in their <filename>wants/</filename> and <filename>before/</filename> lists.
 Local filesystem checks, decryptions, and mounts should list this target in their <filename>after/</filename> lists, so that they order relative to it if the target is brought in but do not themselves bring it in.
 </para></listitem>
@@ -909,7 +913,7 @@ Local filesystem checks, decryptions, and mounts should list this target in thei
 
 <varlistentry><term><filename>fs-servers</filename></term>
 <listitem><para>
-This "filesystems servers" target exists in order to ensure that remote filesystem mounts of volumes on the local machine work, by ordering them after the startup of any filesystem servers (e.g. SAMBA or NFS server d&#xe6;mons).
+This <quote>filesystems servers</quote> target exists in order to ensure that remote filesystem mounts of volumes on the local machine work, by ordering them after the startup of any filesystem servers (e.g. SAMBA or NFS server d&#xe6;mons).
 Such server services should list this target in their <filename>wants/</filename> and <filename>before/</filename> lists.
 Remote filesystem mounts should list this target in their <filename>after/</filename> lists, so that they order relative to it if the target is brought in but do not themselves bring it in.
 </para></listitem>
@@ -917,7 +921,7 @@ Remote filesystem mounts should list this target in their <filename>after/</file
 
 <varlistentry><term><filename>multi-user-pre</filename></term>
 <listitem><para>
-This "multi-user precursor" target exists for services that need to start/execute before any multi-user login.
+This <quote>multi-user precursor</quote> target exists for services that need to start/execute before any multi-user login.
 Such services should list this target in their <filename>wants/</filename> and <filename>before/</filename> lists.
 Login services should list this target in their <filename>after/</filename> lists.
 </para></listitem>
@@ -933,7 +937,7 @@ All services that are involved in providing local name/address lookup services s
 
 <varlistentry><term><filename>databases</filename></term>
 <listitem><para>
-This "database servers" target exists because some database clients cannot be caused via the client-server communications mechanism itself to block indefinitely until the server is ready; and so have to have an explicit ordering to order them after any respective servers.
+This <quote>database servers</quote> target exists because some database clients cannot be caused via the client-server communications mechanism itself to block indefinitely until the server is ready; and so have to have an explicit ordering to order them after any respective servers.
 One lists <filename>databases</filename> in the <filename>wants/</filename> and <filename>after/</filename> lists of a service or target to ensure that it is only brought up after such database services are available.
 All services that are involved in providing database services should list it in their <filename>before/</filename> lists.
 </para></listitem>
@@ -974,7 +978,8 @@ Note that because of the dependencies of the synchronization services themselves
 
 </refsection>
 
-<refsection><title>Both collections and ordering milestones</title>
+<refsection id="CORECOLLECTIONANDORDERINGTARGETS" xreflabel="CORECOLLECTIONANDORDERINGTARGETS">
+<title>Both collections and ordering milestones</title>
 
 <para>
 Generally, with some exceptions, all services listed in these targets' <filename>wants/</filename> lists should also be listed in their <filename>after/</filename> lists.
@@ -984,7 +989,7 @@ Generally, with some exceptions, all services listed in these targets' <filename
 
 <varlistentry><term><filename>local-fs</filename></term>
 <listitem><para>
-This "local filesystems" target lists all system initialization services and steps for checking and mounting local filesystems, including remounting the root filesystem in read-write mode.
+This <quote>local filesystems</quote> target lists all system initialization services and steps for checking and mounting local filesystems, including remounting the root filesystem in read-write mode.
 One can thus list <filename>local-fs</filename> in the <filename>after/</filename> list of a service or target to ensure that it is only brought up after local filesystems have been mounted and checked.
 </para>
 <note>
@@ -995,7 +1000,7 @@ To handle the latter, in particular, their <filename>supervise/</filename> subdi
 
 <varlistentry><term><filename>remote-fs</filename></term>
 <listitem><para>
-This "remote filesystems" target lists all system initialization services and steps for checking and mounting remote filesystems.
+This <quote>remote filesystems</quote> target lists all system initialization services and steps for checking and mounting remote filesystems.
 One can thus list <filename>remote-fs</filename> in the <filename>after/</filename> list of a service or target to ensure that it is only brought up after remote filesystems have been mounted and checked.
 </para></listitem>
 </varlistentry>

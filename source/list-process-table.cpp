@@ -169,7 +169,7 @@ make_graphical_tree (
 						r.push_back('\xe2'); r.push_back('\x94'); r.push_back('\x80');
 						break;
 					case ' ':
-						// U+00002500 box drawings light vertical
+						// U+00002502 box drawings light vertical
 						r.push_back('\xe2'); r.push_back('\x94'); r.push_back('\x82');
 						r.push_back(c1);
 						break;

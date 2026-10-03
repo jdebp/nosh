@@ -129,6 +129,7 @@ TerminalCapabilities::TerminalCapabilities(
 	const bool iterm_pretending_xterm = xterm && iterm_env;
 	const bool true_xterm = xterm && !!xterm_version;
 	const bool tmux_pretending_screen = screen && tmux_env;
+	const bool user_space_vt = !true_kvt && (teken || linuxvt || netbsd6);
 
 	// *********************************************************************
 	// colour abilities
@@ -142,7 +143,7 @@ TerminalCapabilities::TerminalCapabilities(
 		if (interix
 		||  pcvt
 		||  wsvt
-		||  netbsd6
+		||  (true_kvt && netbsd6)
 		||  cons
 		) {
 			colour_level = ECMA_8_COLOURS;
@@ -150,7 +151,7 @@ TerminalCapabilities::TerminalCapabilities(
 		if (vte_version >= 3600			// per GNOME bug #685759
 		||  iterm || iterm_pretending_xterm	// per analysis of VT100Terminal.m
 		||  (permit_fake_truecolour && true_xterm)
-		||  (!true_kvt && (teken || linuxvt))
+		||  user_space_vt
 		) {
 			colour_level = ISO_DIRECT_COLOUR;
 		} else
@@ -195,7 +196,7 @@ TerminalCapabilities::TerminalCapabilities(
 
 		if (false
 		// Allows forcing the use of DECSCUSR on KVT-compatible terminals that do indeed implement the xterm extension:
-		||  (!true_kvt && (teken || linuxvt))
+		||  user_space_vt
 		) {
 			// These have an extended version that has a vertical bar, a box, a star, under+over line, and a mirror L-shape.
 			cursor_shape_command = EXTENDED_DECSCUSR;
@@ -238,20 +239,20 @@ TerminalCapabilities::TerminalCapabilities(
 
 		if (true_xterm
 		// Allows forcing the use of HPA on KVT-compatible terminals that do indeed implement the control sequence:
-		||  (!true_kvt && (teken || linuxvt))
+		||  user_space_vt
 		) {
 			lacks_HPA = false;
 		}
 
 		if (true_xterm
 		// Allows forcing the use of CTC on KVT-compatible terminals that do indeed implement the control sequence:
-		||  (!true_kvt && (teken || linuxvt))
+		||  user_space_vt
 		) {
 			lacks_CTC = false;
 		}
 
 		if (dumb
-		||  (true_kvt && (teken || linuxvt))
+		||  user_space_vt
 		) {
 			lacks_invisible = true;
 		}
@@ -280,7 +281,7 @@ TerminalCapabilities::TerminalCapabilities(
 		if (true_xterm
 		||  putty
 		||  msterminal
-		||  (!true_kvt && (teken || linuxvt))
+		||  user_space_vt
 		)
 			lacks_REP = false;
 
@@ -292,7 +293,7 @@ TerminalCapabilities::TerminalCapabilities(
 		if (putty
 		||  konsole
 		||  msterminal
-		||  (!true_kvt && (teken || linuxvt))
+		||  user_space_vt
 		)
 			faulty_inverse_erase = false;
 
@@ -335,28 +336,28 @@ TerminalCapabilities::TerminalCapabilities(
 
 		if (teken		// The teken library does not do anything, but does handle the control sequence properly.
 		// Allows forcing the use of DECSTR on KVT-compatible terminals that do indeed implement DEC soft reset:
-		||  (!true_kvt && (teken || linuxvt))
+		||  user_space_vt
 		) {
 			use_DECSTR = true;
 		}
 
 		if (true_xterm
 		// Allows forcing the use of DECELR on KVT-compatible terminals that do indeed implement location reports:
-		||  (!true_kvt && (teken || linuxvt))
+		||  user_space_vt
 		) {
 			use_DECLocator = true;
 		}
 
 		if (false		// XTerm does not handle the control sequence properly.
 		// Allows forcing the use of DECELR on KVT-compatible terminals that do indeed implement location reports:
-		||  (!true_kvt && (teken || linuxvt))
+		||  user_space_vt
 		) {
 			use_DECST8C = true;
 		}
 
 		if (true_xterm
 		// Allows forcing the use of DECSNLS on KVT-compatible terminals that do indeed implement the control sequence:
-		||  (!true_kvt && (teken || linuxvt))
+		||  user_space_vt
 		) {
 			use_DECSNLS = true;
 		}
@@ -378,7 +379,7 @@ TerminalCapabilities::TerminalCapabilities(
 			use_DECNKM = false;
 		}
 
-		if (!true_kvt && (teken || linuxvt)) {
+		if (user_space_vt) {
 			has_DECECM = true;
 		}
 		if (vte_version > 0) {
@@ -392,7 +393,7 @@ TerminalCapabilities::TerminalCapabilities(
 		||  teraterm		// per TeraTerm "Supported Control Functions" doco
 		||  rxvt		// per command.C
 		// Allows forcing the use of DTTerm DECSLPP extensions on KVT-compatible terminals that do indeed implement the control sequence:
-		||  (!true_kvt && (teken || linuxvt))
+		||  user_space_vt
 		) {
 			has_DTTerm_DECSLPP_extensions = true;
 		}
@@ -404,7 +405,7 @@ TerminalCapabilities::TerminalCapabilities(
 			has_XTerm1006Mouse = false;
 		}
 
-		if ((!true_kvt && (teken || linuxvt))
+		if (user_space_vt
 		||  (term && has_term_feature(term, "square"))
 		) {
 			has_square_mode = true;
@@ -429,7 +430,7 @@ TerminalCapabilities::TerminalCapabilities(
 		// rxvt copes very badly with extended underline attributes, as it does not handle subparameters properly.
 		if (kitty
 		||  gnome
-		||  (!true_kvt && (teken || linuxvt))
+		||  user_space_vt
 		) {
 			has_extended_underline = true;
 		}

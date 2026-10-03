@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.... vim: indentexpr=:
+.-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
+
+<refentry id="sqz">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>sqz</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv><refname>sqz</refname><refpurpose>squeeze multiple blank lines into one</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>sqz</command>
+<arg choice='opt' repeat='rep'><replaceable>filename(s)</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>sqz</command> outputs either the contents of <filename><replaceable>filename(s)</replaceable></filename> or, if none are supplied, its standard input; to its standard output.
+The only processing that it does is to truncate sequences of more than 2 consecutive newlines down to 2 newlines.
+This effectively 'squeezes' multiple empty lines into a single empty line.
+</para>
+
+<para>
+Compare the <arg choice='plain'>-s</arg> option to <citerefentry><refentrytitle>cat</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>less</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>more</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and <citerefentry><refentrytitle>most</refentrytitle><manvolnum>1</manvolnum></citerefentry>; and the <arg choice='plain'>--squeeze-empty-lines</arg> option to <citerefentry><refentrytitle>console-tty37-viewer</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+</refsection>
+
+<refsection><title>See also</title>
+
+<para>
+<orderedlist>
+<listitem><para>
+<citetitle>Program design in the UNIX environment</citetitle> by <author><personname>Rob</personname> <surname>Pike</surname></author> and <author><personname>Brian W.</personname> <surname>Kernighan</surname></author>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>cat</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>vis</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>linenumber</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+</orderedlist>
+</para>
+
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
+
+</refentry>

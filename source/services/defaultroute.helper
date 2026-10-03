@@ -33,11 +33,11 @@ list_dhcp_interfaces() {
 	do
 		case "$i" in
 		# Loopbacks of various flavours don't count.
-		lo[0-9]*|stf[0-9]*|faith[0-9]*|lp[0-9]*|sl[0-9]*)
+		(lo[0-9]*|stf[0-9]*|faith[0-9]*|lp[0-9]*|sl[0-9]*)
 			continue
 			;;
 		# Nor do firewalls and others of their ilk that have no af configuration.
-		pflog[0-9]*|pfsync[0-9]*|usbus[0-9]*|an[0-9]*|ath[0-9]*|ipw[0-9]*|ipfw[0-9]*|iwi[0-9]*|iwn[0-9]*|ral[0-9]*|wi[0-9]*|wl[0-9]*|wpi[0-9]*)
+		(pflog[0-9]*|pfsync[0-9]*|usbus[0-9]*|an[0-9]*|ath[0-9]*|ipw[0-9]*|ipfw[0-9]*|iwi[0-9]*|iwn[0-9]*|ral[0-9]*|wi[0-9]*|wl[0-9]*|wpi[0-9]*)
 			continue
 			;;
 		esac
@@ -49,7 +49,7 @@ list_dhcp_interfaces() {
 		while read -r v
 		do
 			case "$v" in
-			[Dd][Hh][Cc][Pp]|[Nn][Oo][Ss][Yy][Nn][Cc][Dd][Hh][Cc][Pp]|[Ss][Yy][Nn][Cc][Dd][Hh][Cc][Pp])
+			([Dd][Hh][Cc][Pp]|[Nn][Oo][Ss][Yy][Nn][Cc][Dd][Hh][Cc][Pp]|[Ss][Yy][Nn][Cc][Dd][Hh][Cc][Pp])
 				echo "$i"
 				;;
 			esac

@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -47,7 +48,7 @@ The kernel virtual terminal subsystem registers the console name <filename>tty</
 <listitem><para>
 The index only has meaning for device drivers that register more than one console I/O handler by the same name, allowing a particular handler instance to be selected from the <code>console=</code> parameter.
 </para><para>
-This is not in fact the case for the KVT subsystem, the parallel port driver, nor indeed many of the drivers in the system; which register just a single console I/O handler each, no matter how many character devices they supply in the filesystem, using -1 as the index (which matches any index in the <code>console=</code> command-line argument).
+This is not in fact the case for the KVT subsystem, the parallel port driver, nor indeed many of the drivers in the system; which register just a single console I/O handler each, no matter how many character devices they supply in the filesystem, using -1 as the index (which matches any index in the <code>console=</code> command&#x2010;line argument).
 It is thus often ignored, making (say) <filename>tty0</filename> functionally equivalent to <filename>tty2</filename>.
 See <citerefentry><refentrytitle>linux-vt</refentrytitle><manvolnum>4</manvolnum></citerefentry> for how to direct console output to different kernel virtual terminals, when <filename>tty</filename> or <filename>tty<replaceable>NN</replaceable></filename> is specified as the console.
 </para></listitem>

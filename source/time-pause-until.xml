@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -36,7 +37,7 @@ It sleeps until that time has passed, and then chain loads to <replaceable>next-
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>time-pause-until</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>time-pause-until</command> will ignore.
 </para>
 
 <para>

@@ -31,8 +31,8 @@ RuntimeDirectoryGroup=user-vt-emulator
 #ExecStartPre=install -d -m 02775 -o root -g user-vt-emulator %t/dev/%I
 #ExecStartPre=setfacl -m u:user-vt-emulator:rwx %t/dev/%I
 # 115200 is the maximum possible (divisor register = 1) bit rate for a vanilla 16550 UART.
-ExecStart=stty ${speed:- 115200} ${sttyflags:- raw -crtscts -tostop}
-ExecStart=fdmove -c 4 0 console-terminal-emulator ${flags} %t/dev/%I
+ExecStart=stty ${speed:- 115200} ${sttyflags:- -crtscts}
+ExecStart=fdmove -c 4 0 console-terminal-emulator ${flags:- --terminal-mode non-canonical} %t/dev/%I
 
 [Install]
 WantedBy=multi-user.target

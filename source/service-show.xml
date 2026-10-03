@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -43,7 +44,7 @@ The latter covers both daemontools-style service directories and nosh-style serv
 </para>
 
 <para>
-If the <arg choice='opt'>--json</arg> command line option is used, the machine parseable format is JSON, with each <replaceable>directory</replaceable> being an entry in a top-level array of objects.
+If the <arg choice='opt'>--json</arg> command&#x2010;line option is used, the machine parseable format is JSON, with each <replaceable>directory</replaceable> being an entry in a top-level array of objects.
 Otherwise, the machine parseable format is that of a .INI file.; with each <replaceable>directory</replaceable> being a section within the file.
 </para>
 

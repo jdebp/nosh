@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -23,7 +24,7 @@
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>list-process-table</command>
-<arg choice="opt">--field <replaceable>name</replaceable></arg>
+<arg choice="opt" repeat='rep'>--field <replaceable>name</replaceable></arg>
 <arg choice="opt">--threads</arg>
 <arg choice='opt'>--tui-level <replaceable>level</replaceable></arg>
 <arg choice="opt">--time-format <replaceable>formatstring</replaceable></arg>
@@ -44,17 +45,17 @@ In fact that latter command (in this toolset) is a shim around <command>list-pro
 </para>
 
 <para>
-The <arg choice="plain"><replaceable>PID</replaceable></arg> command-line arguments are a filter set that is matched against the process IDs, enabling the selection of individual process records.
+The <arg choice="plain"><replaceable>PID</replaceable></arg> command&#x2010;line arguments are a filter set that is matched against the process IDs, enabling the selection of individual process records.
 If there are no <arg choice="plain"><replaceable>PID</replaceable></arg> arguments, the entire list is output, unfiltered.
 It is not an error for a filter item not to match a process ID.
 </para>
 
 <para>
-The <arg choice="plain">--threads</arg> command-line option controls whether <command>list-process-table</command> asks the operating system for a list of all individual threads, or simply all processes.
+The <arg choice="plain">--threads</arg> command&#x2010;line option controls whether <command>list-process-table</command> asks the operating system for a list of all individual threads, or simply all processes.
 </para>
 
 <para>
-The <arg choice="plain">--field</arg> command-line option specifies a list of fields by <arg choice="plain"><replaceable>name</replaceable></arg>.
+The <arg choice="plain">--field</arg> command&#x2010;line option specifies a list of fields by <arg choice="plain"><replaceable>name</replaceable></arg>.
 What exactly the fields are varies from operating system to operating system.
 There is a basic common set:
 <arg choice="plain">pid</arg>,
@@ -80,7 +81,7 @@ There is a basic common set:
 </para>
 
 <para>
-The <arg choice="plain">--time-format</arg> command-line option specifies an alternative display format to be employed for all time fields, <arg choice="plain"><replaceable>formatstring</replaceable></arg>, in the form employed by the <citerefentry><refentrytitle>strftime</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function.
+The <arg choice="plain">--time-format</arg> command&#x2010;line option specifies an alternative display format to be employed for all time fields, <arg choice="plain"><replaceable>formatstring</replaceable></arg>, in the form employed by the <citerefentry><refentrytitle>strftime</refentrytitle><manvolnum>3</manvolnum></citerefentry> library function.
 </para>
 <note>
 Linux pre-formats several time fields into human-readable form itself, and this option has no effect upon such fields.
@@ -94,7 +95,7 @@ Linux pre-formats several time fields into human-readable form itself, and this 
 The output format is variable-length records terminated by LF containing TAB-separated fields.
 Fields are output as if passed through the BSD <citerefentry><refentrytitle><code>vis</code></refentrytitle><manvolnum>3</manvolnum></citerefentry> library function.
 They are thus unambiguously machine-parseable, because any whitespace in the field itself is encoded by <citerefentry><refentrytitle><code>vis</code></refentrytitle><manvolnum>3</manvolnum></citerefentry>.
-After separating out an individual field, its contents can (for example) be decoded in shell script using the <citerefentry><refentrytitle><code>unvis</code></refentrytitle><manvolnum>1</manvolnum></citerefentry> utility (which is supplied by FreeBSD).
+After separating out an individual field, its contents can (for example) be decoded in shell script using the <citerefentry><refentrytitle><code>unvis</code></refentrytitle><manvolnum>1</manvolnum></citerefentry> utility (either the one that is supplied by FreeBSD, NetBSD, and OpenBSD or the one that is an <citerefentry><refentrytitle><code>exec</code></refentrytitle><manvolnum>1</manvolnum></citerefentry> built&#x2010;in).
 </para>
 
 <para>
@@ -116,7 +117,7 @@ Selection of records by process ID happens after the tree has been generated, an
 </para>
 
 <para>
-The <arg choice='plain'>--tui-level</arg> command-line option constrains the use of MouseText or Unicode block graphics and line drawing characters in the <arg choice="plain">tree</arg> field.
+The <arg choice='plain'>--tui-level</arg> command&#x2010;line option constrains the use of MouseText or Unicode block graphics and line drawing characters in the <arg choice="plain">tree</arg> field.
 </para>
 
 <refsection><title>Header row</title>
@@ -144,7 +145,7 @@ It agrees, rather, with Laurent Berot's <command>s6-ps</command>.
 It eliminates confusion with the <code>COMMAND</code> field heading that the Single Unix Specification engenders, albeit that the Single Unix Specification's <arg choice="plain">comm</arg> field is not what real <command>ps</command> tools on Linux and the BSDs actually do.
 <arg choice="plain">comm</arg> is supposed to be just the first string in <arg choice="plain">args</arg> according to the Single Unix Specification.
 Hence why <code>COMMAND</code> can be the header for both fields.
-Actual <command>ps</command> commands on Linux and the BSDs instead display an "accounting name" for the process in this field, and not its argument strings at all.
+Actual <command>ps</command> commands on Linux and the BSDs instead display an <quote>accounting name</quote> for the process in this field, and not its argument strings at all.
 </para></listitem>
 </itemizedlist>
 

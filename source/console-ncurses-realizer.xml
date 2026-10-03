@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -63,7 +64,7 @@ writes the contents of the character/attribute buffer file to its standard outpu
 </itemizedlist>
 
 <para>
-The <arg choice='plain'>--wrong-way-up</arg> command-line option causes the display to be realized the wrong way up, swapping the direction of increasing line numbers.
+The <arg choice='plain'>--wrong-way-up</arg> command&#x2010;line option causes the display to be realized the wrong way up, swapping the direction of increasing line numbers.
 This is an oft-requested terminal feature, albeit by people who have never actually experienced it.
 </para>
 
@@ -132,7 +133,7 @@ Font weights are conflated with colour changes.
 <listitem>
 <para>
 The ncursesw colour system does not lend itself to 24-bit RGB.
-It is, in the terminology of the <citerefentry><refentrytitle>termcap</refentrytitle><manvolnum>5</manvolnum></citerefentry> manual page, "HP-like" rather than "Tektronix-like".
+It is, in the terminology of the <citerefentry><refentrytitle>termcap</refentrytitle><manvolnum>5</manvolnum></citerefentry> manual page, <quote>HP-like</quote> rather than <quote>Tektronix-like</quote>.
 This means that colours are specified indirectly, first via one of 64 (at minimum) colour pairs that pair up foreground and background colours; and then via an (at minimum) 8-entry colour palette.
 The maximum number of simultaneously on-screen colours is nowhere near the size of the 24-bit RGB colour space, and is in fact 8 as standard.
 </para>

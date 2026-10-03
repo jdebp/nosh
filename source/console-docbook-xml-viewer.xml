@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -39,7 +40,7 @@
 </para>
 
 <para>
-The manual data are read from the command's standard input, or the list of files denoted by <arg choice='plain'><replaceable>filename(s)</replaceable></arg>, and parsed at startup; before its initializes its display.
+The manual data are read from the command's standard input, or the list of files denoted by <arg choice='plain'><replaceable>filename(s)</replaceable></arg>, and parsed at startup; before it initializes its display.
 </para>
 
 <refsection><title>Documents</title>
@@ -94,15 +95,15 @@ Various common control characters with conventional special meanings may be used
 </para>
 
 <para>
-The <arg choice='plain'>--cursor-keypad-application-mode</arg> and <arg choice='plain'>--calculator-keypad-application-mode</arg> command-line options instruct <command>console-docbook-xml-viewer</command> to switch, respectively, the cursor keypad and the calculator keypad of the realizing terminal into their "application" modes.
-Otherwise it switches them into their "normal" modes.
+The <arg choice='plain'>--cursor-keypad-application-mode</arg> and <arg choice='plain'>--calculator-keypad-application-mode</arg> command&#x2010;line options instruct <command>console-docbook-xml-viewer</command> to switch, respectively, the cursor keypad and the calculator keypad of the realizing terminal into their <quote>application</quote> modes.
+Otherwise it switches them into their <quote>normal</quote> modes.
 "application" mode is generally not useful to <command>console-docbook-xml-viewer</command>, since it makes cursor and calculator keys indistinguishable from accelerator keys.
-The <arg choice='plain'>--no-alternate-screen-buffer</arg> command-line option instructs <command>console-docbook-xml-viewer</command> to not switch to the alternative screen buffer.
+The <arg choice='plain'>--no-alternate-screen-buffer</arg> command&#x2010;line option instructs <command>console-docbook-xml-viewer</command> to not switch to the alternative screen buffer.
 This has two uses.
 First, it allows one to retain visibility of displayed information after the program has exited (although <citerefentry><refentrytitle>setterm</refentrytitle><manvolnum>1</manvolnum></citerefentry> provides access to the alternative screen buffer).
 Second, it works around problems with some (yet more!) broken terminal emulators that attempt to be and fail at being like XTerm, which forcibly change cursor and editing keys into application mode when the alternative screen buffer is active.
-The <arg choice='plain'>--inversescreen</arg> command-line option instructs <command>console-docbook-xml-viewer</command> to switch the DECSCNM ("light"/"dark" screen mode) private mode on or off.
-The <arg choice='plain'>--tui-level</arg> command-line option constrains the use of MouseText or Unicode block graphics and line drawing characters in TUI widgets; currently none.
+The <arg choice='plain'>--inversescreen</arg> command&#x2010;line option instructs <command>console-docbook-xml-viewer</command> to switch the DECSCNM ("light"/"dark" screen mode) private mode on or off.
+The <arg choice='plain'>--tui-level</arg> command&#x2010;line option constrains the use of MouseText or Unicode block graphics and line drawing characters in TUI widgets; currently none.
 </para>
 
 </refsection>

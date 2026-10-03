@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -30,11 +31,11 @@
 <refsection><title>Description</title>
 
 <para>
-<command>fdmove</command> is a chain-loading utility that duplicates the (open) file descriptor <replaceable>from</replaceable> to the descriptor <replaceable>to</replaceable>, closes <replaceable>from</replaceable> unless the <arg choice='plain'>--copy</arg> command line option is used, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
+<command>fdmove</command> is a chain-loading utility that duplicates the (open) file descriptor <replaceable>from</replaceable> to the descriptor <replaceable>to</replaceable>, closes <replaceable>from</replaceable> unless the <arg choice='plain'>--copy</arg> command&#x2010;line option is used, and then chain loads to <replaceable>next-prog</replaceable> with the <citerefentry><refentrytitle>execvp</refentrytitle><manvolnum>3</manvolnum></citerefentry> function.
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>fdmove</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>fdmove</command> will ignore.
 </para>
 
 </refsection><refsection><title>Author</title>

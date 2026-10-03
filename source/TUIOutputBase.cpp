@@ -4,9 +4,8 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 #define __STDC_FORMAT_MACROS
-#define _XOPEN_SOURCE_EXTENDED
 #include <vector>
-#include <cstdio>
+#include <iostream>
 #include <cstdlib>
 #include <cstring>
 #include <unistd.h>
@@ -218,16 +217,16 @@ TUIOutputBase::GotoYX(
 			if (row > cursor_y) {
 				const unsigned short n(row - cursor_y);
 				if (!out.caps.lacks_IND && n <= 3U)
-					out.print_control_characters(IND, n);
+					out.forward_index(n);
 				else
 				if (n <= 6U)
-					out.print_control_characters(LF, n);
+					out.linefeed(n);
 				else
 					out.CUD(n);
 				cursor_y = row;
 			}
 		} else
-			out.print_control_character(CR);
+			out.carriage_return();
 		cursor_x = 0;
 	}
 	// If we are (now) in the right column, use index and reverse index to get to the right row.
@@ -235,7 +234,7 @@ TUIOutputBase::GotoYX(
 		if (row < cursor_y) {
 			const unsigned short n(cursor_y - row);
 			if (!out.caps.lacks_RI && n <= 3U)
-				out.print_control_characters(RI, n);
+				out.reverse_index(n);
 			else
 				out.CUU(n);
 			cursor_y = row;
@@ -243,22 +242,22 @@ TUIOutputBase::GotoYX(
 		if (row > cursor_y) {
 			const unsigned short n(row - cursor_y);
 			if (!out.caps.lacks_IND && n <= 3U)
-				out.print_control_characters(IND, n);
+				out.forward_index(n);
 			else
 			if (n <= 6U)
-				out.print_control_characters(LF, n);
+				out.linefeed(n);
 			else
 				out.CUD(n);
 			cursor_y = row;
 		}
 	} else
-	// If we are (now) in the right row, use left and right to get to the right row.
+	// If we are (now) in the right row, use left and right to get to the right column.
 	if (row == cursor_y && cursor_x < c.query_w()) {
 		if (col < cursor_x) {
 			const unsigned short n(cursor_x - col);
 			// Optimize going left if the control sequence is longer than just printing enough BS characters.
 			if (n <= 6U)
-				out.print_control_characters(BS, n);
+				out.backspace(n);
 			else
 				out.CUL(n);
 			cursor_x = col;
@@ -285,39 +284,44 @@ TUIOutputBase::GotoYX(
 	}
 }
 
+namespace {
+
 inline
 void
-TUIOutputBase::SGRAttr1(
+SGRAttr1(
+	const CharacterCell::attribute_type & current_attr,
 	const CharacterCell::attribute_type & attr,
 	const CharacterCell::attribute_type & mask,
-	char m,
-	char & semi
-) const {
+	std::vector<unsigned> & n,
+	unsigned n0
+) {
 	if ((attr & mask) != (current_attr & mask)) {
-		if (semi) out.print_graphic_character(semi);
-		if (!(attr & mask)) out.print_graphic_character('2');
-		out.print_graphic_character(m);
-		semi = ';';
+		if (!(attr & mask))
+			n.push_back(20U + n0);
+		else
+			n.push_back(n0);
 	}
 }
 
 inline
 void
-TUIOutputBase::SGRAttr1(
+SGRAttr1(
+	const CharacterCell::attribute_type & current_attr,
 	const CharacterCell::attribute_type & attr,
 	const CharacterCell::attribute_type & mask,
 	const CharacterCell::attribute_type & unit,
-	char m,
-	char & semi
-) const {
+	std::vector<unsigned> & n,
+	std::vector<unsigned> & u
+) {
 	const CharacterCell::attribute_type bits(attr & mask);
 	if (bits != (current_attr & mask)) {
-		if (semi) out.print_graphic_character(semi);
-		if (!bits) out.print_graphic_character('2');
-		out.print_graphic_character(m);
-		if (bits) out.print_subparameter(bits / unit);
-		semi = ';';
+		if (!bits)
+			n.push_back(24U);
+		else
+			u.push_back(bits / unit);
 	}
+}
+
 }
 
 inline
@@ -326,12 +330,9 @@ TUIOutputBase::SGRAttr (
 	const CharacterCell::attribute_type & attr
 ) {
 	if (attr == current_attr) return;
-	out.csi();
-	char semi(0);
+	std::vector<unsigned> n, u;
 	if (out.caps.lacks_reverse_off && (current_attr & CharacterCell::INVERSE)) {
-		if (semi) out.print_graphic_character(semi);
-		out.print_graphic_character('0');
-		semi = ';';
+		n.push_back(0U);
 		current_attr = 0;
 	}
 	enum {
@@ -339,67 +340,41 @@ TUIOutputBase::SGRAttr (
 		FE = CharacterCell::FRAME|CharacterCell::ENCIRCLE,
 	};
 	if ((attr & BF) != (current_attr & BF)) {
-		if (current_attr & BF) {
-			if (semi) out.print_graphic_character(semi);
-			out.print_graphic_character('2');
-			out.print_graphic_character('2');
-			semi = ';';
-		}
-		if (CharacterCell::BOLD & attr) {
-			if (semi) out.print_graphic_character(semi);
-			out.print_graphic_character('1');
-			semi = ';';
-		}
-		if (CharacterCell::FAINT & attr) {
-			if (semi) out.print_graphic_character(semi);
-			out.print_graphic_character('2');
-			semi = ';';
-		}
+		if (current_attr & BF)
+			n.push_back(22U);
+		if (CharacterCell::BOLD & attr)
+			n.push_back(1U);
+		if (CharacterCell::FAINT & attr)
+			n.push_back(2U);
 	}
 	if ((attr & FE) != (current_attr & FE)) {
-		if (current_attr & FE) {
-			if (semi) out.print_graphic_character(semi);
-			out.print_graphic_character('5');
-			out.print_graphic_character('4');
-			semi = ';';
-		}
-		if (CharacterCell::FRAME & attr) {
-			if (semi) out.print_graphic_character(semi);
-			out.print_graphic_character('5');
-			out.print_graphic_character('1');
-			semi = ';';
-		}
-		if (CharacterCell::ENCIRCLE & attr) {
-			if (semi) out.print_graphic_character(semi);
-			out.print_graphic_character('5');
-			out.print_graphic_character('2');
-			semi = ';';
-		}
+		if (current_attr & FE)
+			n.push_back(54U);
+		if (CharacterCell::FRAME & attr)
+			n.push_back(51U);
+		if (CharacterCell::ENCIRCLE & attr)
+			n.push_back(52U);
 	}
-	SGRAttr1(attr, CharacterCell::ITALIC, '3', semi);
+	SGRAttr1(current_attr, attr, CharacterCell::ITALIC, n, 3U);
 	if (out.caps.has_extended_underline) {
-		SGRAttr1(attr, CharacterCell::UNDERLINES, CharacterCell::SIMPLE_UNDERLINE, '4', semi);
+		SGRAttr1(current_attr, attr, CharacterCell::UNDERLINES, CharacterCell::SIMPLE_UNDERLINE, n, u);
 	} else {
-		SGRAttr1(attr, CharacterCell::UNDERLINES, '4', semi);
+		SGRAttr1(current_attr, attr, CharacterCell::UNDERLINES, n, 4U);
 	}
-	SGRAttr1(attr, CharacterCell::BLINK, '5', semi);
-	SGRAttr1(attr, CharacterCell::INVERSE, '7', semi);
-	if (!out.caps.lacks_invisible) {
-		SGRAttr1(attr, CharacterCell::INVISIBLE, '8', semi);
-	}
-	if (!out.caps.lacks_strikethrough) {
-		SGRAttr1(attr, CharacterCell::STRIKETHROUGH, '9', semi);
-	}
+	SGRAttr1(current_attr, attr, CharacterCell::BLINK, n, 5U);
+	SGRAttr1(current_attr, attr, CharacterCell::INVERSE, n, 7U);
+	if (!out.caps.lacks_invisible)
+		SGRAttr1(current_attr, attr, CharacterCell::INVISIBLE, n, 8U);
+	if (!out.caps.lacks_strikethrough)
+		SGRAttr1(current_attr, attr, CharacterCell::STRIKETHROUGH, n, 9U);
 	if ((attr & CharacterCell::OVERLINE) != (current_attr & CharacterCell::OVERLINE)) {
-		if (semi) out.print_graphic_character(semi);
-		out.print_graphic_character('5');
 		if (attr & CharacterCell::OVERLINE)
-			out.print_graphic_character('3');
+			n.push_back(53U);
 		else
-			out.print_graphic_character('5');
-		semi = ';';
+			n.push_back(55U);
 	}
-	out.print_graphic_character('m');
+	out.SGRAttribute(n);
+	if (!u.empty()) out.SGRAttribute(4U, u);
 	current_attr = attr;
 }
 
@@ -434,8 +409,10 @@ TUIOutputBase::print(
 void
 TUIOutputBase::enter_full_screen_mode(
 ) {
-	if (0 <= tcgetattr_nointr(out.fd(), original_attr))
-		tcsetattr_nointr(out.fd(), TCSADRAIN, make_raw(original_attr));
+	if (0 <= tcgetattr_nointr(fd, original_attr)) {
+		out.stream().flush();
+		tcsetattr_nointr(fd, TCSADRAIN, disable_canonical_software_processing(original_attr));
+	}
 	if (out.caps.use_DECPrivateMode) {
 		out.XTermSaveRestore(true);
 		out.XTermAlternateScreenBuffer(!options.no_alternate_screen_buffer);
@@ -475,7 +452,7 @@ TUIOutputBase::enter_full_screen_mode(
 	}
 	out.change_cursor_visibility(false);
 	out.SCUSR(cursor_attributes, cursor_glyph);
-	out.flush();
+	out.stream().flush();
 }
 
 void
@@ -512,19 +489,21 @@ TUIOutputBase::exit_full_screen_mode(
 		out.XTermAlternateScreenBuffer(false);
 		out.XTermSaveRestore(false);
 	}
-	out.flush();
-	tcsetattr_nointr(out.fd(), TCSADRAIN, original_attr);
+	out.stream().flush();
+	tcsetattr_nointr(fd, TCSADRAIN, original_attr);
 }
 
 TUIOutputBase::TUIOutputBase(
 	const TerminalCapabilities & t,
-	FILE * f,
+	std::ostream & os,
+	int d,
 	const TUIOutputBase::Options & o,
 	TUIDisplayCompositor & comp
 ) :
 	c(comp),
 	options(o),
-	out(t, f, true /* C1 is 7-bit aliased */, false /* C1 is not raw 8-bit */),
+	out(t, os, true /* C1 is 7-bit aliased */, false /* C1 is not raw 8-bit */),
+	fd(d),
 	window_resized(true),
 	refresh_needed(true),
 	update_needed(true),
@@ -537,15 +516,16 @@ TUIOutputBase::TUIOutputBase(
 	invert_screen(-1),	// Use an impossible value to force an initial update.
 	current_attr_unknown(true)
 {
-	out.flush();
-	std::setvbuf(out.file(), out_buffer, _IOFBF, sizeof out_buffer);
+	out.stream().flush();
+	out.stream().rdbuf()->pubsetbuf(out_buffer, sizeof out_buffer);
 	enter_full_screen_mode();
 }
 
 TUIOutputBase::~TUIOutputBase()
 {
 	exit_full_screen_mode();
-	std::setvbuf(out.file(), nullptr, _IOFBF, 1024);
+	out.stream().flush();
+	out.stream().rdbuf()->pubsetbuf(nullptr, 0);
 }
 
 void
@@ -554,7 +534,7 @@ TUIOutputBase::handle_resize_event (
 	if (window_resized) {
 		window_resized = false;
 		struct winsize size;
-		if (0 <= tcgetwinsz_nointr(out.fd(), size)) {
+		if (0 <= tcgetwinsz_nointr(fd, size)) {
 			sane(size);
 			c.resize(size.ws_row, size.ws_col);
 		}
@@ -634,9 +614,7 @@ TUIOutputBase::write_changed_cells_to_output()
 	}
 	// Do this once, instead of inside of every call to SGRAttr().
 	if (current_attr_unknown) {
-		out.csi();
-		out.print_graphic_character('0');
-		out.print_graphic_character('m');
+		out.SGRAttribute(0);
 		current_attr = 0U;
 		current_attr_unknown = false;
 	}
@@ -701,7 +679,7 @@ TUIOutputBase::write_changed_cells_to_output()
 	}
 	if (CursorSprite::VISIBLE & a)
 		out.change_cursor_visibility(true);
-	out.flush();
+	out.stream().flush();
 }
 
 void
@@ -712,19 +690,19 @@ TUIOutputBase::optimize_scroll_up(
 	if (CursorSprite::VISIBLE & a)
 		out.change_cursor_visibility(false);
 	GotoYX(0U, 0U);
-	for (unsigned row(0); row < rows; ++row)
-		out.reverse_index();
+	const unsigned short capped_rows(rows < c.query_h() ? rows : c.query_h());
+	out.reverse_index(capped_rows);
 	GotoYX(c.query_cursor_row(), c.query_cursor_col());
 	if (CursorSprite::VISIBLE & a)
 		out.change_cursor_visibility(true);
-	c.scroll_up(rows);
+	c.scroll_up(capped_rows);
 	if ((out.caps.has_DECECM || !out.caps.initial_DECECM)	// i.e. does not always erase to default colour
 	&&  !out.caps.faulty_inverse_erase
 	) {
 		// RI scrolling sets erased cells to 0 attributes, by widespread tacit agreement.
 		TUIDisplayCompositor::DirtiableCell spc(SPC, 0, current);
-		for (unsigned row(0U); row < rows && row < c.query_h(); ++row)
-			for (unsigned col(0U); col < c.query_w(); ++col)
+		for (unsigned row(0); row < capped_rows; ++row)
+			for (unsigned col(0U), w(c.query_w()); col < w; ++col)
 				c.cur_at(row, col) = spc;
 	}
 }
@@ -737,19 +715,19 @@ TUIOutputBase::optimize_scroll_down(
 	if (CursorSprite::VISIBLE & a)
 		out.change_cursor_visibility(false);
 	GotoYX(c.query_h() - 1U, 0U);
-	for (unsigned row(0); row < rows; ++row)
-		out.forward_index();
+	const unsigned short capped_rows(rows < c.query_h() ? rows : c.query_h());
+	out.forward_index(capped_rows);
 	GotoYX(c.query_cursor_row(), c.query_cursor_col());
 	if (CursorSprite::VISIBLE & a)
 		out.change_cursor_visibility(true);
-	c.scroll_down(rows);
+	c.scroll_down(capped_rows);
 	if ((out.caps.has_DECECM || !out.caps.initial_DECECM)	// i.e. does not always erase to default colour
 	&&  !out.caps.faulty_inverse_erase
 	) {
 		// IND scrolling sets erased cells to 0 attributes, by widespread tacit agreement.
 		TUIDisplayCompositor::DirtiableCell spc(SPC, 0, current);
-		for (unsigned row(0U); row < rows && row < c.query_h(); ++row)
-			for (unsigned col(0U); col < c.query_w(); ++col)
+		for (unsigned row(0); row < capped_rows; ++row)
+			for (unsigned col(0U), w(c.query_w()); col < w; ++col)
 				c.cur_at(c.query_h() - 1U - row, col) = spc;
 	}
 }

@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -40,7 +41,7 @@ This command is more commonly used with <citerefentry><refentrytitle>exec</refen
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>umask</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>umask</command> will ignore.
 </para>
 
 <para>

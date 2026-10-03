@@ -35,9 +35,6 @@ vc_reset_tty (
 	bool hard_reset(false);
 	bool set_text_mode(false);
 
-	// A virtual terminal is always local.
-	const bool no_local(false);
-
 	const char * prog(basename_of(args[0]));
 	try {
 		popt::bool_definition no_utf_8_option('\0', "no-utf8", "Do not set UTF-8 input mode.", no_utf_8);
@@ -66,7 +63,7 @@ vc_reset_tty (
 		die_errno(prog, envs, "stdout");
 	}
 
-	tcsetattr_nointr(STDOUT_FILENO, TCSAFLUSH, sane(no_tostop, no_local, no_utf_8));
+	tcsetattr_nointr(STDOUT_FILENO, TCSAFLUSH, make_default_local_virtual(no_tostop, no_utf_8));
 
 	if (set_text_mode) {
 #if defined(__LINUX__) || defined(__linux__)

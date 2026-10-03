@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -37,22 +38,22 @@ It should be an absolute pathname; but a relative pathname is not regarded as an
 </note>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>chdir-home</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>chdir-home</command> will ignore.
 </para>
 
 <para>
 If the home directory cannot be changed to, normally <command>chdir-home</command> exits with a non-zero exit status does not chain.
-Using the <arg choice='plain'>--oknodir</arg> command-line option causes it to change working directory to the <filename>/</filename> directory instead and to carry on, akin to the behaviours of <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry> programs when a user's home directory is unavailable.
+Using the <arg choice='plain'>--oknodir</arg> command&#x2010;line option causes it to change working directory to the <filename>/</filename> directory instead and to carry on, akin to the behaviours of <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry> programs when a user's home directory is unavailable.
 </para>
 
 <note>
-The <filename>/</filename> directory is a "safe" choice for a default home directory inasmuch as it is not expected to contain any "dotfiles" that programs may mistakenly access as if they were in a bona fide home directory.
-Historically, <filename>/</filename> actually was the superuser's own home directory, and this would have not been a "safe" choice; but for security reasons the convention changed to the superuser having a distinct home directory (on the root volume) as <filename>/root</filename> or some such and <filename>/</filename> is nowadays no longer a bona fide home directory.
+The <filename>/</filename> directory is a <quote>safe</quote> choice for a default home directory inasmuch as it is not expected to contain any <quote>dotfiles</quote> that programs may mistakenly access as if they were in a bona fide home directory.
+Historically, <filename>/</filename> actually was the superuser's own home directory, and this would have not been a <quote>safe</quote> choice; but for security reasons the convention changed to the superuser having a distinct home directory (on the root volume) as <filename>/root</filename> or some such and <filename>/</filename> is nowadays no longer a bona fide home directory.
 </note>
 
 <para>
-Unlike the shell built-in <command>chdir</command> command, <command>chdir-home</command> always operates in "physical" mode, and performs no canonicalization of <quote><code>..</code></quote> or <quote><code>.</code></quote> components.
-For the benefit of the <citerefentry><refentrytitle>pwd</refentrytitle><manvolnum>1</manvolnum></citerefentry> command when its <arg choice='plain'>-L</arg> command-line option is used, if the path of the directory changed to is an absolute one <command>chdir-home</command> sets the <envar>PWD</envar> environment variable to that path, and unsets that environment variable if it is a relative path.
+Unlike the shell built-in <command>chdir</command> command, <command>chdir-home</command> always operates in <quote>physical</quote> mode, and performs no canonicalization of <quote><code>..</code></quote> or <quote><code>.</code></quote> components.
+For the benefit of the <citerefentry><refentrytitle>pwd</refentrytitle><manvolnum>1</manvolnum></citerefentry> command when its <arg choice='plain'>-L</arg> command&#x2010;line option is used, if the path of the directory changed to is an absolute one <command>chdir-home</command> sets the <envar>PWD</envar> environment variable to that path, and unsets that environment variable if it is a relative path.
 </para>
 
 <para>

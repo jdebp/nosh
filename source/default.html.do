@@ -7,5 +7,5 @@ nam="`basename "$1"`"
 src="${nam}.xml"
 man="index.html"
 install -d "tmp/${nam}"
-redo-ifchange "${src}" exec "version.xml"
-exec ./exec setlock "tmp/${nam}/index.html.lock" sh -c "xmlto --skip-validation -o \"tmp/${nam}\" html \"${src}\" && sed -e 's/href=\"${man}#/href=\"#/g' \"tmp/${nam}/${man}\" > \"$3\""
+redo-ifchange "${src}" command/build-helper "version.xml"
+exec command/build-helper setlock "tmp/${nam}/index.html.lock" sh -ce 'xmlto --skip-validation -o "tmp/'"${nam}"'" html "'"${src}"'" && sed -e '"'"'s/href="'"${man}"'#/href="#/g'"'"' "tmp/'"${nam}"'/'"${man}"'" > "'"$3"'"'

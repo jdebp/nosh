@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -43,7 +44,7 @@ A trailing newline is silently added to any file (or to standard input) that end
 
 <para>
 <command>tai64nlocal</command> treats TAI64N timestamps correctly.
-On a Linux system where it detects an Olson "right" timezone currently in use, it knows that the system clock is TAI seconds since the Epoch and performs a simple conversion to determine system clock time.
+On a Linux system where it detects an Olson <quote>right</quote> timezone currently in use, it knows that the system clock is TAI seconds since the Epoch and performs a simple conversion to determine system clock time.
 On other Linux systems, and on BSDs, it assumes that the system clock is UTC seconds since the Epoch and attempts to correct for (known) UTC leap seconds in order to determine UTC system clock time.
 </para>
 

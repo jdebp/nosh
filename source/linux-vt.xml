@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -74,7 +75,7 @@ Such applications can also block hot-key virtual terminal switches, which requir
 </para>
 
 <para>
-The kernel can be configured with a hot-key sequence in the virtual terminal subsystem (the "Magic SysRq" keys, also mis-named "SAK") that issues a <code>SIGKILL</code> signal to all processes that have an open file descriptor to the currently active virtual terminal device.
+The kernel can be configured with a hot-key sequence in the virtual terminal subsystem (the <quote>Magic SysRq</quote> keys, also mis-named <quote>SAK</quote>) that issues a <code>SIGKILL</code> signal to all processes that have an open file descriptor to the currently active virtual terminal device.
 </para>
 
 </refsection>

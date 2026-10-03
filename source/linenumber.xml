@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- **************************************************************************
+.... For copyright and licensing terms, see the file named COPYING.
+.... **************************************************************************
+.... vim: indentexpr=:
+.-->
+<?xml-stylesheet href="docbook-xml.css" type="text/css"?>
+
+<refentry id="linenumber">
+
+<refmeta xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentrytitle>linenumber</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">user commands</refmiscinfo>
+<refmiscinfo class="source">nosh</refmiscinfo>
+<xi:include href="version.xml" />
+</refmeta>
+
+<refnamediv><refname>linenumber</refname><refpurpose>number lines</refpurpose></refnamediv>
+
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>linenumber</command>
+<arg choice='opt' repeat='rep'><replaceable>filename(s)</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection><title>Description</title>
+
+<para>
+<command>linenumber</command> outputs either the contents of <filename><replaceable>filename(s)</replaceable></filename> or, if none are supplied, its standard input; to its standard output.
+The only processing that it does is to add an incrementing line number to the beginning of every line.
+</para>
+
+<para>
+Compare the <arg choice='plain'>-n</arg> option to <citerefentry><refentrytitle>cat</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+
+</refsection>
+
+<refsection><title>History</title>
+
+<para>
+<command>linenumber</command> was first proposed in a 1983 paper <citetitle>Program design in the UNIX environment</citetitle> by <author><personname>Rob</personname> <surname>Pike</surname></author> and <author><personname>Brian W.</personname> <surname>Kernighan</surname></author>.
+Unlike <citerefentry><refentrytitle>vis</refentrytitle><manvolnum>1</manvolnum></citerefentry> from the same paper, it was never written.
+</para>
+
+</refsection>
+
+<refsection><title>See also</title>
+
+<para>
+<orderedlist>
+<listitem><para>
+<citerefentry><refentrytitle>cat</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>vis</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>sqz</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+<listitem><para>
+<citerefentry><refentrytitle>nl</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para></listitem>
+</orderedlist>
+</para>
+
+</refsection><refsection><title>Author</title>
+<para><author><personname><firstname>Jonathan</firstname> <surname>de Boyne Pollard</surname></personname></author></para>
+</refsection>
+
+</refentry>

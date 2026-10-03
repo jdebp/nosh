@@ -1,0 +1,18 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=IDENTD service over IP4/IP6 using djbwares
+
+[Service]
+User=publicfile
+SessionLeader=yes
+EnvironmentDirectory=env
+EnvironmentUserOnly=true
+LimitNOFILE=10
+LimitDATA=3000000
+ExecStart=sh -c 'exec identd ~publicfile/public'
+
+[Install]
+WantedBy=server.target

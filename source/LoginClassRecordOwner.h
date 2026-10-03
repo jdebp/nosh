@@ -7,7 +7,7 @@ For copyright and licensing terms, see the file named COPYING.
 #define INCLUDE_LOGIN_CLASS_RECORD_OWNER_H
 
 #include <string>
-#include "haslogincap.h"
+#include "config/haslogincap.h"
 #if defined(HAS_LOGINCAP)
 #include <sys/types.h>
 #include <login_cap.h>

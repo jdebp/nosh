@@ -3,6 +3,7 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
+#define _BSD_SOURCE 1
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
@@ -128,17 +129,13 @@ tcp_socket_accept (
 	if (args.empty()) die_missing_next_program(prog, envs);
 
 	const unsigned listen_fds(query_listen_fds_or_daemontools(envs));
-	if (1U > listen_fds) {
-		die_errno(prog, envs, "LISTEN_FDS");
-	}
+	if (1U > listen_fds) die_errno(prog, envs, "LISTEN_FDS");
 
 	ReserveSignalsForKQueue kqueue_reservation(SIGPIPE, SIGCHLD, 0);
 	PreventDefaultForFatalSignals ignored_signals(SIGPIPE, 0);
 
 	const int queue(kqueue());
-	if (0 > queue) {
-		die_errno(prog, envs, "kqueue");
-	}
+	if (0 > queue) die_errno(prog, envs, "kqueue");
 
 	std::vector<struct kevent> ip;
 	for (unsigned i(0U); i < listen_fds; ++i)
@@ -160,8 +157,7 @@ tcp_socket_accept (
 		ip.clear();
 		if (0 > rc) {
 			if (EINTR == errno) continue;
-exit_error:
-			die_errno(prog, envs, prog);
+			die_errno(prog, envs, "kevent");
 		}
 		for (size_t i(0); i < static_cast<std::size_t>(rc); ++i) {
 			const struct kevent & e(p[i]);
@@ -177,19 +173,17 @@ exit_error:
 			socklen_t remoteaddrsz = sizeof remoteaddr;
 			const int s(accept(l, reinterpret_cast<sockaddr *>(&remoteaddr), &remoteaddrsz));
 			if (0 > s) {
-				const int error(errno);
-				if (ECONNABORTED == error) {
-					std::fprintf(stderr, "%s: ERROR: %s\n", prog, std::strerror(error));
+				if (ECONNABORTED == errno) {
+					message_error_errno(prog, envs, "accept");
 					close(s);
 					continue;
 				}
-				goto exit_error;
+				die_errno(prog, envs, "accept");
 			}
 
 			const pid_t child(fork());
 			if (0 > child) {
-				const int error(errno);
-				std::fprintf(stderr, "%s: ERROR: %s\n", prog, std::strerror(error));
+				message_error_errno(prog, envs, "fork");
 				close(s);
 				continue;
 			}
@@ -203,17 +197,17 @@ exit_error:
 
 			if (keepalives) {
 				const int on = 1;
-				if (0 > setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof on)) goto exit_error ;
+				if (0 > setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof on)) die_errno(prog, envs, "setsockopt");
 			}
 			if (no_delay) {
 				const int on = 1;
-				if (0 > setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &on, sizeof on)) goto exit_error ;
+				if (0 > setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &on, sizeof on)) die_errno(prog, envs, "setsockopt");
 			}
 #if defined(IP_OPTIONS)
 			if (!no_kill_IP_options) {
 				switch (remoteaddr.ss_family) {
 					case AF_INET:
-						if (0 > setsockopt(s, IPPROTO_IP, IP_OPTIONS, nullptr, 0)) goto exit_error ;
+						if (0 > setsockopt(s, IPPROTO_IP, IP_OPTIONS, nullptr, 0)) die_errno(prog, envs, "setsockopt");
 						break;
 					default:
 						break;
@@ -223,12 +217,12 @@ exit_error:
 
 			sockaddr_storage localaddr;
 			socklen_t localaddrsz = sizeof localaddr;
-			if (0 > getsockname(s, reinterpret_cast<sockaddr *>(&localaddr), &localaddrsz)) goto exit_error;
+			if (0 > getsockname(s, reinterpret_cast<sockaddr *>(&localaddr), &localaddrsz)) die_errno(prog, envs, "getsockname");
 
 			for (unsigned j(0U); j < listen_fds; ++j)
 				close(LISTEN_SOCKET_FILENO + j);
-			if (0 > dup2(s, STDIN_FILENO)) goto exit_error;
-			if (0 > dup2(s, STDOUT_FILENO)) goto exit_error;
+			if (0 > dup2(s, STDIN_FILENO)) die_errno(prog, envs, "dup2");
+			if (0 > dup2(s, STDOUT_FILENO)) die_errno(prog, envs, "dup2");
 			if (s != STDIN_FILENO && s != STDOUT_FILENO)
 				close(s);
 
@@ -237,20 +231,20 @@ exit_error:
 				case AF_INET:
 				{
 					const struct sockaddr_in & localaddr4(*reinterpret_cast<const struct sockaddr_in *>(&localaddr));
-					char port[64], ip[INET_ADDRSTRLEN];
-					if (nullptr == inet_ntop(localaddr4.sin_family, &localaddr4.sin_addr, ip, sizeof ip)) goto exit_error;
+					char port[64], addr[INET_ADDRSTRLEN];
+					if (nullptr == inet_ntop(localaddr4.sin_family, &localaddr4.sin_addr, addr, sizeof addr)) die_errno(prog, envs, "inet_ntop");
 					snprintf(port, sizeof port, "%u", ntohs(localaddr4.sin_port));
-					envs.set("TCPLOCALIP", ip);
+					envs.set("TCPLOCALIP", addr);
 					envs.set("TCPLOCALPORT", port);
 					break;
 				}
 				case AF_INET6:
 				{
 					const struct sockaddr_in6 & localaddr6(*reinterpret_cast<const struct sockaddr_in6 *>(&localaddr));
-					char port[64], ip[INET6_ADDRSTRLEN];
-					if (nullptr == inet_ntop(localaddr6.sin6_family, &localaddr6.sin6_addr, ip, sizeof ip)) goto exit_error;
+					char port[64], addr[INET6_ADDRSTRLEN];
+					if (nullptr == inet_ntop(localaddr6.sin6_family, &localaddr6.sin6_addr, addr, sizeof addr)) die_errno(prog, envs, "inet_ntop");
 					snprintf(port, sizeof port, "%u", ntohs(localaddr6.sin6_port));
-					envs.set("TCPLOCALIP", ip);
+					envs.set("TCPLOCALIP", addr);
 					envs.set("TCPLOCALPORT", port);
 					break;
 				}
@@ -263,20 +257,20 @@ exit_error:
 				case AF_INET:
 				{
 					const struct sockaddr_in & remoteaddr4(*reinterpret_cast<const struct sockaddr_in *>(&remoteaddr));
-					char port[64], ip[INET_ADDRSTRLEN];
-					if (nullptr == inet_ntop(remoteaddr4.sin_family, &remoteaddr4.sin_addr, ip, sizeof ip)) goto exit_error;
+					char port[64], addr[INET_ADDRSTRLEN];
+					if (nullptr == inet_ntop(remoteaddr4.sin_family, &remoteaddr4.sin_addr, addr, sizeof addr)) die_errno(prog, envs, "inet_ntop");
 					snprintf(port, sizeof port, "%u", ntohs(remoteaddr4.sin_port));
-					envs.set("TCPREMOTEIP", ip);
+					envs.set("TCPREMOTEIP", addr);
 					envs.set("TCPREMOTEPORT", port);
 					break;
 				}
 				case AF_INET6:
 				{
 					const struct sockaddr_in6 & remoteaddr6(*reinterpret_cast<const struct sockaddr_in6 *>(&remoteaddr));
-					char port[64], ip[INET6_ADDRSTRLEN];
-					if (nullptr == inet_ntop(remoteaddr6.sin6_family, &remoteaddr6.sin6_addr, ip, sizeof ip)) goto exit_error;
+					char port[64], addr[INET6_ADDRSTRLEN];
+					if (nullptr == inet_ntop(remoteaddr6.sin6_family, &remoteaddr6.sin6_addr, addr, sizeof addr)) die_errno(prog, envs, "inet_ntop");
 					snprintf(port, sizeof port, "%u", ntohs(remoteaddr6.sin6_port));
-					envs.set("TCPREMOTEIP", ip);
+					envs.set("TCPREMOTEIP", addr);
 					envs.set("TCPREMOTEPORT", port);
 					break;
 				}

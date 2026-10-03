@@ -75,14 +75,14 @@ do
 		v="`get_config \"$i\" \"$n\"`"
 
 		case "$n" in
-		ip)		m="ip4";;
-		rootdir)	m="root";;
-		procfs_enable)	m="`if_yes \"$v\" mount_procfs`";;
-		devfs_enable)	m="`if_yes \"$v\" mount_devfs`";;
-		fdescfs_enable)	m="`if_yes \"$v\" mount_fdescfs`";;
-		mount_enable)	m="`if_yes \"$v\" allow_mount`";;
-		sysvipc_enable)	m="`if_yes \"$v\" allow_sysvipc`";;
-		*)		m="$n";;
+		(ip)			m="ip4";;
+		(rootdir)		m="root";;
+		(procfs_enable)		m="`if_yes \"$v\" mount_procfs`";;
+		(devfs_enable)		m="`if_yes \"$v\" mount_devfs`";;
+		(fdescfs_enable)	m="`if_yes \"$v\" mount_fdescfs`";;
+		(mount_enable)		m="`if_yes \"$v\" allow_mount`";;
+		(sysvipc_enable)	m="`if_yes \"$v\" allow_sysvipc`";;
+		(*)			m="$n";;
 		esac
 		test -n "$m" || continue
 

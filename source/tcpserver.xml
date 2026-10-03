@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -52,18 +53,18 @@ It devolves to a combination of <citerefentry><refentrytitle>tcp-socket-listen</
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>tcpserver</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>tcpserver</command> will ignore.
 </para>
 
 <para>
-The <arg choice='plain'>-O</arg>, <arg choice='plain'>-P</arg>, <arg choice='plain'>-q</arg>, <arg choice='plain'>-Q</arg>, <arg choice='plain'>-H</arg>, <arg choice='plain'>-R</arg>, and <arg choice='plain'>-d</arg> command-line options (which originate with the Bernstein tool by this name) simply would enact what are already the defaults, are thus present solely for compatibility, and are thus ignored.
+The <arg choice='plain'>-O</arg>, <arg choice='plain'>-P</arg>, <arg choice='plain'>-q</arg>, <arg choice='plain'>-Q</arg>, <arg choice='plain'>-H</arg>, <arg choice='plain'>-R</arg>, and <arg choice='plain'>-d</arg> command&#x2010;line options (which originate with the Bernstein tool by this name) simply would enact what are already the defaults, are thus present solely for compatibility, and are thus ignored.
 </para>
 
 <para>
-The <arg choice='plain'>-b</arg> command-line option is passed through to <command>tcp-socket-listen</command>, with any of its option arguments.
+The <arg choice='plain'>-b</arg> command&#x2010;line option is passed through to <command>tcp-socket-listen</command>, with any of its option arguments.
 The <arg choice='plain'>-v</arg>, <arg choice='plain'>-D</arg>, <arg choice='plain'>-o</arg> <arg choice='plain'>-l</arg>, and <arg choice='plain'>-c</arg> options are passed through to <command>tcp-socket-accept</command>, with any of their option arguments.
-The <arg choice='plain'>-U</arg> command-line option causes <command>setuidgid-fromenv</command> to be invoked.
-The <arg choice='plain'>-B <replaceable>banner</replaceable></arg> command-line option causes <command>line-banner</command> to be invoked, with <replaceable>banner</replaceable> as the banner.
+The <arg choice='plain'>-U</arg> command&#x2010;line option causes <command>setuidgid-fromenv</command> to be invoked.
+The <arg choice='plain'>-B <replaceable>banner</replaceable></arg> command&#x2010;line option causes <command>line-banner</command> to be invoked, with <replaceable>banner</replaceable> as the banner.
 </para>
 
 <refsection><title>Security</title>

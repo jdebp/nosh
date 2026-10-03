@@ -1,0 +1,21 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Dump coreboot-console boot log
+DefaultDependencies=false
+Before=shutdown.target
+
+[Service]
+Type=oneshot
+Umask=0022
+StandardOutput=file:/run/%p.boot
+ExecStart=cat /dev/%p
+# This only has appropriate behaviour at bootstrap, not later.
+RemainAfterExit=yes
+Restart=never
+
+[Install]
+StoppedBy=shutdown.target
+WantedBy=sysinit.target

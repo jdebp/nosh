@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -42,7 +43,7 @@ It creates individual control FIFOs for each service, through which it receives 
 <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry> invokes <command>service-manager</command> with the appropriate socket (which it sets up itself) and output directed to a logging d&#xe6;mon.
 So also does <citerefentry><refentrytitle>per-user-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 Alternatively, <command>service-manager</command> can be started by <citerefentry><refentrytitle>local-datagram-socket-listen</refentrytitle><manvolnum>1</manvolnum></citerefentry>, which will set up the appropriate socket.
-(<command>service-manager</command> can even be started as a "socket-activated" d&#xe6;mon by <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry> with the systemd-recommended <code>Accept=false</code>.)
+(<command>service-manager</command> can even be started as a <quote>socket-activated</quote> d&#xe6;mon by <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry> with the systemd-recommended <code>Accept=false</code>.)
 </para>
 
 </refsection><refsection><title>Services</title>
@@ -73,7 +74,7 @@ Conventionally, <citerefentry><refentrytitle>system-manager</refentrytitle><manv
 </para>
 
 <para>
-The upshot of this is that all service processes start in their <filename>service</filename> directory; with the global root directory; with the service manager's credentials, session, and process group; with no controlling terminal or session login name; with the global environment that <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry> or <citerefentry><refentrytitle>per-user-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> either set up from the likes of <filename>/etc/default/locale</filename> and the like (c.f. those tools's respective manuals) or itself inherited from the kernel's own command-line/environment set by the operating system boot loader; with no open file descriptors other than standard input+output+error (unless the kernel or an "initial RAM disc" system, if one is in use, left some file descriptors open in error); and with standard error either going to the same place as the <command>service-manager</command>'s or to another service.
+The upshot of this is that all service processes start in their <filename>service</filename> directory; with the global root directory; with the service manager's credentials, session, and process group; with no controlling terminal or session login name; with the global environment that <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>8</manvolnum></citerefentry> or <citerefentry><refentrytitle>per-user-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> either set up from the likes of <filename>/etc/default/locale</filename> and the like (c.f. those tools's respective manuals) or itself inherited from the kernel's own command&#x2010;line/environment set by the operating system boot loader; with no open file descriptors other than standard input+output+error (unless the kernel or an <quote>initial RAM disc</quote> system, if one is in use, left some file descriptors open in error); and with standard error either going to the same place as the <command>service-manager</command>'s or to another service.
 </para>
 
 <para>

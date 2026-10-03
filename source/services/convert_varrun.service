@@ -7,7 +7,7 @@ Description=Convert /var/run into a symbolic link to /run .
 DefaultDependencies=no
 WantsMountsFor=/var
 AfterMountsFor=/var
-Before=devd devpubd local-fs.target
+Before=coreboot-console devd devpubd local-fs.target
 
 [Service]
 Type=oneshot

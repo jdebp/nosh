@@ -17,6 +17,7 @@ gemini6d
 gopher6d
 http6d
 https6d
+ident6d
 initctld
 kadmind
 klogd

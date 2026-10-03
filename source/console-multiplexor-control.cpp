@@ -3,7 +3,7 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-#define _XOPEN_SOURCE_EXTENDED
+#define _BSD_SOURCE 1
 #include <vector>
 #include <memory>
 #include <iostream>
@@ -13,7 +13,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <cctype>
 #include <stdint.h>
 #include <sys/ioctl.h>
-#include "haswscons.h"
+#include "config/haswscons.h"
 #if defined(HAS_WSCONS)
 #	include <dev/wscons/wsdisplay_usl_io.h>	// VT/CONSIO ioctls
 #elif defined(__LINUX__) || defined(__linux__)

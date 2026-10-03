@@ -358,6 +358,33 @@ drop_privileges (
 ) ;
 extern
 void
+message_warning (
+	const char * prog,
+	const ProcessEnvironment & envs,
+	const char * what,
+	const char * how
+) ;
+extern
+void
+message_warning (
+	const char * prog,
+	const ProcessEnvironment & envs,
+	const char * what0,
+	const char * what1,
+	const char * what2,
+	const char * what3,
+	const char * how
+) ;
+extern
+void
+message_error (
+	const char * prog,
+	const ProcessEnvironment & envs,
+	const char * what,
+	const char * how
+) ;
+extern
+void
 message_error_errno (
 	const char * prog,
 	const ProcessEnvironment & envs,

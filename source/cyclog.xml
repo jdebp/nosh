@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -86,7 +87,7 @@ A <filename>current</filename> file or an old log file where <command>cyclog</co
 </para>
 
 <para>
-<command>cyclog</command> shuts down when either it sees EOF on its standard input, or it receives one of the "good" termination signals (<code>SIGTERM</code>, <code>SIGPIPE</code>, <code>SIGINT</code>, or <code>SIGHUP</code>).
+<command>cyclog</command> shuts down when either it sees EOF on its standard input, or it receives one of the <quote>good</quote> termination signals (<code>SIGTERM</code>, <code>SIGPIPE</code>, <code>SIGINT</code>, or <code>SIGHUP</code>).
 At shut down, <command>cyclog</command> writes all pending data that it has already read from standard input, flushes <filename>current</filename> to disc, and changes <filename>current</filename>'s permissions.
 At start up, it checks <filename>current</filename>'s permissions, creating the file with permissions 0744 if it does not already exist.
 If they indicate proper shutdown, as they will also do if the file was created because it did not exist, it carries on.
@@ -147,7 +148,7 @@ On many systems this has nanosecond resolution.
 
 <para>
 <command>cyclog</command> attempts to generate real TAI timestamps.
-On a Linux system where it detects an Olson "right" timezone currently in use, it knows that the system clock is TAI seconds since the Epoch and performs a simple conversion.
+On a Linux system where it detects an Olson <quote>right</quote> timezone currently in use, it knows that the system clock is TAI seconds since the Epoch and performs a simple conversion.
 On other Linux systems, and on BSDs, it assumes that the system clock is UTC seconds since the Epoch and attempts to correct for (known) UTC leap seconds in order to determine TAI.
 </para>
 

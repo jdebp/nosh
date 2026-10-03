@@ -64,8 +64,7 @@ setgid_fromenv (
 		groups.push_back(gid);
 	if (0 > setgroups(groups.size(), groups.data())) {
 exit_error:
-		const int error(errno);
-		std::fprintf(stderr, "%s: FATAL: %s\n", prog, std::strerror(error));
+		message_fatal_errno(prog, envs, "setgroups");
 		throw static_cast<int>(EXIT_TEMPORARY_FAILURE);	// Bernstein daemontools compatibility
 	}
 	if (0 > setgid(gid)) goto exit_error;

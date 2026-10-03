@@ -10,7 +10,7 @@ For copyright and licensing terms, see the file named COPYING.
 #define FSTYPE MAKE_IOVEC("fstype")
 #define FSPATH MAKE_IOVEC("fspath")
 
-#include "hasnmount.h"
+#include "config/hasnmount.h"
 
 // Some platforms don't supply their own nmount().
 #if !defined(HAS_NMOUNT)

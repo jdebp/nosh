@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -48,12 +49,12 @@ Strings that begin with the <quote><code>~</code></quote> character are not proc
 </note>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>chdir</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>chdir</command> will ignore.
 </para>
 
 <para>
-Unlike the shell built-in of the same name, <command>chdir</command> always operates in "physical" mode, ignores any <envar>CDPATH</envar> environment variable, and performs no canonicalization.
-For the benefit of the <citerefentry><refentrytitle>pwd</refentrytitle><manvolnum>1</manvolnum></citerefentry> command when its <arg choice='plain'>-L</arg> command-line option is used, if the path of the directory changed to is an absolute one <command>chdir</command> sets the <envar>PWD</envar> environment variable to that path, and unsets that environment variable if it is a relative path.
+Unlike the shell built-in of the same name, <command>chdir</command> always operates in <quote>physical</quote> mode, ignores any <envar>CDPATH</envar> environment variable, and performs no canonicalization.
+For the benefit of the <citerefentry><refentrytitle>pwd</refentrytitle><manvolnum>1</manvolnum></citerefentry> command when its <arg choice='plain'>-L</arg> command&#x2010;line option is used, if the path of the directory changed to is an absolute one <command>chdir</command> sets the <envar>PWD</envar> environment variable to that path, and unsets that environment variable if it is a relative path.
 </para>
 
 </refsection>

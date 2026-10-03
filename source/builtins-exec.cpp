@@ -43,6 +43,7 @@ extern void getuidgid ( const char * &, std::vector<const char *> &, ProcessEnvi
 extern void hardlimit ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void klog_read ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void line_banner ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void linenumber ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void local_datagram_socket_listen ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void local_reaper ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void local_seqpacket_socket_accept ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
@@ -79,6 +80,7 @@ extern void setuidgid_fromenv ( const char * &, std::vector<const char *> &, Pro
 extern void setup_machine_id ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void erase_machine_id ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void softlimit ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
+extern void sqz ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void syslog_read ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void tai64n ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
 extern void tai64nlocal ( const char * &, std::vector<const char *> &, ProcessEnvironment & );
@@ -219,6 +221,8 @@ commands[] = {
 	{	"time-print-tai64n",			time_print_tai64n		},
 	{	"ifconfig",				ifconfig			},
 	{	"unvis",				unvis				},
+	{	"sqz",					sqz				},
+	{	"linenumber",				linenumber			},
 };
 const std::size_t num_commands = sizeof commands/sizeof *commands;
 

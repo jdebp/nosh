@@ -17,6 +17,13 @@ ProcessEnvironment::ProcessEnvironment(const char * const * envp) :
 {
 }
 
+ProcessEnvironment::ProcessEnvironment(const ProcessEnvironment & o) :
+	global_environ(o.global_environ),
+	cached_data(o.global_environ),	// Do not copy another object's cache.
+	m(o.m)
+{
+}
+
 void
 ProcessEnvironment::make_data()
 {

@@ -2,6 +2,9 @@ Debian-mask-initscripts
 alsa-restore
 alsa-state
 atd
+atop
+atop-rotate
+atopacct
 cgmanager
 cgproxy
 cntlm

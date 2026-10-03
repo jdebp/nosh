@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -17,7 +18,7 @@
 
 <refnamediv>
 <refname>userenv</refname>
-<refpurpose>set the "user" environment variables from the current UID and GID</refpurpose>
+<refpurpose>set the <quote>user</quote> environment variables from the current UID and GID</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>

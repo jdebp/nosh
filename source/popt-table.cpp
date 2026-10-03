@@ -6,8 +6,6 @@ For copyright and licensing terms, see the file named COPYING.
 #include <iostream>
 #include <iomanip>
 #include <cstring>
-#include <cstdlib>
-#include <cctype>
 
 #include "popt.h"
 #include "ECMA48Output.h"
@@ -36,11 +34,14 @@ bool table_definition::execute(processor & proc, const char * s)
 			return true;
 	return false;
 }
-void table_definition::help(ECMA48Output & out, bool do_colour)
+void table_definition::help(std::ostream & out, ECMA48Output & ecma48, bool do_colour)
 {
 	for (unsigned i(0); i < count; ++i)
 		if (dynamic_cast<named_definition *>(array[i])) {
-			std::cout << description << ":\n";
+			if (do_colour) ecma48.set_underline(true);
+			out << description;
+			if (do_colour) ecma48.set_underline(false);
+			out << ":\n";
 			break;
 		}
 	std::size_t w = 0;
@@ -53,69 +54,45 @@ void table_definition::help(ECMA48Output & out, bool do_colour)
 				l += 2 + std::strlen(long_name);
 			}
 			if (const char * args_description = n->query_args_description())
-				l += 1 + std::strlen(args_description);
+				l += 2 + std::strlen(args_description);
 			if (l > w) w = l;
 		}
 	for (unsigned i(0); i < count; ++i)
 		if (named_definition * n = dynamic_cast<named_definition *>(array[i])) {
 			std::size_t l = 0;
-			std::cout.put('\t');
-			if (do_colour) std::cout.flush();
+			out.put('\t');
 			if (char short_name = n->query_short_name()) {
-				if (do_colour) {
-					out.set_underline(true);
-					out.flush();
-				}
-				std::cout.put('-') << std::string(1, short_name);
+				if (do_colour) ecma48.set_boldface(true);
+				out.put('-') << std::string(1, short_name);
 				l += 2;
-				if (do_colour) {
-					std::cout.flush();
-					out.set_underline(false);
-					out.flush();
-				}
+				if (do_colour) ecma48.set_boldface(false);
 			}
 			if (const char * long_name = n->query_long_name()) {
 				if (n->query_short_name()) {
-					std::cout << ", " << std::flush;
+					out << ", " << std::flush;
 					l += 2;
 				}
-				if (do_colour) {
-					std::cout.flush();
-					out.set_underline(true);
-					out.flush();
-				}
-				std::cout << "--" << std::string(long_name);
-				if (do_colour) {
-					std::cout.flush();
-					out.set_underline(false);
-					out.flush();
-				}
-				l += 2 + std::strlen(long_name);
+				if (do_colour) ecma48.set_boldface(true);
+				out << "--" << std::string(long_name);
+				if (do_colour) ecma48.set_boldface(false);
+				l += 1 + std::strlen(long_name);
 			}
 			if (const char * args_description = n->query_args_description()) {
-				if (do_colour) {
-					std::cout.flush();
-					out.set_italics(true);
-					out.flush();
-				}
-				std::cout.put(' ') << std::string(args_description);
-				if (do_colour) {
-					std::cout.flush();
-					out.set_italics(false);
-					out.flush();
-				}
+				if (do_colour) ecma48.set_italics(true);
+				out.put(' ') << std::string(args_description);
+				if (do_colour) ecma48.set_italics(false);
 				l += 1 + std::strlen(args_description);
 			}
-			while (l < w) { std::cout.put(' '); ++l; }
+			while (l < w) { out.put(' '); ++l; }
 			if (const char * entry_description = n->query_description())
-				std::cout.put(' ') << entry_description;
-			std::cout.put('\n');
+				out.put(' ').put(' ') << entry_description;
+			out.put('\n');
 		}
 	for (unsigned i(0); i < count; ++i)
 		if (table_definition * n = dynamic_cast<table_definition *>(array[i]))
-			n->help(out, do_colour);
+			n->help(out, ecma48, do_colour);
 }
-void table_definition::long_usage(ECMA48Output & out, bool do_colour)
+void table_definition::long_usage(std::ostream & out, ECMA48Output & ecma48, bool do_colour)
 {
 	for (unsigned i(0); i < count; ++i)
 		if (named_definition * n = dynamic_cast<named_definition *>(array[i])) {
@@ -123,54 +100,30 @@ void table_definition::long_usage(ECMA48Output & out, bool do_colour)
 			const char * args_description = n->query_args_description();
 			if (long_name || args_description) {
 				char short_name = n->query_short_name();
-				std::cout << "[";
-				if (do_colour) {
-					std::cout.flush();
-					out.set_underline(true);
-					out.flush();
-				}
+				out.put('[');
+				if (do_colour) ecma48.set_boldface(true);
 				if (args_description && short_name)
-					std::cout.put('-').put(short_name);
+					out.put('-').put(short_name);
 				if (long_name) {
 					if (args_description && short_name) {
-						if (do_colour) {
-							std::cout.flush();
-							out.set_underline(false);
-							out.flush();
-						}
-						std::cout.put('|');
-						if (do_colour) {
-							std::cout.flush();
-							out.set_underline(true);
-							out.flush();
-						}
+						if (do_colour) ecma48.set_boldface(false);
+						out.put('|');
+						if (do_colour) ecma48.set_boldface(true);
 					}
-					std::cout << "--" << long_name;
+					out << "--" << long_name;
 				}
-				if (do_colour) {
-					std::cout.flush();
-					out.set_underline(false);
-					out.flush();
-				}
+				if (do_colour) ecma48.set_boldface(false);
 				if (args_description) {
-					if (do_colour) {
-						std::cout.flush();
-						out.set_italics(true);
-						out.flush();
-					}
-					std::cout << " " << args_description;
-					if (do_colour) {
-						std::cout.flush();
-						out.set_italics(false);
-						out.flush();
-					}
+					if (do_colour) ecma48.set_italics(true);
+					out.put(' ') << args_description;
+					if (do_colour) ecma48.set_italics(false);
 				}
-				std::cout << "] ";
+				out << "] ";
 			}
 		}
 	for (unsigned i(0); i < count; ++i)
 		if (table_definition * n = dynamic_cast<table_definition *>(array[i]))
-			n->long_usage(out, do_colour);
+			n->long_usage(out, ecma48, do_colour);
 }
 void table_definition::gather_combining_shorts(std::string & shorts)
 {

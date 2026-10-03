@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -33,7 +34,7 @@
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>line-banner</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>line-banner</command> will ignore.
 </para>
 
 <para>
@@ -41,7 +42,7 @@
 </para>
 
 <para>
-If the <arg choice='plain'>--NVT</arg> command-line option is used, the newline follows the Network Virtual Terminal convention of carriage return plus a linefeed.
+If the <arg choice='plain'>--NVT</arg> command&#x2010;line option is used, the newline follows the Network Virtual Terminal convention of carriage return plus a linefeed.
 Normally, it follows the Unix convention of just a linefeed.
 </para>
 

@@ -1,0 +1,16 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=atop process accounting daemon
+Conflicts=acct.service
+Conflicts=psacct.service
+Before=atop.service
+
+[Service]
+Type=forking
+ExecStart=%p
+
+[Install]
+WantedBy=multi-user.target

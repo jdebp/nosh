@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -51,20 +52,20 @@ The compatibility shims for upstart, SunOS, and others are provided by <citerefe
 </note>
 
 <para>
-It operates in one of two modes, controlled by the <arg choice="req">--user</arg> command line option:
+It operates in one of two modes, controlled by the <arg choice="req">--user</arg> command&#x2010;line option:
 </para>
 
 <itemizedlist>
 <listitem>
 <para>
-In "system" mode it operates on system-wide state and services.
+In <quote>system</quote> mode it operates on system-wide state and services.
 It potentially communicates with a System Manager process, which must be process #1 and which it expects to recognize the same signals as <citerefentry><refentrytitle>system-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> does.
 It potentially communicates with a Service Manager process, such as <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> via a local domain socket at <filename>/run/service-manager/control</filename> and via the control/status API of the individual services.
 </para>
 </listitem>
 <listitem>
 <para>
-In "user" mode it operates on per-user state and services.
+In <quote>user</quote> mode it operates on per-user state and services.
 It potentially communicates with a Session Manager process, which again it expects to recognize the same signals as <citerefentry><refentrytitle>per-user-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> does.
 It potentially communicates with a Service Manager process, such as <citerefentry><refentrytitle>service-manager</refentrytitle><manvolnum>1</manvolnum></citerefentry> via a local domain socket at <filename>/run/user/<replaceable>$USER</replaceable>/service-manager/control</filename> and via the control/status API of the individual services.
 </para>
@@ -93,7 +94,7 @@ What they contain and where and how they are located is documented in <citerefen
 
 <para>
 For compatibility with uses of <command>initctl</command>, the <command>version</command> subcommand displays the (compiled-in) version of the toolset.
-It does not contain the string "upstart".
+It does not contain the string <quote>upstart</quote>.
 </para>
 
 </refsection>
@@ -230,7 +231,7 @@ LILO, the FreeBSD <citerefentry><refentrytitle>loader</refentrytitle><manvolnum>
 Their meanings are non-standard, largely or even wholly undocumented, inconsistent across platforms and toolsets, considered obsolete in their original forms, and without application here.
 The <arg choice='plain'>-z</arg> option is a dummy space-taker that is also used by such systems.
 All three options are ignored.
-The <arg choice='plain'>--update</arg> command line option is reserved for future use.
+The <arg choice='plain'>--update</arg> command&#x2010;line option is reserved for future use.
 </para>
 
 </refsection>
@@ -285,15 +286,15 @@ To control services directly and individually without regard for dependencies, u
 </para>
 
 <para>
-The <arg choice="plain">--verbose</arg> command line option causes information about actions taken and blocked/unblocked services to be written to standard error as jobs are processed.
+The <arg choice="plain">--verbose</arg> command&#x2010;line option causes information about actions taken and blocked/unblocked services to be written to standard error as jobs are processed.
 If the standard error is a terminal, <command>system-control</command> uses whatever it can find via the <citerefentry><refentrytitle>TerminalCapabilities</refentrytitle><manvolnum>3</manvolnum></citerefentry> library to display various parts of the output in different colours, highlighting different events in different colours.
-The <arg choice='plain'>--colour</arg> command line option tells it to do this unconditionally, even if its standard error is not a terminal.
-The <arg choice='plain'>--pretend</arg> command line option tells it to only pretend that it is taking actions, and not actually take them.
+The <arg choice='plain'>--colour</arg> command&#x2010;line option tells it to do this unconditionally, even if its standard error is not a terminal.
+The <arg choice='plain'>--pretend</arg> command&#x2010;line option tells it to only pretend that it is taking actions, and not actually take them.
 </para>
 
 <para>
 The <command>reset</command> command is intended to be used by package installer programs.
-It is translated into either <command>start</command> or <command>stop</command> according to whether the service is enabled or disabled; and can be thought of, if one likes, as "reset to however the service is configured to be at bootstrap".
+It is translated into either <command>start</command> or <command>stop</command> according to whether the service is enabled or disabled; and can be thought of, if one likes, as <quote>reset to however the service is configured to be at bootstrap</quote>.
 This allows package installers to remain in blissful ignorance of whether a service should be started or stopped after installing the package for it.
 Instead, the package installer simply executes the <command>preset</command> command and then the <command>reset</command> command and the service is started or stopped according to whatever the administrator has chosen.
 </para>
@@ -314,9 +315,9 @@ The service bundles also determine the order in which the actions are taken.
 </para>
 
 <para>
-A start action simply requests that the service manager bring the service/target to the "running" state, if it isn't already there.
+A start action simply requests that the service manager bring the service/target to the <quote>running</quote> state, if it isn't already there.
 A stop action, however, is more complex.
-Initially it requests that the service manager bring the service/target to the "stopped" state (if it isn't already there).
+Initially it requests that the service manager bring the service/target to the <quote>stopped</quote> state (if it isn't already there).
 However, if that does not happen within 60 seconds, it requests that the service manager send the <code>SIGKILL</code> signal to the service/target.
 </para>
 
@@ -383,7 +384,7 @@ Preset information can be taken from one of several sources:
 </para>
 <itemizedlist>
 <listitem><para>
-(unless the <arg choice="plain">--no-system</arg> command line option is set) systemd and system-manager preset information given in <filename>*.preset</filename> files.
+(unless the <arg choice="plain">--no-system</arg> command&#x2010;line option is set) systemd and system-manager preset information given in <filename>*.preset</filename> files.
 There are different sets of files for per-user and system-wide service management.
 </para>
 <itemizedlist>
@@ -425,35 +426,35 @@ In addition to those locations, <command>preset</command> looks in extra directo
 These extra directories follow the more conventional scheme of <filename>/etc</filename>, <filename>/usr/share</filename>, and <filename>/usr/pkg/etc</filename> for administrator-set, operating-system-set, and application-software-set stuff.
 </para>
 <para>
-As with systemd, earlier preset directories override later ones; the contents of files with lexically earlier names override the contents of files with lexically later names; and the default state, in the absence of an explicit preset, is "enabled".
+As with systemd, earlier preset directories override later ones; the contents of files with lexically earlier names override the contents of files with lexically later names; and the default state, in the absence of an explicit preset, is <quote>enabled</quote>.
 Directives are matched against <replaceable>prefix</replaceable><replaceable>name</replaceable>.
 </para></listitem>
 <listitem><para>
-(unless the <arg choice="plain">--no-rcconf</arg> command line option is set) <citerefentry><refentrytitle>rc.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> preset information, specifically the <envar><replaceable>name</replaceable>_enable</envar> variable, interpreting the values <code>true</code>, <code>1</code>, <code>yes</code>, and <code>on</code> as enable, and any other values (including specifically <code>false</code>, <code>0</code>, <code>no</code>, and <code>off</code>) as disable.
+(unless the <arg choice="plain">--no-rcconf</arg> command&#x2010;line option is set) <citerefentry><refentrytitle>rc.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> preset information, specifically the <envar><replaceable>name</replaceable>_enable</envar> variable, interpreting the values <code>true</code>, <code>1</code>, <code>yes</code>, and <code>on</code> as enable, and any other values (including specifically <code>false</code>, <code>0</code>, <code>no</code>, and <code>off</code>) as disable.
 <para>
 </para>
-By default in system-wide mode the <filename>/etc/defaults/rc.conf</filename>, <filename>/etc/rc.conf</filename>, and <filename>/etc/rc.conf.local</filename> files are used, but the <arg choice="plain">--rcconf-file</arg> command line option overrides that list with the single replacement file <replaceable>filename</replaceable>.
+By default in system-wide mode the <filename>/etc/defaults/rc.conf</filename>, <filename>/etc/rc.conf</filename>, and <filename>/etc/rc.conf.local</filename> files are used, but the <arg choice="plain">--rcconf-file</arg> command&#x2010;line option overrides that list with the single replacement file <replaceable>filename</replaceable>.
 The default for per-user mode is the <filename><envar>$HOME</envar>/.config/rc.conf</filename> file.
 </para>
 <para>
 The variable names are matched against just <replaceable>name</replaceable> to allow one to use a main service name as <replaceable>name</replaceable> and combine it with a log service template <replaceable>prefix</replaceable> such as <code>cyclog@</code> or <code>s6-multilog@</code>, on the grounds that traditional <filename>/etc/defaults/rc.conf</filename>, <filename>/etc/rc.conf</filename>, and <filename>/etc/rc.conf.local</filename> contents do not make explicit provision for separate logging services.
 </para></listitem>
 <listitem><para>
-(if the <arg choice="plain">--ttys</arg> command line option is set) <filename>/etc/ttys</filename> preset information, specifically the <code>on</code> and <code>off</code> flags as enable and disable, respectively.
+(if the <arg choice="plain">--ttys</arg> command&#x2010;line option is set) <filename>/etc/ttys</filename> preset information, specifically the <code>on</code> and <code>off</code> flags as enable and disable, respectively.
 The <code>onifconsole</code> flag is also recognized and processed with reference to the currently active console device (on BSD systems only).
 If <filename>/etc/ttys</filename> does not exist, as is usually the case on Linux operating systems, all TTYs default to preset disabled.
 </para>
 <para>
 The terminal names are matched against just <replaceable>name</replaceable>.
-This allows one to use an ordinary TTY device name as <replaceable>name</replaceable> and combine it with a "templatized" bundle name <replaceable>prefix</replaceable> such as <code>ttylogin@</code>, <code>getty@</code>, or <code>agetty@</code>.
+This allows one to use an ordinary TTY device name as <replaceable>name</replaceable> and combine it with a <quote>templatized</quote> bundle name <replaceable>prefix</replaceable> such as <code>ttylogin@</code>, <code>getty@</code>, or <code>agetty@</code>.
 </para></listitem>
 <listitem><para>
-(if the <arg choice="plain">--fstab</arg> command line option is set)
+(if the <arg choice="plain">--fstab</arg> command&#x2010;line option is set)
 <filename>/etc/fstab</filename> preset information, specifically the <code>noauto</code> flag as disable.
 </para>
 <para>
 The device and directory names are matched against just <replaceable>name</replaceable>, after unescaping it.
-This allows one to use an ordinary device or directory name as <replaceable>name</replaceable> and combine it with a "templatized" bundle name <replaceable>prefix</replaceable> such as <code>mount@</code>, <code>fsck@</code>, <code>swap@</code>, or <code>dump@</code>.
+This allows one to use an ordinary device or directory name as <replaceable>name</replaceable> and combine it with a <quote>templatized</quote> bundle name <replaceable>prefix</replaceable> such as <code>mount@</code>, <code>fsck@</code>, <code>swap@</code>, or <code>dump@</code>.
 This is designed in particular for use with service bundles generated by the <command>convert-fstab-services</command> subcommand.
 </para></listitem>
 </itemizedlist>
@@ -663,19 +664,19 @@ It queries the status API in the bundle directory for service/target <arg choice
 <itemizedlist>
 <listitem>
 <para>
-If the service is up for longer than <arg choice='plain'><replaceable>seconds</replaceable></arg> seconds it returns a Nagios "OK" status.
+If the service is up for longer than <arg choice='plain'><replaceable>seconds</replaceable></arg> seconds it returns a Nagios <quote>OK</quote> status.
 </para>
 </listitem>
 <listitem>
 <para>
-If the service is up, but for less than <arg choice='plain'><replaceable>seconds</replaceable></arg> seconds it returns a Nagios "WARNING" status and prints a line containing the service bundle directory name.
+If the service is up, but for less than <arg choice='plain'><replaceable>seconds</replaceable></arg> seconds it returns a Nagios <quote>WARNING</quote> status and prints a line containing the service bundle directory name.
 It does the same if the service is still in the process of being loaded by the service manager, or in the starting or stopping states.
-The <arg choice="plain">--critical-if-below-min</arg> command line option changes the status returned for such up services to "CRITICAL", but does not alter the treatment of starting or stopping services.
+The <arg choice='plain'>--critical-if-below-min</arg> command&#x2010;line option changes the status returned for such up services to <quote>CRITICAL</quote>, but does not alter the treatment of starting or stopping services.
 </para>
 </listitem>
 <listitem>
 <para>
-If the service is unexpectedly down or unloaded, if the status API reports the service running in the future (because of clock skew somewhere), or if the service is in the failing state, it returns a Nagios "CRITICAL" status and prints a line containing the service bundle directory name.
+If the service is unexpectedly down or unloaded, if the status API reports the service running in the future (because of clock skew somewhere), or if the service is in the failing state, it returns a Nagios <quote>CRITICAL</quote> status and prints a line containing the service bundle directory name.
 </para>
 </listitem>
 </itemizedlist>
@@ -766,7 +767,7 @@ If the <arg choice="plain"><replaceable>name</replaceable></arg> service has an 
 </itemizedlist>
 
 <para>
-The <arg choice="plain">--full</arg> command-line option switches to an alternative format for the environment template subdirectory, as understood by <citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry> when its option of the same name is used.
+The <arg choice="plain">--full</arg> command&#x2010;line option switches to an alternative format for the environment template subdirectory, as understood by <citerefentry><refentrytitle>envdir</refentrytitle><manvolnum>1</manvolnum></citerefentry> when its option of the same name is used.
 </para>
 
 </refsection>

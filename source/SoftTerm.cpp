@@ -25,7 +25,7 @@ SoftTerm::SoftTerm(
 ) :
 	ECMA48Decoder::ECMA48ControlSequenceSink(),
 	utf8_decoder(*this),
-	ecma48_decoder(*this, false /* no control strings */, true /* permit cancel */, true /* permit 7-bit extensions*/, false /* no Interix shift state */, false /* no RXVT final $ in CSI bodge */, false /* no Linux function keys */),
+	ecma48_decoder(*this, ECMA48Decoder::Options(false /* no control strings */, true /* permit cancel */, true /* permit 7-bit extensions*/, false /* no Interix shift state */, false /* no RXVT final $ in CSI bodge */, false /* no Linux function keys */)),
 	screen(s),
 	keyboard(k),
 	mouse(m),
@@ -2424,7 +2424,8 @@ SoftTerm::ControlSequence(
 
 void
 SoftTerm::ControlString(
-	char32_t /*character*/
+	char32_t /*start_char*/,
+	char32_t /*term_char*/
 ) {
 #if defined(DEBUG)
 	std::clog << "Unexpected control string\n";

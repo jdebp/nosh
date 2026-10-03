@@ -3,8 +3,8 @@
 ## For copyright and licensing terms, see the file named COPYING.
 ## **************************************************************************
 # vim: set filetype=sh:
-redo-ifchange ./has_waitid
-if ./has_waitid
+redo-ifchange command/has_waitid
+if command/has_waitid
 then
 	ext=waitid
 else

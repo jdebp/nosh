@@ -1,0 +1,13 @@
+# Extra post-remove for nosh-systemv-shims
+# vim: set filetype=sh:
+
+for i in emergency halt haltsys initctl-read normal powercycle poweroff reboot rescue runlevel shutdown telinit
+do
+	dpkg-divert --package nosh-systemv-shims --rename --remove /usr/sbin/"${i}"
+	dpkg-divert --package nosh-systemv-shims --rename --divert /usr/share/man/man8/"${i}".distrib.8.gz --remove /usr/share/man/man8/"${i}".8.gz
+done
+for i in init
+do
+	dpkg-divert --package nosh-systemv-shims --rename --remove /usr/sbin/"${i}"
+	dpkg-divert --package nosh-systemv-shims --rename --divert /usr/share/man/man1/"${i}".distrib.1.gz --remove /usr/share/man/man1/"${i}".1.gz
+done

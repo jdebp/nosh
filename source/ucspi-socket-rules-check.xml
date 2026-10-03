@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -37,7 +38,7 @@ If the access checks fail, it exits without running anything.
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>ucspi-socket-rules-check</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>ucspi-socket-rules-check</command> will ignore.
 </para>
 
 <refsection><title>Searching for access control rules</title>

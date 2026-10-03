@@ -1,0 +1,10 @@
+## **************************************************************************
+## For copyright and licensing terms, see the file named COPYING.
+## **************************************************************************
+
+[Unit]
+Description=Restart atop daemon to rotate logs
+
+[Service]
+Type=oneshot
+ExecStart=system-control try-restart atop.service

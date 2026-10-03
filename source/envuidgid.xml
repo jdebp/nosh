@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -38,7 +39,7 @@
 
 <note>
 <command>envuidgid</command> intentionally does not set the <envar>LOGNAME</envar> environment variable.
-It does not deal in login sessions, and is not altering the "login name".
+It does not deal in login sessions, and is not altering the <quote>login name</quote>.
 </note>
 
 <para>
@@ -55,7 +56,7 @@ If it cannot set the environment variables, or cannot find an account named <rep
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>envuidgid</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>envuidgid</command> will ignore.
 </para>
 
 <para>

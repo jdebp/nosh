@@ -22,9 +22,9 @@ For copyright and licensing terms, see the file named COPYING.
 */
 
 namespace {
-struct resource_limit_definition : public popt::compound_named_definition {
+struct resource_limit_definition : public popt::compound_1arg_named_definition {
 public:
-	resource_limit_definition(char s, const char * l, const char * a, const char * d, int r, unsigned int sc) : compound_named_definition(s, l, a, d), resource(r), scale(sc), set(false) {}
+	resource_limit_definition(char s, const char * l, const char * a, const char * d, int r, unsigned int sc) : popt::compound_1arg_named_definition(s, l, a, d), resource(r), scale(sc), set(false) {}
 	virtual void action(popt::processor &, const char *);
 	virtual ~resource_limit_definition();
 	void enact(bool hard, bool soft);
@@ -200,9 +200,9 @@ time_resource_limit_definition::rescale (
 }
 
 namespace {
-struct memory_resource_limit_definition : public popt::compound_named_definition {
+struct memory_resource_limit_definition : public popt::compound_1arg_named_definition {
 public:
-	memory_resource_limit_definition(char s, const char * l, const char * a, const char * d, unsigned int sc) : compound_named_definition(s, l, a, d), scale(sc), set(false) {}
+	memory_resource_limit_definition(char s, const char * l, const char * a, const char * d, unsigned int sc) : popt::compound_1arg_named_definition(s, l, a, d), scale(sc), set(false) {}
 	virtual void action(popt::processor &, const char *);
 	virtual ~memory_resource_limit_definition();
 	void enact(bool hard, bool soft);

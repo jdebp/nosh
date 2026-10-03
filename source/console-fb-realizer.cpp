@@ -3,7 +3,7 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-#define _XOPEN_SOURCE_EXTENDED
+#define _BSD_SOURCE 1
 #include <map>
 #include <vector>
 #include <cstring>
@@ -11,7 +11,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <csignal>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
-#include "haswscons.h"
+#include "config/haswscons.h"
 #if defined(HAS_WSCONS)
 #	include <dev/wscons/wsconsio.h>
 #	include <dev/wscons/wsdisplay_usl_io.h>	// VT/CONSIO ioctls
@@ -47,9 +47,9 @@ using namespace VirtualTerminalRealizer;
 
 namespace {
 
-struct fontspec_definition : public popt::compound_named_definition {
+struct fontspec_definition : public popt::compound_1arg_named_definition {
 public:
-	fontspec_definition(char s, const char * l, const char * a, const char * d, FontSpecList & f, int w, CombinedFont::Font::Slant i) : compound_named_definition(s, l, a, d), specs(f), weight(w), slant(i) {}
+	fontspec_definition(char s, const char * l, const char * a, const char * d, FontSpecList & f, int w, CombinedFont::Font::Slant i) : popt::compound_1arg_named_definition(s, l, a, d), specs(f), weight(w), slant(i) {}
 	virtual void action(popt::processor &, const char *);
 	virtual ~fontspec_definition();
 protected:

@@ -43,7 +43,7 @@ public:
 		virtual void ControlCharacter(char32_t character) = 0;
 		virtual void EscapeSequence(char32_t character, char32_t first_intermediate) = 0;
 		virtual void ControlSequence(char32_t character, char32_t last_intermediate, char32_t first_private_parameter) = 0;
-		virtual void ControlString(char32_t character) = 0;
+		virtual void ControlString(char32_t string_char, char32_t term_char) = 0;
 		/// @}
 
 		typedef unsigned int argument_type;
@@ -100,16 +100,22 @@ public:
 		argument_type GetArgThisIfZeroThisIfEmpty(std::size_t sub, std::size_t index, argument_type dz, argument_type de) const;
 		/// @}
 	};
-	ECMA48Decoder(ECMA48ControlSequenceSink &, bool, bool, bool, bool, bool, bool);
+	/// \brief Options for an ECMA48Decoder
+	struct Options {
+		Options(bool cs, bool can, bool b7, bool is, bool rfn, bool lfn) : control_strings(cs), allow_cancel(can), allow_7bit_extension(b7), interix_shift(is), rxvt_function_keys(rfn), linux_function_keys(lfn) {}
+		Options() : control_strings(false), allow_cancel(false), allow_7bit_extension(false), interix_shift(false), rxvt_function_keys(false), linux_function_keys(false) {}
+		bool control_strings, allow_cancel, allow_7bit_extension, interix_shift, rxvt_function_keys, linux_function_keys;
+	};
+	ECMA48Decoder(ECMA48ControlSequenceSink &, const Options & o);
 	void Process(char32_t character, bool decoder_error, bool overlong);
 	void AbortSequence();
 protected:
 	ECMA48ControlSequenceSink & sink;
 	enum { NORMAL, ESCAPE, ESCAPE_NF, CONTROL1, CONTROL2, SHIFT2, SHIFT3, SHIFTA, SHIFTL, CONTROLSTRING, CONTROLSTRINGESCAPE } state;
-	const bool control_strings, allow_cancel, allow_7bit_extension, interix_shift, rxvt_function_keys, linux_function_keys;
+	const Options options;
 	uint_fast32_t first_private_parameter, saved_intermediate, string_char;
 
-	void TerminateSequence();
+	void TerminateSequence(char32_t term_char);
 	void ResetControlSeqAndStr();
 	void Escape(char32_t character);
 	void Escape_nF(char32_t character);

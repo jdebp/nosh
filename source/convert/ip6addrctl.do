@@ -25,38 +25,38 @@ prefer() {
 }
 
 case "`get_var ip6addrctl_policy`" in
-ipv4_prefer)
+(ipv4_prefer)
 	prefer ipv4
 	;;
-ipv6_prefer)
+(ipv6_prefer)
 	prefer ipv6
 	;;
-[Nn][Oo][Nn][Ee])
+([Nn][Oo][Nn][Ee])
 	;;
-[Aa][Uu][Tt][Oo])
+([Aa][Uu][Tt][Oo])
 	case "`read_rc ipv6_activate_all_interfaces || read_rc ipv6_enable || true`" in
-	[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
+	([Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
 		prefer ipv6
 		;;
-	[Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Oo][Ff][Ff]|0)
+	([Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Oo][Ff][Ff]|0)
 		prefer ipv4
 		;;
-	*)
+	(*)
 		# We could look for ifconfig_*_ipv6 variables, but this is the 21st century and we have had 3 IPv6 Days now.
 		prefer ipv6
 		;;
 	esac
 	;;
-*)
+(*)
 	echo 1>&2 "$0: \$ip6addrctl_policy is invalid: ${ip6addrctl_policy}. Obsolete \$ipv6_prefer is used instead."
 	case "`get_var ipv6_prefer`" in
-	[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
+	([Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
 		prefer ipv6
 		;;
-	[Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Oo][Ff][Ff]|0)
+	([Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Oo][Ff][Ff]|0)
 		prefer ipv4
 		;;
-	*)
+	(*)
 		;;
 	esac
 	;;

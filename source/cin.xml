@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -62,8 +63,8 @@ Case-insensitivity is the appropriate default for East Asian languages, but for 
 <varlistentry>
 <term><code>%keyname</code></term>
 <listitem><para>
-<code>%keyname&#160;begin</code> and <code>%keyname&#160;end</code> directives enclose a block of data lines that define the "engravings" for each ASCII letter.
-The "engraving" controls how an ASCII character is displayed on-screen by <citerefentry><refentrytitle>console-input-method</refentrytitle><manvolnum>1</manvolnum></citerefentry> when it is in its unconverted form.
+<code>%keyname&#160;begin</code> and <code>%keyname&#160;end</code> directives enclose a block of data lines that define the <quote>engravings</quote> for each ASCII letter.
+The <quote>engraving</quote> controls how an ASCII character is displayed on-screen by <citerefentry><refentrytitle>console-input-method</refentrytitle><manvolnum>1</manvolnum></citerefentry> when it is in its unconverted form.
 The first field must be a single ASCII character, and the second field is its UTF-8 display string.
 </para></listitem>
 </varlistentry>
@@ -99,7 +100,7 @@ So to encode data lines where the first field begins with a <code>#</code> or a 
 
 <informalexample>
 <para>
-The Hangul CIN file from unicon exemplifies how the "engravings" cause ASCII input sequences to be displayed as Jamo when unconverted:
+The Hangul CIN file from unicon exemplifies how the <quote>engravings</quote> cause ASCII input sequences to be displayed as Jamo when unconverted:
 </para>
 <literallayout>A &#x313c;
 b &#x3160;

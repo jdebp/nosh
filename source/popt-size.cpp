@@ -3,12 +3,8 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-#include <iostream>
-#include <iomanip>
-#include <cstring>
 #include <cstdlib>
 #include <limits>
-#include <cctype>
 
 #include "popt.h"
 

@@ -4,18 +4,18 @@
 ## **************************************************************************
 # vim: set filetype=sh:
 main="`basename "$1"`"
-objects="main-exec.o builtins-${main}.o"
-libraries="builtins.a utils.a"
+objects="object/main-exec.o object/builtins-${main}.o"
+libraries='library/builtins.a library/utils.a'
 case "`uname`" in
-	Linux)
+	(Linux)
 		crypt=-lcrypt
 		;;
-	*BSD)
+	(*BSD)
 		util=-lutil
 		crypt=-lcrypt
 		;;
 esac
-redo-ifchange haspam.h hasutmpx.h
-grep -q -F HAS_PAM haspam.h && pam="-lpam"
+redo-ifchange config/haspam.h
+grep -q -F HAS_PAM config/haspam.h && pam="-lpam"
 redo-ifchange link ${objects} ${libraries}
 exec ./link "$3" ${objects} ${libraries} ${crypt} ${static} ${util} ${pam}

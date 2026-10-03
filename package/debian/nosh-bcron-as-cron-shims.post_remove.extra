@@ -1,0 +1,8 @@
+# Extra post-remove for nosh-bcron-as-cron-shims
+# vim: set filetype=sh:
+
+for i in crontab
+do
+	dpkg-divert --package nosh-bcron-as-cron-shims --rename --remove /usr/bin/"${i}"
+	dpkg-divert --package nosh-bcron-as-cron-shims --rename --divert /usr/share/man/man8/"${i}".distrib.8.gz --remove /usr/share/man/man8/"${i}".8.gz
+done

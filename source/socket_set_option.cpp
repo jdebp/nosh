@@ -56,12 +56,14 @@ socket_set_bind_to_any (
 		case AF_INET:	return socket_set_boolean_option_special(s, IPPROTO_IPV4, IP_BINDANY, v);
 		case AF_INET6:	return socket_set_boolean_option(s, IPPROTO_IPV6, IP_BINDANY, v);
 	}
-	return errno = EINVAL, -1;
+	errno = EINVAL;
+	return -1;
 #else
 	switch (info.ai_family) {
 		case AF_INET:	return socket_set_boolean_option(s, IPPROTO_IPV4, IP_BINDANY, v);
 		case AF_INET6:	return socket_set_boolean_option(s, IPPROTO_IPV6, IP_BINDANY, v);
 	}
-	return errno = EINVAL, -1;
+	errno = EINVAL;
+	return -1;
 #endif
 }

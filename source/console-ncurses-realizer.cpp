@@ -3,7 +3,6 @@ For copyright and licensing terms, see the file named COPYING.
 // **************************************************************************
 */
 
-#define _XOPEN_SOURCE_EXTENDED
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
@@ -28,6 +27,7 @@ For copyright and licensing terms, see the file named COPYING.
 #if defined(__LINUX__) || defined(__linux__)
 #include <ncursesw/curses.h>
 #else
+#define _XOPEN_SOURCE_EXTENDED
 #include <curses.h>
 #endif
 

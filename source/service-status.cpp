@@ -7,7 +7,7 @@ For copyright and licensing terms, see the file named COPYING.
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
-#include <cstdio>
+#include <iostream>
 #include <cstring>
 #include <csignal>
 #include <cerrno>
@@ -25,6 +25,8 @@ For copyright and licensing terms, see the file named COPYING.
 #include "service-manager-client.h"
 #include "service-manager.h"
 #include "CharacterCell.h"
+#include "popt.h"
+#include "ttyname.h"
 #include "ECMA48Output.h"
 #include "TerminalCapabilities.h"
 
@@ -326,10 +328,10 @@ service_status (
 ) {
 	const char * prog(basename_of(args[0]));
 	TerminalCapabilities caps(envs);
-	ECMA48Output o(caps, stdout, true /* C1 is 7-bit aliased */, false /* C1 is not raw 8-bit */);
+	ECMA48Output o(caps, std::cout, true /* C1 is 7-bit aliased */, false /* C1 is not raw 8-bit */);
 
 	bool long_form(0 != std::strcmp(prog, "svstat"));
-	bool colours(isatty(STDOUT_FILENO));
+	bool colours(ECMA48Output::query_use_colours(envs, STDOUT_FILENO));
 	const char * log_lines = "5";
 	try {
 		popt::bool_definition long_form_option('\0', "long", "Output in a longer form.", long_form);

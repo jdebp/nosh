@@ -2,6 +2,7 @@
 <!-- **************************************************************************
 .... For copyright and licensing terms, see the file named COPYING.
 .... **************************************************************************
+.... vim: indentexpr=:
 .-->
 <?xml-stylesheet href="docbook-xml.css" type="text/css"?>
 
@@ -46,11 +47,11 @@ It is a built-in command for <citerefentry><refentrytitle>nosh</refentrytitle><m
 </para>
 
 <para>
-<replaceable>next-prog</replaceable> may contain its own command line options, which <command>exec</command> will ignore.
+<replaceable>next-prog</replaceable> may contain its own command&#x2010;line options, which <command>exec</command> will ignore.
 </para>
 
 <para>
-If the <arg choice='plain'>--clear</arg> command line option is used, <command>exec</command> will clear its environment before chaining.
+If the <arg choice='plain'>--clear</arg> command&#x2010;line option is used, <command>exec</command> will clear its environment before chaining.
 Otherwise, it leaves its process state unchanged.
 </para>
 <caution>
@@ -60,8 +61,8 @@ Instead, use the built-in <citerefentry><refentrytitle>clearenv</refentrytitle><
 </caution>
 
 <para>
-The <arg choice='plain'>--arg0</arg> command line option causes it to replace the first element of the argument list that it passes to <replaceable>next-prog</replaceable>, which is otherwise the name of the command in <replaceable>next-prog</replaceable>, with the supplied string.
-If the <arg choice='plain'>--login</arg> command line option is used, then the first element of the argument list has a dash (<code>-</code>) prepended, which is the convention for signalling shells that they are being invoked directly by <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+The <arg choice='plain'>--arg0</arg> command&#x2010;line option causes it to replace the first element of the argument list that it passes to <replaceable>next-prog</replaceable>, which is otherwise the name of the command in <replaceable>next-prog</replaceable>, with the supplied string.
+If the <arg choice='plain'>--login</arg> command&#x2010;line option is used, then the first element of the argument list has a dash (<code>-</code>) prepended, which is the convention for signalling shells that they are being invoked directly by <citerefentry><refentrytitle>login</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 This happens after any substitution because of <arg choice='plain'>--arg0</arg>.
 </para>
 
@@ -73,10 +74,15 @@ The alternative names are:
 <command>appendpath</command>,
 <command>background</command>,
 <command>cd</command>,
+<command>cd-home</command>,
 <command>chdir</command>,
 <command>chdir-home</command>,
 <command>chroot</command>,
 <command>clearenv</command>,
+<command>console-docbook-xml-viewer</command>,
+<command>console-flat-table-viewer</command>,
+<command>console-tty37-viewer</command>,
+<command>create-control-group</command>,
 <command>cyclog</command>,
 <command>delegate-control-group-to</command>,
 <command>envdir</command>,
@@ -88,23 +94,27 @@ The alternative names are:
 <command>fdmove</command>,
 <command>fdredir</command>,
 <command>fifo-listen</command>,
+<command>find-default-jvm</command>,
+<command>find-matching-jvm</command>,
 <command>follow-log-directories</command>,
 <command>foreground</command>,
 <command>getuidgid</command>,
 <command>hardlimit</command>,
-<command>klog-read</command>
+<command>ifconfig</command>,
+<command>klog-read</command>,
 <command>line-banner</command>,
+<command>linenumber</command>,
 <command>local-datagram-socket-listen</command>,
 <command>local-seqpacket-socket-accept</command>,
 <command>local-seqpacket-socket-listen</command>,
+<command>local-reaper</command>,
 <command>local-stream-socket-accept</command>,
 <command>local-stream-socket-connect</command>,
 <command>local-stream-socket-listen</command>,
 <command>machineenv</command>,
 <command>make-private-fs</command>,
 <command>make-read-only-fs</command>,
-<command>monitored-fsck</command>,
-<command>create-control-group</command>,
+<command>monitor-fsck-progress</command>,
 <command>move-to-control-group</command>,
 <command>netlink-datagram-socket-listen</command>,
 <command>nosh</command>,
@@ -118,24 +128,34 @@ The alternative names are:
 <command>recordio</command>,
 <command>set-control-group-knob</command>,
 <command>set-dynamic-hostname</command>,
-<command>set-mount-object</command>
+<command>set-mount-object</command>,
 <command>setenv</command>,
 <command>setgid-fromenv</command>,
 <command>setlock</command>,
+<command>setlogin</command>,
 <command>setpgrp</command>,
-<command>setsid</command>,
 <command>setsid</command>,
 <command>setuidgid-fromenv</command>,
 <command>setuidgid</command>,
 <command>setup-machine-id</command>
 <command>softlimit</command>,
-<command>syslog-read</command>
+<command>sqz</command>,
+<command>syslog-read</command>,
 <command>tai64n</command>,
 <command>tai64nlocal</command>,
 <command>tcp-socket-accept</command>,
 <command>tcp-socket-connect</command>,
 <command>tcp-socket-listen</command>,
-<command>tcpserver</command>
+<command>tcpserver</command>,
+<command>time-env-add</command>,
+<command>time-env-set</command>,
+<command>time-env-set-if-earlier</command>,
+<command>time-env-set-if-later</command>,
+<command>time-env-unset-if-earlier</command>,
+<command>time-env-unset-if-later</command>,
+<command>time-env-unset-if-null-or-later</command>,
+<command>time-pause-until</command>,
+<command>time-print-tai64n</command>,
 <command>true</command>,
 <command>ucspi-socket-rules-check</command>,
 <command>udp-socket-connect</command>,
@@ -144,6 +164,7 @@ The alternative names are:
 <command>umask</command>,
 <command>unsetenv</command>,
 <command>unshare</command>,
+<command>unvis</command>,
 <command>userenv</command>,
 and
 <command>userenv-fromenv</command>.
@@ -154,7 +175,7 @@ See their individual manual pages for details.
 These other commands are also available as built-in commands, in <citerefentry><refentrytitle>exec</refentrytitle><manvolnum>1</manvolnum></citerefentry> and in <citerefentry><refentrytitle>nosh</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 If <replaceable>next-prog</replaceable> is such a command, it will be executed directly, without needing to ask the operating system to overlay the current process and reinitialize the runtime libraries.
 (Built-in commands must be named simply, and may not have directory prefixes.
-If invoked with prefixes, they will be run as ordinary overlaid programs via <citerefentry><refentrytitle>execv</refentrytitle><manvolnum>1</manvolnum></citerefentry>.)
+If invoked with prefixes, they will be run as ordinary overlaid programs via <citerefentry><refentrytitle>execve</refentrytitle><manvolnum>2</manvolnum></citerefentry>.)
 </para>
 
 <para>

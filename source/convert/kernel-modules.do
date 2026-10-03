@@ -12,12 +12,9 @@
 read_rc() { clearenv read-conf rc.conf printenv "$1" || true ; }
 
 list_modules() { 
-	( 
-		read_rc kld_list || true
+	printf '%s\n' `read_rc kld_list || true`
 # ibcs2 is in the FreeBSD 10 rc.d scripts, but is not actually present as kernel modules any more.
-#		read_rc ibcs2_loaders | sed -e 's:^:ibcs2_:' || true 
-	) | 
-	fmt -w 1
+#	printf '%s\n' `read_rc ibcs2_loaders | sed -e 's:^:ibcs2_:' || true`
 	true
 }
 
@@ -88,17 +85,17 @@ while read -r n
 do
 	# Note that the way that we are setting up prefixes allows variables such as ntfs_enable in /etc/rc.conf{,.local} .
 	case "$n" in
-	autofs)		;;	## log-less on BSD too?
+	(autofs)	;;	## log-less on BSD too?
 	# None of these have attached cyclog services, as they are /etc services.
-	fuse)		;;
-	geom_uzip)	;;
-	linux)		;;
-	svr4)		;;
-	sysvmsg)	;;
-	sysvsem)	;;
-	sysvshm)	;;
+	(fuse)		;;
+	(geom_uzip)	;;
+	(linux)		;;
+	(svr4)		;;
+	(sysvmsg)	;;
+	(sysvsem)	;;
+	(sysvshm)	;;
 	# Everything else has an accompanying log service.
-	*)
+	(*)
 		system-control preset --prefix "cyclog@kmod@" -- "$n"
 		;;
 	esac
